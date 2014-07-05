@@ -60,9 +60,29 @@ ul, ol {
 	    width: 300px;
 	    height: 600px;
 	}
+	.mainButtons {
+	   display: block;
+       	margin:20px auto 20px;    
+        padding:0;
+        border:0;
+        position: relative;
+        text-align: center;
+	    width: 300px;
+	    height: 100px;
+	}
 }
 
 @media (min-width : 600px) {
+	.mainButtons {
+	   display: block;
+       	margin:20px auto 20px;    
+        padding:0;
+        border:0;
+        position: relative;
+        text-align: center;
+	    width: 620px;
+	    height: 100px;
+	}
 	.downloadButtons {
 	   display: block;
        	margin:20px auto 20px;    
