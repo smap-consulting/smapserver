@@ -6,7 +6,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<title>Smap Server</title>
+	<title>Form Builder</title>
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
@@ -14,7 +14,29 @@
 	<!--  <link rel="stylesheet" href="/css/foundation.min.css" /> -->
 
     <script src="js/libs/modernizr.js"></script>
-
+    <script id="tpl" type="text/template">
+	<div>
+  		{{#questions}}
+			<div class="row">
+				<div class="small-6 large-6 columns">
+					<input type="text" placeholder="ask here" id="question_value" name="qtitle" value="{{values.0}}">
+  				</div>
+				<div class="small-2 large-2 columns">
+					<form class="custom">
+						<select id="question_type" placeholder"Question type?" class="project_list" data-sel={{type}}>
+							<option value="select1" >Multiple Choice with one answer</option>
+							<option value="select">Multiple Choice tick all that apply</option>
+							<option value="string">Text</option>
+						</select>
+				</div>
+				<div class="small-4 large-4 columns">
+					<input type="text" placeholder="name" id="question_name" name="qname" value="{{name}}">
+  				</div>
+				
+			</div>
+  		{{/questions}}
+	</div>
+    </script>
 </head>
 <body class="backdos">
 
@@ -32,8 +54,11 @@
 	    <section class="top-bar-section">
 	      <!-- Right Nav gridfix -->
 	      <ul class="right">
-	        <li><a href="http://blog.smap.com.au">News</a></li>
-	        <li><a href="/webForm.html">Web Forms</a></li>
+	        <li class="has-dropdown"><a href="#">File</a>
+	        	<ul class="dropdown">
+	        		<li><a id="m_get_survey" href="#">Get Survey</a>
+	        	</ul>
+	        </li>  
 			<li><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
 	      </ul>
 	
@@ -46,29 +71,7 @@
 	
 	<div class="uno" id="main_page">
 	
-		<div class="full-width"><img class="full-width" src="images/cropped-blog1.jpg"/></div>
-		<h1 class="center">Welcome to the Smap Server (Version 14.05)</h1>
-		<h2 class="center">A description of changes in this release can be found <a href="http://blog.smap.com.au/smap-version-14-05/">here</a>.</h2>
-		<div class="mainButtons center">
-		
-				<a href="edit.html" class="button">Create a Survey</a>
-				<a href="/fieldManager/templateManagement.html" class="button">Manage a Survey</a>
-				<a href="/fieldAnalysis/index.html" class="button">View Survey Results</a>
-			
-		</div>
-		<div class="row center">
-			<div class="large-push-6 large-6 columns">
-				<a href="fieldTask.apk"><img width="200px" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
-				<h1>Get field Task</h1>
-			</div>
-			<div class="large-pull-6 large-6 columns">
-				<a href="smapUploader.jar"><img width="200px" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
-				<h1>Get Smap Uploader</h1>
-			</div>
-		</div>
-		
-		
-		<div style="clear: both;">&nbsp;</div>
+		<div id="questions"></div>
 	
 	
 	</div>
@@ -79,10 +82,29 @@
 	</div>
 	<!-- end #footer -->
 
+	<!-- Modals -->
+	<div id="smap" class="reveal-modal" data-reveal>
+  		<h2>Get Survey</h2>
+  		<form class="custom">
+			<label for="project_name">Project :</label>
+			<select id="project_name" class="project_list">
+			</select>
+			<label for="survey_name">Survey :</label>
+			<select id="survey_name" class="survey_select">
+			</select>
+		</form>
+
+		<div class="large-12">
+			<input id="get_survey" class="button radius text-center" value="Get Survey">
+		</div>
+  		<a class="close-reveal-modal">&#215;</a>
+	</div>
+	
 	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
+	<script src="js/libs/mustache.js"></script>
 	<script src="js/libs/foundation.min.js"></script>
-	<script>
-		$(document).foundation();
-	</script>
+	<script src=js/common.js></script>
+	<script src="js/edit.js"></script>
+
 </body>
 </html>
