@@ -16,3 +16,6 @@ Development
 * Code contributions are very welcome. 
 * [Issue Tracker](https://github.com/smap-consulting/smapserver/issues)
 
+How to Install
+--------------
+Smap server is currently being moved from google code to GitHub.  Some components are still on google code.  Some of the git hub components are also unstable as a development branch was migrated to the github master. The google code repository should be used to get the latest production version of these components. A list of all the compoents and their status can be found [here](https://code.google.com/p/smap-suite/#Source_Code) 

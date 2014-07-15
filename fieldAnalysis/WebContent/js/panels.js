@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Purpose: Manage the panels that display graphs, maps etc of results data
  */
 
+
 requirejs.config({
     baseUrl: 'js/libs',
     paths: {
@@ -27,7 +28,8 @@ requirejs.config({
     	jquery_ui: '../../../../js/libs/jquery-ui-1.10.3.custom.min',
     	modernizr: '../../../../js/libs/modernizr',
     	rmm: '../../../../js/libs/responsivemobilemenu',
-    	common: '../../../../js/app/common'
+    	common: '../../../../js/app/common',
+    	app: '../app'
     },
     shim: {
     	'rmm': ['jquery'],
@@ -37,7 +39,8 @@ requirejs.config({
     	}
     });
 
-require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common',
+
+require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'app/localise',
          'js/libs/jqplot/jquery.jqplot.min.js',
          'js/libs/jqplot/plugins/jqplot.highlighter.min.js',
          'js/libs/jqplot/plugins/jqplot.cursor.min.js',
@@ -67,8 +70,9 @@ require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common',
          'js/data.js',
          'js/reports.js',
          
-         ], function($, jquery_ui, modernizr, rmm, common) {
+         ], function($, jquery_ui, modernizr, rmm, common, localise) {
 
+    
 // HTML fragments for constructing panels
 var hstart = '<li class="ui-state-default pSmall" id="p';
 var hstart2 = '">';
@@ -321,6 +325,8 @@ $(document).ready(function() {
  	 });
 	
 	enableUserProfile();
+	localise.setlang();
+	
 });
 
 /*
