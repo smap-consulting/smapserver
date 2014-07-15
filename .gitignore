@@ -1,3 +1,4 @@
 bin/*
 *.tgz
 smapServer/smapServer
+.DS_Store

@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # Minify
-rm -rf smapServer
 node tools/r.js -o WebContent/js/build.js
 
 # Create a tar file and copy to the deploy directory
@@ -12,3 +11,5 @@ cp smapServer.tgz ~/deploy
 rm -rf /Library/WebServer/Documents/smapServer
 cp -rf smapServer/* /Library/WebServer/Documents
 sudo apachectl restart
+rm -rf smapServer
+rm smapServer.tgz

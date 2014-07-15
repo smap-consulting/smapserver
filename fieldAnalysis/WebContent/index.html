@@ -1,0 +1,349 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!-- Consider adding an manifest.appcache: h5bp.com/d/Offline -->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<!--[if IE]><script src="js/libs/excanvas.compiled.js"></script><![endif]-->
+
+<head>
+	<meta charset="utf-8">
+  
+	<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+		 Remove this if you use the .htaccess -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  
+	<title>Smap Field Analysis GIS</title>
+	<meta name="description" content="Smap Analysis Module.">
+	<meta name="author" content="Neil Penman">
+	
+	<!-- Allow all robots -->	
+	<meta content="all" name="robots" />
+	
+	<!-- turn off IE image toolbar -->
+    <meta content="no" http-equiv="imagetoolbar" />
+    
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+	<!-- jQuery UI CSS -->
+	<link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" />
+	
+	<!-- Flowcontrol -->
+	<link type="text/css" media="all" href="js/libs/fp/minimalist.css" rel="stylesheet" />
+		
+  	<!-- Datatable css -->
+  	<link type="text/css" media="all" rel="stylesheet" href="css/datatable.css"/>
+  	<!-- JQPlot CSS -->
+	<link rel="stylesheet" type="text/css" href="js/libs/jqplot/jquery.jqplot.css" />
+	<!--  <link rel="stylesheet" type="text/css" href="js/libs/jqplot/examples.min.css" />-->
+	
+	<!-- Openlayers Styling -->
+	<link rel="stylesheet" href="/OpenLayers/js/theme/default/style.tidy.css" type="text/css">
+	
+	<!-- CSS: implied media="all" -->
+  	<link type="text/css" rel="stylesheet" href="/css/smap.css"/>
+  	<link type="text/css" rel="stylesheet" href="css/reports.css"/>
+	
+	<link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/>
+	
+	<script data-main="js/panels" src="/js/libs/require.js"></script>
+	
+	<!--  <script src="js/libs/modernizr.custom.js"></script> -->
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+
+</head>
+
+<body>
+	<!-- Portal -->
+	<div id="container">
+		<div class="rmm noPrint" data-menu-style = "minimal">
+			<!-- Menu Bar -->
+			<ul>
+				<li><a href="/index.html">Home</a></li>
+				<li><a href="/fieldManager/" title="Admin">Admin</a></li>
+				<li><a href="reports.html" title="Reports">Reports</a></li>
+				<li><a id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
+				<li><a id="exportMenu" href="#" title="Export">Export</a></li> 
+				<li><a id="discuss" href="https://grow.smap.com.au" title="Discuss">Discuss</a></li>  
+				<li><a href="/fieldAnalysis/modify_data.html" title="Modify">Modify</a></li>
+			</ul>
+		</div> 	<!-- End of menu -->
+	
+		<p style="clear: both;"></p>
+		<div id="header">
+			<div id="username"></div>
+			<div id="banner">Analysis</div>
+		</div>
+	
+		<div id="main" role="main">
+			<!-- Analysis Panels -->
+			<div style="width:210px; height:32px; float:left; font-size:16px">
+				<label for="project_name" style="width:200px; margin-left:5px;">Select Project:</label>
+				<select class="project_list" id="project_name" style="width:200px; margin-left:5px; font-size:16px;"></select>
+			</div>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="graph"><img src="img/graph_ico.png" width="32" height="32"/><br/>Graph</button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="map"><img src="img/map_ico2.png" width="32" height="32"/><br/>Map</button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="table"><img src="img/table_ico.png" width="32" height="32"/><br/>Table</button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="media"><img src="img/camera.png" width="32" height="32"/><br/>Images</button>
+			<div id="panel-container">		
+				<ul id="panels">			
+				</ul>
+			</div>
+						
+			<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+			
+		</div>	<!-- End of main -->
+	
+	</div> <!-- end of #container -->
+	
+	<!-- Popups -->
+	
+	<!-- Report Popup -->
+	<div id="reportContainer" style="display:none;">		
+		<form>
+			<fieldset class="ui-widget-content">
+				<label for="report_title">Title</label>
+				<input type="text" id="report_title"/><br/>
+				<label for="report_description">Comment</label>
+				<textarea id="report_description"></textarea><br/>
+			</fieldset>						
+		</form>
+		<div id="report_map"></div>
+		<div style="clear: both;"></div>
+		<form>
+			<fieldset class="ui-widget-content">
+				<label class="report_field" for="report_country">Country</label>
+				<input class="report_field" type="text" id="report_country"/><br/>
+				<label class="report_field" for="report_region">Region</label>
+				<input class="report_field" type="text" id="report_region"/><br/>
+				<label class="report_field" for="report_district">District</label>
+				<input class="report_field" type="text" id="report_district"/><br/>
+				<label class="report_field" for="report_community">Community</label>
+				<input class="report_field" type="text" id="report_community"/><br/>
+			</fieldset>						
+		</form>
+
+	</div>
+			
+	<div id="export" title="Export Results" style="display:none;">
+		<form>
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Select a Survey</legend>
+				<select id="export_survey"></select><br/>	
+			</fieldset>	
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Output format:</legend>
+				<select id="exportformat">
+					<option value="xls">XLS</option>
+					<option value="csv">CSV</option>
+					<option value="osm">OSM</option>
+					<option value="shape">Shape File</option>
+					<option value="kml">KML / KMZ</option>
+					<option value="vrt">VRT / CSV</option>
+				</select><br/>	
+				<!-- 
+				<input class="exportformat" type="radio" name="exportformat" value="xls" checked="checked"/> XLS<br/> 
+				<input class="exportformat" type="radio" name="exportformat" value="csv"/> CSV<br/>  
+				<input class="exportformat" type="radio" name="exportformat" value="osm"/> OSM<br/>
+				<input class="exportformat" type="radio" name="exportformat" value="shape"/> Shape File<br/>  
+				-->
+			</fieldset>
+			
+			<div class="showspreadsheet">
+				<fieldset class="ui-widget-content showxls">
+					<legend class="ui-widget-header ui-corner-all">Split location into lat / lon:</legend>
+					<input class="splitlocn" type="radio" name="splitlocn" value="false" checked="checked"/> No<br/> 
+					<input class="splitlocn" type="radio" name="splitlocn" value="true"/> Yes<br/> 
+				</fieldset>
+				<label for="export_language">Language</label><br/>
+				<select class="selected_language" id="export_language"></select><br/>
+			</div>
+			<div class="showosm" style="display:none;">
+				<fieldset class="ui-widget-content">
+					<legend class="ui-widget-header ui-corner-all">Select ways (if any):</legend>
+					<div class="osmforms"></div>
+				</fieldset>
+			</div>
+			<div class="showspreadsheet">
+				<fieldset class="ui-widget-content">
+					<legend class="ui-widget-header ui-corner-all">Select forms to include:</legend>
+					<div class="selectforms"></div>
+				</fieldset>
+			</div>
+			<div class="showshape" style="display:none;">
+				<fieldset class="ui-widget-content">
+					<legend class="ui-widget-header ui-corner-all">Select form:</legend>
+					<div class="shapeforms"></div>
+				</fieldset>
+			</div>
+		</form>
+	</div>
+	
+	<!-- Popup to show features when a user clicks on a geometry item -->
+	<div id="features" class="feature-panel-right"></div>
+	
+	<!-- Popup to edit panel settings -->
+	<div id="p_settings" title="Settings" style="display:none;">
+		<form>
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Type and Title</legend>
+				<label for="settings_type">Chart Type</label>
+				<select id="settings_type">
+					<option value="map">Map</option>
+ 					<option value="table">Table</option>
+					<option value="graph">Graph</option>
+					<option value="media">Media</option>
+				</select><br/>	
+				<label for="settings_title">Title</label>
+				<input type="text" id="settings_title"/><br/>
+				<span class="map_only" style="display:none;">
+					<label for="display_panel">Show on:</label>
+					<select id="display_panel"></select><br/>
+				</span>
+			</fieldset>	
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Select a Survey</legend>
+				<label for="settings_survey">Survey</label>
+				<select id="settings_survey"></select><br/>
+				<label for="settings_date_question">Date</label>
+				<select id="settings_date_question"></select><br/>
+			</fieldset>	
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Select Question</legend>
+				<label for="settings_language">Language</label>
+				<select class="selected_language" id="settings_language"></select>
+				<br/>
+				<label for="settings_question">Question</label>
+				<select class="selected_question" id="settings_question"></select>
+				<select id="q1_function"></select>
+				<br/>	
+				<label for="settings_group">Group By</label>
+				<select id="settings_group" disabled="disabled"></select><br/>
+				<label for="time_group">Time Series</label>
+				<select id="time_group" disabled="disabled">
+					<option value="none">None</option>
+					<option value="hour">Hour</option>
+					<option value="day">Day</option>
+					<option value="week">Week</option>
+					<option value="month">Month</option>
+					<option value="year">Year</option>
+				</select><br/>
+				<span class="map_group_only" style="display:none">
+					<input type="radio" name="mapgrouptype" value="contains" checked="checked"/> GPS coordinates within region<br/> 
+					<input type="radio" name="mapgrouptype" value="matches"/> Matches<br/> 
+				</span>	
+			</fieldset>	
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Filter</legend>
+				<label for="from_date">From Date: </label>
+				<input type="text" id="from_date"/> inclusive<br/>	
+				<label for="to_date">To Date: </label>
+				<input type="text" id="to_date"/><br/>
+				<button id="filter_button" class="">Filter By Value</button>
+			</fieldset>							
+		</form>
+	</div>
+	
+	<!-- Popup for status message -->
+	<div id="status_msg" title="Status" style="display:none;">
+		<h3 id="status_msg_msg"></h3>
+	</div>
+	
+	<!-- Popup for filter by value -->
+	<div id="filter_dialog" title="Filter by Value" style="display:none;">
+		<form>
+			<fieldset class="ui-widget-content">
+				<label for="filter_question">Filter Question</label>
+				<select class="selected_question" id="filter_question"></select><br/>
+				<label for="filter_value">Value</label>
+				<select class="" id="filter_value"></select><br/>
+				<button id="filter_clear">Clear</button>
+			</fieldset>
+		</form>
+	</div>
+	
+	<!-- Popup to allow the user to edit their own details -->
+	<div id="modify_me_popup" style="display:none;">
+	
+		<div class="left_panel">
+			<form id="me_edit_form">
+				<label for="me_name">Name</label>
+				<input type="text" id="me_name" required/><br/>
+				<label for="me_email">Email</label>
+				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"/><br/>
+				<span id="reset_me_password_fields" style="display:none;">
+					<label for="reset_me_password">Reset Password</label>
+					<input type="checkbox" id="reset_me_password"/><br/>
+				</span>
+				<span id="password_me_fields" style="display:none;">
+					<label for="me_password">Password</label>
+					<input id="me_password" type="password"/><br/>	
+					<label for="me_password_confirm">Confirm Password</label>
+					<input id="me_password_confirm" type="password"/><br/>	
+				</span>		
+			</form>	
+		</div>
+	</div>
+
+
+	<!-- JavaScript at the bottom for fast page loading -->
+  
+	<!-- jQuery and jQuery UI -->
+	<!--
+	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="/js/libs/jquery-ui-1.10.3.custom.min.js"></script>
+	<script src="/js/responsivemobilemenu.js"></script>
+	-->
+  	
+	<!-- JQPlot Scripts -->
+	<!--[if lt IE 9]><script language="javascript" type="text/javascript" src="excanvas.js"></script><![endif]-->
+	<!-- 
+		<script type="text/javascript" src="js/libs/jqplot/jquery.jqplot.min.js"></script>
+
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.highlighter.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.cursor.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>	
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.enhancedLegendRenderer.min.js"></script>
+
+	<script type="text/javascript" src="js/libs/jquery-ui-timepicker-addon.js"></script>
+	<script type="text/javascript" src="js/libs/fp/flowplayer.min.js"></script>
+	<script type="text/javascript" src="js/libs/jquery.dataTables.min.js"></script>
+	-->
+	
+	<!-- Scripts for openlayers map -->
+	<script type="text/javascript" src="/OpenLayers/js/OpenLayers.js"></script>
+	<!-- Do not link to Openlayers.js on openlayers website, it will change without warning and deprecated functions will stop working -->
+	<!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+	<script type="text/javascript" src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script> 
+	
+	<!--  
+	<script type="text/javascript" src="js/jqplot_image.js"></script>
+	<script type="text/javascript" src="js/map-functions.js"></script>
+	<script type="text/javascript" src="js/map-ol.js"></script>
+	<script type="text/javascript" src="js/graph-functions.js"></script>
+	<script type="text/javascript" src="js/graph-view2.js"></script>
+	<script type="text/javascript" src="js/table-functions.js"></script>
+	<script type="text/javascript" src="js/table-view.js"></script>
+	<script type="text/javascript" src="js/media-view.js"></script>
+	<script type="text/javascript" src="js/survey_control.js"></script>
+	<script type="text/javascript" src="js/panels.js"></script>
+	<script type="text/javascript"  src="js/plugins.js"></script>
+	<script type="text/javascript" src="js/script.js"></script>
+	<script type="text/javascript" src="js/data.js"></script>
+	<script src="js/reports.js"></script>
+	-->
+	<script type="text/javascript" src="/fieldManager/js/commonReportFunctions.js"></script>
+	<!--  <script src="/js/common.js"></script> -->
+	<script src="/fieldManager/js/tablesorter.js"></script>
+
+	<!-- end scripts-->
+     
+
+</body>
+</html>
