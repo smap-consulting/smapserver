@@ -1,6 +1,7 @@
 *.tgz
 smapServer/smapServer
 
+# Eclipse artifacts
 *.pydevproject
 .metadata
 .gradle
