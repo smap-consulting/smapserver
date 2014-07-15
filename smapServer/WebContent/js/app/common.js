@@ -16,6 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
+	
 var	gProjectList,
 	gLanguages,
 	gCurrentProject = 0,
@@ -365,13 +366,15 @@ function removeHourglass() {
  */
 function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 	
-	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
-		if(selector === undefined) {
-			selector = ".survey_select";	// Update the entire class of survey select controls
-		}
+	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
+		$elem;
 	
-		var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
-			$elem = $(selector);
+	if(selector === undefined) {
+		selector = ".survey_select";	// Update the entire class of survey select controls
+	}
+	$elem = $(selector);
+	
+	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 		
 		if(getDeleted) {
 			url+="&deleted=true";
@@ -815,3 +818,6 @@ function showErrors() {
 var l = function (string) {
     return string.toLocaleString();
 };
+
+
+

@@ -1,3 +1,20 @@
+requirejs.config({
+    baseUrl: 'js/libs',
+    paths: {
+    	app: '../app',
+    	jquery: 'jquery-1.8.3.min'
+    },
+    shim: {
+        'mustache': {
+            exports: 'Mustache'
+        }
+    }
+});
+
+require(['jquery','app/common', 'foundation.min', 'mustache', 'modernizr'], 
+		function($, common, foundation, Mustache, modernizr) {
+
+
 var	gSurvey,
 	gQuestions,
 	gCurrentProject,
@@ -74,3 +91,4 @@ function refreshView() {
 	});
 	$('#questions').foundation();
 }
+});

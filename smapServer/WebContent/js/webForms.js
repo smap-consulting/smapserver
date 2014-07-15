@@ -1,5 +1,15 @@
-var	gSurveys,
-	gCurrentProject;
+requirejs.config({
+    baseUrl: 'js/libs',
+    paths: {
+    	app: '../app',
+    	jquery: 'jquery-1.8.3.min',
+    	jquery_ui: 'jquery-ui-1.10.3.custom.min'
+    }
+});
+
+require(['jquery', 'app/common', 'jquery_ui', 'responsivemobilemenu'], function($, common, jquery_ui, responsivemobilemenu) {
+
+var	gSurveys;
 
 $(document).ready(function() {
 	
@@ -86,4 +96,6 @@ function completeSurveyList() {
 	
 	}	
 }
+
+});
 
