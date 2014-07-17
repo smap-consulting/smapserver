@@ -29,7 +29,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 			dataType: 'json',
 			success: function(data) {
 				removeHourglass();
-				gSelector.addSurvey(sId, data);
+				globals.gSelector.addSurvey(sId, data);
 				if(getS) {
 					 getSurveyDataSE(sId, view);
 				}
@@ -72,7 +72,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
  			dataType: 'json',
  			success: function(data) {
  				gMetaInProgress--;
- 				gSelector.addQuestion(aqId, alanguage, data);	
+ 				globals.gSelector.addQuestion(aqId, alanguage, data);	
  				if(view && view.type == "map") {
  					getGeometryQuestion(asId, data.f_id);
  				} 
@@ -116,7 +116,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 	  			dataType: 'json',
 	  			success: function(data) {
 	  				gMetaInProgress--;
-	  				gSelector.addQuestion(aqId, alanguage, data);	
+	  				globals.gSelector.addQuestion(aqId, alanguage, data);	
 	  			},
 	  			error: function(data) {
 	  				gMetaInProgress--;
@@ -137,14 +137,14 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 //Get data at the survey level
  function getSurveyDataSE(sId, view) {
  	
- 	var formItems = gSelector.getFormItems(sId);
+ 	var formItems = globals.gSelector.getFormItems(sId);
  		//hasData = false,
  		//idx;
  	
 	view.tableCount = 0;
 	view.results = [];
  	
-	survey = gSelector.getSurvey(sId);
+	survey = globals.gSelector.getSurvey(sId);
 	view.tableCount = survey.forms.length;
 	for(i = 0; i < survey.forms.length; i++) {
 		processSurveyData(survey.forms[i].name, sId, view, survey.name, false, 0 );		// Get table data
@@ -197,7 +197,7 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
 			}
 			f_view.start_recs[table].push(start_rec);
 			
-	 		gSelector.addDataItem(url, data);
+	 		globals.gSelector.addDataItem(url, data);
 	 		f_view.tableCount--;
 	 		
 	 		if(replace) {
@@ -241,7 +241,7 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
 				cache: false,
 	  			dataType: 'json',
 	  			success: function(results) {	
-	  				gSelector.addDataItem(url, results);				// Cache the raw data
+	  				globals.gSelector.addDataItem(url, results);				// Cache the raw data
 	  				view.results = results;						// Save the raw data against the panel
 	  				refreshData(view, "question");
 	  				removeHourglass();
@@ -295,7 +295,7 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
  	outputView = view;
  	// Check to see if we need to show these results on a different view panel
  	if(view.layerId > 0) {
- 		views = gSelector.getViews();
+ 		views = globals.gSelector.getViews();
  		for(i = 0; i < views.length; i++) {
  			if(view.layerId === views[i].id) {
  				outputView = views[i];  

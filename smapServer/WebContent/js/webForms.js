@@ -20,8 +20,8 @@ $(document).ready(function() {
 		dataType: 'json',
 		success: function(data) {
 			removeHourglass();			
-			gCurrentProject = data.current_project_id;
-			getMyProjects(gCurrentProject, getSurveysForList);	// Get projects and call getSurveys when the current project is known
+			globals.gCurrentProject = data.current_project_id;
+			getMyProjects(globals.gCurrentProject, getSurveysForList);	// Get projects and call getSurveys when the current project is known
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -37,10 +37,10 @@ $(document).ready(function() {
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
-		$('#projectId').val(gCurrentProject);		// Set the project value for the hidden field in template upload
-		getSurveysForList(gCurrentProject);			// Get surveys
-		saveCurrentProject(gCurrentProject);		// Save the current project id
+		globals.gCurrentProject = $('#project_name option:selected').val();
+		$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
+		getSurveysForList(globals.gCurrentProject);			// Get surveys
+		saveCurrentProject(globals.gCurrentProject);		// Save the current project id
  	 });
 	
 	removeHourglass();

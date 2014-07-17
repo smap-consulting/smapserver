@@ -18,7 +18,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 var gTasksEnabled = false;
 var viewIdx = 0;
-var gWait = 0;	// Counter set non zero when there are long running processes running
 
 $(document).ready(function() {
 
@@ -35,7 +34,7 @@ $(document).ready(function() {
 		e.preventDefault();
 		
 		// Set the survey selector
-		var surveyList = gSelector.getSurveyList();
+		var surveyList = globals.gSelector.getSurveyList();
 		if(!surveyList) {	// Surveys have not yet been retrieved
 			getViewSurveys({sId:"-1"});
 		} 
@@ -114,7 +113,7 @@ $(document).ready(function() {
 	// Change event on export dialog survey select
 	$('#export_survey').change(function() {
 		var sId = $('#export_survey option:selected').val(),
-			languages = gSelector.getSurveyLanguages(sId),
+			languages = globals.gSelector.getSurveyLanguages(sId),
 			sMeta,
 			questions;
 		
@@ -123,11 +122,11 @@ $(document).ready(function() {
 		} else {
 			setSurveyViewLanguages(languages, undefined, '#settings_language', false );
 			setSurveyViewLanguages(languages, undefined, '#export_language', true );
-			questions = gSelector.getSurveyQuestions(sId, languages[0].name);
+			questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name);
 		}
 		
 		// Add the form list for osm export an identifying forms to include in spreadsheet export
-		sMeta = gSelector.getSurvey(sId);
+		sMeta = globals.gSelector.getSurvey(sId);
 		if(!sMeta) {
 			getSurveyMetaSE(sId, {}, false,true, false);
 		} else {
@@ -228,7 +227,7 @@ $(window).load(function() {
 				gReportIdent = aParam[1];
 				gCalledFromReports = true;
 			} else if(aParam[0] == "projectId") {
-				gEditingReportProject = aParam[1];
+				globals.gEditingReportProject = aParam[1];
 				
 			}
 		}
@@ -307,7 +306,7 @@ function addFormPickList(sMeta) {
  */
 function getQuestionInfo(sId, language, qId) {
 
-	var qList = gSelector.getSurveyQuestions(sId, language),
+	var qList = globals.gSelector.getSurveyQuestions(sId, language),
 		i,
 		qInfo;
 	
@@ -575,8 +574,8 @@ function surveyMeta (survey) {
 function surveyList () {
 
 	var url = "/surveyKPI/surveys";
-	if(gCurrentProject !== 0 && gCurrentProject !== -1) {
-		url += "?projectId=" + gCurrentProject;
+	if(globals.gCurrentProject !== 0 && globals.gCurrentProject !== -1) {
+		url += "?projectId=" + globals.gCurrentProject;
 		url += "&blocked=true";
 		return url;
 	} else {

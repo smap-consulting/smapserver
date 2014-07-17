@@ -23,7 +23,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Globals specifically for OpenLayers Use
  */
-
+	
 var defaultMapExtent = [-20037508, -20037508, 20037508, 20037508.34];
 
 $(document).ready(function() {
@@ -114,7 +114,7 @@ function initializeMap(idx){
 	// Add a zoom to data button
 	$('#mLayers' + idx).append('<button type="button" value="' + idx + '" id="zoom_to_data' + idx + '">Zoom to data</button>');
 	$('#zoom_to_data' + idx).button().click(function() {
-		zoomToData(gSelector.getMap($(this).val()));
+		zoomToData(globals.gSelector.getMap($(this).val()));
 	});
 
 	if (!map.getCenter()) {
@@ -127,7 +127,7 @@ function initializeMap(idx){
 	});
 	
 	// Store the map in the global store
-	gSelector.setMap(idx, map);
+	globals.gSelector.setMap(idx, map);
 	
 	// Hide the container if it wasn't originally visible
 	if(!isVisible) {
@@ -140,13 +140,13 @@ function initializeMap(idx){
  * Update the map size after a resize event
  */
 function updateMapSize(idx) {
-	var map = gSelector.getMap(idx);
+	var map = globals.gSelector.getMap(idx);
 	map.updateSize();
 }
 
 // Zoom to maximum extent
 function zoomToMax(idx) {
-	var map = gSelector.getMap(idx);
+	var map = globals.gSelector.getMap(idx);
 	map.zoomToMaxExtent();
 }
 
@@ -157,8 +157,8 @@ function zoomToMax(idx) {
 function setMap(view, secondaryLayer) {
 	
 	var i, j,
-		views = gSelector.getViews(),
-		map = gSelector.getMap(view.pId),
+		views = globals.gSelector.getViews(),
+		map = globals.gSelector.getMap(view.pId),
 		$dataButtons=$('#mDataOptions' + view.pId),
 		$btn,
 		selectedButton = -1;

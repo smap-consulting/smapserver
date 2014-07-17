@@ -21,8 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 var gTextValues,
 	gChangeset,
-	gCurrentProject,
-	gAuditItems,	// cehcked
+	gAuditItems,	
 	gQuestions,
 	gRecordIdx,
 	gUpdate = {},
@@ -41,8 +40,8 @@ $(document).ready(function() {
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		globals.gCurrentProject = $('#project_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 		getSurveyList();
  	 });
 	
@@ -101,7 +100,7 @@ function enableReversal() {
 				        			  type: "POST",
 				        			  contentType: "application/json",
 				        			  dataType: "json",
-				        			  url: "/surveyKPI/review/" + gCurrentSurvey + "/undo/" + gChangeset,
+				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/undo/" + gChangeset,
 				        			  success: function(data, status) {
 				        				  removeHourglass();
 				        				  getAuditList();
@@ -131,7 +130,7 @@ function enableReversal() {
 }
 
 function getSurveyList() {
-	loadSurveys(gCurrentProject, undefined, false, false, getAuditList);
+	loadSurveys(globals.gCurrentProject, undefined, false, false, getAuditList);
 }
 
 
@@ -146,10 +145,10 @@ function getAuditList(highlightCS) {
 		intHighlightCS = parseInt(highlightCS);
 	}
 	
-	gCurrentSurvey = $('#survey_name option:selected').val();
+	globals.gCurrentSurvey = $('#survey_name option:selected').val();
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/review/" + gCurrentSurvey + "/audit",
+		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/audit",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
@@ -211,7 +210,7 @@ function getAuditList(highlightCS) {
 				$('h1', '#details_popup').html("Details for change number " + gChangeset);
 				
 				$.ajax({
-					url: "/surveyKPI/review/" + gCurrentSurvey + "/audit/details/" + gChangeset,
+					url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/audit/details/" + gChangeset,
 					dataType: 'json',
 					cache: false,
 					success: function(data) {

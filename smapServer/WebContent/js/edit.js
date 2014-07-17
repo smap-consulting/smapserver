@@ -17,7 +17,6 @@ require(['jquery','app/common', 'foundation.min', 'mustache', 'modernizr'],
 
 var	gSurvey,
 	gQuestions,
-	gCurrentProject,
 	gCurrentLang = 0;	// Each language is in an array, this determines the array element that will be shown
 
 $(document).ready(function() {
@@ -32,8 +31,8 @@ $(document).ready(function() {
 	
 	// Add responses to events
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		globals.gCurrentProject = $('#project_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 		getSurveyList();
  	 });
 	
@@ -48,7 +47,7 @@ $(document).ready(function() {
 });
 
 function getSurveyList() {
-	loadSurveys(gCurrentProject, undefined, false, false, undefined);
+	loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
 }
 
 

@@ -19,6 +19,48 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Purpose: Show a list of reports
  */
+
+requirejs.config({
+    baseUrl: 'js/libs',
+    paths: {
+     	app: '../app',
+     	async: '../../../../js/libs/async',
+    	jquery: [
+    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
+    	       '../../../../js/libs/jquery-1.8.3.min'
+    	       ],
+    	jquery_ui: [
+    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+    	            ],
+    	modernizr: '../../../../js/libs/modernizr',
+    	rmm: '../../../../js/libs/responsivemobilemenu',
+    	common: '../../../../js/app/common',
+    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
+    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers'
+    },
+    shim: {
+    	'rmm': ['jquery'],
+    	'jquery_ui': ['jquery'],	
+       	'common': ['jquery'],
+    	
+       	'app/script': ['jquery_ui'],
+       	'app/map-functions': ['jquery'],
+    	
+    	}
+    });
+
+
+require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'app/localise', 
+         
+         'app/map-functions',
+         'app/script',
+         'async!googlemaps',
+         'openlayers'
+         
+         ], function($, jquery_ui, modernizr, rmm, common, localise) {
+	
+
 var reportList = null,
 	minDate = null,
 	maxDate = null,
@@ -47,9 +89,9 @@ $(document).ready(function() {
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
-		getReportList(gCurrentProject);			// Get reports
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		globals.gCurrentProject = $('#project_name option:selected').val();
+		getReportList(globals.gCurrentProject);			// Get reports
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
  	 });
 	
 	// Add function to show map
@@ -282,7 +324,7 @@ function updateListView() {
 	
 	$('.email_button').button({icons: {primary: "ui-icon-mail-closed"}});	// Add icons to email button
 	$('.delete_button').button().on("click", function() {reportDelete($(this).val());});
-	$('.edit_button').button().on("click", function() {window.location.href = '/fieldAnalysis?ident=' + $(this).val() + '&projectId=' + gCurrentProject;});
+	$('.edit_button').button().on("click", function() {window.location.href = '/fieldAnalysis?ident=' + $(this).val() + '&projectId=' + globals.gCurrentProject;});
 	$('.fb_post_button').button().on("click", function(){
 		gIndex = $(this).val(); 
 		$('#fb_groups').dialog("open");
@@ -324,7 +366,7 @@ function reportDelete(ident) {
 		
 		$.ajax({
 			type : 'Delete',
-			url : "/surveyKPI/reports/report/" + gCurrentProject + "/" + ident,
+			url : "/surveyKPI/reports/report/" + globals.gCurrentProject + "/" + ident,
 			error : function() {
 				alert("Error: Failed to delete");
 			},
@@ -723,3 +765,5 @@ function onFeatureSelect() {
 function onFeatureUnselect() {
 	
 }
+
+});

@@ -24,55 +24,105 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 requirejs.config({
     baseUrl: 'js/libs',
     paths: {
-    	jquery: '../../../../js/libs/jquery-1.8.3.min',
-    	jquery_ui: '../../../../js/libs/jquery-ui-1.10.3.custom.min',
+     	app: '../app',
+     	i18n: '../../../../js/libs/i18n',
+     	async: '../../../../js/libs/async',
+     	localise: '../../../../js/app/localise',
+    	jquery: [
+    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
+    	       '../../../../js/libs/jquery-1.8.3.min'
+    	       ],
+    	jquery_ui: [
+    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+    	            ],
     	modernizr: '../../../../js/libs/modernizr',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
-    	app: '../app'
+    	globals: '../../../../js/app/globals',
+    	tablesorter: '../../../../js/libs/tablesorter',
+    	crf: '../../../../js/libs/commonReportFunctions',
+    	googlemaps: 'http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false'
     },
     shim: {
     	'rmm': ['jquery'],
-    	'js/libs/jquery-ui-timepicker-addon': ['jquery', 'jquery_ui'],
-    	'js/libs/jqplot/plugins/jqplot.min.js': ['jquery', 'jquery_ui'],
-    	'js/libs/jqplot/plugins/jqplot.highlighter.min.js': ['jquery', 'jquery_ui']
+    	'jquery_ui': ['jquery'],
+    	'jquery-ui-timepicker-addon': ['jquery_ui'],
+    	'jquery.dataTables.min': ['jquery'],
+    	'fp/flowplayer.min': ['jquery'],
+    	'common': ['jquery'],
+    	
+    	'jqplot/jquery.jqplot.min': ['jquery_ui'],
+    	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.cursor.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.categoryAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	
+    	'app/jqplot_image': ['jquery'],
+    	'app/map-functions': ['jquery'],
+    	'app/map-ol': ['jquery', 'globals'],
+    	'app/graph-functions': ['jquery'],
+    	'app/graph-view2': ['jquery'],
+    	'app/table-functions': ['jquery'],
+    	'app/table-view': ['jquery'],
+    	'app/media-view': ['jquery'],	
+    	'app/survey_control': ['jquery_ui'],	
+    	'app/table-functions': ['jquery'],
+    	'app/plugins': ['jquery'],
+    	'app/script': ['jquery_ui'],
+    	'app/data': ['jquery'],
+    	'app/reports': ['jquery_ui'],
+    	
+    	'tablesorter': ['jquery'],
+    	'crf': ['jquery']
+    	
     	}
     });
 
+require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globals',
+         
+         'jqplot/jquery.jqplot.min',
+         'jqplot/plugins/jqplot.highlighter.min',
+         'jqplot/plugins/jqplot.cursor.min',
+         'jqplot/plugins/jqplot.dateAxisRenderer.min',
+         'jqplot/plugins/jqplot.barRenderer.min',
+         'jqplot/plugins/jqplot.categoryAxisRenderer.min',
+         'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
+         'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
+         'jqplot/plugins/jqplot.canvasTextRenderer.min',
+         'jqplot/plugins/jqplot.enhancedLegendRenderer.min',
+         
+         'jquery-ui-timepicker-addon',
+         'fp/flowplayer.min',
+         'jquery.dataTables.min',
+         
+         'app/jqplot_image',
+         'app/map-functions',
+         'app/map-ol',
+         'app/graph-functions',
+         'app/graph-view2',
+         'app/table-functions',
+         'app/table-view',
+         'app/media-view',
+         'app/survey_control',
+         'app/plugins',
+         'app/script',
+         'app/data',
+         'app/reports',
+         
+         'tablesorter',
+         'crf',
+         //'async!googlemaps'
+         
+         ], function($, jquery_ui, modernizr, rmm, common, localise, globalObj) {
 
-require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'app/localise',
-         'js/libs/jqplot/jquery.jqplot.min.js',
-         'js/libs/jqplot/plugins/jqplot.highlighter.min.js',
-         'js/libs/jqplot/plugins/jqplot.cursor.min.js',
-         'js/libs/jqplot/plugins/jqplot.dateAxisRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.barRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.categoryAxisRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.canvasTextRenderer.min.js',
-         'js/libs/jqplot/plugins/jqplot.enhancedLegendRenderer.min.js',
-         
-         'js/libs/jquery-ui-timepicker-addon.js',
-         'js/libs/fp/flowplayer.min.js',
-         'js/libs/jquery.dataTables.min.js',
-         
-         'js/jqplot_image.js',
-         'js/map-functions.js',
-         'js/map-ol.js',
-         'js/graph-functions.js',
-         'js/graph-view2.js',
-         'js/table-functions.js',
-         'js/table-view.js',
-         'js/media-view.js',
-         'js/survey_control.js',
-         'js/plugins.js',
-         'js/script.js',
-         'js/data.js',
-         'js/reports.js',
-         
-         ], function($, jquery_ui, modernizr, rmm, common, localise) {
 
-    
 // HTML fragments for constructing panels
 var hstart = '<li class="ui-state-default pSmall" id="p';
 var hstart2 = '">';
@@ -160,13 +210,15 @@ var hmedia2 = '"><div class="image_wrap"><img src="img/blank.gif" width="512" he
 var hmedia3 = '"><div class="player"></div></div></div><br clear="all" /><div class="scrollable" id="scrollable';
 var hmedia4 = '"></div></div>';
 
-var gViewIdx;
 var gNewPanel = false;	// Set to true when editing settings of a new panel
 var gExpandedPanelSeq;	// Set to the sequence number of a newly created panel
 
 $(document).ready(function() {
 	
 	var aDate;
+	
+	window.globals = globalObj;		// Make it truly global!
+	localise.setlang();		// Localise HTML
 	
     // Add a new panel button click
     $('.db_settings_add').click(function() { 
@@ -186,8 +238,7 @@ $(document).ready(function() {
 		        	click: function() {
 		        		if(gNewPanel) {
 		        			gNewPanel = false;
-		        			delPanel($('#p' + gViewIdx).find('.pDel'), gViewIdx);
-		        			//$('#p' + gViewIdx).find('.pDel').trigger('click');		// If this is a new panel delete on cancel
+		        			delPanel($('#p' + globals.gViewIdx).find('.pDel'), globals.gViewIdx);
 		        		}
 		        		$(this).dialog("close");
 		        	}
@@ -203,7 +254,8 @@ $(document).ready(function() {
 		        		
 		        		// Check that the meta data for the question has been retrieved
 		        		if(gMetaInProgress !== 0) {
-		        			alert("Waiting for a response from the server. Please try again in a few seconds");
+		        			//alert("Waiting for a response from the server. Please try again in a few seconds");
+		        			alert(localise.set["msg_wait"]);
 		        			return false;
 		        		}
 		        		
@@ -220,17 +272,19 @@ $(document).ready(function() {
 	 					} 
 						sId  = $('#settings_survey option:selected').val();
 		        		if(sId == "-1") {
-							alert("You must select a survey");
+							//alert("You must select a survey");
+							alert(localise.set["msg_sel_survey"]);
 		        			return false;
 		        		}
 		        		if(newType == "graph" && qId == "-1") {
-							alert("You must select a question to show on a graph");
+							//alert("You must select a question to show on a graph");
+		        			alert(localise.set["msg_sel_q"]);
 		        			return false;
 						}
 		        		
 		        		gNewPanel = false;
-		        		views = gSelector.getViews();
-						view = views[gViewIdx];
+		        		views = globals.gSelector.getViews();
+						view = views[globals.gViewIdx];
 
 						view.sId  = sId;
 						view.qId = qId;
@@ -261,7 +315,7 @@ $(document).ready(function() {
 						}
 						// Determine if we need to redraw the panel
 						if(newType !== view.type) {
-							setPanelType(newType, gViewIdx, view.timeGroup, view.qId);
+							setPanelType(newType, globals.gViewIdx, view.timeGroup, view.qId);
 						}
 						if(newTitle !== view.title) {	// Set the new title
 							$('#p' + view.pId).find('span').html(newTitle);
@@ -280,10 +334,10 @@ $(document).ready(function() {
 		        		view.key_words = $('#settings_key_words').val();
 		        		
 		        		// Set the data names and labels, this is the question / options that the user wants to view
-		        		qMeta = gSelector.getQuestion(view.qId, view.lang);
+		        		qMeta = globals.gSelector.getQuestion(view.qId, view.lang);
 		        		
 		        		// Set the group type
-		        		groupMeta = gSelector.getQuestion(view.groupQuestionId, view.lang);
+		        		groupMeta = globals.gSelector.getQuestion(view.groupQuestionId, view.lang);
 		        		if(groupMeta && view.groupQuestionId != "-1") {
 		        			if(groupMeta.type === "geopoint" || groupMeta.type === "geopolygon" || 
 		        					groupMeta.type === "geolinestring" || 
@@ -317,15 +371,14 @@ $(document).ready(function() {
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
+		globals.gCurrentProject = $('#project_name option:selected').val();
 
-		getPanels(gCurrentProject);				
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		getPanels(globals.gCurrentProject);				
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 		getViewSurveys({sId:"-1"});				// Update the survey list to match the new project
  	 });
 	
 	enableUserProfile();
-	localise.setlang();
 	
 });
 
@@ -360,7 +413,7 @@ function getPanels(projectId) {
 			cache: false,
 			success: function(data) {
 				removeHourglass();
-				gSelector.setViews(data);
+				globals.gSelector.setViews(data);
 				refreshPanels();	// nodbl	
 			},
 			error: function(data) {
@@ -395,7 +448,7 @@ function refreshPanels() {
 	addHourglass();
 	// Get the view list
 	//dbList = $( "#db_list" ).sortable("toArray"),  ndbl
-	views = gSelector.getViews();
+	views = globals.gSelector.getViews();
 	
 	$panels = $('#panels');
 	$panels.empty();	// Remove existing panels
@@ -484,7 +537,7 @@ function addTriggers() {
 // Add a new panel on to the end of the current panels
 function addNewPanel(type) {
 	
-	var views = gSelector.getViews();
+	var views = globals.gSelector.getViews();
 	var idx = 0;
 	if(views) {
 		idx = views.length;
@@ -524,7 +577,7 @@ function delPanel($this, idx) {
 	
 	if (decision === true) {
 			
-		views = gSelector.getViews();
+		views = globals.gSelector.getViews();
 		if(views[idx].state === "expanded") {
 			gExpandedPanelSeq = idx;	
 			$('.pSmall').removeClass('pHide');	// unhide other panels
@@ -698,7 +751,7 @@ function exportReport($this) {
 	var $data, map,
 		html,
 		viewIdx = $this.attr("value"),
-		views = gSelector.getViews(),
+		views = globals.gSelector.getViews(),
 		canvas, canvasData, item,
 		csvValue,
 		format, num,
@@ -788,7 +841,7 @@ function exportReport($this) {
 function expandFunction($this) {
 
 	var viewIdx = $this.attr("value"),	
-		views = gSelector.getViews(),
+		views = globals.gSelector.getViews(),
 		oldState,
 		i,
 		e;
@@ -836,7 +889,7 @@ function getData(view) {
 		getResults(view);
 		
 	} else {				// Whole of survey results
-		var sMeta = gSelector.getSurvey(view.sId);
+		var sMeta = globals.gSelector.getSurvey(view.sId);
 		if(!sMeta) {
 			 getSurveyMetaSE(view.sId, view, true, false, true, view.dateQuestionId);
 		 } else {
@@ -847,79 +900,10 @@ function getData(view) {
 }
 
 /*
- * Get the list of available surveys
- */
-function getViewSurveys (view) {
-		
-	var url = surveyList();
-	if(typeof url !== "undefined") {
-		$.ajax({
-			url: url,
-			cache: false,
-			dataType: 'json',
-			success: function(data) {
-				gSelector.setSurveyList(data);
-				if(view) {
-					setSurveyViewSurveys(data, view.sId, '#settings_survey, #export_survey');
-				}
-			},
-			error: function(xhr, textStatus, err) {
-				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					$('#status_msg_msg').empty().text("Error: Failed to get a list of surveys");
-					$("#status_msg").dialog("open");
-				}
-			}
-		});		
-	}
-}
-
-
-function getViewLanguages(view) {
-	
-	if(view.sId != -1) {
-		var url = languageListUrl(view.sId);
-		$.getJSON(url, function(data) {
-			gSelector.setSurveyLanguages(view.sId, data);
-			setSurveyViewLanguages(data, view.lang, '#settings_language', false);	
-			setSurveyViewLanguages(data, view.lang, '#export_language', true);
-		});
-	}
-	
-}
-
-/*
- * Get the list of available regions
- */
-function getViewRegions(view) {	
-			
-	var url = regionsURL();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			gSelector.setRegionList(data);
-			if(view.type == "map") {
-				setSurveyViewRegions(data, view.region);
-			}
-		},
-		error: function(xhr, textStatus, err) {
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get list of regions: " + err);
-			}
-		}
-	});		
-}
-
-/*
  * Save the panels to the database
  */
 function savePanels(newPanel) {
-	var views = gSelector.getViews(),
+	var views = globals.gSelector.getViews(),
 		idx,
 		i,
 		inViews = [],
@@ -965,7 +949,7 @@ function savePanels(newPanel) {
 		  data: { settings: viewsString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  getPanels(gCurrentProject);
+			  getPanels(globals.gCurrentProject);
 		  }, error: function(data, status) {
 			  removeHourglass();
 			  console.log("Error: Failed to save panel");

@@ -16,19 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-	
-var	gProjectList,
-	gLanguages,
-	gCurrentProject = 0,
-	gCurrentSurvey = 0,
-	gLoggedInUser,
-	gEditingReportProject,   		// Set if fieldAnalysis called to edit a report
-	gWait = 0,						// Counter set non zero when there are long running processes running
-	gIsAdministrator = false;
-	gIsOrgAdministrator = false;
-	
-// Global Model Object
-var gSelector = new Selector();
+var gWait = 0;
 
 /*
  * ===============================================================
@@ -51,14 +39,14 @@ function updateProjectList(addAll, projectId, callback) {
 		h[++idx] = '<option value="0">All</option>';
 		updateCurrentProject = false;
 	}
-	for(i = 0; i < gProjectList.length; i++) {
+	for(i = 0; i < globals.gProjectList.length; i++) {
 		h[++idx] = '<option value="';
-		h[++idx] = gProjectList[i].id;
+		h[++idx] = globals.gProjectList[i].id;
 		h[++idx] = '">';
-		h[++idx] = gProjectList[i].name;
+		h[++idx] = globals.gProjectList[i].name;
 		h[++idx] = '</option>';
 		
-		if(gProjectList[i].id === projectId) {
+		if(globals.gProjectList[i].id === projectId) {
 			updateCurrentProject = false;
 		}
 	}
@@ -67,19 +55,19 @@ function updateProjectList(addAll, projectId, callback) {
 	// If for some reason the user's default project is no longer available then 
 	//  set the default project to the first project in the list
 	//  if the list is empty then set the default project to undefined
-	if(updateCurrentProject && gProjectList[0]) {	
-		gCurrentProject = gProjectList[0].id;		// Update the current project id
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+	if(updateCurrentProject && globals.gProjectList[0]) {	
+		globals.gCurrentProject = globals.gProjectList[0].id;		// Update the current project id
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 	} else if(updateCurrentProject) {	
-		gCurrentProject = -1;		// Update the current project id
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		globals.gCurrentProject = -1;		// Update the current project id
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 	}
 	
-	$projectSelect.val(gCurrentProject);			// Set the initial project value
-	$('#projectId').val(gCurrentProject);			// Set the project value for the hidden field in template upload
+	$projectSelect.val(globals.gCurrentProject);			// Set the initial project value
+	$('#projectId').val(globals.gCurrentProject);			// Set the project value for the hidden field in template upload
 
 	if(typeof callback !== "undefined") {
-		callback(gCurrentProject);				// Call the callback with the correct current project
+		callback(globals.gCurrentProject);				// Call the callback with the correct current project
 	}
 }
 
@@ -94,7 +82,7 @@ function getMyProjects(projectId, callback, getAll) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			gProjectList = data;
+			globals.gProjectList = data;
 			updateProjectList(getAll, projectId, callback);
 		},
 		error: function(xhr, textStatus, err) {
@@ -147,7 +135,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 	var groups = data.groups,
 		i;
 	
-	gLoggedInUser = data;
+	globals.gLoggedInUser = data;
 	$('#username').html(data.name).button({ label: data.name + " @" + data.organisation_name, 
 			icons: { primary: "ui-icon-person" }}).off().click(function(){
 		$('#me_edit_form')[0].reset();
@@ -166,19 +154,19 @@ function updateUserDetails(data, getOrganisationsFn) {
 	if(groups) {
 		for(i = 0; i < groups.length; i++) {
 			if(groups[i].name === "admin") {
-				gIsAdministrator = true;
+				globals.gIsAdministrator = true;
 			}
 			if(groups[i].name === "org admin") {
-				gIsOrgAdministrator = true;
+				globals.gIsOrgAdministrator = true;
 			}
 		}
 	}
-	if(gIsAdministrator) {
+	if(globals.gIsAdministrator) {
 		$('.super_user_only').show();
 	} else {
 		$('.super_user_only').hide();
 	}
-	if(gIsOrgAdministrator) {
+	if(globals.gIsOrgAdministrator) {
 		$('.org_user_only').show();
 		if(typeof getOrganisationsFn === "function") {
 			getOrganisationsFn();
@@ -212,7 +200,7 @@ function enableUserProfile () {
 		        	text: "Save",
 		        	click: function() {
 
-		        		var user = gLoggedInUser,
+		        		var user = globals.gLoggedInUser,
 		        			userList = [],
 		        			error = false,
 		        			userList;
@@ -310,9 +298,9 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn) {
 			gTwitterEnabled = data.allow_twitter;
 			
 			if(getProjects) {
-				gCurrentProject = data.current_project_id;
-				$('#projectId').val(gCurrentProject);		// Set the project value for the hidden field in template upload
-				getMyProjects(gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
+				globals.gCurrentProject = data.current_project_id;
+				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
+				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
 			}
 			if(typeof enableFacebookDialog == 'function' && gFacebookEnabled) {
 				enableFacebookDialog();
@@ -397,7 +385,7 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 					$elem.append('<option value="' + item.id + '">' + item.displayName + '</option>');
 				});
 
-				gCurrentSurvey = $elem.val();
+				globals.gCurrentSurvey = $elem.val();
 				
 				if(typeof callback == "function") {
 					callback();
@@ -430,7 +418,7 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 function getLanguageList(sId, callback, addNone, selector, setGroupList) {
 	
 	if(typeof sId === "undefined") {
-		sId = gCurrentSurvey;
+		sId = globals.gCurrentSurvey;
 	}
 	
 	function getAsyncLanguageList(sId, theCallback, selector) {
@@ -441,7 +429,7 @@ function getLanguageList(sId, callback, addNone, selector, setGroupList) {
 			cache: false,
 			success: function(data) {
 				removeHourglass();
-				gSelector.setSurveyLanguages(sId, data);
+				globals.gSelector.setSurveyLanguages(sId, data);
 				if(selector) {
 					setSurveyViewLanguages(data, undefined, selector, addNone);
 				} else {
@@ -483,7 +471,7 @@ function getQuestionList(sId, language, qId, groupId, callback, setGroupList, vi
 			cache: false,
 			success: function(data) {
 				removeHourglass();
-				gSelector.setSurveyQuestions(sId, language, data);
+				globals.gSelector.setSurveyQuestions(sId, language, data);
 				setSurveyViewQuestions(data, qId, view);
 	
 				if(setGroupList && typeof setSurveyViewQuestionGroups === "function") {
@@ -601,195 +589,6 @@ function questionMetaURL (sId, lang, qId) {
 	url += "/" + qId;
 	url += "/getMeta";
 	return url;
-}
-
-function Selector() {
-	
-	this.dataItems = new Object();
-	//this.panelDataItems = new Object();
-	this.surveys = new Object();
-	this.surveyLanguages = new Object();
-	this.surveyQuestions = new Object();
-	this.questions = new Object();
-	this.allSurveys;				// Simple list of surveys
-	this.allRegions;
-	this.views = [];			// Simple list of views
-	this.maps = {};				// map panels indexed by the panel id
-	this.changed = false;
-	this.SURVEY_KEY_PREFIX = "surveys";
-	this.TASK_KEY = "tasks";
-	this.TASK_COLOR = "#dd00aa";
-	this.SURVEY_COLOR = "#00aa00";
-	this.SELECTED_COLOR = "#0000aa";
-	this.currentPanel = "map";
-	
-	/*
-	 * Get Functions
-	 */
-	this.getAll = function () {
-		return this.dataItems;
-	};
-	
-	this.getItem = function (key) {
-		return this.dataItems[key];
-	};
-	
-	// Return all the table data available for a survey
-	this.getFormItems = function (sId) {
-		var tableItems = new Object();
-		for(var key in this.dataItems) {
-			var item = this.dataItems[key];
-			if(item.table == true && item.sId == sId) {
-				tableItems[key] = item;
-			}
-		}
-		return tableItems;
-	};
-	
-	this.getSurvey = function (key) {
-		return this.surveys[key];
-	};
-	
-	this.getSurveyQuestions = function (sId, language) {
-		var langQ = this.surveyQuestions[sId];
-		if(langQ) {
-			return langQ[language];
-		} else {
-			return null;
-		}
-	};
-	
-	this.getSurveyLanguages = function (key) {
-		return this.surveyLanguages[key];
-	};
-	
-	// Returns the list of surveys on the home server
-	this.getSurveyList = function () {
-		return this.allSurveys;
-	};
-	
-	this.getRegionList = function () {
-		return this.allRegions;
-	};
-	
-	// deprecate question meta should be replaced by all question details in the question list
-	this.getQuestion = function(qId, language) {
-		var langQ = this.questions[qId];
-		if(langQ) {
-			return langQ[language];
-		} else {
-			return null;
-		}
-	};
-	
-	/*
-	 * Get the question details that came with the question list
-	 * This aproach should replace the concept of "question meta"
-	 */
-	this.getQuestionDetails = function(sId, qId, language) {
-		var qList = this.getSurveyQuestions(sId, language),
-			i;
-		
-		for(i = 0; i < qList.length; i++) {
-			if(qList[i].id == qId) {
-				return qList[i];
-			}
-		}
-		return null;
-	};
-	
-	this.hasQuestion = function(key) {
-		if(this.questions[key] != undefined) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	
-	// Return the list of current views
-	this.getViews = function () {
-		return this.views;
-	};
-	
-	// Return a map if it exists
-	this.getMap = function (key) {
-		return this.maps[key];
-	};
-	
-	
-	/*
-	 * Set Functions
-	 */
-	this.addDataItem = function (key, value) {
-		this.dataItems[key] = value;
-		this.changed = true;
-	};	
-	
-	this.clearDataItems = function () {
-		this.dataItems = new Object();
-	};	
-	
-	this.clearSurveys = function () {
-		this.surveys = new Object();
-		this.surveyLanguages = new Object();
-		this.surveyQuestions = new Object();
-		this.questions = new Object();
-		this.allSurveys = undefined;				
-		this.allRegions = undefined;
-	};	
-	
-	this.setSurveyList = function (list) {
-		this.allSurveys = list;
-		if(typeof list[0] !== "undefined") {
-			this.selectedSurvey = list[0].sId;
-		}
-	};	
-	
-	this.setSurveyLanguages = function (key, value) {
-		this.surveyLanguages[key] = value;
-	};
-	
-	this.setSurveyQuestions = function (sId, language, value) {
-		var langQ = new Object();
-		langQ[language] = value;
-		this.surveyQuestions[sId] = langQ;
-	};
-	
-	this.setRegionList = function (list) {
-		this.allRegions = list;
-	};	
-	
-	this.addSurvey = function (key, value) {
-		this.surveys[key] = value;
-	};
-	
-	this.setSelectedSurvey = function (survey) {
-		this.selectedSurvey = survey;
-	};
-	
-	this.setSelectedQuestion = function (id) {
-		this.selectedQuestion = id;
-	};
-	
-	this.addQuestion = function (qId, language, value) {	
-		var langQ = this.questions[qId];
-		if(!langQ) {
-			this.questions[qId] = new Object();
-			langQ = this.questions[qId];
-		}
-		langQ[language] = value;
-	};	
-	
-	// Set the list of views to the passed in array
-	this.setViews = function (list) {
-		this.views = list;
-	};	
-	
-	// Set the passed in map into the maps object indexed by key
-	this.setMap = function (key, value) {
-		this.maps[key] = value;
-	};
-	
 }
 
 /*

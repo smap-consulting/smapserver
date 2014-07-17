@@ -114,9 +114,9 @@ $(document).ready(function() {
 
 //Handle click on settings button
 function showSettings($this) {
-	gViewIdx = $this.attr("value");
-	var views = gSelector.getViews();
-	gSurveyControlView = $.extend(true, {}, views[gViewIdx]);	// Get a copy of the current view
+	globals.gViewIdx = $this.attr("value");
+	var views = globals.gSelector.getViews();
+	gSurveyControlView = $.extend(true, {}, views[globals.gViewIdx]);	// Get a copy of the current view
 	
 	getViewData(gSurveyControlView);
 	setSurveyViewControl(gSurveyControlView);		// Set the values in the settings dialog from the view
@@ -134,7 +134,7 @@ function getViewData(view) {
 	}
 	
 	// Set the survey selector
-	var surveyList = gSelector.getSurveyList();
+	var surveyList = globals.gSelector.getSurveyList();
 	if(!surveyList) {	// Surveys have not yet been retrieved
 		getViewSurveys(view);
 	} 
@@ -142,7 +142,7 @@ function getViewData(view) {
 	$('#settings_title').val(view.title);
 	
 	// Set the survey meta data
-	var sMeta = gSelector.getSurvey(view.sId);
+	var sMeta = globals.gSelector.getSurvey(view.sId);
 	if(!sMeta) {
 		getSurveyMetaSE(view.sId, undefined, false, true, true, view.dateQuestionId);
 	} else {
@@ -151,7 +151,7 @@ function getViewData(view) {
 	}
 	
 	// Get the languages 
-	var surveyLanguages = gSelector.getSurveyLanguages(view.sId);
+	var surveyLanguages = globals.gSelector.getSurveyLanguages(view.sId);
 	if(!surveyLanguages) {	
 		getViewLanguages(view);
 	} else {
@@ -164,7 +164,7 @@ function getViewData(view) {
 	 */
 	if(view.qId != "-1") {
 		if(!view.qId_is_calc) {
-			var qMeta = gSelector.getQuestion(view.qId, view.lang);
+			var qMeta = globals.gSelector.getQuestion(view.qId, view.lang);
 			if(!qMeta) {
 				getQuestionMeta(view.sId, view.qId, view.lang, view);
 			} else {
@@ -179,7 +179,7 @@ function getViewData(view) {
 		}
 	}
 	if(view.groupQuestionId != "-1") {
-		var qMeta = gSelector.getQuestion(view.groupQuestionId, view.lang);
+		var qMeta = globals.gSelector.getQuestion(view.groupQuestionId, view.lang);
 		if(!qMeta) {
 			getGroupMeta(view.sId, view.groupQuestionId, view.lang);
 		}
@@ -189,7 +189,7 @@ function getViewData(view) {
 	 * Get the list of questions
 	 */
 	if(view.sId != "-1") {
-		var questions = gSelector.getSurveyQuestions(view.sId, view.lang);
+		var questions = globals.gSelector.getSurveyQuestions(view.sId, view.lang);
 		var setGroupList = false;
 		if(view.type != "map") {
 			setGroupList = true;
@@ -211,7 +211,7 @@ function getViewData(view) {
 	/*
 	 * Get the regions
 	 */
-	var regions = gSelector.getRegionList();
+	var regions = globals.gSelector.getRegionList();
 	if(!regions) {
 		getViewRegions(view);
 	} else {
@@ -257,13 +257,13 @@ function typeChangeEvent(type) {
 	}
 	
 	if(type == "map") {
-		var regions = gSelector.getRegionList();
+		var regions = globals.gSelector.getRegionList();
 		setSurveyViewRegions(regions, gSurveyControlView.region);
 		
 		// Set the geometry question 
 		if(qId != "-1") {
 			if(qId.indexOf(":") < 0) {
-				var qMeta = gSelector.getQuestion(qId, language);
+				var qMeta = globals.gSelector.getQuestion(qId, language);
 				getGeometryQuestion(surveyId, qMeta.f_id);
 			} else {
 				var qMeta = getCalculationQMeta(surveyId, language, qId);
@@ -273,7 +273,7 @@ function typeChangeEvent(type) {
 		$('.map_only', '#p_settings').show();
 	} else {
 		 	 
-		questions = gSelector.getSurveyQuestions(surveyId, language);
+		questions = globals.gSelector.getSurveyQuestions(surveyId, language);
 		if(questions) {
 			setSurveyViewQuestionGroups(questions, gSurveyControlView.groupQuestionId);
 		} else {
@@ -296,7 +296,7 @@ function typeChangeEvent(type) {
 function surveyChangeEvent(sId) {
 	
 	// Get the survey meta data
-	var surveyMeta = gSelector.getSurvey(sId);
+	var surveyMeta = globals.gSelector.getSurvey(sId);
 	if(!surveyMeta) {
 		getSurveyMetaSE(sId, undefined, false, false, true);
 	} else {
@@ -304,7 +304,7 @@ function surveyChangeEvent(sId) {
 	}
 	
 	// Get the languages for this survey
-	var languages = gSelector.getSurveyLanguages(sId);
+	var languages = globals.gSelector.getSurveyLanguages(sId);
 	var setGroupList = false;
 	if(gSurveyControlView.type != "map") {
 		setGroupList = true;
@@ -315,7 +315,7 @@ function surveyChangeEvent(sId) {
 	} else {
 		setSurveyViewLanguages(languages, undefined, '#settings_language', false);
 		setSurveyViewLanguages(languages, undefined, '#export_language', true);
-		var questions = gSelector.getSurveyQuestions(sId, languages[0].name);
+		var questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name);
 		if(!questions) {
 			getQuestionList(sId, languages[0].name, "-1", "-1", undefined, setGroupList, undefined);	// Default language to the first in the list
 		} else {
@@ -341,7 +341,7 @@ function surveyChangeEvent(sId) {
 //Selected language has changed
 function languageChangeEvent(sId, language) {
 	
-	var qList = gSelector.getSurveyQuestions(sId, language);
+	var qList = globals.gSelector.getSurveyQuestions(sId, language);
 	
 	var setGroupList = false;
 	if(gSurveyControlView.type != "map") {
@@ -383,7 +383,7 @@ function questionChangeEvent(sId, qId, question) {
 			// Not an SSC question
 			// Get the question meta data
 
-			qMeta = gSelector.getQuestion(qId, language);
+			qMeta = globals.gSelector.getQuestion(qId, language);
 			if(!qMeta) {
 				 getQuestionMeta(sId, qId, language, gSurveyControlView);
 			 } else {
@@ -411,7 +411,7 @@ function questionChangeEvent(sId, qId, question) {
 }
 
 function getCalculationQMeta(sId, lang, qId) {
-	var questionList = gSelector.getSurveyQuestions(sId, lang),
+	var questionList = globals.gSelector.getSurveyQuestions(sId, lang),
 		i,
 		qMeta = {
 			type: "decimal",
@@ -436,7 +436,7 @@ function getCalculationQMeta(sId, lang, qId) {
 // 	2) the geo question in the top level form
 // 	3) Show an alert if no suitable geometry question exists
 function getGeometryQuestion(sId, f_id) {
-	var sMeta = gSelector.getSurvey(sId);
+	var sMeta = globals.gSelector.getSurvey(sId);
 	var geomId = null;
 	
 	// First try to get the geometry id from the question form
@@ -469,7 +469,7 @@ function getGeometryQuestion(sId, f_id) {
 	if(geomId != null) {
 		gSurveyControlView.geometryQuestion = geomId;
 		var language = $('#settings_language option:selected').val();
-		var groupMeta = gSelector.getQuestion(geomId, language);
+		var groupMeta = globals.gSelector.getQuestion(geomId, language);
 		if(!groupMeta) {
 			getGroupMeta(sId, geomId, language);
 		}
@@ -486,7 +486,7 @@ function groupChangeEvent(sId, groupId) {
 	// Get the meta data for this group
 	if(groupId != "-1") {
 		language = $('#settings_language option:selected').val();
-		groupMeta = gSelector.getQuestion(groupId, language);
+		groupMeta = globals.gSelector.getQuestion(groupId, language);
 		if(!groupMeta) {
 			 getGroupMeta(sId, groupId, language);
 		}
@@ -507,7 +507,7 @@ function setSurveyViewControl(view) {
 	}
 	
 	// Display Panel and other map specific fields
-	var views = gSelector.getViews();
+	var views = globals.gSelector.getViews();
 	$display_panel = $('#display_panel');
 	$display_panel.empty().append('<option value="-1">This Chart</option>');
 	for (var i = 0; i < views.length; i++) {
@@ -625,12 +625,12 @@ function setSurveyViewQuestionGroups(list, groupId) {
 // Refresh the data, clears the cache and reloads data from the server
 function refreshAnalysisData() {
 
-	gSelector.clearDataItems();	// clear any cached data
-	gSelector.clearSurveys();	// Clear the list of surveys and survey definitions
+	globals.gSelector.clearDataItems();	// clear any cached data
+	globals.gSelector.clearSurveys();	// Clear the list of surveys and survey definitions
 	
 	// Get the view list
 	var // dbList = $( "#db_list" ).sortable("toArray"), nodbl
-		views = gSelector.getViews(),
+		views = globals.gSelector.getViews(),
 		i, j, idx,
 		multiLayerMaps = [];
 	
@@ -820,4 +820,72 @@ function updateFilterOptions(data, value, isSelect) {
 	if(typeof value !== "undefined") {
 		$('#filter_value').val(value);
 	}
+}
+
+/*
+ * Get the list of available surveys
+ */
+function getViewSurveys (view) {
+		
+	var url = surveyList();
+	if(typeof url !== "undefined") {
+		$.ajax({
+			url: url,
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				globals.gSelector.setSurveyList(data);
+				if(view) {
+					setSurveyViewSurveys(data, view.sId, '#settings_survey, #export_survey');
+				}
+			},
+			error: function(xhr, textStatus, err) {
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					$('#status_msg_msg').empty().text("Error: Failed to get a list of surveys");
+					$("#status_msg").dialog("open");
+				}
+			}
+		});		
+	}
+}
+
+function getViewLanguages(view) {
+	
+	if(view.sId != -1) {
+		var url = languageListUrl(view.sId);
+		$.getJSON(url, function(data) {
+			globals.gSelector.setSurveyLanguages(view.sId, data);
+			setSurveyViewLanguages(data, view.lang, '#settings_language', false);	
+			setSurveyViewLanguages(data, view.lang, '#export_language', true);
+		});
+	}
+	
+}
+
+/*
+ * Get the list of available regions
+ */
+function getViewRegions(view) {	
+			
+	var url = regionsURL();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			globals.gSelector.setRegionList(data);
+			if(view.type == "map") {
+				setSurveyViewRegions(data, view.region);
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of regions: " + err);
+			}
+		}
+	});		
 }

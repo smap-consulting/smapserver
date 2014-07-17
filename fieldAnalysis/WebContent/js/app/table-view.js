@@ -25,7 +25,7 @@ function setTableSurvey(view) {
 		$selMain = $('#table_panel' + view.pId),
 		$selFoot = $('#p' + view.pId).find('.pfoot'),
 		$tabSelect,
-		sMeta = gSelector.getSurvey(view.sId),
+		sMeta = globals.gSelector.getSurvey(view.sId),
 		topTable = undefined,
 		currentTable = undefined,
 		idx,
@@ -234,9 +234,9 @@ function setTableQuestion(view) {
 }
 
 function getTablePanel() {
-	for (var i = 0; i < gSelector.getViews().length; i++) {
-		if (gSelector.getViews()[i].title == "Table"){
-			return gSelector.getViews()[i];
+	for (var i = 0; i < globals.gSelector.getViews().length; i++) {
+		if (globals.gSelector.getViews()[i].title == "Table"){
+			return globals.gSelector.getViews()[i];
 		}
 	}
 	

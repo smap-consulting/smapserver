@@ -100,7 +100,7 @@ function setReport(data) {
 		initialiseReportMap(data.smap.data_bounds);
 	} else {
 		// Get the bounds from the survey meta data
-		surveyMeta = gSelector.getSurvey(data.smap.sId);
+		surveyMeta = globals.gSelector.getSurvey(data.smap.sId);
 		if(!surveyMeta) {
 			getSurveyMetaReport(data.smap.sId, data);
 		} else {
@@ -138,7 +138,7 @@ function getSurveyMetaReport(sId, data) {
 			dataType: 'json',
 			success: function(surveyMeta) {
 				removeHourglass();
-				gSelector.addSurvey(sId, surveyMeta);
+				globals.gSelector.addSurvey(sId, surveyMeta);
 				if(typeof surveyMeta.bbox !== "undefined") {
 					data.smap.data_bounds = new OpenLayers.Bounds(surveyMeta.bbox[0], surveyMeta.bbox[1], surveyMeta.bbox[2], surveyMeta.bbox[3]).
 							transform(new OpenLayers.Projection("EPSG:4326"), new OpenLayers.Projection("EPSG:900913"));
@@ -174,9 +174,9 @@ function saveReport() {
 		url;
 	
 	if(gCalledFromReports) {
-		url = reportSaveURL(gEditingReportProject);
+		url = reportSaveURL(globals.gEditingReportProject);
 	} else {
-		url = reportSaveURL(gCurrentProject);
+		url = reportSaveURL(globals.gCurrentProject);
 	}
 	
 	addHourglass();

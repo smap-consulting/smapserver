@@ -20,8 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Purpose: Review and modify collected data
  */
 var gTextValues,	
-	gCurrentProject,
-	gCurrentSurvey,
 	gCurrentLanguage,	
 	gUpdate = {},
 	gTextSelected = 0,	// checked
@@ -45,8 +43,8 @@ $(document).ready(function() {
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
-		gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(gCurrentProject);	// Save the current project id
+		globals.gCurrentProject = $('#project_name option:selected').val();
+		saveCurrentProject(globals,gCurrentProject);	// Save the current project id
 		getSurveyList();
  	 });
 	
@@ -194,7 +192,7 @@ function enableTextUpdate() {
 				        			  type: "POST",
 				        			  contentType: "application/json",
 				        			  dataType: "json",
-				        			  url: "/surveyKPI/review/" + gCurrentSurvey,
+				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
 				        			  data: { updates: updateString },
 				        			  success: function(data, status) {
 				        				  removeHourglass();
@@ -214,13 +212,13 @@ function enableTextUpdate() {
 }
 
 function getSurveyList() {
-	loadSurveys(gCurrentProject, undefined, false, false, getReviewLanguageList);
+	loadSurveys(globals.gCurrentProject, undefined, false, false, getReviewLanguageList);
 }
 
 
 function getReviewLanguageList() {
-	gCurrentSurvey = $('#survey_name option:selected').val();
-	getLanguageList(gCurrentSurvey, getTextQuestions, false, '#language_name', false);
+	globals.gCurrentSurvey = $('#survey_name option:selected').val();
+	getLanguageList(globals.gCurrentSurvey, getTextQuestions, false, '#language_name', false);
 }
 
 
@@ -232,7 +230,7 @@ function getTextQuestions() {
 	
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/questionList/" + gCurrentSurvey + "/" + gCurrentLanguage + "?exc_read_only=true&single_type=string&exc_ssc=true",
+		url: "/surveyKPI/questionList/" + globals.gCurrentSurvey + "/" + gCurrentLanguage + "?exc_read_only=true&single_type=string&exc_ssc=true",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
@@ -269,7 +267,7 @@ function getData() {
 	
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/review/" + gCurrentSurvey + "/results/distinct/" + gTextId,
+		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/results/distinct/" + gTextId,
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
@@ -319,7 +317,7 @@ function getRelevance() {
 	
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/review/" + gCurrentSurvey + "/relevance/" + gCurrentLanguage + "/" + gTextId,
+		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/relevance/" + gCurrentLanguage + "/" + gTextId,
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
