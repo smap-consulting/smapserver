@@ -20,7 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Quick solution to issue of legacy globals after migrating to AMD / require.js
  */
 define(function() {
-	return {
+	window.globals = {
 	
 		gProjectList: undefined,
 		gCurrentProject: 0,
@@ -33,6 +33,8 @@ define(function() {
 		gSelector: new Selector()
 
 	}
+	
+	return window.globals;
 	
 	function Selector() {
 		

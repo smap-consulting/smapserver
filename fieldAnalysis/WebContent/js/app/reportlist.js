@@ -20,47 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Purpose: Show a list of reports
  */
 
-requirejs.config({
-    baseUrl: 'js/libs',
-    paths: {
-     	app: '../app',
-     	async: '../../../../js/libs/async',
-    	jquery: [
-    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-    	       '../../../../js/libs/jquery-1.8.3.min'
-    	       ],
-    	jquery_ui: [
-    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-    	            ],
-    	modernizr: '../../../../js/libs/modernizr',
-    	rmm: '../../../../js/libs/responsivemobilemenu',
-    	common: '../../../../js/app/common',
-    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers'
-    },
-    shim: {
-    	'rmm': ['jquery'],
-    	'jquery_ui': ['jquery'],	
-       	'common': ['jquery'],
-    	
-       	'app/script': ['jquery_ui'],
-       	'app/map-functions': ['jquery'],
-    	
-    	}
-    });
-
-
-require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'app/localise', 
-         
-         'app/map-functions',
-         'app/script',
-         'async!googlemaps',
-         'openlayers'
-         
-         ], function($, jquery_ui, modernizr, rmm, common, localise) {
-	
-
 var reportList = null,
 	minDate = null,
 	maxDate = null,
@@ -766,4 +725,3 @@ function onFeatureUnselect() {
 	
 }
 
-});
