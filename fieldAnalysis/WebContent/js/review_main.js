@@ -47,9 +47,7 @@ requirejs.config({
     	'jquery_ui': ['jquery'],	
        	'common': ['jquery'], 	
        	'localise': ['jquery'], 
-       	'app/script': ['jquery_ui'],
-       	'app/reportlist': ['jquery_ui'],
-       	'app/map-functions': ['jquery'],   	
+       	'app/review': ['jquery_ui']  	
     	}
     });
 
@@ -62,10 +60,6 @@ require([
          'common', 
          'globals',
          'localise', 
-         'app/map-functions',
-         'app/script',
-         'app/reportlist',
-         'async!googlemaps',
-         'openlayers'
+         'app/review'
          
          ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});

@@ -44,12 +44,13 @@ $(document).ready(function() {
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(globals,gCurrentProject);	// Save the current project id
+		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
 		getSurveyList();
  	 });
 	
 	// Set change function on surveys
 	$('#survey_name').change(function() {
+		globals.gCurrentSurvey = $('#survey_name option:selected').val();
 		getReviewLanguageList();
  	 });
 	
@@ -217,8 +218,10 @@ function getSurveyList() {
 
 
 function getReviewLanguageList() {
-	globals.gCurrentSurvey = $('#survey_name option:selected').val();
-	getLanguageList(globals.gCurrentSurvey, getTextQuestions, false, '#language_name', false);
+	globals.gCurrentSurvey = $('#survey_name option:selected').val();	// TODO Remove when gCurrent survey is truly global and preserved for duration of app
+	if(globals.gCurrentSurvey) {
+		getLanguageList(globals.gCurrentSurvey, getTextQuestions, false, '#language_name', false);
+	}
 }
 
 

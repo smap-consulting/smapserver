@@ -385,7 +385,8 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 					$elem.append('<option value="' + item.id + '">' + item.displayName + '</option>');
 				});
 
-				globals.gCurrentSurvey = $elem.val();
+				//globals.gCurrentSurvey = $elem.val();   // TODO set to current global survey
+				$elem.val(globals.gCurrentSurvey);
 				
 				if(typeof callback == "function") {
 					callback();

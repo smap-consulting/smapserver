@@ -47,6 +47,7 @@ $(document).ready(function() {
 	
 	// Set change function on surveys
 	$('#survey_name').change(function() {
+		globals.gCurrentSurvey = $('#survey_name option:selected').val();
 		getAuditList();
  	 });
 	
@@ -145,7 +146,7 @@ function getAuditList(highlightCS) {
 		intHighlightCS = parseInt(highlightCS);
 	}
 	
-	globals.gCurrentSurvey = $('#survey_name option:selected').val();
+	globals.gCurrentSurvey = $('#survey_name option:selected').val();	// TODO remove, the global survey should have already been set
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/audit",

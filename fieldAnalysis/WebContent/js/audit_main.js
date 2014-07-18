@@ -38,18 +38,14 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals',
-    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers'
+    	globals: '../../../../js/app/globals'
     },
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],	
        	'common': ['jquery'], 	
        	'localise': ['jquery'], 
-       	'app/script': ['jquery_ui'],
-       	'app/reportlist': ['jquery_ui'],
-       	'app/map-functions': ['jquery'],   	
+       	'app/review_audit': ['jquery_ui']  	
     	}
     });
 
@@ -62,10 +58,6 @@ require([
          'common', 
          'globals',
          'localise', 
-         'app/map-functions',
-         'app/script',
-         'app/reportlist',
-         'async!googlemaps',
-         'openlayers'
+         'app/review_audit'
          
          ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});

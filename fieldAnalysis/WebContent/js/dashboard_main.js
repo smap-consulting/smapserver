@@ -125,5 +125,5 @@ require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globa
          'async!googlemaps',
          'openlayers'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globalObj) {});
+         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
 
