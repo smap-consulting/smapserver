@@ -38,14 +38,13 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals'
+    	globals: '../../../../js/app/globals',
+    	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],	
-       	'common': ['jquery'], 	
-       	'localise': ['jquery'], 
-       	'app/review_audit': ['jquery_ui']  	
+       	'common': ['jquery']	
     	}
     });
 

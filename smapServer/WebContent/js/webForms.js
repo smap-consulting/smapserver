@@ -3,11 +3,22 @@ requirejs.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
-    	jquery_ui: 'jquery-ui-1.10.3.custom.min'
+    	jquery_ui: 'jquery-ui-1.10.3.custom.min',
+       	lang_location: '../'
+    },
+    shim: {
+    	'responsivemobilemenu': ['jquery']
     }
 });
 
-require(['jquery', 'app/common', 'jquery_ui', 'responsivemobilemenu'], function($, common, jquery_ui, responsivemobilemenu) {
+require([
+         'jquery', 
+         'app/common', 
+         'jquery_ui', 
+         'responsivemobilemenu', 
+         'app/globals',
+         'app/localise'
+         ], function($, common, jquery_ui, responsivemobilemenu, globals, localise) {
 
 var	gSurveys;
 

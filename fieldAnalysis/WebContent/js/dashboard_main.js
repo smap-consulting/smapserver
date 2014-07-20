@@ -21,7 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
-requirejs.config({
+require.config({
     baseUrl: 'js/libs',
     paths: {
      	app: '../app',
@@ -43,7 +43,8 @@ requirejs.config({
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
     	googlemaps: 'http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers'
+    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
+    	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
@@ -52,7 +53,7 @@ requirejs.config({
     	'jquery.dataTables.min': ['jquery'],
     	'fp/flowplayer.min': ['jquery'],
     	'common': ['jquery'],
-    	'localise': ['jquery'],
+    	//'localise': ['jquery'],
     	
     	'jqplot/jquery.jqplot.min': ['jquery_ui'],
     	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
@@ -60,7 +61,6 @@ requirejs.config({
     	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.categoryAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
@@ -75,13 +75,10 @@ requirejs.config({
     	'app/table-view': ['jquery'],
     	'app/media-view': ['jquery'],	
     	'app/survey_control': ['jquery_ui'],	
-    	'app/table-functions': ['jquery'],
     	'app/plugins': ['jquery'],
     	'app/script': ['jquery_ui'],
     	'app/data': ['jquery'],
     	'app/reports': ['jquery_ui'],
-    	'app/panels': ['jquery_ui'],
-    	
     	'tablesorter': ['jquery'],
     	'crf': ['jquery']
     	

@@ -1,0 +1,64 @@
+
+#table table, #table th, #table td {
+	border:1px solid black;
+}
+table {
+	border-collapse:collapse;
+}
+td {
+	padding: 5px;
+}
+.rep_content {
+	height: 90%; 
+	width: 100%; 
+	background: white; 
+	overflow: none;
+}
+#rep_meta p { 
+	margin: 0.5em 0; 
+	font-size:0.875em;
+}
+#rm_left {
+	width: 1%;
+	float: left;
+}
+#rm_right {
+	margin-left: 1%; 
+}
+.r_overview {
+	height: 10%; 
+	width: 100%; 
+	background: white; 
+	overflow: auto;
+}
+.graphLabel {
+    background: none repeat scroll 0 0 rgba(0, 60, 136, 0.5);
+    z-index:2005; 
+    position: absolute;
+    top: 0px; right: 24px; 
+    color: #FFFFFF;
+    display: block;
+    font-family: sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    height: 22px;
+    width: 22px;
+    line-height: 20px;
+    margin: 1px;
+    padding: 0;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+    border-radius: 4px 4px 0 0;
+}
+.timecontrols {
+	position: absolute;
+	z-index: 1005;
+	bottom: 2px;
+	left: 10px;
+	width: 95%;
+	background-color:rgba(131,214,255,.7);
+}
+.timecontrols_inner {
+	margin: 10px;
+}

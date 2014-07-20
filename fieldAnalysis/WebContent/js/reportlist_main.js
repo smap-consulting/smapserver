@@ -40,15 +40,15 @@ requirejs.config({
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers'
+    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
+    	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],	
        	'common': ['jquery'], 	
-       	'localise': ['jquery'], 
        	'app/script': ['jquery_ui'],
-       	'app/reportlist': ['jquery_ui'],
+       	//'app/reportlist': ['jquery_ui'],
        	'app/map-functions': ['jquery'],   	
     	}
     });

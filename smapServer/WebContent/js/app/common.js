@@ -592,32 +592,5 @@ function questionMetaURL (sId, lang, qId) {
 	return url;
 }
 
-/*
- * Show any errors during uploading of a page
- */
-function showErrors() {
-	var m = window.location.search;
-
-	console.log("show errors:" + m);
-	if (m.length > 0) {
-		var keys = m.split("&");
-		for(i = 0; i < keys.length; i++) {
-			console.log("keys[" + i + "] " + keys[i])
-			var param = keys[i].split("=");
-			console.log("param[0]" + param[0]);
-			if (param[0] === "?mesg" || param[0] === "mesg") {
-				alert(unescape(param[1]));
-			}
-		}
-	}
-}
-
-/*
- * Add an alias for language translation
- */
-var l = function (string) {
-    return string.toLocaleString();
-};
-
 
 

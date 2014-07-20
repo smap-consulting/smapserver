@@ -1,8 +1,8 @@
 
 
-define(['jquery', "i18n!../../../../js/nls/lang"], function($, lang) {
+define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 	
-	localise = {	// Set global while migrating app to AMD
+	window.localise = {	// Set global while migrating app to AMD
 		setlang: function () {
 	     
 			$(".lang").each(function(index) {

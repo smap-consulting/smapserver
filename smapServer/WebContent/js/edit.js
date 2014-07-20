@@ -11,8 +11,14 @@ requirejs.config({
     }
 });
 
-require(['jquery','app/common', 'foundation.min', 'mustache', 'modernizr'], 
-		function($, common, foundation, Mustache, modernizr) {
+require([
+         'jquery',
+         'app/common', 
+         'foundation.min', 
+         'mustache', 
+         'modernizr',
+         'app/localise'], 
+		function($, common, foundation, Mustache, modernizr, localise) {
 
 
 var	gSurvey,
