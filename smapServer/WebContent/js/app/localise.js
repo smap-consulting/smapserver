@@ -12,7 +12,7 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 					$(this).html(lang[code]);
 				}
 			});
-			console.log("lang: " + lang.m_home);
+			console.log("lang for home: " + lang.m_home);
 		},
 		set: lang
 	}

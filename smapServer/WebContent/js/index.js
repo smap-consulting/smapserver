@@ -3,7 +3,7 @@ requirejs.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
-    	lang_location: '../'
+    	lang_location: '..'
     },
     shim: {
     	'foundation.min': ['jquery']

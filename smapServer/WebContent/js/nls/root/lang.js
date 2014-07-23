@@ -1,6 +1,7 @@
 define({
 	"m_home": "Home",
 	"m_admin": "Admin",
+	"m_analysis": "Analysis",
 	"m_reports": "Reports",
 	"m_refresh": "Refresh",
 	"m_export": "Export",
@@ -9,6 +10,10 @@ define({
 	"m_news": "News",
 	"m_web_forms": "Web Forms",
 	"m_docs": "Documentation",
+	"m_monitor": "Monitoring",
+	"m_user": "Users",
+	"m_assign": "Assign",
+	"m_help": "Help",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
