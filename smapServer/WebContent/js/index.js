@@ -1,4 +1,4 @@
-requirejs.config({
+require.config({
     baseUrl: 'js/libs',
     paths: {
     	app: '../app',
@@ -6,7 +6,10 @@ requirejs.config({
     	lang_location: '..'
     },
     shim: {
-    	'foundation.min': ['jquery']
+    	'foundation.min': ['jquery'],
+       	'jquery_ui': ['jquery'],
+    	'responsivemobilemenu': ['jquery'],
+    	'app/common': ['jquery']
     }
 });
 

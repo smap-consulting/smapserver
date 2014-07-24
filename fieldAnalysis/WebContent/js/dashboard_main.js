@@ -53,7 +53,6 @@ require.config({
     	'jquery.dataTables.min': ['jquery'],
     	'fp/flowplayer.min': ['jquery'],
     	'common': ['jquery'],
-    	//'localise': ['jquery'],
     	
     	'jqplot/jquery.jqplot.min': ['jquery_ui'],
     	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],

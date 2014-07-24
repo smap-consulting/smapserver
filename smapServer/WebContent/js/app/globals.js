@@ -30,7 +30,8 @@ define(function() {
 		gIsAdministrator: false,
 		gIsOrgAdministrator: false,
 		gViewIdx: 0,
-		gSelector: new Selector()
+		gSelector: new Selector(),
+		model: new Model()
 
 	}
 	
@@ -222,6 +223,29 @@ define(function() {
 		this.setMap = function (key, value) {
 			this.maps[key] = value;
 		};
+		
+	}
+	
+	function Model() {
+		
+		this.survey = undefined;
+	
+		
+		/*
+		 * Get Functions
+		 */
+		this.getSurvey = function () {
+			return this.survey;
+		};
+		
+		
+		/*
+		 * Set Functions
+		 */
+		this.set = function (survey) {
+			this.survey = survey;
+		};	
+
 		
 	}
 });

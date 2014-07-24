@@ -12,8 +12,7 @@
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="css/floathousebooks.css" />
 	<!--  <link rel="stylesheet" href="/css/foundation.min.css" /> -->
-
-    <!--  <script src="js/libs/modernizr.js"></script> -->
+    
     <script id="tpl" type="text/template">
 	<div>
   		{{#questions}}
@@ -37,6 +36,8 @@
   		{{/questions}}
 	</div>
     </script>
+
+    
     <script data-main="js/edit" src="js/libs/require.js"></script>
 </head>
 <body class="backdos">
@@ -58,7 +59,13 @@
 	        	<ul class="dropdown">
 	        		<li><a id="m_get_survey" href="#">Get Survey</a>
 	        	</ul>
-	        </li>  
+	        </li> 
+	        <li class="has-dropdown"><a href="#">View</a>
+	        	<ul class="dropdown">
+	        		<li><a id="m_simple_edit" href="#">Edit</a>
+	        		<li><a id="m_translate" href="#">Translate</a>
+	        	</ul>
+	        </li>   
 			<li><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
 	      </ul>
 	
@@ -100,12 +107,5 @@
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
-	<!-- 
-	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script src="js/libs/mustache.js"></script>
-	<script src="js/libs/foundation.min.js"></script>
-	<script src=js/common.js></script>
-	<script src="js/edit.js"></script>
-	-->
 </body>
 </html>

@@ -2,9 +2,24 @@ define(
 {
     "m_home": "Inicio",
     "m_admin": "Admin",
+    "m_analysis": "Análises",
     "m_reports": "Relatórios",
     "m_refresh": "Atualizar",
     "m_export": "Exportar",
     "m_discuss": "Opinião",
-    "m_modify": "Modificar"
+    "m_modify": "Modificar",
+    "m_news": "Noticias",
+    "m_web_forms": "Forms On-Line",
+    "m_docs": "Documentação",
+    "m_monitor": "Monitorização",
+    "m_user": "Utilizadores",
+    "m_assign": "Tarefas",
+    "m_help": "Ajuda",
+    "ss_welcome": "Bem Vindo ao Servidor SMAP Versão:",
+    "ss_welcome2": "A descrição das alterações nesta versão podem ser encontradas aqui:",
+    "ss_ft": "Descarregar Field Task",
+    "ss_su": "Descarregar Smap Uploader",
+    "msg_wait": "A aguardar uma resposta do servidor. Por favor, tente novamente dentro de alguns segundos",
+    "msg_sel_survey": "Tem de seleccionar um questionário",
+    "msg_sel_q": "Tem de seleccionar uma questão para mostrar no gráfico"
 });

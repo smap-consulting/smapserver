@@ -7,7 +7,9 @@ requirejs.config({
        	lang_location: '../'
     },
     shim: {
-    	'responsivemobilemenu': ['jquery']
+    	'jquery_ui': ['jquery'],
+    	'responsivemobilemenu': ['jquery'],
+    	'app/common': ['jquery']
     }
 });
 

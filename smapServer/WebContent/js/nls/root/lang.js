@@ -12,7 +12,7 @@ define({
 	"m_docs": "Documentation",
 	"m_monitor": "Monitoring",
 	"m_user": "Users",
-	"m_assign": "Assign",
+	"m_assign": "Tasks",
 	"m_help": "Help",
 	
 	// Smap Server
