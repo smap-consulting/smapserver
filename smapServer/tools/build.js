@@ -6,7 +6,7 @@
     optimize: 'none',
     paths: {
     	jquery: 'jquery-1.8.3.min',
-    	jquery_ui: 'jquery-ui-1.10.3.custom.min',
+    	jquery_ui: 'empty:',
     	app: '../app',
     	lang_location: '..'
     },
@@ -15,7 +15,6 @@
         {
             name: '../index'
         },
-
         {
             name: '../edit'
         },

@@ -2,8 +2,14 @@ requirejs.config({
     baseUrl: 'js/libs',
     paths: {
     	app: '../app',
-    	jquery: 'jquery-1.8.3.min',
-    	jquery_ui: 'jquery-ui-1.10.3.custom.min',
+    	jquery: [
+      	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
+      	       '../../../../js/libs/jquery-1.8.3.min'
+      	       ],
+      	jquery_ui: [
+      	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+      	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+      	       ],
        	lang_location: '../'
     },
     shim: {

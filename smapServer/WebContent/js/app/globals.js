@@ -24,6 +24,7 @@ define(function() {
 	
 		gProjectList: undefined,
 		gCurrentProject: 0,
+		gCurrentLanguage: undefined,
 		gCurrentSurvey: 0,
 		gLoggedInUser: undefined,
 		gEditingReportProject: undefined,   		// Set if fieldAnalysis called to edit a report
@@ -118,7 +119,7 @@ define(function() {
 		
 		/*
 		 * Get the question details that came with the question list
-		 * This aproach should replace the concept of "question meta"
+		 * This approach should replace the concept of "question meta"
 		 */
 		this.getQuestionDetails = function(sId, qId, language) {
 			var qList = this.getSurveyQuestions(sId, language),
@@ -226,26 +227,126 @@ define(function() {
 		
 	}
 	
+	/*
+	 * Model for Survey editing
+	 */
 	function Model() {
 		
 		this.survey = undefined;
+		this.changes = [];
+		this.currentChange = 0;
 	
-		
-		/*
-		 * Get Functions
-		 */
+		// Get the survey object
 		this.getSurvey = function () {
 			return this.survey;
 		};
 		
-		
-		/*
-		 * Set Functions
-		 */
+		// Set the survey object
 		this.set = function (survey) {
 			this.survey = survey;
-		};	
-
+		};
 		
+		// Save the survey
+		this.save = function() {
+			
+			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
+			var changesString = JSON.stringify(this.changes);
+			console.log("Saving as: " + url);			
+			
+			addHourglass();
+			$.ajax({
+				url: url,
+				type: 'PUT',
+				dataType: 'json',
+				cache: false,
+				data: { changes: changesString },
+				success: function(data) {
+					removeHourglass();
+					this.changes = [];
+					this.currentChange = 0;
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						alert("Error: Failed to save survey: " + err);
+					}
+				}
+			});	
+			
+		};
+		
+		// Apply the current change
+		this.doChange = function() {
+			
+			var item = this.changes[this.currentChange];
+			var i,
+				question;
+
+			if(item.type === "q") {
+				for(i = 0; i < item.questions.length; i++) {
+					question = item.questions[i];
+					this.survey.forms[question.form].questions[question.question].
+						labels[question.language][question.element] = question.newVal;
+				}
+			} else {
+				alert("Error: unknown item type: " + item.type);
+			}
+			
+		}
+		
+		this.undo = function() {
+			var item = this.changes[this.currentChange--];
+			if(item.type === "q") {
+				for(i = 0; i < item.questions.length; i++) {
+					question = item.questions[i];
+					this.survey.forms[question.form].questions[question.question].
+						labels[question.language][question.element] = question.oldVal;
+				}
+			} 
+		}
+		
+		this.redo = function() {
+			if(this.currentChange < this.changes.length - 1) {
+				this.currentChange++;
+				this.doChange();
+			}
+		}
+		
+		// Modify a question
+		this.modQuestion = function(language, changedQ, newVal, element) {
+			
+			var questionMod = {
+					type: "q",
+					questions: []
+			}
+			
+			var i,
+				question;
+			
+			for(i = 0; i < changedQ.length; i++) {
+				question = new Question();
+
+				question.form = changedQ[i].form;
+				question.question = changedQ[i].question;
+				question.oldVal = this.survey.forms[question.form].questions[question.question].labels[language][element];
+				question.newVal = newVal;
+				question.element = element;
+				question.language = language;
+				
+				// The following items are to write the change to the database
+				question.languageName = this.survey.languages[language];
+				question.transId = this.survey.forms[question.form].questions[question.question].text_id;
+				questionMod.questions.push(question);
+			}
+			
+			this.currentChange = this.changes.push(questionMod) - 1;
+			this.doChange();				// Apply the current change
+		};
 	}
+	
+	function Question() {
+	} 
+	
 });

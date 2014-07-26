@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
+"use strict";
 require.config({
     baseUrl: 'js/libs',
     paths: {
@@ -24,9 +24,6 @@ require.config({
     	lang_location: '..'
     },
     shim: {
-    	'mustache': {
-    		exports: 'Mustache'
-        },
     	'app/common': ['jquery'],
         'foundation.min': ['jquery']
     }
@@ -36,16 +33,13 @@ require([
          'jquery',
          'app/common', 
          'foundation.min', 
-         'mustache', 
          'modernizr',
          'app/localise',
          'app/globals'], 
-		function($, common, foundation, Mustache, modernizr, lang, globals) {
+		function($, common, foundation, modernizr, lang, globals) {
 
 
-var	gQuestions,
-	gCurrentLang = 0,	// Each language is in an array, this determines the array element that will be shown
-	gMode = "translate",
+var	gMode = "translate",
 	gTempQuestions = [],
 	gLanguage1 = 0,
 	gLanguage2 = 0;
@@ -64,12 +58,27 @@ $(document).ready(function() {
 	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
 		$('#smap').foundation('reveal', 'open');
 	});
+	// Add menu functions
+	$('#m_language').off().click(function() {	// Select languages
+		$('#set_language').foundation('reveal', 'open');
+	});
+	$('#m_save_survey').off().click(function() {	// Save a survey to Smap
+		globals.model.save();
+	});
 	$('#m_simple_edit').off().click(function() {	// Edit a survey
 		gMode = "simple_edit";
 		refreshView(gMode);
 	});
 	$('#m_translate').off().click(function() {	// Translate languages
 		gMode = "translate";
+		refreshView(gMode);
+	});
+	$('#m_undo').off().click(function() {	// Undo last change
+		globals.model.undo();
+		refreshView(gMode);
+	});
+	$('#m_redo').off().click(function() {	// Redo last change
+		globals.model.redo();
 		refreshView(gMode);
 	});
 	
@@ -81,8 +90,16 @@ $(document).ready(function() {
  	 });
 	
 	$('#get_survey').off().click(function() {
-		getSurvey($('#survey_name option:selected').val());
+		globals.gCurrentSurvey = $('#survey_name option:selected').val();
+		getSurvey(globals.gCurrentSurvey);
 		$('#smap').foundation('reveal', 'close');
+ 	 });
+	
+	$('#apply_set_language').off().click(function() {
+		gLanguage1 = $('#language1').val();
+		gLanguage2 = $('#language2').val();
+		refreshView(gMode);
+		$('#set_language').foundation('reveal', 'close');
  	 });
 	
 	$(document).foundation();		// Add foundation styling
@@ -122,13 +139,7 @@ function getSurvey(sId) {
 			globals.model.set(data);
 			console.log("Survey");
 			console.log(data);
-			gQuestions = {questions: data.forms[0].questions};
-			gCurrentLanguage = data.languages.indexOf(data.def_lang);	// Set the initial language to the default language
-			gLanguage1 = 0;	// Language indexes used for translations
-			gLanguage2 = 0;
-			if(data.languages.length > 1) {
-				gLanguage2 = 1;
-			}
+			setLanguages(data.languages);
 			refreshView(gMode);
 		},
 		error: function(xhr, textStatus, err) {
@@ -142,6 +153,33 @@ function getSurvey(sId) {
 	});	
 }
 
+function setLanguages(languages) {
+	
+	var h = [],
+		idx = -1,
+		$lang = $('.language_list'),
+		$lang1 = $('#language1'),
+		$lang2 = $('#language2'),
+		i;
+	
+	gLanguage1 = 0;	// Language indexes used for translations
+	gLanguage2 = 0;
+	if(languages.length > 1) {
+		gLanguage2 = 1;
+	}
+
+	for (i = 0; i < languages.length; i++) {
+		h[++idx] = '<option value="';
+			h[++idx] = i;
+			h[++idx] = '">';
+			h[++idx] = languages[i];
+		h[++idx] = '</option>';
+	}
+	$lang.empty().append(h.join(""));
+	$lang1.val(gLanguage1);
+	$lang2.val(gLanguage2)
+}
+
 function refreshView(mode) {
 	
 	var i,
@@ -151,14 +189,15 @@ function refreshView(mode) {
 		survey = globals.model.getSurvey(),
 		numberLanguages = survey.languages.length;
 	
+	gTempQuestions = [];
 	
 	// Modify Template to reflect view parameters
 	
 	if(mode === "simple_edit") {
-		$('#questions').html(Mustache.to_html( $('#tpl').html(), gQuestions));
-		$('#questions select').each(function(){
-			$(this).val($(this).attr("data-sel"));
-		});
+		//$('#questions').html(Mustache.to_html( $('#tpl').html(), gQuestions));
+		//$('#questions select').each(function(){
+		//	$(this).val($(this).attr("data-sel"));
+		//});
 	} else if(mode === "translate") {
 		
 		// Add all unique questions / options from all surveys
@@ -166,9 +205,17 @@ function refreshView(mode) {
 			console.log("Form name: " + survey.forms[i].name);
 			var formQuestions = survey.forms[i].questions; 
 			for(j = 0; j < formQuestions.length; j++) {
+				
 				if(formQuestions[j].labels[gLanguage1].text) {
-					if($.inArray(formQuestions[j].labels[gLanguage1].text, qList) > -1) {
+					if((index = $.inArray(formQuestions[j].labels[gLanguage1].text, qList)) > -1) {
 						// TODO update indexes
+						console.log("indexes need updating");
+						console.log(formQuestions[j].labels[gLanguage1].text);
+						gTempQuestions[index].indexes.push({
+							form: i,
+							question: j
+						});
+						console.log(gTempQuestions[index]);
 					} else {
 						qList.push(formQuestions[j].labels[gLanguage1].text);
 						gTempQuestions.push({
@@ -183,11 +230,17 @@ function refreshView(mode) {
 				}
 			}
 		}
+		qList = [];		// clear temporary question list	
 
 		$('#questions').html(getTranslateHtml(gTempQuestions, survey));
 		$(".lang_b").first().focus();
 		$(".lang_b").change(function(){
-			alert("hi you have changed: " + $(this).data("index"));
+			var $this = $(this);
+			var index = $this.data("index");
+			var newVal = $this.val();
+			console.log(gTempQuestions[index]);
+			console.log("New val:" + newVal);
+			globals.model.modQuestion(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
 		});
 
 		
