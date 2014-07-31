@@ -21,7 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 requirejs.config({
-    baseUrl: 'js/libs',
+    baseUrl: '/fieldAnalysis/js/libs',
     paths: {
      	app: '../app',
     	i18n: '../../../../js/libs/i18n',
@@ -31,40 +31,39 @@ requirejs.config({
     	       '../../../../js/libs/jquery-1.8.3.min'
     	       ],
     	jquery_ui: [
-    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-    	            ],
+    	       '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+    		   '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+    		   ],
     	modernizr: '../../../../js/libs/modernizr',
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
-    	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals',
+    	crf: '../../../../js/libs/commonReportFunctions',
     	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
-    	'jquery_ui': ['jquery'],	
-       	'common': ['jquery'], 	
-       	'app/script': ['jquery_ui'],
-       	'app/map-functions': ['jquery'],   	
+    	'jquery_ui': 'jquery',
+    	'app/map-functions': ['jquery_ui'],
+    	'app/map-reports': ['jquery'],
     	}
     });
 
 
 require([
-         'jquery', 
-         'jquery_ui', 
+         'jquery',  
          'modernizr', 
          'rmm', 
-         'common', 
-         'globals',
+         'crf', 
          'localise', 
          'app/map-functions',
-         'app/script',
-         'app/reportlist',
-         'async!googlemaps',
-         'openlayers'
+         'app/map-reports',
+         'openlayers',
+         'async!googlemaps'
          
-         ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});
+         ], function($, modernizr, rmm, crf, localise, map_functions, map_reports) {
+	
+	var data_source = $("#data_source").text();
+	getData(data_source);
+});

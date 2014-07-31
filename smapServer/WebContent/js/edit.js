@@ -35,11 +35,12 @@ require([
          'foundation.min', 
          'modernizr',
          'app/localise',
+         'app/ssc',
          'app/globals'], 
-		function($, common, foundation, modernizr, lang, globals) {
+		function($, common, foundation, modernizr, lang, ssc, globals) {
 
 
-var	gMode = "translate",
+var	gMode = "settings",
 	gTempQuestions = [],
 	gLanguage1 = 0,
 	gLanguage2 = 0;
@@ -50,20 +51,34 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
-		
-	// Get projects and surveys
-	getMyProjects(-1, getSurveyList, false);
 	
+	// Get the parameters and start editing a survey if one was passed as a parameter
+	params = location.search.substr(location.search.indexOf("?") + 1)
+	pArray = params.split("&");
+	for (i = 0; i < pArray.length; i++) {
+		param = pArray[i].split("=");
+		console.log("param:" + param[0] +":");
+		if ( param[0] === "id" ) {
+			globals.gCurrentSurvey = param[1];
+			console.log("Passed in survey is: " + globals.gCurrentSurvey);
+		}
+	}
+	
+	// Get the user details
+	globals.gIsAdministrator = false;
+	getLoggedInUser(getSurveyList, false, true, undefined, true);
+
 	// Add menu functions
 	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
 		$('#smap').foundation('reveal', 'open');
 	});
+	$('#m_save_survey').off().click(function() {	// Save a survey to Smap
+		globals.model.save();
+	});
+
 	// Add menu functions
 	$('#m_language').off().click(function() {	// Select languages
 		$('#set_language').foundation('reveal', 'open');
-	});
-	$('#m_save_survey').off().click(function() {	// Save a survey to Smap
-		globals.model.save();
 	});
 	$('#m_simple_edit').off().click(function() {	// Edit a survey
 		gMode = "simple_edit";
@@ -73,6 +88,10 @@ $(document).ready(function() {
 		gMode = "translate";
 		refreshView(gMode);
 	});
+	$('#m_settings').off().click(function() {	// Get a survey from Smap
+		gMode = "settings";
+		refreshView(gMode);
+	});
 	$('#m_undo').off().click(function() {	// Undo last change
 		globals.model.undo();
 		refreshView(gMode);
@@ -80,6 +99,9 @@ $(document).ready(function() {
 	$('#m_redo').off().click(function() {	// Redo last change
 		globals.model.redo();
 		refreshView(gMode);
+	});
+	$('#save_settings').off().click(function() {	// Save settings to Smap
+		globals.model.save_settings();
 	});
 	
 	// Add responses to events
@@ -91,7 +113,7 @@ $(document).ready(function() {
 	
 	$('#get_survey').off().click(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		getSurvey(globals.gCurrentSurvey);
+		getSurvey();
 		$('#smap').foundation('reveal', 'close');
  	 });
 	
@@ -102,32 +124,40 @@ $(document).ready(function() {
 		$('#set_language').foundation('reveal', 'close');
  	 });
 	
+	// Check for changes in settings
+	$('#set_survey_name').keyup(function(){
+		globals.model.settingsChange();
+	});
+	$('#set_project_name').change(function() {
+		saveCurrentProject($('#set_project_name option:selected').val());	// Save the current project id
+		globals.model.settingsChange();
+	});
+	$('#set_default_language').change(function() {
+		globals.model.settingsChange();
+	});
+
+	
+	ssc.init();	// initialise the Server Side Calculations section
+	csv.init();	// initialise the add csv file section
+		
 	$(document).foundation();		// Add foundation styling
 	
-	// Get the parameters and start editing a survey if one was passed as a parameter
-	params = location.search.substr(location.search.indexOf("?") + 1)
-	pArray = params.split("&");
-	for (i = 0; i < pArray.length; i++) {
-		param = pArray[i].split("=");
-		console.log("param:" + param[0] +":");
-		if ( param[0] === "id" ) {
-			globals.gCurrentSurvey = param[1];
-			console.log("Get survey: " + globals.gCurrentSurvey);
-			getSurvey(globals.gCurrentSurvey);
-		}
-	}
-
 	
 });
 
 function getSurveyList() {
-	loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
+	if(globals.gCurrentSurvey > 0) {
+		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
+	} else {
+		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
+	}
 }
 
 
-function getSurvey(sId) {
+function getSurvey() {
 
-	var url="/surveyKPI/surveys/" + sId;
+	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
+	console.log("Getting survey: " + globals.gCurrentSurvey);
 	
 	addHourglass();
 	$.ajax({
@@ -136,7 +166,8 @@ function getSurvey(sId) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			globals.model.set(data);
+			globals.model.survey = data;
+			globals.model.setSettings();
 			console.log("Survey");
 			console.log(data);
 			setLanguages(data.languages);
@@ -186,7 +217,7 @@ function refreshView(mode) {
 		j,
 		qList = [],
 		index = -1,
-		survey = globals.model.getSurvey(),
+		survey = globals.model.survey,
 		numberLanguages = survey.languages.length;
 	
 	gTempQuestions = [];
@@ -194,13 +225,15 @@ function refreshView(mode) {
 	// Modify Template to reflect view parameters
 	
 	if(mode === "simple_edit") {
-		//$('#questions').html(Mustache.to_html( $('#tpl').html(), gQuestions));
-		//$('#questions select').each(function(){
+		$('#survey').empty().append("<h1>Not available</h1>");
+		showSurvey();
+		//$('#survey').html(Mustache.to_html( $('#tpl').html(), gQuestions));
+		//$('#survey select').each(function(){
 		//	$(this).val($(this).attr("data-sel"));
 		//});
 	} else if(mode === "translate") {
 		
-		// Add all unique questions / options from all surveys
+		// Add all unique questions / options from all forms
 		for(i = 0; i < survey.forms.length; i++) {
 			console.log("Form name: " + survey.forms[i].name);
 			var formQuestions = survey.forms[i].questions; 
@@ -232,7 +265,7 @@ function refreshView(mode) {
 		}
 		qList = [];		// clear temporary question list	
 
-		$('#questions').html(getTranslateHtml(gTempQuestions, survey));
+		$('#survey').html(getTranslateHtml(gTempQuestions, survey));
 		$(".lang_b").first().focus();
 		$(".lang_b").change(function(){
 			var $this = $(this);
@@ -242,16 +275,37 @@ function refreshView(mode) {
 			console.log("New val:" + newVal);
 			globals.model.modQuestion(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
 		});
+		
+		showSurvey();
 
 		
+	} else if(mode === "settings") {
+		$('#set_survey_name').val(globals.model.survey.displayName);
+		ssc.setHtml('#sscList', globals.model.survey.sscList);
+		showSettings();
 	} else {
 		alert("unknown mode");
 		refreshView("simple_edit");
 	}
-	$('#questions').foundation();
+	$('#survey').foundation();
 	
 }
 
+/*
+ * Show the survey view
+ */
+function showSurvey() {
+	$("#survey").show();
+	$("#settings").hide();
+}
+
+/*
+ * Show the settings view
+ */
+function showSettings() {
+	$("#survey").hide();
+	$("#settings").show();
+}
 
 /*
  * Convert JSON to html
@@ -275,7 +329,7 @@ function getTranslateHtml(questions, survey) {
 					h[++idx] = questions[i].label_b;
 					h[++idx] = '" ';
 					h[++idx] = 'tabindex="';
-					h[++idx] = i;
+					h[++idx] = i + 1;
 					h[++idx] = '" ';
 					h[++idx] = 'data-index="';
 					h[++idx] = i;
@@ -286,4 +340,5 @@ function getTranslateHtml(questions, survey) {
 	
 	return h.join('');
 }
+
 });

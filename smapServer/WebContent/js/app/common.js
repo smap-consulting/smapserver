@@ -283,7 +283,7 @@ function saveCurrentUser(user) {
 }
 
 
-function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn) {
+function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hideUserDetails) {
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/user",
@@ -291,7 +291,9 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn) {
 		dataType: 'json',
 		success: function(data) {
 			removeHourglass();
-			updateUserDetails(data, getOrganisationsFn);
+			if(!hideUserDetails) {
+				updateUserDetails(data, getOrganisationsFn);
+			}
 			
 			gEmailEnabled = data.allow_email;
 			gFacebookEnabled = data.allow_facebook;

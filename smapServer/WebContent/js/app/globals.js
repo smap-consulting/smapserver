@@ -235,16 +235,8 @@ define(function() {
 		this.survey = undefined;
 		this.changes = [];
 		this.currentChange = 0;
+		this.savedSettings = undefined;
 	
-		// Get the survey object
-		this.getSurvey = function () {
-			return this.survey;
-		};
-		
-		// Set the survey object
-		this.set = function (survey) {
-			this.survey = survey;
-		};
 		
 		// Save the survey
 		this.save = function() {
@@ -274,6 +266,33 @@ define(function() {
 					}
 				}
 			});	
+			
+		};
+		
+		// Save the settings for the survey
+		this.save_settings = function() {
+			
+			var settings = JSON.stringify(this.getSettings());
+			
+			
+			addHourglass();
+			$.ajax({
+				  type: "POST",
+				  contentType: "application/json",
+				  dataType: "json",
+				  url: "/surveyKPI/survey/" + globals.gCurrentSurvey + "/save_settings",
+				  data: {
+					  settings: settings
+				  },
+				  success: function(data, status) {
+					  removeHourglass();
+					  this.savedSettings = settings;
+					  $('#save_settings').attr("disabled", true);
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  alert("Failed to update survey settings"); 
+				  }
+			});
 			
 		};
 		
@@ -344,9 +363,45 @@ define(function() {
 			this.currentChange = this.changes.push(questionMod) - 1;
 			this.doChange();				// Apply the current change
 		};
+		
+		this.getSettings = function() {
+			var current =  {
+				displayName: $('#set_survey_name').val(),
+				p_id: $('#set_project_name option:selected').val(),
+				def_lang: $('#set_default_language option:selected').text(),
+				sscList: this.survey.sscList
+			}
+			
+			// Update the model to reflect the current values
+			this.survey.displayName = current.displayName;
+			this.survey.p_id = current.p_id;
+			this.survey.def_lang = current.def_lang;
+			console.log("updated model");
+			console.log(this.survey);
+			
+			return current;
+		} 
+		
+		this.setSettings = function() {
+			this.savedSettings = JSON.stringify({
+				displayName: this.survey.displayName,
+				project_id: String(this.survey.p_id),
+				def_lang: this.survey.def_lang,
+				sscList: this.survey.sscList
+			});
+		} 
+		
+		this.settingsChange = function() {
+			var current = globals.model.getSettings();
+			
+			if(JSON.stringify(current) !== globals.model.savedSettings) {
+				$('#save_settings').attr("disabled", false);
+			} else {
+				$('#save_settings').attr("disabled", true);
+			}
+		}
 	}
 	
-	function Question() {
-	} 
+
 	
 });

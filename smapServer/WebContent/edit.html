@@ -10,34 +10,11 @@
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<link rel="stylesheet" href="css/floathousebooks.css" />
-	<!--  <link rel="stylesheet" href="/css/foundation.min.css" /> -->
+	<!--  <link rel="stylesheet" href="css/floathousebooks.css" /> -->
+	<link rel="stylesheet" href="/css/foundation.min.css" /> 
+	<style>.name h1 img {width:30px;}</style>	<!-- Temporary while styles are sorted -->
     
-    <script id="tpl" type="text/template">
-	<div>
-  		{{#questions}}
-			<div class="row">
-				<div class="small-6 large-6 columns">
-					<input type="text" placeholder="ask here" id="question_value" name="qtitle" value="{{values.0}}">
-  				</div>
-				<div class="small-2 large-2 columns">
-					<form class="custom">
-						<select id="question_type" placeholder"Question type?" class="project_list" data-sel={{type}}>
-							<option value="select1" >Multiple Choice with one answer</option>
-							<option value="select">Multiple Choice tick all that apply</option>
-							<option value="string">Text</option>
-						</select>
-				</div>
-				<div class="small-4 large-4 columns">
-					<input type="text" placeholder="name" id="question_name" name="qname" value="{{name}}">
-  				</div>
-				
-			</div>
-  		{{/questions}}
-	</div>
-    </script>
-
-    
+ 
     <script data-main="js/edit" src="js/libs/require.js"></script>
 </head>
 <body class="backdos">
@@ -55,6 +32,7 @@
 	    <section class="top-bar-section">
 	      <!-- Right Nav gridfix -->
 	      <ul class="right">
+	     	 <li><a id="m_sm" href="/fieldManager">Survey Management</a></li>
 	        <li class="has-dropdown"><a href="#">File</a>
 	        	<ul class="dropdown">
 	        		<li><a id="m_get_survey" href="#">Get Survey</a>
@@ -63,6 +41,7 @@
 	        </li> 
 	        <li class="has-dropdown"><a href="#">View</a>
 	        	<ul class="dropdown">
+	        		<li><a id="m_settings" href="#">Settings</a>
 	        		<li><a id="m_simple_edit" href="#">Edit</a>
 	        		<li><a id="m_translate" href="#">Translate</a>
 	        	</ul>
@@ -82,13 +61,70 @@
 	
 	<div class="uno" id="main_page">
 	
-		<div id="questions"></div>
+		<div id="survey" style="display:none;"></div>
+		<div id="settings">
+  		<h2>Settings</h2>
+  		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
+  		create a new version of the survey and will not save any changes you have made to the survey
+  		proper such as changes to questions.  The undo and redo buttons are not used for
+  		information on this page</p>
+  		<form>
+  			<div class="large-12 columns">
+	      		<label>Survey Name:
+	        		<input id="set_survey_name" type="text" placeholder="Enter the name of the survey" />
+	      		</label>
+    		</div>
+    		<div class="large-12 columns">
+				<label>Project :</label>
+				<select id="set_project_name" class="project_list">
+				</select>
+			</div>
+			<div class="large-12 columns">
+				<label>Default Language :</label>
+				<select id="set_default_language" class="language_list">
+				</select>
+			</div>
+		</form>
+		<dl class="accordion" data-accordion>
+  			<dd class="accordion-navigation">
+    			<a href="#panel1">Server Side Calculations</a>
+    			<div id="panel1" class="content">
+    			
+    				<table id="fl" border="1" width=100%">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Form</th>
+								<th>Function</th>
+								<th>Units</th>
+								<th>Parameters</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody id="sscList">
+						</tbody>
+					</table>
+	
+					<button id="add_ssc">Add Calculated Value</button>
+					
+    			</div>
+    		</dd>
+    			<dd class="accordion-navigation">
+    			<a href="#panel2">Attach CSV Files</a>
+    			<div id="panel2" class="content">
+    			</div>
+    		</dd>
+    	</dl>
+    			
+		<div class="large-12">
+			<button id="save_settings" class="button radius text-center" disabled="disabled">Save Settings</button>
+		</div>		
+
 	
 	</div>
 	<div id="footer">
         Website created by <a href="http://blog.smap.com.au">Smap Consulting</a> (c) March, 2011
         , design by <a href="http://wilfhorsfall.com ">Will Horsfall</a>
-        <span style="float: right;">Photo copyright Libby Jones</span>
 	</div>
 	<!-- end #footer -->
 
@@ -110,6 +146,7 @@
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
+
 	<div id="set_language" class="reveal-modal" data-reveal>
   		<h2>Set Languages to Edit</h2>
   		<form class="custom">
@@ -127,5 +164,29 @@
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
+	<!-- Popup to add a server side calculation function -->
+	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
+		<label for="ssc_function">function:</label>
+		<select id="ssc_function">
+			<option value=""></option>
+			<option value="area">Area</option>
+			<option value="length">Length / Perimeter</option>
+		</select><br/>
+		<label for="ssc_units">Units:</label>
+		<select id="ssc_units">
+		</select><br/>
+		<label for="ssc_name" required>Name: </label>
+		<input type="text" id="ssc_name"><br/>
+		<label for="ssc_form">Form: </label>
+		<select id="ssc_form">
+		</select>
+		
+		
+		<div class="large-12">
+			<input id="add_ssc_done" class="button radius text-center" value="Done">
+			<input id="add_ssc_cancel" class="button radius text-center" value="Cancel">
+		</div>
+  		<a class="close-reveal-modal">&#215;</a>
+	</div>
 </body>
 </html>

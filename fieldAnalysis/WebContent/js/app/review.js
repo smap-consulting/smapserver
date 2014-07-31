@@ -19,7 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Purpose: Review and modify collected data
  */
-define(['jquery', 'jquery_ui', 'localise', 'globals'], function($, ui, lang, globals) {
+define(['jquery', 'jquery_ui', 'localise', 'common', 'globals'], function($, ui, lang, common, globals) {
 
 var gTextValues,	
 	gCurrentLanguage,	

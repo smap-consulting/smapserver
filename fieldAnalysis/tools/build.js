@@ -1,6 +1,7 @@
 ({
     appDir: '../WebContent',
     mainConfigFile: '../WebContent/js/dashboard_main.js',
+//    optimize: 'none',
     wrapShim: false,
     baseUrl: 'js/libs',
     paths: {
@@ -16,7 +17,7 @@
     	globals: '../../../../smapServer/WebContent/js/app/globals',
     	tablesorter: '../../../../smapServer/WebContent/js/libs/tablesorter',
     	crf: '../../../../smapServer/WebContent/js/libs/commonReportFunctions',
-    	googlemaps: 'http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
+    	googlemaps: 'empty:',
     	openlayers: '../../../../smapServer/WebContent/js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../smapServer/WebContent/js'
     },
@@ -33,6 +34,15 @@
         },
         {
             name: '../audit_main'
+        },
+        {
+            name: '../table_reports_main'
+        },
+        {
+            name: '../graph_reports_main'
+        },
+        {
+            name: '../map_reports_main'
         }
 
 

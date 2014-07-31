@@ -35,8 +35,7 @@ var gLon = null,
 	gReport = {};
 
 $(document).ready(function() {
-	
-
+	      
 	/*
 	 * Report Dialog
 	 */	

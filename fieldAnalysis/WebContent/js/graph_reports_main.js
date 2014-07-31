@@ -17,45 +17,36 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Purpose: Manage the panels that display graphs, maps etc of results data
+ * Entry point for report list page
  */
 
-
-require.config({
-    baseUrl: 'js/libs',
+requirejs.config({
+    baseUrl: '/fieldAnalysis/js/libs',
     paths: {
      	app: '../app',
-     	i18n: '../../../../js/libs/i18n',
+    	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
-     	localise: '../../../../js/app/localise',
     	jquery: [
     	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
     	       '../../../../js/libs/jquery-1.8.3.min'
     	       ],
-    	jquery_ui: [
-    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-    	            ],
-
+	    jquery_ui: [
+	    	   '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+	    	   '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+	    	   ],
     	modernizr: '../../../../js/libs/modernizr',
+    	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
-    	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals',
-    	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	googlemaps: 'http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
+    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],
-    	'jquery-ui-timepicker-addon': ['jquery_ui'],
-    	'jquery.dataTables.min': ['jquery'],
-    	'fp/flowplayer.min': ['jquery'],
-    	'common': ['jquery'],
     	
-    	'jqplot/jquery.jqplot.min': ['jquery_ui'],
+       	'jqplot/jquery.jqplot.min': ['jquery_ui'],
     	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.cursor.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
@@ -64,28 +55,20 @@ require.config({
     	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	
-    	'app/jqplot_image': ['jquery'],
-    	'app/map-functions': ['jquery'],
-    	'app/map-ol': ['jquery', 'globals'],
-    	'app/graph-functions': ['jquery'],
-    	'app/graph-view2': ['jquery'],
-    	'app/table-functions': ['jquery'],
-    	'app/table-view': ['jquery'],
-    	'app/media-view': ['jquery'],	
-    	'app/survey_control': ['jquery_ui'],	
-    	'app/plugins': ['jquery'],
-    	'app/script': ['jquery_ui'],
-    	'app/data': ['jquery'],
-    	'app/reports': ['jquery_ui'],
-    	'tablesorter': ['jquery'],
-    	'crf': ['jquery']
-    	
+    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min']
     	}
     });
 
-require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globals',
+
+require([
+         'jquery',  
+         'jquery_ui',
+         'modernizr', 
+         'rmm', 
+         'crf', 
+         'localise', 
+         'app/graph-functions',
+         'app/graph-reports',
          
          'jqplot/jquery.jqplot.min',
          'jqplot/plugins/jqplot.highlighter.min',
@@ -96,31 +79,11 @@ require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globa
          'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
          'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
          'jqplot/plugins/jqplot.canvasTextRenderer.min',
-         'jqplot/plugins/jqplot.enhancedLegendRenderer.min',
+         'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
          
-         'jquery-ui-timepicker-addon',
-         'fp/flowplayer.min',
-         'jquery.dataTables.min',
-         
-         'app/jqplot_image',
-         'app/map-functions',
-         'app/map-ol',
-         'app/graph-functions',
-         'app/graph-view2',
-         'app/table-functions',
-         'app/table-view',
-         'app/media-view',
-         'app/survey_control',
-         'app/plugins',
-         'app/script',
-         'app/data',
-         'app/reports',
-         'app/panels',
-         
-         'tablesorter',
-         'crf',
-         'async!googlemaps',
-         'openlayers'
-         
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
-
+         ], function($, jquery_ui, modernizr, rmm, crf, localise, 
+        		 graph_functions, graph_reports) {
+	
+	var data_source = $("#data_source").text();
+	getData(data_source);
+});
