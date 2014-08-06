@@ -506,13 +506,10 @@ function enableFacebookDialog() {
 		        					removeHourglass();
 		        					if(xhr.status != 200) {	// Error can be called if FB does not return valid json even if the call was a success
 		        						alert("Error: Failed to post: " + error);
-		        					} else {
-			        					alert("Posted");
-		        					}
+		        					} 
 		        				},
 		        				success : function() {
 		        					removeHourglass();
-		        					alert("Posted");
 		        				}
 		        			});
 		        		}

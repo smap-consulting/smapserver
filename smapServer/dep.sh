@@ -14,4 +14,4 @@ cd ..
 # deploy to local
 cp -rf smapServer/* /Library/WebServer/Documents
 sudo apachectl restart
-rm -rf smapServer
+#rm -rf smapServer

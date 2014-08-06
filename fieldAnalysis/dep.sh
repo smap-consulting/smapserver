@@ -13,5 +13,5 @@ rm -rf /Library/WebServer/Documents/fieldAnalysis
 mkdir /Library/WebServer/Documents/fieldAnalysis
 cp -rf fieldAnalysis/* /Library/WebServer/Documents/fieldAnalysis
 sudo apachectl restart
-rm -rf fieldAnalysis
+//rm -rf fieldAnalysis
 rm fieldAnalysis.tgz

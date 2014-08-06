@@ -1,6 +1,7 @@
 ({
     appDir: '../WebContent',
-    mainConfigFile: '../WebContent/js/index.js',
+//    mainConfigFile: '../WebContent/js/index.js',
+    locale: "en",
     wrapShim: false,
     baseUrl: 'js/libs',
     optimize: 'none',

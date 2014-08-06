@@ -1,5 +1,6 @@
 *.tgz
 smapServer/smapServer
+fieldAnalysis/fieldAnalysis
 
 # Eclipse artifacts
 *.pydevproject

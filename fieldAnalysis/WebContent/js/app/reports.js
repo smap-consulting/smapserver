@@ -190,7 +190,6 @@ function saveReport() {
 			  
 			  // clearReport();
 			  removeHourglass();
-			  alert("Report Saved");
 			  if(gCalledFromReports) {
 					window.location.href="reports.html";
 			  } 

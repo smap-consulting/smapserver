@@ -20,20 +20,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Purpose: Manage the panels that display graphs, maps etc of results data
  */
 
+var gUserLocale = navigator.language;
 if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
-} else {
-	console.log("local storage not supported");
-	gUserLocale = navigator.language;
-}
+} 
 
 require.config({
     baseUrl: 'js/libs',
-    config: {
-        i18n: {
-            locale: gUserLocale
-        }
-    },
+    locale: gUserLocale,
     paths: {
      	app: '../app',
      	i18n: '../../../../js/libs/i18n',
