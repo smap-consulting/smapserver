@@ -140,7 +140,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 	var groups = data.groups,
 		i;
 	
-	if(data.language !== gUserLocale) {
+	if(data.language && data.language !== gUserLocale) {
 		localStorage.setItem('user_locale', data.language);
 		location.reload();
 	}
@@ -344,10 +344,6 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			gEmailEnabled = data.allow_email;
 			gFacebookEnabled = data.allow_facebook;
 			gTwitterEnabled = data.allow_twitter;
-			if(data.language !== gUserLocale) {
-				localStorage.setItem('user_locale', data.language);
-				location.reload();
-			}
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;

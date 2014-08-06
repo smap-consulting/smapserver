@@ -14,4 +14,9 @@ cd ..
 # deploy to local
 cp -rf smapServer/* /Library/WebServer/Documents
 sudo apachectl restart
-#rm -rf smapServer
+
+# clean up the temporary smapServer directory but first check that it is the right one
+if [ -d smapServer ]
+then
+	rm -rf smapServer
+fi
