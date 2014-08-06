@@ -140,6 +140,10 @@ function updateUserDetails(data, getOrganisationsFn) {
 	var groups = data.groups,
 		i;
 	
+	if(data.language !== gUserLocale) {
+		localStorage.setItem('user_locale', data.language);
+		location.reload();
+	}
 	globals.gLoggedInUser = data;
 	$('#username').html(data.name).button({ label: data.name + " @" + data.organisation_name, 
 			icons: { primary: "ui-icon-person" }}).off().click(function(){
@@ -147,6 +151,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 		
 		$('#reset_me_password_fields').show();
 		$('#password_me_fields').hide();
+		addLanguageOptions($('#me_language'), data.language);
 		$('#me_name').val(data.name);
 		$('#me_email').val(data.email);
 		
@@ -181,6 +186,41 @@ function updateUserDetails(data, getOrganisationsFn) {
 	}
 }
 
+function addLanguageOptions($elem, current) {
+	
+	var h = [],
+		idx = -1,
+		i,
+		languages = [
+		             {
+		            	locale: "en",
+		            	name: "English"
+		             },
+		             {
+			            locale: "fr",
+			            name: "French"
+			         },
+			         {
+				         locale: "kh",
+				         name: "Khmer"
+			         },
+			         {
+			         	locale: "pt",
+			            name: "Portugese"
+					 }
+		];
+	
+	for(i = 0; i < languages.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = languages[i].locale;
+		h[++idx] = '">';
+		h[++idx] = languages[i].name;
+		h[++idx] = '</option>';
+	}
+	$elem.html(h.join(''));
+	$elem.val(current);
+}
+
 /*
  * Enable the user profile button
  */
@@ -211,6 +251,7 @@ function enableUserProfile () {
 		        			userList;
 		        		
 		        		user.name = $('#me_name').val();
+		        		user.language = $('#me_language').val();
 		        		user.email = $('#me_email').val();
 		        		if($('#me_password').is(':visible')) {
 		        			user.password = $('#me_password').val();
@@ -226,6 +267,7 @@ function enableUserProfile () {
 		        		}
 		        		
 		        		user.current_project_id = 0;	// Tell service to ignore project id and update other details
+		        		user.current_survey_id = 0;
 		        		saveCurrentUser(user);			// Save the updated user details to disk
 		        		$(this).dialog("close");
 		        	}, 
@@ -279,7 +321,6 @@ function saveCurrentUser(user) {
 		  success: function(data, status) {
 			  removeHourglass();
 			  updateUserDetails(user, undefined);
-			  alert("Profile Updated"); 
 		  }, error: function(data, status) {
 			  removeHourglass();
 			  alert("Error profile not saved"); 
@@ -303,6 +344,10 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			gEmailEnabled = data.allow_email;
 			gFacebookEnabled = data.allow_facebook;
 			gTwitterEnabled = data.allow_twitter;
+			if(data.language !== gUserLocale) {
+				localStorage.setItem('user_locale', data.language);
+				location.reload();
+			}
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;

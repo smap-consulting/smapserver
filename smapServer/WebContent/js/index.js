@@ -1,5 +1,17 @@
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} else {
+	console.log("local storage not supported");
+	gUserLocale = navigator.language;
+}
+
 require.config({
     baseUrl: 'js/libs',
+    config: {
+        i18n: {
+            locale: gUserLocale
+        }
+    },
     paths: {
     	app: '../app',
     	jquery: [

@@ -35,10 +35,11 @@
   	<link type="text/css" href="css/reports.css" rel="stylesheet"/>	
 	<link type="text/css" href="/css/responsivemobilemenu.css" rel="stylesheet"/>
 	
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+	<script src="/js/libs/modernizr.js"></script>
 	<script data-main="js/dashboard_main" src="/js/libs/require.js"></script>
 	
-	<!--  <script src="js/libs/modernizr.custom.js"></script> -->
-	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+	
 
 </head>
 
@@ -258,6 +259,7 @@
 			<form id="me_edit_form">
 				<label for="me_name">Name</label>
 				<input type="text" id="me_name" required/><br/>
+				<select id="me_language"></select><br/>
 				<label for="me_email">Email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"/><br/>
 				<span id="reset_me_password_fields" style="display:none;">
