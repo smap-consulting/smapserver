@@ -51,8 +51,9 @@ $(document).ready(function() {
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
+		globals.gCurrentSurvey = -1;
 		getReportList(globals.gCurrentProject);			// Get reports
-		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
  	 });
 	
 	// Add function to show map

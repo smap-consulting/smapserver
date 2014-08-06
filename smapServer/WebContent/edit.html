@@ -44,6 +44,7 @@
 	        		<li><a id="m_settings" href="#">Settings</a>
 	        		<li><a id="m_simple_edit" href="#">Edit</a>
 	        		<li><a id="m_translate" href="#">Translate</a>
+	        		<li><a id="m_media" href="#">Media</a>
 	        	</ul>
 	        </li> 
 			<li><a id="m_language" href="#">Languages</a></li>
@@ -112,6 +113,19 @@
     			<dd class="accordion-navigation">
     			<a href="#panel2">Attach CSV Files</a>
     			<div id="panel2" class="content">
+    				<table id="csv_manifest_list" class="tablesorter" border="1" width=100%">
+						<thead>
+							<tr>
+								<th>File</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody id="csvList">
+						</tbody>
+					</table>
+					
+					<button id="add_csv">Attach CSV file</button>
+					
     			</div>
     		</dd>
     	</dl>
@@ -188,5 +202,20 @@
 		</div>
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
+	
+	<div id="upload_media" class="reveal-modal" data-reveal>
+  		<h2>Upload Media</h2>
+  			<form id="media_controls" name="add_media_form" action="http://localhost/surveyKPI/upload/media" enctype="multipart/form-data" method="POST" 
+				class="ui-body ui-body-a ui-corner-all">
+			<input id="sId" type="hidden" name="survey_id" value="" style="display:none;"/>	
+			<input id="original_url" type="hidden" name="original_url" value="" style="display:none;"/>								
+			<label for="file">File:</label> 
+			<input type="file" name="tname" id="file" size="30"/><br/>
+		<input id="upload_media_done" type="submit" class="button radius text-center" value="Upload">
+		</form>
+
+  		<a class="close-reveal-modal">&#215;</a>
+	</div>
+	
 </body>
 </html>

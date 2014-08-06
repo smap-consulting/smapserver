@@ -43,13 +43,15 @@ $(document).ready(function() {
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
+		globals.gCurrentSurvey = -1;
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 		getSurveyList();
  	 });
 	
 	// Set change function on surveys
 	$('#survey_name').change(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
 		getAuditList();
  	 });
 	

@@ -57,10 +57,12 @@ function updateProjectList(addAll, projectId, callback) {
 	//  if the list is empty then set the default project to undefined
 	if(updateCurrentProject && globals.gProjectList[0]) {	
 		globals.gCurrentProject = globals.gProjectList[0].id;		// Update the current project id
-		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
+		globals.gCurrentSurvey = -1;
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 	} else if(updateCurrentProject) {	
 		globals.gCurrentProject = -1;		// Update the current project id
-		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
+		globals.gCurrentSurvey = -1;
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 	}
 	
 	$projectSelect.val(globals.gCurrentProject);			// Set the initial project value
@@ -99,9 +101,12 @@ function getMyProjects(projectId, callback, getAll) {
 /*
  * Save the current project id in the user defaults
  */
-function saveCurrentProject(projectId) {
+function saveCurrentProject(projectId, surveyId) {
 
-	var user = {current_project_id: projectId};
+	var user = {
+			current_project_id: projectId,
+			current_survey_id: surveyId
+			};
 	var userString = JSON.stringify(user);
 	
 	addHourglass();
@@ -301,6 +306,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;
+				globals.gCurrentSurvey = data.current_survey_id;
 				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
 			}
@@ -388,7 +394,9 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 				});
 
 				//globals.gCurrentSurvey = $elem.val();   // TODO set to current global survey
-				$elem.val(globals.gCurrentSurvey);
+				if(globals.gCurrentSurvey > 0) {
+					$elem.val(globals.gCurrentSurvey);
+				}
 				
 				if(typeof callback == "function") {
 					callback();

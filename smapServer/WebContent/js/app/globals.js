@@ -280,7 +280,7 @@ define(function() {
 				  type: "POST",
 				  contentType: "application/json",
 				  dataType: "json",
-				  url: "/surveyKPI/survey/" + globals.gCurrentSurvey + "/save_settings",
+				  url: "/surveyKPI/surveys/" + globals.gCurrentSurvey + "/save_settings",
 				  data: {
 					  settings: settings
 				  },
@@ -306,8 +306,14 @@ define(function() {
 			if(item.type === "q") {
 				for(i = 0; i < item.questions.length; i++) {
 					question = item.questions[i];
-					this.survey.forms[question.form].questions[question.question].
-						labels[question.language][question.element] = question.newVal;
+					
+					if(question.form) {
+						this.survey.forms[question.form].questions[question.question].
+							labels[question.language][question.element] = question.newVal;
+					} else if(question.optionList) {
+						this.survey.optionLists[question.optionList][question.option].
+							labels[question.language][question.element] = question.newVal;
+					}
 				}
 			} else {
 				alert("Error: unknown item type: " + item.type);
@@ -320,8 +326,13 @@ define(function() {
 			if(item.type === "q") {
 				for(i = 0; i < item.questions.length; i++) {
 					question = item.questions[i];
-					this.survey.forms[question.form].questions[question.question].
-						labels[question.language][question.element] = question.oldVal;
+					if(question.form) {
+						this.survey.forms[question.form].questions[question.question].
+							labels[question.language][question.element] = question.oldVal;
+					} else if(question.optionList) {
+						this.survey.optionLists[question.optionList][question.option].
+							labels[question.language][question.element] = question.oldVal;
+					}
 				}
 			} 
 		}
@@ -333,7 +344,7 @@ define(function() {
 			}
 		}
 		
-		// Modify a question
+		// Modify a question or an option
 		this.modQuestion = function(language, changedQ, newVal, element) {
 			
 			var questionMod = {
@@ -342,21 +353,37 @@ define(function() {
 			}
 			
 			var i,
-				question;
+				question = {},
+				item;
 			
 			for(i = 0; i < changedQ.length; i++) {
-				question = new Question();
+				question = {};
 
-				question.form = changedQ[i].form;
-				question.question = changedQ[i].question;
-				question.oldVal = this.survey.forms[question.form].questions[question.question].labels[language][element];
+				// For questions
+				if(typeof changedQ[i].form !== "undefined") {
+					question.form = changedQ[i].form;
+					question.question = changedQ[i].question;
+					item = this.survey.forms[question.form].questions[question.question];
+					//question.oldVal = this.survey.forms[question.form].questions[question.question].labels[language][element];
+				} else {
+					// For options
+					question.optionList = changedQ[i].optionList;
+					question.option = changedQ[i].option;
+					item = this.survey.optionLists[question.optionList][question.option];
+					//question.oldVal = this.survey.optionLists[question.optionList][question.option].labels[language][element];
+				}
+				
+				
+					
 				question.newVal = newVal;
+				question.oldVal = item.labels[language][element];
 				question.element = element;
 				question.language = language;
 				
 				// The following items are to write the change to the database
 				question.languageName = this.survey.languages[language];
-				question.transId = this.survey.forms[question.form].questions[question.question].text_id;
+				//question.transId = this.survey.forms[question.form].questions[question.question].text_id;
+				question.transId = item.text_id;
 				questionMod.questions.push(question);
 			}
 			
@@ -369,7 +396,8 @@ define(function() {
 				displayName: $('#set_survey_name').val(),
 				p_id: $('#set_project_name option:selected').val(),
 				def_lang: $('#set_default_language option:selected').text(),
-				sscList: this.survey.sscList
+				sscList: this.survey.sscList,
+				surveyManifest: this.survey.surveyManifest
 			}
 			
 			// Update the model to reflect the current values

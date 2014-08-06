@@ -57,9 +57,10 @@ $(document).ready(function() {
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
+		globals.gCurrentSurvey = -1;
 		$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 		getSurveysForList(globals.gCurrentProject);			// Get surveys
-		saveCurrentProject(globals.gCurrentProject);		// Save the current project id
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
  	 });
 	
 	removeHourglass();

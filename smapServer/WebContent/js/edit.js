@@ -36,8 +36,9 @@ require([
          'modernizr',
          'app/localise',
          'app/ssc',
-         'app/globals'], 
-		function($, common, foundation, modernizr, lang, ssc, globals) {
+         'app/globals',
+         'app/csv'], 
+		function($, common, foundation, modernizr, lang, ssc, globals, csv) {
 
 
 var	gMode = "settings",
@@ -60,6 +61,7 @@ $(document).ready(function() {
 		console.log("param:" + param[0] +":");
 		if ( param[0] === "id" ) {
 			globals.gCurrentSurvey = param[1];
+			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
 			console.log("Passed in survey is: " + globals.gCurrentSurvey);
 		}
 	}
@@ -107,12 +109,14 @@ $(document).ready(function() {
 	// Add responses to events
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject);	// Save the current project id
+		globals.gCurrentSurvey = -1;
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 		getSurveyList();
  	 });
 	
 	$('#get_survey').off().click(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
 		getSurvey();
 		$('#smap').foundation('reveal', 'close');
  	 });
@@ -129,7 +133,7 @@ $(document).ready(function() {
 		globals.model.settingsChange();
 	});
 	$('#set_project_name').change(function() {
-		saveCurrentProject($('#set_project_name option:selected').val());	// Save the current project id
+		saveCurrentProject($('#set_project_name option:selected').val(), globals.gCurrentSurvey);	// Save the current project id
 		globals.model.settingsChange();
 	});
 	$('#set_default_language').change(function() {
@@ -171,6 +175,10 @@ function getSurvey() {
 			console.log("Survey");
 			console.log(data);
 			setLanguages(data.languages);
+			
+			// Set the link to the media editor
+			$('#m_media').attr("href", '/fieldManager/browseForms.jsp?id=' + globals.gCurrentSurvey + '&name=' + data.displayName);
+			
 			refreshView(gMode);
 		},
 		error: function(xhr, textStatus, err) {
@@ -218,7 +226,9 @@ function refreshView(mode) {
 		qList = [],
 		index = -1,
 		survey = globals.model.survey,
-		numberLanguages = survey.languages.length;
+		numberLanguages = survey.languages.length,
+		key,
+		options = [];
 	
 	gTempQuestions = [];
 	
@@ -233,7 +243,7 @@ function refreshView(mode) {
 		//});
 	} else if(mode === "translate") {
 		
-		// Add all unique questions / options from all forms
+		// Add all unique questions from all forms
 		for(i = 0; i < survey.forms.length; i++) {
 			console.log("Form name: " + survey.forms[i].name);
 			var formQuestions = survey.forms[i].questions; 
@@ -241,8 +251,6 @@ function refreshView(mode) {
 				
 				if(formQuestions[j].labels[gLanguage1].text) {
 					if((index = $.inArray(formQuestions[j].labels[gLanguage1].text, qList)) > -1) {
-						// TODO update indexes
-						console.log("indexes need updating");
 						console.log(formQuestions[j].labels[gLanguage1].text);
 						gTempQuestions[index].indexes.push({
 							form: i,
@@ -257,6 +265,36 @@ function refreshView(mode) {
 							indexes: [{
 								form: i,
 								question: j
+							}]
+						});
+					}
+				}
+			}
+		}
+		// Add all unique options from all option lists
+		for(key in survey.optionLists) {
+			console.log("Option list: " + key);
+			var options = survey.optionLists[key]; 
+			for(j = 0; j < options.length; j++) {
+				
+				console.log("Option:" + options[j]);
+
+				if(options[j].labels[gLanguage1].text) {
+					if((index = $.inArray(options[j].labels[gLanguage1].text, qList)) > -1) {
+						console.log(options[j].labels[gLanguage1].text);
+						gTempQuestions[index].indexes.push({
+							optionList: key,
+							option: j
+						});
+						console.log(gTempQuestions[index]);
+					} else {
+						qList.push(options[j].labels[gLanguage1].text);
+						gTempQuestions.push({
+							label_a: options[j].labels[gLanguage1].text,
+							label_b: options[j].labels[gLanguage2].text,
+							indexes: [{
+								optionList: key,
+								option: j
 							}]
 						});
 					}
@@ -282,6 +320,7 @@ function refreshView(mode) {
 	} else if(mode === "settings") {
 		$('#set_survey_name').val(globals.model.survey.displayName);
 		ssc.setHtml('#sscList', globals.model.survey.sscList);
+		csv.setHtml('#csvList', globals.model.survey.surveyManifest);
 		showSettings();
 	} else {
 		alert("unknown mode");

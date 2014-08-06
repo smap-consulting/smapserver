@@ -27,7 +27,8 @@ define([
 
 	return {
 	
-		init: init
+		init: init,
+		setHtml: setHtml
 
 	};
 	
@@ -37,82 +38,40 @@ define([
 	function init() {
 		
 		var i;
-		
-		$('#add_ssc_done').off().click(function(){
-	
-			var fn = $('#ssc_function').val(),
-				name = $('#ssc_name').val(),
-				formId = $('#ssc_form option:selected').val(),
-				form = $('#ssc_form option:selected').text();
+		$('#upload_media_done').off().click(function(){
 			
-			if(fn === "") {
-				alert("You must select a function");
-				return false;
-			}
-			if(name === "") {
-				alert("You must specify a name");
-				return false;
-			}
-			if(typeof form === "undefined" || form === "") {
-				alert("You must specify a form");
-				return false;
-			}
-			for(i = 0; i < globals.model.survey.sscList.length; i++) {
-				if(globals.model.survey.sscList[i].name === name) {
-					alert("There is an existing calculation with that name");
-					return false;
-				}
-			}
+			var filepath = $('#file').val(),
+				filename,
+				idx = filepath.lastIndexOf('\\');
 			
-			// Add the new ssc to the list
-			var newSSC = {
-					name: name,
-					fn: fn,
-					units: $('#ssc_units').val(),
-					form: form,
-					formId: formId
-			}
-			globals.model.survey.sscList.push(newSSC);
-			setHtml('#sscList', globals.model.survey.sscList);
-			globals.model.settingsChange();
-			$('#add_ssc_popup').foundation('reveal', 'close');
-		
-		});
-		
-		$('#add_ssc_cancel').off().click(function(){
-			$('#add_ssc_popup').foundation('reveal', 'close');
-		});
-		
-		/*
-		 * Add options for units
-		 */
-		$('#ssc_function').change(function () {
-			var fn = $(this).val();
-			$('#ssc_name').val(fn);		// Default name to name of function
-			$("#ssc_form").empty();
-			if(fn !== "") {
-				populateFormList(fn);
-				if(fn === "area") {
-					$('#ssc_units').html(
-							'<option value="hectares">Hectares</option>' +
-							'<option value="square meters">Square Meters</option>'
-							);
-				} else if(fn === "length") {
-					$('#ssc_units').html(
-							'<option value="km">Kilometers</option>' +
-							'<option value="meters">Meters</option>'
-							);
-				}
+			if(idx > 0) {
+				filename = filepath.substring(idx + 1);
 			} else {
-				$('#ssc_units').html('');
+				filename = filepath;
 			}
-		});
+			// Add the new csv to the list
+			var newCSV = {
+					filename: filename,
+					type: 'csv',
+					qId: -1,
+					oId: -1
+			}
 			
-		$('#add_ssc').off().click(function() {	
-			$('#ssc_name').val($('#ssc_function').val());		// Default name to name of function
-			$('#add_ssc_popup').foundation('reveal', 'open');
+			globals.model.survey.surveyManifest.push(newCSV);
+			setHtml('#csvList', globals.model.survey.surveyManifest);
+			globals.model.settingsChange();
+			$('#upload_media').foundation('reveal', 'close');
+		
 		});
-					
+		
+		$('#add_csv').off().click(function() {	
+			// Set the url to return to after submit a csv file to the server
+			$('#original_url').val(window.location.href);
+			$('#sId').val(globals.gCurrentSurvey);
+			$('#upload_media').foundation('reveal', 'open');
+		});
+
+
 	}
 
 
@@ -121,45 +80,42 @@ define([
 			idx = -1,
 			i,
 			filename,
-			idx;
+			idx,
+			value;
 		
 		for(i = 0; i < csvList.length; i++) {	
 
-			idx = csvList[i].lastIndexOf('/');
-			if(idx > 0) {
-				filename = csvList[i].substring(idx + 1);
-			} else {
-				filename = csvList[i];
-			}
+			value = csvList[i].value;
+			filename = csvList[i].filename;
 			
-			out.println("<td><a href=\"/media/" + t.getValue() + "\">" + filename + "</a></td>");
-			out.println("<td><button value=\"" + sId + ":-1:-1:" + t.getTextId() + "\" class=\"media_btn_rem\">-</button></td>");
-			out.println("</tr>");
+			
+		
 			h[++idx] = '<tr>';
+				h[++idx] = '<td>';
 				h[++idx] = '<a href=\"/media/"';
-				h[++idx] = csvList[i];
+				h[++idx] = value;
 				h[++idx] = '">';
 				h[++idx] = filename;
 				h[++idx] = '</a></td>';	
 				h[++idx] = '<td><button value="';
 				h[++idx] = globals.gCurrentSurvey;
 				h[++idx] = ':-1:-1:';
-				h[++idx] = 
+				h[++idx] = csvList[i].text_id;
 				h[++idx] = '</td>';	
 				h[++idx] = '<td><button value="';
 				h[++idx] = i;
-				h[++idx] = '" class="ssc_btn_rem">-</button></td>';
+				h[++idx] = '" class="csv_btn_rem">-</button></td>';
 				
 			h[++idx] = '</tr>';
 		}
 
 		$(selector).html(h.join(''));
 		
-		$('.ssc_btn_rem').click(function () {
+		$('.csv_btn_rem').click(function () {
 			var id = $(this).val();
-			globals.model.survey.sscList.splice(id,1);
+			globals.model.survey.surveyManifest.splice(id,1);
 			globals.model.settingsChange();
-			setHtml('#sscList', globals.model.survey.sscList);
+			setHtml('#csvList', globals.model.survey.surveyManifest);
 		});
 		
 	}

@@ -122,38 +122,40 @@ define([
 			idx = -1,
 			i;
 		
-		for(i = 0; i < sscList.length; i++) {
-			h[++idx] = '<tr>';
-				h[++idx] = '<td>';
-				h[++idx] = sscList[i].name;
-				h[++idx] = '</td>';	
-				h[++idx] = '<td>';
-				h[++idx] = sscList[i].form;
-				h[++idx] = '</td>';	
-				h[++idx] = '<td>';
-				h[++idx] = sscList[i].fn;
-				h[++idx] = '</td>';	
-				h[++idx] = '<td>';
-				h[++idx] = sscList[i].units;
-				h[++idx] = '</td>';	
-				h[++idx] = '<td>';
-				h[++idx] = sscList[i].parameters;
-				h[++idx] = '</td>';	
-				h[++idx] = '<td><button value="';
-				h[++idx] = i;
-				h[++idx] = '" class="ssc_btn_rem">-</button></td>';
-				
-			h[++idx] = '</tr>';
+		if(sscList) {
+			for(i = 0; i < sscList.length; i++) {
+				h[++idx] = '<tr>';
+					h[++idx] = '<td>';
+					h[++idx] = sscList[i].name;
+					h[++idx] = '</td>';	
+					h[++idx] = '<td>';
+					h[++idx] = sscList[i].form;
+					h[++idx] = '</td>';	
+					h[++idx] = '<td>';
+					h[++idx] = sscList[i].fn;
+					h[++idx] = '</td>';	
+					h[++idx] = '<td>';
+					h[++idx] = sscList[i].units;
+					h[++idx] = '</td>';	
+					h[++idx] = '<td>';
+					h[++idx] = sscList[i].parameters;
+					h[++idx] = '</td>';	
+					h[++idx] = '<td><button value="';
+					h[++idx] = i;
+					h[++idx] = '" class="ssc_btn_rem">-</button></td>';
+					
+				h[++idx] = '</tr>';
+			}
+	
+			$(selector).html(h.join(''));
+			
+			$('.ssc_btn_rem').click(function () {
+				var id = $(this).val();
+				globals.model.survey.sscList.splice(id,1);
+				globals.model.settingsChange();
+				setHtml('#sscList', globals.model.survey.sscList);
+			});
 		}
-
-		$(selector).html(h.join(''));
-		
-		$('.ssc_btn_rem').click(function () {
-			var id = $(this).val();
-			globals.model.survey.sscList.splice(id,1);
-			globals.model.settingsChange();
-			setHtml('#sscList', globals.model.survey.sscList);
-		});
 		
 	}
 
