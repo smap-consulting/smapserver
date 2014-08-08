@@ -10,9 +10,15 @@
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<!--  <link rel="stylesheet" href="css/floathousebooks.css" /> -->
-	<link rel="stylesheet" href="/css/foundation.min.css" /> 
-	<style>.name h1 img {width:30px;}</style>	<!-- Temporary while styles are sorted -->
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,800" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="css/app.css" />
+	<!-- <link rel="stylesheet" href="/css/foundation.min.css" /> 
+	<style>.name h1 img {width:30px;}</style>	Temporary while styles are sorted 
+	-->
+	<style> 
+		textarea.lang_a, textarea.lang_b {overflow: hidden; word-wrap: break-word; resize: horizontal; height: 66px;}
+		textarea.lang_b:focus {background-color: green; }
+	</style>
     
  
     <script data-main="js/edit" src="js/libs/require.js"></script>
@@ -33,21 +39,22 @@
 	      <!-- Right Nav gridfix -->
 	      <ul class="right">
 	     	 <li><a id="m_sm" href="/fieldManager">Survey Management</a></li>
+	     	 <!--  
 	        <li class="has-dropdown"><a href="#">File</a>
 	        	<ul class="dropdown">
 	        		<li><a id="m_get_survey" href="#">Get Survey</a>
 	        		<li><a id="m_save_survey" href="#">Save Survey</a>
 	        	</ul>
 	        </li> 
+	        -->
 	        <li class="has-dropdown"><a href="#">View</a>
 	        	<ul class="dropdown">
 	        		<li><a id="m_settings" href="#">Settings</a>
-	        		<li><a id="m_simple_edit" href="#">Edit</a>
+	        		<!--  <li><a id="m_simple_edit" href="#">Edit</a> -->
 	        		<li><a id="m_translate" href="#">Translate</a>
-	        		<li><a id="m_media" href="#">Media</a>
 	        	</ul>
 	        </li> 
-			<li><a id="m_language" href="#">Languages</a></li>
+			<!--  <li><a id="m_language" href="#">Languages</a></li> -->
 	        <li><a id="m_undo" href="#">Undo</a></li>
 	        <li><a id="m_redo" href="#">Redo</a></li>	
 			<li><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
@@ -62,7 +69,29 @@
 	
 	<div class="uno" id="main_page">
 	
-		<div id="survey" style="display:none;"></div>
+		<div id="translate" style="display:none;">
+			<div class="errorcount">
+  				<div class="large-4 small-4 columns">
+    				<p class="qcount">Translations Made: </p>		
+  				</div>
+	  			<div class="tabhint large-4 columns">
+	    			<p class="tabhint"> Once you've filled a form field, press tab to go to the next one! </p>
+	  			</div>
+	  			<div class="large-4 small-8 columns ecount">
+	    			<a class="button tiny white m_save_survey">Save Translations</a>
+	 			 </div>
+	 		 </div>
+	 		 <div class="errorcount" style="top: 90px;">
+	 			 	<div class="small-12 medium-6 columns" style="line-height: 30px;">
+						<select id="language1" class="language_list"></select>
+					</div>
+					<div class="small-12 medium-6 columns" style="line-height: 30px;">
+						<select id="language2" class="language_list"></select></div>
+					</div>
+ 			 <div class="questions translate"></div>
+		</div>
+		
+
 		<div id="settings">
   		<h2>Settings</h2>
   		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
@@ -160,7 +189,7 @@
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
-
+<!-- 
 	<div id="set_language" class="reveal-modal" data-reveal>
   		<h2>Set Languages to Edit</h2>
   		<form class="custom">
@@ -177,7 +206,7 @@
 		</div>
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
-	
+-->	
 	<!-- Popup to add a server side calculation function -->
 	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
 		<label for="ssc_function">function:</label>

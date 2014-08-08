@@ -25,7 +25,8 @@ require.config({
     },
     shim: {
     	'app/common': ['jquery'],
-        'foundation.min': ['jquery']
+        'foundation.min': ['jquery'],
+        'jquery.autosize.min': ['jquery']
     }
 });
 
@@ -37,7 +38,8 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
-         'app/csv'], 
+         'app/csv',
+         'jquery.autosize.min'], 
 		function($, common, foundation, modernizr, lang, ssc, globals, csv) {
 
 
@@ -74,14 +76,14 @@ $(document).ready(function() {
 	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
 		$('#smap').foundation('reveal', 'open');
 	});
-	$('#m_save_survey').off().click(function() {	// Save a survey to Smap
+	$('.m_save_survey').off().click(function() {	// Save a survey to Smap
 		globals.model.save();
 	});
 
 	// Add menu functions
-	$('#m_language').off().click(function() {	// Select languages
-		$('#set_language').foundation('reveal', 'open');
-	});
+	//$('#m_language').off().click(function() {	// Select languages
+	//	$('#set_language').foundation('reveal', 'open');
+	//});
 	$('#m_simple_edit').off().click(function() {	// Edit a survey
 		gMode = "simple_edit";
 		refreshView(gMode);
@@ -121,11 +123,11 @@ $(document).ready(function() {
 		$('#smap').foundation('reveal', 'close');
  	 });
 	
-	$('#apply_set_language').off().click(function() {
+	$('.language_list').off().change(function() {
 		gLanguage1 = $('#language1').val();
 		gLanguage2 = $('#language2').val();
 		refreshView(gMode);
-		$('#set_language').foundation('reveal', 'close');
+		//$('#set_language').foundation('reveal', 'close');
  	 });
 	
 	// Check for changes in settings
@@ -236,7 +238,7 @@ function refreshView(mode) {
 	
 	if(mode === "simple_edit") {
 		$('#survey').empty().append("<h1>Not available</h1>");
-		showSurvey();
+		showTranslate();
 		//$('#survey').html(Mustache.to_html( $('#tpl').html(), gQuestions));
 		//$('#survey select').each(function(){
 		//	$(this).val($(this).attr("data-sel"));
@@ -303,18 +305,20 @@ function refreshView(mode) {
 		}
 		qList = [];		// clear temporary question list	
 
-		$('#survey').html(getTranslateHtml(gTempQuestions, survey));
+		showTranslate();
+		setTranslateHtml($('#translate .questions'), gTempQuestions, survey);
+		var questionsedited="0";
 		$(".lang_b").first().focus();
 		$(".lang_b").change(function(){
+			event.preventDefault();
 			var $this = $(this);
 			var index = $this.data("index");
 			var newVal = $this.val();
 			console.log(gTempQuestions[index]);
 			console.log("New val:" + newVal);
 			globals.model.modQuestion(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
+			$('.qcount').empty().append('Translations made: ' + (++questionsedited))
 		});
-		
-		showSurvey();
 
 		
 	} else if(mode === "settings") {
@@ -333,8 +337,8 @@ function refreshView(mode) {
 /*
  * Show the survey view
  */
-function showSurvey() {
-	$("#survey").show();
+function showTranslate() {
+	$("#translate").show();
 	$("#settings").hide();
 }
 
@@ -342,7 +346,7 @@ function showSurvey() {
  * Show the settings view
  */
 function showSettings() {
-	$("#survey").hide();
+	$("#translate").hide();
 	$("#settings").show();
 }
 
@@ -351,33 +355,59 @@ function showSettings() {
  * Mustache is preferred however once you start needing helper functions this is more 
  * straightforward
  */
-function getTranslateHtml(questions, survey) {
+function setTranslateHtml($element, questions, survey) {
 	var h =[],
 		idx = -1,
 		i;
 	
-	for(i = 0; i < questions.length; i++) {
-		h[++idx] = '<div class="row">';
-			h[++idx] = '<div class="small-6 large-6 columns">';
-				h[++idx] = '<input type="text"  class="lang_a" tabindex="-1" readonly value="';
-					h[++idx] = questions[i].label_a;
-				h[++idx] = '">';
-			h[++idx] = '</div>';
-			h[++idx] = '<div class="small-6 large-6 columns">';
-				h[++idx] = '<input type="text"  class="lang_b" value="';
-					h[++idx] = questions[i].label_b;
-					h[++idx] = '" ';
-					h[++idx] = 'tabindex="';
-					h[++idx] = i + 1;
-					h[++idx] = '" ';
-					h[++idx] = 'data-index="';
-					h[++idx] = i;
-				h[++idx] = '">';
-			h[++idx] = '</div>';	
+	h[++idx] = '<div class="ribbon">';
+		h[++idx] = '<div class="large-12 columns">';
+			h[++idx] = '<h1 class="pagetitle"> Translating Survey:<span class="thick">';
+			h[++idx] = survey.displayName;
+			h[++idx] = '</span></h1>';
 		h[++idx] = '</div>';
-	}
+	h[++idx] = '</div>';
 	
-	return h.join('');
+	h[++idx] = '<div class="ribbon">';
+	for(i = 0; i < questions.length; i++) {
+		h[++idx] = '<div class="small-12 medium-6 columns">';
+			h[++idx] = '<textarea class="lang_a" tabindex="-1" readonly>';
+				h[++idx] = questions[i].label_a;
+			h[++idx] = '</textarea>';
+		h[++idx] = '</div>';
+		h[++idx] = '<div class="small-12 large-6 columns">';
+			h[++idx] = '<textarea class="lang_b" tabindex="';
+				h[++idx] = i + 1;
+				h[++idx] = '" data-index="';
+				h[++idx] = i;
+				h[++idx] = '">';
+				h[++idx] = questions[i].label_b;
+			h[++idx] = '</textarea>';
+		h[++idx] = '</div>';	
+	}
+	h[++idx] = '</div>';
+	
+	$element.html(h.join(''));
+	translateHtmlFixup($element);
+	
+}
+
+function translateHtmlFixup($element) {
+
+	//$('.lang_a', $element).before('<h6 class="qtype">Original Language</h6>');
+	//$('.lang_b', $element).before('<h6 class="qtype">Translated Language</h6>');
+	$(document).on('focus', '.lang_a, .lang_b', function(event) {
+		event.preventDefault();
+		var half_height = $(window).height()/2.5;
+		$("html, body").animate({ 
+			scrollTop: 
+			($(this).offset().top 
+				-half_height) 
+			});
+		$(this).autosize();
+		$(this).parent().prev().find('.lang_a').autosize();
+	});
+
 }
 
 });
