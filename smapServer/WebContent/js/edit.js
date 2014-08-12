@@ -368,24 +368,28 @@ function setTranslateHtml($element, questions, survey) {
 		h[++idx] = '</div>';
 	h[++idx] = '</div>';
 	
-	h[++idx] = '<div class="ribbon">';
+
 	for(i = 0; i < questions.length; i++) {
-		h[++idx] = '<div class="small-12 medium-6 columns">';
-			h[++idx] = '<textarea class="lang_a" tabindex="-1" readonly>';
-				h[++idx] = questions[i].label_a;
-			h[++idx] = '</textarea>';
+		h[++idx] = '<div class="fullest-width row center ribbonwrapper">';
+			h[++idx] = '<div class="ribbon">';
+				h[++idx] = '<div class="small-12 medium-6 columns">';
+					h[++idx] = '<textarea class="lang_a" tabindex="-1" readonly>';
+						h[++idx] = questions[i].label_a;
+					h[++idx] = '</textarea>';
+				h[++idx] = '</div>';
+				h[++idx] = '<div class="small-12 medium-6 columns">';
+					h[++idx] = '<textarea class="lang_b" tabindex="';
+						h[++idx] = i + 1;
+						h[++idx] = '" data-index="';
+						h[++idx] = i;
+						h[++idx] = '">';
+						h[++idx] = questions[i].label_b;
+					h[++idx] = '</textarea>';
+				h[++idx] = '</div>';	
+			h[++idx] = '</div>';
 		h[++idx] = '</div>';
-		h[++idx] = '<div class="small-12 large-6 columns">';
-			h[++idx] = '<textarea class="lang_b" tabindex="';
-				h[++idx] = i + 1;
-				h[++idx] = '" data-index="';
-				h[++idx] = i;
-				h[++idx] = '">';
-				h[++idx] = questions[i].label_b;
-			h[++idx] = '</textarea>';
-		h[++idx] = '</div>';	
 	}
-	h[++idx] = '</div>';
+
 	
 	$element.html(h.join(''));
 	translateHtmlFixup($element);
@@ -403,7 +407,7 @@ function translateHtmlFixup($element) {
 			scrollTop: 
 			($(this).offset().top 
 				-half_height) 
-			});
+			},100);
 		$(this).autosize();
 		$(this).parent().prev().find('.lang_a').autosize();
 	});

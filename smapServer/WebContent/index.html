@@ -25,7 +25,7 @@
 	  <nav class="top-bar" data-topbar>
 	    <ul class="title-area">
 	      <li class="name">
-	        <h1><a href="http://www.smap.com.au"><img src="/images/logo.png" /><span class="thick">SMAP</span> Consulting</a></h1>
+	        <h1><a href="http://www.smap.com.au"><img src="/images/logo.png" /><span class="thick">SMAP</span> Server</a></h1>
 	      </li>
 	       <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
 	      <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
@@ -34,7 +34,8 @@
 	    <section class="top-bar-section">
 	      <!-- Right Nav gridfix -->
 	      <ul class="right">
-	        <li><a class="lang" data-lang="m_news" href="http://blog.smap.com.au">News</a></li>
+	      	<li><a class="lang" data-lang="m_admin" href="/fieldManager/" title="Admin">Administration</a></li>
+	      	<li><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
 	        <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
 			<li><a class="lang" data-lang="m_docs" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
 	      </ul>
@@ -48,23 +49,25 @@
 	
 	<div class="uno" id="main_page">
 	
-		<div class="full-width"><img class="full-width" src="images/cropped-blog1.jpg"/></div>
+		<div class="row center"><img src="images/cropped-blog1.jpg"/></div>
 		<h1 class="center"><span class="lang" data-lang="ss_welcome">Welcome</span> 14.05</h1>
-		<h2 class="center"><span class="lang" data-lang="ss_welcome2">Description:</span> <a href="http://blog.smap.com.au/smap-version-14-05/"></a>.</h2>
+		<p class="center"><span class="lang" data-lang="ss_welcome2">Description:</span> <a href="http://blog.smap.com.au/smap-version-14-05/"></a>.</p>
 		<div class="mainButtons center">
 		
+				<!--
 				<a href="edit.html" class="button">Create a Survey</a>
 				<a href="/fieldManager/templateManagement.html" class="button">Manage a Survey</a>
 				<a href="/fieldAnalysis/index.html" class="button">View Survey Results</a>
+				-->
 			
 		</div>
 		<div class="row center">
 			<div class="large-push-6 large-6 columns">
-				<a href="fieldTask.apk"><img width="200px" height="200px" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
+				<a href="fieldTask.apk" class="button" style="width:220px; height:220px;"><img width="200px" height="200px" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
 				<h1 class="lang" data-lang="ss_ft">Get FT</h1>
 			</div>
 			<div class="large-pull-6 large-6 columns">
-				<a href="smapUploader.jar"><img width="200px" height="200px" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
+				<a href="smapUploader.jar" class="button" style="width:220px; height:220px;"><img width="200px" height="200px" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
 				<h1 class="lang" data-lang="ss_su">Get SU</h1>
 			</div>
 		</div>

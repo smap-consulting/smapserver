@@ -63,9 +63,9 @@ $(document).ready(function() {
 		        		var sId = $('#export_survey option:selected').val(),
 		        			language = $('#export_language option:selected').val(),
 		        			displayName = $('#export_survey option:selected').text(),
-			        		//format = $('.exportformat:checked').attr("value"),
 			        		format = $('#exportformat').val(),
 			        		split_locn = $('.splitlocn:checked').attr("value"),
+			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		forms = [];
 		        			
 		        		if(sId == "-1") {
@@ -77,7 +77,7 @@ $(document).ready(function() {
 		        			forms = $(':checkbox:checked', '.osmforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
-		        			url = exportSurveyOSMURL(sId, displayName, forms);
+		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly);
 		        		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
@@ -86,7 +86,7 @@ $(document).ready(function() {
 		        				alert("A form must be selected");
 			        			return(false);
 		        			}		
-		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format);
+		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly);
 		        		} else {
 
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
@@ -97,9 +97,8 @@ $(document).ready(function() {
 		        				alert("At least one form must be selected");
 			        			return(false);
 		        			}
-		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms);
+		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms, exportReadOnly);
 		        		}
-		        		
 		        		
 		        		$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
 		        		$(this).dialog("close");
@@ -650,9 +649,11 @@ function exportTableURL (table, format) {
 /*
  * Web service handler for exporting an entire survey to CSV
  */
-function exportSurveyURL (sId, filename, language, format, split_locn, forms) {
+function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro) {
 
 	var url = "/surveyKPI/exportSurvey/";
+	
+	exp_ro = exp_ro || false;
 	
 	if(!format) {
 		format="xls";
@@ -670,17 +671,21 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms) {
 		url += "&split_locn=true";
 	}
 	url+="&forms=" + forms;
+	url += "&exp_ro=" + exp_ro;
+	
 	return encodeURI(url);
 }
 
 /*
  * Web service handler for exporting an entire survey to OSM
  */
-function exportSurveyOSMURL (sId, filename, forms) {
+function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 
 	var url = "/surveyKPI/exportSurveyOSM/",
 		form,
 		ways = [];
+		
+	exp_ro = exp_ro || false;
 	
 	url += sId;
 	url += "/" + filename;
@@ -695,16 +700,22 @@ function exportSurveyOSMURL (sId, filename, forms) {
 			ways[i] = form;
 		}
 		url += "?ways=" + ways.join(',');
+		url+= "&exp_ro=" + exp_ro;
+	} else {
+		url += "?exp_ro=" + exp_ro;
 	}
+	
 	return encodeURI(url);
 }
 
 /*
  * Web service handler for exporting a form as a shape file
  */
-function exportSurveyShapeURL (sId, filename, form, format) {
+function exportSurveyShapeURL (sId, filename, form, format, exp_ro) {
 
 	var url = "/surveyKPI/exportSurveyMisc/";
+	
+	exp_ro = exp_ro || false;
 	
 	// Remove the ":false" from the form id which used by xls exports
 	form = form.substring(0, form.lastIndexOf(":"));
@@ -714,6 +725,7 @@ function exportSurveyShapeURL (sId, filename, form, format) {
 	url += "/shape";
 	url += "?form=" + form;
 	url += "&format=" + format;
+	url += "&exp_ro=" + exp_ro;
 		
 	return encodeURI(url);
 }

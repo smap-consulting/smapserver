@@ -28,7 +28,9 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 					$(this).html(lang[code]);
 				}
 			});
-			responsiveMobileMenu();		// Resize menus
+			if(typeof responsiveMobileMenu === "function") {
+				responsiveMobileMenu();		// Resize menus
+			}
 			console.log("lang for home: " + lang.m_home);
 		},
 		set: lang
