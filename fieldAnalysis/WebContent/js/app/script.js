@@ -78,7 +78,7 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly);
-		        		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
+		        		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv" || format === "stata") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
@@ -86,7 +86,7 @@ $(document).ready(function() {
 		        				alert("A form must be selected");
 			        			return(false);
 		        			}		
-		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly);
+		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly, language);
 		        		} else {
 
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
@@ -142,11 +142,14 @@ $(document).ready(function() {
 	$('#exportformat').change(function(){
 		var format = $('#exportformat').val();
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showosm').hide();
+			$('.showshape,.showspreadsheet,.showxls').hide();
 			$('.showosm').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showshape,.showspreadsheet,.showxls,.showosm').hide();
+			$('.showspreadsheet,.showxls,.showosm').hide();
 			$('.showshape').show();
+		} else if(format === "stata") {
+			$('.showxls,.showosm').hide();
+			$('.showshape,.showspreadsheet').show();
 		} else {
 			$('.showshape,.showspreadsheet,.showxls,.showosm').hide();
 			$('.showxls,.showspreadsheet').show();
@@ -171,22 +174,6 @@ $(document).ready(function() {
 			]
 		}
 	);
-	
-	/*
-	 * Enable hover functionality for menu options
-	 *
-	$('#nav li a').hover(menuIn, menuOut);
-	function menuIn() {
-		if($(this).hasClass('menu_enabled')) {
-			$(this).toggleClass('menu_hover').toggleClass('menu_no_hover');
-		}
-	}
-	function menuOut() {
-		if($(this).hasClass('menu_enabled')) {
-			$(this).toggleClass('menu_hover').toggleClass('menu_no_hover');
-		}
-	}
-	*/
 
 });
 
@@ -711,7 +698,7 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 /*
  * Web service handler for exporting a form as a shape file
  */
-function exportSurveyShapeURL (sId, filename, form, format, exp_ro) {
+function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 
 	var url = "/surveyKPI/exportSurveyMisc/";
 	
@@ -726,6 +713,7 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro) {
 	url += "?form=" + form;
 	url += "&format=" + format;
 	url += "&exp_ro=" + exp_ro;
+	url += "&language=" + language;
 		
 	return encodeURI(url);
 }

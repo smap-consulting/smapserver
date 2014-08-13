@@ -105,7 +105,7 @@ function completeSurveyList() {
 		var $link = $('<a />').attr("class", "formLink")
         	.text(gSurveys[i].displayName);
      
-		$link.attr("href", "/webforms/formXML.php"+"?key=" + gSurveys[i].id)
+		$link.attr("href", "/webforms/formXML.php"+"?key=" + gSurveys[i].ident)
 			.attr("target", "_blank")
 			.addClass("online");
 		

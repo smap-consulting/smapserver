@@ -130,27 +130,28 @@
 					<option value="shape">Shape File</option>
 					<option value="kml">KML / KMZ</option>
 					<option value="vrt">VRT / CSV</option>
+					<option value="stata">Stata / CSV</option>
 				</select><br/>	
-				<label for="exportReadOnly">Include read only questions:</label>
-				<input type="checkbox" id="exportReadOnly" checked="checked"/><br/>
+				<label for="exportReadOnly">Export notes:</label>
+				<input type="checkbox" id="exportReadOnly"/><br/>
+				<div class="showspreadsheet">
+					<div class="showxls">
+						<label for="splitlocn">Split lat / lon:</label>	
+						<input type="checkbox" id="splitlocn"/><br/>
+					</div>
+					<label for="export_language">Language</label><br/>
+					<select class="selected_language" id="export_language"></select><br/>
+				</div>
 			</fieldset>
 			
-			<div class="showspreadsheet">
-				<fieldset class="ui-widget-content showxls">
-					<legend class="ui-widget-header ui-corner-all">Split location into lat / lon:</legend>
-					<input class="splitlocn" type="radio" name="splitlocn" value="false" checked="checked"/> No<br/> 
-					<input class="splitlocn" type="radio" name="splitlocn" value="true"/> Yes<br/> 
-				</fieldset>
-				<label for="export_language">Language</label><br/>
-				<select class="selected_language" id="export_language"></select><br/>
-			</div>
+		
 			<div class="showosm" style="display:none;">
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all">Select ways (if any):</legend>
 					<div class="osmforms"></div>
 				</fieldset>
 			</div>
-			<div class="showspreadsheet">
+			<div class="showxls">
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all">Select forms to include:</legend>
 					<div class="selectforms"></div>
