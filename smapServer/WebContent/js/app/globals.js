@@ -241,6 +241,10 @@ define(function() {
 		// Save the survey
 		this.save = function() {
 			
+			if(this.changes.length === 0) {
+				alert("No changes to apply");
+				return;
+			}
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
 			var changesString = JSON.stringify(this.changes);
 			console.log("Saving as: " + url);			
@@ -254,8 +258,11 @@ define(function() {
 				data: { changes: changesString },
 				success: function(data) {
 					removeHourglass();
-					this.changes = [];
-					this.currentChange = 0;
+					globals.model.changes = [];
+					globals.model.currentChange = 0;
+					var msg = "Update to version " + data.version + ". " + 
+							data.success + " changes saved. " + data.failed + " failed.";
+					alert(msg);
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -286,7 +293,7 @@ define(function() {
 				  },
 				  success: function(data, status) {
 					  removeHourglass();
-					  this.savedSettings = settings;
+					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
 				  }, error: function(data, status) {
 					  removeHourglass();
@@ -303,16 +310,16 @@ define(function() {
 			var i,
 				question;
 
-			if(item.type === "q") {
-				for(i = 0; i < item.questions.length; i++) {
-					question = item.questions[i];
+			if(item.type === "label") {
+				for(i = 0; i < item.labels.length; i++) {
+					label = item.labels[i];
 					
-					if(question.form) {
-						this.survey.forms[question.form].questions[question.question].
-							labels[question.language][question.element] = question.newVal;
-					} else if(question.optionList) {
-						this.survey.optionLists[question.optionList][question.option].
-							labels[question.language][question.element] = question.newVal;
+					if(label.form) {
+						this.survey.forms[label.formIdx].questions[label.questionIdx].
+							labels[label.language][label.element] = label.newVal;
+					} else if(label.optionListIdx) {
+						this.survey.optionLists[label.optionListIdx][label.optionIdx].
+							labels[label.language][label.element] = label.newVal;
 					}
 				}
 			} else {
@@ -323,15 +330,15 @@ define(function() {
 		
 		this.undo = function() {
 			var item = this.changes[this.currentChange--];
-			if(item.type === "q") {
-				for(i = 0; i < item.questions.length; i++) {
-					question = item.questions[i];
-					if(question.form) {
-						this.survey.forms[question.form].questions[question.question].
-							labels[question.language][question.element] = question.oldVal;
+			if(item.type === "label") {
+				for(i = 0; i < item.labels.length; i++) {
+					label = item.labels[i];
+					if(label.form) {
+						this.survey.forms[label.formIdx].questions[label.questionIdx].
+							labels[label.language][label.element] = label.oldVal;
 					} else if(question.optionList) {
-						this.survey.optionLists[question.optionList][question.option].
-							labels[question.language][question.element] = question.oldVal;
+						this.survey.optionLists[label.optionListIdx][label.optionIdx].
+							labels[label.language][label.element] = label.oldVal;
 					}
 				}
 			} 
@@ -344,50 +351,51 @@ define(function() {
 			}
 		}
 		
-		// Modify a question or an option
-		this.modQuestion = function(language, changedQ, newVal, element) {
+		// Modify a label for a question or an option when done as part of a language change
+		this.modLabel = function(language, changedQ, newVal, element) {
 			
-			var questionMod = {
-					type: "q",
-					questions: []
+			var labelMod = {
+					type: "label",
+					items: []
 			}
 			
 			var i,
-				question = {},
+				label = {},
 				item;
+				
 			
 			for(i = 0; i < changedQ.length; i++) {
-				question = {};
+				label = {};
 
 				// For questions
 				if(typeof changedQ[i].form !== "undefined") {
-					question.form = changedQ[i].form;
-					question.question = changedQ[i].question;
-					item = this.survey.forms[question.form].questions[question.question];
-					//question.oldVal = this.survey.forms[question.form].questions[question.question].labels[language][element];
+					label.formIdx = changedQ[i].form;
+					label.questionIdx = changedQ[i].question;
+					label.type = "question";
+					item = this.survey.forms[label.formIdx].questions[label.questionIdx];
+					label.name = item.name;	
 				} else {
 					// For options
-					question.optionList = changedQ[i].optionList;
-					question.option = changedQ[i].option;
-					item = this.survey.optionLists[question.optionList][question.option];
-					//question.oldVal = this.survey.optionLists[question.optionList][question.option].labels[language][element];
+					label.optionListIdx = changedQ[i].optionList;
+					label.optionIdx = changedQ[i].option;
+					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];
+					label.type = "option";
+					label.name = label.optionListIdx;		// The option list name
 				}
-				
-				
 					
-				question.newVal = newVal;
-				question.oldVal = item.labels[language][element];
-				question.element = element;
-				question.language = language;
+				label.newVal = newVal;
+				label.oldVal = item.labels[language][element];
+				label.element = element;
+				label.language = language;
 				
 				// The following items are to write the change to the database
-				question.languageName = this.survey.languages[language];
-				//question.transId = this.survey.forms[question.form].questions[question.question].text_id;
-				question.transId = item.text_id;
-				questionMod.questions.push(question);
+				label.languageName = this.survey.languages[language];
+				label.transId = item.text_id;
+				
+				labelMod.items.push(label);
 			}
 			
-			this.currentChange = this.changes.push(questionMod) - 1;
+			this.currentChange = this.changes.push(labelMod) - 1;
 			this.doChange();				// Apply the current change
 		};
 		

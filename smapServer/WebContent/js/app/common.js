@@ -329,7 +329,7 @@ function saveCurrentUser(user) {
 }
 
 
-function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hideUserDetails) {
+function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hideUserDetails, dontGetCurrentSurvey) {
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/user",
@@ -347,7 +347,9 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;
-				globals.gCurrentSurvey = data.current_survey_id;
+				if(!dontGetCurrentSurvey) {	// Horrible hack, on edit screen current survey is set as parameter not from the user's defaults
+					globals.gCurrentSurvey = data.current_survey_id;
+				}
 				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
 			}

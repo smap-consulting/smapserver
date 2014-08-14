@@ -70,7 +70,7 @@ $(document).ready(function() {
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurveyList, false, true, undefined, true);
+	getLoggedInUser(getSurveyList, false, true, undefined, true, true);
 
 	// Add menu functions
 	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
@@ -152,6 +152,7 @@ $(document).ready(function() {
 });
 
 function getSurveyList() {
+	console.log("getSurveyList: " + globals.gCurrentSurvey);
 	if(globals.gCurrentSurvey > 0) {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
 	} else {
@@ -316,7 +317,7 @@ function refreshView(mode) {
 			var newVal = $this.val();
 			console.log(gTempQuestions[index]);
 			console.log("New val:" + newVal);
-			globals.model.modQuestion(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
+			globals.model.modLabel(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
 			$('.qcount').empty().append('Translations made: ' + (++questionsedited))
 		});
 
