@@ -53,6 +53,7 @@
 	        		<li><a id="m_settings" href="#">Settings</a>
 	        		<!--  <li><a id="m_simple_edit" href="#">Edit</a> -->
 	        		<li><a id="m_translate" href="#">Translate</a>
+	        		<li><a id="m_changes" href="#">Changes</a>
 	        	</ul>
 	        </li> 
 			<!--  <li><a id="m_language" href="#">Languages</a></li> -->
@@ -70,9 +71,28 @@
 	
 	<div class="uno" id="main_page">
 	
+		<div id="changes" style="display:none;">
+			<table border="1" width=100%">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Form</th>
+						<th>Function</th>
+						<th>Units</th>
+						<th>Parameters</th>
+						<th>Delete</th>
+					</tr>
+				</thead>
+				<tbody id="sscList">
+				</tbody>
+			</table>
+		</div>
+		
 		<div id="translate" style="display:none;">
 			<div class="errorcount">
   				<div class="large-4 small-4 columns">
+  					<span id="successLabel" class="success round radius label"><span class="counter">0</span> Successful Changes</span>
+        			<span id="failedLabel" class="alert round radius label"><span class="counter">0</span> Failed Changes</span>
     				<p class="qcount">Translations Made: </p>		
   				</div>
 	  			<div class="tabhint large-4 columns">

@@ -258,11 +258,17 @@ define(function() {
 				data: { changes: changesString },
 				success: function(data) {
 					removeHourglass();
+					// Reset the set of pending updates
 					globals.model.changes = [];
 					globals.model.currentChange = 0;
-					var msg = "Update to version " + data.version + ". " + 
-							data.success + " changes saved. " + data.failed + " failed.";
-					alert(msg);
+					
+					// Report success and failure
+					globals.model.lastChanges = data.changeSet;
+					$('#successLabel .counter').html(data.success);
+					$('#failedLabel .counter').html(data.failed);				
+					if(data.failed > 0) {
+						alert(data.failed + " changes failed. Click on red label to review.");
+					}
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -306,13 +312,13 @@ define(function() {
 		// Apply the current change
 		this.doChange = function() {
 			
-			var item = this.changes[this.currentChange];
+			var currentChange = this.changes[this.currentChange];
 			var i,
 				question;
 
-			if(item.type === "label") {
-				for(i = 0; i < item.labels.length; i++) {
-					label = item.labels[i];
+			if(currentChange.type === "label") {
+				for(i = 0; i < currentChange.items.length; i++) {
+					label = currentChange.items[i];
 					
 					if(label.form) {
 						this.survey.forms[label.formIdx].questions[label.questionIdx].
@@ -323,7 +329,7 @@ define(function() {
 					}
 				}
 			} else {
-				alert("Error: unknown item type: " + item.type);
+				alert("Error: unknown item type: " + currentChange.type);
 			}
 			
 		}

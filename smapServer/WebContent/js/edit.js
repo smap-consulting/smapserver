@@ -78,12 +78,10 @@ $(document).ready(function() {
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to Smap
 		globals.model.save();
+		getSurvey();
 	});
 
 	// Add menu functions
-	//$('#m_language').off().click(function() {	// Select languages
-	//	$('#set_language').foundation('reveal', 'open');
-	//});
 	$('#m_simple_edit').off().click(function() {	// Edit a survey
 		gMode = "simple_edit";
 		refreshView(gMode);
@@ -94,6 +92,10 @@ $(document).ready(function() {
 	});
 	$('#m_settings').off().click(function() {	// Get a survey from Smap
 		gMode = "settings";
+		refreshView(gMode);
+	});
+	$('#m_changes').off().click(function() {	// View the changes to this survey
+		gMode = "changes";
 		refreshView(gMode);
 	});
 	$('#m_undo').off().click(function() {	// Undo last change
@@ -142,6 +144,14 @@ $(document).ready(function() {
 		globals.model.settingsChange();
 	});
 
+	// Check for selection of the label indicating successful updates and the one indicating failed
+	$('#successLabel').off().click(function() {
+		alert("success");
+	});
+	// Check for selection of the label indicating successful updates and the one indicating failed
+	$('#failedLabel').off().click(function() {
+		alert("failed");
+	});
 	
 	ssc.init();	// initialise the Server Side Calculations section
 	csv.init();	// initialise the add csv file section
@@ -327,6 +337,9 @@ function refreshView(mode) {
 		ssc.setHtml('#sscList', globals.model.survey.sscList);
 		csv.setHtml('#csvList', globals.model.survey.surveyManifest);
 		showSettings();
+	} else if(mode === "changes") {
+		setChangesHtml($('#changes'), survey.changes, survey);
+		showChanges();
 	} else {
 		alert("unknown mode");
 		refreshView("simple_edit");
@@ -335,20 +348,22 @@ function refreshView(mode) {
 	
 }
 
-/*
- * Show the survey view
- */
+// Show the translation view
 function showTranslate() {
 	$("#translate").show();
-	$("#settings").hide();
+	$("#settings,#changes").hide();
 }
 
-/*
- * Show the settings view
- */
+// Show the settings view
 function showSettings() {
-	$("#translate").hide();
+	$("#translate, #changes").hide();
 	$("#settings").show();
+}
+
+//Show the changes to this survey
+function showChanges() {
+	$("#translate, #settings").hide();
+	$("#changes").show();
 }
 
 /*
@@ -413,6 +428,64 @@ function translateHtmlFixup($element) {
 		$(this).parent().prev().find('.lang_a').autosize();
 	});
 
+}
+
+/*
+ * Convert change log JSON to html
+ */
+function setChangesHtml($element, changes, survey) {
+	var h =[],
+		idx = -1,
+		i;
+	
+	h[++idx] = '<table border="1" width=100%">';
+	
+	// write the table headings
+	h[++idx] = '<thead>';
+		h[++idx] = '<tr>';
+			h[++idx] = '<th>Version</th>';
+			h[++idx] = '<th>Change</th>';
+			h[++idx] = '<th>Changed By</th>';
+			h[++idx] = '<th>When changed</th>';
+		h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	
+	// Write the table body
+	h[++idx] = '<body>';
+	for(i = 0; i < changes.length; i++) {
+		
+		h[++idx] = '<tr>';
+			h[++idx] = '<td>';
+			h[++idx] = changes[i].version;
+			h[++idx] = '</td>';	
+			h[++idx] = '<td>';
+			// Description
+				h[++idx] = changes[i].type;
+				h[++idx] = ' ';
+				h[++idx] = changes[i].name;
+				h[++idx] = ' changed to: <span style="color:blue;">';
+				h[++idx] = changes[i].newVal;
+				h[++idx] = '</span>';
+				h[++idx] = ' from: <span style="color:red;">';
+				h[++idx] = changes[i].oldVal;
+				h[++idx] = '</span>';
+			// End Description
+			h[++idx] = '</td>';
+			h[++idx] = '<td>';
+			h[++idx] = changes[i].userName;
+			h[++idx] = '</td>';
+			h[++idx] = '<td>';
+			h[++idx] = changes[i].updatedTime;
+			h[++idx] = '</td>';
+		h[++idx] = '</tr>';
+	}
+	h[++idx] = '</body>';
+	
+	h[++idx] = '</table>';
+	
+	$element.html(h.join(''));
+	
+	
 }
 
 });
