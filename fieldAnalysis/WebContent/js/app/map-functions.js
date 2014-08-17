@@ -271,8 +271,9 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 		data.option = cols[data.optionIdx];
 
 	} else {
-		data.optionIdx = pareto[0];		// Default to showing the first item 
-		data.option = cols[pareto[0]];
+		// This is a report with no ability to select option, leave set to the optionIdx and option specified in the report data
+		//data.optionIdx = pareto[0];		// Default to showing the first item 
+		//data.option = cols[pareto[0]];
 	}
 
 	

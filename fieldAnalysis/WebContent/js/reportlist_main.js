@@ -19,6 +19,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Entry point for report list page
  */
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
 
 requirejs.config({
     baseUrl: 'js/libs',
@@ -34,7 +38,6 @@ requirejs.config({
     	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
     	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
     	            ],
-    	modernizr: '../../../../js/libs/modernizr',
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
@@ -56,7 +59,6 @@ requirejs.config({
 require([
          'jquery', 
          'jquery_ui', 
-         'modernizr', 
          'rmm', 
          'common', 
          'globals',

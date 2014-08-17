@@ -40,6 +40,30 @@ var reportList = null,
 
 $(document).ready(function() {
 	
+	/*
+	 * Initialise Facebook
+	 */
+	  window.fbAsyncInit = function() {
+	      FB.init({
+	        appId      : '563570780321012', // App ID
+	    channelUrl : '//dev.smap.com.au/channel.php', // Channel File
+	    status     : true, // check login status
+	    cookie     : true, // enable cookies to allow the server to access the session
+	    xfbml      : true  // parse XFBML
+	  });
+	  
+	  // Get notified of the users logon status
+	  FB.Event.subscribe('auth.statusChange', authStatusChange);
+	};
+	
+	// Load the SDK Asynchronously
+	(function(d){
+	  var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+	  js = d.createElement('script'); js.id = id; js.async = true;
+	  js.src = "//connect.facebook.net/en_US/all.js";
+	  d.getElementsByTagName('head')[0].appendChild(js);
+	}(document));    
+	    
 	initializeReportsMap();
 	
 	 /*
