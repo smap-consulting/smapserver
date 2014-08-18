@@ -64,7 +64,7 @@ $(document).ready(function() {
 		        			language = $('#export_language option:selected').val(),
 		        			displayName = $('#export_survey option:selected').text(),
 			        		format = $('#exportformat').val(),
-			        		split_locn = $('.splitlocn:checked').attr("value"),
+			        		split_locn = $('#splitlocn:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		forms = [];
 		        			
@@ -645,16 +645,13 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	if(!format) {
 		format="xls";
 	}
-	if(!split_locn) {
-		split_locn="false";
-	}
 	
 	url += sId;
 	url += "/" + filename;
 	url += "?language=" + language;
 
 	url += "&format=" + format;
-	if(format === "xls" && split_locn === "true") {
+	if(format === "xls" && split_locn === true) {
 		url += "&split_locn=true";
 	}
 	url+="&forms=" + forms;

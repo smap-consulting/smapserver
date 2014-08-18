@@ -26,6 +26,7 @@ define(function() {
 		gCurrentProject: 0,
 		gCurrentLanguage: undefined,
 		gCurrentSurvey: 0,
+		gCurrentLayer: undefined,
 		gLoggedInUser: undefined,
 		gEditingReportProject: undefined,   		// Set if fieldAnalysis called to edit a report
 		gIsAdministrator: false,
@@ -241,10 +242,6 @@ define(function() {
 		// Save the survey
 		this.save = function() {
 			
-			if(this.changes.length === 0) {
-				alert("No changes to apply");
-				return;
-			}
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
 			var changesString = JSON.stringify(this.changes);
 			console.log("Saving as: " + url);			
@@ -259,8 +256,7 @@ define(function() {
 				success: function(data) {
 					removeHourglass();
 					// Reset the set of pending updates
-					globals.model.changes = [];
-					globals.model.currentChange = 0;
+					globals.model.setHasChanges(0);
 					
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
@@ -281,6 +277,17 @@ define(function() {
 			});	
 			
 		};
+		
+		// Update settings when the number of changes to apply transitions to or from 0
+		this.setHasChanges = function(numberChanges) {
+			if(numberChanges === 0) {
+				globals.model.changes = [];
+				globals.model.currentChange = 0;
+				$('.m_save_survey').addClass("disabled").attr("disabled", true);
+			} else {
+				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
+			}
+		}
 		
 		// Save the settings for the survey
 		this.save_settings = function() {
@@ -312,13 +319,13 @@ define(function() {
 		// Apply the current change
 		this.doChange = function() {
 			
-			var currentChange = this.changes[this.currentChange];
+			var change = this.changes[this.currentChange];
 			var i,
 				question;
 
-			if(currentChange.type === "label") {
-				for(i = 0; i < currentChange.items.length; i++) {
-					label = currentChange.items[i];
+			if(change.type === "label") {
+				for(i = 0; i < change.items.length; i++) {
+					label = change.items[i];
 					
 					if(label.form) {
 						this.survey.forms[label.formIdx].questions[label.questionIdx].
@@ -329,16 +336,17 @@ define(function() {
 					}
 				}
 			} else {
-				alert("Error: unknown item type: " + currentChange.type);
+				alert("Error: unknown item type: " + change.type);
 			}
 			
 		}
 		
 		this.undo = function() {
-			var item = this.changes[this.currentChange--];
-			if(item.type === "label") {
-				for(i = 0; i < item.labels.length; i++) {
-					label = item.labels[i];
+			var change = this.changes[this.currentChange--];
+			this.setHasChanges(this.changes.length);
+			if(change.type === "label") {
+				for(i = 0; i < change.labels.length; i++) {
+					label = change.labels[i];
 					if(label.form) {
 						this.survey.forms[label.formIdx].questions[label.questionIdx].
 							labels[label.language][label.element] = label.oldVal;
@@ -353,6 +361,7 @@ define(function() {
 		this.redo = function() {
 			if(this.currentChange < this.changes.length - 1) {
 				this.currentChange++;
+				this.setHasChanges(this.changes.length);
 				this.doChange();
 			}
 		}
@@ -402,9 +411,13 @@ define(function() {
 			}
 			
 			this.currentChange = this.changes.push(labelMod) - 1;
+			this.setHasChanges(this.changes.length);
 			this.doChange();				// Apply the current change
 		};
 		
+		/*
+		 * Functions for managing settings
+		 */
 		this.getSettings = function() {
 			var current =  {
 				displayName: $('#set_survey_name').val(),
