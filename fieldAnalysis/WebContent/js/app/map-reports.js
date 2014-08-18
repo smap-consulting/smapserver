@@ -17,7 +17,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 var defaultMapExtent = [-20037508, -20037508, 20037508, 20037508.34];
-var gMap;
+var map;
 
 /**
  * Get the report data afer initialising the map
@@ -39,7 +39,7 @@ function getData(feature_url) {
 	xmlhttp.onreadystatechange=function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
 			dataJSON = JSON.parse(xmlhttp.responseText);
-			setData(dataJSON, gMap);
+			setData(dataJSON, map);
 		}
 		hourGlass.style.display="none";
 	}
@@ -55,40 +55,59 @@ function getData(feature_url) {
 function initializeMap() {
 	
 	var mapOptions,
-		arrayOSM;
+		arrayOSM,
+		arrayHOT;
 
 	// Set options and initialize map
 	mapOptions = {
 		projection: new OpenLayers.Projection("EPSG:900913"),
 		displayProjection: new OpenLayers.Projection("EPSG:4326"),
 		units: "m",
-		numZoomLevels: 16,
+		numZoomLevels: 22,
 		maxResolution: 156543.0339,
 		maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34),
-		fallThrough: false,
-		controls: []
+		fallThrough: false
+		//controls: []
 	};
 	
-	gMap = new OpenLayers.Map("map", mapOptions);  	
+	loadEnd = false;
+	function layerLoadStart(event) {
+		loadEnd = false;
+	}
+
+	function layerLoadEnd(event) {
+		loadEnd = true;
+	}
+	
+	map = new OpenLayers.Map("map", mapOptions);  	
 		
 	// OSM Tile from mapquest
 	arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
                  "http://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
                  "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
                  "http://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
+	
+	arrayHOT = ["http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+	               "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+	               "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
 	 
 	// Add layers
-	gMap.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
+	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
+	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	if(typeof google != 'undefined') {
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 18}));
+		map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
+		map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
+		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 18}));
 	}
 	
 	// Map Controls
-	gMap.addControl(new OpenLayers.Control.PanZoomBar());
-	//gMap.addControl(new OpenLayers.Control.Scale());
-	gMap.addControl(new OpenLayers.Control.LayerSwitcher());	
+	map.addControl(new OpenLayers.Control.Zoom());
+	map.addControl(new OpenLayers.Control.Scale());
+	map.addControl(new OpenLayers.Control.LayerSwitcher());
+	
+	//map.addControl(new OpenLayers.Control.PanZoomBar());
+	//map.addControl(new OpenLayers.Control.Scale());
+	//map.addControl(new OpenLayers.Control.LayerSwitcher());	
 	
 
 	

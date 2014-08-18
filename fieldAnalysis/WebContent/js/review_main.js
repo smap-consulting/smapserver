@@ -39,7 +39,6 @@ requirejs.config({
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
-    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },

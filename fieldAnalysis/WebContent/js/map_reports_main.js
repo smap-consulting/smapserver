@@ -38,7 +38,6 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	googlemaps: '//maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
@@ -59,8 +58,7 @@ require([
          'localise', 
          'app/map-functions',
          'app/map-reports',
-         'openlayers',
-         'async!googlemaps'
+         'openlayers'
          
          ], function($, modernizr, rmm, crf, localise, map_functions, map_reports) {
 	

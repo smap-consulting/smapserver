@@ -48,7 +48,6 @@ require.config({
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	googlemaps: 'http://maps.google.com/maps/api/js?v=3.6&amp;sensor=false',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
@@ -124,7 +123,6 @@ require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globa
          
          'tablesorter',
          'crf',
-         'async!googlemaps',
          'openlayers'
          
          ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
