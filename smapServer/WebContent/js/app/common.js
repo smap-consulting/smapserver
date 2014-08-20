@@ -341,9 +341,9 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 				updateUserDetails(data, getOrganisationsFn);
 			}
 			
-			gEmailEnabled = data.allow_email;
-			gFacebookEnabled = data.allow_facebook;
-			gTwitterEnabled = data.allow_twitter;
+			globals.gEmailEnabled = data.allow_email;
+			globals.gFacebookEnabled = data.allow_facebook;
+			globals.gTwitterEnabled = data.allow_twitter;
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;
@@ -353,9 +353,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
 			}
-			if(typeof enableFacebookDialog == 'function' && gFacebookEnabled) {
-				enableFacebookDialog();
-			}
+
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();

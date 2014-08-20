@@ -33,6 +33,14 @@ define(function() {
 		gIsOrgAdministrator: false,
 		gViewIdx: 0,
 		gSelector: new Selector(),
+		
+		gRegions: undefined,
+		gRegion: {},
+		
+		gEmailEnabled: false,
+		gFacebookEnabled: false,
+		gTwitterEnabled: false,
+		
 		model: new Model()
 
 	}
@@ -300,7 +308,7 @@ define(function() {
 				  type: "POST",
 				  contentType: "application/json",
 				  dataType: "json",
-				  url: "/surveyKPI/surveys/" + globals.gCurrentSurvey + "/save_settings",
+				  url: "/surveyKPI/surveys/save_settings/" + globals.gCurrentSurvey,
 				  data: {
 					  settings: settings
 				  },
@@ -308,6 +316,7 @@ define(function() {
 					  removeHourglass();
 					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
+					  alert("Settings saved"); 
 				  }, error: function(data, status) {
 					  removeHourglass();
 					  alert("Failed to update survey settings"); 

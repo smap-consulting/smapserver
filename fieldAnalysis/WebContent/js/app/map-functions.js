@@ -235,34 +235,36 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 		// Add any data series to the options panel
 		$btnSelect = $('#mDataOptions' + pId1);
 		
-		j = -1;
-		btns = [];
-
-		$btnSelect.append('<p>Panel: ' + title + ', Question: ' + data.question + 
-				', Function: ' + fn + '</p>');
-		$btnSelect.append('<div id="mDataOptions' + pId1 + '_' + pId2 +'"></div>');
-		
-		$btnLayerSelect = $('#mDataOptions' + pId1 + "_" + pId2);
-		
-		for(i = 0; i < pareto.length; i++) {		// Add in descending order of series total value
-			btns[++j] = '<input type="radio" id="radio';
-			btns[++j] = pId1 + '_' + pId2 + '_' + i; 
-			btns[++j] = '" name="radio' + pId1 + '_' +  pId2;
-			btns[++j] = '" value="' + pareto[i] + '"'; 
-			if(i == 0) {
-				btns[++j] = ' checked="checked"';
+		if($btnSelect.length) {
+			j = -1;
+			btns = [];
+	
+			$btnSelect.append('<p>Panel: ' + title + ', Question: ' + data.question + 
+					', Function: ' + fn + '</p>');
+			$btnSelect.append('<div id="mDataOptions' + pId1 + '_' + pId2 +'"></div>');
+			
+			$btnLayerSelect = $('#mDataOptions' + pId1 + "_" + pId2);
+			
+			for(i = 0; i < pareto.length; i++) {		// Add in descending order of series total value
+				btns[++j] = '<input type="radio" id="radio';
+				btns[++j] = pId1 + '_' + pId2 + '_' + i; 
+				btns[++j] = '" name="radio' + pId1 + '_' +  pId2;
+				btns[++j] = '" value="' + pareto[i] + '"'; 
+				if(i == 0) {
+					btns[++j] = ' checked="checked"';
+				}
+				btns[++j] = '/><label for="radio'+ pId1 + '_' + pId2 + '_' + i + '">';
+				btns[++j] = cols[pareto[i]];
+				btns[++j] = '</label>';
 			}
-			btns[++j] = '/><label for="radio'+ pId1 + '_' + pId2 + '_' + i + '">';
-			btns[++j] = cols[pareto[i]];
-			btns[++j] = '</label>';
+			
+			$btnLayerSelect.append(btns.join('')).buttonset();
+			$btnLayerSelect.find('input').change(function() {
+				data.optionIdx = $(this).val();
+				data.option = cols[data.optionIdx];
+				addLayer(data, pId1, pId2, view, title, map);
+			});
 		}
-		
-		$btnLayerSelect.append(btns.join('')).buttonset();
-		$btnLayerSelect.find('input').change(function() {
-			data.optionIdx = $(this).val();
-			data.option = cols[data.optionIdx];
-			addLayer(data, pId1, pId2, view, title, map);
-		});
 	} 
 	
 	// Set the option index to the selected button

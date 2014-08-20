@@ -10,8 +10,20 @@
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<link rel="stylesheet" href="css/app.css" />
-	<!--  <link rel="stylesheet" href="/css/foundation.min.css" /> -->
+	<!--  <link rel="stylesheet" href="css/app.css" /> -->
+	<link rel="stylesheet" href="/css/foundation.min.css" /> 
+	<style>
+	.top-bar img {
+		max-height: 40px;
+		padding-right: 5px;
+	}
+	.center {
+		text-align: center;
+	}
+	.maxwidth {
+		width: 100%;
+	}
+	</style>
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
@@ -49,9 +61,9 @@
 	
 	<div class="uno" id="main_page">
 	
-		<div class="row center"><img src="images/cropped-blog1.jpg"/></div>
-		<h1 class="center"><span class="lang" data-lang="ss_welcome">Welcome</span> 14.05</h1>
-		<p class="center"><span class="lang" data-lang="ss_welcome2">Description:</span> <a href="http://blog.smap.com.au/smap-version-14-05/"></a>.</p>
+		<div class="row center"><img class="maxwidth" src="images/cropped-blog1.jpg"/></div>
+		<h1 class="center"><span class="lang" data-lang="ss_welcome">Welcome</span> 14.08</h1>
+		<h2 class="center"><a href="http://blog.smap.com.au/update-to-14-08-stata-export-and-translation-editor/"><span class="lang" data-lang="ss_welcome2">Description:</span> </a></h2>
 		<div class="mainButtons center">
 		
 				<!--
@@ -62,12 +74,12 @@
 			
 		</div>
 		<div class="row center">
-			<div class="large-push-6 large-6 columns">
-				<a href="fieldTask.apk" class="button" style="width:220px; height:220px;"><img width="200px" height="200px" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
+			<div class="large-6 columns">
+				<a href="fieldTask.apk" class="button" style="width:220px; height:220px; padding:5px;"><img width="200" height="200" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
 				<h1 class="lang" data-lang="ss_ft">Get FT</h1>
 			</div>
-			<div class="large-pull-6 large-6 columns">
-				<a href="smapUploader.jar" class="button" style="width:220px; height:220px;"><img width="200px" height="200px" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
+			<div class="large-6 columns">
+				<a href="smapUploader.jar" class="button" style="width:220px; height:220px; padding:5px;"><img width="200" height="200" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
 				<h1 class="lang" data-lang="ss_su">Get SU</h1>
 			</div>
 		</div>

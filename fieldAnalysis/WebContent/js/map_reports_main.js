@@ -17,7 +17,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Entry point for report list page
+ * Entry point for report map page
  */
 
 requirejs.config({
@@ -38,7 +38,6 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
@@ -57,11 +56,12 @@ require([
          'crf', 
          'localise', 
          'app/map-functions',
-         'app/map-reports',
-         'openlayers'
+         'app/map-reports'
          
          ], function($, modernizr, rmm, crf, localise, map_functions, map_reports) {
 	
-	var data_source = $("#data_source").text();
-	getData(data_source);
+	$(document).ready(function() {		// Wait for Openlayers
+		var data_source = $("#data_source").text();
+		getData(data_source);
+	});
 });

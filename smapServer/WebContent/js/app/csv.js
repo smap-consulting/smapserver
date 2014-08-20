@@ -61,12 +61,30 @@ define([
 			setHtml('#csvList', globals.model.survey.surveyManifest);
 			globals.model.settingsChange();
 			$('#upload_media').foundation('reveal', 'close');
+			
+			var postData = new FormData($( "#media_controls" )[0]);
+			
+			// Submit the upload to the server
+			addHourglass();
+			$.ajax({
+				type: "POST",
+				url: "/surveyKPI/upload/media",
+				contentType: false,
+				processData: false,
+				data: postData,
+				 success: function(data, status) {
+					  removeHourglass();
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  alert("Failed to submit file"); 
+				  }
+			})
+
+			return false;
 		
 		});
 		
 		$('#add_csv').off().click(function() {	
-			// Set the url to return to after submit a csv file to the server
-			$('#original_url').val(window.location.href);
 			$('#sId').val(globals.gCurrentSurvey);
 			$('#upload_media').foundation('reveal', 'open');
 		});

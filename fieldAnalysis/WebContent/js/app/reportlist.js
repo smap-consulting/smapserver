@@ -27,16 +27,13 @@ var reportList = null,
 	maxDate = null,
 	exportCss =  '.post-image {width:600px;} ' +
 		'table,th,td {border:1px solid black}',
-	gAccessToken,		// Facebook Access Token
-	gFacebookEnabled = false,
-	gEmailEnabled = false,
-	gTwitterEnabled = false,
-	gData,
-	gFeatures = [],
-	gMap,
-	gOverallBounds,
-	gSelectResultsControl,
-	gResultsLayer;
+	gAccessToken,			// Facebook Access Token
+	gData,					// This java script file only			
+	gFeatures = [],			// This java script file only
+	gMap,					// This java script file only
+	gOverallBounds,			// This java script file only
+	gSelectResultsControl,	// This java script file only
+	gResultsLayer;			// This java script file only
 
 $(document).ready(function() {
 	
@@ -114,6 +111,13 @@ $(document).ready(function() {
  * Get the reports for this project
  */
 function getReportList(projectId) {
+	
+	// Enable the facebook dialog
+	if(globals.gFacebookEnabled) {
+		enableFacebookDialog();
+	}
+	
+	// Get the reports
 	if(projectId != -1) {
 	 	$.ajax({
 			url: "/surveyKPI/reports/list/" + projectId,
@@ -204,7 +208,7 @@ function updateListView() {
 			html[++th] = '<div class="post-right">';
 			var reportUrl = gData[index].smap.report_url;
 
-			if(gEmailEnabled) {
+			if(globals.gEmailEnabled) {
 				var mailtoSubject = escape(gData[index].title);
 				var desc = gData[index].smap.description;
 				if(desc && desc.length > 100) {	// Only send first 100 characters of description
@@ -213,12 +217,12 @@ function updateListView() {
 				var mailtoBody = escape(reportUrl + '\n\n' + desc);
 				html[++th] = '<a class="publish_button email_button" href="mailto:?subject=' + mailtoSubject + '&body=' + mailtoBody + '">Email</a>';
 			}
-			if(gFacebookEnabled) {
+			if(globals.gFacebookEnabled) {
 				html[++th] = '<button class="publish_button fb_post_button" type="button" value="';
 				html[++th] = index;
 				html[++th] = '">Facebook</button>';
 			}
-			if(gTwitterEnabled) {
+			if(globals.gTwitterEnabled) {
 				var hashtags = "#smaptesting";
 				var tweetTitle = gData[index].title;
 				var tweetLength = hashtags.length + reportUrl.length + tweetTitle.length;

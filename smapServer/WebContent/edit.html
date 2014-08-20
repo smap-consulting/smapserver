@@ -18,6 +18,23 @@
 	<style> 
 		textarea.lang_a, textarea.lang_b {overflow: hidden; word-wrap: break-word; resize: horizontal; height: 66px;}
 		textarea.lang_b:focus {background-color: green; }
+		.csv_btn_rem {
+			display: inline;
+			font-size: 18px;
+			height: 24px;
+			width: 24px;
+			line-height: 14px;
+			text-align: center;
+			margin: 1px;
+			padding: 2px;
+			font-weight: bold;
+			text-decoration: none;
+			color: white;
+			visited: white;
+			border: 1px solid #a1a1a1;
+			border-radius: 2px;
+			background: rgba(0, 60, 136, 0.5);
+		}
 	</style>
     
  
@@ -238,13 +255,12 @@
 	
 	<div id="upload_media" class="reveal-modal" data-reveal>
   		<h2>Upload Media</h2>
-  			<form id="media_controls" name="add_media_form" action="http://localhost/surveyKPI/upload/media" enctype="multipart/form-data" method="POST" 
+  			<form id="media_controls" name="add_media_form" action="	/surveyKPI/upload/media" enctype="multipart/form-data" method="POST" 
 				class="ui-body ui-body-a ui-corner-all">
 			<input id="sId" type="hidden" name="survey_id" value="" style="display:none;"/>	
-			<input id="original_url" type="hidden" name="original_url" value="" style="display:none;"/>								
 			<label for="file">File:</label> 
 			<input type="file" name="tname" id="file" size="30"/><br/>
-		<input id="upload_media_done" type="submit" class="button radius text-center" value="Upload">
+			<input id="upload_media_done" class="button radius text-center" value="Upload">
 		</form>
 
   		<a class="close-reveal-modal">&#215;</a>
