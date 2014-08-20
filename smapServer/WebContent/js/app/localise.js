@@ -25,7 +25,7 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 				var $this = $(this);
 				var code = $this.data("lang");
 				if(code) {		
-					$(this).html(lang[code]);
+					$this.html(lang[code]);
 				}
 			});
 			if(typeof responsiveMobileMenu === "function") {

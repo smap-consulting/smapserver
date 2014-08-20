@@ -16,7 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-var gWait = 0;
+var gWait = 0;		// This javascript file only
 
 /*
  * ===============================================================
