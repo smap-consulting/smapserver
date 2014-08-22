@@ -28,8 +28,6 @@ require([
          'app/localise'
          ], function($, common, jquery_ui, responsivemobilemenu, globals, localise) {
 
-var	gSurveys;
-
 $(document).ready(function() {
 	
 	addHourglass();
@@ -78,9 +76,8 @@ function getSurveysForList(projectId) {
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
-			gSurveys = data;
-			completeSurveyList();
 			removeHourglass();
+			completeSurveyList(data);
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
@@ -96,16 +93,16 @@ function getSurveysForList(projectId) {
 /*
  * Fill in the survey list
  */
-function completeSurveyList() {
+function completeSurveyList(surveyList) {
 	
 	$('#forms').empty();
 
-	for(i = 0; i < gSurveys.length; i++) {
+	for(i = 0; i < surveyList.length; i++) {
 
 		var $link = $('<a />').attr("class", "formLink")
-        	.text(gSurveys[i].displayName);
+        	.text(surveyList[i].displayName);
      
-		$link.attr("href", "/webforms/formXML.php"+"?key=" + gSurveys[i].ident)
+		$link.attr("href", "/webforms/formXML.php"+"?key=" + surveyList[i].ident)
 			.attr("target", "_blank")
 			.addClass("online");
 		

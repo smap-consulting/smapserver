@@ -425,7 +425,6 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 			success: function(data) {
 				
 				removeHourglass();
-				gSurveys = data;
 				$elem.empty();
 				if(addAll) {
 					$elem.append('<option value="_all">All Surveys</option>');	

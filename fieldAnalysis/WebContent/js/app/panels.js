@@ -781,24 +781,6 @@ function expandFunction($this) {
 	
 }
 
-
-// Get the data for the specified view
-function getData(view) {
-	
-	if(view.qId != "-1") {			// Question level results
-		getResults(view);
-		
-	} else {				// Whole of survey results
-		var sMeta = globals.gSelector.getSurvey(view.sId);
-		if(!sMeta) {
-			 getSurveyMetaSE(view.sId, view, true, false, true, view.dateQuestionId);
-		 } else {
-			addDatePickList(sMeta);
-			getSurveyDataSE(view.sId, view);	
-		 }
-	}
-}
-
 /*
  * Save the panels to the database
  */

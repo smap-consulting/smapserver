@@ -325,7 +325,7 @@ a:hover {
 	right: 0px; 
 	left: 20%; 
 	bottom: 0px; 
-	overflow:auto;
+	overflow:none;
 }
 
 #scroll_zone {

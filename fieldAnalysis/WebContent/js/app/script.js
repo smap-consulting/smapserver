@@ -16,7 +16,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-var gTasksEnabled = false;
 var viewIdx = 0;
 
 $(document).ready(function() {
@@ -640,6 +639,8 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 
 	var url = "/surveyKPI/exportSurvey/";
 	
+	filename = filename.replace('/', '_');	// remove slashes from the filename
+	
 	exp_ro = exp_ro || false;
 	
 	if(!format) {
@@ -669,6 +670,8 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 		form,
 		ways = [];
 		
+	filename = filename.replace('/', '_');	// remove slashes from the filename
+	
 	exp_ro = exp_ro || false;
 	
 	url += sId;
@@ -700,6 +703,8 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	var url = "/surveyKPI/exportSurveyMisc/";
 	
 	exp_ro = exp_ro || false;
+	
+	filename = filename.replace('/', '_');	// remove slashes from the filename
 	
 	// Remove the ":false" from the form id which used by xls exports
 	form = form.substring(0, form.lastIndexOf(":"));

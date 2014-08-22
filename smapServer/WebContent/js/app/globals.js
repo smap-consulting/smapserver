@@ -37,9 +37,17 @@ define(function() {
 		gRegions: undefined,
 		gRegion: {},
 		
+		// Reports
 		gEmailEnabled: false,
 		gFacebookEnabled: false,
 		gTwitterEnabled: false,
+		
+		// Tasks
+		gCurrentUserId: undefined,
+		gCurrentUserName: undefined,
+		gAssignmentsLayer: undefined,
+		gPendingUpdates: [],
+		gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
 		
 		model: new Model()
 
