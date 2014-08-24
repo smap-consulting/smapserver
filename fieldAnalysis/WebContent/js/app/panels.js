@@ -22,7 +22,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 // HTML fragments for constructing panels
 
-define(['jquery', 'jquery_ui', 'localise', 'common', 'globals'], function($, ui, lang, common, globals) {
+define(['jquery', 'jquery_ui', 'localise', 'common', 'globals','app/script'], function($, ui, lang, common, globals) {
 	
 var hstart = '<li class="ui-state-default pSmall" id="p';
 var hstart2 = '">';
