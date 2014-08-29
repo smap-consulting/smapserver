@@ -272,10 +272,12 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 		data.optionIdx = $btnLayerSelect.find('input[type=radio]:checked').val();
 		data.option = cols[data.optionIdx];
 
+	} else if(data.optionIdx) {
+		// This is probably a report with no ability to select option, in which case leave set to the optionIdx and option specified in the report data
+	
 	} else {
-		// This is a report with no ability to select option, leave set to the optionIdx and option specified in the report data
-		//data.optionIdx = pareto[0];		// Default to showing the first item 
-		//data.option = cols[pareto[0]];
+		data.optionIdx = pareto[0];		// Default to showing the first item 
+		data.option = cols[pareto[0]];
 	}
 
 	

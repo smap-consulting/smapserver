@@ -26,6 +26,7 @@ if (Modernizr.localstorage) {
 
 requirejs.config({
     baseUrl: 'js/libs',
+    waitSeconds: 0,
     paths: {
      	app: '../app',
     	i18n: '../../../../js/libs/i18n',

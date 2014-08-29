@@ -3,6 +3,7 @@
     //mainConfigFile: '../WebContent/js/dashboard_main.js',
     optimize: 'none',
     wrapShim: false,
+    waitSeconds: 0,
     baseUrl: 'js/libs',
     paths: {
     	app: '../app',

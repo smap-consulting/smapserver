@@ -28,6 +28,7 @@ if (Modernizr.localstorage) {
 require.config({
     baseUrl: 'js/libs',
     locale: gUserLocale,
+    waitSeconds: 0,
     paths: {
      	app: '../app',
      	i18n: '../../../../js/libs/i18n',
@@ -89,7 +90,7 @@ require.config({
     	}
     });
 
-require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globals',
+require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
          
          'jqplot/jquery.jqplot.min',
          'jqplot/plugins/jqplot.highlighter.min',
@@ -125,5 +126,5 @@ require(['jquery', 'jquery_ui', 'modernizr', 'rmm', 'common', 'localise', 'globa
          'crf',
          'openlayers'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
+         ], function($, jquery_ui, rmm, common, localise, globals) {});
 

@@ -22,6 +22,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 requirejs.config({
     baseUrl: '/fieldAnalysis/js/libs',
+    waitSeconds: 0,
     paths: {
      	app: '../app',
     	i18n: '../../../../js/libs/i18n',
