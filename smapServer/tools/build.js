@@ -2,6 +2,7 @@
     appDir: '../WebContent',
 //    mainConfigFile: '../WebContent/js/index.js',
     locale: "en",
+    waitSeconds: 0,
     wrapShim: false,
     baseUrl: 'js/libs',
     optimize: 'none',

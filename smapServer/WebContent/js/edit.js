@@ -15,9 +15,17 @@ You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
+
 "use strict";
 require.config({
     baseUrl: 'js/libs',
+    waitSeconds: 0,
+    locale: gUserLocale,
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',

@@ -1,5 +1,6 @@
 requirejs.config({
     baseUrl: 'js/libs',
+    waitSeconds: 0,
     paths: {
     	app: '../app',
     	jquery: [
