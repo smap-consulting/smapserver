@@ -49,14 +49,6 @@ function setTableSurvey(view) {
 		});
 	}
 	
-	// If an arbitrary table name has been set as the top table in the view then use that instead of the real top level table
-	// The top table is just the table that gets displayed first
-	/*
-	if(view.currentTableName) {
-		topTable = view.currentTableName;
-		view.currentTableName = undefined;
-	} 
-	*/
 
 	
 	/*
@@ -80,15 +72,19 @@ function setTableSurvey(view) {
 	}
 	$tabSelect.append(btns.join(''));
 	$tabSelect.buttonset();
-	$tabSelect.find('input').change(function() {
-		tableIdx = $tabSelect.find('input:checked').val();
-		showTable(tableIdx, view, data[tableIdx], data[tableIdx].tableName);
-	});
+	
+	function addChangeFunction (ident) {
+		$tabSelect.find('input').change(function() {
+			tableIdx = $tabSelect.find('input:checked').val();
+			showTable(tableIdx, view, data[tableIdx], data[tableIdx].tableName, ident);
+		});
+	}
+	addChangeFunction(sMeta.survey_ident);
 
 	if(typeof currentTable != "undefined") {
 		// note: the current table may not have been loaded yet if the panels were re-loaded while data
 		// was still being retrieved
-		showTable(currentTable, view, data[currentTable], data[currentTable].tableName);
+		showTable(currentTable, view, data[currentTable], data[currentTable].tableName, sMeta.survey_ident);
 	}
 
 	// Enable the export and delete button
@@ -98,6 +94,28 @@ function setTableSurvey(view) {
 	$selFoot.find('.tDelete').button().click(function() {
 		deleteAllTables(view.sId);
 	});
+	
+	 // Initialse the edit record dialog
+	 $('#edit_record_dialog').dialog(
+		{
+			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
+			show:"drop",
+			width:300,
+			zIndex: 2010,
+			buttons: [
+		        {
+		        	text: "Done",
+		        	click: function() {
+		        		
+		        		$(this).dialog("close");
+		        	}
+		        }
+			]
+		}
+	);
+	 $('#btn_edit_record').button().onclick(function(){
+		 $(this).close();
+	 });
 
 
 }
@@ -152,7 +170,7 @@ function deleteAllTables(sId) {
 
 }
 
-function showTable(tableIdx, view, tableItems, tableName) {
+function showTable(tableIdx, view, tableItems, tableName, survey_ident) {
 
 	var elemMain = 'table_panel' + view.pId,
 		$selMain = $('#'+ elemMain);
@@ -168,7 +186,7 @@ function showTable(tableIdx, view, tableItems, tableName) {
 	}
 	
 	if(tableItems && tableItems.features && tableItems.features.length > 0) {
-		generateTable(elemMain, tableItems);
+		generateTable(elemMain, tableItems, "", survey_ident);
 		addRightClickToTable($selMain, view.sId, view);
 		$selMain.find('table').tablesorter();
 		addMoreLessButtons($selMain, view, tableName, tableItems);
@@ -219,7 +237,7 @@ function setTableQuestion(view) {
 	 * Get all the features for all the items in this form, 
 	 */ 
 	if(data) {
-		generateTable(elemMain, data, disp_desc);
+		generateTable(elemMain, data, disp_desc, survey_ident);
 		addRightClickToTable($selMain, view.sId);
 	} else {
 		$selHead.html("No data available");
@@ -328,11 +346,28 @@ function addRightClickToTable($elem, sId, view) {
 			var pkey = $this.attr("pkey");
 			var tableName = $this.closest('table').attr("name");
 			var value = $this.text();
-			toggleBad($(this), tableName, pkey, value, survey, theView);
+			toggleBad($this, tableName, pkey, value, survey, theView);
+			return false;
+		});
+	}
+	
+	function tableEditFn(survey, theView) {
+		$elem.find('.menu_button').off().click(function(e) {
+			var $this = $(this);
+			var pkey = $this.data("pkey");
+			var survey_ident = $this.data("ident");
+			
+			$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
+					"&datakey=prikey&datakeyvalue="+pkey)
+					.attr("target", "_blank");
+			
+			$("#edit_record_dialog").dialog("open");
+			//alert($(this), tableName, pkey, value, survey, theView);
 			return false;
 		});
 	}
 	
 	toggleBadFn(sId, view);
+	tableEditFn(sId, view);
 }
 

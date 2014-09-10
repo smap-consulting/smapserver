@@ -88,6 +88,9 @@
 	</div> <!-- end of #container -->
 	
 	<!-- Popups -->
+	<div id="edit_record_dialog" style="display:none;">		
+		<a id="btn_edit_record">Edit</a>
+	</div>
 	
 	<!-- Report Popup -->
 	<div id="reportContainer" style="display:none;">		
@@ -132,6 +135,7 @@
 					<option value="kml">KML / KMZ</option>
 					<option value="vrt">VRT / CSV</option>
 					<option value="stata">Stata / CSV</option>
+					<option value="thingsat">Thingsat</option>
 				</select><br/>	
 				<label for="exportReadOnly">Export notes:</label>
 				<input type="checkbox" id="exportReadOnly"/><br/>
@@ -164,6 +168,52 @@
 					<div class="shapeforms"></div>
 				</fieldset>
 			</div>
+		</form>
+		<div class="showthingsat" style="display:none;">
+			<button id="btn_edit_thingsat">Edit Survey Model</button>	
+			<div id="ta_model_show"></div>
+		</div>
+	</div>
+	
+	<!-- Popup to edit thingsat model -->
+	<div id="dialog_edit_ta" title="Edit Thingsat Model" style="display:none;">
+		<div id="ta_model_edit"></div>
+		<div id="ta_items_edit"></div>
+	</div>
+	
+	<!-- Popup to edit thingsat node or relation / link -->
+	<div id="dialog_element_edit_ta" title="Edit Thingsat Element" style="display:none;">
+		<form>
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Type and Title</legend>
+				<label for="ta_name">Name</label>
+				<input type="text" id="ta_name"/><br/>
+				<label for="ta_type">Type</label>
+				<select id="ta_type">
+					<option value="node">Node</option>
+ 					<option value="link">Relation</option>
+				</select><br/>	
+				<div class="ta_node_only">
+					<p>Select a form as node Properties must all be from the same form</p>
+					<div class="taforms"></div>
+				</div>
+			</fieldset>	
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Properties</legend>
+				<button id="ta_add_property">Add Property</button>
+				<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Unique</th>
+						<th>Delete</th>
+					</tr>
+				</thead>
+				<tbody id="ta_property_list">
+				</tbody>
+				</table>
+			</fieldset>	
+				
 		</form>
 	</div>
 	

@@ -103,26 +103,29 @@ function getMyProjects(projectId, callback, getAll) {
  */
 function saveCurrentProject(projectId, surveyId) {
 
-	var user = {
-			current_project_id: projectId,
-			current_survey_id: surveyId
-			};
-	var userString = JSON.stringify(user);
-	
-	addHourglass();
-	$.ajax({
-		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
-		  url: "/surveyKPI/user",
-		  data: { user: userString },
-		  success: function(data, status) {
-			  removeHourglass();
-		  }, error: function(data, status) {
-			  removeHourglass();
-			  console.log("Error: Failed to save current project");
-		  }
-	});
+	if(surveyId > 0 || projectId > 0) {
+		
+		var user = {
+				current_project_id: projectId,
+				current_survey_id: surveyId
+				};
+		var userString = JSON.stringify(user);
+		
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  url: "/surveyKPI/user",
+			  data: { user: userString },
+			  success: function(data, status) {
+				  removeHourglass();
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  console.log("Error: Failed to save current project");
+			  }
+		});
+	}
 }
 
 
@@ -492,7 +495,9 @@ function getLanguageList(sId, callback, addNone, selector, setGroupList) {
 				if(data[0]) {
 					getQuestionList(sId, data[0].name, "-1", "-1", theCallback, setGroupList, undefined);	// Default language to the first in the list
 				} else {
-					theCallback();
+					if(typeof theCallback === "function") {
+						theCallback();
+					}
 				}
 				
 			},

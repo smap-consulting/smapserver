@@ -20,7 +20,7 @@ var gTab = [];
 	gIdx = -1;
 
 
-function generateTable(elementId, data, disp_desc) {
+function generateTable(elementId, data, disp_desc, survey_ident) {
 	
 	console.log("generate table");
 	var i,j,k,
@@ -77,7 +77,7 @@ function generateTable(elementId, data, disp_desc) {
 		if(data.totals.start_key > 0) {
 			// Add less
 			gTab[++gIdx] = '<button class="get_less" value="';
-			gTab[++gIdx] = 0;
+			gTab[++gIdx] = survey_ident;
 			gTab[++gIdx] = '">&lt;&lt;&lt;</button>';
 		} else {
 			// Add disabled less
@@ -133,6 +133,7 @@ function generateTable(elementId, data, disp_desc) {
 	} else if(isPeriod ){
 		gTab[++gIdx] = '<th>' + data.interval + '</th>';
 	} else {
+		gTab[++gIdx] = '<th></th>';			// Add empty header for edit button
 		gTab[++gIdx] = '<th>Record</th>';
 	}
 	
@@ -185,15 +186,28 @@ function generateTable(elementId, data, disp_desc) {
 			
 			gTab[++gIdx] = '<tr>';
 			
-			gTab[++gIdx] = '<td>';
+			
 			if(isGrouped && !isPeriod) {
+				gTab[++gIdx] = '<td>';
 				gTab[++gIdx] = groups[i].properties.group_label;
+				gTab[++gIdx] = '</td>';
 			} else if(isPeriod) {
+				gTab[++gIdx] = '<td>';
 				gTab[++gIdx] = groups[i].properties.period;
+				gTab[++gIdx] = '</td>';
 			} else {
+				gTab[++gIdx] = '<td>';
+				gTab[++gIdx] = '<div class="menu_button context_table" data-pkey="';
+					gTab[++gIdx] = groups[i].properties.prikeys[0];
+					gTab[++gIdx] = '" data-ident="';
+					gTab[++gIdx] = survey_ident;
+					gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
+				gTab[++gIdx] = '</td>';
+				gTab[++gIdx] = '<td>';
 				gTab[++gIdx] = groups[i].properties.prikeys[0];
+				gTab[++gIdx] = '</td>';
 			} 
-			gTab[++gIdx] = '</td>';
+			
 	
 			for(k = 0; k < cols.length; k++) {
 				

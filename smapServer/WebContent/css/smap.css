@@ -1188,3 +1188,24 @@ span.selectProject
 .edit_section {
 	margin-top: 50px;
 }
+
+.menu_button {
+	display:block;
+}
+
+.menu_button span {
+	display:block;
+	margin-top:4px;
+	height:2px;
+	width:24px;
+	background:#333333;
+	width:25px;
+}
+
+.menu_button:hover {
+	cursor:pointer;
+}
+
+#btn_edit_record, #btn_assign_record, #btn_mark_bad, #btn_edit_thingsat {
+	width: 100%;
+}

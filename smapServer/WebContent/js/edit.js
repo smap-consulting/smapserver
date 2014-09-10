@@ -342,6 +342,7 @@ function refreshView(mode) {
 		
 	} else if(mode === "settings") {
 		$('#set_survey_name').val(globals.model.survey.displayName);
+		$('#set_survey_ident').val(globals.model.survey.ident);
 		ssc.setHtml('#sscList', globals.model.survey.sscList);
 		csv.setHtml('#csvList', globals.model.survey.surveyManifest);
 		showSettings();

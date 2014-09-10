@@ -50,7 +50,8 @@ require.config({
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
-    	lang_location: '../../../../js'
+    	lang_location: '../../../../js',
+    	d3: '//d3js.org/d3.v3.min'
     },
     shim: {
     	'rmm': ['jquery'],

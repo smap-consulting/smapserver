@@ -48,6 +48,7 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
+			width: 350,
 			zIndex: 2000,
 			buttons: [
 		        {
@@ -59,6 +60,7 @@ $(document).ready(function() {
 		        {
 		        	text: "Export",
 		        	click: function() {
+		        		
 		        		var sId = $('#export_survey option:selected').val(),
 		        			language = $('#export_language option:selected').val(),
 		        			displayName = $('#export_survey option:selected').text(),
@@ -107,6 +109,33 @@ $(document).ready(function() {
 		}
 	);
 	
+	/*
+	 * Thingsat edit dialog
+	 */	
+	$('#dialog_edit_ta').dialog(
+		{
+			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
+			show:"drop",
+			width: 350,
+			maxHeight: 700,
+			zIndex: 3000,
+			buttons: [
+		        {
+		        	text: "Cancel",
+		        	click: function() {
+		        		$(this).dialog("close");
+		        	}
+		        },
+		        {
+		        	text: "Save",
+		        	click: function() {
+		        	}
+	
+		        }
+			]
+		}
+	);
+	
 	
 	// Change event on export dialog survey select
 	$('#export_survey').change(function() {
@@ -131,26 +160,33 @@ $(document).ready(function() {
 			addFormPickList(sMeta);
 		}
 		
+		// Update the thingsat model if we changed the survey
+		if($('#exportformat').val() === "thingsat") {
+			showModel();
+		}
+		
  	});
 	
 	/*
 	 * Change event on export format select
 	 */
-	//$('.exportformat').change(function(){
-	//	var format = $('.exportformat:checked').attr("value");
 	$('#exportformat').change(function(){
 		var format = $('#exportformat').val();
+		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showthingsat').hide();
 			$('.showosm').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showspreadsheet,.showxls,.showosm').hide();
+			$('.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
 			$('.showshape').show();
 		} else if(format === "stata") {
-			$('.showxls,.showosm').hide();
+			$('.showxls,.showosm,.showthingsat').hide();
 			$('.showshape,.showspreadsheet').show();
-		} else {
-			$('.showshape,.showspreadsheet,.showxls,.showosm').hide();
+		} else if(format === "thingsat") {
+			$('.showxls,.showosm,.showshape,.showspreadsheet').hide();
+			showModel();			// Show the thingsat model
+		}else {
+			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
 			$('.showxls,.showspreadsheet').show();
 		}
 	});
@@ -173,6 +209,18 @@ $(document).ready(function() {
 			]
 		}
 	);
+	
+	// Edit thingsat button
+	$('#btn_edit_thingsat').button().off().click(function(){
+		require(['app/neo_model'], function(neo_model) {
+			var sId = $('#export_survey option:selected').val();
+			if(sId != -1) {
+				neo_model.showModel('#ta_model_edit', sId, 300, 200);
+				neo_model.showTable('#ta_items_edit', sId);
+			}
+		});
+		$('#dialog_edit_ta').dialog("open");	
+	});
 
 });
 
@@ -243,6 +291,18 @@ $(window).load(function() {
  	
 });
 
+/* 
+ * Show a newo4J model of the survey
+ */
+function showModel() {
+	require(['app/neo_model'], function(neo_model) {
+		var sId = $('#export_survey option:selected').val();
+		if(sId != -1) {
+			$('.showthingsat').show();
+			neo_model.showModel('#ta_model_show', sId, 300, 200);
+		}
+	});
+}
 /*
  * Add a list of forms to pick from during export
  */
@@ -257,11 +317,10 @@ function addFormPickList(sMeta) {
 		if(typeof sMeta.forms[i].p_id === "undefined") {
 			$(".osmforms").html(addFormToList(sMeta.forms[i], sMeta, 0, true, false));
 			$(".selectforms").html(addFormToList(sMeta.forms[i], sMeta, 0, false, false));
-			$(".shapeforms").html(addFormToList(sMeta.forms[i], sMeta, 0, true, true));
+			$(".shapeforms,.taforms").html(addFormToList(sMeta.forms[i], sMeta, 0, true, true));
 		}
 	}
 
-	(h.join(''));
 	$("button",".selectforms").click(function() {
 		var $this = $(this),
 			$check = $this.parent().find("input"),

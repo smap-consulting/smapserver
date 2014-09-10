@@ -49,6 +49,9 @@ define(function() {
 		gPendingUpdates: [],
 		gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
 		
+		// Thingsat
+		gTaElement: {},
+		
 		model: new Model()
 
 	}
