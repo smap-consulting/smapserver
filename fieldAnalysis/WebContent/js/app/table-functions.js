@@ -76,8 +76,8 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 		gTab[++gIdx] = '<div class="get_less_more">';
 		if(data.totals.start_key > 0) {
 			// Add less
-			gTab[++gIdx] = '<button class="get_less" value="';
-			gTab[++gIdx] = survey_ident;
+			gTab[++gIdx] = '<button class="get_less" value="';	
+			//gTab[++gIdx] = survey_ident;	// No value required for less
 			gTab[++gIdx] = '">&lt;&lt;&lt;</button>';
 		} else {
 			// Add disabled less

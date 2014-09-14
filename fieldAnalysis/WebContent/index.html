@@ -193,18 +193,31 @@
 					<option value="node">Node</option>
  					<option value="link">Relation</option>
 				</select><br/>	
-				<div class="ta_node_only">
-					<p>Select a form as node Properties must all be from the same form</p>
-					<div class="taforms"></div>
+				<div class="link_only" style="display:none;">
+					<label for="ta_source">From</label>
+					<select id="ta_source"></select>
+					<label for="ta_target">To</label>
+					<select id="ta_target"></select>
 				</div>
 			</fieldset>	
 			<fieldset class="ui-widget-content">
 				<legend class="ui-widget-header ui-corner-all">Properties</legend>
+				<table>
+				<thead>
+					<tr>
+						<th>Question</th><th>Include</th><th>Unique</th>
+					</tr>
+				</thead>
+				<tbody id="ta_property_list">
+				</tbody>
+				</table>
+				
+				<!--  
 				<button id="ta_add_property">Add Property</button>
 				<table>
 				<thead>
 					<tr>
-						<th>Name</th>
+						<th>Question</th>
 						<th>Unique</th>
 						<th>Delete</th>
 					</tr>
@@ -212,6 +225,7 @@
 				<tbody id="ta_property_list">
 				</tbody>
 				</table>
+				-->
 			</fieldset>	
 				
 		</form>

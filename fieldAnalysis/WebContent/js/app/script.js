@@ -79,6 +79,7 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly);
+		        		
 		        		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv" || format === "stata") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
@@ -88,6 +89,16 @@ $(document).ready(function() {
 			        			return(false);
 		        			}		
 		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly, language);
+		        		
+		        		} else if(format === "thingsat") {
+		        			forms = $(':radio:checked', '.shapeforms').map(function() {
+		        			      return this.value;
+		        			    }).get();
+		        			if(forms.length === 0) {
+		        				alert("A form must be selected");
+			        			return(false);
+		        			}		
+		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language);
 		        		} else {
 
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
@@ -104,33 +115,6 @@ $(document).ready(function() {
 		        		$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
 		        		$(this).dialog("close");
 		        	}
-		        }
-			]
-		}
-	);
-	
-	/*
-	 * Thingsat edit dialog
-	 */	
-	$('#dialog_edit_ta').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			width: 350,
-			maxHeight: 700,
-			zIndex: 3000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		$(this).dialog("close");
-		        	}
-		        },
-		        {
-		        	text: "Save",
-		        	click: function() {
-		        	}
-	
 		        }
 			]
 		}
@@ -172,6 +156,10 @@ $(document).ready(function() {
 	 */
 	$('#exportformat').change(function(){
 		var format = $('#exportformat').val();
+		
+		// Make sure the export button is enabled as export to things at may have disabled it
+		$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
+		
 		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
 			$('.showshape,.showspreadsheet,.showxls,.showthingsat').hide();
@@ -183,7 +171,8 @@ $(document).ready(function() {
 			$('.showxls,.showosm,.showthingsat').hide();
 			$('.showshape,.showspreadsheet').show();
 		} else if(format === "thingsat") {
-			$('.showxls,.showosm,.showshape,.showspreadsheet').hide();
+			$('.showxls,.showosm').hide();
+			$('.showshape,.showspreadsheet').show();
 			showModel();			// Show the thingsat model
 		}else {
 			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
@@ -213,13 +202,29 @@ $(document).ready(function() {
 	// Edit thingsat button
 	$('#btn_edit_thingsat').button().off().click(function(){
 		require(['app/neo_model'], function(neo_model) {
-			var sId = $('#export_survey option:selected').val();
-			if(sId != -1) {
-				neo_model.showModel('#ta_model_edit', sId, 300, 200);
-				neo_model.showTable('#ta_items_edit', sId);
+			var sId = $('#export_survey option:selected').val(),
+				language = $('#export_language option:selected').val(),
+				form,
+				forms = $(':radio:checked', '.shapeforms').map(function() {
+					return this.value;
+			    }).get();
+			
+			var sMeta = globals.gSelector.getSurvey(sId);
+			
+			if(forms.length === 0) {
+				alert("A form must be selected");
+				return(false);
 			}
-		});
-		$('#dialog_edit_ta').dialog("open");	
+			// Remove the :false or :true from the form, this is used only by xls exports
+			form = forms[0].substring(0, forms[0].lastIndexOf(":"));
+			
+			if(sId != -1) {
+				neo_model.init(sId, form, language, sMeta.model);
+				neo_model.showModel('#ta_model_edit', 300, 200);
+				neo_model.showTable('#ta_items_edit');
+				neo_model.startEdit();
+			} 
+		});	
 	});
 
 });
@@ -298,8 +303,16 @@ function showModel() {
 	require(['app/neo_model'], function(neo_model) {
 		var sId = $('#export_survey option:selected').val();
 		if(sId != -1) {
-			$('.showthingsat').show();
-			neo_model.showModel('#ta_model_show', sId, 300, 200);
+			var sMeta = globals.gSelector.getSurvey(sId);
+			if(!sMeta) {
+				 getSurveyMetaSE(sId, {}, false, false, false, undefined, neo_model);
+			} else {
+				$('.showthingsat').show();
+				neo_model.init(sId, undefined, undefined, sMeta.model);
+				neo_model.showModel('#ta_model_show', 300, 200);
+			}
+		} else {
+				neo_model.clear('#ta_model_show');
 		}
 	});
 }
@@ -774,6 +787,27 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	url += "?form=" + form;
 	url += "&format=" + format;
 	url += "&exp_ro=" + exp_ro;
+	url += "&language=" + language;
+		
+	return encodeURI(url);
+}
+
+/*
+ * Web service handler for exporting a form as a shape file
+ */
+function exportSurveyThingsatURL (sId, filename, form, language) {
+
+	var url = "/surveyKPI/exportSurveyThingsat/";
+	
+	
+	filename = filename.replace('/', '_');	// remove slashes from the filename
+	
+	// Remove the ":false" from the form id which used by xls exports
+	form = form.substring(0, form.lastIndexOf(":"));
+	
+	url += sId;
+	url += "/" + filename;
+	url += "?form=" + form;
 	url += "&language=" + language;
 		
 	return encodeURI(url);

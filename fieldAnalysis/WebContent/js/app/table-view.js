@@ -113,7 +113,7 @@ function setTableSurvey(view) {
 			]
 		}
 	);
-	 $('#btn_edit_record').button().onclick(function(){
+	 $('#btn_edit_record').button().click(function(){
 		 $(this).close();
 	 });
 
@@ -237,7 +237,7 @@ function setTableQuestion(view) {
 	 * Get all the features for all the items in this form, 
 	 */ 
 	if(data) {
-		generateTable(elemMain, data, disp_desc, survey_ident);
+		generateTable(elemMain, data, disp_desc, undefined);
 		addRightClickToTable($selMain, view.sId);
 	} else {
 		$selHead.html("No data available");
