@@ -41,6 +41,13 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 				}
 				if(neo_model) {
 					$('.showthingsat').show();
+					
+					// Set the form to the value stored in the model
+					if(sMeta.model) {
+						var graph = JSON.parse(sMeta.model);
+						$('.osmform[value=' + graph.form + ']').prop("checked", "checked");
+					}
+					
 					neo_model.init(sId, undefined, undefined, data.model);
 					neo_model.showModel('#ta_model_show', sId, 200, 200);
 				}

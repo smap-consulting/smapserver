@@ -95,17 +95,26 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			        		
 			        		var type,
 			        			sourceIdx,
-			        			targetIdx;
+			        			targetIdx,
+			        			name;
 			        			
 			        		// validity checks
 			        		type = $('#ta_type').val();
 			        		sourceIdx = parseInt($('#ta_source').val());
 			        		targetIdx = parseInt($('#ta_target').val());
+			        		name = $('#ta_name').val();
 			        		
 			        		if(type === "link" && sourceIdx === targetIdx) {
 			        			alert("You can't link a thing to itself, select a different source or from thing");
+			        			$('#ta_source').focus();
 			        			return;
 			        		}
+			        		if(name.length === 0) {
+			        			alert("You must specify a name");
+			        			$('#ta_name').focus();
+			        			return;
+			        		}
+			        		
 			        		
 			        		/*
 			        		 * Get the property values from the property table
@@ -139,7 +148,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			        		}
 			        		taElement.label.value = $('#ta_name').val();
 			        		taElement.type = type;
-			        		taElement.name = taElement.label.value;
+			        		taElement.name = name;
 			        		
 			        		
 			        		// Set the source and target if this is a link
@@ -214,7 +223,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			} else {
 				graph = {
 						  "nodes":[],
-						  "links":[]
+						  "links":[],
+						  "form": fId
 						};
 			}
 			if(fId && language) {
@@ -560,7 +570,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			elem,
 			newGraph = {
 				nodes: [],
-				links: []
+				links: [],
+				form: local_fId
 		}
 		
 		for(i = 0; i < graph.nodes.length; i++) {
@@ -615,10 +626,10 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 		}
 		if(!hasUnique) {
 			elem.properties.push ({
-				key: "uuid",
-				value_type: "record_uuid",
+				key: "suid",				// Smap unique id, unique within Smap
+				value_type: "record_suid",
 				unique: true,
-				colName: "uuid"
+				colName: "suid"
 				}
 			);
 		}

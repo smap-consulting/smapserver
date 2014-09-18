@@ -215,11 +215,9 @@ $(document).ready(function() {
 				alert("A form must be selected");
 				return(false);
 			}
-			// Remove the :false or :true from the form, this is used only by xls exports
-			form = forms[0].substring(0, forms[0].lastIndexOf(":"));
 			
 			if(sId != -1) {
-				neo_model.init(sId, form, language, sMeta.model);
+				neo_model.init(sId, forms[0], language, sMeta.model);
 				neo_model.showModel('#ta_model_edit', 300, 200);
 				neo_model.showTable('#ta_items_edit');
 				neo_model.startEdit();
@@ -308,6 +306,13 @@ function showModel() {
 				 getSurveyMetaSE(sId, {}, false, false, false, undefined, neo_model);
 			} else {
 				$('.showthingsat').show();
+				
+				// Set the form to the value stored in the model
+				if(sMeta.model) {
+					var graph = JSON.parse(sMeta.model);
+					$('.osmform[value=' + graph.form + ']').prop("checked", "checked");
+				}
+				
 				neo_model.init(sId, undefined, undefined, sMeta.model);
 				neo_model.showModel('#ta_model_show', 300, 200);
 			}
@@ -445,7 +450,11 @@ function addFormToList(form, sMeta, offset, osm, set_radio) {
 		h[++idx] = '<input class="osmform" type="' + type + '" ' + checked + ' name="osmform" value="';
 	}
 	h[++idx] = form.f_id;
-	h[++idx] = ':false"/>';
+	if(!osm) {
+		h[++idx] = ':false"/>';
+	} else {
+		h[++idx] = '"/>';
+	}
 	h[++idx] = form.form;
 	if(typeof form.p_id !== "undefined" && !osm) {
 		h[++idx] = ' <button class="exportpivot">Pivot</button>';
@@ -752,13 +761,12 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 
 	if(typeof forms !== undefined && forms.length > 0 ) {
 
-		for(i = 0; i < forms.length; i++) {
-			// Remove the ":false" from the form id which used by xls exports
-			form = forms[i];		
-			form = form.substring(0, form.lastIndexOf(":"));
-			ways[i] = form;
-		}
-		url += "?ways=" + ways.join(',');
+		//for(i = 0; i < forms.length; i++) {
+		//	form = forms[i];		
+		//	form = form.substring(0, form.lastIndexOf(":"));
+		//	ways[i] = form;
+		//}
+		url += "?ways=" + forms.join(',');
 		url+= "&exp_ro=" + exp_ro;
 	} else {
 		url += "?exp_ro=" + exp_ro;
@@ -779,7 +787,7 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	filename = filename.replace('/', '_');	// remove slashes from the filename
 	
 	// Remove the ":false" from the form id which used by xls exports
-	form = form.substring(0, form.lastIndexOf(":"));
+	//form = form.substring(0, form.lastIndexOf(":"));
 	
 	url += sId;
 	url += "/" + filename;
@@ -803,7 +811,7 @@ function exportSurveyThingsatURL (sId, filename, form, language) {
 	filename = filename.replace('/', '_');	// remove slashes from the filename
 	
 	// Remove the ":false" from the form id which used by xls exports
-	form = form.substring(0, form.lastIndexOf(":"));
+	//form = form.substring(0, form.lastIndexOf(":"));
 	
 	url += sId;
 	url += "/" + filename;
