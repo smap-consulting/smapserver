@@ -347,6 +347,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			globals.gEmailEnabled = data.allow_email;
 			globals.gFacebookEnabled = data.allow_facebook;
 			globals.gTwitterEnabled = data.allow_twitter;
+			globals.gCanEdit = data.can_edit;
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;

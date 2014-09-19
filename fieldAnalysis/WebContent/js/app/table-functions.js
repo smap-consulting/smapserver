@@ -133,7 +133,9 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 	} else if(isPeriod ){
 		gTab[++gIdx] = '<th>' + data.interval + '</th>';
 	} else {
-		gTab[++gIdx] = '<th></th>';			// Add empty header for edit button
+		if(globals.gCanEdit) {
+			gTab[++gIdx] = '<th></th>';			// Add empty header for edit button
+		}
 		gTab[++gIdx] = '<th>Record</th>';
 	}
 	
@@ -196,13 +198,16 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 				gTab[++gIdx] = groups[i].properties.period;
 				gTab[++gIdx] = '</td>';
 			} else {
-				gTab[++gIdx] = '<td>';
-				gTab[++gIdx] = '<div class="menu_button context_table" data-pkey="';
-					gTab[++gIdx] = groups[i].properties.prikeys[0];
-					gTab[++gIdx] = '" data-ident="';
-					gTab[++gIdx] = survey_ident;
-					gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
-				gTab[++gIdx] = '</td>';
+				if(globals.gCanEdit) {
+					// Add a button to edit the survey data in web forms
+					gTab[++gIdx] = '<td>';
+					gTab[++gIdx] = '<div class="menu_button context_table" data-pkey="';
+						gTab[++gIdx] = groups[i].properties.prikeys[0];
+						gTab[++gIdx] = '" data-ident="';
+						gTab[++gIdx] = survey_ident;
+						gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
+					gTab[++gIdx] = '</td>';
+				}
 				gTab[++gIdx] = '<td>';
 				gTab[++gIdx] = groups[i].properties.prikeys[0];
 				gTab[++gIdx] = '</td>';
