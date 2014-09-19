@@ -19,7 +19,8 @@
     	tablesorter: '../../../../smapServer/WebContent/js/libs/tablesorter',
     	crf: '../../../../smapServer/WebContent/js/libs/commonReportFunctions',
     	openlayers: '../../../../smapServer/WebContent/js/libs/OpenLayers/OpenLayers',
-    	lang_location: '../../../../smapServer/WebContent/js'
+    	lang_location: '../../../../smapServer/WebContent/js',
+    	d3: '../../../../smapServer/WebContent/js/libs/d3.v3.min'
     },
     dir: '../fieldAnalysis',
     modules: [

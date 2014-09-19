@@ -321,11 +321,11 @@ a:hover {
 	border-style: solid;
 	border-color: grey;
 	border-width: thin;
-	top: 140px; 
+	top: 100px; 
 	right: 0px; 
 	left: 20%; 
-	bottom: 0px; 
-	overflow:none;
+	/*bottom: 0px; */
+	overflow:auto;
 }
 
 #scroll_zone {
@@ -345,7 +345,7 @@ a:hover {
 	top: 100px; 
 	left: 0px; 
 	right: 80%; 
-	bottom: 0px; 
+	/*bottom: 0px; */
 	overflow:auto;
 }
 @media screen
@@ -402,6 +402,8 @@ a:hover {
 	/*overflow: auto;*/
 }
 
+
+}
 #feature_data {
 	width: 100%;
 	height: 100%;
