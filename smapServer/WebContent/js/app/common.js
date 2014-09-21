@@ -158,6 +158,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 		$('#me_name').val(data.name);
 		$('#me_email').val(data.email);
 		
+		$('#modify_me_popup').dialog("option", "title", data.name + "@" + data.organisation_name);
 		$('#modify_me_popup').dialog("open");
 	});
 	
@@ -232,7 +233,7 @@ function enableUserProfile () {
 	 $('#modify_me_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			title:"Profile",
+			title:"User Profile",
 			show:"drop",
 			width:350,
 			height:350,

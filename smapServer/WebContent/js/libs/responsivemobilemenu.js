@@ -47,6 +47,31 @@ function responsiveMobileMenu() {
 		
 	 	});
 }
+
+// Smap call after language change
+function rmmResizeLabels() {
+	$('.rmm').each(function() {
+		
+		// Make sure the menu items are visible
+		$(this).children('.rmm-main-list').show(0);
+		$(this).children('.rmm-toggled').hide(0);
+		
+		var $width = 0;
+		$(this).find('ul li').each(function() {
+			$width += $(this).outerWidth();
+		});
+		
+		// Set new max width
+		if ($.support.leadingWhitespace) {
+			$(this).css('max-width' , $width*1.05+'px');
+		} else {
+			$(this).css('width' , $width*1.05+'px');
+		}
+		
+	});
+	adaptMenu();
+}
+
 function getMobileMenu() {
 
 	/* 	build toggled dropdown menu list */

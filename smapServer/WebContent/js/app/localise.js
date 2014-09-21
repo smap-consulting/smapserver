@@ -29,7 +29,7 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 				}
 			});
 			if(typeof responsiveMobileMenu === "function") {
-				responsiveMobileMenu();		// Resize menus
+				rmmResizeLabels();		// Resize menus
 			}
 			console.log("lang for home: " + lang.m_home);
 		},
