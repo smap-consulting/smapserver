@@ -1,0 +1,86 @@
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence">
+    <persistence-unit name="pgsql_jpa" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <class>org.smap.server.entities.Survey</class>
+        <class>org.smap.server.entities.Form</class>
+        <class>org.smap.server.entities.Question</class>
+        <class>org.smap.server.entities.Option</class>
+        <class>org.smap.server.entities.Group</class>
+        <class>org.smap.server.entities.UploadEvent</class>
+        <class>org.smap.server.entities.SubscriberEvent</class>
+        <properties>
+        	<property name="hibernate.connection.datasource" value="java:comp/env/jdbc/survey_definitions"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="File=/var/log/tomcat7/openjpa.log, DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <properties>
+          	<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+         	<property name="javax.persistence.jdbc.user" value="ws"/>
+         	<property name="javax.persistence.jdbc.password" value="ws1234"/>
+         	<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://127.0.0.1:5432/survey_definitions"/>
+         	<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="File=/var/log/tomcat7/openjpa.log, DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="smap1" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <properties>
+          	<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+         	<property name="javax.persistence.jdbc.user" value="ws"/>
+         	<property name="javax.persistence.jdbc.password" value="ws1234"/>
+         	<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://127.0.0.1:5432/smap1"/>
+         	<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="File=/var/log/tomcat7/openjpa.log, DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="smap2" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <properties>
+          	<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+         	<property name="javax.persistence.jdbc.user" value="ws"/>
+         	<property name="javax.persistence.jdbc.password" value="ws1234"/>
+         	<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://127.0.0.1:5432/smap2"/>
+         	<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="File=/var/log/tomcat7/openjpa.log, DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="smap3" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <properties>
+          	<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+         	<property name="javax.persistence.jdbc.user" value="ws"/>
+         	<property name="javax.persistence.jdbc.password" value="ws1234"/>
+         	<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://127.0.0.1:5432/smap3"/>
+         	<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="File=/var/log/tomcat7/openjpa.log, DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+</persistence>
