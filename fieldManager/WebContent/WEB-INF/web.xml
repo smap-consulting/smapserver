@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>fieldManager</display-name>
+  <welcome-file-list>
+    <welcome-file>templateManagement.html</welcome-file>
+  </welcome-file-list>
+  <servlet>
+    <servlet-name>TemplateUpload</servlet-name>
+    <servlet-class>com.cloudtec.fieldManager.TemplateUpload</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>TemplateUpload</servlet-name>
+    <url-pattern>/TemplateUpload</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>UpdateResultsServlet</display-name>
+    <servlet-name>UpdateResultsServlet</servlet-name>
+    <servlet-class>com.cloudtec.fieldManager.UpdateResultsServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UpdateResultsServlet</servlet-name>
+    <url-pattern>/UpdateResultsServlet</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>UpdateStatusServlet</display-name>
+    <servlet-name>UpdateStatusServlet</servlet-name>
+    <servlet-class>com.cloudtec.fieldManager.UpdateStatusServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UpdateStatusServlet</servlet-name>
+    <url-pattern>/UpdateStatusServlet</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>MediaUpload</display-name>
+    <servlet-name>MediaUpload</servlet-name>
+    <servlet-class>com.cloudtec.fieldManager.MediaUpload</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MediaUpload</servlet-name>
+    <url-pattern>/MediaUpload</url-pattern>
+  </servlet-mapping>
+</web-app>

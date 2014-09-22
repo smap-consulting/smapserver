@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="TaskManagement" basedir="." default="compile.service">
+    <property environment="env"/>
+    <path id="classpath">
+        <fileset dir="${basedir}/WebContent/WEB-INF/lib" includes="*.jar"/>
+    </path>
+    <target name="compile.service">
+        <javac debug="on" destdir="${basedir}/WebContent/WEB-INF/classes" srcdir="${basedir}/src" classpathref="classpath"/>
+    </target>
+</project>

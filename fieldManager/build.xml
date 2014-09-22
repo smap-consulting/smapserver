@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Deploy fieldManager" basedir=".">
+<property name="warfile" value="fieldManager"/>
+
+<target name="unpack">
+	<unwar src="${warfile}.war" dest="${warfile}" />
+</target>
+	
+<target name="create">
+	<war destfile="${warfile}.war" webxml="WebContent/WEB-INF/web.xml" update="true">
+		<classes dir="build\classes"/>
+		<fileset dir="WebContent">
+			<exclude name="WEB-INF/web.xml"/>
+		</fileset>
+	</war>
+</target>
+	
+<target name="copy" depends="create">
+	<copy todir="C:\Program Files\Apache Software Foundation\apache-tomcat-6.0.32\webapps" overwrite="true">
+		<fileset dir=".">
+			<include name="*.war"/>
+		</fileset>
+	</copy>
+</target>
+
+
+<target name="main" depends="copy, create, unpack">
+	<description>Main Target</description>
+</target>
+	
+</project>

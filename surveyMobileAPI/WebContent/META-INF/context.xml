@@ -1,0 +1,15 @@
+<Context path="/surveyMobileAPI" 
+   crossContext="true" reloadable="true" debug="1">
+
+    <Resource name="jdbc/survey_definitions" auth="Container"
+          type="javax.sql.DataSource" driverClassName="org.postgresql.Driver"
+          url="jdbc:postgresql://127.0.0.1:5432/survey_definitions"
+          username="ws" password="ws1234" maxActive="-1" maxIdle="-1"
+          maxWait="-1"/>
+
+    <Resource name="jdbc/results" auth="Container"
+          type="javax.sql.DataSource" driverClassName="org.postgresql.Driver"
+          url="jdbc:postgresql://127.0.0.1:5432/results"
+          username="ws" password="ws1234" maxActive="-1" maxIdle="-1"
+          maxWait="-1"/>
+</Context>

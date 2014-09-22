@@ -1,0 +1,21 @@
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence">
+    <persistence-unit name="pgsql_jpa" transaction-type="RESOURCE_LOCAL">
+        <provider>
+            org.hibernate.ejb.HibernatePersistence
+        </provider> 
+        <class>org.smap.server.entities.Survey</class>
+        <class>org.smap.server.entities.Form</class>
+        <class>org.smap.server.entities.Question</class>
+        <class>org.smap.server.entities.Option</class>
+        <class>org.smap.server.entities.Group</class>
+        <class>org.smap.server.entities.UploadEvent</class>
+        <class>org.smap.server.entities.SubscriberEvent</class>
+        <properties>
+        	<property name="hibernate.connection.datasource" value="java:comp/env/jdbc/survey_definitions"/>
+         	<property name="hibernate.max_fetch_depth" value="3"/>
+    		<property name="hibernate.show_sql" value="false"/>
+    		<property name="hibernate.use_sql_comments" value="false" />
+    		<property name="openjpa.log" value="DefaultLevel=ERROR" />
+        </properties>
+    </persistence-unit>
+</persistence>

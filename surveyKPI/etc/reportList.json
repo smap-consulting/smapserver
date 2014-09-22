@@ -1,0 +1,85 @@
+[
+    {
+        "id":4,
+        "u_id":2,
+        "p_id":0,
+        "title":"Situation report",
+        "desc":"A report on the situation in ....",
+        "country":"",
+        "region":"",
+        "district":"",
+        "community":"",
+        "ident":"24be5f39-6814-49ec-a494-2238d4decc7d",
+        "url":"https://dev.smap.com.au/surveyKPI/reports/view/24be5f39-6814-49ec-a494-2238d4decc7d?format=html",
+        "pubDate":"2013-04-30T22:19:23+0000",
+        "startDate":"2013-04-01T22:19:23+0000",
+        "endDate":"2013-04-30T22:19:23+0000",
+        "boundingBox": {
+            "left":"23.0",
+            "bottom":"10.0",
+            "right":"32.4",
+            "top":"22.0"
+        },
+        "items":[
+            {
+                "caption":"undefined - s8_geopolygon_area",
+                "dataURL":"//dev.smap.com.au/attachments/report/24be5f39-6814-49ec-a494-2238d4decc7d_7.kml",
+                "thumbURL":"//dev.smap.com.au/fieldAnalysis/img/ge.png",
+                "type":"kml",
+                "itemId":7
+            },
+            {
+                "caption":"Health Graph",
+                "imageURL":"//dev.smap.com.au/attachments/report/24be5f39-6814-49ec-a494-2238d4decc7d_8.png",
+                "dataURL":"//dev.smap.com.au/attachments/report/24be5f39-6814-49ec-a494-2238d4decc7d_8.csv",
+                "thumbURL":"//dev.smap.com.au/attachments/report/thumbs/24be5f39-6814-49ec-a494-2238d4decc7d_8.png",
+                "type":"graph",
+                "itemId":8
+            }
+        ]
+    },
+    {
+        "id":3,
+        "u_id":2,
+        "p_id":0,
+        "title":"Another report",
+        "desc":"",
+        "country":"Uganda",
+        "region":"",
+        "district":"",
+        "community":"",
+        "ident":"df2c7b9f-caf9-4909-ac23-ba04b0fdd563",
+        "url":"//dev.smap.com.au/surveyKPI/reports/view/df2c7b9f-caf9-4909-ac23-ba04b0fdd563?format=html",
+        "pubDate":"2013-04-30T00:07:24+0000",
+        "startDate":"2013-03-01T22:19:23+0000",
+        "endDate":"2013-03-30T22:19:23+0000",
+        "boundingBox": {
+            "left":"23.76",
+            "bottom":"13.0",
+            "right":"34.4",
+            "top":"21.0"
+        },
+        "items":[
+            {
+                "caption":"New Panel",
+                "dataURL":"//dev.smap.com.au/attachments/report/df2c7b9f-caf9-4909-ac23-ba04b0fdd563_3.csv",
+                "type":"table",
+                "itemId":3
+            },
+            {
+                "caption":"media",
+                "imageURL":"//dev.smap.com.au/attachments/report/df2c7b9f-caf9-4909-ac23-ba04b0fdd563_353203050168908_1367190919317.jpg",
+                "thumbURL":"//dev.smap.com.au/attachments/report/thumbs/df2c7b9f-caf9-4909-ac23-ba04b0fdd563_353203050168908_1367190919317.jpg.jpg",
+                "type":"image",
+                "itemId":5
+            },
+            {
+                "caption":"media",
+                "imageURL":"//dev.smap.com.au/attachments/report/df2c7b9f-caf9-4909-ac23-ba04b0fdd563_353203050168908_1367190933997.jpg",
+                "thumbURL":"//dev.smap.com.au/attachments/report/thumbs/df2c7b9f-caf9-4909-ac23-ba04b0fdd563_353203050168908_1367190933997.jpg.jpg",
+                "type":"image",
+                "itemId":6
+            }
+        ]
+    }
+]
