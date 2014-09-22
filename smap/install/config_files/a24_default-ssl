@@ -1,0 +1,215 @@
+<IfModule mod_ssl.c>
+
+ServerAdmin webmaster@localhost
+
+ErrorLog ${APACHE_LOG_DIR}/error.log
+
+LogLevel warn
+CustomLog ${APACHE_LOG_DIR}/ssl_access.log combined
+
+SSLCertificateFile    /etc/ssl/certs/ssl-cert-snakeoil.pem
+SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+
+<FilesMatch "\.(cgi|shtml|phtml|php)$">
+	SSLOptions +StdEnvVars
+</FilesMatch>
+<Directory /usr/lib/cgi-bin>
+	SSLOptions +StdEnvVars
+</Directory>
+
+BrowserMatch "MSIE [2-6]" \
+	nokeepalive ssl-unclean-shutdown \
+	downgrade-1.0 force-response-1.0
+# MSIE 7 and newer should be able to use keepalive
+BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+
+<VirtualHost *:443>
+	ServerAdmin webmaster@localhost
+
+	DocumentRoot /var/www/smap
+	SSLEngine on
+	DBDriver pgsql
+	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
+	DirectoryIndex index.html index.htm index.shtml
+		
+	ExpiresActive On
+
+    ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
+    ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
+
+    ProxyPass         /formList ajp://localhost:8009/surveyMobileAPI/formList
+    ProxyPassReverse  /formList ajp://localhost:8009/surveyMobileAPI/formList
+    ProxyPass         /formXML ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPassReverse  /formXML ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPass         /instanceXML ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPassReverse  /instanceXML ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPass         /submission ajp://localhost:8009/surveyMobileAPI/submission connectiontimeout=30 timeout=140
+    ProxyPassReverse  /submission ajp://localhost:8009/surveyMobileAPI/submission
+    ProxyPass         /xformsManifest ajp://localhost:8009/surveyMobileAPI/xformsManifest
+    ProxyPassReverse  /xformsManifest ajp://localhost:8009/surveyMobileAPI/xformsManifest
+    ProxyPass         /htmlManifest ajp://localhost:8009/surveyMobileAPI/htmlManifest
+    ProxyPassReverse  /htmlManifest ajp://localhost:8009/surveyMobileAPI/htmlManifest
+    
+    ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
+    ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
+   
+    <Directory />
+    	Require all denied
+    </Directory>
+
+    <Directory /var/www/smap>
+    	Options FollowSymLinks
+        ExpiresDefault A300
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+	<Directory /var/www/smap/webforms>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Directory>
+
+	# field manager module
+	<Location /fieldManager>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+
+# survey mobile API module. Require enumerator access
+     <Location /formList>
+     	AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        <RequireAny>
+        	Require valid-user
+            Require ip  127.0.0.1
+        </RequireAny>
+     </Location>
+
+    <Location /formXML>
+     	AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        <RequireAny>
+       		Require valid-user
+            Require ip  127.0.0.1
+        </RequireAny>
+	</Location>
+		
+	<Location /submission>
+    	AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        <RequireAny>
+        	Require valid-user
+            Require ip  127.0.0.1
+        </RequireAny>
+	</Location>
+
+ 	<Location /instanceXML>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        <RequireAny>
+        	Require valid-user
+            Require ip  127.0.0.1
+        </RequireAny>
+	</Location>
+
+	<Location /xformsManifest>
+		AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+
+	<Location /htmlManifest>
+#		Header unset ETag
+#		Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+#		Header set Pragma "no-cache"
+#		Header set Expires "Sat, 1 Jan 2000 01:00:00 GMT"
+		AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+	
+# surveyKPI module
+ 	<Location /surveyKPI>
+		AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+
+	<Location /surveyKPI/reports/view>
+        Require all granted
+    </Location>
+
+	<Location /surveyKPI/reports/oembed.json>
+		Require all granted
+	</Location>
+
+
+	# Deny access to deprecated services
+	<Location /surveyKPI/deprecated>
+		Require all denied
+	</Location>
+
+	# Miscelaneous
+	<Location /OpenLayers>
+		Require all granted
+	</location>
+	<Location /fieldManager/js>
+		Require all granted
+    </location>
+
+	alias /attachments {your_files}/attachments
+    <Directory {your_files}/attachments>
+		Require all granted
+	</Directory>
+		
+	alias /media {your_files}/media
+    <Directory {your_files}/media>
+		Options FollowSymLinks
+		AuthType Digest
+		AuthName "smap"
+		AuthDigestDomain /
+		AuthDigestProvider dbd
+		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+		Require valid-user
+	</Directory>
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+
+	# Possible values include: debug, info, notice, warn, error, crit,
+	# alert, emerg.
+	LogLevel warn
+
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+</VirtualHost>
+
+</IfModule>

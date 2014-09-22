@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<subscriber>
+	<type>org.smap.subscribers.SubUshahidi</type>
+	<enabled>no</enabled>
+	<filter></filter>
+	<subscriber_specific>
+		<url>http://hoa.smap.com.au/ushahidi/api</url>
+		
+		<parameter>
+			<name>task</name>
+			<type>text</type>
+			<value>report</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_title</name>
+			<type>text</type>
+			<value>Survey</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_description</name>
+			<type>xpath</type>
+			<value>//@id</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_date</name>
+			<type>xpath</type>
+			<value>//_start</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_hour</name>
+			<type>xpath</type>
+			<value>//_start</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_minute</name>
+			<type>xpath</type>
+			<value>//_start</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_ampm</name>
+			<type>xpath</type>
+			<value>//_start</value>
+		</parameter>
+		
+		<parameter>
+			<name>incident_category</name>
+			<type>xpath</type>
+			<value>//fgd</value>
+		</parameter>
+		
+		<parameter>
+			<name>latitude</name>
+			<type>xpath</type>
+			<value>//location</value>
+		</parameter>
+		
+		<parameter>
+			<name>longitude</name>
+			<type>xpath</type>
+			<value>//location</value>
+		</parameter>
+		
+		<parameter>
+			<name>location_name</name>
+			<type>xpath</type>
+			<value>//area</value>
+			<map>
+				<key>1</key>
+				<value>Shone</value>
+			</map>
+			<map>
+				<key>2</key>
+				<value>Boricha</value>
+			</map>
+		</parameter>
+
+		<parameter>
+			<name>person_first</name>
+			<type>other</type>
+			<value>remoteUser</value>
+		</parameter>
+		
+		<parameter>
+			<name>person_last</name>
+			<type>text</type>
+			<value>(field task user id)</value>
+		</parameter>		
+		
+	</subscriber_specific>
+</subscriber>

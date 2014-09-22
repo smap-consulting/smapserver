@@ -1,0 +1,71 @@
+This tar file contains a version of the Smap server.  You can run upgrade an existing installation or install 
+a fresh installation.  The latter will delete your existing data. Hence if you have already installed Smap Server
+only do an upgrade.
+
+Upgrading
+----------
+Deploy a new version of Smap.  If you have already installed smap you can update it with the new
+version.  Your existing data will not be affected.
+
+It would be a good idea to 
+
+  1. Backup your database before upgrading
+  2. Stop Apache so that there are no uploads happening during the upgrade
+  
+cd ~/smap/deploy
+sudo ./patchdb.sh
+sudo ./deploy.sh
+
+Versions 14.03 and 14.05 of Smap require some changes to the Apache configuration files. For Ubuntu 12.04
+and Apache2, these are:
+	/etc/apache2/sites-available/default    
+	/etc/apache2/sites-available/default-ssl 
+You can use the default and default-ssl files from smap/install/config to update your files. However
+remember to replace the text {your_files} with the location of your media files (by default this should
+be /smap)
+
+
+Installation
+------------
+
+WARNING.  This will do a clean install and will delete all your existing data!  The install will also modify configuration 
+files for apache, tomcat and postgres.  The assumption is that you are installing on a new Ubuntu version possibly
+running as a virtual machine.  If you want to install on an existing server that already has Apache, Tomcat or Postgres 
+then you may want to do a manual installation following the steps in the install.sh file as a guide.  You can also
+do this if you are running a different flavour of linux.  If you want to update the install script to support your
+linux version then I can add those updates to the source code.
+
+If you want to install on Windows then you will have to proceed with a manual installation. Smap Server hasn't been
+tested on Windows in several years so there are likely to be some issues. 
+
+Smap installation is performed by running the install.sh script.  
+After running the script the steps described in Post Install Configuration will need to be performed
+	
+
+Pre-requisites / assumptions:
+	1. Ubuntu server. Testing has been done with Versions 12.04 and 14.04
+	2. Hardware (minimum)
+		2 GB of memory
+		1 CPU
+		20 GB of disk
+	3. Apache 2.2 / 2.4, Tomcat 7, Postgres 9.3 and Postgis 2.1, openjdk 7 will be installed from Ubuntu sources or updated if they are already installed
+
+##### Installing
+	1. Logon as a user other than root 
+	2. Run the install script
+		./install.sh
+		
+To logon to smap:
+	user: admin
+	password: admin
+	
+You should change the above password as soon as possible.
+
+##### Set up Backups
+	1. Create a file called "passwordfile" in the postgres home directory owned by postgres
+	2. The file should contain the password used to encrypt backups.  A copy of this password needs to be kept
+	   in a safe place.
+	3. As postgres type "crontab -e" and add the following line to the end of the file:
+			44 19 * * * /var/lib/postgresql/bu.sh >> /var/lib/postgresql/cron.log 2 >&1
+	4. You will need to organsise for the backup *.gpg file to be copied to an offsite location each time it is created
+

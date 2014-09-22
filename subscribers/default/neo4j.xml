@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<subscriber>
+	<type>org.smap.subscribers.Neo4j</type>
+	<enabled>no</enabled>
+	<filter></filter>
+	<subscriber_specific>
+		<server>http://neo4j.smap.com.au</server>
+		<path>/db/data</path>
+	</subscriber_specific>
+</subscriber>

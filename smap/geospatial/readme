@@ -1,0 +1,6 @@
+#!/bin/sh
+# country file
+/usr/lib/postgresql/9.3/bin/shp2pgsql -s 4326 -I world_countries_boundary_file_world_2002.shp | psql results
+echo "alter table world_countries_boundary_file_world_2002 name to countries;" | psql -d results
+echo "alter table countries owner to ws;" | psql -d results
+

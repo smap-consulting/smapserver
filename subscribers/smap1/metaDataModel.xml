@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<database_specification>
+	<dbclass>org.postgresql.Driver</dbclass>
+	<database>jdbc:postgresql://127.0.0.1:5432/smap1</database>
+	<user>ws</user>
+	<password>ws1234</password>
+</database_specification>
+

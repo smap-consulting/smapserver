@@ -1,0 +1,19 @@
+<!-- 
+	Configuration files should follow the following format
+	
+	<?xml version="1.0" encoding="UTF-8"?>
+	<subscriber>
+		<type>{The fully qualified class name that implements this subscriber}</type>
+		<enabled>{yes|no - Only yes is checked in the code, everything else is disabled, case insensitive}</enabled>
+		<filter>
+			{An XPath expression returning a boolean that can be applied
+			to the submitted survey results.  If this evaluates to true then
+			the subscriber will be called - example: "//@id="hoarte"}
+		</filter>
+		<subscriber_specific>
+			{Any XML elements that are specific to the subscriber}
+		</subscriber_specific>
+	</subscriber>
+
+ -->
+
