@@ -133,7 +133,7 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 	} else if(isPeriod ){
 		gTab[++gIdx] = '<th>' + data.interval + '</th>';
 	} else {
-		if(globals.gCanEdit) {
+		if(typeof globals !== "undefined" && globals.gCanEdit) {
 			gTab[++gIdx] = '<th></th>';			// Add empty header for edit button
 		}
 		gTab[++gIdx] = '<th>Record</th>';
@@ -198,7 +198,7 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 				gTab[++gIdx] = groups[i].properties.period;
 				gTab[++gIdx] = '</td>';
 			} else {
-				if(globals.gCanEdit) {
+				if(typeof globals !== "undefined" && globals.gCanEdit) {
 					// Add a button to edit the survey data in web forms
 					gTab[++gIdx] = '<td>';
 					gTab[++gIdx] = '<div class="menu_button context_table" data-pkey="';
