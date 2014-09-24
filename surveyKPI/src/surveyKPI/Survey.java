@@ -854,6 +854,7 @@ public class Survey extends Application {
 			Connection connectionRel = null; 
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtDelTem = null;
+			PreparedStatement pstmtIdent = null;
 
 			try {
 				if(undelete) {
@@ -924,6 +925,7 @@ public class Survey extends Application {
 							
 						} 
 		
+						// Get the path to files
 						String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
 						if(basePath == null) {
 							basePath = "/smap";
@@ -931,10 +933,28 @@ public class Survey extends Application {
 							basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
 						}
 						
+						// Get the survey ident and name
+						String surveyIdent = null;
+						String surveyName = null;
+						sql = "SELECT s.name, s.ident " +
+								"FROM survey s " + 
+								"where s.s_id = ?;";
+						
+						log.info(sql);
+						pstmtIdent = connectionSD.prepareStatement(sql);
+						pstmtIdent.setInt(1, sId);
+						ResultSet resultSet = pstmtIdent.executeQuery();
+						
+						if (resultSet.next()) {		
+							surveyName = resultSet.getString("name");
+							surveyIdent = resultSet.getString("ident");
+						}
+							
+						
 						/*
 						 * Delete any attachments
 						 */
-						String fileFolder = basePath + "/attachments/" + sId;
+						String fileFolder = basePath + "/attachments/" + surveyIdent;
 					    File folder = new File(fileFolder);
 					    try {
 					    	System.out.println("Deleting attachments folder: " + fileFolder);
@@ -946,10 +966,10 @@ public class Survey extends Application {
 						/*
 						 * Delete any raw upload data
 						 */
-						fileFolder = basePath + "/uploadedSurveys/" + sId;
+						fileFolder = basePath + "/uploadedSurveys/" + surveyIdent;
 					    folder = new File(fileFolder);
 					    try {
-					    	System.out.println("Deleting uploaded files for survey: " + sId + " in folder: " + fileFolder);
+					    	System.out.println("Deleting uploaded files for survey: " + surveyName + " in folder: " + fileFolder);
 							FileUtils.deleteDirectory(folder);
 						} catch (IOException e) {
 							log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
@@ -958,45 +978,28 @@ public class Survey extends Application {
 						/*
 						 * Delete the templates
 						 */
-					    String source_name = null;
+
 						try {
-							
-							ResultSet resultSet = null;
-						
-							/*
-							 * Get the survey name (file name)
-							 */
-							sql = "SELECT s.name " +
-									"FROM survey s " + 
-									"where s.s_id = ?;";
-							
-							log.info(sql + " : " + sId);
-							pstmtDelTem = connectionSD.prepareStatement(sql);
-							pstmtDelTem.setInt(1, sId);
-							resultSet = pstmtDelTem.executeQuery();
-							
-							if (resultSet.next()) {			
-								source_name = resultSet.getString(1); 
-								int idx = source_name.lastIndexOf('.');
 								
-								File f1 = new File(source_name);
-								
-								String xlsPath = null;
-								File f2 = null;
-								if(idx > 0) {
-									xlsPath = source_name.substring(0, idx) + ".xls";
-									f2 = new File(xlsPath);
-								}			
-						
-							    System.out.println("Deleting templates for survey: " + sId + " : " + source_name);
-							    f1.delete();
-							    if(f2 != null) {
-							    	f2.delete();
-							    }
+							int idx = surveyName.lastIndexOf('.');						
+							File f1 = new File(surveyName);
 							
-							}
+							String xlsPath = null;
+							File f2 = null;
+							if(idx > 0) {
+								xlsPath = surveyName.substring(0, idx) + ".xls";
+								f2 = new File(xlsPath);
+							}			
+					
+						    System.out.println("Deleting templates for survey: " + sId + " : " + surveyName);
+						    f1.delete();
+						    if(f2 != null) {
+						    	f2.delete();
+						    }
+							
+
 						} catch (Exception e) {
-							log.info("Error deleting templates: " + source_name + " : " + e.getMessage());
+							log.info("Error deleting templates: " + surveyName + " : " + e.getMessage());
 						}
 						
 						// Delete survey definition
@@ -1062,6 +1065,7 @@ public class Survey extends Application {
 			} finally {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				try {if (pstmtDelTem != null) {pstmtDelTem.close();}} catch (SQLException e) {}
+				try {if (pstmtIdent != null) {pstmtIdent.close();}} catch (SQLException e) {}
 				
 				try {
 					if (connectionSD != null) {

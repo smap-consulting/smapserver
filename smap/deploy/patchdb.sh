@@ -58,7 +58,7 @@ fi
 # version 14.08
 if [ $version -lt "1408" ]
 then
-echo "Applying patches for version 14.06"
+echo "Applying patches for version 14.08"
 echo "installing ffmpeg"
 if [ $(cat /etc/*-release | grep "DISTRIB_CODENAME=" | cut -d "=" -f2) == 'trusty' ];
 then  
@@ -68,4 +68,11 @@ sudo apt-get update -y
 sudo apt-get install ffmpeg -y
 fi
 
+# version 14.10
+
+if [ $version -lt "1410" ]
+then
+echo "Applying patches for version 14.10"
+sudo chown -R tomcat7 /var/log/subscribers
+fi
 echo "1409" > ~/smap_version
