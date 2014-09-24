@@ -190,13 +190,11 @@ public class SmapForward extends Subscriber {
 			String msg = "ClientProtocolException:" + e.getMessage();
 			se.setReason(msg);
 			System.out.println("        " + msg);
-			e.printStackTrace();
 		} catch(IOException e) {
 			se.setStatus("host_unreachable");
 			String msg = "IOException:" + e.getMessage();
 			se.setReason(msg);
 			System.out.println("        " + msg);
-			e.printStackTrace();
 		} catch(IllegalArgumentException e) {
 			se.setStatus("error");			
 			String msg = "IllegalArgumentException:" + e.getMessage();
@@ -251,7 +249,7 @@ public class SmapForward extends Subscriber {
 		            	Transformer transformer = TransformerFactory.newInstance().newTransformer(new StreamSource(xslStream));
 						StreamSource source = new StreamSource(instanceFile);
 						StreamResult out = new StreamResult(outStream);
-						transformer.setParameter("surveyId", new String(sIdRemote));
+						transformer.setParameter("surveyId", new String(sIdentRemote));
 			        	transformer.transform(source, out);
 			        	outStream.close();
 			        } catch (TransformerConfigurationException e1) {

@@ -37,7 +37,7 @@ public abstract class Subscriber {
 	String filter = null;
 	boolean enabled = false;
 	boolean surveySpecific = false;
-	String sIdRemote;		// Use String to support odkAggregate
+	String sIdentRemote;		
 	String sNameRemote;
 	int sId;
 	String user = null;
@@ -89,7 +89,7 @@ public abstract class Subscriber {
 		return sId;
 	}
 	public String getSurveyIdRemote() {
-		return sIdRemote;
+		return sIdentRemote;
 	}
 	public String getSurveyNameRemote() {
 		return sNameRemote;
@@ -140,7 +140,7 @@ public abstract class Subscriber {
 		}
 	}
 	public void setSurveyIdRemote(String value) {
-		sIdRemote = value;
+		sIdentRemote = value;
 	}
 	public void setSurveyNameRemote(String value) {
 		sNameRemote = value;

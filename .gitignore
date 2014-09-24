@@ -9,6 +9,7 @@ fieldAnalysis/fieldAnalysis
 bin/
 tmp/
 *.tmp
+*.class
 *.bak
 *.swp
 *~.nib

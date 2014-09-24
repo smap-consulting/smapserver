@@ -256,6 +256,7 @@ public class SubscriberBatch {
 										}
 									} else if(se.getStatus() != null && se.getStatus().equals("host_unreachable")) {
 										// If the host is unreachable then stop forwarding for 10 seconds
+										// Also stop processing this subscriber, it may be that it has been taken off line
 
 										int forwardSleep = 60;
 										Date now = new Date();
@@ -267,7 +268,13 @@ public class SubscriberBatch {
 											// ignore
 										}
 									}
-								}						
+								}	
+								
+								// If the host is unreachable stop processing this subscriber, it may be that it has been taken off line
+								if(se.getStatus() != null && se.getStatus().equals("host_unreachable")) {
+									System.out.println("Stopping processing of subscriber: " + s.getSubscriberName());
+									break;
+								}
 							}
 						}
 					}

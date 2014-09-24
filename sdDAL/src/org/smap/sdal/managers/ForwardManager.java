@@ -215,19 +215,22 @@ public class ForwardManager {
 		
 		while (resultSet.next()) {								
 
-			Forward f = new Forward();
-			f.setId(resultSet.getInt(1));
-			f.setSId(resultSet.getInt(2));
-			f.setEnabled(resultSet.getBoolean(3));
-			f.setRemoteIdent(resultSet.getString(4));
-			f.setRemoteSName(resultSet.getString(5));
-			f.setRemoteHost(resultSet.getString(6));
-			f.setRemoteUser(resultSet.getString(7));
-			if(getPassword) {
-				f.setRemotePassword(resultSet.getString(8));
-			}
+			String remote_s_id = resultSet.getString(4);
+			if(remote_s_id != null) {			// Probably null remote survey idents are just caused by bad data during development and this can be removed
+				Forward f = new Forward();
+				f.setId(resultSet.getInt(1));
+				f.setSId(resultSet.getInt(2));
+				f.setEnabled(resultSet.getBoolean(3));
+				f.setRemoteIdent(remote_s_id);
+				f.setRemoteSName(resultSet.getString(5));
+				f.setRemoteHost(resultSet.getString(6));
+				f.setRemoteUser(resultSet.getString(7));
+				if(getPassword) {
+					f.setRemotePassword(resultSet.getString(8));
+				}
 			
 			forwards.add(f);
+			}
 		} 
 	}
 }

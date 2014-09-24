@@ -103,7 +103,7 @@ ul, ol {
 }
 
 .biglink {
-	marign-top: 50px;
+	margin-top: 50px;
     font-size: 2.4em;
     text-align: center;
 }
@@ -493,7 +493,7 @@ form input[type="checkbox"], input[type="radio"] {
 	width: 40px;
 }
 
-#controls, #organisation_controls, 
+#controls, #organisation_controls
   {
 	margin-left: 100px;
 	margin-right: 100px;
@@ -525,7 +525,7 @@ form input[type="checkbox"], input[type="radio"] {
 }
 
 /* Deleted surveys */
-tr.deleted td {
+tr.deleted td a {
 	color: red !important;
 }
 

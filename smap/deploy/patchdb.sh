@@ -68,4 +68,4 @@ sudo apt-get update -y
 sudo apt-get install ffmpeg -y
 fi
 
-echo "1408" > ~/smap_version
+echo "1409" > ~/smap_version
