@@ -369,13 +369,13 @@ public class QueryGenerator {
 				/*
 				 * Specify SQL functions
 				 */
-				if(sqlDesc.geometry_type != null && type.equals("geometry") && (format.equals("vrt") || format.equals("csv") || format.equals("stata"))) {
+				if(sqlDesc.geometry_type != null && type.equals("geometry") && (format.equals("vrt") || format.equals("csv") || format.equals("stata") || format.equals("thingsat"))) {
 					//colBuf.append("ST_AsText(");
-					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata")) ) {
+					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata")) ) {		// Split location into Lon, Lat
 						colBuf.append("ST_Y(" + tName + "." + name + ") as lat, ST_X(" + tName + "." + name + ") as lon");
 						sqlDesc.colNames.add(new ColDesc("lat", type, qType, label, null, false));
 						sqlDesc.colNames.add(new ColDesc("lon", type, qType, label, null, false));
-					} else {
+					} else {																								// Use well known text
 						colBuf.append("ST_AsText(" + tName + "." + name + ") as the_geom");
 						sqlDesc.colNames.add(new ColDesc("the_geom", type, qType, label, null, false));
 					}
