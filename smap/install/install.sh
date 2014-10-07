@@ -255,6 +255,7 @@ sudo apt-get install ffmpeg -y  --force-yes
 sudo apt-get install flvtool2 -y --force-yes
 
 echo '##### 15. Install PHP'
+sudo apt-get install php5-json -y
 sudo apt-get install libpcre3-dev -y
 sudo apt-get install php5 php5-pgsql libapache2-mod-php5 -y
 

@@ -77,7 +77,7 @@ public class Thingsat {
 		PrintWriter wBatch = new PrintWriter(fBatch);
 		wBatch.println("#/bin/sh");
 		wBatch.println("cd $1");
-		wBatch.println("/users/neilpenman/neo4j/bin/neo4j-shell -file import.cql");
+		wBatch.println("$NEO4J_HOME/bin/neo4j-shell -file import.cql");
 		wBatch.close();
 		
 	}
