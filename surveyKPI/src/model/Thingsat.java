@@ -41,7 +41,7 @@ public class Thingsat {
 	public Thingsat(ThingsatDO model) {
 		/*
 		 * Converting the JSON model directly into a thingsat object had a problem with recursion
-		 *  rather than exclude the attributes causing the problem the JSON is converted into Data Objects
+		 *  rather than exclude the attributes that are causing the problem the JSON is converted into Data Objects
 		 *  and then these are used to build the Thingsat object
 		 */
 		for(Neo4JDO n : model.nodes) {

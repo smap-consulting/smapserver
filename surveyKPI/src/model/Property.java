@@ -29,8 +29,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class Property {
 	public String key;					// The key that identifies the property
 	public String value_type;			// record || constant
+	public String q_type;				// Question type, select, seelct1, int, string etc
+	public int q_id;					// Question type, select, seelct1, int, string etc
 	public String value;				// Value if the value_type is constant
 	public String colName;				// Name of the column containing the data if the value type is record
+	public ArrayList<String> optionValues;		// Options (only if this is a select multiple question)
+	
 	public boolean unique;	
 	
 	public void debug() {

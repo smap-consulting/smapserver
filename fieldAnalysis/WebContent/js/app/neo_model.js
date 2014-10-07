@@ -109,17 +109,23 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			        			$('#ta_source').focus();
 			        			return;
 			        		}
+			        		
 			        		if(name.length === 0) {
 			        			alert("You must specify a name");
 			        			$('#ta_name').focus();
 			        			return;
+			        		}	
+			        		if(name.indexOf(' ') > 0) {
+			        			alert("Names cannot have spaces");
+			        			$('#ta_name').focus();
+			        			return;
 			        		}
-			        		
 			        		
 			        		/*
 			        		 * Get the property values from the property table
 			        		 */
 			        		var count = 0;
+			        		var selectMultipleCount = 0;
 			        		taElement.properties = [];
 			        		$('#ta_property_list .question:checkbox:checked').each(function(index){
 			        			
@@ -127,16 +133,24 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 			        			var prop = {
 			        					value_type: "record",		// TODO add support for other value types
 			        					colName: $this.val(),
+			        					q_type: $this.data("type"),
+			        					q_id: $this.data("id"),
 			        					unique: $this.parent().next().find('.unique').prop('checked')
 			        				};
 			        			
 			        			taElement.properties.push(prop);
 			        			
-			        			
+			        			if(prop.q_type === "select") {
+			        				selectMultipleCount++;
+			        			}
 			        			count++;
 			        		});
 			        		if(type === "node" && count == 0) {
 			        			alert("You must select at least one property for a node");
+			        			return;
+			        		}
+			        		if(selectMultipleCount > 1) {
+			        			alert("You can only use one select multiple question in a node or relation");
 			        			return;
 			        		}
 			        		
@@ -404,6 +418,10 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
 					h[++idx] = availableQuestions[i].name;
 					h[++idx] = '" value="';
 					h[++idx] = availableQuestions[i].name;
+					h[++idx] = '" data-type="';
+					h[++idx] = availableQuestions[i].type;
+					h[++idx] = '" data-id="';
+					h[++idx] = availableQuestions[i].id;
 					h[++idx] = '"/>';
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';

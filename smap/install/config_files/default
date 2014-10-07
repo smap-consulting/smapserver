@@ -7,7 +7,12 @@
     
     ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
     ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
-            
+       
+    ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPass         /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPassReverse  /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+         
     ProxyPass         /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPassReverse  /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPass         /formXML ajp://localhost:8009/surveyMobileAPI/formXML
@@ -64,6 +69,19 @@
         allow from all
 	</Location>
     	
+    # Local access points for webforms
+    <Location /formXMLLocal>
+    	order deny, allow
+    	deny from all
+       	allow from  127.0.0.1
+	</Location>
+
+	<Location /instanceXMLLocal>
+	   	order deny, allow
+    	deny from all
+    	allow from  127.0.0.1
+	</Location>
+	
 	# survey mobile API module. Require enumerator access
 	<Location /formList>
 		AuthType Digest
@@ -72,10 +90,7 @@
 		AuthDigestProvider dbd
 		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
-      	Order deny,allow
-    	deny from all
-        allow from 127.0.0.1
-        Satisfy any
+        allow from all
 	</Location>
 
 	<Location /formXML>
@@ -85,10 +100,7 @@
 		AuthDigestProvider dbd
 		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
-        Order deny,allow
-        deny from all
-        allow from 127.0.0.1
-        Satisfy any
+        allow from all
 	</Location>
 		
 	<Location /submission>
@@ -98,10 +110,7 @@
 		AuthDigestProvider dbd
 		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
-        Order deny,allow
-        deny from all
-        allow from 127.0.0.1
-        Satisfy any
+        allow from all
 	</Location>
 
 	<Location /instanceXML>
@@ -111,10 +120,7 @@
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
-        Order deny,allow
-        deny from all
-        allow from 127.0.0.1
-        Satisfy any
+        allow from all
 	</Location>
 
 	<Location /xformsManifest>

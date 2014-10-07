@@ -8,6 +8,11 @@
     ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
     ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
         
+    ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPass         /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPassReverse  /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    
     ProxyPass         /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPassReverse  /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPass         /formXML ajp://localhost:8009/surveyMobileAPI/formXML
@@ -59,6 +64,15 @@
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
+
+# Local access points for webforms
+    <Location /formXMLLocal>
+       	Require ip  127.0.0.1
+	</Location>
+
+	<Location /instanceXMLLocal>
+    	Require ip  127.0.0.1
+	</Location>
 	    	
 	# survey mobile API module. Require enumerator access
      <Location /formList>
@@ -67,10 +81,7 @@
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
      </Location>
 
     <Location /formXML>
@@ -79,10 +90,7 @@
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-       		Require valid-user
-       		Require ip  127.0.0.1
-        </RequireAny>
+       	Require valid-user
 	</Location>
 	
 	<Location /submission>
@@ -91,10 +99,7 @@
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
 	</Location>
 
 	<Location /instanceXML>
@@ -103,10 +108,7 @@
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
 	</Location>
 
 	<Location /xformsManifest>

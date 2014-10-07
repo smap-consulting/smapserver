@@ -83,6 +83,15 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         Require valid-user
 	</Location>
 
+# Local access points for webforms
+    <Location /formXMLLocal>
+       	Require ip  127.0.0.1
+	</Location>
+
+	<Location /instanceXMLLocal>
+    	Require ip  127.0.0.1
+	</Location>
+	
 # survey mobile API module. Require enumerator access
      <Location /formList>
      	AuthType Digest
@@ -90,10 +99,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
      </Location>
 
     <Location /formXML>
@@ -102,34 +108,25 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-       		Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+       	Require valid-user
 	</Location>
-		
+	
 	<Location /submission>
     	AuthType Digest
         AuthName "smap"
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
 	</Location>
 
- 	<Location /instanceXML>
+	<Location /instanceXML>
         AuthType Digest
         AuthName "smap"
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        <RequireAny>
-        	Require valid-user
-            Require ip  127.0.0.1
-        </RequireAny>
+        Require valid-user
 	</Location>
 
 	<Location /xformsManifest>

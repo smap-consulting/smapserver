@@ -37,13 +37,14 @@ public class Neo4J  {
 	public ArrayList<Property> properties;
 	
 	// Additional data values for link
-	public int source;		// The index in the node list of the from node, (can't store references in json?)
+	public int source;		// The index in the node list of the from node
 	public int target;
 	
 	// Temporary data not stored in database
 	File f;
 	PrintWriter w;
-	HashMap <String, String> keys;	// Contains keys already written to the file
+	HashMap <String, String> keys;					// Contains keys already written to the file
+	HashMap <String, String> multipleChoiceKeys;	// Contains keys for each option where there is a multiple choice question in the properties
 	String currentKey;
 	int numberKeys;	
 	public boolean isRelation;
@@ -56,12 +57,14 @@ public class Neo4J  {
 		
 		name = elem.label.value;
 		label = elem.label;
+
 		properties = elem.properties;
 		keys = new HashMap<String, String> ();
+
 	}
 	
+
 	public void createDataFile(String filepath) throws FileNotFoundException {
-		System.out.println("Creating file at: " + filepath + "/" + name + ".csv");
 		f = new File(filepath, name + ".csv");
 		w = new PrintWriter(f);
 	}
@@ -142,15 +145,91 @@ public class Neo4J  {
 	
 	public void writeData(ResultSet rs, Thingsat things) throws SQLException {
 		
+		
+
+		if(isRelation) {
+			System.out.println("======================= Is Relation =================");
+			System.out.println("    " + name);
+			Property sourceSelectMultipleProperty = things.nodes.get(source).getSelectMultiple();
+			Property targetSelectMultipleProperty = things.nodes.get(target).getSelectMultiple();
+			
+			if(sourceSelectMultipleProperty != null && targetSelectMultipleProperty != null) {
+				System.out.println("    Target and Source have select multiple");
+				for(String sourceOption : sourceSelectMultipleProperty.optionValues) {
+					for(String targetOption : targetSelectMultipleProperty.optionValues) {
+						writeRecord(rs, things, null, sourceOption, targetOption);
+					}
+				}
+			} else if(sourceSelectMultipleProperty != null) {
+				System.out.println("    Source has select multiple");
+				for(String sourceOption : sourceSelectMultipleProperty.optionValues) {
+					writeRecord(rs, things, null, sourceOption, null);
+				}
+			} else if(targetSelectMultipleProperty != null) {
+				System.out.println("    Target has select multiple");
+				for(String targetOption : targetSelectMultipleProperty.optionValues) {
+					System.out.println("    Writing relation for targetOption: " + targetOption);
+					writeRecord(rs, things, null, null, targetOption);
+				}
+			} else  {
+				System.out.println("    No Select Multiples");
+				writeRecord(rs, things, null, null, null);
+			}
+			
+		} else {
+			Property selectMultipleProperty = getSelectMultiple();
+			multipleChoiceKeys = new HashMap<String,String>();
+			if(selectMultipleProperty != null) {
+				for(String option : selectMultipleProperty.optionValues) {
+					writeRecord(rs, things, option, null, null);
+				}
+			} else {
+				writeRecord(rs, things, null, null, null);
+			}
+		}
+
+	}
+	
+	private Property getSelectMultiple() {
+		for(Property p : properties) {
+			if(p.q_type != null && p.q_type.equals("select")) {
+				return p;
+			}
+		}
+		return null;
+	}
+	
+	private void writeRecord(ResultSet rs, Thingsat things, String option, 
+			String sourceOption,
+			String targetOption) throws SQLException {
+		
+
 		StringBuffer output = new StringBuffer();
 		StringBuffer key = new StringBuffer();
 		
 		if(isRelation) {
+			String sourceKey = null; 
+			String targetKey = null;
+			if(sourceOption != null) {
+				sourceKey = things.nodes.get(source).multipleChoiceKeys.get(sourceOption);
+			} else {
+				sourceKey = things.nodes.get(source).currentKey;
+			}
+			if(targetOption != null) {
+				targetKey = things.nodes.get(target).multipleChoiceKeys.get(targetOption);
+			} else {
+				targetKey = things.nodes.get(target).currentKey;
+			}
+			
+			if(sourceKey == null || targetKey == null) {
+				return;		// Missing end point, can happen with select multiple where an option was not selected
+			}
+			System.out.println("CurrentKey : " + currentKey + " sourceKey: " + sourceKey + " targetKey: " + targetKey);
 			output.append(",\"");
-			output.append(things.nodes.get(source).currentKey);
+			output.append(sourceKey);
 			output.append("\",");
 			output.append("\"");
-			output.append(things.nodes.get(target).currentKey);
+			output.append(targetKey);
 			output.append("\"");
 		}
 		
@@ -162,7 +241,20 @@ public class Neo4J  {
 			}
 			
 			if(p.value_type.equals("record")) {
-				v = rs.getString(p.colName);
+				String colName = p.colName;
+				if(option != null && p.q_type.equals("select")) {
+					colName = colName + "__" + option;
+					boolean selected = rs.getBoolean(colName);
+					if(selected) {
+						v = option;
+					} else {
+						return;			// Multi select option not selected, don't create the node or relation
+					}
+				} else {
+					System.out.println("###### question type: " + p.q_type);
+					
+					v = rs.getString(colName);
+				}
 			} else if(p.value_type.equals("constant")) {
 				v = p.value;
 			} else if(p.value_type.equals("record_suid")) {
@@ -176,11 +268,22 @@ public class Neo4J  {
 			output.append("\"");
 		}
 		
-
-		
-		writeOutput(key.toString(), output.toString());
-		currentKey = key.toString();
-		System.out.println("output: " + output);
+		String fullKey = key.toString();
+		if(option != null) {
+			fullKey += option;
+		}
+		if(sourceOption != null) {
+			fullKey += sourceOption;
+		}
+		if(targetOption != null) {
+			fullKey += targetOption;
+		}
+		writeOutput(fullKey, output.toString());
+		if(option != null) {
+			multipleChoiceKeys.put(option, fullKey);
+		} else {
+			currentKey = fullKey.toString();
+		}
 	}
 	
 }

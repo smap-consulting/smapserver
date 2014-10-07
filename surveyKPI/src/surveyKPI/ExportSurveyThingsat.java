@@ -115,7 +115,7 @@ public class ExportSurveyThingsat extends Application {
 		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
 
 		/*
-		 * Get a path to a tempory folder
+		 * Get a path to a temporary folder
 		 */
 		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
 		if(basePath == null) {
@@ -145,7 +145,8 @@ public class ExportSurveyThingsat extends Application {
 			 * Get the thingsat model
 			 */
 			Thingsat things = new Thingsat(getThingsAtModel(connectionSD, sId));
-			things.debug();
+			addChoices(connectionSD, things);		// Add the options to any properties that are from select questions
+			//things.debug();
 			things.createDataFiles(filepath, "import");
 			/*
 			 * Get the sql
@@ -343,7 +344,43 @@ public class ExportSurveyThingsat extends Application {
 		*/
 	}
 	
-	
+	private void addChoices(Connection connectionSD, Thingsat things) {
+		PreparedStatement pstmt = null;
+		String sql = "select ovalue from option where q_id = ?;";
+		
+		try {
+			pstmt = connectionSD.prepareStatement(sql);
+		
+			for(Neo4J n : things.nodes) {
+				System.out.println("--------" + n.name);
+				addChoicesToProperties(pstmt, n.properties);
+			}
+			for(Neo4J l : things.links) {
+				System.out.println("++++++++" + l.name);
+				addChoicesToProperties(pstmt, l.properties);
+			}
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(pstmt != null) try { pstmt.close(); } catch(Exception e) {}
+		}
+	}
 
+	private void addChoicesToProperties(PreparedStatement pstmt, ArrayList<Property> properties) throws SQLException {
+		for(Property p: properties) {
+			System.out.println("     property" + p.colName + " : " + p.q_type);
+			if(p.q_type != null && p.q_type.equals("select")) {
+				p.optionValues = new ArrayList<String> ();
+				pstmt.setInt(1, p.q_id);
+				
+				ResultSet rs = pstmt.executeQuery();
+				while(rs.next()) {
+					p.optionValues.add(rs.getString(1));
+				}
+			}
+		}
+	}
 
 }

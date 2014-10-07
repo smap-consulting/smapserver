@@ -182,7 +182,7 @@ public class QueryGenerator {
 		//shpSqlBuf.append(";");
 		sqlDesc.sql = shpSqlBuf.toString();
 		
-		System.out.println("Shape SQL: " + shpSqlBuf);
+		System.out.println("Generated SQL: " + shpSqlBuf);
 		
 		return sqlDesc;
 	}
