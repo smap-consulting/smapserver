@@ -290,14 +290,22 @@ $(document).ready(function() {
 	$('#uploadForm').on("submit", function(e) {
 		
 		var file = $('#templateName').val(),
-			reg_start = /^[a-zA-Z_]+.*/;
+			reg_start = /^[a-zA-Z_]+.*/,
+			pId = $('#projectId').val();
 		
+		// Check file name
 		if(!reg_start.test(file)) {
 			alert("Name must start with a letter or underscore");
 			return false;
-		} else {
-			return true;
+		} 
+		
+		// Check for valid project id
+		if(pId <= 0) {
+			alert("A project must be selected for this survey. You need to have access to at least one project");
+			return false;
 		}
+		
+		return true;
 	});
 	
 	enableUserProfile();

@@ -87,27 +87,29 @@ public class Thingsat {
 		// Write the nodes
 		for(Neo4J n : nodes) {
 			w.print("load csv with headers from \"file://" + n.f.getAbsolutePath() + "\"");
-			w.print(" as csvLine MERGE(n:" + n.label.value );
+			w.print(" as csvLine MERGE ( n: " + n.label.value );
 			
 			if(n.properties != null && n.properties.size() > 0) {
-				w.print("{");
-				w.print("id: csvLine.id");		// All nodes have id
+				w.print(" {");
+				w.print(" id: csvLine.id");		// All nodes have id
 				for(Property p : n.properties) {
-					w.print("," + p.key + ": csvLine." + p.key);
+					w.print(", " + p.key + ": csvLine." + p.key);
 				}
-				w.print("}");
+				w.print(" }");
 			}
-			w.println(");");
+			w.println(" );");
 		}
 		
 		// Write the relations
-		w.println("using periodic commit");
+
 		for(Neo4J r : links) {
+			w.println("");
+			w.println("using periodic commit");
 			w.print("load csv with headers from \"file://" + r.f.getAbsolutePath() + "\"");
 			w.println(" as csvLine ");
 			w.print("   ");
-			w.print("match (from: " + nodes.get(r.source).name + " {id: csvLine.from})");
-			w.print(", (to: " + nodes.get(r.target).name + " {id: csvLine.to})");
+			w.print("match (from: " + nodes.get(r.source).name + " { id: csvLine.from })");
+			w.print(", (to: " + nodes.get(r.target).name + " { id: csvLine.to })");
 			w.println(" merge (from)-[:" + r.name + "]->(to);");
 			/*
 			 * TODO properties
