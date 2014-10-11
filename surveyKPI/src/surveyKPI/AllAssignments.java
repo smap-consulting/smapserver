@@ -552,8 +552,17 @@ public class AllAssignments extends Application {
 							resultSet = pstmt.executeQuery();
 							while (resultSet.next()) {
 				
+								/*
+								 * The original URL for instance data only allowed searching via primary key
+								 *  the prikey was the last part of the path.
+								 *  This use is now deprecated and a more flexible approach is used where the key
+								 *  is passed as an attribute.  
+								 *  The old path value of primary key is ignored with this new format
+								 *  and is set to zero here.
+								 */
 								if(as.update_results && (as.source_survey_id == as.form_id)) {
-									initial_data_url = "http://" + hostname + "/instanceXML/" + source_survey_ident + "/" + resultSet.getString(1);
+									initial_data_url = "http://" + hostname + "/instanceXML/" + 
+									source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);
 								}
 								
 								String location = null;

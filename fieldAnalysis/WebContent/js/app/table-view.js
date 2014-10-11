@@ -355,14 +355,18 @@ function addRightClickToTable($elem, sId, view) {
 		$elem.find('.menu_button').off().click(function(e) {
 			var $this = $(this);
 			var pkey = $this.data("pkey");
-			var survey_ident = $this.data("ident");
+			var survey_ident = $this.data("ident");	
+			var isBad = $this.parent().parent().find('.bad_r').size() !== 0;
 			
-			$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
-					"&datakey=prikey&datakeyvalue="+pkey)
-					.attr("target", "_blank");
-			
-			$("#edit_record_dialog").dialog("open");
-			//alert($(this), tableName, pkey, value, survey, theView);
+			if(isBad) {
+				alert("You cannot edit a record marked as bad");
+			} else {
+				$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
+						"&datakey=prikey&datakeyvalue="+pkey)
+						.attr("target", "_blank");
+				
+				$("#edit_record_dialog").dialog("open");
+			}
 			return false;
 		});
 	}
