@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 @Path("/review/{sId}/{language}/other")
 public class ReviewQuestionsOther extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {

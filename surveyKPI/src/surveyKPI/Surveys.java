@@ -58,8 +58,8 @@ import java.util.logging.Logger;
 @Path("/surveys")
 public class Surveys extends Application {
 
-	Authorise a = new Authorise(Authorise.ANALYST);
-	Authorise aDel = new Authorise(Authorise.ADMIN);
+	Authorise a = null;
+	Authorise aDel = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Surveys.class.getName());
@@ -69,6 +69,17 @@ public class Surveys extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Surveys.class);
 		return s;
+	}
+	
+	public Surveys() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.ENUM);
+		a = new Authorise(authorisations, null);
+		aDel = new Authorise(authorisations, null);
+		
 	}
 
 	// JSON

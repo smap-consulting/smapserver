@@ -173,7 +173,15 @@ function updateUserDetails(data, getOrganisationsFn) {
 			if(groups[i].name === "org admin") {
 				globals.gIsOrgAdministrator = true;
 			}
+			if(groups[i].name === "analyst") {
+				globals.gIsAnalyst = true;
+			}
 		}
+	}
+	if(globals.gIsAnalyst) {
+		$('.analyst_only').show();
+	} else {
+		$('.analyst_only').hide();
 	}
 	if(globals.gIsAdministrator) {
 		$('.super_user_only').show();

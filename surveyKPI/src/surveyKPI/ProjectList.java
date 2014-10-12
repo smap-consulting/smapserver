@@ -55,7 +55,7 @@ import java.util.logging.Logger;
 @Path("/projectList")
 public class ProjectList extends Application {
 	
-	Authorise a = new Authorise(Authorise.ADMIN);
+	Authorise a = new Authorise(null, Authorise.ADMIN);
 
 	private static Logger log =
 			 Logger.getLogger(ProjectList.class.getName());

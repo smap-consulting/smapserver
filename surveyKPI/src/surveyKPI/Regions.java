@@ -55,7 +55,7 @@ import java.util.logging.Logger;
 @Path("/regions")
 public class Regions extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Regions.class.getName());
@@ -67,6 +67,15 @@ public class Regions extends Application {
 		return s;
 	}
 
+
+	public Regions() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+		
+	}
 	
 	// JSON
 	@GET

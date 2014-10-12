@@ -77,7 +77,7 @@ import org.w3c.dom.Element;
 @Path("/htmlManifest")
 public class HtmlManifest extends Application{
 
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(HtmlManifest.class.getName());

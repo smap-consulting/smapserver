@@ -52,7 +52,7 @@ public class Languages extends Application {
 	private static Logger log =
 			 Logger.getLogger(Languages.class.getName());
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 
 	// Tell class loader about the root classes.  
 	public Set<Class<?>> getClasses() {

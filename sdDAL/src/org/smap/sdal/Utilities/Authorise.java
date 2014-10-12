@@ -19,10 +19,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.Utilities;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,13 +38,25 @@ public class Authorise {
 	public static String ADMIN = "admin";
 	public static String ORG = "org admin";
 	
-	private String requiredGroup;
+	//private String requiredGroup;
+	ArrayList<String> permittedGroups; 
 	
 	/*
 	 * Create authorise object with required security policies
 	 */
-	public Authorise(String group) {
-		requiredGroup = group;
+	public Authorise(ArrayList<String> groups, String group) {
+		
+		if(groups == null) {
+			permittedGroups = new ArrayList<String> ();
+			permittedGroups.add(group);
+		} else {
+			permittedGroups = groups;
+		}
+		//requiredGroup = group;
+
+		// permittedGroups = new ArrayList<String> ();
+		// permittedGroups.add(ANALYST);
+		//permittedGroups.add(ADMIN);
 	}
 	
 	/*
@@ -57,20 +71,36 @@ public class Authorise {
 		String sql = "select count(*) from users u, groups g, user_group ug " +
 				" where u.id = ug.u_id " +
 				" and g.id = ug.g_id " +
-				" and g.name = ? " +
-				" and u.ident = ?;";
-		//log.info(sql + " : " + requiredGroup + " : " + user);
+				" and u.ident = ? " +
+				" and (" +
+				" g.name = ? ";
+				
+		if(permittedGroups.size() > 1) {
+			for(int i = 1; i < permittedGroups.size(); i++)
+				sql += " or g.name = ? ";
+		}
+		sql += ");";
+		
+		log.info(sql + " user: " + user);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, requiredGroup);
-			pstmt.setString(2, user);
+			//pstmt.setString(1, requiredGroup);
+			pstmt.setString(1, user);
+			for(int i = 0; i < permittedGroups.size(); i++) {
+				System.out.println("   -- group: " + permittedGroups.get(i));
+				pstmt.setString(i + 2, permittedGroups.get(i));
+			}
+
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
 			count = resultSet.getInt(1);
 		} catch (Exception e) {
-			log.info("Authorisation failed for: " + user + " group required was: " + requiredGroup);
+			log.info("Authorisation failed for: " + user + " groups required were one of: " );
+			for(int i = 0; i < permittedGroups.size(); i++) {
+				log.info("  ==== " + permittedGroups.get(i));
+			}
 			log.log(Level.SEVERE,"SQL Error during authorisation", e);
 			sqlError = true;
 		} finally {		
@@ -85,8 +115,10 @@ public class Authorise {
 		
 		// Check to see if the user was authorised to access this service
  		if(count == 0 || sqlError) {
- 			log.info("Authorisation failed for: " + user + " group required was: " + requiredGroup);
- 			
+ 			log.info("Authorisation failed for: " + user + " group required was one of: ");
+ 			for(int i = 0; i < permittedGroups.size(); i++) {
+				log.info("  ==== " + permittedGroups.get(i));
+			}
  			// Close the connection as throwing an exception will end the service call
 			
 			try {

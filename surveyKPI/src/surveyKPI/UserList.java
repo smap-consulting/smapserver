@@ -62,7 +62,7 @@ import java.util.logging.Logger;
 @Path("/userList")
 public class UserList extends Application {
 	
-	Authorise a = new Authorise(Authorise.ADMIN);
+	Authorise a = new Authorise(null, Authorise.ADMIN);
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());

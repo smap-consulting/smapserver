@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 @Path("/review/{sId}")
 public class Review extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());

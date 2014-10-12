@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 @Path("/ssc/{sId}/{fn}")
 public class ServerSideCalculates extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(ServerSideCalculates.class.getName());

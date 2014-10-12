@@ -51,7 +51,7 @@ import org.smap.sdal.Utilities.UtilityMethods;
 @Path("/exportSurvey/{sId}/{filename}")
 public class ExportSurvey extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurvey.class.getName());

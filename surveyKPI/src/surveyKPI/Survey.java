@@ -81,8 +81,8 @@ import com.google.gson.reflect.TypeToken;
 @Path("/survey/{sId}")
 public class Survey extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
-	Authorise aDel = new Authorise(Authorise.ADMIN);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise aDel = new Authorise(null, Authorise.ADMIN);
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());

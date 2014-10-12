@@ -52,7 +52,7 @@ import org.smap.server.utilities.GetXForm;
 @Path("/formXML")
 public class FormXML extends Application{
 	
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 
 	private static Logger log =
 			 Logger.getLogger(FormXML.class.getName());

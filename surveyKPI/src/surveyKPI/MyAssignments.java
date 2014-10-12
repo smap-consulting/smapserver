@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 @Path("/myassignments")
 public class MyAssignments extends Application {
 
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());

@@ -60,7 +60,7 @@ import org.apache.commons.codec.digest.*;
 @Path("/xformsManifest")
 public class FormsManifest {
 
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(FormsManifest.class.getName());

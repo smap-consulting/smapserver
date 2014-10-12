@@ -55,7 +55,7 @@ import java.util.logging.Logger;
 @Path("/values/{sId}/{qId}/{rId}")
 public class Values extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Values.class.getName());

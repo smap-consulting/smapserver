@@ -72,7 +72,7 @@ public class TemplateUpload extends HttpServlet {
 	private static Logger log =
 			 Logger.getLogger(TemplateUpload.class.getName());
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private class Message {
 		String host;

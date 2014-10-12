@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 @Path("/question/{sId}/{lang}/{qId}")
 public class Question extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 
 	private static Logger log =
 			 Logger.getLogger(Question.class.getName());

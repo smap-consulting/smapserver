@@ -71,7 +71,7 @@ public class XFormData {
 	
 	String serverName = null;
 	
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 
 	public XFormData() {
 		

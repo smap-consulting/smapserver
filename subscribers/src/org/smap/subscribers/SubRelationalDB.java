@@ -155,7 +155,7 @@ public class SubRelationalDB extends Subscriber {
 			// Authorisation - Access
 		    Class.forName(dbClassMeta);		 
 			connection = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);
-			Authorise a = new Authorise(Authorise.ENUM);
+			Authorise a = new Authorise(null, Authorise.ENUM);
 			SurveyManager sm = new SurveyManager();
 			Survey survey = sm.getSurveyId(connection, templateName);	// Get the survey id from the templateName / key
 			boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );

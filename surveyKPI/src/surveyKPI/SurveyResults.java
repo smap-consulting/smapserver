@@ -43,7 +43,7 @@ import java.util.Set;
 @Path("/surveyResults/{sId}")
 public class SurveyResults extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {

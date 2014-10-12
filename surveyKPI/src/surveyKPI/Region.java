@@ -37,6 +37,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -44,8 +45,6 @@ import java.util.logging.Logger;
 
 @Path("/region/{region}")
 public class Region extends Application {
-
-	Authorise a = new Authorise(Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Region.class.getName());
@@ -78,6 +77,10 @@ public class Region extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Region");
+		ArrayList<String> authorisations = new ArrayList<String> ();
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		Authorise a = new Authorise(authorisations, null);
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 

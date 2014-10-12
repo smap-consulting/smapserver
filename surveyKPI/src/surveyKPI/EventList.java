@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 @Path("/eventList")
 public class EventList extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(EventList.class.getName());
@@ -56,6 +56,15 @@ public class EventList extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(EventList.class);
 		return s;
+	}
+	
+	public EventList() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+		
 	}
 
 	

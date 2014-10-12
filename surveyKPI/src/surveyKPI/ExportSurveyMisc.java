@@ -65,7 +65,7 @@ import org.w3c.dom.Element;
 @Path("/exportSurveyMisc/{sId}/{filename}")
 public class ExportSurveyMisc extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyMisc.class.getName());

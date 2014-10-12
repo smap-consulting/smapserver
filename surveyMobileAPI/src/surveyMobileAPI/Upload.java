@@ -60,7 +60,7 @@ import exceptions.SurveyBlockedException;
 @Path("/submission")
 public class Upload extends Application {
 	
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(Upload.class.getName());

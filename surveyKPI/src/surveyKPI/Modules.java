@@ -48,7 +48,7 @@ import java.util.Stack;
 @Path("/modules/{sId}")
 public class Modules extends Application {
 
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	// Tell class loader about the root classes.  
 	public Set<Class<?>> getClasses() {

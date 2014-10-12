@@ -68,7 +68,7 @@ import com.google.gson.GsonBuilder;
 
 public class FormList extends Application {
 	
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(FormList.class.getName());

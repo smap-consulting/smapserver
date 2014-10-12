@@ -78,7 +78,7 @@ import org.w3c.dom.Element;
 @Path("/instanceXML")
 public class InstanceXML extends Application{
 
-	Authorise a = new Authorise(Authorise.ENUM);
+	Authorise a = new Authorise(null, Authorise.ENUM);
 	
 	private static Logger log =
 			 Logger.getLogger(InstanceXML.class.getName());

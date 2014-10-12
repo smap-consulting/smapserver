@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 @Path("/dashboard")
 public class Dashboard extends Application {
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Dashboard.class.getName());

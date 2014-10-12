@@ -50,7 +50,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 public class MediaUpload extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	Authorise a = new Authorise(Authorise.ANALYST);
+	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(MediaUpload.class.getName());

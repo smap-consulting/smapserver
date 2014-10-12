@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 @Path("/organisationList")
 public class OrganisationList extends Application {
 	
-	Authorise a = new Authorise(Authorise.ORG);
+	Authorise a = new Authorise(null, Authorise.ORG);
 
 	private static Logger log =
 			 Logger.getLogger(OrganisationList.class.getName());
