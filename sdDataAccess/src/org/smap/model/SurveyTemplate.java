@@ -689,7 +689,6 @@ public class SurveyTemplate {
 		HashMap <String, HashMap<String, String>> questionList = new HashMap <String, HashMap<String, String>> ();
 		ArrayList<String> badNames = new ArrayList<String> ();
 		
-		System.out.println("Checking for duplicate options");
 		List<Option> optionList = new ArrayList<Option>(options.values());
 		for (Option o : optionList) {
 			
@@ -739,10 +738,15 @@ public class SurveyTemplate {
 	/*
 	 * Method to write the model to the database
 	 */
-	public void writeDatabase() {
+	public void writeDatabase() throws Exception {
 		Collection c = null;
 		Iterator itr = null;
 
+		System.out.println("Forms values length: " + forms.values().size());
+		if(forms.values().size() == 0) {
+			System.out.println("No forms in this survey");
+			throw new Exception("No forms in this survey");
+		}
 		SurveyManager surveys = new SurveyManager(pc);
 		surveys.persist(survey);
 

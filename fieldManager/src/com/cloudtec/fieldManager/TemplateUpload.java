@@ -309,7 +309,7 @@ public class TemplateUpload extends HttpServlet {
 					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
 					return;
 				} 	
-					
+				
 				//model.printModel();
 				model.writeDatabase();	// write the survey definitions
 				log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
