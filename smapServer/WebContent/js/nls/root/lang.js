@@ -8,7 +8,6 @@ define({
 	"m_export": "Export",
 	"m_discuss": "Discuss",
 	"m_modify": "Modify",
-	"m_news": "News",
 	"m_web_forms": "Web Forms",
 	"m_docs": "Documentation",
 	"m_monitor": "Monitoring",

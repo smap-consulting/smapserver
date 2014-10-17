@@ -1,7 +1,25 @@
-define({
-	"m_home": "Le Maison",
-	"m_admin": "Le Admin",
-	"m_news": "Le journal",
-	"m_web_forms": "Web Le Forms",
-	"m_docs": "Le Docs"
+define(
+{
+    "m_home": "Accueil",
+    "m_admin": "Administrer",
+    "m_analysis": "Analyser",
+    "m_reports": "Rapports",
+    "m_refresh": "Actualiser",
+    "m_export": "Exporter",
+    "m_discuss": "Discuter",
+    "m_modify": "Modifier",
+    "m_news": "Nouvelles",
+    "m_web_forms": "Formulaires Web",
+    "m_docs": "Documentation",
+    "m_monitor": "Surveillance",
+    "m_user": "Utilisateurs",
+    "m_assign": "Assigner",
+    "m_help": "Aide",
+    "ss_welcome": "Bienvenu dans Smap Server Version:",
+    "ss_welcome2": "La description des changements inclus dans cette version peut être trouvée ici:",
+    "ss_ft": "Obtenir Field Task",
+    "ss_su": "Obtenir Smap Uploader",
+    "msg_wait": "Attente de la réponse du serveur. Réessayez dans quelques secondes",
+    "msg_sel_survey": "Vous devez sélectionner une enquête",
+    "msg_sel_q": "Vous devez sélectionner une question à afficher sur un graph"
 });
