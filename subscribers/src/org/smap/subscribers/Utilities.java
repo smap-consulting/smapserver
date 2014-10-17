@@ -70,7 +70,7 @@ public class Utilities {
 		String extension = "";
 		int idx = filename.lastIndexOf('.');
 		if(idx > 0) {
-			extension = filename.substring(idx+1);
+			extension = filename.substring(idx+1).toLowerCase();
 		}
 		
 	      if (extension.equals("xml")) {
