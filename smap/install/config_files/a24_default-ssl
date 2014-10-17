@@ -37,6 +37,11 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
     ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
     ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
 
+    ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPass         /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPassReverse  /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    
     ProxyPass         /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPassReverse  /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPass         /formXML ajp://localhost:8009/surveyMobileAPI/formXML
