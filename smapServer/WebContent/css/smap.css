@@ -321,7 +321,7 @@ a:hover {
 	border-style: solid;
 	border-color: grey;
 	border-width: thin;
-	top: 100px; 
+	/*top: 100px;*/ 
 	right: 0px; 
 	left: 20%; 
 	/*bottom: 0px; */
@@ -342,7 +342,7 @@ a:hover {
 	border-style: solid;
 	border-color: grey;
 	border-width: thin;
-	top: 100px; 
+	/*top: 100px;*/ 
 	left: 0px; 
 	right: 80%; 
 	/*bottom: 0px; */
