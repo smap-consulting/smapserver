@@ -71,13 +71,13 @@
     	
     # Local access points for webforms
     <Location /formXMLLocal>
-    	order deny, allow
+    	order deny,allow
     	deny from all
        	allow from  127.0.0.1
 	</Location>
 
 	<Location /instanceXMLLocal>
-	   	order deny, allow
+	   	order deny,allow
     	deny from all
     	allow from  127.0.0.1
 	</Location>

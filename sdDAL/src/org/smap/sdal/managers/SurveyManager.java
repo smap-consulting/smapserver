@@ -62,6 +62,7 @@ public class SurveyManager {
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
 				" and s.p_id = up.p_id" +
+				" and p.o_id = u.o_id" +
 				" and u.ident = ? ";
 		
 		// only return surveys in the users organisation unit + assigned project id 

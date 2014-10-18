@@ -16,13 +16,21 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
-Versions 14.03 and 14.05 of Smap require some changes to the Apache configuration files. For Ubuntu 12.04
-and Apache2, these are:
-	/etc/apache2/sites-available/default    
-	/etc/apache2/sites-available/default-ssl 
-You can use the default and default-ssl files from smap/install/config to update your files. However
-remember to replace the text {your_files} with the location of your media files (by default this should
-be /smap)
+Version 14.10 needs the following added to Apache configuration files (Assuming version 2.4 of Apache)
+
+    ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
+    ProxyPass         /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+    ProxyPassReverse  /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
+
+# Local access points for webforms
+    <Location /formXMLLocal>
+       	Require ip  127.0.0.1
+	</Location>
+
+	<Location /instanceXMLLocal>
+    	Require ip  127.0.0.1
+	</Location>
 
 
 Installation

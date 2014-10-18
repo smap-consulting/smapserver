@@ -409,15 +409,22 @@ public class TemplateUpload extends HttpServlet {
 	        String line = null;
 	        //errorMesgBuf.append("<ol>");
 	        response.foundErrorMsg = false;
+	        boolean hasCircularRef = false;
+	        boolean hasSystemError = false;
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
-	        			line.startsWith("/") || line.startsWith("java")) {
-	        		errorMesgBuf.append("System error");
-	        		response.hints.add(line);
-	        		response.hints.add("Contact your system administrator for support");
-	        		if(!line.equals("errors.PyXFormError")) {
-	        			response.foundErrorMsg = true;
+	        			line.startsWith("java")) {
+	        		if(!line.contains("Dependency cycles")) {
+	        			if(!hasSystemError) {
+	        				hasSystemError = true;
+		        			errorMesgBuf.append("System error");
+		        			response.hints.add(line);
+		        			response.hints.add("Contact your system administrator for support");
+		        			if(!line.equals("errors.PyXFormError")) {
+		        				response.foundErrorMsg = true;
+		        			}
+	        			}
 	        		}
 	        	} else if(line.contains("Exception: java.lang.Boolean")) {
         			// calculation errors
@@ -459,14 +466,20 @@ public class TemplateUpload extends HttpServlet {
 
         		// Test for circular reference
         		} else if(line.contains("=>")) {	
-        			errorMesgBuf.append("Check for circular references");
-        			int posName = line.lastIndexOf('/');
-        			if(posName != -1) {
-        				String name = line.substring(posName + 1);
-        				response.hints.add("A 'relevant' statement for question " + 
-        						name + " is potentially referring to  itself instead of referring to another question") ;
-        				response.hints.add("<li>Relevant statements are evaluated before a question is asked so they " +
-        						"cannot refer to their own questions");
+        			if(!hasCircularRef) {
+        				errorMesgBuf.append(" Check for circular references.");
+        				hasCircularRef = true;
+        			
+        				int posName = line.lastIndexOf('/');
+	        			if(posName != -1) {
+	        				String name = line.substring(posName + 1);
+	        				response.hints.add("A 'relevant' statement for question " + 
+	        						name + " is potentially referring to  itself instead of referring to another question") ;
+	        				response.hints.add("<li>Relevant statements are evaluated before a question is asked so they " +
+	        						"cannot refer to their own questions");
+	        			} else {
+	        				response.hints.add(line);
+	        			}
         			}
 	        		response.foundErrorMsg = true;
         		} else if(line.contains("XFormParseException")) {	
