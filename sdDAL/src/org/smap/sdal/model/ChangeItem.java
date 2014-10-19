@@ -12,8 +12,8 @@ public class ChangeItem {
 	public String type;				// question or option
 	public String element;
 	public String languageName;
-	public String newVal;
-	public String oldVal;
+	public String newVal;			// When updating a label
+	public String oldVal;			// Old label
 	public String name;
 	public String transId;
 	public String optionList;	

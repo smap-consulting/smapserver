@@ -293,7 +293,7 @@ public class Surveys extends Application {
 			}
 			pstmt.close();
 			
-			for(int i = 0; i < changes.size(); i++) {			
+			for(ChangeSet cs : changes) {			
 				
 				// Process each change set separately and roll back to a save point if it fails
 				Savepoint sp = connectionSD.setSavepoint();
@@ -303,21 +303,21 @@ public class Surveys extends Application {
 							pstmtChangeLog,
 							userId, 
 							sId, 
-							changes.get(i).type, 
-							changes.get(i).items,
+							cs.type, 
+							cs.items,
 							resp.version,
 							gson);
 					
 					// Success
-					changes.get(i).updateFailed = false;
+					cs.updateFailed = false;
 					resp.success++;
 				} catch (Exception e) {
 					
 					// Failure
 					connectionSD.rollback(sp);
 					System.out.println(e.getMessage());
-					changes.get(i).updateFailed = true;
-					changes.get(i).errorMsg = e.getMessage();
+					cs.updateFailed = true;
+					cs.errorMsg = e.getMessage();
 					resp.failed++;
 				}
 				

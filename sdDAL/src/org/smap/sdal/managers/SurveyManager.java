@@ -575,6 +575,8 @@ public class SurveyManager {
 					pstmtChangeLog.execute();
 			}
 
+		} else if(change_type.equals("new_multichoice_option")) {
+			System.out.println("Changing multiple choice ")
 		}
 
 		

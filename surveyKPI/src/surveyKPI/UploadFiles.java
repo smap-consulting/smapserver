@@ -20,12 +20,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 
@@ -34,23 +30,16 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("/upload")
@@ -79,7 +68,6 @@ public class UploadFiles extends Application {
 		String serverName = request.getServerName();
 		//String contextPath = request.getContextPath();
 		String original_url = "/edit.html?mesg=error loading media file";
-		String mesg = null;
 		int sId = 0;
 	
 		log.info("upload files - media -----------------------");
@@ -97,8 +85,7 @@ public class UploadFiles extends Application {
 			 */
 			List<?> items = uploadHandler.parseRequest(request);
 			Iterator<?> itr = items.iterator();
-			//String qId = null;
-			String oId = null;
+
 			while(itr.hasNext()) {
 				FileItem item = (FileItem) itr.next();
 				
@@ -203,10 +190,6 @@ public class UploadFiles extends Application {
 				e.printStackTrace();
 				//log("Failed to close connection",e);
 			}
-		}
-		
-		if(mesg != null) {
-			original_url += "&mesg=" + mesg;
 		}
 		
 		response.sendRedirect(response.encodeRedirectURL(original_url));
