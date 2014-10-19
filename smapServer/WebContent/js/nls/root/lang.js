@@ -14,6 +14,7 @@ define({
 	"m_user": "Users",
 	"m_assign": "Tasks",
 	"m_help": "Help",
+	"m_forgotton": "Forgot Password",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
