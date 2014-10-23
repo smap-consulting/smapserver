@@ -22,6 +22,9 @@
         },
         {
             name: '../webForms'
+        },
+        {
+            name: '../forgottonPassword'
         }
 
 

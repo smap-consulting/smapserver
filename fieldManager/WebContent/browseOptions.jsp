@@ -44,7 +44,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<div class="rmm noPrint" data-menu-style = "minimal">
 		<ul>
 			<li><a href="/index.html">Home</a></li>
-			<li><a href="templateManagement.html">Template Management</a></li>
+			<li><a href="templateManagement.html">Form Management</a></li>
 			<li><a href="/fieldAnalysis/index.html">Analysis</a></li>
 			<li><a href="monitor.html">Monitoring</a></li>
 			<li><a href="http://help.smap.com.au" target="_top">Help</a></li>

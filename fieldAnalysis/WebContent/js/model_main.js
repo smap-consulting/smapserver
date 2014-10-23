@@ -432,7 +432,7 @@ var graph = {
   var node = svg.selectAll(".node")
       .data(graph.nodes)
     .enter().append("circle")
-      .attr("id", function(d) { return d.name})
+      .attr("id", function(d) { return d.name;})
       .attr("class", "node")
       .attr("r", 10)
       .style("fill", function(d) { return color(d.group); })

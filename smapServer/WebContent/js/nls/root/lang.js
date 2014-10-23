@@ -1,7 +1,7 @@
 define({
 	"m_home": "Home",
 	"m_admin": "Admin",
-	"m_tm": "Template Management",
+	"m_tm": "Form Management",
 	"m_analysis": "Analysis",
 	"m_reports": "Reports",
 	"m_refresh": "Refresh",
@@ -14,7 +14,7 @@ define({
 	"m_user": "Users",
 	"m_assign": "Tasks",
 	"m_help": "Help",
-	"m_forgotton": "Forgot Password",
+	"m_forgot_password": "Forgot Password",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -22,7 +22,74 @@ define({
 	"ss_ft": "Get Field Task",
 	"ss_su": "Get Smap Uploader",
 	
+	// Common
+	"c_project": "Select Project",
+	"c_forms": "Forms",
+	"c_forward": "Forward",
+	"c_name": "Name",
+	"c_file": "File",
+	"c_host": "Host",
+	"c_user": "User",
+	"c_email": "Email",
+	"c_lang": "Language",
+	"c_password": "Password",
+	"c_c_p": "Confirm Password",
+	"c_r_p": "Reset Password",
+	"c_en": "Enable",
+	"c_loc_f": "Local Form:",
+	"c_rem_f": "Remote Form",
+	"c_rem_u": "Remote User",
+	"c_enabled": "Enabled",
+	"c_edit": "Edit",
+	"c_del": "Delete",
+	"c_download": "Download",
+	"c_done": "Done",
+	"c_cancel": "Cancel",
+	"c_save": "Save",
+	"c_block": "Block",
+	
+	// File Types
+	"ft_xls": "XLS Form",
+	"ft_xml": "XML Form",
+	"ft_pdf": "PDF Form",
+	
+	// Template Management
+	"tm_s_del": "Show deleted forms",
+	"tm_d_forms": "Delete Forms",
+	"tm_r_forms": "Restore Forms",
+	"tm_e_forms": "Erase Forms",
+	"tm_c_form": "Create a Form",
+	"tm_g_temp": "Download Template",
+	"tm_g_temp_i1": "Download a template to create a new form on your personal computer. " +
+			"When you have finished, upload it to the server by clicking on the upload button below. " +
+			"You will first need to select the XLS file containing the form you have created and give it a name.",
+	"tm_g_temp_i3": "Reference Guide",
+	"tm_g_temp_i4": "Other editors can be used including: ",
+	"tm_ul_f": "Upload a Form",
+	"tm_si": "Specify survey identifier",
+	"tm_up": "Upload",
+	"tm_add_for": "Add Forward",
+	"tm_ref_f": "Refresh Form List",
+	
+	
+	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
 	"msg_sel_survey": "You must select a survey",
-	"msg_sel_q": "You must select a question to show on a graph"
+	"msg_sel_q": "You must select a question to show on a graph",
+	"msg_val_prot": "Protocol (http:// or https:// must be specified with the hostname",
+	"msg_val_p": "A project must be selected for this form",
+	"msg_val_rf": "You must select a remote form",
+	"msg_val_rh": "You must select a remote host",
+	"msg_val_u_id": "You must specify a user id",
+	"msg_val_pass": "You must specify a password",
+	"msg_val_let": "Name must start with a letter or underscore",
+	"msg_add_forward": "Add forward",
+	"msg_edit_forward": "Edit forward",
+	"msg_sel_form": "Select Form:",
+	"msg_err_save": "Error: Save failed: ",
+	"msg_err_del": "Error: Delete failed: ",
+	"msg_err_res": "Error: Restore failed: ",
+	"msg_err_block": "Error: Block failed: ",
+	"msg_err_get_f": "Error: Get forms failed: ",
+	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://"
 });

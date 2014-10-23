@@ -74,7 +74,7 @@ $(document).ready(function() {
 		if(host.length === 0) {
 			return false;
 		} else if(host.substr(0, 4) !== "http") {
-			alert("Protocol (http:// or https:// must be specified with the hostname");
+			alert(localise.set["msg_val_prot"]);
 			return false;
 		}
 	});
@@ -98,19 +98,19 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
-			title:"Add New Forward",
+			title:localise.set["msg_add_forward"],
 			width:300,
 			height:400,
 			zIndex: 2000,
 			buttons: [
 		        {
-		        	text: "Cancel",
+		        	text: localise.set["c_cancel"],
 		        	click: function() {
 		        		
 		        		$(this).dialog("close");
 		        	}
 		        }, {
-		        	text: "Save",
+		        	text: localise.set["c_save"],
 		        	click: function(event, ui) {
 		        		var forward = {},
 		        			forwardString,
@@ -130,10 +130,11 @@ $(document).ready(function() {
 		        		
 		        		if(typeof remote_s_ident === "undefined" || remote_s_ident.length == 0) {
 		        			error = true;
-		        			alert("You must select a remote survey");
+		        			alert(localise.set["msg_val_rf"]);
+		        			
 		        		} else if(host.substr(0, 4) !== "http") {
 		        			error = true;
-		        			alert("Protocol (http:// or https:// must be specified with the hostname");
+		        			alert(localise.set["msg_val_prot"]);
 		        			$('#fwd_host').focus();
 		        		}
 		        		
@@ -141,7 +142,6 @@ $(document).ready(function() {
 			        		forward.s_id = gSelectedTemplate;
 			        		forward.enabled = true;	
 			        		
-			        		console.log("update password: " + gUpdateFwdPassword);
 			        		forward.enabled = $('#fwd_enabled').is(':checked');
 			        		forward.remote_s_ident = remote_s_ident;
 			        		forward.remote_s_name = $('#fwd_rem_survey_nm').val();
@@ -181,7 +181,7 @@ $(document).ready(function() {
 		        						if(xhr.readyState == 0 || xhr.status == 0) {
 		        				              return;  // Not an error
 		        						} else {
-		        							alert("Error: Failed save forward settings: " + xhr.responseText);
+		        							alert(localise.set["msg_err_save"] + xhr.responseText);
 		        						}
 		        					}
 			        		});
@@ -198,13 +198,13 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
-			title:"Forward",
+			title:localise.set["c_forward"],
 			width:'auto',
 			height:400,
 			zIndex: 2000,
 			buttons: [
 		        {
-		        	text: "Done",
+		        	text: localise.set["c_done"],
 		        	click: function() {
 		        		
 		        	    $(this).dialog("close");	  
@@ -220,15 +220,14 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
-			title:"Survey Selection",
+			title:localise.set["msg_sel_form"],
 			width:300,
 			height:200,
 			zIndex: 2000,
 			buttons: [
 		        {
-		        	text: "Done",
+		        	text: localise.set["c_done"],
 		        	click: function() {
-		        		
 		        	    $(this).dialog("close");	  
 		        	
 		        	}	
@@ -242,19 +241,19 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
-			title:"Download",
+			title:localise.set["c_download"],
 			width:250,
 			height:300,
 			zIndex: 2000,
 			buttons: [
 		        {
-		        	text: "Cancel",
+		        	text: localise.set["c_cancel"],
 		        	click: function() {
 		        		
 		        		$(this).dialog("close");
 		        	}
 		        }, {
-		        	text: "Download",
+		        	text: localise.set["c_download"],
 		        	click: function() {
 		        		var docURL,
 		        			language,
@@ -272,6 +271,17 @@ $(document).ready(function() {
 			]
 		}
 	 );
+	
+	// Change function on download file type
+	$("input[name='download_type']", "#download_template").change(function() {
+		var type = $("input[name='download_type']:checked", "#download_template").val();
+		if(type === "pdf") {
+			$('#download_language_div').show();
+		} else {
+			$('#download_language_div').hide();
+		}
+	});
+	$('#download_language_div').hide();
 	
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();
@@ -295,13 +305,13 @@ $(document).ready(function() {
 		
 		// Check file name
 		if(!reg_start.test(file)) {
-			alert("Name must start with a letter or underscore");
+			alert(localise.set["msg_val_let"]);
 			return false;
 		} 
 		
 		// Check for valid project id
 		if(pId <= 0) {
-			alert("A project must be selected for this survey. You need to have access to at least one project");
+			alert(localise.set["msg_val_p"]);
 			return false;
 		}
 		
@@ -320,7 +330,7 @@ function remoteSurveyChanged() {
 function edit_forward(fwdIndex) {
 	
 	var forward,
-		title = "Add forward";
+		title = localise.set["msg_add_forward"];
 	
 	document.getElementById("fwd_edit_form").reset();
 	
@@ -328,7 +338,7 @@ function edit_forward(fwdIndex) {
 		forward = gForwards[fwdIndex];
 		console.log("Editing:");
 		console.log(forward);
-		title = "Edit Forward";
+		title = localise.set["msg_edit_forward"],
 		
 		$('#fwd_rem_survey_id').val(forward.remote_s_ident);
 		$('#fwd_rem_survey_nm').val(forward.remote_s_name);	
@@ -446,10 +456,10 @@ function completeSurveyList() {
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th></th>';
-	h[++idx] = '<th>Survey Name</th>';
-	h[++idx] = '<th>Block</th>';
-	h[++idx] = '<th>Download</th>';
-	h[++idx] = '<th>Forward</th>';
+	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_block"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_download"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_forward"] + '</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
@@ -567,20 +577,20 @@ function completeSurveyList() {
 				$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
 			});
 		});
-		name = $(this).parent().siblings(".displayName").html();
+		name = $(this).parent().siblings(".displayName").text();
 		$('h1', '#download_template').html(name);
 		$('#download_template').dialog("open");
 	});
 	
 	$('.forward_td').button().click(function(e) {
-		var selTempName = $(this).parent().siblings('.displayName').html();
+		var selTempName = $(this).parent().siblings('.displayName').text();
 		gSelectedTemplate = $(this).val();
 		if(typeof gForwards === "undefined") {
 			getForwardsForList(globals.gCurrentProject, gSelectedTemplate);	
 		} else {
 			setForwardList(gSelectedTemplate);
 		}
-		$('#forward_list_popup h1').html("Local Survey: " + selTempName);
+		$('#forward_list_popup .form_name').html(selTempName);
 		$('#forward_list_popup').dialog("open");
 	});
 	
@@ -622,12 +632,12 @@ function setForwardList(sId) {
 			h[++idx] = '<td>';
 			h[++idx] = '<button class="fwd_edit" type="button" value="';
 			h[++idx] = i;
-			h[++idx] = '">Edit</button>';
+			h[++idx] = '">' + localise.set["c_edit"] + '</button>';
 			h[++idx] = '</td>';
 			h[++idx] = '<td>';
 			h[++idx] = '<button class="fwd_delete" type="button" value="';
 			h[++idx] = i;
-			h[++idx] = '">Delete</button>';
+			h[++idx] = '">' + localise.set["c_delete"] + '</button>';
 			h[++idx] = '</td>';
 			h[++idx] = '</tr>';	
 		}
@@ -658,14 +668,13 @@ function delete_forward(index) {
 		  success: function(data, status) {
 			  removeHourglass();
 			  getForwardsForList(globals.gCurrentProject, gSelectedTemplate);
-			  alert("Forward Deleted"); 
 		  },
 		  error: function(xhr, textStatus, err) {
 				removeHourglass();
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
-					alert("Error: Failed to delete forward: " + xhr.responseText);
+					alert(localise.set["msg_err_del"] + xhr.responseText);
 				}
 			}
 	});
@@ -693,7 +702,6 @@ function updateRemoteSurveys(surveyList) {
 	
 	$rs.empty().append(h.join(''));
 	remoteSurveyChanged();
-	$('#select_fwd_survey_pop h1').html("Select Remote Survey");
 		
 }
 
@@ -850,7 +858,7 @@ function executeDelete(template, delTables, hard) {
 		url : delURL,
 		error : function() {
 			removeHourglass();
-			alert("Error: Failed to delete");
+			alert(localise.set["msg_err_del"]);
 		},
 		success : function() {
 			removeHourglass();
@@ -876,7 +884,7 @@ function executeUnDelete(template) {
 		url : url,
 		error : function() {
 			removeHourglass();
-			alert("Error: Failed to restore the survey");
+			alert(localise.set["msg_err_res"]);
 		},
 		success : function() {
 			var projectId = $('#project_name option:selected').val();
@@ -897,7 +905,7 @@ function executeBlock(template, set) {
 		url : blockURL,
 		error : function() {
 			removeHourglass();
-			alert("Error: Failed to change block");
+			alert(localise.set["msg_err_block"]);
 		},
 		success : function() {
 			removeHourglass();
@@ -924,15 +932,15 @@ function getRemoteSurveys() {
 	
 	
 	if(!remote.address || remote.address.length == 0) {
-		alert("You must specify a remote host");
+		alert(localise.set["msg_val_rh"]);
 		$('#fwd_host').focus();
 		return;
 	} else if(!remote.user || remote.user.length == 0) {
-		alert("You must specify a user id to access the remote host");
+		alert(localise.set["msg_val_u_id"]);
 		$('#fwd_user').focus();
 		return;
 	} else if(!remote.password || remote.user.password == 0) {
-		alert("You must specify a password to access the remote host");
+		alert(localise.set["msg_val_pass"]);
 		$('#fwd_password').focus();
 		return;
 	}
@@ -961,12 +969,12 @@ function getRemoteSurveys() {
 		              return;  // Not an error
 				} else {
 					var msg;
-					if(xhr.responseText.indexOf("RSA premaster") >= 0) {
-						msg = "Remote server does not have a signed certificate, try using http:// instead of https://";
+					if(xhr.responseText.indexOf("RSA premaster") >= 0) {				
+						msg = localise.set["msg_err_cert"];
 					} else {
 						msg = xhr.responseText;
 					}
-					alert("Error: Failed to get remote surveys: " + msg);
+					alert(localise.set["msg_err_get_f"] + msg);
 				}
 			}
 	});
