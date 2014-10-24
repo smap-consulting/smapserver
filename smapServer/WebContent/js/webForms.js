@@ -1,3 +1,29 @@
+/*
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/*
+ * Purpose: Allow the user to select a web form in order to complete a survey
+ */
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
+
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
@@ -31,6 +57,11 @@ require([
 
 $(document).ready(function() {
 	
+	// Get the user details
+	globals.gIsAdministrator = false;
+	getLoggedInUser(projectSet, false, true, undefined);
+	
+	/*
 	addHourglass();
 	
 	$.ajax({
@@ -53,17 +84,24 @@ $(document).ready(function() {
 		}
 	});	
 	
+	removeHourglass();
+	*/
+	
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
-		$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
+		//$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 		getSurveysForList(globals.gCurrentProject);			// Get surveys
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
  	 });
 	
-	removeHourglass();
+	enableUserProfile();
 });
+
+function projectSet() {
+	getSurveysForList(globals.gCurrentProject);			// Get surveys
+}
 
 
 

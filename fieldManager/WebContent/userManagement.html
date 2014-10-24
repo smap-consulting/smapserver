@@ -21,9 +21,9 @@
 		<ul>
 			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
 			<li><a class="lang" data-lang="m_tm" href="templateManagement.html">Form Management</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
 			<li><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 		</ul>
 	</div>
@@ -68,12 +68,12 @@
 			<button id="delete_project">Delete</button>
 		</div>
 		
-		<div class="org_user_only" style="display:none;">
+		<div class="restrict_role org_role" style="display:none;">
 			<h1>Move selected People and Projects to a different organisation</h1>
 			<button id="move_to_organisation">Move</button>
 		</div>
 		
-		<div class="org_user_only" style="display:none;">
+		<div class="restrict_role org_role" style="display:none;">
 			<div id="organisations">
 				<h1>Organisations</h1>
 				<button id="create_organisation">Add Organisation</button>

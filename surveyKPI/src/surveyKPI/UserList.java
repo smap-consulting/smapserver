@@ -62,7 +62,8 @@ import java.util.logging.Logger;
 @Path("/userList")
 public class UserList extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ADMIN);
+	Authorise a = null;
+	Authorise aUpdate = null;
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());
@@ -72,6 +73,19 @@ public class UserList extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(UserList.class);
 		return s;
+	}
+	
+	public UserList() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+		
+		authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ADMIN);
+		aUpdate = new Authorise(authorisations, null);
+		
 	}
 
 	
@@ -265,7 +279,7 @@ public class UserList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		
@@ -521,7 +535,7 @@ public class UserList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		

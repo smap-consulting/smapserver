@@ -59,12 +59,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
- * Used by an administrator to view task status and make updates
+ * Used by an administrator or analyst to view task status and make updates
  */
 @Path("/assignments")
 public class AllAssignments extends Application {
 
-	Authorise a = new Authorise(null, Authorise.ADMIN);
+
+	Authorise a = null;;
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
@@ -74,6 +75,14 @@ public class AllAssignments extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(AllAssignments.class);
 		return s;
+	}
+	
+	public AllAssignments() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);		
 	}
 
 	
