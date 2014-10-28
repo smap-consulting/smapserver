@@ -34,6 +34,7 @@
 #    Redirect permanent /fieldAnalysis https://{hostname}/fieldAnalysis
 #    Redirect permanent /fieldManager https://{hostname}/fieldManager
 #    Redirect permanent /attachments https://{hostname}/attachments
+#    Redirect permanent /resetPassword.html https://{hostname}/resetPassword.html
     
     <Directory />
     	Require all denied

@@ -24,9 +24,8 @@
             name: '../webForms'
         },
         {
-            name: '../forgottonPassword'
+            name: '../passwords'
         }
-
 
     ]
 })

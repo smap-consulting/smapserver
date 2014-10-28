@@ -272,7 +272,7 @@ public class InstanceXML extends Application{
 		List<Question> questions = firstForm.getQuestions();
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
-			if(q.getName().equals(key)) {
+			if(q.getColName().equals(key)) {
 				type = q.getType();
 				break;
 			}
@@ -552,11 +552,11 @@ public class InstanceXML extends Application{
 		    		String qType = q.getType();
 		    		log.fine("    QType:" + qType );
 		    		if(qType.equals("geopoint")) {
-		    			col = "ST_AsText(" + q.getName() + ")";
+		    			col = "ST_AsText(" + q.getColName() + ")";
 		    		} else if(qType.equals("select")){
 		    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
 		    		} else {
-		    			col = q.getName();
+		    			col = q.getColName();
 		    		}
 		
 		    		sql += "," + col;
@@ -625,7 +625,7 @@ public class InstanceXML extends Application{
 						if(hasColumns) {
 							sqlSelect += ",";
 						}
-						sqlSelect += q.getName() + "__" + option.getValue();
+						sqlSelect += q.getColName() + "__" + option.getValue();
 						hasColumns = true;
 					}
 					sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
@@ -638,7 +638,7 @@ public class InstanceXML extends Application{
 			    	String optValue = "";
 			    	hasColumns = false;
 			    	for(Option option : options) {
-			    		String opt = q.getName() + "__" + option.getValue();
+			    		String opt = q.getColName() + "__" + option.getValue();
 			    		boolean optSet = resultSetOptions.getBoolean(opt);
 			    		log.fine("Option " + opt + ":" + resultSetOptions.getString(opt));
 			    		if(optSet) {

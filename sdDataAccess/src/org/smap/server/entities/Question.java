@@ -174,6 +174,10 @@ public class Question implements Serializable {
 	public String getName() {
 		return name;
 	}
+	
+	public String getColName() {
+		return UtilityMethods.cleanName(name);
+	}
 
 	public String getType() {
 		return qType;

@@ -16,6 +16,17 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
+Version 14.11 needs the following added to /etc/apache2/sites-available/default-ssl.conf (Assuming version 2.4 of Apache)
+Add after the <location /surveyKPI> entry
+
+	<Location /surveyKPI/onetimelogon>
+		Require all granted
+	</Location>
+
+Also update 000-default.conf to 
+	redirect /resetPassword.html to https
+	redirect /forgottenPassword.html to https
+
 Version 14.10 needs the following added to Apache configuration files (Assuming version 2.4 of Apache)
 
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML

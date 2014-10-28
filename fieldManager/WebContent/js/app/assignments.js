@@ -214,7 +214,6 @@ $(document).ready(function() {
 		        			filteroId,
 		        			source_survey;
 		        		
-	        			addHourglass();
 	        			assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
 		        		assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
 		        		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
@@ -256,6 +255,7 @@ $(document).ready(function() {
 			            	globals.gCurrentUserId = undefined;
 			            	globals.gCurrentUserName = undefined;
 		        			
+		        			addHourglass();
 		            		$.ajax({
 		            			  type: "POST",
 		            			  contentType: "application/json",
@@ -263,24 +263,22 @@ $(document).ready(function() {
 		            			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 		            			  data: { settings: assignString },
 		            			  success: function(data, status) {
+		            				  removeHourglass();
 		            				  refreshAssignmentData(gUserFilter);
 		            				  clearNewTasks();
-		            				  removeHourglass();
 		            			  }, error: function(data, status) {
-
+		            				  removeHourglass();
 		            				  if(data.responseText.indexOf("<html>") !== 0) {
 		            					  alert("Error: " + data.responseText); 
 		            				  } else {
 		            					  alert("Error adding tasks");
 		            				  }
-		            				  removeHourglass();
+
 		            			  }
 		            		});
 		            		
 			        		$(this).dialog("close");
-		        		} else {
-		        			removeHourglass();
-		        		}
+		        		} 
 		        	},
 		        }, 
 		        {
