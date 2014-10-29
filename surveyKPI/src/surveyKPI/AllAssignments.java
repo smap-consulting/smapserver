@@ -716,7 +716,7 @@ public class AllAssignments extends Application {
 				String msg = "No results have been submitted for " + as.source_survey_name;
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
 			} else {
-				response = Response.serverError().build();
+				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"", e);
 			}	
 			

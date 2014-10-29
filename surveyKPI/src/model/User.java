@@ -37,5 +37,6 @@ public class User {
 	public ArrayList<Group> groups;
 	public ArrayList<Project> projects;
 	public boolean keepProjects;
+	public boolean sendEmail;
 	
 }

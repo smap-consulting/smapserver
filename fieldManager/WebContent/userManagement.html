@@ -99,6 +99,12 @@
 			<input type="text" id="user_name" required><br/>
 			<label for="user_email">Email</label>
 			<input type="text" id="user_email" pattern="[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}"><br/>
+			<span id="send_email_fields" style="display:none;">
+				<label for="send_email">Send email to new user</label>
+				<input type="radio" id="send_email" name="send_email" value="send_email" checked="checked"/><br/>
+				<label for="set_password">Specify password</label>
+				<input type="radio" id="set_password" name="send_email" value="set_password" /><br/>
+			</span>
 			<span id="reset_password_fields" style="display:none;">
 				<label for="reset_password">Reset Password</label>
 				<input type="checkbox" id="reset_password"/><br/>
@@ -191,18 +197,6 @@
 			</form>	
 		</div>
 	</div>
-	
-<!-- Javascript
-
-	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script src="/js/responsivemobilemenu.js"></script>
-	<script type="text/javascript" src="/js/libs/jquery-ui-1.10.3.custom.min.js"></script> 
-
-	<script src="js/tablesorter.js"></script>
-		
-	<script src="js/userManagement.js"></script>
-	<script src="/js/common.js"></script> 
--->
 
 
 </body>

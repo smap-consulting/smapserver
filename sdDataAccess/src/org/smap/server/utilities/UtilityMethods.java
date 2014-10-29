@@ -10,26 +10,6 @@ import org.w3c.dom.NodeList;
 
 public class UtilityMethods {
 	
-	// Language codes
-	// For each language, first element is the standard code
-	// All other elements in the same row are alternate translations
-	// Rows and columns are terminated with null values
-	/*
-	private static String[][] languageCodes = new String[][] {
-			{"ara", "arabic", "ar", null},	
-			{"chi", "chinese","zh", null},
-			{"eng", "english", "anglais", "en", null},
-			{"fre", "french", "fr", null},
-			{"khm", "khmer", "km", null},
-			{"lao", "lao", "lo", null},
-			{"mya", "burmese", "myanmar", "my", null},
-			{"spa", "spanish","es", null},
-			{"swa", "swahili", "sw", null},
-			{"tha", "thai", "th", null},
-			{"xho", "xhosa", "xh", null},
-			{null, null}
-			};
-	*/
 	private static String [] reservedSQL = new String [] {
 		"all",
 		"analyse",

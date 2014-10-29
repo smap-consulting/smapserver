@@ -19,11 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -109,58 +104,17 @@ public class PasswordReset extends Application {
 
 		if(email != null && email.trim().length() > 0) {		
 			
-			try {
+			try {				
 				
-				String uuid = String.valueOf(UUID.randomUUID());
-				System.out.println("uuid:" + uuid + "::::" + uuid.length());
+				String interval = "1 hour";
+				String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, email, interval);
 				
-				/*
-				 * Get the table name and column name containing the text data
-				 */
-				String sql = "update users set" +
-						" one_time_password = ?," +
-						" one_time_password_expiry = timestamp 'now' + interval '24 hours'" +		// Set token to expire in 1 day
-						" where email = ?";
-		
-				log.info(sql);
-				pstmt = connectionSD.prepareStatement(sql);	
-				pstmt.setString(1, uuid);
-				pstmt.setString(2, email);
-				int count = pstmt.executeUpdate();
-				
-				if(count > 0) {
+				if(uuid != null) {
 					// Update succeeded
 					System.out.println("Sending email");
-					String has_email = request.getServletContext().getInitParameter("au.com.smap.smtp_on");
 					
-					//has_email="true";	// DEBUG
-					
-					if(has_email != null && has_email.equals("true")) {
-						String smtp_host = request.getServletContext().getInitParameter("au.com.smap.smtp_host");
-						String from = request.getServletContext().getInitParameter("au.com.smap.password_reset_from");
-						String subject = request.getServletContext().getInitParameter("au.com.smap.password_reset_subject");
-						
-						//smtp_host = "smtp-relay.gmail.com";	// DEBUG
-						//from="rp@smap.com.au";
-						//subject="reset";
-						
-						Properties props = System.getProperties();
-						props.put("mail.smtp.host", smtp_host);	
-						Session session = Session.getInstance(props, null);
-						session.setDebug(true);
-						Message msg = new MimeMessage(session);
-						msg.setFrom(new InternetAddress(from));
-					    msg.setRecipients(Message.RecipientType.TO,	InternetAddress.parse(email, false));
-					    msg.setSubject(subject);
-					    
-					    String txtMessage = "Goto https://" + 
-					    			request.getServerName() + "/resetPassword.html?token=" + uuid +
-					    			" to reset your password.\n" +
-					    			" Do not reply to this email";
-					    msg.setText(txtMessage);
-					    msg.setHeader("X-Mailer", "msgsend");
-					    Transport.send(msg);
-					    
+					if(UtilityMethods.hasEmail(request)) {
+					    UtilityMethods.sendEmail(request, email, uuid, "reset", "Password Reset", null, interval);
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

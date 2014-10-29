@@ -210,10 +210,6 @@ function addLanguageOptions($elem, current) {
 			            name: "French"
 			         },
 			         {
-				         locale: "kh",
-				         name: "Khmer"
-			         },
-			         {
 			         	locale: "pt",
 			            name: "Portugese"
 					 }
@@ -349,6 +345,8 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			if(!hideUserDetails) {
 				updateUserDetails(data, getOrganisationsFn);
 			}
+			
+			globals.gServerCanSendEmail = data.sendEmail;
 			
 			globals.gEmailEnabled = data.allow_email;
 			globals.gFacebookEnabled = data.allow_facebook;

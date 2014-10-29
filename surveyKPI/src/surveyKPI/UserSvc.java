@@ -33,6 +33,7 @@ import model.Project;
 import model.User;
 
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethods;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -130,6 +131,11 @@ public class UserSvc extends Application {
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
 				user.can_edit = resultSet.getBoolean("can_edit");
 			}
+			
+			/*
+			 * Set a flag if email is enabled on the server
+			 */
+			user.sendEmail = UtilityMethods.hasEmail(request);
 			
 			/*
 			 * Get the groups that the user belongs to

@@ -91,7 +91,9 @@ $(document).ready(function() {
 		        		var userList = [],
 		        			user = {},
 		        			error = false,
-		        			validIdent = new RegExp('^[a-z0-9]+$');
+		        			validIdent = new RegExp('^[a-z0-9]+$'),
+		        			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
+		        			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
 		        		
 		        		if(gCurrentUserIndex === -1) {
 		        			user.id = -1;
@@ -101,6 +103,7 @@ $(document).ready(function() {
 		        		user.ident = $('#user_ident').val();
 		        		user.name = $('#user_name').val();
 		        		user.email = $('#user_email').val();
+		        		send_email == "send_email" ? user.sendEmail = true : user.sendEmail = false;
 		        		
 		        		// Validations
 		        		if(!user.ident.match(validIdent)) {
@@ -113,8 +116,33 @@ $(document).ready(function() {
 		        			$('#user_ident').focus();
 	        				return false;
 		        		}
+		        		if(user.email.length > 0) {
+		        			if(!validEmail.test(user.email)) {
+		        				error = true;
+		        				alert("Email is not valid");
+		        				$('#user_email').focus();
+		        				return false;
+		        			}
+		        		}
+		        		
+	        			// For a new user, email must be specified if the send email check box is set
+	        			if(user.sendEmail && user.email.length === 0) {
+		        			error = true;
+		        			alert("If sending an email to the user then email address must be specified");
+		        			$('#user_email').focus();
+		        			return false;
+	        			}
+
+		        	    
 		        		if($('#user_password').is(':visible')) {
 		        			user.password = $('#user_password').val();
+		        			if(user.password.length < 2) {
+		        				error = true;
+		        				user.password = undefined;
+		        				alert("Passwords, if specified, must be longer than 1 character");
+		        				$('#user_password').focus();
+		        				return false;
+		        			}
 		        			if($('#user_password_confirm').val() !== user.password) {
 		        				error = true;
 		        				user.password = undefined;
@@ -125,6 +153,7 @@ $(document).ready(function() {
 		        		} else {
 		        			user.password = undefined;
 		        		}
+		        		
 		        		user.groups = [];
 		        		user.projects = [];
 		        		$('#user_groups').find('input:checked').each(function(index) {
@@ -392,6 +421,20 @@ $(document).ready(function() {
 			 $('#password_fields').hide();
 		 }
 	 });
+	 // Initialise the send email or set password radio buttons
+	 if(globals.gServerCanSendEmail) {
+		 $('input[type=radio][name=send_email]').change(function() {
+		        if (this.value == 'send_email') {
+		        	$('#password_fields').hide();
+		        } else if (this.value == 'set_password') {
+		        	$('#password_fields').show();
+		        }
+		    });
+	 } else {
+		 $('#password_fields').show();
+		 $('input[type=radio][name=send_email]').attr('disabled',true);
+		 $('#set_password').attr('checked',true);
+	 }
 
 	enableUserProfile();	// Allow user to reset their own profile
 	
@@ -520,10 +563,16 @@ function openUserDialog(existing, userIndex) {
 	
 	$('#user_create_form')[0].reset();
 	if(!existing) {
-		$('#password_fields').show();
+		if($('#send_email').is(':checked')) {
+			$('#password_fields').hide();
+		} else {
+			$('#password_fields').show();
+		}
+		$('#send_email_fields').show();
 		$('#reset_password_fields').hide();
 	} else {
 		$('#reset_password_fields').show();
+		$('#send_email_fields').hide();
 		$('#password_fields').hide();
 		$('#user_ident').val(gUsers[userIndex].ident);
 		$('#user_name').val(gUsers[userIndex].name);
@@ -597,13 +646,19 @@ function writeUserDetails(userList, $dialog) {
 				  $dialog.dialog("close");
 			  }
 			  getUsers();
-		  }, error: function(data, status) {
+		  }, error: function(xhr, textStatus, err) {
 			  removeHourglass();
-			  if(data.status === 409) {
-				  alert("Duplicate user identification. Please change the user ident."); 
+			  if(xhr.readyState == 0 || xhr.status == 0) {
+				  return;  // Not an error
 			  } else {
-				  alert("Error user details not saved");
+				  if(xhr.status === 409) {
+					  alert("Duplicate user identification. Please change the user ident."); 
+				  } else {
+					  alert("Error user details not saved: " + xhr.responseText);
+				  }
 			  }
+				
+			  
 		  }
 	});
 }

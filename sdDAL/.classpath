@@ -14,5 +14,6 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="Libraries/jsr311-api-1.1.1.jar"/>
 	<classpathentry kind="lib" path="Libraries/gson-2.1.jar"/>
+	<classpathentry kind="lib" path="Libraries/javax.mail.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
