@@ -66,7 +66,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 			</div>
 
 			<span class="selected_templates">
-				<span class="restrict_role admin_role" style="display:none">
+				<span class="restrict_role admin_role analyst_role" style="display:none">
 					<input id="show_deleted" type="checkbox" name="show_deleted" 
 						value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
 				</span>
@@ -75,9 +75,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					<div id="survey_table"></div>
 				</div>
 				<div id="tem_controls">
-					<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role lang">Delete Forms</button>
-					<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role lang">Restore Forms</button>
-					<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role lang">Erase Forms</button>
+					<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role analyst_role lang">Delete Forms</button>
+					<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
+					<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
 				</div>
 			</span>
 
@@ -111,8 +111,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<label for="file"><span data-lang="c_file" class="lang">File</span>:</label> 
 						<input type="file" name="tname" id="file" required/><br/>
 
+						<!--
 						<input type="checkbox" id="ident" name="ident" value="ident"/> <span data-lang="tm_si" class="lang">Specify survey identifier</span><br/> 
 						<input style="display:none;" id="surveyIdent" type="text" name="surveyIdent" maxlength="100" /><br/>
+						-->
 						
 						<button	class="abutton lang" data-lang="tm_up" type="submit" name="submitFile" value="Upload File" >Upload</button>
 					</fieldset>

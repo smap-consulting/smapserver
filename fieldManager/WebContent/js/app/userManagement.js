@@ -106,8 +106,9 @@ $(document).ready(function() {
 		        		send_email == "send_email" ? user.sendEmail = true : user.sendEmail = false;
 		        		
 		        		// Validations
+		        		if(user.ident.len)
 		        		if(!user.ident.match(validIdent)) {
-		        			alert("Only a-z and 0-9 are allowed in the user ident");
+		        			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
 		        			$('#user_ident').focus();
 	        				return false;
 		        		}
@@ -266,7 +267,8 @@ $(document).ready(function() {
 	        			organisation = {},
 	        			error = false,
 	        			options=[],
-	        			i;
+	        			i,
+	           			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm;
 	        		
 		        		if(gCurrentOrganisationIndex === -1) {
 		        			organisation.id = -1;
@@ -276,6 +278,22 @@ $(document).ready(function() {
 	        		
 		        		organisation.name = $('#o_name').val();
 		        		organisation.admin_email = $('#o_admin_email').val();
+		        		
+		        		// Validate
+		        		if(organisation.name.length === 0) {
+		        			alert("Name must be specified");
+	        				$('#o_name').focus();
+	        				return false;
+		        		}
+		        		if(organisation.admin_email.length > 0) {
+			        		if(!validEmail.test(organisation.admin_email)) {
+		        				error = true;
+		        				alert("Email is not valid");
+		        				$('#o_admin_email').focus();
+		        				return false;
+		        			}
+		        		}
+		        		
 		        		options = $(".puboption:checked").map(function(){
 		        	        	return $(this).val();
 		        	    	}).toArray();

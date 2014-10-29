@@ -52,7 +52,6 @@ $(document).ready(function() {
 	$('#show_deleted').removeAttr('checked');
 	
 	// Get the user details
-	globals.gIsAdministrator = false;
 	getLoggedInUser(projectSet, false, true, undefined);
 
 	// Set change function on projects
@@ -288,12 +287,14 @@ $(document).ready(function() {
 	});
 	
 	// Ident checkbox
+	/*
 	if($('#ident').is(':checked')) {
 		$('#surveyIdent').show();
 	}
 	$('#ident').change(function () {
 		$('#surveyIdent').toggle();
 	});
+	*/
 	
 	// Validate upload form on submit
 	// Check that the survey has a valid name
@@ -376,7 +377,7 @@ function getSurveysForList(projectId) {
 	if(projectId != -1) {
 		var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true";
 		
-		if(globals.gIsAdministrator) {
+		if(globals.gIsAdministrator || globals.gIsAnalyst) {
 			url+="&deleted=true";
 		}
 		

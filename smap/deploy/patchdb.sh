@@ -81,6 +81,6 @@ echo "1410" > ~/smap_version
 
 if [ $version -lt "1411" ]
 then
-echo "Applying patches for version 14.1"
+echo "Applying patches for version 14.11"
 fi
 echo "1411" > ~/smap_version
