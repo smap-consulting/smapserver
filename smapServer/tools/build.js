@@ -22,8 +22,10 @@
         },
         {
             name: '../webForms'
+        },
+        {
+            name: '../passwords'
         }
-
 
     ]
 })

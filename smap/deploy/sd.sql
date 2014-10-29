@@ -154,3 +154,7 @@ CREATE TABLE public.form_downloads (
 ALTER TABLE public.form_downloads OWNER TO ws;
 
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);
+
+-- Upgrade to:  14.11 from 14.09 =======
+alter table users add column one_time_password varchar(36);
+alter table users add column one_time_password_expiry timestamp;

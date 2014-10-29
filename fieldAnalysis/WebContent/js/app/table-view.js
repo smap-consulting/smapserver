@@ -361,11 +361,13 @@ function addRightClickToTable($elem, sId, view) {
 			if(isBad) {
 				alert("You cannot edit a record marked as bad");
 			} else {
-				$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
-						"&datakey=prikey&datakeyvalue="+pkey)
-						.attr("target", "_blank");
+				document.location.href = "/webforms/formXML.php"+"?key=" + survey_ident +
+						"&datakey=prikey&datakeyvalue="+pkey;
+				//$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
+				//		"&datakey=prikey&datakeyvalue="+pkey)
+				//		.attr("target", "_blank");
 				
-				$("#edit_record_dialog").dialog("open");
+				//$("#edit_record_dialog").dialog("open");
 			}
 			return false;
 		});

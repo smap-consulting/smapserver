@@ -43,6 +43,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethods;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -62,7 +63,8 @@ import java.util.logging.Logger;
 @Path("/userList")
 public class UserList extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ADMIN);
+	Authorise a = null;
+	Authorise aUpdate = null;
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());
@@ -72,6 +74,19 @@ public class UserList extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(UserList.class);
 		return s;
+	}
+	
+	public UserList() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+		
+		authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ADMIN);
+		aUpdate = new Authorise(authorisations, null);
+		
 	}
 
 	
@@ -265,7 +280,7 @@ public class UserList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		
@@ -275,15 +290,16 @@ public class UserList extends Application {
 		try {	
 			String sql = null;
 			int o_id;
+			String adminName = null;
 			ResultSet resultSet = null;
 			boolean isOrgUser = isOrgUser(connectionSD, request.getRemoteUser());
 			
 			connectionSD.setAutoCommit(false);
 			
 			/*
-			 * Get the organisation
+			 * Get the organisation and user name
 			 */
-			sql = "SELECT u.o_id " +
+			sql = "SELECT u.o_id, u.name " +
 					" FROM users u " +  
 					" WHERE u.ident = ?;";				
 						
@@ -293,6 +309,7 @@ public class UserList extends Application {
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
+				adminName = resultSet.getString(2);
 				
 				for(int i = 0; i < uArray.size(); i++) {
 					User u = uArray.get(i);
@@ -319,6 +336,20 @@ public class UserList extends Application {
 						if (rs.next()){
 						    u_id = rs.getInt(1);
 						    insertUserGroupsProjects(connectionSD, u, u_id, isOrgUser);
+						}
+						
+						// Send a notification email to the user
+						if(u.sendEmail) {
+						System.out.println("Check if email enabled: " + u.sendEmail);
+							if(UtilityMethods.hasEmail(request)) {
+								System.out.println("Send email");
+								String interval = "48 hours";
+								String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, u.email, interval);
+								UtilityMethods.sendEmail(request, u.email, uuid, "newuser", 
+										"Account created on Smap", adminName, interval);
+							} else {
+								throw new Exception("Email not enabled - set passwords directly");
+							}
 						}
 								
 					} else {
@@ -418,11 +449,15 @@ public class UserList extends Application {
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			if(state.startsWith("23")) {
-				response = Response.status(Status.CONFLICT).build();
+				response = Response.status(Status.CONFLICT).entity("Conflict").build();
 			} else {
-				response = Response.serverError().build();
+				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"Error", e);
 			}
+		} catch (Exception e) {
+			try{connectionSD.rollback();} catch(Exception er) {log.log(Level.SEVERE,"Failed to rollback connection", er);}
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
@@ -521,7 +556,7 @@ public class UserList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		

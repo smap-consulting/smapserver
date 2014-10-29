@@ -20,10 +20,10 @@
 	<div class="rmm noPrint" data-menu-style = "minimal">
 		<ul>
 			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-			<li><a class="lang" data-lang="m_tm" href="templateManagement.html">Template Management</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+			<li><a class="lang" data-lang="m_tm" href="templateManagement.html">Form Management</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
 			<li><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 		</ul>
 	</div>
@@ -68,12 +68,12 @@
 			<button id="delete_project">Delete</button>
 		</div>
 		
-		<div class="org_user_only" style="display:none;">
+		<div class="restrict_role org_role" style="display:none;">
 			<h1>Move selected People and Projects to a different organisation</h1>
 			<button id="move_to_organisation">Move</button>
 		</div>
 		
-		<div class="org_user_only" style="display:none;">
+		<div class="restrict_role org_role" style="display:none;">
 			<div id="organisations">
 				<h1>Organisations</h1>
 				<button id="create_organisation">Add Organisation</button>
@@ -99,6 +99,12 @@
 			<input type="text" id="user_name" required><br/>
 			<label for="user_email">Email</label>
 			<input type="text" id="user_email" pattern="[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}"><br/>
+			<span id="send_email_fields" style="display:none;">
+				<label for="send_email">Send email to new user</label>
+				<input type="radio" id="send_email" name="send_email" value="send_email" checked="checked"/><br/>
+				<label for="set_password">Specify password</label>
+				<input type="radio" id="set_password" name="send_email" value="set_password" /><br/>
+			</span>
 			<span id="reset_password_fields" style="display:none;">
 				<label for="reset_password">Reset Password</label>
 				<input type="checkbox" id="reset_password"/><br/>
@@ -191,18 +197,6 @@
 			</form>	
 		</div>
 	</div>
-	
-<!-- Javascript
-
-	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script src="/js/responsivemobilemenu.js"></script>
-	<script type="text/javascript" src="/js/libs/jquery-ui-1.10.3.custom.min.js"></script> 
-
-	<script src="js/tablesorter.js"></script>
-		
-	<script src="js/userManagement.js"></script>
-	<script src="/js/common.js"></script> 
--->
 
 
 </body>

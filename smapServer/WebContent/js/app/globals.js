@@ -38,6 +38,8 @@ define(function() {
 		gRegions: undefined,
 		gRegion: {},
 		
+		gServerCanSendEmail: false,
+		
 		// Reports
 		gEmailEnabled: false,
 		gFacebookEnabled: false,

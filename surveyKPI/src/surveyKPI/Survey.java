@@ -81,8 +81,7 @@ import com.google.gson.reflect.TypeToken;
 @Path("/survey/{sId}")
 public class Survey extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
-	Authorise aDel = new Authorise(null, Authorise.ADMIN);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
@@ -92,6 +91,15 @@ public class Survey extends Application {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Survey.class);
 		return s;
+	}
+	
+	public Survey() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+		
 	}
 	
 	@Path("/download")
@@ -842,9 +850,9 @@ public class Survey extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
-		aDel.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isAuthorised(connectionSD, request.getRemoteUser());
 		boolean surveyMustBeDeleted = undelete || hard;
-		aDel.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted);  // Note if hard delete is set to true the survey should have already been soft deleted
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted);  // Note if hard delete is set to true the survey should have already been soft deleted
 		// End Authorisation
 		
 		// Escape any quotes

@@ -178,24 +178,21 @@ function updateUserDetails(data, getOrganisationsFn) {
 			}
 		}
 	}
+	
+	// Only show items relevant to a user
+	$('.restrict_role').hide();
 	if(globals.gIsAnalyst) {
-		$('.analyst_only').show();
-	} else {
-		$('.analyst_only').hide();
-	}
+		$('.analyst_role').show();
+	} 
 	if(globals.gIsAdministrator) {
-		$('.super_user_only').show();
-	} else {
-		$('.super_user_only').hide();
-	}
+		$('.admin_role').show();
+	} 
 	if(globals.gIsOrgAdministrator) {
-		$('.org_user_only').show();
+		$('.org_role').show();
 		if(typeof getOrganisationsFn === "function") {
 			getOrganisationsFn();
 		}
-	} else {
-		$('.org_user_only').hide();
-	}
+	} 
 }
 
 function addLanguageOptions($elem, current) {
@@ -211,10 +208,6 @@ function addLanguageOptions($elem, current) {
 		             {
 			            locale: "fr",
 			            name: "French"
-			         },
-			         {
-				         locale: "kh",
-				         name: "Khmer"
 			         },
 			         {
 			         	locale: "pt",
@@ -352,6 +345,8 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			if(!hideUserDetails) {
 				updateUserDetails(data, getOrganisationsFn);
 			}
+			
+			globals.gServerCanSendEmail = data.sendEmail;
 			
 			globals.gEmailEnabled = data.allow_email;
 			globals.gFacebookEnabled = data.allow_facebook;

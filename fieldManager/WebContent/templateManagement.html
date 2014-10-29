@@ -41,18 +41,18 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<div class="rmm noPrint" data-menu-style = "minimal">
 		<ul>
 			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
 			<li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
-			<li><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
-			<li class="super_user_only"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
-			<li class="analyst_only"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
+			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
+			<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Assign</a></li>
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 		</ul>
 	</div>
 	<p style="clear: both;"></p>
 	<div id="header">
 		<div id="username"></div>
-		<div id="banner">Templates</div>
+		<div class="lang" data-lang="c_forms" id="banner">Forms</div>
 	</div>
 
 	<div id="wrapper" data-role="content">
@@ -60,24 +60,24 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		<div id="sidebar" data-role="content">
 			<div id="filters">
 				<form id="service_filter_form">
-					<label for="project_name">Select Project</label>
+					<label class="lang" data-lang="c_project" for="project_name">Select Project</label>
 					<select class="project_list" id="project_name"></select><br/>
 				</form>	
 			</div>
 
 			<span class="selected_templates">
-				<span class="super_user_only" style="display:none">
+				<span class="restrict_role admin_role analyst_role" style="display:none">
 					<input id="show_deleted" type="checkbox" name="show_deleted" 
-						value="show_deleted"/> Show deleted surveys<br/> 
+						value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
 				</span>
 				<div id="surveys">
-					<h1>Surveys</h1>
+					<h1 class="lang" data-lang="c_forms">Forms</h1>
 					<div id="survey_table"></div>
 				</div>
 				<div id="tem_controls">
-					<button id="delete_survey" class="super_user_only">Delete Surveys</button>
-					<button id="un_delete_survey" class="super_user_only">Restore Surveys</button>
-					<button id="erase_survey" class="super_user_only">Erase Surveys</button>
+					<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role analyst_role lang">Delete Forms</button>
+					<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
+					<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
 				</div>
 			</span>
 
@@ -86,17 +86,19 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		<div id="content" class="ui-grid-solo selected_templates">
 			<div class="ui-block-a">
 
-				<h2>Create or Edit a Template</h2>
-				<p><a class="abutton" href="blankform.xls">Download Template</a></p>
-				<p>Download a template to create an new survey on your personal computer. When you have finished, upload it to the server by clicking on the upload button below. 
-					You will first need to select the survey you have created and give it a name.</p>
-					<p>
-					Help on how to complete a survey in the spreadsheet is available <a href="https://docs.google.com/file/d/0B5_SmpWlQYxvdHREdEJTWEVmLTQ/edit" target="_blank">here</a>. A
-					<a href="https://docs.google.com/file/d/0B5_SmpWlQYxvWlBoWkdiT3FrY1U/edit">reference</a> is also available.
-					You can also use other editors such as <a href="http://build.opendatakit.org/">odkBuild</a> to define your survey.
+				<h2 class="lang" data-lang="tm_c_form">Create a Form</h2>
+				<p><a class="lang abutton alist" data-lang="tm_g_temp" href="blankform.xls">Download Template</a></p>
+				<div class="alistSmall"><a data-lang="m_help" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvdHREdEJTWEVmLTQ/edit" target="_blank"></a></div>
+				<div class="alistSmall"><a data-lang="tm_g_temp_i3" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvWlBoWkdiT3FrY1U/edit"></a></div> 
+				<div style="clear: both;">&nbsp;</div>
+				<p data-lang="tm_g_temp_i1" class="lang"></p>
+				
+				<p>
+				<span data-lang="tm_g_temp_i4" class="lang"></span>
+				<a href="http://build.opendatakit.org/">odkBuild</a>
 				</p>
-				<br> <br>
-				<h2>Upload a Template</h2>
+				<br>
+				<h2 data-lang="tm_ul_f" class="lang">Upload a Form</h2>
 				<form id="uploadForm" accept-charset="utf-8" 
 						action="TemplateUpload" 
 						enctype="multipart/form-data" method="POST" 
@@ -104,15 +106,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					<fieldset id="templateUpload">
 						<input id="projectId" type="hidden" name="projectId" value="" style="display:none;"/>
 						<input id="projectName" type="hidden" name="projectName" value="" style="display:none;"/>
-						<label for="templateName">Name:</label>
+						<label for="templateName"><span data-lang="c_name" class="lang">Name</span>:</label>
 						<input id="templateName" type="text" name="templateName" maxlength="100" required /><br/>
-						<label for="file">File:</label> 
+						<label for="file"><span data-lang="c_file" class="lang">File</span>:</label> 
 						<input type="file" name="tname" id="file" required/><br/>
 
-						<input type="checkbox" id="ident" name="ident" value="ident"/> Specify survey identifier<br/> 
+						<!--
+						<input type="checkbox" id="ident" name="ident" value="ident"/> <span data-lang="tm_si" class="lang">Specify survey identifier</span><br/> 
 						<input style="display:none;" id="surveyIdent" type="text" name="surveyIdent" maxlength="100" /><br/>
+						-->
 						
-						<button	class="abutton" type="submit" name="submitFile" value="Upload File" >Upload</button>
+						<button	class="abutton lang" data-lang="tm_up" type="submit" name="submitFile" value="Upload File" >Upload</button>
 					</fieldset>
 					<fieldset id="showtype" class="ui-widget-content">
 					
@@ -126,17 +130,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	
 	<!-- Popup to show the list of forwards for this survey -->
 	<div id="forward_list_popup" style="display:none;">
-		<h1></h1>
-		<button	class="abutton" id="add_forward">Add Forward</button>
+		<h1><div data-lang="c_loc_f" class="lang label">Local Form:</div><span class="form_name"></span></h1>
+		<button	data-lang="tm_add_for" class="abutton lang" id="add_forward" style="margin-top:10px; margin-bottom:10px;">Add Forward</button>
 		<table id="forward_table" class="tablesorter">
 			<thead>
 				<tr>
-					<th>Host</th>
-					<th>Remote Survey</th>
-					<th>Remote User</th>
-					<th>Enabled</th>
-					<th>Edit</th>
-					<th>Delete</th>
+					<th data-lang="c_host" class="lang">Host</th>
+					<th data-lang="c_rem_f" class="lang">Remote Form</th>
+					<th data-lang="c_rem_u" class="lang">Remote User</th>
+					<th data-lang="c_enabled" class="lang">Enabled</th>
+					<th data-lang="c_edit" class="lang">Edit</th>
+					<th data-lang="c_del" class="lang">Delete</th>
 				</tr>
 			</thead>
 			<tbody></tbody>
@@ -148,25 +152,24 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<div id="add_forward_popup" style="display:none;">
 		<form id="fwd_edit_form">
 			<input id="fwd_enabled" type="checkbox" name="fwd_enabled" 
-						value="fwd_enabled"/>Enable<br/> 
-			<label for="fwd_host">Host: </label>
+						value="fwd_enabled"/><span data-lang="c_en" class="lang">Enable</span><br/> 
+			<label for="fwd_host" data-lang="c_host" class="lang">Host</label>
 			<input type="text" id="fwd_host" required><br/>
-			<label for="fwd_user">User: </label>
+			<label for="fwd_user" data-lang="c_user" class="lang">User</label>
 			<input type="text" id="fwd_user" required><br/>
-			<label for="fwd_password">Password: </label>
+			<label for="fwd_password" data-lang="c_password" class="lang">Password</label>
 			<input id="fwd_password" type="password" required><br/>
-			<label for="fwd_rem_survey_nm">Remote Survey: </label>
+			<label for="fwd_rem_survey_nm" data-lang="c_rem_f" class="lang"	>Remote Form</label>
 			<input id="fwd_rem_survey_nm" readonly>
 			<input id="fwd_rem_survey_id" style="display:none;">
 		</form>	
-		<button id="fwd_upd_rem_survey">Update Survey List</button><br/>
+		<button id="fwd_upd_rem_survey" data-lang="tm_ref_f" class="lang">Refresh Form List</button><br/>
 
 	</div>
 	
 	<!-- Popup to allow the user to select a survey -->
-	<div id="select_fwd_survey_pop" style="display:none;">
-			<h1></h1>	
-			<label for="fwd_rem_survey">Remote Survey: </label>
+	<div id="select_fwd_survey_pop" style="display:none;">	
+			<label for="fwd_rem_survey" data-lang="c_rem_f" class="lang">Remote Form</label>
 			<select id="fwd_rem_survey"></select><br/>
 	</div>
 	
@@ -175,19 +178,20 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
-				<label for="me_name">Name</label>
+				<label for="me_name" data-lang="c_name" class="lang">Name</label>
 				<input type="text" id="me_name" required><br/>
+				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
 				<select id="me_language"></select><br/>
-				<label for="me_email">Email</label>
+				<label for="me_email" data-lang="c_email" class="lang">Email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
+					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
 					<input type="checkbox" id="reset_me_password"/><br/>
 				</span>
 				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
+					<label for="me_password" data-lang="c_password" class="lang">Password</label>
 					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
+					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
 					<input id="me_password_confirm" type="password"><br/>	
 				</span>		
 			</form>	
@@ -203,12 +207,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<h1></h1>
 	<fieldset>
 	<legend>File Type:</legend>
-	<input type="radio" name="download_type" value="xls" checked="checked"/> XLS Template<br/> 
-	<input type="radio" name="download_type" value="xml"/> XML Form<br/>
-	<input type="radio" name="download_type" value="pdf"/> PDF Codebook<br/> 
+	<input type="radio" name="download_type" value="xls" checked="checked"/> <span data-lang="ft_xls" class="lang">XLS Form</span><br/> 
+	<input type="radio" name="download_type" value="xml"/> <span data-lang="ft_xml" class="lang">XML Form</span><br/>
+	<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Codebook</span><br/> 
 	</fieldset>
-	<label for="download_language">Language</label><br/>
-	<select id="download_language"></select><br/>
+	<div id="download_language_div">
+		<label for="download_language" data-lang="c_lang" class="lang">Language</label><br/>
+		<select id="download_language"></select><br/>
+	</div>
 </div>
 
 <!-- JavaScript

@@ -305,7 +305,17 @@ a:hover {
 
 .alist {
 	float: left;
-	width: 280px;
+	/*width: 280px; */
+	margin-left: 5px;
+	margin-right:5px;
+}
+
+.alistSmall {
+	float: left;
+	width: 50px;
+	text-align:center;
+	margin-left: 5px;
+	margin-right:5px;
 }
 
 #scroll_controls p, #scroll_controls_indent p {
@@ -436,12 +446,14 @@ a:hover {
 }
 
 /* Forms */
-form label, form input, form select, form button  {
+form label, form input, form select, form button, h1 .label  {
 	display: inline-block;
 }
 
-form label {
+form label, h1 .label {
 	width: 150px;
+	margin-top:5px;
+	margin-bottom:2px;
 }
 
 #reportContainer label {

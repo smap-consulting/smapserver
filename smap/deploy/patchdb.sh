@@ -75,4 +75,12 @@ then
 echo "Applying patches for version 14.10"
 sudo chown -R tomcat7 /var/log/subscribers
 fi
-echo "1409" > ~/smap_version
+echo "1410" > ~/smap_version
+
+# version 14.11
+
+if [ $version -lt "1411" ]
+then
+echo "Applying patches for version 14.11"
+fi
+echo "1411" > ~/smap_version
