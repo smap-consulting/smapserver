@@ -345,8 +345,9 @@ public class UserList extends Application {
 								System.out.println("Send email");
 								String interval = "48 hours";
 								String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, u.email, interval);
+								ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								UtilityMethods.sendEmail(request, u.email, uuid, "newuser", 
-										"Account created on Smap", adminName, interval);
+										"Account created on Smap", adminName, interval, idents);
 							} else {
 								throw new Exception("Email not enabled - set passwords directly");
 							}

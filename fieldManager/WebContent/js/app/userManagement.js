@@ -439,20 +439,6 @@ $(document).ready(function() {
 			 $('#password_fields').hide();
 		 }
 	 });
-	 // Initialise the send email or set password radio buttons
-	 if(globals.gServerCanSendEmail) {
-		 $('input[type=radio][name=send_email]').change(function() {
-		        if (this.value == 'send_email') {
-		        	$('#password_fields').hide();
-		        } else if (this.value == 'set_password') {
-		        	$('#password_fields').show();
-		        }
-		    });
-	 } else {
-		 $('#password_fields').show();
-		 $('input[type=radio][name=send_email]').attr('disabled',true);
-		 $('#set_password').attr('checked',true);
-	 }
 
 	enableUserProfile();	// Allow user to reset their own profile
 	
@@ -596,6 +582,22 @@ function openUserDialog(existing, userIndex) {
 		$('#user_name').val(gUsers[userIndex].name);
 		$('#user_email').val(gUsers[userIndex].email);
 	}
+	
+	 // Initialise the send email or set password radio buttons
+	 if(globals.gServerCanSendEmail) {
+		 $('input[type=radio][name=send_email]').change(function() {
+		        if (this.value == 'send_email') {
+		        	$('#password_fields').hide();
+		        } else if (this.value == 'set_password') {
+		        	$('#password_fields').show();
+		        }
+		    });
+	 } else {
+		 $('#password_fields').show();
+		 $('input[type=radio][name=send_email]').attr('disabled',true);
+		 $('#set_password').attr('checked',true);
+	 }
+	 
 	$('#create_user_popup').dialog("open");
 }
 

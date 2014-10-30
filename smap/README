@@ -16,7 +16,7 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
-Version 14.11 needs the following added to /etc/apache2/sites-available/default-ssl.conf (Assuming version 2.4 of Apache)
+Version 14.10.02 needs the following added to /etc/apache2/sites-available/default-ssl.conf (Assuming version 2.4 of Apache)
 Add after the <location /surveyKPI> entry
 
 	<Location /surveyKPI/onetimelogon>
@@ -26,6 +26,25 @@ Add after the <location /surveyKPI> entry
 Also update 000-default.conf to 
 	redirect /resetPassword.html to https
 	redirect /forgottenPassword.html to https
+Use the existing redirect statements as a template
+
+If you are going to allow the server to send emails in order to reset passwords then you will need to
+set up an email server, or gain access to one, and then update /var/lib/tomcat7/conf/web.xml to add the following:
+		<context-param>
+		   <param-name>au.com.smap.smtp_on</param-name>
+		   <param-value>true</param-value>
+		</context-param>
+		
+		<context-param>
+		   <param-name>au.com.smap.smtp_host</param-name>
+		   <param-value>{your smtp host}</param-value>
+		</context-param>
+		
+		<context-param>
+		   <param-name>au.com.smap.password_reset_from</param-name>
+		   <param-value>{an email address to use in the from: section of a password reset}</param-value>
+		</context-param>
+These parameters should be added just before the final "</web-app>"
 
 Version 14.10 needs the following added to Apache configuration files (Assuming version 2.4 of Apache)
 

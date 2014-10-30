@@ -114,7 +114,8 @@ public class PasswordReset extends Application {
 					System.out.println("Sending email");
 					
 					if(UtilityMethods.hasEmail(request)) {
-					    UtilityMethods.sendEmail(request, email, uuid, "reset", "Password Reset", null, interval);
+						ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, email);
+					    UtilityMethods.sendEmail(request, email, uuid, "reset", "Password Reset", null, interval, idents);
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";
@@ -202,29 +203,33 @@ public class PasswordReset extends Application {
 			System.out.println("SQL: " + sql + " : " + pd.onetime);
 			
 			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
+			int count = 0;
+			while(rs.next()) {
 				String ident = rs.getString(1);
 				String name = rs.getString(2);
 				
 				System.out.println("Updating password for user " + name + " with ident " + ident);
 				
-				sql = "update users set password = md5(?) where one_time_password = ?;";
+				sql = "update users set password = md5(?) where one_time_password = ? and ident = ?;";
 				pstmtUpdate = connectionSD.prepareStatement(sql);
 				String pwdString = ident + ":smap:" + pd.password;
 				pstmtUpdate.setString(1, pwdString);
 				pstmtUpdate.setString(2, pd.onetime);
+				pstmtUpdate.setString(3, ident);
 				
 				pstmtUpdate.executeUpdate();
 				response = Response.ok().build();
 				log.info("Password updated");
-				
-			} else {
+				count++;
+			} 
+			
+			if(count == 0) {
 				// Clean up an expired token
 				sql = "update users set one_time_password = null, one_time_password_expiry = null where one_time_password = ?";
 				pstmtDel = connectionSD.prepareStatement(sql);
 				pstmtDel.setString(1, pd.onetime);
-				int count = pstmtDel.executeUpdate();
-				if(count > 0) {
+				int nbrUpdated = pstmtDel.executeUpdate();
+				if(nbrUpdated > 0) {
 					response = Response.status(Status.NOT_FOUND).entity("Token has expired").build();
 				} else {
 					response = Response.status(Status.NOT_FOUND).entity("Token not found").build();

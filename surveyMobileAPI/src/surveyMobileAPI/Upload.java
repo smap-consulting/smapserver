@@ -136,13 +136,15 @@ public class Upload extends Application {
 
 		// Extract the data
 		try {
-			log.info("Info: Upload Started =================");
+			System.out.println("");
+			System.out.println("Upload Started ================= " + instanceId + " ==============");
 			log.info("Url:" + request.getRequestURI());
 			XFormData xForm = new XFormData();
 			xForm.loadMultiPartMime(request, request.getRemoteUser(), instanceId);
 			log.info("User:" + request.getRemoteUser());
 			log.info("Server:" + request.getServerName());
-			log.info("Info: Upload finished =================");
+			System.out.println("Info: Upload finished ---------------- " + instanceId + " ------------");
+			System.out.println("");
 			
 			response = Response.created(uriInfo.getBaseUri()).status(HttpServletResponse.SC_CREATED)
 					.entity(RESPONSE_MSG1 + 	"<message>Upload Success</message>" + RESPONSE_MSG2)

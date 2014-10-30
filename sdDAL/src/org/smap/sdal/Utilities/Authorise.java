@@ -84,11 +84,9 @@ public class Authorise {
 		log.info(sql + " user: " + user);
 		
 		try {
-			pstmt = conn.prepareStatement(sql);
-			//pstmt.setString(1, requiredGroup);
+			pstmt = conn.prepareStatement(sql); 	
 			pstmt.setString(1, user);
 			for(int i = 0; i < permittedGroups.size(); i++) {
-				System.out.println("   -- group: " + permittedGroups.get(i));
 				pstmt.setString(i + 2, permittedGroups.get(i));
 			}
 

@@ -118,6 +118,7 @@ public class XFormData {
 				templateName = si.getTemplateName();
 				
 				saveDetails = saveToDisk(item, request, basePath, null, templateName);
+				log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
 				
 				SurveyTemplate template = new SurveyTemplate();
 				template.readDatabase(templateName);										
@@ -143,7 +144,7 @@ public class XFormData {
 		    } else {
 		        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
 		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, templateName);
-			    	log.info("Saving file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
+			    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 		        }
 		    }
 		}

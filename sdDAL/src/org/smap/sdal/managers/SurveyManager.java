@@ -576,7 +576,7 @@ public class SurveyManager {
 			}
 
 		} else if(change_type.equals("new_multichoice_option")) {
-			System.out.println("Changing multiple choice ")
+			System.out.println("Changing multiple choice ");
 		}
 
 		

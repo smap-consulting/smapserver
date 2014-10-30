@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -210,6 +211,30 @@ public class UtilityMethods {
 		return email;
 	}
 	
+	// Get applicable user idents from an email
+	static public ArrayList<String> getIdentsFromEmail(
+			Connection connectionSD, 
+			PreparedStatement pstmt, 
+			String email) throws SQLException {
+		
+		ArrayList<String> idents = new ArrayList<String> ();
+		
+		/*
+		 * Get the table name and column name containing the text data
+		 */
+		String sql = "select ident from users where email = ?";
+
+		System.out.println(sql + " : "  + email);
+		pstmt = connectionSD.prepareStatement(sql);	
+		pstmt.setString(1, email);
+		ResultSet rs = pstmt.executeQuery();
+		while (rs.next()) {
+			idents.add(rs.getString(1));
+		}
+		
+		return idents;
+	}
+	
 	// Set a one time password
 	static public String setOnetimePassword(
 			Connection connectionSD, 
@@ -221,7 +246,7 @@ public class UtilityMethods {
 		interval = interval.replace("'", "''");	// Escape apostrophes
 		
 		/*
-		 * Get the table name and column name containing the text data
+		 * Update the users table by adding the UUID and expiry time
 		 */
 		String sql = "update users set" +
 				" one_time_password = ?," +
@@ -248,7 +273,8 @@ public class UtilityMethods {
 			String type, 
 			String subject,
 			String adminName,
-			String interval) throws Exception  {
+			String interval,
+			ArrayList<String> idents) throws Exception  {
 		
 		String smtp_host = request.getServletContext().getInitParameter("au.com.smap.smtp_host");
 		String from = request.getServletContext().getInitParameter("au.com.smap.password_reset_from");
@@ -263,19 +289,29 @@ public class UtilityMethods {
 		    msg.setRecipients(Message.RecipientType.TO,	InternetAddress.parse(email, false));
 		    msg.setSubject(subject);
 		    
+		    StringBuffer identString = new StringBuffer();
+	    	int count = 0;
+	    	for(String ident : idents) {
+	    		if(count++ > 0) {
+	    			identString.append(" or ");
+	    		} 
+	    		identString.append(ident);
+	    	}
+		    
 		    String txtMessage = null;
 		    if(type.equals("reset")) {
 			    txtMessage = "Goto https://" + 
 			    			request.getServerName() + "/resetPassword.html?token=" + uuid +
-			    			" to reset your password.\n" +
-			    			" The link is valid for " + interval + "\n\n" +
+			    			" to reset your password.\n\n" +
+			    			"Your user name is: " + identString.toString() + "\n\n" +
+			    			" The link is valid for " + interval + "\n" +
 			    			" Do not reply to this email it is not monitored";
 		    } if(type.equals("newuser")) {
 		    	 txtMessage = adminName + " has given you access to a Smap server with address http://" + request.getServerName() + "\n" +
 		    	 			"You will need to specify your password before you can log on.  To do this click on the following link https://" + 
-			    			request.getServerName() + "/resetPassword.html?token=" + uuid +
-			    			" to reset your password.\n" +
-			    			" The link is valid for " + interval + "\n\n" +
+			    			request.getServerName() + "/resetPassword.html?token=" + uuid + "\n\n" +
+			    			"Your user name is: " + identString.toString() + "\n\n" +
+			    			" The link is valid for " + interval + "\n" +
 			    			" Do not reply to this email it is not monitored";
 
 		    }
