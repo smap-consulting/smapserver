@@ -89,10 +89,12 @@ public class XFormData {
 		DiskFileItemFactory  factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		List <FileItem> items = upload.parseRequest(request);
+		
 		serverName = request.getServerName();
 		SurveyInstance si = null;
 		String templateName = null;
 		String form_status = request.getHeader("form_status");
+		boolean incomplete = false;	// Set true if odk has more attachments to send
 		
 		System.out.println("Form status: " + form_status);
 
@@ -136,11 +138,15 @@ public class XFormData {
 		while (iter.hasNext()) {
 		    FileItem item = (FileItem) iter.next();	 
 		    String fieldName = item.getFieldName();
-		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {	
-		    	
-	    		log.info("Warning FormField Ignored, Item:" + 
-	    				item.getFieldName() + ":" + item.getString());
-		    	
+		    
+		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
+		    	// Check to see if this form field indicates the submission is incomplete
+		    	if(item.getFieldName().equals("*isIncomplete*") && item.getString().equals("yes")) {
+		    		System.out.println("    ++++++ Incomplete Submission");
+		    		incomplete = true;
+		    	} else {
+		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
+		    	}		    	
 		    } else {
 		        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
 		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, templateName);
@@ -187,6 +193,7 @@ public class XFormData {
 		ue.setImei(si.getImei());
 		ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);
 		ue.setStatus("success"); // Not really needed any more as status is really set in the subscriber event
+		ue.setIncomplete(incomplete);
 		UploadEventManager uem = new UploadEventManager(pc);
 		uem.persist(ue);
 		

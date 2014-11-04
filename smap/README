@@ -46,6 +46,10 @@ set up an email server, or gain access to one, and then update /var/lib/tomcat7/
 		</context-param>
 These parameters should be added just before the final "</web-app>"
 
+You should also add the following to the submission directive in the apache configuration files in /etc/apache2/sites-available
+	AuthDigestNonceLifetime -1
+This will prevent timeouts when uploading large attachments
+
 Version 14.10 needs the following added to Apache configuration files (Assuming version 2.4 of Apache)
 
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML

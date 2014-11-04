@@ -103,7 +103,11 @@ $(document).ready(function() {
 		        		user.ident = $('#user_ident').val();
 		        		user.name = $('#user_name').val();
 		        		user.email = $('#user_email').val();
-		        		send_email == "send_email" ? user.sendEmail = true : user.sendEmail = false;
+		        		if(gCurrentUserIndex === -1 && send_email == "send_email") {
+		        			user.sendEmail = true;
+		        		} else {
+		        			user.sendEmail = false;
+		        		}
 		        		
 		        		// Validations
 		        		if(user.ident.len)
@@ -134,7 +138,6 @@ $(document).ready(function() {
 		        			return false;
 	        			}
 
-		        	    
 		        		if($('#user_password').is(':visible')) {
 		        			user.password = $('#user_password').val();
 		        			if(user.password.length < 2) {
@@ -584,19 +587,21 @@ function openUserDialog(existing, userIndex) {
 	}
 	
 	 // Initialise the send email or set password radio buttons
-	 if(globals.gServerCanSendEmail) {
-		 $('input[type=radio][name=send_email]').change(function() {
-		        if (this.value == 'send_email') {
-		        	$('#password_fields').hide();
-		        } else if (this.value == 'set_password') {
-		        	$('#password_fields').show();
-		        }
-		    });
-	 } else {
-		 $('#password_fields').show();
-		 $('input[type=radio][name=send_email]').attr('disabled',true);
-		 $('#set_password').attr('checked',true);
-	 }
+	if(!existing) {
+		 if(globals.gServerCanSendEmail) {
+			 $('input[type=radio][name=send_email]').change(function() {
+			        if (this.value == 'send_email') {
+			        	$('#password_fields').hide();
+			        } else if (this.value == 'set_password') {
+			        	$('#password_fields').show();
+			        }
+			    });
+		 } else {
+			 $('#password_fields').show();
+			 $('input[type=radio][name=send_email]').attr('disabled',true);
+			 $('#set_password').attr('checked',true);
+		 }
+	}
 	 
 	$('#create_user_popup').dialog("open");
 }

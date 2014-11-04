@@ -121,6 +121,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthName "smap"
         AuthDigestDomain /
         AuthDigestProvider dbd
+        AuthDigestNonceLifetime -1
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>

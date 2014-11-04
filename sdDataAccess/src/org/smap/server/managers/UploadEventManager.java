@@ -65,7 +65,7 @@ public class UploadEventManager {
 	}
 	
 	/**
-	 * This method is used to return upload events that have not been submitted 
+	 * This method is used to return complete upload events that have not been submitted 
 	 * successfully to the specified subscriber
 	 * if sId > 0 then only uploads for that survey are returned
 	 */
@@ -79,6 +79,7 @@ public class UploadEventManager {
 					"SELECT ue FROM UPLOAD_EVENT ue " +
 					"WHERE ue.status = 'success' " +
 					" AND ue.s_id = :sId " +
+					" AND ue.incomplete = 'false'" +
 					" AND NOT EXISTS (SELECT se FROM SUBSCRIBER_EVENT se WHERE " +
 					"se.subscriber =:name AND se.ue = ue)");
 			query.setParameter("sId", sId);
@@ -87,6 +88,7 @@ public class UploadEventManager {
 					"SELECT ue FROM UPLOAD_EVENT ue " +
 					"WHERE ue.status = 'success' " +
 					" AND ue.s_id is not null " +
+					" AND ue.incomplete = 'false'" +
 					" AND NOT EXISTS (SELECT se FROM SUBSCRIBER_EVENT se WHERE " +
 					"se.subscriber =:name AND se.ue = ue)");
 		}
@@ -100,6 +102,33 @@ public class UploadEventManager {
 		return eventList;
 	}
 	
+	/**
+	 * This method is used to return complete upload events that have not been submitted 
+	 * successfully to the specified subscriber
+	 * if sId > 0 then only uploads for that survey are returned
+	 */
+	@SuppressWarnings("unchecked")
+	public List<UploadEvent> getIncomplete(String origIdent, String ident) {
+		List<UploadEvent> eventList = null;
+
+ 		Query query = em.createQuery(
+				"SELECT ue FROM UPLOAD_EVENT ue " +
+				"WHERE ue.status = 'success' " +
+				" AND ue.s_id is not null " +
+		//		" AND ue.origSurveyIdent = :origIdent " +
+		//		" AND ue.ident = :ident " +
+				" AND ue.incomplete = true" +
+				" AND NOT EXISTS (SELECT se FROM SUBSCRIBER_EVENT se WHERE se.ue = ue)");
+		
+ 		query.setParameter("origIdent", origIdent);
+ 		query.setParameter("ident", ident);
+		try {
+			eventList = query.getResultList();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return eventList;
+	}
 
 	public void persist(UploadEvent ue) throws Exception {
 

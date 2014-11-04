@@ -92,6 +92,9 @@ public class UploadEvent implements Serializable {
 	@Column(name="file_path")
 	private String filePath;
 	
+	@Column(name="incomplete")
+	private boolean incomplete = false;
+	
 	/*
 	 * Constructor
 	 */
@@ -169,6 +172,10 @@ public class UploadEvent implements Serializable {
 		return filePath;
 	}
 	
+	public boolean getIncomplete() {
+		return incomplete;
+	}
+	
 	/*
 	 * Setters
 	 */
@@ -240,6 +247,10 @@ public class UploadEvent implements Serializable {
 	
 	public void setFilePath(String value) {
 		filePath = value;
+	}
+	
+	public void setIncomplete(boolean value) {
+		incomplete = value;
 	}
 
 }

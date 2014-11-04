@@ -77,6 +77,7 @@ public class EventList extends Application {
 			@PathParam("sName") String sName,
 			@QueryParam("hide_errors") boolean hideErrors,
 			@QueryParam("hide_duplicates") boolean hideDuplicates,
+			@QueryParam("hide_merged") boolean hideMerged,
 			@QueryParam("hide_success") boolean hideSuccess,
 			@QueryParam("hide_not_loaded") boolean hideNotLoaded,
 			@QueryParam("is_forward") boolean is_forward,
@@ -190,7 +191,8 @@ public class EventList extends Application {
 						 (status == null && !hideNotLoaded) ||
 						 (status != null && !hideSuccess && status.equals("success")) ||
 						 (status != null && !hideErrors && status.equals("error") && (se_reason == null || !se_reason.startsWith("Duplicate survey:"))) ||
-						 (status != null && !hideDuplicates && status.equals("error") && (se_reason != null && se_reason.startsWith("Duplicate survey:")))
+						 (status != null && !hideDuplicates && status.equals("error") && (se_reason != null && se_reason.startsWith("Duplicate survey:")) ||
+						 (status != null && !hideMerged && status.equals("merged")))
 						 ) {
 					
 					
@@ -297,6 +299,7 @@ public class EventList extends Application {
 		int success = 0;
 		int errors = 0;
 		int duplicates = 0;
+		int merged = 0;
 		int notLoaded = 0;
 	}
 	
@@ -309,6 +312,7 @@ public class EventList extends Application {
 			@PathParam("sName") String sName,
 			@QueryParam("hide_errors") boolean hideErrors,
 			@QueryParam("hide_duplicates") boolean hideDuplicates,
+			@QueryParam("hide_merged") boolean hideMerged,
 			@QueryParam("hide_success") boolean hideSuccess,
 			@QueryParam("hide_not_loaded") boolean hideNotLoaded,
 			@QueryParam("groupby") String groupby,
@@ -344,6 +348,9 @@ public class EventList extends Application {
 			}
 			if(!hideDuplicates) {
 				addStatusTotals("duplicates", sName, projectId, user, pstmt, connectionSD,	groupby, sList, is_forward); 
+			}
+			if(!hideMerged) {
+				addStatusTotals("merged", sName, projectId, user, pstmt, connectionSD,	groupby, sList, is_forward); 
 			}
 			if(!hideNotLoaded) {
 				addStatusTotals("not_loaded", sName, projectId, user, pstmt, connectionSD, groupby, sList, is_forward); 
@@ -384,6 +391,9 @@ public class EventList extends Application {
 				}
 				if(!hideDuplicates) {
 					jp.put("duplicates", st.duplicates);
+				}
+				if(!hideMerged) {
+					jp.put("merged", st.merged);
 				}
 				if(!hideNotLoaded) {
 					jp.put("not_loaded", st.notLoaded);
@@ -433,6 +443,8 @@ public class EventList extends Application {
 			selectStatus = "AND se.status is null ";
 		} else if(status.equals("duplicates")) {
 			selectStatus = "AND se.status = 'error' AND se.reason like 'Duplicate survey:%' ";
+		} else if(status.equals("merged")) {
+			selectStatus = "AND se.status = 'merged' ";
 		}
 		
 		String subscriberSelect = "";
@@ -608,6 +620,8 @@ public class EventList extends Application {
 				 st.errors = count;
 			 } else if(status.equals("duplicates")) {
 				 st.duplicates = count;
+			 } else if(status.equals("merged")) {
+				 st.merged = count;
 			 } else if(status.equals("not_loaded")) {
 				 st.notLoaded = count;
 			 }

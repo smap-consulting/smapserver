@@ -368,6 +368,7 @@ function refreshData(projectId, surveyId, start_rec) {
 	var hide_success=true,
 		hide_errors=true,
 		hide_duplicates=true,
+		hide_merged=true,
 		hide_not_loaded=true;
 	
 	var status_values = $('#showstatus :checkbox:checked').each(function() {
@@ -383,6 +384,9 @@ function refreshData(projectId, surveyId, start_rec) {
 	      }
 	      if($this === "duplicates") {
 	    	  hide_duplicates=false;
+	      }
+	      if($this === "merged") {
+	    	  hide_merged=false;
 	      }
 	    });
 	
@@ -411,6 +415,7 @@ function refreshData(projectId, surveyId, start_rec) {
 				"&hide_errors=" + hide_errors +
 				"&hide_not_loaded=" + hide_not_loaded +
 				"&hide_duplicates=" + hide_duplicates +
+				"&hide_merged=" + hide_merged +
 				"&is_forward=" + isForward;
 			
 			if(showTypeE === "totals" && surveyId !== "_all") {
@@ -533,6 +538,9 @@ function refreshTable(data, showType) {
 		if(typeof features[0].properties.duplicates  !== "undefined") {
 			h[++i] = '<th>Duplicates</th>';
 		}
+		if(typeof features[0].properties.merged  !== "undefined") {
+			h[++i] = '<th>Merged</th>';
+		}
 		if(typeof features[0].properties.not_loaded  !== "undefined") {
 			h[++i] = '<th>Not Loaded</th>';
 		}
@@ -574,6 +582,9 @@ function refreshTable(data, showType) {
 			}
 			if(typeof features[j].properties.duplicates !== "undefined") {
 				h[++i] = '<td>' + features[j].properties.duplicates + '</td>';
+			}
+			if(typeof features[j].properties.merged !== "undefined") {
+				h[++i] = '<td>' + features[j].properties.merged + '</td>';
 			}
 			if(typeof features[j].properties.not_loaded !== "undefined") {
 				h[++i] = '<td>' + features[j].properties.not_loaded + '</td>';

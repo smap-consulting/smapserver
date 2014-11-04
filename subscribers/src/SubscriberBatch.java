@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -193,6 +194,9 @@ public class SubscriberBatch {
 										template.readDatabase(templateName);					
 										template.extendInstance(instance);	// Extend the instance with information from the template
 										// instance.getTopElement().printIEModel("   ");	// Debug
+										
+										// Get attachments from incomplete submissions
+										getAttachmentsFromIncompleteSurveys(connection, s.getSubscriberName(), ue.getFilePath(), ue.getOrigSurveyIdent(), ue.getIdent());
 										
 										is3 = new FileInputStream(uploadFile);	// Get an input stream for the file in case the subscriber uses that rather than an Instance object
 										s.upload(instance, is3, ue.getUserName(), 
@@ -395,5 +399,76 @@ public class SubscriberBatch {
 		}
 		return subscribers;
 	}
+	
+	/*
+	 * ODK sends large attachments in separate "incomplete" posts
+	 * Get these now
+	 * Only do it once for all subscribers, so once the attachments from the incomplete posts have been moved
+	 *  to the complete submission then the first subscriber to do this will be marked as having processed the
+	 *  attachments.  All other subscribers will then ignore incomplete attachments
+	 */
+	private void getAttachmentsFromIncompleteSurveys(Connection connectionSD, 
+			String subscriberName, 
+			String finalPath, 
+			String origIdent, 
+			String ident) {
+		
+		
+		String sql = "select ue.ue_id, ue.file_path from upload_event ue " +
+				"where ue.status = 'success' " +
+				" and ue.orig_survey_ident = ? " +
+				" and ue.ident = ? " +
+				" and ue.incomplete = 'true'" +
+				" and not exists (select se.se_id from subscriber_event se where se.ue_id = ue.ue_id)";
+		
+		String sqlUpdate = "insert into subscriber_event (se_id, ue_id, subscriber, status, reason) values (nextval('se_seq'), ?, ?, ?, ?);";
+		
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtUpdate = null;
+		try {
+			pstmt = connection.prepareStatement(sql);
+			pstmt.setString(1, origIdent);
+			pstmt.setString(2, ident);
+			
+			pstmtUpdate = connection.prepareStatement(sqlUpdate);
+			
+			File finalFile = new File(finalPath);
+			File finalDirFile = finalFile.getParentFile();
+			String finalDir = finalDirFile.getPath();
+			
+			System.out.println("SQL: " + sql + " : " + origIdent + " : " + ident);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				System.out.println("++++++ Processing incomplete file name is: " + rs.getString(2));
+				
+				int ue_id = rs.getInt(1);
+				File sourceFile = new File(rs.getString(2));
+				File sourceDirFile = sourceFile.getParentFile();
+				
+				File files[] = sourceDirFile.listFiles();
+				for(int i = 0; i < files.length; i++) {
+					System.out.println("       File: " + files[i].getName());
+					String fileName = files[i].getName();
+					if(!fileName.endsWith("xml")) {
+						System.out.println("++++++ Moving " + fileName + " to " + finalDir);
+						files[i].renameTo(new File(finalDir + "/" + fileName));
+					}
+				}
+				pstmtUpdate.setInt(1, ue_id);
+				pstmtUpdate.setString(2,subscriberName);
+				pstmtUpdate.setString(3,"merged");
+				pstmtUpdate.setString(4,"Files moved to " + finalDir);
+				pstmtUpdate.executeUpdate();
+				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+			if(pstmtUpdate != null) try {pstmtUpdate.close();} catch(Exception e) {};
+		}
+		
+	}
+
 	
 }

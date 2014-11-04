@@ -108,6 +108,7 @@
         AuthName "smap"
 		AuthDigestDomain /
 		AuthDigestProvider dbd
+		AuthDigestNonceLifetime -1
 		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
         allow from all

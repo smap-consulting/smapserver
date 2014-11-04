@@ -196,6 +196,7 @@ CREATE TABLE upload_event (
 	reason text,
 	location text,
 	form_status text,
+	incomplete boolean default false,	-- odk will set this if sending attachments in multiple posts
 	server_name text  -- Stores the server used to upload the results.  The url's of all attachments will reference this address
 	);
 
