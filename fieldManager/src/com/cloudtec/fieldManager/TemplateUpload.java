@@ -190,7 +190,6 @@ public class TemplateUpload extends HttpServlet {
 			/*
 			 * Next get the file
 			 */
-
 			if(uploadedFile != null) {
 
 				//Handle Uploaded files.
@@ -410,7 +409,9 @@ public class TemplateUpload extends HttpServlet {
 	        //errorMesgBuf.append("<ol>");
 	        response.foundErrorMsg = false;
 	        boolean hasCircularRef = false;
+	        boolean hasInvalidFunction = false;
 	        boolean hasSystemError = false;
+	        boolean hasValidationError = false;
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
@@ -447,22 +448,34 @@ public class TemplateUpload extends HttpServlet {
         		
 	           	// Test for invalid function
         		} else if(line.contains("cannot handle function")) {	
-        			errorMesgBuf.append("Invalid Function");
-        			int posName = line.indexOf('\'');
-        			int posName2 = line.indexOf('\'', posName + 1);
-        			if(posName != -1 && posName2 != -1) {
-        				String name = line.substring(posName + 1, posName2);
-        				response.hints.add("Function " + name + " is invalid");
-        				response.hints.add("Check for capital letters or spelling mistakes");
-        				response.hints.add(line);
+        			if(!hasInvalidFunction) {
+        				hasInvalidFunction = true;
+	        			errorMesgBuf.append(" Invalid Function");
+	        			int posName = line.indexOf('\'');
+	        			int posName2 = line.indexOf('\'', posName + 1);
+	        			if(posName != -1 && posName2 != -1) {
+	        				String name = line.substring(posName + 1, posName2);
+	        				if(!isValidFunction(name)) {
+	        					response.hints.add("Function " + name + " has a problem");
+	        					if(isValidFunction(name.toLowerCase())) {
+	        						response.hints.add("Check for capital letters");
+	        					} else {
+	        						response.hints.add("Check for spelling mistakes");
+	        					}
+	        				}
+	        			}
+	        			response.hints.add(line);	        			
+		        		response.foundErrorMsg = true;
         			}
-	        		response.foundErrorMsg = true;
 
 	        	// Test for Xpath evaluation errors
         		} else if(line.startsWith("org.javarosa.core.log.WrappedException")) {	
-        			errorMesgBuf.append("Validation Error");
-        			response.hints.add("line");
-	        		response.foundErrorMsg = true;
+        			if(!hasValidationError) {
+        				hasValidationError = true;
+	        			errorMesgBuf.append(" Validation Error");
+	        			response.hints.add(line);
+		        		response.foundErrorMsg = true;
+        			}
 
         		// Test for circular reference
         		} else if(line.contains("=>")) {	
@@ -514,6 +527,76 @@ public class TemplateUpload extends HttpServlet {
 	    return response;
 	}
 	
+	private boolean isValidFunction(String fn) {
+		boolean valid = false;
+		
+		switch(fn) {
+		case "not":
+			valid = true;
+			break;
+		case "selected":
+			valid = true;
+			break;
+		case "count-selected":
+			valid = true;
+			break;
+		case "regex":
+			valid = true;
+			break;
+		case "if":
+			valid = true;
+			break;
+		case "string-length":
+			valid = true;
+			break;
+		case "format-date":
+			valid = true;
+			break;
+		case "decimal-date-time":
+			valid = true;
+			break;
+		case "date-time":
+			valid = true;
+			break;
+		case "indexed-repeat":
+			valid = true;
+			break;
+		case "position":
+			valid = true;
+			break;
+		case "count":
+			valid = true;
+			break;
+		case "pow":
+			valid = true;
+			break;
+		case "random":
+			valid = true;
+			break;
+		case "round":
+			valid = true;
+			break;
+		case "concat":
+			valid = true;
+			break;
+		case "join":
+			valid = true;
+			break;
+		case "number":
+			valid = true;
+			break;
+		case "int":
+			valid = true;
+			break;
+		case "string":
+			valid = true;
+			break;
+		default:
+			valid = false;
+		}
+		
+		return valid;
+	}
 	private String getResponseMessage(String mesg, ArrayList<String> hints, String host, String project, String survey, String fileName) {
 
 		Message m = new Message();

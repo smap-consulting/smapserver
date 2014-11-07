@@ -47,6 +47,16 @@ define({
 	"c_cancel": "Cancel",
 	"c_save": "Save",
 	"c_block": "Block",
+	"c_graph": "Graph",
+	"c_map": "Map",
+	"c_table": "Table",
+	"c_images": "Images",
+	"c_title": "Title",
+	"c_comment": "Comment",
+	"c_country": "Country",
+	"c_region": "Region",
+	"c_district": "District",
+	"c_community": "Community",
 	
 	// File Types
 	"ft_xls": "XLS Form",
@@ -69,6 +79,8 @@ define({
 	"tm_add_for": "Add Forward",
 	"tm_ref_f": "Refresh Form List",
 	
+	// Analysis
+	"a_exp_title": "Export Results xx",
 	
 	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",

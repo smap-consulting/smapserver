@@ -178,7 +178,8 @@ $(document).ready(function() {
 		 * Make sure we have the survey id
 		 */
 		if(typeof s_id === "undefined" || s_id === null) {
-			alert("Waiting for server. Please try again in a few seconds");
+			alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
+					"If the project does have surveys then try again in a few seconds");
 			return;
 		}
 		
@@ -595,6 +596,7 @@ function getUsers(projectId) {
 	h = [],
 	idx = -1;
 
+	$users.empty();
 	$('#users_filter').append('<option value="0">All Users</options>');
 	$('#users_filter').append('<option value="-1">Unassigned Users</options>');
 

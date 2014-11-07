@@ -78,9 +78,10 @@ fi
 echo "1410" > ~/smap_version
 
 # version 14.11
-
-if [ $version -lt "1411" ]
+# Yes 14.11 patches being reapplied as last release was actually 14.10.02
+if [ $version -lt "1412" ]
 then
 echo "Applying patches for version 14.11"
+sudo chown -R tomcat7 /smap/attachments
 fi
 echo "1411" > ~/smap_version

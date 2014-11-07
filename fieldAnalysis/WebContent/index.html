@@ -63,19 +63,19 @@
 		<p class="lang" style="clear: both;"></p>
 		<div id="header">
 			<div id="username"></div>
-			<div id="banner">Analysis</div>
+			<div class="lang" data-lang="m_analysis" id="banner">Analysis</div>
 		</div>
 	
 		<div id="main" role="main">
 			<!-- Analysis Panels -->
 			<div style="width:210px; height:32px; float:left; font-size:16px">
-				<label for="project_name" style="width:200px; margin-left:5px;">Select Project:</label>
+				<label class="lang" data-lang="c_project" for="project_name" style="width:200px; margin-left:5px;">Select Project:</label>
 				<select class="project_list" id="project_name" style="width:200px; margin-left:5px; font-size:16px;"></select>
 			</div>
-			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="graph"><img src="img/graph_ico.png" width="32" height="32"/><br/>Graph</button>
-			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="map"><img src="img/map_ico2.png" width="32" height="32"/><br/>Map</button>
-			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="table"><img src="img/table_ico.png" width="32" height="32"/><br/>Table</button>
-			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="media"><img src="img/camera.png" width="32" height="32"/><br/>Images</button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="graph"><img src="img/graph_ico.png" width="32" height="32"/><br/><span class="lang" data-lang="c_graph">Graph</span></button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="map"><img src="img/map_ico2.png" width="32" height="32"/><br/><span class="lang" data-lang="c_map">Map</span></button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="table"><img src="img/table_ico.png" width="32" height="32"/><br/><span class="lang" data-lang="c_table" >Table</span></button>
+			<button type="button" class="db_settings_add ui-priority-primary ui-corner-all hover" value="media"><img src="img/camera.png" width="32" height="32"/><br/><span class="lang" data-lang="c_images">Images</span></button>
 			<div id="panel-container">		
 				<ul id="panels">			
 				</ul>
@@ -87,42 +87,37 @@
 	
 	</div> <!-- end of #container -->
 	
-	<!-- Popups -->
-	<div id="edit_record_dialog" style="display:none;">		
-		<a id="btn_edit_record">Edit</a>
-	</div>
-	
 	<!-- Report Popup -->
 	<div id="reportContainer" style="display:none;">		
 		<form>
 			<fieldset class="ui-widget-content">
-				<label for="report_title">Title</label>
+				<label for="report_title" class="lang" data-lang="c_title">Title</label>
 				<input type="text" id="report_title"/><br/>
-				<label for="report_description">Comment</label>
+				<label for="report_description" class="lang" data-lang="c_comment">Comment</label>
 				<textarea id="report_description"></textarea><br/>
 			</fieldset>						
-		</form>
+		</form>								
 		<div id="report_map"></div>
 		<div style="clear: both;"></div>
 		<form>
 			<fieldset class="ui-widget-content">
-				<label class="report_field" for="report_country">Country</label>
+				<label class="report_field lang" for="report_country" data-lang="c_country">Country</label>
 				<input class="report_field" type="text" id="report_country"/><br/>
-				<label class="report_field" for="report_region">Region</label>
+				<label class="report_field lang" for="report_region" data-lang="c_region">Region</label>
 				<input class="report_field" type="text" id="report_region"/><br/>
-				<label class="report_field" for="report_district">District</label>
+				<label class="report_field lang" for="report_district" data-lang="c_district">District</label>
 				<input class="report_field" type="text" id="report_district"/><br/>
-				<label class="report_field" for="report_community">Community</label>
+				<label class="report_field lang" for="report_community" data-lang="c_community">Community</label>
 				<input class="report_field" type="text" id="report_community"/><br/>
 			</fieldset>						
 		</form>
-
+<!-- END TRANSLATION -->
 	</div>
 			
 	<div id="export" title="Export Results" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Select a Survey</legend>
+				<legend class="ui-widget-header ui-corner-all" >Select a Form</legend>
 				<select id="export_survey"></select><br/>	
 			</fieldset>	
 			<fieldset class="ui-widget-content">
@@ -211,21 +206,6 @@
 				<tbody id="ta_property_list">
 				</tbody>
 				</table>
-				
-				<!--  
-				<button id="ta_add_property">Add Property</button>
-				<table>
-				<thead>
-					<tr>
-						<th>Question</th>
-						<th>Unique</th>
-						<th>Delete</th>
-					</tr>
-				</thead>
-				<tbody id="ta_property_list">
-				</tbody>
-				</table>
-				-->
 			</fieldset>	
 				
 		</form>
@@ -340,64 +320,6 @@
 
 
 	<script type="text/javascript" src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script> 
-	
-	<!-- JavaScript at the bottom for fast page loading -->
-  
-	<!-- jQuery and jQuery UI -->
-	<!--
-	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script type="text/javascript" src="/js/libs/jquery-ui-1.10.3.custom.min.js"></script>
-	<script src="/js/responsivemobilemenu.js"></script>
-	-->
-  	
-	<!-- JQPlot Scripts -->
-	<!--[if lt IE 9]><script language="javascript" type="text/javascript" src="excanvas.js"></script><![endif]-->
-	<!-- 
-		<script type="text/javascript" src="js/libs/jqplot/jquery.jqplot.min.js"></script>
-
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.highlighter.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.cursor.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>	
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.barRenderer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jqplot/plugins/jqplot.enhancedLegendRenderer.min.js"></script>
-
-	<script type="text/javascript" src="js/libs/jquery-ui-timepicker-addon.js"></script>
-	<script type="text/javascript" src="js/libs/fp/flowplayer.min.js"></script>
-	<script type="text/javascript" src="js/libs/jquery.dataTables.min.js"></script>
-	-->
-	
-	<!-- Scripts for openlayers map 
-	<script type="text/javascript" src="/OpenLayers/js/OpenLayers.js"></script>
-	-->
-	<!-- Do not link to Openlayers.js on openlayers website, it will change without warning and deprecated functions will stop working -->
-	<!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> 
-	<script type="text/javascript" src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script> 
-	
-	<script type="text/javascript" src="js/jqplot_image.js"></script>
-	<script type="text/javascript" src="js/map-functions.js"></script>
-	<script type="text/javascript" src="js/map-ol.js"></script>
-	<script type="text/javascript" src="js/graph-functions.js"></script>
-	<script type="text/javascript" src="js/graph-view2.js"></script>
-	<script type="text/javascript" src="js/table-functions.js"></script>
-	<script type="text/javascript" src="js/table-view.js"></script>
-	<script type="text/javascript" src="js/media-view.js"></script>
-	<script type="text/javascript" src="js/survey_control.js"></script>
-	<script type="text/javascript" src="js/panels.js"></script>
-	<script type="text/javascript"  src="js/plugins.js"></script>
-	<script type="text/javascript" src="js/script.js"></script>
-	<script type="text/javascript" src="js/data.js"></script>
-	<script src="js/reports.js"></script>
-
-	<script type="text/javascript" src="/fieldManager/js/commonReportFunctions.js"></script>
-	<script src="/js/common.js"></script> 
-	<script src="/fieldManager/js/tablesorter.js"></script>
-	-->
-
-	<!-- end scripts-->
      
 
 </body>

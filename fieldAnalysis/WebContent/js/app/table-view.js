@@ -94,29 +94,6 @@ function setTableSurvey(view) {
 	$selFoot.find('.tDelete').button().click(function() {
 		deleteAllTables(view.sId);
 	});
-	
-	 // Initialse the edit record dialog
-	 $('#edit_record_dialog').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			width:300,
-			zIndex: 2010,
-			buttons: [
-		        {
-		        	text: "Done",
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }
-			]
-		}
-	);
-	 $('#btn_edit_record').button().click(function(){
-		 $(this).close();
-	 });
-
 
 }
 
@@ -363,11 +340,6 @@ function addRightClickToTable($elem, sId, view) {
 			} else {
 				document.location.href = "/webforms/formXML.php"+"?key=" + survey_ident +
 						"&datakey=prikey&datakeyvalue="+pkey;
-				//$('#btn_edit_record').attr("href", "/webforms/formXML.php"+"?key=" + survey_ident +
-				//		"&datakey=prikey&datakeyvalue="+pkey)
-				//		.attr("target", "_blank");
-				
-				//$("#edit_record_dialog").dialog("open");
 			}
 			return false;
 		});
