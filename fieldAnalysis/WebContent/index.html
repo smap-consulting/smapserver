@@ -111,17 +111,16 @@
 				<input class="report_field" type="text" id="report_community"/><br/>
 			</fieldset>						
 		</form>
-<!-- END TRANSLATION -->
 	</div>
 			
 	<div id="export" title="Export Results" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all" >Select a Form</legend>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="a_exp_leg1" >Select a form</legend>
 				<select id="export_survey"></select><br/>	
 			</fieldset>	
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Output format:</legend>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="a_exp_leg2">Output format:</legend>
 				<select id="exportformat">
 					<option value="xls">XLS</option>
 					<option value="csv">CSV</option>
@@ -132,43 +131,44 @@
 					<option value="stata">Stata / CSV</option>
 					<option value="thingsat">Thingsat</option>
 				</select><br/>	
-				<label for="exportReadOnly">Export notes:</label>
+				<label for="exportReadOnly" class="lang" data-lang="a_exp_notes">Export notes:</label>
 				<input type="checkbox" id="exportReadOnly"/><br/>
 				<div class="showspreadsheet">
 					<div class="showxls">
-						<label for="splitlocn">Split lat / lon:</label>	
+						<label for="splitlocn" class="lang" data-lang="a_exp_split">Split lat / lon:</label>	
 						<input type="checkbox" id="splitlocn"/><br/>
 					</div>
-					<label for="export_language">Language</label><br/>
+					<label for="export_language" class="lang" data-lang="c_lang">Language</label><br/>
 					<select class="selected_language" id="export_language"></select><br/>
 				</div>
-			</fieldset>
-			
+			</fieldset>			
 		
 			<div class="showosm" style="display:none;">
 				<fieldset class="ui-widget-content">
-					<legend class="ui-widget-header ui-corner-all">Select ways (if any):</legend>
+					<legend class="ui-widget-header ui-corner-all lang" data-lang="a_sel_ways">Select ways (if any):</legend>
 					<div class="osmforms"></div>
 				</fieldset>
 			</div>
 			<div class="showxls">
 				<fieldset class="ui-widget-content">
-					<legend class="ui-widget-header ui-corner-all">Select forms to include:</legend>
+					<legend class="ui-widget-header ui-corner-all lang" data-lang="a_sel_forms">Select forms to include:</legend>
 					<div class="selectforms"></div>
 				</fieldset>
 			</div>
 			<div class="showshape" style="display:none;">
 				<fieldset class="ui-widget-content">
-					<legend class="ui-widget-header ui-corner-all">Select form:</legend>
+					<legend class="ui-widget-header ui-corner-all lang" data-lang="msg_sel_form">Select form:</legend>
 					<div class="shapeforms"></div>
 				</fieldset>
 			</div>
 		</form>
 		<div class="showthingsat" style="display:none;">
-			<button id="btn_edit_thingsat">Edit Survey Model</button>	
+			<button id="btn_edit_thingsat" class="lang" data-lang="a_sel_model">Edit Survey Model</button>	
 			<div id="ta_model_show"></div>
 		</div>
 	</div>
+	
+	<!-- END TRANSLATION -->
 	
 	<!-- Popup to edit thingsat model -->
 	<div id="dialog_edit_ta" title="Edit Thingsat Model" style="display:none;">

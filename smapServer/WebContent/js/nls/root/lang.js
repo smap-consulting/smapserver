@@ -80,7 +80,14 @@ define({
 	"tm_ref_f": "Refresh Form List",
 	
 	// Analysis
-	"a_exp_title": "Export Results xx",
+	"a_exp_title": "Export Results",
+	"a_exp_leg1": "Select a form",
+	"a_exp_leg2": "Output format:",
+	"a_exp_notes": "Export notes:",
+	"a_exp_split": "Split lat / lon:",
+	"a_sel_ways": "Select ways (if any):",
+	"a_sel_forms": "Select forms to include:",
+	"a_sel_model": "Edit survey model",
 	
 	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
