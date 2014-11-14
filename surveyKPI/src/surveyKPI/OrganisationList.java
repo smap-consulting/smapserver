@@ -108,6 +108,8 @@ public class OrganisationList extends Application {
 					" allow_facebook, " +
 					" allow_twitter, " +
 					" can_edit, " +
+					" ft_delete_submitted," +
+					" ft_send_trail," +
 					" changed_by, " +
 					" changed_ts," +
 					" admin_email " +
@@ -126,6 +128,8 @@ public class OrganisationList extends Application {
 				org.allow_facebook = resultSet.getBoolean("allow_facebook");
 				org.allow_twitter = resultSet.getBoolean("allow_twitter"); 
 				org.can_edit = resultSet.getBoolean("can_edit");
+				org.ft_delete_submitted = resultSet.getBoolean("ft_delete_submitted");
+				org.ft_send_trail = resultSet.getBoolean("ft_send_trail");
 				org.changed_by = resultSet.getString("changed_by");
 				org.changed_ts = resultSet.getString("changed_ts");
 				org.admin_email = resultSet.getString("admin_email");
@@ -197,9 +201,9 @@ public class OrganisationList extends Application {
 					// New organisation
 						
 					sql = "insert into organisation (name, " +
-							"allow_email, allow_facebook, allow_twitter, can_edit, " +
+							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
 							"changed_by, admin_email, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, now());";
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setString(1, o.name);
@@ -207,8 +211,10 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(3, o.allow_facebook);
 					pstmt.setBoolean(4, o.allow_twitter);
 					pstmt.setBoolean(5, o.can_edit);
-					pstmt.setString(6, request.getRemoteUser());
-					pstmt.setString(7, o.admin_email);
+					pstmt.setBoolean(6, o.ft_delete_submitted);
+					pstmt.setBoolean(7, o.ft_send_trail);
+					pstmt.setString(8, request.getRemoteUser());
+					pstmt.setString(9, o.admin_email);
 					log.info("SQL: " + sql + " : " + o.name);
 					pstmt.executeUpdate();
 						 
@@ -221,6 +227,8 @@ public class OrganisationList extends Application {
 							" allow_facebook = ?, " +
 							" allow_twitter = ?, " +
 							" can_edit = ?, " +
+							" ft_delete_submitted = ?, " +
+							" ft_send_trail = ?, " +
 							" admin_email = ?, " +
 							" changed_by = ?, " + 
 							" changed_ts = now() " + 
@@ -233,9 +241,11 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(3, o.allow_facebook);
 					pstmt.setBoolean(4, o.allow_twitter);
 					pstmt.setBoolean(5, o.can_edit);
-					pstmt.setString(6, o.admin_email);
-					pstmt.setString(7, request.getRemoteUser());
-					pstmt.setInt(8, o.id);
+					pstmt.setBoolean(6, o.ft_delete_submitted);
+					pstmt.setBoolean(7, o.ft_send_trail);
+					pstmt.setString(8, o.admin_email);
+					pstmt.setString(9, request.getRemoteUser());
+					pstmt.setInt(10, o.id);
 							
 					log.info("SQL: " + sql + ":" + o.name + ":" + o.id);
 					pstmt.executeUpdate();

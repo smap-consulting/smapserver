@@ -65,6 +65,8 @@ create TABLE organisation (
 	allow_facebook boolean,
 	allow_twitter boolean,
 	can_edit boolean,
+	ft_delete_submitted boolean,
+	ft_send_trail boolean,
 	changed_by text,
 	admin_email text,
 	changed_ts TIMESTAMP WITH TIME ZONE

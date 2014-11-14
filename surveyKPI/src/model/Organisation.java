@@ -25,6 +25,8 @@ public class Organisation {
 	public boolean allow_facebook;
 	public boolean allow_twitter;
 	public boolean can_edit;
+	public boolean ft_delete_submitted;
+	public boolean ft_send_trail;
 	public String changed_by;
 	public String changed_ts;
 	public String admin_email;

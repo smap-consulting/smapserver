@@ -254,7 +254,7 @@ $(document).ready(function() {
 			show:"drop",
 			title: "Create Organisation",
 			width:380,
-			height:300,
+			height:450,
 			zIndex: 2000,
 			buttons: [
 		        {
@@ -312,6 +312,10 @@ $(document).ready(function() {
 		        				organisation.allow_twitter = true;
 		        			} else if(options[i] === "can_edit") {
 		        				organisation.can_edit = true;
+		        			} else if(options[i] === "ft_delete_submitted") {
+		        				organisation.ft_delete_submitted = true;
+		        			} else if(options[i] === "ft_send_trail") {
+		        				organisation.ft_send_trail = true;
 		        			}
 		        		}
 		        		organisationList[0] = organisation;	
@@ -643,6 +647,10 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.allow_twitter;
 			} else if($(this).val() === "can_edit") {
 				this.checked = org.can_edit;
+			} else if($(this).val() === "ft_delete_submitted") {
+				this.checked = org.ft_delete_submitted;
+			} else if($(this).val() === "ft_send_trail") {
+				this.checked = org.ft_send_trail;
 			}
 		});
 

@@ -161,3 +161,7 @@ alter table users add column one_time_password_expiry timestamp;
 
 alter table upload_event add column incomplete boolean default false;
 update upload_event set incomplete = 'false';
+
+-- Upgrade to:  14.11.1 from 14.10.2 =======
+alter table organisation add column ft_delete_submitted boolean;
+alter table organisation add column ft_send_trail boolean;

@@ -243,7 +243,7 @@ function refreshMap(data) {
 }
 
 /*
- * Refresh the assignments layer
+ * Refresh the tasks layer
  */
 function refreshMapAssignments(data) {
 	"use strict";

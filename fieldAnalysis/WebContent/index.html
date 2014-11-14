@@ -168,8 +168,6 @@
 		</div>
 	</div>
 	
-	<!-- END TRANSLATION -->
-	
 	<!-- Popup to edit thingsat model -->
 	<div id="dialog_edit_ta" title="Edit Thingsat Model" style="display:none;">
 		<div id="ta_model_edit"></div>
@@ -180,27 +178,26 @@
 	<div id="dialog_element_edit_ta" title="Edit Thingsat Element" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Type and Title</legend>
-				<label for="ta_name">Name</label>
+				<label for="ta_name" class="lang" data-lang="c_name">Name</label>
 				<input type="text" id="ta_name" required /><br/>
-				<label for="ta_type">Type</label>
+				<label for="ta_type" class="lang" data-lang="c_type">Type</label>
 				<select id="ta_type">
-					<option value="node">Node</option>
- 					<option value="link">Relation</option>
+					<option value="node" class="lang" data-lang="c_node">Node</option>
+ 					<option value="link" class="lang" data-lang="c_relation">Relation</option>
 				</select><br/>	
 				<div class="link_only" style="display:none;">
-					<label for="ta_source">From</label>
+					<label for="ta_source" class="lang" data-lang="c_from">From</label>
 					<select id="ta_source"></select>
-					<label for="ta_target">To</label>
+					<label for="ta_target" class="lang" data-lang="c_to">To</label>
 					<select id="ta_target"></select>
 				</div>
 			</fieldset>	
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Properties</legend>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="c_properties">Properties</legend>
 				<table>
 				<thead>
 					<tr>
-						<th>Question</th><th>Include</th><th>Unique</th>
+						<th class="lang" data-lang="c_question">Question</th><th class="lang" data-lang="c_include">Include</th><th class="lang" data-lang="c_unique">Unique</th>
 					</tr>
 				</thead>
 				<tbody id="ta_property_list">
@@ -210,7 +207,7 @@
 				
 		</form>
 	</div>
-	
+		
 	<!-- Popup to show features when a user clicks on a geometry item -->
 	<div id="features" class="feature-panel-right"></div>
 	
@@ -218,64 +215,63 @@
 	<div id="p_settings" title="Settings" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Type and Title</legend>
-				<label for="settings_type">Chart Type</label>
+				<label for="settings_type" class="lang" data-lang="a_type">Chart Type</label>
 				<select id="settings_type">
-					<option value="map">Map</option>
- 					<option value="table">Table</option>
-					<option value="graph">Graph</option>
-					<option value="media">Media</option>
+					<option value="map" class="lang" data-lang="c_map">Map</option>
+ 					<option value="table" class="lang" data-lang="c_table">Table</option>
+					<option value="graph" class="lang" data-lang="c_graph">Graph</option>
+					<option value="media" class="lang" data-lang="c_images">Images</option>
 				</select><br/>	
-				<label for="settings_title">Title</label>
+				<label for="settings_title" class="lang" data-lang="c_title">Title</label>
 				<input type="text" id="settings_title"/><br/>
 				<span class="map_only" style="display:none;">
-					<label for="display_panel">Show on:</label>
+					<label for="display_panel" class="lang" data-lang="a_showon">Show on</label>
 					<select id="display_panel"></select><br/>
 				</span>
 			</fieldset>	
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Select a Survey</legend>
-				<label for="settings_survey">Survey</label>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="a_ss">Select Survey</legend>
+				<label for="settings_survey" class="lang" data-lang="c_survey">Survey</label>
 				<select id="settings_survey"></select><br/>
-				<label for="settings_date_question">Date</label>
+				<label for="settings_date_question" class="lang" data-lang="c_date">Date</label>
 				<select id="settings_date_question"></select><br/>
 			</fieldset>	
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Select Question</legend>
-				<label for="settings_language">Language</label>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="a_sq">Select Question</legend>
+				<label for="settings_language" class="lang" data-lang="c_lang">Language</label>
 				<select class="selected_language" id="settings_language"></select>
 				<br/>
-				<label for="settings_question">Question</label>
+				<label for="settings_question" class="lang" data-lang="c_question">Question</label>
 				<select class="selected_question" id="settings_question"></select>
 				<select id="q1_function"></select>
 				<br/>	
-				<label for="settings_group">Group By</label>
+				<label for="settings_group" class="lang" data-lang="a_gb">Group by</label>
 				<select id="settings_group" disabled="disabled"></select><br/>
-				<label for="time_group">Time Series</label>
+				<label for="time_group" class="lang" data-lang="a_ts">Time Series</label>
 				<select id="time_group" disabled="disabled">
-					<option value="none">None</option>
-					<option value="hour">Hour</option>
-					<option value="day">Day</option>
-					<option value="week">Week</option>
-					<option value="month">Month</option>
-					<option value="year">Year</option>
+					<option value="none" class="lang" data-lang="c_none">None</option>
+					<option value="hour" class="lang" data-lang="c_hour">Hour</option>
+					<option value="day" class="lang" data-lang="c_day">Day</option>
+					<option value="week" class="lang" data-lang="c_week">Week</option>
+					<option value="month" class="lang" data-lang="c_month">Month</option>
+					<option value="year" class="lang" data-lang="c_year">Year</option>
 				</select><br/>
 				<span class="map_group_only" style="display:none">
-					<input type="radio" name="mapgrouptype" value="contains" checked="checked"/> GPS coordinates within region<br/> 
-					<input type="radio" name="mapgrouptype" value="matches"/> Matches<br/> 
+					<input type="radio" name="mapgrouptype" value="contains" checked="checked"/> <span class="lang" data-lang="a_g_gps">GPS coordinates within region</span><br/> 
+					<input type="radio" name="mapgrouptype" value="matches"/> <span class="lang" data-lang="c_matches">Matches</span><br/> 
 				</span>	
 			</fieldset>	
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Filter</legend>
-				<label for="from_date">From Date: </label>
-				<input type="text" id="from_date"/> inclusive<br/>	
-				<label for="to_date">To Date: </label>
+				<legend class="ui-widget-header ui-corner-all" class="lang" data-lang="c_filter">Filter</legend>
+				<label for="from_date" class="lang" data-lang="a_from_date">From date</label>
+				<input type="text" id="from_date"/> <span class="lang" data-lang="c_inclusive">inclusive</span><br/>	
+				<label for="to_date" class="lang" data-lang="a_to_date">To date</label>
 				<input type="text" id="to_date"/><br/>
-				<button id="filter_button" class="">Filter By Value</button>
+				<button id="filter_button" class="lang" data-lang="a_fbv">Filter by value</button>
 			</fieldset>							
 		</form>
 	</div>
-	
+		
 	<!-- Popup for status message -->
 	<div id="status_msg" title="Status" style="display:none;">
 		<h3 id="status_msg_msg"></h3>
@@ -285,34 +281,35 @@
 	<div id="filter_dialog" title="Filter by Value" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<label for="filter_question">Filter Question</label>
+				<label for="filter_question" class="lang" data-lang="a_fq">Filter Question</label>
 				<select class="selected_question" id="filter_question"></select><br/>
-				<label for="filter_value">Value</label>
+				<label for="filter_value" class="lang" data-lang="c_value">Value</label>
 				<select class="" id="filter_value"></select><br/>
-				<button id="filter_clear">Clear</button>
+				<button id="filter_clear" class="lang" data-lang="c_clear">Clear</button>
 			</fieldset>
 		</form>
 	</div>
-	
+		
 	<!-- Popup to allow the user to edit their own details -->
 	<div id="modify_me_popup" style="display:none;">
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
-				<label for="me_name">Name</label>
-				<input type="text" id="me_name" required/><br/>
+				<label for="me_name" data-lang="c_name" class="lang">Name</label>
+				<input type="text" id="me_name" required><br/>
+				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
 				<select id="me_language"></select><br/>
-				<label for="me_email">Email</label>
-				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"/><br/>
+				<label for="me_email" data-lang="c_email" class="lang">Email</label>
+				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
+					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
 					<input type="checkbox" id="reset_me_password"/><br/>
 				</span>
 				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
-					<input id="me_password" type="password"/><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
-					<input id="me_password_confirm" type="password"/><br/>	
+					<label for="me_password" data-lang="c_password" class="lang">Password</label>
+					<input id="me_password" type="password"><br/>	
+					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
+					<input id="me_password_confirm" type="password"><br/>	
 				</span>		
 			</form>	
 		</div>

@@ -41,7 +41,7 @@ $(document).ready(function() {
  	 });
 	
 	/*
-	 * Change function on source project when assignments are being copied from an existing survey
+	 * Change function on source project when tasks are being copied from an existing survey
 	 * The source project is the project that data is being copied from, 
 	 *  it can be different from the current project
 	 */
@@ -203,7 +203,7 @@ $(document).ready(function() {
 			position: { my: "left top", at: "left top", of:'#aside'},
 			buttons: [
 		        {
-		        	text: "Add to Assignments",
+		        	text: "Add to Tasks",
 		        	click: function() {
 		        		var error = false,
 		        			taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
@@ -304,7 +304,7 @@ $(document).ready(function() {
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
 			position: { my: "left top", at: "left top", of:'#aside'},
-			title: "Delete Assignments",
+			title: "Delete Tasks",
 			show:"drop",
 			buttons: [
 		        {
@@ -318,7 +318,7 @@ $(document).ready(function() {
 		        {
 		        	text: "Save",
 		        	click: function() {
-		        		if(confirm("Are you sure you want to delete these assignments")) {		        		
+		        		if(confirm("Are you sure you want to delete these tasks")) {		        		
 		        			globals.gDeleteSelected = false;
 		        			deleteData(globals.gPendingUpdates);       		
 		        			$(this).dialog("close");
@@ -656,7 +656,7 @@ function saveData(data) {
 			  refreshAssignmentData(gUserFilter);
 		  }, error: function(data, status) {
 			  console.log(data);
-			  alert("Error: Failed to update assignments"); 
+			  alert("Error: Failed to update tasks"); 
 		  }
 	});
 }
@@ -678,7 +678,7 @@ function deleteData(data) {
 		  }, error: function(data, status) {
 			  console.log(data);
 			  removeHourglass();
-			  alert("Error: Failed to delete assignments"); 
+			  alert("Error: Failed to delete tasks"); 
 		  }
 	});
 }

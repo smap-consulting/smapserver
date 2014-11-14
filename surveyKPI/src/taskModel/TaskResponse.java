@@ -12,4 +12,5 @@ public class TaskResponse {
 	@SerializedName("data")
 	public List<TaskAssignment> taskAssignments;
 	public List<FormLocator> forms;
+	public FieldTaskSettings settings;
 }

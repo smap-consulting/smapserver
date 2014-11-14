@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import taskModel.Assignment;
+import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
 import taskModel.Geometry;
 import taskModel.Location;
@@ -98,6 +99,7 @@ public class MyAssignments extends Application {
 		// End Authorisation
 		
 		PreparedStatement pstmtGetForms = null;
+		PreparedStatement pstmtGetSettings = null;
 		
 		try {
 			String sql = null;
@@ -328,6 +330,27 @@ public class MyAssignments extends Application {
 			}
 			
 			/*
+			 * Get the settings for the phone
+			 */
+			tr.settings = new FieldTaskSettings();
+			sql = "SELECT " +
+					"o.ft_delete_submitted," +
+					"o.ft_send_trail " +
+					"from organisation o, users u " +
+					"where u.o_id = o.id " +
+					"and u.ident = ?;";
+			
+			pstmtGetSettings = connectionSD.prepareStatement(sql);	
+			pstmtGetSettings.setString(1, userName);
+			log.info("Getting settings: " + sql + " : " + userName);
+			resultSet = pstmtGetSettings.executeQuery();
+			
+			if(resultSet.next()) {
+				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
+				tr.settings.ft_send_trail = resultSet.getBoolean(2);
+			}
+			
+			/*
 			 * Return the response
 			 */
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("dd/MM/yyyy hh:mm").create();
@@ -348,6 +371,7 @@ public class MyAssignments extends Application {
 			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
 			try {if (pstmtGetForms != null) {pstmtGetForms.close();} } catch (SQLException e) {}
+			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (SQLException e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
