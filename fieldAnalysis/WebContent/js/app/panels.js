@@ -18,6 +18,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
  * Purpose: Manage the panels that display graphs, maps etc of results data
+ * 
+ * translations: partial
  */
 
 // HTML fragments for constructing panels
@@ -52,20 +54,20 @@ var hmap4 = '<div class="analysis map_panel" id="map_panel';
 var hmap5 = '"></div>';		// close map panel
 var hmap6 = '</div>';       // close overview and map panel
 var hmap7 = '<div class="pSidebar">';
-var hmap8 = 	'<h3>Map Layers</h3>';
+var hmap8 = 	'<h3>' + localise.set["c_layers"] + '</h3>';
 var hmap9 =		'<div id="mLayers';
 var hmap10 =		'"></div>';
-var hmap11 = 	'<h3>Data Series</h3>';
+var hmap11 = 	'<h3>' + localise.set["c_data"] + '</h3>';
 var hmap12 =		'<div class="dataOptions" id="mDataOptions';
 var hmap13 = 	'"></div>';
-var hmap14 = 	'<h3>Layer Settings</h3>';
+var hmap14 = 	'<h3>' + localise.set["c_settings"] + '</h3>';
 var hmap15 =	'<div id="mLayerSettings';
 var hmap16 = 	'"></div>';
 var hmap17 = '</div>';
 
 var hmapTs1 = '<div class="timecontrols" style="display:none;"><div class="timecontrols_inner">';
 var hmapTs2 = 'Interval: <select name="span"></select>';
-var hmapTs3 = '<button class="starttimer">Start</button>';
+var hmapTs3 = '<button class="starttimer">' + localise.set["c_start"] + '</button>';
 var hmapTs4 = '<input type="text" class="slide_date1" readonly>';
 var hmapTs5 = '<input type="text" class="slide_date2" readonly>';
 var hmapTs6 = '<div style="clear: both;"></div>';
@@ -80,10 +82,10 @@ var hgraph5 = 	'<div id="chartdiv';
 var hgraph6 = 	'" style="height:90%;width:100%; "></div>';
 var hgraph7 = '</div>';
 var hgraph8 = '<div class="pSidebar">';
-var hgraph9 = 	'<h3>Graph Options</h3>';
+var hgraph9 = 	'<h3>' + localise.set["c_options"] + '</h3>';
 var hgraph10 = 	'<div id="mLayers';
 var hgraph11 = 	'"></div>';
-var hgraph12 = 	'<h3>Data Series</h3>';
+var hgraph12 = 	'<h3>' + localise.set["c_data"] + '</h3>';
 var hgraph13 = 	'<div class="dataOptions" id="mDataOptions';
 var hgraph14 = 	'">';
 var hgraph15 = '</div>';
@@ -92,16 +94,16 @@ var htable1 = '<a class="slide" href="#slideLeft">\<</a>';
 var htable2 = '<div class="analysis table_panel" id="table_panel';
 var htable3 = '"></div>';
 var htable4 = '<div class="pSidebar">';
-var htable5 = 	'<h3>Tables</h3>';
+var htable5 = 	'<h3>' + localise.set["c_tables"] + '</h3>';
 var htable6 =	'<div class="phead"></div>';
-var htable7 = 	'<h3>Export</h3>';
+var htable7 = 	'<h3>' + localise.set["m_export"] + '</h3>';
 var htable8 =	'<div class="pfoot">';
 var htable9 =		'<form action="services/getCSV.php" method="post">';
 var htable10 =			'<input type="hidden" name="csv_text" class="csv_text"/>';
 var htable11 = 			'<input type="hidden" name="csv_name" class="csv_name"/>';
 var htable12 =			'<input type="submit" value="Export Table" class="tExport" />';
 var htable13 = 		'</form>';
-var htable14 =		'<button class="tDelete">Delete All Data</button>';
+var htable14 =		'<button class="tDelete">' + localise.set["c_del"] + '</button>';
 var htable15 =	'</div>' ;
 var htable16 = '</div>';
 
@@ -124,6 +126,9 @@ $(document).ready(function() {
     $('.db_settings_add').click(function() { 
     	addNewPanel($(this).val());
     });
+    
+    
+    // ** End Translations **
     
 	 // Initialse the settings dialog
 	 $('#p_settings').dialog(

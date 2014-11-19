@@ -130,16 +130,21 @@
 					<option value="vrt">VRT / CSV</option>
 					<option value="stata">Stata / CSV</option>
 					<option value="thingsat">Thingsat</option>
-				</select><br/>	
-				<label for="exportReadOnly" class="lang" data-lang="a_exp_notes">Export notes:</label>
-				<input type="checkbox" id="exportReadOnly"/><br/>
+					<option value="trail">Trail</option>
+				</select><br/>
+				<div class="showro">	
+					<label for="exportReadOnly" class="lang" data-lang="a_exp_notes">Export notes:</label>
+					<input type="checkbox" id="exportReadOnly"/><br/>
+				</div>
 				<div class="showspreadsheet">
 					<div class="showxls">
 						<label for="splitlocn" class="lang" data-lang="a_exp_split">Split lat / lon:</label>	
 						<input type="checkbox" id="splitlocn"/><br/>
 					</div>
-					<label for="export_language" class="lang" data-lang="c_lang">Language</label><br/>
-					<select class="selected_language" id="export_language"></select><br/>
+					<div class="showlang">
+						<label for="export_language" class="lang" data-lang="c_lang">Language</label><br/>
+						<select class="selected_language" id="export_language"></select><br/>
+					</div>
 				</div>
 			</fieldset>			
 		
@@ -161,6 +166,7 @@
 					<div class="shapeforms"></div>
 				</fieldset>
 			</div>
+			
 		</form>
 		<div class="showthingsat" style="display:none;">
 			<button id="btn_edit_thingsat" class="lang" data-lang="a_sel_model">Edit Survey Model</button>	

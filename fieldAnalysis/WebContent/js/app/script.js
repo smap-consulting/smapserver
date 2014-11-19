@@ -80,7 +80,11 @@ $(document).ready(function() {
 		        			    }).get();
 		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly);
 		        		
-		        		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv" || format === "stata") {
+		        		} else if(format === "shape" 
+		        				|| format === "kml" 
+		        				|| format === "vrt" 
+		        				|| format === "csv" 
+		        				|| format === "stata") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
@@ -99,6 +103,18 @@ $(document).ready(function() {
 			        			return(false);
 		        			}		
 		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language);
+		        		} else if(format === "trail") {
+		        			forms = $(':radio:checked', '.shapeforms').map(function() {
+		        			      return this.value;
+		        			    }).get();
+		        			if(forms.length === 0) {
+		        				alert("A form must be selected");
+			        			return(false);
+		        			}		
+		        			var traceFormat = "shape";	// Todo add gpx
+		        			var type = "trail";			// Todo allow selection of events or trail
+		        			url = exportSurveyLocationURL(sId, displayName, forms[0], traceFormat, type);
+		        		
 		        		} else {
 
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
@@ -162,21 +178,24 @@ $(document).ready(function() {
 		
 		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showthingsat').hide();
-			$('.showosm').show();
+			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail').hide();
+			$('.showosm,.showro,.showlang').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 			$('.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
-			$('.showshape').show();
+			$('.showshape,.showro,.showlang').show();
 		} else if(format === "stata") {
 			$('.showxls,.showosm,.showthingsat').hide();
-			$('.showshape,.showspreadsheet').show();
+			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		} else if(format === "thingsat") {
 			$('.showxls,.showosm').hide();
-			$('.showshape,.showspreadsheet').show();
+			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 			showModel();			// Show the thingsat model
-		}else {
+		} else if(format === "trail") {
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat').hide();
+			$('.showshape,.showspreadsheet').show();
+		} else {
 			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
-			$('.showxls,.showspreadsheet').show();
+			$('.showxls,.showspreadsheet,.showro,.showlang').show();
 		}
 	});
 	
@@ -810,13 +829,29 @@ function exportSurveyThingsatURL (sId, filename, form, language) {
 	
 	filename = filename.replace('/', '_');	// remove slashes from the filename
 	
-	// Remove the ":false" from the form id which used by xls exports
-	//form = form.substring(0, form.lastIndexOf(":"));
-	
 	url += sId;
 	url += "/" + filename;
 	url += "?form=" + form;
 	url += "&language=" + language;
+		
+	return encodeURI(url);
+}
+
+/*
+ * Web service handler for exporting a form as a shape file
+ */
+function exportSurveyLocationURL (sId, filename, form, format, type) {
+
+	var url = "/surveyKPI/exportSurveyLocation/";
+	
+	
+	filename = filename.replace('/', '_');	// remove slashes from the filename
+	
+	url += sId;
+	url += "/" + filename;
+	url += "?form=" + form;
+	url += "&format=" + format;
+	url += "&type=" + type;
 		
 	return encodeURI(url);
 }

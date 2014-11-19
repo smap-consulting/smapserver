@@ -165,3 +165,30 @@ update upload_event set incomplete = 'false';
 -- Upgrade to:  14.11.1 from 14.10.2 =======
 alter table organisation add column ft_delete_submitted boolean;
 alter table organisation add column ft_send_trail boolean;
+
+CREATE SEQUENCE task_completion_id_seq START 1;
+ALTER TABLE task_completion_id_seq OWNER TO ws;
+
+CREATE TABLE public.task_completion (
+	id integer DEFAULT nextval('task_completion_id_seq') NOT NULL PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	form_ident text REFERENCES survey(ident) ON DELETE CASCADE,
+	form_version int,
+	device_id text,
+	uuid text,		-- Unique identifier for the results
+	completion_time TIMESTAMP WITH TIME ZONE
+);
+SELECT AddGeometryColumn('task_completion', 'the_geom', 4326, 'POINT', 2);
+ALTER TABLE public.task_completion OWNER TO ws;
+
+CREATE SEQUENCE user_trail_id_seq START 1;
+ALTER TABLE user_trail_id_seq OWNER TO ws;
+
+CREATE TABLE public.user_trail (
+	id integer DEFAULT nextval('user_trail_id_seq') NOT NULL PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	device_id text,
+	event_time TIMESTAMP WITH TIME ZONE
+);
+SELECT AddGeometryColumn('user_trail', 'the_geom', 4326, 'POINT', 2);
+ALTER TABLE public.user_trail OWNER TO ws;

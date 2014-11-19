@@ -10,13 +10,7 @@ public class Task {
 	public String form_id;
 	public String form_version;
 	public String initial_data;
-	public String assignment_mode;
-	//public boolean gps;
-	//public boolean camera;
-	//public boolean barcode;
-	//public boolean rfid;
-	//public int repeats;
-	//public int priority;
+	//public String assignment_mode;
 	public Date scheduled_at;
 	public Date from_date;
 	public Date due_date;

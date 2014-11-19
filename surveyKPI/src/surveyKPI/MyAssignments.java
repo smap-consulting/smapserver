@@ -35,18 +35,23 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.sun.tools.javac.util.Log;
 
 import taskModel.Assignment;
 import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
 import taskModel.Geometry;
 import taskModel.Location;
+import taskModel.PointEntry;
 import taskModel.Task;
 import taskModel.TaskAssignment;
+import taskModel.TaskCompletionInfo;
 import taskModel.TaskResponse;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -105,6 +110,10 @@ public class MyAssignments extends Application {
 			String sql = null;
 			PreparedStatement pstmt = null;
 			ResultSet results = null;
+			
+			/*
+			 * Disable dynamic assignments
+			 * 
 			int assignmentCount = 0;
 			
 			// Start transaction scope
@@ -176,6 +185,7 @@ public class MyAssignments extends Application {
 					connectionSD.commit();
 				}
 			}
+			*/
 			connectionSD.setAutoCommit(true);
 			
 			// Get the assignments
@@ -187,7 +197,6 @@ public class MyAssignments extends Application {
 					"s.ident as form_ident," +
 					"s.version as form_version," +
 					"t.initial_data," +
-					"t.assignment_mode," +
 					"t.schedule_at," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
@@ -237,7 +246,6 @@ public class MyAssignments extends Application {
 				ta.task.form_id = resultSet.getString("form_ident");		// Form id is survey ident
 				ta.task.form_version = resultSet.getString("form_version");
 				ta.task.initial_data = resultSet.getString("initial_data");
-				ta.task.assignment_mode = resultSet.getString("assignment_mode");
 				ta.task.scheduled_at = resultSet.getDate("schedule_at");
 				ta.task.address = resultSet.getString("address");
 				
@@ -284,7 +292,6 @@ public class MyAssignments extends Application {
 				// Add the new task assignment to the list of task assignments
 				tr.taskAssignments.add(ta);
 				System.out.println("Created assignment for task:" + ta.task.id);
-				assignmentCount++;
 			}
 			
 			/*
@@ -419,10 +426,12 @@ public class MyAssignments extends Application {
 		PreparedStatement pstmtForms = null;
 		PreparedStatement pstmtFormsDelete = null;
 		PreparedStatement pstmtUser = null;
+		PreparedStatement pstmtTasks = null;
+		PreparedStatement pstmtTrail = null;
 		try {
 			String sql = null;
 
-			
+			connectionSD.setAutoCommit(false);
 			for(TaskAssignment ta : tr.taskAssignments) {
 				
 				/*
@@ -457,7 +466,9 @@ public class MyAssignments extends Application {
 				pstmt.executeUpdate();
 			}
 			
-			connectionSD.setAutoCommit(false);
+			/*
+			 * Update the status of down loaded forms
+			 */
 			sql = "select id from users where ident = ?"; 
 			pstmtUser = connectionSD.prepareStatement(sql);
 			pstmtUser.setString(1, userName);
@@ -472,7 +483,8 @@ public class MyAssignments extends Application {
 				pstmtFormsDelete.setString(2, tr.deviceId);
 				pstmtFormsDelete.executeUpdate();
 				
-				sql = "insert into form_downloads (u_id, " +
+				sql = "insert into form_downloads (" +
+						"u_id, " +
 						"device_id, " +
 						"form_ident, " +
 						"form_version, " +
@@ -489,13 +501,64 @@ public class MyAssignments extends Application {
 					pstmtForms.executeUpdate();
 				}
 				
-			}
 
+				/*
+				 * Record task information for any submitted tasks
+				 */
+				if(tr.taskCompletionInfo != null) {
+					sql = "insert into task_completion (" +
+							"u_id, " +
+							"device_id, " +
+							"form_ident, " +
+							"form_version, " +
+							"uuid,"	+
+							"the_geom," +
+							"completion_time" +
+							") " +
+							"values(?, ?, ?, ?, ?, ST_GeomFromText(?, 4326), ?);";
+					pstmtTasks = connectionSD.prepareStatement(sql);
+					pstmtTasks.setInt(1, userId);
+					pstmtTasks.setString(2, tr.deviceId);
+					for(TaskCompletionInfo tci : tr.taskCompletionInfo) {
+						System.out.println("    Adding task: " + tci.uuid);
+						pstmtTasks.setString(3, tci.ident);
+						pstmtTasks.setInt(4, tci.version);
+						pstmtTasks.setString(5, tci.uuid);
+						pstmtTasks.setString(6, "POINT(" + tci.lon + " " + tci.lat + ")");
+						pstmtTasks.setTimestamp(7, new Timestamp(tci.actFinish));
+						pstmtTasks.executeUpdate();
+					}
+					
+				}
+				
+				/*
+				 * Record user trail information
+				 */
+				if(tr.userTrail != null) {
+					sql = "insert into user_trail (" +
+							"u_id, " +
+							"device_id, " +			
+							"the_geom," +
+							"event_time" +
+							") " +
+							"values(?, ?, ST_GeomFromText(?, 4326), ?);";
+					pstmtTrail = connectionSD.prepareStatement(sql);
+					pstmtTrail.setInt(1, userId);
+					pstmtTrail.setString(2, tr.deviceId);
+					for(PointEntry pe : tr.userTrail) {
+						System.out.println("    Adding point: " + pe.toString());
+						
+						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
+						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
+						pstmtTrail.executeUpdate();
+					}
+					
+				}
+			}
+			
 			connectionSD.commit();
 			response = Response.ok().build();
-			log.info("Assignments updated");
-				
-			
+			log.info("Assignments updated");	
 				
 		} catch (Exception e) {		
 			response = Response.serverError().build();
@@ -507,11 +570,13 @@ public class MyAssignments extends Application {
 			try {if ( pstmtForms != null ) { pstmtForms.close(); }} catch (Exception e) {}
 			try {if ( pstmtFormsDelete != null ) { pstmtFormsDelete.close(); }} catch (Exception e) {}
 			try {if ( pstmtUser != null ) { pstmtUser.close(); }} catch (Exception e) {}
+			try {if ( pstmtTasks != null ) { pstmtTasks.close(); }} catch (Exception e) {}
+			try {if ( pstmtTrail != null ) { pstmtTrail.close(); }} catch (Exception e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.setAutoCommit(true);
 					connectionSD.close();
-				}
+				} 
 			} catch (SQLException e) {
 				System.out.println("Failed to close connection");
 			    e.printStackTrace();

@@ -31,7 +31,6 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 			if(typeof responsiveMobileMenu === "function") {
 				rmmResizeLabels();		// Resize menus
 			}
-			console.log("lang for home: " + lang.m_home);
 		},
 		set: lang
 	}

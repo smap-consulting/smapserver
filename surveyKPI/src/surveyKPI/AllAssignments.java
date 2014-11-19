@@ -129,7 +129,6 @@ public class AllAssignments extends Application {
 					"t.url," +
 					"t.form_id," +
 					"t.initial_data," +
-					"t.assignment_mode," +
 					"t.schedule_at," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +

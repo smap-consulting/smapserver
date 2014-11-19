@@ -13,4 +13,6 @@ public class TaskResponse {
 	public List<TaskAssignment> taskAssignments;
 	public List<FormLocator> forms;
 	public FieldTaskSettings settings;
+	public List<TaskCompletionInfo> taskCompletionInfo;
+	public List<PointEntry> userTrail;
 }
