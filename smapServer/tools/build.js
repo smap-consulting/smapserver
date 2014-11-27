@@ -25,6 +25,9 @@
         },
         {
             name: '../passwords'
+        },
+        {
+            name: '../userTrail'
         }
 
     ]

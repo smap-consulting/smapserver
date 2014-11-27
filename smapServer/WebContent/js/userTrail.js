@@ -37,15 +37,12 @@ requirejs.config({
     	       'jquery-1.8.3.min'
     	       ],
     	modernizr: 'modernizr',
-    	localise: '../app/localise',
-    	bootstrap: 'bootstrap.min',
-    	ol: 'ol3/js/ol-debug',
     	lang_location: '..'
     },
     shim: {
     	'app/common': ['jquery'],
-    	'ol': ['jquery'],
-    	'bootstrap': ['jquery']
+    	'bootstrap.min': ['jquery'],
+    	'bootstrap-datetimepicker.min': ['moment.min']
     	}
     });
 
@@ -53,12 +50,15 @@ requirejs.config({
 require([
          'jquery', 
          'app/common',
-         'bootstrap', 
+         'bootstrap.min', 
          'modernizr', 
-         'localise',
-         'ol'
+         'app/localise',
+         'app/globals',
+         'ol3/js/ol',
+         'moment.min',
+         'bootstrap-datetimepicker.min'
          
-         ], function($, common, bootstrap, modernizr, localise) {
+         ], function($, common, bootstrap, modernizr, localise, globals) {
 	
 var gTrailData;
 var gFeatures = [];
@@ -68,24 +68,123 @@ var gMap;
 
 $(document).ready(function() {
 	
+	$('#startDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false
+	});
+	$('#startDate').data("DateTimePicker").setDate(moment());
+	
+	$('#endDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false
+	});
+
+	$('#endDate').data("DateTimePicker").setDate(moment());
+	
+	var base = new ol.layer.Tile({source: new ol.source.MapQuest({layer: 'sat'})}); 
+	
 	gTrailSource = new ol.source.Vector({
-		projection: 'EPSG:4326',
 		features: gFeatures
 		});
 	
 	gTrailLayer = new ol.layer.Vector ({
-		projection: 'EPSG:4326',
 		source: gTrailSource
 	});
 	
+	getLoggedInUser(getUserList, false, true, undefined, true, true);
+	
+	// Add responses to events
+	$('#project_list').change(function() {
+		globals.gCurrentProject = $('#project_list option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		getUserList();
+ 	 });
+	
+	// Add responses to events
+	$('#user_list').change(function() {
+		
+		getTrailData(
+				globals.gCurrentProject, 
+				$('#user_list option:selected').val(),
+				$('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
+				$('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD")
+				);
+ 	 });
 
+	// Show the map
+
+	
+    gMap = new ol.Map({
+        target: 'map',
+        layers: [base, gTrailLayer],
+        view: new ol.View({
+          center: ol.proj.transform([37.41, 8.82], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 4
+        })
+      });
     
-    getData();
 });
 
-function getData() {
+function getUserList(projectId) {
 	
-	var url = '/surveyKPI/usertrail/trail?projectId=1&userId=1&startDate=2000-01-01&endDate=2020-01-01';
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/userList/" + globals.gCurrentProject,
+		cache: false,
+		dataType: 'json',
+		success: function(data) {
+			removeHourglass();
+			console.log(data);
+			updateUserList(data);
+			getTrailData(
+					globals.gCurrentProject, 
+					$('#user_list option:selected').val(),
+					$('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
+					$('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD")
+					);
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get user list: " + err);
+				alert("Error: Failed to get user list: " + err);
+			}
+		}
+	});	
+}
+
+function updateUserList(users, addAll) {
+
+	var $userSelect = $('.user_list'),
+		i, 
+		h = [],
+		idx = -1;
+	
+	if(addAll) {
+		h[++idx] = '<option value="0">All</option>';
+		updateCurrentProject = false;
+	}
+	for(i = 0; i < users.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = users[i].id;
+		h[++idx] = '">';
+		h[++idx] = users[i].name;
+		h[++idx] = '</option>';
+		
+		
+	}
+	$userSelect.empty().append(h.join(''));
+}
+
+function getTrailData(projectId, userId, startDate, endDate) {
+	
+	var url = '/surveyKPI/usertrail/trail?projectId=' + projectId +
+		'&userId=' + userId +
+		'&startDate=' + startDate +
+		'&endDate=' + endDate;
 	
 	addHourglass();
 	$.ajax({
@@ -97,7 +196,7 @@ function getData() {
 			console.log("Got user trail");
 			console.log(data);
 			gTrailData = data;
-			showData();
+			showUserTrail();
 			
 		},
 		error: function(xhr, textStatus, err) {
@@ -111,8 +210,14 @@ function getData() {
 	});	
 }
 
-function showData() {
-	var i;
+function showUserTrail() {
+	var i,
+		lineFeature,
+		coords = [];
+	
+	gTrailSource.clear();
+	
+	// Add points
 	for(i = 0; i < gTrailData.features.length; i++) {
 		
 		var f = new ol.Feature({
@@ -120,22 +225,19 @@ function showData() {
 			name: gTrailData.features[i].time
 		});
 		gFeatures.push(f);
-		gFeatures
+		coords.push(gTrailData.features[i].coordinates);
 	}
-	
 	gTrailSource.addFeatures(gFeatures);
 	
-	var base = new ol.layer.Tile({source: new ol.source.MapQuest({layer: 'sat'})}); 
+	// Add line
+	lineFeature = new ol.Feature({
+		geometry: new ol.geom.LineString(coords)
+	});
+	gTrailSource.addFeature(lineFeature);
 	
-    gMap = new ol.Map({
-        target: 'map',
-        layers: [base, gTrailLayer],
-        view: new ol.View({
-          center: ol.proj.transform([37.41, 8.82], 'EPSG:4326', 'EPSG:3857'),
-          zoom: 4
-        })
-      });
-	//gMap.render();
+
+
+	gMap.render();
 }
 });
 

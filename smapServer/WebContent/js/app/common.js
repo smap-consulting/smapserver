@@ -212,7 +212,11 @@ function addLanguageOptions($elem, current) {
 			         {
 			         	locale: "pt",
 			            name: "Portugese"
-					 }
+					 },
+			         {
+				        locale: "es",
+				        name: "Spanish"
+			         }
 		];
 	
 	for(i = 0; i < languages.length; i++) {
@@ -355,11 +359,11 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;
-				if(!dontGetCurrentSurvey) {	// Horrible hack, on edit screen current survey is set as parameter not from the user's defaults
+				if(!dontGetCurrentSurvey) {	// Hack, on edit screen current survey is set as parameter not from the user's defaults
 					globals.gCurrentSurvey = data.current_survey_id;
 				}
 				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
-				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects and call getSurveys when the current project is known
+				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects 
 			}
 
 		},

@@ -78,11 +78,13 @@ public class UserList extends Application {
 	
 	public UserList() {
 		
+		// Allow administrators and analysts to view the list of users
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
 		
+		// Only allow administrators to update user list
 		authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ADMIN);
 		aUpdate = new Authorise(authorisations, null);
@@ -247,6 +249,99 @@ public class UserList extends Application {
 			} catch (SQLException e) {
 			
 			}
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection: ", e);
+			}
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Get the users who have access to a specific project
+	 */
+	@Path("/{projectId}")
+	@GET
+	@Produces("application/json")
+	public Response getUsersForProject(
+			@Context HttpServletRequest request,
+			@PathParam("projectId") int projectId
+			) { 
+
+		Response response = null;
+		
+		System.out.println("userList for project: " + projectId);
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		// End Authorisation
+		
+		/*
+		 * 
+		 */	
+		PreparedStatement pstmt = null;
+		ArrayList<User> users = new ArrayList<User> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			/*
+			 * Get the users for this organisation
+			 * Do this in one outer join query rather than running separate group and project queries for 
+			 *  each user. This is to reduce the need for potentially a large number of queries if
+			 *  an organisation had a large number of users
+			 */
+			sql = "SELECT u.id as id, " +
+					"u.ident as ident, " +
+					"u.name as name, " +
+					"u.email as email " +
+					"from users u, user_project up " +			
+					"where u.id = up.u_id " +
+					"and up.p_id = ? " +
+					"order by u.ident";
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, projectId);
+			log.info("SQL: " + sql + ":" + projectId);
+			resultSet = pstmt.executeQuery();
+							
+			User user = null;
+			while(resultSet.next()) {
+				user = new User();
+				user.id = resultSet.getInt("id");
+				user.ident = resultSet.getString("ident");
+				user.name = resultSet.getString("name");
+				user.email = resultSet.getString("email");
+				users.add(user);
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+					
+				
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
@@ -440,7 +535,7 @@ public class UserList extends Application {
 				response = Response.ok().build();
 			} else {
 				log.log(Level.SEVERE,"Error: No organisation");
-			    response = Response.serverError().build();
+				response = Response.serverError().entity("Error: No organisation").build();
 			}
 				
 		} catch (SQLException e) {

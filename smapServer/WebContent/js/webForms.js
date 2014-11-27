@@ -61,32 +61,6 @@ $(document).ready(function() {
 	globals.gIsAdministrator = false;
 	getLoggedInUser(projectSet, false, true, undefined);
 	
-	/*
-	addHourglass();
-	
-	$.ajax({
-		url: "/surveyKPI/user",
-		dataType: 'json',
-		success: function(data) {
-			removeHourglass();			
-			globals.gCurrentProject = data.current_project_id;
-			getMyProjects(globals.gCurrentProject, getSurveysForList);	// Get projects and call getSurveys when the current project is known
-
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				console.log("Error: Failed to get list of users: " + err);
-				alert("Error: Failed to get list of users: " + err);
-			}
-		}
-	});	
-	
-	removeHourglass();
-	*/
-	
 	// Set change function on projects
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
