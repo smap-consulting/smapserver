@@ -65,9 +65,25 @@ var gFeatures = [];
 var gTrailSource;
 var gTrailLayer;
 var gMap;
+var point = null;
+var line = null;
 
 $(document).ready(function() {
 	
+	var imageStyle = new ol.style.Circle({
+		  radius: 5,
+		  fill: null,
+		  stroke: new ol.style.Stroke({
+		    color: 'rgba(255,0,0,0.9)',
+		    width: 1
+		  })
+		});
+		var strokeStyle = new ol.style.Stroke({
+		  color: 'rgba(255,0,0,0.9)',
+		  width: 1
+		});
+		
+	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({
 		pickTime: false,
 		useCurrent: false
@@ -78,10 +94,13 @@ $(document).ready(function() {
 		pickTime: false,
 		useCurrent: false
 	});
-
 	$('#endDate').data("DateTimePicker").setDate(moment());
 	
-	var base = new ol.layer.Tile({source: new ol.source.MapQuest({layer: 'sat'})}); 
+	// Set base layers
+	var osm = new ol.layer.Tile({source: new ol.source.OSM()}); 
+	//var osmVisible = new ol.dom.Input(document.getElementById('osmVisible'));
+	//osmVisible.bindTo('checked', base, 'osmVisible');
+	
 	
 	gTrailSource = new ol.source.Vector({
 		features: gFeatures
@@ -100,30 +119,84 @@ $(document).ready(function() {
 		getUserList();
  	 });
 	
-	// Add responses to events
-	$('#user_list').change(function() {
-		
-		getTrailData(
-				globals.gCurrentProject, 
-				$('#user_list option:selected').val(),
-				$('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
-				$('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD")
-				);
+	// Add responses to changing parameters
+	$('#user_list').change(function() {		
+		getTrailData();
  	 });
+	
+	// Add responses to changing parameters
+	$('#startDate,#endDate').change(function(e) {	
+		if(validDates()) {
+			getTrailData();
+			return true;
+		} 
+ 	 });
+
 
 	// Show the map
 
 	
     gMap = new ol.Map({
         target: 'map',
-        layers: [base, gTrailLayer],
+        layers: [osm, gTrailLayer],
         view: new ol.View({
           center: ol.proj.transform([37.41, 8.82], 'EPSG:4326', 'EPSG:3857'),
           zoom: 4
         })
       });
     
+    $(gMap.getViewport()).on('click', function(evt) {
+    	  var coordinate = gMap.getEventCoordinate(evt.originalEvent);
+    	  displaySnap(coordinate);
+    	});
+    
+    gMap.on('postcompose', function(evt) {
+    	  var vectorContext = evt.vectorContext;
+    	  if (point !== null) {
+    	    vectorContext.setImageStyle(imageStyle);
+    	    vectorContext.drawPointGeometry(point);
+    	  }
+    	  if (line !== null) {
+    	    vectorContext.setFillStrokeStyle(null, strokeStyle);
+    	    vectorContext.drawLineStringGeometry(line);
+    	  }
+    	});
+    
 });
+
+function validDates() {
+	var $d1 = $('#startDate'),
+		$d2 = $('#endDate'),
+		d1 = $d1.data("DateTimePicker").getDate(),
+		d2 = $d2.data("DateTimePicker").getDate()
+			
+	if(!d1 || !d1.isValid()) {
+		$('#ut_alert').show().text("Invalid Start Date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);		
+		return false;
+	}
+	
+	if(!d2 || !d2.isValid()) {
+		$('#ut_alert').show().text("Invalid End Date");
+		setTimeout(function() {
+			$('.form-control', '#endDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	if(d1 > d2) {
+		$('#ut_alert').show().text("End date must be greater than start date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	$('#ut_alert').hide();
+	return true;
+}
 
 function getUserList(projectId) {
 	
@@ -136,12 +209,7 @@ function getUserList(projectId) {
 			removeHourglass();
 			console.log(data);
 			updateUserList(data);
-			getTrailData(
-					globals.gCurrentProject, 
-					$('#user_list option:selected').val(),
-					$('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
-					$('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD")
-					);
+			getTrailData();
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -179,8 +247,13 @@ function updateUserList(users, addAll) {
 	$userSelect.empty().append(h.join(''));
 }
 
-function getTrailData(projectId, userId, startDate, endDate) {
+function getTrailData() {
 	
+	var projectId = globals.gCurrentProject,
+		userId = $('#user_list option:selected').val(),
+		startDate = $('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
+		endDate = $('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD");
+
 	var url = '/surveyKPI/usertrail/trail?projectId=' + projectId +
 		'&userId=' + userId +
 		'&startDate=' + startDate +
@@ -233,12 +306,41 @@ function showUserTrail() {
 	lineFeature = new ol.Feature({
 		geometry: new ol.geom.LineString(coords)
 	});
-	gTrailSource.addFeature(lineFeature);
-	
+	//gTrailSource.addFeature(lineFeature);
+	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
 
 
 	gMap.render();
 }
+
+// Show data for closes features
+var displaySnap = function(coordinate) {
+	  var closestFeature = gTrailSource.getClosestFeatureToCoordinate(coordinate);
+	  var info = document.getElementById('info');
+	  if (closestFeature === null) {
+	    point = null;
+	    line = null;
+	    info.innerHTML = '&nbsp;';
+	  } else {
+	    var geometry = closestFeature.getGeometry();
+	    var closestPoint = geometry.getClosestPoint(coordinate);
+	    if (point === null) {
+	      point = new ol.geom.Point(closestPoint);
+	    } else {
+	      point.setCoordinates(closestPoint);
+	    }
+	
+	    info.innerHTML =
+	        closestFeature.get('name');
+	    var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
+	    if (line === null) {
+	      line = new ol.geom.LineString(coordinates);
+	    } else {
+	      line.setCoordinates(coordinates);
+	    }
+	  }
+	  gMap.render();
+	};
 });
 
 

@@ -41,7 +41,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a href="/" class="navbar-brand">User Trail</a>
+      <a href="#" class="navbar-brand">User Trail</a>
     </div>
     <nav class="collapse navbar-collapse" role="navigation">
       <ul class="nav navbar-nav">
@@ -97,16 +97,42 @@
 	                </div>
 	            </div>
             </div>
+            
+            <div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
+            
+            <!-- Expandable panel to manage layers 
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+  				<div class="panel panel-default">
+    				<div class="panel-heading" role="tab" id="headingOne">
+						<h4 class="panel-title">
+					       <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+					         Map Layers
+					       </a>
+					     </h4>
+    				</div>
+    				<div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+      				<div class="panel-body">
+        				<label class="checkbox" for="visible">
+                			<input id="osmVisible" type="checkbox">visibility
+              			</label>
+      				</div>
+    			</div>
+  			</div>
+  			-->
+  			
+  		</div>
+  
+
 	        
 	   </div>
-	   </div>
-       
   
 		<div class="col-md-9">		
 			<div id="map" class="map"></div>
+			<div id="info" class="alert alert-success"></div>
 		</div>
+		</div>	<!-- End of row -->
 		
-		<div class="col-sm-12 text-center">
+		<div class="col-md-12 text-center">
 			<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 		</div>
 	</div>
