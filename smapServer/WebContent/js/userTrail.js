@@ -62,7 +62,11 @@ require([
 	
 var gTrailData;
 var gFeatures = [];
+var gSurveys = [];
 var gTrailSource;
+var gSurveyLocations;
+var gSurveyLocationLayer;
+var gSurveyLocationSource;
 var gTrailLayer;
 var gMap;
 var point = null;
@@ -78,10 +82,20 @@ $(document).ready(function() {
 		    width: 1
 		  })
 		});
-		var strokeStyle = new ol.style.Stroke({
-		  color: 'rgba(255,0,0,0.9)',
-		  width: 1
+	
+	var surveyStyle = new ol.style.Circle({
+		  radius: 20,
+		  fill: null,
+		  stroke: new ol.style.Stroke({
+		    color: 'rgba(255,0,0,0.9)',
+		    width: 1
+		  })
 		});
+	
+	var strokeStyle = new ol.style.Stroke({
+	  color: 'rgba(255,0,0,0.9)',
+	  width: 1
+	});
 		
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({
@@ -110,6 +124,15 @@ $(document).ready(function() {
 		source: gTrailSource
 	});
 	
+	gSurveyLocationSource = new ol.source.Vector({
+		features: gSurveys
+		});
+	
+	gSurveyLocationLayer = new ol.layer.Vector ({
+		source: gSurveyLocationSource,
+		style: surveyStyle
+	});
+	
 	getLoggedInUser(getUserList, false, true, undefined, true, true);
 	
 	// Add responses to events
@@ -121,13 +144,13 @@ $(document).ready(function() {
 	
 	// Add responses to changing parameters
 	$('#user_list').change(function() {		
-		getTrailData();
+		getData();
  	 });
 	
 	// Add responses to changing parameters
 	$('#startDate,#endDate').change(function(e) {	
 		if(validDates()) {
-			getTrailData();
+			getData();
 			return true;
 		} 
  	 });
@@ -139,10 +162,12 @@ $(document).ready(function() {
     gMap = new ol.Map({
         target: 'map',
         layers: [osm, gTrailLayer],
-        view: new ol.View({
-          center: ol.proj.transform([37.41, 8.82], 'EPSG:4326', 'EPSG:3857'),
-          zoom: 4
-        })
+        view: new ol.View(
+        		{
+        			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
+        			zoom: 1
+        		}
+        	)
       });
     
     $(gMap.getViewport()).on('click', function(evt) {
@@ -209,7 +234,7 @@ function getUserList(projectId) {
 			removeHourglass();
 			console.log(data);
 			updateUserList(data);
-			getTrailData();
+			getData();
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -247,6 +272,11 @@ function updateUserList(users, addAll) {
 	$userSelect.empty().append(h.join(''));
 }
 
+function getData() {
+	getTrailData();
+	getSurveyLocations();
+
+}
 function getTrailData() {
 	
 	var projectId = globals.gCurrentProject,
@@ -283,12 +313,49 @@ function getTrailData() {
 	});	
 }
 
+function getSurveyLocations() {
+	
+	var projectId = globals.gCurrentProject,
+		userId = $('#user_list option:selected').val(),
+		startDate = $('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
+		endDate = $('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD");
+
+	var url = '/surveyKPI/usertrail/surveys?projectId=' + projectId +
+		'&userId=' + userId +
+		'&startDate=' + startDate +
+		'&endDate=' + endDate;
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();		
+			console.log("Got survey locations");
+			console.log(data);
+			gSurveyLocations = data;
+			showSurveyLocations();
+			
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get user trail: " + err);
+			}
+		}
+	});	
+}
+
 function showUserTrail() {
 	var i,
 		lineFeature,
 		coords = [];
 	
 	gTrailSource.clear();
+	gFeatures = [];
 	
 	// Add points
 	for(i = 0; i < gTrailData.features.length; i++) {
@@ -309,6 +376,34 @@ function showUserTrail() {
 	//gTrailSource.addFeature(lineFeature);
 	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
 
+
+	gMap.render();
+}
+
+function showSurveyLocations() {
+	var i,
+		lineFeature,
+		coords = [];
+	
+	gSurveyLocationSource.clear();
+	gSurveys = [];
+	
+	// Add points
+	for(i = 0; i < gSurveyLocations.surveys.length; i++) {
+		
+		var f = new ol.Feature({
+			geometry: new ol.geom.Point(gSurveyLocations.surveys[i].coordinates),
+			name: gSurveyLocations.surveys[i].time
+		});
+		
+		gSurveys.push(f);
+		coords.push(gSurveyLocations.surveys[i].coordinates);
+	}
+	
+	gSurveyLocationSource.addFeatures(gSurveys);
+	
+	// TODO fit the extent to the combination of trail data and survey locations
+	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
 
 	gMap.render();
 }

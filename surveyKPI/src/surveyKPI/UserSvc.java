@@ -106,7 +106,8 @@ public class UserSvc extends Application {
 					"o.allow_email, " +
 					"o.allow_facebook, " +
 					"o.allow_twitter, " +
-					"o.can_edit " +
+					"o.can_edit, " +
+					"o.ft_send_trail " +
 					" from users u, organisation o " +
 					" where u.ident = ? " +
 					" and u.o_id = o.id " +
@@ -130,6 +131,7 @@ public class UserSvc extends Application {
 				user.allow_facebook = resultSet.getBoolean("allow_facebook");
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
 				user.can_edit = resultSet.getBoolean("can_edit");
+				user.ft_send_trail = resultSet.getBoolean("ft_send_trail");
 			}
 			
 			/*

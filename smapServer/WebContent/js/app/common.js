@@ -193,6 +193,11 @@ function updateUserDetails(data, getOrganisationsFn) {
 			getOrganisationsFn();
 		}
 	} 
+	
+	// Other conditional elements
+	if(!globals.gSendTrail) {
+		$('.user_trail').hide();
+	}
 }
 
 function addLanguageOptions($elem, current) {
@@ -346,16 +351,18 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 		dataType: 'json',
 		success: function(data) {
 			removeHourglass();
-			if(!hideUserDetails) {
-				updateUserDetails(data, getOrganisationsFn);
-			}
-			
+		
 			globals.gServerCanSendEmail = data.sendEmail;
 			
 			globals.gEmailEnabled = data.allow_email;
 			globals.gFacebookEnabled = data.allow_facebook;
 			globals.gTwitterEnabled = data.allow_twitter;
 			globals.gCanEdit = data.can_edit;
+			globals.gSendTrail = data.ft_send_trail;
+			
+			if(!hideUserDetails) {
+				updateUserDetails(data, getOrganisationsFn);
+			}
 			
 			if(getProjects) {
 				globals.gCurrentProject = data.current_project_id;

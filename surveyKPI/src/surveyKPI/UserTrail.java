@@ -76,6 +76,18 @@ public class UserTrail extends Application {
 		
 	}
 	
+	public class Survey {
+		public int id;
+		public double[] coordinates = new double[2];
+		public Timestamp time;
+	}
+	
+	public class SurveyList {
+		String userName = null;
+		public ArrayList<Survey> surveys = null;
+		
+	}
+	
 	public UserTrail() {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	
@@ -185,6 +197,104 @@ public class UserTrail extends Application {
 		return response;
 	}
 
+	/*
+	 * Get the survey locations 
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/surveys")
+	public Response getSurveyLocations(@Context HttpServletRequest request, 
+			@QueryParam("projectId") int projectId,
+			@QueryParam("userId") int uId,
+			@QueryParam("startDate") Date startDate,
+			@QueryParam("endDate") Date endDate) {
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Class not found Exception", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		}
+		
+		System.out.println("Get Survey Locations: Project id:" + projectId);
+
+		String user = request.getRemoteUser();
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
+		a.isAuthorised(connectionSD, user);
+		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		// End Authorisation
+		
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		try {
+			
+			String sql = "SELECT t.id as id, ST_X(ST_Transform(t.the_geom, 3857)) as x, " +
+						"ST_Y(ST_Transform(t.the_geom, 3857)) as y, t.completion_time as completion_time, " +	
+						"u.name as user_name " +	
+					"FROM task_completion t, user_project up, users u  " +
+					"where up.p_id = ? " + 	
+					"and up.u_id = t.u_id " +
+					"and up.u_id = u.id " +
+					"and t.completion_time >= ? " +
+					"and t.completion_time < ? " +
+					"and t.u_id = ? " +
+					"order by t.completion_time asc;";
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, projectId);
+			pstmt.setDate(2, startDate);
+			pstmt.setDate(3, endDate);
+			pstmt.setInt(4, uId);
+
+			log.info("Events List: " + sql + " : " + uId + " : " + projectId + " : " + startDate + " : " + endDate);
+
+			resultSet = pstmt.executeQuery();
+			 
+			SurveyList sl = new SurveyList();
+			sl.surveys = new ArrayList<Survey> ();
+			 
+			while (resultSet.next()) {
+				
+				if(sl.userName == null) {
+					sl.userName = resultSet.getString("user_name");
+				}
+				
+				Survey s = new Survey();
+				s.id = resultSet.getInt("id");
+				s.time = resultSet.getTimestamp("completion_time");	
+				s.coordinates[0] = resultSet.getDouble("x");
+				s.coordinates[1] = resultSet.getDouble("y");
+				sl.surveys.add(s);
+			}
+			 
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			String resp = gson.toJson(sl);
+			response = Response.ok(resp).build();
+			 
+
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Exception", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+
+		} finally {
+			try {if(resultSet != null) {resultSet.close();}	} catch (SQLException e) {	}	
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
 
 
 }

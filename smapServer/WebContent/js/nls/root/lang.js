@@ -15,6 +15,7 @@ define({
 	"m_assign": "Tasks",
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
+	"m_locations": "Survey Locations",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
