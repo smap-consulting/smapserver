@@ -433,6 +433,7 @@ public class MyAssignments extends Application {
 
 			connectionSD.setAutoCommit(false);
 			for(TaskAssignment ta : tr.taskAssignments) {
+				System.out.println("+++++Task Assignment: " + ta.assignment.assignment_status);
 				
 				/*
 				 * If the updated status = "cancelled" then this is an acknowledgment of the status set on the server
@@ -495,7 +496,6 @@ public class MyAssignments extends Application {
 				pstmtForms.setInt(1, userId);
 				pstmtForms.setString(2, tr.deviceId);
 				for(FormLocator f : tr.forms) {
-					System.out.println("    Adding form: " + f.ident);
 					pstmtForms.setString(3, f.ident);
 					pstmtForms.setInt(4, f.version);
 					pstmtForms.executeUpdate();

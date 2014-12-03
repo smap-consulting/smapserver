@@ -13,6 +13,7 @@
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 	<link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
 	<link rel="stylesheet" href="/js/libs/ol3/css/ol.css" type="text/css">
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 	 <style>
       .map {
         height: 400px;
@@ -41,10 +42,13 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a href="#" class="navbar-brand">User Trail</a>
+      <a href="#" class="navbar-brand">
+      	<img src="/images/logo.png">
+     	 User Trail
+      </a>
     </div>
     <nav class="collapse navbar-collapse" role="navigation">
-      <ul class="nav navbar-nav">
+      <ul class="nav navbar-nav navbar-right">
         <li>
           <a class="lang" data-lang="m_home" href="/index.html">Home</a>
         </li>
@@ -80,7 +84,7 @@
 			<div>
 				<label>From :</label>
 	            <div class="form-group">
-	                <div class='input-group date' id='startDate'>
+	                <div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in UTC time zone">
 	                    <input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
 	                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
 	                    </span>
@@ -90,7 +94,7 @@
             <div>
 			<label>To :</label>
 	            <div class="form-group">
-	                <div class='input-group date' id='endDate'>
+	                <div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in UTC time zone">
 	                    <input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
 	                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
 	                    </span>

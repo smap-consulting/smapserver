@@ -1,0 +1,28 @@
+.navbar-default {
+    background-color: #333333;
+    border-color: #e7e7e7;
+    color: #fff;
+}
+
+.navbar-default .navbar-brand {
+    color: #fff;
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: #fff;
+}
+
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-brand:hover, .navbar-default .navbar-brand:focus
+{
+    color: #ccc;
+}
+
+.navbar-default img {
+	max-height: 30px;
+	line-height: 40px;
+	padding-right: 5px;
+}
+
+.icon-bar {
+	background-color: #fff;
+}

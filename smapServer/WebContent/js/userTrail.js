@@ -54,7 +54,7 @@ require([
          'modernizr', 
          'app/localise',
          'app/globals',
-         'ol3/js/ol',
+         'ol3/js/ol-debug',
          'moment.min',
          'bootstrap-datetimepicker.min'
          
@@ -72,30 +72,38 @@ var gMap;
 var point = null;
 var line = null;
 
+// Style for survey locations
+var iconStyle = new ol.style.Style({
+	  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+	    anchor: [0.5, 0.5],
+	    anchorXUnits: 'fraction',
+	    anchorYUnits: 'fraction',
+	    height: 36,
+	    width: 36,
+	    opacity: 0.75,
+	    src: 'images/survey.png'
+	  }))
+	});
+
+// Style for selected points
+var imageStyle = new ol.style.Circle({
+	  radius: 5,
+	  fill: null,
+	  stroke: new ol.style.Stroke({
+	    color: 'rgba(255,0,0,0.9)',
+	    width: 1
+	  })
+	});
+
+// Style for line to selected points
+var strokeStyle = new ol.style.Stroke({
+	color: 'rgba(255,0,0,0.9)',
+	width: 1
+});
+
 $(document).ready(function() {
 	
-	var imageStyle = new ol.style.Circle({
-		  radius: 5,
-		  fill: null,
-		  stroke: new ol.style.Stroke({
-		    color: 'rgba(255,0,0,0.9)',
-		    width: 1
-		  })
-		});
-	
-	var surveyStyle = new ol.style.Circle({
-		  radius: 20,
-		  fill: null,
-		  stroke: new ol.style.Stroke({
-		    color: 'rgba(255,0,0,0.9)',
-		    width: 1
-		  })
-		});
-	
-	var strokeStyle = new ol.style.Stroke({
-	  color: 'rgba(255,0,0,0.9)',
-	  width: 1
-	});
+
 		
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({
@@ -130,7 +138,7 @@ $(document).ready(function() {
 	
 	gSurveyLocationLayer = new ol.layer.Vector ({
 		source: gSurveyLocationSource,
-		style: surveyStyle
+		style: iconStyle
 	});
 	
 	getLoggedInUser(getUserList, false, true, undefined, true, true);
@@ -156,12 +164,10 @@ $(document).ready(function() {
  	 });
 
 
-	// Show the map
-
-	
+	// Add the map	
     gMap = new ol.Map({
         target: 'map',
-        layers: [osm, gTrailLayer],
+        layers: [osm, gTrailLayer, gSurveyLocationLayer],
         view: new ol.View(
         		{
         			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
@@ -171,9 +177,11 @@ $(document).ready(function() {
       });
     
     $(gMap.getViewport()).on('click', function(evt) {
-    	  var coordinate = gMap.getEventCoordinate(evt.originalEvent);
-    	  displaySnap(coordinate);
-    	});
+    	
+    	var coordinate = gMap.getEventCoordinate(evt.originalEvent);   	  
+    	displaySnap(coordinate);
+    	  
+    });
     
     gMap.on('postcompose', function(evt) {
     	  var vectorContext = evt.vectorContext;
@@ -186,6 +194,9 @@ $(document).ready(function() {
     	    vectorContext.drawLineStringGeometry(line);
     	  }
     	});
+    
+    // Enable tooltips
+    $('[data-toggle="tooltip"]').tooltip();
     
 });
 
@@ -395,6 +406,7 @@ function showSurveyLocations() {
 			geometry: new ol.geom.Point(gSurveyLocations.surveys[i].coordinates),
 			name: gSurveyLocations.surveys[i].time
 		});
+		//f.setStyle(iconStyle);
 		
 		gSurveys.push(f);
 		coords.push(gSurveyLocations.surveys[i].coordinates);

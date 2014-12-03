@@ -736,6 +736,48 @@ public class SurveyTemplate {
 	}
 	
 	/*
+	 * Method to check for:
+	 *  	a) read only mandatory questions
+	 *  	b) constraints that don't have a "."
+	 */
+	public ArrayList <String> manReadQuestions() {
+		
+		HashMap <String, HashMap<String, String>> forms = new HashMap <String, HashMap<String, String>> ();
+		ArrayList<String> badNames = new ArrayList<String> ();
+		
+		List<Question> questionList = new ArrayList<Question>(questions.values());
+		for (Question q : questionList) {
+			String qName = q.getName();
+			String qType = q.getType();
+			boolean man = q.isMandatory();
+			boolean ro = q.isReadOnly() || (qType != null && qType.equals("note"));
+			String relevance = q.getRelevant();
+			String constraint = q.getConstraint();
+			
+			System.out.println("chck: "+ qName + " : " + constraint);
+		
+			// Check for mandatory and readonly
+			if(man && ro && relevance == null) {
+				System.out.println("check man read: " + qName + " : " + man + " : " + ro + " : " + relevance);
+				String roMsg = "Question '" + qName + "' is mandatory, read only and has nothing in the 'relevance' column - remove the 'yes' in the required column" ;
+				badNames.add(roMsg);
+			}
+			
+			// Check for constraints without dots
+			if(constraint !=null && !constraint.contains(".")) {
+				System.out.println("check constraint: " + qName + " : " + constraint);
+				String roMsg = "Constraint '" + constraint + "' for question " + qName + " must refer to the answer using a '.' (dot)";
+				badNames.add(roMsg);
+			}
+					
+		}
+		
+		return badNames;
+	}
+	
+
+	
+	/*
 	 * Method to write the model to the database
 	 */
 	public void writeDatabase() throws Exception {

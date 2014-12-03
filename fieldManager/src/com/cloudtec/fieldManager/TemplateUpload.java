@@ -307,7 +307,22 @@ public class TemplateUpload extends HttpServlet {
 					System.out.println(mesg);
 					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
 					return;
-				} 	
+				} 
+				
+				// If there are mandatory read only questions without a relevance then throw an error
+				ArrayList<String> manReadQuestions = null;
+				if((manReadQuestions = model.manReadQuestions()).size() > 0) {		
+					String mesg = "Error:\n";
+					for(int i = 0; i < manReadQuestions.size(); i++) {
+						if(i > 0) {
+							mesg += ",\n";
+						}
+						mesg += manReadQuestions.get(i);
+					}
+					System.out.println(mesg);
+					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					return;
+				} 
 				
 				//model.printModel();
 				model.writeDatabase();	// write the survey definitions
