@@ -284,16 +284,26 @@ function updateUserList(users, addAll) {
 }
 
 function getData() {
-	getTrailData();
-	getSurveyLocations();
+	
+	var startDate = $('#startDate').data("DateTimePicker").getDate().startOf('day'),
+		endDate = $('#endDate').data("DateTimePicker").getDate().endOf('day');	// Get end of displayed date
+	
+	var startUtc = moment.utc(startDate),
+		endUtc = moment.utc(endDate);
+	
+	console.log("start:" + startDate.format("YYYY-MM-DD HH:mm:ss"));
+	console.log("end:" + endDate.format("YYYY-MM-DD HH:mm:ss"));
+	console.log("start UTC:" + startUtc.format("YYYY-MM-DD HH:mm:ss"));
+	console.log("end UTC:" + endUtc.format("YYYY-MM-DD HH:mm:ss"));
+		
+	getTrailData(startUtc.valueOf(), endUtc.valueOf());
+	getSurveyLocations(startUtc.valueOf(), endUtc.valueOf());
 
 }
-function getTrailData() {
+function getTrailData(startDate, endDate) {
 	
 	var projectId = globals.gCurrentProject,
-		userId = $('#user_list option:selected').val(),
-		startDate = $('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
-		endDate = $('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD");
+		userId = $('#user_list option:selected').val();
 
 	var url = '/surveyKPI/usertrail/trail?projectId=' + projectId +
 		'&userId=' + userId +
@@ -324,12 +334,10 @@ function getTrailData() {
 	});	
 }
 
-function getSurveyLocations() {
+function getSurveyLocations(startDate, endDate) {
 	
 	var projectId = globals.gCurrentProject,
-		userId = $('#user_list option:selected').val(),
-		startDate = $('#startDate').data("DateTimePicker").getDate().format("YYYY-MM-DD"),
-		endDate = $('#endDate').data("DateTimePicker").getDate().format("YYYY-MM-DD");
+		userId = $('#user_list option:selected').val();
 
 	var url = '/surveyKPI/usertrail/surveys?projectId=' + projectId +
 		'&userId=' + userId +

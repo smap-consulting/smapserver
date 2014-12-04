@@ -107,8 +107,9 @@ public class UserTrail extends Application {
 	public Response getTrail(@Context HttpServletRequest request, 
 			@QueryParam("projectId") int projectId,
 			@QueryParam("userId") int uId,
-			@QueryParam("startDate") Date startDate,
-			@QueryParam("endDate") Date endDate) {
+			@QueryParam("startDate") long start_t,
+			@QueryParam("endDate") long end_t) {
+
 
 		Response response = null;
 		
@@ -119,7 +120,11 @@ public class UserTrail extends Application {
 			response = Response.serverError().entity(e.getMessage()).build();
 		}
 		
-		System.out.println("Project id:" + projectId);
+		Timestamp startDate = new Timestamp(start_t);
+		Timestamp endDate = new Timestamp(end_t);
+		
+		System.out.println("Project id:" + projectId);		
+		System.out.println("Getting trail between" + startDate.toGMTString() + " and " + endDate.toGMTString());;
 
 		String user = request.getRemoteUser();
 		// Authorisation - Access
@@ -146,8 +151,8 @@ public class UserTrail extends Application {
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, projectId);
-			pstmt.setDate(2, startDate);
-			pstmt.setDate(3, endDate);
+			pstmt.setTimestamp(2, startDate);
+			pstmt.setTimestamp(3, endDate);
 			pstmt.setInt(4, uId);
 
 			log.info("Events List: " + sql + " : " + uId + " : " + projectId + " : " + startDate + " : " + endDate);
@@ -206,8 +211,8 @@ public class UserTrail extends Application {
 	public Response getSurveyLocations(@Context HttpServletRequest request, 
 			@QueryParam("projectId") int projectId,
 			@QueryParam("userId") int uId,
-			@QueryParam("startDate") Date startDate,
-			@QueryParam("endDate") Date endDate) {
+			@QueryParam("startDate") long start_t,
+			@QueryParam("endDate") long end_t) {
 
 		Response response = null;
 		
@@ -227,6 +232,9 @@ public class UserTrail extends Application {
 		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 		// End Authorisation
 		
+		Timestamp startDate = new Timestamp(start_t);
+		Timestamp endDate = new Timestamp(end_t);
+		
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		try {
@@ -245,8 +253,8 @@ public class UserTrail extends Application {
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, projectId);
-			pstmt.setDate(2, startDate);
-			pstmt.setDate(3, endDate);
+			pstmt.setTimestamp(2, startDate);
+			pstmt.setTimestamp(3, endDate);
 			pstmt.setInt(4, uId);
 
 			log.info("Events List: " + sql + " : " + uId + " : " + projectId + " : " + startDate + " : " + endDate);
