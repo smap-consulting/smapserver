@@ -68,6 +68,7 @@ public class UserTrail extends Application {
 		public int id;
 		public double[] coordinates = new double[2];
 		public Timestamp time;
+		public long rawTime;
 	}
 	
 	public class Trail {
@@ -139,6 +140,7 @@ public class UserTrail extends Application {
 			
 			String sql = "SELECT ut.id as id, ST_X(ST_Transform(the_geom, 3857)) as x, " +
 						"ST_Y(ST_Transform(the_geom, 3857)) as y, ut.event_time as event_time, " +	
+						"extract(epoch from ut.event_time) * 1000 as raw_time, " + 
 						"u.name as user_name " +	
 					"FROM user_trail ut, user_project up, users u  " +
 					"where up.p_id = ? " + 	
@@ -171,6 +173,7 @@ public class UserTrail extends Application {
 				Feature f = new Feature();
 				f.id = resultSet.getInt("id");
 				f.time = resultSet.getTimestamp("event_time");	
+				f.rawTime = resultSet.getLong("raw_time");
 				f.coordinates[0] = resultSet.getDouble("x");
 				f.coordinates[1] = resultSet.getDouble("y");
 				trail.features.add(f);

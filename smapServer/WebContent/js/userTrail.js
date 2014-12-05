@@ -59,18 +59,24 @@ require([
          'bootstrap-datetimepicker.min'
          
          ], function($, common, bootstrap, modernizr, localise, globals) {
-	
+
+var gHighlight;
 var gTrailData;
-var gFeatures = [];
 var gSurveys = [];
 var gTrailSource;
 var gSurveyLocations;
 var gSurveyLocationLayer;
 var gSurveyLocationSource;
 var gTrailLayer;
+var featureOverlay;
 var gMap;
 var point = null;
 var line = null;
+var gTime = {
+	  start: Infinity,
+	  stop: -Infinity,
+	  duration: 0
+	};
 
 // Style for survey locations
 var iconStyle = new ol.style.Style({
@@ -123,15 +129,23 @@ $(document).ready(function() {
 	//var osmVisible = new ol.dom.Input(document.getElementById('osmVisible'));
 	//osmVisible.bindTo('checked', base, 'osmVisible');
 	
-	
+	// Source and Layer objects for gps points
 	gTrailSource = new ol.source.Vector({
-		features: gFeatures
 		});
 	
 	gTrailLayer = new ol.layer.Vector ({
 		source: gTrailSource
 	});
 	
+	// Source and Layer objects for gps path
+	//gPathSource = new ol.source.Vector({
+	//	});
+	
+	//gPathLayer = new ol.layer.Vector ({
+	//	source: gPathSource
+	//});
+	
+	// Source and Layer objects for survey locations
 	gSurveyLocationSource = new ol.source.Vector({
 		features: gSurveys
 		});
@@ -176,6 +190,20 @@ $(document).ready(function() {
         	)
       });
     
+    // Overlay to highlight time of slider
+    featureOverlay = new ol.FeatureOverlay({
+    	  map: gMap,
+    	  style: new ol.style.Style({
+    	    image: new ol.style.Circle({
+    	      radius: 5,
+    	      fill: new ol.style.Fill({
+    	        color: 'rgba(255,0,0,0.9)'
+    	      }),
+    	      stroke: null
+    	    })
+    	  })
+    	});
+    
     $(gMap.getViewport()).on('click', function(evt) {
     	
     	var coordinate = gMap.getEventCoordinate(evt.originalEvent);   	  
@@ -197,6 +225,32 @@ $(document).ready(function() {
     
     // Enable tooltips
     $('[data-toggle="tooltip"]').tooltip();
+	
+    // Enable the time slider
+    $('#time').on('input', function(event) {
+    	
+    	point = null;		// Clear any selected points
+	    line = null;
+	    
+    	var value = parseInt($(this).val(), 10) / 100;
+    	var m = gTime.start + (gTime.duration * value);
+    	gTrailSource.forEachFeature(function(feature) {
+    		var geometry = /** @type {ol.geom.LineString} */ (feature.getGeometry());
+    	    var coordinate = geometry.getCoordinateAtM(m, true);
+    	    gHighlight = feature.get('highlight');
+    	    if (gHighlight === undefined) {
+    	      gHighlight = new ol.Feature(new ol.geom.Point(coordinate));
+    	      feature.set('highlight', gHighlight);
+    	      featureOverlay.addFeature(gHighlight);
+    	    } else {
+    	      gHighlight.getGeometry().setCoordinates(coordinate);
+    	    }
+    	});
+    	gMap.render();
+    	  
+  	   	var date = new Date(m * 1000);	// Using Measure coordinate to store unix date
+  	    document.getElementById('info').innerHTML = date;
+    });
     
 });
 
@@ -374,27 +428,26 @@ function showUserTrail() {
 		coords = [];
 	
 	gTrailSource.clear();
-	gFeatures = [];
 	
 	// Add points
 	for(i = 0; i < gTrailData.features.length; i++) {
 		
-		var f = new ol.Feature({
-			geometry: new ol.geom.Point(gTrailData.features[i].coordinates),
-			name: gTrailData.features[i].time
-		});
-		gFeatures.push(f);
+		gTrailData.features[i].coordinates.push(gTrailData.features[i].rawTime);	// Add attributes to Measure coordinate
 		coords.push(gTrailData.features[i].coordinates);
 	}
-	gTrailSource.addFeatures(gFeatures);
+	if(coords.length > 0) {
+		var geometry = new ol.geom.LineString(coords, 'XYM');
+		var lineFeature = new ol.Feature({
+			geometry: geometry
+		});
+		gTrailSource.addFeature(lineFeature);
+		
+		gTime.start = Math.min(gTime.start, geometry.getFirstCoordinate()[2]);
+		gTime.stop = Math.max(gTime.stop, geometry.getLastCoordinate()[2]);
+		gTime.duration = gTime.stop - gTime.start;
+	}
 	
-	// Add line
-	lineFeature = new ol.Feature({
-		geometry: new ol.geom.LineString(coords)
-	});
-	//gTrailSource.addFeature(lineFeature);
 	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
-
 
 	gMap.render();
 }
@@ -430,9 +483,17 @@ function showSurveyLocations() {
 
 // Show data for closes features
 var displaySnap = function(coordinate) {
-	  var closestFeature = gTrailSource.getClosestFeatureToCoordinate(coordinate);
-	  var info = document.getElementById('info');
-	  if (closestFeature === null) {
+	
+	// Clear the slider
+	if(gHighlight) {
+		featureOverlay.removeFeature(gHighlight);
+		gHighlight = undefined;
+	}
+	  
+	var closestFeature = gTrailSource.getClosestFeatureToCoordinate(coordinate);
+	var info = document.getElementById('info');
+	  
+	if (closestFeature === null) {
 	    point = null;
 	    line = null;
 	    info.innerHTML = '&nbsp;';
@@ -445,8 +506,8 @@ var displaySnap = function(coordinate) {
 	      point.setCoordinates(closestPoint);
 	    }
 	
-	    info.innerHTML =
-	        closestFeature.get('name');
+	    var date = new Date(closestPoint[2] * 1000);	// Using Z coordinate to store unix date
+	    info.innerHTML = date;
 	    var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
 	    if (line === null) {
 	      line = new ol.geom.LineString(coordinates);
