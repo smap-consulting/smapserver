@@ -764,7 +764,7 @@ public class SurveyTemplate {
 			}
 			
 			// Check for constraints without dots
-			if(constraint !=null && !constraint.contains(".")) {
+			if(constraint !=null && !constraint.contains(".") && !constraint.contains("false()")) {
 				System.out.println("check constraint: " + qName + " : " + constraint);
 				String roMsg = "Constraint '" + constraint + "' for question " + qName + " must refer to the answer using a '.' (dot)";
 				badNames.add(roMsg);

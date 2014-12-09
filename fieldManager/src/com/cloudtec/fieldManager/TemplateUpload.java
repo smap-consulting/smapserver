@@ -309,7 +309,7 @@ public class TemplateUpload extends HttpServlet {
 					return;
 				} 
 				
-				// If there are mandatory read only questions without a relevance then throw an error
+				// If there are mandatory read only questions without a relevance or constraints that don't reference the current question then throw an error
 				ArrayList<String> manReadQuestions = null;
 				if((manReadQuestions = model.manReadQuestions()).size() > 0) {		
 					String mesg = "Error:\n";
@@ -427,6 +427,7 @@ public class TemplateUpload extends HttpServlet {
 	        boolean hasInvalidFunction = false;
 	        boolean hasSystemError = false;
 	        boolean hasValidationError = false;
+	        boolean hasDisplayConditionError = false;
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
@@ -508,6 +509,13 @@ public class TemplateUpload extends HttpServlet {
 	        			} else {
 	        				response.hints.add(line);
 	        			}
+        			}
+	        		response.foundErrorMsg = true;
+        		} else if(line.contains("Mismatched brackets")) {	
+        			if(!hasDisplayConditionError) {
+        				errorMesgBuf.append(" Error in formula");
+        				hasDisplayConditionError = true;
+	        			response.hints.add(line);			
         			}
 	        		response.foundErrorMsg = true;
         		} else if(line.contains("XFormParseException")) {	

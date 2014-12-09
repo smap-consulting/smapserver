@@ -54,13 +54,13 @@ require([
          'modernizr', 
          'app/localise',
          'app/globals',
-         'ol3/js/ol-debug',
+         'ol3/js/ol',
          'moment.min',
          'bootstrap-datetimepicker.min'
          
          ], function($, common, bootstrap, modernizr, localise, globals) {
 
-var gHighlight;
+var gOverlayHasFeature;
 var gTrailData;
 var gSurveys = [];
 var gTrailSource;
@@ -237,20 +237,34 @@ $(document).ready(function() {
     	gTrailSource.forEachFeature(function(feature) {
     		var geometry = /** @type {ol.geom.LineString} */ (feature.getGeometry());
     	    var coordinate = geometry.getCoordinateAtM(m, true);
-    	    gHighlight = feature.get('highlight');
-    	    if (gHighlight === undefined) {
-    	      gHighlight = new ol.Feature(new ol.geom.Point(coordinate));
-    	      feature.set('highlight', gHighlight);
-    	      featureOverlay.addFeature(gHighlight);
+    	    var highlight = feature.get('highlight');
+    	    if (highlight === undefined) {
+    	      highlight = new ol.Feature(new ol.geom.Point(coordinate));
+    	      feature.set('highlight', highlight);
     	    } else {
-    	      gHighlight.getGeometry().setCoordinates(coordinate);
+    	      highlight.getGeometry().setCoordinates(coordinate);
+    	    }
+    	    if(!gOverlayHasFeature) {
+    	    	featureOverlay.addFeature(highlight);
+    	    	gOverlayHasFeature = true;
     	    }
     	});
     	gMap.render();
     	  
-  	   	var date = new Date(m * 1000);	// Using Measure coordinate to store unix date
+  	   	var date = new Date(m);	// Using Measure coordinate to store unix date
   	    document.getElementById('info').innerHTML = date;
     });
+    
+	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
+	function autocollapse() {
+	    var $navbar = $('.navbar');
+	    $navbar.removeClass('collapsed'); 
+	    if($navbar.innerHeight() > 60) // check if we've got 2 lines
+	        $navbar.addClass('collapsed'); // force collapse mode
+	}
+
+	$(document).on('ready', autocollapse);
+	$(window).on('resize', autocollapse);
     
 });
 
@@ -485,10 +499,12 @@ function showSurveyLocations() {
 var displaySnap = function(coordinate) {
 	
 	// Clear the slider
-	if(gHighlight) {
-		featureOverlay.removeFeature(gHighlight);
-		gHighlight = undefined;
+	var overlays = featureOverlay.getFeatures(),
+		i;
+	for(i = 0; i < overlays.a.length; i++) {
+		featureOverlay.removeFeature(overlays.a[i]);
 	}
+	gOverlayHasFeature = false;
 	  
 	var closestFeature = gTrailSource.getClosestFeatureToCoordinate(coordinate);
 	var info = document.getElementById('info');
@@ -506,7 +522,7 @@ var displaySnap = function(coordinate) {
 	      point.setCoordinates(closestPoint);
 	    }
 	
-	    var date = new Date(closestPoint[2] * 1000);	// Using Z coordinate to store unix date
+	    var date = new Date(closestPoint[2]);	// Using Z coordinate to store unix date
 	    info.innerHTML = date;
 	    var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
 	    if (line === null) {

@@ -1,5 +1,5 @@
 .navbar-default {
-    background-color: #333333;
+    background-color: #2C3D29;
     border-color: #e7e7e7;
     color: #fff;
 }
@@ -25,4 +25,35 @@
 
 .icon-bar {
 	background-color: #fff;
+}
+
+.thick {
+	font-weight: 800;
+}
+
+/* Collapse menu bar */
+
+.collapsed .navbar-header {
+    float: none;
+}
+.collapsed .navbar-toggle {
+    display: block;
+}
+.collapsed .navbar-collapse {
+    border-top: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.collapsed .navbar-collapse.collapse {
+    display: none!important;
+}
+.collapsed .navbar-nav {
+    float: none!important;
+    margin: 7.5px -15px;
+}
+.collapsed .navbar-nav>li {
+    float: none;
+}
+.collapsed .navbar-nav>li>a {
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
