@@ -109,7 +109,7 @@ var strokeStyle = new ol.style.Stroke({
 
 $(document).ready(function() {
 	
-
+	localise.setlang();
 		
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({

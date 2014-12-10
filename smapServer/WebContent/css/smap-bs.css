@@ -12,6 +12,12 @@
     color: #fff;
 }
 
+.navbar-default .navbar-nav > li > .btn {
+	padding: 5px;
+	margin-top:10px;
+    color: #222;
+}
+
 .navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-brand:hover, .navbar-default .navbar-brand:focus
 {
     color: #ccc;

@@ -435,11 +435,25 @@ public class TemplateUpload extends HttpServlet {
 	        		if(!line.contains("Dependency cycles")) {
 	        			if(!hasSystemError) {
 	        				hasSystemError = true;
-		        			errorMesgBuf.append("System error");
-		        			response.hints.add(line);
-		        			response.hints.add("Contact your system administrator for support");
-		        			if(!line.equals("errors.PyXFormError")) {
+		        			
+		        			response.hints.add(line);		        			
+		        			// Test for select questions without list name
+		        			if(line.contains("Unknown question type 'select_multiple'")) {	
+		        				errorMesgBuf.append("select_multiple question without list name");
+		        				response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
+	            					"for all the select_multiple questions");
 		        				response.foundErrorMsg = true;
+		        			} else if(line.contains("Unknown question type 'select_one'")) {	
+		        				errorMesgBuf.append("select_one question without list name");
+		        				response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
+	            					"for all the select_one questions");
+		        				response.foundErrorMsg = true;
+		        			} else {	
+		        				errorMesgBuf.append("System error");
+		        				response.hints.add("Contact your system administrator for support");
+		        				if(!line.equals("errors.PyXFormError")) {
+		        					response.foundErrorMsg = true;
+		        				}
 		        			}
 	        			}
 	        		}
@@ -453,13 +467,6 @@ public class TemplateUpload extends HttpServlet {
 	        	// Test for calculation on a group
         		} else if(line.contains("Can't set data value for node that has children")) {
         			response.hints.add("Check calculation column for a formula on a group or repeat");
-	        		response.foundErrorMsg = true;
-        		
-	        	// Test for select questions without list name
-        		} else if(line.contains("Unknown question type 'select_multiple'") ||
-        				line.contains("Unknown question type 'select_one'")) {	
-        			response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
-        					"for all the choice questions (select_one, select_multiple)");
 	        		response.foundErrorMsg = true;
         		
 	           	// Test for invalid function
