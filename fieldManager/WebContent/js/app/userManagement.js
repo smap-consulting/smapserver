@@ -685,7 +685,13 @@ function writeUserDetails(userList, $dialog) {
 				  return;  // Not an error
 			  } else {
 				  if(xhr.status === 409) {
-					  alert("Duplicate user identification. Please change the user ident."); 
+					  var msg;
+					  if(xhr.responseText.indexOf("email") > 0) {
+						  msg = "Duplicate email. Some other user has this email."
+					  } else {
+						  msg = "Duplicate user identification. Please change the user ident.";
+					  }
+					  alert(msg); 
 				  } else {
 					  alert("Error user details not saved: " + xhr.responseText);
 				  }

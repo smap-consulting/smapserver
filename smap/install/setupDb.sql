@@ -114,7 +114,7 @@ CREATE TABLE users (
 	has_data boolean,
 	has_sms boolean,
 	phone_number text,
-	email text,
+	email text UNIQUE,
 	device_id text,
 	max_dist_km integer,
 	user_role text,

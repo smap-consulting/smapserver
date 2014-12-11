@@ -246,6 +246,11 @@ public class UserSvc extends Application {
 		PreparedStatement pstmt = null;
 		try {	
 			
+			// Ensure email is null if it has not been set
+			if(u.email != null && u.email.trim().isEmpty()) {
+				u.email = null;
+			}
+			
 			if(u.current_project_id > 0 || u.current_survey_id > 0) {
 				/*
 				 * If the current project/survey is to be changed then only update the project id and survey id

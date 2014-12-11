@@ -409,6 +409,11 @@ public class UserList extends Application {
 				for(int i = 0; i < uArray.size(); i++) {
 					User u = uArray.get(i);
 					
+					// Ensure email is null if it has not been set
+					if(u.email != null && u.email.trim().isEmpty()) {
+						u.email = null;
+					}
+					
 					if(u.id == -1) {
 						// New user
 						
@@ -545,7 +550,7 @@ public class UserList extends Application {
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			if(state.startsWith("23")) {
-				response = Response.status(Status.CONFLICT).entity("Conflict").build();
+				response = Response.status(Status.CONFLICT).entity(e.getMessage()).build();
 			} else {
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"Error", e);
