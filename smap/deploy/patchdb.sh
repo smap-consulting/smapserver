@@ -10,7 +10,7 @@ echo "Current Smap Version is $version"
 
 # Apply database patches
 echo "applying patches to survey_definitions"
-sudo -u postgres psql -f ./sd.sql -q -d survey_definitions 2>&1 | grep -v "already exists" | grep -v "duplicate key"
+sudo -u postgres psql -f ./sd.sql -q -d survey_definitions 2>&1 | grep -v "already exists" | grep -v "duplicate key" | grep -v "addgeometrycolumn"
 echo "applying patches to results"
 sudo -u postgres psql -f ./results.sql -q -d results 2>&1 | grep -v "already exists"
 
@@ -79,7 +79,7 @@ echo "1410" > ~/smap_version
 
 # version 14.11
 # Yes 14.11 patches being reapplied as last release was actually 14.10.02
-if [ $version -lt "1412" ]
+if [ $version -lt "1411" ]
 then
 echo "Applying patches for version 14.11"
 sudo chown -R tomcat7 /smap/attachments
