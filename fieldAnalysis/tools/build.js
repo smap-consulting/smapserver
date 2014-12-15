@@ -1,7 +1,6 @@
 ({
     appDir: '../WebContent',
-    //mainConfigFile: '../WebContent/js/dashboard_main.js',
-    optimize: 'none',
+//    optimize: 'none',
     wrapShim: false,
     waitSeconds: 0,
     baseUrl: 'js/libs',

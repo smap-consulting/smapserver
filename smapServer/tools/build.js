@@ -1,11 +1,10 @@
 ({
     appDir: '../WebContent',
-//    mainConfigFile: '../WebContent/js/index.js',
     locale: "en",
     waitSeconds: 0,
     wrapShim: false,
     baseUrl: 'js/libs',
-    optimize: 'none',
+//    optimize: 'none',
     paths: {
     	jquery: 'jquery-1.8.3.min',
     	jquery_ui: 'empty:',

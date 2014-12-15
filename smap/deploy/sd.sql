@@ -195,7 +195,6 @@ ALTER TABLE public.user_trail OWNER TO ws;
 
 -- Upgrade to:  14.12 from 14.11 =======
 update users set email = null where trim(email) = '';
-ALTER TABLE users ADD UNIQUE (email);
 
 alter table assignments drop constraint assignee;
 alter table assignments add constraint assignee FOREIGN KEY (assignee)
