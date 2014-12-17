@@ -20,6 +20,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Entry point for report list page
  */
 
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
+
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,

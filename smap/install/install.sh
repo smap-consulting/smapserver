@@ -234,6 +234,7 @@ echo "==================> $results database already exists.  Apply patches if ne
 fi
 
 echo '##### 12. Setup subscribers'
+sudo rm -rf /usr/bin/smap
 sudo mkdir /usr/bin/smap
 sudo mkdir /var/log/subscribers
 sudo cp subscribers.sh /usr/bin/smap

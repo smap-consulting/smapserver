@@ -193,7 +193,6 @@ CREATE TABLE public.user_trail (
 SELECT AddGeometryColumn('user_trail', 'the_geom', 4326, 'POINT', 2);
 ALTER TABLE public.user_trail OWNER TO ws;
 
--- Upgrade to:  14.12 from 14.11 =======
 update users set email = null where trim(email) = '';
 
 alter table assignments drop constraint assignee;

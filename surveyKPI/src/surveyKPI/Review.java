@@ -318,7 +318,7 @@ public class Review extends Application {
 
 		}
 		
-		System.out.println("getReferencedQuestion: " + sId + " : " + language + " : " + qId);
+		System.out.println("===========getReferencedQuestion: " + sId + " : " + language + " : " + qId);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
@@ -326,6 +326,7 @@ public class Review extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
+		System.out.println("------- Passed authorisation");
 		Response response = null;
 
 		ArrayList<RelevanceQuestion> relResults = new ArrayList<RelevanceQuestion> ();
@@ -374,7 +375,7 @@ public class Review extends Application {
 			/*
 			 * Get the relevance statement for the passed in question
 			 */
-			
+			log.info("getReferenceQuestion" + sqlGetRelevance + " : " + qId);
 			pstmtGetRelevance.setInt(1,  qId);
 			resultSet = pstmtGetRelevance.executeQuery();
 			
