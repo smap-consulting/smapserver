@@ -20,12 +20,32 @@ define(['jquery', "i18n!../../../../js/nls/lang",'mustache','jquery_ui', 'locali
 	
 	$(document).ready(function() {
 		
+		var i;
 		localise.setlang();		// Localise HTML
+		
+		msg.mesg = "";
+		for(i = 0; i < msg.mesgArray.length; i++) {
+			if(msg.mesgArray[i].indexOf("$") === 0) {
+				msg.mesg += localise.set[msg.mesgArray[i].substring(1)];
+			} else {
+				msg.mesg += msg.mesgArray[i];
+			}
+		}
+		
+		if(msg.hints) {
+			for(i = 0; i < msg.hints.length; i++) {
+				if(msg.hints[i].indexOf("$") === 0) {
+					msg.hints[i] = localise.set[msg.hints[i].substring(1)];
+				} 
+			}
+		}
+		
 		
 		$('#msg_locn').html(Mustache.to_html( $('#tpl').html(), msg));
 		var sendto = administrator || '';
 			$('#email_button').attr("href", "mailto:" + administrator + "?subject=Error loading template&body=" + msgToText(msg));
 			$('.abutton').button();
+			
 	});
 		
 	function msgToText(msg) {

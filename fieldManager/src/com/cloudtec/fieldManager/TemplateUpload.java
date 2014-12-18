@@ -76,7 +76,7 @@ public class TemplateUpload extends HttpServlet {
 	
 	private class Message {
 		String host;
-		String mesg;
+		ArrayList<String> mesgArray;
 		String project;
 		String survey;
 		String fileName;
@@ -93,7 +93,7 @@ public class TemplateUpload extends HttpServlet {
     private class SaveResponse {
     	public int code = 0;
     	public String fileName = null;
-    	public String errMesg = "";
+    	public ArrayList<String> errMesg;
     	public ArrayList<String> hints = new ArrayList<String> ();
     	boolean foundErrorMsg;
     }
@@ -118,7 +118,8 @@ public class TemplateUpload extends HttpServlet {
 		
 		fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
-			
+		ArrayList<String> mesgArray = new ArrayList<String> ();
+		
 		try {
 			/*
 			 * Parse the request
@@ -202,11 +203,22 @@ public class TemplateUpload extends HttpServlet {
 				
 				// If the survey display name already exists on this server, for this project, then throw an error
 				SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
-				if(surveys.surveyExists(displayName, projectId)) {		
-					String mesg = "Survey " + displayName + " Exists in project " + projectName;
-					System.out.println(mesg);
+				if(surveys.surveyExists(displayName, projectId)) {
+					// String mesg = "Survey " + displayName + " Exists in project " + projectName;
+					mesgArray.add("$c_survey");
+					mesgArray.add(" '");
+					mesgArray.add(displayName);
+					mesgArray.add("' ");
+					mesgArray.add("$e_u_exists");
+					mesgArray.add(" '");
+					mesgArray.add(projectName);
+					mesgArray.add("'");
+					System.out.println(mesgArray.toString());
 					
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					ArrayList<String> hints = new ArrayList<String>(); 
+					hints.add("$e_h_rename");
+					
+					setErrorResponse(request, response, mesgArray, hints, serverName, projectName, displayName, fileName);
 					return;
 				} 	
 				
@@ -218,9 +230,9 @@ public class TemplateUpload extends HttpServlet {
 
 					if(!resp.foundErrorMsg) { // Error but no error message found
 						resp.hints.add("Check the 'name' and 'list_name' columns for accented characters.");
-						resp.hints.add("Check these names in both worksheets.</li></ul>");
 						resp.hints.add("Finally: Contact tech support, this may be a system error.");
 					}
+					System.out.println(resp.errMesg.toString());
 					
 					setErrorResponse(request, response, resp.errMesg, resp.hints, serverName, projectName, displayName, fileName);
 					return;
@@ -238,10 +250,10 @@ public class TemplateUpload extends HttpServlet {
 					model.getSurvey().setDisplayName(displayName);
 					model.getSurvey().setFileName(resp.fileName);
 				} else {
-					String mesg = "Error: No survey name";
-					System.out.println(mesg);
+					mesgArray.add("No survey name");		// TODO Language
+					System.out.println(mesgArray.toString());
 					
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				}
 				
@@ -249,9 +261,10 @@ public class TemplateUpload extends HttpServlet {
 				if(projectId != -1) {
 					model.getSurvey().setProjectId(projectId);
 				} else {
-					String mesg = "Error: No project";
-					System.out.println(mesg);
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					mesgArray.add("No project");		// TODO Language
+					System.out.println(mesgArray.toString());
+
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				}
 				
@@ -274,8 +287,10 @@ public class TemplateUpload extends HttpServlet {
 						}
 						mesg += formsWithError.get(i);
 					}
-					System.out.println(mesg);
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					mesgArray.add(mesg);		// TODO Language
+					System.out.println(mesgArray.toString());
+					
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				} 
 				
@@ -289,8 +304,10 @@ public class TemplateUpload extends HttpServlet {
 						}
 						mesg += duplicateNames.get(i);
 					}
-					System.out.println(mesg);
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					mesgArray.add(mesg);		// TODO Language
+					System.out.println(mesgArray.toString());
+					
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				} 	
 				
@@ -304,8 +321,10 @@ public class TemplateUpload extends HttpServlet {
 						}
 						mesg += duplicateOptionNames.get(i);
 					}
-					System.out.println(mesg);
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					mesgArray.add(mesg);		// TODO Language
+					System.out.println(mesgArray.toString());
+
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				} 
 				
@@ -319,8 +338,10 @@ public class TemplateUpload extends HttpServlet {
 						}
 						mesg += manReadQuestions.get(i);
 					}
-					System.out.println(mesg);
-					setErrorResponse(request, response, mesg, null, serverName, projectName, displayName, fileName);
+					mesgArray.add(mesg);		// TODO Language
+					System.out.println(mesgArray.toString());
+					
+					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 					return;
 				} 
 				
@@ -335,12 +356,14 @@ public class TemplateUpload extends HttpServlet {
 			throw ex;		// re-throw
 		} catch(FileUploadException ex) {
 			log.log(Level.SEVERE,"Error encountered while parsing the request", ex);
-			setErrorResponse(request, response, "Error: " + ex.getMessage(), null, serverName, projectName, displayName, fileName);
+			mesgArray.add(ex.getMessage());		// TODO Language
+			setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 			return;
 		} catch(Exception ex) {
 			System.out.println(ex.getMessage());
 			log("Error encountered while uploading file",ex);
-			setErrorResponse(request, response, "Error: " + ex.getMessage(), null, serverName, projectName, displayName, fileName);
+			mesgArray.add(ex.getMessage());		// TODO Language
+			setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
 			return;
 		}
 		
@@ -361,7 +384,6 @@ public class TemplateUpload extends HttpServlet {
 		String filePath = null;
 		String fileFolder = null;
 		SaveResponse response = new SaveResponse();
-        StringBuffer errorMesgBuf = new StringBuffer("");
 		
 		// Remove special characters from the target name
 	    String specRegex = "[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]";
@@ -439,18 +461,22 @@ public class TemplateUpload extends HttpServlet {
 		        			response.hints.add(line);		        			
 		        			// Test for select questions without list name
 		        			if(line.contains("Unknown question type 'select_multiple'")) {	
-		        				errorMesgBuf.append("select_multiple question without list name");
-		        				response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
-	            					"for all the select_multiple questions");
+		        				response.errMesg.add("$e_u_sm_no_list");
+		        				//errorMesgBuf.append("select_multiple question without list name");
+		        				//response.hints.add("Check the survey sheet. Make sure you have specified a list name for all the select_multiple questions");
+		        				response.hints.add("$e_h_sm_no_list");
 		        				response.foundErrorMsg = true;
-		        			} else if(line.contains("Unknown question type 'select_one'")) {	
-		        				errorMesgBuf.append("select_one question without list name");
-		        				response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
-	            					"for all the select_one questions");
+		        			} else if(line.contains("Unknown question type 'select_one'")) {
+		        				response.errMesg.add("$e_u_so_no_list");
+		        				//errorMesgBuf.append("select_one question without list name");
+		        				//response.hints.add("Check the survey sheet. Make sure you have specified a list name " +
+	            				//	"for all the select_one questions");
+		        				response.hints.add("$e_h_so_no_list");
 		        				response.foundErrorMsg = true;
-		        			} else {	
-		        				errorMesgBuf.append("System error");
-		        				response.hints.add("Contact your system administrator for support");
+		        			} else {
+		        				response.errMesg.add("$e_unknown");
+		        				response.hints.add("$e_get_help");
+		        				//response.hints.add("Contact your system administrator for support");
 		        				if(!line.equals("errors.PyXFormError")) {
 		        					response.foundErrorMsg = true;
 		        				}
@@ -459,9 +485,9 @@ public class TemplateUpload extends HttpServlet {
 	        		}
 	        	} else if(line.contains("Exception: java.lang.Boolean")) {
         			// calculation errors
-	        		errorMesgBuf.append("Calculation error");
-        			response.hints.add("Check calculation column for an invalid formula (A valid formula results in either true or false)");
-        			response.hints.add("Otherwise check relevant column for a formula that does not result in a true or false result");
+	        		response.errMesg.add("$e_calc");
+        			response.hints.add("$e_h_calc1");
+        			response.hints.add("$e_h_calc2");
 	        		response.foundErrorMsg = true;
 	        	
 	        	// Test for calculation on a group
@@ -473,7 +499,7 @@ public class TemplateUpload extends HttpServlet {
         		} else if(line.contains("cannot handle function")) {	
         			if(!hasInvalidFunction) {
         				hasInvalidFunction = true;
-	        			errorMesgBuf.append(" Invalid Function");
+        				response.errMesg.add("$e_inv_f");
 	        			int posName = line.indexOf('\'');
 	        			int posName2 = line.indexOf('\'', posName + 1);
 	        			if(posName != -1 && posName2 != -1) {
@@ -481,9 +507,9 @@ public class TemplateUpload extends HttpServlet {
 	        				if(!isValidFunction(name)) {
 	        					response.hints.add("Function " + name + " has a problem");
 	        					if(isValidFunction(name.toLowerCase())) {
-	        						response.hints.add("Check for capital letters");
+	        						response.hints.add("e_h_f1");
 	        					} else {
-	        						response.hints.add("Check for spelling mistakes");
+	        						response.hints.add("e_h_f2");
 	        					}
 	        				}
 	        			}
@@ -495,7 +521,7 @@ public class TemplateUpload extends HttpServlet {
         		} else if(line.startsWith("org.javarosa.core.log.WrappedException")) {	
         			if(!hasValidationError) {
         				hasValidationError = true;
-	        			errorMesgBuf.append(" Validation Error");
+        				response.errMesg.add("$e_val");
 	        			response.hints.add(line);
 		        		response.foundErrorMsg = true;
         			}
@@ -503,16 +529,19 @@ public class TemplateUpload extends HttpServlet {
         		// Test for circular reference
         		} else if(line.contains("=>")) {	
         			if(!hasCircularRef) {
-        				errorMesgBuf.append(" Check for circular references.");
+        				response.errMesg.add("$e_circ");
         				hasCircularRef = true;
         			
         				int posName = line.lastIndexOf('/');
 	        			if(posName != -1) {
 	        				String name = line.substring(posName + 1);
-	        				response.hints.add("A 'relevant' statement for question " + 
-	        						name + " is potentially referring to  itself instead of referring to another question") ;
-	        				response.hints.add("<li>Relevant statements are evaluated before a question is asked so they " +
-	        						"cannot refer to their own questions");
+	        				response.errMesg.add(" ");
+	        				response.errMesg.add("$e_in_q");
+	        				response.errMesg.add(" '");
+	        				response.errMesg.add(name);
+	        				response.errMesg.add("'");
+	        				response.hints.add("$e_h_c1") ;
+	        				response.hints.add("$e_h_c2");
 	        			} else {
 	        				response.hints.add(line);
 	        			}
@@ -520,7 +549,7 @@ public class TemplateUpload extends HttpServlet {
 	        		response.foundErrorMsg = true;
         		} else if(line.contains("Mismatched brackets")) {	
         			if(!hasDisplayConditionError) {
-        				errorMesgBuf.append(" Error in formula");
+        				response.errMesg.add("$e_brackets");
         				hasDisplayConditionError = true;
 	        			response.hints.add(line);			
         			}
@@ -531,9 +560,11 @@ public class TemplateUpload extends HttpServlet {
         			int posStart = line.lastIndexOf("line:");
         			int posEnd = line.lastIndexOf(" Couldn");
         			if(posStart != -1 && posEnd != -1) {
-        				errorMesgBuf.append("Error with the text:");
+        				response.errMesg.add("$e_text");
+        				response.errMesg.add(" '");
         				String name = line.substring(posStart + 5, posEnd);
-        				response.hints.add(name); 
+        				response.errMesg.add(name); 
+        				response.errMesg.add("'");
         				response.foundErrorMsg = true;
         			} else {
         				posStart = line.indexOf(':');
@@ -553,7 +584,6 @@ public class TemplateUpload extends HttpServlet {
             log.info("Process exitValue: " + response.code);
 	    }
 	    
-	    response.errMesg = errorMesgBuf.toString();
 	    return response;
 	}
 	
@@ -627,10 +657,17 @@ public class TemplateUpload extends HttpServlet {
 		
 		return valid;
 	}
-	private String getResponseMessage(String mesg, ArrayList<String> hints, String host, String project, String survey, String fileName) {
+	private String getResponseMessage( 
+				ArrayList<String> mesgArray,
+				ArrayList<String> hints, 
+				String host, 
+				String project, 
+				String survey, 
+				String fileName
+			) {
 
 		Message m = new Message();
-		m.mesg = mesg;
+		m.mesgArray = mesgArray;
 		m.host = host;
 		m.project = project;
 		m.survey = survey;
@@ -645,7 +682,7 @@ public class TemplateUpload extends HttpServlet {
 	
 	private void setErrorResponse(HttpServletRequest request, 
 			HttpServletResponse response, 
-			String mesg, 
+			ArrayList<String> mesgArray, 
 			ArrayList<String> hints, String serverName, 
 			String projectName, 
 			String surveyName, 
@@ -683,7 +720,7 @@ public class TemplateUpload extends HttpServlet {
 		}
 		
 		request.setAttribute("administrator", admin_email);
-		request.setAttribute("message", getResponseMessage(mesg, hints, serverName, projectName, surveyName, fileName));
+		request.setAttribute("message", getResponseMessage(mesgArray, hints, serverName, projectName, surveyName, fileName));
 		request.getRequestDispatcher("/templateUploadResponse.jsp").forward(request, response);
 	}
 	

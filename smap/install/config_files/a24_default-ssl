@@ -10,6 +10,8 @@ CustomLog ${APACHE_LOG_DIR}/ssl_access.log combined
 SSLCertificateFile    /etc/ssl/certs/ssl-cert-snakeoil.pem
 SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
 
+SSLProtocol All -SSLv2 -SSLv3
+
 <FilesMatch "\.(cgi|shtml|phtml|php)$">
 	SSLOptions +StdEnvVars
 </FilesMatch>
