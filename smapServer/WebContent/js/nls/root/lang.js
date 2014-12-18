@@ -85,6 +85,7 @@ define({
 	"c_layers": "Layers",
 	"c_settings": "Settings",
 	"c_start": "Start",
+	"c_back": "Backxx",
 	
 	// File Types
 	"ft_xls": "XLS Form",
@@ -147,5 +148,34 @@ define({
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
-	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://"
+	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
+		
+	// template load errors
+	"e_u_err": "Form Upload Errorxx",
+	"e_u_exists": "exists in projectxx",
+	"e_h_rename": "Change the name of the form or delete the old form",
+	"e_u_sm_no_list": "select_multiple question without list name",
+	"e_h_sm_no_list": "Check the survey sheet. Make sure you have specified a list name for all the select_multiple questions",
+	"e_u_so_no_list": "select_one question without list name",
+	"e_h_so_no_list": "Check the survey sheet. Make sure you have specified a list name for all the select_one questions",
+	"e_unknown": "Unknown error",
+	"e_get_help": "Contact the help desk",
+	"e_calc": "Calculation error",
+	"e_h_calc1": "Check the 'calculation' column for an invalid formula (A valid formula results in either true or false)",
+	"e_h_calc2": "Otherwise check the 'relevant' column for a formula that does not result in a true or false result",
+	"e_inv_f": "Invalid Function",
+	"e_h_f1": "Check for capital letters, all letters should be lower case",
+	"e_h_f2": "Check for spelling mistakes in the name of the function",
+	"e_val": "Validation error",
+	"e_circ": "Check for circular references",
+	"e_in_q": "in question",
+	"e_h_c1": "A 'relevant' statement for question is potentially referring to  itself instead of referring to another question",
+	"e_h_c2": "Relevant statements are evaluated before a question is asked so they cannot refer to their own questions",
+	"e_brackets": "Mismatched brackets in function",
+	"e_text": "Error with the following text:"
+		
+	
+		
+	
+		
 });
