@@ -16,6 +16,8 @@ define({
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
 	"m_locations": "Locations",
+	"m_section": "Sectionxx",
+	"m_notify": "Notificationsxx",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",

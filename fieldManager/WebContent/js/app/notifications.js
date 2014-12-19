@@ -34,23 +34,7 @@ $(document).ready(function() {
 	
 	localise.setlang();		// Localise HTML
 	
-	/*
-	 * Add functionality to control buttons
-	 */
-	$('#delete_survey').button().click(function () {
-		surveyDelete();
-	});
-	$('#erase_survey').button().click(function () {
-		surveyErase();
-	});
-	$('#un_delete_survey').button().click(function () {
-		surveyUnDelete();
-	});
-	$('#show_deleted').click(function() {
-		gShowDeleted = $('#show_deleted').is(':checked');
-		completeSurveyList();
-	});
-	$('#show_deleted').removeAttr('checked');
+
 	
 	// Get the user details
 	getLoggedInUser(projectSet, false, true, undefined);
@@ -87,14 +71,11 @@ $(document).ready(function() {
 		getRemoteSurveys();
 	});
 	
-	/*
-	 * Style the template editing and uploading
-	 */
-	$('.abutton').button();
 	
 	
 	// Forward
 	// Initialse the forwarding dialog
+	/*
 	$('#add_forward_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -236,89 +217,10 @@ $(document).ready(function() {
 			]
 		}
 	 );
-	
-	// Initialse the download template dialog
-	$('#download_template').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title:localise.set["c_download"],
-			width:250,
-			height:300,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: localise.set["c_cancel"],
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: localise.set["c_download"],
-		        	click: function() {
-		        		var docURL,
-		        			language,
-		        			type;
-		        		
-		        		type = $("input[name='download_type']:checked", "#download_template").val();
-		        		language = $('#download_language option:selected').val();
-		        		
-		        		docURL = "/surveyKPI/survey/" + gSelectedTemplate + "/download?type=" + type + "&language=" + language;
-		        	    
-		        	    $(this).dialog("close");	  
-		        		window.location.href = docURL;
-		        	}	
-		        }
-			]
-		}
-	 );
-	
-	// Change function on download file type
-	$("input[name='download_type']", "#download_template").change(function() {
-		var type = $("input[name='download_type']:checked", "#download_template").val();
-		if(type === "pdf") {
-			$('#download_language_div').show();
-		} else {
-			$('#download_language_div').hide();
-		}
-	});
-	$('#download_language_div').hide();
+	*/
 	
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();
-	});
-	
-	// Ident checkbox
-	/*
-	if($('#ident').is(':checked')) {
-		$('#surveyIdent').show();
-	}
-	$('#ident').change(function () {
-		$('#surveyIdent').toggle();
-	});
-	*/
-	
-	// Validate upload form on submit
-	// Check that the survey has a valid name
-	$('#uploadForm').on("submit", function(e) {
-		
-		var file = $('#templateName').val(),
-			reg_start = /^[a-zA-Z_]+.*/,
-			pId = $('#projectId').val();
-		
-		// Check file name
-		if(!reg_start.test(file)) {
-			alert(localise.set["msg_val_let"]);
-			return false;
-		} 
-		
-		// Check for valid project id
-		if(pId <= 0) {
-			alert(localise.set["msg_val_p"]);
-			return false;
-		}
-		
-		return true;
 	});
 	
 	enableUserProfileBS();
@@ -364,7 +266,6 @@ function edit_forward(fwdIndex) {
 		gUpdateFwdPassword = true;
 		gSelectedForward = -1;
 	}
-	$('#add_forward_popup').dialog({title: title}).dialog("open");
 }
 
 function projectSet() {
@@ -567,23 +468,7 @@ function completeSurveyList() {
  
 	});
 	
-	$('.pdf_td').button().click(function(e) {
-		var name;
-		
-		gSelectedTemplate = $(this).val();
-		$.getJSON("/surveyKPI/languages/" + gSelectedTemplate, function(data) {
 
-			var $languageSelect = $('#download_language');
-			$languageSelect.empty();
-			
-			$.each(data, function(j, item) {
-				$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
-			});
-		});
-		name = $(this).parent().siblings(".displayName").text();
-		$('h1', '#download_template').html(name);
-		$('#download_template').dialog("open");
-	});
 	
 	$('.forward_td').button().click(function(e) {
 		var selTempName = $(this).parent().siblings('.displayName').text();
@@ -594,7 +479,7 @@ function completeSurveyList() {
 			setForwardList(gSelectedTemplate);
 		}
 		$('#forward_list_popup .form_name').html(selTempName);
-		$('#forward_list_popup').dialog("open");
+		//$('#forward_list_popup').dialog("open");
 	});
 	
 	$('.sEdit').button().click(function(e) {
@@ -950,7 +835,7 @@ function getRemoteSurveys() {
 	
 	
 	$('#select_fwd_survey_pop h1').html("Retrieving survey");
-	$('#select_fwd_survey_pop').dialog("open");
+	//$('#select_fwd_survey_pop').dialog("open");
 	
 	remoteString = JSON.stringify(remote);
 	addHourglass();

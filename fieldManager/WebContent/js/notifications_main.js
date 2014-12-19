@@ -59,7 +59,7 @@ require([
          'localise', 
          'globals',
          'bootstrap',
-         'app/templateManagement',  
+         'app/notifications',  
          'tablesorter'
          
          ], function($, common, localise, globals, bootstrap) {});

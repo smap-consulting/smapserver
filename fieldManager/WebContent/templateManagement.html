@@ -22,107 +22,143 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-	<link rel=StyleSheet href="/css/smap.css" type="text/css">
-	<link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" />
-	<link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/>
-	<link rel="stylesheet" href="/css/jquery.contextMenu.css" type="text/css"/>
+	<!--  <link rel=StyleSheet href="/css/smap.css" type="text/css"> -->
+	<!--  <link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" /> -->
+	<!--  <link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/> -->
+	<!--  <link rel="stylesheet" href="/css/jquery.contextMenu.css" type="text/css"/> -->
+	
+	<link rel="stylesheet" href="/css/normalize.css" />
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+	
+	<!--[if lt IE 9]>
+		<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
 	<script data-main="js/templatemanagement_main" src="/js/libs/require.js"></script>
 
-	<title>Manage Forms</title>
+	<title>Manage Forms</title>  
 
 </head>
 <body>
 
-<div id="templateManagementPage">
+<header class="navbar navbar-default navbar-static-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<img src="/images/logo.png">
+     	<span class="lang" data-lang="m_tm" >Forms</span>
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_section">Section</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+            <li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+            <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
+            <li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
+          </ul>
+        </li>
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
+		<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>	
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+        <li>
+        	<a id="username" type="button" class="btn btn-default" aria-label="User">
+			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+			</a>
+		</li>
+      </ul>
+      	
+	</nav>
 
-	<div class="rmm noPrint" data-menu-style = "minimal">
-		<ul>
-			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-			<li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
-			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
-			<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
-			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
-		</ul>
-	</div>
-	<p style="clear: both;"></p>
-	<div id="header">
-		<div id="username"></div>
-		<div class="lang" data-lang="c_forms" id="banner">Forms</div>
-	</div>
+  </div>
+</header>
 
-	<div id="wrapper" data-role="content">
-	
-		<div id="sidebar" data-role="content">
-			<div id="filters">
-				<form id="service_filter_form">
-					<label class="lang" data-lang="c_project" for="project_name">Select Project</label>
-					<select class="project_list" id="project_name"></select><br/>
-				</form>	
-			</div>
 
-			<span class="selected_templates">
-				<span class="restrict_role admin_role analyst_role" style="display:none">
-					<input id="show_deleted" type="checkbox" name="show_deleted" 
-						value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
+<div class="container">
+	<div class="row">	   	
+	   	<div class="col-md-5 col-md-offset-1 col-xs-12" id="sidebar">
+	   		<div class = "well">
+	   	
+				<div id="filters">
+					<form id="service_filter_form">
+						<label class="lang" data-lang="c_project" for="project_name">Select Project</label>
+						<select class="project_list" id="project_name"></select><br/>
+					</form>	
+				</div>
+
+				<span class="selected_templates">
+					<span class="restrict_role admin_role analyst_role" style="display:none">
+						<input id="show_deleted" type="checkbox" name="show_deleted" 
+							value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
+					</span>
+					<div id="surveys">
+						<h1 class="lang" data-lang="c_forms">Forms</h1>
+						<div id="survey_table"></div>
+					</div>
+					<div id="tem_controls">
+						<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role analyst_role lang">Delete Forms</button>
+						<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
+						<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
+					</div>
 				</span>
-				<div id="surveys">
-					<h1 class="lang" data-lang="c_forms">Forms</h1>
-					<div id="survey_table"></div>
-				</div>
-				<div id="tem_controls">
-					<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role analyst_role lang">Delete Forms</button>
-					<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
-					<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
-				</div>
-			</span>
 
+			</div>
 		</div>
 
-		<div id="content" class="ui-grid-solo selected_templates">
-			<div class="ui-block-a">
-
-				<h2 class="lang" data-lang="tm_c_form">Create a Form</h2>
-				<p><a class="lang abutton alist" data-lang="tm_g_temp" href="blankform.xls">Download Template</a></p>
-				<div class="alistSmall"><a data-lang="m_help" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvdHREdEJTWEVmLTQ/edit" target="_blank"></a></div>
-				<div class="alistSmall"><a data-lang="tm_g_temp_i3" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvWlBoWkdiT3FrY1U/edit" target="_blank"></a></div> 
-				<div style="clear: both;">&nbsp;</div>
-				<p data-lang="tm_g_temp_i1" class="lang"></p>
-				
-				<p>
-				<span data-lang="tm_g_temp_i4" class="lang"></span>
-				<a href="http://build.opendatakit.org/">odkBuild</a>
-				</p>
-				<br>
-				<h2 data-lang="tm_ul_f" class="lang">Upload a Form</h2>
-				<form id="uploadForm" accept-charset="utf-8" 
-						action="TemplateUpload" 
-						enctype="multipart/form-data" method="POST" 
-						class="ui-body ui-body-a ui-corner-all">
-					<fieldset id="templateUpload">
-						<input id="projectId" type="hidden" name="projectId" value="" style="display:none;"/>
-						<input id="projectName" type="hidden" name="projectName" value="" style="display:none;"/>
-						<label for="templateName"><span data-lang="c_name" class="lang">Name</span>:</label>
-						<input id="templateName" type="text" name="templateName" maxlength="100" required /><br/>
-						<label for="file"><span data-lang="c_file" class="lang">File</span>:</label> 
-						<input type="file" name="tname" id="file" required/><br/>
-
-						<!--
-						<input type="checkbox" id="ident" name="ident" value="ident"/> <span data-lang="tm_si" class="lang">Specify survey identifier</span><br/> 
-						<input style="display:none;" id="surveyIdent" type="text" name="surveyIdent" maxlength="100" /><br/>
-						-->
-						
-						<button	class="abutton lang" data-lang="tm_up" type="submit" name="submitFile" value="Upload File" >Upload</button>
-					</fieldset>
-					<fieldset id="showtype" class="ui-widget-content">
+		<div class="col-md-5 col-xs-12" id="sidebar">
+			<div id="content" class="ui-grid-solo selected_templates">
+				<div class="ui-block-a">
+	
+					<h2 class="lang" data-lang="tm_c_form">Create a Form</h2>
+					<p><a class="btn btn-primary lang alist" type="button" data-lang="tm_g_temp" href="blankform.xls">Download Template</a></p>
+					<div class="alistSmall"><a data-lang="m_help" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvdHREdEJTWEVmLTQ/edit" target="_blank"></a></div>
+					<div class="alistSmall"><a data-lang="tm_g_temp_i3" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvWlBoWkdiT3FrY1U/edit" target="_blank"></a></div> 
+					<div style="clear: both;">&nbsp;</div>
+					<p data-lang="tm_g_temp_i1" class="lang"></p>
 					
-					</fieldset>
-				</form>
-
+					<p>
+					<span data-lang="tm_g_temp_i4" class="lang"></span>
+					<a href="http://build.opendatakit.org/">odkBuild</a>
+					</p>
+					<br>
+					<h2 data-lang="tm_ul_f" class="lang">Upload a Form</h2>
+					<form id="uploadForm" accept-charset="utf-8" 
+							action="TemplateUpload" 
+							enctype="multipart/form-data" method="POST" 
+							class="ui-body ui-body-a ui-corner-all">
+						<fieldset id="templateUpload">
+							<input id="projectId" type="hidden" name="projectId" value="" style="display:none;"/>
+							<input id="projectName" type="hidden" name="projectName" value="" style="display:none;"/>
+							<label for="templateName"><span data-lang="c_name" class="lang">Name</span>:</label>
+							<input id="templateName" type="text" name="templateName" maxlength="100" required /><br/>
+							<label for="file"><span data-lang="c_file" class="lang">File</span>:</label> 
+							<input type="file" name="tname" id="file" required/><br/>
+	
+							<!--
+							<input type="checkbox" id="ident" name="ident" value="ident"/> <span data-lang="tm_si" class="lang">Specify survey identifier</span><br/> 
+							<input style="display:none;" id="surveyIdent" type="text" name="surveyIdent" maxlength="100" /><br/>
+							-->
+							
+							<button	type="button" class="btn btn-primary lang" data-lang="tm_up" type="submit" name="submitFile" value="Upload File" >Upload</button>
+						</fieldset>
+						<fieldset id="showtype" class="ui-widget-content">
+						
+						</fieldset>
+					</form>
+	
+				</div>
 			</div>
 
 		</div>
@@ -167,11 +203,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 	</div>
 	
-	<!-- Popup to allow the user to select a survey -->
-	<div id="select_fwd_survey_pop" style="display:none;">	
-			<label for="fwd_rem_survey" data-lang="c_rem_f" class="lang">Remote Form</label>
-			<select id="fwd_rem_survey"></select><br/>
-	</div>
 	
 	<!-- Popup to allow the user to edit their own details -->
 	<div id="modify_me_popup" style="display:none;">
@@ -217,14 +248,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	</div>
 </div>
 
-<!-- JavaScript
-	
-	<script src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script src="/js/libs/responsivemobilemenu.js"></script>
-	<script src="/js/libs/tablesorter.js"></script>
-	<script src="/js/libs/jquery-ui-1.10.3.custom.min.js"></script> 
-	<script src="js/templateManagement.js" type="text/javascript"></script>
-	<script src="/js/app/common.js"></script> 
--->
+
 </body>
 </html>

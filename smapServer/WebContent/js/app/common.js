@@ -141,26 +141,48 @@ function saveCurrentProject(projectId, surveyId) {
 function updateUserDetails(data, getOrganisationsFn) {
 	
 	var groups = data.groups,
-		i;
+		i,
+		bootstrap_enabled = (typeof $().modal == 'function');
 	
 	if(data.language && data.language !== gUserLocale) {
 		localStorage.setItem('user_locale', data.language);
 		location.reload();
 	}
 	globals.gLoggedInUser = data;
-	$('#username').html(data.name).button({ label: data.name + " @" + data.organisation_name, 
-			icons: { primary: "ui-icon-person" }}).off().click(function(){
-		$('#me_edit_form')[0].reset();
+	
+	if(bootstrap_enabled) {
+
+			
+		$('#modify_me_popup').on('show.bs.modal', function (event) {
+			  var $this = $(this)
+			  $this.find('.modal-title').text(data.name + "@" + data.organisation_name)
+			  
+			  $('#me_edit_form')[0].reset();
+			  $('#reset_me_password_fields').show();
+			  $('#password_me_fields').hide();
+			  addLanguageOptions($('#me_language'), data.language);
+			  $('#me_name').val(data.name);
+			  $('#me_email').val(data.email);
+				
+			  $(".navbar-collapse").removeClass("in").addClass("collapse");	// Remove drop down menu
+			});
+
 		
-		$('#reset_me_password_fields').show();
-		$('#password_me_fields').hide();
-		addLanguageOptions($('#me_language'), data.language);
-		$('#me_name').val(data.name);
-		$('#me_email').val(data.email);
-		
-		$('#modify_me_popup').dialog("option", "title", data.name + "@" + data.organisation_name);
-		$('#modify_me_popup').dialog("open");
-	});
+	} else {
+		$('#username').html(data.name).button({ label: data.name + " @" + data.organisation_name, 
+				icons: { primary: "ui-icon-person" }}).off().click(function(){
+			$('#me_edit_form')[0].reset();
+			
+			$('#reset_me_password_fields').show();
+			$('#password_me_fields').hide();
+			addLanguageOptions($('#me_language'), data.language);
+			$('#me_name').val(data.name);
+			$('#me_email').val(data.email);
+			
+			$('#modify_me_popup').dialog("option", "title", data.name + "@" + data.organisation_name);
+			$('#modify_me_popup').dialog("open");
+		});
+	}
 	
 	/*
 	 * Show administrator only functions
@@ -239,7 +261,7 @@ function addLanguageOptions($elem, current) {
  * Enable the user profile button
  */
 function enableUserProfile () {
-	 // Initialse the dialog for the user to edit their own account details
+	 // Initialise the dialog for the user to edit their own account details
 	 $('#modify_me_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -308,6 +330,91 @@ function enableUserProfile () {
 		}
 	 );
 	 
+
+	 // Initialise the reset password checkbox
+	 $('#reset_me_password').click(function () {
+		 if($(this).is(':checked')) {
+			 $('#password_me_fields').show();
+		 } else {
+			 $('#password_me_fields').hide();
+		 }
+	 });
+}
+
+/*
+ * Enable the user profile button
+ */
+function enableUserProfileBS () {
+	 // Initialise the dialog for the user to edit their own account details
+	/*
+	 $('#modify_me_popup').dialog(
+		{
+			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
+			title:"User Profile",
+			show:"drop",
+			width:350,
+			height:350,
+			zIndex: 2000,
+			buttons: [
+		        {
+		        	text: "Cancel",
+		        	click: function() {
+		        		
+		        		$(this).dialog("close");
+		        	}
+		        }, {
+		        	text: "Save",
+		        	click: function() {
+
+		        		var user = globals.gLoggedInUser,
+		        			userList = [],
+		        			error = false,
+		        			userList;
+		        		
+		        		user.name = $('#me_name').val();
+		        		user.language = $('#me_language').val();
+		        		user.email = $('#me_email').val();
+		        		if($('#me_password').is(':visible')) {
+		        			user.password = $('#me_password').val();
+		        			if($('#me_password_confirm').val() !== user.password) {
+		        				error = true;
+		        				user.password = undefined;
+		        				alert("Passwords do not match");
+		        				$('#me_password').focus();
+		        				return false;
+		        			}
+		        		} else {
+		        			user.password = undefined;
+		        		}
+		        		
+		        		user.current_project_id = 0;	// Tell service to ignore project id and update other details
+		        		user.current_survey_id = 0;
+		        		saveCurrentUser(user);			// Save the updated user details to disk
+		        		$(this).dialog("close");
+		        	}, 
+		        }, {
+		        	text: "Logout",
+		        	click: function() {
+		        		jQuery.ajax({
+		        		    type: "GET",
+		        			cache: false,
+		        		    url: "/fieldManager/templateManagement.html",
+		        		    username: "shkdhasfkhd",
+		        		    password: "sieinkdnfkdf",
+		        		    error: function(data, status) {
+		        				  window.location.href="/";
+		        			},
+		        			success: function(data,status) {
+		        				window.location.href="/";
+		        			}
+		        		});
+		        		$(this).dialog("close");
+		        	}
+		        }
+			]
+		}
+	 );
+	 */
 
 	 // Initialise the reset password checkbox
 	 $('#reset_me_password').click(function () {
