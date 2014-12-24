@@ -68,9 +68,9 @@ import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.ForwardManager;
+import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.ODKForm;
-import org.smap.sdal.model.Forward;
+import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.XformsJavaRosa;
 
 import com.google.gson.Gson;
@@ -79,9 +79,11 @@ import com.google.gson.reflect.TypeToken;
 
 /*
  * Get the forwards set for this project
+ * Deprecated
+ * This service has been replaced by the notifications service
  */
 
-@Path("/forwards")
+@Path("/deprecated/forwards")
 public class ForwardList extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -120,8 +122,8 @@ public class ForwardList extends Application {
 		PreparedStatement pstmt = null;
 		
 		try {
-			ForwardManager fm = new ForwardManager();
-			ArrayList<Forward> fList = fm.getProjectForwards(connectionSD, pstmt, request.getRemoteUser(), projectId);
+			NotificationManager fm = new NotificationManager();
+			ArrayList<Notification> fList = fm.getProjectNotifications(connectionSD, pstmt, request.getRemoteUser(), projectId);
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(fList);
@@ -278,35 +280,35 @@ public class ForwardList extends Application {
 		    return response;
 		}
 		
-		Type type = new TypeToken<Forward>(){}.getType();
+		Type type = new TypeToken<Notification>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		Forward f = gson.fromJson(forwardString, type);
+		Notification f = gson.fromJson(forwardString, type);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
-		System.out.println("s_id: " + f.getSId());
-		System.out.println("Remote s_id: " + f.getRemoteIdent());
+		System.out.println("s_id: " + f.s_id);
+		System.out.println("Remote s_id: " + f.remote_s_ident);
 		
 		PreparedStatement pstmt = null;
 		
 		// Data level authorisation, is the user authorised to forward this survey
 		try {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), f.getSId(), false);
-			ForwardManager fm = new ForwardManager();
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), f.s_id, false);
+			NotificationManager fm = new NotificationManager();
 			if(fm.isFeedbackLoop(connectionSD, request.getServerName(), f)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
 
-			fm.addForward(connectionSD, pstmt, request.getRemoteUser(), f);
+			fm.addNotification(connectionSD, pstmt, request.getRemoteUser(), f);
 			
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
 			String msg = e.getMessage();
-			if(msg.contains("forwarddest")) {	// Unique key
+			if(msg != null && msg.contains("forwarddest")) {	// Unique key
 				response = Response.serverError().entity("Duplicate forwarding address").build();
 			} else {
 				response = Response.serverError().entity("SQL Error").build();
@@ -320,7 +322,7 @@ public class ForwardList extends Application {
 		} catch (Exception e) {
 			String msg = e.getMessage();
 			log.info(msg);
-			if(!msg.contains("forwarded to itself")) {
+			if(msg!= null && !msg.contains("forwarded to itself")) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 		    response = Response.serverError().entity(msg).build();
@@ -360,24 +362,24 @@ public class ForwardList extends Application {
 		    return response;
 		}
 		
-		Type type = new TypeToken<Forward>(){}.getType();
+		Type type = new TypeToken<Notification>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		Forward f = gson.fromJson(forwardString, type);
+		Notification f = gson.fromJson(forwardString, type);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
-		System.out.println("s_id: " + f.getSId());
-		System.out.println("Remote s_id: " + f.getRemoteIdent());
+		System.out.println("s_id: " + f.s_id);
+		System.out.println("Remote s_id: " + f.remote_s_ident);
 		
 		PreparedStatement pstmt = null;
 		
 		
 		try {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), f.getSId(), false);
-			ForwardManager fm = new ForwardManager();
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), f.s_id, false);
+			NotificationManager fm = new NotificationManager();
 			if(fm.isFeedbackLoop(connectionSD, request.getServerName(), f)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
@@ -459,8 +461,8 @@ public class ForwardList extends Application {
 			if(resultSet.next()) {
 				int sId = resultSet.getInt(1);
 				a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
-				ForwardManager fm = new ForwardManager();
-				fm.deleteForward(connectionSD, pstmt, request.getRemoteUser(), id);
+				NotificationManager fm = new NotificationManager();
+				fm.deleteNotification(connectionSD, pstmt, request.getRemoteUser(), id);
 			}
 			
 			response = Response.ok().build();

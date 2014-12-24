@@ -26,9 +26,9 @@ import javax.xml.xpath.XPathFactory;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.ForwardManager;
+import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.Forward;
+import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.HostUnreachableException;
 import org.smap.server.entities.MissingSurveyException;
@@ -370,15 +370,15 @@ public class SubscriberBatch {
 		// This type of subscriber is per link, that is 
 		// survey -> remote survey so create a subscriber object for each
 		// survey id and remote end point to be forwarded
-		ForwardManager fm = new ForwardManager();
-		ArrayList<Forward> forwards = fm.getEnabledForwards(connection, pstmt);
+		NotificationManager fm = new NotificationManager();
+		ArrayList<Notification> forwards = fm.getEnabledNotifications(connection, pstmt, true);
 		for(int i = 0; i < forwards.size(); i++) {
-			Forward f = forwards.get(i);
+			Notification f = forwards.get(i);
 			Subscriber sub = (Subscriber) new SmapForward();		
 			// Save the configuration document in the Subscriber
-			int sId = f.getSId();
-			String remote_sId = f.getRemoteIdent();
-			String remoteUrl = f.getRemoteHost();
+			int sId = f.s_id;
+			String remote_sId = f.remote_s_ident;
+			String remoteUrl = f.remote_host;
 			int idx = remoteUrl.lastIndexOf("//");
 			if(idx >= 0) {
 				String host = remoteUrl.substring(idx + 2);
@@ -387,9 +387,9 @@ public class SubscriberBatch {
 				sub.setSubscriberName("fwd_" + sId + "_" + host + remote_sId);
 				sub.setSurveyId(sId);	
 				sub.setSurveyIdRemote(remote_sId);
-				sub.setUser(f.getRemoteUser());
-				sub.setPassword(f.getRemotePassword());
-				sub.setSurveyNameRemote(f.getRemoteSName());
+				sub.setUser(f.remote_user);
+				sub.setPassword(f.remote_password);
+				sub.setSurveyNameRemote(f.remote_s_name);
 				sub.setHostname(remoteUrl);
 				subscribers.add(sub);	// Add the new subscriber to the list of subscribers
 			} else {

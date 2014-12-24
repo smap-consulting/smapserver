@@ -19,23 +19,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 define(['jquery','localise', 'common', 'globals',  'tablesorter', 'bootstrap'], 
 		function($, lang, common, globals, tablesorter, bootstrap) {
 	
-var	gSurveys,		// Only in this java script file
-	gForwards,
+var	gNotifications,		// Globals in this java script file
 	gUpdateFwdPassword,
-	gSelectedForward = -1,
-	gControlDelete,
-	gControlRestore,
-	gShowDeleted = false,
-	gSelectedTemplate,
+	gSelectedNotification = -1,
 	gRemote_host,
 	gRemote_user;	
 	
 $(document).ready(function() {
 	
 	localise.setlang();		// Localise HTML
-	
-
-	
+		
 	// Get the user details
 	getLoggedInUser(projectSet, false, true, undefined);
 
@@ -43,16 +36,29 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = 1;
-		$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
-		projectSet();
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
- 	 });
+		projectSet();
+ 	});
 	
-	// Forward
-	$('#add_forward').button().click(function () {
-		edit_forward(undefined);
-	});
+	// Set change function target
+	$('#target').change(function() {
+		var target = $(this).val();
+		
+		$('#forward_options, email_options').hide();
+		if(target === "email") {
+			$('#email_options').show();
+		} else if(target === "forward") {
+			$('#forward_options').show();
+		}		
+ 	});
+	$('#email_options').show();
 	
+	// Enable the save notifications function
+	$('#saveNotification').click(function(){saveNotification();});
+	
+	/*
+	 * Functions for forwarding
+	 */
 	$('#fwd_host').change(function(){
 		var host = $(this).val();
 		if(host.length === 0) {
@@ -71,165 +77,140 @@ $(document).ready(function() {
 		getRemoteSurveys();
 	});
 	
-	
-	
-	// Forward
-	// Initialse the forwarding dialog
-	/*
-	$('#add_forward_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title:localise.set["msg_add_forward"],
-			width:300,
-			height:400,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: localise.set["c_cancel"],
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: localise.set["c_save"],
-		        	click: function(event, ui) {
-		        		var forward = {},
-		        			forwardString,
-		        			error = false,
-		        			url,
-		        			remote_s_ident,
-		        			host,
-		        			$dialog;
-		        		
-		        		remote_s_ident = $('#fwd_rem_survey_id').val();
-		        		host = $('#fwd_host').val();
-		        		
-		        		// Remove any trailing slashes from the host
-		        		if(host.substr(-1) == '/') {
-		        	        host = host.substr(0, host.length - 1);
-		        	    }
-		        		
-		        		if(typeof remote_s_ident === "undefined" || remote_s_ident.length == 0) {
-		        			error = true;
-		        			alert(localise.set["msg_val_rf"]);
-		        			
-		        		} else if(host.substr(0, 4) !== "http") {
-		        			error = true;
-		        			alert(localise.set["msg_val_prot"]);
-		        			$('#fwd_host').focus();
-		        		}
-		        		
-		        		if(!error) {
-			        		forward.s_id = gSelectedTemplate;
-			        		forward.enabled = true;	
-			        		
-			        		forward.enabled = $('#fwd_enabled').is(':checked');
-			        		forward.remote_s_ident = remote_s_ident;
-			        		forward.remote_s_name = $('#fwd_rem_survey_nm').val();
-			        		forward.remote_user = $('#fwd_user').val();	
-			        		forward.remote_password = $('#fwd_password').val();
-			        		forward.remote_host = host;
-			        		forward.update_password = gUpdateFwdPassword;
-			        		
-			        		if(gSelectedForward !== -1) {
-			        			forward.id = gSelectedForward;
-			        			url = "/surveyKPI/forwards/update";
-			        		} else {
-			        			url = "/surveyKPI/forwards/add";
-			        			
-			        			// Save the values entered by the user
-			        			gRemote_host = host;
-				        		gRemote_user = $('#fwd_user').val();	
-			        		}
-			        		
-			        		forwardString = JSON.stringify(forward);
-			        		$dialog = $(this);
-			        		addHourglass();
-			        		$.ajax({
-			        			  type: "POST",
-			        			  contentType: "application/json",
-			        			  dataType: "json",
-			        			  async: false,
-			        			  url: url,
-			        			  data: { forward: forwardString },
-			        			  success: function(data, status) {
-			        				  removeHourglass();
-			        				  getForwardsForList(globals.gCurrentProject, gSelectedTemplate);
-			        				  $dialog.dialog("close");
-			        			  },
-			        			  error: function(xhr, textStatus, err) {
-		        						removeHourglass();
-		        						if(xhr.readyState == 0 || xhr.status == 0) {
-		        				              return;  // Not an error
-		        						} else {
-		        							alert(localise.set["msg_err_save"] + xhr.responseText);
-		        						}
-		        					}
-			        		});
-			        	    	
-		        		}
-		        	}	
-		        }
-			]
-		}
-	 );
-	
-	// Initialse the forwarding dialog
-	$('#forward_list_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title:localise.set["c_forward"],
-			width:'auto',
-			height:400,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: localise.set["c_done"],
-		        	click: function() {
-		        		
-		        	    $(this).dialog("close");	  
-		        	
-		        	}	
-		        }
-			]
-		}
-	 );
-	
-	// Initialse the forward select remote survey popup dialog
-	$('#select_fwd_survey_pop').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title:localise.set["msg_sel_form"],
-			width:300,
-			height:200,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: localise.set["c_done"],
-		        	click: function() {
-		        	    $(this).dialog("close");	  
-		        	
-		        	}	
-		        }
-			]
-		}
-	 );
-	*/
-	
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();
 	});
 	
 	enableUserProfileBS();
+});	
+	
+function projectSet() {
+	loadSurveys(globals.gCurrentProject, undefined, false, false);			// Get surveys
+	getNotifications(globals.gCurrentProject);
+}
 
-});
+/*
+ * Save a notification
+ */
+function saveNotification() {
+	
+	var notication,
+		url,
+		notificationString,
+		target = $('#target').val();
+	
+	if(target === "email") {
+		notification = saveEmail();
+	} else if(target === "forward") {
+		notification = saveForward();
+	}
+		
+	if(!notification.error) {
+		
+		notification.s_id = $('#survey').val();
+		notification.enabled = $('#nt_enabled').is(':checked');
+		
+		if(gSelectedNotification !== -1) {
+			notification.id = gSelectedNotification;
+			url = "/surveyKPI/notifications/update";
+		} else {
+			url = "/surveyKPI/notifications/add";
+		}
+			
+			
+		notificationString = JSON.stringify(notification);
+		$dialog = $(this);
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  async: false,
+			  url: url,
+			  data: { notification: notificationString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  getNotifications(globals.gCurrentProject);
+				  $('#addNotificationPopup').modal("hide");
+			  },
+			  error: function(xhr, textStatus, err) {
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						alert(localise.set["msg_err_save"] + xhr.responseText);
+					}
+				}
+		});
+			        	    	
+	}
+}	
 
-function remoteSurveyChanged() {
-	$('#fwd_rem_survey_id').val($('#fwd_rem_survey :selected').val());
-	$('#fwd_rem_survey_nm').val($('#fwd_rem_survey :selected').text());
+/*
+ * Process a save notification when the target is "email"
+ */
+function saveEmail() {
+	
+	var error = false,
+		notification = {};
+
+	notification.target = "email";
+	notification.notify_emails = $('#notify_emails').val();
+	
+	return notification;
+}
+
+/*
+ * Process a save notification when the target is "forward"
+ */
+function saveForward() {
+	
+	var error = false,
+		remote_s_ident,
+		host,
+		$dialog,
+		rem_survey_id,
+		rem_survey_nm,
+		notification = {};
+
+	host = $('#fwd_host').val();
+	remote_s_ident = $('#fwd_rem_survey :selected').val();
+	remote_s_nm = $('#fwd_rem_survey :selected').text();
+
+	// Remove any trailing slashes from the host
+	if(host.substr(-1) == '/') {
+	    host = host.substr(0, host.length - 1);
+	}
+
+	if(typeof remote_s_ident === "undefined" || remote_s_ident.length == 0) {
+		error = true;
+		alert(localise.set["msg_val_rf"]);
+		
+	} else if(host.substr(0, 4) !== "http") {
+		error = true;
+		alert(localise.set["msg_val_prot"]);
+		$('#fwd_host').focus();
+	}
+
+	if(!error) {
+		
+		notification.target = "forward";
+		notification.remote_s_ident = remote_s_ident;
+		notification.remote_s_name = remote_s_nm;
+		notification.remote_user = $('#fwd_user').val();	
+		notification.remote_password = $('#fwd_password').val();
+		notification.remote_host = host;
+		notification.update_password = gUpdateFwdPassword;
+		
+		// Save the values temporarily entered by the user
+		gRemote_host = host;
+		gRemote_user = $('#fwd_user').val();	
+		
+	} else {
+		notification.error = true;
+	}
+	
+	return notification;
 }
 
 function edit_forward(fwdIndex) {
@@ -252,37 +233,29 @@ function edit_forward(fwdIndex) {
 		
 		$('#fwd_host').val(forward.remote_host);
 		if(forward.enabled) {
-			$('#fwd_enabled').attr('checked','checked');
+			$('#nt_enabled').attr('checked','checked');
 		} else {
-			$('#fwd_enabled').removeAttr('checked');
+			$('#nt_enabled').removeAttr('checked');
 		}
 		gUpdateFwdPassword = false;
-		gSelectedForward = forward.id;
+		gSelectedNotification = forward.id;
 	} else {
 		$('#fwd_host').val(gRemote_host);	// Set the values to the ones last used
 		$('#fwd_user').val(gRemote_user);
 		
-		$('#fwd_enabled').attr('checked','checked');
+		$('#nt_enabled').attr('checked','checked');
 		gUpdateFwdPassword = true;
-		gSelectedForward = -1;
+		gSelectedNotification = -1;
 	}
-}
-
-function projectSet() {
-	getSurveysForList(globals.gCurrentProject);			// Get surveys
 }
 
 /*
  * Load the surveys from the server and populate the survey table
  */
-function getSurveysForList(projectId) {
+function getNotifications(projectId) {
 
 	if(projectId != -1) {
-		var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true";
-		
-		if(globals.gIsAdministrator || globals.gIsAnalyst) {
-			url+="&deleted=true";
-		}
+		var url="/surveyKPI/notifications/" + projectId;
 		
 		addHourglass();
 		$.ajax({
@@ -290,261 +263,30 @@ function getSurveysForList(projectId) {
 			dataType: 'json',
 			cache: false,
 			success: function(data) {
-				gSurveys = data;
-				completeSurveyList();
 				removeHourglass();
+				gNotifications = data;
+				if(data) {
+					updateNotificationList(data);
+				}
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
-					console.log("Error: Failed to get list of surveys: " + err);
+					console.log("Error: Failed to get list of notifications: " + err);
 				}
 			}
 		});	
 	}
 }
 
-/*
- * Forward
- * Load the forwards from the server and populate the forward table
- */
-function getForwardsForList(projectId, surveyId) {
-
-	if(projectId != -1) {
-		
-		function getForwardsForListAsync(sId, pId) {
-			var url="/surveyKPI/forwards/" + pId;
-			addHourglass();
-			$.ajax({
-				url: url,
-				dataType: 'json',
-				cache: false,
-				success: function(data) {
-					removeHourglass();
-					gForwards = data;
-					setForwardList(sId);
-				},
-				error: function(xhr, textStatus, err) {
-					removeHourglass();
-					if(xhr.readyState == 0 || xhr.status == 0) {
-			              return;  // Not an error
-					} else {
-						console.log("Error: Failed to get list of forwards: " + err);
-					}
-				}
-			});	
-		}
-		
-		getForwardsForListAsync(surveyId, projectId);
-	}
-}
 
 
 /*
- * Fill in the survey list
+ * Delete a notification
  */
-function completeSurveyList() {
-
-	gControlDelete = 0;
-	gControlRestore = 0;
-	$('#tem_controls').find('button').button("disable");
-	
-	var $surveys = $('#survey_table'),
-	i, survey,
-	h = [],
-	idx = -1;
-	
-	h[++idx] = '<table class="tablesorter">';
-	h[++idx] = '<thead>';
-	h[++idx] = '<tr>';
-	h[++idx] = '<th></th>';
-	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
-	h[++idx] = '<th>' + localise.set["c_block"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_download"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_forward"] + '</th>';
-	h[++idx] = '</tr>';
-	h[++idx] = '</thead>';
-	h[++idx] = '<tbody>';
-
-	for(i = 0; i < gSurveys.length; i++) {
-		survey = gSurveys[i];
-		if(gShowDeleted || !survey.deleted) {
-			h[++idx] = '<tr';
-			if(survey.deleted) {
-				h[++idx] = ' class="deleted"';
-			} else if(survey.blocked) {
-				h[++idx] = ' class="blocked"';
-			}
-			h[++idx] = '>';
-			h[++idx] = '<td class="control_td"><input type="checkbox" name="controls" value="';
-			h[++idx] = i;
-			h[++idx] = '"></td>';
-			h[++idx] = '<td class="displayName">';
-			h[++idx] = '<a class="displayName" href="/edit.html?id=';
-			h[++idx] = survey.id;
-			h[++idx] = '&name=';
-			h[++idx] = encodeURI(survey.displayName);
-			h[++idx] = '">';
-			h[++idx] = survey.displayName;
-			h[++idx] = '</a></td>';
-			h[++idx] = '<td class="control_block"><input type="checkbox" name="block" value="';
-			h[++idx] = survey.id;
-			h[++idx] = '" ';
-			if(survey.blocked) {
-				h[++idx] = 'checked="checked"';
-			}
-			h[++idx] = '></td>';
-			h[++idx] = '<td>';
-			h[++idx] = '<button class="pdf_td" type="button" value="';
-			h[++idx] = survey.id;
-			h[++idx] = '"><img src="images/downarrow.png" height="16" width="16"></button>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = '<button class="forward_td" type="button" value="';
-			h[++idx] = survey.id;
-			h[++idx] = '"><img src="images/uparrow.png" height="16" width="16"></button>';
-			h[++idx] = '</td>';
-			h[++idx] = '</tr>';	
-		}
-	}
-
-	h[++idx] = '</tbody>';
-	h[++idx] = '</table>';
-	
-	$surveys.empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
-	
-	$('.control_td').find('input').click(function() {
-
-		if($(this).is(':checked')) {
-			if(gSurveys[$(this).val()].deleted === false) {
-				++gControlDelete;
-			} else {
-				++gControlRestore;
-			}
-
-			if(gControlDelete === 1) {
-				$('#delete_survey').button("enable");
-			}
-			if(gControlRestore === 1) {
-				$('#un_delete_survey').button("enable");
-				$('#erase_survey').button("enable");
-			}
-		} else {
-
-			if(gSurveys[$(this).val()].deleted === false) {
-				--gControlDelete;
-			} else {
-				--gControlRestore;
-			}
-			if(gControlDelete === 0) {
-				$('#delete_survey').button("disable");
-			}
-			if(gControlRestore === 0) {
-				$('#un_delete_survey').button("disable");
-				$('#erase_survey').button("disable");
-			}
-		}
- 
-	});
-	
-	$('.control_block').find('input').click(function() {
-
-		var $template,
-			$this = $(this),
-			id;
-		
-		$template = $this.closest('tr');
-		id=$this.val();
-		
-		if($this.is(':checked')) {	
-			$template.addClass('blocked');
-			executeBlock(id, true);
-		} else {
-			$template.removeClass('blocked');
-			executeBlock(id, false);
-		}
- 
-	});
-	
-
-	
-	$('.forward_td').button().click(function(e) {
-		var selTempName = $(this).parent().siblings('.displayName').text();
-		gSelectedTemplate = $(this).val();
-		if(typeof gForwards === "undefined") {
-			getForwardsForList(globals.gCurrentProject, gSelectedTemplate);	
-		} else {
-			setForwardList(gSelectedTemplate);
-		}
-		$('#forward_list_popup .form_name').html(selTempName);
-		//$('#forward_list_popup').dialog("open");
-	});
-	
-	$('.sEdit').button().click(function(e) {
-	});
-	
-}
-
-/*
- * Fill in the forward list
- * Forward
- */
-function setForwardList(sId) {
-
-	console.log("setForwardList: " + sId);
-	console.log(gForwards);
-	
-	var $forwards = $('#forward_table tbody'),
-		i, forward,
-		h = [],
-		idx = -1;
-
-	for(i = 0; i < gForwards.length; i++) {
-		forward = gForwards[i];
-		if(forward.s_id == sId) {
-			h[++idx] = '<tr>';
-			h[++idx] = '<td>'; 
-			h[++idx] = forward.remote_host;
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = forward.remote_s_name;
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = forward.remote_user;
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = forward.enabled ? 'yes' : 'no';
-			h[++idx] = '</td>';	
-			h[++idx] = '<td>';
-			h[++idx] = '<button class="fwd_edit" type="button" value="';
-			h[++idx] = i;
-			h[++idx] = '">' + localise.set["c_edit"] + '</button>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = '<button class="fwd_delete" type="button" value="';
-			h[++idx] = i;
-			h[++idx] = '">' + localise.set["c_delete"] + '</button>';
-			h[++idx] = '</td>';
-			h[++idx] = '</tr>';	
-		}
-	}
-	
-	$forwards.empty().append(h.join(''));
-	$('#forward_table').find('table').tablesorter({ widgets: ['zebra']});
-	$('.fwd_edit').button().click(function(){
-		edit_forward($(this).val());
-	});
-	$('.fwd_delete').button().click(function(){
-		delete_forward($(this).val());
-	});
-		
-}
-
-function delete_forward(index) {
-	
-	var id = gForwards[index].id;
+function delete_notification(id) {
 	
 	addHourglass();
 	$.ajax({
@@ -552,10 +294,10 @@ function delete_forward(index) {
 		  contentType: "application/json",
 		  dataType: "json",
 		  async: false,
-		  url: "/surveyKPI/forwards/" + id,
+		  url: "/surveyKPI/notifications/" + id,
 		  success: function(data, status) {
 			  removeHourglass();
-			  getForwardsForList(globals.gCurrentProject, gSelectedTemplate);
+			  getNotifications(globals.gCurrentProject);
 		  },
 		  error: function(xhr, textStatus, err) {
 				removeHourglass();
@@ -593,215 +335,7 @@ function updateRemoteSurveys(surveyList) {
 		
 }
 
-/*
- * Permanently erase a survey
- */
-function surveyErase() {
-	
-	var surveys = [],
-		decision = false,
-		h = [],
-		i = -1,
-		index = 0,
-		surveyIdx;
-	
-	$('.control_td').find('input:checked').each(function() {
-		surveyIdx = $(this).val();
-		if(gSurveys[surveyIdx].deleted === true) {
-			surveys[index++] = {id: gSurveys[surveyIdx].id, name: gSurveys[surveyIdx].displayName};
-			h[++i] = gSurveys[surveyIdx].displayName;
-		}
-	});
-	
-	decision = confirm("Are you sure you want to permanently erase these surveys and all of their data?\n" + h.join());	
-	
-	if (decision == true) {
-		for(i = 0; i < surveys.length; i++) {
-			deleteTemplate(surveys[i].id, surveys[i].name, true);
-		}
-	}
-}
 
-/*
- * Restore soft deleted surveys
- */
-function surveyUnDelete() {
-	
-	var surveys = [],
-		decision = false,
-		h = [],
-		i = -1,
-		index = 0;
-
-	$('.control_td').find('input:checked').each(function() {
-		var surveyIdx = $(this).val();
-		if(gSurveys[surveyIdx].deleted === true) {
-			surveys[index++] = {id: gSurveys[surveyIdx].id, name: gSurveys[surveyIdx].displayName};
-			h[++i] = gSurveys[surveyIdx].displayName;
-		}
-	});
-
-	decision = confirm("Are you sure you want to restore these surveys?\n" + h.join());
-
-	if (decision == true) {
-		for(i = 0; i < surveys.length; i++) {
-			executeUnDelete(surveys[i].id, surveys[i].name);
-		}
-	}
-}
-
-/*
- * Soft delete surveys
- */
-function surveyDelete() {
-	
-	var surveys = [],
-		decision = false,
-		h = [],
-		i = -1,
-		index = 0;
-
-	$('.control_td').find(':checked').each(function() {
-		var surveyIdx = $(this).val();
-		if(gSurveys[surveyIdx].deleted === false) {
-			surveys[index++] = {id: gSurveys[surveyIdx].id, name: gSurveys[surveyIdx].displayName};
-			h[++i] = gSurveys[surveyIdx].displayName;
-		}
-	});
-
-	decision = confirm("Are you sure you want to delete these surveys?\n" + h.join());
-
-	if (decision == true) {
-		for(i = 0; i < surveys.length; i++) {
-			deleteTemplate(surveys[i].id, surveys[i].name, false);
-		}
-	}
-}
-
-
-function deleteTemplate(template, name, hard) {
-
-	// Check for results associated with this template
-	var resultCountURL = "/surveyKPI/survey/" + template + "/getMeta";
-	
-	if(hard) {
-		addHourglass();
-		$.ajax({
-			type : 'Get',
-			url : resultCountURL,
-			dataType : 'json',
-			cache: false,
-			error : function() {
-				removeHourglass();
-				executeDelete(template, true, hard);	// Just delete as this is what the user has requested
-
-			},
-			success : function(response) {
-				var totalRows = 0,
-					msg, decision;
-				
-				removeHourglass();
-	
-				$.each(response.forms, function(index,value) {
-					totalRows += value.rows;
-				});
-				
-				if (totalRows == 0) {							
-					executeDelete(template, true, hard);	// Delete survey template and data tables
-				} else {
-					
-					msg = "There are " +
-						totalRows +
-						"data rows submitted for " +
-						name +
-						". Are you sure you want to delete this data?";
-					
-					decision = confirm(msg);
-					if (decision == true) {
-						executeDelete(template, true, hard);
-					}
-				}
-			}
-		});
-	} else {
-		// This is just a soft delete, no need to worry the user about data
-		executeDelete(template, true, hard);
-	}
-}
-
-// Delete the template
-function executeDelete(template, delTables, hard) {
-	
-	var delURL = "/surveyKPI/survey/" + template;
-
-	if(delTables) {
-		delURL += "?tables=yes&delData=true&hard=" + hard;
-	} else {
-		delURL += "?hard=" + hard;
-	}
-	
-	addHourglass();
-	$.ajax({
-		type : 'DELETE',
-		url : delURL,
-		error : function() {
-			removeHourglass();
-			alert(localise.set["msg_err_del"]);
-		},
-		success : function() {
-			removeHourglass();
-			var projectId = $('#project_name option:selected').val();
-			getSurveysForList(projectId);
-		}
-	});
-}
-
-/*
- * Un-Delete the template
- * TODO: Using DELETE to un-delete has to violate innumerable laws of REST!!!!
- * TODO: Presumably the use of DELETE to do a soft delete is also problematic
- */
-
-function executeUnDelete(template) {
-	
-	var url = "/surveyKPI/survey/" + template + "?undelete=true";
-	
-	addHourglass();
-	$.ajax({
-		type : 'DELETE',
-		url : url,
-		error : function() {
-			removeHourglass();
-			alert(localise.set["msg_err_res"]);
-		},
-		success : function() {
-			var projectId = $('#project_name option:selected').val();
-			getSurveysForList(projectId);
-			removeHourglass();
-		}
-	});
-}
-
-//Block or ublock the template
-function executeBlock(template, set) {
-	
-	var blockURL = "/surveyKPI/survey/" + template + "/block?set=" + set;
-	
-	addHourglass();	
-	$.ajax({
-		type : 'POST',
-		url : blockURL,
-		error : function() {
-			removeHourglass();
-			alert(localise.set["msg_err_block"]);
-		},
-		success : function() {
-			removeHourglass();
-			var projectId = $('#project_name option:selected').val();
-			getSurveysForList(projectId);
-		}
-	});
-}
 
 /*
  * Get available surveys from a remote host
@@ -833,10 +367,6 @@ function getRemoteSurveys() {
 		return;
 	}
 	
-	
-	$('#select_fwd_survey_pop h1').html("Retrieving survey");
-	//$('#select_fwd_survey_pop').dialog("open");
-	
 	remoteString = JSON.stringify(remote);
 	addHourglass();
 	$.ajax({
@@ -865,6 +395,71 @@ function getRemoteSurveys() {
 					alert(localise.set["msg_err_get_f"] + msg);
 				}
 			}
+	});
+
+}
+
+/*
+ * Update the notification list
+ */
+function updateNotificationList(data) {
+
+	var $selector=$('#notification_list'),
+		i, 
+		h = [],
+		idx = -1,
+		updateCurrentProject = true;
+	
+	for(i = 0; i < data.length; i++) {
+		
+		h[++idx] = '<div class="row">';
+		
+		// survey
+		h[++idx] = '<div class="col-md-3 col-xs-12">';
+		h[++idx] = '<div class="grid-border">';
+		h[++idx] = data[i].s_name;
+		h[++idx] = '</div>';
+		h[++idx] = '</div>';	// col end
+		
+		// target
+		h[++idx] = '<div class="col-md-3 col-xs-12">';
+		h[++idx] = '<div class="grid-border">';
+		h[++idx] = data[i].target;
+		h[++idx] = '</div>';
+		h[++idx] = '</div>';	// col end
+		
+		// details
+		h[++idx] = '<div class="col-md-3 col-xs-12">';
+		h[++idx] = '<div class="grid-border">';
+		if(data[i].target === "email") {
+			h[++idx] = data[i].notify_emails;
+		} else if(data[i].target === "forward"){
+			h[++idx] = data[i].remote_host;
+			h[++idx] = ':';
+			h[++idx] = data[i].remote_s_name;
+		}
+		h[++idx] = '</div>';
+		h[++idx] = '</div>';	// col end
+		
+		// actions
+		h[++idx] = '<div class="col-md-3 col-xs-12">';
+		h[++idx] = '<div class="grid-border">';
+		h[++idx] = '<button type="button" data-id="';
+		h[++idx] = data[i].id;
+		h[++idx] = '" class="btn btn-default btn-sm rm_not">';
+		h[++idx] = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '</div>';
+		h[++idx] = '</div>';	// col end
+		
+
+		
+		h[++idx] = '</div>';	// row end
+	}
+	
+	$selector.empty().append(h.join(''));
+	$(".rm_not", $selector).click(function(){
+		delete_notification($(this).data("id"));
 	});
 
 }

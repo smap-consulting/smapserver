@@ -63,3 +63,14 @@
     padding-top: 10px;
     padding-bottom: 10px;
 }
+
+// Format Grids
+#notifications .grid-border {
+	border-right-style: solid;
+	border-left-style: solid;
+	border-width: 1px;
+}
+
+.glyphicon-remove {
+	color:red;
+}

@@ -339,11 +339,13 @@ CREATE TABLE forward (
 	id INTEGER DEFAULT NEXTVAL('forward_seq') CONSTRAINT pk_forward PRIMARY KEY,
 	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
 	enabled boolean,
+	target text,
 	remote_s_id text,
 	remote_s_name text,
 	remote_user text,
 	remote_password text,
-	remote_host text
+	remote_host text,
+	notify_emails					-- TODO replace with links to a user management system
 	);
 ALTER TABLE forward OWNER TO ws;
 CREATE UNIQUE INDEX ForwardDest ON forward(s_id, remote_s_id, remote_host);

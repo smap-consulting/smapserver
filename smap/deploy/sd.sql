@@ -200,3 +200,8 @@ alter table assignments add constraint assignee FOREIGN KEY (assignee)
 	REFERENCES users (id) MATCH SIMPLE
 	ON UPDATE NO ACTION ON DELETE CASCADE;
 
+-- Upgrade to:  14.12 from 14.11 =======
+alter table forward add column target text;
+alter table forward add column notify_emails text;
+update forward set target = 'forward';
+

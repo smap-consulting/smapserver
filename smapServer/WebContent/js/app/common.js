@@ -345,77 +345,58 @@ function enableUserProfile () {
  * Enable the user profile button
  */
 function enableUserProfileBS () {
-	 // Initialise the dialog for the user to edit their own account details
+	
+
 	/*
-	 $('#modify_me_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			title:"User Profile",
-			show:"drop",
-			width:350,
-			height:350,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: "Save",
-		        	click: function() {
-
-		        		var user = globals.gLoggedInUser,
-		        			userList = [],
-		        			error = false,
-		        			userList;
-		        		
-		        		user.name = $('#me_name').val();
-		        		user.language = $('#me_language').val();
-		        		user.email = $('#me_email').val();
-		        		if($('#me_password').is(':visible')) {
-		        			user.password = $('#me_password').val();
-		        			if($('#me_password_confirm').val() !== user.password) {
-		        				error = true;
-		        				user.password = undefined;
-		        				alert("Passwords do not match");
-		        				$('#me_password').focus();
-		        				return false;
-		        			}
-		        		} else {
-		        			user.password = undefined;
-		        		}
-		        		
-		        		user.current_project_id = 0;	// Tell service to ignore project id and update other details
-		        		user.current_survey_id = 0;
-		        		saveCurrentUser(user);			// Save the updated user details to disk
-		        		$(this).dialog("close");
-		        	}, 
-		        }, {
-		        	text: "Logout",
-		        	click: function() {
-		        		jQuery.ajax({
-		        		    type: "GET",
-		        			cache: false,
-		        		    url: "/fieldManager/templateManagement.html",
-		        		    username: "shkdhasfkhd",
-		        		    password: "sieinkdnfkdf",
-		        		    error: function(data, status) {
-		        				  window.location.href="/";
-		        			},
-		        			success: function(data,status) {
-		        				window.location.href="/";
-		        			}
-		        		});
-		        		$(this).dialog("close");
-		        	}
-		        }
-			]
-		}
-	 );
+	 * User logout
 	 */
+	$('#userProfileLogout').click(function() {
+		jQuery.ajax({
+		    type: "GET",
+			cache: false,
+		    url: "/fieldManager/templateManagement.html",
+		    username: "shkdhasfkhd",
+		    password: "sieinkdnfkdf",
+		    error: function(data, status) {
+				  window.location.href="/";
+			},
+			success: function(data,status) {
+				window.location.href="/";
+			}
+		});
+	});
+	
+	/*
+	 * Save the user profile
+	 */
+	$('#userProfileSave').click(function() {
+		var user = globals.gLoggedInUser,
+		userList = [],
+		error = false,
+		userList;
+		
+		user.name = $('#me_name').val();
+		user.language = $('#me_language').val();
+		user.email = $('#me_email').val();
+		if($('#me_password').is(':visible')) {
+			user.password = $('#me_password').val();
+			if($('#me_password_confirm').val() !== user.password) {
+				error = true;
+				user.password = undefined;
+				alert("Passwords do not match");
+				$('#me_password').focus();
+				return false;
+			}
+		} else {
+			user.password = undefined;
+		}
+		
+		user.current_project_id = 0;	// Tell service to ignore project id and update other details
+		user.current_survey_id = 0;
+		saveCurrentUser(user);			// Save the updated user details to disk	 
+	});
 
+	
 	 // Initialise the reset password checkbox
 	 $('#reset_me_password').click(function () {
 		 if($(this).is(':checked')) {

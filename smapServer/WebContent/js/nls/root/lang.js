@@ -16,8 +16,8 @@ define({
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
 	"m_locations": "Locations",
-	"m_section": "Sectionxx",
-	"m_notify": "Notificationsxx",
+	"m_section": "Section",
+	"m_notify": "Notifications",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -87,7 +87,8 @@ define({
 	"c_layers": "Layers",
 	"c_settings": "Settings",
 	"c_start": "Start",
-	"c_back": "Backxx",
+	"c_back": "Back",
+	"c_target": "Target",
 	
 	// File Types
 	"ft_xls": "XLS Form",
@@ -153,8 +154,8 @@ define({
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 		
 	// template load errors
-	"e_u_err": "Form Upload Errorxx",
-	"e_u_exists": "exists in projectxx",
+	"e_u_err": "Form Upload Error",
+	"e_u_exists": "exists in project",
 	"e_h_rename": "Change the name of the form or delete the old form",
 	"e_u_sm_no_list": "select_multiple question without list name",
 	"e_h_sm_no_list": "Check the survey sheet. Make sure you have specified a list name for all the select_multiple questions",

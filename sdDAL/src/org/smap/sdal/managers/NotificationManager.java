@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import org.smap.sdal.model.Forward;
+import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.Survey;
 
 /*****************************************************************************
@@ -32,24 +32,33 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Manage the table that stores details on the forwarding of data onto other systems
  */
-public class ForwardManager {
+public class NotificationManager {
 	
 	private static Logger log =
-			 Logger.getLogger(ForwardManager.class.getName());
+			 Logger.getLogger(NotificationManager.class.getName());
 	
 	/*
-	 * Get all Enabled Forwards
-	 * Used by Subscriber to do the actual forwarding
+	 * Get all Enabled notifications
+	 * Used by Subscriber to do forwarding
 	 */
-	public ArrayList<Forward> getEnabledForwards(Connection sd, PreparedStatement pstmt) throws SQLException {
+	public ArrayList<Notification> getEnabledNotifications(Connection sd, 
+			PreparedStatement pstmt, boolean forward_only) throws SQLException {
 		
-		ArrayList<Forward> forwards = new ArrayList<Forward>();	// Results of request
+		ArrayList<Notification> forwards = new ArrayList<Notification>();	// Results of request
 		
 		ResultSet resultSet = null;
 		String sql = "select f.id, f.s_id, f.enabled, " +
-				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user, f.remote_password " +
+				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user, " +
+				"f.target, s.display_name, f.notify_emails, " +
+				"f.remote_password " +
 				" from forward f " +
-				" where f.enabled = 'true';";
+				" where f.enabled = 'true' ";
+		
+		if(forward_only) {
+			sql += " and f.target = 'forward'";
+		} else {
+			sql += " and f.target != 'forward'";
+		}
 		
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		pstmt = sd.prepareStatement(sql);	 			
@@ -61,25 +70,27 @@ public class ForwardManager {
 	}
 	
 	/*
-	 * Add a record to the forwarding table
+	 * Add a record to the notification table
 	 */
-	public void addForward(Connection sd, PreparedStatement pstmt, String user, 
-			Forward f) throws Exception {
+	public void addNotification(Connection sd, PreparedStatement pstmt, String user, 
+			Notification n) throws Exception {
 					
 			String sql = "insert into forward(" +
 					" s_id, enabled, " +
-					" remote_s_id, remote_s_name, remote_host, remote_user, remote_password) " +
-					" values (?, ?, ?, ?, ?, ?, ?); ";
+					" remote_s_id, remote_s_name, remote_host, remote_user, remote_password, notify_emails, target) " +
+					" values (?, ?, ?, ?, ?, ?, ?, ?, ?); ";
 	
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 			pstmt = sd.prepareStatement(sql);	 			
-			pstmt.setInt(1, f.getSId());
-			pstmt.setBoolean(2, f.isEnabled());
-			pstmt.setString(3, f.getRemoteIdent());
-			pstmt.setString(4, f.getRemoteSName());
-			pstmt.setString(5, f.getRemoteHost());
-			pstmt.setString(6, f.getRemoteUser());
-			pstmt.setString(7, f.getRemotePassword());
+			pstmt.setInt(1, n.s_id);
+			pstmt.setBoolean(2, n.enabled);
+			pstmt.setString(3, n.remote_s_ident);
+			pstmt.setString(4, n.remote_s_name);
+			pstmt.setString(5, n.remote_host);
+			pstmt.setString(6, n.remote_user);
+			pstmt.setString(7, n.remote_password);
+			pstmt.setString(8, n.notify_emails);
+			pstmt.setString(9, n.target);
 			pstmt.executeUpdate();
 	}
 	
@@ -87,10 +98,10 @@ public class ForwardManager {
 	 * Update a record to the forwarding table
 	 */
 	public void updateForward(Connection sd, PreparedStatement pstmt, String user, 
-			Forward f) throws Exception {
+			Notification n) throws Exception {
 			
 		String sql = null;
-		if(f.isUpdatePassword()) {
+		if(n.update_password) {
 			sql = "update forward set " +
 					" s_id = ?, " +
 					" enabled = ?, " +
@@ -114,28 +125,28 @@ public class ForwardManager {
 
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		pstmt = sd.prepareStatement(sql);	 			
-		pstmt.setInt(1, f.getSId());
-		pstmt.setBoolean(2, f.isEnabled());
-		pstmt.setString(3, f.getRemoteIdent());
-		pstmt.setString(4, f.getRemoteSName());
-		pstmt.setString(5, f.getRemoteHost());
-		pstmt.setString(6, f.getRemoteUser());
-		if(f.isUpdatePassword()) {
-			pstmt.setString(7, f.getRemotePassword());
-			pstmt.setInt(8, f.getId());
+		pstmt.setInt(1, n.s_id);
+		pstmt.setBoolean(2, n.enabled);
+		pstmt.setString(3, n.remote_s_ident);
+		pstmt.setString(4, n.remote_s_name);
+		pstmt.setString(5, n.remote_host);
+		pstmt.setString(6, n.remote_user);
+		if(n.update_password) {
+			pstmt.setString(7, n.remote_password);
+			pstmt.setInt(8, n.id);
 		} else {
-			pstmt.setInt(7, f.getId());
+			pstmt.setInt(7, n.id);
 		}
-		log.info("SQL: " + sql + " id:" + f.getId());
+		log.info("SQL: " + sql + " id:" + n.id);
 		pstmt.executeUpdate();
 	}
 	
-	public boolean isFeedbackLoop(Connection con, String server, Forward f) throws SQLException {
+	public boolean isFeedbackLoop(Connection con, String server, Notification n) throws SQLException {
 		boolean loop = false;
 		
 		String remote_host = null;;
 		
-		String [] hostParts = f.getRemoteHost().split("//");
+		String [] hostParts = n.remote_host.split("//");
 		remote_host = hostParts[1];
 		
 		System.out.println("Current server is: " + server + " : " + remote_host);
@@ -144,12 +155,12 @@ public class ForwardManager {
 		PreparedStatement pstmt;
 		String sql = "select ident from survey where s_id = ?;";
 		pstmt = con.prepareStatement(sql);
-		pstmt.setInt(1, f.getSId());
+		pstmt.setInt(1, n.s_id);
 		ResultSet rs = pstmt.executeQuery(); 
 		if(rs.next()) {
 			String local_ident = rs.getString(1);
-			System.out.println("Local ident is: " + local_ident + " : " + f.getRemoteIdent());
-			if(local_ident != null && local_ident.equals(f.getRemoteIdent()) && remote_host.equals(server)) {
+			System.out.println("Local ident is: " + local_ident + " : " + n.remote_s_ident);
+			if(local_ident != null && local_ident.equals(n.remote_s_ident) && remote_host.equals(server)) {
 				loop = true;
 			}
 		}
@@ -162,15 +173,16 @@ public class ForwardManager {
 	 * Get all Forwards that are accessible by the requesting user and in a specific project
 	 * Used by Subscriber to do the actual forwarding
 	 */
-	public ArrayList<Forward> getProjectForwards(Connection sd, PreparedStatement pstmt,
+	public ArrayList<Notification> getProjectNotifications(Connection sd, PreparedStatement pstmt,
 			String user,
 			int projectId) throws SQLException {
 		
-		ArrayList<Forward> forwards = new ArrayList<Forward>();	// Results of request
+		ArrayList<Notification> notifications = new ArrayList<Notification>();	// Results of request
 		
 		ResultSet resultSet = null;
 		String sql = "select f.id, f.s_id, f.enabled, " +
-				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user" +
+				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user," +
+				" f.target, s.display_name, f.notify_emails" +
 				" from forward f, survey s, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -187,16 +199,16 @@ public class ForwardManager {
 		log.info("Project Forwards: " + sql + " : " + user + " : " + projectId);
 		resultSet = pstmt.executeQuery();
 
-		addToList(resultSet, forwards, false);
+		addToList(resultSet, notifications, false);
 
-		return forwards;
+		return notifications;
 		
 	}
 	
 	/*
-	 * Delete the forward
+	 * Delete the notification
 	 */
-	public void deleteForward(Connection sd, PreparedStatement pstmt,
+	public void deleteNotification(Connection sd, PreparedStatement pstmt,
 			String user,
 			int id) throws SQLException {
 		
@@ -211,26 +223,28 @@ public class ForwardManager {
 		
 	}
 
-	private void addToList(ResultSet resultSet, ArrayList<Forward> forwards, boolean getPassword) throws SQLException {
+	private void addToList(ResultSet resultSet, ArrayList<Notification> notifications, boolean getPassword) throws SQLException {
 		
 		while (resultSet.next()) {								
 
 			String remote_s_id = resultSet.getString(4);
-			if(remote_s_id != null) {			// Probably null remote survey idents are just caused by bad data during development and this can be removed
-				Forward f = new Forward();
-				f.setId(resultSet.getInt(1));
-				f.setSId(resultSet.getInt(2));
-				f.setEnabled(resultSet.getBoolean(3));
-				f.setRemoteIdent(remote_s_id);
-				f.setRemoteSName(resultSet.getString(5));
-				f.setRemoteHost(resultSet.getString(6));
-				f.setRemoteUser(resultSet.getString(7));
-				if(getPassword) {
-					f.setRemotePassword(resultSet.getString(8));
-				}
-			
-			forwards.add(f);
+			Notification n = new Notification();
+			n.id = resultSet.getInt(1);
+			n.s_id = resultSet.getInt(2);
+			n.enabled = resultSet.getBoolean(3);
+			n.remote_s_ident = remote_s_id;
+			n.remote_s_name = resultSet.getString(5);
+			n.remote_host = resultSet.getString(6);
+			n.remote_user = resultSet.getString(7);
+			n.target = resultSet.getString(8);
+			n.s_name = resultSet.getString(9);
+			n.notify_emails = resultSet.getString(10);
+			if(getPassword) {
+				n.remote_password = resultSet.getString(11);
 			}
+			
+			notifications.add(n);
+			
 		} 
 	}
 }

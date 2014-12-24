@@ -22,11 +22,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-	<!--  <link rel=StyleSheet href="/css/smap.css" type="text/css"> -->
-	<!--  <link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" /> -->
-	<!--  <link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/> -->
-	<!--  <link rel="stylesheet" href="/css/jquery.contextMenu.css" type="text/css"/> -->
-	
 	<link rel="stylesheet" href="/css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
@@ -92,137 +87,198 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 <div class="container">
 <div class="row">	   	
-	   	<div class="col-md-6 col-md-offset-1 col-xs-12" id="sidebar">
+	   	<div class="col-md-6 col-xs-12" id="sidebar">
 				<div id="filters">
-					<form id="service_filter_form">
-						<label class="lang" data-lang="c_project" for="project_name">Select Project</label>
-						<select class="project_list form-control" id="project_name"></select><br/>
+					<form role="form" class="form-horizontal" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+						<div class="col-sm-8">
+							<select class="project_list form-control" id="project_name"></select>
+						</div>
 					</form>	
 				</div>
 		</div>
 	</div>
-	<div class="row">	   	
-	   	<div class="col-md-5 col-md-offset-1 col-xs-12" id="sidebar">
-	   		<div class = "well">
-	   	
-
-
-				<span class="selected_templates">
-					<span class="restrict_role admin_role analyst_role" style="display:none">
-						<input id="show_deleted" type="checkbox" name="show_deleted" 
-							value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
-					</span>
-					<div id="surveys">
-						<h1 class="lang" data-lang="c_forms">Forms</h1>
-						<div id="survey_table"></div>
-					</div>
-					<div id="tem_controls">
-						<button id="delete_survey" data-lang="tm_d_forms" class="restrict_role admin_role analyst_role lang">Delete Forms</button>
-						<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
-						<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
-					</div>
-				</span>
-
+	<div class = "well">
+		<div class="container-fluid">	
+		<a type="button" class="btn btn-default" data-toggle="modal" data-target="#addNotificationPopup" aria-label="Add Notification">Add</a>
+			<!-- Columns: survey, selection filter(todo), transformation(todo), target (includes format), Details(summary of target specific data), Actions(delete) -->
+			<div id="notifications">
+				<div class="row">	   	
+		   			<div class="col-md-3 col-xs-12">
+		   				<div class="grid-border">Survey</div>
+		   			</div>
+		   			<div class="col-md-3 col-xs-12">
+		   				<div class="grid-border">Target</div>
+		   			</div>
+		   			<div class="col-md-3 col-xs-12">
+		   				<div class="grid-border">Details</div>
+		   			</div>
+		   			<div class="col-md-3 col-xs-12">
+		   				<div class="grid-border">Action</div>
+		   			</div>						
+				</div>
+				<div id="notification_list">
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
 	
-	<!-- Popup to show the list of forwards for this survey -->
-	<div id="forward_list_popup" style="display:none;">
-		<h1><div data-lang="c_loc_f" class="lang label">Local Form:</div><span class="form_name"></span></h1>
-		<button	data-lang="tm_add_for" class="abutton lang" id="add_forward" style="margin-top:10px; margin-bottom:10px;">Add Forward</button>
-		<table id="forward_table" class="tablesorter">
-			<thead>
-				<tr>
-					<th data-lang="c_host" class="lang">Host</th>
-					<th data-lang="c_rem_f" class="lang">Remote Form</th>
-					<th data-lang="c_rem_u" class="lang">Remote User</th>
-					<th data-lang="c_enabled" class="lang">Enabled</th>
-					<th data-lang="c_edit" class="lang">Edit</th>
-					<th data-lang="c_del" class="lang">Delete</th>
-				</tr>
-			</thead>
-			<tbody></tbody>
-		</table>
-
-	</div>
 	
-	<!-- Popup to allow the user to add a host for forwarding -->
-	<div id="add_forward_popup" style="display:none;">
-		<form id="fwd_edit_form">
-			<input id="fwd_enabled" type="checkbox" name="fwd_enabled" 
-						value="fwd_enabled"/><span data-lang="c_en" class="lang">Enable</span><br/> 
-			<label for="fwd_host" data-lang="c_host" class="lang">Host</label>
-			<input type="text" id="fwd_host" required><br/>
-			<label for="fwd_user" data-lang="c_user" class="lang">User</label>
-			<input type="text" id="fwd_user" required><br/>
-			<label for="fwd_password" data-lang="c_password" class="lang">Password</label>
-			<input id="fwd_password" type="password" required><br/>
-			<label for="fwd_rem_survey_nm" data-lang="c_rem_f" class="lang"	>Remote Form</label>
-			<input id="fwd_rem_survey_nm" readonly>
-			<input id="fwd_rem_survey_id" style="display:none;">
-		</form>	
-		<button id="fwd_upd_rem_survey" data-lang="tm_ref_f" class="lang">Refresh Form List</button><br/>
-
-	</div>
-	
-	<!-- Popup to allow the user to select a survey -->
-	<div id="select_fwd_survey_pop" style="display:none;">	
-			<label for="fwd_rem_survey" data-lang="c_rem_f" class="lang">Remote Form</label>
-			<select id="fwd_rem_survey"></select><br/>
-	</div>
-	
-	<!-- Popup to allow the user to edit their own details -->
-	<div id="modify_me_popup" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-    		<div class="modal-content">
-      			<div class="modal-header">
-        			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
-      			</div>
-		     <div class="modal-body">
-				<div class="left_panel">
-					<form id="me_edit_form">
-						<label for="me_name" data-lang="c_name" class="lang">Name</label>
-						<input type="text" id="me_name" required><br/>
-						<label for="me_language" data-lang="c_lang" class="lang">Language</label>
-						<select id="me_language"></select><br/>
-						<label for="me_email" data-lang="c_email" class="lang">Email</label>
-						<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
-						<span id="reset_me_password_fields" style="display:none;">
-							<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
-							<input type="checkbox" id="reset_me_password"/><br/>
-						</span>
-						<span id="password_me_fields" style="display:none;">
-							<label for="me_password" data-lang="c_password" class="lang">Password</label>
-							<input id="me_password" type="password"><br/>	
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
-							<input id="me_password_confirm" type="password"><br/>	
-						</span>		
-					</form>	
-				</div>
+<!-- Popup to allow the user to add a notification -->
+<div id="addNotificationPopup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addNotificationLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+    			<div class="modal-header">
+      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+      				<h4 class="modal-title" id="addNotificationLabel">Add Notification</h4>
+    			</div>
+    			
+		    <div class="modal-body">
+				<form id="fwd_edit_form" class="form-horizontal" role="form">
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_target" for="target">Target</label>
+						<div class="col-sm-10">
+							<select class="form-control" id="target">
+								<option value="email">Email</option>
+								<option value="forward">Forward to another server</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="survey" class="col-sm-2 control-label">Survey: </label>
+						<div class="col-sm-10">
+							<select id="survey" class="survey_select form-control"></select>
+						</div>
+					</div>
+					<div id="forward_options" style="display:none;">
+						<div class="form-group">
+							<label for="fwd_host" data-lang="c_host" class="lang col-sm-2 control-label">Host</label>
+							<div class="col-sm-10">
+								<input type="text" id="fwd_host" class="form-control" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_user" data-lang="c_user" class="lang col-sm-2 control-label">User</label>
+							<div class="col-sm-10">
+								<input type="text" id="fwd_user" class="form-control" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="fwd_password" type="password" class="form-control" placeholder="Password" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_rem_survey" data-lang="c_rem_f" class="lang col-sm-2 control-label">Remote Form</label>
+							<div class="col-sm-10">
+								<select id="fwd_rem_survey" class="form-control"></select>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button id="fwd_upd_rem_survey" type="button" class="btn btn-default lang"  data-lang="tm_ref_f">Refresh Form List</button>
+							</div>
+						</div>
+					</div>
+					<div id="email_options" style="display:none;">
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Comma separated list of email addresses">
+							<label for="fwd_host" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+							<div class="col-sm-10">
+								<input type="text" id="notify_emails" class="form-control" required>
+							</div>
+						</div>
+					</div>
+						
+										
+					<div class="col-sm-offset-2 col-sm-10">
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" id="nt_enabled" name="nt_enabled"
+									value="nt_enabled" checked="checked"><span data-lang="c_enabled" class="lang">Enabled</span>
+							</label>
+						</div>
+					</div>
+				</form>
+				<div class="modal-footer">
+                	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                	<button id="saveNotification" type="button" class="btn btn-primary">Save</button>
+        		</div>
 			</div>
 		</div>
 	</div>
-	
-	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-
-
 </div>
+	
+<!-- Popup to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+	     <div class="modal-body">
+			<form role="form" class="form-horizontal" id="me_edit_form">
+				<div class="form-group">
+					<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+					<div class="col-sm-10">
+						<input type="text" id="me_name" required class="form-control">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+					<div class="col-sm-10">
+						<select id="me_language" class="form-control"></select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control" id="me_email" 
+								placeholder="Enter email" 
+								pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+					</div>
+				</div>
+				<div id="reset_me_password_fields" style="display:none;">
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="password_me_fields" style="display:none;">
+					<div class="form-group">
+						<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+						<div class="col-sm-10">
+							<input id="me_password" type="password" placeholder="Password" class="form-control">
+						</div>
+					</div>	
+					<div class="form-group">
+						<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+						<div class="col-sm-10">
+							<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+						</div>
+					</div>	
+				</div>		
+			</form>	
 
-<div id="download_template" style="display:none;">
-	<h1></h1>
-	<fieldset>
-	<legend>File Type:</legend>
-	<input type="radio" name="download_type" value="xls" checked="checked"/> <span data-lang="ft_xls" class="lang">XLS Form</span><br/> 
-	<input type="radio" name="download_type" value="xml"/> <span data-lang="ft_xml" class="lang">XML Form</span><br/>
-	<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Codebook</span><br/> 
-	</fieldset>
-	<div id="download_language_div">
-		<label for="download_language" data-lang="c_lang" class="lang">Language</label><br/>
-		<select id="download_language"></select><br/>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default" data-dismiss="modal">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+        	</div>
+		</div>
 	</div>
+</div>
+	
+<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+
+
 </div>
 
 

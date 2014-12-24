@@ -727,7 +727,7 @@ public class Review extends Application {
 		/*
 		 * Get the updates
 		 */
-		log.info("Updates:" + updates);
+		System.out.println("+++++++++++++++++Applying Updates:" + updates);
 		Type updateType = new TypeToken<ReviewUpdate>() {}.getType();
 		ReviewUpdate u = new Gson().fromJson(updates, updateType);
 
@@ -743,13 +743,12 @@ public class Review extends Application {
 		    return response;
 		}
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Results");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Review");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		try {
-			dConnection = ResultsDataSource.getConnection("surveyKPI-ReviewResultsText");
 			ArrayList<UpdateItem> uiList = new ArrayList<UpdateItem> ();
 			
 			/*
@@ -783,26 +782,7 @@ public class Review extends Application {
 			} else {
 				throw new ApplicationException("Failed to get user name");
 			}
-			
-			/*
-			 * All updates must be made in a single transaction or rolled back
-			 */
-			dConnection.setAutoCommit(false);
-			
-			// Create an entry for this changeset and get the changeset id
-			pstmtInsertChangeset.setString(1, userName);
-			pstmtInsertChangeset.setInt(2, sId);
-			pstmtInsertChangeset.setString(3, u.reason);
-			pstmtInsertChangeset.setString(4, u.description);
-			pstmtInsertChangeset.executeUpdate();
-			resultSet = pstmtInsertChangeset.getGeneratedKeys();
-			if(resultSet.next()) {
-				csId = resultSet.getInt(1);
-				System.out.println("Changeset id: "+ csId);
-			} else {
-				throw new ApplicationException("Failed to create changeset entry");
-			}
-			
+						
 			// Get table name, question name and question type for all update items
 			for(int i = 0; i < u.reviewItems.size(); i++) {
 				ReviewItem ri = u.reviewItems.get(i);
@@ -819,6 +799,11 @@ public class Review extends Application {
 				}	
 
 			}
+			
+			/*
+			 * All updates must be made in a single transaction or rolled back
+			 */
+			dConnection.setAutoCommit(false);
 			
 			// Create an array of update items for each update item in each record
 			if(u.r_id > 0) {
@@ -871,11 +856,27 @@ public class Review extends Application {
 				throw new ApplicationException("Can't get records to update");
 			}
 			
-			for(int i = 0; i < uiList.size(); i++) {
-				UpdateItem ui = uiList.get(i);
-				System.out.println("Update Item: " + ui.qId + " : " + ui.oldValue + " : " + ui.newValue);
+			//for(int i = 0; i < uiList.size(); i++) {
+			//	UpdateItem ui = uiList.get(i);
+			//	System.out.println("Update Item: " + ui.qId + " : " + ui.oldValue + " : " + ui.newValue);
+			//}
+			
+			// Create an entry for this changeset and get the changeset id
+			System.out.println("Get changeset id");
+			pstmtInsertChangeset.setString(1, userName);
+			pstmtInsertChangeset.setInt(2, sId);
+			pstmtInsertChangeset.setString(3, u.reason);
+			pstmtInsertChangeset.setString(4, u.description);
+			pstmtInsertChangeset.executeUpdate();
+			resultSet = pstmtInsertChangeset.getGeneratedKeys();
+			if(resultSet.next()) {
+				csId = resultSet.getInt(1);
+				System.out.println("Changeset id: "+ csId);
+			} else {
+				throw new ApplicationException("Failed to create changeset entry");
 			}
 			
+			System.out.println("Apply updates");
 			applyUpdateItems (
 					csId,
 					uiList,
