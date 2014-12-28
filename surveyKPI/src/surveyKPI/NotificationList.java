@@ -503,5 +503,68 @@ public class NotificationList extends Application {
 		return response;
 
 	}
+	
+	
+	/*
+	 * Apply notifications for the supplied upload event
+	 */
+	@Path("/apply/{ue_id}")
+	@GET
+	public Response applyNotifications(@Context HttpServletRequest request,
+			@PathParam("ue_id") int ue_id) { 
+		
+		ResponseBuilder builder = Response.ok();
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
+		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		//a.isAuthorised(connectionSD, request.getRemoteUser());
+		// End Authorisation
+		
+		
+		PreparedStatement pstmtGetUploadEvent = null;
+		PreparedStatement pstmtGetNotifications = null;
+		
+		
+		try {
+			NotificationManager fm = new NotificationManager();
+			fm.notifyForSubmission(connectionSD, pstmtGetUploadEvent, pstmtGetNotifications, ue_id);	
+			response = Response.ok().build();
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"SQL Exception", e);
+		    response = Response.serverError().entity("SQL Error").build();
+		} catch (Exception e) {
+			String msg = e.getMessage();
+			log.info(msg);
+		    response = Response.serverError().entity(msg).build();
+		} finally {
+			
+			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
+			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			    response = Response.serverError().entity("Survey: Failed to close connection").build();
+			}
+			
+		}
+
+		return response;
+
+	}
 }
 

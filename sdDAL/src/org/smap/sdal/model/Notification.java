@@ -12,6 +12,6 @@ public class Notification {
 	public String remote_password;
 	public String remote_host;
 	public boolean update_password;
-	public String notify_emails;
+	public NotifyDetails notifyDetails;
 	
 }

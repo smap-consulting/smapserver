@@ -198,6 +198,7 @@ CREATE TABLE upload_event (
 	reason text,
 	location text,
 	form_status text,
+	notifications_applied boolean,		-- Set after notifications are sent
 	incomplete boolean default false,	-- odk will set this if sending attachments in multiple posts
 	server_name text  -- Stores the server used to upload the results.  The url's of all attachments will reference this address
 	);
@@ -345,7 +346,7 @@ CREATE TABLE forward (
 	remote_user text,
 	remote_password text,
 	remote_host text,
-	notify_emails					-- TODO replace with links to a user management system
+	notify_details	text				-- JSON string
 	);
 ALTER TABLE forward OWNER TO ws;
 CREATE UNIQUE INDEX ForwardDest ON forward(s_id, remote_s_id, remote_host);

@@ -192,7 +192,7 @@ function edit_forward(fwdIndex) {
 	var forward,
 		title = localise.set["msg_add_forward"];
 	
-	document.getElementById("fwd_edit_form").reset();
+	document.getElementById("notification_edit_form").reset();
 	
 	if(fwdIndex) {
 		forward = gForwards[fwdIndex];

@@ -81,6 +81,10 @@ $(document).ready(function() {
 		remoteSurveyChanged();
 	});
 	
+	$('#addNotificationPopup').on('hidden.bs.modal', function (e) {
+		document.getElementById("notification_edit_form").reset();
+	});
+		
 	enableUserProfileBS();
 });	
 	
@@ -155,7 +159,8 @@ function saveEmail() {
 		notification = {};
 
 	notification.target = "email";
-	notification.notify_emails = $('#notify_emails').val();
+	notification.notifyDetails = {};
+	notification.notifyDetails.emails = $('#notify_emails').val().split(";");
 	
 	return notification;
 }
@@ -218,7 +223,7 @@ function edit_forward(fwdIndex) {
 	var forward,
 		title = localise.set["msg_add_forward"];
 	
-	document.getElementById("fwd_edit_form").reset();
+	document.getElementById("notification_edit_form").reset();
 	
 	if(fwdIndex) {
 		forward = gForwards[fwdIndex];
@@ -240,6 +245,7 @@ function edit_forward(fwdIndex) {
 		gUpdateFwdPassword = false;
 		gSelectedNotification = forward.id;
 	} else {
+		
 		$('#fwd_host').val(gRemote_host);	// Set the values to the ones last used
 		$('#fwd_user').val(gRemote_user);
 		
@@ -431,8 +437,8 @@ function updateNotificationList(data) {
 		// details
 		h[++idx] = '<div class="col-md-3 col-xs-12">';
 		h[++idx] = '<div class="grid-border">';
-		if(data[i].target === "email") {
-			h[++idx] = data[i].notify_emails;
+		if(data[i].target === "email" && data[i].notifyDetails) {
+			h[++idx] = data[i].notifyDetails.emails.join(";");
 		} else if(data[i].target === "forward"){
 			h[++idx] = data[i].remote_host;
 			h[++idx] = ':';

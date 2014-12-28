@@ -201,7 +201,8 @@ alter table assignments add constraint assignee FOREIGN KEY (assignee)
 	ON UPDATE NO ACTION ON DELETE CASCADE;
 
 -- Upgrade to:  14.12 from 14.11 =======
+alter table upload_event add column notifications_applied boolean;
 alter table forward add column target text;
-alter table forward add column notify_emails text;
+alter table forward add column notify_details text;
 update forward set target = 'forward';
 

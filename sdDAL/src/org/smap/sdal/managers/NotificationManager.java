@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.smap.sdal.model.Notification;
-import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.NotifyDetails;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /*****************************************************************************
 
@@ -49,7 +51,7 @@ public class NotificationManager {
 		ResultSet resultSet = null;
 		String sql = "select f.id, f.s_id, f.enabled, " +
 				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user, " +
-				"f.target, s.display_name, f.notify_emails, " +
+				"f.target, s.display_name, f.notify_details, " +
 				"f.remote_password " +
 				" from forward f " +
 				" where f.enabled = 'true' ";
@@ -77,10 +79,14 @@ public class NotificationManager {
 					
 			String sql = "insert into forward(" +
 					" s_id, enabled, " +
-					" remote_s_id, remote_s_name, remote_host, remote_user, remote_password, notify_emails, target) " +
+					" remote_s_id, remote_s_name, remote_host, remote_user, remote_password, notify_details, target) " +
 					" values (?, ?, ?, ?, ?, ?, ?, ?, ?); ";
 	
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String notifyDetails = gson.toJson(n.notifyDetails);
+			
 			pstmt = sd.prepareStatement(sql);	 			
 			pstmt.setInt(1, n.s_id);
 			pstmt.setBoolean(2, n.enabled);
@@ -89,7 +95,7 @@ public class NotificationManager {
 			pstmt.setString(5, n.remote_host);
 			pstmt.setString(6, n.remote_user);
 			pstmt.setString(7, n.remote_password);
-			pstmt.setString(8, n.notify_emails);
+			pstmt.setString(8, notifyDetails);
 			pstmt.setString(9, n.target);
 			pstmt.executeUpdate();
 	}
@@ -170,8 +176,7 @@ public class NotificationManager {
 	}
 	
 	/*
-	 * Get all Forwards that are accessible by the requesting user and in a specific project
-	 * Used by Subscriber to do the actual forwarding
+	 * Get all Notifications that are accessible by the requesting user and in a specific project
 	 */
 	public ArrayList<Notification> getProjectNotifications(Connection sd, PreparedStatement pstmt,
 			String user,
@@ -182,7 +187,7 @@ public class NotificationManager {
 		ResultSet resultSet = null;
 		String sql = "select f.id, f.s_id, f.enabled, " +
 				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user," +
-				" f.target, s.display_name, f.notify_emails" +
+				" f.target, s.display_name, f.notify_details" +
 				" from forward f, survey s, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -238,7 +243,8 @@ public class NotificationManager {
 			n.remote_user = resultSet.getString(7);
 			n.target = resultSet.getString(8);
 			n.s_name = resultSet.getString(9);
-			n.notify_emails = resultSet.getString(10);
+			String notifyDetailsString = resultSet.getString(10);
+			n.notifyDetails = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
 			if(getPassword) {
 				n.remote_password = resultSet.getString(11);
 			}
@@ -246,6 +252,62 @@ public class NotificationManager {
 			notifications.add(n);
 			
 		} 
+	}
+	
+	/*
+	 * Apply any notification for the passed in submission
+	 */
+	public void notifyForSubmission(Connection sd, PreparedStatement pstmtGetUploadEvent, 
+			PreparedStatement pstmtGetNotifications, int ue_id) throws SQLException {
+		/*
+		 * 1. Get notifications that may apply to the passed in upload event.
+		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
+		 * 2. Apply any additional filtering
+		 * 3. Invoke each notification
+		 * 4. Update upload event table to show that notifications have been applied
+		 */
+		
+		ResultSet rs = null;
+		ResultSet rsNotifications = null;
+		int s_id = 0;
+		
+		System.out.println("notifyForSubmission:: " + ue_id);
+		
+		String sqlGetUploadEvent = "select ue.s_id " +
+				" from upload_event ue " +
+				" where ue.ue_id = ?;";
+		try {if (pstmtGetUploadEvent != null) { pstmtGetUploadEvent.close();}} catch (SQLException e) {}
+		pstmtGetUploadEvent = sd.prepareStatement(sqlGetUploadEvent);
+		
+		String sqlGetNotifications = "select n.target, n.notify_details " +
+				" from forward n " +
+				" where n.s_id = ? " + 
+				" and n.target != 'forward'";
+		try {if (pstmtGetNotifications != null) { pstmtGetNotifications.close();}} catch (SQLException e) {}
+		pstmtGetNotifications = sd.prepareStatement(sqlGetNotifications);
+	
+		// Get the details from the upload event
+		pstmtGetUploadEvent.setInt(1, ue_id);
+		rs = pstmtGetUploadEvent.executeQuery();
+		if(rs.next()) {
+			s_id = rs.getInt(1);
+			System.out.println("Get notifications:: " + s_id);
+			pstmtGetNotifications.setInt(1, s_id);
+			rsNotifications = pstmtGetNotifications.executeQuery();
+			while(rsNotifications.next()) {
+				System.out.println("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
+				String target = rs.getString(1);
+				String notifyDetailsString = rs.getString(2);
+				NotifyDetails nd = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
+				
+				if(target.equals("email")) {
+					for(String email : nd.emails) {
+						System.out.println("+++ emailing to: " + email);
+					}
+				}
+			}
+			
+		}
 	}
 }
 
