@@ -80,7 +80,7 @@ public class SubUshahidi extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId)  {
+			String basePath, String filePath, String updateId, int ue_id)  {
 		
 		String url = null;	// Address of Ushahidi API
 

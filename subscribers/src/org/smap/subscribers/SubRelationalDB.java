@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
+
+import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -40,6 +43,7 @@ import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.Form;
@@ -113,7 +117,7 @@ public class SubRelationalDB extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId)  {
+			String basePath, String filePath, String updateId, int ue_id)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;
@@ -129,7 +133,7 @@ public class SubRelationalDB extends Subscriber {
 		Connection connection = null;
 		try {
 				
-			// Get the connection details for the database with survey dfinitions
+			// Get the connection details for the database with survey definitions
 			db = dbf.newDocumentBuilder();
 			xmlConf = db.parse(new File(confFilePath + "/metaDataModel.xml"));
 			dbClassMeta = xmlConf.getElementsByTagName("dbclass").item(0).getTextContent();
@@ -183,8 +187,10 @@ public class SubRelationalDB extends Subscriber {
 
 		try {
 			
-			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId);	
+			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId);
+			applyNotifications(ue_id, remoteUser, server);
 			se.setStatus("success");
+			
 			
 		} catch (SQLInsertException e) {
 			
@@ -194,6 +200,48 @@ public class SubRelationalDB extends Subscriber {
 		}
 			
 		return;
+	}
+	
+	/*
+	 * Apply notifications
+	 */
+	private void applyNotifications(int ue_id, String remoteUser, String server) {
+		
+		PreparedStatement pstmtGetUploadEvent = null;
+		PreparedStatement pstmtGetNotifications = null;
+		PreparedStatement pstmtUpdateUploadEvent = null;
+		PreparedStatement pstmtGetAdminEmail = null;
+		
+		Connection connectionSD = null;
+		
+		try {
+			Class.forName(dbClass);	 
+			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
+		
+			NotificationManager fm = new NotificationManager();
+			fm.notifyForSubmission(connectionSD, pstmtGetAdminEmail, pstmtGetUploadEvent, pstmtGetNotifications, 
+					pstmtUpdateUploadEvent, ue_id, remoteUser, server);	
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			
+			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
+			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
+			try {if (pstmtGetAdminEmail != null) {pstmtGetAdminEmail.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/*

@@ -112,7 +112,8 @@ public class OrganisationList extends Application {
 					" ft_send_trail," +
 					" changed_by, " +
 					" changed_ts," +
-					" admin_email " +
+					" admin_email, " +
+					" smtp_host " +
 					" from organisation " + 
 					" order by name ASC;";			
 						
@@ -133,6 +134,7 @@ public class OrganisationList extends Application {
 				org.changed_by = resultSet.getString("changed_by");
 				org.changed_ts = resultSet.getString("changed_ts");
 				org.admin_email = resultSet.getString("admin_email");
+				org.smtp_host = resultSet.getString("smtp_host");
 				organisations.add(org);
 			}
 	
@@ -202,8 +204,8 @@ public class OrganisationList extends Application {
 						
 					sql = "insert into organisation (name, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
-							"changed_by, admin_email, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+							"changed_by, admin_email, smtp_host, changed_ts) " +
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setString(1, o.name);
@@ -215,6 +217,7 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(7, o.ft_send_trail);
 					pstmt.setString(8, request.getRemoteUser());
 					pstmt.setString(9, o.admin_email);
+					pstmt.setString(10, o.smtp_host);
 					log.info("SQL: " + sql + " : " + o.name);
 					pstmt.executeUpdate();
 						 
@@ -230,6 +233,7 @@ public class OrganisationList extends Application {
 							" ft_delete_submitted = ?, " +
 							" ft_send_trail = ?, " +
 							" admin_email = ?, " +
+							" smtp_host = ?, " +
 							" changed_by = ?, " + 
 							" changed_ts = now() " + 
 							" where " +
@@ -244,8 +248,9 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(6, o.ft_delete_submitted);
 					pstmt.setBoolean(7, o.ft_send_trail);
 					pstmt.setString(8, o.admin_email);
-					pstmt.setString(9, request.getRemoteUser());
-					pstmt.setInt(10, o.id);
+					pstmt.setString(9, o.smtp_host);
+					pstmt.setString(10, request.getRemoteUser());
+					pstmt.setInt(11, o.id);
 							
 					log.info("SQL: " + sql + ":" + o.name + ":" + o.id);
 					pstmt.executeUpdate();

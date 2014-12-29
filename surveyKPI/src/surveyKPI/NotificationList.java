@@ -507,6 +507,7 @@ public class NotificationList extends Application {
 	
 	/*
 	 * Apply notifications for the supplied upload event
+	 * Debug only block this or remove
 	 */
 	@Path("/apply/{ue_id}")
 	@GET
@@ -539,7 +540,7 @@ public class NotificationList extends Application {
 		try {
 			NotificationManager fm = new NotificationManager();
 			fm.notifyForSubmission(connectionSD, pstmtGetAdminEmail, pstmtGetUploadEvent, pstmtGetNotifications, 
-					pstmtUpdateUploadEvent, ue_id, request);	
+					pstmtUpdateUploadEvent, ue_id, request.getRemoteUser(), request.getServerName());	
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {

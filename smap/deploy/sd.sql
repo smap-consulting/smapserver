@@ -206,4 +206,5 @@ alter table upload_event add column instanceid varchar(41);
 alter table forward add column target text;
 alter table forward add column notify_details text;
 update forward set target = 'forward';
+alter table organisation add column smtp_host text;
 

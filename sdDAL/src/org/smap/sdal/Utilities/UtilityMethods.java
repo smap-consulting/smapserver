@@ -17,6 +17,8 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 
+import org.smap.sdal.model.NotifyDetails;
+
 public class UtilityMethods {
 	
 	private static String [] reservedSQL = new String [] {
@@ -201,6 +203,7 @@ public class UtilityMethods {
 	}
 	
 	// Check to see if email is enabled on this server
+	/*
 	static public boolean hasEmail(HttpServletRequest request) throws Exception {
 		System.out.println("checking");
 		boolean email = false;
@@ -211,8 +214,11 @@ public class UtilityMethods {
 		}
 		return email;
 	}
+	*/
 	
-	// Get applicable user idents from an email
+	/*
+	 * Get applicable user idents from an email
+	 */
 	static public ArrayList<String> getIdentsFromEmail(
 			Connection connectionSD, 
 			PreparedStatement pstmt, 
@@ -236,7 +242,9 @@ public class UtilityMethods {
 		return idents;
 	}
 	
-	// Get applicable user idents from an email
+	/*
+	 * Get the administrator email for the organisation that the user belongs to
+	 */
 	static public String getAdminEmail(
 			Connection sd, 
 			PreparedStatement pstmt, 
@@ -259,6 +267,33 @@ public class UtilityMethods {
 			}
 		}
 		return adminEmail;
+	}
+	
+	/*
+	 * Get the smtp host for the organisation that the user belongs to
+	 */
+	static public String getSmtpHost(
+			Connection sd, 
+			PreparedStatement pstmt, 
+			String user) throws SQLException {
+		
+		String smtpHost = null;
+		
+		String sql = "select o.smtp_host " +
+				" from organisation o, users u " +
+				" where u.o_id = o.id " +
+				" and u.ident = ?;";
+		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		pstmt = sd.prepareStatement(sql);
+		pstmt.setString(1, user);
+		ResultSet rs = pstmt.executeQuery();
+		if(rs.next()) {
+			String host = rs.getString(1);
+			if(host != null && host.trim().length() > 0) {
+				smtpHost = rs.getString(1);
+			}
+		}
+		return smtpHost;
 	}
 	
 	// Set a one time password
@@ -293,7 +328,7 @@ public class UtilityMethods {
 	}
 	
 	// Send an email
-	static public void sendEmail(HttpServletRequest request, 
+	static public void sendEmail( 
 			String email, 
 			String uuid, 
 			String type, 
@@ -302,19 +337,21 @@ public class UtilityMethods {
 			String interval,
 			ArrayList<String> idents,
 			String docURL,
-			String adminEmail) throws Exception  {
+			String adminEmail,
+			String smtp_host,
+			String serverName) throws Exception  {
 		
-		String smtp_host = request.getServletContext().getInitParameter("au.com.smap.smtp_host");
-		String from = request.getServletContext().getInitParameter("au.com.smap.password_reset_from");
+		if(smtp_host == null) {
+			throw new Exception("smtp_host not available");
+		}
+		
 		RecipientType rt = null;
-		
 		try {
 			Properties props = System.getProperties();
 			props.put("mail.smtp.host", smtp_host);	
 			Session session = Session.getInstance(props, null);
 			session.setDebug(true);
 			Message msg = new MimeMessage(session);
-			msg.setFrom(new InternetAddress(from));
 			
 			if(type.equals("notify")) {
 				rt = Message.RecipientType.BCC;
@@ -338,7 +375,7 @@ public class UtilityMethods {
 		    StringBuffer txtMessage = new StringBuffer("");
 		    if(type.equals("reset")) {
 			    txtMessage.append("Goto https://");
-			    txtMessage.append(request.getServerName());
+			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
 			    txtMessage.append(" to reset your password.\n\n");
@@ -356,10 +393,10 @@ public class UtilityMethods {
 		    	
 			    txtMessage.append(adminName);
 			    txtMessage.append(" has given you access to a Smap server with address http://");
-			    txtMessage.append(request.getServerName());
+			    txtMessage.append(serverName);
 			    txtMessage.append("\n");
 			    txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link https://");
-			    txtMessage.append(request.getServerName());
+			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
 			    txtMessage.append("\n\n");
@@ -375,9 +412,9 @@ public class UtilityMethods {
 
 		    } else if(type.equals("notify")) {
 			    txtMessage.append("This is a notification from Smap server http://");
-			    txtMessage.append(request.getServerName());
+			    txtMessage.append(serverName);
 			    txtMessage.append("\n");
-			    txtMessage.append(request.getServerName());
+			    txtMessage.append(serverName);
 			    txtMessage.append(docURL);
 			    txtMessage.append("\n");
 			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
@@ -386,6 +423,7 @@ public class UtilityMethods {
 
 		    }
 		    
+			msg.setFrom(new InternetAddress(type + "@" + serverName));
 		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
 		    Transport.send(msg);

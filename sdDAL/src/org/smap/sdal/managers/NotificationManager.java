@@ -262,12 +262,13 @@ public class NotificationManager {
 	 * Apply any notification for the passed in submission
 	 */
 	public void notifyForSubmission(Connection sd, 
-			PreparedStatement pstmtGetAdminEmail,
+			PreparedStatement pstmt,
 			PreparedStatement pstmtGetUploadEvent, 
 			PreparedStatement pstmtGetNotifications, 
 			PreparedStatement pstmtUpdateUploadEvent, 
 			int ue_id,
-			HttpServletRequest request) throws SQLException {
+			String remoteUser,
+			String serverName) throws SQLException {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
@@ -304,7 +305,7 @@ public class NotificationManager {
 		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
 
 		// Get the admin email
-		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmtGetAdminEmail, request.getRemoteUser());
+		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmt, remoteUser);
 		
 		
 		// Get the details from the upload event
@@ -335,14 +336,36 @@ public class NotificationManager {
 				 * Send document to target
 				 */
 				if(target.equals("email")) {
-					for(String email : nd.emails) {
-						System.out.println("+++ emailing to: " + email + " : " + docUrl);
+					String smtp_host = UtilityMethods.getSmtpHost(sd, pstmt, remoteUser);
+					if(smtp_host != null && smtp_host.trim().length() > 0) {
+						String emails = "";
+						for(String email : nd.emails) {
+							System.out.println("+++ emailing to: " + email + " : " + docUrl);
+							if(emails.length() > 0) {
+								emails += ";";
+							}
+							emails += email;
+						}
+						
 						try {
-							UtilityMethods.sendEmail(request, email, null, "notify", "Smap Notification", null, null, null, docUrl, adminEmail);
+							UtilityMethods.sendEmail(emails, 
+									null, 
+									"notify", 
+									"Smap Notification", 
+									null, 
+									null, 
+									null, 
+									docUrl, 
+									adminEmail, 
+									smtp_host,
+									serverName);
 						} catch(Exception e) {
 							// ignore errors
 						}
+					} else {
+						System.out.println("Error: Attempt to do email nottification but email server nto set");
 					}
+					
 				}
 			}
 			

@@ -254,7 +254,7 @@ $(document).ready(function() {
 			show:"drop",
 			title: "Create Organisation",
 			width:380,
-			height:450,
+			height:550,
 			zIndex: 2000,
 			buttons: [
 		        {
@@ -281,6 +281,7 @@ $(document).ready(function() {
 	        		
 		        		organisation.name = $('#o_name').val();
 		        		organisation.admin_email = $('#o_admin_email').val();
+		        		organisation.smtp_host = $('#o_smtp_host').val();
 		        		
 		        		// Validate
 		        		if(organisation.name.length === 0) {
@@ -637,6 +638,7 @@ function openOrganisationDialog(existing, organisationIndex) {
 	if(existing) {
 		$('#o_name').val(org.name);
 		$('#o_admin_email').val(org.admin_email);
+		$('#o_smtp_host').val(org.smtp_host);
 		$('.puboption').each(function() {
 			console.log("option: " + $(this).val() );
 			if($(this).val() === "email") {

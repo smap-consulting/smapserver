@@ -202,7 +202,8 @@ public class SubscriberBatch {
 										s.upload(instance, is3, ue.getUserName(), 
 												ue.getServerName(), ue.getImei(), se,
 												confFilePath, ue.getFormStatus(),
-												basePath, uploadFile, ue.getUpdateId());	// Call the subscriber	
+												basePath, uploadFile, ue.getUpdateId(),
+												ue.getId());	// Call the subscriber	
 									
 									} else {
 										

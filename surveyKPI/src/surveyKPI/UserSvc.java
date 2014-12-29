@@ -137,7 +137,7 @@ public class UserSvc extends Application {
 			/*
 			 * Set a flag if email is enabled on the server
 			 */
-			user.sendEmail = UtilityMethods.hasEmail(request);
+			user.sendEmail = UtilityMethods.getSmtpHost(connectionSD, pstmt, request.getRemoteUser()) != null;
 			
 			/*
 			 * Get the groups that the user belongs to

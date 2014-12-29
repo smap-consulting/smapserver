@@ -69,6 +69,7 @@ create TABLE organisation (
 	ft_send_trail boolean,
 	changed_by text,
 	admin_email text,
+	smtp_host text,				-- Set if email is enabled
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);

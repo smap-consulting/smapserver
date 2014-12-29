@@ -78,7 +78,7 @@ public class PasswordReset extends Application {
 
 	
 	/*
-	 * Get the distinct text results for a question
+	 * Send an email with a link for a one time logon
 	 */
 	@GET
 	@Path("/{email}")
@@ -113,11 +113,12 @@ public class PasswordReset extends Application {
 					// Update succeeded
 					System.out.println("Sending email");
 					
-					if(UtilityMethods.hasEmail(request)) {
+					String smtp_host = null;
+					if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, pstmt, request.getRemoteUser())) != null) {
 						String adminEmail = UtilityMethods.getAdminEmail(connectionSD, pstmt, request.getRemoteUser());
 						ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, email);
-					    UtilityMethods.sendEmail(request, email, uuid, "reset", "Password Reset", null, interval, 
-					    		idents, null, adminEmail);
+					    UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", null, interval, 
+					    		idents, null, adminEmail, smtp_host, request.getServerName());
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

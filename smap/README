@@ -29,22 +29,8 @@ Also update 000-default.conf to
 Use the existing redirect statements as a template
 
 If you are going to allow the server to send emails in order to reset passwords then you will need to
-set up an email server, or gain access to one, and then update /var/lib/tomcat7/conf/web.xml to add the following:
-		<context-param>
-		   <param-name>au.com.smap.smtp_on</param-name>
-		   <param-value>true</param-value>
-		</context-param>
-		
-		<context-param>
-		   <param-name>au.com.smap.smtp_host</param-name>
-		   <param-value>{your smtp host}</param-value>
-		</context-param>
-		
-		<context-param>
-		   <param-name>au.com.smap.password_reset_from</param-name>
-		   <param-value>{an email address to use in the from: section of a password reset}</param-value>
-		</context-param>
-These parameters should be added just before the final "</web-app>"
+set up an email server, or gain access to one, and then update the smtp_host parameter for the organisation. The
+organisaiton values are set on the Admin | users page.
 
 You should also add the following to the submission directive in the apache configuration files in /etc/apache2/sites-available
 	AuthDigestNonceLifetime -1
