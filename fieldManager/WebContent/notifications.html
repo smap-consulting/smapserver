@@ -86,7 +86,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 </header>
 
 <div class="container">
-<div class="row">	   	
+	<div class="row">	   	
 	   	<div class="col-md-6 col-xs-12" id="sidebar">
 				<div id="filters">
 					<form role="form" class="form-horizontal" id="service_filter_form">
@@ -98,29 +98,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 				</div>
 		</div>
 	</div>
-	<div class = "well">
-		<div class="container-fluid">	
+	<div class = "well">	
 		<a type="button" class="btn btn-default" data-toggle="modal" data-target="#addNotificationPopup" aria-label="Add Notification">Add</a>
-			<!-- Columns: survey, selection filter(todo), transformation(todo), target (includes format), Details(summary of target specific data), Actions(delete) -->
-			<div id="notifications">
-				<div class="row">	   	
-		   			<div class="col-md-3 col-xs-12">
-		   				<div class="grid-border">Survey</div>
-		   			</div>
-		   			<div class="col-md-3 col-xs-12">
-		   				<div class="grid-border">Target</div>
-		   			</div>
-		   			<div class="col-md-3 col-xs-12">
-		   				<div class="grid-border">Details</div>
-		   			</div>
-		   			<div class="col-md-3 col-xs-12">
-		   				<div class="grid-border">Action</div>
-		   			</div>						
-				</div>
-				<div id="notification_list">
-				</div>
-			</div>
+		<div class="table-responsive">
+			<div id="notification_list"></div>
 		</div>
+
 	</div>
 </div>
 	

@@ -49,7 +49,9 @@ define({
 	"c_download": "Download",
 	"c_done": "Done",
 	"c_cancel": "Cancel",
-	"c_save": "Save",
+	"c_save": "Savexx",
+	"c_close": "Closexx",
+	"c_logout": "Logoutxx",
 	"c_block": "Block",
 	"c_graph": "Graph",
 	"c_map": "Map",
@@ -89,6 +91,8 @@ define({
 	"c_start": "Start",
 	"c_back": "Back",
 	"c_target": "Target",
+	"c_details": "Details",
+	"c_action": "Action",
 	
 	// File Types
 	"ft_xls": "XLS Form",
@@ -131,6 +135,7 @@ define({
 	"a_from_date": "From date",
 	"a_to_date": "To date",
 	"a_fq": "Filter question",
+	"a_res": "Please provide a reason",
 	
 	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
@@ -148,10 +153,12 @@ define({
 	"msg_sel_form": "Select Form:",
 	"msg_err_save": "Error: Save failed: ",
 	"msg_err_del": "Error: Delete failed: ",
+	"msg_err_upd": "Error: Update failed: ",
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
+	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
 		
 	// template load errors
 	"e_u_err": "Form Upload Error",

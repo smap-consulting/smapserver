@@ -138,7 +138,8 @@ function deleteAllTables(sId) {
 				              return;  // Not an error
 						} else {
 							console.log(xhr);
-							alert("Error: Failed to delete results: " + err);		
+							alert(localise.set["msg_err_del"] + " " + err);
+							//alert("Error: Failed to delete results: " + err);		
 						}
 					}
 			});
@@ -254,7 +255,8 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 		toValue = "f";
 	}
 	
-	var reason = prompt("Please provide a reason","");
+	//var reason = prompt("Please provide a reason","");
+	var reason = prompt(localise.set["msg_err_upd"],"");
 	
 	$.ajax({
 		  type: "POST",
@@ -269,7 +271,8 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 				  theView.dirty = true;
 			  }
 		  }, error: function(data, status) {
-			  alert("Error: Failed to update record"); 
+			  alert(localise.set["msg_err_upd"] + " " + err);
+			  //alert("Error: Failed to update record"); 
 		  }
 	});
 	
@@ -334,9 +337,11 @@ function addRightClickToTable($elem, sId, view) {
 			var pkey = $this.data("pkey");
 			var survey_ident = $this.data("ident");	
 			var isBad = $this.parent().parent().find('.bad_r').size() !== 0;
+			var isReplaced = $this.parent().parent().find('.bad_replaced').size() !== 0;
 			
-			if(isBad) {
-				alert("You cannot edit a record marked as bad");
+			if(isBad && isReplaced) {
+				//alert("You cannot edit a record that has been replaced by another record");
+				alert(localise.set["msg_no_edit_rep"]);
 			} else {
 				document.location.href = "/webforms/formXML.php"+"?key=" + survey_ident +
 						"&datakey=prikey&datakeyvalue="+pkey;

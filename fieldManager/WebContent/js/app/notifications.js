@@ -416,27 +416,33 @@ function updateNotificationList(data) {
 		idx = -1,
 		updateCurrentProject = true;
 	
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_survey"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_target"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_details"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_action"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+	
 	for(i = 0; i < data.length; i++) {
 		
-		h[++idx] = '<div class="row">';
+		h[++idx] = '<tr>';
 		
 		// survey
-		h[++idx] = '<div class="col-md-3 col-xs-12">';
-		h[++idx] = '<div class="grid-border">';
+		h[++idx] = '<td>';
 		h[++idx] = data[i].s_name;
-		h[++idx] = '</div>';
-		h[++idx] = '</div>';	// col end
-		
+		h[++idx] = '</td>';
+
 		// target
-		h[++idx] = '<div class="col-md-3 col-xs-12">';
-		h[++idx] = '<div class="grid-border">';
+		h[++idx] = '<td>';
 		h[++idx] = data[i].target;
-		h[++idx] = '</div>';
-		h[++idx] = '</div>';	// col end
+		h[++idx] = '</td>';
 		
 		// details
-		h[++idx] = '<div class="col-md-3 col-xs-12">';
-		h[++idx] = '<div class="grid-border">';
+		h[++idx] = '<td>';
 		if(data[i].target === "email" && data[i].notifyDetails) {
 			h[++idx] = data[i].notifyDetails.emails.join(";");
 		} else if(data[i].target === "forward"){
@@ -444,24 +450,20 @@ function updateNotificationList(data) {
 			h[++idx] = ':';
 			h[++idx] = data[i].remote_s_name;
 		}
-		h[++idx] = '</div>';
-		h[++idx] = '</div>';	// col end
+		h[++idx] = '</td>';
 		
 		// actions
-		h[++idx] = '<div class="col-md-3 col-xs-12">';
-		h[++idx] = '<div class="grid-border">';
+		h[++idx] = '<td>';
 		h[++idx] = '<button type="button" data-id="';
 		h[++idx] = data[i].id;
 		h[++idx] = '" class="btn btn-default btn-sm rm_not">';
 		h[++idx] = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>';
+		h[++idx] = '</td>';
 		
-		h[++idx] = '</div>';
-		h[++idx] = '</div>';	// col end
-		
-
-		
-		h[++idx] = '</div>';	// row end
+		h[++idx] = '</tr>';
 	}
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
 	
 	$selector.empty().append(h.join(''));
 	$(".rm_not", $selector).click(function(){

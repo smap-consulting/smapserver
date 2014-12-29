@@ -9,6 +9,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.mail.Message;
+import javax.mail.Message.RecipientType;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -235,6 +236,31 @@ public class UtilityMethods {
 		return idents;
 	}
 	
+	// Get applicable user idents from an email
+	static public String getAdminEmail(
+			Connection sd, 
+			PreparedStatement pstmt, 
+			String user) throws SQLException {
+		
+		String adminEmail = "<admin email not set>";
+		
+		String sqlGetAdminEmail = "select o.admin_email " +
+				" from organisation o, users u " +
+				" where u.o_id = o.id " +
+				" and u.ident = ?;";
+		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		pstmt = sd.prepareStatement(sqlGetAdminEmail);
+		pstmt.setString(1, user);
+		ResultSet rs = pstmt.executeQuery();
+		if(rs.next()) {
+			String email = rs.getString(1);
+			if(email != null && email.trim().length() > 0) {
+				adminEmail = rs.getString(1);
+			}
+		}
+		return adminEmail;
+	}
+	
 	// Set a one time password
 	static public String setOnetimePassword(
 			Connection connectionSD, 
@@ -274,10 +300,13 @@ public class UtilityMethods {
 			String subject,
 			String adminName,
 			String interval,
-			ArrayList<String> idents) throws Exception  {
+			ArrayList<String> idents,
+			String docURL,
+			String adminEmail) throws Exception  {
 		
 		String smtp_host = request.getServletContext().getInitParameter("au.com.smap.smtp_host");
 		String from = request.getServletContext().getInitParameter("au.com.smap.password_reset_from");
+		RecipientType rt = null;
 		
 		try {
 			Properties props = System.getProperties();
@@ -286,36 +315,78 @@ public class UtilityMethods {
 			session.setDebug(true);
 			Message msg = new MimeMessage(session);
 			msg.setFrom(new InternetAddress(from));
-		    msg.setRecipients(Message.RecipientType.TO,	InternetAddress.parse(email, false));
+			
+			if(type.equals("notify")) {
+				rt = Message.RecipientType.BCC;
+			} else {
+				rt = Message.RecipientType.TO;
+			}
+		    msg.setRecipients(rt,	InternetAddress.parse(email, false));
 		    msg.setSubject(subject);
 		    
 		    StringBuffer identString = new StringBuffer();
 	    	int count = 0;
-	    	for(String ident : idents) {
-	    		if(count++ > 0) {
-	    			identString.append(" or ");
-	    		} 
-	    		identString.append(ident);
+	    	if(idents != null) {
+		    	for(String ident : idents) {
+		    		if(count++ > 0) {
+		    			identString.append(" or ");
+		    		} 
+		    		identString.append(ident);
+		    	}
 	    	}
 		    
-		    String txtMessage = null;
+		    StringBuffer txtMessage = new StringBuffer("");
 		    if(type.equals("reset")) {
-			    txtMessage = "Goto https://" + 
-			    			request.getServerName() + "/resetPassword.html?token=" + uuid +
-			    			" to reset your password.\n\n" +
-			    			"Your user name is: " + identString.toString() + "\n\n" +
-			    			" The link is valid for " + interval + "\n" +
-			    			" Do not reply to this email it is not monitored";
-		    } if(type.equals("newuser")) {
-		    	 txtMessage = adminName + " has given you access to a Smap server with address http://" + request.getServerName() + "\n" +
-		    	 			"You will need to specify your password before you can log on.  To do this click on the following link https://" + 
-			    			request.getServerName() + "/resetPassword.html?token=" + uuid + "\n\n" +
-			    			"Your user name is: " + identString.toString() + "\n\n" +
-			    			" The link is valid for " + interval + "\n" +
-			    			" Do not reply to this email it is not monitored";
+			    txtMessage.append("Goto https://");
+			    txtMessage.append(request.getServerName());
+			    txtMessage.append("/resetPassword.html?token=");
+			    txtMessage.append(uuid);
+			    txtMessage.append(" to reset your password.\n\n");
+			    txtMessage.append("Your user name is: ");
+			    txtMessage.append(identString.toString());
+			    txtMessage.append("\n\n");
+			    txtMessage.append(" The link is valid for ");
+			    txtMessage.append(interval);
+			    txtMessage.append("\n");
+			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
+			    txtMessage.append(adminEmail);
+			    txtMessage.append(".");
+			
+		    } else if(type.equals("newuser")) {
+		    	
+			    txtMessage.append(adminName);
+			    txtMessage.append(" has given you access to a Smap server with address http://");
+			    txtMessage.append(request.getServerName());
+			    txtMessage.append("\n");
+			    txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link https://");
+			    txtMessage.append(request.getServerName());
+			    txtMessage.append("/resetPassword.html?token=");
+			    txtMessage.append(uuid);
+			    txtMessage.append("\n\n");
+			    txtMessage.append("Your user name is: ");
+			    txtMessage.append(identString.toString());
+			    txtMessage.append("\n\n");
+			    txtMessage.append(" The link is valid for ");
+			    txtMessage.append(interval);
+			    txtMessage.append("\n");
+			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
+			    txtMessage.append(adminEmail);
+			    txtMessage.append(".");			
+
+		    } else if(type.equals("notify")) {
+			    txtMessage.append("This is a notification from Smap server http://");
+			    txtMessage.append(request.getServerName());
+			    txtMessage.append("\n");
+			    txtMessage.append(request.getServerName());
+			    txtMessage.append(docURL);
+			    txtMessage.append("\n");
+			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
+			    txtMessage.append(adminEmail);
+			    txtMessage.append(".");
 
 		    }
-		    msg.setText(txtMessage);
+		    
+		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
 		    Transport.send(msg);
 		} catch(MessagingException me) {

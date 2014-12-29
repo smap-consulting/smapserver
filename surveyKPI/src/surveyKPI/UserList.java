@@ -443,11 +443,12 @@ public class UserList extends Application {
 						System.out.println("Check if email enabled: " + u.sendEmail);
 							if(UtilityMethods.hasEmail(request)) {
 								System.out.println("Send email");
+								String adminEmail = UtilityMethods.getAdminEmail(connectionSD, pstmt, request.getRemoteUser());
 								String interval = "48 hours";
 								String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								UtilityMethods.sendEmail(request, u.email, uuid, "newuser", 
-										"Account created on Smap", adminName, interval, idents);
+										"Account created on Smap", adminName, interval, idents, null, adminEmail);
 							} else {
 								throw new Exception("Email not enabled - set passwords directly");
 							}

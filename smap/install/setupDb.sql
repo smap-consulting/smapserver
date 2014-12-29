@@ -194,6 +194,7 @@ CREATE TABLE upload_event (
 	imei text,
 	orig_survey_ident text,
 	update_id varchar(41),
+	instanceid varchar(41),
 	status varchar(10),
 	reason text,
 	location text,

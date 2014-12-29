@@ -7,8 +7,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -257,23 +261,32 @@ public class NotificationManager {
 	/*
 	 * Apply any notification for the passed in submission
 	 */
-	public void notifyForSubmission(Connection sd, PreparedStatement pstmtGetUploadEvent, 
-			PreparedStatement pstmtGetNotifications, int ue_id) throws SQLException {
+	public void notifyForSubmission(Connection sd, 
+			PreparedStatement pstmtGetAdminEmail,
+			PreparedStatement pstmtGetUploadEvent, 
+			PreparedStatement pstmtGetNotifications, 
+			PreparedStatement pstmtUpdateUploadEvent, 
+			int ue_id,
+			HttpServletRequest request) throws SQLException {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
 		 * 2. Apply any additional filtering
 		 * 3. Invoke each notification
+		 *    3a) Create document
+		 *    3b) Send document to target
 		 * 4. Update upload event table to show that notifications have been applied
 		 */
 		
 		ResultSet rs = null;
 		ResultSet rsNotifications = null;
 		int s_id = 0;
+		String ident = null;
+		String instanceId = null;
 		
 		System.out.println("notifyForSubmission:: " + ue_id);
-		
-		String sqlGetUploadEvent = "select ue.s_id " +
+				
+		String sqlGetUploadEvent = "select ue.s_id, ue.ident, ue.instanceid " +
 				" from upload_event ue " +
 				" where ue.ue_id = ?;";
 		try {if (pstmtGetUploadEvent != null) { pstmtGetUploadEvent.close();}} catch (SQLException e) {}
@@ -285,27 +298,59 @@ public class NotificationManager {
 				" and n.target != 'forward'";
 		try {if (pstmtGetNotifications != null) { pstmtGetNotifications.close();}} catch (SQLException e) {}
 		pstmtGetNotifications = sd.prepareStatement(sqlGetNotifications);
-	
+		
+		String sqlUpdateUploadEvent = "update upload_event set notifications_applied = 'true' where ue_id = ?; ";
+		try {if (pstmtUpdateUploadEvent != null) { pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
+		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
+
+		// Get the admin email
+		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmtGetAdminEmail, request.getRemoteUser());
+		
+		
 		// Get the details from the upload event
 		pstmtGetUploadEvent.setInt(1, ue_id);
 		rs = pstmtGetUploadEvent.executeQuery();
 		if(rs.next()) {
 			s_id = rs.getInt(1);
-			System.out.println("Get notifications:: " + s_id);
+			ident = rs.getString(2);
+			instanceId = rs.getString(3);
+			
+			System.out.println("Get notifications:: " + s_id + " : " + ident + " : " + instanceId);
 			pstmtGetNotifications.setInt(1, s_id);
 			rsNotifications = pstmtGetNotifications.executeQuery();
 			while(rsNotifications.next()) {
 				System.out.println("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
-				String target = rs.getString(1);
-				String notifyDetailsString = rs.getString(2);
+				String target = rsNotifications.getString(1);
+				String notifyDetailsString = rsNotifications.getString(2);
 				NotifyDetails nd = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
 				
+				/*
+				 * Create the document
+				 * TODO: Allow creation of PDFs, reports, aggregations
+				 */
+				String docUrl = "/webforms/formXML.php"+"?key=" + ident +
+						"&datakey=instanceid&datakeyvalue=" + instanceId;
+				
+				/*
+				 * Send document to target
+				 */
 				if(target.equals("email")) {
 					for(String email : nd.emails) {
-						System.out.println("+++ emailing to: " + email);
+						System.out.println("+++ emailing to: " + email + " : " + docUrl);
+						try {
+							UtilityMethods.sendEmail(request, email, null, "notify", "Smap Notification", null, null, null, docUrl, adminEmail);
+						} catch(Exception e) {
+							// ignore errors
+						}
 					}
 				}
 			}
+			
+			/*
+			 * Update upload event to record application of notifications
+			 */
+			pstmtUpdateUploadEvent.setInt(1, ue_id);
+			pstmtUpdateUploadEvent.executeUpdate();
 			
 		}
 	}

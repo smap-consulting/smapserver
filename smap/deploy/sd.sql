@@ -202,6 +202,7 @@ alter table assignments add constraint assignee FOREIGN KEY (assignee)
 
 -- Upgrade to:  14.12 from 14.11 =======
 alter table upload_event add column notifications_applied boolean;
+alter table upload_event add column instanceid varchar(41);
 alter table forward add column target text;
 alter table forward add column notify_details text;
 update forward set target = 'forward';

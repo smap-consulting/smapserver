@@ -21,11 +21,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-	<!--  <link rel=StyleSheet href="/css/smap.css" type="text/css"> -->
-	<!--  <link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" /> -->
-	<!--  <link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/> -->
-	<!--  <link rel="stylesheet" href="/css/jquery.contextMenu.css" type="text/css"/> -->
 	
 	<link rel="stylesheet" href="/css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
@@ -74,7 +69,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
 		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
-        	<a id="username" type="button" class="btn btn-default" aria-label="User">
+         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
 			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
 			</a>
 		</li>
@@ -88,21 +83,26 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 <div class="container">
 	<div class="row">	   	
-	   	<div class="col-md-5 col-md-offset-1 col-xs-12" id="sidebar">
-	   		<div class = "well">
-	   	
+	   	<div class="col-md-6 col-xs-12">
 				<div id="filters">
-					<form id="service_filter_form">
-						<label class="lang" data-lang="c_project" for="project_name">Select Project</label>
-						<select class="project_list" id="project_name"></select><br/>
+					<form role="form" class="form-horizontal" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+						<div class="col-sm-8">
+							<select class="project_list form-control" id="project_name"></select>
+						</div>
 					</form>	
 				</div>
+		</div>
+	</div>
+	<div class="row">	   	
+	   	<div class="col-md-5 col-md-offset-1 col-xs-12" id="sidebar">
+	   		<div class = "well">
 
-				<span class="selected_templates">
-					<span class="restrict_role admin_role analyst_role" style="display:none">
+				<div class="selected_templates">
+					<div class="restrict_role admin_role analyst_role" style="display:none">
 						<input id="show_deleted" type="checkbox" name="show_deleted" 
 							value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
-					</span>
+					</div>
 					<div id="surveys">
 						<h1 class="lang" data-lang="c_forms">Forms</h1>
 						<div id="survey_table"></div>
@@ -112,7 +112,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<button id="un_delete_survey" data-lang="tm_r_forms" class="restrict_role admin_role analyst_role lang">Restore Forms</button>
 						<button id="erase_survey" data-lang="tm_e_forms" class="restrict_role admin_role analyst_role lang">Erase Forms</button>
 					</div>
-				</span>
+				</div>
 
 			</div>
 		</div>
@@ -163,48 +163,100 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 		</div>
 	</div>
-	
-	<!-- Popup to allow the user to edit their own details -->
-	<div id="modify_me_popup" style="display:none;">
-	
-		<div class="left_panel">
-			<form id="me_edit_form">
-				<label for="me_name" data-lang="c_name" class="lang">Name</label>
-				<input type="text" id="me_name" required><br/>
-				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
-				<select id="me_language"></select><br/>
-				<label for="me_email" data-lang="c_email" class="lang">Email</label>
-				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
-				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
-					<input type="checkbox" id="reset_me_password"/><br/>
-				</span>
-				<span id="password_me_fields" style="display:none;">
-					<label for="me_password" data-lang="c_password" class="lang">Password</label>
-					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
-					<input id="me_password_confirm" type="password"><br/>	
-				</span>		
-			</form>	
-		</div>
-	</div>
-	
-	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-
-
 </div>
 
-<div id="download_template" style="display:none;">
-	<h1></h1>
-	<fieldset>
-	<legend>File Type:</legend>
-	<input type="radio" name="download_type" value="xls" checked="checked"/> <span data-lang="ft_xls" class="lang">XLS Form</span><br/> 
-	<input type="radio" name="download_type" value="xml"/> <span data-lang="ft_xml" class="lang">XML Form</span><br/>
-	<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Codebook</span><br/> 
-	</fieldset>
-	<div id="download_language_div">
-		<label for="download_language" data-lang="c_lang" class="lang">Language</label><br/>
-		<select id="download_language"></select><br/>
+<!-- Popup to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+
+<!-- Popup to allow the user to edit their own details -->
+<div id="download_template" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="dtLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="dtLabel">Download</h4>
+   			</div>
+		     <div class="modal-body">
+
+				<h1></h1>
+				<fieldset>
+				<legend>File Type:</legend>
+				<input type="radio" name="download_type" value="xls" checked="checked"/> <span data-lang="ft_xls" class="lang">XLS Form</span><br/> 
+				<input type="radio" name="download_type" value="xml"/> <span data-lang="ft_xml" class="lang">XML Form</span><br/>
+				<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Codebook</span><br/> 
+				</fieldset>
+				<div id="download_language_div">
+					<label for="download_language" data-lang="c_lang" class="lang">Language</label><br/>
+					<select id="download_language"></select><br/>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 

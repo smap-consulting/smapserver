@@ -16,13 +16,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','localise', 'common', 'globals',  'tablesorter', 'bootstrap'], 
-		function($, lang, common, globals, tablesorter, bootstrap) {
+define(['jquery','localise', 'common', 'globals',  'bootstrap'], 
+		function($, lang, common, globals, bootstrap) {
 	
 var	gSurveys,		// Only in this java script file
-	gForwards,
 	gUpdateFwdPassword,
-	gSelectedForward = -1,
 	gControlDelete,
 	gControlRestore,
 	gShowDeleted = false,
@@ -64,11 +62,7 @@ $(document).ready(function() {
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
  	 });
 	
-	// Forward
-	$('#add_forward').button().click(function () {
-		edit_forward(undefined);
-	});
-	
+/*
 	$('#fwd_host').change(function(){
 		var host = $(this).val();
 		if(host.length === 0) {
@@ -86,7 +80,7 @@ $(document).ready(function() {
 	$('#fwd_upd_rem_survey').click(function(){
 		getRemoteSurveys();
 	});
-	
+*/	
 	/*
 	 * Style the template editing and uploading
 	 */
@@ -95,6 +89,7 @@ $(document).ready(function() {
 	
 
 	// Initialse the download template dialog
+	/*
 	$('#download_template').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -129,6 +124,7 @@ $(document).ready(function() {
 			]
 		}
 	 );
+	 */
 	
 	// Change function on download file type
 	$("input[name='download_type']", "#download_template").change(function() {
@@ -312,17 +308,16 @@ function completeSurveyList() {
 	h = [],
 	idx = -1;
 	
-	h[++idx] = '<table class="tablesorter">';
+	h[++idx] = '<table class="table">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th></th>';
 	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
 	h[++idx] = '<th>' + localise.set["c_block"] + '</th>';
 	h[++idx] = '<th>' + localise.set["c_download"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_forward"] + '</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
-	h[++idx] = '<tbody>';
+	h[++idx] = '<tbody class="table-striped">';
 
 	for(i = 0; i < gSurveys.length; i++) {
 		survey = gSurveys[i];
@@ -357,11 +352,6 @@ function completeSurveyList() {
 			h[++idx] = survey.id;
 			h[++idx] = '"><img src="images/downarrow.png" height="16" width="16"></button>';
 			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = '<button class="forward_td" type="button" value="';
-			h[++idx] = survey.id;
-			h[++idx] = '"><img src="images/uparrow.png" height="16" width="16"></button>';
-			h[++idx] = '</td>';
 			h[++idx] = '</tr>';	
 		}
 	}
@@ -369,7 +359,7 @@ function completeSurveyList() {
 	h[++idx] = '</tbody>';
 	h[++idx] = '</table>';
 	
-	$surveys.empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
+	$surveys.empty().append(h.join(''));
 	
 	$('.control_td').find('input').click(function() {
 
@@ -439,7 +429,7 @@ function completeSurveyList() {
 		});
 		name = $(this).parent().siblings(".displayName").text();
 		$('h1', '#download_template').html(name);
-		$('#download_template').dialog("open");
+		$('#download_template').modal('show');
 	});
 	
 	$('.forward_td').button().click(function(e) {

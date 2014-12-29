@@ -77,7 +77,7 @@ public class XFormData {
 		
 	}
 	
-	public void loadMultiPartMime(HttpServletRequest request, String user, String instanceId) 
+	public void loadMultiPartMime(HttpServletRequest request, String user, String updateInstanceId) 
 			throws SurveyBlockedException, MissingSurveyException, IOException, FileUploadException, 
 			MissingTemplateException, AuthorisationException, Exception {
 
@@ -109,6 +109,7 @@ public class XFormData {
 		 * Save the XML submission file
 		 */
 		Iterator<FileItem> iter = items.iterator();
+		String thisInstanceId = null;
 		while (iter.hasNext()) {
 		    FileItem item = (FileItem) iter.next();	    
 	    	String name = item.getFieldName();
@@ -125,6 +126,8 @@ public class XFormData {
 				SurveyTemplate template = new SurveyTemplate();
 				template.readDatabase(templateName);										
 				template.extendInstance(si);
+				
+				thisInstanceId = si.getUuid();
 
 				break;	// There is only one XML submission file
 	        }
@@ -188,7 +191,8 @@ public class XFormData {
 		ue.setUploadTime(new Date());	
 		ue.setFileName(saveDetails.fileName);
 		ue.setSurveyName(si.getDisplayName());
-		ue.setUpdateId(instanceId);
+		ue.setUpdateId(updateInstanceId);
+		ue.setInstanceId(thisInstanceId);
 		ue.setLocation(si.getSurveyGeopoint());
 		ue.setImei(si.getImei());
 		ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);

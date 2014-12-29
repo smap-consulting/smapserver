@@ -250,7 +250,11 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 							} else {
 								params = 'class="bad_r" pkey="' + groups[i].properties.prikeys[0] + '"';
 							}
-						} 
+						} else if(key === "_bad_reason") {
+							if(val && val.indexOf("Replaced by") === 0) {	
+								params = 'class="bad_replaced"';
+							}
+						}
 						gTab[++gIdx] = '<td ' + params + '>';
 						if(val === "0") {
 							gTab[++gIdx] = "";
