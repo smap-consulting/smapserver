@@ -81,10 +81,8 @@ $(document).ready(function() {
 		getRemoteSurveys();
 	});
 */	
-	/*
-	 * Style the template editing and uploading
-	 */
-	$('.abutton').button();
+	
+
 	
 	
 
@@ -126,6 +124,20 @@ $(document).ready(function() {
 	 );
 	 */
 	
+	// Download file
+	$('#downloadFile').button().click(function () {
+		var docURL,
+		language,
+		type;
+
+		type = $("input[name='download_type']:checked", "#download_template").val();
+		language = $('#download_language option:selected').val();
+
+		docURL = "/surveyKPI/survey/" + gSelectedTemplate + "/download?type=" + type + "&language=" + language;
+			  
+		window.location.href = docURL;
+	});
+	
 	// Change function on download file type
 	$("input[name='download_type']", "#download_template").change(function() {
 		var type = $("input[name='download_type']:checked", "#download_template").val();
@@ -140,16 +152,6 @@ $(document).ready(function() {
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();
 	});
-	
-	// Ident checkbox
-	/*
-	if($('#ident').is(':checked')) {
-		$('#surveyIdent').show();
-	}
-	$('#ident').change(function () {
-		$('#surveyIdent').toggle();
-	});
-	*/
 	
 	// Validate upload form on submit
 	// Check that the survey has a valid name
@@ -428,24 +430,10 @@ function completeSurveyList() {
 			});
 		});
 		name = $(this).parent().siblings(".displayName").text();
-		$('h1', '#download_template').html(name);
+		$('h4', '#download_template').append(" " + name);
 		$('#download_template').modal('show');
 	});
 	
-	$('.forward_td').button().click(function(e) {
-		var selTempName = $(this).parent().siblings('.displayName').text();
-		gSelectedTemplate = $(this).val();
-		if(typeof gForwards === "undefined") {
-			getForwardsForList(globals.gCurrentProject, gSelectedTemplate);	
-		} else {
-			setForwardList(gSelectedTemplate);
-		}
-		$('#forward_list_popup .form_name').html(selTempName);
-		$('#forward_list_popup').dialog("open");
-	});
-	
-	$('.sEdit').button().click(function(e) {
-	});
 	
 }
 

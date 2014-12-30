@@ -18,7 +18,7 @@ define({
 	"m_locations": "Locations",
 	"m_section": "Section",
 	"m_notify": "Notifications",
-	"m_view": "Viewxx",
+	"m_view": "View",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -50,9 +50,9 @@ define({
 	"c_download": "Download",
 	"c_done": "Done",
 	"c_cancel": "Cancel",
-	"c_save": "Savexx",
-	"c_close": "Closexx",
-	"c_logout": "Logoutxx",
+	"c_save": "Save",
+	"c_close": "Close",
+	"c_logout": "Logout",
 	"c_block": "Block",
 	"c_graph": "Graph",
 	"c_map": "Map",
@@ -96,6 +96,7 @@ define({
 	"c_action": "Action",
 	
 	// File Types
+	"ft": "File Type",
 	"ft_xls": "XLS Form",
 	"ft_xml": "XML Form",
 	"ft_pdf": "PDF Form",

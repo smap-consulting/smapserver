@@ -800,11 +800,6 @@ public class Review extends Application {
 
 			}
 			
-			/*
-			 * All updates must be made in a single transaction or rolled back
-			 */
-			dConnection.setAutoCommit(false);
-			
 			// Create an array of update items for each update item in each record
 			if(u.r_id > 0) {
 				
@@ -862,7 +857,7 @@ public class Review extends Application {
 			//}
 			
 			// Create an entry for this changeset and get the changeset id
-			System.out.println("Get changeset id");
+			System.out.println("Get changeset id: " + sqlInsertChangeset);
 			pstmtInsertChangeset.setString(1, userName);
 			pstmtInsertChangeset.setInt(2, sId);
 			pstmtInsertChangeset.setString(3, u.reason);
@@ -885,7 +880,6 @@ public class Review extends Application {
 					pstmtInsertChangeHistory
 					);
 
-			dConnection.commit();
 			response = Response.ok().build();
 
 		} catch (ApplicationException e) {
@@ -915,7 +909,8 @@ public class Review extends Application {
 		
 		} finally {
 			
-			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}		
+			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}	
+			try {dConnection.setAutoCommit(true);} catch (Exception e) {}
 			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (SQLException e) {}
 			try {if (pstmtData != null) {pstmtData.close();}} catch (SQLException e) {}
 			try {if (pstmtGetCurrentValue != null) {pstmtGetCurrentValue.close();}} catch (SQLException e) {}
@@ -1004,6 +999,12 @@ public class Review extends Application {
 			PreparedStatement pstmtInsertChangeHistory
 			) throws ApplicationException, SQLException, Exception {
 		
+		System.out.println("+++ applyUpdateItems");
+		
+		// Update to table and change history must be in a single transaction
+		dConnection.setAutoCommit(false);
+		System.out.println("*****Autocommit false");
+		
 		/*
 		 * Get the current value and primary key of each record that is to change
 		 */
@@ -1013,7 +1014,7 @@ public class Review extends Application {
 			UpdateItem ui = updateItems.get(i);
 			
 			/*
-			 * Update date
+			 * Update data
 			 */
 			if(ui.qtype.equals("select")) {
 				String cleanOname = UtilityMethods.cleanName(ui.newValue);
@@ -1060,10 +1061,18 @@ public class Review extends Application {
 				} else {
 					pstmtInsertChangeHistory.setString(9, "");
 				}
-	
+				
+				System.out.println("Insert Change History: " + "insert into change_history(c_id, q_id, r_id, old_value, " +
+						"new_value, qname, qtype, tablename, oname) " +
+						" values(?, ?, ?, ?, ?, ?, ?, ?, ?);");
 				pstmtInsertChangeHistory.executeUpdate();
+				
+				dConnection.commit();
+				System.out.println("********Commit");
 			} 
 		}
+		try {dConnection.setAutoCommit(true);} catch (Exception e) {}
+		System.out.println("*****Autocommit true");
 	}
 	
 
@@ -1151,11 +1160,6 @@ public class Review extends Application {
 				throw new ApplicationException("Failed to get user name");
 			}
 			
-			/*
-			 * All updates must be made in a single transaction or rolled back
-			 */
-			dConnection.setAutoCommit(false);
-			
 			// Update the changeset
 			pstmtUpdateChangeset.setString(1, userName);
 			pstmtUpdateChangeset.setInt(2, csId);
@@ -1222,7 +1226,6 @@ public class Review extends Application {
 					null
 					);
 
-			dConnection.commit();
 			response = Response.ok().build();
 
 		} catch (InvalidUndoException e) {
@@ -1260,7 +1263,8 @@ public class Review extends Application {
 		
 		} finally {
 			
-			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}		
+			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}	
+			try {dConnection.setAutoCommit(true);} catch (Exception e) {}
 			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (SQLException e) {}
 			try {if (pstmtData != null) {pstmtData.close();}} catch (SQLException e) {}
 			try {if (pstmtGetCurrentValue != null) {pstmtGetCurrentValue.close();}} catch (SQLException e) {}

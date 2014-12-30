@@ -93,7 +93,7 @@ public class TemplateUpload extends HttpServlet {
     private class SaveResponse {
     	public int code = 0;
     	public String fileName = null;
-    	public ArrayList<String> errMesg;
+    	public ArrayList<String> errMesg = new ArrayList<String> ();
     	public ArrayList<String> hints = new ArrayList<String> ();
     	boolean foundErrorMsg;
     }
@@ -232,7 +232,7 @@ public class TemplateUpload extends HttpServlet {
 						resp.hints.add("Check the 'name' and 'list_name' columns for accented characters.");
 						resp.hints.add("Finally: Contact tech support, this may be a system error.");
 					}
-					System.out.println(resp.errMesg.toString());
+					//System.out.println(resp.errMesg.toString());
 					
 					setErrorResponse(request, response, resp.errMesg, resp.hints, serverName, projectName, displayName, fileName);
 					return;
@@ -443,7 +443,6 @@ public class TemplateUpload extends HttpServlet {
 	        InputStreamReader isr = new InputStreamReader(stderr);
 	        BufferedReader br = new BufferedReader(isr);
 	        String line = null;
-	        //errorMesgBuf.append("<ol>");
 	        response.foundErrorMsg = false;
 	        boolean hasCircularRef = false;
 	        boolean hasInvalidFunction = false;
@@ -576,7 +575,9 @@ public class TemplateUpload extends HttpServlet {
         				
         			}
 	        		
-        		} 
+        		} else {
+        			response.errMesg.add(line);
+        		}
 
 	        }   
 	        
