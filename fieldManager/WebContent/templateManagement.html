@@ -134,18 +134,21 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					</p>
 					<br>
 					<h3 data-lang="tm_ul_f" class="lang">Upload a Form</h3>
-					<form id="uploadForm" accept-charset="utf-8" 
+					<form role="form" id="uploadForm" accept-charset="utf-8" 
 							action="TemplateUpload" 
 							enctype="multipart/form-data" method="POST" 
 							class="ui-body ui-body-a ui-corner-all">
 						<fieldset id="templateUpload">
 							<input id="projectId" type="hidden" name="projectId" value="" style="display:none;"/>
 							<input id="projectName" type="hidden" name="projectName" value="" style="display:none;"/>
-							<label for="templateName"><span data-lang="c_name" class="lang">Name</span>:</label>
-							<input id="templateName" type="text" name="templateName" maxlength="100" required /><br/>
-							<label for="file"><span data-lang="c_file" class="lang">File</span>:</label> 
-							<input type="file" name="tname" id="file" required/><br/>
-							
+							<div class="form-group">
+								<label for="templateName"><span data-lang="c_name" class="lang control-label">Name</span>:</label>
+								<input id="templateName" class="form-control" type="text" name="templateName" maxlength="100" required />
+							</div>
+							<div class="form-group">
+								<label for="file"><span data-lang="c_file" class="lang control-label">File</span>:</label> 
+								<input type="file" class="form-control" name="tname" id="file" required/>
+							</div>
 							<button	type="submit" class="btn btn-primary lang" data-lang="tm_up" name="submitFile" value="Upload File" >Upload</button>
 						</fieldset>
 						<fieldset id="showtype" class="ui-widget-content">

@@ -76,6 +76,26 @@ $(document).ready(function() {
 		window.location.href = docURL;
 	});
 	
+	// Change function on file selected
+	$('#file').change(function(){
+		var templateName = $('#templateName').val();
+		var $this = $(this);
+		var fileName = $this[0].files[0].name;
+		var newTemplateName;
+		
+		if(templateName && templateName.trim().length() > 0) {
+			// ignore - leave user specified name
+		} else {
+			var lastDot = fileName.lastIndexOf(".");
+		    if (lastDot === -1) {
+		    	newTemplateName = fileName;
+		    } else {
+		    	newTemplateName = fileName.substr(0, lastDot);
+		    }
+			$('#templateName').val(newTemplateName);
+		}
+	});
+	
 	// Change function on download file type
 	$("input[name='download_type']", "#download_template").change(function() {
 		var type = $("input[name='download_type']:checked", "#download_template").val();
