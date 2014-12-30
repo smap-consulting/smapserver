@@ -383,7 +383,7 @@ public class ForwardList extends Application {
 			if(fm.isFeedbackLoop(connectionSD, request.getServerName(), f)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
-			fm.updateForward(connectionSD, pstmt, request.getRemoteUser(), f);	
+			fm.updateNotification(connectionSD, pstmt, request.getRemoteUser(), f);	
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {

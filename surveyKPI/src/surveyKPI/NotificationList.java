@@ -357,7 +357,7 @@ public class NotificationList extends Application {
 	@Path("/update")
 	@POST
 	public Response updateNotification(@Context HttpServletRequest request,
-			@FormParam("forward") String forwardString) { 
+			@FormParam("notification") String notificationString) { 
 		
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -372,26 +372,26 @@ public class NotificationList extends Application {
 		
 		Type type = new TypeToken<Notification>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		Notification f = gson.fromJson(forwardString, type);
+		Notification n = gson.fromJson(notificationString, type);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
-		System.out.println("s_id: " + f.s_id);
-		System.out.println("Remote s_id: " + f.remote_s_ident);
+		System.out.println("s_id: " + n.s_id);
+		System.out.println("Remote s_id: " + n.remote_s_ident);
 		
 		PreparedStatement pstmt = null;
 		
 		
 		try {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), f.s_id, false);
-			NotificationManager fm = new NotificationManager();
-			if(fm.isFeedbackLoop(connectionSD, request.getServerName(), f)) {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false);
+			NotificationManager nm = new NotificationManager();
+			if(n.target.equals("forward") && nm.isFeedbackLoop(connectionSD, request.getServerName(), n)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
-			fm.updateForward(connectionSD, pstmt, request.getRemoteUser(), f);	
+			nm.updateNotification(connectionSD, pstmt, request.getRemoteUser(), n);	
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
@@ -405,8 +405,13 @@ public class NotificationList extends Application {
 		} catch (Exception e) {
 			String msg = e.getMessage();
 			log.info(msg);
-			if(!msg.contains("forwarded to itself")) {
+			if(msg!= null && !msg.contains("forwarded to itself")) {
 				log.log(Level.SEVERE,"Error", e);
+			} else if(msg == null) {
+				log.log(Level.SEVERE,"Error", e);
+				msg = "System error";
+			} else {
+				msg = "System error";
 			}
 		    response = Response.serverError().entity(msg).build();
 		} finally {

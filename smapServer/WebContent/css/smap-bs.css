@@ -76,6 +76,14 @@ tr.deleted td a {
 	color: red !important;
 }
 
-.glyphicon-remove {
-	color:red;
+.danger {
+	background-color:red;
+	border-color:red;
+	color: white;
+}
+
+.warning {
+	background-color:orange;
+	border-color:orange;
+	color: white;
 }

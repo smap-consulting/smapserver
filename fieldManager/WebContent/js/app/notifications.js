@@ -44,14 +44,9 @@ $(document).ready(function() {
 	$('#target').change(function() {
 		var target = $(this).val();
 		
-		$('#forward_options, email_options').hide();
-		if(target === "email") {
-			$('#email_options').show();
-		} else if(target === "forward") {
-			$('#forward_options').show();
-		}		
+		setTargetDependencies(target);
  	});
-	$('#email_options').show();
+	setTargetDependencies("email");
 	
 	// Enable the save notifications function
 	$('#saveNotification').click(function(){saveNotification();});
@@ -81,13 +76,23 @@ $(document).ready(function() {
 		remoteSurveyChanged();
 	});
 	
-	$('#addNotificationPopup').on('hidden.bs.modal', function (e) {
-		document.getElementById("notification_edit_form").reset();
+	$('#addNotification').click(function(){
+		edit_notification();
+		$('#addNotificationPopup').modal("show");
 	});
 		
 	enableUserProfileBS();
 });	
-	
+
+function setTargetDependencies(target) {
+	$('#forward_options, email_options').hide();
+	if(target === "email") {
+		$('#email_options').show();
+	} else if(target === "forward") {
+		$('#forward_options').show();
+	}		
+}
+
 function projectSet() {
 	loadSurveys(globals.gCurrentProject, undefined, false, false);			// Get surveys
 	getNotifications(globals.gCurrentProject);
@@ -218,32 +223,38 @@ function saveForward() {
 	return notification;
 }
 
-function edit_forward(fwdIndex) {
+function edit_notification(idx) {
 	
-	var forward,
-		title = localise.set["msg_add_forward"];
+	var notification,
+		title = localise.set["msg_add_notification"];
 	
 	document.getElementById("notification_edit_form").reset();
 	
-	if(fwdIndex) {
-		forward = gForwards[fwdIndex];
-		console.log("Editing:");
-		console.log(forward);
-		title = localise.set["msg_edit_forward"],
+	if(typeof idx !== "undefined") {
+		notification = gNotifications[idx];
 		
-		$('#fwd_rem_survey_id').val(forward.remote_s_ident);
-		$('#fwd_rem_survey_nm').val(forward.remote_s_name);	
-		$('#fwd_user').val(forward.remote_user);	
+		title = localise.set["msg_edit_notification"],
+		
+		$('#target').val(notification.target);
+		setTargetDependencies(notification.target)
+		
+		$('#survey').val(notification.s_name);
+		if(notification.notifyDetails && notification.notifyDetails.emails) {
+			$('#notify_emails').val(notification.notifyDetails.emails.join(";"));
+		}
+		$('#fwd_rem_survey_id').val(notification.remote_s_ident);
+		$('#fwd_rem_survey_nm').val(notification.remote_s_name);	
+		$('#fwd_user').val(notification.remote_user);	
 		// Password not returned from server - leave blank
 		
-		$('#fwd_host').val(forward.remote_host);
-		if(forward.enabled) {
+		$('#fwd_host').val(notification.remote_host);
+		if(notification.enabled) {
 			$('#nt_enabled').attr('checked','checked');
 		} else {
 			$('#nt_enabled').removeAttr('checked');
 		}
 		gUpdateFwdPassword = false;
-		gSelectedNotification = forward.id;
+		gSelectedNotification = notification.id;
 	} else {
 		
 		$('#fwd_host').val(gRemote_host);	// Set the values to the ones last used
@@ -253,6 +264,8 @@ function edit_forward(fwdIndex) {
 		gUpdateFwdPassword = true;
 		gSelectedNotification = -1;
 	}
+	$('#addNotificationLabel').html(title);
+	
 }
 
 /*
@@ -454,11 +467,19 @@ function updateNotificationList(data) {
 		
 		// actions
 		h[++idx] = '<td>';
-		h[++idx] = '<button type="button" data-id="';
-		h[++idx] = data[i].id;
-		h[++idx] = '" class="btn btn-default btn-sm rm_not">';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm edit_not warning">';
+		h[++idx] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm rm_not danger">';
 		h[++idx] = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>';
+		
 		h[++idx] = '</td>';
+		// end actions
 		
 		h[++idx] = '</tr>';
 	}
@@ -466,8 +487,16 @@ function updateNotificationList(data) {
 	h[++idx] = '</table>';
 	
 	$selector.empty().append(h.join(''));
+	
 	$(".rm_not", $selector).click(function(){
-		delete_notification($(this).data("id"));
+		var idx = $(this).data("idx");
+		delete_notification(gNotifications[idx].id);
+	});
+	
+	$(".edit_not", $selector).click(function(){
+		var idx = $(this).data("idx");
+		edit_notification(idx);
+		$('#addNotificationPopup').modal("show");
 	});
 
 }

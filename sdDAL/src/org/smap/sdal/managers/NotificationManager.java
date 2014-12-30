@@ -107,7 +107,7 @@ public class NotificationManager {
 	/*
 	 * Update a record to the forwarding table
 	 */
-	public void updateForward(Connection sd, PreparedStatement pstmt, String user, 
+	public void updateNotification(Connection sd, PreparedStatement pstmt, String user, 
 			Notification n) throws Exception {
 			
 		String sql = null;
@@ -119,6 +119,8 @@ public class NotificationManager {
 					" remote_s_name = ?, " +
 					" remote_host = ?, " +
 					" remote_user = ?, " +
+					" notify_details = ?, " +
+					" target = ?, " +
 					" remote_password = ? " +
 					" where id = ?; ";
 		} else {
@@ -128,11 +130,16 @@ public class NotificationManager {
 					" remote_s_id = ?, " +
 					" remote_s_name = ?, " +
 					" remote_host = ?, " +
-					" remote_user = ? " +
+					" remote_user = ?, " +
+					" notify_details = ?, " +
+					" target = ? " +
 					" where id = ?; ";
 		}
 			
 
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		String notifyDetails = gson.toJson(n.notifyDetails);
+		
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		pstmt = sd.prepareStatement(sql);	 			
 		pstmt.setInt(1, n.s_id);
@@ -141,11 +148,13 @@ public class NotificationManager {
 		pstmt.setString(4, n.remote_s_name);
 		pstmt.setString(5, n.remote_host);
 		pstmt.setString(6, n.remote_user);
+		pstmt.setString(7, notifyDetails);
+		pstmt.setString(8, n.target);
 		if(n.update_password) {
-			pstmt.setString(7, n.remote_password);
-			pstmt.setInt(8, n.id);
+			pstmt.setString(9, n.remote_password);
+			pstmt.setInt(10, n.id);
 		} else {
-			pstmt.setInt(7, n.id);
+			pstmt.setInt(9, n.id);
 		}
 		log.info("SQL: " + sql + " id:" + n.id);
 		pstmt.executeUpdate();
