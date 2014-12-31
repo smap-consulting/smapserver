@@ -270,6 +270,30 @@ public class UtilityMethods {
 	}
 	
 	/*
+	 * Get the organisation id for the user
+	 */
+	static public int getOrganisationId(
+			Connection sd, 
+			PreparedStatement pstmt, 
+			String user) throws SQLException {
+		
+		int o_id = -1;
+		
+		String sqlGetOrgId = "select o_id " +
+				" from users u " +
+				" where u.ident = ?;";
+		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		pstmt = sd.prepareStatement(sqlGetOrgId);
+		pstmt.setString(1, user);
+		ResultSet rs = pstmt.executeQuery();
+		if(rs.next()) {
+			o_id = rs.getInt(1);	
+		}
+		
+		return o_id;
+	}
+	
+	/*
 	 * Get the smtp host for the organisation that the user belongs to
 	 */
 	static public String getSmtpHost(

@@ -316,13 +316,15 @@ public class NotificationManager {
 		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
 		
 		String sqlNotificationLog = "insert into notification_log " +
-				"(notify_details, status, status_details, event_time) " +
-				"values( ?, ?, ?, now()); ";
+				"(o_id, notify_details, status, status_details, event_time) " +
+				"values( ?, ?, ?, ?, now()); ";
 		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Get the admin email
 		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmt, remoteUser);
+		int o_id = UtilityMethods.getOrganisationId(sd, pstmt, remoteUser);
+		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
 		
 		
 		// Get the details from the upload event
@@ -367,7 +369,7 @@ public class NotificationManager {
 							emails += email;
 						}
 						
-						notify_details = "Sending email to: " + emails + " of link " + docUrl;
+						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
 						
 						try {
 							UtilityMethods.sendEmail(emails, 
@@ -398,9 +400,10 @@ public class NotificationManager {
 				}
 				
 				// Write log message
-				pstmtNotificationLog.setString(1, notify_details);
-				pstmtNotificationLog.setString(2, status);
-				pstmtNotificationLog.setString(3, error_details);
+				pstmtNotificationLog.setInt(1, o_id);
+				pstmtNotificationLog.setString(2, notify_details);
+				pstmtNotificationLog.setString(3, status);
+				pstmtNotificationLog.setString(4, error_details);
 				pstmtNotificationLog.executeUpdate();
 			}
 			

@@ -331,7 +331,7 @@ function setcontrols() {
 		$(".showmap").hide();
 		$('#map,#layers,.get_less_more').hide();
 		$('#events_table').show();
-		refreshData(globals.gCurrentProject, survey);
+		//refreshData(globals.gCurrentProject, survey);
 	} else {
 		$(".showmap,.get_less_more").show();
 	}
@@ -402,10 +402,21 @@ function refreshData(projectId, surveyId, start_rec) {
 	}
 	function refreshDataExec(showTypeE, showSourceE) {
 		
-		var url = "/surveyKPI/eventList/" + projectId + "/" + surveyId;
+		if(typeof start_rec === "undefined") {
+			start_rec = 0;
+			gPageCount = 1;
+		}
+		
+		var url;
+		if(showSourceE === "notifications") {
+			url = "/surveyKPI/eventList/notifications";
+		} else {
+			url = "/surveyKPI/eventList/" + projectId + "/" + surveyId;
+		}
+
 		
 		if(showSourceE === "forms") {
-			url += "/forms"
+			url += "/forms";
 		} else {
 			if(showTypeE === "totals" ) {
 				url += "/totals";
@@ -422,9 +433,6 @@ function refreshData(projectId, surveyId, start_rec) {
 				url += "&groupby=" + groupby;
 			}
 			
-			if(typeof start_rec === "undefined") {
-				start_rec = 0;
-			}
 			url += "&start_key=" + start_rec;
 			url += "&rec_limit=200";
 		}
@@ -457,6 +465,8 @@ function refreshData(projectId, surveyId, start_rec) {
 				}
 				if(showSourceE === "forms") {
 					refreshFormsTable(data);
+				} else if(showSourceE === "notifications") {
+					refreshNotificationsTable(data, showType);
 				} else {
 					refreshTable(data, showType);
 					if(showTypeE !== "totals") {
@@ -509,8 +519,10 @@ function refreshTable(data, showType) {
 			msg = "<h1>No Forms</h1>";
 		} else if(showSource === "uploaded") {
 			msg = "<h1>No Submissions</h1>";
-		} else {
+		} else if(isForwarded) {
 			msg = "<h1>No results forwarded to another server</h1>";
+		} else {
+			msg = "<h1>Error: unknown source</h1>";
 		}
 		$msg.html(msg);
 		return;
@@ -622,8 +634,74 @@ function refreshTable(data, showType) {
 	
 	$elem.append(h.join(''));
 	
-	// Apply styling
-	//$("#events").tablesorter({ widgets: ['zebra'] });
+			
+}
+
+function refreshNotificationsTable(data, showType) {
+
+	var features = data.features,
+		$elem = $("#events tbody"),
+		$head = $("#events thead"),
+		$msg = $('#events_table_msg'),
+		h = [],
+		i = -1,
+		j,
+		locn,
+		status,
+		reason,
+		showSource = $("input[name=showsource]:checked").val();
+	
+	$head.empty();
+	$elem.empty();
+	$msg.empty();
+	
+	if(typeof features === "undefined" || features.length === 0) {
+		var msg = "<h1>No notifications</h1>";	
+		$msg.html(msg);
+		return;
+	}
+	
+	// Add the head
+	h[++i] = '<tr>';
+	if(showType === "totals") {
+		h[++i] = '<th>Success</th>';
+		h[++i] = '<th>Errors</th>';
+
+	} else {
+		h[++i] = '<th>Id</th>';
+		h[++i] = '<th>Details</th>';
+		h[++i] = '<th>Status</th>';
+		h[++i] = '<th>Failure Reason</th>';
+		h[++i] = '<th>Time</th>';
+	}
+	h[++i] = '</tr>';
+	$head.append(h.join(''));
+	
+	h = [];
+	i = -1;
+	// Add the body
+	for(j = 0; j < features.length; j++) {
+		h[++i] = '<tr>';
+		if(showType === "totals") {
+			h[++i] = '<td>' + features[j].properties.success + '</td>';
+			h[++i] = '<td>' + features[j].properties.errors + '</td>';
+		} else {
+			
+			h[++i] = '<td>' + features[j].properties.id + '</td>';
+			h[++i] = '<td>' + features[j].properties.notify_details + '</td>';
+			status = features[j].properties.status;
+			h[++i] = '<td class="' + status + '">' + status + '</td>';
+			h[++i] = '<td>' + features[j].properties.status_details + '</td>';
+			h[++i] = '<td>' + features[j].properties.event_time + '</td>';
+			
+
+		}
+		h[++i] = '</tr>';
+		
+	}
+	
+	$elem.append(h.join(''));
+
 			
 }
 

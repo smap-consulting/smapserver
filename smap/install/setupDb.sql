@@ -368,6 +368,7 @@ CREATE UNIQUE INDEX ForwardDest ON forward(s_id, remote_s_id, remote_host);
 DROP TABLE IF EXISTS notification_log;
 CREATE TABLE public.notification_log (
 	id integer default nextval('notification_log_seq') not null PRIMARY KEY,
+	o_id integer,
 	notify_details text,
 	status text,	
 	status_details text,

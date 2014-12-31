@@ -215,6 +215,7 @@ ALTER SEQUENCE notification_log_seq OWNER TO ws;
 
 CREATE TABLE public.notification_log (
 	id integer default nextval('notification_log_seq') not null PRIMARY KEY,
+	o_id integer,
 	notify_details text,
 	status text,
 	status_details text,

@@ -291,6 +291,147 @@ public class EventList extends Application {
 		return jo.toString();
 	}
 
+	/*
+	 * Get the individual notification events
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/notifications")
+	public String getNotificationEvents(@Context HttpServletRequest request, 
+			@QueryParam("hide_errors") boolean hideErrors,
+			@QueryParam("hide_success") boolean hideSuccess,
+			@QueryParam("start_key") int start_key,
+			@QueryParam("rec_limit") int rec_limit) {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    return "Error: Can't find PostgreSQL JDBC Driver";
+		}
+		
+		String user = request.getRemoteUser();
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
+		a.isAuthorised(connectionSD, user);
+		// End Authorisation
+		
+		if(rec_limit == 0) {
+			rec_limit = 200;	// Default for number of records to return
+		}
+		String filter = "";
+		if(start_key > 0) {
+			filter = " and n.id < ? ";
+		}
+		
+		JSONObject jo = new JSONObject();
+
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		try {
+			// Record limiting
+			JSONObject jTotals = new JSONObject();
+			jo.put("totals", jTotals);
+			jTotals.put("start_key", start_key);
+			jTotals.put("rec_limit", rec_limit);
+			jTotals.put("more_recs", 0);	// Default
+			
+			String sql = "SELECT n.id, n.status, n.notify_details, n.status_details, n.event_time " +
+						"from notification_log n, users u " +
+						"where u.ident = ? " +
+						"and u.o_id = n.o_id " +
+						filter +
+						" ORDER BY n.id desc;";
+				pstmt = connectionSD.prepareStatement(sql);
+				pstmt.setString(1, user);
+				int argIdx = 2;
+				if(start_key > 0) {
+					pstmt.setInt(argIdx++, start_key);
+				}	
+
+			 log.info("Events List: " + sql + " : " + user + " : " + start_key);
+
+			 resultSet = pstmt.executeQuery();
+			 JSONArray ja = new JSONArray();	
+			 int countRecords = 0;
+			 int maxRec = 0;
+			 while (resultSet.next()) {
+				 String status = resultSet.getString("status");
+				 String statusDetails = resultSet.getString("status_details");
+				 if(
+						 (status != null && !hideSuccess && status.equals("success")) ||
+						 (status != null && !hideErrors && status.equals("error")) 
+						
+						 ) {
+					
+					
+					// Only return max limit
+					if(countRecords++ >= rec_limit) {
+						// We have at least one more record than we want to return
+						jTotals.put("more_recs", 1);	// Ideally we should record the number of records still to be returned
+						countRecords--;					// Set to the number of records actually returned
+						break;
+					}
+					
+					JSONObject jr = new JSONObject();
+					jr.put("type", "Feature");
+					
+					// Add the properties
+					JSONObject jp = new JSONObject();
+					jp.put("id", resultSet.getInt("id")); 
+					jp.put("notify_details", resultSet.getString("notify_details"));
+					jp.put("status", resultSet.getString("status"));
+					jp.put("status_details", resultSet.getString("status_details"));
+					jp.put("event_time", resultSet.getString("event_time"));
+					jr.put("properties", jp);
+					ja.put(jr);
+					
+					maxRec = resultSet.getInt("id");
+				 }
+				 
+				 jTotals.put("max_rec", maxRec);
+				 jTotals.put("returned_count", countRecords);
+				 String eventTime = resultSet.getString("event_time");
+				 String aEventTime [] = eventTime.split(" ");
+				 jTotals.put("to_date", aEventTime[0]);
+				 if(countRecords == 1) {	 
+					 if(aEventTime.length > 1) {
+						 jTotals.put("from_date", aEventTime[0]);
+					 }
+				 }
+				 
+				 jo.put("type", "FeatureCollection");
+				 jo.put("features", ja);
+			 }
+			 
+
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Exception", e);
+		} catch (JSONException e) {
+			log.log(Level.SEVERE, "JSON Exception", e);
+		} finally {
+			try {
+				if(resultSet != null) {
+					resultSet.close();
+				}
+			} catch (SQLException e) {
+			
+			}
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		return jo.toString();
+	}
 
 
 	private class StatusTotal {
@@ -301,6 +442,90 @@ public class EventList extends Application {
 		int duplicates = 0;
 		int merged = 0;
 		int notLoaded = 0;
+	}
+	
+	// Get totals for notifications
+	@GET
+	@Produces("application/json")
+	@Path("/notifications/totals")
+	public String getNotificationTotals(@Context HttpServletRequest request, 
+			@QueryParam("hide_errors") boolean hideErrors,
+			@QueryParam("hide_success") boolean hideSuccess
+			) {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    return "Error: Can't find PostgreSQL JDBC Driver";
+		}
+		
+		String user = request.getRemoteUser();
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
+		a.isAuthorised(connectionSD, user);
+		// End Authorisation
+		
+		HashMap<String,StatusTotal> sList = new HashMap<String,StatusTotal> ();
+		JSONObject jo = new JSONObject();
+		
+		PreparedStatement pstmt = null;
+
+		try {
+			if(!hideSuccess) {
+				addNotificationTotals("success", user, pstmt, connectionSD,	sList); 
+			}
+			if(!hideErrors) {
+				addNotificationTotals("error", user, pstmt, connectionSD,	sList); 
+			}
+			
+			
+			ArrayList<String> totals = new ArrayList<String> ();
+			for (String uniqueTotal : sList.keySet()) {
+				totals.add(uniqueTotal);
+			}
+			
+			// Create JSON array
+			JSONArray ja = new JSONArray();	
+			StatusTotal st = sList.get("notifications");
+			
+			JSONObject jr = new JSONObject();
+			jr.put("type", "Feature");
+					
+			// Add the properties
+			JSONObject jp = new JSONObject();
+			jp.put("key", "notifications");
+			if(!hideSuccess) {
+				jp.put("success", st.success);
+			}
+			if(!hideErrors) {
+				jp.put("errors", st.errors);
+			}
+			jr.put("properties", jp);
+			ja.put(jr);
+				 
+			jo.put("type", "FeatureCollection");
+			jo.put("features", ja);
+
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Exception", e);
+		} catch (JSONException e) {
+			log.log(Level.SEVERE, "JSON Exception", e);
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		return jo.toString();
 	}
 	
 	// Get totals for events
@@ -628,7 +853,47 @@ public class EventList extends Application {
 		 }
 	}
 	
-	// Get totals for events
+	private void addNotificationTotals(String status, 
+			String user,
+			PreparedStatement pstmt, 
+			Connection connectionSD,
+			HashMap<String,StatusTotal> sList) throws SQLException {
+		
+		String sql = null;
+		
+			
+		sql = "SELECT count(*) " +
+				"from notification_log n, users u " +
+				"where u.ident = ? " +
+				"and n.o_id = u.o_id " +
+				"and n.status = ?;";
+
+		System.out.println("SQL Notification Totals: " + sql + " : " + user + " : " + status);
+		try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		pstmt = connectionSD.prepareStatement(sql);
+		pstmt.setString(1, user);			
+		pstmt.setString(2, status);
+			
+
+		ResultSet resultSet = pstmt.executeQuery();
+		if (resultSet.next()) {
+			int count = resultSet.getInt(1);
+			 
+			StatusTotal st = sList.get("notifications");			
+			if(st == null) {
+				st = new StatusTotal();
+				sList.put("notifications", st);
+				st.key = "notifications";
+			 }
+			 if(status.equals("success")) {
+				 st.success = count;
+			 } else if(status.equals("error")) {
+				 st.errors = count;
+			 } 
+		 }
+	}
+	
+	// Get forms
 	@GET
 	@Produces("application/json")
 	@Path("/{projectId}/{sName}/forms")
