@@ -423,9 +423,11 @@ public class UtilityMethods {
 
 		    }
 		    
-			msg.setFrom(new InternetAddress(type + "@" + serverName));
+		    String from = type + "@" + serverName;
+			msg.setFrom(new InternetAddress(from));
 		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
+		    System.out.println("Sending email from: " + from);
 		    Transport.send(msg);
 		} catch(MessagingException me) {
 			System.out.println("Messaging Exception");

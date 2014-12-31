@@ -28,6 +28,10 @@ DROP SEQUENCE IF EXISTS forward_seq;
 CREATE SEQUENCE forward_seq START 1;
 ALTER SEQUENCE forward_seq OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS notification_log_seq;
+CREATE SEQUENCE notification_log_seq START 1;
+ALTER SEQUENCE notification_log_seq OWNER TO ws;
+
 DROP SEQUENCE IF EXISTS t_seq;
 CREATE SEQUENCE t_seq START 1;
 ALTER SEQUENCE t_seq OWNER TO ws;	
@@ -227,6 +231,7 @@ DROP TABLE IF EXISTS form CASCADE;
 DROP TABLE IF EXISTS survey CASCADE;
 DROP TABLE IF EXISTS survey_change CASCADE;
 
+DROP TABLE IF EXISTS survey CASCADE;
 CREATE TABLE survey (
 	s_id INTEGER DEFAULT NEXTVAL('s_seq') CONSTRAINT pk_survey PRIMARY KEY,
 	name text,
@@ -247,6 +252,7 @@ CREATE UNIQUE INDEX SurveyDisplayName ON survey(p_id, display_name);
 DROP INDEX IF EXISTS SurveyKey;
 CREATE UNIQUE INDEX SurveyKey ON survey(ident);
 
+DROP TABLE IF EXISTS survey_change CASCADE;
 CREATE TABLE survey_change (
 	c_id integer DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_survey_changes PRIMARY KEY,
 	s_id integer REFERENCES survey ON DELETE CASCADE,	-- Survey containing this version
@@ -260,6 +266,7 @@ CREATE TABLE survey_change (
 ALTER TABLE survey_change OWNER TO ws;
 
 -- table name is used by "results databases" to store result data for this form
+DROP TABLE IF EXISTS form CASCADE;
 CREATE TABLE form (
 	f_id INTEGER DEFAULT NEXTVAL('f_seq') CONSTRAINT pk_form PRIMARY KEY,
 	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
@@ -274,6 +281,7 @@ CREATE TABLE form (
 ALTER TABLE form OWNER TO ws;
 
 -- q_itext references the text string in the translations table
+DROP TABLE IF EXISTS question CASCADE;
 CREATE TABLE question (
 	q_id INTEGER DEFAULT NEXTVAL('q_seq') CONSTRAINT pk_question PRIMARY KEY,
 	f_id INTEGER REFERENCES form ON DELETE CASCADE,
@@ -309,6 +317,7 @@ CREATE UNIQUE INDEX formId_sequence ON question(f_id, seq);
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
 CREATE INDEX infotext_id_sequence ON question(infotext_id);
 	
+DROP TABLE IF EXISTS option CASCADE;
 CREATE TABLE option (
 	o_id INTEGER DEFAULT NEXTVAL('o_seq') CONSTRAINT pk_option PRIMARY KEY,
 	q_id INTEGER REFERENCES question ON DELETE CASCADE,
@@ -324,6 +333,7 @@ CREATE INDEX label_id_sequence ON option(label_id);
 CREATE INDEX q_id_sequence ON option(q_id);
 
 -- Server side calculates
+DROP TABLE IF EXISTS ssc;
 CREATE TABLE ssc (
 	id INTEGER DEFAULT NEXTVAL('ssc_seq') CONSTRAINT pk_ssc PRIMARY KEY,
 	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
@@ -337,7 +347,8 @@ CREATE TABLE ssc (
 ALTER TABLE ssc OWNER TO ws;
 CREATE UNIQUE INDEX SscName ON ssc(s_id, name);
 
--- Survey Forwarding
+-- Survey Forwarding (All notifications are stored in here, forward is a legacy name)
+DROP TABLE IF EXISTS forward;
 CREATE TABLE forward (
 	id INTEGER DEFAULT NEXTVAL('forward_seq') CONSTRAINT pk_forward PRIMARY KEY,
 	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
@@ -352,6 +363,17 @@ CREATE TABLE forward (
 	);
 ALTER TABLE forward OWNER TO ws;
 CREATE UNIQUE INDEX ForwardDest ON forward(s_id, remote_s_id, remote_host);
+
+-- Log of all sent notifications (except for forwards which are recorded by the forward subscriber)
+DROP TABLE IF EXISTS notification_log;
+CREATE TABLE public.notification_log (
+	id integer default nextval('notification_log_seq') not null PRIMARY KEY,
+	notify_details text,
+	status text,	
+	status_details text,
+	event_time TIMESTAMP WITH TIME ZONE
+	);
+ALTER TABLE notification_log OWNER TO ws;
 
 -- Question group Deprecated, (only used by SmapMobile) replaced by start and end of group columns on question table
 DROP TABLE IF EXISTS question_group;

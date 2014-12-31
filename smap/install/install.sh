@@ -287,7 +287,7 @@ sudo printf "\n" | sudo pear upgrade
 sudo printf "\n" | sudo /usr/bin/pecl install pecl_http-1.7.6
 echo "extension=http.so" | sudo tee -a /etc/php5/apache2/php.ini
 
-echo '##### 19. Update miselaneous file configurations'
+echo '##### 19. Update miscelaneous file configurations'
 
 echo '##### Add file location to tomcat configuration'
 

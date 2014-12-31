@@ -275,6 +275,7 @@ public class NotificationManager {
 			PreparedStatement pstmtGetUploadEvent, 
 			PreparedStatement pstmtGetNotifications, 
 			PreparedStatement pstmtUpdateUploadEvent, 
+			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
 			String serverName) throws SQLException {
@@ -285,6 +286,7 @@ public class NotificationManager {
 		 * 3. Invoke each notification
 		 *    3a) Create document
 		 *    3b) Send document to target
+		 *    3c) Update notification log
 		 * 4. Update upload event table to show that notifications have been applied
 		 */
 		
@@ -312,6 +314,12 @@ public class NotificationManager {
 		String sqlUpdateUploadEvent = "update upload_event set notifications_applied = 'true' where ue_id = ?; ";
 		try {if (pstmtUpdateUploadEvent != null) { pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
 		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
+		
+		String sqlNotificationLog = "insert into notification_log " +
+				"(notify_details, status, status_details, event_time) " +
+				"values( ?, ?, ?, now()); ";
+		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
+		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Get the admin email
 		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmt, remoteUser);
@@ -344,6 +352,9 @@ public class NotificationManager {
 				/*
 				 * Send document to target
 				 */
+				String status = "success";				// Notification log
+				String notify_details = null;			// Notification log
+				String error_details = null;			// Notification log
 				if(target.equals("email")) {
 					String smtp_host = UtilityMethods.getSmtpHost(sd, pstmt, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
@@ -355,6 +366,8 @@ public class NotificationManager {
 							}
 							emails += email;
 						}
+						
+						notify_details = "Sending email to: " + emails + " of link " + docUrl;
 						
 						try {
 							UtilityMethods.sendEmail(emails, 
@@ -369,13 +382,26 @@ public class NotificationManager {
 									smtp_host,
 									serverName);
 						} catch(Exception e) {
-							// ignore errors
+							status = "error";
+							error_details = e.getMessage();
 						}
 					} else {
-						System.out.println("Error: Attempt to do email nottification but email server nto set");
+						status = "error";
+						error_details = "smtp_host not set";
+						System.out.println("Error: Attempt to do email notification but email server not set");
 					}
 					
+				} else {
+					status = "error";
+					error_details = "Invalid target" + target;
+					System.out.println("Error: Invalid target" + target);
 				}
+				
+				// Write log message
+				pstmtNotificationLog.setString(1, notify_details);
+				pstmtNotificationLog.setString(2, status);
+				pstmtNotificationLog.setString(3, error_details);
+				pstmtNotificationLog.executeUpdate();
 			}
 			
 			/*

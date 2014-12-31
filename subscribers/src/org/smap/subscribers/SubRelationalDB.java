@@ -211,6 +211,7 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtGetNotifications = null;
 		PreparedStatement pstmtUpdateUploadEvent = null;
 		PreparedStatement pstmtGetAdminEmail = null;
+		PreparedStatement pstmtNotificationLog = null;
 		
 		Connection connectionSD = null;
 		
@@ -219,8 +220,13 @@ public class SubRelationalDB extends Subscriber {
 			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
 		
 			NotificationManager fm = new NotificationManager();
-			fm.notifyForSubmission(connectionSD, pstmtGetAdminEmail, pstmtGetUploadEvent, pstmtGetNotifications, 
-					pstmtUpdateUploadEvent, ue_id, remoteUser, server);	
+			fm.notifyForSubmission(connectionSD, 
+					pstmtGetAdminEmail, 
+					pstmtGetUploadEvent, 
+					pstmtGetNotifications, 
+					pstmtUpdateUploadEvent, 
+					pstmtNotificationLog, 
+					ue_id, remoteUser, server);	
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -232,6 +238,7 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
 			try {if (pstmtGetAdminEmail != null) {pstmtGetAdminEmail.close();}} catch (SQLException e) {}
+			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
