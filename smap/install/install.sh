@@ -7,9 +7,10 @@ filelocn="/smap"
 
 CATALINA_HOME=/usr/share/tomcat7
 postgresDriverLocation="http://jdbc.postgresql.org/download"				# Postgres jdbc driver
-postgresDriver="postgresql-9.2-1002.jdbc4.jar"								# Postgres jdbc driver
+#postgresDriver="postgresql-9.2-1002.jdbc4.jar"								# Postgres jdbc driver
+postgresDriver="postgresql-9.3-1102.jdbc41.jar"								# Postgres jdbc driver
 PGV=9.3																		# Postgres version
-PGSV=2.1																	# Postgis version
+#PGSV=2.1																	# Postgis version
 pg_conf="/etc/postgresql/$PGV/main/postgresql.conf"							# Postgres config
 sd="survey_definitions"														# Postgres config survey definitions db name
 results="results"															# Postgres config results db name
@@ -34,17 +35,16 @@ case $choice in
         y|Y)
 
 
-echo '##### 0. Get repository for postgis 2.1'
-
+#echo '##### 0. Get repository for postgis 2.1'
+#
 # The following lines are taken from http://wiki.postgresql.org/wiki/Apt
 # If there are errors you should manually install postgres and postgis
-CODENAME=$(lsb_release -cs 2>/dev/null)
-echo "Writing /etc/apt/sources.list.d/pgdg.list ..."
-sudo tee -a /etc/apt/sources.list.d/pgdg.list <<EOF
-deb http://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main
-#deb-src http://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main
-EOF
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+#CODENAME=$(lsb_release -cs 2>/dev/null)
+#echo "Writing /etc/apt/sources.list.d/pgdg.list ..."
+#sudo tee -a /etc/apt/sources.list.d/pgdg.list <<EOF
+#deb http://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main
+#EOF
+#wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 
 echo '##### 1. Update Ubuntu'
 sudo apt-get update
@@ -85,9 +85,9 @@ sudo cp misc_files/tomcat-jdbc.jar $CATALINA_HOME/lib/		# Add file missing from 
 
 echo '##### 5. Install Postgres / Postgis'
 
-sudo apt-get install language-pack-en-base -y
-sudo apt-get install postgresql-$PGV postgresql-contrib -y
-sudo apt-get install postgresql-$PGV-postgis-scripts -y
+#sudo apt-get install language-pack-en-base -y
+sudo apt-get install postgresql postgresql-contrib postgis postgresql-$PGV-postgis-2.1 -y
+#sudo apt-get install postgresql-$PGV-postgis-scripts -y
 sudo apt-get install postgresql-server-dev-$PGV -y
 sudo apt-get install build-essential libxml2-dev -y
 sudo apt-get install libgeos-dev libpq-dev libbz2-dev -y
@@ -204,8 +204,9 @@ if [ "$sd_exists"  = "0" ]
 then
 echo 'survey_definitions table does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $sd
-sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $sd
-sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $sd
+echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $sd 
+#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $sd
+#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $sd
 echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $sd
 sudo -u postgres psql -f setupDb.sql -d $sd
 else
@@ -218,8 +219,9 @@ if [ "$results_exists"  = "0" ]
 then
 echo 'results table does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $results
-sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $results
-sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $results
+echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $results
+#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $results
+#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $results
 sudo -u postgres echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $results
 sudo -u postgres psql -f resultsDb.sql -d $results
 

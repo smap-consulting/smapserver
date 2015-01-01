@@ -57,6 +57,13 @@ DROP SEQUENCE IF EXISTS regions_seq CASCADE;
 CREATE SEQUENCE regions_seq START 10;
 ALTER SEQUENCE regions_seq OWNER TO ws;
 
+-- Server level defaults
+DROP TABLE IF EXISTS server CASCADE;
+create TABLE server (
+	smtp_host text
+	);
+ALTER TABLE server OWNER TO ws;
+
 DROP SEQUENCE IF EXISTS organisation_seq CASCADE;
 CREATE SEQUENCE organisation_seq START 10;
 ALTER SEQUENCE organisation_seq OWNER TO ws;

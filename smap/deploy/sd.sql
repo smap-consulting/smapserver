@@ -209,7 +209,6 @@ update forward set target = 'forward';
 alter table organisation add column smtp_host text;
 
 -- Create notification_log table
-
 CREATE SEQUENCE notification_log_seq START 1;
 ALTER SEQUENCE notification_log_seq OWNER TO ws;
 
@@ -222,4 +221,10 @@ CREATE TABLE public.notification_log (
 	event_time TIMESTAMP WITH TIME ZONE
 	);
 ALTER TABLE notification_log OWNER TO ws;
+
+-- Create organisation level table
+create TABLE server (
+	smtp_host text
+	);
+ALTER TABLE server OWNER TO ws;
 

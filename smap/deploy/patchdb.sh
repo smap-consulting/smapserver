@@ -84,4 +84,4 @@ then
 echo "Applying patches for version 14.11"
 sudo chown -R tomcat7 /smap/attachments
 fi
-echo "1411" > ~/smap_version
+echo "1412" > ~/smap_version

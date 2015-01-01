@@ -317,6 +317,23 @@ public class UtilityMethods {
 				smtpHost = rs.getString(1);
 			}
 		}
+		
+		/*
+		 * If the smtp_host was not set at the organisation level try the server level defaults
+		 */
+		if(smtpHost == null) {
+			sql = "select smtp_host " +
+					" from server ";
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+			pstmt = sd.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String host = rs.getString(1);
+				if(host != null && host.trim().length() > 0) {
+					smtpHost = rs.getString(1);
+				}
+			}
+		}
 		return smtpHost;
 	}
 	

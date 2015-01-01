@@ -104,7 +104,15 @@ var imageStyle = new ol.style.Circle({
 // Style for line to selected points
 var strokeStyle = new ol.style.Stroke({
 	color: 'rgba(255,0,0,0.9)',
-	width: 1
+	width: 3
+});
+
+//Style for user trail
+var trailStyle = new ol.style.Style({
+		stroke: new ol.style.Stroke({
+			color: 'rgba(20,20,237,0.8)',
+			width: 3
+		})
 });
 
 $(document).ready(function() {
@@ -155,7 +163,7 @@ $(document).ready(function() {
 		style: iconStyle
 	});
 	
-	getLoggedInUser(getUserList, false, true, undefined, true, true);
+	getLoggedInUser(getUserList, false, true, undefined, false, true);
 	
 	// Add responses to events
 	$('#project_list').change(function() {
@@ -253,6 +261,7 @@ $(document).ready(function() {
     	  
   	   	var date = new Date(m);	// Using Measure coordinate to store unix date
   	    document.getElementById('info').innerHTML = date;
+  	    
     });
     
 	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
@@ -265,6 +274,8 @@ $(document).ready(function() {
 
 	$(document).on('ready', autocollapse);
 	$(window).on('resize', autocollapse);
+	
+	enableUserProfileBS();
     
 });
 
@@ -454,6 +465,7 @@ function showUserTrail() {
 		var lineFeature = new ol.Feature({
 			geometry: geometry
 		});
+		lineFeature.setStyle(trailStyle);
 		gTrailSource.addFeature(lineFeature);
 		
 		gTime.start = Math.min(gTime.start, geometry.getFirstCoordinate()[2]);

@@ -87,3 +87,7 @@ tr.deleted td a {
 	border-color:orange;
 	color: white;
 }
+
+.blocked {
+	opacity: 0.5;
+}
