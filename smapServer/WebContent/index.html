@@ -10,20 +10,8 @@
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<!--  <link rel="stylesheet" href="css/app.css" /> -->
-	<link rel="stylesheet" href="/css/foundation.min.css" /> 
-	<style>
-	.top-bar img {
-		max-height: 40px;
-		padding-right: 5px;
-	}
-	.center {
-		text-align: center;
-	}
-	.maxwidth {
-		width: 100%;
-	}
-	</style>
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
@@ -32,78 +20,75 @@
 </head>
 <body class="backdos">
 
-	<!-- NAV BAR -->
-	<div class="fixed" id="nav">
-	  <nav class="top-bar" data-topbar>
-	    <ul class="title-area">
-	      <li class="name">
-	        <h1><a href="http://www.smap.com.au"><img src="/images/logo.png" /><span class="thick">SMAP</span> Server</a></h1>
-	      </li>
-	       <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
-	      <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
-	    </ul>
+<header class="navbar navbar-default navbar-static-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<img src="/images/logo.png">
+     	 <span class="thick">SMAP</span> Server
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	     	
+		<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">Admin</a></li>
+	    <li><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+	    <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
+		<li><a class="lang" data-lang="m_docs" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
+		<li id="signup"><a class="lang button" data-lang="m_forgot_password" href="/forgottenPassword.html" > Forgot Password</a></li>
+			   
+      </ul>   	
+	</nav>
+  </div>
+</header>
+
 	
-	    <section class="top-bar-section">
-	      <!-- Right Nav gridfix -->
-	      <ul class="right">
-	      	<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">Admin</a></li>
-	      	<li><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-	        <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
-			<li><a class="lang" data-lang="m_docs" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
-			<li id="signup"><a class="lang button" data-lang="m_forgot_password" href="/forgottenPassword.html" > Forgot Password</a></li>
-	      </ul>
-	
-	      
-	    </section>
-	  </nav>
-	</div>
-	
-	<!-- END NAV BAR -->
-	
-	<div class="uno" id="main_page">
-	
-		<div class="row center"><img class="maxwidth" src="images/cropped-blog1.jpg"/></div>
-		<h1 class="center"><span class="lang" data-lang="ss_welcome">Welcome</span> 14.12</h1>
-		<h2 class="center"><a href="http://blog.smap.com.au/version-14-12"><span class="lang" data-lang="ss_welcome2">Description:</span> </a></h2>
-		<div class="mainButtons center">
-		
-				<!--
-				<a href="edit.html" class="button">Create a Survey</a>
-				<a href="/fieldManager/templateManagement.html" class="button">Manage a Survey</a>
-				<a href="/fieldAnalysis/index.html" class="button">View Survey Results</a>
-				-->
+	<div id="main_page">
+
+		<div class="container-fluid">	
+			<div class="row">
+				<div class="col-sm-10 col-md-offset-1">
+					<img class="maxwidth" src="images/cropped-blog1.jpg"/>
+					<h1 class="text-center"><span class="lang" data-lang="ss_welcome">Welcome</span> 14.12</h1>
+					<h2 class="text-center"><a href="http://blog.smap.com.au/version-14-12"><span class="lang" data-lang="ss_welcome2">Description:</span> </a></h2>
+				</div>
+			</div>
 			
-		</div>
-		<div class="row center">
-			<div class="large-6 columns">
-				<a href="fieldTask.apk" class="button" style="width:220px; height:220px; padding:5px;"><img width="200" height="200" alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
-				<h1 class="lang" data-lang="ss_ft">Get FT</h1>
+			
+			<div class="row">
+				<div class="col-sm-2 hidden-xs"></div>
+				<div class="col-sm-4 center">
+					<a href="fieldTask.apk" class="btn btn-primary" role="button" ><img class="img-responsive" width="200"  height="200"
+	alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
+					<h1 class="lang" data-lang="ss_ft">Get FT</h1>
+				</div>
+				<div class="col-sm-4 center">
+					<a href="smapUploader.jar" class="btn btn-primary" role="button"><img class="img-responsive" width="200"  height="200" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
+					<h1 class="lang" data-lang="ss_su">Get SU</h1>
+				</div>
 			</div>
-			<div class="large-6 columns">
-				<a href="smapUploader.jar" class="button" style="width:220px; height:220px; padding:5px;"><img width="200" height="200" alt="Get Smap Uploader" src="images/su_logo.png"/></a>
-				<h1 class="lang" data-lang="ss_su">Get SU</h1>
-			</div>
 		</div>
-		
 		
 		<div style="clear: both;">&nbsp;</div>
 	
-	
 	</div>
-	<div id="footer">
-        Website created by <a href="http://blog.smap.com.au">Smap Consulting</a> (c) March, 2011
-        , design by <a href="http://wilfhorsfall.com ">Will Horsfall</a>
-        <span style="float: right;">Photo copyright Libby Jones</span>
+	
+	<div class="container">
+		<div class="row">
+			<div id="footer">
+		        Website created by <a href="http://blog.smap.com.au">Smap Consulting</a> (c) November, 2011
+		        , translations by <a href="/translations.html ">Translation Team</a>
+		        <span style="float: right;">Photo copyright Libby Jones</span>
+			</div>
+		</div>
 	</div>
 	<!-- end #footer -->
 
-	<!--  
-    <script src="js/libs/modernizr.js"></script>
-	<script type="text/javascript" src="/js/libs/jquery-1.8.3.min.js"></script>
-	<script src="js/libs/foundation.min.js"></script>
-	<script>
-		
-	</script>
-	-->
 </body>
 </html>

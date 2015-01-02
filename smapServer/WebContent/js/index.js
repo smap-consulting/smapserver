@@ -14,21 +14,14 @@ require.config({
       	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
       	       '../../../../js/libs/jquery-1.8.3.min'
       	       ],
-      	jquery_ui: [
-      	       '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-      	       '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-      	       ],
     	lang_location: '..'
     },
     shim: {
-    	'foundation.min': ['jquery'],
-       	'jquery_ui': ['jquery'],
-    	'responsivemobilemenu': ['jquery'],
+    	'bootstrap.min': ['jquery'],
     	'app/common': ['jquery']
     }
 });
 
-require(['jquery', 'foundation.min', 'app/localise'], function($, foundation, localise) {
-	$(document).foundation();
+require(['jquery', 'bootstrap.min', 'app/localise'], function($, bootstrap, localise) {
 	localise.setlang();
  });
