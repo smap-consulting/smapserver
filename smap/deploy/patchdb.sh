@@ -84,4 +84,13 @@ then
 echo "Applying patches for version 14.11"
 sudo chown -R tomcat7 /smap/attachments
 fi
+
+
+# version 15.01
+if [ $version -lt "1411" ]
+then
+echo "Applying patches for version 15.01"
+sudo mkdir /smap/media/organisation
+sudo chown -R tomcat7 /smap/media
+fi
 echo "1412" > ~/smap_version

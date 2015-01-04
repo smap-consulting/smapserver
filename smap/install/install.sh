@@ -98,6 +98,7 @@ sudo mkdir $filelocn/attachments
 sudo mkdir $filelocn/attachments/report
 sudo mkdir $filelocn/attachments/report/thumbs
 sudo mkdir $filelocn/media
+sudo mkdir $filelocn/media/organisation
 sudo mkdir $filelocn/templates
 sudo mkdir $filelocn/templates/xls
 sudo mkdir $filelocn/uploadedSurveys

@@ -10,11 +10,10 @@
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,800" rel="stylesheet" type="text/css">
-	<link rel="stylesheet" href="css/app.css" />
-	<!-- <link rel="stylesheet" href="/css/foundation.min.css" /> 
-	<style>.name h1 img {width:30px;}</style>	Temporary while styles are sorted 
-	-->
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/app.css" /> 
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+
 	<style> 
 		textarea.lang_a, textarea.lang_b {overflow: hidden; word-wrap: break-word; resize: horizontal; height: 66px;}
 		textarea.lang_b:focus {background-color: green; }
@@ -41,53 +40,72 @@
 	<script src="js/libs/modernizr.js"></script>
     <script data-main="js/edit" src="js/libs/require.js"></script>
 </head>
-<body class="backdos">
-	<!-- NAV BAR -->
-	<div class="fixed" id="nav">
-	  <nav class="top-bar" data-topbar>
-	    <ul class="title-area">
-	      <li class="name">
-	        <h1><a href="http://www.smap.com.au"><img src="/images/logo.png" /><span class="thick">SMAP</span> Consulting</a></h1>
-	      </li>
-	       <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
-	      <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
-	    </ul>
-	
-	    <section class="top-bar-section">
-	      <!-- Right Nav gridfix -->
-	      <ul class="right">
-	      	 <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-	     	 <li><a id="m_admin" href="/fieldManager">Admin</a></li>
-	     	 <li><a id="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-	     	 <!--  
-	        <li class="has-dropdown"><a href="#">File</a>
-	        	<ul class="dropdown">
-	        		<li><a id="m_get_survey" href="#">Get Survey</a>
-	        		<li><a id="m_save_survey" href="#">Save Survey</a>
-	        	</ul>
-	        </li> 
-	        -->
-	        <li class="has-dropdown"><a href="#">View</a>
-	        	<ul class="dropdown">
-	        		<li><a id="m_settings" href="#">Settings</a>
-	        		<!--  <li><a id="m_simple_edit" href="#">Edit</a> -->
-	        		<li><a id="m_translate" href="#">Translate</a>
-	        		<li><a id="m_media" href="#">Media</a>
-	        		<li><a id="m_changes" href="#">Changes</a>
-	        	</ul>
-	        </li> 
-			<!--  <li><a id="m_language" href="#">Languages</a></li> -->
-	        <li><a id="m_undo" href="#">Undo</a></li>
-	        <li><a id="m_redo" href="#">Redo</a></li>	
-			<li><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
-	      </ul>
+<body>
+
+<header class="navbar navbar-default navbar-static-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<img src="/images/logo.png">
+     	 Edit
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_view">View</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+            <li class="disabled"><a class="lang" data-lang="c_edit" href="#">Edit</a></li>
+            <li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html">Admin</a></li>
+            <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
+            <li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+          </ul>
+        </li> 
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a id="m_save" href="#">Save</a></li>
+            <li><a id="m_new" href="#">New</a></li>
+            <li><a id="m_import_new" href="#">New from spreadsheet</a>
+          </ul>
+        </li> 
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span>Show</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a id="m_form" href="#">Form</a>
+            <li><a id="m_translate" href="#">Translate</a>
+           	<li><a id="m_media" href="#">Attach Media To Survey</a>				<!-- TODO retire -->
+            <li><a id="m_changes" href="#">Changes</a>
+          </ul>
+        </li>  
+        <li><a id="m_manage_media" href="/media.html">Media</a></li>               
+	    <!-- 
+	   	<li><a id="m_undo" href="#">Undo</a></li>
+	    <li><a id="m_redo" href="#">Redo</a></li>
+	    -->
+		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+        <li>
+         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+			</a>
+		</li>
+      </ul>
+      	
+	</nav>
+
+  </div>
+</header>
 	
 	      
-	    </section>
-	  </nav>
-	</div>
+	    
 	
-	<!-- END NAV BAR -->
 	
 	<div class="uno" id="main_page">
 	
@@ -108,6 +126,11 @@
 			</table>
 		</div>
 		
+		<!-- Main Survey editing page -->
+		<div id="survey">
+		</div>
+		
+		<!-- Specialist translation editing -->
 		<div id="translate" style="display:none;">
 			<div class="errorcount">
   				<div class="large-4 small-4 columns">
@@ -133,7 +156,7 @@
 		</div>
 		
 
-		<div id="settings">
+		<div id="settings" style="display:none;">
   		<h2>Settings</h2>
   		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
   		create a new version of the survey and will not save any changes you have made to the survey
@@ -211,11 +234,7 @@
 
 	
 	</div>
-	<div id="footer">
-        Website created by <a href="http://blog.smap.com.au">Smap Consulting</a> (c) March, 2011
-        , design by <a href="http://wilfhorsfall.com ">Will Horsfall</a>
-	</div>
-	<!-- end #footer -->
+	
 
 	<!-- Modals -->
 	<div id="smap" class="reveal-modal" data-reveal>
@@ -273,5 +292,71 @@
   		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
+<!-- Popup to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
 </body>
 </html>

@@ -19,6 +19,7 @@ define({
 	"m_section": "Section",
 	"m_notify": "Notifications",
 	"m_view": "View",
+	"m_attach": "Load Attachments",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",

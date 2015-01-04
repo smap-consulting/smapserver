@@ -33,7 +33,7 @@ require.config({
     },
     shim: {
     	'app/common': ['jquery'],
-        'foundation.min': ['jquery'],
+        'bootstrap.min': ['jquery'],
         'jquery.autosize.min': ['jquery']
     }
 });
@@ -41,17 +41,17 @@ require.config({
 require([
          'jquery',
          'app/common', 
-         'foundation.min', 
+         'bootstrap.min', 
          'modernizr',
          'app/localise',
          'app/ssc',
          'app/globals',
          'app/csv',
          'jquery.autosize.min'], 
-		function($, common, foundation, modernizr, lang, ssc, globals, csv) {
+		function($, common, bootstrap, modernizr, lang, ssc, globals, csv) {
 
 
-var	gMode = "settings",
+var	gMode = "survey",
 	gTempQuestions = [],
 	gLanguage1 = 0,
 	gLanguage2 = 0;
@@ -62,6 +62,8 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
+	
+	localise.setlang();		// Localise HTML
 	
 	// Get the parameters and start editing a survey if one was passed as a parameter
 	params = location.search.substr(location.search.indexOf("?") + 1)
@@ -78,7 +80,7 @@ $(document).ready(function() {
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurveyList, false, true, undefined, true, true);
+	getLoggedInUser(getSurveyList, false, true, undefined, false, true);
 
 	// Add menu functions
 	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
@@ -163,10 +165,8 @@ $(document).ready(function() {
 	
 	ssc.init();	// initialise the Server Side Calculations section
 	csv.init();	// initialise the add csv file section
-		
-	$(document).foundation();		// Add foundation styling
 	
-	
+	enableUserProfileBS();
 });
 
 function getSurveyList() {
@@ -247,22 +247,19 @@ function refreshView(mode) {
 		qList = [],
 		index = -1,
 		survey = globals.model.survey,
-		numberLanguages = survey.languages.length,
+		numberLanguages,
 		key,
 		options = [];
 	
 	gTempQuestions = [];
 	
+	if(survey) {
+		numberLanguages = survey.languages.length;
+	}
+	
 	// Modify Template to reflect view parameters
 	
-	if(mode === "simple_edit") {
-		$('#survey').empty().append("<h1>Not available</h1>");
-		showTranslate();
-		//$('#survey').html(Mustache.to_html( $('#tpl').html(), gQuestions));
-		//$('#survey select').each(function(){
-		//	$(this).val($(this).attr("data-sel"));
-		//});
-	} else if(mode === "translate") {
+	if(mode === "translate") {
 		
 		// Add all unique questions from all forms
 		for(i = 0; i < survey.forms.length; i++) {
@@ -349,30 +346,34 @@ function refreshView(mode) {
 	} else if(mode === "changes") {
 		setChangesHtml($('#changes'), survey.changes, survey);
 		showChanges();
-	} else {
-		alert("unknown mode");
-		refreshView("simple_edit");
+	} else if(mode === "survey") {
+		showSurvey();
 	}
-	$('#survey').foundation();
 	
 }
 
 // Show the translation view
 function showTranslate() {
 	$("#translate").show();
-	$("#settings,#changes").hide();
+	$("#settings,#changes, #survey").hide();
 }
 
 // Show the settings view
 function showSettings() {
-	$("#translate, #changes").hide();
+	$("#translate, #changes, #survey").hide();
 	$("#settings").show();
 }
 
 //Show the changes to this survey
 function showChanges() {
-	$("#translate, #settings").hide();
+	$("#translate, #settings, #survey").hide();
 	$("#changes").show();
+}
+
+//Show the survey page
+function showSurvey() {
+	$("#translate, #settings, #changes").hide();
+	$("#survey").show();
 }
 
 /*

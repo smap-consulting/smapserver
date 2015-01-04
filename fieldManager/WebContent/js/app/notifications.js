@@ -476,7 +476,7 @@ function updateNotificationList(data) {
 		h[++idx] = '<button type="button" data-idx="';
 		h[++idx] = i;
 		h[++idx] = '" class="btn btn-default btn-sm rm_not danger">';
-		h[++idx] = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>';
+		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
 		
 		h[++idx] = '</td>';
 		// end actions

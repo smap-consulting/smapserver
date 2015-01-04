@@ -1,0 +1,190 @@
+package utilities;
+
+/*
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/*
+ * Manage media files
+ * Media information is returned in the format required by JQuery-File-Upload as per
+ *    https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
+ */
+import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.logging.Logger;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+
+import model.MediaItem;
+import surveyKPI.Dashboard;
+
+public class MediaInfo {
+	
+	private static Logger log =
+			 Logger.getLogger(MediaInfo.class.getName());
+	
+
+	private File folder = null;
+	String folderUrl = null;
+	String folderPath = null;
+	String server = null;
+	
+	public MediaInfo(File f) {			
+		folder = f;
+	}
+	
+	public MediaInfo() {			
+		folder = null;
+	}
+	
+	/*
+	 * Set folder from survey id
+	 */
+	public boolean setFolder(String basePath, int sId, Connection conn) {
+		boolean status = false;
+		
+		// Get the survey ident
+		String survey_ident = null;
+		String sql = "select ident from survey where s_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			
+			System.out.println("sql: " + sql + " : " + sId);
+			
+			pstmt.setInt(1, sId);
+			ResultSet resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				
+				survey_ident = resultSet.getString(1);
+				folderUrl = "/media/" + survey_ident;
+				folderPath = basePath + folderUrl;
+				
+				// Make sure the media folder exists
+				folder = new File(folderPath);
+				FileUtils.forceMkdir(folder);
+				
+				status = true;
+				
+			} else {
+				System.out.println("Error: Form identifier not found for form id: " + sId);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}};
+		}		
+		
+		return status;
+	}
+	
+	/*
+	 * Set media folder to the organisation folder for the provided user
+	 */
+	public boolean setFolder(String basePath, String user, Connection conn) {
+		boolean status = false;
+		
+		// Get the organisation id
+		String organisationId = null;
+		String sql = "select o_id from users where ident = ?;";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			
+			System.out.println("sql: " + sql + " : " + user);
+			
+			pstmt.setString(1, user);
+			ResultSet resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				
+				organisationId = resultSet.getString(1);	
+				folderUrl = "/media/organisation/" + organisationId;
+				folderPath = basePath + folderUrl;
+				
+				// Make sure the media folder exists
+				folder = new File(folderPath);
+				FileUtils.forceMkdir(folder);
+				
+				status = true;
+				
+			} else {
+				throw new Exception("Organisation not found for user: " + user);
+			}
+							
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}};
+		}		
+		
+		return status;
+	}
+	
+	public void setServer(String url) {
+		if(url != null) {
+			int a = url.indexOf("//");
+			int b = url.indexOf("/", a + 2);
+			if(a > 0 && b > a) {
+				server = url.substring(0, b) + "/";
+			}
+			System.out.println("+++ " + a + " " + b + " " + server + " : " + url);
+		}
+	}
+	
+	/*
+	 * Getters
+	 */
+	public ArrayList<MediaItem> get() {
+		ArrayList<MediaItem> media = new ArrayList<MediaItem> ();
+		
+		if(folder != null) {
+			ArrayList <File> files = new ArrayList<File> (FileUtils.listFiles(folder, FileFilterUtils.fileFileFilter(), null));
+			
+			for(int i = 0; i < files.size(); i++) {
+				MediaItem mi = new MediaItem();
+				File f = files.get(i);
+				mi.name = f.getName();
+				mi.size = f.length();
+				if(server != null) {
+					mi.url = server + folderUrl + "/" + mi.name;
+					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + mi.name;
+					mi.deleteUrl = mi.url;
+				}
+				mi.deleteType = "DELETE";
+				media.add(mi);
+			}
+		} else {
+			System.out.println("Error: Get media: folder is null" );
+		}
+		return media;
+	}
+	
+	public String getPath() {
+		return folderPath;
+	}
+
+	
+}
