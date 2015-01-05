@@ -83,7 +83,7 @@ $(document).ready(function() {
 		var fileName = $this[0].files[0].name;
 		var newTemplateName;
 		
-		if(templateName && templateName.trim().length() > 0) {
+		if(templateName && templateName.trim().length > 0) {
 			// ignore - leave user specified name
 		} else {
 			var lastDot = fileName.lastIndexOf(".");
