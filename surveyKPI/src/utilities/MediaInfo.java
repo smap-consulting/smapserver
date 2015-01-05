@@ -24,6 +24,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  *    https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
  */
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.smap.sdal.Utilities.UtilityMethods;
 
 import model.MediaItem;
 import surveyKPI.Dashboard;
@@ -80,10 +82,9 @@ public class MediaInfo {
 				survey_ident = resultSet.getString(1);
 				folderUrl = "/media/" + survey_ident;
 				folderPath = basePath + folderUrl;
-				
-				// Make sure the media folder exists
 				folder = new File(folderPath);
-				FileUtils.forceMkdir(folder);
+				
+				createFolders(folderPath);
 				
 				status = true;
 				
@@ -122,10 +123,9 @@ public class MediaInfo {
 				organisationId = resultSet.getString(1);	
 				folderUrl = "/media/organisation/" + organisationId;
 				folderPath = basePath + folderUrl;
-				
-				// Make sure the media folder exists
 				folder = new File(folderPath);
-				FileUtils.forceMkdir(folder);
+				
+				createFolders(folderPath);
 				
 				status = true;
 				
@@ -170,7 +170,17 @@ public class MediaInfo {
 				mi.size = f.length();
 				if(server != null) {
 					mi.url = server + folderUrl + "/" + mi.name;
-					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + mi.name;
+					
+					String contentType = UtilityMethods.getContentType(mi.name);
+					String thumbName = mi.name;
+					if(!contentType.startsWith("image")) {		// Thumbnail has extension png
+						
+						int idx = mi.name.lastIndexOf('.');
+						if(idx > 0) {
+							thumbName = mi.name.substring(0, idx + 1) + "png";
+						}
+					}
+					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
 					mi.deleteUrl = mi.url;
 				}
 				mi.deleteType = "DELETE";
@@ -184,6 +194,19 @@ public class MediaInfo {
 	
 	public String getPath() {
 		return folderPath;
+	}
+
+	private void createFolders(String path) {
+		try {
+			String thumbsPath = path + "/thumbs";
+			File thumbsFolder = new File(thumbsPath);
+			FileUtils.forceMkdir(folder);
+			FileUtils.forceMkdir(thumbsFolder);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	

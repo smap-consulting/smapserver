@@ -146,6 +146,64 @@ public class SurveyManager {
 		return s;
 		
 	}
+	
+	/*
+	 * Get all the surveys in the user's organisation that reference the passed in CSV file
+	 *  Note even surveys that are in projects not enabled for the user should be returned
+	 */
+	public ArrayList<Survey> getByOrganisationAndExternalCSV(Connection sd, 
+			String user, 
+			String csvFileName			
+			)  {
+		
+		ArrayList<Survey> surveys = new ArrayList<Survey>();	// Results of request
+		
+		int idx = csvFileName.lastIndexOf('.');
+		String csvRoot = csvFileName;
+		if(idx > 0) {
+			csvRoot = csvFileName.substring(0, idx);
+		}
+		
+		ResultSet resultSet = null;
+		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident" +
+				" from survey s, users u, user_project up, project p" +
+				" where s.appearance = 'search(''?'')' " +
+				" and s.p_id = p.id" +
+				" and p.o_id = u.o_id" +
+				" and u.ident = ? " +
+				"order BY s.display_name;";
+		
+	
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, csvRoot);
+			pstmt.setString(2, user);
+			
+			log.info(sql + " : " + user);
+			resultSet = pstmt.executeQuery();
+	
+			while (resultSet.next()) {								
+	
+				Survey s = new Survey();
+				s.setId(resultSet.getInt(1));
+				s.setName(resultSet.getString(2));
+				s.setDisplayName(resultSet.getString(3));
+				s.setDeleted(resultSet.getBoolean(4));
+				s.setBlocked(resultSet.getBoolean(5));
+				s.setIdent(resultSet.getString(6));
+				
+				surveys.add(s);
+			} 
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
+		}
+		
+		return surveys;
+		
+	}
 
 	/*
 	 * Add survey details

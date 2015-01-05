@@ -679,7 +679,7 @@ public class SubRelationalDB extends Subscriber {
 						File dstThumbsFile = new File(dstThumbsPath);
 						File dstFlvFile = new File(dstFlvPath);
 	
-						String contentType = Utilities.getContentType(srcName);
+						String contentType = org.smap.sdal.Utilities.UtilityMethods.getContentType(srcName);
 		
 						try {
 							System.out.println("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);

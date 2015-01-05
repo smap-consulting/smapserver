@@ -1,10 +1,17 @@
 package org.smap.sdal.Utilities;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -476,5 +483,139 @@ public class UtilityMethods {
 		}
 	}
 	
+	/*
+	 * Get a substring of a date that is in ISO 8601 format
+	 */
+	public static String getPartDate(String fullDate, String format) throws ParseException {
+		
+		String partDate = null;
+		
+		// parse the input date
+		SimpleDateFormat inFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");  // ISO8601 date formats - add timezone after upgrade of java rosa libraries
+		SimpleDateFormat outFormat = new SimpleDateFormat(format);
+		Date theDate = null;
+
+		theDate = inFormat.parse(fullDate);
+		partDate = outFormat.format(theDate).toString();
+		
+		return partDate;
+}
+	
+	public static String getPartLocation(String location, String dimension) {
+		
+		String partLocation= "0.0";
+		
+		String vals[] = location.split(" ");
+		if(vals.length > 2) {
+			if(dimension.equals("lat")) {
+				partLocation = vals[0];
+			} else if(dimension.equals("lon")) {
+				partLocation = vals[1];
+			}
+		}	
+		
+		return partLocation;
+	}
+	
+	/*
+	 * Get the content type from the filename
+	 */
+	public static String getContentType(String filename) {
+		
+		String ct = null;
+		String extension = "";
+		int idx = filename.lastIndexOf('.');
+		if(idx > 0) {
+			extension = filename.substring(idx+1).toLowerCase();
+		}
+		
+	      if (extension.equals("xml")) {
+          	ct = "text/xml";
+          } else if (extension.equals("jpg") || extension.equals("jpeg") || extension.equals("jpe")) {
+          	ct = "image/jpeg";
+          } else if (extension.equals("png")) {
+            	ct = "image/png";
+          } else if (extension.equals("gif")) {
+          	ct = "image/gif";
+          } else if (extension.equals("3gp")) {
+          	ct = "video/3gp";
+          } else if (extension.equals("3ga")) {
+            ct = "audio/3ga";
+          } else if (extension.equals("mp2") || extension.equals("mp3") || extension.equals("mpga")) {
+            ct = "audio/mpeg";
+          } else if (extension.equals("mpeg") || extension.equals("mpg") || extension.equals("mpe")) {
+            ct = "video/mpeg";
+          } else if (extension.equals("qt") || extension.equals("mov")) {
+            ct = "video/quicktime";
+          } else if (extension.equals("mp4") || extension.equals("m4p")) {
+          	ct = "video/mp4";
+          } else if (extension.equals("avi")) {
+            ct = "video/x-msvideo";
+          } else if (extension.equals("movie")) {
+            ct = "video/x-sgi-movie";
+          } else if (extension.equals("m4a")) {
+          	ct = "audio/m4a";
+          } else if (extension.equals("csv")) {
+          	ct = "text/csv";
+          } else if (extension.equals("amr")) {
+          	ct = "audio/amr";
+          } else if (extension.equals("xls")) {
+          	ct = "application/vnd.ms-excel";
+          }  else {
+          	ct = "application/octet-stream";
+          	System.out.println("	Info: unrecognised content type for extension " + extension);           
+          }
+		
+		return ct;
+	}
+	
+	/*
+	 * Create a thumbnail for a file
+	 */
+	public static void createThumbnail(String name, String path, File file) {
+		
+		String imagesPath = "/var/lib/tomcat7/webapps/surveyKPI/images/";
+		String contentType = getContentType(name);
+		String source = path + "/" + name;
+		String dest = path + "/thumbs/" + name;
+		
+		int idx = dest.lastIndexOf('.');
+		String destRoot = dest;
+		if(idx > 0) {
+			destRoot = dest.substring(0, idx + 1);
+		}
+		
+		String cmd = null;
+		if(contentType.startsWith("image")) {
+			cmd = "/usr/bin/convert -thumbnail 100x100 " + source+ " " + dest;
+		} else if (contentType.equals("text/csv")) {
+			cmd = "/bin/cp " + imagesPath + "csv.png " + destRoot + "png";
+		}
+		
+		System.out.println("Exec: " + cmd);
+		
+		if(cmd != null) {
+			try {
+	
+				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", cmd});
+	    		
+	    		int code = proc.waitFor();
+	    		System.out.println("Attachment processing finished with status:" + code);
+	    		if(code != 0) {
+	    			System.out.println("Error: Attachment processing failed");
+	    			InputStream stderr = proc.getErrorStream();
+	    	        InputStreamReader isr = new InputStreamReader(stderr);
+	    	        BufferedReader br = new BufferedReader(isr);
+	    	        String line = null;
+	    	        while ( (line = br.readLine()) != null) {
+	    	        	System.out.println("** " + line);
+	    	        }
+	    		}
+	    		
+			} catch (Exception e) {
+				e.printStackTrace();
+	    	}
+		}
+	}
 	
 }

@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -37,6 +38,9 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,7 +60,9 @@ import java.util.logging.Logger;
 @Path("/upload")
 public class UploadFiles extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	// Analysts can upload files to a single survey, Admin is required to do this for the whole organisation
+	Authorise surveyLevelAuth = new Authorise(null, Authorise.ANALYST);
+	Authorise orgLevelAuth = new Authorise(null, Authorise.ADMIN);
 	
 	private static Logger log =
 			 Logger.getLogger(UploadFiles.class.getName());
@@ -69,6 +75,7 @@ public class UploadFiles extends Application {
 	}
  
 	@POST
+	@Produces("application/json")
 	@Path("/media")
 	public Response sendMedia(
 			@Context HttpServletRequest request
@@ -124,14 +131,16 @@ public class UploadFiles extends Application {
 					
 					String fileName = item.getName();
 					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
-					//String fileSuffix = null;
-					//String itemType = item.getContentType();
 	
+					// Authorisation - Access
 					connectionSD = SDDataSource.getConnection("fieldManager-MediaUpload");
-					a.isAuthorised(connectionSD, request.getRemoteUser());
 					if(sId > 0) {
-						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+						surveyLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+						surveyLevelAuth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+					} else {
+						orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
 					}
+					// End authorisation
 					
 					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");		
 					if(basePath == null) {
@@ -152,6 +161,15 @@ public class UploadFiles extends Application {
 						String filePath = folderPath + "/" + fileName;
 					    File savedFile = new File(filePath);
 					    item.write(savedFile);
+					    
+					    // Create thumbnails
+					    UtilityMethods.createThumbnail(fileName, folderPath, savedFile);
+					    
+					    // Apply changes from CSV files to survey definition
+					    String contentType = UtilityMethods.getContentType(fileName);
+					    if(contentType.equals("text/csv")) {
+					    	applyCSVChanges(connectionSD, user, sId, fileName);
+					    }
 					    
 					    MediaResponse mResponse = new MediaResponse ();
 					    mResponse.files = mediaInfo.get();			
@@ -197,6 +215,7 @@ public class UploadFiles extends Application {
 	 * Return available files
 	 */
 	@GET
+	@Produces("application/json")
 	@Path("/media")
 	public Response getMedia(
 			@Context HttpServletRequest request
@@ -214,9 +233,11 @@ public class UploadFiles extends Application {
 		 */
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
-		a.isAuthorised(connectionSD, user);
 		if(sId > 0) {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+			surveyLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+			surveyLevelAuth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		} else {
+			orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
 		}
 		// End Authorisation		
 		
@@ -255,7 +276,6 @@ public class UploadFiles extends Application {
 		}  catch(Exception ex) {
 			System.out.println(ex.getMessage());
 			ex.printStackTrace();
-			//log("Error encountered while uploading file",ex);
 			response = Response.serverError().build();
 		} finally {
 	
@@ -267,11 +287,29 @@ public class UploadFiles extends Application {
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
-				//log("Failed to close connection",e);
 			}
 		}
 		
 		return response;		
+	}
+	
+	/*
+	 * Update the survey with any changes resulting from the uploaded CSV file
+	 */
+	private void applyCSVChanges(Connection connectionSD, String user, int sId, String csvFileName) {
+		/*
+		 * Find surveys that use this CSV file
+		 */
+		if(sId > 0) {  // TODO A specific survey has been requested
+			
+		} else {		// Organisational level
+			// Get all the surveys that reference this CSV file and are in the same organisation
+			SurveyManager sm = new SurveyManager();
+			ArrayList<Survey> surveys = sm.getByOrganisationAndExternalCSV(connectionSD, user,	csvFileName);
+			for(Survey s : surveys) {
+				System.out.println("Need to update: " + s.displayName);
+			}
+		}
 	}
 
 }
