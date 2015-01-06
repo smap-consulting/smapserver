@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
@@ -164,10 +165,15 @@ public class SurveyManager {
 			csvRoot = csvFileName.substring(0, idx);
 		}
 		
+		// Escape csvRoot
+		csvRoot = csvRoot.replace("\'", "\'\'");
+		
 		ResultSet resultSet = null;
 		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident" +
-				" from survey s, users u, user_project up, project p" +
-				" where s.appearance = 'search(''?'')' " +
+				" from survey s, users u, user_project up, project p, question q, form f " +
+				" where s.s_id = f.s_id " +
+				" and f.f_id = q.f_id " +
+				" and q.appearance like 'search(''" + csvRoot + "''%' " +
 				" and s.p_id = p.id" +
 				" and p.o_id = u.o_id" +
 				" and u.ident = ? " +
@@ -177,10 +183,9 @@ public class SurveyManager {
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setString(1, csvRoot);
-			pstmt.setString(2, user);
+			pstmt.setString(1, user);
 			
-			log.info(sql + " : " + user);
+			System.out.println(pstmt.toString() + " : " + user);
 			resultSet = pstmt.executeQuery();
 	
 			while (resultSet.next()) {								
@@ -285,7 +290,7 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
-				getLabels(pstmt4, s, q.text_id, q.hint_id, q.labels);
+				UtilityMethods.getLabels(pstmt4, s, q.text_id, q.hint_id, q.labels);
 				
 				/*
 				 * If this is a select question get the options
@@ -305,7 +310,7 @@ public class SurveyManager {
 							o.text_id = resultSet5.getString(3);
 							
 							// Get the labels for the option
-							getLabels(pstmt4, s, o.text_id, null, o.labels);
+							UtilityMethods.getLabels(pstmt4, s, o.text_id, null, o.labels);
 							options.add(o);
 						}
 						
@@ -376,64 +381,7 @@ public class SurveyManager {
 		try { if (pstmt8 != null) {pstmt8.close();}} catch (SQLException e) {}
 	}
 	
-	/*
-	 * Get all the labels for the question or option
-	 */
-	private void getLabels(PreparedStatement pstmt, 
-			Survey s, 
-			String text_id, 
-			String hint_id, 
-			ArrayList<Label> labels) throws SQLException {
-		for(int i = 0; i < s.languages.size(); i++) {
-			
-			Label l = new Label();
-			
-			// Get label and media
-			pstmt.setInt(1, s.id);
-			pstmt.setString(2, s.languages.get(i));
-			pstmt.setString(3, text_id);			
-			ResultSet resultSet = pstmt.executeQuery();		
-			while(resultSet.next()) {
 
-				String t = resultSet.getString(1).trim();
-				String v = resultSet.getString(2);
-				
-				if(t.equals("none")) {
-					l.text = v;
-				} else if(t.equals("image")) {
-					l.image = v;
-				} else if(t.equals("audio")) {
-					l.audio = v;
-				} else if(t.equals("video")) {
-					l.video = v;
-				} 
-
-			}
-			
-			// Get hint
-			if(hint_id != null) {
-				pstmt.setInt(1, s.id);
-				pstmt.setString(2, s.languages.get(i));
-				pstmt.setString(3, hint_id);
-				
-				resultSet = pstmt.executeQuery();
-				
-				if(resultSet.next()) {
-					String t = resultSet.getString(1).trim();
-					String v = resultSet.getString(2);
-					
-					if(t.equals("none")) {
-						l.hint = v;
-					} else {
-						System.out.println("Error: Invalid type for hint: " + t);
-					}
-				}
-			}
-			
-			labels.add(l);	
-			
-		}
-	}
 	
 	/*
 	 * Get all the manifest elements that are attached to the entire survey

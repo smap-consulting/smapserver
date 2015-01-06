@@ -24,7 +24,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.NotifyDetails;
+import org.smap.sdal.model.Survey;
 
 public class UtilityMethods {
 	
@@ -615,6 +617,68 @@ public class UtilityMethods {
 			} catch (Exception e) {
 				e.printStackTrace();
 	    	}
+		}
+	}
+	
+	/*
+	 * Get labels for an option or question
+	 */
+	/*
+	 * Get all the labels for the question or option
+	 */
+	public static void getLabels(PreparedStatement pstmt, 
+			Survey s, 
+			String text_id, 
+			String hint_id, 
+			ArrayList<Label> labels) throws SQLException {
+		for(int i = 0; i < s.languages.size(); i++) {
+			
+			Label l = new Label();
+			
+			// Get label and media
+			pstmt.setInt(1, s.id);
+			pstmt.setString(2, s.languages.get(i));
+			pstmt.setString(3, text_id);			
+			ResultSet resultSet = pstmt.executeQuery();		
+			while(resultSet.next()) {
+
+				String t = resultSet.getString(1).trim();
+				String v = resultSet.getString(2);
+				
+				if(t.equals("none")) {
+					l.text = v;
+				} else if(t.equals("image")) {
+					l.image = v;
+				} else if(t.equals("audio")) {
+					l.audio = v;
+				} else if(t.equals("video")) {
+					l.video = v;
+				} 
+
+			}
+			
+			// Get hint
+			if(hint_id != null) {
+				pstmt.setInt(1, s.id);
+				pstmt.setString(2, s.languages.get(i));
+				pstmt.setString(3, hint_id);
+				
+				resultSet = pstmt.executeQuery();
+				
+				if(resultSet.next()) {
+					String t = resultSet.getString(1).trim();
+					String v = resultSet.getString(2);
+					
+					if(t.equals("none")) {
+						l.hint = v;
+					} else {
+						System.out.println("Error: Invalid type for hint: " + t);
+					}
+				}
+			}
+			
+			labels.add(l);	
+			
 		}
 	}
 	

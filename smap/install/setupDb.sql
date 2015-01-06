@@ -333,7 +333,8 @@ CREATE TABLE option (
 	label_id text,
 	oValue text,
 	selected BOOLEAN,
-	cascade_filters text
+	cascade_filters text,
+	externalfile text
 	);
 ALTER TABLE option OWNER TO ws;
 CREATE INDEX label_id_sequence ON option(label_id);

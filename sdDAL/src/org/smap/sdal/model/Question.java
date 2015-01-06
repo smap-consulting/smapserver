@@ -13,6 +13,8 @@ public class Question {
 	public String text_id;
 	public String hint_id;
 	public String list_name;
+	public String appearance;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
+	public ArrayList<Option> options = new ArrayList<Option> ();
 	
 }

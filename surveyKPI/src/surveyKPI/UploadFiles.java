@@ -39,15 +39,19 @@ import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import utilities.CSVParser;
 import utilities.MediaInfo;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -168,7 +172,7 @@ public class UploadFiles extends Application {
 					    // Apply changes from CSV files to survey definition
 					    String contentType = UtilityMethods.getContentType(fileName);
 					    if(contentType.equals("text/csv")) {
-					    	applyCSVChanges(connectionSD, user, sId, fileName);
+					    	applyCSVChanges(connectionSD, user, sId, fileName, savedFile, basePath, mediaInfo);
 					    }
 					    
 					    MediaResponse mResponse = new MediaResponse ();
@@ -296,19 +300,244 @@ public class UploadFiles extends Application {
 	/*
 	 * Update the survey with any changes resulting from the uploaded CSV file
 	 */
-	private void applyCSVChanges(Connection connectionSD, String user, int sId, String csvFileName) {
+	private void applyCSVChanges(Connection connectionSD, 
+			String user, 
+			int sId, 
+			String csvFileName, 
+			File csvFile,
+			String basePath,
+			MediaInfo mediaInfo) {
 		/*
 		 * Find surveys that use this CSV file
 		 */
 		if(sId > 0) {  // TODO A specific survey has been requested
 			
+			applyCSVChangesToSurvey(connectionSD, user, sId, csvFileName, csvFile);
+			
 		} else {		// Organisational level
+			
+			System.out.println("Organisational Level");
 			// Get all the surveys that reference this CSV file and are in the same organisation
 			SurveyManager sm = new SurveyManager();
 			ArrayList<Survey> surveys = sm.getByOrganisationAndExternalCSV(connectionSD, user,	csvFileName);
 			for(Survey s : surveys) {
-				System.out.println("Need to update: " + s.displayName);
+				
+				System.out.println("Survey: " + s.id);
+				// Check that there is not already a survey level file with the same name				
+				String surveyUrl = mediaInfo.getUrlForSurveyId(sId, connectionSD);
+				if(surveyUrl != null) {
+					String surveyPath = basePath + surveyUrl + "/" + csvFileName;
+					File surveyFile = new File(surveyPath);
+					if(surveyFile.exists()) {
+						continue;	// This survey has a survey specific version of the CSV file
+					}
+				}
+					
+				applyCSVChangesToSurvey(connectionSD, user, s.id, csvFileName, csvFile);
 			}
+		}
+	}
+	
+	/*
+	 * Filter to use when applying changes to a survey
+	 */
+	private class Filter {
+		
+		private class Rule {
+			public int column;
+			public int function;	// 1: contains, 2: startswith, 3: endswith, 4: matches 
+			public String value;
+		}
+		private boolean includeAll = false;
+		private Rule r1 = null;
+		private Rule r2 = null;		// Secondary filter rule
+		
+		public Filter(String [] cols, String appearance) {
+			int idx1 = appearance.indexOf('(');
+			int idx2 = appearance.indexOf(')');
+			if(idx1 > 0 && idx2 > idx1) {
+				String criteriaString = appearance.substring(idx1 + 1, idx2);
+				System.out.println("#### criteria for csv filter: " + criteriaString);
+				
+				String criteria [] = criteriaString.split(",");
+				if(criteria.length < 4) {
+					
+					System.out.println("Info: Criteria elements less than 4, incude all rows");
+					includeAll = true;
+					
+				} else {
+					
+					r1 = new Rule();
+					r1.column = -1;
+					// Ignore file name which is first criterion
+					for(int i = 1; i < criteria.length; i++) {						
+										
+						// function
+						if(i == 1) { 
+							
+							// remove quotes
+							criteria[i] = criteria[i].trim();
+							criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
+							System.out.println("@@@@ criterion " + i + " " + criteria[i]);
+							
+							if(criteria[i].equals("contains")) {
+								r1.function = 1;	
+							} else if(criteria[i].equals("startswith")) {
+								r1.function = 2;	
+							} else if(criteria[i].equals("endswith")) {
+								r1.function = 3;	
+							} else if(criteria[i].equals("matches")) {
+								r1.function = 4;	
+							} else {
+								System.out.println("Error: unknown function, " + criteria[i] +
+										", include all rows");
+								includeAll = true;
+								return;
+							}
+						}
+						
+						// Column to match
+						if(i == 2) {
+							
+							// remove quotes
+							criteria[i] = criteria[i].trim();
+							criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
+							System.out.println("@@@@ criterion " + i + " " + criteria[i]);
+							
+							for(int j = 0; j < cols.length; j++) {
+								System.out.println("***: " + criteria[i] + " : " + cols[j]);
+								if (criteria[i].equals(cols[j])) {
+									r1.column = j;
+									break;
+								}	
+							}
+							if(r1.column == -1) {
+								System.out.println("Error: no matching column, include all rows");
+								includeAll = true;
+								return;
+							}
+						}
+						
+						// Value to match
+						if(i == 3) {
+							
+							// Check for quotes - only strings are supported for filtering values
+							criteria[i] = criteria[i].trim();
+							if(criteria[i].charAt(0) == '\'') {
+								criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
+								System.out.println("@@@@ value criterion " + i + " " + criteria[i]);
+								
+								r1.value =  criteria[i];
+								
+							} else {
+								System.out.println("Info dynamic filter value are not supported: " + 
+											criteria[i] + ", include all rows ");
+								includeAll = true;
+								return;
+							}
+							
+							
+						}
+						
+						if(i == 4) {
+							// TODO add rules for extra filters
+						}
+					}
+					includeAll = false;
+					
+				}
+			} else {
+				System.out.println("Error: Unknown appearance: " + appearance + ", include all rows");
+				includeAll = true;
+			}
+			
+		}
+		
+		/*
+		 * Return true if the row should be included
+		 */
+		public boolean isIncluded(String [] cols) {
+			boolean include = true;
+					
+			if(!includeAll) {
+				switch(r1.function) {
+					case 1: // contains
+						if(!cols[r1.column].contains(r1.value)) {
+							include = false;
+						}
+						break;
+					case 2: // startswith
+						if(!cols[r1.column].startsWith(r1.value)) {
+							include = false;
+						}
+						break;
+					case 3: // endswith
+						if(!cols[r1.column].startsWith(r1.value)) {
+							include = false;
+						}
+						break;
+					case 4: // matches
+						if(!cols[r1.column].equals(r1.value)) {
+							include = false;
+						}
+						break;
+				}
+				
+				if(include) {	// Check the secondary filter
+					if(r2 != null) {
+						// TODO 
+					}
+				}
+			}
+			
+			return include;
+		}
+	}
+	
+	private void applyCSVChangesToSurvey(Connection connectionSD, 
+			String user, 
+			int sId, 
+			String csvFileName,
+			File csvFile) {
+		System.out.println("About to update: " + sId);
+		QuestionManager qm = new QuestionManager();
+		ArrayList<org.smap.sdal.model.Question> questions = qm.getByCSV(connectionSD, sId, csvFileName);
+		
+		for(org.smap.sdal.model.Question q : questions) {
+			
+			System.out.println("Updating question: " + q.name + " : " + q.type);
+			
+			/*
+			 * Get the list of options from the file that match the selection criteria in the appearance column
+			 */
+			try {
+			       FileReader reader = new FileReader(csvFile);
+			       BufferedReader br = new BufferedReader(reader);
+			       CSVParser parser = new CSVParser();
+			       
+			       // Get Header
+			       String line = br.readLine();
+			       String cols [] = parser.parseLine(line);
+			       System.out.println("Header: " + line);
+			       
+			       Filter filter = new Filter(cols, q.appearance);
+			       
+			       while(line != null) {
+			    	   line = br.readLine();
+			    	   if(line != null) {
+				    	   System.out.println("## " + line);
+				    	   if(filter.isIncluded(parser.parseLine(line))) {
+				    		   System.out.println("        Include ");
+				    	   } else {
+				    		   System.out.println("        Do not Include ");
+				    	   }
+			    	   }
+			       }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			      
+			
 		}
 	}
 

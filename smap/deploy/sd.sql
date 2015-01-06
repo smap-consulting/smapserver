@@ -228,3 +228,5 @@ create TABLE server (
 	);
 ALTER TABLE server OWNER TO ws;
 
+-- Add external file attribute for options
+ALTER TABLE option add column externalfile text;

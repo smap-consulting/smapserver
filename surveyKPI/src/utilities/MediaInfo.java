@@ -65,37 +65,15 @@ public class MediaInfo {
 	public boolean setFolder(String basePath, int sId, Connection conn) {
 		boolean status = false;
 		
-		// Get the survey ident
-		String survey_ident = null;
-		String sql = "select ident from survey where s_id = ?;";
-		PreparedStatement pstmt = null;
-		
-		try {
-			pstmt = conn.prepareStatement(sql);
-			
-			System.out.println("sql: " + sql + " : " + sId);
-			
-			pstmt.setInt(1, sId);
-			ResultSet resultSet = pstmt.executeQuery();
-			if(resultSet.next()) {
+		folderUrl = getUrlForSurveyId(sId, conn);
+		if(folderUrl != null) {
+			folderPath = basePath + folderUrl;
+			folder = new File(folderPath);	
+			createFolders(folderPath);
 				
-				survey_ident = resultSet.getString(1);
-				folderUrl = "/media/" + survey_ident;
-				folderPath = basePath + folderUrl;
-				folder = new File(folderPath);
+			status = true;
 				
-				createFolders(folderPath);
-				
-				status = true;
-				
-			} else {
-				System.out.println("Error: Form identifier not found for form id: " + sId);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}};
-		}		
+		} 
 		
 		return status;
 	}
@@ -194,6 +172,41 @@ public class MediaInfo {
 	
 	public String getPath() {
 		return folderPath;
+	}
+	
+	/*
+	 * Return the path to the file when it is specific to a survey
+	 */
+	public String getUrlForSurveyId(int sId, Connection conn) {
+		
+		// Get the survey ident
+		String survey_ident = null;
+		String sql = "select ident from survey where s_id = ?;";
+		PreparedStatement pstmt = null;
+		String url = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			
+			System.out.println("sql: " + sql + " : " + sId);
+			
+			pstmt.setInt(1, sId);
+			ResultSet resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				
+				survey_ident = resultSet.getString(1);
+				url = "/media/" + survey_ident;
+				
+				
+			} else {
+				System.out.println("Error: Form identifier not found for form id: " + sId);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}};
+		}		
+		return url;
 	}
 
 	private void createFolders(String path) {

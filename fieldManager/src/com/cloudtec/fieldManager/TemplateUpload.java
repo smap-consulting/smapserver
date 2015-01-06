@@ -575,6 +575,13 @@ public class TemplateUpload extends HttpServlet {
         				
         			}
 	        		
+        		} else if(line.startsWith("======") 
+        				|| line.startsWith("Traceback") 
+        				|| line.startsWith("  ") 
+        				|| line.startsWith("[Fatal Error]") 
+        				|| line.startsWith(">>") 
+        				|| line.startsWith("processing")) {
+        			// ignore all of the above
         		} else {
         			response.errMesg.add(line);
         		}

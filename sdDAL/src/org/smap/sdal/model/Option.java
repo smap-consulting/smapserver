@@ -8,7 +8,9 @@ import java.util.ArrayList;
  */
 public class Option {
 	public int id;
+	public int seq;
 	public String value;
+	public String defLabel;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	public String text_id;
 }
