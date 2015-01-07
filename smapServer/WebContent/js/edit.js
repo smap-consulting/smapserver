@@ -344,7 +344,7 @@ function refreshView(mode) {
 		csv.setHtml('#csvList', globals.model.survey.surveyManifest);
 		showSettings();
 	} else if(mode === "changes") {
-		setChangesHtml($('#changes'), survey.changes, survey);
+		setChangesHtml($('#changes'), survey, survey);
 		showChanges();
 	} else if(mode === "survey") {
 		showSurvey();
@@ -443,55 +443,61 @@ function translateHtmlFixup($element) {
 /*
  * Convert change log JSON to html
  */
-function setChangesHtml($element, changes, survey) {
+function setChangesHtml($element, survey, survey) {
 	var h =[],
 		idx = -1,
 		i;
 	
-	h[++idx] = '<table border="1" width=100%">';
-	
-	// write the table headings
-	h[++idx] = '<thead>';
-		h[++idx] = '<tr>';
-			h[++idx] = '<th>Version</th>';
-			h[++idx] = '<th>Change</th>';
-			h[++idx] = '<th>Changed By</th>';
-			h[++idx] = '<th>When changed</th>';
-		h[++idx] = '</tr>';
-	h[++idx] = '</thead>';
-	
-	// Write the table body
-	h[++idx] = '<body>';
-	for(i = 0; i < changes.length; i++) {
+	if(!survey) {
+		$('#errormesg').html("<strong>No Changes</strong> Create or select a survey to see changes");
+		$('#infobox').show();
+	} else {
+
+		h[++idx] = '<table border="1" width=100%">';
 		
-		h[++idx] = '<tr>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].version;
-			h[++idx] = '</td>';	
-			h[++idx] = '<td>';
-			// Description
-				h[++idx] = changes[i].type;
-				h[++idx] = ' ';
-				h[++idx] = changes[i].name;
-				h[++idx] = ' changed to: <span style="color:blue;">';
-				h[++idx] = changes[i].newVal;
-				h[++idx] = '</span>';
-				h[++idx] = ' from: <span style="color:red;">';
-				h[++idx] = changes[i].oldVal;
-				h[++idx] = '</span>';
-			// End Description
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].userName;
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].updatedTime;
-			h[++idx] = '</td>';
-		h[++idx] = '</tr>';
-	}
-	h[++idx] = '</body>';
-	
-	h[++idx] = '</table>';
+		// write the table headings
+		h[++idx] = '<thead>';
+			h[++idx] = '<tr>';
+				h[++idx] = '<th>Version</th>';
+				h[++idx] = '<th>Change</th>';
+				h[++idx] = '<th>Changed By</th>';
+				h[++idx] = '<th>When changed</th>';
+			h[++idx] = '</tr>';
+		h[++idx] = '</thead>';
+		
+		// Write the table body
+		h[++idx] = '<body>';
+		for(i = 0; i < changes.length; i++) {
+			
+			h[++idx] = '<tr>';
+				h[++idx] = '<td>';
+				h[++idx] = changes[i].version;
+				h[++idx] = '</td>';	
+				h[++idx] = '<td>';
+				// Description
+					h[++idx] = changes[i].type;
+					h[++idx] = ' ';
+					h[++idx] = changes[i].name;
+					h[++idx] = ' changed to: <span style="color:blue;">';
+					h[++idx] = changes[i].newVal;
+					h[++idx] = '</span>';
+					h[++idx] = ' from: <span style="color:red;">';
+					h[++idx] = changes[i].oldVal;
+					h[++idx] = '</span>';
+				// End Description
+				h[++idx] = '</td>';
+				h[++idx] = '<td>';
+				h[++idx] = changes[i].userName;
+				h[++idx] = '</td>';
+				h[++idx] = '<td>';
+				h[++idx] = changes[i].updatedTime;
+				h[++idx] = '</td>';
+			h[++idx] = '</tr>';
+		}
+		h[++idx] = '</body>';
+		
+		h[++idx] = '</table>';
+	} 
 	
 	$element.html(h.join(''));
 	
