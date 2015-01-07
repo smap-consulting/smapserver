@@ -74,10 +74,6 @@ public class OptionList extends Application {
 		
 		JSONArray jaOptions = new JSONArray();
 
-		/*
-		 * For this survey get all the questions that can have "counts"
-		 *  that is "select one" and "select multiple" questions
-		 */
 		PreparedStatement pstmt = null;
 		try {
 			String sql = null;

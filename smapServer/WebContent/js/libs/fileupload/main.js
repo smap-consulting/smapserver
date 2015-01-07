@@ -26,6 +26,7 @@ $(function () {
     });
 
     // Enable iframe cross-domain access via redirect option:
+    /*
     $('#fileupload').fileupload(
         'option',
         'redirect',
@@ -34,6 +35,7 @@ $(function () {
             '/cors/result.html?%s'
         )
     );
+    */
 
     
     // Load existing files:
@@ -51,5 +53,10 @@ $(function () {
             .call(this, $.Event('done'), {result: result});
     });
     
+    $('#fileupload').bind('fileuploaddone', function(event, data){
+    	location.reload();
+    	//$(this).fileupload('option', 'done')
+        //.call(this, $.Event('done'), {result: data.result});
+    });
 
 });

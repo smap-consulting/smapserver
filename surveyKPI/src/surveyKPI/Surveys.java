@@ -213,6 +213,9 @@ public class Surveys extends Application {
 		return response;
 	}
 
+	/*
+	 * Apply updates to the survey
+	 */
 	@PUT
 	@Path("/save/{sId}")
 	@Produces("application/json")
@@ -239,95 +242,14 @@ public class Surveys extends Application {
 		
 		Type type = new TypeToken<ArrayList<ChangeSet>>(){}.getType();
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);
-		int userId = 0;
-		
-		ChangeResponse resp = new ChangeResponse();	// Response object
-		resp.changeSet = changes;
-		
+		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);	
 		Response response = null;
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtLang = null;
-		PreparedStatement pstmtChangeLog = null;
-		SurveyManager sm = new SurveyManager();
+
 		try {
-			
-			// Create prepared statements
-			String sqlLang = "update translation set value = ? " +
-					"where s_id = ? and language = ? and text_id = ? and type = ? and value = ?;";
-			pstmtLang = connectionSD.prepareStatement(sqlLang);
-			
-			String sqlChangeLog = "insert into survey_change " +
-					"(s_id, version, changes, user_id, updated_time) " +
-					"values(?, ?, ?, ?, ?)";
-			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
-			
-			connectionSD.setAutoCommit(false);
-			
-			// update version number of survey and get the new version
-			String sqlUpdateVersion = "update survey set version = version + 1 where s_id = ?";
-			String sqlGetVersion = "select version from survey where s_id = ?";
-			pstmt = connectionSD.prepareStatement(sqlUpdateVersion);
-			pstmt.setInt(1, sId);
-			pstmt.execute();
-			pstmt.close();
-			
-			pstmt = connectionSD.prepareStatement(sqlGetVersion);
-			pstmt.setInt(1, sId);
-			ResultSet rs = pstmt.executeQuery();
-			rs.next();
-			resp.version = rs.getInt(1);
-			pstmt.close();
-			
-			/*
-			 * Get the user id
-			 * This should be saved rather than the ident as a user could be deleted
-			 *  then a new user created with the same ident but its a different user
-			 */
-			String sqlGetUser = "select id from users where ident = ?";
-			pstmt = connectionSD.prepareStatement(sqlGetUser);
-			pstmt.setString(1, request.getRemoteUser());
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				userId = rs.getInt(1);
-			}
-			pstmt.close();
-			
-			for(ChangeSet cs : changes) {			
-				
-				// Process each change set separately and roll back to a save point if it fails
-				Savepoint sp = connectionSD.setSavepoint();
-				try {
+	
+			SurveyManager sm = new SurveyManager();
+			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, sId, request.getRemoteUser(), changes);
 					
-					sm.applyChanges(pstmtLang, 
-							pstmtChangeLog,
-							userId, 
-							sId, 
-							cs.type, 
-							cs.items,
-							resp.version,
-							gson);
-					
-					// Success
-					cs.updateFailed = false;
-					resp.success++;
-				} catch (Exception e) {
-					
-					// Failure
-					connectionSD.rollback(sp);
-					System.out.println(e.getMessage());
-					cs.updateFailed = true;
-					cs.errorMsg = e.getMessage();
-					resp.failed++;
-				}
-				
-			}
-			
-			connectionSD.commit();
-			System.out.println("Survey update to version: " + resp.version + ". " + 
-					resp.success + " successful changes and " + 
-					resp.failed + " failed changes");
-						
 			String respString = gson.toJson(resp);	// Create the response	
 			response = Response.ok(respString).build();
 			
@@ -338,9 +260,8 @@ public class Surveys extends Application {
 			response = Response.serverError().build();
 		} finally {
 			
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}
-			try {if (pstmtChangeLog != null) {pstmtChangeLog.close();}} catch (SQLException e) {}
+			
+
 			
 			try {
 				if (connectionSD != null) {

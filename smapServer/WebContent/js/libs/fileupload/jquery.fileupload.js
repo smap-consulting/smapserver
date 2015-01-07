@@ -852,7 +852,7 @@
             response.result = options.result = result;
             response.textStatus = options.textStatus = textStatus;
             response.jqXHR = options.jqXHR = jqXHR;
-            this._trigger('done', null, options);
+            this._trigger('done', null, options); 
         },
 
         _onFail: function (jqXHR, textStatus, errorThrown, options) {

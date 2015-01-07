@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
@@ -108,7 +110,7 @@ public class SurveyManager {
 			String user,
 			int sId,
 			boolean full	// Get the full details of the survey
-			) throws SQLException {
+			) throws Exception {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
@@ -213,7 +215,7 @@ public class SurveyManager {
 	/*
 	 * Add survey details
 	 */
-	private void populateSurvey(Connection sd, Survey s) throws SQLException {
+	private void populateSurvey(Connection sd, Survey s) throws Exception {
 		
 		ResultSet resultSet1 = null;
 		ResultSet resultSet2 = null;
@@ -225,7 +227,6 @@ public class SurveyManager {
 		String sql = "select f.f_id, f.name from form f where f.s_id = ?;";
 		String sql2 = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id from question q where f_id = ?";
 		String sql3 = "select distinct t.language from translation t where s_id = ? order by t.language asc";
-		String sql4 = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
 		String sql5 = "select o.o_id, o.ovalue as value, o.label_id  from option o where q_id = ? order by seq";
 		String sql6 = "SELECT ssc.id, ssc.name, ssc.function, ssc.parameters, ssc.units, f.name, f.f_id " +
 				"FROM ssc ssc, form f WHERE ssc.s_id = ? AND ssc.f_id = f.f_id ORDER BY id";
@@ -240,7 +241,6 @@ public class SurveyManager {
 		PreparedStatement pstmt1 = sd.prepareStatement(sql);	
 		PreparedStatement pstmt2 = sd.prepareStatement(sql2);
 		PreparedStatement pstmt3 = sd.prepareStatement(sql3);
-		PreparedStatement pstmt4 = sd.prepareStatement(sql4);
 		PreparedStatement pstmt5 = sd.prepareStatement(sql5);
 		PreparedStatement pstmt6 = sd.prepareStatement(sql6);
 		PreparedStatement pstmt7 = sd.prepareStatement(sql7);
@@ -290,7 +290,7 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
-				UtilityMethods.getLabels(pstmt4, s, q.text_id, q.hint_id, q.labels);
+				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels);
 				
 				/*
 				 * If this is a select question get the options
@@ -310,7 +310,7 @@ public class SurveyManager {
 							o.text_id = resultSet5.getString(3);
 							
 							// Get the labels for the option
-							UtilityMethods.getLabels(pstmt4, s, o.text_id, null, o.labels);
+							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels);
 							options.add(o);
 						}
 						
@@ -374,7 +374,6 @@ public class SurveyManager {
 		try { if (pstmt1 != null) {pstmt1.close();}} catch (SQLException e) {}
 		try { if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
 		try { if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
-		try { if (pstmt4 != null) {pstmt4.close();}} catch (SQLException e) {}
 		try { if (pstmt5 != null) {pstmt5.close();}} catch (SQLException e) {}
 		try { if (pstmt6 != null) {pstmt6.close();}} catch (SQLException e) {}
 		try { if (pstmt7 != null) {pstmt7.close();}} catch (SQLException e) {}
@@ -532,61 +531,117 @@ public class SurveyManager {
 	}
 	
 	/*
-	 * Apply a set of changes as sent by survey editor
-	 * Returns the changes that were not applied
+	 * Apply an array of change sets to a survey
 	 */
-	public void applyChanges(PreparedStatement pstmtLang, 
-			PreparedStatement pstmtChangeLog,
-			int userId,
-			int sId,
-			String change_type,
-			ArrayList<ChangeItem> changes,
-			int version,
-			Gson gson) throws SQLException, Exception {
+	public ChangeResponse applyChangeSetArray(Connection connectionSD, int sId, String ident, ArrayList<ChangeSet> changes) throws Exception {
 		
-		String transType = null;
+		ChangeResponse resp = new ChangeResponse();	// Response object
+		resp.changeSet = changes;
 		
-		System.out.println("applyChanges: " + change_type);
-		if(change_type.equals("label")) {
-			for(ChangeItem change : changes) {
+		int userId = -1;
+		ResultSet rs = null;
 		
-					pstmtLang.setString(1, change.newVal);
-					pstmtLang.setInt(2, sId);
-					pstmtLang.setString(3, change.languageName);
-					pstmtLang.setString(4, change.transId);
-					if(change.element.equals("text")) {
-						transType = "none";
-					} else {
-						transType = change.element;
-					}
-					pstmtLang.setString(5,  transType);
-					pstmtLang.setString(6, change.oldVal);
-					
-					System.out.println("Survey update: " + change.name + " from::" + change.oldVal + ":: to ::" + change.newVal);
-					
-					log.info("userevent: " + userId + " : modify survey label : " + change.transId + " to: " + change.newVal + " survey: " + sId + " language: " + change.languageName + " labelId: "  + transType);
-					
-					int count = pstmtLang.executeUpdate();
-					if(count == 0) {
-						System.out.println("Error: Element already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-					}
-					
-					// Write the change log
-					pstmtChangeLog.setInt(1, sId);
-					pstmtChangeLog.setInt(2, version);
-					pstmtChangeLog.setString(3, gson.toJson(change));
-					pstmtChangeLog.setInt(4,userId);
-					pstmtChangeLog.setTimestamp(5, getTimeStamp());
-					pstmtChangeLog.execute();
+
+		PreparedStatement pstmtChangeLog = null;
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			String sqlChangeLog = "insert into survey_change " +
+					"(s_id, version, changes, user_id, updated_time) " +
+					"values(?, ?, ?, ?, ?)";
+			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
+			
+			/*
+			 * Get the user id
+			 * This should be saved rather than the ident as a user could be deleted
+			 *  then a new user created with the same ident but its a different user
+			 */
+			String sqlGetUser = "select id from users where ident = ?";
+			pstmt = connectionSD.prepareStatement(sqlGetUser);
+			pstmt.setString(1, ident);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				userId = rs.getInt(1);
 			}
+			pstmt.close();
+			
+			connectionSD.setAutoCommit(false);
+			
+			/*
+			 * Lock the survey
+			 * update version number of survey and get the new version
+			 */
+			String sqlUpdateVersion = "update survey set version = version + 1 where s_id = ?";
+			String sqlGetVersion = "select version from survey where s_id = ?";
+			pstmt = connectionSD.prepareStatement(sqlUpdateVersion);
+			pstmt.setInt(1, sId);
+			pstmt.execute();
+			pstmt.close();
+			
+			pstmt = connectionSD.prepareStatement(sqlGetVersion);
+			pstmt.setInt(1, sId);
+			rs = pstmt.executeQuery();
+			rs.next();
+			resp.version = rs.getInt(1);
+			pstmt.close();
+			
+			for(ChangeSet cs : changes) {			
+				
+				// Process each change set separately and roll back to a save point if it fails
+				Savepoint sp = connectionSD.setSavepoint();
+				try {
+					
+					System.out.println("applyChanges: " + cs.type);
+					if(cs.type.equals("label")) {
+						
+						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 
-		} else if(change_type.equals("new_multichoice_option")) {
-			System.out.println("Changing multiple choice ");
+					} else if(cs.type.equals("option_update")) {
+						
+						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
+						
+					}
+					
+					
+					// Success
+					cs.updateFailed = false;
+					resp.success++;
+				} catch (Exception e) {
+					
+					// Failure
+					connectionSD.rollback(sp);
+					System.out.println(e.getMessage());
+					cs.updateFailed = true;
+					cs.errorMsg = e.getMessage();
+					resp.failed++;
+				}
+				
+			}
+			
+			if(resp.success > 0) {
+				connectionSD.commit();
+				System.out.println("Survey update to version: " + resp.version + ". " + 
+						resp.success + " successful changes and " + 
+						resp.failed + " failed changes");
+			} else {
+				connectionSD.rollback();
+				System.out.println("Survey version not updated: " + 
+						resp.success + " successful changes and " + 
+						resp.failed + " failed changes");
+			}
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {if (pstmtChangeLog != null) {pstmtChangeLog.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
-
 		
+		return resp;
 	}
+	
+
 	
 	// Get the timestamp
 	public static Timestamp getTimeStamp() {
@@ -594,6 +649,203 @@ public class SurveyManager {
 		Date today = new Date();
 		return new Timestamp(today.getTime());
 	 
+	}
+	
+	/*
+	 * ========================= Type specific update fuction
+	 */
+	
+	/*
+	 * Apply label changes
+	 * These are just changes to question labels, commonly created when editing translations
+	 */
+	public void applyLabel(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version) throws Exception {
+		
+		String transType = null;
+		PreparedStatement pstmtLang = null;
+		
+		try {
+			// Create prepared statements
+			String sqlLang = "update translation set value = ? " +
+					"where s_id = ? and language = ? and text_id = ? and type = ? and value = ?;";
+			pstmtLang = connectionSD.prepareStatement(sqlLang);
+		
+			for(ChangeItem ci : changeItemList) {
+			
+				pstmtLang.setString(1, ci.newVal);
+				pstmtLang.setInt(2, sId);
+				pstmtLang.setString(3, ci.languageName);
+				pstmtLang.setString(4, ci.key);
+				if(ci.element.equals("text")) {
+					transType = "none";
+				} else {
+					transType = ci.element;
+				}
+				pstmtLang.setString(5,  transType);
+				pstmtLang.setString(6, ci.oldVal);
+				
+				System.out.println("Survey update: " + ci.name + " from::" + ci.oldVal + ":: to ::" + ci.newVal);
+				
+				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
+				
+				int count = pstmtLang.executeUpdate();
+				if(count == 0) {
+					System.out.println("Error: Element already modified");
+					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+				}
+				
+				// Write the change log
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				pstmtChangeLog.setInt(1, sId);
+				pstmtChangeLog.setInt(2, version);
+				pstmtChangeLog.setString(3, gson.toJson(ci));
+				pstmtChangeLog.setInt(4,userId);
+				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.execute();
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}
+		}
+	}
+	
+	/*
+	 * Apply changes to an option
+	 *  1) Get the maximum sequence number for each question
+	 *  2) Attempt to get the text_id for the passed in option
+	 *     3a) If the text_id can't be found create a new option
+	 *     3b) Else update the label value for the option 
+	 */
+	public void applyOptionUpdates(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version) throws Exception {
+		
+		PreparedStatement pstmtLangInsert = null;
+		PreparedStatement pstmtLangUpdate = null;
+		PreparedStatement pstmtOptionGet = null;
+		PreparedStatement pstmtOptionInsert = null;
+		PreparedStatement pstmtMaxSeq = null;
+		
+		try {
+			// Create prepared statements
+			String sqlOptionGet = "select label_id from option where q_id = ? and ovalue = ?;";
+			pstmtOptionGet = connectionSD.prepareStatement(sqlOptionGet);
+			
+			String sqlOptionInsert = "insert into option  (o_id, q_id, seq, label_id, ovalue, externalfile) values(nextval('o_seq'), ?, ?, ?, ?, 'true');"; 			
+			pstmtOptionInsert = connectionSD.prepareStatement(sqlOptionInsert);
+			
+			String sqlLangInsert = "insert into translation  (t_id, s_id, language, text_id, type, value) values(nextval('t_seq'), ?, ?, ?, ?, ?);"; 			
+			pstmtLangInsert = connectionSD.prepareStatement(sqlLangInsert);
+			
+			String sqlLangUpdate = "update translation  set value = ? where s_id = ? and text_id = ? and value != ?;"; 			
+			pstmtLangUpdate = connectionSD.prepareStatement(sqlLangUpdate);		// Assumes all languages and types TODO
+			
+			String sqlMaxSeq = "select max(seq) from option where q_id = ?;";
+			pstmtMaxSeq = connectionSD.prepareStatement(sqlMaxSeq);
+		
+			ArrayList<String> languages = UtilityMethods.getLanguagesForSurvey(connectionSD, sId);
+			int currentQId = -1;
+			int maxSeq = -1;
+			ResultSet rs = null;
+			int totalCount = 0;		// Total changes for this change set
+			
+			for(ChangeItem ci : changeItemList) {
+				
+				int count = 0;		// Count of changes for this change item
+			
+				// Get the max sequence number
+				if(currentQId != ci.qId) {
+					// Get current maximum sequence
+					pstmtMaxSeq.setInt(1, ci.qId);
+					rs = pstmtMaxSeq.executeQuery();
+					if(rs.next()) {
+						maxSeq = rs.getInt(1);
+					}			
+				}
+				
+				System.out.println("Maximum sequence number: " + maxSeq);
+				
+				// Get the text_id for this option
+				pstmtOptionGet.setInt(1, ci.qId);
+				pstmtOptionGet.setString(2, ci.key);
+				rs = pstmtOptionGet.executeQuery();
+				if(rs.next()) {
+					
+					String text_id = rs.getString(1);
+					// Update the label for all languages
+					System.out.println("Updating label");	
+					
+					pstmtLangUpdate.setString(1, ci.newVal);
+					pstmtLangUpdate.setInt(2, sId);
+					pstmtLangUpdate.setString(3, text_id);
+					pstmtLangUpdate.setString(4, ci.newVal);
+					count = pstmtLangUpdate.executeUpdate();
+					
+				} else {
+					
+					// Create a new option
+					
+					// Set text id
+					maxSeq++;
+					String text_id = "external_" + ci.qId + "_" + maxSeq;
+					// Insert new option		
+					pstmtOptionInsert.setInt(1, ci.qId);
+					pstmtOptionInsert.setInt(2, maxSeq);
+					pstmtOptionInsert.setString(3, text_id);
+					pstmtOptionInsert.setString(4, ci.key);
+					count = pstmtOptionInsert.executeUpdate();
+					
+					// Set label
+					pstmtLangInsert.setInt(1, sId);
+					pstmtLangInsert.setString(3, text_id);
+					pstmtLangInsert.setString(4, "none");
+					pstmtLangInsert.setString(5, ci.newVal);
+					for(String language : languages) {
+						pstmtLangInsert.setString(2, language);
+						count += pstmtLangInsert.executeUpdate();
+					}	
+					
+					
+					// TODO write instructions for subscriber to update results table 
+					
+				}			
+				
+				// Write the change log
+				if(count > 0) {
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(ci));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					pstmtChangeLog.execute();
+				}
+				totalCount += count;
+			}
+			
+			if(totalCount == 0) {
+				System.out.println("Info: No changes applied");
+				throw new Exception("No changes applied");		
+			}
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {if (pstmtLangInsert != null) {pstmtLangInsert.close();}} catch (SQLException e) {}
+			try {if (pstmtLangUpdate != null) {pstmtLangUpdate.close();}} catch (SQLException e) {}
+			try {if (pstmtOptionInsert != null) {pstmtOptionInsert.close();}} catch (SQLException e) {}
+			try {if (pstmtOptionGet != null) {pstmtOptionGet.close();}} catch (SQLException e) {}
+			try {if (pstmtMaxSeq != null) {pstmtMaxSeq.close();}} catch (SQLException e) {}
+		}
 	}
 	
 }

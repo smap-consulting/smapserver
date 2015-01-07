@@ -623,63 +623,97 @@ public class UtilityMethods {
 	/*
 	 * Get labels for an option or question
 	 */
-	/*
-	 * Get all the labels for the question or option
-	 */
-	public static void getLabels(PreparedStatement pstmt, 
+	public static void getLabels(Connection connectionSD,
 			Survey s, 
 			String text_id, 
 			String hint_id, 
-			ArrayList<Label> labels) throws SQLException {
-		for(int i = 0; i < s.languages.size(); i++) {
+			ArrayList<Label> labels) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		
+		try {
 			
-			Label l = new Label();
+			String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
+			pstmt = connectionSD.prepareStatement(sql);
 			
-			// Get label and media
-			pstmt.setInt(1, s.id);
-			pstmt.setString(2, s.languages.get(i));
-			pstmt.setString(3, text_id);			
-			ResultSet resultSet = pstmt.executeQuery();		
-			while(resultSet.next()) {
-
-				String t = resultSet.getString(1).trim();
-				String v = resultSet.getString(2);
+			for(int i = 0; i < s.languages.size(); i++) {
+	
+				Label l = new Label();
 				
-				if(t.equals("none")) {
-					l.text = v;
-				} else if(t.equals("image")) {
-					l.image = v;
-				} else if(t.equals("audio")) {
-					l.audio = v;
-				} else if(t.equals("video")) {
-					l.video = v;
-				} 
-
-			}
-			
-			// Get hint
-			if(hint_id != null) {
+				// Get label and media
 				pstmt.setInt(1, s.id);
 				pstmt.setString(2, s.languages.get(i));
-				pstmt.setString(3, hint_id);
-				
-				resultSet = pstmt.executeQuery();
-				
-				if(resultSet.next()) {
+				pstmt.setString(3, text_id);			
+				ResultSet resultSet = pstmt.executeQuery();		
+				while(resultSet.next()) {
+	
 					String t = resultSet.getString(1).trim();
 					String v = resultSet.getString(2);
 					
 					if(t.equals("none")) {
-						l.hint = v;
-					} else {
-						System.out.println("Error: Invalid type for hint: " + t);
+						l.text = v;
+					} else if(t.equals("image")) {
+						l.image = v;
+					} else if(t.equals("audio")) {
+						l.audio = v;
+					} else if(t.equals("video")) {
+						l.video = v;
+					} 
+	
+				}
+				
+				// Get hint
+				if(hint_id != null) {
+					pstmt.setInt(1, s.id);
+					pstmt.setString(2, s.languages.get(i));
+					pstmt.setString(3, hint_id);
+					
+					resultSet = pstmt.executeQuery();
+					
+					if(resultSet.next()) {
+						String t = resultSet.getString(1).trim();
+						String v = resultSet.getString(2);
+						
+						if(t.equals("none")) {
+							l.hint = v;
+						} else {
+							System.out.println("Error: Invalid type for hint: " + t);
+						}
 					}
 				}
+				
+				labels.add(l);		
 			}
-			
-			labels.add(l);	
-			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 		}
+	}
+	
+	/*
+	 * Get languages for a survey
+	 */
+	public static ArrayList<String> getLanguagesForSurvey(Connection connectionSD, int sId) throws Exception {
+		
+		PreparedStatement pstmtLanguages = null;
+		
+		ArrayList<String> languages = new ArrayList<String> ();
+		try {
+			String sqlLanguages = "select distinct t.language from translation t where s_id = ? order by t.language asc";
+			pstmtLanguages = connectionSD.prepareStatement(sqlLanguages);
+			
+			pstmtLanguages.setInt(1, sId);
+			ResultSet rs = pstmtLanguages.executeQuery();
+			while(rs.next()) {
+				languages.add(rs.getString(1));
+			}
+		} catch(Exception e) {
+			throw e;
+		} finally {
+			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
+		}
+		return languages;
 	}
 	
 }

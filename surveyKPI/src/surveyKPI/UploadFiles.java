@@ -41,6 +41,8 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
@@ -306,7 +308,7 @@ public class UploadFiles extends Application {
 			String csvFileName, 
 			File csvFile,
 			String basePath,
-			MediaInfo mediaInfo) {
+			MediaInfo mediaInfo) throws Exception {
 		/*
 		 * Find surveys that use this CSV file
 		 */
@@ -494,51 +496,125 @@ public class UploadFiles extends Application {
 		}
 	}
 	
+	private class ValueLabelCols {
+		public int value;
+		public int label;
+	}
+	
 	private void applyCSVChangesToSurvey(Connection connectionSD, 
 			String user, 
 			int sId, 
 			String csvFileName,
-			File csvFile) {
+			File csvFile) throws Exception {
+		
 		System.out.println("About to update: " + sId);
 		QuestionManager qm = new QuestionManager();
+		SurveyManager sm = new SurveyManager();
 		ArrayList<org.smap.sdal.model.Question> questions = qm.getByCSV(connectionSD, sId, csvFileName);
+		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
 		
+		// Create one change set per question
 		for(org.smap.sdal.model.Question q : questions) {
 			
 			System.out.println("Updating question: " + q.name + " : " + q.type);
 			
 			/*
+			 * Create a changeset
+			 */
+			ChangeSet cs = new ChangeSet();
+			cs.type = "option_update";
+			cs.items = new ArrayList<ChangeItem> ();
+			changes.add(cs);
+			
+			/*
 			 * Get the list of options from the file that match the selection criteria in the appearance column
 			 */
 			try {
-			       FileReader reader = new FileReader(csvFile);
-			       BufferedReader br = new BufferedReader(reader);
-			       CSVParser parser = new CSVParser();
-			       
-			       // Get Header
-			       String line = br.readLine();
-			       String cols [] = parser.parseLine(line);
-			       System.out.println("Header: " + line);
-			       
-			       Filter filter = new Filter(cols, q.appearance);
-			       
-			       while(line != null) {
-			    	   line = br.readLine();
-			    	   if(line != null) {
-				    	   System.out.println("## " + line);
-				    	   if(filter.isIncluded(parser.parseLine(line))) {
-				    		   System.out.println("        Include ");
-				    	   } else {
-				    		   System.out.println("        Do not Include ");
-				    	   }
+				FileReader reader = new FileReader(csvFile);
+		       BufferedReader br = new BufferedReader(reader);
+		       CSVParser parser = new CSVParser();
+		       
+		       // Get Header
+		       String line = br.readLine();
+		       String cols [] = parser.parseLine(line);
+		       System.out.println("Header: " + line);
+		       
+		       Filter filter = new Filter(cols, q.appearance);								// Get a filter
+		       ValueLabelCols vlc = getValueLabelCols(connectionSD, q.id, q.name, cols);	// Identify the columns in the CSV file that have the value and label
+
+		       while(line != null) {
+		    	   line = br.readLine();
+		    	   if(line != null) {
+			    	   String [] optionCols = parser.parseLine(line);
+			    	   if(filter.isIncluded(optionCols)) {
+			    		   System.out.println("        ## Include " + line);
+			    		   
+			    		   ChangeItem c = new ChangeItem();
+			    		   c.qId = q.id;
+			    		   c.qType = q.type;
+			    		   c.newVal = optionCols[vlc.label];
+			    		   c.key = optionCols[vlc.value];
+			    		  
+			    		   cs.items.add(c);
+			    		   
+			    	   } else {
+			    		   System.out.println("        ## Ignore " + line);
 			    	   }
-			       }
+		    	   }
+		       }
+		       
+			       // TODO delete all file options that were not in the latest file (file version number)
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			      
 			
 		}
+		 
+		// Apply the changes 
+		sm.applyChangeSetArray(connectionSD, sId, user, changes);
+		      
+	}
+	
+	private ValueLabelCols getValueLabelCols(Connection connectionSD, int qId, String qDisplayName, String [] cols) throws Exception {
+		
+		ValueLabelCols vlc = new ValueLabelCols();
+		
+		/*
+		 * Ignore language in the query, these values are codes and are (currently) independent of language
+		 */
+		PreparedStatement pstmt = null;
+		String sql = "SELECT o.ovalue, t.value " +
+				"from option o, translation t " +  		
+				"where o.label_id = t.text_id " +
+				"and o.q_id = ? " +
+				"and externalfile ='false';";	
+		
+		try {
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1,  qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String valueName = rs.getString(1);
+				String labelName = rs.getString(2);
+				System.out.println("Value column: " + valueName + " : " + labelName);
+				
+				for(int i = 0; i < cols.length; i++) {
+					if(cols[i].equals(valueName)) {
+						vlc.value = i;
+					} else if(cols[i].equals(labelName)) {
+						vlc.label = i;
+					}
+				}
+			} else {
+				throw new Exception("The names of the columns to use in this csv file "
+						+ "have not been set in question " + qDisplayName);
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if (pstmt != null) try {pstmt.close();;} catch(Exception e) {};
+		}
+		return vlc;
 	}
 
 }

@@ -82,7 +82,7 @@ public class QuestionManager {
 		String sqlOption = "select o_id, seq, label_id, ovalue " +
 				" from option " +
 				" where q_id = ? " +
-				" and externalfile = ?;";
+				" and externalfile = 'true';";
 		
 		String sqlLanguages = "select distinct t.language from translation t " +
 				"where s_id = ? order by t.language asc";
@@ -90,7 +90,6 @@ public class QuestionManager {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtOption = null;
 		PreparedStatement pstmtLanguages = null;
-		PreparedStatement pstmtLabels = null;
 		
 		try {
 			pstmtOption = sd.prepareStatement(sqlOption);
@@ -118,7 +117,6 @@ public class QuestionManager {
 				
 			
 				pstmtOption.setInt(1, q.id);
-				pstmtOption.setString(2, "csvFileName");
 				ResultSet rsOptions = pstmtOption.executeQuery();
 				while (rsOptions.next()) {
 					Option o = new Option();
@@ -126,7 +124,7 @@ public class QuestionManager {
 					o.seq = rsOptions.getInt("seq");
 					o.text_id = rsOptions.getString("label_id");
 					
-					UtilityMethods.getLabels(pstmtLabels, survey, o.text_id, null, o.labels);
+					UtilityMethods.getLabels( sd, survey, o.text_id, null, o.labels);
 				}
 				
 				questions.add(q);
@@ -137,7 +135,6 @@ public class QuestionManager {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 			if(pstmtOption != null) try{pstmtOption.close();}catch(Exception e){}
 			if(pstmtLanguages != null) try{pstmtLanguages.close();}catch(Exception e){}
-			if(pstmtLabels != null) try{pstmtLabels.close();}catch(Exception e){}
 		}
 		
 		return questions;
