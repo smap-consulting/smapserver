@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.UtilityMethods;
@@ -130,6 +131,7 @@ public class TranslationManager {
 			
 			
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}
@@ -187,6 +189,7 @@ public class TranslationManager {
 				}
 			}
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}

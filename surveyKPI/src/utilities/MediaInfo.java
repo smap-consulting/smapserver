@@ -90,11 +90,10 @@ public class MediaInfo {
 		PreparedStatement pstmt = null;
 		
 		try {
-			pstmt = conn.prepareStatement(sql);
-			
-			System.out.println("sql: " + sql + " : " + user);
-			
+			pstmt = conn.prepareStatement(sql);	
 			pstmt.setString(1, user);
+			log.info("SQL: " + pstmt.toString() );
+			
 			ResultSet resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				
@@ -128,7 +127,6 @@ public class MediaInfo {
 			if(a > 0 && b > a) {
 				server = url.substring(0, b) + "/";
 			}
-			System.out.println("+++ " + a + " " + b + " " + server + " : " + url);
 		}
 	}
 	
@@ -165,7 +163,7 @@ public class MediaInfo {
 				media.add(mi);
 			}
 		} else {
-			System.out.println("Error: Get media: folder is null" );
+			log.info("Error: Get media: folder is null" );
 		}
 		return media;
 	}
@@ -187,10 +185,9 @@ public class MediaInfo {
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
-			
-			System.out.println("sql: " + sql + " : " + sId);
-			
 			pstmt.setInt(1, sId);
+			log.info("SQL: " + pstmt.toString());
+			
 			ResultSet resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				
@@ -199,7 +196,7 @@ public class MediaInfo {
 				
 				
 			} else {
-				System.out.println("Error: Form identifier not found for form id: " + sId);
+				log.info("Error: Form identifier not found for form id: " + sId);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

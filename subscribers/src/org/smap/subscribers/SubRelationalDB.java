@@ -135,6 +135,7 @@ public class SubRelationalDB extends Subscriber {
 		DocumentBuilder db = null;
 		Document xmlConf = null;		
 		Connection connection = null;
+		Survey survey = null;
 		try {
 				
 			// Get the connection details for the database with survey definitions
@@ -165,7 +166,7 @@ public class SubRelationalDB extends Subscriber {
 			connection = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);
 			Authorise a = new Authorise(null, Authorise.ENUM);
 			SurveyManager sm = new SurveyManager();
-			Survey survey = sm.getSurveyId(connection, templateName);	// Get the survey id from the templateName / key
+			survey = sm.getSurveyId(connection, templateName);	// Get the survey from the templateName / ident
 			boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
 			try {
 				if (connection != null) {
@@ -177,7 +178,7 @@ public class SubRelationalDB extends Subscriber {
 			}
 			if(!isAuthorised) {
 				throw new Exception("The user " + remoteUser + 
-						" was not allowed to submit this survey(" + sId + ")");
+						" was not allowed to submit this survey(" + templateName + ")");
 			}	
 			
 		} catch (Exception e) {
@@ -189,7 +190,7 @@ public class SubRelationalDB extends Subscriber {
 
 		try {
 			
-			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId);
+			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id);
 			applyNotifications(ue_id, remoteUser, server);
 			se.setStatus("success");			
 			
@@ -253,7 +254,8 @@ public class SubRelationalDB extends Subscriber {
 	 * Write the submission to the database
 	 */
 	private void writeAllTableContent(SurveyInstance instance, String remoteUser, 
-			String server, String device, String formStatus, String updateId) throws SQLInsertException {
+			String server, String device, String formStatus, String updateId,
+			int sId) throws SQLInsertException {
 			
 		String response = null;
 		Connection cResults = null;
@@ -266,7 +268,7 @@ public class SubRelationalDB extends Subscriber {
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
 			statement = cResults.createStatement();
 			
-			applyTableChanges(cMeta);			// Apply any updates that have been made to the table structure since the last submission
+			applyTableChanges(cMeta, sId);			// Apply any updates that have been made to the table structure since the last submission
 			
 			cResults.setAutoCommit(false);
 			IE topElement = instance.getTopElement();
@@ -1078,7 +1080,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Apply any table changes for this version
 	 */
-	private void applyTableChanges(Connection connectionSD) throws SQLException {
+	private void applyTableChanges(Connection connectionSD, int sId) throws SQLException {
 		
 		String sqlGet = "select c_id, changes "
 				+ "from survey_change "
@@ -1088,16 +1090,20 @@ public class SubRelationalDB extends Subscriber {
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
+		System.out.println("######## Apply table changes");
 		try {
 			pstmtGet = connectionSD.prepareStatement(sqlGet);
 			pstmtGet.setInt(1, sId);
+			System.out.println("SQL: " + pstmtGet.toString());
+			
 			ResultSet rs = pstmtGet.executeQuery();
 			while(rs.next()) {
 				int c_id = rs.getInt(1);
 				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
-				System.out.println("########Updating: " + ci.name + "__" + ci.key);
+				System.out.println("######## Updating: " + ci.name + "__" + ci.key);
 			}
 		} catch (SQLException e) {
+			e.printStackTrace();
 			throw e;
 		} finally {
 			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}

@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.UtilityMethods;
@@ -554,7 +555,7 @@ public class SurveyManager {
 			
 			String sqlChangeLog = "insert into survey_change " +
 					"(s_id, version, changes, user_id, apply_results, updated_time) " +
-					"values(?, ?, ?, ?, ?)";
+					"values(?, ?, ?, ?, ?, ?)";
 			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
 			
 			/*
@@ -637,6 +638,7 @@ public class SurveyManager {
 			}
 			
 		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmtChangeLog != null) {pstmtChangeLog.close();}} catch (SQLException e) {}
@@ -715,6 +717,7 @@ public class SurveyManager {
 				pstmtChangeLog.execute();
 			}
 		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}
@@ -820,9 +823,6 @@ public class SurveyManager {
 						count += pstmtLangInsert.executeUpdate();
 					}	
 					
-					
-					// TODO write instructions for subscriber to update results table 
-					
 				}			
 				
 				// Write the change log
@@ -851,6 +851,7 @@ public class SurveyManager {
 			}
 			
 		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmtLangInsert != null) {pstmtLangInsert.close();}} catch (SQLException e) {}

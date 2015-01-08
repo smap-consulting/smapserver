@@ -140,7 +140,7 @@ public class QuestionInfo {
 					pstmt.setInt(3, sId);
 					pstmt.setBoolean(4,  qExternalChoices);
 					
-					System.out.println("Getting options for question: " + pstmt.toString());
+					log.info("Getting options for question: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					
 					boolean select = false;
@@ -165,6 +165,7 @@ public class QuestionInfo {
 				log.info("Error (QuetionInfo.java) retrieving question data for survey: " + surveyId + " and question: " + questionId);
 			}	
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
@@ -229,10 +230,9 @@ public class QuestionInfo {
 						" AND o.q_id = q.q_id" +
 						" ORDER BY o.seq";
 				
-				System.out.println("Getting options for question " + questionId + ":" + sql);
-				log.info(sql);
 				pstmt = connection.prepareStatement(sql);
 				pstmt.setInt(1,  qId);
+				log.info("Getting options for question " + pstmt.toString());
 				
 				resultSet = pstmt.executeQuery();
 				
@@ -321,12 +321,11 @@ public class QuestionInfo {
 						" AND o.q_id = q.q_id" +
 						" ORDER BY o.seq";
 				
-				System.out.println("Getting options for question " + questionId + ":" + sql);
-				log.info(sql);
 				pstmt = connection.prepareStatement(sql);
 				pstmt.setInt(1,  qId);
 				pstmt.setString(2, lang);
 				pstmt.setInt(3, sId);
+				log.info("SQL: " + pstmt.toString());
 				
 				resultSet = pstmt.executeQuery();
 				
@@ -485,13 +484,13 @@ public class QuestionInfo {
 			}
 		}
 		
-		System.out.println("Filter: " + filter);
+		log.info("Filter: " + filter);
 		return filter;
 	}
 	
 	public String getSelect() {
 		String sqlFrag = "";
-		System.out.println("get select: " + tableName + ":" + qName + ":" + qType + " : " + qType);
+		log.info("get select: " + tableName + ":" + qName + ":" + qType + " : " + qType);
 		if(qType != null && qType.equals("select")) {
 			// Add primary key with each question, assume only one question per query
 			sqlFrag = tableName + ".prikey as prikey";

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.mail.Message;
@@ -215,6 +216,7 @@ public class UtilityMethods {
 				}
 			}
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
@@ -278,6 +280,7 @@ public class UtilityMethods {
 				}
 			}
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (Exception e) {}
@@ -310,6 +313,7 @@ public class UtilityMethods {
 			}
 			
 		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
@@ -363,6 +367,7 @@ public class UtilityMethods {
 				}
 			}
 		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
@@ -709,6 +714,7 @@ public class UtilityMethods {
 				labels.add(l);		
 			}
 		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
@@ -733,6 +739,7 @@ public class UtilityMethods {
 				languages.add(rs.getString(1));
 			}
 		} catch(Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}

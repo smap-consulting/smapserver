@@ -161,13 +161,15 @@ public class Authorise {
 				" and s.s_id = ? " +
 				" and u.ident = ? " +
 				" and s.deleted = ?;"; 
-		log.info("isValidSurvey" + sql + " : " + sId + " : " + user + " : " + isDeleted);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setString(2, user);
 			pstmt.setBoolean(3, isDeleted);
+			
+			log.info("IsValidSurvey: " + pstmt.toString());
+			
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			

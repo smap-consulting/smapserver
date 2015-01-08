@@ -611,6 +611,7 @@ public class UploadFiles extends Application {
 						+ "have not been set in question " + qDisplayName);
 			}
 		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
