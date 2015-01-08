@@ -54,7 +54,7 @@ public class OptionList extends Application {
 	
 	@GET
 	@Produces("application/json")
-	public String getCountQuestions(@Context HttpServletRequest request,
+	public String getOptions(@Context HttpServletRequest request,
 			@PathParam("sId") int sId, 
 			@PathParam("language") String language,
 			@PathParam("qId") int qId) { 

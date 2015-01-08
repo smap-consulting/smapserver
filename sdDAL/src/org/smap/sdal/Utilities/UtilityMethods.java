@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import javax.mail.Message;
 import javax.mail.Message.RecipientType;
@@ -22,13 +23,15 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.servlet.http.HttpServletRequest;
 
 import org.smap.sdal.model.Label;
-import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Survey;
 
+
 public class UtilityMethods {
+	
+	private static Logger log =
+			 Logger.getLogger(UtilityMethods.class.getName());
 	
 	private static String [] reservedSQL = new String [] {
 		"all",
@@ -168,62 +171,58 @@ public class UtilityMethods {
 		// TODO add optimistic locking		
 		String sql = "update " + tName + " set _bad = ?, _bad_reason = ? " + 
 				" where prikey = ?;";
-			
-		System.out.println(sql + " : " + value + " : " + reason + " : " + key);
-		PreparedStatement pstmt = cRel.prepareStatement(sql);
-		pstmt.setBoolean(1, value);
-		pstmt.setString(2, reason);
-		pstmt.setInt(3, key);
-		int count = pstmt.executeUpdate();
 		
-		if(count != 1) {
-			throw new Exception("Upate count not equal to 1");
-		}
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt2 = null;
 		
-		// Get the child tables
-		sql = "SELECT DISTINCT f.table_name, f_id FROM form f " +
-				" where f.s_id = ? " + 
-				" and f.parentform = ?;";
-		System.out.println(sql + " : " + sId + " : " + fId);
-		pstmt = cSD.prepareStatement(sql);
-		pstmt.setInt(1, sId);
-		pstmt.setInt(2, fId);
-		
-		ResultSet tableSet = pstmt.executeQuery();
-		while(tableSet.next()) {
-			String childTable = tableSet.getString(1);
-			int childFormId = tableSet.getInt(2);
+		try {
 			
-			// Get the child records to be updated
-			sql = "select prikey from " + childTable + 
-					" where parkey = ?;";
-			PreparedStatement pstmt2 = cRel.prepareStatement(sql);	
-			pstmt2.setInt(1, key);
-			System.out.println(sql + " : " + key);
+			pstmt = cRel.prepareStatement(sql);
+			pstmt.setBoolean(1, value);
+			pstmt.setString(2, reason);
+			pstmt.setInt(3, key);
+			int count = pstmt.executeUpdate();
 			
-			ResultSet childRecs = pstmt2.executeQuery();
-			while(childRecs.next()) {
-				int childKey = childRecs.getInt(1);
-				markRecord(cRel, cSD, childTable, value, reason, childKey, sId, childFormId);
+			if(count != 1) {
+				throw new Exception("Upate count not equal to 1");
 			}
+			
+			// Get the child tables
+			sql = "SELECT DISTINCT f.table_name, f_id FROM form f " +
+					" where f.s_id = ? " + 
+					" and f.parentform = ?;";
+			log.info(sql + " : " + sId + " : " + fId);
+			pstmt = cSD.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, fId);
+			
+			ResultSet tableSet = pstmt.executeQuery();
+			while(tableSet.next()) {
+				String childTable = tableSet.getString(1);
+				int childFormId = tableSet.getInt(2);
+				
+				// Get the child records to be updated
+				sql = "select prikey from " + childTable + 
+						" where parkey = ?;";
+				pstmt2 = cRel.prepareStatement(sql);	
+				pstmt2.setInt(1, key);
+				log.info(pstmt2.toString());
+				
+				ResultSet childRecs = pstmt2.executeQuery();
+				while(childRecs.next()) {
+					int childKey = childRecs.getInt(1);
+					markRecord(cRel, cSD, childTable, value, reason, childKey, sId, childFormId);
+				}
+			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
+			if (pstmt2 != null) try {pstmt2.close();} catch(Exception e) {};
 		}
 		
 		
 	}
-	
-	// Check to see if email is enabled on this server
-	/*
-	static public boolean hasEmail(HttpServletRequest request) throws Exception {
-		System.out.println("checking");
-		boolean email = false;
-		String has_email = request.getServletContext().getInitParameter("au.com.smap.smtp_on");
-		System.out.println("checking2");
-		if(has_email != null && has_email.equals("true")) {
-			email = true;
-		}
-		return email;
-	}
-	*/
 	
 	/*
 	 * Get applicable user idents from an email
@@ -240,9 +239,9 @@ public class UtilityMethods {
 		 */
 		String sql = "select ident from users where email = ?";
 
-		System.out.println(sql + " : "  + email);
 		pstmt = connectionSD.prepareStatement(sql);	
 		pstmt.setString(1, email);
+		log.info(pstmt.toString());
 		ResultSet rs = pstmt.executeQuery();
 		while (rs.next()) {
 			idents.add(rs.getString(1));
@@ -364,7 +363,7 @@ public class UtilityMethods {
 				" one_time_password_expiry = timestamp 'now' + interval '" + interval + "' " +		
 				" where email = ?";
 
-		System.out.println(sql + " : " + uuid + " : "  + email);
+		log.info(sql + " : " + uuid + " : "  + email);
 		pstmt = connectionSD.prepareStatement(sql);	
 		pstmt.setString(1, uuid);
 		pstmt.setString(2, email);
@@ -477,10 +476,10 @@ public class UtilityMethods {
 			msg.setFrom(new InternetAddress(from));
 		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
-		    System.out.println("Sending email from: " + from);
+		    log.info("Sending email from: " + from);
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-			System.out.println("Messaging Exception");
+			log.info("Messaging Exception");
 			throw new Exception(me.getMessage());
 		}
 	}
@@ -565,7 +564,7 @@ public class UtilityMethods {
           	ct = "application/vnd.ms-excel";
           }  else {
           	ct = "application/octet-stream";
-          	System.out.println("	Info: unrecognised content type for extension " + extension);           
+          	log.info("	Info: unrecognised content type for extension " + extension);           
           }
 		
 		return ct;
@@ -594,7 +593,7 @@ public class UtilityMethods {
 			cmd = "/bin/cp " + imagesPath + "csv.png " + destRoot + "png";
 		}
 		
-		System.out.println("Exec: " + cmd);
+		log.info("Exec: " + cmd);
 		
 		if(cmd != null) {
 			try {
@@ -602,15 +601,15 @@ public class UtilityMethods {
 				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", cmd});
 	    		
 	    		int code = proc.waitFor();
-	    		System.out.println("Attachment processing finished with status:" + code);
+	    		log.info("Attachment processing finished with status:" + code);
 	    		if(code != 0) {
-	    			System.out.println("Error: Attachment processing failed");
+	    			log.info("Error: Attachment processing failed");
 	    			InputStream stderr = proc.getErrorStream();
 	    	        InputStreamReader isr = new InputStreamReader(stderr);
 	    	        BufferedReader br = new BufferedReader(isr);
 	    	        String line = null;
 	    	        while ( (line = br.readLine()) != null) {
-	    	        	System.out.println("** " + line);
+	    	        	log.info("** " + line);
 	    	        }
 	    		}
 	    		
@@ -677,7 +676,7 @@ public class UtilityMethods {
 						if(t.equals("none")) {
 							l.hint = v;
 						} else {
-							System.out.println("Error: Invalid type for hint: " + t);
+							log.info("Error: Invalid type for hint: " + t);
 						}
 					}
 				}
@@ -714,6 +713,17 @@ public class UtilityMethods {
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
 		return languages;
+	}
+	
+	/*
+	 * Return true if this questions appearance means that choices come from an external file
+	 */
+	public static boolean isAppearanceExternalFile(String appearance) {
+		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 }

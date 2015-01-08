@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("/upload")
@@ -118,19 +119,19 @@ public class UploadFiles extends Application {
 				// Get form parameters
 				
 				if(item.isFormField()) {
-					System.out.println("Form field:" + item.getFieldName() + " - " + item.getString());
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 				
 					if(item.getFieldName().equals("original_url")) {
 						original_url = item.getString();
-						System.out.println("original url:" + original_url);
+						log.info("original url:" + original_url);
 					} else if(item.getFieldName().equals("survey_id")) {
 						sId = Integer.parseInt(item.getString());
-						System.out.println("surveyId:" + sId);
+						log.info("surveyId:" + sId);
 					}
 					
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
-					System.out.println("Field Name = "+item.getFieldName()+
+					log.info("Field Name = "+item.getFieldName()+
 						", File Name = "+item.getName()+
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
@@ -181,7 +182,7 @@ public class UploadFiles extends Application {
 					    mResponse.files = mediaInfo.get();			
 						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 						String resp = gson.toJson(mResponse);
-						System.out.println("Responding with " + mResponse.files.size() + " files");
+						log.info("Responding with " + mResponse.files.size() + " files");
 						response = Response.ok(resp).build();	
 					} else {
 						response = Response.serverError().entity("Media folder not found").build();
@@ -194,12 +195,10 @@ public class UploadFiles extends Application {
 			}
 			
 		} catch(FileUploadException ex) {
-			System.out.println(ex.getMessage());
-			ex.printStackTrace();
+			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
-			System.out.println(ex.getMessage());
-			ex.printStackTrace();
+			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
@@ -208,8 +207,7 @@ public class UploadFiles extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
-				//log("Failed to close connection",e);
+				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 		}
 		
@@ -271,7 +269,7 @@ public class UploadFiles extends Application {
 				mediaInfo.setFolder(basePath, user, connectionSD);				 
 			}
 			
-			System.out.println("Media query on: " + mediaInfo.getPath());
+			log.info("Media query on: " + mediaInfo.getPath());
 				
 			MediaResponse mResponse = new MediaResponse();
 			mResponse.files = mediaInfo.get();			
@@ -280,8 +278,7 @@ public class UploadFiles extends Application {
 			response = Response.ok(resp).build();		
 			
 		}  catch(Exception ex) {
-			System.out.println(ex.getMessage());
-			ex.printStackTrace();
+			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().build();
 		} finally {
 	
@@ -318,13 +315,13 @@ public class UploadFiles extends Application {
 			
 		} else {		// Organisational level
 			
-			System.out.println("Organisational Level");
+			log.info("Organisational Level");
 			// Get all the surveys that reference this CSV file and are in the same organisation
 			SurveyManager sm = new SurveyManager();
 			ArrayList<Survey> surveys = sm.getByOrganisationAndExternalCSV(connectionSD, user,	csvFileName);
 			for(Survey s : surveys) {
 				
-				System.out.println("Survey: " + s.id);
+				log.info("Survey: " + s.id);
 				// Check that there is not already a survey level file with the same name				
 				String surveyUrl = mediaInfo.getUrlForSurveyId(sId, connectionSD);
 				if(surveyUrl != null) {
@@ -359,12 +356,12 @@ public class UploadFiles extends Application {
 			int idx2 = appearance.indexOf(')');
 			if(idx1 > 0 && idx2 > idx1) {
 				String criteriaString = appearance.substring(idx1 + 1, idx2);
-				System.out.println("#### criteria for csv filter: " + criteriaString);
+				log.info("#### criteria for csv filter: " + criteriaString);
 				
 				String criteria [] = criteriaString.split(",");
 				if(criteria.length < 4) {
 					
-					System.out.println("Info: Criteria elements less than 4, incude all rows");
+					log.info("Info: Criteria elements less than 4, incude all rows");
 					includeAll = true;
 					
 				} else {
@@ -380,7 +377,7 @@ public class UploadFiles extends Application {
 							// remove quotes
 							criteria[i] = criteria[i].trim();
 							criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
-							System.out.println("@@@@ criterion " + i + " " + criteria[i]);
+							log.info("@@@@ criterion " + i + " " + criteria[i]);
 							
 							if(criteria[i].equals("contains")) {
 								r1.function = 1;	
@@ -391,7 +388,7 @@ public class UploadFiles extends Application {
 							} else if(criteria[i].equals("matches")) {
 								r1.function = 4;	
 							} else {
-								System.out.println("Error: unknown function, " + criteria[i] +
+								log.info("Error: unknown function, " + criteria[i] +
 										", include all rows");
 								includeAll = true;
 								return;
@@ -404,17 +401,17 @@ public class UploadFiles extends Application {
 							// remove quotes
 							criteria[i] = criteria[i].trim();
 							criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
-							System.out.println("@@@@ criterion " + i + " " + criteria[i]);
+							log.info("@@@@ criterion " + i + " " + criteria[i]);
 							
 							for(int j = 0; j < cols.length; j++) {
-								System.out.println("***: " + criteria[i] + " : " + cols[j]);
+								log.info("***: " + criteria[i] + " : " + cols[j]);
 								if (criteria[i].equals(cols[j])) {
 									r1.column = j;
 									break;
 								}	
 							}
 							if(r1.column == -1) {
-								System.out.println("Error: no matching column, include all rows");
+								log.info("Error: no matching column, include all rows");
 								includeAll = true;
 								return;
 							}
@@ -427,12 +424,12 @@ public class UploadFiles extends Application {
 							criteria[i] = criteria[i].trim();
 							if(criteria[i].charAt(0) == '\'') {
 								criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
-								System.out.println("@@@@ value criterion " + i + " " + criteria[i]);
+								log.info("@@@@ value criterion " + i + " " + criteria[i]);
 								
 								r1.value =  criteria[i];
 								
 							} else {
-								System.out.println("Info dynamic filter value are not supported: " + 
+								log.info("Info dynamic filter value are not supported: " + 
 											criteria[i] + ", include all rows ");
 								includeAll = true;
 								return;
@@ -449,7 +446,7 @@ public class UploadFiles extends Application {
 					
 				}
 			} else {
-				System.out.println("Error: Unknown appearance: " + appearance + ", include all rows");
+				log.info("Error: Unknown appearance: " + appearance + ", include all rows");
 				includeAll = true;
 			}
 			
@@ -507,7 +504,7 @@ public class UploadFiles extends Application {
 			String csvFileName,
 			File csvFile) throws Exception {
 		
-		System.out.println("About to update: " + sId);
+		log.info("About to update: " + sId);
 		QuestionManager qm = new QuestionManager();
 		SurveyManager sm = new SurveyManager();
 		ArrayList<org.smap.sdal.model.Question> questions = qm.getByCSV(connectionSD, sId, csvFileName);
@@ -516,7 +513,7 @@ public class UploadFiles extends Application {
 		// Create one change set per question
 		for(org.smap.sdal.model.Question q : questions) {
 			
-			System.out.println("Updating question: " + q.name + " : " + q.type);
+			log.info("Updating question: " + q.name + " : " + q.type);
 			
 			/*
 			 * Create a changeset
@@ -616,7 +613,7 @@ public class UploadFiles extends Application {
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			if (pstmt != null) try {pstmt.close();;} catch(Exception e) {};
+			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
 		}
 		return vlc;
 	}
