@@ -617,7 +617,7 @@ public class InstanceXML extends Application{
 	    				
 	    			System.out.println("Select: " + qName + " : " + qType);
 					String sqlSelect = "select ";
-					List<Option> options = new ArrayList<Option>(q.getChoices());
+					List<Option> options = new ArrayList<Option>(q.getValidChoices());
 					UtilityMethods.sortOptions(options);	// Order within an XForm is not actually required, this is just for consistency of reading
 
 					boolean hasColumns = false;

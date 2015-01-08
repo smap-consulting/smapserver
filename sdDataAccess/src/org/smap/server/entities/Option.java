@@ -64,7 +64,10 @@ public class Option implements Serializable{
 	private String cascade_filters = null;
 	
 	@Column(name="seq")
-	private int seq;			// Order in which options should be displayed
+	private int seq;						// Order in which options should be displayed
+	
+	@Column(name="externalfile")
+	private boolean externalFile;			// Set true if this choice was created by loading an external file
 	
 	@Transient
 	private String questionRef = null;	// Reference of the parent question
@@ -84,6 +87,7 @@ public class Option implements Serializable{
 		this.label_id = anOption.getLabelId();
 		this.value = anOption.getValue();
 		this.seq = anOption.getSeq();
+		this.externalFile = anOption.getExternalFile();
 		this.questionRef = anOption.getQuestionRef();
 		this.cascadeInstanceId = anOption.getCascadeInstanceId();
 		this.cascadeKeyValues = new HashMap<String, String> (anOption.getCascadeKeyValues());
@@ -114,6 +118,10 @@ public class Option implements Serializable{
 
 	public int getSeq() {
 		return seq;
+	}
+	
+	public boolean getExternalFile() {
+		return externalFile;
 	}
 	
 	public String getQuestionRef() {

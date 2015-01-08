@@ -271,7 +271,6 @@ public class NotificationManager {
 	 * Apply any notification for the passed in submission
 	 */
 	public void notifyForSubmission(Connection sd, 
-			PreparedStatement pstmt,
 			PreparedStatement pstmtGetUploadEvent, 
 			PreparedStatement pstmtGetNotifications, 
 			PreparedStatement pstmtUpdateUploadEvent, 
@@ -322,8 +321,8 @@ public class NotificationManager {
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Get the admin email
-		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmt, remoteUser);
-		int o_id = UtilityMethods.getOrganisationId(sd, pstmt, remoteUser);
+		String adminEmail = UtilityMethods.getAdminEmail(sd, remoteUser);
+		int o_id = UtilityMethods.getOrganisationId(sd, remoteUser);
 		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
 		
 		
@@ -358,7 +357,7 @@ public class NotificationManager {
 				String notify_details = null;			// Notification log
 				String error_details = null;			// Notification log
 				if(target.equals("email")) {
-					String smtp_host = UtilityMethods.getSmtpHost(sd, pstmt, remoteUser);
+					String smtp_host = UtilityMethods.getSmtpHost(sd, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						String emails = "";
 						for(String email : nd.emails) {

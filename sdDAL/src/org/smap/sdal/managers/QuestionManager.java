@@ -49,7 +49,8 @@ public class QuestionManager {
 			 Logger.getLogger(QuestionManager.class.getName());
 
 	/*
-	 * These functions are used when adding CSV files to store options
+	 * These functions are used when adding CSV files. 
+	 * They will add the choices from the CSV files to the survey definition
 	 */
 	public ArrayList<Question> getByCSV(Connection sd, 
 			int sId,

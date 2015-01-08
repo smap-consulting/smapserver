@@ -1,5 +1,6 @@
 package org.smap.model;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -8,12 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 import java.util.Vector;
 
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Group;
-import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Project;
@@ -29,7 +28,9 @@ import org.smap.server.managers.QuestionManager;
 import org.smap.server.managers.SurveyManager;
 import org.smap.server.managers.TranslationManager;
 import org.smap.server.utilities.UtilityMethods;
-import org.w3c.dom.Element;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 public class SurveyTemplate {
 	//private Connection connection;
@@ -1239,6 +1240,51 @@ public class SurveyTemplate {
 		}
 
 		return loaded;
+	}
+	
+	/*
+	 * Add a survey level manifest such as a csv file from an appearance attribute
+	 */
+	public void addManifestFromAppearance(String appearance) {
+		
+		// Check to see if this appearance references a manifest file
+		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+			// Yes it references a manifest
+			
+			int idx1 = appearance.indexOf('(');
+			int idx2 = appearance.indexOf(')');
+			if(idx1 > 0 && idx2 > idx1) {
+				String criteriaString = appearance.substring(idx1 + 1, idx2);
+				
+				String criteria [] = criteriaString.split(",");
+				if(criteria.length > 0) {
+					
+					if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+						String file = criteria[0].trim();
+						file = file.substring(1, file.length() -1);
+						file += ".csv";
+						System.out.println("We have found a manifest link to " + file); // DEBUG
+						
+						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+						
+						String manifestString = survey.getManifest();
+						ArrayList<String> mArray = null;
+						if(manifestString == null) {
+							mArray = new ArrayList<String>();
+						} else {
+							Type type = new TypeToken<ArrayList<String>>(){}.getType();
+							mArray = gson.fromJson(manifestString, type);	
+						}
+						if(!mArray.contains(file)) {
+							mArray.add(file);
+						}
+	
+						survey.setManifest(gson.toJson(mArray));
+					}
+				}
+			}
+		} 
+			
 	}
 	
 	/*

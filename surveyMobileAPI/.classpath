@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-codec-1.7.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDAL"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDataAccess"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javax.mail.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

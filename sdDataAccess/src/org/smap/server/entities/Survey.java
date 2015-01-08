@@ -69,6 +69,9 @@ public class Survey implements Serializable {
 	@Column(name="version")
 	private int version;
 	
+	@Column(name="manifest")
+	private String manifest;
+	
 	@Column(name="class")
 	private String surveyClass;
 	
@@ -117,6 +120,10 @@ public class Survey implements Serializable {
 		return version;
 	}
 	
+	public String getManifest() {
+		return manifest;
+	}
+	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
 		return esc(display_name);
@@ -152,6 +159,10 @@ public class Survey implements Serializable {
 	
 	public void setVersion(int v) {
 		version = v;
+	}
+	
+	public void setManifest(String v) {
+		manifest = v;
 	}
 	
 	/*

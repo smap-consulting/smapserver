@@ -230,8 +230,8 @@ public class SurveyManager {
 		String sql5 = "select o.o_id, o.ovalue as value, o.label_id  from option o where q_id = ? order by seq";
 		String sql6 = "SELECT ssc.id, ssc.name, ssc.function, ssc.parameters, ssc.units, f.name, f.f_id " +
 				"FROM ssc ssc, form f WHERE ssc.s_id = ? AND ssc.f_id = f.f_id ORDER BY id";
-		String sql7 = "SELECT t.value, t.text_id, t.type FROM translation t where t.s_id = ?" +
-				" and t.type = 'csv' ";	
+		//String sql7 = "SELECT t.value, t.text_id, t.type FROM translation t where t.s_id = ?" +
+		//		" and t.type = 'csv' ";	
 		String sql8 = "SELECT c.changes, c.c_id, c.version, u.name, c.updated_time " +
 				"from survey_change c, users u " +
 				"where c.s_id = ? " +
@@ -243,7 +243,7 @@ public class SurveyManager {
 		PreparedStatement pstmt3 = sd.prepareStatement(sql3);
 		PreparedStatement pstmt5 = sd.prepareStatement(sql5);
 		PreparedStatement pstmt6 = sd.prepareStatement(sql6);
-		PreparedStatement pstmt7 = sd.prepareStatement(sql7);
+		//PreparedStatement pstmt7 = sd.prepareStatement(sql7);
 		PreparedStatement pstmt8 = sd.prepareStatement(sql8);
 		
 		// Add Languages	
@@ -341,6 +341,8 @@ public class SurveyManager {
 		}
 		
 		// Add the survey manifests
+		/*
+		 * No longer needed survey level manifests are now in the survey table
 		pstmt7.setInt(1, s.getId());	
 		resultSet7 = pstmt7.executeQuery();
 		
@@ -352,6 +354,7 @@ public class SurveyManager {
 
 			s.surveyManifest.add(mv);
 		}
+		*/
 		
 		// Add the change log
 		pstmt8.setInt(1, s.getId());
@@ -376,15 +379,17 @@ public class SurveyManager {
 		try { if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
 		try { if (pstmt5 != null) {pstmt5.close();}} catch (SQLException e) {}
 		try { if (pstmt6 != null) {pstmt6.close();}} catch (SQLException e) {}
-		try { if (pstmt7 != null) {pstmt7.close();}} catch (SQLException e) {}
+		//try { if (pstmt7 != null) {pstmt7.close();}} catch (SQLException e) {}
 		try { if (pstmt8 != null) {pstmt8.close();}} catch (SQLException e) {}
 	}
 	
 
 	
 	/*
-	 * Get all the manifest elements that are attached to the entire survey
-	 */
+	 * Save a survey level or organisation level manifest file
+	 *
+	 *Deprecated now set on template load
+	 *
 	public void saveSurveyManifest(Connection connection, 
 			PreparedStatement pstmtLanguages, 
 			PreparedStatement pstmtQuestions,
@@ -464,7 +469,7 @@ public class SurveyManager {
 	    	}
 	    }
 	}
-	
+	*/
 	
 	
 	/*
@@ -548,7 +553,7 @@ public class SurveyManager {
 		try {
 			
 			String sqlChangeLog = "insert into survey_change " +
-					"(s_id, version, changes, user_id, updated_time) " +
+					"(s_id, version, changes, user_id, apply_results, updated_time) " +
 					"values(?, ?, ?, ?, ?)";
 			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
 			
@@ -705,7 +710,8 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(ci));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setBoolean(5,false);
+				pstmtChangeLog.setTimestamp(6, getTimeStamp());
 				pstmtChangeLog.execute();
 			}
 		} catch (Exception e) {
@@ -827,7 +833,12 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(ci));
 					pstmtChangeLog.setInt(4,userId);
-					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					if(ci.qType != null && ci.qType.equals("select")) {
+						pstmtChangeLog.setBoolean(5, true);
+					} else {
+						pstmtChangeLog.setBoolean(5, false);
+					}
+					pstmtChangeLog.setTimestamp(6, getTimeStamp());
 					pstmtChangeLog.execute();
 
 				}

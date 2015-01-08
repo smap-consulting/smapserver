@@ -251,6 +251,7 @@ CREATE TABLE survey (
 	def_lang text,
 	class varchar(10),
 	model text,										-- JSON model of the survey for thingsat
+	manifest text,									-- JSON set of manifest information for the survey
 	last_updated_time DATE
 	);
 ALTER TABLE survey OWNER TO ws;
@@ -262,14 +263,10 @@ CREATE UNIQUE INDEX SurveyKey ON survey(ident);
 DROP TABLE IF EXISTS survey_change CASCADE;
 CREATE TABLE survey_change (
 	c_id integer DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_survey_changes PRIMARY KEY,
-	s_id integer REFERENCES survey ON DELETE CASCADE,	-- Survey containing this version
-		
+	s_id integer REFERENCES survey ON DELETE CASCADE,	-- Survey containing this version		
 	version integer,							-- Version of survey with these changes
 	changes text,								-- Changes as json object
-	
-	apply_results boolean default false,		-- Set to true if the results tables need to be updated
-	results_change text,						-- json object containing change that needs to be applied						
-	
+	apply_results boolean default false,		-- Set to true if the results tables need to be updated	
 	user_id integer,							-- Person who made the changes
 	updated_time TIMESTAMP WITH TIME ZONE		-- Time and date of change
 	);

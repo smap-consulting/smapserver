@@ -569,6 +569,7 @@ public class PutXForm {
 		if(appNode != null) {
 			appearance = appNode.getNodeValue();
 			q.setAppearance(appearance);
+			template.addManifestFromAppearance(appearance);	// Survey level manifests can be set in the appearance attribute
 		}
     	
     	if(eName.equals("group")) {

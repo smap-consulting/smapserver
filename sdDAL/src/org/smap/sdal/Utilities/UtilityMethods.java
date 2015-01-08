@@ -255,7 +255,6 @@ public class UtilityMethods {
 	 */
 	static public String getAdminEmail(
 			Connection sd, 
-			PreparedStatement pstmt, 
 			String user) throws SQLException {
 		
 		String adminEmail = "<admin email not set>";
@@ -264,15 +263,24 @@ public class UtilityMethods {
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
-		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		pstmt = sd.prepareStatement(sqlGetAdminEmail);
-		pstmt.setString(1, user);
-		ResultSet rs = pstmt.executeQuery();
-		if(rs.next()) {
-			String email = rs.getString(1);
-			if(email != null && email.trim().length() > 0) {
-				adminEmail = rs.getString(1);
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sqlGetAdminEmail);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String email = rs.getString(1);
+				if(email != null && email.trim().length() > 0) {
+					adminEmail = rs.getString(1);
+				}
 			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (Exception e) {}
 		}
 		return adminEmail;
 	}
@@ -282,7 +290,6 @@ public class UtilityMethods {
 	 */
 	static public int getOrganisationId(
 			Connection sd, 
-			PreparedStatement pstmt, 
 			String user) throws SQLException {
 		
 		int o_id = -1;
@@ -290,12 +297,22 @@ public class UtilityMethods {
 		String sqlGetOrgId = "select o_id " +
 				" from users u " +
 				" where u.ident = ?;";
-		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		pstmt = sd.prepareStatement(sqlGetOrgId);
-		pstmt.setString(1, user);
-		ResultSet rs = pstmt.executeQuery();
-		if(rs.next()) {
-			o_id = rs.getInt(1);	
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetOrgId);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				o_id = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		}
 		
 		return o_id;
@@ -306,7 +323,6 @@ public class UtilityMethods {
 	 */
 	static public String getSmtpHost(
 			Connection sd, 
-			PreparedStatement pstmt, 
 			String user) throws SQLException {
 		
 		String smtpHost = null;
@@ -315,32 +331,41 @@ public class UtilityMethods {
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
-		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		pstmt = sd.prepareStatement(sql);
-		pstmt.setString(1, user);
-		ResultSet rs = pstmt.executeQuery();
-		if(rs.next()) {
-			String host = rs.getString(1);
-			if(host != null && host.trim().length() > 0) {
-				smtpHost = rs.getString(1);
-			}
-		}
 		
-		/*
-		 * If the smtp_host was not set at the organisation level try the server level defaults
-		 */
-		if(smtpHost == null) {
-			sql = "select smtp_host " +
-					" from server ";
-			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		PreparedStatement pstmt = null;
+		
+		try {
+
 			pstmt = sd.prepareStatement(sql);
-			rs = pstmt.executeQuery();
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String host = rs.getString(1);
 				if(host != null && host.trim().length() > 0) {
 					smtpHost = rs.getString(1);
 				}
 			}
+		
+			/*
+			 * If the smtp_host was not set at the organisation level try the server level defaults
+			 */
+			if(smtpHost == null) {
+				sql = "select smtp_host " +
+						" from server ";
+				try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					String host = rs.getString(1);
+					if(host != null && host.trim().length() > 0) {
+						smtpHost = rs.getString(1);
+					}
+				}
+			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		}
 		return smtpHost;
 	}

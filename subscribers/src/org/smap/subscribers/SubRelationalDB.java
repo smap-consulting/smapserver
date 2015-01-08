@@ -45,6 +45,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
@@ -53,6 +54,9 @@ import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.exceptions.SQLInsertException;
 import org.smap.server.utilities.UtilityMethods;
 import org.w3c.dom.Document;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 
 public class SubRelationalDB extends Subscriber {
@@ -207,7 +211,6 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtGetUploadEvent = null;
 		PreparedStatement pstmtGetNotifications = null;
 		PreparedStatement pstmtUpdateUploadEvent = null;
-		PreparedStatement pstmtGetAdminEmail = null;
 		PreparedStatement pstmtNotificationLog = null;
 		
 		Connection connectionSD = null;
@@ -218,7 +221,6 @@ public class SubRelationalDB extends Subscriber {
 		
 			NotificationManager fm = new NotificationManager();
 			fm.notifyForSubmission(connectionSD, 
-					pstmtGetAdminEmail, 
 					pstmtGetUploadEvent, 
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
@@ -234,7 +236,6 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
 			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
-			try {if (pstmtGetAdminEmail != null) {pstmtGetAdminEmail.close();}} catch (SQLException e) {}
 			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {
@@ -264,7 +265,9 @@ public class SubRelationalDB extends Subscriber {
 			cResults = DriverManager.getConnection(database, user, password);
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
 			statement = cResults.createStatement();
-				
+			
+			applyTableChanges(cMeta);			// Apply any updates that have been made to the table structure since the last submission
+			
 			cResults.setAutoCommit(false);
 			IE topElement = instance.getTopElement();
 			
@@ -794,23 +797,6 @@ public class SubRelationalDB extends Subscriber {
 		return value;
 	}
 	
-	/*
-	 * Move attachments
-	 *
-	void moveAttachments(String folder, String srcMain, int idx, String dstName) throws IOException {
-
-		File aDir = new File(folder);
-		Collection<File> files = FileUtils.listFiles(aDir, new WildcardFileFilter(srcMain + "*"), new WildcardFileFilter("*"));
-		ArrayList <File> fileA = new ArrayList<File> (files);
-		for (int i = 0; i < fileA.size(); i++) {
-			String atName = fileA.get(i).getName();
-			String dstExt = atName.substring(idx);
-			
-		   System.out.println("Moving attachment: " + atName + " to: " + dstName + dstExt);
-		   FileUtils.moveFile(new File(folder + atName), new File(folder + dstName + dstExt));
-		}
-	}
-	*/
 	
 	/*
 	 * Create the table if it does not already exits in the database
@@ -1092,11 +1078,31 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Apply any table changes for this version
 	 */
-	private void applyTableChanges() {
-		String sql = "select c_id, results_change "
+	private void applyTableChanges(Connection connectionSD) throws SQLException {
+		
+		String sqlGet = "select c_id, changes "
 				+ "from survey_change "
 				+ "where apply_results = 'true' "
 				+ "and s_id = ? ";
+		PreparedStatement pstmtGet = null;
+		
+		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		
+		try {
+			pstmtGet = connectionSD.prepareStatement(sqlGet);
+			pstmtGet.setInt(1, sId);
+			ResultSet rs = pstmtGet.executeQuery();
+			while(rs.next()) {
+				int c_id = rs.getInt(1);
+				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
+				System.out.println("########Updating: " + ci.name + "__" + ci.key);
+			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}
+		}
+		
 	}
 
 }

@@ -105,10 +105,11 @@ public class MyAssignments extends Application {
 		
 		PreparedStatement pstmtGetForms = null;
 		PreparedStatement pstmtGetSettings = null;
+		PreparedStatement pstmtGeo = null;
+		PreparedStatement pstmt = null;
 		
 		try {
 			String sql = null;
-			PreparedStatement pstmt = null;
 			ResultSet results = null;
 			
 			/*
@@ -271,7 +272,7 @@ public class MyAssignments extends Application {
 					} else if (geo_type.equals("LINESTRING")) {
 						sql = "select ST_AsText(geo_linestring) from tasks where id = ?;";
 					}
-					PreparedStatement pstmtGeo = connectionSD.prepareStatement(sql);
+					pstmtGeo = connectionSD.prepareStatement(sql);
 					pstmtGeo.setInt(1, t_id);
 					ResultSet resultSetGeo = pstmtGeo.executeQuery();
 					if(resultSetGeo.next()) {
@@ -331,7 +332,7 @@ public class MyAssignments extends Application {
 				fl.version = resultSet.getInt("version");
 				fl.name = resultSet.getString("display_name");
 				fl.project = resultSet.getString("name");
-				fl.hasManifest = translationMgr.hasManifest(connectionSD, pstmt, userName, sId);
+				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
 				
 				tr.forms.add(fl);
 			}
@@ -377,8 +378,10 @@ public class MyAssignments extends Application {
 			response = Response.serverError().build();
 			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
-			try {if (pstmtGetForms != null) {pstmtGetForms.close();} } catch (SQLException e) {}
-			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (SQLException e) {}
+			try {if (pstmtGetForms != null) {pstmtGetForms.close();} } catch (Exception e) {}
+			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (Exception e) {}
+			try {if (pstmtGeo != null) {pstmtGeo.close();} } catch (Exception e) {}
+			try {if (pstmt != null) {pstmt.close();} } catch (Exception e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();

@@ -318,7 +318,7 @@ public class Surveys extends Application {
 		PreparedStatement pstmtM3 = null;
 		PreparedStatement pstmtM4 = null;
 		PreparedStatement pstmtM5 = null;
-		PreparedStatement pstmtM6 = null;
+		//PreparedStatement pstmtM6 = null;
 		try {
 			connectionSD.setAutoCommit(false);
 		
@@ -363,6 +363,7 @@ public class Surveys extends Application {
 			
 			/*
 			 * Save the manifest entries
+			 * Deprecated - now moved to media management page
 			 */
 			System.out.println("Saving manifest entries: " + survey.surveyManifest.size());
 		    
@@ -382,7 +383,10 @@ public class Surveys extends Application {
 	    			"values (nextval('t_seq'),?,?,?,?,?);"; 
 	    	pstmtM5 = connectionSD.prepareStatement(sqlM5);
 	    	
+	    	/*
+	    	 * No longer required
 	    	String sqlGetIdent = "select ident from survey where s_id = ?;"; 
+	    	    	 
 	    	pstmtM6 = connectionSD.prepareStatement(sqlGetIdent);
 		    SurveyManager sm = new SurveyManager();
 		    for(int i = 0; i < survey.surveyManifest.size(); i++) {
@@ -390,6 +394,7 @@ public class Surveys extends Application {
 		    	sm.saveSurveyManifest(connectionSD, pstmtM1, pstmtM2, pstmtM3, pstmtM4, pstmtM5,
 		    			pstmtM6, sId, survey.surveyManifest.get(i));
 		    }
+		    */
 
 			
 			
@@ -410,7 +415,7 @@ public class Surveys extends Application {
 			if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
 			if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
 			if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
-			if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
+			//if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {

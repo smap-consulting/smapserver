@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
 
@@ -443,8 +444,41 @@ public class Question implements Serializable {
 		this.choices = choices;
 	}
 
+	/*
+	 * Only return choices that were not created by an external csv file
+	 */
 	public Collection<Option> getChoices() {
-		return choices;
+		Collection<Option> internalChoices = new ArrayList<Option> ();
+		
+		ArrayList<Option> cArray = new ArrayList<Option>(choices);
+		for(int i = 0; i < cArray.size(); i++) {
+			if(!cArray.get(i).getExternalFile()) {
+				internalChoices.add(cArray.get(i));
+			}
+		}
+		return internalChoices;
+	}
+	
+	/*
+	 * Return all non external choices 
+	 *   or if there is a single external choice then return all external choices
+	 */
+	public Collection<Option> getValidChoices() {
+		
+		Collection<Option> externalChoices = new ArrayList<Option> ();
+		ArrayList<Option> cArray = new ArrayList<Option>(choices);
+		boolean external = false;
+		for(int i = 0; i < cArray.size(); i++) {
+			if(cArray.get(i).getExternalFile()) {
+				external = true;
+				externalChoices.add(cArray.get(i));
+			}
+		}
+		if(external) {
+			return externalChoices;
+		} else {
+			return choices;
+		}
 	}
 
 	public String toString() {
