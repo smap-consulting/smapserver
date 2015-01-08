@@ -821,6 +821,7 @@ public class SurveyManager {
 				
 				// Write the change log
 				if(count > 0) {
+					ci.changeType = "option_update";
 					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 					pstmtChangeLog.setInt(1, sId);
 					pstmtChangeLog.setInt(2, version);
@@ -828,6 +829,7 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(4,userId);
 					pstmtChangeLog.setTimestamp(5, getTimeStamp());
 					pstmtChangeLog.execute();
+
 				}
 				totalCount += count;
 			}

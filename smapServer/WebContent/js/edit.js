@@ -446,13 +446,16 @@ function translateHtmlFixup($element) {
 function setChangesHtml($element, survey, survey) {
 	var h =[],
 		idx = -1,
-		i;
+		i,
+		changes;
 	
 	if(!survey) {
 		$('#errormesg').html("<strong>No Changes</strong> Create or select a survey to see changes");
 		$('#infobox').show();
 	} else {
 
+		changes = survey.changes;
+		
 		h[++idx] = '<table border="1" width=100%">';
 		
 		// write the table headings
@@ -474,17 +477,7 @@ function setChangesHtml($element, survey, survey) {
 				h[++idx] = changes[i].version;
 				h[++idx] = '</td>';	
 				h[++idx] = '<td>';
-				// Description
-					h[++idx] = changes[i].type;
-					h[++idx] = ' ';
-					h[++idx] = changes[i].name;
-					h[++idx] = ' changed to: <span style="color:blue;">';
-					h[++idx] = changes[i].newVal;
-					h[++idx] = '</span>';
-					h[++idx] = ' from: <span style="color:red;">';
-					h[++idx] = changes[i].oldVal;
-					h[++idx] = '</span>';
-				// End Description
+				h[++idx] = getChangeDescription(changes[i]);
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
 				h[++idx] = changes[i].userName;
@@ -502,6 +495,37 @@ function setChangesHtml($element, survey, survey) {
 	$element.html(h.join(''));
 	
 	
+}
+
+function getChangeDescription(change) {
+	
+	var h =[],
+		idx = -1;
+	
+	if(change.changeType && change.changeType === "option_update") {
+		h[++idx] = 'Choice <span style="color:blue;">'; 
+		h[++idx] = change.newVal;
+		h[++idx] = '</span>';
+		h[++idx] = ' added to';
+		h[++idx] = ' question: <span style="color:blue;">';
+		h[++idx] = change.name;
+		h[++idx] = '</span>';
+		h[++idx] = ' from file: <span style="color:blue;">';
+		h[++idx] = change.fileName;
+		h[++idx] = '</span>';
+	} else {
+		h[++idx] = change.type;
+		h[++idx] = ' ';
+		h[++idx] = change.name;
+		h[++idx] = ' changed to: <span style="color:blue;">';
+		h[++idx] = change.newVal;
+		h[++idx] = '</span>';
+		h[++idx] = ' from: <span style="color:red;">';
+		h[++idx] = change.oldVal;
+		h[++idx] = '</span>';
+	}
+
+	return h.join('');
 }
 
 });

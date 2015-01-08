@@ -110,9 +110,9 @@ function completeSurveyList(surveyList) {
 
 	for(i = 0; i < surveyList.length; i++) {
 		
-		h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webforms/formXML.php?key="';
+		h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webforms/formXML.php?key=';
 		h[++idx] = surveyList[i].ident;
-		h[++idx] = '>';
+		h[++idx] = '">';
 		h[++idx] = surveyList[i].displayName;
 		h[++idx] = '</a>';
 		

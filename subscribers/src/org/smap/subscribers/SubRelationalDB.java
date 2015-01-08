@@ -174,9 +174,7 @@ public class SubRelationalDB extends Subscriber {
 			if(!isAuthorised) {
 				throw new Exception("The user " + remoteUser + 
 						" was not allowed to submit this survey(" + sId + ")");
-			}
-
-			
+			}	
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -189,8 +187,7 @@ public class SubRelationalDB extends Subscriber {
 			
 			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId);
 			applyNotifications(ue_id, remoteUser, server);
-			se.setStatus("success");
-			
+			se.setStatus("success");			
 			
 		} catch (SQLInsertException e) {
 			
@@ -1090,6 +1087,16 @@ public class SubRelationalDB extends Subscriber {
 			e.printStackTrace();
     	}
 		
+	}
+	
+	/*
+	 * Apply any table changes for this version
+	 */
+	private void applyTableChanges() {
+		String sql = "select c_id, results_change "
+				+ "from survey_change "
+				+ "where apply_results = 'true' "
+				+ "and s_id = ? ";
 	}
 
 }

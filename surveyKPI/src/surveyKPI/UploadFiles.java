@@ -531,37 +531,39 @@ public class UploadFiles extends Application {
 			 */
 			try {
 				FileReader reader = new FileReader(csvFile);
-		       BufferedReader br = new BufferedReader(reader);
-		       CSVParser parser = new CSVParser();
+				BufferedReader br = new BufferedReader(reader);
+				CSVParser parser = new CSVParser();
 		       
-		       // Get Header
-		       String line = br.readLine();
-		       String cols [] = parser.parseLine(line);
-		       System.out.println("Header: " + line);
+				// Get Header
+				String line = br.readLine();
+				String cols [] = parser.parseLine(line);
+				System.out.println("Header: " + line);
 		       
-		       Filter filter = new Filter(cols, q.appearance);								// Get a filter
-		       ValueLabelCols vlc = getValueLabelCols(connectionSD, q.id, q.name, cols);	// Identify the columns in the CSV file that have the value and label
+				Filter filter = new Filter(cols, q.appearance);								// Get a filter
+				ValueLabelCols vlc = getValueLabelCols(connectionSD, q.id, q.name, cols);	// Identify the columns in the CSV file that have the value and label
 
-		       while(line != null) {
-		    	   line = br.readLine();
-		    	   if(line != null) {
-			    	   String [] optionCols = parser.parseLine(line);
-			    	   if(filter.isIncluded(optionCols)) {
-			    		   System.out.println("        ## Include " + line);
+				while(line != null) {
+					line = br.readLine();
+					if(line != null) {
+						String [] optionCols = parser.parseLine(line);
+						if(filter.isIncluded(optionCols)) {
+							System.out.println("        ## Include " + line);
 			    		   
-			    		   ChangeItem c = new ChangeItem();
-			    		   c.qId = q.id;
-			    		   c.qType = q.type;
-			    		   c.newVal = optionCols[vlc.label];
-			    		   c.key = optionCols[vlc.value];
+							ChangeItem c = new ChangeItem();
+							c.qId = q.id;
+							c.name = q.name;				// Add for logging
+							c.fileName = csvFileName;		// Add for logging
+							c.qType = q.type;
+							c.newVal = optionCols[vlc.label];
+							c.key = optionCols[vlc.value];
 			    		  
-			    		   cs.items.add(c);
+							cs.items.add(c);
 			    		   
-			    	   } else {
-			    		   System.out.println("        ## Ignore " + line);
-			    	   }
-		    	   }
-		       }
+						} else {
+							System.out.println("        ## Ignore " + line);
+						}
+					}
+				}
 		       
 			       // TODO delete all file options that were not in the latest file (file version number)
 			} catch (Exception e) {
@@ -598,10 +600,12 @@ public class UploadFiles extends Application {
 				String labelName = rs.getString(2);
 				System.out.println("Value column: " + valueName + " : " + labelName);
 				
+				vlc.value = -1;
+				vlc.label = -1;
 				for(int i = 0; i < cols.length; i++) {
-					if(cols[i].equals(valueName)) {
+					if(cols[i].toLowerCase().equals(valueName.toLowerCase())) {
 						vlc.value = i;
-					} else if(cols[i].equals(labelName)) {
+					} else if(cols[i].toLowerCase().equals(labelName.toLowerCase())) {
 						vlc.label = i;
 					}
 				}
