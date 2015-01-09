@@ -1289,8 +1289,12 @@ public class SurveyTemplate {
 	
 	/*
 	 * Method to extend a survey instance with information from the template
+	 *  useExternalChoices is set true when processing results
+	 *      Use the options as shown on the form
+	 *  useExternalChoices is set false when getting an XForm
+	 *      Return the dummy choice that points to the external file columns
 	 */
-	public void extendInstance(SurveyInstance instance) {
+	public void extendInstance(SurveyInstance instance, boolean useExternalChoices) {
 		List<Form> formList  = getAllForms(); 
 		
 		// Set the display name
@@ -1301,12 +1305,15 @@ public class SurveyTemplate {
 		for(Form f : formList) {
 			instance.setForm(f.getPath(), f.getTableName(), f.getType());
 			List <Question> questionList = f.getQuestions();
-			extendQuestions(instance, questionList, f.getPath());
+			extendQuestions(instance, questionList, f.getPath(), useExternalChoices);
 		}
 	}
 	
 	
-	public void extendQuestions(SurveyInstance instance, List <Question> questionList, String formPath) {
+	public void extendQuestions(SurveyInstance instance, 
+			List <Question> questionList, 
+			String formPath,
+			boolean useExternalChoices) {
 		
 		for(Question q : questionList) {
 			
@@ -1332,7 +1339,12 @@ public class SurveyTemplate {
 				
 				if(q.getType().equals("select")) {
 					// Add the options to this multi choice question
-					Collection <Option> optionList = q.getChoices();
+					Collection <Option> optionList = null;
+					if(useExternalChoices) {
+						optionList = q.getValidChoices();
+					} else {
+						optionList = q.getChoices();
+					}
 
 					for(Option o : optionList) {
 						

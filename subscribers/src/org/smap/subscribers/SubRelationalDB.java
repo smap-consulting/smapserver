@@ -268,8 +268,6 @@ public class SubRelationalDB extends Subscriber {
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
 			statement = cResults.createStatement();
 			
-			applyTableChanges(cMeta, sId);			// Apply any updates that have been made to the table structure since the last submission
-			
 			cResults.setAutoCommit(false);
 			IE topElement = instance.getTopElement();
 			
@@ -278,8 +276,20 @@ public class SubRelationalDB extends Subscriber {
 				String msg = "Error: Top element name " + topElement.getName() + " in survey did not match a form in the template";
 				throw new Exception(msg);
 			}
-			Keys keys = writeTableContent(topElement, statement, 0, instance.getTemplateName(), 
-					remoteUser, server, device, instance.getUuid(), formStatus, instance.getVersion(), cResults);
+			Keys keys = writeTableContent(
+					topElement, 
+					statement, 
+					0, 
+					instance.getTemplateName(), 
+					remoteUser, 
+					server, 
+					device, 
+					instance.getUuid(), 
+					formStatus, 
+					instance.getVersion(), 
+					cResults,
+					cMeta,
+					sId);
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
@@ -362,11 +372,20 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Method to write the table content
 	 */
-	private  Keys writeTableContent(IE element, Statement statement, int parent_key, String sName, 
-			String remoteUser, String server, String device, 
-			String uuid, String formStatus, 
+	private  Keys writeTableContent(
+			IE element, 
+			Statement statement, 
+			int parent_key, 
+			String sName, 
+			String remoteUser, 
+			String server, 
+			String device, 
+			String uuid, 
+			String formStatus, 
 			int version,
-			Connection cRel) throws SQLException, Exception {
+			Connection cRel,
+			Connection cMeta,
+			int sId) throws SQLException, Exception {
 
 		Keys keys = new Keys();
 		
@@ -397,6 +416,8 @@ public class SubRelationalDB extends Subscriber {
 				if(keys.duplicateKeys.size() > 0 && getDuplicatePolicy() == DUPLICATE_DROP) {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
+				// Apply any updates that have been made to the table structure since the last submission
+				applyTableChanges(cMeta, cRel, sId);
 			}
 			
 			boolean isBad = false;
@@ -454,7 +475,7 @@ public class SubRelationalDB extends Subscriber {
 		List<IE> childElements = element.getChildren();
 		for(IE child : childElements) {
 			writeTableContent(child, statement, parent_key, sName, remoteUser, server, device, 
-					uuid, formStatus, version, cRel);
+					uuid, formStatus, version, cRel, cMeta, sId);
 		}
 		
 		return keys;
@@ -472,18 +493,21 @@ public class SubRelationalDB extends Subscriber {
 					"from information_schema.columns " +
 					"where table_name = ? and column_name = '_version';";
 		
-		System.out.println("Sql: " + sql + " : " + tablename);
+		PreparedStatement pstmt = null;
 		try {
-			PreparedStatement pstmt = cRel.prepareStatement(sql);
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
+			System.out.println("SQL: " + pstmt.toString());
+			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				hasVersion = true;
 			}
-			pstmt.close();
+
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 		
 		return hasVersion;
@@ -1080,33 +1104,90 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Apply any table changes for this version
 	 */
-	private void applyTableChanges(Connection connectionSD, int sId) throws SQLException {
+	private void applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws SQLException {
 		
 		String sqlGet = "select c_id, changes "
 				+ "from survey_change "
 				+ "where apply_results = 'true' "
 				+ "and s_id = ? ";
+			
+		String sqlGetTable = "select f.table_name from form f, question q " +
+				" where q.f_id = f.f_id " +
+				" and q.q_id = ?";
+		
+		String sqlUpdateChange = "update survey_change "
+				+ "set apply_results = 'false' "
+				+ "where c_id = ? ";
+		
 		PreparedStatement pstmtGet = null;
+		PreparedStatement pstmtGetTable = null;
+		PreparedStatement pstmtAlterTable = null;
+		PreparedStatement pstmtUpdateChange = null;
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
 		System.out.println("######## Apply table changes");
 		try {
+			
 			pstmtGet = connectionSD.prepareStatement(sqlGet);
+			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
+			pstmtUpdateChange = connectionSD.prepareStatement(sqlUpdateChange);
+			
 			pstmtGet.setInt(1, sId);
 			System.out.println("SQL: " + pstmtGet.toString());
 			
 			ResultSet rs = pstmtGet.executeQuery();
 			while(rs.next()) {
-				int c_id = rs.getInt(1);
+				int cId = rs.getInt(1);
 				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
-				System.out.println("######## Updating: " + ci.name + "__" + ci.key);
+				int qId = ci.qId;
+				
+				// Get the table and column
+				pstmtGetTable.setInt(1, qId);
+				ResultSet rsTable = pstmtGetTable.executeQuery();
+				String table = null;
+				if(rsTable.next()) {
+					table = rsTable.getString(1);
+				
+					String column = ci.name + "__" + ci.key;
+				
+					// Alter the table
+					boolean tableAltered = true;
+					String sqlAlterTable = "alter table " + table + " add column " + column + " integer;";
+					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+					System.out.println("SQL: " + pstmtAlterTable.toString());
+					try {
+						pstmtAlterTable.executeUpdate();
+					} catch (Exception e) {
+						// Report but otherwise ignore any errors
+						// No need to roll back if the survey_change table is not updated, 
+						System.out.println("Error altering table -- continuing");
+						e.printStackTrace();
+						
+						// Only record the update as failed if the problem was not due to the column already existing
+						String msg = e.getMessage();
+						if(msg == null || !msg.contains("already exists")) {
+							tableAltered = false;
+						}
+					}
+					
+					// Record the table as having been altered
+					if(tableAltered) {
+						pstmtUpdateChange.setInt(1, cId);
+						pstmtUpdateChange.executeUpdate();
+					}
+				} else {
+					System.out.println("Error table not found: " + pstmtGetTable.toString());
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
 		} finally {
-			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (Exception e) {}
+			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (Exception e) {}
+			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
 		}
 		
 	}
