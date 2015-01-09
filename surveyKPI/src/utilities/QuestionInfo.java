@@ -26,9 +26,8 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
-
-import surveyKPI.Dashboard;
 
 public class QuestionInfo {
 	
@@ -121,7 +120,7 @@ public class QuestionInfo {
 				if(qType.startsWith("select")) {
 					o = new ArrayList<OptionInfo> ();
 					
-					qExternalChoices = UtilityMethods.isAppearanceExternalFile(qAppearance);
+					qExternalChoices = MediaUtilities.isAppearanceExternalFile(qAppearance);
 					
 					sql = "SELECT o.oValue, t.value, t.type" + 
 							" FROM option o, question q, translation t" +

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
@@ -761,7 +762,7 @@ public class SurveyManager {
 			String sqlMaxSeq = "select max(seq) from option where q_id = ?;";
 			pstmtMaxSeq = connectionSD.prepareStatement(sqlMaxSeq);
 		
-			ArrayList<String> languages = UtilityMethods.getLanguagesForSurvey(connectionSD, sId);
+			ArrayList<String> languages = MediaUtilities.getLanguagesForSurvey(connectionSD, sId);
 			int currentQId = -1;
 			int maxSeq = -1;
 			ResultSet rs = null;

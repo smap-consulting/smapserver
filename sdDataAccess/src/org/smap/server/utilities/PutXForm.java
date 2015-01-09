@@ -30,7 +30,7 @@ public class PutXForm {
     /*
      * Load the XForm into an object based model
      */
-    public SurveyTemplate put(InputStream is) throws Exception {
+    public SurveyTemplate put(InputStream is, String user, String basePath) throws Exception {
     	template = null;
      	    	
 
@@ -42,6 +42,8 @@ public class PutXForm {
 		
 		template = new SurveyTemplate();
 		template.createSurvey();
+		template.setUser(user);
+		template.setBasePath(basePath);
 		processElement(rootElement);   	   		
     		
     	return template;
@@ -569,7 +571,8 @@ public class PutXForm {
 		if(appNode != null) {
 			appearance = appNode.getNodeValue();
 			q.setAppearance(appearance);
-			template.addManifestFromAppearance(appearance);	// Survey level manifests can be set in the appearance attribute
+			// Survey level manifests can be set in the appearance attribute
+			template.addManifestFromAppearance(appearance, questionRef);	
 		}
     	
     	if(eName.equals("group")) {

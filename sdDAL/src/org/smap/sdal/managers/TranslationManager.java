@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.NotifyDetails;
@@ -63,7 +64,7 @@ public class TranslationManager {
 		
 		HashMap<String, String> files = new HashMap<String, String> ();
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
-		int oId = UtilityMethods.getOrganisationId(sd, user);
+		int oId = MediaUtilities.getOrganisationId(sd, user);
 		
 		String sqlQuestionLevel = "select t.text_id, t.type, t.value " +
 				manifestQuerySql;
@@ -202,7 +203,7 @@ public class TranslationManager {
 	/*
 	 * Get the partial (URL) of the file and its file path or null if the file does not exist
 	 */
-	private void getFileUrl(ManifestValue manifest, int sId, String fileName, String basePath, int oId) {
+	public void getFileUrl(ManifestValue manifest, int sId, String fileName, String basePath, int oId) {
 		
 		String url = null;
 		File file = null;

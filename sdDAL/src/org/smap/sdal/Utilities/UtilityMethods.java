@@ -2,6 +2,7 @@ package org.smap.sdal.Utilities;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -25,6 +26,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Survey;
 
@@ -288,39 +290,7 @@ public class UtilityMethods {
 		return adminEmail;
 	}
 	
-	/*
-	 * Get the organisation id for the user
-	 */
-	static public int getOrganisationId(
-			Connection sd, 
-			String user) throws SQLException {
-		
-		int o_id = -1;
-		
-		String sqlGetOrgId = "select o_id " +
-				" from users u " +
-				" where u.ident = ?;";
-		
-		PreparedStatement pstmt = null;
-		
-		try {
-		
-			pstmt = sd.prepareStatement(sqlGetOrgId);
-			pstmt.setString(1, user);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				o_id = rs.getInt(1);	
-			}
-			
-		} catch(SQLException e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		}
-		
-		return o_id;
-	}
+
 	
 	/*
 	 * Get the smtp host for the organisation that the user belongs to
@@ -720,42 +690,6 @@ public class UtilityMethods {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 		}
 	}
-	
-	/*
-	 * Get languages for a survey
-	 */
-	public static ArrayList<String> getLanguagesForSurvey(Connection connectionSD, int sId) throws Exception {
 		
-		PreparedStatement pstmtLanguages = null;
-		
-		ArrayList<String> languages = new ArrayList<String> ();
-		try {
-			String sqlLanguages = "select distinct t.language from translation t where s_id = ? order by t.language asc";
-			pstmtLanguages = connectionSD.prepareStatement(sqlLanguages);
-			
-			pstmtLanguages.setInt(1, sId);
-			ResultSet rs = pstmtLanguages.executeQuery();
-			while(rs.next()) {
-				languages.add(rs.getString(1));
-			}
-		} catch(Exception e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
-		}
-		return languages;
-	}
-	
-	/*
-	 * Return true if this questions appearance means that choices come from an external file
-	 */
-	public static boolean isAppearanceExternalFile(String appearance) {
-		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 	
 }

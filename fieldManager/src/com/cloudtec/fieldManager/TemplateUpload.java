@@ -240,9 +240,19 @@ public class TemplateUpload extends HttpServlet {
 				}
 				File templateFile = new File(resp.fileName);
 				
+				String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+				System.out.println("Files parameter: " + basePath);
+				if(basePath == null) {
+					basePath = "/smap";
+				} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+				}
+				
 				// Parse the form into an object model
 				PutXForm loader = new PutXForm();
-				SurveyTemplate model = loader.put(new FileInputStream(templateFile));	// Load the XForm into the model
+				SurveyTemplate model = loader.put(new FileInputStream(templateFile), 
+						request.getRemoteUser(),
+						basePath);	// Load the XForm into the model
 				//model.printModel();
 				
 				// Set the survey name to the one entered by the user 
@@ -346,7 +356,8 @@ public class TemplateUpload extends HttpServlet {
 				} 
 				
 				//model.printModel();
-				model.writeDatabase();	// write the survey definitions
+				model.writeDatabase();				// write the survey definitions
+				model.writeExternalChoices();		// Update the survey definitions with choices from csv files
 				log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
 					
 			}

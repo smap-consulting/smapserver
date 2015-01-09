@@ -1,6 +1,8 @@
 package org.smap.model;
 
+import java.io.File;
 import java.lang.reflect.Type;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -8,9 +10,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import java.util.Set;
 import java.util.Vector;
 
+import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.ChangeSet;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Group;
 import org.smap.server.entities.MissingTemplateException;
@@ -28,11 +33,16 @@ import org.smap.server.managers.QuestionManager;
 import org.smap.server.managers.SurveyManager;
 import org.smap.server.managers.TranslationManager;
 import org.smap.server.utilities.UtilityMethods;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 public class SurveyTemplate {
+	
+	private static Logger log =
+			 Logger.getLogger(SurveyTemplate.class.getName());
+	
 	//private Connection connection;
 	PersistenceContext pc = null;
 	FormManager fPersist = null;
@@ -54,6 +64,8 @@ public class SurveyTemplate {
 	private Vector<Translation> dummyTranslations = new Vector<Translation>();
 	private HashMap<String, String> defaults = new HashMap<String, String>();
 	private Survey survey = null;
+	private String user;			// The user that created this template
+	private String basePath;		// Where the files are located
 	private Project project = null;
 	private String firstFormRef = null;
 	private String firstFormName = null;
@@ -155,6 +167,22 @@ public class SurveyTemplate {
 	 */
 	public void createSurvey() {
 		survey = new Survey();
+	}
+	
+	public void setUser(String v) {
+		user = v;
+	}
+	
+	public void setBasePath(String v) {
+		basePath = v;
+	}
+	
+	public String getUser() {
+		return user;
+	}
+	
+	public String getBasePath() {
+		return basePath;
 	}
 
 	/*
@@ -1245,7 +1273,7 @@ public class SurveyTemplate {
 	/*
 	 * Add a survey level manifest such as a csv file from an appearance attribute
 	 */
-	public void addManifestFromAppearance(String appearance) {
+	public void addManifestFromAppearance(String appearance, String questionRef) {
 		
 		// Check to see if this appearance references a manifest file
 		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
@@ -1260,10 +1288,10 @@ public class SurveyTemplate {
 				if(criteria.length > 0) {
 					
 					if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
-						String file = criteria[0].trim();
-						file = file.substring(1, file.length() -1);
-						file += ".csv";
-						System.out.println("We have found a manifest link to " + file); // DEBUG
+						String filename = criteria[0].trim();
+						filename = filename.substring(1, filename.length() -1);
+						filename += ".csv";
+						log.info("We have found a manifest link to " + filename);
 						
 						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 						
@@ -1275,8 +1303,8 @@ public class SurveyTemplate {
 							Type type = new TypeToken<ArrayList<String>>(){}.getType();
 							mArray = gson.fromJson(manifestString, type);	
 						}
-						if(!mArray.contains(file)) {
-							mArray.add(file);
+						if(!mArray.contains(filename)) {
+							mArray.add(filename);
 						}
 	
 						survey.setManifest(gson.toJson(mArray));
@@ -1370,5 +1398,81 @@ public class SurveyTemplate {
 		}
 		name = qName + "__" + value;	// Use double underscore to minimise chance of user specifying this as a question name
 		return name;
+	}
+	
+	/*
+	 * Add the options from the csv file
+	 */
+	public void writeExternalChoices() {
+		
+		org.smap.sdal.managers.SurveyManager sm = new org.smap.sdal.managers.SurveyManager();
+		List<Question> questionList = new ArrayList<Question>(questions.values());
+		Connection connectionSD = org.smap.sdal.Utilities.SDDataSource.getConnection("fieldManager-SurveyTemplate");
+		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
+
+		try {
+			for(Question q : questionList) {
+	
+				System.out.println(q.toString());
+				if(q.getType().equals("select")) {
+					
+					// Check to see if this appearance references a manifest file
+					String appearance = q.getAppearance();
+					if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+						// Yes it references a manifest
+						
+						int idx1 = appearance.indexOf('(');
+						int idx2 = appearance.indexOf(')');
+						if(idx1 > 0 && idx2 > idx1) {
+							String criteriaString = appearance.substring(idx1 + 1, idx2);
+							
+							String criteria [] = criteriaString.split(",");
+							if(criteria.length > 0) {
+								
+								if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+									String filename = criteria[0].trim();
+									filename = filename.substring(1, filename.length() -1);
+									filename += ".csv";
+									log.info("We have found a manifest link to " + filename);
+									
+									ChangeSet cs = new ChangeSet();
+									cs.type = "option_update";
+									cs.items = new ArrayList<ChangeItem> ();
+									changes.add(cs);
+	
+									int oId = org.smap.sdal.Utilities.MediaUtilities.getOrganisationId(connectionSD, user);
+					
+									String filepath = basePath + "/media/organisation/" + oId + "/" + filename;		
+									File file = new File(filepath);
+	
+									org.smap.sdal.Utilities.MediaUtilities.getOptionsFromFile(
+										connectionSD,
+										cs.items,
+										file,
+										filename,
+										q.getName(),
+										q.getId(),				
+										"select",
+										appearance);
+					
+									for(ChangeItem ci : cs.items) {
+										System.out.println("################## " + ci.key + " : " + ci.newVal);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			sm.applyChangeSetArray(connectionSD, survey.getId(), user, changes);
+			
+		} catch(Exception e) {
+			// Record exception but otherwise ignore
+			e.printStackTrace();
+		} finally {
+			if(connectionSD != null) try{connectionSD.close();} catch(Exception e){};
+		}
+			
 	}
 }

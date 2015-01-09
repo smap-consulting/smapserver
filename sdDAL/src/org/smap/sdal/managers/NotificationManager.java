@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
@@ -322,7 +323,7 @@ public class NotificationManager {
 
 		// Get the admin email
 		String adminEmail = UtilityMethods.getAdminEmail(sd, remoteUser);
-		int o_id = UtilityMethods.getOrganisationId(sd, remoteUser);
+		int o_id = MediaUtilities.getOrganisationId(sd, remoteUser);
 		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
 		
 		

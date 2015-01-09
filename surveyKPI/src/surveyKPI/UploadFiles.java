@@ -37,6 +37,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.managers.QuestionManager;
@@ -339,7 +340,7 @@ public class UploadFiles extends Application {
 	
 	/*
 	 * Filter to use when applying changes to a survey
-	 */
+	 *
 	private class Filter {
 		
 		private class Rule {
@@ -452,9 +453,7 @@ public class UploadFiles extends Application {
 			
 		}
 		
-		/*
-		 * Return true if the row should be included
-		 */
+
 		public boolean isIncluded(String [] cols) {
 			boolean include = true;
 					
@@ -492,11 +491,14 @@ public class UploadFiles extends Application {
 			return include;
 		}
 	}
+	*/
 	
+	/*
 	private class ValueLabelCols {
 		public int value;
 		public int label;
 	}
+	*/
 	
 	private void applyCSVChangesToSurvey(Connection connectionSD, 
 			String user, 
@@ -523,9 +525,19 @@ public class UploadFiles extends Application {
 			cs.items = new ArrayList<ChangeItem> ();
 			changes.add(cs);
 			
+			MediaUtilities.getOptionsFromFile(
+					connectionSD,
+					cs.items,
+					csvFile,
+					csvFileName,
+					q.name,
+					q.id,
+					q.type,
+					q.appearance);
 			/*
 			 * Get the list of options from the file that match the selection criteria in the appearance column
 			 */
+			/*
 			try {
 				FileReader reader = new FileReader(csvFile);
 				BufferedReader br = new BufferedReader(reader);
@@ -566,6 +578,7 @@ public class UploadFiles extends Application {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			*/
 			
 		}
 		 
@@ -574,13 +587,12 @@ public class UploadFiles extends Application {
 		      
 	}
 	
+	/*
 	private ValueLabelCols getValueLabelCols(Connection connectionSD, int qId, String qDisplayName, String [] cols) throws Exception {
 		
 		ValueLabelCols vlc = new ValueLabelCols();
 		
-		/*
-		 * Ignore language in the query, these values are codes and are (currently) independent of language
-		 */
+
 		PreparedStatement pstmt = null;
 		String sql = "SELECT o.ovalue, t.value " +
 				"from option o, translation t " +  		
@@ -618,6 +630,7 @@ public class UploadFiles extends Application {
 		}
 		return vlc;
 	}
+*/
 
 }
 
