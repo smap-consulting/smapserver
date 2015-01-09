@@ -43,6 +43,7 @@ import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
@@ -926,7 +927,10 @@ public class SubRelationalDB extends Subscriber {
 							
 			for(Question q : columns) {
 				
-				if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+				boolean hasExternalOptions = MediaUtilities.isAppearanceExternalFile(q.getAppearance());
+				
+				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+				if(q.getSource() != null) {
 					
 					// Set column type for postgres
 					String colType = q.getType();
@@ -983,8 +987,13 @@ public class SubRelationalDB extends Subscriber {
 							List<Option> optionList = new ArrayList <Option> (options);
 							UtilityMethods.sortOptions(optionList);	
 							for(Option option : optionList) {
-								String name = SurveyTemplate.getOptionName(option, q.getName());
-								sql += ", " + UtilityMethods.cleanName(name) + " integer";
+								
+								// Create if its an external choice and this question uses external choices
+								//  or its not an external choice and this question does not use external choices
+								if(hasExternalOptions && option.getExternalFile() || !hasExternalOptions && !option.getExternalFile()) {
+									String name = SurveyTemplate.getOptionName(option, q.getName());
+									sql += ", " + UtilityMethods.cleanName(name) + " integer";
+								}
 							}
 						} else {
 							System.out.println("Warning: No Options for Select:" + q.getName());

@@ -35,13 +35,13 @@ $(document).ready(function() {
 	/*
 	 * Add functionality to control buttons
 	 */
-	$('#delete_survey').button().click(function () {
+	$('#delete_survey').click(function () {
 		surveyDelete();
 	});
-	$('#erase_survey').button().click(function () {
+	$('#erase_survey').click(function () {
 		surveyErase();
 	});
-	$('#un_delete_survey').button().click(function () {
+	$('#un_delete_survey').click(function () {
 		surveyUnDelete();
 	});
 	$('#show_deleted').click(function() {
@@ -63,7 +63,7 @@ $(document).ready(function() {
  	 });
 	
 	// Download file
-	$('#downloadFile').button().click(function () {
+	$('#downloadFile').click(function () {
 		var docURL,
 		language,
 		type;
@@ -189,7 +189,7 @@ function completeSurveyList() {
 
 	gControlDelete = 0;
 	gControlRestore = 0;
-	$('#tem_controls').find('button').button("disable");
+	$('#tem_controls').find('button').addClass("disabled");
 	
 	var $surveys = $('#survey_table'),
 	i, survey,
@@ -236,7 +236,7 @@ function completeSurveyList() {
 			}
 			h[++idx] = '></td>';
 			h[++idx] = '<td>';
-			h[++idx] = '<button class="pdf_td" type="button" value="';
+			h[++idx] = '<button class="btn pdf_td" value="';
 			h[++idx] = survey.id;
 			h[++idx] = '"><img src="images/downarrow.png" height="16" width="16"></button>';
 			h[++idx] = '</td>';
@@ -259,11 +259,11 @@ function completeSurveyList() {
 			}
 
 			if(gControlDelete === 1) {
-				$('#delete_survey').button("enable");
+				$('#delete_survey').removeClass("disabled");
 			}
 			if(gControlRestore === 1) {
-				$('#un_delete_survey').button("enable");
-				$('#erase_survey').button("enable");
+				$('#un_delete_survey').removeClass("disabled");
+				$('#erase_survey').removeClass("disabled");
 			}
 		} else {
 
@@ -273,11 +273,11 @@ function completeSurveyList() {
 				--gControlRestore;
 			}
 			if(gControlDelete === 0) {
-				$('#delete_survey').button("disable");
+				$('#delete_survey').addClass("disabled");
 			}
 			if(gControlRestore === 0) {
-				$('#un_delete_survey').button("disable");
-				$('#erase_survey').button("disable");
+				$('#un_delete_survey').addClass("disabled");
+				$('#erase_survey').addClass("disabled");
 			}
 		}
  
@@ -302,7 +302,7 @@ function completeSurveyList() {
  
 	});
 	
-	$('.pdf_td').button().click(function(e) {
+	$('.pdf_td').click(function(e) {
 		var name;
 		
 		gSelectedTemplate = $(this).val();

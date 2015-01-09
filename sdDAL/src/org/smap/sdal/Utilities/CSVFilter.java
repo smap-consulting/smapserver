@@ -48,6 +48,7 @@ public class CSVFilter {
 			String criteria [] = criteriaString.split(",");
 			if(criteria.length < 4) {
 				
+				// This is presumably a search without a criteria - It can't have too many rows so lets include it
 				log.info("Info: Criteria elements less than 4, incude all rows");
 				includeAll = true;
 				
@@ -75,9 +76,7 @@ public class CSVFilter {
 						} else if(criteria[i].equals("matches")) {
 							r1.function = 4;	
 						} else {
-							log.info("Error: unknown function, " + criteria[i] +
-									", include all rows");
-							includeAll = true;
+							log.info("Error: unknown function, " + criteria[i]);
 							return;
 						}
 					}
@@ -98,8 +97,7 @@ public class CSVFilter {
 							}	
 						}
 						if(r1.column == -1) {
-							log.info("Error: no matching column, include all rows");
-							includeAll = true;
+							log.info("Error: no matching column");
 							return;
 						}
 					}
@@ -116,9 +114,7 @@ public class CSVFilter {
 							r1.value =  criteria[i];
 							
 						} else {
-							log.info("Info dynamic filter value are not supported: " + 
-										criteria[i] + ", include all rows ");
-							includeAll = true;
+							log.info("Info dynamic filter value are not supported: ");
 							return;
 						}
 						
@@ -133,8 +129,7 @@ public class CSVFilter {
 				
 			}
 		} else {
-			log.info("Error: Unknown appearance: " + appearance + ", include all rows");
-			includeAll = true;
+			log.info("Error: Unknown appearance: " + appearance);
 		}
 		
 	}
