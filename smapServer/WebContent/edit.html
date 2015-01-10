@@ -11,7 +11,7 @@
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
-	<link rel="stylesheet" href="/css/app.css" /> 
+	<!--  <link rel="stylesheet" href="/css/app.css" /> -->
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 
 	<style> 
@@ -52,14 +52,14 @@
         <span class="icon-bar"></span>
       </button>
       <a href="#" class="navbar-brand">
-      	<img src="/images/logo.png">
-     	 Edit
+      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+     	 Form Builder
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
       <ul class="nav navbar-nav navbar-right">
       	<li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_view">View</span> <span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
             <li class="disabled"><a class="lang" data-lang="c_edit" href="#">Edit</a></li>
@@ -71,21 +71,23 @@
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a id="m_save" href="#">Save</a></li>
-            <li><a id="m_new" href="#">New</a></li>
-            <li><a id="m_import_new" href="#">New from spreadsheet</a>
+            <li><a id="c_save" href="#">Save</a></li>
+            <li><a id="m_open" href="#">Open</a></li>
+            <li class="disabled"><a id="m_new" href="#">New</a></li>
+            <li class="disabled"><a id="m_import" href="#">Import</a>
           </ul>
         </li> 
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span>Show</span> <span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_view">View</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a id="m_form" href="#">Form</a>
+            <li class="disabled"><a id="m_form" href="#">Form</a>
             <li><a id="m_translate" href="#">Translate</a>
-           	<li><a id="m_media" href="#">Attach Media To Survey</a>				<!-- TODO retire -->
+           	<li><a id="m_manage_media" href="/media.html">Media</a></li> 
+           	<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
             <li><a id="m_changes" href="#">Changes</a>
           </ul>
         </li>  
-        <li><a id="m_manage_media" href="/media.html">Media</a></li>               
+                      
 	    <!-- 
 	   	<li><a id="m_undo" href="#">Undo</a></li>
 	    <li><a id="m_redo" href="#">Redo</a></li>
@@ -230,47 +232,37 @@
 	
 
 	<!-- Modals -->
-	<div id="smap" class="reveal-modal" data-reveal>
-  		<h2>Get Survey</h2>
-  		<form class="custom">
-			<label for="project_name">Project :</label>
-			<select id="project_name" class="project_list">
-			</select>
-			<label for="survey_name">Survey :</label>
-			<select id="survey_name" class="survey_select">
-			</select>
-		</form>
-
-		<div class="large-12">
-			<input id="get_survey" class="button radius text-center" value="Get Survey">
+	<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
+		<div class="modal-dialog">
+	   		<div class="modal-content">
+	   			<div class="modal-header">
+	     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
+	   			</div>
+			     <div class="modal-body">
+			  		<form role="form" class="form-horizontal">
+			  			<div class="form-group">
+							<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+							<div class="col-sm-10">
+								<select id="project_name" class="project_list form-control"></select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="form_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
+							<select id="form_name" class="survey_select form-control"></select>
+						</div>
+					</form>
+				</div>
+			</div>
+	
+			<div class="modal-footer">
+	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+	            <button id="get_form" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="m_open">Open</button>
+	        </div>
 		</div>
-  		<a class="close-reveal-modal">&#215;</a>
 	</div>
 	
-	<!-- Popup to add a server side calculation function -->
-	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
-		<label for="ssc_function">function:</label>
-		<select id="ssc_function">
-			<option value=""></option>
-			<option value="area">Area</option>
-			<option value="length">Length / Perimeter</option>
-		</select><br/>
-		<label for="ssc_units">Units:</label>
-		<select id="ssc_units">
-		</select><br/>
-		<label for="ssc_name" required>Name: </label>
-		<input type="text" id="ssc_name"><br/>
-		<label for="ssc_form">Form: </label>
-		<select id="ssc_form">
-		</select>
-		
-		
-		<div class="large-12">
-			<input id="add_ssc_done" class="button radius text-center" value="Done">
-			<input id="add_ssc_cancel" class="button radius text-center" value="Cancel">
-		</div>
-  		<a class="close-reveal-modal">&#215;</a>
-	</div>
+
 	
 	<div id="upload_media" class="reveal-modal" data-reveal>
   		<h2>Upload Media</h2>

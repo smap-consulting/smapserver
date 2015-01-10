@@ -535,7 +535,7 @@ function executeBlock(template, set) {
 
 /*
  * Get available surveys from a remote host
- */
+ *
 function getRemoteSurveys() {
 	
 	var host,
@@ -598,5 +598,5 @@ function getRemoteSurveys() {
 	});
 
 }
-
+*/
 });	

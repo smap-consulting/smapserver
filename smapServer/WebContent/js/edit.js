@@ -83,8 +83,8 @@ $(document).ready(function() {
 	getLoggedInUser(getSurveyList, false, true, undefined, false, true);
 
 	// Add menu functions
-	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
-		$('#smap').foundation('reveal', 'open');
+	$('#m_open').off().click(function() {	// Open an existing form
+		$('#openFormModal').modal('show');
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to Smap
 		globals.model.save();

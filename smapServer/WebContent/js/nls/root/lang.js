@@ -20,6 +20,11 @@ define({
 	"m_notify": "Notifications",
 	"m_view": "View",
 	"m_attach": "Load Attachments",
+	"m_modules": "Modules",
+	"m_open": "Open",
+	"m_new": "New",
+	"m_import": "Import",
+	"m_calculations": "Calculations",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",

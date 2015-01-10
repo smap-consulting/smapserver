@@ -43,27 +43,46 @@
         <span class="icon-bar"></span>
       </button>
       <a href="#" class="navbar-brand">
-      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-     	 User Trail
+      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+     	 Server Side Calculations
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
       <ul class="nav navbar-nav navbar-right">
       	<li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-            <li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="c_edit" href="/edit.html" title="Edit">Edit</a></li> 
-            <li class="disabled restrict_role admin_role analyst_role"><a class="lang" data-lang="m_admin" href="#">Admin</a></li>
+            <li class="disabled"><a class="lang" data-lang="c_edit" href="#">Edit</a></li>
+            <li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html">Admin</a></li>
             <li><a class="lang" data-lang="m_web_forms" href="/webForm.html">Web Forms</a></li>
             <li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
           </ul>
-        </li>       
-       	<li><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-		<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="/fieldManager/notifications.html">Notifications</a></li>			
-		<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
+        </li> 
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a id="c_save" href="#">Save</a></li>
+            <li><a id="m_open" href="#">Open</a></li>
+            <li class="disabled"><a id="m_new" href="#">New</a></li>
+            <li class="disabled"><a id="m_import" href="#">Import</a>
+          </ul>
+        </li> 
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_view">View</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a id="m_form" href="/edit.html">Form</a>
+            <li><a id="m_translate" href="#">Translate</a>
+           	<li><a id="m_manage_media" href="/media.html">Media</a></li> 
+           	<li class="disabled"><a id="m_calculations" href="/ssc.html">Calculations</a></li>
+            <li><a id="m_changes" href="#">Changes</a>
+          </ul>
+        </li>  
+                      
+	    <!-- 
+	   	<li><a id="m_undo" href="#">Undo</a></li>
+	    <li><a id="m_redo" href="#">Redo</a></li>
+	    -->
 		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -80,74 +99,30 @@
 <div class="container">
 	<div class="row">
 	   	
-	   	<div class="col-md-3" id="leftCol">
-	   	<div class = "well">
-	   	
-		   	<div>
-				<label>Project :</label>
-				<select id="project_list" class="form-control project_list"></select>
-			</div>
-			<div>
-				<label>User :</label>
-				<select id="user_list" class="form-control user_list"></select>
-			</div>
+	<!-- Popup to add a server side calculation function -->
+	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
+		<label for="ssc_function">function:</label>
+		<select id="ssc_function">
+			<option value=""></option>
+			<option value="area">Area</option>
+			<option value="length">Length / Perimeter</option>
+		</select><br/>
+		<label for="ssc_units">Units:</label>
+		<select id="ssc_units">
+		</select><br/>
+		<label for="ssc_name" required>Name: </label>
+		<input type="text" id="ssc_name"><br/>
+		<label for="ssc_form">Form: </label>
+		<select id="ssc_form">
+		</select>
 		
-			<div>
-				<label>From :</label>
-	            <div class="form-group">
-	                <div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-	                    <input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-	                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
-	                    </span>
-	                </div>
-	            </div>
-            </div>
-            <div>
-			<label>To :</label>
-	            <div class="form-group">
-	                <div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-	                    <input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-	                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
-	                    </span>
-	                </div>
-	            </div>
-            </div>
-            
-            <div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
-            
-            <input id="time" type="range" value="0" steps="1" />
-            
-            <!-- Expandable panel to manage layers 
-            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  				<div class="panel panel-default">
-    				<div class="panel-heading" role="tab" id="headingOne">
-						<h4 class="panel-title">
-					       <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-					         Map Layers
-					       </a>
-					     </h4>
-    				</div>
-    				<div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-      				<div class="panel-body">
-        				<label class="checkbox" for="visible">
-                			<input id="osmVisible" type="checkbox">visibility
-              			</label>
-      				</div>
-    			</div>
-  			</div>
-  			-->
-  			
-  		</div>
-  
-
-	        
-	   </div>
-  
-		<div class="col-md-9">		
-			<div id="map" class="map"></div>
-			<div id="info" class="alert alert-success"></div>
+		
+		<div class="large-12">
+			<input id="add_ssc_done" class="button radius text-center" value="Done">
+			<input id="add_ssc_cancel" class="button radius text-center" value="Cancel">
 		</div>
-		</div>	<!-- End of row -->
+  		<a class="close-reveal-modal">&#215;</a>
+	</div>
 		
 		<div class="col-md-12 text-center">
 			<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
