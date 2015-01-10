@@ -618,6 +618,7 @@ public class SurveyManager {
 					
 					// Failure
 					connectionSD.rollback(sp);
+					String msg = e.getMessage();
 					System.out.println(e.getMessage());
 					cs.updateFailed = true;
 					cs.errorMsg = e.getMessage();
@@ -697,9 +698,8 @@ public class SurveyManager {
 				pstmtLang.setString(5,  transType);
 				pstmtLang.setString(6, ci.oldVal);
 				
-				System.out.println("Survey update: " + ci.name + " from::" + ci.oldVal + ":: to ::" + ci.newVal);
-				
 				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
+				log.info("SQL: " + pstmtLang.toString());
 				
 				int count = pstmtLang.executeUpdate();
 				if(count == 0) {
@@ -718,7 +718,11 @@ public class SurveyManager {
 				pstmtChangeLog.execute();
 			}
 		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error", e);
+			
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
 			throw e;
 		} finally {
 			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}

@@ -16,7 +16,7 @@
     
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
-    <script data-main="js/edit" src="js/libs/require.js"></script>
+    <script data-main="js/changes" src="js/libs/require.js"></script>
 </head>
 <body>
 
@@ -56,16 +56,12 @@
           </ul>
         </li> 
  
+ 		<li><a id="m_form" href="/edit.html">Form</a>
 		<li><a id="m_translate" href="translate.html">Translate</a>
 		<li><a id="m_manage_media" href="/media.html">Media</a></li> 
 		<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
-		<li><a id="m_changes" href="/changes.html">Changes</a>
            
-                      
-	    <!-- 
-	   	<li><a id="m_undo" href="#">Undo</a></li>
-	    <li><a id="m_redo" href="#">Redo</a></li>
-	    -->
+                     
 		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -85,125 +81,11 @@
 	
 	<div class="uno" id="main_page">
 	
-		<!-- Informational -->
-		<div id="infobox" class="alert alert-warning alert-dismissible" role="alert" style="display:none;">
-  			<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-  			<span id="errormesg"></span>
-		</div>
 		
 		<!-- List of changes to the current survey -->
-		<div id="changes" style="display:none;">
+		<div id="changes">
 		</div>
-		
-		<!-- Main Survey editing page -->
-		<div id="survey">
-		</div>
-		
-		<!-- Specialist translation editing -->
-		<div id="translate" style="display:none;">
-			<div class="errorcount">
-  				<div class="large-4 small-4 columns">
-  					<span id="successLabel" class="success round radius label"><span class="counter">0</span> Successful Changes</span>
-        			<span id="failedLabel" class="alert round radius label"><span class="counter">0</span> Failed Changes</span>
-    				<p class="qcount">Translations Made: </p>		
-  				</div>
-	  			<div class="tabhint large-4 columns">
-	    			<p class="tabhint"> Once you've filled a form field, press tab to go to the next one! </p>
-	  			</div>
-	  			<div class="large-4 small-8 columns ecount">
-	    			<a class="button tiny white m_save_survey disabled" disabled="disabled">Save Translations</a>
-	 			 </div>
-	 		 </div>
-	 		 <div class="errorcount" style="top: 90px;">
-	 			 	<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language1" class="language_list" tabindex="-1"></select>
-					</div>
-					<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language2" class="language_list" tabindex="-1"></select></div>
-					</div>
- 			 <div class="questions translate"></div>
-		</div>
-		
 
-		<div id="settings" style="display:none;">
-  		<h2>Settings</h2>
-  		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
-  		create a new version of the survey and will not save any changes you have made to the survey
-  		proper such as changes to questions.  The undo and redo buttons are not used for
-  		information on this page</p>
-  		<form>
-  			<div class="large-12 columns">
-	      		<label>Survey Name:
-	        		<input id="set_survey_name" type="text" placeholder="Enter the name of the survey" />
-	      		</label>
-    		</div>
-    		 <div class="large-12 columns">
-	      		<label>Survey Identifier:
-	        		<input id="set_survey_ident" type="text"  readonly/>
-	      		</label>
-    		</div>
-    		<div class="large-12 columns">
-				<label>Project :</label>
-				<select id="set_project_name" class="project_list">
-				</select>
-			</div>
-			<div class="large-12 columns">
-				<label>Default Language :</label>
-				<select id="set_default_language" class="language_list">
-				</select>
-			</div>
-		</form>
-		<dl class="accordion" data-accordion>
-  			<dd class="accordion-navigation">
-    			<a href="#panel1">Server Side Calculations</a>
-    			<div id="panel1" class="content">
-    			
-    				<table id="fl" border="1" width=100%">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Form</th>
-								<th>Function</th>
-								<th>Units</th>
-								<th>Parameters</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="sscList">
-						</tbody>
-					</table>
-	
-					<button id="add_ssc">Add Calculated Value</button>
-					
-    			</div>
-    		</dd>
-    			<dd class="accordion-navigation">
-    			<a href="#panel2">Attach CSV Files</a>
-    			<div id="panel2" class="content">
-    				<table id="csv_manifest_list" class="tablesorter" border="1" width=100%">
-						<thead>
-							<tr>
-								<th>File</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="csvList">
-						</tbody>
-					</table>
-					
-					<button id="add_csv">Attach CSV file</button>
-					
-    			</div>
-    		</dd>
-    	</dl>
-    			
-		<div class="large-12">
-			<button id="save_settings" class="button radius text-center" disabled="disabled">Save Settings</button>
-		</div>		
-
-	
-	</div>
-	
 
 	<!-- Modals -->
 	<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">

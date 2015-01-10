@@ -426,7 +426,7 @@ define(function() {
 				
 				// The following items are to write the change to the database
 				label.languageName = this.survey.languages[language];
-				label.transId = item.text_id;
+				label.key = item.text_id;
 				
 				labelMod.items.push(label);
 			}
