@@ -20,9 +20,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
@@ -127,7 +129,11 @@ public class UploadFiles extends Application {
 						original_url = item.getString();
 						log.info("original url:" + original_url);
 					} else if(item.getFieldName().equals("survey_id")) {
-						sId = Integer.parseInt(item.getString());
+						try {
+							sId = Integer.parseInt(item.getString());
+						} catch (Exception e) {
+							
+						}
 						log.info("surveyId:" + sId);
 					}
 					
@@ -160,10 +166,11 @@ public class UploadFiles extends Application {
 					
 					MediaInfo mediaInfo = new MediaInfo();
 					if(sId > 0) {
-						mediaInfo.setFolder(basePath, sId, connectionSD);
+						mediaInfo.setFolder(basePath, sId, null, connectionSD);
 					} else {		
 						mediaInfo.setFolder(basePath, user, connectionSD);				 
 					}
+					mediaInfo.setServer(request.getRequestURL().toString());
 					
 					String folderPath = mediaInfo.getPath();
 					if(folderPath != null) {
@@ -218,6 +225,106 @@ public class UploadFiles extends Application {
 		
 	}
 	
+	@DELETE
+	@Produces("application/json")
+	@Path("/media/organisation/{oId}/{filename}")
+	public Response deleteMedia(
+			@PathParam("oId") int oId,
+			@PathParam("filename") String filename,
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		Response response = null;
+		
+		System.out.println("Deleting " + filename);
+
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
+		orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+		// End Authorisation		
+
+		try {
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			String serverName = request.getServerName();
+			
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {
+				basePath = "/ebs1/servers/" + serverName.toLowerCase();
+			}
+			
+			deleteFile(basePath, serverName, null, oId, filename);
+			
+			MediaInfo mediaInfo = new MediaInfo();
+			mediaInfo.setServer(request.getRequestURL().toString());
+			mediaInfo.setFolder(basePath, request.getRemoteUser(), connectionSD);				 
+		
+			MediaResponse mResponse = new MediaResponse ();
+		    mResponse.files = mediaInfo.get();			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(mResponse);
+			log.info("Responding with " + mResponse.files.size() + " files");
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			response = Response.serverError().build();
+		}
+		
+		return response;
+		
+	}
+	
+	@DELETE
+	@Produces("application/json")
+	@Path("/media/{sIdent}/{filename}")
+	public Response deleteMediaSurvey(
+			@PathParam("sIdent") String sIdent,
+			@PathParam("filename") String filename,
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		Response response = null;
+		
+		System.out.println("Deleting " + filename);
+
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
+		orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+		// End Authorisation		
+
+		try {
+			
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			String serverName = request.getServerName(); 
+			
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {
+				basePath = "/ebs1/servers/" + serverName.toLowerCase();
+			}
+			
+			deleteFile(basePath, serverName, sIdent, 0, filename);
+			
+			MediaInfo mediaInfo = new MediaInfo();
+			mediaInfo.setServer(request.getRequestURL().toString());
+			mediaInfo.setFolder(basePath, 0, sIdent, connectionSD);
+			
+			MediaResponse mResponse = new MediaResponse ();
+		    mResponse.files = mediaInfo.get();			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(mResponse);
+			log.info("Responding with " + mResponse.files.size() + " files");
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			response = Response.serverError().build();
+		}
+		
+		return response;
+		
+	}
 	/*
 	 * Return available files
 	 */
@@ -267,7 +374,7 @@ public class UploadFiles extends Application {
 					
 			// Get the path to the media folder	
 			if(sId > 0) {
-				mediaInfo.setFolder(basePath, sId, connectionSD);
+				mediaInfo.setFolder(basePath, sId, null, connectionSD);
 			} else {		
 				mediaInfo.setFolder(basePath, user, connectionSD);				 
 			}
@@ -385,49 +492,28 @@ public class UploadFiles extends Application {
 	}
 	
 	/*
-	private ValueLabelCols getValueLabelCols(Connection connectionSD, int qId, String qDisplayName, String [] cols) throws Exception {
+	 * Delete the file
+	 */
+	private void deleteFile(String basePath, String serverName, String sIdent, int oId, String filename) {
 		
-		ValueLabelCols vlc = new ValueLabelCols();
+		String path = null;
 		
-
-		PreparedStatement pstmt = null;
-		String sql = "SELECT o.ovalue, t.value " +
-				"from option o, translation t " +  		
-				"where o.label_id = t.text_id " +
-				"and o.q_id = ? " +
-				"and externalfile ='false';";	
 		
-		try {
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1,  qId);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				String valueName = rs.getString(1);
-				String labelName = rs.getString(2);
-				System.out.println("Value column: " + valueName + " : " + labelName);
-				
-				vlc.value = -1;
-				vlc.label = -1;
-				for(int i = 0; i < cols.length; i++) {
-					if(cols[i].toLowerCase().equals(valueName.toLowerCase())) {
-						vlc.value = i;
-					} else if(cols[i].toLowerCase().equals(labelName.toLowerCase())) {
-						vlc.label = i;
-					}
-				}
-			} else {
-				throw new Exception("The names of the columns to use in this csv file "
-						+ "have not been set in question " + qDisplayName);
+		
+		if(filename != null) {
+			if(sIdent != null) {
+				path = basePath + "/media/" + sIdent + "/" + filename;
+			} else if( oId > 0) {
+				path = basePath + "/media/organisation/" + oId + "/" + filename;
 			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
+			System.out.println("Deleting: " + path);
+			
+			File f = new File(path);
+			f.delete();
 		}
-		return vlc;
+		
+			
 	}
-*/
 
 }
 

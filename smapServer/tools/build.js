@@ -27,6 +27,9 @@
         },
         {
             name: '../userTrail'
+        },
+        {
+            name: '../media'
         }
 
     ]

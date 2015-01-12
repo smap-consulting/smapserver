@@ -228,6 +228,8 @@ create TABLE server (
 	);
 ALTER TABLE server OWNER TO ws;
 
+-- Upgrade to:  15.01 from 14.12 =======
+
 -- Changes required for updating surveys via loading a csv file
 ALTER TABLE option add column externalfile boolean default false;
 ALTER TABLE survey_change add column apply_results boolean default false;

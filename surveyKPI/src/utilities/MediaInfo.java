@@ -60,12 +60,18 @@ public class MediaInfo {
 	}
 	
 	/*
-	 * Set folder from survey id
+	 * Set folder from survey id or the survey Ident
 	 */
-	public boolean setFolder(String basePath, int sId, Connection conn) {
+	public boolean setFolder(String basePath, int sId, String sIdent, Connection conn) {
 		boolean status = false;
+	
+		if(sIdent == null) {
+			folderUrl = getUrlForSurveyId(sId, conn);
+		} else {
+			folderUrl = "/media/" + sIdent;
+		}
+				
 		
-		folderUrl = getUrlForSurveyId(sId, conn);
 		if(folderUrl != null) {
 			folderPath = basePath + folderUrl;
 			folder = new File(folderPath);	
@@ -121,6 +127,7 @@ public class MediaInfo {
 	}
 	
 	public void setServer(String url) {
+		System.out.println("### Setting server with: " + url);
 		if(url != null) {
 			int a = url.indexOf("//");
 			int b = url.indexOf("/", a + 2);
@@ -128,6 +135,7 @@ public class MediaInfo {
 				server = url.substring(0, b) + "/";
 			}
 		}
+		System.out.println("Server is: " + server);
 	}
 	
 	/*
@@ -157,7 +165,10 @@ public class MediaInfo {
 						}
 					}
 					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
-					mi.deleteUrl = mi.url;
+					mi.deleteUrl = server + "surveyKPI/upload" + folderUrl + "/" + mi.name; 
+					System.out.println("Delete: " + mi.deleteUrl);
+				} else {
+					System.out.println("Error: $$$$$$$ Server is null");
 				}
 				mi.deleteType = "DELETE";
 				media.add(mi);

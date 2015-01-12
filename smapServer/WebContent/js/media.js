@@ -25,13 +25,14 @@ require.config({
 });
 
 require([
+         'jquery',
          'app/common', 
          'bootstrap.min',
          'app/localise',
          'app/globals',
          'bootstrap.file-input'
         ], 
-        function(common, bootstrap, localise, globals) {
+        function($,common, bootstrap, localise, globals) {
 	
     'use strict';
     
@@ -45,11 +46,15 @@ $(document).ready(function() {
 	getLoggedInUser(gotLoggedInUser, false, false, undefined, false, false);
 	getFilesFromServer();		// Get the organisational level media files
 	
+	gSId = undefined;
 	gUrl = gBaseUrl;
+	$('#survey_id').val("");				// clear the survey id in the forms hidden field
     $('#surveyLevelTab a').click(function (e) {
     	  e.preventDefault();
     	  $(this).tab('show');
     	  gUrl = gBaseUrl + '?sId=' + gSId;
+    	  $('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    	  
     	  $('#orgPanel').hide();
     	  $('#surveyPanel').show();
     })
@@ -58,6 +63,7 @@ $(document).ready(function() {
     	  e.preventDefault();
     	  $(this).tab('show');
     	  gUrl = gBaseUrl;
+    	  $('#survey_id').val("");				// clear the survey id in the forms hidden field
     	  
     	  $('#orgPanel').show();
     	  $('#surveyPanel').hide();
@@ -124,7 +130,10 @@ function gotLoggedInUser() {
 }
 
 function gotSurveyDetails() {
-	getFilesFromServer(globals.gCurrentSurvey);
+	if(globals.gCurrentSurvey) {
+		$('#surveyLevelTab').removeClass("disabled");
+		getFilesFromServer(globals.gCurrentSurvey);
+	}
 }
 
 function getFilesFromServer(sId) {
@@ -154,7 +163,7 @@ function getFilesFromServer(sId) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to get media: " + err);
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
 			}
 		}
 	});	
@@ -210,7 +219,9 @@ function refreshView(data, sId) {
 				h[++idx] = '</p>';
 			h[++idx] = '</td>';
 			h[++idx] = '<td>';
-				h[++idx] = '<button class="btn btn-danger">';
+				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
+				h[++idx] = files[i].deleteUrl;
+				h[++idx] = '">';
 				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
 				h[++idx] = ' Delete';
 				h[++idx] = '</button>';
@@ -221,12 +232,42 @@ function refreshView(data, sId) {
 		}
 		
 		$element.html(h.join(""));
+		$('.media_del', $element).click(function () {
+			delete_media($(this).data('url'));
+		});
 	
-	}
-		
-	
-	
+	}	
 }
+
+function delete_media(url) {
+	addHourglass();
+	$.ajax({
+		url: url,
+		type: 'DELETE',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			console.log(data);
+			
+			var address = url;
+			if(url.indexOf('organisation') > 0) {
+				refreshView(data);
+			} else {
+				refreshView(data, gSId);
+			}
+	
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
+}
+
 });
 	    	
 	       
