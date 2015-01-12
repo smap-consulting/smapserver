@@ -24,6 +24,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -186,6 +187,7 @@ public class UploadFiles extends Application {
 						log.info("Responding with " + mResponse.files.size() + " files");
 						response = Response.ok(resp).build();	
 					} else {
+						log.log(Level.SEVERE, "Media folder not found");
 						response = Response.serverError().entity("Media folder not found").build();
 					}
 				
@@ -223,13 +225,13 @@ public class UploadFiles extends Application {
 	@Produces("application/json")
 	@Path("/media")
 	public Response getMedia(
-			@Context HttpServletRequest request
+			@Context HttpServletRequest request,
+			@QueryParam("sId") int sId
 			) throws IOException {
 		
 		Response response = null;
 		String serverName = request.getServerName();
 		String user = request.getRemoteUser();
-		int sId = -1;	// TODO set from request if available
 		
 		/*
 		 * Authorise

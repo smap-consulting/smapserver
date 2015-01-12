@@ -452,13 +452,18 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 				updateUserDetails(data, getOrganisationsFn);
 			}
 			
+			if(!dontGetCurrentSurvey) {	// Hack, on edit screen current survey is set as parameter not from the user's defaults
+				globals.gCurrentSurvey = data.current_survey_id;
+			}
+			globals.gCurrentProject = data.current_project_id;
+			$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
+			
 			if(getProjects) {
-				globals.gCurrentProject = data.current_project_id;
-				if(!dontGetCurrentSurvey) {	// Hack, on edit screen current survey is set as parameter not from the user's defaults
-					globals.gCurrentSurvey = data.current_survey_id;
-				}
-				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects 
+			} else {
+				if(typeof callback !== "undefined") {
+					callback(globals.gCurrentSurvey);				// Call the callback with the correct current project
+				}
 			}
 
 		},
@@ -751,5 +756,69 @@ function questionMetaURL (sId, lang, qId) {
 	return url;
 }
 
+/*
+ * Get a survey details - depends on globals being set
+ */
+function getSurveyDetails(callback) {
 
+	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
+	console.log("Getting survey: " + globals.gCurrentSurvey);
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.model.survey = data;
+			globals.model.setSettings();
+			console.log("Survey");
+			console.log(data);
+			setLanguages(data.languages);
+			
+			if(typeof callback == "function") {
+				callback();
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get survey: " + err);
+			}
+		}
+	});	
+	
+	/*
+	 * Set the languages for the editor
+	 */
+	function setLanguages(languages) {
+		
+		var h = [],
+			idx = -1,
+			$lang = $('.language_list'),
+			$lang1 = $('#language1'),
+			$lang2 = $('#language2'),
+			i;
+		
+		gLanguage1 = 0;	// Language indexes used for translations
+		gLanguage2 = 0;
+		if(languages.length > 1) {
+			gLanguage2 = 1;
+		}
+
+		for (i = 0; i < languages.length; i++) {
+			h[++idx] = '<option value="';
+				h[++idx] = i;
+				h[++idx] = '">';
+				h[++idx] = languages[i];
+			h[++idx] = '</option>';
+		}
+		$lang.empty().append(h.join(""));
+		$lang1.val(gLanguage1);
+		$lang2.val(gLanguage2)
+	}
+}
 

@@ -68,15 +68,11 @@ $(document).ready(function() {
 
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurveyList, false, true, undefined, false, false);
+	getLoggedInUser(surveyListDone, false, true, undefined, false, false);
 
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
 		$('#openFormModal').modal('show');
-	});
-	$('.m_save_survey').off().click(function() {	// Save a survey to Smap
-		globals.model.save();
-		getSurvey();
 	});
 
 	// Add menu functions
@@ -119,7 +115,7 @@ $(document).ready(function() {
 	$('#get_survey').off().click(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurvey();
+		getSurveyDetails();
 		$('#smap').foundation('reveal', 'close');
  	 });
 	
@@ -157,13 +153,17 @@ $(document).ready(function() {
 function getSurveyList() {
 	console.log("getSurveyList: " + globals.gCurrentSurvey);
 	if(globals.gCurrentSurvey > 0) {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
+		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
 	} else {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
 	}
 }
 
+function surveyListDone() {
+	getSurveyDetails(refreshView);
+}
 
+/*
 function getSurvey() {
 
 	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
@@ -198,6 +198,7 @@ function getSurvey() {
 	});	
 }
 
+
 function setLanguages(languages) {
 	
 	var h = [],
@@ -224,6 +225,7 @@ function setLanguages(languages) {
 	$lang1.val(gLanguage1);
 	$lang2.val(gLanguage2)
 }
+*/
 
 function refreshView() {
 	

@@ -67,11 +67,7 @@ $(document).ready(function() {
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurvey, false, true, undefined, false, false);
-
-	if(globals.model.survey) {
-		refreshView();
-	}
+	getLoggedInUser(surveyListDone, false, true, undefined, false, false);
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
@@ -80,7 +76,7 @@ $(document).ready(function() {
 	
 	$('.save_form').off().click(function() {	// Save a survey to Smap
 		globals.model.save();
-		getSurvey();
+		getSurveyDetails();
 	});
 
 	// Add menu functions
@@ -120,7 +116,7 @@ $(document).ready(function() {
 	$('#get_survey').off().click(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurvey();
+		getSurveyDetails();
 		$('#smap').foundation('reveal', 'close');
  	 });
 	
@@ -158,73 +154,16 @@ $(document).ready(function() {
 function getSurveyList() {
 	console.log("getSurveyList: " + globals.gCurrentSurvey);
 	if(globals.gCurrentSurvey > 0) {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
+		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
 	} else {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
 	}
 }
 
-
-function getSurvey() {
-
-	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
-	console.log("Getting survey: " + globals.gCurrentSurvey);
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			globals.model.survey = data;
-			globals.model.setSettings();
-			console.log("Survey");
-			console.log(data);
-			setLanguages(data.languages);
-			
-			// Set the display name
-			$('#formName').html(data.displayName);
-			
-			refreshView();
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get survey: " + err);
-			}
-		}
-	});	
+function surveyListDone() {
+	getSurveyDetails(refreshView);
 }
 
-function setLanguages(languages) {
-	
-	var h = [],
-		idx = -1,
-		$lang = $('.language_list'),
-		$lang1 = $('#language1'),
-		$lang2 = $('#language2'),
-		i;
-	
-	gLanguage1 = 0;	// Language indexes used for translations
-	gLanguage2 = 0;
-	if(languages.length > 1) {
-		gLanguage2 = 1;
-	}
-
-	for (i = 0; i < languages.length; i++) {
-		h[++idx] = '<option value="';
-			h[++idx] = i;
-			h[++idx] = '">';
-			h[++idx] = languages[i];
-		h[++idx] = '</option>';
-	}
-	$lang.empty().append(h.join(""));
-	$lang1.val(gLanguage1);
-	$lang2.val(gLanguage2)
-}
 
 function refreshView() {
 	
@@ -243,9 +182,9 @@ function refreshView() {
 		numberLanguages = survey.languages.length;
 	}
 	
-	// Modify Template to reflect view parameters
-	
-		
+	// Set the display name
+	$('#formName').html(survey.displayName);
+			
 	// Add all unique questions from all forms
 	for(i = 0; i < survey.forms.length; i++) {
 		console.log("Form name: " + survey.forms[i].name);
@@ -322,30 +261,6 @@ function refreshView() {
 	});
 
 	
-}
-
-// Show the translation view
-function showTranslate() {
-	$("#translate").show();
-	$("#settings,#changes, #survey").hide();
-}
-
-// Show the settings view
-function showSettings() {
-	$("#translate, #changes, #survey").hide();
-	$("#settings").show();
-}
-
-//Show the changes to this survey
-function showChanges() {
-	$("#translate, #settings, #survey").hide();
-	$("#changes").show();
-}
-
-//Show the survey page
-function showSurvey() {
-	$("#translate, #settings, #changes").hide();
-	$("#survey").show();
 }
 
 /*
