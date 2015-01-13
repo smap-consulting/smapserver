@@ -78,16 +78,7 @@ $(document).ready(function() {
 		globals.model.save();
 		getSurveyDetails();
 	});
-
-	// Add menu functions
-	$('#m_simple_edit').off().click(function() {	// Edit a survey
-		gMode = "simple_edit";
-		refreshView(gMode);
-	});
-	$('#m_translate').off().click(function() {	// Translate languages
-		gMode = "translate";
-		refreshView(gMode);
-	});
+	
 	$('#m_settings').off().click(function() {	// Get a survey from Smap
 		gMode = "settings";
 		refreshView(gMode);
@@ -245,7 +236,6 @@ function refreshView() {
 	}
 	qList = [];		// clear temporary question list	
 
-	showTranslate();
 	setTranslateHtml($('#translate .questions'), gTempQuestions, survey);
 	var questionsedited="0";
 	$(".lang_b").first().focus();

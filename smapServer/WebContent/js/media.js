@@ -50,13 +50,15 @@ $(document).ready(function() {
 	gUrl = gBaseUrl;
 	$('#survey_id').val("");				// clear the survey id in the forms hidden field
     $('#surveyLevelTab a').click(function (e) {
-    	  e.preventDefault();
-    	  $(this).tab('show');
-    	  gUrl = gBaseUrl + '?sId=' + gSId;
-    	  $('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    	if(gSId) {
+    		e.preventDefault();
+    		$(this).tab('show');
+    		gUrl = gBaseUrl + '?sId=' + gSId;
+    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
     	  
-    	  $('#orgPanel').hide();
-    	  $('#surveyPanel').show();
+    		$('#orgPanel').hide();
+    		$('#surveyPanel').show();
+    	}
     })
     
     $('#orgLevelTab a').click(function (e) {

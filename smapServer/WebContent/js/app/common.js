@@ -786,6 +786,11 @@ function getSurveyDetails(callback) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
+				if(xhr.status == 404) {
+					// The current survey has probably been deleted or the user no longer has access
+					globals.gCurrentSurvey = undefined;
+					return;		
+				}
 				alert("Error: Failed to get survey: " + err);
 			}
 		}
