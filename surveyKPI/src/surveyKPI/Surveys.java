@@ -152,7 +152,9 @@ public class Surveys extends Application {
 		return response;
 	}
 	
-	// JSON
+	/*
+	 * Get details on a survey
+	 */
 	@GET
 	@Path("/{sId}")
 	@Produces("application/json")

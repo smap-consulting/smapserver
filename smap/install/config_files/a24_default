@@ -167,8 +167,8 @@
 		Require all granted
     </location>
 	
-	alias /attachments {your_files}/attachments
-	<Directory {your_files}/attachments>
+	alias /attachments /smap/attachments
+	<Directory /smap/attachments>
 		Require all granted
 	</Directory>
 	

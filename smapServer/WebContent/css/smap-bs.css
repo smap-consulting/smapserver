@@ -112,3 +112,107 @@ tr.deleted td a {
 	z-index: 10;
 	width: 100%;
 }
+
+/*
+ *--------------------------------------------------------------------------------
+ * Panel settings for the editor
+ */
+ #formListHeader {
+ 	padding-bottom: 0px;
+ }
+ #formListHeader .table {
+	margin-bottom: 0px;
+}
+#formList .table {
+ 	margin-bottom: 0px;
+ }
+.panel-level-1 {
+	border-color: red;
+}
+.panel-level-1 > .panel-heading {
+	background-color: red;
+	border-color: red;
+}
+
+.q_type_col {
+	width: 30px;
+
+}
+
+.q_icons_col {
+	width: 30px;	
+
+}
+
+.q_name_col {
+	width: 25%;
+	min-width: 90px;
+
+}
+
+.q_label_col {
+	width: 65%;
+	min-width: 260px;	
+}
+
+/* show the move cursor as the user moves the mouse over the panel header.*/
+#formList .panel-heading {
+	cursor: move;
+}
+
+/*
+/* Icons */
+
+.q_icons_col > .glyphicon-trash {
+	color: red;
+}
+.edit_icon1 {
+	font-size: 20px;
+	margin-top: 7px;
+	margin-bottom:3px;
+	margin-right: 5px;
+	margin-left: 0px;
+	color: black;
+}
+.edit_icon2 {
+	font-size: 20px;
+	margin-top: 3px;
+	margin-bottom:7px;
+	margin-right: 5px;
+	margin-left: 0px;
+	color: black;
+}
+
+.edit_type {
+	font-size: 30px;
+	margin-top: 16px;
+	margin-bottom:36px;
+	margin-right: 0px;
+	margin-left: 0px;
+	color: black;
+}
+
+.edit_image {
+	height: 40px;
+	margin-top: 11px;
+	margin-bottom:31px;
+	margin-right: 0px;
+	margin-left: 0px;
+}
+
+.qname {
+	width: 100%;
+	height: 60px;
+}
+textarea {
+	width: 100%;
+	overflow: hidden; 
+	word-wrap: break-word; 
+	resize: vertical; 
+	height: 60px;
+}
+
+qMedia {
+	height: 80px;
+	width: 80px;
+}

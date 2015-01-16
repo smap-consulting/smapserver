@@ -12,9 +12,8 @@ public class Question {
 	public String type;
 	public String text_id;
 	public String hint_id;
-	public String list_name;
+	public String list_name;		// A reference to the list of options
 	public String appearance;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
-	public ArrayList<Option> options = new ArrayList<Option> ();
 	
 }

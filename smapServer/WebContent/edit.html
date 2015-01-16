@@ -4,14 +4,14 @@
 	<meta name="keywords" content="" />
 	<meta name="description" content="" />
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=0.7">
 
 	<title>Form Builder</title>
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
-	<!--  <link rel="stylesheet" href="/css/app.css" /> -->
+	<!-- <link rel="stylesheet" href="/css/app.css" /> -->
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
@@ -80,8 +80,64 @@
 
   </div>
 </header>
-	
-	      
+
+<div class="container">
+<!-- Heading for questions -->
+<div id="formListHeader" class="panel-heading">
+	<table class="table">
+		<tr>
+			<td class="q_type_col">Type</td>
+			<td class="q_name_col">Name</td>
+			<td class="q_label_col">
+				<select class="form-control" id="selProperty">
+					<option value="label">Label</option>
+					<option value="media">Media</option>
+				</select>
+			</td>
+			<td class="q_icons_col"></td>
+		</tr>
+	</table>
+</div>
+<ol id="formList" class="list-unstyled">
+</ol>
+</div>
+
+
+<div style="display:none;">
+	<div class="panel panel-info">
+		<div class="panel-heading">
+        		<a data-toggle="collapse"  href="#collapseOne">
+					Collapse <span class="glyphicon glyphicon-collapse-down pull-right"></span>
+        		</a>	
+		</div>
+		<div id="collapseOne" class="panel-body collapse">
+			<div class="panel panel-level-1">
+				<div class="panel-heading">
+					Heading
+				</div>
+				<div class="panel-body">
+					Body
+				</div>"
+			</div>
+
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					Heading
+				</div>
+				<div class="panel-body">
+					<div class="panel panel-level-1">
+						<div class="panel-heading">
+							Heading
+						</div>
+						<div class="panel-body">
+							Body
+						</div>
+					</div>
+				</div>"
+			</div>
+		</div>
+	</div>
+</div>      
 	    
 	
 	
@@ -93,38 +149,10 @@
   			<span id="errormesg"></span>
 		</div>
 		
-		<!-- List of changes to the current survey -->
-		<div id="changes" style="display:none;">
-		</div>
 		
-		<!-- Main Survey editing page -->
-		<div id="survey">
-		</div>
+
 		
-		<!-- Specialist translation editing -->
-		<div id="translate" style="display:none;">
-			<div class="errorcount">
-  				<div class="large-4 small-4 columns">
-  					<span id="successLabel" class="success round radius label"><span class="counter">0</span> Successful Changes</span>
-        			<span id="failedLabel" class="alert round radius label"><span class="counter">0</span> Failed Changes</span>
-    				<p class="qcount">Translations Made: </p>		
-  				</div>
-	  			<div class="tabhint large-4 columns">
-	    			<p class="tabhint"> Once you've filled a form field, press tab to go to the next one! </p>
-	  			</div>
-	  			<div class="large-4 small-8 columns ecount">
-	    			<a class="button tiny white m_save_survey disabled" disabled="disabled">Save Translations</a>
-	 			 </div>
-	 		 </div>
-	 		 <div class="errorcount" style="top: 90px;">
-	 			 	<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language1" class="language_list" tabindex="-1"></select>
-					</div>
-					<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language2" class="language_list" tabindex="-1"></select></div>
-					</div>
- 			 <div class="questions translate"></div>
-		</div>
+
 		
 
 		<div id="settings" style="display:none;">

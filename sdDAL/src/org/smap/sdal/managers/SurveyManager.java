@@ -215,76 +215,76 @@ public class SurveyManager {
 	}
 
 	/*
-	 * Add survey details
+	 * Get a survey's details
 	 */
 	private void populateSurvey(Connection sd, Survey s) throws Exception {
 		
-		ResultSet resultSet1 = null;
-		ResultSet resultSet2 = null;
-		ResultSet resultSet3 = null;
-		ResultSet resultSet5 = null;
-		ResultSet resultSet6 = null;
-		ResultSet resultSet7 = null;
-		ResultSet resultSet8 = null;
-		String sql = "select f.f_id, f.name from form f where f.s_id = ?;";
-		String sql2 = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id from question q where f_id = ?";
-		String sql3 = "select distinct t.language from translation t where s_id = ? order by t.language asc";
-		String sql5 = "select o.o_id, o.ovalue as value, o.label_id  from option o where q_id = ? order by seq";
-		String sql6 = "SELECT ssc.id, ssc.name, ssc.function, ssc.parameters, ssc.units, f.name, f.f_id " +
+		/*
+		 * Prepared Statements
+		 */
+		
+		// Get the forms belonging to this survey
+		ResultSet rsGetForms = null;
+		String sqlGetForms = "select f.f_id, f.name from form f where f.s_id = ?;";
+		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
+		
+		// Get the questions belonging to a form
+		ResultSet rsGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id from question q where f_id = ?";
+		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+
+		// Get the options belonging to a question		
+		ResultSet rsGetOptions = null;
+		String sqlGetOptions = "select o.o_id, o.ovalue as value, o.label_id  from option o where q_id = ? order by seq";
+		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
+		
+		// Get the server side calculations
+		ResultSet rsGetSSC = null;
+		String sqlGetSSC = "SELECT ssc.id, ssc.name, ssc.function, ssc.parameters, ssc.units, f.name, f.f_id " +
 				"FROM ssc ssc, form f WHERE ssc.s_id = ? AND ssc.f_id = f.f_id ORDER BY id";
-		//String sql7 = "SELECT t.value, t.text_id, t.type FROM translation t where t.s_id = ?" +
-		//		" and t.type = 'csv' ";	
-		String sql8 = "SELECT c.changes, c.c_id, c.version, u.name, c.updated_time " +
+		PreparedStatement pstmtGetSSC = sd.prepareStatement(sqlGetSSC);
+		
+		// Get the changes that have been made to this survey
+		ResultSet rsGetChanges = null;
+		String sqlGetChanges = "SELECT c.changes, c.c_id, c.version, u.name, c.updated_time " +
 				"from survey_change c, users u " +
 				"where c.s_id = ? " +
 				"and c.user_id = u.id " +
 				"order by c_id desc; ";
-	
-		PreparedStatement pstmt1 = sd.prepareStatement(sql);	
-		PreparedStatement pstmt2 = sd.prepareStatement(sql2);
-		PreparedStatement pstmt3 = sd.prepareStatement(sql3);
-		PreparedStatement pstmt5 = sd.prepareStatement(sql5);
-		PreparedStatement pstmt6 = sd.prepareStatement(sql6);
-		//PreparedStatement pstmt7 = sd.prepareStatement(sql7);
-		PreparedStatement pstmt8 = sd.prepareStatement(sql8);
+		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
 		
-		// Add Languages	
-		pstmt3.setInt(1, s.getId());
-		resultSet3 = pstmt3.executeQuery();
-		
-		while (resultSet3.next()) {
-			s.languages.add(resultSet3.getString(1));
-		}
+		// Get the available languages
+		s.languages = MediaUtilities.getLanguagesForSurvey(sd, s.id);
 		
 		// Set the default language if it has not previously been set
 		if(s.def_lang == null) {
 			s.def_lang = s.languages.get(0);
 		}
 		
-		// Add Forms
-		pstmt1.setInt(1, s.id);
-		resultSet1 = pstmt1.executeQuery();
+		// Get the Forms
+		pstmtGetForms.setInt(1, s.id);
+		rsGetForms = pstmtGetForms.executeQuery();
 		
-		while (resultSet1.next()) {								
+		while (rsGetForms.next()) {								
 			Form f = new Form();
-			f.id = resultSet1.getInt(1);
-			f.name = resultSet1.getString(2);
+			f.id = rsGetForms.getInt(1);
+			f.name = rsGetForms.getString(2);
 			
 			/*
 			 * Get the questions for this form
 			 */
-			System.out.println("SQL: " + sql2 + " : " + f.id);
-			pstmt2.setInt(1, f.id);
-			resultSet2 = pstmt2.executeQuery();
+			System.out.println("SQL: " + sqlGetQuestions + " : " + f.id);
+			pstmtGetQuestions.setInt(1, f.id);
+			rsGetQuestions = pstmtGetQuestions.executeQuery();
 			
-			while (resultSet2.next()) {
+			while (rsGetQuestions.next()) {
 				Question q = new Question();
-				q.id = resultSet2.getInt(1);
-				q.name = resultSet2.getString(2);
-				q.type = resultSet2.getString(3);
-				q.text_id = resultSet2.getString(4);
-				q.list_name = resultSet2.getString(5);
-				q.hint_id = resultSet2.getString(6);
+				q.id = rsGetQuestions.getInt(1);
+				q.name = rsGetQuestions.getString(2);
+				q.type = rsGetQuestions.getString(3);
+				q.text_id = rsGetQuestions.getString(4);
+				q.list_name = rsGetQuestions.getString(5);
+				q.hint_id = rsGetQuestions.getString(6);
 				
 				// If the survey was loaded from xls it will not have a list name
 				if(q.list_name == null || q.list_name.trim().length() == 0) {
@@ -298,18 +298,18 @@ public class SurveyManager {
 				 * If this is a select question get the options
 				 */
 				if(q.type.startsWith("select")) {
+					// Only add the options if this option list has not already been added by another question
 					ArrayList<Option> options = s.optionLists.get(q.list_name);
-					if(options == null) {
-						// Ignore if this option list has already been added by another question
+					if(options == null) {				
 						options = new ArrayList<Option> ();
 						
-						pstmt5.setInt(1, q.id);
-						resultSet5 = pstmt5.executeQuery();
-						while(resultSet5.next()) {
+						pstmtGetOptions.setInt(1, q.id);
+						rsGetOptions = pstmtGetOptions.executeQuery();
+						while(rsGetOptions.next()) {
 							Option o = new Option();
-							o.id = resultSet5.getInt(1);
-							o.value = resultSet5.getString(2);
-							o.text_id = resultSet5.getString(3);
+							o.id = rsGetOptions.getInt(1);
+							o.value = rsGetOptions.getString(2);
+							o.text_id = rsGetOptions.getString(3);
 							
 							// Get the labels for the option
 							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels);
@@ -328,17 +328,17 @@ public class SurveyManager {
 		} 
 		
 		// Add the server side calculations
-		pstmt6.setInt(1, s.getId());
-		resultSet6= pstmt6.executeQuery();
+		pstmtGetSSC.setInt(1, s.getId());
+		rsGetSSC= pstmtGetSSC.executeQuery();
 		
-		while (resultSet6.next()) {
+		while (rsGetSSC.next()) {
 			ServerSideCalculate ssc = new ServerSideCalculate();
-			ssc.setId(resultSet6.getInt(1));
-			ssc.setName(resultSet6.getString(2));
-			ssc.setFunction(resultSet6.getString(3));
-			ssc.setUnits(resultSet6.getString(5));
-			ssc.setForm(resultSet6.getString(6));
-			ssc.setFormId(resultSet6.getInt(7));
+			ssc.setId(rsGetSSC.getInt(1));
+			ssc.setName(rsGetSSC.getString(2));
+			ssc.setFunction(rsGetSSC.getString(3));
+			ssc.setUnits(rsGetSSC.getString(5));
+			ssc.setForm(rsGetSSC.getString(6));
+			ssc.setFormId(rsGetSSC.getInt(7));
 			s.sscList.add(ssc);
 		}
 		
@@ -359,30 +359,28 @@ public class SurveyManager {
 		*/
 		
 		// Add the change log
-		pstmt8.setInt(1, s.getId());
-		resultSet8 = pstmt8.executeQuery();
+		pstmtGetChanges.setInt(1, s.getId());
+		rsGetChanges = pstmtGetChanges.executeQuery();
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
-		while (resultSet8.next()) {
+		while (rsGetChanges.next()) {
 			
-			ChangeItem ci = gson.fromJson(resultSet8.getString(1), ChangeItem.class);
+			ChangeItem ci = gson.fromJson(rsGetChanges.getString(1), ChangeItem.class);
 			
-			ci.cId = resultSet8.getInt(2);
-			ci.version = resultSet8.getInt(3);
-			ci.userName = resultSet8.getString(4);
-			ci.updatedTime = resultSet8.getTimestamp(5);
+			ci.cId = rsGetChanges.getInt(2);
+			ci.version = rsGetChanges.getInt(3);
+			ci.userName = rsGetChanges.getString(4);
+			ci.updatedTime = rsGetChanges.getTimestamp(5);
 			s.changes.add(ci);
 		}
 		
 		// Close statements
-		try { if (pstmt1 != null) {pstmt1.close();}} catch (SQLException e) {}
-		try { if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
-		try { if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
-		try { if (pstmt5 != null) {pstmt5.close();}} catch (SQLException e) {}
-		try { if (pstmt6 != null) {pstmt6.close();}} catch (SQLException e) {}
-		//try { if (pstmt7 != null) {pstmt7.close();}} catch (SQLException e) {}
-		try { if (pstmt8 != null) {pstmt8.close();}} catch (SQLException e) {}
+		try { if (pstmtGetForms != null) {pstmtGetForms.close();}} catch (SQLException e) {}
+		try { if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		try { if (pstmtGetOptions != null) {pstmtGetOptions.close();}} catch (SQLException e) {}
+		try { if (pstmtGetSSC != null) {pstmtGetSSC.close();}} catch (SQLException e) {}
+		try { if (pstmtGetChanges != null) {pstmtGetChanges.close();}} catch (SQLException e) {}
 	}
 	
 

@@ -188,15 +188,15 @@
         Satisfy any
     </location>
 	
-	alias /attachments {your_files}/attachments
-    <Directory {your_files}/attachments>
+	alias /attachments /smap/attachments
+    <Directory /smap/attachments>
     	Options -Indexes FollowSymLinks MultiViews
         allow from all
     </Directory>
     
 	# Media files
-	alias /media {your_files}/media
-	<Directory {your_files}/media>
+	alias /media /smap/media
+	<Directory /smap/media>
 		Options -Indexes FollowSymLinks MultiViews
 		AuthType Digest
 		AuthName "smap"
