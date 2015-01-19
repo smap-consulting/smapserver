@@ -20,7 +20,7 @@
 </head>
 <body>
 
-<header class="navbar navbar-default navbar-static-top" role="banner">
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
   <div class="container">
     <div class="navbar-header">
       <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
@@ -51,7 +51,7 @@
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a id="c_save" href="#">Save</a></li>
+            <li><a id="c_save" class="m_save_survey" href="#">Save</a></li>
             <li><a id="m_open" href="#">Open</a></li>
             <li class="disabled"><a id="m_new" href="#">New</a></li>
             <li class="disabled"><a id="m_import" href="#">Import</a>
@@ -81,25 +81,38 @@
   </div>
 </header>
 
-<div class="container">
-<!-- Heading for questions -->
-<div id="formListHeader" class="panel-heading">
-	<table class="table">
-		<tr>
-			<td class="q_type_col">Type</td>
-			<td class="q_name_col">Name</td>
-			<td class="q_label_col">
-				<select class="form-control" id="selProperty">
-					<option value="label">Label</option>
-					<option value="media">Media</option>
-				</select>
-			</td>
-			<td class="q_icons_col"></td>
-		</tr>
-	</table>
+<div id="edit_statusbar">
+	<div class="container">
+		<div class="panel panel-info header_style">
+			<table class="table">
+				<tr>
+				<td><select class="form-control language_list" id="language" tabindex="-1"></select></td>
+				<td><a type="button" class="btn btn-default btn-success lang m_save_survey">Save <span class="badge">0</span></a><td>
+				</tr>
+				
+			</table>			
+			<div id="formListHeader" >
+				<table class="table">
+					<tr>
+						<td class="q_type_col">Type</td>
+						<td class="q_name_col">Name</td>
+						<td class="q_label_col">
+							<select class="form-control" id="selProperty">
+								<option value="label">Label</option>
+								<option value="media">Media</option>
+							</select>
+						</td>
+						<td class="q_icons_col"></td>
+					</tr>
+				</table>	
+			</div>
+		</div>
+	</div>
 </div>
-<ol id="formList" class="list-unstyled">
-</ol>
+
+<div class="container">
+	<ol id="formList" class="list-unstyled">
+	</ol>
 </div>
 
 
@@ -149,12 +162,6 @@
   			<span id="errormesg"></span>
 		</div>
 		
-		
-
-		
-
-		
-
 		<div id="settings" style="display:none;">
   		<h2>Settings</h2>
   		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not

@@ -33,9 +33,7 @@ require.config({
     },
     shim: {
     	'app/common': ['jquery'],
-        'bootstrap.min': ['jquery'],
-        'jquery.autosize.min': ['jquery'],
-        'jquery-drag-ui.min': ['jquery']
+        'bootstrap.min': ['jquery']
     }
 });
 
@@ -46,11 +44,8 @@ require([
          'modernizr',
          'app/localise',
          'app/ssc',
-         'app/globals',
-         'app/csv',
-         'jquery-drag-ui.min',
-         'jquery.autosize.min'], 
-		function($, common, bootstrap, modernizr, lang, ssc, globals, csv, jquery_ui) {
+         'app/globals'], 
+		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
 var	gMode = "survey",

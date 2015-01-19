@@ -298,14 +298,15 @@ define(function() {
 			
 		};
 		
-		// Update settings when the number of changes to apply transitions to or from 0
+		// Update settings when the number of changes to apply changes 
 		this.setHasChanges = function(numberChanges) {
 			if(numberChanges === 0) {
 				globals.model.changes = [];
 				globals.model.currentChange = 0;
-				$('.m_save_survey').addClass("disabled").attr("disabled", true);
+				$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
+				
 			} else {
-				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
+				$('.m_save_survey').removeClass("disabled").attr("disabled", false).find('.badge').html(numberChanges);
 			}
 		}
 		
@@ -387,7 +388,7 @@ define(function() {
 			}
 		}
 		
-		// Modify a label for a question or an option when done as part of a language change
+		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
 		this.modLabel = function(language, changedQ, newVal, element) {
 			
 			var labelMod = {
@@ -424,8 +425,7 @@ define(function() {
 				label.element = element;
 				label.language = language;
 				
-				// The following items are to write the change to the database
-				label.languageName = this.survey.languages[language];
+				label.languageName = this.survey.languages[language];			// For logging the event
 				label.key = item.text_id;
 				
 				labelMod.items.push(label);

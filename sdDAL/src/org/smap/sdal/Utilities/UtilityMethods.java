@@ -642,7 +642,8 @@ public class UtilityMethods {
 				// Get label and media
 				pstmt.setInt(1, s.id);
 				pstmt.setString(2, s.languages.get(i));
-				pstmt.setString(3, text_id);			
+				pstmt.setString(3, text_id);
+				
 				ResultSet resultSet = pstmt.executeQuery();		
 				while(resultSet.next()) {
 	

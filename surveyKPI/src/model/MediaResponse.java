@@ -22,4 +22,5 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 public class MediaResponse {
 	public ArrayList<MediaItem> files = null;
+	//public int surveyId;
 }

@@ -24,6 +24,14 @@ public class MediaItem {
 	public String url;	
 	public String thumbnailUrl;	
 	public String deleteUrl;		
-	public String deleteType;	
+	public String deleteType;
+	
+	// The following are used when updating the link between files and questions / options on the server
+	/*
+	public boolean surveyLevel;		// Set true if this is a survey level media item
+	public int qId;
+	public int oId;
+	public String type;
+	*/
 
 }
