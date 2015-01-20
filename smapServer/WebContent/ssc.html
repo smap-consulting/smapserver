@@ -28,7 +28,7 @@
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
-	<script data-main="js/userTrail" src="js/libs/require.js"></script>
+	<script data-main="js/ssc_main" src="js/libs/require.js"></script>
 
 </head>
 <body>
@@ -93,39 +93,85 @@
 
   </div>
 </header>
-  
+
 <div class="container">
-	<div class="row">
-	   	
-	<!-- Popup to add a server side calculation function -->
-	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
-		<label for="ssc_function">function:</label>
-		<select id="ssc_function">
-			<option value=""></option>
-			<option value="area">Area</option>
-			<option value="length">Length / Perimeter</option>
-		</select><br/>
-		<label for="ssc_units">Units:</label>
-		<select id="ssc_units">
-		</select><br/>
-		<label for="ssc_name" required>Name: </label>
-		<input type="text" id="ssc_name"><br/>
-		<label for="ssc_form">Form: </label>
-		<select id="ssc_form">
-		</select>
-		
-		
-		<div class="large-12">
-			<input id="add_ssc_done" class="button radius text-center" value="Done">
-			<input id="add_ssc_cancel" class="button radius text-center" value="Cancel">
-		</div>
-  		<a class="close-reveal-modal">&#215;</a>
+	<span class="form-control survey_name" tabindex="-1"></span>
+	<table class="table" id="fl">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Form</th>
+				<th>Function</th>
+				<th>Units</th>
+				<th>Parameters</th>
+				<th>Delete</th>
+			</tr>
+		</thead>
+		<tbody id="sscList">
+		</tbody>
+	</table>
+	
+	<button type="button" class="btn btn-default" id="add_ssc" data-toggle="modal" data-target="#add_ssc_modal">Add Calculated Value</button>
+					
+</div>
+ 
+<div id="add_ssc_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addSSCLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="addSSCLabel">New message</h4>
+   			</div>
+		     <div class="modal-body">    	
+
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="ssc_function" class="col-sm-2 control-label">Function</label>
+						<div class="col-sm-10">
+							<select id="ssc_function" class="form-control">
+								<option value=""></option>
+								<option value="area">Area</option>
+								<option value="length">Length / Perimeter</option>
+							</select><br/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="ssc_units" class="col-sm-2 control-label">Units</label>
+						<div class="col-sm-10">
+							<select id="ssc_units" class="form-control">
+							</select><br/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="ssc_name" class="col-sm-2 control-label">Units</label>
+						<div class="col-sm-10">
+							<input type="text" id="ssc_name" class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="ssc_form" class="col-sm-2 control-label">Form</label>
+						<div class="col-sm-10">
+							<select id="ssc_form" class="form-control">
+							</select><br/>
+						</div>
+					</div>
+					
+					<div id="ssc_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
+								
+				</form>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="sscSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+        </div>
 	</div>
+</div>
 		
-		<div class="col-md-12 text-center">
-			<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-		</div>
-	</div>
+<div class="col-md-12 text-center">
+	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+</div>
+	
 
 <!-- Popup to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

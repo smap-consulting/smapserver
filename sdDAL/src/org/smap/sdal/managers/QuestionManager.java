@@ -125,7 +125,7 @@ public class QuestionManager {
 					o.seq = rsOptions.getInt("seq");
 					o.text_id = rsOptions.getString("label_id");
 					
-					UtilityMethods.getLabels( sd, survey, o.text_id, null, o.labels);
+					UtilityMethods.getLabels( sd, survey, o.text_id, null, o.labels, null, 0);
 				}
 				
 				questions.add(q);

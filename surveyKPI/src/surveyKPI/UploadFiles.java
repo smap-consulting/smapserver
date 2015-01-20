@@ -363,8 +363,6 @@ public class UploadFiles extends Application {
 			) throws IOException {
 		
 		Response response = null;
-		
-		System.out.println("Deleting " + filename);
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
@@ -413,8 +411,6 @@ public class UploadFiles extends Application {
 			) throws IOException {
 		
 		Response response = null;
-		
-		System.out.println("Deleting " + filename);
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
@@ -634,7 +630,6 @@ public class UploadFiles extends Application {
 			} else if( oId > 0) {
 				path = basePath + "/media/organisation/" + oId + "/" + filename;
 			}
-			System.out.println("Deleting: " + path);
 			
 			File f = new File(path);
 			f.delete();

@@ -180,11 +180,20 @@ public class Surveys extends Application {
 		
 		org.smap.sdal.model.Survey survey = null;
 		
+		// Get the base path
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		System.out.println("Files parameter: " + basePath);
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		
 		Response response = null;
 		PreparedStatement pstmt = null;
 		SurveyManager sm = new SurveyManager();
 		try {
-			survey = sm.getById(connectionSD, pstmt, request.getRemoteUser(), sId, true);
+			survey = sm.getById(connectionSD, pstmt, request.getRemoteUser(), sId, true, basePath);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();

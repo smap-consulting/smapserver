@@ -10,6 +10,7 @@ public class ManifestValue {
 	public String value;
 	public String fileName;
 	public String url;
+	public String thumbsUrl;
 	public File file;
 	public String filePath;
 	public String type;

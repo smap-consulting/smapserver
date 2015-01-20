@@ -26,8 +26,10 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Label;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 
 
@@ -626,7 +628,9 @@ public class UtilityMethods {
 			Survey s, 
 			String text_id, 
 			String hint_id, 
-			ArrayList<Label> labels) throws Exception {
+			ArrayList<Label> labels,
+			String basePath,
+			int oId) throws Exception {
 		
 		PreparedStatement pstmt = null;
 		
@@ -634,6 +638,7 @@ public class UtilityMethods {
 			
 			String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
 			pstmt = connectionSD.prepareStatement(sql);
+			ManifestValue manifest = new ManifestValue();
 			
 			for(int i = 0; i < s.languages.size(); i++) {
 	
@@ -652,12 +657,22 @@ public class UtilityMethods {
 					
 					if(t.equals("none")) {
 						l.text = v;
-					} else if(t.equals("image")) {
-						l.image = v;
-					} else if(t.equals("audio")) {
-						l.audio = v;
-					} else if(t.equals("video")) {
-						l.video = v;
+					} else if(basePath != null && oId > 0) {
+						getFileUrl(manifest, s.id, v, basePath, oId);
+						System.out.println("Url: " + manifest.url + " : " + v);
+						if(t.equals("image")) {
+							l.image = v;
+							l.imageUrl = manifest.url;
+							l.imageThumb = manifest.thumbsUrl;
+						} else if(t.equals("audio")) {
+							l.audio = v;
+							l.audioUrl = manifest.url;
+							l.audioThumb = null;
+						} else if(t.equals("video")) {
+							l.video = v;
+							l.videoUrl = manifest.url;
+							l.videoThumb = manifest.thumbsUrl;
+						}
 					} 
 	
 				}
@@ -692,5 +707,44 @@ public class UtilityMethods {
 		}
 	}
 		
+	/*
+	 * Get the partial (URL) of the file and its file path or null if the file does not exist
+	 */
+	public static void getFileUrl(ManifestValue manifest, int sId, String fileName, String basePath, int oId) {
+		
+		String url = null;
+		String thumbsUrl = null;
+		File file = null;
+		File thumb = null;
+		
+		// First try the survey level
+		url = "/media/" + sId + "/" + fileName;	
+		thumbsUrl = "/media/" + sId + "/thumbs/" + fileName;	
+		file = new File(basePath + url);
+		if(file.exists()) {
+			manifest.url = url;
+			manifest.filePath = basePath + url;
+			
+			thumb = new File(basePath + thumbsUrl);
+			if(thumb.exists()) {
+				manifest.thumbsUrl = thumbsUrl;
+			}
+		} else {
+		
+			// Second try the organisation level
+			url = "/media/organisation/" + oId + "/" + fileName;
+			thumbsUrl = "/media/organisation/" + oId + "/thumbs/" + fileName;
+			file = new File(basePath + url);
+			if(file.exists()) {
+				manifest.url = url;
+				manifest.filePath = basePath + url;
+				
+				thumb = new File(basePath + thumbsUrl);
+				if(thumb.exists()) {
+					manifest.thumbsUrl = thumbsUrl;
+				}
+			}		
+		}
+	}
 	
 }

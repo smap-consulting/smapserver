@@ -35,7 +35,9 @@ require.config({
     	'app/common': ['jquery'],
         'bootstrap.min': ['jquery'],
         'jquery.autosize.min': ['jquery'],
-        'jquery-drag-ui.min': ['jquery']
+        'jquery-drag-ui.min': ['jquery'],
+        'bootstrap.file-input': ['bootstrap.min']
+        
     }
 });
 
@@ -45,12 +47,11 @@ require([
          'bootstrap.min', 
          'modernizr',
          'app/localise',
-         'app/ssc',
          'app/globals',
-         'app/csv',
          'jquery-drag-ui.min',
-         'jquery.autosize.min'], 
-		function($, common, bootstrap, modernizr, lang, ssc, globals, csv, jquery_ui) {
+         'jquery.autosize.min',
+         'bootstrap.file-input'], 
+		function($, common, bootstrap, modernizr, lang, globals, jquery_ui) {
 
 
 var	gMode = "survey",
@@ -58,8 +59,24 @@ var	gMode = "survey",
 	gLanguage = 0,
 	gIndex = 0;			// Unique index to each question
 
+// Media globals
+var gUrl,			// url to submit to
+	gBaseUrl = '/surveyKPI/upload/media',
+	gSId;
+
+// Media Modal Parameters
+var gNewVal,
+	gSelFormId,
+	gSelId,
+	gOptionListKey,
+	gElement,
+	gNewVal;
+
+
+'use strict';
+
 $(document).ready(function() {
-	
+  
 	var i,
 		params,
 		pArray = [],
@@ -86,9 +103,10 @@ $(document).ready(function() {
 	if(globals.gCurrentSurvey > 0) {
 		dont_get_current_survey = true;		// The current survey was passed in the parameters
 	} else {
-		dont_get_current_survey = false;		// The current survey was passed in the parameters
+		dont_get_current_survey = false;		// The current survey was not passed in the parameters
 	}
 	getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
+	getFilesFromServer();		// Get the organisational level media files
 
 	/*
 	 * Refresh the view when the selected property changes
@@ -107,9 +125,16 @@ $(document).ready(function() {
 	});
 
 	// Add menu functions
-	$('#m_simple_edit').off().click(function() {	// Edit a survey
-		gMode = "simple_edit";
-		refreshView(gMode);
+	$('#m_media').off().click(function() {	// MEDIA
+		// Set up media dialog to manage loading and deleting of media
+		$('.mediaManage').show();
+		$('.mediaSelect').hide();
+		$('#mediaModalLabel').html("Manage Media Files");
+		$('#mediaModal table').off();
+		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
+		
+		$('#mediaModal').modal('show');
+
 	});
 	$('#m_translate').off().click(function() {	// Translate languages
 		gMode = "translate";
@@ -176,6 +201,16 @@ $(document).ready(function() {
 	
 	enableUserProfileBS();
 	
+	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
+	function autocollapse() {
+	    var $navbar = $('.navbar');
+	    $navbar.removeClass('collapsed'); 
+	    if($navbar.innerHeight() > 60) // check if we've got 2 lines
+	        $navbar.addClass('collapsed'); // force collapse mode
+	}
+	$(document).on('ready', autocollapse);
+	$(window).on('resize', autocollapse);
+	
 	/*
 	 * Add check prior to the user leaving the screen
 	 */
@@ -185,6 +220,90 @@ $(document).ready(function() {
 		}
 	};
 
+	/*
+	 * Set up media files
+	 */
+	gSId = undefined;
+	gUrl = gBaseUrl;
+	$('#survey_id').val("");				// clear the survey id in the forms hidden field
+    $('#surveyLevelTab a').click(function (e) {
+    	if(gSId) {
+    		e.preventDefault();
+    		$(this).tab('show');
+    		gUrl = gBaseUrl + '?sId=' + gSId;
+    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    	  
+    		$('#orgPanel').hide();
+    		$('#surveyPanel').show();
+    	}
+    })
+    
+    $('#orgLevelTab a').click(function (e) {
+    	  e.preventDefault();
+    	  $(this).tab('show');
+    	  gUrl = gBaseUrl;
+    	  $('#survey_id').val("");				// clear the survey id in the forms hidden field
+    	  
+    	  $('#orgPanel').show();
+    	  $('#surveyPanel').hide();
+    })
+    	
+    $('.file-inputs').bootstrapFileInput();
+    
+    /*
+     * Submit the files
+     */
+    $('#submitFiles').click( function() {
+    	console.log("Serialize");
+    	var sId = $('#survey_id').val();
+    	var f = document.forms.namedItem("fileupload");
+    	var formData = new FormData(f);
+    	
+
+        $.ajax({
+            url: gUrl,
+            type: 'POST',
+            xhr: function () {
+            	var myXhr = $.ajaxSettings.xhr();
+        		if(myXhr.upload){ 
+        			myXhr.upload.addEventListener('progress', progressFn, false); 
+        		}
+        		return myXhr;
+            },
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData:false,
+            success: function(data) {
+            	
+            	var surveyId = sId;
+            	console.log("Success");
+            	console.log(data);
+            	refreshMediaView(data, surveyId);
+            	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
+            	document.forms.namedItem("fileupload").reset();
+            	
+            },
+            error: function(xhr, textStatus, err) {
+            	
+  				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
+
+				}
+            }
+        });
+    });
+    
+    /*
+     * Save a selected media file
+     */
+	$('#mediaSelectSave').click(function() {
+		if(gNewVal) {
+			updateLabel("question", gSelFormId, gSelId, gOptionListKey, gElement, gNewVal);
+		}
+	});
 });
 
 function enableDragablePanels() {
@@ -220,6 +339,13 @@ function surveyListDone() {
 }
 
 function surveyDetailsDone() {
+	// Get survey level files
+	if(globals.gCurrentSurvey) {
+		$('#surveyLevelTab').removeClass("disabled");
+		getFilesFromServer(globals.gCurrentSurvey);
+	}
+	
+	// Update edit view
 	updateLanguageList();
 	refreshView();
 }
@@ -241,6 +367,7 @@ function refreshView() {
 	}
 	$('#formList').html(h.join(""));
 	//enableDragablePanels();
+	
 	$('.labelProp').change(function(){
 		event.preventDefault();
 		var $this = $(this),
@@ -252,6 +379,34 @@ function refreshView() {
 											// TODO media
 		
 		updateLabel("question", formIndex, itemIndex, optionListKey, "text", newVal); // TODO Hint
+
+	});
+	
+	$('.mediaProp').off().click(function(){
+		event.preventDefault();
+		var $this = $(this),
+			$parent = $this.closest('td');
+		
+		// Set up media view
+		gElement = $this.data("element");
+		gSelFormId = $parent.data("fid");
+		gSelId = $parent.data("id");
+		gOptionListKey ="" // TODO
+			
+		$('.mediaManage').hide();						// MEDIA
+		$('.mediaSelect').show();
+		$('#mediaModalLabel').html("Select Media File");
+		$('#mediaModal table').on('click', 'tbody tr', function(e) {
+			var $sel = $(this);
+			
+			$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other seelcted rows
+		    $sel.addClass('success');
+		 
+		    gNewVal = $sel.find('.filename').text();		    
+		   
+		});
+		
+		$('#mediaModal').modal('show');
 
 	});
 }
@@ -274,7 +429,9 @@ function updateLanguageList() {
 		h[++idx] = '</option>';
 	}
 	$('.language_list').html(h.join(""));
+	$('.survey_name').html(globals.model.survey.displayName);
 }
+
 
 /*
  * Add the questions for a form
@@ -417,7 +574,7 @@ function getFeaturedMarkup(question) {
 	var h = [],
 		idx = -1,
 		selProperty = $('#selProperty').val(),
-		mediaButtonMarkup =  '<p><a href="#" class="btn btn-primary" role="button">Add</a> <a href="#" class="btn btn-danger" role="button">Delete</a></p>';
+		emptyMedia = '<div class="emptyMedia text-center">Empty</div>';
 	
 	if(selProperty === "label") {
 		h[++idx] = '<textarea class="labelProp" placeholder="Label">';
@@ -426,23 +583,42 @@ function getFeaturedMarkup(question) {
 	} else if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
 			h[++idx] = '<div class="col-sm-3">';
-				h[++idx] = '<a href="#" class="thumbnail">';
-				h[++idx] = '<img height="100" width="100" src="/images/fieldTaskBigLogo.jpg">';
+				h[++idx] = '<a href="';
+				h[++idx] = question.labels[gLanguage].imageUrl
+				h[++idx] = '" class="thumbnail">';
+				console.log(question.labels[gLanguage]);
+				if(question.labels[gLanguage].image) {
+					h[++idx] = '<img height="100" width="100" src="';
+					if(question.labels[gLanguage].imageThumb) {
+						h[++idx] = question.labels[gLanguage].thumbUrl;
+					} else {
+						h[++idx] = question.labels[gLanguage].imageUrl;
+					}
+					h[++idx] = '">';
+				} else {
+					h[++idx] = emptyMedia;
+				}
+
 				h[++idx] = '</a>';
-			    h[++idx] = '<div class="caption">';
-		        h[++idx] = '<h3 class="text-center">Image</h3>';
-		        h[++idx] = '</div>';
+			    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Image</a>';
+		     
 		    h[++idx] = '</div>';		        
 			h[++idx] = '<div class="col-sm-3">';
-			    h[++idx] = '<a href="#" class="thumbnail">';
-			    h[++idx] = '<img height="100" width="100" src="/images/su_logo.png">';
-			    h[++idx] = '</a>';
-			    h[++idx] = '<div class="caption">';
-		        h[++idx] = '<h3 class="text-center">Video</h3>';
-		        h[++idx] = '</div>';
+			    h[++idx] = '<a href="';
+			    h[++idx] = question.labels[gLanguage].videoUrl
+			    h[++idx] =	'" class="thumbnail">';
+			    if(question.labels[gLanguage].video) {
+					h[++idx] = '<img height="100" width="100" src="';
+					h[++idx] = question.labels[gLanguage].thumbUrl;
+					h[++idx] = '">';
+				} else {
+					h[++idx] = emptyMedia;
+				}
+				h[++idx] = '</a>';
+			    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Video</a>';
 			h[++idx] = '</div>';
 			h[++idx] = '<div class="col-sm-3">';
-			    h[++idx] = '<a href="#" class="thumbnail">';
+			    h[++idx] = '<a href="#" class="thumbnail mediaProp">';
 			    h[++idx] = '<img height="100" width="100" src="/images/su_logo.png">';
 			    h[++idx] = '</a>';
 			    h[++idx] = '<div class="caption">';
@@ -552,5 +728,148 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 	
 	// Add the change to the list of changes to be applied
 	globals.model.modLabel(language, item, newVal, element);
+}
+
+/*
+ * Media functions
+ */
+function progressFn(e) {
+	if(e.lengthComputable){
+        var w = (100.0 * e.loaded) / e.total;
+        $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
+    }
+}
+
+function getFilesFromServer(sId) {
+	
+	var url = gBaseUrl;
+	if(sId) {
+		gSId = sId;
+		url += '?sId=' + sId;
+	}
+	console.log("Getting media: " + url);
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			
+			var surveyId = sId;
+			console.log(data);
+			refreshMediaView(data, surveyId);
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
+}
+
+function refreshMediaView(data, sId) {
+	
+	var i,
+		survey = globals.model.survey,
+		$element,
+		h = [],
+		idx = -1,
+		files;
+	
+	if(survey && sId) {
+		// Set the display name
+		$('#formName').html(survey.displayName);
+		$('#survey_id').val(sId);
+		gSId = sId;
+	}
+	
+	if(data) {
+		files = data.files;
+		
+		if(sId) {
+			$element = $('#filesSurvey');
+		} else {
+			$element = $('#filesOrg');
+		}
+		
+		for(i = 0; i < files.length; i++){
+			h[++idx] = '<tr>';
+			
+			h[++idx] = '<td>';
+				h[++idx] = '<span class="preview>';
+				h[++idx] = '<a href="';
+				h[++idx] = files[i].url;
+				h[++idx] = '"><img src="';
+				h[++idx] = files[i].thumbnailUrl;
+				h[++idx] = '" alt="';
+				h[++idx] = files[i].name;
+				h[++idx] = '"></a>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="filename">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].name;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].size;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
+				h[++idx] = files[i].deleteUrl;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
+				h[++idx] = ' Delete';
+				h[++idx] = '</button>';
+			h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+		}
+		
+
+		$element.html(h.join(""));
+	
+		$('.media_del', $element).click(function () {
+			delete_media($(this).data('url'));
+		});
+	
+	}	
+}
+
+function delete_media(url) {
+	addHourglass();
+	$.ajax({
+		url: url,
+		type: 'DELETE',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			console.log(data);
+			
+			var address = url;
+			if(url.indexOf('organisation') > 0) {
+				refreshView(data);
+			} else {
+				refreshView(data, gSId);
+			}
+	
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
 }
 });

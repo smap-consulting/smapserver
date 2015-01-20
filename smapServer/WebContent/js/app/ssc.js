@@ -47,7 +47,10 @@ define([
 				form = $('#ssc_form option:selected').text();
 			
 			if(fn === "") {
-				alert("You must select a function");
+				$('#ssc_alert').show().text("You must select a function");
+				setTimeout(function() {
+					$('#ssc_function').focus();
+					}, 0);		
 				return false;
 			}
 			if(name === "") {
@@ -76,7 +79,7 @@ define([
 			globals.model.survey.sscList.push(newSSC);
 			setHtml('#sscList', globals.model.survey.sscList);
 			globals.model.settingsChange();
-			$('#add_ssc_popup').foundation('reveal', 'close');
+			$('#ssc_alert').hide();
 		
 		});
 		
@@ -175,7 +178,10 @@ define([
 				console.log("Forms");
 				console.log(data);
 				if(data.length === 0) {
-					alert("No forms found that can be used for function " + fn);
+					$('#ssc_alert').show().text("No forms found that can be used for function " + fn);
+					setTimeout(function() {
+						$('#ssc_function').focus();
+						}, 0);		
 				} else {
 					
 					for(i = 0; i < data.length; i++) {
@@ -200,7 +206,6 @@ define([
 		});
 	}
 	
-	/*
 	function saveSSC() {
 		
 		var name = $('#ssc_name').val(),
@@ -228,6 +233,6 @@ define([
 			  }
 		});
 	}
-	*/
+
 
 });

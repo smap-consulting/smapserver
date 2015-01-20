@@ -111,7 +111,8 @@ public class SurveyManager {
 	public Survey getById(Connection sd, PreparedStatement pstmt,
 			String user,
 			int sId,
-			boolean full	// Get the full details of the survey
+			boolean full,	// Get the full details of the survey
+			String basePath
 			) throws Exception {
 		
 		Survey s = null;	// Survey to return
@@ -146,7 +147,7 @@ public class SurveyManager {
 		} 
 		
 		if(full && s != null) {
-			populateSurvey(sd, s);
+			populateSurvey(sd, s, basePath, user);
 		}
 		return s;
 		
@@ -217,7 +218,7 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s) throws Exception {
+	private void populateSurvey(Connection sd, Survey s, String basePath, String user) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -256,6 +257,9 @@ public class SurveyManager {
 		// Get the available languages
 		s.languages = MediaUtilities.getLanguagesForSurvey(sd, s.id);
 		
+		// Get the organisation id
+		int oId = MediaUtilities.getOrganisationId(sd, user);
+		
 		// Set the default language if it has not previously been set
 		if(s.def_lang == null) {
 			s.def_lang = s.languages.get(0);
@@ -292,7 +296,7 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
-				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels);
+				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				
 				/*
 				 * If this is a select question get the options
@@ -312,7 +316,7 @@ public class SurveyManager {
 							o.text_id = rsGetOptions.getString(3);
 							
 							// Get the labels for the option
-							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels);
+							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
 							options.add(o);
 						}
 						
@@ -674,36 +678,59 @@ public class SurveyManager {
 			int version) throws Exception {
 		
 		String transType = null;
-		PreparedStatement pstmtLang = null;
+		PreparedStatement pstmtLangOldVal = null;
+		PreparedStatement pstmtLangNew = null;
 		
 		try {
-			// Create prepared statements
-			String sqlLang = "update translation set value = ? " +
+			
+			// Create prepared statements, one for the case where an existing value is being updated
+			String sqlLangOldVal = "update translation set value = ? " +
 					"where s_id = ? and language = ? and text_id = ? and type = ? and value = ?;";
-			pstmtLang = connectionSD.prepareStatement(sqlLang);
+			pstmtLangOldVal = connectionSD.prepareStatement(sqlLangOldVal);
 		
+			String sqlLangNew = "insert into translation (value, s_id, language, text_id, type) values(?,?,?,?,?);";
+			pstmtLangNew = connectionSD.prepareStatement(sqlLangNew);
+			
 			for(ChangeItem ci : changeItemList) {
 			
-				pstmtLang.setString(1, ci.newVal);
-				pstmtLang.setInt(2, sId);
-				pstmtLang.setString(3, ci.languageName);
-				pstmtLang.setString(4, ci.key);
-				if(ci.element.equals("text")) {
-					transType = "none";
+				if(ci.oldVal != null) {
+					pstmtLangOldVal.setString(1, ci.newVal);
+					pstmtLangOldVal.setInt(2, sId);
+					pstmtLangOldVal.setString(3, ci.languageName);
+					pstmtLangOldVal.setString(4, ci.key);
+					if(ci.element.equals("text")) {
+						transType = "none";
+					} else {
+						transType = ci.element;
+					}
+					pstmtLangOldVal.setString(5,  transType);
+					pstmtLangOldVal.setString(6, ci.oldVal);
+
+					log.info("SQL: " + pstmtLangOldVal.toString());
+					
+					int count = pstmtLangOldVal.executeUpdate();
+					if(count == 0) {
+						System.out.println("Error: Element already modified");
+						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+					}
 				} else {
-					transType = ci.element;
+					pstmtLangNew.setString(1, ci.newVal);
+					pstmtLangNew.setInt(2, sId);
+					pstmtLangNew.setString(3, ci.languageName);
+					pstmtLangNew.setString(4, ci.key);
+					if(ci.element.equals("text")) {
+						transType = "none";
+					} else {
+						transType = ci.element;
+					}
+					pstmtLangNew.setString(5,  transType);
+					
+					log.info("SQL: " + pstmtLangNew.toString());
+					
+					 pstmtLangNew.executeUpdate();
 				}
-				pstmtLang.setString(5,  transType);
-				pstmtLang.setString(6, ci.oldVal);
 				
 				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
-				log.info("SQL: " + pstmtLang.toString());
-				
-				int count = pstmtLang.executeUpdate();
-				if(count == 0) {
-					System.out.println("Error: Element already modified");
-					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-				}
 				
 				// Write the change log
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -723,7 +750,8 @@ public class SurveyManager {
 			}
 			throw e;
 		} finally {
-			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}
+			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
+			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 		}
 	}
 	

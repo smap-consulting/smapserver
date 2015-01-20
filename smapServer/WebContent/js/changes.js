@@ -46,9 +46,8 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
-         'app/csv',
          'jquery.autosize.min'], 
-		function($, common, bootstrap, modernizr, lang, ssc, globals, csv) {
+		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
 var	gMode = "survey",

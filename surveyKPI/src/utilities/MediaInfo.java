@@ -166,7 +166,6 @@ public class MediaInfo {
 					}
 					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
 					mi.deleteUrl = server + "surveyKPI/upload" + folderUrl + "/" + mi.name; 
-					System.out.println("Delete: " + mi.deleteUrl);
 				} else {
 					System.out.println("Error: $$$$$$$ Server is null");
 				}

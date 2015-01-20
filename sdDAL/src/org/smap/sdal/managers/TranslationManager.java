@@ -95,7 +95,7 @@ public class TranslationManager {
 					// Get file name from value (Just for legacy, new media should be stored as the file name only)
 					int idx = m.value.lastIndexOf('/');	
 					m.fileName = m.value.substring(idx + 1);					
-					getFileUrl(m, surveyId, m.fileName, basePath, oId);		// Url will be null if file does not exist
+					UtilityMethods.getFileUrl(m, surveyId, m.fileName, basePath, oId);		// Url will be null if file does not exist
 					
 					// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
 					if(files.get(m.fileName) == null) {
@@ -124,7 +124,7 @@ public class TranslationManager {
 					m.type = "csv";
 					
 					m.fileName = manifestList.get(i);
-					getFileUrl(m, surveyId, m.fileName, basePath, oId);
+					UtilityMethods.getFileUrl(m, surveyId, m.fileName, basePath, oId);
 					
 					manifests.add(m);
 				}
@@ -200,29 +200,4 @@ public class TranslationManager {
 		return hasManifest;	
 	}
 	
-	/*
-	 * Get the partial (URL) of the file and its file path or null if the file does not exist
-	 */
-	public void getFileUrl(ManifestValue manifest, int sId, String fileName, String basePath, int oId) {
-		
-		String url = null;
-		File file = null;
-		
-		// First try the survey level
-		url = "/media/" + sId + "/" + fileName;		
-		file = new File(basePath + url);
-		if(file.exists()) {
-			manifest.url = url;
-			manifest.filePath = basePath + url;
-		} else {
-		
-			// Second try the organisation level
-			url = "/media/organisation/" + oId + "/" + fileName;		
-			file = new File(basePath + url);
-			if(file.exists()) {
-				manifest.url = url;
-				manifest.filePath = basePath + url;
-			}		
-		}
-	}
 }

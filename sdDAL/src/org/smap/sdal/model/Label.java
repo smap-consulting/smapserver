@@ -11,5 +11,11 @@ public class Label {
 	public String hint;
 	public String image;
 	public String audio;
-	public String video;	
+	public String video;
+	public String imageUrl;
+	public String audioUrl;
+	public String videoUrl;
+	public String imageThumb;
+	public String audioThumb;
+	public String videoThumb;
 }
