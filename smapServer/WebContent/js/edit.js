@@ -575,6 +575,7 @@ function getFeaturedMarkup(question) {
 		idx = -1,
 		selProperty = $('#selProperty').val(),
 		emptyMedia = '<div class="emptyMedia text-center">Empty</div>';
+		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 	
 	if(selProperty === "label") {
 		h[++idx] = '<textarea class="labelProp" placeholder="Label">';
@@ -582,51 +583,59 @@ function getFeaturedMarkup(question) {
 		h[++idx] = '</textarea>';
 	} else if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
-			h[++idx] = '<div class="col-sm-3">';
-				h[++idx] = '<a href="';
-				h[++idx] = question.labels[gLanguage].imageUrl
-				h[++idx] = '" class="thumbnail">';
-				console.log(question.labels[gLanguage]);
-				if(question.labels[gLanguage].image) {
-					h[++idx] = '<img height="100" width="100" src="';
-					if(question.labels[gLanguage].imageThumb) {
-						h[++idx] = question.labels[gLanguage].thumbUrl;
+			if(question.inMeta || question.source != "user") {
+				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
+				h[++idx] = naMedia;
+				h[++idx] = '</div>';
+			} else {
+				h[++idx] = '<div class="col-sm-3">';
+					h[++idx] = '<a href="';
+					h[++idx] = question.labels[gLanguage].imageUrl
+					h[++idx] = '" class="thumbnail">';
+					console.log(question.labels[gLanguage]);
+					if(question.labels[gLanguage].image) {
+						h[++idx] = '<img height="100" width="100" src="';
+						if(question.labels[gLanguage].imageThumb) {
+							h[++idx] = question.labels[gLanguage].thumbUrl;
+						} else {
+							h[++idx] = question.labels[gLanguage].imageUrl;
+						}
+						h[++idx] = '">';
 					} else {
-						h[++idx] = question.labels[gLanguage].imageUrl;
+						h[++idx] = emptyMedia;
 					}
-					h[++idx] = '">';
-				} else {
-					h[++idx] = emptyMedia;
-				}
+	
+					h[++idx] = '</a>';
+				    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Image</a>';
+			     
+			    h[++idx] = '</div>';		        
+				h[++idx] = '<div class="col-sm-3">';
+				    h[++idx] = '<a href="';
+				    h[++idx] = question.labels[gLanguage].videoUrl
+				    h[++idx] =	'" class="thumbnail">';
+				    if(question.labels[gLanguage].video) {
+						h[++idx] = '<img height="100" width="100" src="';
+						h[++idx] = question.labels[gLanguage].thumbUrl;
+						h[++idx] = '">';
+					} else {
+						h[++idx] = emptyMedia;
+					}
+					h[++idx] = '</a>';
+				    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Video</a>';
+				h[++idx] = '</div>';
+				h[++idx] = '<div class="col-sm-3">';
+				    h[++idx] = '<a href="#" class="thumbnail mediaProp">';
+				    h[++idx] = '<img height="100" width="100" src="/images/su_logo.png">';
+				    h[++idx] = '</a>';
+				    h[++idx] = '<div class="caption">';
+			        h[++idx] = '<h3 class="text-center">Audio</h3>';
+			        h[++idx] = '</div>';
+			        h[++idx] = '</div>';
+				h[++idx] = '</div>';
+			}
+			
+		h[++idx] = '</div>';		// End of row
 
-				h[++idx] = '</a>';
-			    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Image</a>';
-		     
-		    h[++idx] = '</div>';		        
-			h[++idx] = '<div class="col-sm-3">';
-			    h[++idx] = '<a href="';
-			    h[++idx] = question.labels[gLanguage].videoUrl
-			    h[++idx] =	'" class="thumbnail">';
-			    if(question.labels[gLanguage].video) {
-					h[++idx] = '<img height="100" width="100" src="';
-					h[++idx] = question.labels[gLanguage].thumbUrl;
-					h[++idx] = '">';
-				} else {
-					h[++idx] = emptyMedia;
-				}
-				h[++idx] = '</a>';
-			    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Video</a>';
-			h[++idx] = '</div>';
-			h[++idx] = '<div class="col-sm-3">';
-			    h[++idx] = '<a href="#" class="thumbnail mediaProp">';
-			    h[++idx] = '<img height="100" width="100" src="/images/su_logo.png">';
-			    h[++idx] = '</a>';
-			    h[++idx] = '<div class="caption">';
-		        h[++idx] = '<h3 class="text-center">Audio</h3>';
-		        h[++idx] = '</div>';
-		        h[++idx] = '</div>';
-			h[++idx] = '</div>';
-		h[++idx] = '</div>';
 	}
 	
 	return h.join("");

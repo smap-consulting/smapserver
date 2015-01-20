@@ -231,7 +231,7 @@ public class SurveyManager {
 		
 		// Get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id from question q where f_id = ?";
+		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, q.source from question q where f_id = ?";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
 		// Get the options belonging to a question		
@@ -281,6 +281,7 @@ public class SurveyManager {
 			pstmtGetQuestions.setInt(1, f.id);
 			rsGetQuestions = pstmtGetQuestions.executeQuery();
 			
+			boolean inMeta = false;				// Set true if the question is in the meta group
 			while (rsGetQuestions.next()) {
 				Question q = new Question();
 				q.id = rsGetQuestions.getInt(1);
@@ -289,6 +290,15 @@ public class SurveyManager {
 				q.text_id = rsGetQuestions.getString(4);
 				q.list_name = rsGetQuestions.getString(5);
 				q.hint_id = rsGetQuestions.getString(6);
+				q.source = rsGetQuestions.getString(7);
+				
+				// Track if this question is in the meta group
+				if(q.name.equals("meta")) {
+					inMeta = true;
+				} else if(q.name.equals("meta_groupEnd")) {
+					inMeta = false;
+				}
+				q.inMeta = inMeta;
 				
 				// If the survey was loaded from xls it will not have a list name
 				if(q.list_name == null || q.list_name.trim().length() == 0) {
