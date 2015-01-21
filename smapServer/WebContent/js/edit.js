@@ -57,7 +57,8 @@ require([
 var	gMode = "survey",
 	gTempQuestions = [],
 	gLanguage = 0,
-	gIndex = 0;			// Unique index to each question
+	gIndex = 0,			// Unique index to each question
+	$gCurrentRow;		// Currently selected row
 
 // Media globals
 var gUrl,			// url to submit to
@@ -70,7 +71,8 @@ var gNewVal,
 	gSelId,
 	gOptionListKey,
 	gElement,
-	gNewVal;
+	gNewVal,
+	gIsSurveyLevel;
 
 
 'use strict';
@@ -232,7 +234,8 @@ $(document).ready(function() {
     		$(this).tab('show');
     		gUrl = gBaseUrl + '?sId=' + gSId;
     		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
-    	  
+    		gIsSurveyLevel = true;
+    		
     		$('#orgPanel').hide();
     		$('#surveyPanel').show();
     	}
@@ -243,6 +246,7 @@ $(document).ready(function() {
     	  $(this).tab('show');
     	  gUrl = gBaseUrl;
     	  $('#survey_id').val("");				// clear the survey id in the forms hidden field
+  		  gIsSurveyLevel = false;
     	  
     	  $('#orgPanel').show();
     	  $('#surveyPanel').hide();
@@ -376,7 +380,6 @@ function refreshView() {
 			itemIndex = $parent.data("id"),
 			newVal = $this.val(),
 			optionListKey ="xx";			// TODO options
-											// TODO media
 		
 		updateLabel("question", formIndex, itemIndex, optionListKey, "text", newVal); // TODO Hint
 
@@ -391,7 +394,8 @@ function refreshView() {
 		gElement = $this.data("element");
 		gSelFormId = $parent.data("fid");
 		gSelId = $parent.data("id");
-		gOptionListKey ="" // TODO
+		gOptionListKey =""; // TODO
+		$gCurrentRow = $parent;
 			
 		$('.mediaManage').hide();						// MEDIA
 		$('.mediaSelect').show();
@@ -521,11 +525,11 @@ function addQType(type) {
 	} else if(type === "begin group") {
 		return '<span class="glyphicon glyphicon-folder-open edit_type"></span>';
 	} else if(type === "image") {
-		return '<span class="glyphicon glyphicon-camera edit_type"></span>';
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-camera edit_type"></span></div>';
 	} else if(type === "audio") {
-		return '<span class="glyphicon glyphicon-volume-up edit_type"></span>';
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-volume-up edit_type"></span></div>';
 	} else if(type === "video") {
-		return '<span class="glyphicon glyphicon-facetime-video edit_type"></span>';
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-facetime-video edit_type"></span></div>';
 	} else if(type === "geopoint") {
 		return '<span class="glyphicon glyphicon-map-marker edit_type"></span>';
 	} else if(type === "dateTime" || type === "date") {
@@ -574,7 +578,6 @@ function getFeaturedMarkup(question) {
 	var h = [],
 		idx = -1,
 		selProperty = $('#selProperty').val(),
-		emptyMedia = '<div class="emptyMedia text-center">Empty</div>';
 		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 	
 	if(selProperty === "label") {
@@ -588,50 +591,22 @@ function getFeaturedMarkup(question) {
 				h[++idx] = naMedia;
 				h[++idx] = '</div>';
 			} else {
-				h[++idx] = '<div class="col-sm-3">';
-					h[++idx] = '<a href="';
-					h[++idx] = question.labels[gLanguage].imageUrl
-					h[++idx] = '" class="thumbnail">';
-					console.log(question.labels[gLanguage]);
-					if(question.labels[gLanguage].image) {
-						h[++idx] = '<img height="100" width="100" src="';
-						if(question.labels[gLanguage].imageThumb) {
-							h[++idx] = question.labels[gLanguage].thumbUrl;
-						} else {
-							h[++idx] = question.labels[gLanguage].imageUrl;
-						}
-						h[++idx] = '">';
-					} else {
-						h[++idx] = emptyMedia;
-					}
-	
-					h[++idx] = '</a>';
-				    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Image</a>';
-			     
-			    h[++idx] = '</div>';		        
-				h[++idx] = '<div class="col-sm-3">';
-				    h[++idx] = '<a href="';
-				    h[++idx] = question.labels[gLanguage].videoUrl
-				    h[++idx] =	'" class="thumbnail">';
-				    if(question.labels[gLanguage].video) {
-						h[++idx] = '<img height="100" width="100" src="';
-						h[++idx] = question.labels[gLanguage].thumbUrl;
-						h[++idx] = '">';
-					} else {
-						h[++idx] = emptyMedia;
-					}
-					h[++idx] = '</a>';
-				    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="image">Video</a>';
-				h[++idx] = '</div>';
-				h[++idx] = '<div class="col-sm-3">';
-				    h[++idx] = '<a href="#" class="thumbnail mediaProp">';
-				    h[++idx] = '<img height="100" width="100" src="/images/su_logo.png">';
-				    h[++idx] = '</a>';
-				    h[++idx] = '<div class="caption">';
-			        h[++idx] = '<h3 class="text-center">Audio</h3>';
-			        h[++idx] = '</div>';
-			        h[++idx] = '</div>';
-				h[++idx] = '</div>';
+				h[++idx] = addMedia("Image", 
+						question.labels[gLanguage].image, 
+						question.labels[gLanguage].imageUrl, 
+						question.labels[gLanguage].imageThumb);
+		        
+				h[++idx] = addMedia("Video", 
+						question.labels[gLanguage].video, 
+						question.labels[gLanguage].videoUrl, 
+						question.labels[gLanguage].videoThumb);
+				
+				h[++idx] = addMedia("Audio", 
+						question.labels[gLanguage].audio, 
+						question.labels[gLanguage].audioUrl, 
+						question.labels[gLanguage].audioThumb);
+				
+
 			}
 			
 		h[++idx] = '</div>';		// End of row
@@ -641,6 +616,58 @@ function getFeaturedMarkup(question) {
 	return h.join("");
 }
 
+/*
+ * Add a media type
+ */
+function addMedia(label, mediaIdent, url, thumbUrl) {
+	var h = [],
+		idx = -1,
+		emptyMedia = '<div class="emptyMedia text-center">Empty</div>',
+		lcLabel = label.toLowerCase();
+	
+	h[++idx] = '<div class="col-sm-3 ';
+	h[++idx] = lcLabel;
+	h[++idx] = 'Element">';
+	if(mediaIdent && (thumbUrl || (lcLabel === "image" && url))) {
+		h[++idx] = '<a target="_blank" href="';
+		h[++idx] = url
+		h[++idx] = '"';
+	} else {
+		h[++idx] = "<div";
+	}
+	h[++idx] = ' class="thumbnail preview">';
+
+	if(mediaIdent) {
+		if(thumbUrl || (lcLabel === "image" && url)) {
+			h[++idx] = '<img height="100" width="100" src="';
+			if(thumbUrl) {
+				h[++idx] = thumbUrl;
+			} else {
+				h[++idx] = url;
+			}
+			h[++idx] = '">';
+		} else {
+			h[++idx] = addQType(lcLabel)
+		}
+	} else {
+		h[++idx] = emptyMedia;
+	}
+
+	if(mediaIdent && (thumbUrl || (lcLabel === "image" && url))) {
+		h[++idx] = '</a>';
+	} else {
+		h[++idx] = '</div>';
+	}
+    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
+    h[++idx] = label.toLowerCase();
+    h[++idx] = '">';
+    h[++idx] = lcLabel;
+    h[++idx] = '</a>';
+ 
+    h[++idx] = '</div>';
+    
+    return h.join("");
+}
 /*
  * Add subform
  */
@@ -721,7 +748,8 @@ function addOneOption(option, fId, id) {
 function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal) {
 	
 	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
-		language = 0;	// Current language index  TODO
+		markup,
+		survey = globals.model.survey;
 	
 	if(type === "question") {
 		item.push({
@@ -736,12 +764,61 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 	}
 	
 	// Add the change to the list of changes to be applied
-	globals.model.modLabel(language, item, newVal, element);
+	globals.model.modLabel(gLanguage, item, newVal, element);
+	
+	if(element === "image") {	
+		
+		markup = addMedia("Image", 
+				newVal, 
+				getUrl(survey.o_id, survey.id, newVal, false), 
+				getUrl(survey.o_id, survey.id, newVal, true)
+				);
+		
+	} else if(element === "video") {
+		
+		markup = addMedia("Video", 
+				newVal, 
+				getUrl(survey.o_id, survey.id, newVal, false), 
+				getUrl(survey.o_id, survey.id, newVal, true)
+				);
+		
+	} else if(element === "audio") {
+		
+		markup = addMedia("Video", 
+				newVal, 
+				getUrl(survey.o_id, survey.id, newVal, false), 
+				undefined
+				);	
+
+	}
+	
+	$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
 }
 
 /*
  * Media functions
  */
+function getUrl(o_id, s_id, newVal, thumbs) {
+	var url = "/media/";
+	if(gIsSurveyLevel) {
+		url += s_id;
+		url += "/";
+		if(thumbs) {
+			url += "thumbs/"; 
+		}
+		url += newVal;
+	} else {
+		url += "organisation/";
+		url += o_id;
+		if(thumbs) {
+			url += "thumbs/"; 
+		}
+		url += newVal;
+	}
+	
+	return url;
+}
+
 function progressFn(e) {
 	if(e.lengthComputable){
         var w = (100.0 * e.loaded) / e.total;

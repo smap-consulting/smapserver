@@ -117,7 +117,7 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, s.def_lang" +
+		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, s.def_lang, u.o_id" +
 				" from survey s, users u, user_project up, project p" +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -143,6 +143,7 @@ public class SurveyManager {
 			s.setPName(resultSet.getString(6));
 			s.setPId(resultSet.getInt(7));
 			s.def_lang = resultSet.getString(8);
+			s.o_id = resultSet.getInt(9);
 			
 		} 
 		
@@ -231,7 +232,10 @@ public class SurveyManager {
 		
 		// Get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, q.source from question q where f_id = ?";
+		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, q.source from question q "
+				+ "where q.f_id = ? "
+				+ "and q.qname != '_instanceid' "
+				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
 		// Get the options belonging to a question		
