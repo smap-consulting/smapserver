@@ -59,7 +59,8 @@ public class TranslationManager {
 	public List<ManifestValue> getManifestBySurvey(Connection sd, 
 			String user, 
 			int surveyId,
-			String basePath
+			String basePath,
+			String surveyIdent
 			)	throws SQLException {
 		
 		HashMap<String, String> files = new HashMap<String, String> ();
@@ -95,7 +96,7 @@ public class TranslationManager {
 					// Get file name from value (Just for legacy, new media should be stored as the file name only)
 					int idx = m.value.lastIndexOf('/');	
 					m.fileName = m.value.substring(idx + 1);					
-					UtilityMethods.getFileUrl(m, surveyId, m.fileName, basePath, oId);		// Url will be null if file does not exist
+					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);		// Url will be null if file does not exist
 					
 					// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
 					if(files.get(m.fileName) == null) {
@@ -124,7 +125,7 @@ public class TranslationManager {
 					m.type = "csv";
 					
 					m.fileName = manifestList.get(i);
-					UtilityMethods.getFileUrl(m, surveyId, m.fileName, basePath, oId);
+					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
 					
 					manifests.add(m);
 				}

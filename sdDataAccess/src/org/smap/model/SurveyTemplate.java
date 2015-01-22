@@ -782,19 +782,17 @@ public class SurveyTemplate {
 			boolean ro = q.isReadOnly() || (qType != null && qType.equals("note"));
 			String relevance = q.getRelevant();
 			String constraint = q.getConstraint();
-			
-			System.out.println("chck: "+ qName + " : " + constraint);
 		
 			// Check for mandatory and readonly
 			if(man && ro && relevance == null) {
-				System.out.println("check man read: " + qName + " : " + man + " : " + ro + " : " + relevance);
+				log.info("check man read: " + qName + " : " + man + " : " + ro + " : " + relevance);
 				String roMsg = "Question '" + qName + "' is mandatory, read only and has nothing in the 'relevance' column - remove the 'yes' in the required column" ;
 				badNames.add(roMsg);
 			}
 			
 			// Check for constraints without dots
 			if(constraint !=null && !constraint.contains(".") && !constraint.contains("false()")) {
-				System.out.println("check constraint: " + qName + " : " + constraint);
+				log.info("check constraint: " + qName + " : " + constraint);
 				String roMsg = "Constraint '" + constraint + "' for question " + qName + " must refer to the answer using a '.' (dot)";
 				badNames.add(roMsg);
 			}

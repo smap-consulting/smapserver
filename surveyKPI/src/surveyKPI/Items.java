@@ -172,7 +172,7 @@ public class Items extends Application {
 				String sqlQType = "select q.qtype from question q, form f " +
 					" where q.f_id = f.f_id " +
 					" and f.table_name = ? " +
-					" and q.qname = ?;";
+					" and lower(q.qname) = lower(?);";
 				pstmtQType = connectionSD.prepareStatement(sqlQType);
 				
 				// Prepare the statement to get the form details

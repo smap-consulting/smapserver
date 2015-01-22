@@ -132,7 +132,7 @@ public class FormsManifest {
 			TranslationManager translationMgr = new TranslationManager();
 			
 			List<ManifestValue> manifestList = translationMgr.
-					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath);
+					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, survey.ident);
 
 			
 			for( ManifestValue m : manifestList) {

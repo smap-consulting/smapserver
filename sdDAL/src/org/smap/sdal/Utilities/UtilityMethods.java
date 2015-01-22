@@ -658,7 +658,7 @@ public class UtilityMethods {
 					if(t.equals("none")) {
 						l.text = v;
 					} else if(basePath != null && oId > 0) {
-						getFileUrl(manifest, s.id, v, basePath, oId);
+						getFileUrl(manifest, s.ident, v, basePath, oId);
 						System.out.println("Url: " + manifest.url + " : " + v);
 						if(t.equals("image")) {
 							l.image = v;
@@ -710,7 +710,7 @@ public class UtilityMethods {
 	/*
 	 * Get the partial (URL) of the file and its file path or null if the file does not exist
 	 */
-	public static void getFileUrl(ManifestValue manifest, int sId, String fileName, String basePath, int oId) {
+	public static void getFileUrl(ManifestValue manifest, String sIdent, String fileName, String basePath, int oId) {
 		
 		String url = null;
 		String thumbsUrl = null;
@@ -718,8 +718,8 @@ public class UtilityMethods {
 		File thumb = null;
 		
 		// First try the survey level
-		url = "/media/" + sId + "/" + fileName;	
-		thumbsUrl = "/media/" + sId + "/thumbs/" + fileName;	
+		url = "/media/" + sIdent + "/" + fileName;	
+		thumbsUrl = "/media/" + sIdent + "/thumbs/" + fileName;	
 		file = new File(basePath + url);
 		if(file.exists()) {
 			manifest.url = url;

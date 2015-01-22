@@ -387,34 +387,47 @@ function refreshView() {
 	
 	$('.mediaProp').off().click(function(){
 		event.preventDefault();
-		var $this = $(this),
-			$parent = $this.closest('td');
 		
-		// Set up media view
-		gElement = $this.data("element");
-		gSelFormId = $parent.data("fid");
-		gSelId = $parent.data("id");
-		gOptionListKey =""; // TODO
-		$gCurrentRow = $parent;
-			
-		$('.mediaManage').hide();						// MEDIA
-		$('.mediaSelect').show();
-		$('#mediaModalLabel').html("Select Media File");
-		$('#mediaModal table').on('click', 'tbody tr', function(e) {
-			var $sel = $(this);
-			
-			$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other seelcted rows
-		    $sel.addClass('success');
-		 
-		    gNewVal = $sel.find('.filename').text();		    
-		   
-		});
-		
-		$('#mediaModal').modal('show');
+		var $this = $(this);
+		mediaPropSelected($this);
 
 	});
 }
 
+function mediaPropSelected($this) {
+	$parent = $this.closest('td');
+	
+	// Set up media view
+	gElement = $this.data("element");
+	gSelFormId = $parent.data("fid");
+	gSelId = $parent.data("id");
+	gOptionListKey =""; // TODO
+	$gCurrentRow = $parent;
+		
+	$('.mediaManage').hide();						// MEDIA
+	$('.mediaSelect').show();
+	$('#mediaModalLabel').html("Select Media File");
+	$('#mediaModal table').on('click', 'tbody tr', function(e) {
+		var $sel = $(this);
+		
+		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other seelcted rows
+	    $sel.addClass('success');
+	 
+	    gNewVal = $sel.find('.filename').text();		    
+	   
+	});
+	
+	// On double click save and exit
+	$('#mediaModal table').on('dblclick', 'tbody tr', function(e) {
+		var $sel = $(this);
+		
+	    gNewVal = $sel.find('.filename').text();		    
+	    $('#mediaSelectSave').trigger("click");
+	});
+	
+	$('#mediaModal').modal('show');
+
+}
 /*
  * Update the list of language
  */
@@ -770,38 +783,43 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 		
 		markup = addMedia("Image", 
 				newVal, 
-				getUrl(survey.o_id, survey.id, newVal, false), 
-				getUrl(survey.o_id, survey.id, newVal, true)
+				getUrl(survey.o_id, survey.ident, newVal, false), 
+				getUrl(survey.o_id, survey.ident, newVal, true)
 				);
 		
 	} else if(element === "video") {
 		
 		markup = addMedia("Video", 
 				newVal, 
-				getUrl(survey.o_id, survey.id, newVal, false), 
-				getUrl(survey.o_id, survey.id, newVal, true)
+				getUrl(survey.o_id, survey.ident, newVal, false), 
+				getUrl(survey.o_id, survey.ident, newVal, true)
 				);
 		
 	} else if(element === "audio") {
 		
 		markup = addMedia("Video", 
 				newVal, 
-				getUrl(survey.o_id, survey.id, newVal, false), 
+				getUrl(survey.o_id, survey.ident, newVal, false), 
 				undefined
 				);	
 
 	}
 	
 	$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
+	$('.mediaProp', $gCurrentRow).off().click(function(){
+		event.preventDefault();	
+		var $this = $(this);
+		mediaPropSelected($this);
+	});
 }
 
 /*
  * Media functions
  */
-function getUrl(o_id, s_id, newVal, thumbs) {
+function getUrl(o_id, s_ident, newVal, thumbs) {
 	var url = "/media/";
 	if(gIsSurveyLevel) {
-		url += s_id;
+		url += s_ident;
 		url += "/";
 		if(thumbs) {
 			url += "thumbs/"; 
