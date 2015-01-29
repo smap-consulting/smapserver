@@ -45,31 +45,145 @@ $(document).ready(function() {
  	 });
 	
 	// Set button style and function
-	$('#create_user').button().click(function () {
+	$('#create_user').click(function () {
 		openUserDialog(false, -1);
 	});
-	$('#delete_user').button().click(function () {
+	$('#delete_user').click(function () {
 		deleteUsers();
 	});
 
-	$('#create_project').button().click(function () {
+	$('#create_project').click(function () {
 		openProjectDialog(false, -1);
 	});
-	$('#delete_project').button().click(function () {
+	$('#delete_project').click(function () {
 		deleteProjects();
 	});
 	
-	$('#create_organisation').button().click(function () {
+	$('#create_organisation').click(function () {
 		openOrganisationDialog(false, -1);
 	});
-	$('#delete_organisation').button().click(function () {
+	$('#delete_organisation').click(function () {
 		deleteOrganisations();
 	});
-	$('#move_to_organisation').button().click(function () {
-		$('#move_to_organisation_popup').dialog("open");
+	$('.move_to_organisation').click(function () {
+		$('#move_to_organisation_popup').modal("show");
 	});
 	
+	// Set up the tabs
+    $('#usersTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').hide();
+		$('#organisationPanel').hide();
+		$('#userPanel').show();
+    })
+    $('#projectsTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').show();
+		$('#organisationPanel').hide();
+		$('#userPanel').hide();
+    })
+    $('#organisationTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').hide();
+		$('#organisationPanel').show();
+		$('#userPanel').hide();
+    })
+    
+    // Function to save a users details
+    $('#userDetailsSave').click(function(e) {
+		var userList = [],
+		user = {},
+		error = false,
+		validIdent = new RegExp('^[a-z0-9]+$'),
+		validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
+		send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
+	
+		if(gCurrentUserIndex === -1) {
+			user.id = -1;
+		} else {
+			user.id = gUsers[gCurrentUserIndex].id;
+		}
+		user.ident = $('#user_ident').val();
+		user.name = $('#user_name').val();
+		user.email = $('#user_email').val();
+		if(gCurrentUserIndex === -1 && send_email == "send_email") {
+			user.sendEmail = true;
+		} else {
+			user.sendEmail = false;
+		}
+		
+		// Validations
+		if(user.ident.len)
+		if(!user.ident.match(validIdent)) {
+			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
+			$('#user_ident').focus();
+			return false;
+		}
+		if(user.ident.indexOf(' ') !== -1) {
+			alert("Spaces are not allowed in the user ident");
+			$('#user_ident').focus();
+			return false;
+		}
+		if(user.email.length > 0) {
+			if(!validEmail.test(user.email)) {
+				error = true;
+				alert("Email is not valid");
+				$('#user_email').focus();
+				return false;
+			}
+		}
+		
+		// For a new user, email must be specified if the send email check box is set
+		if(user.sendEmail && user.email.length === 0) {
+			error = true;
+			alert("If sending an email to the user then email address must be specified");
+			$('#user_email').focus();
+			return false;
+		}
+	
+		if($('#user_password').is(':visible')) {
+			user.password = $('#user_password').val();
+			if(user.password.length < 2) {
+				error = true;
+				user.password = undefined;
+				alert("Passwords, if specified, must be longer than 1 character");
+				$('#user_password').focus();
+				return false;
+			}
+			if($('#user_password_confirm').val() !== user.password) {
+				error = true;
+				user.password = undefined;
+				alert("Passwords do not match");
+				$('#user_password').focus();
+				return false;
+			}
+		} else {
+			user.password = undefined;
+		}
+		
+		user.groups = [];
+		user.projects = [];
+		$('#user_groups').find('input:checked').each(function(index) {
+			user.groups[index] = {id: $(this).val()};
+		});
+		$('#user_projects').find('input:checked').each(function(index) {
+			user.projects[index] = {id: $(this).val()};
+	
+		});
+		userList[0] = user;
+		writeUserDetails(userList, $(this));	// Save the user details to the database
+ 		
+    });
+  
+    
 	 // Initialse the create user dialog
+    /*
 	 $('#create_user_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -175,6 +289,7 @@ $(document).ready(function() {
 		}
 	 );
 	 
+	 */
 	 // Initialse the create project dialog
 	 $('#create_project_popup').dialog(
 		{
@@ -526,7 +641,8 @@ function openUserDialog(existing, userIndex) {
 	h = [];
 	idx = -1;
 	for(i = 0; i < gGroups.length; i++) {
-		if(gGroups[i]. id !== 4 || globals.gIsOrgAdministrator) {
+		if(gGroups[i].id !== 4 || globals.gIsOrgAdministrator) {
+			h[++idx] = '<div class="checkbox"><label>';
 			h[++idx] = '<input type="checkbox" id="'; 
 			h[++idx] = 'user_groups_cb' + i;
 			h[++idx] = '" name="';
@@ -540,10 +656,10 @@ function openUserDialog(existing, userIndex) {
 					h[++idx] = ' checked="checked"';
 				}
 			}
-			h[++idx] = '/><label for="';
-			h[++idx] = 'user_groups_cb' + i;
-			h[++idx] = '">' + gGroups[i].name;
-			h[++idx] =	 '</label><br/>';
+			h[++idx] = '/> ';
+			h[++idx] = gGroups[i].name;
+			h[++idx] =	 '</label></div>';
+			
 		}
 	}
 	$user_groups.empty().append(h.join(''));
@@ -552,6 +668,7 @@ function openUserDialog(existing, userIndex) {
 	h = [];
 	idx = -1;
 	for(i = 0; i < globals.gProjectList.length; i++) {
+		h[++idx] = '<div class="checkbox"><label>';
 		h[++idx] = '<input type="checkbox" id="'; 
 		h[++idx] = 'user_projects_cb' + i;
 		h[++idx] = '" name="';
@@ -566,10 +683,9 @@ function openUserDialog(existing, userIndex) {
 				h[++idx] = ' checked="checked"';
 			}
 		}
-		h[++idx] = '/><label for="';
-		h[++idx] = 'user_projects_cb' + i;
-		h[++idx] = '">' + globals.gProjectList[i].name;
-		h[++idx] =	 '</label><br/>';
+		h[++idx] = '/>';
+		h[++idx] = globals.gProjectList[i].name;
+		h[++idx] = '</label></div>';
 	}
 	$user_projects.empty().append(h.join(''));
 	
@@ -608,7 +724,7 @@ function openUserDialog(existing, userIndex) {
 		 }
 	}
 	 
-	$('#create_user_popup').dialog("open");
+	$('#create_user_popup').modal("show");
 }
 
 /*
@@ -677,9 +793,10 @@ function writeUserDetails(userList, $dialog) {
 		  data: { users: userString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  if(typeof $dialog !== "undefined") {
-				  $dialog.dialog("close");
-			  }
+			  //if(typeof $dialog !== "undefined") {
+				  $('#create_user_popup').modal("show");
+				  //$dialog.modal("close");
+			  //}
 			  getUsers();
 		  }, error: function(xhr, textStatus, err) {
 			  removeHourglass();
@@ -728,7 +845,7 @@ function updateUserTable(group, projectStr) {
 		project;
 	
 	gControlCount = 0;
-	$('#controls').find('button').button("disable");
+	$('#controls').find('button').addClass("disabled");
 	
 	if(group === undefined || group === null) {
 		group = $('#group_name').val(); 
@@ -748,13 +865,13 @@ function updateUserTable(group, projectStr) {
 	}
 	
 	
-	h[++idx] = '<table class="tablesorter">';
+	h[++idx] = '<table class="table table-striped">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<col style="width:160px;">';	
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<tr>';
-	h[++idx] = '<th></th>';
+	h[++idx] = '<th>Select</th>';
 	h[++idx] = '<th>User Id</th>';
 	h[++idx] = '<th>Name</th>';
 	//h[++idx] = '<th>Email</th>';
@@ -774,7 +891,7 @@ function updateUserTable(group, projectStr) {
 			h[++idx] = '<td class="control_td"><input type="checkbox" name="controls" value="';
 			h[++idx] = i;
 			h[++idx] = '"></td>';
-			h[++idx] = '<td class="user_edit_td"><button class="user_edit" value="';
+			h[++idx] = '<td class="user_edit_td"><button class="btn btn-default user_edit" style="width:100%;" value="';
 			h[++idx] = i;
 			h[++idx] = '">';
 			h[++idx] = user.ident;
@@ -792,8 +909,8 @@ function updateUserTable(group, projectStr) {
 	h[++idx] = '</tbody>';
 	h[++idx] = '</table>';
 	
-	$userTable.empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
-	$('.user_edit').button({icons: {primary: "ui-icon-document"}}).click(function() {
+	$userTable.empty().append(h.join(''));
+	$('.user_edit').click(function() {
 		openUserDialog(true, $(this).val());
 	});
 	$('#user_table .control_td').find('input').click(function() {
@@ -801,16 +918,16 @@ function updateUserTable(group, projectStr) {
 
 			++gControlCount;
 			if(gControlCount === 1) {
-				$('#controls').find('button').button("enable");
-				$('#move_to_organisation').button("enable");
+				$('#controls').find('button').removeClass("disabled");
+				$('.move_to_organisation').removeClass("disabled");
 			}
 		} else {
 
 			--gControlCount;
 			if(gControlCount === 0) {
-				$('#controls').find('button').button("disable");
+				$('#controls').find('button').addClass("disabled");
 				if(gControlProjectCount === 0) {
-					$('#move_to_organisation').button("disable");
+					$('.move_to_organisation').addClass("disabled");
 				}
 			}
 		}
@@ -825,15 +942,15 @@ function updateUserTable(group, projectStr) {
 function updateProjectTable() {
 
 	gControlProjectCount = 0;
-	$('#project_controls').find('button').button("disable");
-	$('#move_to_organisation').button("disable");
+	$('#project_controls').find('button').addClass("disabled");
+	$('.move_to_organisation').addClass("disabled");
 	
 	var $projectTable = $('#project_table'),
 		i, project,
 		h = [],
 		idx = -1;
 	
-	h[++idx] = '<table class="tablesorter">';
+	h[++idx] = '<table class="table table-striped">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<col style="width:auto;">';
@@ -859,7 +976,7 @@ function updateProjectTable() {
 		h[++idx] = '<td>';
 		h[++idx] = project.id;
 		h[++idx] = '</td>';
-		h[++idx] = '<td class="user_edit_td"><button class="project_edit" value="';
+		h[++idx] = '<td class="user_edit_td"><button class="btn btn-default project_edit" style="width:100%;" value="';
 		h[++idx] = i;
 		h[++idx] = '">';
 		h[++idx] = project.name;
@@ -874,8 +991,8 @@ function updateProjectTable() {
 	h[++idx] = '</tbody>';
 	h[++idx] = '</table>';
 	
-	$projectTable.empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
-	$('.project_edit').button({icons: {primary: "ui-icon-document"}}).click(function() {
+	$projectTable.empty().append(h.join('')).find('table');
+	$('.project_edit').click(function() {
 		openProjectDialog(true, $(this).val());
 	});
 	$('#project_table .control_td').find('input').click(function() {
@@ -883,16 +1000,16 @@ function updateProjectTable() {
 
 			++gControlProjectCount;
 			if(gControlProjectCount === 1) {
-				$('#project_controls').find('button').button("enable");
-				$('#move_to_organisation').button("enable");
+				$('#project_controls').find('button').removeClass("disabled");
+				$('.move_to_organisation').removeClass("disabled");
 			}
 		} else {
 
 			--gControlProjectCount;
 			if(gControlProjectCount === 0) {
-				$('#project_controls').find('button').button("disable");
+				$('#project_controls').find('button').addClass("disabled");
 				if(gControlCount === 0) {
-					$('#move_to_organisation').button("disable");
+					$('.move_to_organisation').addClass("disabled");
 				}
 			}
 		}
@@ -907,14 +1024,14 @@ function updateProjectTable() {
 function updateOrganisationTable() {
 
 	gControlOrganisationCount = 0;
-	$('#organisation_controls').find('button').button("disable");
+	$('#organisation_controls').find('button').addClass("disabled");
 
 	var $organisationTable = $('#organisation_table'),
 		i, organisation,
 		h = [],
 		idx = -1;
 	
-	h[++idx] = '<table class="tablesorter">';
+	h[++idx] = '<table class="table table-striped">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th></th>';
@@ -936,7 +1053,7 @@ function updateOrganisationTable() {
 		h[++idx] = '<td>';
 		h[++idx] = organisation.id;
 		h[++idx] = '</td>';
-		h[++idx] = '<td class="user_edit_td"><button class="organisation_edit" value="';
+		h[++idx] = '<td class="user_edit_td"><button style="width:100%;" class="btn btn-default organisation_edit" value="';
 		h[++idx] = i;
 		h[++idx] = '">';
 		h[++idx] = organisation.name;
@@ -951,8 +1068,8 @@ function updateOrganisationTable() {
 	h[++idx] = '</tbody>';
 	h[++idx] = '</table>';
 	
-	$organisationTable.empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
-	$('.organisation_edit').button({icons: {primary: "ui-icon-document"}}).click(function() {
+	$organisationTable.empty().append(h.join(''));
+	$('.organisation_edit').click(function() {
 		openOrganisationDialog(true, $(this).val());
 	});
 	$('#organisation_table .control_td').find('input').click(function() {
@@ -960,13 +1077,13 @@ function updateOrganisationTable() {
 
 			++gControlOrganisationCount;
 			if(gControlOrganisationCount === 1) {
-				$('#organisation_controls').find('button').button("enable");
+				$('.move_to_organisation').removeClass("disabled");
 			}
 		} else {
 
 			--gControlOrganisationCount;
 			if(gControlOrganisationCount === 0) {
-				$('#organisation_controls').find('button').button("disable");
+				$('.move_to_organisation').addClass("disabled");
 			}
 		}
  

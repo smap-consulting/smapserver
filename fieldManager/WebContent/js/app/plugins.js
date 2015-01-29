@@ -403,15 +403,15 @@ function getMedia(property) {
 					tab[++idx] = '</span>';
 					// Add a button to delete the task group
 					tab[++idx] = '<span class="noPrint">';
-					tab[++idx] = '<button class="delete_task_group" value="';
+					tab[++idx] = '<button class="delete_task_group btn btn-danger" value="';
 					tab[++idx] = thisTg;
-					tab[++idx] = '">Delete</button>';
+					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
 					tab[++idx] = '</span>';
 					
 					// Create the table
-					tab[++idx] = '<table class="tasks tablesorter" border="1" >';
+					tab[++idx] = '<table class="tasks table table-striped">';
 					tab[++idx] = '<thead><tr>';
-					tab[++idx] = '<th>Task</th><th>location</th>';
+					tab[++idx] = '<th>Select</th><th>Task</th><th>location</th>';
 					
 					addressParams = settings.data.task_groups[currentTg].tg_address_params;
 					$.each(item.properties, function(key, value) {
@@ -423,6 +423,8 @@ function getMedia(property) {
 										tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
 									}
 								}
+							} else if(key === 'task_id' || key === 'task_group_id' || key === 'task_group_name') {
+								// ignore
 							} else {
 								tab[++idx] = '<th>' + key + '</th>';
 							}
@@ -436,9 +438,16 @@ function getMedia(property) {
 				showCompleted = settings.showCompleted || assignmentStatus !== "submitted";
 				if(showCompleted) {
 					tab[++idx] = '<tr>';
-					/*
-					 * Write the location if it exists
-					 */
+					
+					// Add select checkbox
+					tab[++idx] = '<td class="control_td"><input class="select_row" type="checkbox" name="controls" data-taskid="';
+					tab[++idx] = item.properties.task_id;
+					tab[++idx] = '" data-assid="';
+					tab[++idx] = item.properties.assignment_id;
+					tab[++idx] = '" data-status="';
+					tab[++idx] = item.properties.assignment_status;
+					tab[++idx] = '"></td>';
+					
 					tab[++idx] = '<td>' + surveyName + '</td>';
 					if(item.geometry) {
 						tab[++idx] = '<td>' + item.geometry.type + '[' + item.geometry.coordinates + ']' + '</td>';
@@ -463,6 +472,8 @@ function getMedia(property) {
 										j++;
 									} 
 								}
+							} else if(key === 'task_id' || key === 'task_group_id' || key === 'task_group_name') {
+								// ignore
 							} else {
 								value = addAnchors(value).join(',');							
 								tab[++idx] = '<td>' + value + '</td>';

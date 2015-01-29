@@ -47,6 +47,7 @@ requirejs.config({
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
+    	bootstrap: '../../../../js/libs/bootstrap.min',
     	crf: '../../../../js/libs/commonReportFunctions',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
@@ -55,6 +56,7 @@ requirejs.config({
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],
     	'common': ['jquery'],
+    	'bootstrap': ['jquery'],
     	'tablesorter': ['jquery'],
     	'jquery-barcode': ['jquery'],
     	'app/map-ol-mgmt': ['jquery_ui', 'openlayers'],
@@ -65,19 +67,17 @@ requirejs.config({
     });
 
 require([
-         'jquery', 
-         'jquery_ui', 
-         'rmm', 
+         'jquery',
+         'bootstrap',
          'common', 
          'localise', 
          'globals',
          'app/assignments', 
          'app/map-ol-mgmt',
          'app/plugins',
-         'tablesorter',
          'jquery-barcode',
          'openlayers',
          'crf'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
+         ], function($, jbootstrap, modernizr, common, localise, globals) {});
 

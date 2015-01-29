@@ -4,11 +4,18 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>User Management</title>
+
+<!-- 
 <link rel=StyleSheet href="/css/smap.css" type="text/css">
 <link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
 <link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" />
 <link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/>
+-->
+<link rel="stylesheet" href="/css/normalize.css" />
+<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 
+	
 <script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 <script src="/js/libs/modernizr.js"></script>
 <script data-main="js/usermanagement_main" src="/js/libs/require.js"></script>
@@ -16,83 +23,218 @@
 </head>
 <body>
 
-<div>
-	<div class="rmm noPrint" data-menu-style = "minimal">
-		<ul>
-			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-			<li><a class="lang" data-lang="m_tm" href="templateManagement.html">Form Management</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-			<li><a class="lang" data-lang="m_monitor" href="monitor.html">Monitoring</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
-			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
-		</ul>
-	</div>
-	<p style="clear: both;"></p>
-	<div id="header">
-		<div id="username"></div>
-		<div id="banner">Users</div>
-	</div>
-</div>	<!-- Header -->
+<header class="navbar navbar-default navbar-static-top noPrint" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+     	<span class="lang" data-lang="m_users" >Users</span>
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            
+            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
+            <li class="restrict_role admin_role analyst_role disabled"><a href="#"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
+            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
+            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
+          
+          </ul>
+        </li>  
+        <li><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>     
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
+		<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
+		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+        <li>
+         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+			</a>
+		</li>
+      </ul>
+      	
+	</nav>
 
-<div id="wrapper" data-role="content">
-	
-	<div id="sidebar" data-role="content">
-	
-		<div id="filters">
-			<h1>Filter user list</h1>
-			<form id="user_filter_form">
-				<label for="group_name">Select Group</label>
-				<select id="group_name"></select><br/>
-				<label for="project_name">Select Project</label>
-				<select class="project_list" id="project_name"></select>
-			</form>	
-		</div>
-	
-		<div id="users">
-			<h1>Users</h1>
-			<button id="create_user">Add User</button>
-			<div id="user_table"></div>
-		</div>
-		<div id="controls">
-			<button id="delete_user">Delete</button>
-		</div>
-	</div>
+  </div>
+</header>
 
-	<div id="content" class="ui-grid-solo">
-		<div id="projects">
-			<h1>Projects</h1>
-			<button id="create_project">Add Project</button>
-			<div id="project_table"></div>
-		</div>
-		<div id="project_controls">
-			<button id="delete_project">Delete</button>
+<div class="container">
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li id="usersTab" role="presentation" class="active"><a href="#">Users</a></li>
+        <li id="projectsTab" role="presentation"><a href="#">Projects</a></li>
+        <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#">Organisations</a></li>
+    </ul>
+	
+	
+	<!-- The container for the user list -->
+    <div id="userPanel" >
+	    
+
+		<div class="well" id="filters">
+			<div class="container">
+				<form role="form" class="form-horizontal" id="user_filter_form">
+					<div class="form-group">
+						<label class="control-label col-sm-4" for="group_name">Show users with security group:</label>
+						<div class="col-sm-4">
+							<select class="form-control" id="group_name"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label col-sm-4" for="project_name">Show users in project:</label>
+						<div class="col-sm-4">
+							<select class="form-control project_list" id="project_name"></select>
+						</div>
+					</div>
+				</form>	
+			</div>
 		</div>
 		
-		<div class="restrict_role org_role" style="display:none;">
-			<h1>Move selected People and Projects to a different organisation</h1>
-			<button id="move_to_organisation">Move</button>
-		</div>
-		
-		<div class="restrict_role org_role" style="display:none;">
-			<div id="organisations">
-				<h1>Organisations</h1>
-				<button id="create_organisation">Add Organisation</button>
-				<div id="organisation_table"></div>
+		<div class="container">
+			<div class="row">	   	
+			   	<div class="col-md-12 col-xs-12">
+					<div id="user_table"></div>	
+				</div>
 			</div>
-			<div id="organisation_controls">
-				<button id="delete_organisation">Delete</button>
+			<div class="row">	   	
+			   	<div class="col-md-12 col-xs-12">
+					<button class="btn btn-success" id="create_user">Add User</button>
+					<button class="btn btn-danger" id="delete_user">Delete User</button>
+					<button class="btn btn-warning" class="restrict_role org_role move_to_organisation">Move To Organisation</button>
+				</div>
 			</div>
 		</div>
 	</div>
+
+
+    <!-- The container for the list of projects -->
+    <div id="projectPanel" style="display:none;">
+
+
+
+		<div id="project_table"></div>
+
+		<button class="btn btn-success" id="create_project">Add Project</button>
+		<button class="btn btn-danger" id="delete_project">Delete Project</button>
+		<button class="btn btn-warning" class="restrict_role org_role move_to_organisation">Move To Organisation</button>
+
+	</div>
+	
+	<!-- The container for the list of organisations -->
+    <div id="organisationPanel" style="display:none;">
+
+		<div id="organisation_table"></div>
+		<button id="create_organisation" class="btn btn-success" >Add Organisation</button>
+		<button class="btn btn-danger" id="delete_organisation">Delete Organisation</button>
+	</div>
+	
+	
+	
 </div>
 
 <img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 	
-<!-- Popup to allow the user to edit a user details -->
+<!-- Modal to allow the editing of a user's details -->
+<div id="create_user_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyUserLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyUserLabel">User Details</h4>
+   			</div>
+		     <div class="modal-body row">
+     			<div class="col-md-6">
+					<form role="form" class="form" id="user_create_form">
+						<label for="user_ident" class="control-label">Ident (lowercase, no spaces)</label>
+						<input type="text" id="user_ident" required pattern="[a-zA-Z0-9_]+" class="form-control">
+							
+						<label for="user_name" data-lang="c_name" class="lang control-label">Name</label>
+						<input type="text" id="user_name" required class="form-control">
+
+						<label for="user_email" data-lang="c_email" class="lang control-label">Email</label>
+						<input type="email" class="form-control" id="user_email" 
+								placeholder="Enter email" 
+								pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						<div id="send_email_fields" style="display:none;">
+							<div class="radio">
+								<label>
+									<input type="radio" id="send_email" name="send_email" value="send_email" checked="checked"/>
+									 Send email to new user
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input  type="radio" id="set_password" name="send_email" value="set_password" />
+									Specify password
+								</label>
+							</div>
+						</div>
+						<div id="reset_password_fields" style="display:none;">
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="reset_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div id="password_fields" style="display:none;">
+							<div class="form-group">
+								<label for="user_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+								<div class="col-sm-10">
+									<input id="user_password" type="password" placeholder="Password" class="form-control">
+								</div>
+							</div>	
+							<div class="form-group">
+								<label for="user_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+								<div class="col-sm-10">
+									<input id="user_password_confirm" type="password" placeholder="Password" class="form-control">
+								</div>
+							</div>	
+						</div>		
+					</form>	
+				</div>
+     			<div class="col-md-6">	
+					<div class="right_panel">
+						<div class="bg-danger">
+							<h4>Security Groups</h4>
+							<div id = "user_groups"></div>
+						</div>
+						<div class="bg-warning">
+							<h4>Projects</h4>
+							<div id = "user_projects"></div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userDetailsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+<!-- 
 <div id="create_user_popup" style="display:none;">
 	<h1>User Details</h1>
 	<div class="left_panel">
 		<form id="user_create_form">
+		
 			<label for="user_ident">Ident (lowercase, no spaces)</label>
 			<input type="text" id="user_ident" required pattern="[a-zA-Z0-9_]+"><br/>
 			<label for="user_name">Name</label>
@@ -114,7 +256,8 @@
 				<input id="user_password" type="password"><br/>	
 				<label for="user_password_confirm">Confirm Password</label>
 				<input id="user_password_confirm" type="password"><br/>	
-			</span>		
+			</span>	
+		
 		</form>	
 	</div>
 	<div class="right_panel">
@@ -128,7 +271,7 @@
 	</div>
 	</div>
 </div>
-
+-->
 
 <!-- Popup to allow the user to edit a project details -->
 <div id="create_project_popup" style="display:none;">
@@ -184,29 +327,72 @@
 	</div>
 </div>
 
-	<!-- Popup to allow the user to edit their own details -->
-	<div id="modify_me_popup" style="display:none;">
-	
-		<div class="left_panel">
-			<form id="me_edit_form">
-				<label for="me_name">Name</label>
-				<input type="text" id="me_name" required><br/>
-				<select id="me_language"></select><br/>
-				<label for="me_email">Email</label>
-				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
-				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
-					<input type="checkbox" id="reset_me_password"/><br/>
-				</span>
-				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
-					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
-					<input id="me_password_confirm" type="password"><br/>	
-				</span>	
-			</form>	
+<!-- Popup to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
 		</div>
 	</div>
+</div>
 
 
 </body>

@@ -43,7 +43,7 @@ requirejs.config({
     	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
     	            ],
     	modernizr: '../../../../js/libs/modernizr',
-    	rmm: '../../../../js/libs/responsivemobilemenu',
+    	bootstrap: '../../../../js/libs/bootstrap.min',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
@@ -52,7 +52,7 @@ requirejs.config({
     	lang_location: '../../../../js'
     },
     shim: {
-    	'rmm': ['jquery'],
+       	'bootstrap': ['jquery'],
     	'jquery_ui': ['jquery'],
     	'common': ['jquery'],
     	'tablesorter': ['jquery']
@@ -63,12 +63,12 @@ require([
          'jquery', 
          'jquery_ui',
          'modernizr', 
-         'rmm', 
+         'bootstrap', 
          'common', 
          'localise', 
          'globals',
          'app/userManagement', 
          'tablesorter'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
+         ], function($, jquery_ui, modernizr, bootstrap, common, localise, globals) {});
 

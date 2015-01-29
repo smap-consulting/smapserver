@@ -441,8 +441,15 @@ function onFeatureSelectOL(feature) {
 	var status, assignment;
 	
 	onFeatureUnselect();
-	
+	if(feature.attributes.isSelected === 6) {
+		removePendingTask(feature.attributes.assignment_id, "map");
+		feature.attributes.isSelected = 0;
+	} else {
+		addPendingTask(feature.attributes.task_id, feature.attributes.assignment_id, feature.attributes.assignment_status, "map");
+		feature.attributes.isSelected = 6;
+	}
 	// Action for assignments
+	/*
 	if(globals.gCurrentUserName && 
 				(feature.attributes.assignment_status === "new" || feature.attributes.assignment_status === "accepted")) {
 			
@@ -462,7 +469,9 @@ function onFeatureSelectOL(feature) {
 		
 		deleteFeature(feature);
 
-	} else {
+	}
+	
+	else {
 
 		$("#features").show();		  
 		$("#features").featureSelect(feature.data, feature.cluster);
@@ -470,9 +479,11 @@ function onFeatureSelectOL(feature) {
 			$("#features").hide().empty();
 		});
 	}
+	*/
 
 }
 
+/*
 function removeFromPending(assignmentId) {
 	var i;
 	for (i = 0; i < globals.gPendingUpdates.length; i++) {
@@ -482,6 +493,7 @@ function removeFromPending(assignmentId) {
 		}
 	}
 }
+*/
 
 function onFeatureUnselect() {
     $("#features").hide().empty();
@@ -536,33 +548,36 @@ function loadAssignments(data) {
 			});
 	var selectStyle = new OpenLayers.Style(
 			{
-				'fillColor': "blue",
+				'fillColor': "orange",
 				'pointRadius': 8,
 				'fillOpacity': 1.0
 			});
 	
 	var lookup = {
-			'new' : {fillColor: "red", strokeColor: "red",},
-			'rejected' : {fillColor: "white", strokeColor: "white"},
-			'cancelled' : {fillColor: "white", strokeColor: "white"},
-			'pending' : {fillColor: "orange", strokeColor: "orange"},
-			'accepted' : {fillColor: "yellow", strokeColor: "yellow"},
-			'completed' : {fillColor: "green", strokeColor: "green"},
-			'submitted' : {fillColor: "green", strokeColor: "green"}
+			'new' : {fillColor: "red", strokeColor: "red", pointRadius: "${isSelected}"},
+			'rejected' : {fillColor: "white", strokeColor: "orange", strokeWidth: "${isSelected}"},
+			'cancelled' : {fillColor: "white", strokeColor: "orange", strokeWidth: "${isSelected}"},
+			'accepted' : {fillColor: "yellow", strokeColor: "orange", strokeWidth: "${isSelected}"},
+			'completed' : {fillColor: "green", strokeColor: "orange", strokeWidth: "${isSelected}"},
+			'submitted' : {fillColor: "green", strokeColor: "orange", strokeWidth: "${isSelected}"}
 	};
 	var lookup_width = {
-			'POINT' : {strokeWidth: 2, strokeColor: "black"},
+			//'POINT' : {strokeWidth: 2, strokeColor: "black"},
 			'LINESTRING' : {strokeWidth: 5},
 			'POLYGON' : {strokeWidth: 2}
 	};
+
 	var styleMap = new OpenLayers.StyleMap({'default': defaultStyle,
         'select': selectStyle});
 	styleMap.addUniqueValueRules("default", "assignment_status", lookup);
 	styleMap.addUniqueValueRules("default", "geo_type", lookup_width);
+
 	
-	// Compute the bounds
+	// Compute the bounds and add isSelected setting
 
 	for (var i = 0; i < featuresObj.length; i++) {
+		featuresObj[i].attributes.isSelected = 0;
+		
 		if(featuresObj[i].geometry) {
 			if(!bounds) {
 				bounds = featuresObj[i].geometry.getBounds();
@@ -594,6 +609,15 @@ function loadAssignments(data) {
 	map.addLayer(globals.gAssignmentsLayer);
 	allLayers[0] = globals.gAssignmentsLayer;
 	
+}
+
+function updateMapTaskSelections(assignment_id, selected) {
+	var feats = globals.gAssignmentsLayer.getFeaturesByAttribute("assignment_id", assignment_id);
+	var selF = feats[0];
+	if(selF) {
+		selected == true ? selF.attributes.isSelected = 6 : selF.attributes.isSelected = 0;
+		globals.gAssignmentsLayer.drawFeature(selF);
+	}
 }
 
 function registerForClicks() {
@@ -638,11 +662,11 @@ function getTasksAsGeoJSON() {
 	return featuresString;
 }
 
-function deleteFeature(feature) {
+function deleteFeature(feature) {		// TODO  apply this functionality to a new deleteSelecte button
 
 	if(feature.attributes.assignment_status === "cancelled") {
 		feature.attributes.assignment_status = feature.attributes.old_assignment_status;
-		removeFromPending(feature.attributes.assignment_id);
+		removeFromPending(feature.attributes.assignment_id, "map");
 
 	} else {	
 		feature.attributes.old_assignment_status = feature.attributes.assignment_status;

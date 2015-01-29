@@ -593,6 +593,9 @@ public class TemplateUpload extends HttpServlet {
         				|| line.startsWith(">>") 
         				|| line.startsWith("processing")) {
         			// ignore all of the above
+        		} else if(line.startsWith("Content is not allowed in prolog")) {
+        			response.errMesg.add(line);
+        			response.hints.add("Did you select an XLS file?");
         		} else {
         			response.errMesg.add(line);
         		}

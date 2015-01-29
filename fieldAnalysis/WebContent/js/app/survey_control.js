@@ -57,9 +57,9 @@ $(document).ready(function() {
 	 	groupChangeEvent(sId, groupId);
 	 });
 	 
-	 // Add datepicker functionality
-	 $('#from_date').datepicker({ dateFormat: "yy-mm-dd" });
-	 $('#to_date').datepicker({ dateFormat: "yy-mm-dd" });
+	 // Add datepicker functionality TODO Bootstrap
+	 //$('#from_date').datepicker({ dateFormat: "yy-mm-dd" });
+	 //$('#to_date').datepicker({ dateFormat: "yy-mm-dd" });
 	 
 	 /*
 	  * Question filter

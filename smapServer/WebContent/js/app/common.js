@@ -18,6 +18,46 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 var gWait = 0;		// This javascript file only
 
+/* 
+ * ==============================================================
+ * Task Functions
+ * ==============================================================
+ */
+
+function addPendingTask(taskId, assignmentId, status, source) {
+	var i,
+		duplicate = false,
+		assignment;
+	
+	assignment = {
+			assignment_id: assignmentId,
+			assignment_status: status,
+			task_id: taskId			
+			};
+	globals.gPendingUpdates.push(assignment);
+	
+	if(source === "table") {
+		updateMapTaskSelections(assignmentId, true);
+	} else if(source === "map") {
+		$('#tasks_table').find('[data-assid=' + assignmentId + ']').prop("checked", true).closest('tr').addClass("info");
+	}
+}
+
+function removePendingTask(assignmentId, source) {
+	var i;
+	for (i = 0; i < globals.gPendingUpdates.length; i++) {
+		if(globals.gPendingUpdates[i].assignment_id === assignmentId) {
+			globals.gPendingUpdates.splice(i,1);
+			break;
+		}
+	}
+	if(source === "table") {
+		updateMapTaskSelections(assignmentId, false);
+	} else if(source === "map") {
+		$('#tasks_table').find('[data-assid=' + assignmentId + ']').prop("checked", false).closest('tr').removeClass("info");
+	}
+}
+
 /*
  * ===============================================================
  * Project Functions

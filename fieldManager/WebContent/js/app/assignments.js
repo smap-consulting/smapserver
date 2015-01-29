@@ -132,9 +132,19 @@ $(document).ready(function() {
 		globals.gCurrentUserName = $('#users_select_user option:selected').text();
 		globals.gCurrentUserId = $('#users_select_user option:selected').val();
 		
-		$('#assign_user').dialog("open");
+		$('#assign_user').modal("show");
 	});
 	
+	$('#assignUserSave').off().click(function() {
+		updatePendingAssignment($('#users_select_user').val(), "accepted");
+        saveData(globals.gPendingUpdates);
+		refreshAssignmentData(gUserFilter);
+		globals.gCurrentUserId = undefined;
+		globals.gCurrentUserName = undefined;
+		globals.gPendingUpdates = [];
+	})
+	
+	/*
 	$('#assign_user').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
@@ -167,7 +177,7 @@ $(document).ready(function() {
 			]
 		}
 	);
-	
+	*/
 
 	// Add button to create tasks
 	$('#assignSurvey').button().click(function () {
@@ -412,6 +422,23 @@ $(document).ready(function() {
 	// Hack on screen refresh default radio button is not always being set (not sure why)
 	$('#tableradio').prop('checked',true);
 });
+
+/*
+ * Assign the specified user to all the pending assignment changes
+ * User is optional
+ */
+function updatePendingAssignments(status, user) {
+	
+	var userObj = {id: user},
+		i;
+	
+	for(i = 0; i < globals.gPendingUpdates.length; i++) {
+		if(user) {
+			globals.gPendingUpdates[i].user = userObj;
+		}
+		globals.gPendingUpdates[i].assignment_status = status;
+	}
+}
 
 /*
  * Function called when the current project is changed
@@ -716,7 +743,7 @@ function clearDialogs() {
 	globals.gCurrentUserId = undefined;
 	globals.gPendingUpdates = [];
 	globals.gDeleteSelected = false;	
-	$(".ui-dialog-content").dialog("close");
+	$(".ui-dialog-content").modal("hide");
 }
 
 function refreshTableAssignments(tasks) {
@@ -728,6 +755,20 @@ function refreshTableAssignments(tasks) {
 					'maxAddCols' : 10,
 					'showCompleted' : $('#filter_completed').prop('checked')
 				});
+		
+		// Respond to selection of a task
+		$(".tasks").find(".select_row").change(function() {
+			var $this = $(this);
+			
+			console.log("Row selected:" + $this.data("taskid") + " : " + $this.data("assid") );
+			if($this.is(':checked')) {
+				$this.closest('tr').addClass("info");
+				addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
+			} else {
+				$this.closest('tr').removeClass("info");
+				removePendingTask($this.data("assid"), "table");
+			}
+		});
 		
 		// Show barcodes
 		$(".tasks").find('.barcode').each(function(index) {
@@ -765,6 +806,7 @@ function refreshTableAssignments(tasks) {
 	}
 }
 
+
 /*
  * Show the task parameters in the dialog
  */
@@ -775,7 +817,7 @@ function displayTaskParams() {
 	addressObj = null,
 	i;
 	
-	h[++idx] = '<table class="tablesorter">';
+	h[++idx] = '<table class="table table-striped">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th>Selected</th>';
@@ -813,7 +855,7 @@ function displayTaskParams() {
 	h[++idx] = '</tbody>';
 	h[++idx] = '</table>';
 	
-	$('#task_params_table').empty().append(h.join('')).find('table').tablesorter({ widgets: ['zebra'] });
+	$('#task_params_table').empty().append(h.join(''));
 	
 }
 

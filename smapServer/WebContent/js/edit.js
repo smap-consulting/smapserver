@@ -511,8 +511,15 @@ function addOneQuestion(question, fId, id) {
 		} else if(question.type.indexOf("select") === 0) {
 			h[++idx] = addOptions(question, fId);
 		}
-		h[++idx] = '</div>';
-	h[++idx] = '</li>';
+		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
+			h[++idx] = '<ol>';
+		} else  if(question.type === "end group") {
+			h[++idx] = '</ol>';
+		} 
+		if(question.type !== "begin group") {	/* End the panel */
+			h[++idx] = '</div>';
+			h[++idx] = '</li>';
+		}
 	
 	return h.join("");
 }
