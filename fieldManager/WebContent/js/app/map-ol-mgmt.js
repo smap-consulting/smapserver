@@ -554,7 +554,7 @@ function loadAssignments(data) {
 			});
 	
 	var lookup = {
-			'new' : {fillColor: "red", strokeColor: "red", pointRadius: "${isSelected}"},
+			'new' : {fillColor: "red", strokeColor: "orange", strokeWidth: "${isSelected}"},
 			'rejected' : {fillColor: "white", strokeColor: "orange", strokeWidth: "${isSelected}"},
 			'cancelled' : {fillColor: "white", strokeColor: "orange", strokeWidth: "${isSelected}"},
 			'accepted' : {fillColor: "yellow", strokeColor: "orange", strokeWidth: "${isSelected}"},
@@ -662,7 +662,8 @@ function getTasksAsGeoJSON() {
 	return featuresString;
 }
 
-function deleteFeature(feature) {		// TODO  apply this functionality to a new deleteSelecte button
+/*
+function deleteFeature(feature) {		
 
 	if(feature.attributes.assignment_status === "cancelled") {
 		feature.attributes.assignment_status = feature.attributes.old_assignment_status;
@@ -679,3 +680,4 @@ function deleteFeature(feature) {		// TODO  apply this functionality to a new de
 		globals.gPendingUpdates.push(assignment);
 	}
 }
+*/

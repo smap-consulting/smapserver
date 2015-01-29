@@ -470,6 +470,7 @@ ALTER TABLE task_group_id_seq OWNER TO ws;
 CREATE TABLE public.task_group (
 	tg_id integer NOT NULL DEFAULT nextval('task_group_id_seq') PRIMARY KEY,
 	name text,
+	p_id integer,
     address_params text
 );
 

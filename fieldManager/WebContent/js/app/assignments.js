@@ -16,7 +16,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','jquery_ui', 'app/map-ol-mgmt', 'common', 'localise'], function($, ui, ol_mgmt, common, lang) {
+define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 'bootbox'], 
+		function($, bootstrap, ol_mgmt, common, lang, bootbox) {
 	
 							// The following globals are only in this java script file
 var gTasks,					// Object containing the task data retrieved from the database
@@ -25,7 +26,6 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gFilterqType,			// The type of the filter question select, select1, int, string
 	gUserFilter = "0";		// Default to all users
 	
-
 $(document).ready(function() {
 	
 	globals.gRegion = {};	// Initialise global values
@@ -96,6 +96,7 @@ $(document).ready(function() {
 	});
 	
 	// Add response to the source of task assignment being changed
+	/*
 	$('input[name=task_source]', '#assign_survey_form').change(function() {
 		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val();
 
@@ -109,6 +110,7 @@ $(document).ready(function() {
 			clearNewTasks();
 		}
 	});
+	*/
 
 	// Initialise the map
 	initializeMap();
@@ -125,9 +127,8 @@ $(document).ready(function() {
 		zoomTo("assignments");
 	});
 	
-	// Add a trigger to open the dialog that assigns a user to tasks
+	// Add a trigger to open the modal that assigns a user to tasks
 	$('#assignUser').button().click(function () {
-		clearDialogs();
 		
 		globals.gCurrentUserName = $('#users_select_user option:selected').text();
 		globals.gCurrentUserId = $('#users_select_user option:selected').val();
@@ -135,14 +136,41 @@ $(document).ready(function() {
 		$('#assign_user').modal("show");
 	});
 	
+	/*
+	 * Save the assigned user
+	 */
 	$('#assignUserSave').off().click(function() {
-		updatePendingAssignment($('#users_select_user').val(), "accepted");
+		updatePendingAssignments($("accepted", '#users_select_user').val());
         saveData(globals.gPendingUpdates);
 		refreshAssignmentData(gUserFilter);
 		globals.gCurrentUserId = undefined;
 		globals.gCurrentUserName = undefined;
 		globals.gPendingUpdates = [];
 	})
+	
+		// Create new task group
+		$('#addTaskGroup').button().click(function () {
+			var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
+				s_id = $('#survey').val();
+			
+			/*
+			 * Make sure we have the survey id
+			 */
+			if(typeof s_id === "undefined" || s_id === null) {
+				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
+						"If the project does have surveys then try again in a few seconds");
+				return;
+			}
+			
+			if(taskSource === "new") {
+				globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+				globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+				registerForNewTasks();
+			}
+			// open the dialog
+			$('#addTask').modal("show");
+
+		});
 	
 	/*
 	$('#assign_user').dialog(
@@ -178,33 +206,8 @@ $(document).ready(function() {
 		}
 	);
 	*/
-
-	// Add button to create tasks
-	$('#assignSurvey').button().click(function () {
-		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-			s_id = $('#survey').val();
-		
-		/*
-		 * Make sure we have the survey id
-		 */
-		if(typeof s_id === "undefined" || s_id === null) {
-			alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-					"If the project does have surveys then try again in a few seconds");
-			return;
-		}
-		
-		clearDialogs();
-		
-		if(taskSource === "new") {
-			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-			registerForNewTasks();
-		}
-		// open the dialog
-		$('#assign_survey').dialog("open");
-
-	});
 	
+	/*
 	$('#assign_survey').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
@@ -302,14 +305,101 @@ $(document).ready(function() {
 			]
 		}
 	);
+	*/
+	
+	// Add new group save
+	$('#addNewGroupSave').click(function () {
+		var error = false,
+		//taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
+		assignObj = {},
+		assignString,
+		url,
+		filterObj = {},
+		filterqId,
+		filteroId,
+		source_survey;
+	
+	assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
+	assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
+	assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
+	assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
+	
+	/*
+	if(taskSource === "new") {
+	       			
+		assignObj["source_survey_id"] = -1;
+		assignObj["new_tasks"] = $.parseJSON(getTasksAsGeoJSON());
+		
+	} else {
+	*/
+		source_survey = $('#survey').val(); 						// The survey that provides the existing results	
+		if(!source_survey) {
+			source_survey = -1;
+		}
+		assignObj["source_survey_id"] = source_survey; 
+		assignObj["address_columns"] = gTaskParams;
+		assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
+		assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
+		
+		// Add filter if filter checkbox has been checked
+		if($('#filter_results_check').attr('checked')) {
+			
+
+			filterObj["qType"] = gFilterqType;
+			filterObj["qId"] = $('#filter_question option:selected').val();
+			filterObj["oValue"] = $('#filter_option option:selected').val();
+			filterObj["qText"] = $('#filter_text').val();
+			if(gFilterqType === "int") {
+				filterObj["qInteger"] = $('#filter_integer').val();
+			}
+			filterObj["lang"] = $('#filter_language option:selected').val();
+			assignObj["filter"] = filterObj;
+
+		}
+	//}
+	if(!error) {
+    	assignString = JSON.stringify(assignObj);
+    	globals.gCurrentUserId = undefined;
+    	globals.gCurrentUserName = undefined;
+		
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
+			  data: { settings: assignString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  refreshAssignmentData(gUserFilter);
+				  clearNewTasks();
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  if(data.responseText.indexOf("<html>") !== 0) {
+					  alert("Error: " + data.responseText); 
+				  } else {
+					  alert("Error adding tasks");
+				  }
+
+			  }
+		});
+		
+	} 
+	});
 	
 	// Delete Tasks button and dialog
 	$('#deleteTasks').button().click(function () {
-		clearDialogs();
-		globals.gDeleteSelected = true;
-		$('#assignments_delete').dialog("open");
+		//globals.gDeleteSelected = true;
+		//$('#assignments_delete').dialog("open");
+		bootbox.confirm('Are you sure you want to delete these tasks?', function(result){
+			if(result) {
+				//updatePendingAssignments("deleted", undefined);
+				deleteData(globals.gPendingUpdates); 
+			}
+		});
 	});
 	
+	/*
 	$('#assignments_delete').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
@@ -320,7 +410,7 @@ $(document).ready(function() {
 		        {
 		        	text: "Cancel",
 		        	click: function() {
-		        		globals.gDeleteSelected = false;
+		        		//globals.gDeleteSelected = false;
 		        		refreshAssignmentData(gUserFilter);
 		        		$(this).dialog("close");
 		        	}
@@ -329,7 +419,7 @@ $(document).ready(function() {
 		        	text: "Save",
 		        	click: function() {
 		        		if(confirm("Are you sure you want to delete these tasks")) {		        		
-		        			globals.gDeleteSelected = false;
+		        			//globals.gDeleteSelected = false;
 		        			deleteData(globals.gPendingUpdates);       		
 		        			$(this).dialog("close");
 		        		}
@@ -355,8 +445,10 @@ $(document).ready(function() {
 		globals.gAssignmentsLayer.redraw();
 
 	});
+	*/
 	
 	// Clear cancelled tasks buton
+	/*
 	$('#clearCancelledTasks').button().click(function () {
 		
 		if(confirm("Are you sure you want to clear all cancelled tasks.  A user that has " +
@@ -380,6 +472,7 @@ $(document).ready(function() {
 		}
 
 	});
+	*/
 	
 	// Create trigger to open dialog to edit task parameters
 
@@ -436,6 +529,7 @@ function updatePendingAssignments(status, user) {
 		if(user) {
 			globals.gPendingUpdates[i].user = userObj;
 		}
+		
 		globals.gPendingUpdates[i].assignment_status = status;
 	}
 }
@@ -700,8 +794,8 @@ function deleteData(data) {
 		  url: "/surveyKPI/assignments",
 		  data: { settings: deleteString },
 		  success: function(data, status) {
-			  refreshAssignmentData(gUserFilter);
 			  removeHourglass();
+			  refreshAssignmentData(gUserFilter);
 		  }, error: function(data, status) {
 			  console.log(data);
 			  removeHourglass();
@@ -738,13 +832,14 @@ function refreshAssignmentData(user_filter) {
 	}
 }
 
-
+/*
 function clearDialogs() {
 	globals.gCurrentUserId = undefined;
 	globals.gPendingUpdates = [];
-	globals.gDeleteSelected = false;	
+	//globals.gDeleteSelected = false;	
 	$(".ui-dialog-content").modal("hide");
 }
+*/
 
 function refreshTableAssignments(tasks) {
 	
@@ -779,28 +874,72 @@ function refreshTableAssignments(tasks) {
 		// Create trigger to open dialog to edit task parameters
 		
 		gTasks = tasks;
+		
+		// Add function to add tasks to group
+		$('.add_new_task').button().click(function () {
+			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
+			var s_id = $('#survey').val();
+			
+			/*
+			 * Make sure we have the survey id
+			 */
+			if(typeof s_id === "undefined" || s_id === null) {
+				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
+						"If the project does have surveys then try again in a few seconds");
+				return;
+			}
+			
+			//if(taskSource === "new") {
+				globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+				globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+				registerForNewTasks();
+			//}
+			
+			// open the dialog
+			$('#addNewTask').modal("show");
+		});
+		
+		// Add function to delete the group
 		$('.delete_task_group').button().click(function () {
 
-			var proceed = confirm("Do you want to delete this task group?"),
-				tg_id = $(this).val();
+			/*
+			var tg_id = $(this).val();
 			
-			if(proceed) {
-				addHourglass();
-				$.ajax({
-					  type: "DELETE",
-					  contentType: "application/json",
-					  dataType: "json",
-					  url: "/surveyKPI/assignments/" + tg_id,
-					  success: function(data, status) {
-						  removeHourglass();
-						  refreshAssignmentData(gUserFilter);
-					  }, error: function(data, status) {
-						  removeHourglass();
-						  console.log(data);
-						  alert("Error: Failed to delete task group"); 
-					  }
-				});	
-			}
+			$('#tasktable' + tg_id).find('.control_td > input').each(function(){
+				var $this = $(this);
+				
+				if(!$this.is(':checked')) {
+					addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
+				} 
+				$this.prop("checked", true).closest('tr').addClass("info");
+
+			});
+			*/
+			
+			var tg_id = $(this).val();
+			
+			bootbox.confirm('Are you sure you want to delete this group and all of its tasks?', function(result){
+				if(result) {
+					addHourglass();
+					$.ajax({
+						  type: "DELETE",
+						  contentType: "application/json",
+						  dataType: "json",
+						  url: "/surveyKPI/assignments/" + tg_id,
+						  success: function(data, status) {
+							  removeHourglass();
+							  refreshAssignmentData(gUserFilter);
+						  }, error: function(data, status) {
+							  removeHourglass();
+							  console.log(data);
+							  alert("Error: Failed to delete task group"); 
+						  }
+					});	
+				}
+			});
+			
+			
+			
 		});
 		
 	}

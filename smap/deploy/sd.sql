@@ -235,3 +235,6 @@ ALTER TABLE option add column externalfile boolean default false;
 ALTER TABLE survey_change add column apply_results boolean default false;
 ALTER TABLE survey add column manifest text;
 
+-- Changes required to Tasks page
+ALTER TABLE task_group add column p_id integer;
+

@@ -144,13 +144,13 @@ public class AllAssignments extends Application {
 					"u.name as user_name, " + 
 					"tg.tg_id as task_group_id, " +
 					"tg.name as task_group_name " +
-					"from tasks t " +
-					" left outer join assignments a " +
+					"from task_group tg " +
+					"left outer join tasks t on tg.tg_id = t.tg_id " +
+					"left outer join assignments a " +
 						" on a.task_id = t.id " + 
 						" and a.status != 'deleted' " +
-					" left outer join users u on a.assignee = u.id " +
-					" inner join task_group tg on tg.tg_id = t.tg_id " +
-					" where t.p_id = ? ";
+					"left outer join users u on a.assignee = u.id " +
+					" where tg.p_id = ? ";
 					
 			String sql2 = null;
 			if(user_filter == 0) {					// All users (default)	
@@ -163,12 +163,12 @@ public class AllAssignments extends Application {
 			
 			String sql3 = " order by tg.tg_id, t.form_id;";
 			
-			log.info(sql1 + sql2 + sql3 + " : " + user_filter);
 			pstmt = connectionSD.prepareStatement(sql1 + sql2 + sql3);	
 			pstmt.setInt(1, projectId);
 			if(user_filter > 0) {
 				pstmt.setInt(2, user_filter);
 			}
+			log.info("SQL: " + pstmt.toString());
 			
 			// Statement to get survey name
 			String sqlSurvey = "select display_name from survey where s_id = ?";
@@ -361,13 +361,14 @@ public class AllAssignments extends Application {
 			
 			String tgSql = "insert into task_group ( " +
 					"name, " +
+					"p_id, " +
 					"address_params) " +
-				"values (" +
-					"?, " + 
-					"?);";
+				"values (?, ?, ?);";
+				
 			pstmtTaskGroup = connectionSD.prepareStatement(tgSql, Statement.RETURN_GENERATED_KEYS);
 			pstmtTaskGroup.setString(1, as.task_group_name);
-			pstmtTaskGroup.setString(2, addressParams);
+			pstmtTaskGroup.setInt(2, projectId);
+			pstmtTaskGroup.setString(3, addressParams);
 			log.info("Sql: " + tgSql + " : " + as.task_group_name + " : " + addressParams);
 			pstmtTaskGroup.execute();
 			ResultSet keys = pstmtTaskGroup.getGeneratedKeys();
@@ -871,50 +872,51 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtDeleteEmptyGroup = null;
 
 		try {
-			connectionSD.setAutoCommit(false);
-			String countSQL = "select count(*) from tasks t, assignments a " +
-					"where t.id = a.task_id " +
-					"and t.id = ?";
-			pstmtCount = connectionSD.prepareStatement(countSQL);
+			//connectionSD.setAutoCommit(false);
+			//String countSQL = "select count(*) from tasks t, assignments a " +
+			//		"where t.id = a.task_id " +
+			//		"and t.id = ?";
+			//pstmtCount = connectionSD.prepareStatement(countSQL);
 			
-			String updateSQL = "update assignments set status = 'cancelled' where task_id = ? " +
-					"and (status = 'new' " +
-					"or status = 'accepted' " + 
-					"or status = 'pending'); "; 
-			pstmtUpdate = connectionSD.prepareStatement(updateSQL);
+			//String updateSQL = "update assignments set status = 'cancelled' where task_id = ? " +
+			//		"and (status = 'new' " +
+			//		"or status = 'accepted' " + 
+			//		"or status = 'pending'); "; 
+			//pstmtUpdate = connectionSD.prepareStatement(updateSQL);
 			
 			String deleteSQL = "delete from tasks where id = ?; "; 
 			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
 			
-			String deleteEmptyGroupSQL = "delete from task_group tg where not exists (select 1 from tasks t where t.tg_id = tg.tg_id);";
-			pstmtDeleteEmptyGroup = connectionSD.prepareStatement(deleteEmptyGroupSQL);
+			//String deleteEmptyGroupSQL = "delete from task_group tg where not exists (select 1 from tasks t where t.tg_id = tg.tg_id);";
+			//pstmtDeleteEmptyGroup = connectionSD.prepareStatement(deleteEmptyGroupSQL);
 			
 			for(int i = 0; i < aArray.size(); i++) {
 				
 				Assignment a = aArray.get(i);
 				
 				// Check to see if the task has any assignments
-				pstmtCount.setInt(1, a.task_id);
-				ResultSet rs = pstmtCount.executeQuery();
-				int countAss = 0;
-				if(rs.next()) {
-					countAss = rs.getInt(1);
-				}
+				//pstmtCount.setInt(1, a.task_id);
+				//ResultSet rs = pstmtCount.executeQuery();
+				//int countAss = 0;
+				//if(rs.next()) {
+				//	countAss = rs.getInt(1);
+				//}
 				
-				if(countAss > 0) {
-					log.info(updateSQL + " : " + a.task_id);
-					pstmtUpdate.setInt(1, a.task_id);
-					pstmtUpdate.execute();
-				} else {
-					log.info(deleteSQL + " : " + a.task_id);
+				//if(countAss > 0) {
+				//	log.info(updateSQL + " : " + a.task_id);
+				//	pstmtUpdate.setInt(1, a.task_id);
+				//	pstmtUpdate.execute();
+				//} else {
+
 					pstmtDelete.setInt(1, a.task_id);
+					log.info("SQL: " + pstmtDelete.toString());
 					pstmtDelete.execute();
-				}
+				//}
 			}
 			
 			// Delete any task groups that have no tasks
-			pstmtDeleteEmptyGroup.execute();
-			connectionSD.commit();
+			//pstmtDeleteEmptyGroup.execute();
+			//connectionSD.commit();
 				
 		} catch (Exception e) {
 			response = Response.serverError().build();
@@ -971,11 +973,11 @@ public class AllAssignments extends Application {
 		try {
 			
 			
-			String deleteSQL = "delete from tasks where tg_id = ?; "; 
+			String deleteSQL = "delete from task_group where tg_id = ?; "; 
 			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
 			
-			log.info(deleteSQL + " : " + tg_id);
 			pstmtDelete.setInt(1, tg_id);
+			log.info("SQL: " + pstmtDelete.toString());
 			pstmtDelete.execute();
 
 				

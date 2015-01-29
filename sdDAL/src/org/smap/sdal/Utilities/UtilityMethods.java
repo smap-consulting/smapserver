@@ -314,13 +314,19 @@ public class UtilityMethods {
 
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, user);
+			System.out.println("SQL:" + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String host = rs.getString(1);
-				if(host != null && host.trim().length() > 0) {
-					smtpHost = rs.getString(1);
+				if(host != null) {
+					host = host.trim();
+					if(host.length() > 0) {
+						smtpHost = host;
+					}
 				}
+				
 			}
+			System.out.println("Using organisation email: " + smtpHost);
 		
 			/*
 			 * If the smtp_host was not set at the organisation level try the server level defaults

@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/css/normalize.css" />
 <link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
 <link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+<link rel="stylesheet" href="/css/bootstrap-dialog.min.css" /> 
 <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 
 <script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
@@ -42,7 +43,7 @@
       <ul class="nav navbar-nav navbar-right">
       	<li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
+          <ul class="dropdown-menu" role="menu" style="z-index:1010;">
             
             <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
             <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
@@ -93,9 +94,9 @@
 					
 					<button class="layerbutton btn btn-info btn-block" id="zoomData" type="button">Zoom to Data</button>
 					<button class="layerbutton btn btn-success btn-block" id="assignUser" type="button">Assign Users</button>
-					<button class="layerbutton btn btn-success btn-block" id="assignSurvey" type="button">Create new Tasks</button>
-					<button class="layerbutton btn btn-danger btn-block" id="deleteTasks" type="button">Delete Selected Tasks</button>
-					<button class="layerbutton btn btn-warning btn-block" id="clearCancelledTasks" type="button">Clear Cancelled Tasks</button>		
+					<button class="layerbutton btn btn-success btn-block" id="addTaskGroup" type="button">Add Task Group</button>
+					<button class="layerbutton btn btn-danger btn-block" id="deleteTasks" type="button">Delete Tasks</button>
+					<!-- <button class="layerbutton btn btn-warning btn-block" id="clearCancelledTasks" type="button">Clear Cancelled Tasks</button>-->	
 				</div>
 			</form>
 		</div>
@@ -139,72 +140,148 @@
 	</div>
 </div>
 
-<!-- Popup to allow the user to add results from a survey as assignments or to add new assignments by clicking on a map -->
-<div id="assign_survey" style="display:none;">
-	<form id="assign_survey_form">
-		<label for="task_group_name">Name</label>
-		<input type="text" id="task_group_name"><br/>
-		<input id="task_source_survey" type="radio" name="task_source" 
-			value="survey" checked="checked" />Existing locations<br/> 
-		<input id="task_source_new" type="radio" name="task_source" 
-			value="new"/>New locations<br/> 
-		<div id="task_source_survey_hide">
-			<p class="single">The locations of results from the existing survey will be used to create assignments for follow up work</p>
-			<label for="project_select">Existing Project: </label>
-			<select class="project_list" id="project_select"></select><br/>
-			<label for="survey">Existing Survey: </label>
-			<select class="survey_select" id="survey"></select><br/>
-			<input id="filter_results_check" type="checkbox" name="filter_results" 
-				value="filter_results"/>Filter tasks:<br/> 
-			<div id="filter_results" style="display:none;">
-				<fieldset>
-				<legend>Filter</legend>
-				<label for="filter_language">Language</label>
-				<select id="filter_language" class="selected_language"></select>
-				<label for="filter_question">Filter by question: </label>
-				<select class="selected_question" id="filter_question"></select><br/>
-				<span class="filter_option_only">
-					<label for="filter_option">Selected option: </label>
-					<select class="selected_option" id="filter_option"></select><br/>
-				</span>
-				<span class="filter_integer_only" style="display:none;">
-					<label for="filter_integer">Set numeric value: </label>
-					<input type="number" class="selected_integer" id="filter_integer"><br/>
-				</span>
-				<span class="filter_text_only" style="display:none;">
-					<label for="filter_text">Set text value: </label>
-					<input type="text" class="selected_text" id="filter_text"><br/>
-				</span>
-				</fieldset>
-			</div>
-			<input id="update_results" type="checkbox" name="update_results" 
-				value="update_results"/>Update existing results:<br/> 
-			<div id="show_task_params">Address Parameters</div>
-		</div>
-		<div  id="task_source_new_hide" style="display: none;">
-			<p class="single">Click on the map at each location where you want to create a task.</p>
-			<label for="users_select_new_task">User: </label>
-			<select class="users_select" id="users_select_new_task"></select><br/>
-			<p>Task Count: <span id="new_task_count">0</span></p>
-		</div>
-		<label for="survey_to_complete">New Survey: </label>
-		<select class="survey_select" id="survey_to_complete"></select>
+<!-- Modal to allow the user to add tasks from an existing survey -->
+<div id="addTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="addTaskLabel"></h4>
+   			</div>
+		    <div class="modal-body">
+		    
+					<form role="form" class="form-horizontal" id="assign_survey_form">
+						<div class="form-group">
+							<label class="lang col-sm-2 control-label" for="task_group_name">Name</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" id="task_group_name">
+							</div>
+						</div>
+						<!-- <input id="task_source_survey" type="radio" name="task_source" 
+							value="survey" checked="checked" />Existing locations<br/> 
+						<input id="task_source_new" type="radio" name="task_source" 
+							value="new"/>New locations<br/> 
+						
+						<div id="task_source_survey_hide">
+						-->
+							<p>The locations of results from the existing survey will be used to create assignments for follow up work</p>
+							
+							<div class="form-group">
+								<label for="project_select" class="col-sm-2 control-label">Existing Project</label>
+								<div class="col-sm-10">
+									<select id="project_select" class="project_list form-control"></select>
+								</div>
+							</div>
+						
+							<div class="form-group">
+								<label for="survey" class="col-sm-2 control-label">Existing Survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey"></select><br/>
+								</div>
+							</div>
+							
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">Filter tasks
+								</label>
+							</div>
+									
+							<div id="filter_results" style="display:none;">
+								<fieldset>
+								<legend>Filter</legend>
+								<label for="filter_language">Language</label>
+								<select id="filter_language" class="selected_language"></select>
+								<label for="filter_question">Filter by question: </label>
+								<select class="selected_question" id="filter_question"></select><br/>
+								<span class="filter_option_only">
+									<label for="filter_option">Selected option: </label>
+									<select class="selected_option" id="filter_option"></select><br/>
+								</span>
+								<span class="filter_integer_only" style="display:none;">
+									<label for="filter_integer">Set numeric value: </label>
+									<input type="number" class="selected_integer" id="filter_integer"><br/>
+								</span>
+								<span class="filter_text_only" style="display:none;">
+									<label for="filter_text">Set text value: </label>
+									<input type="text" class="selected_text" id="filter_text"><br/>
+								</span>
+								</fieldset>
+							</div>
+							<input id="update_results" type="checkbox" name="update_results" 
+								value="update_results"/>Update existing results:<br/> 
+							<div id="show_task_params">Address Parameters</div>
+							
+						<!--  
+						</div>
+		
+						<div  id="task_source_new_hide" style="display: none;">
+							<p class="single">Click on the map at each location where you want to create a task.</p>
+							<label for="users_select_new_task">User: </label>
+							<select class="users_select" id="users_select_new_task"></select><br/>
+							<p>Task Count: <span id="new_task_count">0</span></p>
+						</div>
+						-->
+						
+						<div class="form-group">
+							<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey_to_complete"></select>
+								</div>
+							</div>
+					
+					</form>	
 
-		<br/><br/>
-	</form>	
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="addNewGroupSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
 </div>
+
+<!-- Modal to allow the user to add new tasks  -->
+<div id="addNewTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="addNewTaskLabel"></h4>
+   			</div>
+		    <div class="modal-body">
+		    
+					<form role="form" class="form-horizontal" id="assign_survey_form">
+						
+							<p class="single">Click on the map at each location where you want to create a task.</p>
+							<label for="users_select_new_task">User: </label>
+							<select class="users_select" id="users_select_new_task"></select><br/>
+							<p>Task Count: <span id="new_task_count">0</span></p>
+						
+						
+						<div class="form-group">
+							<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey_to_complete"></select>
+								</div>
+							</div>
+					
+					</form>	
+
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="addNewGroupSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
 
 <!-- Popup to allow the user to manage the task parameters -->
 <div id="task_params" style="display:none;">
 
 	<div id="task_params_table"></div>
 
-</div>
-
-<!-- Popup to allow the user to delete assignments -->
-<div id="assignments_delete" style="display:none;">
-<p class="single">Click on tasks to delete them individually. Otherwise click the button to delete all the tasks.</p>
-<button id="deleteAllTasks" type="button">Delete All Tasks</button><br/>
 </div>
 
 

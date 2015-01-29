@@ -51,7 +51,7 @@ define(function() {
 		gCurrentUserName: undefined,
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
-		gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
+		//gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
 		
 		model: new Model()
 

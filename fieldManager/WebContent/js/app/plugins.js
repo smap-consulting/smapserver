@@ -403,13 +403,18 @@ function getMedia(property) {
 					tab[++idx] = '</span>';
 					// Add a button to delete the task group
 					tab[++idx] = '<span class="noPrint">';
+					tab[++idx] = '<button class="add_new_task btn btn-success" value="';
+					tab[++idx] = thisTg;
+					tab[++idx] = '"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Tasks</button>';
 					tab[++idx] = '<button class="delete_task_group btn btn-danger" value="';
 					tab[++idx] = thisTg;
-					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Group</button>';
 					tab[++idx] = '</span>';
 					
 					// Create the table
-					tab[++idx] = '<table class="tasks table table-striped">';
+					tab[++idx] = '<table class="tasks table table-striped" id="tasktable';
+					tab[++idx] = thisTg;
+					tab[++idx] = '">';
 					tab[++idx] = '<thead><tr>';
 					tab[++idx] = '<th>Select</th><th>Task</th><th>location</th>';
 					
@@ -423,7 +428,7 @@ function getMedia(property) {
 										tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
 									}
 								}
-							} else if(key === 'task_id' || key === 'task_group_id' || key === 'task_group_name') {
+							} else if(key === 'task_group_id' || key === 'task_group_name') {
 								// ignore
 							} else {
 								tab[++idx] = '<th>' + key + '</th>';
@@ -435,7 +440,7 @@ function getMedia(property) {
 				}
 				
 				// Check if we should show this record
-				showCompleted = settings.showCompleted || assignmentStatus !== "submitted";
+				showCompleted = item.properties.task_id > 0 && (settings.showCompleted || assignmentStatus !== "submitted");
 				if(showCompleted) {
 					tab[++idx] = '<tr>';
 					

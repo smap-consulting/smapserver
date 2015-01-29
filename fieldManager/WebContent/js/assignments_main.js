@@ -46,18 +46,17 @@ requirejs.config({
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
-    	tablesorter: '../../../../js/libs/tablesorter',
     	bootstrap: '../../../../js/libs/bootstrap.min',
+    	bootbox: '../../../../js/libs/bootbox.min',
     	crf: '../../../../js/libs/commonReportFunctions',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
-    	'rmm': ['jquery'],
-    	'jquery_ui': ['jquery'],
+
     	'common': ['jquery'],
     	'bootstrap': ['jquery'],
-    	'tablesorter': ['jquery'],
+    	'bootbox': ['bootstrap'],
     	'jquery-barcode': ['jquery'],
     	'app/map-ol-mgmt': ['jquery_ui', 'openlayers'],
     	'app/plugins': ['jquery'],
@@ -72,6 +71,7 @@ require([
          'common', 
          'localise', 
          'globals',
+         'bootbox',
          'app/assignments', 
          'app/map-ol-mgmt',
          'app/plugins',
@@ -79,5 +79,5 @@ require([
          'openlayers',
          'crf'
          
-         ], function($, jbootstrap, modernizr, common, localise, globals) {});
+         ], function($, bootstrap, common, localise, globals) {});
 
