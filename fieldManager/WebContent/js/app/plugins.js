@@ -406,6 +406,9 @@ function getMedia(property) {
 					tab[++idx] = '<button class="add_new_task btn btn-success" value="';
 					tab[++idx] = thisTg;
 					tab[++idx] = '"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Tasks</button>';
+					tab[++idx] = '<button class="save_new_task btn btn-warning" style="display:none;" value="';
+					tab[++idx] = thisTg;
+					tab[++idx] = '"><span class="glyphicon glyphicon-save" aria-hidden="true"></span> Save Tasks</button>';
 					tab[++idx] = '<button class="delete_task_group btn btn-danger" value="';
 					tab[++idx] = thisTg;
 					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Group</button>';
@@ -463,7 +466,7 @@ function getMedia(property) {
 	
 						if(includeKey(key)) {
 							
-							if(key === 'address') {
+							if(key === 'address' && addressParamsObj) {
 								addressObj = $.parseJSON(value);
 								j = 0;
 								for(i = 0; i < addressParamsObj.length; i++) {
@@ -477,7 +480,7 @@ function getMedia(property) {
 										j++;
 									} 
 								}
-							} else if(key === 'task_id' || key === 'task_group_id' || key === 'task_group_name') {
+							} else if(key === 'task_group_id' || key === 'task_group_name') {
 								// ignore
 							} else {
 								value = addAnchors(value).join(',');							

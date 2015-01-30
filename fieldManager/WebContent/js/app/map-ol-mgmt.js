@@ -211,7 +211,14 @@ function zoomTo(layerName) {
 			}
 		}
 
-		if(bounds != null && bounds.getWidth() != 0) {
+		if(bounds != null) {
+			if(bounds.getWidth() == 0) {
+				bounds.left -= 100;			// Create 200 meter by 200 meter box
+				bounds.right += 100;
+				bounds.top += 100;
+				bounds.bottom -= 100;
+			}
+
 			map.zoomToExtent(bounds);
 		}
 	}

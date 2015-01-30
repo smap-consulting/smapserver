@@ -329,6 +329,8 @@ public class AllAssignments extends Application {
 		System.out.println("Assignment:" + settings);
 		AssignFromSurvey as = new Gson().fromJson(settings, AssignFromSurvey.class);
 
+		System.out.println("User id: " + as.user_id);
+		
 		String userName = request.getRemoteUser();
 		int sId = as.source_survey_id;								// Source survey id (optional)
 			
@@ -354,364 +356,393 @@ public class AllAssignments extends Application {
 			connectionSD.setAutoCommit(false);
 			
 			/*
-			 * Create the task group
+			 * Create the task group if an existing task group was not specified
 			 */
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String addressParams = gson.toJson(as.address_columns); 
-			
-			String tgSql = "insert into task_group ( " +
-					"name, " +
-					"p_id, " +
-					"address_params) " +
-				"values (?, ?, ?);";
-				
-			pstmtTaskGroup = connectionSD.prepareStatement(tgSql, Statement.RETURN_GENERATED_KEYS);
-			pstmtTaskGroup.setString(1, as.task_group_name);
-			pstmtTaskGroup.setInt(2, projectId);
-			pstmtTaskGroup.setString(3, addressParams);
-			log.info("Sql: " + tgSql + " : " + as.task_group_name + " : " + addressParams);
-			pstmtTaskGroup.execute();
-			ResultSet keys = pstmtTaskGroup.getGeneratedKeys();
 			int taskGroupId = -1;
-			if(keys.next()) {
-				taskGroupId = keys.getInt(1);
-			}
-			
-			/*
-			 * Create the tasks
-			 */
-			String sql = null;
-			ResultSet resultSet = null;
-			String insertSql1 = "insert into tasks (" +
-						"p_id, " +
-						"tg_id, " +
-						"type, " +
-						"title, " +
-						"form_id, " +
-						"url, " +
-						"geo_type, ";
-						
-			String insertSql2 =	"initial_data, " +
-						"existing_record," +
-						"address," +
-						"schedule_at) " +
-					"values (" +
-						"?, " + 
-						"?, " + 
-						"'xform', " +
-						"?, " +
-						"?, " +
-						"?, " +
-						"?, ST_GeomFromText(?, 4326), " +
-						"?, " +
-						"?," +
-						"?," +
-						"now());";
-			
-			String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
-			pstmtAssign = connectionSD.prepareStatement(assignSQL);
-			
-			String checkGeomSQL = "select count(*) from information_schema.columns where table_name = ? and column_name = 'the_geom'";
-			pstmtCheckGeom = connectionRel.prepareStatement(checkGeomSQL);
-			
-			String getSurveyIdentSQL = "select ident from survey where s_id = ?;";
-			pstmtGetSurveyIdent = connectionSD.prepareStatement(getSurveyIdentSQL);
-			
-			/*
-			 * Todo: Generate form url and initial instance url in myassignments service
-			 */
-			System.out.println("Getting survey ident");
-			String hostname = request.getServerName();
-			if(hostname.equals("localhost")) {
-					hostname = "10.0.2.2";	// For android emulator
-			}
-			pstmtGetSurveyIdent.setInt(1, as.form_id);
-			resultSet = pstmtGetSurveyIdent.executeQuery();
-			String initial_data_url = null;
-			String target_form_url = null;
-			if(resultSet.next()) {
-				String target_form_ident = resultSet.getString(1);
-				target_form_url = "http://" + hostname + "/formXML?key=" + target_form_ident;
-			} else {
-				throw new Exception("Form identifier not found for form id: " + as.form_id);
-			}
-	
-			System.out.println("target_url: " + target_form_url);
-			
-			/*
-			 * Get the tasks from the passed in source survey if this has been set
-			 */
-			if(sId != -1) {
-				/*
-				 * Get Forms and row counts in this survey
-				 */
-				sql = "select distinct f.table_name, f.parentform from form f " +
-						"where f.s_id = ? " + 
-						"order by f.table_name;";		
-			
-				log.info(sql + " : " + sId);
-				pstmt = connectionSD.prepareStatement(sql);	 
-				pstmt.setInt(1, sId);
-				resultSet = pstmt.executeQuery();
-	
-				while (resultSet.next()) {
-					String tableName2 = null;
-					String tableName = resultSet.getString(1);
-					String p_id = resultSet.getString(2);
-					if(p_id == null) {	// The top level form
-	
-						QuestionInfo filterQuestion = null;
-						String filterSql = null;
-						if(as.filter != null) {
-							String fValue = null;
-							String fValue2 = null;
-							filterQuestion = new QuestionInfo(sId, as.filter.qId, connectionSD, false, as.filter.lang, urlprefix);
-							log.info("Filter question type: " + as.filter.qType);
-							if(as.filter.qType != null) {
-								if(as.filter.qType.startsWith("select")) {
-									fValue = as.filter.oValue;
-								} else if(as.filter.qType.equals("int")) {
-									fValue = String.valueOf(as.filter.qInteger);
-								} else if(as.filter.qType.equals("date")  || as.filter.qType.equals("dateTime")) {
-									Timestamp startDate = new Timestamp(as.filter.qStartDate);
-									Timestamp endDate = new Timestamp(as.filter.qEndDate);
-									
-									fValue = startDate.toString();
-									fValue2 = endDate.toString();
-								} else {
-									fValue = as.filter.qText;
-								}
-							}
-							
-							filterSql = filterQuestion.getFilterExpression(fValue, fValue2);		
-							log.info("filter: " + filterSql);
-						}
-						// Check to see if this form has geometry columns
-						boolean hasGeom = false;
-						pstmtCheckGeom.setString(1, tableName);
-						log.info("Sql: " + checkGeomSQL + " : " + tableName);
-						ResultSet resultSetGeom = pstmtCheckGeom.executeQuery();
-						if(resultSetGeom.next()) {
-							if(resultSetGeom.getInt(1) > 0) {
-								hasGeom = true;
-							}
-						}
-						
-						// Get the primary key, location and address columns from this top level table
-						String getTaskSql = null;
-						String getTaskSqlWhere = null;
-						String getTaskSqlEnd = null;
-						
-						if(hasGeom) {
-							System.out.println("Has geometry");
-							getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom ";
-							getTaskSqlWhere = " from " + tableName + " where " + tableName + ".the_geom is not null " +
-									" and " + tableName + "._bad = 'false'";	
-							getTaskSqlEnd = ";";
-						} else {
-							System.out.println("No geom found");
-							// Get a subform that has geometry
-							
-							PreparedStatement pstmt2 = connectionSD.prepareStatement(sql);	 
-							pstmt2.setInt(1, sId);
-							ResultSet resultSet2 = pstmt2.executeQuery();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			ResultSet keys = null;
+			if(as.task_group_id <= 0) {
 				
-							while (resultSet2.next()) {
-								String aTable = resultSet2.getString(1);
-								pstmtCheckGeom.setString(1, aTable);
-								log.info("Sql: " + checkGeomSQL + " : " + aTable);
-								resultSetGeom = pstmtCheckGeom.executeQuery();
-								if(resultSetGeom.next()) {
-									if(resultSetGeom.getInt(1) > 0) {
-										hasGeom = true;
-										tableName2 = aTable;
+				String addressParams = gson.toJson(as.address_columns); 				
+				String tgSql = "insert into task_group ( " +
+						"name, " +
+						"p_id, " +
+						"address_params) " +
+					"values (?, ?, ?);";
+					
+				pstmtTaskGroup = connectionSD.prepareStatement(tgSql, Statement.RETURN_GENERATED_KEYS);
+				pstmtTaskGroup.setString(1, as.task_group_name);
+				pstmtTaskGroup.setInt(2, projectId);
+				pstmtTaskGroup.setString(3, addressParams);
+				log.info("Sql: " + tgSql + " : " + as.task_group_name + " : " + addressParams);
+				pstmtTaskGroup.execute();
+				keys = pstmtTaskGroup.getGeneratedKeys();
+				if(keys.next()) {
+					taskGroupId = keys.getInt(1);
+				}
+			} else {
+				taskGroupId = as.task_group_id;
+			}
+			
+			/*
+			 * Create the tasks unless no tasks have been specified
+			 */
+			if(as.form_id > 0) {
+				String sql = null;
+				ResultSet resultSet = null;
+				String insertSql1 = "insert into tasks (" +
+							"p_id, " +
+							"tg_id, " +
+							"type, " +
+							"title, " +
+							"form_id, " +
+							"url, " +
+							"geo_type, ";
+							
+				String insertSql2 =	"initial_data, " +
+							"existing_record," +
+							"address," +
+							"schedule_at) " +
+						"values (" +
+							"?, " + 
+							"?, " + 
+							"'xform', " +
+							"?, " +
+							"?, " +
+							"?, " +
+							"?, ST_GeomFromText(?, 4326), " +
+							"?, " +
+							"?," +
+							"?," +
+							"now());";
+				
+				String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
+				pstmtAssign = connectionSD.prepareStatement(assignSQL);
+				
+				String checkGeomSQL = "select count(*) from information_schema.columns where table_name = ? and column_name = 'the_geom'";
+				pstmtCheckGeom = connectionRel.prepareStatement(checkGeomSQL);
+				
+				String getSurveyIdentSQL = "select ident from survey where s_id = ?;";
+				pstmtGetSurveyIdent = connectionSD.prepareStatement(getSurveyIdentSQL);
+				
+				/*
+				 * Todo: Generate form url and initial instance url in myassignments service
+				 */
+				System.out.println("Getting survey ident");
+				String hostname = request.getServerName();
+				if(hostname.equals("localhost")) {
+						hostname = "10.0.2.2";	// For android emulator
+				}
+				pstmtGetSurveyIdent.setInt(1, as.form_id);
+				resultSet = pstmtGetSurveyIdent.executeQuery();
+				String initial_data_url = null;
+				String target_form_url = null;
+				if(resultSet.next()) {
+					String target_form_ident = resultSet.getString(1);
+					target_form_url = "http://" + hostname + "/formXML?key=" + target_form_ident;
+				} else {
+					throw new Exception("Form identifier not found for form id: " + as.form_id);
+				}
+		
+				System.out.println("target_url: " + target_form_url);
+				
+				/*
+				 * Get the tasks from the passed in source survey if this has been set
+				 */
+				if(sId != -1) {
+					/*
+					 * Get Forms and row counts in this survey
+					 */
+					sql = "select distinct f.table_name, f.parentform from form f " +
+							"where f.s_id = ? " + 
+							"order by f.table_name;";		
+				
+					log.info(sql + " : " + sId);
+					pstmt = connectionSD.prepareStatement(sql);	 
+					pstmt.setInt(1, sId);
+					resultSet = pstmt.executeQuery();
+		
+					while (resultSet.next()) {
+						String tableName2 = null;
+						String tableName = resultSet.getString(1);
+						String p_id = resultSet.getString(2);
+						if(p_id == null) {	// The top level form
+		
+							QuestionInfo filterQuestion = null;
+							String filterSql = null;
+							if(as.filter != null) {
+								String fValue = null;
+								String fValue2 = null;
+								filterQuestion = new QuestionInfo(sId, as.filter.qId, connectionSD, false, as.filter.lang, urlprefix);
+								log.info("Filter question type: " + as.filter.qType);
+								if(as.filter.qType != null) {
+									if(as.filter.qType.startsWith("select")) {
+										fValue = as.filter.oValue;
+									} else if(as.filter.qType.equals("int")) {
+										fValue = String.valueOf(as.filter.qInteger);
+									} else if(as.filter.qType.equals("date")  || as.filter.qType.equals("dateTime")) {
+										Timestamp startDate = new Timestamp(as.filter.qStartDate);
+										Timestamp endDate = new Timestamp(as.filter.qEndDate);
+										
+										fValue = startDate.toString();
+										fValue2 = endDate.toString();
+									} else {
+										fValue = as.filter.qText;
 									}
 								}
+								
+								filterSql = filterQuestion.getFilterExpression(fValue, fValue2);		
+								log.info("filter: " + filterSql);
 							}
-							pstmt2.close();
-							resultSet2.close();
-							getTaskSql = "select " + tableName + 
-									".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
-							getTaskSqlWhere = " from " + tableName + ", " + tableName2 + " where " + tableName +".prikey = " + tableName2 + 	".parkey " +
-									" and " + tableName + "._bad = 'false'";
-							getTaskSqlEnd = "group by " + tableName + ".prikey ";
-						}
-									
-						if(as.address_columns != null) {
-							for(int i = 0; i < as.address_columns.size(); i++) {
-								TaskAddressSettings add = as.address_columns.get(i);
-								if(add.selected) {
-									getTaskSql += "," + tableName + "." + add.name;
+							// Check to see if this form has geometry columns
+							boolean hasGeom = false;
+							pstmtCheckGeom.setString(1, tableName);
+							log.info("Sql: " + checkGeomSQL + " : " + tableName);
+							ResultSet resultSetGeom = pstmtCheckGeom.executeQuery();
+							if(resultSetGeom.next()) {
+								if(resultSetGeom.getInt(1) > 0) {
+									hasGeom = true;
 								}
 							}
-						}
-						if(hasGeom) {
 							
-							/*
-							 * Get the source form ident
-							 */
-							pstmtGetSurveyIdent.setInt(1, as.source_survey_id);
-							resultSet = pstmtGetSurveyIdent.executeQuery();
-							String source_survey_ident = null;
-							if(resultSet.next()) {
-								source_survey_ident = resultSet.getString(1);
+							// Get the primary key, location and address columns from this top level table
+							String getTaskSql = null;
+							String getTaskSqlWhere = null;
+							String getTaskSqlEnd = null;
+							
+							if(hasGeom) {
+								System.out.println("Has geometry");
+								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom ";
+								getTaskSqlWhere = " from " + tableName + " where " + tableName + ".the_geom is not null " +
+										" and " + tableName + "._bad = 'false'";	
+								getTaskSqlEnd = ";";
 							} else {
-								throw new Exception("Form identifier not found for form id: " + as.source_survey_id);
-							}
-							getTaskSql += getTaskSqlWhere;
-							if(filterSql != null) {
-								getTaskSql += " and " + filterSql;
-							}
-							getTaskSql += getTaskSqlEnd;
-
-							log.info("Get Task SQL:" + getTaskSql);
-							if(pstmt != null) {pstmt.close();};
-							pstmt = connectionRel.prepareStatement(getTaskSql);	 
-							resultSet = pstmt.executeQuery();
-							while (resultSet.next()) {
-				
-								/*
-								 * The original URL for instance data only allowed searching via primary key
-								 *  the prikey was the last part of the path.
-								 *  This use is now deprecated and a more flexible approach is used where the key
-								 *  is passed as an attribute.  
-								 *  The old path value of primary key is ignored with this new format
-								 *  and is set to zero here.
-								 */
-								if(as.update_results && (as.source_survey_id == as.form_id)) {
-									initial_data_url = "http://" + hostname + "/instanceXML/" + 
-									source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);
-								}
+								System.out.println("No geom found");
+								// Get a subform that has geometry
 								
-								String location = null;
-								int recordId = resultSet.getInt(1);
-								if(hasGeom) {
-									location = resultSet.getString("the_geom");
-								} 
-								if(location == null) {
-									location = "POINT(0 0)";
-								}
-								
-								String geoType = null;
-								if(pstmtInsert != null) {pstmtInsert.close();};
-								if(location.startsWith("POINT")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "POINT";
-								} else if(location.startsWith("POLYGON")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_polygon," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "POLYGON";
-								} else if(location.startsWith("LINESTRING")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_linestring," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "LINESTRING";
-								} else {
-									log.log(Level.SEVERE, "Unknown location type: " + location);
-								}
-								pstmtInsert.setInt(1, projectId);
-								pstmtInsert.setInt(2, taskGroupId);
-								pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
-								pstmtInsert.setInt(4, as.form_id);
-								pstmtInsert.setString(5, target_form_url);	
-								pstmtInsert.setString(6, geoType);
-								pstmtInsert.setString(7, location);
-								pstmtInsert.setString(8, initial_data_url);			// Initial data
-								pstmtInsert.setInt(9, recordId);			// Initial data
-								
-								/*
-								 * Create address JSON string
-								 */
-								String addressString = null;
-								if(as.address_columns != null) {
-									
-									addressArray = new ArrayList<TaskAddress> ();
-									for(int i = 0; i < as.address_columns.size(); i++) {
-										TaskAddressSettings add = as.address_columns.get(i);
-										if(add.selected) {
-											TaskAddress ta = new TaskAddress();
-											ta.name = add.name;
-											ta.value = resultSet.getString(add.name);
-											addressArray.add(ta);
+								PreparedStatement pstmt2 = connectionSD.prepareStatement(sql);	 
+								pstmt2.setInt(1, sId);
+								ResultSet resultSet2 = pstmt2.executeQuery();
+					
+								while (resultSet2.next()) {
+									String aTable = resultSet2.getString(1);
+									pstmtCheckGeom.setString(1, aTable);
+									log.info("Sql: " + checkGeomSQL + " : " + aTable);
+									resultSetGeom = pstmtCheckGeom.executeQuery();
+									if(resultSetGeom.next()) {
+										if(resultSetGeom.getInt(1) > 0) {
+											hasGeom = true;
+											tableName2 = aTable;
 										}
 									}
-									gson = new GsonBuilder().disableHtmlEscaping().create();
-									addressString = gson.toJson(addressArray); 
 								}
-								
-								pstmtInsert.setString(10, addressString);			// Address
-								
-								log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + resultSet.getString(1) + 
-										" : " + as.form_id + " : " + target_form_url + " : " + resultSet.getString(2) +
-										" : " + initial_data_url + " : " + addressString);
-								int count = pstmtInsert.executeUpdate();
-								if(count != 1) {
-									log.info("Error: Failed to insert task");
+								pstmt2.close();
+								resultSet2.close();
+								getTaskSql = "select " + tableName + 
+										".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
+								getTaskSqlWhere = " from " + tableName + ", " + tableName2 + " where " + tableName +".prikey = " + tableName2 + 	".parkey " +
+										" and " + tableName + "._bad = 'false'";
+								getTaskSqlEnd = "group by " + tableName + ".prikey ";
+							}
+										
+							if(as.address_columns != null) {
+								for(int i = 0; i < as.address_columns.size(); i++) {
+									TaskAddressSettings add = as.address_columns.get(i);
+									if(add.selected) {
+										getTaskSql += "," + tableName + "." + add.name;
+									}
 								}
 							}
+							if(hasGeom) {
+								
+								/*
+								 * Get the source form ident
+								 */
+								pstmtGetSurveyIdent.setInt(1, as.source_survey_id);
+								resultSet = pstmtGetSurveyIdent.executeQuery();
+								String source_survey_ident = null;
+								if(resultSet.next()) {
+									source_survey_ident = resultSet.getString(1);
+								} else {
+									throw new Exception("Form identifier not found for form id: " + as.source_survey_id);
+								}
+								getTaskSql += getTaskSqlWhere;
+								if(filterSql != null) {
+									getTaskSql += " and " + filterSql;
+								}
+								getTaskSql += getTaskSqlEnd;
+	
+								log.info("Get Task SQL:" + getTaskSql);
+								if(pstmt != null) {pstmt.close();};
+								pstmt = connectionRel.prepareStatement(getTaskSql);	 
+								resultSet = pstmt.executeQuery();
+								while (resultSet.next()) {
+					
+									/*
+									 * The original URL for instance data only allowed searching via primary key
+									 *  the prikey was the last part of the path.
+									 *  This use is now deprecated and a more flexible approach is used where the key
+									 *  is passed as an attribute.  
+									 *  The old path value of primary key is ignored with this new format
+									 *  and is set to zero here.
+									 */
+									if(as.update_results && (as.source_survey_id == as.form_id)) {
+										initial_data_url = "http://" + hostname + "/instanceXML/" + 
+										source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);
+									}
+									
+									String location = null;
+									int recordId = resultSet.getInt(1);
+									if(hasGeom) {
+										location = resultSet.getString("the_geom");
+									} 
+									if(location == null) {
+										location = "POINT(0 0)";
+									}
+									
+									String geoType = null;
+									if(pstmtInsert != null) {pstmtInsert.close();};
+									if(location.startsWith("POINT")) {
+										pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
+										geoType = "POINT";
+									} else if(location.startsWith("POLYGON")) {
+										pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_polygon," + insertSql2, Statement.RETURN_GENERATED_KEYS);
+										geoType = "POLYGON";
+									} else if(location.startsWith("LINESTRING")) {
+										pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_linestring," + insertSql2, Statement.RETURN_GENERATED_KEYS);
+										geoType = "LINESTRING";
+									} else {
+										log.log(Level.SEVERE, "Unknown location type: " + location);
+									}
+									pstmtInsert.setInt(1, projectId);
+									pstmtInsert.setInt(2, taskGroupId);
+									pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
+									pstmtInsert.setInt(4, as.form_id);
+									pstmtInsert.setString(5, target_form_url);	
+									pstmtInsert.setString(6, geoType);
+									pstmtInsert.setString(7, location);
+									pstmtInsert.setString(8, initial_data_url);			// Initial data
+									pstmtInsert.setInt(9, recordId);			// Initial data
+									
+									/*
+									 * Create address JSON string
+									 */
+									String addressString = null;
+									if(as.address_columns != null) {
+										
+										addressArray = new ArrayList<TaskAddress> ();
+										for(int i = 0; i < as.address_columns.size(); i++) {
+											TaskAddressSettings add = as.address_columns.get(i);
+											if(add.selected) {
+												TaskAddress ta = new TaskAddress();
+												ta.name = add.name;
+												ta.value = resultSet.getString(add.name);
+												addressArray.add(ta);
+											}
+										}
+										gson = new GsonBuilder().disableHtmlEscaping().create();
+										addressString = gson.toJson(addressArray); 
+									}
+									
+									pstmtInsert.setString(10, addressString);			// Address
+									
+									log.info("SQL: " + pstmtInsert.toString());
+									
+									int count = pstmtInsert.executeUpdate();
+									if(count != 1) {
+										log.info("Error: Failed to insert task");
+									} else {
+										if(as.user_id > 0) {	// Assign the user to the new task
+										
+											keys = pstmtInsert.getGeneratedKeys();
+											if(keys.next()) {
+												int taskId = keys.getInt(1);
+		
+												pstmtAssign.setInt(1, as.user_id);
+												pstmtAssign.setString(2, "accepted");
+												pstmtAssign.setInt(3, taskId);
+												
+												log.info("SQL:" + pstmtAssign.toString());
+												
+												pstmtAssign.executeUpdate();
+											}
+											if(keys != null) try{ keys.close(); } catch(SQLException e) {};
+	
+									
+										}
+									}
+								}
+							} else {
+								System.out.println("No geometry columns in any of the survey tables");
+								throw new Exception("\"the_geom\" does not exist");
+							}
+							break;
 						} else {
-							System.out.println("No geometry columns in any of the survey tables");
-							throw new Exception("\"the_geom\" does not exist");
+							System.out.println("parent is:" + p_id + ":");
 						}
-						break;
-					} else {
-						System.out.println("parent is:" + p_id + ":");
 					}
 				}
-			}
-			
-			/*
-			 * Set the tasks from the passed in task list if this has been set
-			 */
-			if(as.new_tasks != null) {
-				System.out.println("New tasks: " + as.new_tasks.type);
 				
-				// Assume POINT location, TODO POLYGON, LINESTRING
-				if(pstmtInsert != null) {pstmtInsert.close();};
-				String geoType = "POINT";
-				pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-				for(int i = 0; i < as.new_tasks.features.length; i++) {
-					Features f = as.new_tasks.features[i];
-					System.out.println(f.geometry.coordinates[0] + " : " + f.geometry.coordinates[1]);
-				
-					pstmtInsert.setInt(1, projectId);
-					pstmtInsert.setInt(2, taskGroupId);
-					String title = null;
-					if(f.properties.title != null && !f.properties.title.equals("null")) {
-						title = as.project_name + " : " + as.survey_name + " : " + f.properties.title;
-					} else {
-						title = as.project_name + " : " + as.survey_name + " : " + i;
-					}
-					pstmtInsert.setString(3, title);
-					pstmtInsert.setInt(4, as.form_id);
-					pstmtInsert.setString(5, target_form_url);	
-					pstmtInsert.setString(6, "POINT");
-					pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
-					pstmtInsert.setString(8, null);			// Initial data url
-					pstmtInsert.setInt(9, 0);				// Initial data record id
-					pstmtInsert.setString(10, null);		// Address TBD
-					log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + f.properties.title + 
-							" : " + as.form_id + " : " + target_form_url + " : " + 
-							"POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")" +
-							" : " + initial_data_url);
-					int count = pstmtInsert.executeUpdate();
-					if(count != 1) {
-						log.info("Error: Failed to insert task");
-					} else if(f.properties.userId > 0) {	// Assign the user to the new task
-						
-						keys = pstmtInsert.getGeneratedKeys();
-						if(keys.next()) {
-							int taskId = keys.getInt(1);
-							
-							log.info("SQL:" + assignSQL + " : " + f.properties.userId + " : " + f.properties.assignment_status + " : " + taskId);
-
-							pstmtAssign.setInt(1, f.properties.userId);
-							pstmtAssign.setString(2, f.properties.assignment_status);
-							pstmtAssign.setInt(3, taskId);
-							
-							pstmtAssign.executeUpdate();
+				/*
+				 * Set the tasks from the passed in task list
+				 */
+				if(as.new_tasks != null) {
+					System.out.println("New tasks: " + as.new_tasks.type);
+					
+					// Assume POINT location, TODO POLYGON, LINESTRING
+					if(pstmtInsert != null) {pstmtInsert.close();};
+					String geoType = "POINT";
+					pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
+					for(int i = 0; i < as.new_tasks.features.length; i++) {
+						Features f = as.new_tasks.features[i];
+						System.out.println(f.geometry.coordinates[0] + " : " + f.geometry.coordinates[1]);
+					
+						pstmtInsert.setInt(1, projectId);
+						pstmtInsert.setInt(2, taskGroupId);
+						String title = null;
+						if(f.properties.title != null && !f.properties.title.equals("null")) {
+							title = as.project_name + " : " + as.survey_name + " : " + f.properties.title;
+						} else {
+							title = as.project_name + " : " + as.survey_name + " : " + i;
 						}
-						if(keys != null) try{ keys.close(); } catch(SQLException e) {};
-
+						pstmtInsert.setString(3, title);
+						pstmtInsert.setInt(4, as.form_id);
+						pstmtInsert.setString(5, target_form_url);	
+						pstmtInsert.setString(6, "POINT");
+						pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
+						pstmtInsert.setString(8, null);			// Initial data url
+						pstmtInsert.setInt(9, 0);				// Initial data record id
+						pstmtInsert.setString(10, null);		// Address TBD
+						log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + f.properties.title + 
+								" : " + as.form_id + " : " + target_form_url + " : " + 
+								"POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")" +
+								" : " + initial_data_url);
+						int count = pstmtInsert.executeUpdate();
+						if(count != 1) {
+							log.info("Error: Failed to insert task");
+						} else if(f.properties.userId > 0 || as.user_id > 0) {	// Assign the user to the new task
+							
+							keys = pstmtInsert.getGeneratedKeys();
+							if(keys.next()) {
+								int taskId = keys.getInt(1);
+								
+								log.info("SQL:" + assignSQL + " : " + f.properties.userId + " : " + f.properties.assignment_status + " : " + taskId);
+	
+								if(f.properties.userId > 0) {
+									pstmtAssign.setInt(1, f.properties.userId);
+								} else {
+									pstmtAssign.setInt(1, as.user_id);
+								}
+								pstmtAssign.setString(2, f.properties.assignment_status);
+								pstmtAssign.setInt(3, taskId);
+								
+								pstmtAssign.executeUpdate();
+							}
+							if(keys != null) try{ keys.close(); } catch(SQLException e) {};
+	
+						}
+					
 					}
-				
 				}
 			}
 			connectionSD.commit();

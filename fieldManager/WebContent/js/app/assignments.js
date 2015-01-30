@@ -24,7 +24,8 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gTaskGroupIndex = -1,	// Currently selected task group
 	gTaskParams = [],		// Parameters for a new task	
 	gFilterqType,			// The type of the filter question select, select1, int, string
-	gUserFilter = "0";		// Default to all users
+	gUserFilter = "0",		// Default to all users
+	gTaskGroupId = 0;		// Currently selected task group
 	
 $(document).ready(function() {
 	
@@ -64,6 +65,11 @@ $(document).ready(function() {
 		$('#filter_results').toggle();
 	});
 	
+	// Add a trigger to respond to the clicking of "empty_task_group" 
+	$('#empty_task_group').attr('checked', false).click(function() {
+		$('#add_task_from_existing').toggle();
+	});
+	
 	// Add a trigger to respond to the clicking of "update results" 
 	$('#update_results').click(function() {
 		var updateResults = $('#update_results').is(':checked');
@@ -94,23 +100,6 @@ $(document).ready(function() {
 	$('#filter_question').change(function() {
 		questionChanged();
 	});
-	
-	// Add response to the source of task assignment being changed
-	/*
-	$('input[name=task_source]', '#assign_survey_form').change(function() {
-		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val();
-
-		if(taskSource === "new") {
-			$('#task_source_new_hide').show();
-			$('#task_source_survey_hide').hide();
-			registerForNewTasks();
-		} else {
-			$('#task_source_new_hide').hide();
-			$('#task_source_survey_hide').show();
-			clearNewTasks();
-		}
-	});
-	*/
 
 	// Initialise the map
 	initializeMap();
@@ -140,7 +129,7 @@ $(document).ready(function() {
 	 * Save the assigned user
 	 */
 	$('#assignUserSave').off().click(function() {
-		updatePendingAssignments($("accepted", '#users_select_user').val());
+		updatePendingAssignments("accepted", $('#users_select_user').val());
         saveData(globals.gPendingUpdates);
 		refreshAssignmentData(gUserFilter);
 		globals.gCurrentUserId = undefined;
@@ -148,219 +137,89 @@ $(document).ready(function() {
 		globals.gPendingUpdates = [];
 	})
 	
-		// Create new task group
-		$('#addTaskGroup').button().click(function () {
-			var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-				s_id = $('#survey').val();
-			
-			/*
-			 * Make sure we have the survey id
-			 */
-			if(typeof s_id === "undefined" || s_id === null) {
-				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-						"If the project does have surveys then try again in a few seconds");
-				return;
-			}
-			
-			if(taskSource === "new") {
-				globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-				globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-				registerForNewTasks();
-			}
-			// open the dialog
-			$('#addTask').modal("show");
-
-		});
-	
-	/*
-	$('#assign_user').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
-			title: "Assign Users",
-			position: { my: "left top", at: "left top", of:'#aside'},
-			width: 250,
-			show:"drop",
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		refreshAssignmentData(gUserFilter);
-		        		globals.gCurrentUserId = undefined;
-		        		globals.gCurrentUserName = undefined;
-		        		globals.gPendingUpdates = [];
-		        		$(this).dialog("close");
-		        	}
-		        },
-		        {
-		        	text: "Save",
-		        	click: function() {
-		        		saveData(globals.gPendingUpdates);
-		        		refreshAssignmentData(gUserFilter);
-		        		globals.gCurrentUserId = undefined;
-		        		globals.gCurrentUserName = undefined;
-		        		globals.gPendingUpdates = [];
-		        		$(this).dialog("close");
-		        	}
-		        }
-			]
+	// Create new task group
+	$('#addTaskGroup').button().click(function () {
+		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
+			s_id = $('#survey').val();
+		
+		/*
+		 * Make sure we have the survey id
+		 */
+		if(typeof s_id === "undefined" || s_id === null) {
+			alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
+					"If the project does have surveys then try again in a few seconds");
+			return;
 		}
-	);
-	*/
-	
-	/*
-	$('#assign_survey').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
-			title: "Create new tasks",
-			show:"drop",
-			position: { my: "left top", at: "left top", of:'#aside'},
-			buttons: [
-		        {
-		        	text: "Add to Tasks",
-		        	click: function() {
-		        		var error = false,
-		        			taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-		        			assignObj = {},
-		        			assignString,
-		        			url,
-		        			filterObj = {},
-		        			filterqId,
-		        			filteroId,
-		        			source_survey;
-		        		
-	        			assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-		        		assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
-		        		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-		        		assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
-		        		
-		        		if(taskSource === "new") {
-		        		       			
-		        			assignObj["source_survey_id"] = -1;
-			        		assignObj["new_tasks"] = $.parseJSON(getTasksAsGeoJSON());
-		        			
-		        		} else {
-		        			source_survey = $('#survey').val(); 						// The survey that provides the existing results	
-		        			if(!source_survey) {
-		        				source_survey = -1;
-		        			}
-			        		assignObj["source_survey_id"] = source_survey; 
-			        		assignObj["address_columns"] = gTaskParams;
-			        		assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
-			        		assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
-			        		
-			        		// Add filter if filter checkbox has been checked
-			        		if($('#filter_results_check').attr('checked')) {
-			        			
-
-		        				filterObj["qType"] = gFilterqType;
-			        			filterObj["qId"] = $('#filter_question option:selected').val();
-			        			filterObj["oValue"] = $('#filter_option option:selected').val();
-			        			filterObj["qText"] = $('#filter_text').val();
-			        			if(gFilterqType === "int") {
-			        				filterObj["qInteger"] = $('#filter_integer').val();
-			        			}
-			        			filterObj["lang"] = $('#filter_language option:selected').val();
-			        			assignObj["filter"] = filterObj;
-
-			        		}
-		        		}
-		        		if(!error) {
-			            	assignString = JSON.stringify(assignObj);
-			            	globals.gCurrentUserId = undefined;
-			            	globals.gCurrentUserName = undefined;
-		        			
-		        			addHourglass();
-		            		$.ajax({
-		            			  type: "POST",
-		            			  contentType: "application/json",
-		            			  dataType: "json",
-		            			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
-		            			  data: { settings: assignString },
-		            			  success: function(data, status) {
-		            				  removeHourglass();
-		            				  refreshAssignmentData(gUserFilter);
-		            				  clearNewTasks();
-		            			  }, error: function(data, status) {
-		            				  removeHourglass();
-		            				  if(data.responseText.indexOf("<html>") !== 0) {
-		            					  alert("Error: " + data.responseText); 
-		            				  } else {
-		            					  alert("Error adding tasks");
-		            				  }
-
-		            			  }
-		            		});
-		            		
-			        		$(this).dialog("close");
-		        		} 
-		        	},
-		        }, 
-		        {
-		        	text: "Close",
-		        	click: function() {
-		    			clearNewTasks();
-		        		$(this).dialog("close");
-		        	}
-		        }
-			]
+		
+		if(taskSource === "new") {
+			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+			registerForNewTasks();
 		}
-	);
-	*/
+		
+		// open the dialog
+		$('#addTask').modal("show");
+
+	});
+	
+	// Set focus when opening addTask modal
+	$('#addTask').on('shown.bs.modal', function() {
+		$('#task_group_name').focus();
+	});
+	
+	// Set focus when opening addNewTask modal
+	$('#addNewTask').on('shown.bs.modal', function() {
+		$('#users_select_new_task').focus();
+	});
 	
 	/*
 	 * Create a new group, optionally populated with tasks generated from existing survey results
 	 */
 	$('#addNewGroupSave').click(function () {
-		var error = false,
-		//taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-		assignObj = {},
-		assignString,
-		url,
-		filterObj = {},
-		filterqId,
-		filteroId,
-		source_survey;
+		var assignObj = {},
+			assignString,
+			url,
+			filterObj = {},
+			filterqId,
+			filteroId,
+			source_survey;
 	
 		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-		assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
 		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-		assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
-	
-	/*
-	if(taskSource === "new") {
-	       			
-		assignObj["source_survey_id"] = -1;
-		assignObj["new_tasks"] = $.parseJSON(getTasksAsGeoJSON());
 		
-	} else {
-	*/
-		source_survey = $('#survey').val(); 						// The survey that provides the existing results	
-		if(!source_survey) {
-			source_survey = -1;
-		}
-		assignObj["source_survey_id"] = source_survey; 
-		assignObj["address_columns"] = gTaskParams;
-		assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
-		assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
-		
-		// Add filter if filter checkbox has been checked
-		if($('#filter_results_check').attr('checked')) {
+		if(!$('#empty_task_group').attr('checked')) {
 			
-			filterObj["qType"] = gFilterqType;
-			filterObj["qId"] = $('#filter_question option:selected').val();
-			filterObj["oValue"] = $('#filter_option option:selected').val();
-			filterObj["qText"] = $('#filter_text').val();
-			filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
-			filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
-			if(gFilterqType === "int") {
-				filterObj["qInteger"] = $('#filter_integer').val();
+			assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
+			assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
+			assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
+			
+			source_survey = $('#survey').val(); 						// The survey that provides the existing results	
+			if(!source_survey) {
+				source_survey = -1;
 			}
-			filterObj["lang"] = $('#filter_language option:selected').val();
-			assignObj["filter"] = filterObj;
-
+			assignObj["source_survey_id"] = source_survey; 
+			assignObj["address_columns"] = gTaskParams;
+			assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
+			assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
+			
+			// Add filter if filter checkbox has been checked
+			if($('#filter_results_check').attr('checked')) {
+				
+				filterObj["qType"] = gFilterqType;
+				filterObj["qId"] = $('#filter_question option:selected').val();
+				filterObj["oValue"] = $('#filter_option option:selected').val();
+				filterObj["qText"] = $('#filter_text').val();
+				filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
+				filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
+				if(gFilterqType === "int") {
+					filterObj["qInteger"] = $('#filter_integer').val();
+				}
+				filterObj["lang"] = $('#filter_language option:selected').val();
+				assignObj["filter"] = filterObj;
+	
+			}
 		}
-	//}
-	if(!error) {
+
     	assignString = JSON.stringify(assignObj);
     	globals.gCurrentUserId = undefined;
     	globals.gCurrentUserName = undefined;
@@ -387,8 +246,60 @@ $(document).ready(function() {
 			  }
 		});
 		
-	} 
 	});
+	
+	/*
+	 * Save new ad-hoc tasks in a group
+	 */
+	$('#addNewTaskSave').click(function () {
+		var error = false,
+			assignObj = {},
+			assignString,
+			url,
+			filterObj = {},
+			filterqId,
+			filteroId,
+			source_survey;
+	
+		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
+		assignObj["survey_name"] = $('#survey_to_complete_new_task option:selected').text();	// The display name of the survey to complete
+		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
+		assignObj["form_id"] = $('#survey_to_complete_new_task option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
+		assignObj["task_group_id"] = gTaskGroupId;
+		assignObj["user_id"] = $('#users_select_new_task option:selected').val();
+		   			
+		assignObj["source_survey_id"] = -1;
+		assignObj["new_tasks"] = $.parseJSON(getTasksAsGeoJSON());
+	
+		assignString = JSON.stringify(assignObj);
+		globals.gCurrentUserId = undefined;
+		globals.gCurrentUserName = undefined;
+	
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
+			  data: { settings: assignString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  refreshAssignmentData(gUserFilter);
+				  clearNewTasks();
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  if(data.responseText.indexOf("<html>") !== 0) {
+					  alert("Error: " + data.responseText); 
+				  } else {
+					  alert("Error adding tasks");
+				  }
+
+			  }
+		});
+		
+	});
+	
+	
 	
 	// Delete Tasks button and dialog
 	$('#deleteTasks').button().click(function () {
@@ -756,6 +667,7 @@ function getUsers(projectId) {
 	$('#users_filter').append('<option value="-1">Unassigned Users</options>');
 
 	$('#users_select_new_task').append('<option value="-1">Unassigned</options>');
+	$('#users_task_group').append('<option value="-1">Unassigned</options>');
 	
 	$.ajax({
 		url: "/surveyKPI/userList",
@@ -915,7 +827,47 @@ function refreshTableAssignments(tasks) {
 		// Add function to add tasks to group
 		$('.add_new_task').button().click(function () {
 			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-			var s_id = $('#survey').val();
+			var s_id = $('#survey').val(),
+				$this = $(this);
+			
+			/*
+			 * Make sure we have the survey id
+			 */
+			if(typeof s_id === "undefined" || s_id === null) {
+				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
+						"If the project does have surveys then try again in a few seconds");
+				return;
+			}
+
+			// Enable selection of locations for new tasks
+			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+			registerForNewTasks();
+			
+			$('.save_new_task').hide();					// Close any other create new task buttons
+			$('.add_new_task').show();
+			
+			$this.hide();								// Enable the button to save new tasks
+			$this.siblings('.save_new_task').show();
+			
+			// Reset any pending tasks
+			$('#new_task_count').html(0);
+			
+			// open the dialog
+			//bootbox.alert("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
+			$('#map_alert').show().text("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
+			window.scrollTo(500, 0);
+		});
+		
+		/*
+		 * Function to save new ad hoc tasks
+		 */
+		$('.save_new_task').button().click(function () {
+			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
+			var s_id = $('#survey').val(),
+				$this = $(this),
+				taskCount = $('#new_task_count').html(),
+				taskCountInt = parseInt(taskCount);
 			
 			/*
 			 * Make sure we have the survey id
@@ -926,17 +878,30 @@ function refreshTableAssignments(tasks) {
 				return;
 			}
 			
-			//if(taskSource === "new") {
-				globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-				globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-				registerForNewTasks();
-			//}
+			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+			registerForNewTasks();
 			
+			// Reset buttons
+			$this.hide();
+			$this.siblings('.add_new_task').show();
+			
+			// Notify the user if we are adding a task without location
+			$('#ts_alert').hide().text("");
+			if(taskCountInt == 0) {
+				$('#new_task_count').html(1);
+				$('#ts_alert').show().text("Adding task without location");
+			}
+
+			gTaskGroupId = $this.val();
+	
 			// open the dialog
 			$('#addNewTask').modal("show");
 		});
 		
-		// Add function to delete the group
+		/*
+		 * Function to delete a task group
+		 */
 		$('.delete_task_group').button().click(function () {
 
 			/*

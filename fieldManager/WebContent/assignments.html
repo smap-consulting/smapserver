@@ -80,23 +80,37 @@
 				<div id="layers" style="display:none;">
 					<label class="lang control-label" data-lang="c_project" for="project_name">Select Project</label>
 					<select class="project_list form-control" id="project_name"></select>
-					<h4>Layers</h4>
-					<div id="current_layers"></div>
-					<h4>Show:</h4><br/>
+
+            		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+  						<div class="panel panel-default">
+    						<div class="panel-heading" role="tab" id="headingOne">
+								<h4 class="panel-title">
+					       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" aria-expanded="true" aria-controls="collapseLayers">
+					         	Map Layers
+					       		</a>
+					     		</h4>
+    						</div>
+	    					<div id="collapseLayers" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+								<div id="current_layers"></div>
+							</div>
+						</div>
+					</div>
+					
 					<label class="control-label" for="users_filter">Show tasks for: </label>
 					<select class="task_filter form-control" id="users_filter"></select>
 					<div class="checkbox">
 						<label>
 							<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
-							Completed Tasks
+							Show Completed Tasks
 						</label>
 					</div>
 					
-					<button class="layerbutton btn btn-info btn-block" id="zoomData" type="button">Zoom to Data</button>
-					<button class="layerbutton btn btn-success btn-block" id="assignUser" type="button">Assign Users</button>
-					<button class="layerbutton btn btn-success btn-block" id="addTaskGroup" type="button">Add Task Group</button>
-					<button class="layerbutton btn btn-danger btn-block" id="deleteTasks" type="button">Delete Tasks</button>
-					<!-- <button class="layerbutton btn btn-warning btn-block" id="clearCancelledTasks" type="button">Clear Cancelled Tasks</button>-->	
+					<button class="btn btn-info btn-block" id="zoomData" type="button">Zoom to Data</button>
+					<button class="btn btn-success btn-block" id="assignUser" type="button">Assign Users</button>
+					<button class="btn btn-success btn-block" id="addTaskGroup" type="button">Add Task Group</button>
+					<button class="btn btn-danger btn-block" id="deleteTasks" type="button">Delete Tasks</button>
+					<button class="btn btn-info btn-block" id="tasks_print" onclick="window.print();">Print</button>
+					
 				</div>
 			</form>
 		</div>
@@ -104,7 +118,7 @@
 		<div id="scroll_zone_indent" class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
 			<div id="monitor">
 				<div id="map" class="noPrint"></div>
-				<span class="noPrint"><button class="btn btn-info" id="tasks_print" onclick="window.print();">Print</button></span>
+				<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
 				<div id="tasks_table" class="yesPrint table-responsive"></div>
 			</div>
 		</div>
@@ -136,7 +150,6 @@
             	<button id="assignUserSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
         	</div>
 		</div>
-		</div>
 	</div>
 </div>
 
@@ -158,111 +171,124 @@
 							</div>
 						</div>
 						
-						<p>The locations of results from the existing survey will be used to create assignments for follow up work</p>
-						
-						<div class="form-group">
-							<label for="project_select" class="col-sm-2 control-label">Existing Project</label>
-							<div class="col-sm-10">
-								<select id="project_select" class="project_list form-control"></select>
-							</div>
-						</div>
-					
-						<div class="form-group">
-							<label for="survey" class="col-sm-2 control-label">Existing Survey</label>
-							<div class="col-sm-10">
-								<select class="survey_select form-control" id="survey"></select><br/>
-							</div>
-						</div>
-						
 						<div class="checkbox">
 							<label>
-								<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">Filter tasks
+								<input type="checkbox" name="empty_task_group" value="empty_task_group" id="empty_task_group">Create Empty Task Group
 							</label>
 						</div>
-								
-						<div id="filter_results" style="display:none;">
-								
-								<div class="form-group">
-									<label for="filter_language" class="col-sm-2 control-label">Language</label>
-									<div class="col-sm-10">
-										<select id="filter_language" class="selected_language form-control"></select>
-									</div>
+						
+						<div id="add_task_from_existing">
+							<div class="form-group">
+								<label for="project_select" class="col-sm-2 control-label">Existing Project</label>
+								<div class="col-sm-10">
+									<select id="project_select" class="project_list form-control"></select>
 								</div>
-								
-								<div class="form-group">
-									<label for="filter_question" class="col-sm-2 control-label">Filter by question: </label>
-									<div class="col-sm-10">
-										<select class="selected_question form-control" id="filter_question"></select>
-									</div>
+							</div>
+						
+							<div class="form-group">
+								<label for="survey" class="col-sm-2 control-label">Existing Survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey"></select><br/>
 								</div>
+							</div>
 							
-								<div class="filter_option_only" style="display:none;">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">Filter tasks
+								</label>
+							</div>
+									
+							<div id="filter_results" style="display:none;">
+									
 									<div class="form-group">
-										<label class="col-sm-2 control-label" for="filter_option">Selected option: </label>
+										<label for="filter_language" class="col-sm-2 control-label">Language</label>
 										<div class="col-sm-10">
-											<select class="form-control selected_option" id="filter_option"></select>
+											<select id="filter_language" class="selected_language form-control"></select>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label for="filter_question" class="col-sm-2 control-label">Filter by question: </label>
+										<div class="col-sm-10">
+											<select class="selected_question form-control" id="filter_question"></select>
+										</div>
+									</div>
+								
+									<div class="filter_option_only" style="display:none;">
+										<div class="form-group">
+											<label class="col-sm-2 control-label" for="filter_option">Selected option: </label>
+											<div class="col-sm-10">
+												<select class="form-control selected_option" id="filter_option"></select>
+											</div>
+										</div>
+									</div>
+									
+								<div class="filter_integer_only" style="display:none;">
+									<div class="form-group">
+										<label class="col-sm-2 control-label" for="filter_integer">Set numeric value: </label>
+										<div class="col-sm-10">
+											<input type="number" class="selected_integer form-control" id="filter_integer">
 										</div>
 									</div>
 								</div>
 								
-							<div class="filter_integer_only" style="display:none;">
-								<div class="form-group">
-									<label class="col-sm-2 control-label" for="filter_integer">Set numeric value: </label>
-									<div class="col-sm-10">
-										<input type="number" class="selected_integer form-control" id="filter_integer">
+								<div class="filter_text_only" style="display:none;">
+									<div class="form-group">
+										<label class="col-sm-2 control-label" for="filter_text">Set text value: </label>
+										<div class="col-sm-10">
+											<input type="text" class="selected_text form-control" id="filter_text">
+										</div>
 									</div>
 								</div>
-							</div>
-							
-							<div class="filter_text_only" style="display:none;">
-								<div class="form-group">
-									<label class="col-sm-2 control-label" for="filter_text">Set text value: </label>
-									<div class="col-sm-10">
-										<input type="text" class="selected_text form-control" id="filter_text">
-									</div>
+								
+								<div class="filter_date_only" style="display:none;">
+	
+		            				<div class="form-group">
+		            					<label class="col-sm-2 control-label" for="startDate">From :</label>
+		            					<div class="col-sm-10">
+			                				<div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                				</div>
+			                			</div>
+		            				</div>
+		     
+		            				<div class="form-group">
+		            				    <label class="col-sm-2 control-label" for="endDate">To :</label>
+		            				    <div class="col-sm-10">
+			                				<div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                				</div>
+			                			</div>
+		            				</div>
+		            				<div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
 								</div>
+							
+							</div>
+							<div class="checkbox">
+								<label>
+									<input id="update_results" type="checkbox" name="update_results" value="update_results"/>Update existing results
+								</label>
 							</div>
 							
-							<div class="filter_date_only" style="display:none;">
-
-	            				<div class="form-group">
-	            					<label class="col-sm-2 control-label" for="startDate">From :</label>
-	            					<div class="col-sm-10">
-		                				<div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-		                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-		                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-		                				</div>
-		                			</div>
-	            				</div>
-	     
-	            				<div class="form-group">
-	            				    <label class="col-sm-2 control-label" for="endDate">To :</label>
-	            				    <div class="col-sm-10">
-		                				<div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-		                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-		                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-		                				</div>
-		                			</div>
-	            				</div>
-	            				<div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
-							</div>
-						
-						</div>
-						<div class="checkbox">
-							<label>
-								<input id="update_results" type="checkbox" name="update_results" value="update_results"/>Update existing results
-							</label>
-						</div>
-						
-						<div id="show_task_params">Address Parameters</div>	
-						
-						<div class="form-group">
-							<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
+							<div id="show_task_params">Address Parameters</div>	
+							
+							<div class="form-group">
+								<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
 								<div class="col-sm-10">
 									<select class="survey_select form-control" id="survey_to_complete"></select>
 								</div>
 							</div>
-					
+							
+							<div class="form-group">
+								<label for="users_task_group" class="col-sm-2 control-label">Assign User</label>
+								<div class="col-sm-10">
+									<select class="form-control users_select" id="users_task_group"></select>
+								</div>
+							</div>
+						</div>
+										
 					</form>	
 
 			</div>
@@ -284,27 +310,30 @@
    			</div>
 		    <div class="modal-body">
 		    
-					<form role="form" class="form-horizontal" id="assign_survey_form">
+		    	<h4>Number of tasks to add: <span id="new_task_count">0</span></h4>
+		    	<div id="ts_alert" style="display:none;" class="alert alert-info" role="alert"></div>
+				<form role="form" class="form-horizontal" id="assign_survey_form">
 						
-							<p class="single">Click on the map at each location where you want to create a task.</p>
-							<label for="users_select_new_task">User: </label>
-							<select class="users_select" id="users_select_new_task"></select><br/>
-							<p>Task Count: <span id="new_task_count">0</span></p>
-						
-						
-						<div class="form-group">
-							<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
-								<div class="col-sm-10">
-									<select class="survey_select form-control" id="survey_to_complete"></select>
-								</div>
-							</div>
+					<div class="form-group">
+						<label for="users_select_new_task" class="col-sm-2 control-label">User </label>
+						<div class="col-sm-10">
+							<select class="users_select form-control" id="users_select_new_task"></select>
+						</div>
+					</div>
 					
-					</form>	
+					<div class="form-group">
+						<label for="survey_to_complete_new_task" class="col-sm-2 control-label">New Survey</label>
+						<div class="col-sm-10">
+							<select class="survey_select form-control" id="survey_to_complete_new_task"></select>
+						</div>
+					</div>
+				
+				</form>	
 
 			</div>
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="addNewGroupSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+            	<button id="addNewTaskSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>
