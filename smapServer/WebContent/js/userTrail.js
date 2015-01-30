@@ -279,39 +279,7 @@ $(document).ready(function() {
     
 });
 
-function validDates() {
-	var $d1 = $('#startDate'),
-		$d2 = $('#endDate'),
-		d1 = $d1.data("DateTimePicker").getDate(),
-		d2 = $d2.data("DateTimePicker").getDate()
-			
-	if(!d1 || !d1.isValid()) {
-		$('#ut_alert').show().text("Invalid Start Date");
-		setTimeout(function() {
-			$('.form-control', '#startDate').focus();
-	    }, 0);		
-		return false;
-	}
-	
-	if(!d2 || !d2.isValid()) {
-		$('#ut_alert').show().text("Invalid End Date");
-		setTimeout(function() {
-			$('.form-control', '#endDate').focus();
-	    }, 0);	
-		return false;
-	}
-	
-	if(d1 > d2) {
-		$('#ut_alert').show().text("End date must be greater than start date");
-		setTimeout(function() {
-			$('.form-control', '#startDate').focus();
-	    }, 0);	
-		return false;
-	}
-	
-	$('#ut_alert').hide();
-	return true;
-}
+
 
 function getUserList(projectId) {
 	
@@ -370,10 +338,10 @@ function getData() {
 	var startUtc = moment.utc(startDate),
 		endUtc = moment.utc(endDate);
 	
-	console.log("start:" + startDate.format("YYYY-MM-DD HH:mm:ss"));
-	console.log("end:" + endDate.format("YYYY-MM-DD HH:mm:ss"));
-	console.log("start UTC:" + startUtc.format("YYYY-MM-DD HH:mm:ss"));
-	console.log("end UTC:" + endUtc.format("YYYY-MM-DD HH:mm:ss"));
+	//console.log("start:" + startDate.format("YYYY-MM-DD HH:mm:ss"));
+	//console.log("end:" + endDate.format("YYYY-MM-DD HH:mm:ss"));
+	//console.log("start UTC:" + startUtc.format("YYYY-MM-DD HH:mm:ss"));
+	//console.log("end UTC:" + endUtc.format("YYYY-MM-DD HH:mm:ss"));
 		
 	getTrailData(startUtc.valueOf(), endUtc.valueOf());
 	getSurveyLocations(startUtc.valueOf(), endUtc.valueOf());

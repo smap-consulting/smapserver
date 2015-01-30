@@ -260,7 +260,7 @@ public class Results extends Application {
 				fQ = new QuestionInfo(sId, filter.qId, connectionSD, hasGeo, lang, urlprefix);	
 				q.add(fQ);
 				tables.add(fQ.getTableName(), fQ.getFId(), fQ.getParentFId());
-				sqlFilter = " and " + fQ.getFilterExpression(filter.value);
+				sqlFilter = " and " + fQ.getFilterExpression(filter.value, null);
 			}
 				
 			// Add any tables required to complete the join

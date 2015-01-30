@@ -43,7 +43,8 @@ requirejs.config({
     	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
     	            ],
     	modernizr: '../../../../js/libs/modernizr',
-    	rmm: '../../../../js/libs/responsivemobilemenu',
+    	moment: '../../../../js/libs/moment.min',
+    	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	bootstrap: '../../../../js/libs/bootstrap.min',
@@ -55,6 +56,7 @@ requirejs.config({
     shim: {
 
     	'common': ['jquery'],
+    	'datetimepicker': ['moment'],
     	'bootstrap': ['jquery'],
     	'bootbox': ['bootstrap'],
     	'jquery-barcode': ['jquery'],
@@ -77,7 +79,9 @@ require([
          'app/plugins',
          'jquery-barcode',
          'openlayers',
-         'crf'
+         'crf',
+         'moment',
+         'datetimepicker'
          
          ], function($, bootstrap, common, localise, globals) {});
 

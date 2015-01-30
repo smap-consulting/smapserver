@@ -307,7 +307,9 @@ $(document).ready(function() {
 	);
 	*/
 	
-	// Add new group save
+	/*
+	 * Create a new group, optionally populated with tasks generated from existing survey results
+	 */
 	$('#addNewGroupSave').click(function () {
 		var error = false,
 		//taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
@@ -319,10 +321,10 @@ $(document).ready(function() {
 		filteroId,
 		source_survey;
 	
-	assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-	assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
-	assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-	assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
+		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
+		assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
+		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
+		assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
 	
 	/*
 	if(taskSource === "new") {
@@ -344,11 +346,12 @@ $(document).ready(function() {
 		// Add filter if filter checkbox has been checked
 		if($('#filter_results_check').attr('checked')) {
 			
-
 			filterObj["qType"] = gFilterqType;
 			filterObj["qId"] = $('#filter_question option:selected').val();
 			filterObj["oValue"] = $('#filter_option option:selected').val();
 			filterObj["qText"] = $('#filter_text').val();
+			filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
+			filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
 			if(gFilterqType === "int") {
 				filterObj["qInteger"] = $('#filter_integer').val();
 			}
@@ -512,8 +515,28 @@ $(document).ready(function() {
 	}); 	
 	$('#tasks_print').button();									// Add button styling
 	
-	// Hack on screen refresh default radio button is not always being set (not sure why)
-	$('#tableradio').prop('checked',true);
+	// Set up the start and end dates with date picker
+	$('#startDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false
+	});
+	$('#startDate').data("DateTimePicker").setDate(moment());
+	
+	$('#endDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false
+	});
+	$('#endDate').data("DateTimePicker").setDate(moment());
+	
+	// Add responses to changing parameters
+	$('#startDate,#endDate').change(function(e) {	
+		if(validDates()) {
+			return true;
+		} else {
+			return false;
+		}
+ 	 });
+	
 });
 
 /*
@@ -584,6 +607,7 @@ function questionChanged() {
 		$filter_option_only = $('.filter_option_only'),
 		$filter_integer_only = $('.filter_integer_only'),
 		$filter_text_only = $('.filter_text_only'),
+		$filter_date_only = $('.filter_date_only'),
 		question = globals.gSelector.getQuestionDetails(sId, qId, language);
 	
 	$filter_option.empty();
@@ -594,6 +618,7 @@ function questionChanged() {
 			$filter_option_only.show();
 			$filter_integer_only.hide();
 			$filter_text_only.hide();
+			$filter_date_only.hide();
 			
 			addHourglass();
 			// Get the meta data for the question
@@ -634,9 +659,18 @@ function questionChanged() {
 			$filter_option_only.hide();
 			$filter_integer_only.show();
 			$filter_text_only.hide();
+			$filter_date_only.hide();
+			
+		} else if(question.type === "date" || question.type == "dateTime") {
+			$filter_option_only.hide();
+			$filter_integer_only.hide();
+			$filter_text_only.hide();
+			$filter_date_only.show();
+			
 		} else {	// Default to text (string)
 			$filter_option_only.hide();
 			$filter_integer_only.hide();
+			$filter_date_only.hide();
 			$filter_text_only.show();
 		}
 	}
@@ -763,6 +797,9 @@ function userHasAccessToProject(user, projectId) {
 	return false;
 }
 
+/*
+ * Save any changes made to the selected tasks
+ */
 function saveData(data) {
 	
 	var assignString = JSON.stringify(data);

@@ -464,18 +464,27 @@ public class AllAssignments extends Application {
 						String filterSql = null;
 						if(as.filter != null) {
 							String fValue = null;
+							String fValue2 = null;
 							filterQuestion = new QuestionInfo(sId, as.filter.qId, connectionSD, false, as.filter.lang, urlprefix);
+							log.info("Filter question type: " + as.filter.qType);
 							if(as.filter.qType != null) {
 								if(as.filter.qType.startsWith("select")) {
 									fValue = as.filter.oValue;
 								} else if(as.filter.qType.equals("int")) {
 									fValue = String.valueOf(as.filter.qInteger);
+								} else if(as.filter.qType.equals("date")  || as.filter.qType.equals("dateTime")) {
+									Timestamp startDate = new Timestamp(as.filter.qStartDate);
+									Timestamp endDate = new Timestamp(as.filter.qEndDate);
+									
+									fValue = startDate.toString();
+									fValue2 = endDate.toString();
 								} else {
 									fValue = as.filter.qText;
 								}
 							}
-							System.out.println("filter: " + filterQuestion.getFilterExpression(fValue));
-							filterSql = filterQuestion.getFilterExpression(fValue);				
+							
+							filterSql = filterQuestion.getFilterExpression(fValue, fValue2);		
+							log.info("filter: " + filterSql);
 						}
 						// Check to see if this form has geometry columns
 						boolean hasGeom = false;

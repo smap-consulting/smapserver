@@ -964,7 +964,9 @@ public class PutXForm {
 	    			
 	    		} else if (name.equals("calculate")) {
 	   				q.setCalculate(attribute.getNodeValue()); 
-	   	   			q.setSource("user");	// Set source as it may not have been set in the body
+	   				if(q.getType() == null || !q.getType().startsWith("begin")) {
+	   					q.setSource("user");	// Set source as it may not have been set in the body
+	   				}
 	    		} else {
 	    			System.out.println("Warning, bind attribute ignored (" + name + ":" + attribute.getNodeValue());
 	    		}

@@ -867,3 +867,64 @@ function getSurveyDetails(callback) {
 	}
 }
 
+/*
+ * Validate start and end dates
+ */
+function validDates() {
+	var $d1 = $('#startDate'),
+		$d2 = $('#endDate'),
+		d1 = $d1.data("DateTimePicker").getDate(),
+		d2 = $d2.data("DateTimePicker").getDate()
+			
+	if(!d1 || !d1.isValid()) {
+		$('#ut_alert').show().text("Invalid Start Date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);		
+		return false;
+	}
+	
+	if(!d2 || !d2.isValid()) {
+		$('#ut_alert').show().text("Invalid End Date");
+		setTimeout(function() {
+			$('.form-control', '#endDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	if(d1 > d2) {
+		$('#ut_alert').show().text("End date must be greater than or the same as the start date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	$('#ut_alert').hide();
+	return true;
+}
+
+/*
+ * Convert a date into UTC
+ */
+function getUtcDate($element, start, end) {
+	
+	var theDate,
+		utcDate;
+	
+	if(start) {
+		theDate = $element.data("DateTimePicker").getDate().startOf('day');
+	} else if (end) {
+		theDate = $element.data("DateTimePicker").getDate().endOf('day');
+	} else {
+		theDate = $element.data("DateTimePicker").getDate();
+	}
+	
+	utcDate = moment.utc(theDate);
+	
+	console.log("date:" + theDate.format("YYYY-MM-DD HH:mm:ss"));
+	console.log("UTC:" + utcDate.format("YYYY-MM-DD HH:mm:ss"));
+	
+	return utcDate.valueOf();
+
+}

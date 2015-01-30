@@ -463,23 +463,25 @@ public class QuestionInfo {
 	/*
 	 * Return an SQL expression that can be used to filter on this question and the passed in option
 	 */
-	public String getFilterExpression(String value) {
+	public String getFilterExpression(String value1, String value2) {
 		String filter = "";
 		if(qType != null) {
 			if(qType.equals("select")) {
 				
 				for(int i = 0; i < o.size(); i++) {
 					OptionInfo aO = o.get(i);
-					if(aO.getValue().equals(value)) {
+					if(aO.getValue().equals(value1)) {
 						String oName = aO.getName();
 						filter = tableName + "." + oName + " = 1 ";
 						break;
 					}
 				}
 			} else if(qType.equals("select1") || qType.equals("string")) {
-				filter = tableName + "." + qName + " =  '" + value + "' ";
+				filter = tableName + "." + qName + " =  '" + value1 + "' ";
+			} else if(value2 != null && (qType.equals("date") || qType.equals("dateTime"))) {
+				filter = tableName + "." + qName + " between  '" + value1 + "' and  '" + value2 + "' ";
 			} else {
-				filter = tableName + "." + qName + " =  " + value + " ";
+				filter = tableName + "." + qName + " =  " + value1 + " ";
 			}
 		}
 		

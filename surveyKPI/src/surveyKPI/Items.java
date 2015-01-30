@@ -337,12 +337,12 @@ public class Items extends Application {
 					
 					QuestionInfo fQ = new QuestionInfo(sId, filter.qId, connectionSD);	
 					tables.add(fQ.getTableName(), fQ.getFId(), fQ.getParentFId());
-					System.out.println("Filter expression: " + fQ.getFilterExpression(filter.value));
+					System.out.println("Filter expression: " + fQ.getFilterExpression(filter.value, null));
 					
 					if(sqlFilter.length() > 0) {
-						sqlFilter += " and " + fQ.getFilterExpression(filter.value);
+						sqlFilter += " and " + fQ.getFilterExpression(filter.value, null);
 					} else {
-						sqlFilter = fQ.getFilterExpression(filter.value);
+						sqlFilter = fQ.getFilterExpression(filter.value, null);
 					}
 				}
 				

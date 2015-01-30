@@ -157,70 +157,104 @@
 								<input type="text" class="form-control" id="task_group_name">
 							</div>
 						</div>
-						<!-- <input id="task_source_survey" type="radio" name="task_source" 
-							value="survey" checked="checked" />Existing locations<br/> 
-						<input id="task_source_new" type="radio" name="task_source" 
-							value="new"/>New locations<br/> 
 						
-						<div id="task_source_survey_hide">
-						-->
-							<p>The locations of results from the existing survey will be used to create assignments for follow up work</p>
+						<p>The locations of results from the existing survey will be used to create assignments for follow up work</p>
+						
+						<div class="form-group">
+							<label for="project_select" class="col-sm-2 control-label">Existing Project</label>
+							<div class="col-sm-10">
+								<select id="project_select" class="project_list form-control"></select>
+							</div>
+						</div>
+					
+						<div class="form-group">
+							<label for="survey" class="col-sm-2 control-label">Existing Survey</label>
+							<div class="col-sm-10">
+								<select class="survey_select form-control" id="survey"></select><br/>
+							</div>
+						</div>
+						
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">Filter tasks
+							</label>
+						</div>
+								
+						<div id="filter_results" style="display:none;">
+								
+								<div class="form-group">
+									<label for="filter_language" class="col-sm-2 control-label">Language</label>
+									<div class="col-sm-10">
+										<select id="filter_language" class="selected_language form-control"></select>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label for="filter_question" class="col-sm-2 control-label">Filter by question: </label>
+									<div class="col-sm-10">
+										<select class="selected_question form-control" id="filter_question"></select>
+									</div>
+								</div>
 							
-							<div class="form-group">
-								<label for="project_select" class="col-sm-2 control-label">Existing Project</label>
-								<div class="col-sm-10">
-									<select id="project_select" class="project_list form-control"></select>
+								<div class="filter_option_only" style="display:none;">
+									<div class="form-group">
+										<label class="col-sm-2 control-label" for="filter_option">Selected option: </label>
+										<div class="col-sm-10">
+											<select class="form-control selected_option" id="filter_option"></select>
+										</div>
+									</div>
+								</div>
+								
+							<div class="filter_integer_only" style="display:none;">
+								<div class="form-group">
+									<label class="col-sm-2 control-label" for="filter_integer">Set numeric value: </label>
+									<div class="col-sm-10">
+										<input type="number" class="selected_integer form-control" id="filter_integer">
+									</div>
 								</div>
 							</div>
-						
-							<div class="form-group">
-								<label for="survey" class="col-sm-2 control-label">Existing Survey</label>
-								<div class="col-sm-10">
-									<select class="survey_select form-control" id="survey"></select><br/>
+							
+							<div class="filter_text_only" style="display:none;">
+								<div class="form-group">
+									<label class="col-sm-2 control-label" for="filter_text">Set text value: </label>
+									<div class="col-sm-10">
+										<input type="text" class="selected_text form-control" id="filter_text">
+									</div>
 								</div>
 							</div>
 							
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">Filter tasks
-								</label>
+							<div class="filter_date_only" style="display:none;">
+
+	            				<div class="form-group">
+	            					<label class="col-sm-2 control-label" for="startDate">From :</label>
+	            					<div class="col-sm-10">
+		                				<div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+		                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+		                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+		                				</div>
+		                			</div>
+	            				</div>
+	     
+	            				<div class="form-group">
+	            				    <label class="col-sm-2 control-label" for="endDate">To :</label>
+	            				    <div class="col-sm-10">
+		                				<div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+		                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+		                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+		                				</div>
+		                			</div>
+	            				</div>
+	            				<div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
 							</div>
-									
-							<div id="filter_results" style="display:none;">
-								<fieldset>
-								<legend>Filter</legend>
-								<label for="filter_language">Language</label>
-								<select id="filter_language" class="selected_language"></select>
-								<label for="filter_question">Filter by question: </label>
-								<select class="selected_question" id="filter_question"></select><br/>
-								<span class="filter_option_only">
-									<label for="filter_option">Selected option: </label>
-									<select class="selected_option" id="filter_option"></select><br/>
-								</span>
-								<span class="filter_integer_only" style="display:none;">
-									<label for="filter_integer">Set numeric value: </label>
-									<input type="number" class="selected_integer" id="filter_integer"><br/>
-								</span>
-								<span class="filter_text_only" style="display:none;">
-									<label for="filter_text">Set text value: </label>
-									<input type="text" class="selected_text" id="filter_text"><br/>
-								</span>
-								</fieldset>
-							</div>
-							<input id="update_results" type="checkbox" name="update_results" 
-								value="update_results"/>Update existing results:<br/> 
-							<div id="show_task_params">Address Parameters</div>
-							
-						<!--  
+						
 						</div>
-		
-						<div  id="task_source_new_hide" style="display: none;">
-							<p class="single">Click on the map at each location where you want to create a task.</p>
-							<label for="users_select_new_task">User: </label>
-							<select class="users_select" id="users_select_new_task"></select><br/>
-							<p>Task Count: <span id="new_task_count">0</span></p>
+						<div class="checkbox">
+							<label>
+								<input id="update_results" type="checkbox" name="update_results" value="update_results"/>Update existing results
+							</label>
 						</div>
-						-->
+						
+						<div id="show_task_params">Address Parameters</div>	
 						
 						<div class="form-group">
 							<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>

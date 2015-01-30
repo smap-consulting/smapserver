@@ -286,6 +286,10 @@ textarea {
 	display: inline-block;
 }
 
+.bootstrap-datetimepicker-widget {
+ z-index: 100000;
+ }
+ 
 @media print
 {
 	#monitor {
