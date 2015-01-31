@@ -306,3 +306,9 @@ textarea {
 @-moz-document url-prefix() {
   fieldset { display: table-cell; }
 }
+
+/* Fix for z-index of deop downs */
+.navbar {
+	z-index: 10000;
+	position: relative;
+}
