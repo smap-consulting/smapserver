@@ -513,8 +513,7 @@ public class AllAssignments extends Application {
 							if(hasGeom) {
 								System.out.println("Has geometry");
 								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom ";
-								getTaskSqlWhere = " from " + tableName + " where " + tableName + ".the_geom is not null " +
-										" and " + tableName + "._bad = 'false'";	
+								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 							} else {
 								System.out.println("No geom found");
@@ -544,6 +543,18 @@ public class AllAssignments extends Application {
 										" and " + tableName + "._bad = 'false'";
 								getTaskSqlEnd = "group by " + tableName + ".prikey ";
 							}
+							
+							// Finally if we still haven't found a geometry column then set all locations to 0, 0
+							if(!hasGeom) {
+								System.out.println("No geometry columns found");
+								
+								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom ";
+								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
+								getTaskSqlEnd = ";";
+								
+								System.out.println("where: " + getTaskSqlWhere);
+							}
+							
 										
 							if(as.address_columns != null) {
 								for(int i = 0; i < as.address_columns.size(); i++) {
@@ -553,7 +564,7 @@ public class AllAssignments extends Application {
 									}
 								}
 							}
-							if(hasGeom) {
+							//if(hasGeom) {
 								
 								/*
 								 * Get the source form ident
@@ -572,9 +583,9 @@ public class AllAssignments extends Application {
 								}
 								getTaskSql += getTaskSqlEnd;
 	
-								log.info("Get Task SQL:" + getTaskSql);
 								if(pstmt != null) {pstmt.close();};
-								pstmt = connectionRel.prepareStatement(getTaskSql);	 
+								pstmt = connectionRel.prepareStatement(getTaskSql);	
+								log.info("SQL Get Tasks: " + pstmt.toString());
 								resultSet = pstmt.executeQuery();
 								while (resultSet.next()) {
 					
@@ -593,12 +604,20 @@ public class AllAssignments extends Application {
 									
 									String location = null;
 									int recordId = resultSet.getInt(1);
+									System.out.println("Has geom: " +hasGeom);
 									if(hasGeom) {
 										location = resultSet.getString("the_geom");
 									} 
 									if(location == null) {
 										location = "POINT(0 0)";
-									}
+									} else if(location.startsWith("LINESTRING")) {
+										System.out.println("Starts with linestring: " + location.split(" ").length);
+										if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
+											location = location.replaceFirst("LINESTRING", "POINT");
+										}
+									}	 
+									
+									System.out.println("Location: " + location);
 									
 									String geoType = null;
 									if(pstmtInsert != null) {pstmtInsert.close();};
@@ -672,10 +691,10 @@ public class AllAssignments extends Application {
 										}
 									}
 								}
-							} else {
-								System.out.println("No geometry columns in any of the survey tables");
-								throw new Exception("\"the_geom\" does not exist");
-							}
+							//} else {
+							//	System.out.println("No geometry columns in any of the survey tables");
+							//	throw new Exception("\"the_geom\" does not exist");
+							//}
 							break;
 						} else {
 							System.out.println("parent is:" + p_id + ":");
