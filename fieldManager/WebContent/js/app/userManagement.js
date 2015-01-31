@@ -16,7 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','jquery_ui', 'localise', 'common', 'globals'], function($, ui, lang, common, globals) {
+define(['jquery','localise', 'common', 'globals', 'bootbox'], function($, lang, common, globals, bootbox) {
 	
 var gUsers,
 	gGroups,
@@ -65,7 +65,7 @@ $(document).ready(function() {
 	$('#delete_organisation').click(function () {
 		deleteOrganisations();
 	});
-	$('.move_to_organisation').click(function () {
+	$('.move_to_org').click(function () {
 		$('#move_to_organisation_popup').modal("show");
 	});
 	
@@ -181,6 +181,12 @@ $(document).ready(function() {
  		
     });
   
+	/* 
+	 * Set focus to first element on opening modals
+	 */
+	$('.modal').on('shown.bs.modal', function() {
+		$(this).find('input[type=text],textarea,select').filter(':visible:first').focus();
+	});
     
 	 // Initialse the create user dialog
     /*
@@ -290,7 +296,56 @@ $(document).ready(function() {
 	 );
 	 
 	 */
+    
+    $('#projectSave').click(function(){
+		var projectList = [],
+			project = {},
+			error = false;
+	
+		if(gCurrentProjectIndex === -1) {
+			project.id = -1;
+		} else {
+			project.id = globals.gProjectList[gCurrentProjectIndex].id;
+		}
+	
+		project.name = $('#p_name').val();
+	  		
+		projectList[0] = project;
+		var projectString = JSON.stringify(projectList);
+	
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  async: false,
+			  url: "/surveyKPI/projectList",
+			  data: { projects: projectString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  getUsers();
+				  getProjects();
+				  $('#create_project_popup').modal("hide");
+			  },
+			  error: function(xhr, textStatus, err) {
+				  removeHourglass();
+	
+				  if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+				  } else {
+					  var msg = err;
+					  if(err.indexOf("Conflict") >= 0) {
+						  msg = "Duplicate project name";
+					  }
+					  alert("Error: Failed to save project details: " + msg);
+				  }
+			  }
+		});   		
+
+    });
+    
 	 // Initialse the create project dialog
+    /*
 	 $('#create_project_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -361,7 +416,98 @@ $(document).ready(function() {
 			]
 		}
 	 );
-	 
+	 */
+    
+    /*
+     * Save the organisation details
+     */
+    $('#organisationSave').click(function() {
+    	var organisationList = [],
+			organisation = {},
+			error = false,
+			options=[],
+			i,
+			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm;
+	
+		if(gCurrentOrganisationIndex === -1) {
+			organisation.id = -1;
+		} else {
+			organisation.id = gOrganisationList[gCurrentOrganisationIndex].id;
+		}
+	
+		organisation.name = $('#o_name').val();
+		organisation.admin_email = $('#o_admin_email').val();
+		organisation.smtp_host = $('#o_smtp_host').val();
+	
+		// Validate
+		if(organisation.name.length === 0) {
+			alert("Name must be specified");
+			$('#o_name').focus();
+			return false;
+		}
+		if(organisation.admin_email.length > 0) {
+    		if(!validEmail.test(organisation.admin_email)) {
+				error = true;
+				alert("Email is not valid");
+				$('#o_admin_email').focus();
+				return false;
+			}
+		}
+		
+		options = $(".puboption:checked").map(function(){
+	        	return $(this).val();
+	    	}).toArray();
+		
+		console.log("options");
+		console.log(options);
+		for(i = 0; i < options.length; i++) {
+			if(options[i] === "email") {
+				organisation.allow_email = true;
+			} else if(options[i] === "facebook") {
+				organisation.allow_facebook = true;
+			} else if(options[i] === "twitter") {
+				organisation.allow_twitter = true;
+			} else if(options[i] === "can_edit") {
+				organisation.can_edit = true;
+			} else if(options[i] === "ft_delete_submitted") {
+				organisation.ft_delete_submitted = true;
+			} else if(options[i] === "ft_send_trail") {
+				organisation.ft_send_trail = true;
+			}
+		}
+		organisationList[0] = organisation;	
+		var organisationString = JSON.stringify(organisationList);
+
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  async: false,
+			  url: "/surveyKPI/organisationList",
+			  data: { organisations: organisationString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  getOrganisations();
+				  $('#create_organisation_popup').modal("hide");
+			  }, error: function(xhr, textStatus, err) {	
+				  removeHourglass();
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						var msg = err;
+    					if(err.indexOf("Conflict") >= 0) {
+    						msg = "Duplicate organisation name";
+    					}
+						alert("Error organisation details not saved: " + msg);
+					}
+			  }
+		});
+	
+    });
+    
+    /*
 	 // Initialse the create organisation dialog
 	 $('#create_organisation_popup').dialog(
 		{
@@ -470,8 +616,70 @@ $(document).ready(function() {
 			]
 		}
 	 );
+	 */
+	 $('#organisationMove').click(function(){
+		 var users = [],
+			projects =[],
+			decision = false,
+			h = [],
+			i = -1,
+			idx,
+			orgId,
+			orgName,
+			hasUsers = false,
+			hasProjects = false,
+			keepProjects = false;
+ 	
+		 h[++i] = "Are you sure you want to move these ";
+		 $('#user_table').find('input:checked').each(function(index) {
+			 if(!hasUsers) {
+				 h[++i] = "users ("; 
+				 hasUsers = true;
+			 } else {
+				 h[++i] = ",";
+			 }
+			 idx = $(this).val();
+			 users[index] = {id: gUsers[idx].id};
+			 h[++i] = gUsers[idx].name;
+		 });
+ 	
+		 $('#project_table').find('input:checked').each(function(index) {
+			 if(hasUsers && !hasProjects) {
+				 h[++i] = ") and these projects (";
+				 hasProjects = true;
+			 } else if(!hasProjects){
+				 h[++i] = "projects (";
+				 hasProjects = true;
+			 } else {
+				 h[++i] = ",";
+			 }
+			 idx = $(this).val();
+			 projects[index] = {id: globals.gProjectList[idx].id};
+ 		
+			 h[++i] = globals.gProjectList[idx].name;
+		 });
+ 	
+		 orgId = $('#target_organisation').val();
+		 orgName = $('#target_organisation :selected').text();
+ 	
+		 h[++i] = ") to " + orgName + "?";
+		 bootbox.confirm(h.join(''), function(result){
+			 if(result) {
+				 for(i = 0; i < users.length; i++) {
+					 if(users[i].id === globals.gLoggedInUser.id) {
+						 users[i].keepProjects = true;
+			 		 } else {
+			 			 users[i].keepProjects = false;
+			 		 }			
+			 	 }
+			 	 moveToOrganisations(orgId, users, projects);	
+			 }
+		 });
+
+	 });
 	 
 	 // Initialse the move organisation dialog
+	 /*
 	 $('#move_to_organisation_popup').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -553,7 +761,7 @@ $(document).ready(function() {
 			]
 		}
 	 );
-	 
+	 */
 	 // Initialise the reset password checkbox
 	 $('#reset_password').click(function () {
 		 if($(this).is(':checked')) {
@@ -563,7 +771,7 @@ $(document).ready(function() {
 		 }
 	 });
 
-	enableUserProfile();	// Allow user to reset their own profile
+	enableUserProfileBS();	// Allow user to reset their own profile
 	
 });
 
@@ -599,6 +807,8 @@ function getProjects() {
  */
 function getOrganisations() {
 
+	// Show the current organisation
+	$('#org_alert').text("Organisation: " + globals.gLoggedInUser.organisation_name);
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/organisationList",
@@ -739,7 +949,7 @@ function openProjectDialog(existing, projectIndex) {
 	if(existing) {
 		$('#p_name').val(globals.gProjectList[projectIndex].name);
 	}
-	$('#create_project_popup').dialog("open");
+	$('#create_project_popup').modal("show");
 }
 
 /*
@@ -773,7 +983,7 @@ function openOrganisationDialog(existing, organisationIndex) {
 		});
 
 	}
-	$('#create_organisation_popup').dialog("open");
+	$('#create_organisation_popup').modal("show");
 }
 
 /*

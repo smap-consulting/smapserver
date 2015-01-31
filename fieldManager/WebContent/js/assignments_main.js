@@ -34,14 +34,7 @@ requirejs.config({
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
-    	jquery: [
-    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-    	       '../../../../js/libs/jquery-1.8.3.min'
-    	       ],
-    	jquery_ui: [
-    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-    	            ],
+    	jquery: '../../../../js/libs/jquery-1.8.3.min',
     	modernizr: '../../../../js/libs/modernizr',
     	moment: '../../../../js/libs/moment.min',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
@@ -60,7 +53,7 @@ requirejs.config({
     	'bootstrap': ['jquery'],
     	'bootbox': ['bootstrap'],
     	'jquery-barcode': ['jquery'],
-    	'app/map-ol-mgmt': ['jquery_ui', 'openlayers'],
+    	'app/map-ol-mgmt': ['jquery', 'openlayers'],
     	'app/plugins': ['jquery'],
     	'crf': ['jquery']
 	

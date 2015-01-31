@@ -6,12 +6,6 @@
 
 <title>Tasks</title>
 
-<!--
-<link rel=StyleSheet href="/css/smap.css" type="text/css">
-<link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" />
-<link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/>
--->
-
 <link rel="stylesheet" href="/css/normalize.css" />
 <link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
 <link rel="stylesheet" href="/css/bootstrap.min.css" /> 
@@ -273,6 +267,21 @@
 							</div>
 							
 							<div id="show_task_params">Address Parameters</div>	
+							<div class="panel-group" role="tablist" aria-multiselectable="true">
+  								<div class="panel panel-default">
+    								<div class="panel-heading" role="tab" id="headingTaskParams">
+										<h4 class="panel-title">
+						       				<a data-toggle="collapse" data-parent="#show_task_params" href="#collapseTaskParams" aria-expanded="true" aria-controls="collapseLayers">
+						         				Address Parameters
+						       				</a>
+					     				</h4>
+    								</div>
+			    					<div id="collapseTaskParams" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+										<div id="task_params_table"></div>
+									</div>
+								</div>
+							</div>
+											
 							
 							<div class="form-group">
 								<label for="survey_to_complete" class="col-sm-2 control-label">New Survey</label>
@@ -340,11 +349,23 @@
 </div>
 
 
-<!-- Popup to allow the user to manage the task parameters -->
-<div id="task_params" style="display:none;">
-
-	<div id="task_params_table"></div>
-
+<!-- Modal to allow the user to manage the task parameters -->
+<div id="task_params" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+		    <div class="modal-body">
+				<div id="task_params_table"></div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="taskParamsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div> 
+        </div>
+	</div>
 </div>
 
 

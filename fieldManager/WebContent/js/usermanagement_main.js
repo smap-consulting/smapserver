@@ -34,41 +34,30 @@ requirejs.config({
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
-    	jquery: [
-    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-    	       '../../../../js/libs/jquery-1.8.3.min'
-    	       ],
-    	jquery_ui: [
-    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-    	            ],
-    	modernizr: '../../../../js/libs/modernizr',
+    	jquery: '../../../../js/libs/jquery-1.8.3.min',
     	bootstrap: '../../../../js/libs/bootstrap.min',
+    	bootbox: '../../../../js/libs/bootbox.min',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
-    	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
     	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
        	'bootstrap': ['jquery'],
-    	'jquery_ui': ['jquery'],
-    	'common': ['jquery'],
-    	'tablesorter': ['jquery']
+    	'bootbox': ['bootstrap'],
+    	'common': ['jquery']
     	}
     });
 
 require([
          'jquery', 
-         'jquery_ui',
-         'modernizr', 
          'bootstrap', 
          'common', 
          'localise', 
          'globals',
-         'app/userManagement', 
-         'tablesorter'
+         'bootbox',
+         'app/userManagement'
          
-         ], function($, jquery_ui, modernizr, bootstrap, common, localise, globals) {});
+         ], function($, bootstrap, common, localise, globals) {});
 

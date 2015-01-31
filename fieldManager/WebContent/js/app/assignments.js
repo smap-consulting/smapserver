@@ -157,19 +157,9 @@ $(document).ready(function() {
 			registerForNewTasks();
 		}
 		
-		// open the dialog
+		// open the modal
 		$('#addTask').modal("show");
 
-	});
-	
-	// Set focus when opening addTask modal
-	$('#addTask').on('shown.bs.modal', function() {
-		$('#task_group_name').focus();
-	});
-	
-	// Set focus when opening addNewTask modal
-	$('#addNewTask').on('shown.bs.modal', function() {
-		$('#users_select_new_task').focus();
 	});
 	
 	/*
@@ -184,6 +174,8 @@ $(document).ready(function() {
 			filteroId,
 			source_survey;
 	
+		updateTaskParams();
+		
 		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
 		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
 		
@@ -301,101 +293,26 @@ $(document).ready(function() {
 	
 	
 	
-	// Delete Tasks button and dialog
+	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
-		//globals.gDeleteSelected = true;
-		//$('#assignments_delete').dialog("open");
 		bootbox.confirm('Are you sure you want to delete these tasks?', function(result){
 			if(result) {
-				//updatePendingAssignments("deleted", undefined);
 				deleteData(globals.gPendingUpdates); 
 			}
 		});
 	});
 	
-	/*
-	$('#assignments_delete').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:false,
-			position: { my: "left top", at: "left top", of:'#aside'},
-			title: "Delete Tasks",
-			show:"drop",
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		//globals.gDeleteSelected = false;
-		        		refreshAssignmentData(gUserFilter);
-		        		$(this).dialog("close");
-		        	}
-		        },
-		        {
-		        	text: "Save",
-		        	click: function() {
-		        		if(confirm("Are you sure you want to delete these tasks")) {		        		
-		        			//globals.gDeleteSelected = false;
-		        			deleteData(globals.gPendingUpdates);       		
-		        			$(this).dialog("close");
-		        		}
-			        	
-		        	}
-		        }
-			]
-		}
-	);
-	
-	$('#deleteAllTasks').button().click(function () {
-		
-		if(typeof globals.gAssignmentsLayer != "undefined") {
-			features = globals.gAssignmentsLayer.features;
-			for(i = 0; i < features.length; i++) {
-				if(features[i].attributes.assignment_status !== "cancelled"
-						&& features[i].attributes.assignment_status !== "submitted"
-						&& features[i].attributes.assignment_status !== "submitted") {
-					deleteFeature(features[i]);
-				}
-			}
-		}
-		globals.gAssignmentsLayer.redraw();
-
-	});
-	*/
-	
-	// Clear cancelled tasks buton
-	/*
-	$('#clearCancelledTasks').button().click(function () {
-		
-		if(confirm("Are you sure you want to clear all cancelled tasks.  A user that has " +
-				"downloaded these tasks to their phones may not be notified that the task has " +
-				"been cancelled..")) {	
-			addHourglass();
-			$.ajax({
-				  type: "DELETE",
-				  contentType: "application/json",
-				  dataType: "json",
-				  url: "/surveyKPI/assignments/cancelled/" + globals.gCurrentProject, 
-				  success: function(data, status) {
-					  refreshAssignmentData(gUserFilter);
-					  removeHourglass();
-				  }, error: function(data, status) {
-					  console.log(data);
-					  removeHourglass();
-					  alert("Error: Failed to clear cancelled tasks"); 
-				  }
-			});
-		}
-
-	});
-	*/
-	
-	// Create trigger to open dialog to edit task parameters
-
+	// Create trigger to open modal to edit task parameters
 	$('#show_task_params').button().click(function () {
 		gTaskGroupIndex = -1;
-		$('#task_params').dialog("open");
+		$('#task_params').modal("show");
 	});
 
+	$('#taskParamsSave').click(function(){
+		updateTaskParams();
+	});
 	
+	/*
 	$('#task_params').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -419,11 +336,13 @@ $(document).ready(function() {
 			]
 		}
 	);
+	*/
 	
-	enableUserProfile();										// Enable user profile button	
-	$('.rmm').delegate('#refreshMenu', 'click', function(e) {	// Add refresh action
+	enableUserProfileBS();										// Enable user profile button	
+	$('#refreshMenu').click(function(e) {	// Add refresh action
 		refreshAssignmentData(gUserFilter);
-	}); 	
+	}); 
+	
 	$('#tasks_print').button();									// Add button styling
 	
 	// Set up the start and end dates with date picker
@@ -448,6 +367,13 @@ $(document).ready(function() {
 		}
  	 });
 	
+	/* 
+	 * Set focus to first element on opening modals
+	 */
+	$('.modal').on('shown.bs.modal', function() {
+		var $selections = $(this).find('input[type=text],textarea,select').filter(':visible:first');
+		$selections.focus();
+	});
 });
 
 /*
@@ -644,10 +570,12 @@ function setAddressOptions() {
 			removeHourglass();
 		},
 		error: function(data) {
-			$('#status_msg_msg').empty().text("Error failed to get data for survey:" + sId);
-			$("#status_msg").dialog("open");
-			//refreshSurveyData(panelView, undefined, dataView);
 			removeHourglass();
+			//$('#status_msg_msg').empty().text("Error failed to get data for survey:" + sId);
+			//$("#status_msg").dialog("open");
+			bootbox.alert("Error failed to get data for survey:" + sId);
+			//refreshSurveyData(panelView, undefined, dataView);
+
 		}
 	});
  	
@@ -820,8 +748,6 @@ function refreshTableAssignments(tasks) {
 			$bcElement.barcode($bcElement.text(), "code11");
 		});
 		
-		// Create trigger to open dialog to edit task parameters
-		
 		gTasks = tasks;
 		
 		// Add function to add tasks to group
@@ -852,9 +778,6 @@ function refreshTableAssignments(tasks) {
 			
 			// Reset any pending tasks
 			$('#new_task_count').html(0);
-			
-			// open the dialog
-			//bootbox.alert("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
 			$('#map_alert').show().text("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
 			window.scrollTo(500, 0);
 		});
@@ -893,10 +816,8 @@ function refreshTableAssignments(tasks) {
 				$('#ts_alert').show().text("Adding task without location");
 			}
 
-			gTaskGroupId = $this.val();
-	
-			// open the dialog
-			$('#addNewTask').modal("show");
+			gTaskGroupId = $this.val();		
+			$('#addNewTask').modal("show");  // open the modal
 		});
 		
 		/*
@@ -949,7 +870,7 @@ function refreshTableAssignments(tasks) {
 
 
 /*
- * Show the task parameters in the dialog
+ * Show the task parameters in the modal
  */
 function displayTaskParams() {
 
@@ -1001,7 +922,7 @@ function displayTaskParams() {
 }
 
 /*
- * Get the updated parameters from the dialog and save back into the global parameters object
+ * Get the updated parameters from the modal and save back into the global parameters object
  */
 function updateTaskParams() {
 	
