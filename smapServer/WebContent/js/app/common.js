@@ -37,24 +37,24 @@ function addPendingTask(taskId, assignmentId, status, source) {
 	globals.gPendingUpdates.push(assignment);
 	
 	if(source === "table") {
-		updateMapTaskSelections(assignmentId, true);
+		updateMapTaskSelections(taskId, true);
 	} else if(source === "map") {
-		$('#tasks_table').find('[data-assid=' + assignmentId + ']').prop("checked", true).closest('tr').addClass("info");
+		$('#tasks_table').find('[data-taskid=' + taskId + ']').prop("checked", true).closest('tr').addClass("info");
 	}
 }
 
-function removePendingTask(assignmentId, source) {
+function removePendingTask(taskId, source) {
 	var i;
 	for (i = 0; i < globals.gPendingUpdates.length; i++) {
-		if(globals.gPendingUpdates[i].assignment_id === assignmentId) {
+		if(globals.gPendingUpdates[i].task_id === taskId) {
 			globals.gPendingUpdates.splice(i,1);
 			break;
 		}
 	}
 	if(source === "table") {
-		updateMapTaskSelections(assignmentId, false);
+		updateMapTaskSelections(taskId, false);
 	} else if(source === "map") {
-		$('#tasks_table').find('[data-assid=' + assignmentId + ']').prop("checked", false).closest('tr').removeClass("info");
+		$('#tasks_table').find('[data-taskid=' + tasktId + ']').prop("checked", false).closest('tr').removeClass("info");
 	}
 }
 

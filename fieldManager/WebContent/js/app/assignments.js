@@ -738,7 +738,7 @@ function refreshTableAssignments(tasks) {
 				addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
 			} else {
 				$this.closest('tr').removeClass("info");
-				removePendingTask($this.data("assid"), "table");
+				removePendingTask($this.data("taskid"), "table");
 			}
 		});
 		

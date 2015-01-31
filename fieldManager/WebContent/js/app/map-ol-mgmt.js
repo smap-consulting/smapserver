@@ -449,7 +449,7 @@ function onFeatureSelectOL(feature) {
 	
 	onFeatureUnselect();
 	if(feature.attributes.isSelected === 6) {
-		removePendingTask(feature.attributes.assignment_id, "map");
+		removePendingTask(feature.attributes.task_id, "map");
 		feature.attributes.isSelected = 0;
 	} else {
 		addPendingTask(feature.attributes.task_id, feature.attributes.assignment_id, feature.attributes.assignment_status, "map");
@@ -618,8 +618,8 @@ function loadAssignments(data) {
 	
 }
 
-function updateMapTaskSelections(assignment_id, selected) {
-	var feats = globals.gAssignmentsLayer.getFeaturesByAttribute("assignment_id", assignment_id);
+function updateMapTaskSelections(task_id, selected) {
+	var feats = globals.gAssignmentsLayer.getFeaturesByAttribute("task_id", task_id);
 	var selF = feats[0];
 	if(selF) {
 		selected == true ? selF.attributes.isSelected = 6 : selF.attributes.isSelected = 0;
