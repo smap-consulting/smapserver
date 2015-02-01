@@ -85,11 +85,12 @@ $(document).ready(function() {
 });	
 
 function setTargetDependencies(target) {
-	$('#forward_options, email_options').hide();
-	if(target === "email") {
+	if(target === "email") { 
 		$('#email_options').show();
+		$('#forward_options').hide();
 	} else if(target === "forward") {
 		$('#forward_options').show();
+		$('#email_options').hide();
 	}		
 }
 
