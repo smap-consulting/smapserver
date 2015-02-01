@@ -299,32 +299,63 @@ public class UtilityMethods {
 	 */
 	static public String getSmtpHost(
 			Connection sd, 
+			String email,
 			String user) throws SQLException {
 		
 		String smtpHost = null;
 		
-		String sql = "select o.smtp_host " +
+		String sqlIdent = "select o.smtp_host " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
 		
+		String sqlEmail = "select o.smtp_host " +
+				" from organisation o, users u " +
+				" where u.o_id = o.id " +
+				" and u.ident = ?;";
+		
+		String sqlServer = "select smtp_host " +
+				" from server ";
+		
 		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		
 		try {
 
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setString(1, user);
-			System.out.println("SQL:" + pstmt.toString());
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				String host = rs.getString(1);
-				if(host != null) {
-					host = host.trim();
-					if(host.length() > 0) {
-						smtpHost = host;
-					}
+			if(user != null) {
+				pstmt = sd.prepareStatement(sqlIdent);
+				pstmt.setString(1, user);
+				System.out.println("SQL:" + pstmt.toString());
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					String host = rs.getString(1);
+					if(host != null) {
+						host = host.trim();
+						if(host.length() > 0) {
+							smtpHost = host;
+						}
+					}		
 				}
-				
+			} else if(email != null) {
+				/*
+				 * This will be for a forgotton password
+				 * Use the email server for the matching email
+				 */
+				pstmt = sd.prepareStatement(sqlEmail);
+				pstmt.setString(1, email);
+				System.out.println("SQL:" + pstmt.toString());
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					String host = rs.getString(1);
+					if(host != null) {
+						host = host.trim();
+						if(host.length() > 0) {
+							smtpHost = host;
+						}
+					}		
+				}
+			} else {
+			
 			}
 			System.out.println("Using organisation email: " + smtpHost);
 		
@@ -332,10 +363,9 @@ public class UtilityMethods {
 			 * If the smtp_host was not set at the organisation level try the server level defaults
 			 */
 			if(smtpHost == null) {
-				sql = "select smtp_host " +
-						" from server ";
+
 				try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-				pstmt = sd.prepareStatement(sql);
+				pstmt = sd.prepareStatement(sqlServer);
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
@@ -343,7 +373,9 @@ public class UtilityMethods {
 						smtpHost = rs.getString(1);
 					}
 				}
+				System.out.println("Using server email: " + smtpHost);
 			}
+			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;

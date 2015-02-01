@@ -442,7 +442,7 @@ public class UserList extends Application {
 						if(u.sendEmail) {
 							System.out.println("Check if email enabled: " + u.sendEmail);
 							String smtp_host = null;
-							if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, request.getRemoteUser())) != null) {
+							if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, null, request.getRemoteUser())) != null) {
 								System.out.println("Send email");
 								String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
 								String interval = "48 hours";
