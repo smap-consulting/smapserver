@@ -58,17 +58,18 @@ public class NotificationManager {
 				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user, " +
 				"f.target, s.display_name, f.notify_details, " +
 				"f.remote_password " +
-				" from forward f " +
-				" where f.enabled = 'true' ";
+				" from forward f, survey s " +
+				" where f.s_id = s.s_id " +
+				" and f.enabled = 'true' ";
 		
 		if(forward_only) {
-			sql += " and f.target = 'forward'";
+			sql += " and f.target = 'forward' and f.remote_host is not null";
 		} else {
 			sql += " and f.target != 'forward'";
 		}
 		
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		pstmt = sd.prepareStatement(sql);	 			
+		pstmt = sd.prepareStatement(sql);	
 
 		resultSet = pstmt.executeQuery();
 		addToList(resultSet, forwards, true);
@@ -358,7 +359,7 @@ public class NotificationManager {
 				String notify_details = null;			// Notification log
 				String error_details = null;			// Notification log
 				if(target.equals("email")) {
-					String smtp_host = UtilityMethods.getSmtpHost(sd, remoteUser);
+					String smtp_host = UtilityMethods.getSmtpHost(sd, null, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						String emails = "";
 						for(String email : nd.emails) {

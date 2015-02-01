@@ -394,7 +394,7 @@ function getRemoteSurveys() {
 		  contentType: "application/json",
 		  dataType: "json",
 		  async: true,
-		  url: "/surveyKPI/forwards/getRemoteSurveys",
+		  url: "/surveyKPI/notifications/getRemoteSurveys",
 		  data: { remote: remoteString },
 		  success: function(data, status) {
 			  removeHourglass();
