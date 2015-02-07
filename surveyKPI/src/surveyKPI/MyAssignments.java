@@ -35,7 +35,6 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.sun.tools.javac.util.Log;
 
 import taskModel.Assignment;
 import taskModel.FieldTaskSettings;

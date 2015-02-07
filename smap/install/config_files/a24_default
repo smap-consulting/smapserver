@@ -1,4 +1,7 @@
 
+FileETag None
+ExpiresActive On   
+     	
 <VirtualHost *:80>
 	ServerAdmin webmaster@localhost
 	DocumentRoot /var/www/smap
@@ -43,7 +46,7 @@
 
     <Directory /var/www/smap>
     	Options FollowSymLinks
-        ExpiresDefault A300
+        ExpiresDefault A30000
         AllowOverride None
         Require all granted
     </Directory>

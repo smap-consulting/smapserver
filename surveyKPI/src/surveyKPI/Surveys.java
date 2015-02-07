@@ -154,6 +154,7 @@ public class Surveys extends Application {
 	
 	/*
 	 * Get details on a survey
+	 * Used to get the data in order to edit the survey
 	 */
 	@GET
 	@Path("/{sId}")
@@ -322,16 +323,15 @@ public class Surveys extends Application {
 		org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 		
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtSSC = null;
-		PreparedStatement pstmtDelSSC = null;
-		PreparedStatement pstmtM1 = null;
-		PreparedStatement pstmtM2 = null;
-		PreparedStatement pstmtM3 = null;
-		PreparedStatement pstmtM4 = null;
-		PreparedStatement pstmtM5 = null;
+		//PreparedStatement pstmtSSC = null;
+		//PreparedStatement pstmtDelSSC = null;
+		//PreparedStatement pstmtM1 = null;
+		//PreparedStatement pstmtM2 = null;
+		//PreparedStatement pstmtM3 = null;
+		//PreparedStatement pstmtM4 = null;
+		//PreparedStatement pstmtM5 = null;
 		//PreparedStatement pstmtM6 = null;
 		try {
-			connectionSD.setAutoCommit(false);
 		
 			String sql = "update survey set display_name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
 		
@@ -350,32 +350,32 @@ public class Surveys extends Application {
 			}
 			
 			// Delete the old server side calculates
-			sql = "delete from ssc where s_id = ?;";
-			pstmtDelSSC = connectionSD.prepareStatement(sql);
-			pstmtDelSSC.setInt(1, sId);
-			pstmtDelSSC.executeUpdate();
+			//sql = "delete from ssc where s_id = ?;";
+			//pstmtDelSSC = connectionSD.prepareStatement(sql);
+			//pstmtDelSSC.setInt(1, sId);
+			//pstmtDelSSC.executeUpdate();
 			
 			// Save the server side calculations
-			sql = "insert into ssc (s_id, f_id, name, function, units) values " +
-					" (?, ?, ?, ?, ?); ";
-			pstmtSSC = connectionSD.prepareStatement(sql);
-			for(int i = 0; i < survey.sscList.size(); i++) {
+			//sql = "insert into ssc (s_id, f_id, name, function, units) values " +
+			//		" (?, ?, ?, ?, ?); ";
+			//pstmtSSC = connectionSD.prepareStatement(sql);
+			//for(int i = 0; i < survey.sscList.size(); i++) {
 				
-				ServerSideCalculate ssc = survey.sscList.get(i);
-				pstmtSSC.setInt(1, sId);
-				pstmtSSC.setInt(2, ssc.getFormId());
-				pstmtSSC.setString(3, ssc.getName());
-				pstmtSSC.setString(4, ssc.getFunction());
-				pstmtSSC.setString(5, ssc.getUnits());
-				pstmtSSC.executeUpdate();
+			//	ServerSideCalculate ssc = survey.sscList.get(i);
+			//	pstmtSSC.setInt(1, sId);
+			//	pstmtSSC.setInt(2, ssc.getFormId());
+			//	pstmtSSC.setString(3, ssc.getName());
+			//	pstmtSSC.setString(4, ssc.getFunction());
+			//	pstmtSSC.setString(5, ssc.getUnits());
+			//	pstmtSSC.executeUpdate();
 				
-				System.out.println("Inserting: " + ssc.getName());
-			}
+			//	System.out.println("Inserting: " + ssc.getName());
+			//}
 			
 			/*
 			 * Save the manifest entries
 			 * Deprecated - now moved to media management page
-			 */
+			 *
 			System.out.println("Saving manifest entries: " + survey.surveyManifest.size());
 		    
 		    // 1) Get the languages
@@ -407,25 +407,21 @@ public class Surveys extends Application {
 		    }
 		    */
 
-			
-			
-			connectionSD.commit();
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
-			try{connectionSD.rollback();}catch(Exception ex){};
 			log.log(Level.SEVERE,"No data available", e);
-		    response = Response.serverError().entity("No data available").build();
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
-			if (pstmtDelSSC != null) try {pstmtDelSSC.close();} catch (SQLException e) {}
-			if (pstmtSSC != null) try {pstmtSSC.close();} catch (SQLException e) {}
-			if (pstmtM1 != null) try {pstmtM1.close();} catch (SQLException e) {}
-			if (pstmtM2 != null) try {pstmtM2.close();} catch (SQLException e) {}
-			if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
-			if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
-			if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
+			//if (pstmtDelSSC != null) try {pstmtDelSSC.close();} catch (SQLException e) {}
+			//if (pstmtSSC != null) try {pstmtSSC.close();} catch (SQLException e) {}
+			//if (pstmtM1 != null) try {pstmtM1.close();} catch (SQLException e) {}
+			//if (pstmtM2 != null) try {pstmtM2.close();} catch (SQLException e) {}
+			//if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
+			//if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
+			//if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
 			//if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
 			
 			try {

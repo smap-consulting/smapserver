@@ -62,60 +62,10 @@ $(document).ready(function() {
 	
 
 	// Add menu functions
-	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
-		$('#smap').foundation('reveal', 'open');
-	});
-
-	// Add menu functions
-	$('#m_simple_edit').off().click(function() {	// Edit a survey
-		gMode = "simple_edit";
-		refreshView(gMode);
-	});
-	$('#m_translate').off().click(function() {	// Translate languages
-		gMode = "translate";
-		refreshView(gMode);
-	});
-	$('#m_settings').off().click(function() {	// Get a survey from Smap
-		gMode = "settings";
-		refreshView(gMode);
-	});
-	$('#m_changes').off().click(function() {	// View the changes to this survey
-		gMode = "changes";
-		refreshView(gMode);
-	});
-	$('#m_undo').off().click(function() {	// Undo last change
-		globals.model.undo();
-		refreshView(gMode);
-	});
-	$('#m_redo').off().click(function() {	// Redo last change
-		globals.model.redo();
-		refreshView(gMode);
-	});
-	$('#ssscSave').off().click(function() {	// Save settings to Smap
-		globals.model.save_settings();
+	$('#m_open').off().click(function() {	// Open an existing form
+		$('#openFormModal').modal('show');
 	});
 	
-	// Add responses to events
-	$('#project_name').change(function() {
-		globals.gCurrentProject = $('#project_name option:selected').val();
-		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
-		getSurveyList();
- 	 });
-	
-	$('#get_survey').off().click(function() {
-		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurvey();
-		$('#smap').foundation('reveal', 'close');
- 	 });
-	
-	$('.language_list').off().change(function() {
-		gLanguage1 = $('#language1').val();
-		gLanguage2 = $('#language2').val();
-		refreshView(gMode);
-		//$('#set_language').foundation('reveal', 'close');
- 	 });
 	
 	// Check for changes in settings
 	$('#set_survey_name').keyup(function(){
@@ -129,6 +79,15 @@ $(document).ready(function() {
 		globals.model.settingsChange();
 	});
 
+    /*
+     * Open a new form
+     */
+	$('#get_form').off().click(function() {
+		globals.gCurrentSurvey = $('#form_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
+		getSurveyDetails(surveyDetailsDone);
+ 	 });
+	
 	// Check for selection of the label indicating successful updates and the one indicating failed
 	$('#successLabel').off().click(function() {
 		alert("success");
@@ -138,17 +97,57 @@ $(document).ready(function() {
 		alert("failed");
 	});
 	
+	/*
+	 * Respond to save button being clicked
+	 */
+	$('#sscSave').off().click(function(){
+		
+		var fn = $('#ssc_function').val(),
+			name = $('#ssc_name').val(),
+			formId = $('#ssc_form option:selected').val(),
+			form = $('#ssc_form option:selected').text();
+		
+		if(fn === "") {
+			$('#ssc_alert').show().text("You must select a function");
+			setTimeout(function() {
+				$('#ssc_function').focus();
+				}, 0);		
+			return false;
+		}
+		if(name === "") {
+			alert("You must specify a name");
+			return false;
+		}
+		if(typeof form === "undefined" || form === "") {
+			alert("You must specify a form");
+			return false;
+		}
+		for(i = 0; i < globals.model.survey.sscList.length; i++) {
+			if(globals.model.survey.sscList[i].name === name) {
+				alert("There is an existing calculation with that name");
+				return false;
+			}
+		}
+		
+		saveSSC();
+		
+		// Add the new ssc to the list
+		/*
+		var newSSC = {
+				name: name,
+				fn: fn,
+				units: $('#ssc_units').val(),
+				form: form,
+				formId: formId
+		}
+		globals.model.survey.sscList.push(newSSC);
+		setHtml('#sscList', globals.model.survey.sscList);
+		globals.model.settingsChange();
+		*/
+		$('#ssc_alert').hide();
 	
+	});
 });
-
-function getSurveyList() {
-	console.log("getSurveyList: " + globals.gCurrentSurvey);
-	if(globals.gCurrentSurvey > 0) {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
-	} else {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
-	}
-}
 
 function getSurveyList() {
 	console.log("getSurveyList: " + globals.gCurrentSurvey);
@@ -159,13 +158,76 @@ function getSurveyList() {
 	}
 }
 
+/*
+ * Save the SSC
+ */
+function saveSSC() {
+	
+	var name = $('#ssc_name').val(),
+		form = $('#ssc_form option:selected').val(),
+		fn = $('#ssc_function').val(),
+		units = $('#ssc_units').val();
+	
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  contentType: "application/json",
+		  dataType: "json",
+		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + fn + "/add",
+		  data: { 
+			  form: form,
+			  name: name,
+			  units: units
+			  },
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#add_ssc_modal').modal("hide");
+			  getSurveyDetails(surveyDetailsDone);
+		  }, error: function(xhr, textStatus, err) {
+			  removeHourglass();
+			  console.log(xhr);
+			  alert("Failed to add server side calculation: " + xhr.responseText); 
+		  }
+	});
+}
+
+/*
+ * Function delete an ssc entry
+ */
+function deleteSSC(idx) {
+	
+	var ssc = globals.model.survey.sscList[idx];
+	
+	addHourglass();
+	$.ajax({
+		  type: "DELETE",
+		  contentType: "application/json",
+		  dataType: "json",
+		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + ssc.fn + "/delete/" + ssc.id,
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#add_ssc_modal').modal("hide");
+			  getSurveyDetails(surveyDetailsDone);
+		  }, error: function(xhr, textStatus, err) {
+			  removeHourglass();
+			  console.log(xhr);
+			  alert("Failed to delete server side calculation: " + xhr.responseText); 
+		  }
+	});
+}
+
 function surveyListDone() {
 	getSurveyDetails(surveyDetailsDone);
 }
 
 function surveyDetailsDone() {
-	$('.survey_name').html(globals.model.survey.displayName);	
+	$('.survey_name_view').val(globals.model.survey.displayName);	
 	ssc.init();	// initialise the Server Side Calculations section
+	ssc.setHtml('#sscList', globals.model.survey.sscList);
+	$('.ssc_btn_rem').click(function () {
+		var idx = $(this).val();
+		deleteSSC(idx);
+	});
 }
 
 

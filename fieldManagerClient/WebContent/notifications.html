@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<!--
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<html>
+<head>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+	<link rel="stylesheet" href="/css/normalize.css" />
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+	
+	<!--[if lt IE 9]>
+		<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+	<script src="/js/libs/modernizr.js"></script>
+	<script data-main="js/notifications_main" src="/js/libs/require.js"></script>
+
+	<title>Notifications</title>  
+
+</head>
+<body>
+
+<header class="navbar navbar-default navbar-static-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+     	<span class="lang" data-lang="m_notify" >Notify</span>
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+          
+           	<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
+            <li class="disabled restrict_role admin_role analyst_role"><a href="#"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
+            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
+            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
+          
+          </ul>
+        </li>
+ 		<li><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+		<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
+		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
+		<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
+		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+       	<li>
+       		<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+			</a>
+		</li>
+      </ul>
+      	
+	</nav>
+
+  </div>
+</header>
+
+<div class="container">
+	<div class="row">	   	
+	   	<div class="col-md-6 col-xs-12" id="sidebar">
+				<div id="filters">
+					<form role="form" class="form-horizontal" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+						<div class="col-sm-8">
+							<select class="project_list form-control" id="project_name"></select>
+						</div>
+					</form>	
+				</div>
+		</div>
+	</div>
+	<div class = "well">	
+		<a id="addNotification" type="button" class="btn btn-default" aria-label="Add Notification">Add</a>
+		<div class="table-responsive">
+			<div id="notification_list"></div>
+		</div>
+	</div>
+	<div class="col-md-12 text-center">
+		<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+	</div>
+</div>
+	
+	
+<!-- Popup to allow the user to add a notification -->
+<div id="addNotificationPopup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addNotificationLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+    			<div class="modal-header">
+      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+      				<h4 class="modal-title" id="addNotificationLabel">Add Notification</h4>
+    			</div>
+    			
+		    <div class="modal-body">
+				<form id="notification_edit_form" class="form-horizontal" role="form">
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_target" for="target">Target</label>
+						<div class="col-sm-10">
+							<select class="form-control" id="target">
+								<option value="email">Email</option>
+								<option value="forward">Forward to another server</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="survey" class="col-sm-2 control-label">Survey: </label>
+						<div class="col-sm-10">
+							<select id="survey" class="survey_select form-control"></select>
+						</div>
+					</div>  
+					<div id="forward_options" style="display:none;">
+						<div class="form-group">
+							<label for="fwd_host" data-lang="c_host" class="lang col-sm-2 control-label">Host</label>
+							<div class="col-sm-10">
+								<input type="text" id="fwd_host" class="form-control" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_user" data-lang="c_user" class="lang col-sm-2 control-label">User</label>
+							<div class="col-sm-10">
+								<input type="text" id="fwd_user" class="form-control" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="fwd_password" type="password" class="form-control" placeholder="Password" required>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="fwd_rem_survey" data-lang="c_rem_f" class="lang col-sm-2 control-label">Remote Form</label>
+							<div class="col-sm-10">
+								<select id="fwd_rem_survey" class="form-control"></select>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button id="fwd_upd_rem_survey" type="button" class="btn btn-default lang"  data-lang="tm_ref_f">Refresh Form List</button>
+							</div>
+						</div>
+					</div>
+					<div id="email_options" style="display:none;">
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Comma separated list of email addresses">
+							<label for="notify_emails" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+							<div class="col-sm-10">
+								<input type="email" id="notify_emails" class="form-control" required multiple>
+							</div>
+						</div>
+					</div>
+						
+										
+					<div class="col-sm-offset-2 col-sm-10">
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" id="nt_enabled" name="nt_enabled"
+									value="nt_enabled" checked="checked"><span data-lang="c_enabled" class="lang">Enabled</span>
+							</label>
+						</div>
+					</div>
+				</form>
+				<div class="modal-footer">
+                	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                	<button id="saveNotification" type="button" class="btn btn-primary">Save</button>
+        		</div>
+			</div>
+		</div>
+	</div>
+</div>
+	
+<!-- Popup to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel"></h4>
+   			</div>
+	     <div class="modal-body">
+			<form role="form" class="form-horizontal" id="me_edit_form">
+				<div class="form-group">
+					<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+					<div class="col-sm-10">
+						<input type="text" id="me_name" required class="form-control">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+					<div class="col-sm-10">
+						<select id="me_language" class="form-control"></select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control" id="me_email" 
+								placeholder="Enter email" 
+								pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+					</div>
+				</div>
+				<div id="reset_me_password_fields" style="display:none;">
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="password_me_fields" style="display:none;">
+					<div class="form-group">
+						<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+						<div class="col-sm-10">
+							<input id="me_password" type="password" placeholder="Password" class="form-control">
+						</div>
+					</div>	
+					<div class="form-group">
+						<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+						<div class="col-sm-10">
+							<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+						</div>
+					</div>	
+				</div>		
+			</form>	
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default" data-dismiss="modal">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+	
+
+
+</div>
+
+
+</body>
+</html>

@@ -12,6 +12,9 @@ SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
 
 SSLProtocol All -SSLv2 -SSLv3
 
+FileETag None
+ExpiresActive On
+	   
 <FilesMatch "\.(cgi|shtml|phtml|php)$">
 	SSLOptions +StdEnvVars
 </FilesMatch>
@@ -33,8 +36,6 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	DBDriver pgsql
 	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
 	DirectoryIndex index.html index.htm index.shtml
-		
-	ExpiresActive On
 
     ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
     ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
@@ -66,7 +67,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
     <Directory /var/www/smap>
     	Options FollowSymLinks
-        ExpiresDefault A300
+        ExpiresDefault A30000
         AllowOverride None
         Require all granted
     </Directory>

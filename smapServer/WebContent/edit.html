@@ -57,6 +57,7 @@
             <li class="disabled"><a id="m_import" href="#">Import</a>
             <li role="presentation" class="divider"></li>
             <li><a id="m_media" href="#">Media</a></li>
+            <li><a id="m_settings" href="#">Settings</a></li>
           </ul>
         </li> 
  
@@ -87,7 +88,7 @@
 		<div class="panel panel-info header_style">
 			<table class="table">
 				<tr>
-				<td><span class="form-control survey_name" tabindex="-1"></span></td>
+				<td><span class="form-control survey_name_view" tabindex="-1"></span></td>
 				<td><select class="form-control language_list" id="language" tabindex="-1"></select></td>
 				<td><a type="button" class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled">Save <span class="badge">0</span></a><td>
 				</tr>
@@ -100,7 +101,7 @@
 						<td class="q_name_col">Name</td>
 						<td class="q_label_col">
 							<select class="form-control" id="selProperty">
-								<option value="label">Label</option>
+								<option value="label">Question Text</option>
 								<option value="media">Media</option>
 							</select>
 						</td>
@@ -155,84 +156,95 @@
 </div>      
 	    
 	
-	
-	<div class="uno" id="main_page">
-	
-		<!-- Informational -->
-		<div id="infobox" class="alert alert-warning alert-dismissible" role="alert" style="display:none;">
-  			<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-  			<span id="errormesg"></span>
-		</div>
-		
-		<div id="settings" style="display:none;">
-  		<h2>Settings</h2>
-  		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
-  		create a new version of the survey and will not save any changes you have made to the survey
-  		proper such as changes to questions.  The undo and redo buttons are not used for
-  		information on this page</p>
-  		<form>
-  			<div class="large-12 columns">
-	      		<label>Survey Name:
-	        		<input id="set_survey_name" type="text" placeholder="Enter the name of the survey" />
-	      		</label>
-    		</div>
-    		 <div class="large-12 columns">
-	      		<label>Survey Identifier:
-	        		<input id="set_survey_ident" type="text"  readonly/>
-	      		</label>
-    		</div>
-    		<div class="large-12 columns">
-				<label>Project :</label>
-				<select id="set_project_name" class="project_list">
-				</select>
-			</div>
-			<div class="large-12 columns">
-				<label>Default Language :</label>
-				<select id="set_default_language" class="language_list">
-				</select>
-			</div>
-		</form>
+<!-- Informational -->
+<div id="infobox" class="alert alert-warning alert-dismissible" role="alert" style="display:none;">
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	<span id="errormesg"></span>
+</div>
 
-    			
-    			
-		<div class="large-12">
-			<button id="save_settings" class="button radius text-center" disabled="disabled">Save Settings</button>
-		</div>		
-
-	
-	</div>
-	
-
-	<!-- Modals -->
-	<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
-		<div class="modal-dialog">
-	   		<div class="modal-content">
-	   			<div class="modal-header">
-	     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-	     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
-	   			</div>
-			     <div class="modal-body">
-			  		<form role="form" class="form-horizontal">
-			  			<div class="form-group">
-							<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
-							<div class="col-sm-10">
-								<select id="project_name" class="project_list form-control"></select>
-							</div>
+<!-- Setting Dialog -->
+<div id="settingsModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   		 	<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="settingsLabel">Settings</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal">
+					
+					<div class="form-group">
+						<label for="set_survey_name" class="lang col-sm-2 control-label">Form Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="set_survey_name" required class="form-control survey_name" tabindex="1">
 						</div>
-						<div class="form-group">
-							<label for="form_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_survey_ident" class="lang col-sm-2 control-label">Form Ident</label>
+						<div class="col-sm-10">
+							<input type="text" id="set_survey_ident" readonly class="form-control" tabindex="2">
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_project_name" class="lang col-sm-2 control-label">Project</label>
+						<div class="col-sm-10">
+							<select id="set_project_name" class="form-control project_list" tabindex="3"></select>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_default_language" class="lang col-sm-2 control-label">Default Language</label>
+						<div class="col-sm-10">
+							<select id="set_default_language" class="form-control language_list" tabindex="4"></select>
+						</div>
+					</div>
+				</form>		
+			</div>
+			
+			<div class="modal-footer">
+	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+	            <button id="save_settings" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="true">Save</button>
+	        </div>
+	        
+		</div>
+  	</div>	
+</div>
+	
+
+<!-- Modals -->
+<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
+   			</div>
+		     <div class="modal-body">
+		  		<form role="form" class="form-horizontal">
+		  			<div class="form-group">
+						<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+						<div class="col-sm-10">
+							<select id="project_name" class="project_list form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="form_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
+						<div class="col-sm-10">
 							<select id="form_name" class="survey_select form-control"></select>
 						</div>
-					</form>
-				</div>
+					</div>
+				</form>
 			</div>
-	
+
 			<div class="modal-footer">
 	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
 	            <button id="get_form" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="m_open">Open</button>
 	        </div>
 		</div>
 	</div>
+</div>
 	
 
 <!-- Modal for managing media -->
@@ -243,7 +255,7 @@
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
      			<h4 class="modal-title" id="mediaModalLabel"></h4>
    			</div>
-		     <div class="modal-body row">
+		    <div class="modal-body row">
    				<ul class="nav nav-tabs" role="tablist">
        				<li id="orgLevelTab" role="presentation" class="active"><a href="#">Organisation</a></li>
        				<li id="surveyLevelTab" role="presentation" class="disabled"><a href="#">Form</a></li>
@@ -321,13 +333,13 @@
 		    	</div>
 	
 			</div>	<!-- End Body -->
+
+
+			<div class="modal-footer">
+	           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+	           	<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
+	       	</div>
 		</div>
-
-		<div class="modal-footer">
-           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-           	<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
-       	</div>
-
 	</div>
 </div>
 

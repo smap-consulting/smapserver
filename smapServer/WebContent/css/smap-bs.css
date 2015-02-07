@@ -308,7 +308,11 @@ textarea {
 }
 
 /* Fix for z-index of deop downs */
-.navbar {
+.navbar-static-top {
 	z-index: 10000;
 	position: relative;
+}
+
+#up_alert {
+	margin-top: 5px;
 }

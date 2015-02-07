@@ -277,6 +277,7 @@ define(function() {
 					removeHourglass();
 					// Reset the set of pending updates
 					globals.model.setHasChanges(0);
+					getSurveyDetails(surveyDetailsDone);
 					
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
@@ -329,10 +330,17 @@ define(function() {
 					  removeHourglass();
 					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
-					  alert("Settings saved"); 
-				  }, error: function(data, status) {
-					  removeHourglass();
-					  alert("Failed to update survey settings"); 
+					  
+					  $('.survey_name_view').html(globals.model.survey.displayName);
+					  $('#settingsModal').modal("hide");
+				  },
+				  error: function(xhr, textStatus, err) {
+					  removeHourglass();  	
+					  if(xhr.readyState == 0 || xhr.status == 0) {
+					      return;  // Not an error
+					 } else {
+						 alert("hi");
+					 }
 				  }
 			});
 			
@@ -443,9 +451,7 @@ define(function() {
 			var current =  {
 				displayName: $('#set_survey_name').val(),
 				p_id: $('#set_project_name option:selected').val(),
-				def_lang: $('#set_default_language option:selected').text(),
-				sscList: this.survey.sscList,
-				surveyManifest: this.survey.surveyManifest
+				def_lang: $('#set_default_language option:selected').text()
 			}
 			
 			// Update the model to reflect the current values
@@ -461,9 +467,7 @@ define(function() {
 		this.setSettings = function() {
 			this.savedSettings = JSON.stringify({
 				displayName: this.survey.displayName,
-				project_id: String(this.survey.p_id),
-				def_lang: this.survey.def_lang,
-				sscList: this.survey.sscList
+				project_id: String(this.survey.p_id)
 			});
 		} 
 		

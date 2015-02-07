@@ -46,9 +46,8 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
-         'app/csv',
          'jquery.autosize.min'], 
-		function($, common, bootstrap, modernizr, lang, ssc, globals, csv) {
+		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
 var	gMode = "survey",
@@ -67,7 +66,7 @@ $(document).ready(function() {
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(surveyListDone, false, true, undefined, false, false);
+	getLoggedInUser(getSurveyList, false, true, undefined, false, false);
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
@@ -104,13 +103,6 @@ $(document).ready(function() {
 		getSurveyList();
  	 });
 	
-	$('#get_survey').off().click(function() {
-		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurveyDetails();
-		$('#smap').foundation('reveal', 'close');
- 	 });
-	
 	$('.language_list').off().change(function() {
 		gLanguage1 = $('#language1').val();
 		gLanguage2 = $('#language2').val();
@@ -138,6 +130,15 @@ $(document).ready(function() {
 	$('#failedLabel').off().click(function() {
 		alert("failed");
 	});
+	
+    /*
+     * Open a new form
+     */
+	$('#get_form').off().click(function() {
+		globals.gCurrentSurvey = $('#form_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
+		getSurveyDetails(refreshView);
+ 	 });
 	
 	enableUserProfileBS();
 });

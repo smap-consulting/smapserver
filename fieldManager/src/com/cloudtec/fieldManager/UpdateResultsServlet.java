@@ -1,5 +1,5 @@
 package com.cloudtec.fieldManager;
-
+/*
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -11,20 +11,20 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Servlet implementation class UpdateResults
- */
+ *
 public class UpdateResultsServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
     /**
      * Default constructor. 
-     */
+     *
     public UpdateResultsServlet() {
         // TODO Auto-generated constructor stub
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
+	 *
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		Map<String, String[]> params = request.getParameterMap();
@@ -63,3 +63,4 @@ public class UpdateResultsServlet extends HttpServlet {
 
 
 }
+*/

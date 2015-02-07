@@ -36,7 +36,8 @@ require.config({
         'bootstrap.min': ['jquery'],
         'jquery.autosize.min': ['jquery'],
         'jquery-drag-ui.min': ['jquery'],
-        'bootstrap.file-input': ['bootstrap.min']
+        'bootstrap.file-input': ['bootstrap.min'],
+    	'bootbox.min': ['bootstrap.min']
         
     }
 });
@@ -50,7 +51,8 @@ require([
          'app/globals',
          'jquery-drag-ui.min',
          'jquery.autosize.min',
-         'bootstrap.file-input'], 
+         'bootstrap.file-input',
+         'bootbox.min'], 
 		function($, common, bootstrap, modernizr, lang, globals, jquery_ui) {
 
 
@@ -123,7 +125,6 @@ $(document).ready(function() {
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
 		globals.model.save();
-		getSurveyDetails(surveyDetailsDone);
 	});
 
 	// Add menu functions
@@ -135,26 +136,24 @@ $(document).ready(function() {
 		$('#mediaModal table').off();
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
+		// Close any drop downmenus
+		$('.dropdown-toggle').parent().removeClass("open");
+		$('.navbar-collapse').removeClass("in");
+		
 		$('#mediaModal').modal('show');
 
 	});
-	$('#m_translate').off().click(function() {	// Translate languages
-		gMode = "translate";
-		refreshView(gMode);
-	});
+	
 	$('#m_settings').off().click(function() {	// Get a survey from Smap
-		gMode = "settings";
-		refreshView(gMode);
+		
+		// Close any drop downmenus
+		$('.dropdown-toggle').parent().removeClass("open");
+		$('.navbar-collapse').removeClass("in");
+		
+		$('#settingsModal').modal('show');
 	});
 
-	$('#m_undo').off().click(function() {	// Undo last change
-		globals.model.undo();
-		refreshView(gMode);
-	});
-	$('#m_redo').off().click(function() {	// Redo last change
-		globals.model.redo();
-		refreshView(gMode);
-	});
+
 	$('#save_settings').off().click(function() {	// Save settings to Smap
 		globals.model.save_settings();
 	});
@@ -165,13 +164,6 @@ $(document).ready(function() {
 		globals.gCurrentSurvey = -1;
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 		getSurveyList();
- 	 });
-	
-	$('#get_survey').off().click(function() {
-		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurveyDetails();
-		$('#smap').foundation('reveal', 'close');
  	 });
 	
 	$('.language_list').off().change(function() {
@@ -301,6 +293,15 @@ $(document).ready(function() {
     });
     
     /*
+     * Open a new form
+     */
+	$('#get_form').off().click(function() {
+		globals.gCurrentSurvey = $('#form_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
+		getSurveyDetails(surveyDetailsDone);
+ 	 });
+	
+    /*
      * Save a selected media file
      */
 	$('#mediaSelectSave').click(function() {
@@ -350,7 +351,7 @@ function surveyDetailsDone() {
 	}
 	
 	// Update edit view
-	updateLanguageList();
+	updateSettingsData();
 	refreshView();
 }
 /*
@@ -366,7 +367,12 @@ function refreshView() {
 	
 	if(survey) {
 		if(survey.forms && survey.forms.length > 0) {
-			h[++idx] = addQuestions(survey.forms[0], 0);
+			for(i = 0; i < survey.forms.length; i++) {
+				if(survey.forms[i].parentform == 0) {
+					h[++idx] = addQuestions(survey.forms[i], i);
+					break
+				}
+			}
 		}
 	}
 	$('#formList').html(h.join(""));
@@ -429,9 +435,9 @@ function mediaPropSelected($this) {
 
 }
 /*
- * Update the list of language
+ * Update the list of languages and other settings data
  */
-function updateLanguageList() {
+function updateSettingsData() {
 	var i,
 		languages = globals.model.survey.languages,
 		key,
@@ -446,7 +452,9 @@ function updateLanguageList() {
 		h[++idx] = '</option>';
 	}
 	$('.language_list').html(h.join(""));
-	$('.survey_name').html(globals.model.survey.displayName);
+	$('.survey_name').val(globals.model.survey.displayName);
+	$('.survey_name_view').html(globals.model.survey.displayName);
+	$('#set_survey_ident').val(globals.model.survey.ident);
 }
 
 
@@ -466,8 +474,16 @@ function addQuestions(form, fId) {
 			if(question.name === '_task_key' || 
 					question.name === 'instanceID' || 
 					question.name === 'meta' || 
-					question.name === 'meta_groupEnd' ||
-					question.name.indexOf('_groupEnd') > 0) {
+					question.name === 'meta_groupEnd') {
+				continue;
+			}
+			if(question.type === "end group") {
+				h[++idx] = '</ol>';
+				h[++idx] = '</div>';
+				h[++idx] = '</li>';
+				continue;
+			}
+			if(question.type === "end repeat") {
 				continue;
 			}
 			h[++idx] = addOneQuestion(question, fId, i);
@@ -506,17 +522,15 @@ function addOneQuestion(question, fId, id) {
 		h[++idx] = '<div id="collapse';
 		h[++idx] = gIndex;
 		h[++idx] = '" class="panel-body collapse">';
-		if(question.type === "begin repeat") {
-			h[++idx] = addSubForm(question);
+		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
+			h[++idx] = addSubForm(question, survey.forms[fId]);
 		} else if(question.type.indexOf("select") === 0) {
 			h[++idx] = addOptions(question, fId);
-		}
+		} 
+		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
 			h[++idx] = '<ol>';
-		} else  if(question.type === "end group") {
-			h[++idx] = '</ol>';
-		} 
-		if(question.type !== "begin group") {	/* End the panel */
+		} else { 
 			h[++idx] = '</div>';
 			h[++idx] = '</li>';
 		}
@@ -566,7 +580,9 @@ function addQType(type) {
 		return '<img class="edit_image" src="/images/linestring_64.png">';
 	} else if(type === "geopolygon") {
 		return '<img class="edit_image" src="/images/polygon_64.png">';
-	}else {
+	} else if(type === "calculate") {
+		return '<img class="edit_image" src="/images/calc_64.png">';
+	} else {
 		return '<span class="glyphicon glyphicon-record edit_type"></span>';
 	}
 }
@@ -601,8 +617,16 @@ function getFeaturedMarkup(question) {
 		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 	
 	if(selProperty === "label") {
-		h[++idx] = '<textarea class="labelProp" placeholder="Label">';
-		h[++idx] = question.labels[gLanguage].text;
+		h[++idx] = '<textarea class="labelProp" placeholder="Label"';
+		if(question.source != "user") {
+			h[++idx] = ' readonly tabindex="-1">';
+			h[++idx] = 'Label not required';
+		} else {
+			h[++idx] = ' tabindex="';
+			h[++idx] = gIndex;
+			h[++idx] = '">';
+			h[++idx] = question.labels[gLanguage].text;
+		}
 		h[++idx] = '</textarea>';
 	} else if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
@@ -691,7 +715,7 @@ function addMedia(label, mediaIdent, url, thumbUrl) {
 /*
  * Add subform
  */
-function addSubForm(question) {
+function addSubForm(question, parentId) {
 	
 	var h = [],
 		idx = -1,
@@ -708,7 +732,7 @@ function addSubForm(question) {
 	forms = survey.forms;
 	for(i = 0; i < forms.length; i++) {
 		form = forms[i];
-		if(forms[i].name === formName) {
+		if(forms[i].parentform === parentId) {
 			h[++idx] = addQuestions(forms[i], i);
 			break;
 		}

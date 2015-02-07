@@ -1,3 +1,22 @@
+/*****************************************************************************
+
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+ ******************************************************************************/
+
 package org.smap.sdal.managers;
 
 import java.sql.Connection;
@@ -27,25 +46,6 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-/*****************************************************************************
-
-This file is part of SMAP.
-
-SMAP is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-SMAP is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
-
- ******************************************************************************/
 
 public class SurveyManager {
 	
@@ -106,6 +106,40 @@ public class SurveyManager {
 		} 
 		return surveys;
 		
+	}
+	
+	/*
+	 * Return true if there is already a survey with the supplied display name and project id
+	 */
+	public boolean surveyExists(Connection sd, String displayName, int projectId) {
+		boolean exists = false;
+		
+		ResultSet resultSet = null;
+		String sql = "select count(*) from survey s "
+				+ " where s.display_name = ? "
+				+ " and s.p_id = ?;";
+	
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = sd.prepareStatement(sql);	 			
+			pstmt.setString(1, displayName);
+			pstmt.setInt(2, projectId);
+
+			log.info(pstmt.toString());
+			resultSet = pstmt.executeQuery();
+
+			if (resultSet.next()) {		
+				int count = resultSet.getInt(1);
+				if(count > 0) {
+					exists = true;
+				}
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e){};
+		}
+		return exists;
 	}
 	
 	public Survey getById(Connection sd, PreparedStatement pstmt,
@@ -227,7 +261,7 @@ public class SurveyManager {
 		
 		// Get the forms belonging to this survey
 		ResultSet rsGetForms = null;
-		String sqlGetForms = "select f.f_id, f.name from form f where f.s_id = ?;";
+		String sqlGetForms = "select f.f_id, f.name, f.parentform from form f where f.s_id = ?;";
 		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
 		
 		// Get the questions belonging to a form
@@ -277,6 +311,8 @@ public class SurveyManager {
 			Form f = new Form();
 			f.id = rsGetForms.getInt(1);
 			f.name = rsGetForms.getString(2);
+			f.parentform =rsGetForms.getInt(3); 
+			
 			
 			/*
 			 * Get the questions for this form

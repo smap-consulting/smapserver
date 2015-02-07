@@ -25,24 +25,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URLEncoder;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,31 +67,33 @@ import com.google.gson.GsonBuilder;
 
   
 /**
- * Servlet implementation class CommonsFileUploadServlet
+ * Upload a new form
  */
-public class TemplateUpload extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Path("/formUpload")
+public class TemplateUpload extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(TemplateUpload.class.getName());
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
+	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
+	public Set<Class<?>> getClasses() {
+		Set<Class<?>> s = new HashSet<Class<?>>();
+		s.add(TemplateUpload.class);
+		return s;
+	}
+	
 	private class Message {
+		String status;
 		String host;
 		ArrayList<String> mesgArray;
 		String project;
 		String survey;
 		String fileName;
+		String administrator;
 		ArrayList<String> hints;
 	}
-	
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public TemplateUpload() {
-        super();
-    }
 
     private class SaveResponse {
     	public int code = 0;
@@ -98,10 +103,14 @@ public class TemplateUpload extends HttpServlet {
     	boolean foundErrorMsg;
     }
     
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @GET
+    public String getit() {
+    	return "form upload";
+    }
+    
+	@POST
+	@Produces("application/json")
+	public Response  formUpload(@Context HttpServletRequest request) {
  
 		//String contextPath = request.getContextPath();
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();
@@ -112,6 +121,8 @@ public class TemplateUpload extends HttpServlet {
 		String fileName = null;
 		String serverName = request.getServerName();
 		FileItem uploadedFile = null;
+		
+		Response response = null;
 
 		log.info("upload template -----------------------");
 		log.info("    Server:" + serverName);
@@ -170,7 +181,7 @@ public class TemplateUpload extends HttpServlet {
 									connectionSD.close();
 								}
 							} catch (SQLException e) {
-								log("Failed to close connection",e);
+								log.log(Level.SEVERE, "Failed to close connection",e);
 							}
 						}
 					} else if(item.getFieldName().equals("surveyIdent")) {
@@ -188,198 +199,182 @@ public class TemplateUpload extends HttpServlet {
 				}
 			} 
 			
+			//Handle Uploaded files.
+			System.out.println("Field Name = "+ uploadedFile.getFieldName()+
+				", File Name = "+ uploadedFile.getName()+
+				", Content type = "+ uploadedFile.getContentType()+
+				", File Size = "+ uploadedFile.getSize());
+			
+			fileName = uploadedFile.getName();
+			
+			// If the survey display name already exists on this server, for this project, then throw an error
+			SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
+			if(surveys.surveyExists(displayName, projectId)) {
+				// String mesg = "Survey " + displayName + " Exists in project " + projectName;
+				mesgArray.add("$c_survey");
+				mesgArray.add(" '");
+				mesgArray.add(displayName);
+				mesgArray.add("' ");
+				mesgArray.add("$e_u_exists");
+				mesgArray.add(" '");
+				mesgArray.add(projectName);
+				mesgArray.add("'");
+				System.out.println(mesgArray.toString());
+				
+				ArrayList<String> hints = new ArrayList<String>(); 
+				hints.add("$e_h_rename");
+				
+				return getErrorResponse(request,  mesgArray, hints, serverName, projectName, displayName, fileName);
+			} 	
+			
 			/*
-			 * Next get the file
+			 * Save the file and get the path to the file on disk
 			 */
-			if(uploadedFile != null) {
+			SaveResponse resp = saveToDisk(request, uploadedFile, serverName, displayName, projectId);
+			if(resp.code != 0) {
 
-				//Handle Uploaded files.
-				System.out.println("Field Name = "+ uploadedFile.getFieldName()+
-					", File Name = "+ uploadedFile.getName()+
-					", Content type = "+ uploadedFile.getContentType()+
-					", File Size = "+ uploadedFile.getSize());
-				
-				fileName = uploadedFile.getName();
-				
-				// If the survey display name already exists on this server, for this project, then throw an error
-				SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
-				if(surveys.surveyExists(displayName, projectId)) {
-					// String mesg = "Survey " + displayName + " Exists in project " + projectName;
-					mesgArray.add("$c_survey");
-					mesgArray.add(" '");
-					mesgArray.add(displayName);
-					mesgArray.add("' ");
-					mesgArray.add("$e_u_exists");
-					mesgArray.add(" '");
-					mesgArray.add(projectName);
-					mesgArray.add("'");
-					System.out.println(mesgArray.toString());
-					
-					ArrayList<String> hints = new ArrayList<String>(); 
-					hints.add("$e_h_rename");
-					
-					setErrorResponse(request, response, mesgArray, hints, serverName, projectName, displayName, fileName);
-					return;
-				} 	
-				
-				/*
-				 * Save the file and get the path to the file on disk
-				 */
-				SaveResponse resp = saveToDisk(uploadedFile, serverName, displayName, projectId);
-				if(resp.code != 0) {
-
-					if(!resp.foundErrorMsg) { // Error but no error message found
-						resp.hints.add("Check the 'name' and 'list_name' columns for accented characters.");
-						resp.hints.add("Finally: Contact tech support, this may be a system error.");
-					}
-					//System.out.println(resp.errMesg.toString());
-					
-					setErrorResponse(request, response, resp.errMesg, resp.hints, serverName, projectName, displayName, fileName);
-					return;
-
+				if(!resp.foundErrorMsg) { // Error but no error message found
+					resp.hints.add("Check the 'name' and 'list_name' columns for accented characters.");
+					resp.hints.add("Finally: Contact tech support, this may be a system error.");
 				}
-				File templateFile = new File(resp.fileName);
+				//System.out.println(resp.errMesg.toString());
 				
-				String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-				System.out.println("Files parameter: " + basePath);
-				if(basePath == null) {
-					basePath = "/smap";
-				} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-				}
-				
-				// Parse the form into an object model
-				PutXForm loader = new PutXForm();
-				SurveyTemplate model = loader.put(new FileInputStream(templateFile), 
-						request.getRemoteUser(),
-						basePath);	// Load the XForm into the model
-				//model.printModel();
-				
-				// Set the survey name to the one entered by the user 
-				if(displayName != null && displayName.length() != 0) {
-					model.getSurvey().setDisplayName(displayName);
-					model.getSurvey().setFileName(resp.fileName);
-				} else {
-					mesgArray.add("No survey name");		// TODO Language
-					System.out.println(mesgArray.toString());
-					
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				}
-				
-				// Set the project id to the one entered by the user 
-				if(projectId != -1) {
-					model.getSurvey().setProjectId(projectId);
-				} else {
-					mesgArray.add("No project");		// TODO Language
-					System.out.println(mesgArray.toString());
+				return getErrorResponse(request,  mesgArray, resp.hints, serverName, projectName, displayName, fileName);
 
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				}
-				
-				// Set the survey ident to the one entered by the user 
-				if(surveyIdent != null && surveyIdent.length() != 0) {
-					model.getSurvey().setIdent(surveyIdent);
-				} 
-				
-				// Set the initial survey version
-				model.getSurvey().setVersion(1);
-				
-				
-				// If there is more than one geom per form or too many questions then throw an error
-				ArrayList formsWithError = null;
-				if((formsWithError = model.multipleGeoms()).size() > 0) {		
-					String mesg = "";
-					for(int i = 0; i < formsWithError.size(); i++) {
-						if(i > 0) {
-							mesg += "\n";
-						}
-						mesg += formsWithError.get(i);
-					}
-					mesgArray.add(mesg);		// TODO Language
-					System.out.println(mesgArray.toString());
-					
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				} 
-				
-				// If there are duplicate question names in a form then throw an error
-				ArrayList<String> duplicateNames = null;
-				if((duplicateNames = model.duplicateNames()).size() > 0) {		
-					String mesg = "Error: The following question names are duplicates:";
-					for(int i = 0; i < duplicateNames.size(); i++) {
-						if(i > 0) {
-							mesg += ",";
-						}
-						mesg += duplicateNames.get(i);
-					}
-					mesgArray.add(mesg);		// TODO Language
-					System.out.println(mesgArray.toString());
-					
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				} 	
-				
-				// If there are duplicate option names in a form then throw an error
-				ArrayList<String> duplicateOptionNames = null;
-				if((duplicateOptionNames = model.duplicateOptionValues()).size() > 0) {		
-					String mesg = "Error:\n";
-					for(int i = 0; i < duplicateOptionNames.size(); i++) {
-						if(i > 0) {
-							mesg += ",\n";
-						}
-						mesg += duplicateOptionNames.get(i);
-					}
-					mesgArray.add(mesg);		// TODO Language
-					System.out.println(mesgArray.toString());
-
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				} 
-				
-				// If there are mandatory read only questions without a relevance or constraints that don't reference the current question then throw an error
-				ArrayList<String> manReadQuestions = null;
-				if((manReadQuestions = model.manReadQuestions()).size() > 0) {		
-					String mesg = "Error:\n";
-					for(int i = 0; i < manReadQuestions.size(); i++) {
-						if(i > 0) {
-							mesg += ",\n";
-						}
-						mesg += manReadQuestions.get(i);
-					}
-					mesgArray.add(mesg);		// TODO Language
-					System.out.println(mesgArray.toString());
-					
-					setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-					return;
-				} 
-				
-				//model.printModel();
-				model.writeDatabase();				// write the survey definitions
-				model.writeExternalChoices();		// Update the survey definitions with choices from csv files
-				log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
-					
 			}
+			File templateFile = new File(resp.fileName);
+			
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			System.out.println("Files parameter: " + basePath);
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+				basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+			}
+			
+			// Parse the form into an object model
+			PutXForm loader = new PutXForm();
+			SurveyTemplate model = loader.put(new FileInputStream(templateFile), 
+					request.getRemoteUser(),
+					basePath);	// Load the XForm into the model
+			//model.printModel();
+			
+			// Set the survey name to the one entered by the user 
+			if(displayName != null && displayName.length() != 0) {
+				model.getSurvey().setDisplayName(displayName);
+				model.getSurvey().setFileName(resp.fileName);
+			} else {
+				mesgArray.add("No survey name");		// TODO Language
+				System.out.println(mesgArray.toString());
+				
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+			}
+			
+			// Set the project id to the one entered by the user 
+			if(projectId != -1) {
+				model.getSurvey().setProjectId(projectId);
+			} else {
+				mesgArray.add("No project");		// TODO Language
+				System.out.println(mesgArray.toString());
+
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+			}
+			
+			// Set the survey ident to the one entered by the user 
+			if(surveyIdent != null && surveyIdent.length() != 0) {
+				model.getSurvey().setIdent(surveyIdent);
+			} 
+			
+			// Set the initial survey version
+			model.getSurvey().setVersion(1);
+			
+			
+			// If there is more than one geom per form or too many questions then throw an error
+			ArrayList formsWithError = null;
+			if((formsWithError = model.multipleGeoms()).size() > 0) {		
+				String mesg = "";
+				for(int i = 0; i < formsWithError.size(); i++) {
+					if(i > 0) {
+						mesg += "\n";
+					}
+					mesg += formsWithError.get(i);
+				}
+				mesgArray.add(mesg);		// TODO Language
+				System.out.println(mesgArray.toString());
+				
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+			} 
+			
+			// If there are duplicate question names in a form then throw an error
+			ArrayList<String> duplicateNames = null;
+			if((duplicateNames = model.duplicateNames()).size() > 0) {		
+				String mesg = "Error: The following question names are duplicates:";
+				for(int i = 0; i < duplicateNames.size(); i++) {
+					if(i > 0) {
+						mesg += ",";
+					}
+					mesg += duplicateNames.get(i);
+				}
+				mesgArray.add(mesg);		// TODO Language
+				System.out.println(mesgArray.toString());
+				
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				
+			} 	
+			
+			// If there are duplicate option names in a form then throw an error
+			ArrayList<String> duplicateOptionNames = null;
+			if((duplicateOptionNames = model.duplicateOptionValues()).size() > 0) {		
+				String mesg = "Error:\n";
+				for(int i = 0; i < duplicateOptionNames.size(); i++) {
+					if(i > 0) {
+						mesg += ",\n";
+					}
+					mesg += duplicateOptionNames.get(i);
+				}
+				mesgArray.add(mesg);		// TODO Language
+				System.out.println(mesgArray.toString());
+
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+			} 
+			
+			// If there are mandatory read only questions without a relevance or constraints that don't reference the current question then throw an error
+			ArrayList<String> manReadQuestions = null;
+			if((manReadQuestions = model.manReadQuestions()).size() > 0) {		
+				String mesg = "Error:\n";
+				for(int i = 0; i < manReadQuestions.size(); i++) {
+					if(i > 0) {
+						mesg += ",\n";
+					}
+					mesg += manReadQuestions.get(i);
+				}
+				mesgArray.add(mesg);		// TODO Language
+				System.out.println(mesgArray.toString());
+				
+				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+			} 
+			
+			//model.printModel();
+			model.writeDatabase();				// write the survey definitions
+			model.writeExternalChoices();		// Update the survey definitions with choices from csv files
+			log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
+				
+			response = Response.ok().build();	
 			
 		} catch(AuthorisationException ex) {
 			log.log(Level.SEVERE,"Authorisation error loading template", ex);
 			throw ex;		// re-throw
 		} catch(FileUploadException ex) {
 			log.log(Level.SEVERE,"Error encountered while parsing the request", ex);
-			mesgArray.add(ex.getMessage());		// TODO Language
-			setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-			return;
+			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
 			System.out.println(ex.getMessage());
-			log("Error encountered while uploading file",ex);
-			mesgArray.add(ex.getMessage());		// TODO Language
-			setErrorResponse(request, response, mesgArray, null, serverName, projectName, displayName, fileName);
-			return;
+			log.log(Level.SEVERE,"Error encountered while uploading file",ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
 		}
 		
-		request.getRequestDispatcher("/templateManagement.html").forward(request, response);
-		return;
+		System.out.println("Returning response:" + response.getStatus());
+		return response;
 
 	}
 	
@@ -390,8 +385,12 @@ public class TemplateUpload extends HttpServlet {
 	 * 2. Transform to XML (if required)
 	 * 3. Return the path to the XML file
 	 */
-	private SaveResponse saveToDisk(FileItem item, String serverName, String targetName,
+	private SaveResponse saveToDisk(HttpServletRequest request, 
+			FileItem item, 
+			String serverName, 
+			String targetName,
 			int projectId) throws Exception {
+		
 		String filePath = null;
 		String fileFolder = null;
 		SaveResponse response = new SaveResponse();
@@ -415,7 +414,7 @@ public class TemplateUpload extends HttpServlet {
 		}
 
 		// Construct the file folder and full path
-		String basePath = getServletContext().getInitParameter("au.com.smap.files");
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
 		if(basePath == null) {
 			basePath = "/smap";
 		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
@@ -679,31 +678,8 @@ public class TemplateUpload extends HttpServlet {
 		
 		return valid;
 	}
-	private String getResponseMessage( 
-				ArrayList<String> mesgArray,
-				ArrayList<String> hints, 
-				String host, 
-				String project, 
-				String survey, 
-				String fileName
-			) {
-
-		Message m = new Message();
-		m.mesgArray = mesgArray;
-		m.host = host;
-		m.project = project;
-		m.survey = survey;
-		m.fileName = fileName;
-		m.hints = hints;
-		
-		
-		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-		return gson.toJson(m);
 	
-	}
-	
-	private void setErrorResponse(HttpServletRequest request, 
-			HttpServletResponse response, 
+	private Response getErrorResponse(HttpServletRequest request, 
 			ArrayList<String> mesgArray, 
 			ArrayList<String> hints, String serverName, 
 			String projectName, 
@@ -737,13 +713,25 @@ public class TemplateUpload extends HttpServlet {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				log("Failed to close connection",e);
+				log.log(Level.SEVERE, "Failed to close connection",e);
 			}
 		}
 		
-		request.setAttribute("administrator", admin_email);
-		request.setAttribute("message", getResponseMessage(mesgArray, hints, serverName, projectName, surveyName, fileName));
-		request.getRequestDispatcher("/templateUploadResponse.jsp").forward(request, response);
+		Message m = new Message();
+		m.status = "error";
+		m.mesgArray = mesgArray;
+		m.host = serverName;
+		m.project = projectName;
+		m.survey = surveyName;
+		m.fileName = fileName;
+		m.administrator = admin_email;
+		m.hints = hints;
+		
+		
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		return Response.ok(gson.toJson(m)).build();
+		
+		
 	}
 	
 }

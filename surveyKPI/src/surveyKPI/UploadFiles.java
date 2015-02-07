@@ -19,9 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -32,15 +30,11 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import model.MediaItem;
 import model.MediaResponse;
-import model.Settings;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -53,16 +47,10 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import utilities.CSVParser;
 import utilities.MediaInfo;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -89,129 +77,6 @@ public class UploadFiles extends Application {
 		return s;
 	}
 
-	/*
-	@POST
-	@Path("/link") 
-	public Response linkMedia(
-			@Context HttpServletRequest request,
-			@FormParam("media_data") String media_data
-			) {
-		
-		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		String user = request.getRemoteUser();
-		
-		Type type = new TypeToken<ArrayList<Settings>>(){}.getType();
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		MediaResponse media = gson.fromJson(media_data, MediaResponse.class);
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("fieldManager-UplaodFile-Link");
-		surveyLevelAuth.isAuthorised(sd, user);
-		surveyLevelAuth.isValidSurvey(sd, request.getRemoteUser(), media.surveyId, false);	// Validate that the user can access this survey
-		// End authorisation
-		
-		PreparedStatement pstmtGetTextIdQuestion = null;
-		PreparedStatement pstmtGetTextIdOption = null;
-		PreparedStatement pstmtDeleteExisting = null;
-		PreparedStatement pstmtInsertMedia = null;
-    	
-		try {
-			
-	    	ResultSet rs = null;
-	    	
-		
-			// Get the text id for a question
-	    	String sqlGetTextIdQuestion = "SELECT qtext_id FROM question WHERE q_id = ?;"; 
-	    	pstmtGetTextIdQuestion = sd.prepareStatement(sqlGetTextIdQuestion);
-	    	
-	    	// Get the text id for an option
-	    	String sqlGetTextIdOption = "SELECT label_id FROM option WHERE o_id = ?;"; 
-	    	pstmtGetTextIdOption = sd.prepareStatement(sqlGetTextIdOption);
-	    	
-	    	// Delete existing media files
-	    	String sqlDeleteExisting = "delete FROM translation " +
-	    			" where s_id = ? " +
-	    			" and text_id = ? " + 
-	    			" and type = ? ";
-	    	pstmtDeleteExisting = sd.prepareStatement(sqlDeleteExisting);
-	    	
-	    	// Insert Media
-	    	String sqlInsertMedia = "insert into translation (t_id, s_id, text_id, type, value,language) " +
-	    			"values (nextval('t_seq'),?,?,?,?,?);"; 
-	    	pstmtInsertMedia = sd.prepareStatement(sqlInsertMedia);
-	    	
-	    	
-			ArrayList<String> lang = MediaUtilities.getLanguagesForSurvey(sd, media.surveyId);
-			
-			
-			for(int i = 0; i < media.files.size(); i++) {
-				
-				MediaItem item = media.files.get(i);
-				String text_id = null;
-				
-				// Get the text id
-				if(item.qId > 0) {	    	
-					if(item.oId < 1) {					
-				    	pstmtGetTextIdQuestion.setInt(1, item.qId);
-				    	log.info("Question: " + pstmtGetTextIdQuestion.toString());
-				    	rs = pstmtGetTextIdQuestion.executeQuery();
-				    	if(rs.next()) {
-							text_id = rs.getString(1);
-						}
-					} else {
-				    	pstmtGetTextIdOption.setInt(1, item.oId);
-				    	log.info("Option: " + pstmtGetTextIdOption.toString());
-				    	rs = pstmtGetTextIdOption.executeQuery();
-				    	if(rs.next()) {
-							text_id = rs.getString(1);
-						}
-					}
-				}
-				if(text_id != null) {
-					sd.setAutoCommit(false);
-					
-					// Delete existing entries
-					pstmtDeleteExisting.setInt(1, media.surveyId);
-			    	pstmtDeleteExisting.setString(2, text_id);
-			    	pstmtDeleteExisting.setString(3, item.type);
-			    	pstmtDeleteExisting.execute();
-			    	
-			    	for(int j = 0; j < lang.size(); j++) {
-			    		
-			    		String language = lang.get(i);
-				    	
-				    	pstmtInsertMedia.setInt(1, media.surveyId);
-				    	pstmtInsertMedia.setString(2, text_id);
-				    	pstmtInsertMedia.setString(3, item.type);
-				    	//pstmtInsertMedia.setString(4, survey_ident + "/" + fileName); TODO
-				    	pstmtInsertMedia.setString(5, language);
-				    	pstmtInsertMedia.execute();
-			    	}
-			    	sd.commit();
-				}
-			}
-		
-		} catch(Exception e) {
-			e.printStackTrace();
-			response = Response.serverError().entity(e.getMessage()).build();
-		} finally {
-			if(pstmtGetTextIdQuestion != null) try {pstmtGetTextIdQuestion.close();} catch(Exception e) {};
-			if(pstmtGetTextIdOption != null) try {pstmtGetTextIdOption.close();} catch(Exception e) {};
-			if(pstmtDeleteExisting != null) try {pstmtDeleteExisting.close();} catch(Exception e) {};
-			if(pstmtInsertMedia != null) try {pstmtInsertMedia.close();} catch(Exception e) {};
-		}
-		return response;
-	}
-	*/
 			
 	@POST
 	@Produces("application/json")
@@ -320,14 +185,14 @@ public class UploadFiles extends Application {
 						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 						String resp = gson.toJson(mResponse);
 						log.info("Responding with " + mResponse.files.size() + " files");
+						
 						response = Response.ok(resp).build();	
+						
 					} else {
 						log.log(Level.SEVERE, "Media folder not found");
 						response = Response.serverError().entity("Media folder not found").build();
 					}
-				
-						    
-	
+
 						
 				}
 			}

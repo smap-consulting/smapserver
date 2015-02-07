@@ -79,26 +79,7 @@ $(document).ready(function() {
 		gMode = "simple_edit";
 		refreshView(gMode);
 	});
-	$('#m_translate').off().click(function() {	// Translate languages
-		gMode = "translate";
-		refreshView(gMode);
-	});
-	$('#m_settings').off().click(function() {	// Get a survey from Smap
-		gMode = "settings";
-		refreshView(gMode);
-	});
-	$('#m_changes').off().click(function() {	// View the changes to this survey
-		gMode = "changes";
-		refreshView(gMode);
-	});
-	$('#m_undo').off().click(function() {	// Undo last change
-		globals.model.undo();
-		refreshView(gMode);
-	});
-	$('#m_redo').off().click(function() {	// Redo last change
-		globals.model.redo();
-		refreshView(gMode);
-	});
+
 	$('#save_settings').off().click(function() {	// Save settings to Smap
 		globals.model.save_settings();
 	});
@@ -111,12 +92,6 @@ $(document).ready(function() {
 		getSurveyList();
  	 });
 	
-	$('#get_survey').off().click(function() {
-		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurveyDetails();
-		$('#smap').foundation('reveal', 'close');
- 	 });
 	
 	$('.language_list').off().change(function() {
 		gLanguage1 = $('#language1').val();
