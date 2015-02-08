@@ -298,6 +298,8 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 		if(max > min) {
 			var diff = max - min;
 			var val = 4 * (matrix[data.optionIdx][i] - min) / diff;		// Normalise value to 5 levels
+		} else if(matrix[data.optionIdx][i] > 0) {
+			val = 4;
 		} else {
 			val = 0;
 		}

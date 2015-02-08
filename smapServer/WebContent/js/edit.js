@@ -511,10 +511,10 @@ function addOneQuestion(question, fId, id) {
 					h[++idx] = '" type="text"></td>';
 					h[++idx] = addFeaturedProperty(question, fId, id, "question");
 					h[++idx] = '<td class="q_icons_col">';
-						h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
+						//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
 						h[++idx] = '<a data-toggle="collapse"  href="#collapse';
 						h[++idx] = ++gIndex;
-						h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon2"></span></a>';
+						h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
 				h[++idx] = '</td>';
 				h[++idx] = '</table>';
 			//h[++idx] = '</div>';
@@ -523,7 +523,7 @@ function addOneQuestion(question, fId, id) {
 		h[++idx] = gIndex;
 		h[++idx] = '" class="panel-body collapse">';
 		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
-			h[++idx] = addSubForm(question, survey.forms[fId]);
+			h[++idx] = addSubForm(question, globals.model.survey.forms[fId].id);
 		} else if(question.type.indexOf("select") === 0) {
 			h[++idx] = addOptions(question, fId);
 		} 
@@ -773,9 +773,9 @@ function addOneOption(option, fId, id) {
 	h[++idx] = option.value;
 	h[++idx] = '" type="text"></td>';
 	h[++idx] = addFeaturedProperty(option, fId, id, "option");
-	h[++idx] = '<td class="q_icons_col">';
-	h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
-	h[++idx] = '</td>';
+	//h[++idx] = '<td class="q_icons_col">';	TODO Add Deletion
+	//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
+	//h[++idx] = '</td>';
 	h[++idx] = '</table>';
 
 	return h.join("");
