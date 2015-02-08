@@ -266,7 +266,8 @@ public class SurveyManager {
 		
 		// Get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, q.source from question q "
+		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, "
+				+ "q.source, q.calculate from question q "
 				+ "where q.f_id = ? "
 				+ "and q.qname != '_instanceid' "
 				+ "order by q.seq asc;";
@@ -331,6 +332,7 @@ public class SurveyManager {
 				q.list_name = rsGetQuestions.getString(5);
 				q.hint_id = rsGetQuestions.getString(6);
 				q.source = rsGetQuestions.getString(7);
+				q.calculation = rsGetQuestions.getString(8);
 				
 				// Track if this question is in the meta group
 				if(q.name.equals("meta")) {
@@ -439,91 +441,7 @@ public class SurveyManager {
 	
 
 	
-	/*
-	 * Save a survey level or organisation level manifest file
-	 *
-	 *Deprecated now set on template load
-	 *
-	public void saveSurveyManifest(Connection connection, 
-			PreparedStatement pstmtLanguages, 
-			PreparedStatement pstmtQuestions,
-			PreparedStatement pstmtOptions,
-			PreparedStatement pstmtDel,
-			PreparedStatement pstmtInsert,
-			PreparedStatement pstmtGetIdent,
-			int sId,
-			ManifestValue mv) throws SQLException {
 
-		List<String> lang = new ArrayList<String>();
-	    String text_id = null;
-		
-	    if(mv.filename != null) {
-	    	mv.filename = mv.filename.replaceAll(" ", "_");		// remove spaces
-	    }
-		pstmtLanguages.setInt(1, sId);
-		ResultSet rs = pstmtLanguages.executeQuery();
-		while(rs.next()) {
-			lang.add(rs.getString(1));
-		}
-		if(lang.size() == 0) {
-			lang.add("eng");	// Default to english
-		}
-		
-		// Get the survey ident
-		String survey_ident = null;
-		pstmtGetIdent.setInt(1, sId);
-		ResultSet resultSet = pstmtGetIdent.executeQuery();
-		if(resultSet.next()) {
-			survey_ident = resultSet.getString(1);
-		} 
-		
-		// 2) Get the text_id
-	    if(mv.qId == -1) {
-	    	System.out.println("Survey");
-	    	text_id = mv.filename;
-	    } else if(mv.oId == -1) {
-	    	System.out.println("Question");
-	    	
-
-	    	pstmtQuestions.setInt(1, mv.qId);
-	    	rs = pstmtQuestions.executeQuery();
-	    	if(rs.next()) {
-				text_id = rs.getString(1);
-			}
-	    } else {
-	    	System.out.println("Option");
-	    	
-
-	    	pstmtOptions.setInt(1, mv.oId);
-	    	rs = pstmtOptions.executeQuery();
-	    	if(rs.next()) {
-				text_id = rs.getString(1);
-			}
-	    }
-	    System.out.println("Text id:" + text_id);
-
-	    if(text_id != null) {
-	    	
-	    	// 3) Delete existing media file
-	    	pstmtDel.setInt(1, sId);
-	    	pstmtDel.setString(2, text_id);
-	    	pstmtDel.setString(3, mv.type);
-	    	pstmtDel.execute();
-	    	
-	    	// 4) Insert new media file for each language
-	    	for(int i = 0; i < lang.size(); i++) {
-	    		String language = lang.get(i);
-
-		    	pstmtInsert.setInt(1, sId);
-		    	pstmtInsert.setString(2, text_id);
-		    	pstmtInsert.setString(3, mv.type);
-		    	pstmtInsert.setString(4, survey_ident + "/" + mv.filename);
-		    	pstmtInsert.setString(5, language);
-		    	pstmtInsert.execute();
-	    	}
-	    }
-	}
-	*/
 	
 	
 	/*
@@ -730,6 +648,7 @@ public class SurveyManager {
 		String transType = null;
 		PreparedStatement pstmtLangOldVal = null;
 		PreparedStatement pstmtLangNew = null;
+		PreparedStatement pstmtNewQuestionLabel = null;
 		
 		try {
 			
@@ -740,6 +659,9 @@ public class SurveyManager {
 		
 			String sqlLangNew = "insert into translation (value, s_id, language, text_id, type) values(?,?,?,?,?);";
 			pstmtLangNew = connectionSD.prepareStatement(sqlLangNew);
+			
+			String sqlNewQLabel = "update question set qtext_id = ? where q_id = ?; ";
+			pstmtNewQuestionLabel = connectionSD.prepareStatement(sqlNewQLabel);
 			
 			for(ChangeItem ci : changeItemList) {
 			
@@ -777,7 +699,12 @@ public class SurveyManager {
 					
 					log.info("SQL: " + pstmtLangNew.toString());
 					
-					 pstmtLangNew.executeUpdate();
+					pstmtLangNew.executeUpdate();
+					 
+					// Add the new text id to the question
+					pstmtNewQuestionLabel.setString(1, ci.key);
+					pstmtNewQuestionLabel.setInt(2, ci.qId);
+					pstmtNewQuestionLabel.executeUpdate();
 				}
 				
 				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
@@ -802,6 +729,7 @@ public class SurveyManager {
 		} finally {
 			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
+			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
 		}
 	}
 	

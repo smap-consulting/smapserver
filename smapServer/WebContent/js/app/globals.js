@@ -434,7 +434,15 @@ define(function() {
 				label.language = language;
 				
 				label.languageName = this.survey.languages[language];			// For logging the event
-				label.key = item.text_id;
+				var form = this.survey.forms[label.formIdx];
+				var question = this.survey.forms[label.formIdx].questions[label.questionIdx];
+				if(item.text_id) {
+					label.key = item.text_id;
+				} else {
+					// Create reference for this new Label					
+					label.key = "/" + form.name + "/" + question.name + ":label";	// TODO hint
+				}
+				label.qId = question.id;
 				
 				labelMod.items.push(label);
 			}

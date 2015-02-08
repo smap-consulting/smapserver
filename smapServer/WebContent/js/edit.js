@@ -503,7 +503,7 @@ function addOneQuestion(question, fId, id) {
 				h[++idx] = '<table class="table">';
 					//h[++idx] = '<div class="col-sm-2 col-xs-4 head1">';
 					h[++idx] = '<td class="q_type_col">';
-						h[++idx] = addQType(question.type);
+						h[++idx] = addQType(question.type, question.calculation);
 					h[++idx] = '</td>';
 					//h[++idx] = '<div class="col-sm-3 col-xs-8 head2"><input class="qname" value="';
 					h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
@@ -547,8 +547,8 @@ function addPanelStyle(type) {
 	}
 }
 
-function addQType(type) {
-	if(type === "string") {
+function addQType(type, calculation) {
+	if(type === "string" && !calculation) {
 		return '<span class="glyphicon glyphicon-font edit_type"></span>';	
 	} else if(type === "select1") {
 		return '<img class="edit_image" src="/images/select1_64.png">';
@@ -580,7 +580,7 @@ function addQType(type) {
 		return '<img class="edit_image" src="/images/linestring_64.png">';
 	} else if(type === "geopolygon") {
 		return '<img class="edit_image" src="/images/polygon_64.png">';
-	} else if(type === "calculate") {
+	} else if(type === "string" && calculation) {
 		return '<img class="edit_image" src="/images/calc_64.png">';
 	} else {
 		return '<span class="glyphicon glyphicon-record edit_type"></span>';
@@ -618,7 +618,7 @@ function getFeaturedMarkup(question) {
 	
 	if(selProperty === "label") {
 		h[++idx] = '<textarea class="labelProp" placeholder="Label"';
-		if(question.source != "user") {
+		if((question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation) {
 			h[++idx] = ' readonly tabindex="-1">';
 			h[++idx] = 'Label not required';
 		} else {
@@ -630,7 +630,7 @@ function getFeaturedMarkup(question) {
 		h[++idx] = '</textarea>';
 	} else if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
-			if(question.inMeta || question.source != "user") {
+			if(question.inMeta || question.source != "user" || question.calculation) {
 				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
 				h[++idx] = naMedia;
 				h[++idx] = '</div>';
@@ -836,12 +836,14 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 
 	}
 	
-	$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
-	$('.mediaProp', $gCurrentRow).off().click(function(){
-		event.preventDefault();	
-		var $this = $(this);
-		mediaPropSelected($this);
-	});
+	if($gCurrentRow) {
+		$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
+		$('.mediaProp', $gCurrentRow).off().click(function(){
+			event.preventDefault();	
+			var $this = $(this);
+			mediaPropSelected($this);
+		});
+	}
 }
 
 /*

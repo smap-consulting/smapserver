@@ -96,12 +96,12 @@ $(document).ready(function() {
             	document.forms.namedItem("uploadForm").reset();
             	
             	// Check for errors in the form
-            	if(data.status && data.status === "error") {
-            		$('#up_alert').show().removeClass('alert-danger,alert-success').addClass('alert-danger').html(getResponseHtml(data));
+            	if(data && data.status === "error") {
+            		$('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html(getResponseHtml(data));
             		var sendto = data.administrator || '';
             		$('#email_button').attr("href", "mailto:" + data.administrator + "?subject=Error loading template&body=" + msgToText(data));
             	} else {
-            		$('#up_alert').show().removeClass('alert-danger,alert-warning').addClass('alert-success').html("Template Loaded");
+            		$('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("Template Loaded");
             	}
             },
             error: function(xhr, textStatus, err) {
@@ -110,7 +110,11 @@ $(document).ready(function() {
   					$('#up_alert').alert();
 		              return;  // Not an error
 				} else {
-					$('#up_alert').show().removeClass('alert-success, alert-warning').addClass('alert-danger').html("Upload failed: " + err);
+					var msg = xhr.responseText;
+					if(msg && msg.indexOf("Content is not allowed in prolog") === 0) {
+						msg = "File is not a valid form definition. check that the file is of type .xls or .xml.";
+					}
+					$('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + msg);
 
 				}
             }
