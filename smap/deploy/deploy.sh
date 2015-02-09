@@ -33,6 +33,12 @@ then
         tar -xzf $deploy_from/fieldAnalysis.tgz -C /var/www/smap
 fi
 
+if [ -e $deploy_from/fieldManager.tgz ]
+then
+        echo "Updating fieldManager"
+        rm -rf /var/www/smap/fieldManager
+        tar -xzf $deploy_from/fieldManager.tgz -C /var/www/smap
+fi
 
 cp $deploy_from/fieldTask.apk /var/www/smap
 cp $deploy_from/smapUploader.jar /var/www/smap

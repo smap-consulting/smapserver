@@ -413,6 +413,11 @@ function mediaPropSelected($this) {
 	$('.mediaManage').hide();						// MEDIA
 	$('.mediaSelect').show();
 	$('#mediaModalLabel').html("Select Media File");
+	
+	// Only show relevant media
+	$('tr.image, tr.audio, tr.video,tr.unknown').hide();
+	$('tr.' + gElement).show();
+	
 	$('#mediaModal table').on('click', 'tbody tr', function(e) {
 		var $sel = $(this);
 		
@@ -861,6 +866,7 @@ function getUrl(o_id, s_ident, newVal, thumbs) {
 	} else {
 		url += "organisation/";
 		url += o_id;
+		url += "/";
 		if(thumbs) {
 			url += "thumbs/"; 
 		}
@@ -936,8 +942,9 @@ function refreshMediaView(data, sId) {
 		}
 		
 		for(i = 0; i < files.length; i++){
-			h[++idx] = '<tr>';
-			
+			h[++idx] = '<tr class="';
+			h[++idx] = files[i].type;
+			h[++idx] = '">';
 			h[++idx] = '<td>';
 				h[++idx] = '<span class="preview>';
 				h[++idx] = '<a href="';

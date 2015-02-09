@@ -68,12 +68,12 @@ public class MediaInfo {
 		if(sIdent == null) {
 			folderUrl = getUrlForSurveyId(sId, conn);
 		} else {
-			folderUrl = "/media/" + sIdent;
+			folderUrl = "media/" + sIdent;
 		}
 				
 		
 		if(folderUrl != null) {
-			folderPath = basePath + folderUrl;
+			folderPath = basePath + "/" + folderUrl;
 			folder = new File(folderPath);	
 			createFolders(folderPath);
 				
@@ -104,8 +104,8 @@ public class MediaInfo {
 			if(resultSet.next()) {
 				
 				organisationId = resultSet.getString(1);	
-				folderUrl = "/media/organisation/" + organisationId;
-				folderPath = basePath + folderUrl;
+				folderUrl = "media/organisation/" + organisationId;
+				folderPath = basePath + "/" + folderUrl;
 				folder = new File(folderPath);
 				
 				createFolders(folderPath);
@@ -155,8 +155,22 @@ public class MediaInfo {
 				if(server != null) {
 					mi.url = server + folderUrl + "/" + mi.name;
 					
+					System.out.println("Url: " + mi.url);
 					String contentType = UtilityMethods.getContentType(mi.name);
 					String thumbName = mi.name;
+					
+					System.out.println("Content Type: " + contentType);
+					// Set type
+					if(contentType.startsWith("image")) {
+						mi.type = "image";
+					} else if(contentType.startsWith("video")) {
+						mi.type = "video";
+					} else if(contentType.startsWith("audio")) {
+						mi.type = "audio";
+					} else {
+						mi.type = "unknown";
+					}
+					
 					if(!contentType.startsWith("image")) {		// Thumbnail has extension png
 						
 						int idx = mi.name.lastIndexOf('.');
@@ -164,8 +178,9 @@ public class MediaInfo {
 							thumbName = mi.name.substring(0, idx + 1) + "png";
 						}
 					}
+					
 					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
-					mi.deleteUrl = server + "surveyKPI/upload" + folderUrl + "/" + mi.name; 
+					mi.deleteUrl = server + "surveyKPI/upload" + "/" + folderUrl + "/" + mi.name; 
 				} else {
 					System.out.println("Error: $$$$$$$ Server is null");
 				}
@@ -202,7 +217,7 @@ public class MediaInfo {
 			if(resultSet.next()) {
 				
 				survey_ident = resultSet.getString(1);
-				url = "/media/" + survey_ident;
+				url = "media/" + survey_ident;
 				
 				
 			} else {

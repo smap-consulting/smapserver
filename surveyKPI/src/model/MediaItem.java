@@ -25,6 +25,7 @@ public class MediaItem {
 	public String thumbnailUrl;	
 	public String deleteUrl;		
 	public String deleteType;
+	public String type;
 	
 	// The following are used when updating the link between files and questions / options on the server
 	/*

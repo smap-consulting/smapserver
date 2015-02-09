@@ -87,10 +87,18 @@ fi
 
 
 # version 15.01
-if [ $version -lt "1411" ]
+if [ $version -lt "1501" ]
 then
 echo "Applying patches for version 15.01"
 sudo mkdir /smap/media/organisation
 sudo chown -R tomcat7 /smap/media
 fi
-echo "1412" > ~/smap_version
+echo "1501" > ~/smap_version
+
+# version 15.02
+if [ $version -lt "1502" ]
+then
+echo "Applying patches for version 15.02"
+sudo rm /var/lib/tomcat7/webapps/fieldManager.war
+fi
+echo "1501" > ~/smap_version
