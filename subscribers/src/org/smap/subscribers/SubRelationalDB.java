@@ -168,7 +168,7 @@ public class SubRelationalDB extends Subscriber {
 			Authorise a = new Authorise(null, Authorise.ENUM);
 			SurveyManager sm = new SurveyManager();
 			survey = sm.getSurveyId(connection, templateName);	// Get the survey from the templateName / ident
-			boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
+			//boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
 			try {
 				if (connection != null) {
 					connection.close();
@@ -177,10 +177,10 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Failed to close connection");
 			    e.printStackTrace();
 			}
-			if(!isAuthorised) {
-				throw new Exception("The user " + remoteUser + 
-						" was not allowed to submit this survey(" + templateName + ")");
-			}	
+			//if(!isAuthorised) {
+			//	throw new Exception("The user " + remoteUser + 
+			//			" was not allowed to submit this survey(" + templateName + ")");
+			//}	
 			
 		} catch (Exception e) {
 			e.printStackTrace();
