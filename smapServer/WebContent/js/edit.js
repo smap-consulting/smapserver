@@ -136,6 +136,8 @@ $(document).ready(function() {
 		$('#mediaModal table').off();
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
+		// Make sure all types of media are shown
+		$('tr.image, tr.audio, tr.video,tr.unknown').show();
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
@@ -414,6 +416,9 @@ function mediaPropSelected($this) {
 	$('.mediaSelect').show();
 	$('#mediaModalLabel').html("Select Media File");
 	
+	// Remove any current selections
+	$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
+	
 	// Only show relevant media
 	$('tr.image, tr.audio, tr.video,tr.unknown').hide();
 	$('tr.' + gElement).show();
@@ -677,7 +682,7 @@ function addMedia(label, mediaIdent, url, thumbUrl) {
 	h[++idx] = '<div class="col-sm-3 ';
 	h[++idx] = lcLabel;
 	h[++idx] = 'Element">';
-	if(mediaIdent && (thumbUrl || (lcLabel === "image" && url))) {
+	if(mediaIdent) {
 		h[++idx] = '<a target="_blank" href="';
 		h[++idx] = url
 		h[++idx] = '"';
@@ -702,7 +707,7 @@ function addMedia(label, mediaIdent, url, thumbUrl) {
 		h[++idx] = emptyMedia;
 	}
 
-	if(mediaIdent && (thumbUrl || (lcLabel === "image" && url))) {
+	if(mediaIdent) {
 		h[++idx] = '</a>';
 	} else {
 		h[++idx] = '</div>';
@@ -833,7 +838,7 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 		
 	} else if(element === "audio") {
 		
-		markup = addMedia("Video", 
+		markup = addMedia("Audio", 
 				newVal, 
 				getUrl(survey.o_id, survey.ident, newVal, false), 
 				undefined
