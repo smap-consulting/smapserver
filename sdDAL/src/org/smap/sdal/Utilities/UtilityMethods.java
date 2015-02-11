@@ -615,7 +615,6 @@ public class UtilityMethods {
 	 */
 	public static void createThumbnail(String name, String path, File file) {
 		
-		String imagesPath = "/var/lib/tomcat7/webapps/surveyKPI/images/";
 		String contentType = getContentType(name);
 		String source = path + "/" + name;
 		String dest = path + "/thumbs/" + name;
@@ -627,11 +626,12 @@ public class UtilityMethods {
 		}
 		
 		String cmd = null;
+		log.info("Creating thumbnail for content type: " + contentType);
 		if(contentType.startsWith("image")) {
-			cmd = "/usr/bin/convert -thumbnail 100x100 " + source+ " " + dest;
-		} else if (contentType.equals("text/csv")) {
-			cmd = "/bin/cp " + imagesPath + "csv.png " + destRoot + "png";
-		}
+			cmd = "/usr/bin/convert -thumbnail 100x100 " + source + " " + dest;
+		} else if(contentType.startsWith("video")) {
+			cmd = "/usr/bin/ffmpeg -i " + source + " -vf scale=-1:100 -vframes 1 " + destRoot + "jpg";
+		} 
 		
 		log.info("Exec: " + cmd);
 		

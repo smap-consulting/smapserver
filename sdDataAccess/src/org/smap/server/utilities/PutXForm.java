@@ -964,7 +964,11 @@ public class PutXForm {
 	    			
 	    		} else if (name.equals("calculate")) {
 	   				q.setCalculate(attribute.getNodeValue()); 
-	   				if(q.getType() == null || !q.getType().startsWith("begin")) {
+	   				
+	   				// Survey level manifests can be set in the appearance attribute
+	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);	
+	   				
+	   				if(q.getType() == null && !q.getType().startsWith("begin")) {
 	   					q.setSource("user");	// Set source as it may not have been set in the body
 	   				}
 	    		} else {

@@ -1024,7 +1024,6 @@ public class SurveyTemplate {
 					trans.setSurvey(survey);
 					trans.setLanguage(languages[langIndex]);
 					trans.setType("none");	// Default dummy translations to a type of "none"
-					System.out.println("Dummy Trans: " + trans.getSurvey().getId() + " : " + trans.getLanguage() + " : " + trans.getTextId() + " : " + trans.getType());
 					tPersist.persist(trans);
 				}
 			}
@@ -1308,6 +1307,58 @@ public class SurveyTemplate {
 						survey.setManifest(gson.toJson(mArray));
 					}
 				}
+			}
+		} 
+			
+	}
+	
+	/*
+	 * Add a survey level manifest such as a csv file from an calculate attribute
+	 */
+	public void addManifestFromCalculate(String calculate, String questionRef) {
+		
+		// Check to see if this appearance references a manifest file
+		if(calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
+			
+			// Yes it references a manifest
+			// Get all the pulldata functions from this calculate
+			
+			int idx1 = calculate.indexOf("pulldata");
+			while(idx1 >= 0) {
+				idx1 = calculate.indexOf('(', idx1);
+				int idx2 = calculate.indexOf(')', idx1);
+				if(idx1 >= 0 && idx2 > idx1) {
+					String criteriaString = calculate.substring(idx1 + 1, idx2);
+					
+					String criteria [] = criteriaString.split(",");
+					
+					if(criteria.length > 0) {
+						
+						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+							String filename = criteria[0].trim();
+							filename = filename.substring(1, filename.length() -1);
+							filename += ".csv";
+							log.info("We have found a manifest link to " + filename);
+							
+							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+							
+							String manifestString = survey.getManifest();
+							ArrayList<String> mArray = null;
+							if(manifestString == null) {
+								mArray = new ArrayList<String>();
+							} else {
+								Type type = new TypeToken<ArrayList<String>>(){}.getType();
+								mArray = gson.fromJson(manifestString, type);	
+							}
+							if(!mArray.contains(filename)) {
+								mArray.add(filename);
+							}
+		
+							survey.setManifest(gson.toJson(mArray));
+						}
+					}
+					idx1 = calculate.indexOf("pulldata(", idx2);
+				}				
 			}
 		} 
 			

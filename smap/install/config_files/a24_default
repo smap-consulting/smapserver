@@ -72,11 +72,11 @@ ExpiresActive On
 
 # Local access points for webforms
     <Location /formXMLLocal>
-       	Require ip  127.0.0.1
+       	Require host  localhost
 	</Location>
 
 	<Location /instanceXMLLocal>
-    	Require ip  127.0.0.1
+    	Require host  localhost
 	</Location>
 	    	
 	# survey mobile API module. Require enumerator access

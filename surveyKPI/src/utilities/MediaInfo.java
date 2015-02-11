@@ -171,15 +171,21 @@ public class MediaInfo {
 						mi.type = "unknown";
 					}
 					
-					if(!contentType.startsWith("image")) {		// Thumbnail has extension png
+					if(!contentType.startsWith("image")) {		// Thumbnail has extension jpg
 						
 						int idx = mi.name.lastIndexOf('.');
 						if(idx > 0) {
-							thumbName = mi.name.substring(0, idx + 1) + "png";
+							thumbName = mi.name.substring(0, idx + 1) + "jpg";
 						}
 					}
 					
-					mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
+					if(contentType.startsWith("text")) {
+						mi.thumbnailUrl = "/images/csv.png";
+					} else if(contentType.startsWith("audio")) {
+						mi.thumbnailUrl = "/images/audio.png";
+					} else {
+						mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
+					}
 					mi.deleteUrl = server + "surveyKPI/upload" + "/" + folderUrl + "/" + mi.name; 
 				} else {
 					System.out.println("Error: $$$$$$$ Server is null");

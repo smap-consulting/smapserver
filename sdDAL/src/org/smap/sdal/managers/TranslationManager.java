@@ -71,7 +71,7 @@ public class TranslationManager {
 				manifestQuerySql;
 		PreparedStatement pstmtQuestionLevel = null;
 		
-		String sqlSurveyLevel = "select manifest from survey where s_id = ?; ";
+		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null; ";
 		PreparedStatement pstmtSurveyLevel = null;
 		
 		try {
@@ -111,6 +111,8 @@ public class TranslationManager {
 			 */
 			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
 			pstmtSurveyLevel.setInt(1, surveyId);
+			log.info("SQL:" + pstmtSurveyLevel.toString());
+			
 			rs = pstmtSurveyLevel.executeQuery();
 			if(rs.next()) {
 				String manifestString = rs.getString(1);
@@ -168,6 +170,8 @@ public class TranslationManager {
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
 			pstmtQuestionLevel.setString(1, user);
 			pstmtQuestionLevel.setInt(2, surveyId);
+			
+			log.info("SQL: " + pstmtQuestionLevel.toString());
 			resultSet = pstmtQuestionLevel.executeQuery();
 			
 			if(resultSet.next()) {

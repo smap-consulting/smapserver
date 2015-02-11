@@ -135,12 +135,19 @@ $(document).ready(function() {
 		window.location.href = docURL;
 	});
 	
+	// On change of template name, hide any previous results
+	$('#templateName').keydown(function(){
+		$('#up_alert').hide();
+	});
+	
 	// Change function on file selected
 	$('#file').change(function(){
 		var templateName = $('#templateName').val();
 		var $this = $(this);
 		var fileName = $this[0].files[0].name;
 		var newTemplateName;
+		
+		$('#up_alert').hide();
 		
 		if(templateName && templateName.trim().length > 0) {
 			// ignore - leave user specified name

@@ -142,6 +142,11 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
+		// Set the default destination as organisation rather than survey level files
+		gUrl = gBaseUrl;
+		$('#survey_id').val("");				// clear the survey id in the forms hidden field
+		gIsSurveyLevel = false;
+		
 		$('#mediaModal').modal('show');
 
 	});
@@ -219,9 +224,6 @@ $(document).ready(function() {
 	/*
 	 * Set up media files
 	 */
-	gSId = undefined;
-	gUrl = gBaseUrl;
-	$('#survey_id').val("");				// clear the survey id in the forms hidden field
     $('#surveyLevelTab a').click(function (e) {
     	if(gSId) {
     		e.preventDefault();
@@ -950,15 +952,22 @@ function refreshMediaView(data, sId) {
 			h[++idx] = '<tr class="';
 			h[++idx] = files[i].type;
 			h[++idx] = '">';
-			h[++idx] = '<td>';
-				h[++idx] = '<span class="preview>';
-				h[++idx] = '<a href="';
-				h[++idx] = files[i].url;
-				h[++idx] = '"><img src="';
+			h[++idx] = '<td class="preview">';
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = files[i].url;
+			h[++idx] = '">';
+			if(files[i].type == "audio") {
+				h[++idx] = addQType("audio");
+			} else {
+				h[++idx] = '<img src="';
 				h[++idx] = files[i].thumbnailUrl;
 				h[++idx] = '" alt="';
 				h[++idx] = files[i].name;
-				h[++idx] = '"></a>';
+				h[++idx] = '">';
+			}
+			h[++idx] = '</a>';
+
+
 			h[++idx] = '</td>';
 			h[++idx] = '<td class="filename">';
 				h[++idx] = '<p>';
@@ -1005,9 +1014,9 @@ function delete_media(url) {
 			
 			var address = url;
 			if(url.indexOf('organisation') > 0) {
-				refreshView(data);
+				refreshMediaView(data);
 			} else {
-				refreshView(data, gSId);
+				refreshMediaView(data, gSId);
 			}
 	
 		},

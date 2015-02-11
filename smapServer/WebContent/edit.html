@@ -255,6 +255,7 @@
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
      			<h4 class="modal-title" id="mediaModalLabel"></h4>
    			</div>
+   			<div class="container">
 		    <div class="modal-body row">
    				<ul class="nav nav-tabs" role="tablist">
        				<li id="orgLevelTab" role="presentation" class="active"><a href="#">Organisation</a></li>
@@ -266,7 +267,7 @@
    				<form enctype="multipart/form-data" name="fileupload">
        
        			<input id="survey_id" type="hidden" name="survey_id" >
-       			<!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
+       			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
        			<div class="row fileupload-buttonbar mediaManage">
            			<div class="col-lg-7">
                 		<!-- The fileinput-button span is used to style the file input field as button -->
@@ -281,11 +282,7 @@
                     		<i class="glyphicon glyphicon-ban-circle"></i>
                     		<span>Cancel upload</span>
                 		</button>
-                		<button type="button" class="btn btn-danger delete">
-                    		<i class="glyphicon glyphicon-trash"></i>
-                    		<span>Delete</span>
-                		</button>
-                		<input type="checkbox" class="toggle">
+                		
                 		<!-- The global file processing state -->
                 		<span class="fileupload-process"></span>
            			</div>
@@ -333,7 +330,7 @@
 		    	</div>
 	
 			</div>	<!-- End Body -->
-
+			</div>
 
 			<div class="modal-footer">
 	           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>

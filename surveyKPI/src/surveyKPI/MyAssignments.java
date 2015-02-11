@@ -349,7 +349,7 @@ public class MyAssignments extends Application {
 			
 			pstmtGetSettings = connectionSD.prepareStatement(sql);	
 			pstmtGetSettings.setString(1, userName);
-			log.info("Getting settings: " + sql + " : " + userName);
+			log.info("Getting settings: " + pstmtGetSettings.toString());
 			resultSet = pstmtGetSettings.executeQuery();
 			
 			if(resultSet.next()) {

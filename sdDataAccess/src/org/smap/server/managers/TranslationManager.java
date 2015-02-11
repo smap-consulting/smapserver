@@ -133,7 +133,6 @@ public class TranslationManager {
 					em.persist(trans);
 				}
 			}
-			System.out.println("Committing language");
 			em.getTransaction().commit();			
 
 		} catch (PersistenceException e) {
