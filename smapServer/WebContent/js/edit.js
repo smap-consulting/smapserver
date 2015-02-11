@@ -71,7 +71,8 @@ var gUrl,			// url to submit to
 var gNewVal,
 	gSelFormId,
 	gSelId,
-	gOptionListKey,
+	gOptionList,
+	gQname,
 	gElement,
 	gNewVal,
 	gIsSurveyLevel;
@@ -124,7 +125,7 @@ $(document).ready(function() {
 		$('#openFormModal').modal('show');
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
-		globals.model.save();
+		globals.model.save(surveyListDone);
 	});
 
 	// Add menu functions
@@ -310,7 +311,12 @@ $(document).ready(function() {
      */
 	$('#mediaSelectSave').click(function() {
 		if(gNewVal) {
-			updateLabel("question", gSelFormId, gSelId, gOptionListKey, gElement, gNewVal);
+			if(gOptionList) {
+				type = "option";
+			} else {
+				type = "question";
+			}
+			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname);
 		}
 	});
 });
@@ -389,9 +395,16 @@ function refreshView() {
 			formIndex = $parent.data("fid"),
 			itemIndex = $parent.data("id"),
 			newVal = $this.val(),
-			optionListKey ="xx";			// TODO options
+			type,
+			optionList = $parent.data("list_name"),
+			qname = $parent.data("qname");
 		
-		updateLabel("question", formIndex, itemIndex, optionListKey, "text", newVal); // TODO Hint
+		if($parent.hasClass("option")) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname); // TODO Hint
 
 	});
 	
@@ -411,7 +424,8 @@ function mediaPropSelected($this) {
 	gElement = $this.data("element");
 	gSelFormId = $parent.data("fid");
 	gSelId = $parent.data("id");
-	gOptionListKey =""; // TODO
+	gOptionList = $parent.data("list_name"); 
+	gQname = $parent.data("qname"); 
 	$gCurrentRow = $parent;
 		
 	$('.mediaManage').hide();						// MEDIA
@@ -521,7 +535,7 @@ function addOneQuestion(question, fId, id) {
 					h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 					h[++idx] = question.name;
 					h[++idx] = '" type="text"></td>';
-					h[++idx] = addFeaturedProperty(question, fId, id, "question");
+					h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
 					h[++idx] = '<td class="q_icons_col">';
 						//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
 						h[++idx] = '<a data-toggle="collapse"  href="#collapse';
@@ -602,19 +616,33 @@ function addQType(type, calculation) {
 /*
  * One of the questions properties will be featured so that it can be edited in the header without expanding the question
  */
-function addFeaturedProperty(question, fId, id, type) {
+function addFeaturedProperty(question, fId, id, list_name, qname) {
 	
 	var h = [],
-		idx = -1;		
-		
+		idx = -1,
+		type = "question";
+	
+	if(list_name) {
+		type = "option";
+	}
+	
 	h[++idx] = '<td class="q_label_col ';
 	h[++idx] = type;
 	h[++idx] = '" data-fid="';
 	h[++idx] = fId;
 	h[++idx] = '" data-id="';
 	h[++idx] = id;
+	if(qname) {
+		h[++idx] = '" data-qname="';
+		h[++idx] = qname;
+	}
+	if(list_name) {
+		h[++idx] = '" data-list_name="';
+		h[++idx] = list_name;
+		type = "option";
+	}
 	h[++idx] = '">';
-	h[++idx] = getFeaturedMarkup(question);
+	h[++idx] = getFeaturedMarkup(question, type);
 	h[++idx] = '</td>';
 	return h.join("");
 }
@@ -622,7 +650,7 @@ function addFeaturedProperty(question, fId, id, type) {
 /*
  * Get Featured Markup for the question
  */
-function getFeaturedMarkup(question) {
+function getFeaturedMarkup(question, type) {
 	var h = [],
 		idx = -1,
 		selProperty = $('#selProperty').val(),
@@ -630,7 +658,7 @@ function getFeaturedMarkup(question) {
 	
 	if(selProperty === "label") {
 		h[++idx] = '<textarea class="labelProp" placeholder="Label"';
-		if((question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation) {
+		if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
 			h[++idx] = ' readonly tabindex="-1">';
 			h[++idx] = 'Label not required';
 		} else {
@@ -642,7 +670,7 @@ function getFeaturedMarkup(question) {
 		h[++idx] = '</textarea>';
 	} else if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
-			if(question.inMeta || question.source != "user" || question.calculation) {
+			if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
 				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
 				h[++idx] = naMedia;
 				h[++idx] = '</div>';
@@ -767,7 +795,7 @@ function addOptions(question, fId) {
 	
 	if(options) {
 		for(i = 0; i < options.length; i++) {
-			h[++idx] = addOneOption(options[i], fId, i);
+			h[++idx] = addOneOption(options[i], fId, i, question.list_name, question.name);
 		}
 	}
 	return h.join("");
@@ -776,7 +804,7 @@ function addOptions(question, fId) {
 /*
  * Add a single option
  */
-function addOneOption(option, fId, id) {
+function addOneOption(option, fId, id, list_name, qname) {
 	var h = [],
 		idx = -1;
 
@@ -784,7 +812,7 @@ function addOneOption(option, fId, id) {
 	h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 	h[++idx] = option.value;
 	h[++idx] = '" type="text"></td>';
-	h[++idx] = addFeaturedProperty(option, fId, id, "option");
+	h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
 	//h[++idx] = '<td class="q_icons_col">';	TODO Add Deletion
 	//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
 	//h[++idx] = '</td>';
@@ -801,7 +829,7 @@ function addOneOption(option, fId, id) {
  *  newVal: The new value for the label
  *  type: question || option
  */
-function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal) {
+function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname) {
 	
 	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
 		markup,
@@ -814,7 +842,8 @@ function updateLabel(type, formIndex, itemIndex, optionListKey, element, newVal)
 		});
 	} else {
 		item.push({
-			optionList: optionListKey,
+			optionList: optionList,
+			qname: qname,
 			option: itemIndex
 		});
 	}

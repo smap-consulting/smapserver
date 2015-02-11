@@ -248,7 +248,7 @@ function initialiseReportMap(bounds) {
 	reportMap.addLayer(markers);
 	size = new OpenLayers.Size(21,25);
 	offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-	icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+	icon = new OpenLayers.Icon('/images/blue-marker.png', size, offset);
 		
 	// Map Controls
 	reportMap.addControl(new OpenLayers.Control.Zoom());

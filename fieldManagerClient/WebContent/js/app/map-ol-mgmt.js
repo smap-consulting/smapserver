@@ -168,7 +168,7 @@ function incrementNewTaskCount() {
 function addMarker(lonlat, clearOld) {
     var size = new OpenLayers.Size(21,25);	
     var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-	var icon = new OpenLayers.Icon('images/blue-marker.png', size, offset);   
+	var icon = new OpenLayers.Icon('/images/blue-marker.png', size, offset);   
     var markerslayer = map.getLayer('Markers');
     if(clearOld) {
     	markerslayer.clearMarkers();

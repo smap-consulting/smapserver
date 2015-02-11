@@ -260,7 +260,7 @@ define(function() {
 	
 		
 		// Save the survey
-		this.save = function() {
+		this.save = function(callback) {
 			
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
 			var changesString = JSON.stringify(this.changes);
@@ -274,10 +274,16 @@ define(function() {
 				cache: false,
 				data: { changes: changesString },
 				success: function(data) {
+					var responseFn = callback;
+					
 					removeHourglass();
+					
 					// Reset the set of pending updates
 					globals.model.setHasChanges(0);
-					getSurveyDetails(surveyDetailsDone);
+					//getSurveyDetails(surveyDetailsDone);
+					if(typeof responseFn === "function") { 
+						responseFn();
+					}
 					
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
@@ -406,7 +412,8 @@ define(function() {
 			
 			var i,
 				label = {},
-				item;
+				item,
+				qname;
 				
 			
 			for(i = 0; i < changedQ.length; i++) {
@@ -419,9 +426,11 @@ define(function() {
 					label.type = "question";
 					item = this.survey.forms[label.formIdx].questions[label.questionIdx];
 					label.name = item.name;	
+					label.qId = item.id;
 				} else {
 					// For options
 					label.optionListIdx = changedQ[i].optionList;
+					qname = changedQ[i].qname;
 					label.optionIdx = changedQ[i].option;
 					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];
 					label.type = "option";
@@ -435,14 +444,18 @@ define(function() {
 				
 				label.languageName = this.survey.languages[language];			// For logging the event
 				var form = this.survey.forms[label.formIdx];
-				var question = this.survey.forms[label.formIdx].questions[label.questionIdx];
+
 				if(item.text_id) {
 					label.key = item.text_id;
 				} else {
-					// Create reference for this new Label					
-					label.key = "/" + form.name + "/" + question.name + ":label";	// TODO hint
+					// Create reference for this new Label		
+					if(typeof changedQ[i].form !== "undefined") {
+						label.key = "/" + form.name + "/" + item.name + ":label";	// TODO hint
+					} else {
+						label.key = "/" + form.name + "/" + qname + "/" + item.name + ":label";
+					}
 				}
-				label.qId = question.id;
+
 				
 				labelMod.items.push(label);
 			}

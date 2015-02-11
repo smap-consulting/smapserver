@@ -88,10 +88,10 @@ function setTableSurvey(view) {
 	}
 
 	// Enable the export and delete button
-	$selFoot.find('.tExport').button().click(function() {
+	$selFoot.find('.tExport').button().off().click(function() {
 		exportTable($(this), view);
 	});
-	$selFoot.find('.tDelete').button().click(function() {
+	$selFoot.find('.tDelete').button().off().click(function() {
 		deleteAllTables(view.sId);
 	});
 
