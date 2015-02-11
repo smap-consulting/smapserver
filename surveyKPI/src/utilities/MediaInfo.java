@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
@@ -127,7 +128,7 @@ public class MediaInfo {
 	}
 	
 	public void setServer(String url) {
-		System.out.println("### Setting server with: " + url);
+
 		if(url != null) {
 			int a = url.indexOf("//");
 			int b = url.indexOf("/", a + 2);
@@ -135,7 +136,7 @@ public class MediaInfo {
 				server = url.substring(0, b) + "/";
 			}
 		}
-		System.out.println("Server is: " + server);
+
 	}
 	
 	/*
@@ -155,11 +156,9 @@ public class MediaInfo {
 				if(server != null) {
 					mi.url = server + folderUrl + "/" + mi.name;
 					
-					System.out.println("Url: " + mi.url);
 					String contentType = UtilityMethods.getContentType(mi.name);
 					String thumbName = mi.name;
 					
-					System.out.println("Content Type: " + contentType);
 					// Set type
 					if(contentType.startsWith("image")) {
 						mi.type = "image";
@@ -188,7 +187,7 @@ public class MediaInfo {
 					}
 					mi.deleteUrl = server + "surveyKPI/upload" + "/" + folderUrl + "/" + mi.name; 
 				} else {
-					System.out.println("Error: $$$$$$$ Server is null");
+					log.log(Level.SEVERE, "Media Server is null");
 				}
 				mi.deleteType = "DELETE";
 				media.add(mi);

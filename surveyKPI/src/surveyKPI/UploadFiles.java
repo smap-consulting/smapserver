@@ -244,7 +244,7 @@ public class UploadFiles extends Application {
 				basePath = "/ebs1/servers/" + serverName.toLowerCase();
 			}
 			
-			deleteFile(basePath, serverName, null, oId, filename);
+			deleteFile(basePath, serverName, null, oId, filename, request.getRemoteUser());
 			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
@@ -293,7 +293,7 @@ public class UploadFiles extends Application {
 				basePath = "/ebs1/servers/" + serverName.toLowerCase();
 			}
 			
-			deleteFile(basePath, serverName, sIdent, 0, filename);
+			deleteFile(basePath, serverName, sIdent, 0, filename, request.getRemoteUser());
 			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
@@ -483,21 +483,44 @@ public class UploadFiles extends Application {
 	/*
 	 * Delete the file
 	 */
-	private void deleteFile(String basePath, String serverName, String sIdent, int oId, String filename) {
+	private void deleteFile(String basePath, String serverName, String sIdent, int oId, String filename, String user) {
 		
 		String path = null;
+		String thumbsFolder = null;
+		String fileBase = null;
 		
-		
+		int idx = filename.lastIndexOf('.');
+		if(idx >= 0) {
+			fileBase = filename.substring(0, idx);
+		}
 		
 		if(filename != null) {
 			if(sIdent != null) {
 				path = basePath + "/media/" + sIdent + "/" + filename;
+				if(fileBase != null) {
+					thumbsFolder = basePath + "/media/" + sIdent + "/thumbs";
+				}
 			} else if( oId > 0) {
 				path = basePath + "/media/organisation/" + oId + "/" + filename;
+				if(fileBase != null) {
+					thumbsFolder = basePath + "/media/organisation/" + oId + "/thumbs";
+				}
 			}
 			
 			File f = new File(path);
 			f.delete();
+			log.info("userevent: " + user + " : delete media file : " + filename);
+			
+			// Delete any matching thumbnails
+			if(fileBase != null) {
+				File thumbs = new File(thumbsFolder);
+				for(File thumb : thumbs.listFiles()) {
+					if(thumb.getName().startsWith(fileBase)) {
+						thumb.delete();
+					}
+				}
+			}
+			
 		}
 		
 			
