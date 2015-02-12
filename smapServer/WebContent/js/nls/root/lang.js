@@ -125,7 +125,7 @@ define({
 	
 	// Analysis
 	"a_exp_title": "Export Results",
-	"a_exp_leg1": "Select a form",
+	"a_exp_leg1": "Select a survey",
 	"a_exp_leg2": "Output format:",
 	"a_exp_notes": "Export notes:",
 	"a_exp_split": "Split lat / lon:",
@@ -159,6 +159,7 @@ define({
 	"msg_add_notification": "Add Notification",
 	"msg_edit_notification": "Edit Notification",
 	"msg_sel_form": "Select Form:",
+	"msg_sel_media": "Select Media Question:",
 	"msg_err_save": "Error: Save failed: ",
 	"msg_err_del": "Error: Delete failed: ",
 	"msg_err_upd": "Error: Update failed: ",

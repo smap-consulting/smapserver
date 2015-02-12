@@ -159,7 +159,7 @@ $(document).ready(function() {
 		} else {
 			addFormPickList(sMeta);
 		}
-		
+
 		// Update the thingsat model if we changed the survey
 		if($('#exportformat').val() === "thingsat") {
 			showModel();
@@ -178,23 +178,27 @@ $(document).ready(function() {
 		
 		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia').hide();
 			$('.showosm,.showro,.showlang').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
+			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showshape,.showro,.showlang').show();
 		} else if(format === "stata") {
-			$('.showxls,.showosm,.showthingsat').hide();
+			$('.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		} else if(format === "thingsat") {
-			$('.showxls,.showosm').hide();
+			$('.showxls,.showosm, .showmedia').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 			showModel();			// Show the thingsat model
 		} else if(format === "trail") {
-			$('.showxls,.showosm,.showro,.showlang,.showthingsat').hide();
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia').hide();
 			$('.showshape,.showspreadsheet').show();
+		} else if(format === "media") {
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia').hide();
+			$('.showshape,.showspreadsheet,.showmedia, .showlang').show();
+			showMediaList();
 		} else {
-			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showxls,.showspreadsheet,.showro,.showlang').show();
 		}
 	});
@@ -340,6 +344,9 @@ function showModel() {
 		}
 	});
 }
+
+
+
 /*
  * Add a list of forms to pick from during export
  */
