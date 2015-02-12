@@ -369,14 +369,24 @@ public class NotificationManager {
 							}
 							emails += email;
 						}
+						String subject = "Smap Notification";
+						if(nd.subject != null) {
+							subject = nd.subject;
+						}
+						String from = "smap";
+						if(nd.from != null) {
+							from = nd.from;
+						}
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
 						
 						try {
-							UtilityMethods.sendEmail(emails, 
+							UtilityMethods.sendEmail(
+									emails, 
 									null, 
 									"notify", 
-									"Smap Notification", 
+									subject, 	
+									from,		
 									null, 
 									null, 
 									null, 

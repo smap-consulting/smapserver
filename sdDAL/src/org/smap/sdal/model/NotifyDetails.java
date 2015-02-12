@@ -6,5 +6,6 @@ public class NotifyDetails {
 	public ArrayList<String> emails;
 	public String smtp_host = null;
 	public String from = null;
+	public String subject = null;
 	
 }

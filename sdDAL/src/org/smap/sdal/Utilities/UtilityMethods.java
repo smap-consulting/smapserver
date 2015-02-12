@@ -422,6 +422,7 @@ public class UtilityMethods {
 			String uuid, 
 			String type, 
 			String subject,
+			String sender,
 			String adminName,
 			String interval,
 			ArrayList<String> idents,
@@ -449,6 +450,7 @@ public class UtilityMethods {
 			}
 		    msg.setRecipients(rt,	InternetAddress.parse(email, false));
 		    msg.setSubject(subject);
+		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
 		    
 		    StringBuffer identString = new StringBuffer();
 	    	int count = 0;

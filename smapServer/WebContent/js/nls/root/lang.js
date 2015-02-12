@@ -74,6 +74,7 @@ define({
 	"c_node": "Node",
 	"c_relation": "Relation",
 	"c_from": "From",
+	"c_subject": "Subject",
 	"c_to": "To",
 	"c_properties": "Properties",
 	"c_question": "Question",

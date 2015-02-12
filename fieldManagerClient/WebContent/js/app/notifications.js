@@ -167,6 +167,8 @@ function saveEmail() {
 	notification.target = "email";
 	notification.notifyDetails = {};
 	notification.notifyDetails.emails = $('#notify_emails').val().split(";");
+	notification.notifyDetails.from = $('#from_email').val();
+	notification.notifyDetails.subject = $('#email_subject').val();
 	
 	return notification;
 }
@@ -242,6 +244,8 @@ function edit_notification(idx) {
 		$('#survey').val(notification.s_name);
 		if(notification.notifyDetails && notification.notifyDetails.emails) {
 			$('#notify_emails').val(notification.notifyDetails.emails.join(";"));
+			$('#from_email').val(notification.notifyDetails.from);
+			$('#email_subject').val(notification.notifyDetails.subject);
 		}
 		$('#fwd_rem_survey_id').val(notification.remote_s_ident);
 		$('#fwd_rem_survey_nm').val(notification.remote_s_name);	
