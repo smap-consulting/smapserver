@@ -17,6 +17,10 @@ then
 	pgsql2shp -f $4/$2 -u ws -P ws1234 $1 "$3"
 	zip -rj $4.zip $4
 fi
+if [ "$5" = "media" ]
+then
+	zip -rj $4.zip $4
+fi
 if [ "$5" = "kml" ]
 then
 	rm $4.kml

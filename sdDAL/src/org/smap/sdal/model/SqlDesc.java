@@ -10,4 +10,5 @@ public class SqlDesc {
 	public int numberFields = 0;	// Shapefile is limited to 255 - make sure there is space for the geometry
 	public String geometry_type = null;
 	public String sql;
+	public boolean gotPriKey = false;
 }
