@@ -56,6 +56,7 @@ public class CSVFilter {
 				
 				r1 = new Rule();
 				r1.column = -1;
+				
 				// Ignore file name which is first criterion
 				for(int i = 1; i < criteria.length; i++) {						
 									
@@ -116,13 +117,45 @@ public class CSVFilter {
 						} else {
 							log.info("Info dynamic filter value are not supported: ");
 							return;
-						}
-						
-						
+						}	
 					}
 					
-					if(i == 4) {
-						// TODO add rules for extra filters
+					if(i == 4) {		// Filter column
+						
+						// remove quotes
+						criteria[i] = criteria[i].trim();
+						criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
+						log.info("++++ Filter criterion " + i + " " + criteria[i]);
+						
+						for(int j = 0; j < cols.length; j++) {
+							log.info("***: " + criteria[i] + " : " + cols[j]);
+							if (criteria[i].equals(cols[j])) {
+								r2 = new Rule();
+								r2.column = j;
+								r2.function = 4;		// Excatc match is only function supported by odk
+								break;
+							}	
+						}
+						if(r2 == null) {
+							log.info("Error: no matching column for filter ignore");
+						}
+					}
+					
+					// Filter Value to match
+					if(r2 != null && i == 5) {
+						
+						// Check for quotes - only strings are supported for filtering values
+						criteria[i] = criteria[i].trim();
+						if(criteria[i].charAt(0) == '\'') {
+							criteria[i] = criteria[i].substring(1, criteria[i].length() -1);
+							log.info("+++ Filter value criterion " + i + " " + criteria[i]);
+							
+							r2.value =  criteria[i];
+							
+						} else {
+							log.info("Info dynamic filter value are not supported: Filter will be ignored.");
+							r2 = null;
+						}	
 					}
 				}
 				includeAll = false;
@@ -166,7 +199,9 @@ public class CSVFilter {
 			
 			if(include) {	// Check the secondary filter
 				if(r2 != null) {
-					// TODO 
+					if(!cols[r2.column].equals(r2.value)) {
+						include = false;
+					}
 				}
 			}
 		}

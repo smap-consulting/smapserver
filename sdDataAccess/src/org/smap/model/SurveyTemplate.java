@@ -1504,9 +1504,6 @@ public class SurveyTemplate {
 										"select",
 										appearance);
 					
-									for(ChangeItem ci : cs.items) {
-										System.out.println("################## " + ci.key + " : " + ci.newVal);
-									}
 								}
 							}
 						}
