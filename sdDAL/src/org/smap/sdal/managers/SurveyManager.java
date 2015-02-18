@@ -225,7 +225,7 @@ public class SurveyManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, user);
 			
-			System.out.println(pstmt.toString() + " : " + user);
+			log.info("Get a survey by organisation id: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 	
 			while (resultSet.next()) {								
@@ -318,8 +318,8 @@ public class SurveyManager {
 			/*
 			 * Get the questions for this form
 			 */
-			System.out.println("SQL: " + sqlGetQuestions + " : " + f.id);
 			pstmtGetQuestions.setInt(1, f.id);
+			log.info("Get questions for form: " + pstmtGetQuestions.toString());
 			rsGetQuestions = pstmtGetQuestions.executeQuery();
 			
 			boolean inMeta = false;				// Set true if the question is in the meta group
@@ -463,9 +463,8 @@ public class SurveyManager {
 		PreparedStatement pstmt2 = null;
 		try {
 			pstmt = sd.prepareStatement(sql);	 			
-			pstmt.setString(1, key);
-			
-			System.out.println("Sql: " + sql + " : " + key);
+			pstmt.setString(1, key);			
+			log.info("Get survey id: " + pstmt.toString());
 	
 			resultSet = pstmt.executeQuery();
 	
@@ -480,7 +479,7 @@ public class SurveyManager {
 				int sId = Integer.parseInt(key);
 				pstmt2.setInt(1, sId);
 				
-				System.out.println("Sql2: " + sql2 + " : " + sId);
+				log.info("Sql: " + pstmt.toString());
 				
 				resultSet = pstmt2.executeQuery();
 				
@@ -490,7 +489,7 @@ public class SurveyManager {
 					s.setId(resultSet.getInt(2));
 					s.setBlocked(resultSet.getBoolean(3));
 				} else {			
-					System.out.println("Error: survey not found");
+					log.info("Error: survey not found");
 				}
 			}
 		} catch (SQLException e) {
@@ -569,7 +568,7 @@ public class SurveyManager {
 				Savepoint sp = connectionSD.setSavepoint();
 				try {
 					
-					System.out.println("applyChanges: " + cs.type);
+					log.info("applyChanges: " + cs.type);
 					if(cs.type.equals("label")) {
 						
 						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
@@ -589,7 +588,7 @@ public class SurveyManager {
 					// Failure
 					connectionSD.rollback(sp);
 					String msg = e.getMessage();
-					System.out.println(e.getMessage());
+					log.info("Error: " + e.getMessage());
 					cs.updateFailed = true;
 					cs.errorMsg = e.getMessage();
 					resp.failed++;
@@ -599,12 +598,12 @@ public class SurveyManager {
 			
 			if(resp.success > 0) {
 				connectionSD.commit();
-				System.out.println("Survey update to version: " + resp.version + ". " + 
+				log.info("Survey update to version: " + resp.version + ". " + 
 						resp.success + " successful changes and " + 
 						resp.failed + " failed changes");
 			} else {
 				connectionSD.rollback();
-				System.out.println("Survey version not updated: " + 
+				log.info("Survey version not updated: " + 
 						resp.success + " successful changes and " + 
 						resp.failed + " failed changes");
 			}
@@ -649,7 +648,9 @@ public class SurveyManager {
 		PreparedStatement pstmtLangOldVal = null;
 		PreparedStatement pstmtLangNew = null;
 		PreparedStatement pstmtNewQuestionLabel = null;
+		PreparedStatement pstmtDeleteLabel = null;
 		
+		log.info("Apply label changes");
 		try {
 			
 			// Create prepared statements, one for the case where an existing value is being updated
@@ -663,9 +664,12 @@ public class SurveyManager {
 			String sqlNewQLabel = "update question set qtext_id = ? where q_id = ?; ";
 			pstmtNewQuestionLabel = connectionSD.prepareStatement(sqlNewQLabel);
 			
+			String sqlDeleteLabel = "delete from translation where s_id = ? and text_id = ? and type = ?;";
+			pstmtDeleteLabel = connectionSD.prepareStatement(sqlDeleteLabel);
+			
 			for(ChangeItem ci : changeItemList) {
 			
-				if(ci.oldVal != null) {
+				if(ci.oldVal != null && ci.newVal != null) {
 					pstmtLangOldVal.setString(1, ci.newVal);
 					pstmtLangOldVal.setInt(2, sId);
 					pstmtLangOldVal.setString(3, ci.languageName);
@@ -678,32 +682,43 @@ public class SurveyManager {
 					pstmtLangOldVal.setString(5,  transType);
 					pstmtLangOldVal.setString(6, ci.oldVal);
 
-					log.info("SQL: " + pstmtLangOldVal.toString());
+					log.info("Update question translation: " + pstmtLangOldVal.toString());
 					
 					int count = pstmtLangOldVal.executeUpdate();
 					if(count == 0) {
-						System.out.println("Error: Element already modified");
+						log.info("Error: Element already modified");
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
 				} else {
-					pstmtLangNew.setString(1, ci.newVal);
-					pstmtLangNew.setInt(2, sId);
-					pstmtLangNew.setString(3, ci.languageName);
-					pstmtLangNew.setString(4, ci.key);
-					if(ci.element.equals("text")) {
-						transType = "none";
+					if(ci.newVal != null) {
+						pstmtLangNew.setString(1, ci.newVal);
+						pstmtLangNew.setInt(2, sId);
+						pstmtLangNew.setString(3, ci.languageName);
+						pstmtLangNew.setString(4, ci.key);
+						if(ci.element.equals("text")) {
+							transType = "none";
+						} else {
+							transType = ci.element;
+						}
+						pstmtLangNew.setString(5,  transType);
+						
+						log.info("Insert new question label: " + pstmtLangNew.toString());
+						
+						pstmtLangNew.executeUpdate();
 					} else {
-						transType = ci.element;
+						// Only media labels get deleted
+						pstmtDeleteLabel.setInt(1, sId);
+						pstmtDeleteLabel.setString(2, ci.key);
+						pstmtDeleteLabel.setString(3, ci.element);
+						log.info("Delete media label: " + pstmtDeleteLabel.toString());
+						pstmtDeleteLabel.executeUpdate();
+						ci.key = null;		// Clear the key in the question table
 					}
-					pstmtLangNew.setString(5,  transType);
-					
-					log.info("SQL: " + pstmtLangNew.toString());
-					
-					pstmtLangNew.executeUpdate();
 					 
 					// Add the new text id to the question
 					pstmtNewQuestionLabel.setString(1, ci.key);
 					pstmtNewQuestionLabel.setInt(2, ci.qId);
+					log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 					pstmtNewQuestionLabel.executeUpdate();
 				}
 				
@@ -730,6 +745,7 @@ public class SurveyManager {
 			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
 		}
 	}
 	
@@ -790,22 +806,22 @@ public class SurveyManager {
 					}			
 				}
 				
-				System.out.println("Maximum sequence number: " + maxSeq);
+				log.info("Maximum sequence number: " + maxSeq);
 				
 				// Get the text_id for this option
 				pstmtOptionGet.setInt(1, ci.qId);
 				pstmtOptionGet.setString(2, ci.key);
+				log.info("Get text_id for option: " + pstmtOptionGet.toString());
 				rs = pstmtOptionGet.executeQuery();
 				if(rs.next()) {
 					
 					String text_id = rs.getString(1);
-					// Update the label for all languages
-					System.out.println("Updating label");	
 					
 					pstmtLangUpdate.setString(1, ci.newVal);
 					pstmtLangUpdate.setInt(2, sId);
 					pstmtLangUpdate.setString(3, text_id);
 					pstmtLangUpdate.setString(4, ci.newVal);
+					log.info("Update existing option label: " + pstmtLangUpdate.toString());
 					count = pstmtLangUpdate.executeUpdate();
 					
 				} else {
@@ -855,7 +871,7 @@ public class SurveyManager {
 			}
 			
 			if(totalCount == 0) {
-				System.out.println("Info: No changes applied");
+				log.info("Info: No changes applied");
 				throw new Exception("No changes applied");		
 			}
 			

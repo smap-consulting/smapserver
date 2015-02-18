@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.managers;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,10 +33,7 @@ import java.util.logging.Logger;
 import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.ManifestValue;
-import org.smap.sdal.model.NotifyDetails;
-
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 
@@ -82,6 +78,7 @@ public class TranslationManager {
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
 			pstmtQuestionLevel.setString(1, user);
 			pstmtQuestionLevel.setInt(2, surveyId);
+			System.out.println("Question level manifests: " + pstmtQuestionLevel.toString());
 			ResultSet rs = pstmtQuestionLevel.executeQuery();
 			
 			while (rs.next()) {								
@@ -111,12 +108,11 @@ public class TranslationManager {
 			 */
 			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
 			pstmtSurveyLevel.setInt(1, surveyId);
-			log.info("SQL:" + pstmtSurveyLevel.toString());
+			log.info("SQL survey level manifests:" + pstmtSurveyLevel.toString());
 			
 			rs = pstmtSurveyLevel.executeQuery();
 			if(rs.next()) {
 				String manifestString = rs.getString(1);
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 				Type type = new TypeToken<ArrayList<String>>(){}.getType();
 				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
 				
@@ -141,6 +137,9 @@ public class TranslationManager {
 			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}
 			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
 		}
+		
+		log.info("Manifest length: " + manifests.size());
+		
 		return manifests;
 	}
 	

@@ -266,6 +266,7 @@ define(function() {
 			var changesString = JSON.stringify(this.changes);
 			console.log("Saving as: " + url);			
 			
+			globals.model.setHasChanges(0);
 			addHourglass();
 			$.ajax({
 				url: url,
@@ -279,7 +280,6 @@ define(function() {
 					removeHourglass();
 					
 					// Reset the set of pending updates
-					globals.model.setHasChanges(0);
 					//getSurveyDetails(surveyDetailsDone);
 					if(typeof responseFn === "function") { 
 						responseFn();

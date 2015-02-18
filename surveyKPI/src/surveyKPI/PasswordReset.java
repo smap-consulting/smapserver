@@ -104,7 +104,8 @@ public class PasswordReset extends Application {
 					if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, email, request.getRemoteUser())) != null) {
 						String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
 						ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, email);
-					    UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", null, interval, 
+					    String sender = "reset@" + request.getServerName();
+						UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", sender, null, interval, 
 					    		idents, null, adminEmail, smtp_host, request.getServerName());
 					    response = Response.ok().build();
 					} else {

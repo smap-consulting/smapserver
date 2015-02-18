@@ -132,7 +132,7 @@ public class FormsManifest {
 			TranslationManager translationMgr = new TranslationManager();
 			
 			List<ManifestValue> manifestList = translationMgr.
-					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, survey.ident);
+					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
 			
 			for( ManifestValue m : manifestList) {
@@ -169,6 +169,8 @@ public class FormsManifest {
 							responseStr.append("</mediaFile>");
 				//		}
 					}
+				} else {
+					log.info("Error: manifest with null file path");
 				}
 			}
 			responseStr.append("</manifest>\n");

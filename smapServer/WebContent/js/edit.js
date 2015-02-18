@@ -60,7 +60,8 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	gLanguage = 0,
 	gIndex = 0,			// Unique index to each question
-	$gCurrentRow;		// Currently selected row
+	$gCurrentRow,		// Currently selected row
+	gCollapsedPanels = [];
 
 // Media globals
 var gUrl,			// url to submit to
@@ -117,12 +118,22 @@ $(document).ready(function() {
 	 * Refresh the view when the selected property changes
 	 */
 	$('#selProperty').change(function() {
+		var i;
+	
 		refreshView();
+		
 	});
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
-		$('#openFormModal').modal('show');
+		if(globals.model.changes.length > 0) {
+			if (confirm("You have unsaved changes are you sure you want to leave?")) {
+				$('#openFormModal').modal('show');
+			}
+		} else {
+			$('#openFormModal').modal('show');
+		}
+		
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
 		globals.model.save(surveyListDone);
@@ -302,7 +313,8 @@ $(document).ready(function() {
      */
 	$('#get_form').off().click(function() {
 		globals.gCurrentSurvey = $('#form_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id
+		globals.model.setHasChanges(0);		// Clear any existing changes from a previous form
 		getSurveyDetails(surveyDetailsDone);
  	 });
 	
@@ -318,6 +330,17 @@ $(document).ready(function() {
 			}
 			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname);
 		}
+	});
+	
+	$('#removeMedia').click(function() {
+
+		if(gOptionList) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname);
+		
 	});
 });
 
@@ -385,7 +408,23 @@ function refreshView() {
 			}
 		}
 	}
+	
+	// Get the current list of collapsed panels
+	gCollapsedPanels = [];
+	gIndex = 0;
+	$('.in').each(function(){
+		gCollapsedPanels.push($(this).attr("id"));
+	});
+	
+	// Update the form view
 	$('#formList').html(h.join(""));
+	
+	// Restore collapsed panels
+	for(i = 0; i < gCollapsedPanels.length; i++) {
+		console.log("collapsed: " + gCollapsedPanels[i]);
+		$('#' + gCollapsedPanels[i]).addClass("in");
+	}
+	
 	//enableDragablePanels();
 	
 	$('.labelProp').change(function(){
@@ -418,7 +457,8 @@ function refreshView() {
 }
 
 function mediaPropSelected($this) {
-	$parent = $this.closest('td');
+	var $parent = $this.closest('td'),
+		$immedParent = $this.closest('div');
 	
 	// Set up media view
 	gElement = $this.data("element");
@@ -448,6 +488,14 @@ function mediaPropSelected($this) {
 	    gNewVal = $sel.find('.filename').text();		    
 	   
 	});
+	
+	// Set the status of the remove button
+	$empty = $immedParent.find('.emptyMedia');
+	if($empty.length > 0) {
+		$('#removeMedia').addClass("disabled");
+	} else {
+		$('#removeMedia').removeClass("disabled");
+	}
 	
 	// On double click save and exit
 	$('#mediaModal table').on('dblclick', 'tbody tr', function(e) {
@@ -523,43 +571,47 @@ function addOneQuestion(question, fId, id) {
 		idx = -1;
 	
 	h[++idx] = addPanelStyle(question.type);
-		h[++idx] = '<div class="panel-heading">';
-			//h[++idx] = '<div class="container">';
-			//	h[++idx] = '<div class="row">';
-				h[++idx] = '<table class="table">';
-					//h[++idx] = '<div class="col-sm-2 col-xs-4 head1">';
-					h[++idx] = '<td class="q_type_col">';
-						h[++idx] = addQType(question.type, question.calculation);
-					h[++idx] = '</td>';
-					//h[++idx] = '<div class="col-sm-3 col-xs-8 head2"><input class="qname" value="';
-					h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
-					h[++idx] = question.name;
-					h[++idx] = '" type="text"></td>';
-					h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
-					h[++idx] = '<td class="q_icons_col">';
-						//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
-						h[++idx] = '<a data-toggle="collapse"  href="#collapse';
-						h[++idx] = ++gIndex;
-						h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
+	h[++idx] = '<div class="panel-heading">';
+		//h[++idx] = '<div class="container">';
+		//	h[++idx] = '<div class="row">';
+			h[++idx] = '<table class="table">';
+				//h[++idx] = '<div class="col-sm-2 col-xs-4 head1">';
+				h[++idx] = '<td class="q_type_col">';
+					h[++idx] = addQType(question.type, question.calculation);
 				h[++idx] = '</td>';
-				h[++idx] = '</table>';
-			//h[++idx] = '</div>';
+				//h[++idx] = '<div class="col-sm-3 col-xs-8 head2"><input class="qname" value="';
+				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
+				h[++idx] = question.name;
+				h[++idx] = '" type="text"></td>';
+				h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
+				h[++idx] = '<td class="q_icons_col">';
+					//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
+					h[++idx] = '<a data-toggle="collapse"  href="#collapse';
+					h[++idx] = ++gIndex;
+					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
+			h[++idx] = '</td>';
+			h[++idx] = '</table>';
 		//h[++idx] = '</div>';
-		h[++idx] = '<div id="collapse';
-		h[++idx] = gIndex;
-		h[++idx] = '" class="panel-body collapse">';
-		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
-			h[++idx] = addSubForm(question, globals.model.survey.forms[fId].id);
-		} else if(question.type.indexOf("select") === 0) {
-			h[++idx] = addOptions(question, fId);
-		} 
-		
-		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
-			h[++idx] = '<ol>';
-		} else { 
-			h[++idx] = '</div>';
-			h[++idx] = '</li>';
-		}
+	//h[++idx] = '</div>';
+	h[++idx] = '<div id="collapse';
+	h[++idx] = gIndex;
+	h[++idx] = '" class="panel-body collapse';
+	if(question.type.indexOf("select") === 0) {
+		h[++idx] = ' selectquestion';
+	}
+	h[++idx] = '">';
+	if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
+		h[++idx] = addSubForm(question, globals.model.survey.forms[fId].id);
+	} else if(question.type.indexOf("select") === 0) {
+		h[++idx] = addOptions(question, fId);
+	} 
+	
+	if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
+		h[++idx] = '<ol>';
+	} else { 
+		h[++idx] = '</div>';
+		h[++idx] = '</li>';
+	}
 	
 	return h.join("");
 }
@@ -833,24 +885,48 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
 		markup,
-		survey = globals.model.survey;
+		survey = globals.model.survey,
+		i;
 	
+	console.log(survey);
 	if(type === "question") {
 		item.push({
 			form: formIndex,
 			question: itemIndex
 		});
+		
+		// Update the in memory survey model
+		if(element === "text") {
+			survey.forms[formIndex].questions[itemIndex].labels[gLanguage][element] = newVal;
+		} else {
+			// For non text changes update all languages
+			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
+				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
+				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false);;
+			}
+		}
 	} else {
 		item.push({
 			optionList: optionList,
 			qname: qname,
 			option: itemIndex
 		});
+		if(element === "text") {
+			survey.optionLists[optionList][itemIndex].labels[gLanguage][element] = newVal;
+		} else {
+			// For non text changes update all languages
+			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
+				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
+				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false);
+			}
+		}
 	}
 	
 	// Add the change to the list of changes to be applied
 	globals.model.modLabel(gLanguage, item, newVal, element);
 	
+	
+	// Update the current markup
 	if(element === "image") {	
 		
 		markup = addMedia("Image", 

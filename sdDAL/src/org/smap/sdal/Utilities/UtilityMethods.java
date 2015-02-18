@@ -514,11 +514,11 @@ public class UtilityMethods {
 
 		    }
 		    
-		    String from = type + "@" + serverName;
-			msg.setFrom(new InternetAddress(from));
+		    //String from = type + "@" + serverName;
+			//msg.setFrom(new InternetAddress(from));
 		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
-		    log.info("Sending email from: " + from);
+		    log.info("Sending email from: " + sender);
 		    Transport.send(msg);
 		} catch(MessagingException me) {
 			log.info("Messaging Exception");
@@ -759,6 +759,7 @@ public class UtilityMethods {
 		
 		// First try the survey level
 		url = "/media/" + sIdent + "/" + fileName;	
+		log.info("Info: Getting file url for file: " + basePath + url);
 		thumbsUrl = "/media/" + sIdent + "/thumbs/" + fileName;	
 		file = new File(basePath + url);
 		if(file.exists()) {

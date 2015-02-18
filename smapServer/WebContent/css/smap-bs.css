@@ -307,7 +307,7 @@ textarea {
   fieldset { display: table-cell; }
 }
 
-/* Fix for z-index of deop downs */
+/* Fix for z-index of drop downs */
 .navbar-static-top {
 	z-index: 10000;
 	position: relative;
@@ -315,4 +315,12 @@ textarea {
 
 #up_alert {
 	margin-top: 5px;
+}
+
+.labelProp[readonly] {
+	background-color: lightgrey;
+}
+
+.selectquestion {
+	background-color: yellow;
 }
