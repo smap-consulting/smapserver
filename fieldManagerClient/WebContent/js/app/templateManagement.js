@@ -65,13 +65,14 @@ $(document).ready(function() {
 	// Upload File
     $('#submitFile').click( function(e) {
     	
+    	$('#up_alert').hide();
     	e.preventDefault();
     	console.log("Sending form");
     	var sId = $('#survey_id').val();
     	var f = document.forms.namedItem("uploadForm");
     	var formData = new FormData(f);
     	
-
+		addHourglass();
         $.ajax({
             url: '/fieldManagerServer/formUpload',
             type: 'POST',
@@ -87,7 +88,8 @@ $(document).ready(function() {
             contentType: false,
             processData:false,
             success: function(data) {
-            	
+				removeHourglass();
+				
             	var surveyId = sId;
             	console.log("Done");
             	console.log(data);
@@ -105,9 +107,8 @@ $(document).ready(function() {
             	}
             },
             error: function(xhr, textStatus, err) {
-            	
+				removeHourglass();
   				if(xhr.readyState == 0 || xhr.status == 0) {
-  					$('#up_alert').alert();
 		              return;  // Not an error
 				} else {
 					var msg = xhr.responseText;

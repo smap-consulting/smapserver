@@ -5,8 +5,8 @@
 	DBDriver pgsql
 	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
     
-    ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
-    ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
+    ProxyPass         /fieldManagerServer   ajp://localhost:8009/fieldManagerServer timeout=600
+    ProxyPassReverse  /fieldManagerServer   ajp://localhost:8009/fieldManagerServer
        
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
     ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
@@ -188,15 +188,15 @@
         Satisfy any
     </location>
 	
-	alias /attachments /smap/attachments
-    <Directory /smap/attachments>
+	alias /attachments {your_files}/attachments
+    <Directory {your_files}/attachments>
     	Options -Indexes FollowSymLinks MultiViews
         allow from all
     </Directory>
     
 	# Media files
-	alias /media /smap/media
-	<Directory /smap/media>
+	alias /media {your_files}/media
+	<Directory {your_files}/media>
 		Options -Indexes FollowSymLinks MultiViews
 		AuthType Digest
 		AuthName "smap"

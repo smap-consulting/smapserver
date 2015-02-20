@@ -37,8 +37,8 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
 	DirectoryIndex index.html index.htm index.shtml
 
-    ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
-    ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
+    ProxyPass         /fieldManagerServer   ajp://localhost:8009/fieldManagerServer timeout=600
+    ProxyPassReverse  /fieldManagerServer   ajp://localhost:8009/fieldManagerServer
 
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
     ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
@@ -195,13 +195,13 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 		Require all granted
     </location>
 
-	alias /attachments /smap/attachments
-    <Directory /smap/attachments>
+	alias /attachments {your_files}/attachments
+    <Directory {your_files}/attachments>
 		Require all granted
 	</Directory>
 		
-	alias /media /smap/media
-    <Directory /smap/media>
+	alias /media {your_files}/media
+    <Directory {your_files}/media>
 		Options FollowSymLinks
 		AuthType Digest
 		AuthName "smap"

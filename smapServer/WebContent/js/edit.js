@@ -271,7 +271,7 @@ $(document).ready(function() {
     	var f = document.forms.namedItem("fileupload");
     	var formData = new FormData(f);
     	
-
+    	addHourglass();
         $.ajax({
             url: gUrl,
             type: 'POST',
@@ -287,7 +287,7 @@ $(document).ready(function() {
             contentType: false,
             processData:false,
             success: function(data) {
-            	
+    			removeHourglass();
             	var surveyId = sId;
             	console.log("Success");
             	console.log(data);
@@ -297,7 +297,7 @@ $(document).ready(function() {
             	
             },
             error: function(xhr, textStatus, err) {
-            	
+    			removeHourglass();
   				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {

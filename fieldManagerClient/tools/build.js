@@ -27,19 +27,19 @@
     dir: '../fieldManager',
     modules: [
         {
-            name: '../templatemanagement_main'
+            name: '../templatemanagement_main',
         },
         {
-            name: '../usermanagement_main'
+            name: '../usermanagement_main',
         },
         {
-            name: '../assignments_main'
+            name: '../assignments_main',
         },
         {
-            name: '../monitor_main'
+            name: '../monitor_main',
         },
         {
-            name: '../notifications_main'
+            name: '../notifications_main',
         }
 
     ]

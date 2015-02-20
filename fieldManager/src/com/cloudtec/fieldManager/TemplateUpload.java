@@ -239,6 +239,7 @@ public class TemplateUpload extends Application {
 				}
 				//System.out.println(resp.errMesg.toString());
 				
+				log.info("Error reported in upload");
 				return getErrorResponse(request,  mesgArray, resp.hints, serverName, projectName, displayName, fileName);
 
 			}
@@ -697,6 +698,8 @@ public class TemplateUpload extends Application {
 					"and u.ident = ?";
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
+			log.info("Get admin email:" + pstmt.toString());
+			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String email = rs.getString(1);
@@ -727,6 +730,7 @@ public class TemplateUpload extends Application {
 		m.administrator = admin_email;
 		m.hints = hints;
 		
+		log.info("Returning error response: " + m.toString());
 		
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		return Response.ok(gson.toJson(m)).build();
