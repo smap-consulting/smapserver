@@ -40,7 +40,6 @@ requirejs.config({
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {

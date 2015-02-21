@@ -43,7 +43,6 @@ requirejs.config({
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	bootbox: '../../../../js/libs/bootbox.min',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
@@ -53,7 +52,6 @@ requirejs.config({
     	'bootstrap': ['jquery'],
     	'bootbox': ['bootstrap'],
     	'jquery-barcode': ['jquery'],
-    	'app/map-ol-mgmt': ['jquery', 'openlayers'],
     	'app/plugins': ['jquery'],
     	'crf': ['jquery']
 	
@@ -71,7 +69,6 @@ require([
          'app/map-ol-mgmt',
          'app/plugins',
          'jquery-barcode',
-         'openlayers',
          'crf',
          'moment',
          'datetimepicker'

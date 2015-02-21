@@ -48,7 +48,6 @@ requirejs.config({
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
@@ -56,7 +55,6 @@ requirejs.config({
     	'jquery_ui': ['jquery'],
     	'common': ['jquery'],
     	'tablesorter': ['jquery'],
-    	'app/map-ol-mgmt': ['jquery_ui', 'openlayers'],
     	'app/plugins': ['jquery'],
     	'crf': ['jquery']
 	
@@ -74,7 +72,6 @@ require([
          'app/map-ol-mgmt',
          'app/plugins',
          'tablesorter',
-         'openlayers',
          'crf'
          
          ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});

@@ -46,7 +46,7 @@ ExpiresActive On
 
     <Directory /var/www/smap>
     	Options FollowSymLinks
-        ExpiresDefault A30000
+        ExpiresDefault A7776000
         AllowOverride None
         Require all granted
     </Directory>

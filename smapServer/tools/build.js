@@ -14,19 +14,20 @@
     dir: '../smapServer',
     modules: [
         {
-            name: '../index'
+            name: '../index',
         },
         {
-            name: '../edit'
+            name: '../edit',
         },
         {
-            name: '../webForms'
+            name: '../webForms',
         },
         {
-            name: '../passwords'
+            name: '../passwords',
         },
         {
-            name: '../userTrail'
+            name: '../userTrail',
+	    exclude: [ 'ol3/js/ol']
         }
 
     ]

@@ -17,35 +17,39 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Entry point for report list page
+ * Purpose: Manage the panels that display graphs, maps etc of results data
  */
 
-requirejs.config({
-    baseUrl: '/fieldAnalysis/js/libs',
+require.config({
+    baseUrl: 'js/libs',
+    locale: gUserLocale,
     waitSeconds: 0,
     paths: {
      	app: '../app',
-    	i18n: '../../../../js/libs/i18n',
-     	async: '../../../../js/libs/async',
+     	localise: '../../../../js/app/localise',
     	jquery: [
     	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
     	       '../../../../js/libs/jquery-1.8.3.min'
     	       ],
-	    jquery_ui: [
-	    	   '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-	    	   '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-	    	   ],
+    	jquery_ui: [
+    	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
+    	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
+    	            ],
+
     	modernizr: '../../../../js/libs/modernizr',
-    	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
+    	common: '../../../../js/app/common',
+    	globals: '../../../../js/app/globals',
+    	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js'
+
     },
     shim: {
-    	'rmm': ['jquery'],
+    	
     	'jquery_ui': ['jquery'],
     	
-       	'jqplot/jquery.jqplot.min': ['jquery_ui'],
+    	'jqplot/jquery.jqplot.min': ['jquery_ui'],
     	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.cursor.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
@@ -54,36 +58,25 @@ requirejs.config({
     	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
     	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min']
+    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min'],
+    	
+
+    	
     	}
     });
 
+require(['jquery', 'jquery_ui', 
+         
+         'jqplot/jquery.jqplot.min',
+         'jqplot/plugins/jqplot.highlighter.min',
+         'jqplot/plugins/jqplot.cursor.min',
+         'jqplot/plugins/jqplot.dateAxisRenderer.min',
+         'jqplot/plugins/jqplot.barRenderer.min',
+         'jqplot/plugins/jqplot.categoryAxisRenderer.min',
+         'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
+         'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
+         'jqplot/plugins/jqplot.canvasTextRenderer.min',
+         'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
+         
+         ], function($, jquery_ui) {});
 
-require([
-         'jquery',  
-         'jquery_ui',
-         'modernizr', 
-         'rmm', 
-         'crf', 
-         'localise', 
-         'app/graph-functions',
-         'app/graph-reports',
-         
-         'main/jqplot_main',
-        // 'jqplot/jquery.jqplot.min',
-        // 'jqplot/plugins/jqplot.highlighter.min',
-        // 'jqplot/plugins/jqplot.cursor.min',
-        // 'jqplot/plugins/jqplot.dateAxisRenderer.min',
-        // 'jqplot/plugins/jqplot.barRenderer.min',
-        // 'jqplot/plugins/jqplot.categoryAxisRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasTextRenderer.min',
-        // 'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
-         
-         ], function($, jquery_ui, modernizr, rmm, crf, localise, 
-        		 graph_functions, graph_reports) {
-	
-	var data_source = $("#data_source").text();
-	getData(data_source);
-});

@@ -31,6 +31,7 @@ require.config({
     waitSeconds: 0,
     paths: {
      	app: '../app',
+     	main: '..',
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
@@ -43,15 +44,12 @@ require.config({
     	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
     	            ],
 
-    	modernizr: '../../../../js/libs/modernizr',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
-    	lang_location: '../../../../js',
-    	d3: '../../../../js/libs/d3.v3.min'
+    	lang_location: '../../../../js'
 
     },
     shim: {
@@ -61,17 +59,6 @@ require.config({
     	'jquery.dataTables.min': ['jquery'],
     	'fp/flowplayer.min': ['jquery'],
     	'common': ['jquery'],
-    	
-    	'jqplot/jquery.jqplot.min': ['jquery_ui'],
-    	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.cursor.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.categoryAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min'],
     	
     	'app/jqplot_image': ['jquery'],
     	'app/map-functions': ['jquery'],
@@ -87,24 +74,15 @@ require.config({
     	'app/data': ['jquery'],
     	'app/reports': ['jquery_ui'],
     	'tablesorter': ['jquery'],
-    	'crf': ['jquery']
+    	'crf': ['jquery'],
+    	'main/jqplot_main': ['jquery']
     	
     	}
     });
 
 require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
          
-         'jqplot/jquery.jqplot.min',
-         'jqplot/plugins/jqplot.highlighter.min',
-         'jqplot/plugins/jqplot.cursor.min',
-         'jqplot/plugins/jqplot.dateAxisRenderer.min',
-         'jqplot/plugins/jqplot.barRenderer.min',
-         'jqplot/plugins/jqplot.categoryAxisRenderer.min',
-         'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
-         'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
-         'jqplot/plugins/jqplot.canvasTextRenderer.min',
-         'jqplot/plugins/jqplot.enhancedLegendRenderer.min',
-         
+         'main/jqplot_main',
          'jquery-ui-timepicker-addon',
          'fp/flowplayer.min',
          'jquery.dataTables.min',
@@ -125,8 +103,7 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
          'app/panels',
          
          'tablesorter',
-         'crf',
-         'openlayers'
+         'crf'
          
          ], function($, jquery_ui, rmm, common, localise, globals) {});
 

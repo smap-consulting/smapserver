@@ -630,9 +630,9 @@ public class UtilityMethods {
 		String cmd = null;
 		log.info("Creating thumbnail for content type: " + contentType);
 		if(contentType.startsWith("image")) {
-			cmd = "/usr/bin/convert -thumbnail 100x100 " + source + " " + dest;
+			cmd = "/usr/bin/convert -thumbnail 100x100 \"" + source + "\" \"" + dest + "\"";
 		} else if(contentType.startsWith("video")) {
-			cmd = "/usr/bin/ffmpeg -i " + source + " -vf scale=-1:100 -vframes 1 " + destRoot + "jpg";
+			cmd = "/usr/bin/ffmpeg -i \"" + source + "\" -vf scale=-1:100 -vframes 1 \"" + destRoot + "jpg\"";
 		} 
 		
 		log.info("Exec: " + cmd);

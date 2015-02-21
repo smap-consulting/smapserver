@@ -154,11 +154,16 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
-		// Set the default destination as organisation rather than survey level files
-		gUrl = gBaseUrl;
-		$('#survey_id').val("");				// clear the survey id in the forms hidden field
-		gIsSurveyLevel = false;
-		
+		// Set the default destination 
+		if($('#orgLevelTab').hasClass("active")) {
+			gUrl = gBaseUrl;
+			$('#survey_id').val("");				// clear the survey id in the forms hidden field
+			gIsSurveyLevel = false;
+		} else {
+			gUrl = gBaseUrl + '?sId=' + gSId;
+    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    		gIsSurveyLevel = true;
+		}
 		$('#mediaModal').modal('show');
 
 	});
@@ -902,7 +907,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
 				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
-				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false);;
+				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
 			}
 		}
 	} else {
@@ -917,7 +922,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
 				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
-				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false);
+				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
 			}
 		}
 	}
@@ -931,23 +936,23 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		
 		markup = addMedia("Image", 
 				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false), 
-				getUrl(survey.o_id, survey.ident, newVal, true)
+				getUrl(survey.o_id, survey.ident, newVal, false, 'image'), 
+				getUrl(survey.o_id, survey.ident, newVal, true, 'image')
 				);
 		
 	} else if(element === "video") {
 		
 		markup = addMedia("Video", 
 				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false), 
-				getUrl(survey.o_id, survey.ident, newVal, true)
+				getUrl(survey.o_id, survey.ident, newVal, false, 'video'), 
+				getUrl(survey.o_id, survey.ident, newVal, true, 'video')
 				);
 		
 	} else if(element === "audio") {
 		
 		markup = addMedia("Audio", 
 				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false), 
+				getUrl(survey.o_id, survey.ident, newVal, false, 'audio'), 
 				undefined
 				);	
 
@@ -966,8 +971,11 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 /*
  * Media functions
  */
-function getUrl(o_id, s_ident, newVal, thumbs) {
-	var url = "/media/";
+function getUrl(o_id, s_ident, newVal, thumbs, type) {
+	var url = "/media/",
+		filebase,
+		ext;
+	
 	if(gIsSurveyLevel) {
 		url += s_ident;
 		url += "/";
@@ -982,7 +990,14 @@ function getUrl(o_id, s_ident, newVal, thumbs) {
 		if(thumbs) {
 			url += "thumbs/"; 
 		}
-		url += newVal;
+		if(type === "image") {
+			url += newVal;
+		} else {
+			// Replace the video's extension with jpg
+			index = newVal.lastIndexOf('.');
+			filebase = newVal.substr(0, index);
+			url += filebase + ".jpg";		
+		}
 	}
 	
 	return url;

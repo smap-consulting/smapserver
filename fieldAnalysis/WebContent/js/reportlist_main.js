@@ -43,7 +43,6 @@ requirejs.config({
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
@@ -65,7 +64,6 @@ require([
          'localise', 
          'app/map-functions',
          'app/script',
-         'app/reportlist',
-         'openlayers'
+         'app/reportlist'
          
          ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});
