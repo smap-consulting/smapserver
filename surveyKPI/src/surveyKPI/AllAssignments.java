@@ -45,6 +45,7 @@ import com.google.gson.reflect.TypeToken;
 import taskModel.AssignFromSurvey;
 import taskModel.Assignment;
 import taskModel.Features;
+import taskModel.Geometry;
 import taskModel.TaskAddress;
 import taskModel.TaskAddressSettings;
 import utilities.QuestionInfo;
@@ -312,7 +313,6 @@ public class AllAssignments extends Application {
 			@FormParam("settings") String settings) { 
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
-		System.out.println("urlprefix: " + urlprefix);
 		
 		Response response = null;
 		ArrayList<TaskAddress> addressArray = null;
@@ -320,16 +320,15 @@ public class AllAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
 		}
 		
-		System.out.println("Assignment:" + settings);
+		log.info("Assignment:" + settings);
 		AssignFromSurvey as = new Gson().fromJson(settings, AssignFromSurvey.class);
 
-		System.out.println("User id: " + as.user_id);
+		log.info("User id: " + as.user_id);
 		
 		String userName = request.getRemoteUser();
 		int sId = as.source_survey_id;								// Source survey id (optional)
@@ -428,7 +427,6 @@ public class AllAssignments extends Application {
 				/*
 				 * Todo: Generate form url and initial instance url in myassignments service
 				 */
-				System.out.println("Getting survey ident");
 				String hostname = request.getServerName();
 				if(hostname.equals("localhost")) {
 						hostname = "10.0.2.2";	// For android emulator
@@ -443,8 +441,6 @@ public class AllAssignments extends Application {
 				} else {
 					throw new Exception("Form identifier not found for form id: " + as.form_id);
 				}
-		
-				System.out.println("target_url: " + target_form_url);
 				
 				/*
 				 * Get the tasks from the passed in source survey if this has been set
@@ -511,12 +507,12 @@ public class AllAssignments extends Application {
 							String getTaskSqlEnd = null;
 							
 							if(hasGeom) {
-								System.out.println("Has geometry");
+								log.info("Has geometry");
 								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom ";
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 							} else {
-								System.out.println("No geom found");
+								log.info("No geom found");
 								// Get a subform that has geometry
 								
 								PreparedStatement pstmt2 = connectionSD.prepareStatement(sql);	 
@@ -546,13 +542,13 @@ public class AllAssignments extends Application {
 							
 							// Finally if we still haven't found a geometry column then set all locations to 0, 0
 							if(!hasGeom) {
-								System.out.println("No geometry columns found");
+								log.info("No geometry columns found");
 								
 								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom ";
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 								
-								System.out.println("where: " + getTaskSqlWhere);
+								log.info("where: " + getTaskSqlWhere);
 							}
 							
 										
@@ -604,20 +600,20 @@ public class AllAssignments extends Application {
 									
 									String location = null;
 									int recordId = resultSet.getInt(1);
-									System.out.println("Has geom: " +hasGeom);
+									log.info("Has geom: " +hasGeom);
 									if(hasGeom) {
 										location = resultSet.getString("the_geom");
 									} 
 									if(location == null) {
 										location = "POINT(0 0)";
 									} else if(location.startsWith("LINESTRING")) {
-										System.out.println("Starts with linestring: " + location.split(" ").length);
+										log.info("Starts with linestring: " + location.split(" ").length);
 										if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
 											location = location.replaceFirst("LINESTRING", "POINT");
 										}
 									}	 
 									
-									System.out.println("Location: " + location);
+									log.info("Location: " + location);
 									
 									String geoType = null;
 									if(pstmtInsert != null) {pstmtInsert.close();};
@@ -691,13 +687,10 @@ public class AllAssignments extends Application {
 										}
 									}
 								}
-							//} else {
-							//	System.out.println("No geometry columns in any of the survey tables");
-							//	throw new Exception("\"the_geom\" does not exist");
-							//}
+						
 							break;
 						} else {
-							System.out.println("parent is:" + p_id + ":");
+							log.info("parent is:" + p_id + ":");
 						}
 					}
 				}
@@ -706,20 +699,32 @@ public class AllAssignments extends Application {
 				 * Set the tasks from the passed in task list
 				 */
 				if(as.new_tasks != null) {
-					System.out.println("New tasks: " + as.new_tasks.type);
+					log.info("Crating " + as.new_tasks.features.length + " Ad-Hoc tasks");
 					
 					// Assume POINT location, TODO POLYGON, LINESTRING
 					if(pstmtInsert != null) {pstmtInsert.close();};
 					String geoType = "POINT";
 					pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
+					
+					// Create a dummy location if this task does not have one
+					if(as.new_tasks.features.length == 0) {
+						Features f = new Features();
+						f.geometry = new Geometry();
+						f.geometry.coordinates = new String[2];
+						f.geometry.coordinates[0] = "0.0";
+						f.geometry.coordinates[1] = "0.0";
+						as.new_tasks.features = new Features[1];
+						as.new_tasks.features[0] = f;
+					}
+					// Tasks have locations
 					for(int i = 0; i < as.new_tasks.features.length; i++) {
 						Features f = as.new_tasks.features[i];
-						System.out.println(f.geometry.coordinates[0] + " : " + f.geometry.coordinates[1]);
+						log.info("Creating task at " + f.geometry.coordinates[0] + " : " + f.geometry.coordinates[1]);
 					
 						pstmtInsert.setInt(1, projectId);
 						pstmtInsert.setInt(2, taskGroupId);
 						String title = null;
-						if(f.properties.title != null && !f.properties.title.equals("null")) {
+						if(f.properties != null && f.properties.title != null && !f.properties.title.equals("null")) {
 							title = as.project_name + " : " + as.survey_name + " : " + f.properties.title;
 						} else {
 							title = as.project_name + " : " + as.survey_name + " : " + i;
@@ -732,42 +737,43 @@ public class AllAssignments extends Application {
 						pstmtInsert.setString(8, null);			// Initial data url
 						pstmtInsert.setInt(9, 0);				// Initial data record id
 						pstmtInsert.setString(10, null);		// Address TBD
-						log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + f.properties.title + 
+						log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + title + 
 								" : " + as.form_id + " : " + target_form_url + " : " + 
 								"POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")" +
 								" : " + initial_data_url);
 						int count = pstmtInsert.executeUpdate();
 						if(count != 1) {
 							log.info("Error: Failed to insert task");
-						} else if(f.properties.userId > 0 || as.user_id > 0) {	// Assign the user to the new task
+						} else if((f.properties != null && f.properties.userId > 0) || as.user_id > 0) {	// Assign the user to the new task
 							
 							keys = pstmtInsert.getGeneratedKeys();
 							if(keys.next()) {
 								int taskId = keys.getInt(1);
 								
-								log.info("SQL:" + assignSQL + " : " + f.properties.userId + " : " + f.properties.assignment_status + " : " + taskId);
-	
-								if(f.properties.userId > 0) {
+								if(f.properties != null && f.properties.userId > 0) {
 									pstmtAssign.setInt(1, f.properties.userId);
+									pstmtAssign.setString(2, f.properties.assignment_status);
 								} else {
 									pstmtAssign.setInt(1, as.user_id);
+									pstmtAssign.setString(2, "accepted");
 								}
-								pstmtAssign.setString(2, f.properties.assignment_status);
+								
 								pstmtAssign.setInt(3, taskId);
 								
+								log.info("Assign status: " + pstmtAssign.toString());
 								pstmtAssign.executeUpdate();
 							}
 							if(keys != null) try{ keys.close(); } catch(SQLException e) {};
 	
 						}
-					
 					}
+
 				}
 			}
 			connectionSD.commit();
 				
 		} catch (Exception e) {
-			System.out.println("Error: " + e.getMessage());
+			log.info("Error: " + e.getMessage());
 			if(e.getMessage() != null && e.getMessage().contains("\"the_geom\" does not exist")) {
 				String msg = "The survey results do not have coordinates " + as.source_survey_name;
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
@@ -810,7 +816,7 @@ public class AllAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -885,7 +891,6 @@ public class AllAssignments extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
 				log.log(Level.SEVERE,"", e);
 			}
 		}
@@ -904,7 +909,7 @@ public class AllAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -995,7 +1000,7 @@ public class AllAssignments extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
+				log.info("Failed to close connection");
 				log.log(Level.SEVERE,"", e);
 			}
 		}
@@ -1016,7 +1021,7 @@ public class AllAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -1055,7 +1060,7 @@ public class AllAssignments extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
+				log.info("Failed to close connection");
 				log.log(Level.SEVERE,"", e);
 			}
 		}
@@ -1077,7 +1082,7 @@ public class AllAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -1121,7 +1126,6 @@ public class AllAssignments extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
 				log.log(Level.SEVERE,"", e);
 			}
 		}

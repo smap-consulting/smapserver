@@ -286,6 +286,16 @@ textarea {
 	display: inline-block;
 }
 
+td.accepted {
+	background-color: yellow !important;	
+}
+td.new {
+	background-color: red !important;	
+}
+td.completed, td.submitted {
+	background-color: green !important;	
+}
+
 .bootstrap-datetimepicker-widget {
  z-index: 100000;
  }

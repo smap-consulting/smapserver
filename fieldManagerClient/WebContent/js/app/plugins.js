@@ -457,8 +457,9 @@ function getMedia(property) {
 					tab[++idx] = '"></td>';
 					
 					tab[++idx] = '<td>' + surveyName + '</td>';
+					tab[++idx] = '<td class="' + item.properties.assignment_status + '">' + item.properties.assignment_status + '</td>';
 					if(item.geometry) {
-						tab[++idx] = '<td>' + item.geometry.type + '[' + item.geometry.coordinates + ']' + '</td>';
+						tab[++idx] = '<td>' + item.geometry.type + '[' + formatCoords(item.geometry.coordinates) + ']' + '</td>';
 					} else {
 						tab[++idx] = '<td></td>';
 					}
@@ -480,8 +481,6 @@ function getMedia(property) {
 										j++;
 									} 
 								}
-							} else if(key === 'task_group_id' || key === 'task_group_name') {
-								// ignore
 							} else {
 								value = addAnchors(value).join(',');							
 								tab[++idx] = '<td>' + value + '</td>';
@@ -502,12 +501,40 @@ function getMedia(property) {
 		
 })(jQuery);
 
+function formatCoords(coords) {
+	
+	var cList = [],
+		i,
+		pointIdx,
+		idx = -1,
+		cListOut = [];
+	
+	if(coords) {
+		coords = String(coords);
+		cList= coords.split(",");
+		for(i = 0; i < cList.length; i++) {
+			pointIdx = cList[i].indexOf(".");
+			if(pointIdx >= 0) {
+				cListOut[++idx] = cList[i].substring(0, pointIdx + 2); 
+			} else {
+				cListOut[++idx] = cList[i];
+			}
+		}
+	}
+	
+	return cListOut.join(',');
+}
+
 function includeKey(key) {
 	if(key === "_table" ||
 			key === 'assignment_id' ||
 			key === 'survey_name' ||
 			key === 'user_id' ||
 			key === 'user_ident' || 
+			key === 'geo_type' ||
+			key === 'task_group_id' ||
+			key === 'task_group_name' ||
+			key === 'assignment_status' ||
 			key === 'type') {
 		return false;
 	}

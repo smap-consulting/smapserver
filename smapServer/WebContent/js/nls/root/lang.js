@@ -1,7 +1,7 @@
 define({
 	"m_home": "Home",
 	"m_admin": "Admin",
-	"m_tm": "Form Management",
+	"m_tm": "Tasks",
 	"m_analysis": "Analysis",
 	"m_reports": "Reports",
 	"m_refresh": "Refresh",

@@ -291,7 +291,9 @@ $(document).ready(function() {
 		
 	});
 	
-	
+	$('#addNewTask').on('hidden.bs.modal', function () {
+		  $('#map_alert').hide();
+		})
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
@@ -674,6 +676,7 @@ function deleteData(data) {
 		  success: function(data, status) {
 			  removeHourglass();
 			  refreshAssignmentData(gUserFilter);
+			  globals.gPendingUpdates = [];
 		  }, error: function(data, status) {
 			  console.log(data);
 			  removeHourglass();
@@ -792,6 +795,7 @@ function refreshTableAssignments(tasks) {
 				$this = $(this),
 				taskCount = $('#new_task_count').html(),
 				taskCountInt = parseInt(taskCount);
+			
 			
 			/*
 			 * Make sure we have the survey id

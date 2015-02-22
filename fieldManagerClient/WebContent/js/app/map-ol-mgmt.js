@@ -568,7 +568,7 @@ function loadAssignments(data) {
 				fillOpacity: 0.8,
 				strokeWidth: 2,
 				strokeWidth: 20,
-				fontColor: "cyan",
+				fontColor: "black",
 				label: "${label_value}"	
 			}, {
                 context: {
@@ -637,13 +637,21 @@ function loadAssignments(data) {
 	showCompleted = $('#filter_completed').prop('checked');
 	if(!showCompleted) {
 		for(i= 0, j = 0; i < featuresObj.length; i++) {
-			if(featuresObj[i].attributes.assignment_status !== "submitted") {
+			if(featuresObj[i].attributes.assignment_status !== "submitted" && 
+					featuresObj[i].geometry &&
+					(featuresObj[i].geometry.x > 0.01 || featuresObj[i].geometry.y > 0.01)) {
 				featuresToLoad.push(featuresObj[i]);
 				j++;
 			}
 		}
 	} else {
-		featuresToLoad = featuresObj;
+		for(i= 0, j = 0; i < featuresObj.length; i++) {
+			if(featuresObj[i].geometry && (featuresObj[i].geometry.x > 0.01 || featuresObj[i].geometry.y > 0.01)) {
+				featuresToLoad.push(featuresObj[i]);
+				j++;
+			}
+		}
+
 	}
 
 	globals.gAssignmentsLayer = new OpenLayers.Layer.Vector("assignments", {
