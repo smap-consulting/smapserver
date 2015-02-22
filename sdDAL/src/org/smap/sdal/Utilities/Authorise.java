@@ -341,7 +341,6 @@ public class Authorise {
 				" and p.id = t.p_id " +
 				" and t.id = ? " +
 				" and u.ident = ?;";
-		// log.info(sql + " : " + tId + " : " + user);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
@@ -351,6 +350,10 @@ public class Authorise {
 			resultSet.next();
 			
 			count = resultSet.getInt(1);
+			
+			if(count == 0) {
+				log.info("Validation of task failed: " + pstmt.toString());
+			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error in Authorisation", e);
 			sqlError = true;

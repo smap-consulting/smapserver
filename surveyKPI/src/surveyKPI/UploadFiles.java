@@ -166,9 +166,10 @@ public class UploadFiles extends Application {
 					mediaInfo.setServer(request.getRequestURL().toString());
 					
 					String folderPath = mediaInfo.getPath();
-					if(folderPath != null) {
+					if(folderPath != null) {						
 						String filePath = folderPath + "/" + fileName;
 					    File savedFile = new File(filePath);
+					    log.info("Saving file to: " + filePath);
 					    item.write(savedFile);
 					    
 					    // Create thumbnails

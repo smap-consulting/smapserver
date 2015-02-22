@@ -54,7 +54,7 @@ function removePendingTask(taskId, source) {
 	if(source === "table") {
 		updateMapTaskSelections(taskId, false);
 	} else if(source === "map") {
-		$('#tasks_table').find('[data-taskid=' + tasktId + ']').prop("checked", false).closest('tr').removeClass("info");
+		$('#tasks_table').find('[data-taskid=' + taskId + ']').prop("checked", false).closest('tr').removeClass("info");
 	}
 }
 

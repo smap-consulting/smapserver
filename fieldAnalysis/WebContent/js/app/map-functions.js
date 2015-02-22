@@ -409,7 +409,6 @@ function loadFeatures(map, key, item, ext_g, bounds, layers, isPeriod, md) {
                                 newValue += feature.cluster[i].attributes.value;
                             }
                             feature.attributes.value = Math.round(newValue / feature.cluster.length);
-                            feature.attributes.value = Math.round(newValue / feature.cluster.length);
                         } 
                         return pix;
                     },

@@ -445,16 +445,19 @@ function loadFeatures(data) {
 // Respond to a feature being selected
 function onFeatureSelectOL(feature) {
 	
-	var status, assignment;
+	var status,
+		assignment,
+		i;
 	
 	onFeatureUnselect();
-	if(feature.attributes.isSelected === 6) {
-		removePendingTask(feature.attributes.task_id, "map");
-		feature.attributes.isSelected = 0;
+	if(feature.cluster) {
+		for(i = 0; i < feature.cluster.length; i++) {
+			processFeatureSelection(feature.cluster[i]);
+		}
 	} else {
-		addPendingTask(feature.attributes.task_id, feature.attributes.assignment_id, feature.attributes.assignment_status, "map");
-		feature.attributes.isSelected = 6;
+		processFeatureSelection(feature);
 	}
+	
 	// Action for assignments
 	/*
 	if(globals.gCurrentUserName && 
@@ -490,20 +493,41 @@ function onFeatureSelectOL(feature) {
 
 }
 
-/*
-function removeFromPending(assignmentId) {
-	var i;
-	for (i = 0; i < globals.gPendingUpdates.length; i++) {
-		if(globals.gPendingUpdates[i].assignment_id === assignmentId) {
-			globals.gPendingUpdates.splice(i,1);
-			break;
-		}
+function processFeatureSelection(feature) {
+	if(feature.attributes.isSelected === 6) {			// Is selected has line width of selected feature
+		removePendingTask(feature.attributes.task_id, "map");
+		feature.attributes.isSelected = 0;
+	} else {
+		addPendingTask(feature.attributes.task_id, feature.attributes.assignment_id, feature.attributes.assignment_status, "map");
+		feature.attributes.isSelected = 6;
 	}
 }
-*/
+
 
 function onFeatureUnselect() {
+	var layer = allLayers[0],
+		i,
+		feature;
+	
     $("#features").hide().empty();
+    
+    for(i = 0; i < layer.features.length; i++) {
+    	feature = layer.features[i];
+		if(feature.cluster) {
+			for(i = 0; i < feature.cluster.length; i++) {
+				processFeatureUnselect(feature.cluster[i]);
+			}
+		} else {
+			processFeatureUnselect(feature);
+		}
+    }
+}
+
+function processFeatureUnselect(feature) {
+	if(feature.attributes.isSelected === 6) {			// Is selected has line width of selected feature
+		removePendingTask(feature.attributes.task_id, "map");
+		feature.attributes.isSelected = 0;
+	} 
 }
 
 /*
@@ -516,7 +540,11 @@ function loadAssignments(data) {
 		filter,
 		filterStrategy,
 		featuresToLoad = [],
-		i, j;
+		i, j,
+		clusterStrategy = new OpenLayers.Strategy.Cluster({distance: 10, threshold: 2}),
+		strategies = [];
+	
+	strategies.push(clusterStrategy);
 	
 	// Project the coordinates
 	var features = JSON.stringify(data);
@@ -537,26 +565,36 @@ function loadAssignments(data) {
 			{
 				fillColor: "green",
 				pointRadius: "${radius}",
-				fillOpacity: 1.0,
+				fillOpacity: 0.8,
 				strokeWidth: 2,
 				strokeWidth: 20,
-				fontColor: "blue",
-				label: "${user_name}"	
+				fontColor: "cyan",
+				label: "${label_value}"	
 			}, {
                 context: {
                     radius: function(feature) {
                         var pix = 8;
                         if(feature.cluster) {
-                            pix = Math.min(feature.attributes.count, 8) + 8;
+                            pix = Math.min(feature.attributes.count, 16) + 8;
+                            feature.attributes.assignment_status = "clustered";
+                            feature.attributes.geo_type = "POINT";
+                            feature.attributes.user_name = "cluster";
                         }
                         return pix;
+                    },
+                    label_value: function(feature) {
+                    	var v = feature.attributes.user_name;
+                    	if(feature.cluster) {
+                    		v = feature.attributes.count;
+                    	}
+                    	return v;
                     }
+                  
 				}
 			});
 	var selectStyle = new OpenLayers.Style(
 			{
 				'fillColor': "orange",
-				'pointRadius': 8,
 				'fillOpacity': 1.0
 			});
 	
@@ -566,7 +604,8 @@ function loadAssignments(data) {
 			'cancelled' : {fillColor: "white", strokeColor: "orange", strokeWidth: "${isSelected}"},
 			'accepted' : {fillColor: "yellow", strokeColor: "orange", strokeWidth: "${isSelected}"},
 			'completed' : {fillColor: "green", strokeColor: "orange", strokeWidth: "${isSelected}"},
-			'submitted' : {fillColor: "green", strokeColor: "orange", strokeWidth: "${isSelected}"}
+			'submitted' : {fillColor: "green", strokeColor: "orange", strokeWidth: "${isSelected}"},
+			'clustered' : {fillColor: "blue", strokeColor: "orange", strokeWidth: "${isSelected}"}
 	};
 	var lookup_width = {
 			//'POINT' : {strokeWidth: 2, strokeColor: "black"},
@@ -608,12 +647,15 @@ function loadAssignments(data) {
 	}
 
 	globals.gAssignmentsLayer = new OpenLayers.Layer.Vector("assignments", {
+		 strategies: strategies,
 		 styleMap:styleMap
+
 	});
 	
-	globals.gAssignmentsLayer.addFeatures(featuresToLoad);
+
 	
 	map.addLayer(globals.gAssignmentsLayer);
+	globals.gAssignmentsLayer.addFeatures(featuresToLoad);
 	allLayers[0] = globals.gAssignmentsLayer;
 	
 }

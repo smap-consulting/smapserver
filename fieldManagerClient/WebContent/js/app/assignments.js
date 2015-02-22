@@ -295,7 +295,7 @@ $(document).ready(function() {
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
-		bootbox.confirm('Are you sure you want to delete these tasks?', function(result){
+		bootbox.confirm('Are you sure you want to delete these ' + globals.gPendingUpdates.length + ' tasks?', function(result){
 			if(result) {
 				deleteData(globals.gPendingUpdates); 
 			}
@@ -548,6 +548,7 @@ function setAddressOptions() {
 						
 						if(colname !== "prikey" && colname !== "parkey" && 
 								colname !== "the_geom" &&
+								colname !== "geo_type" &&
 								colname.indexOf("_") !== 0) {
 							gTaskParams[j++] = {selected:false, name:colname, isBarcode:false}; 
 							
