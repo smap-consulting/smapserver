@@ -189,7 +189,23 @@ public class Form implements Serializable {
 	*/
 	
 	public String getPath() {
-		return path;
+		String tPath = null;
+		
+		tPath = path;
+		/*
+		if(path.startsWith("/main")) {
+			tPath = path;
+		} else {
+			int idx = path.indexOf('/', 1);
+			if(idx < 0) {
+				tPath = "/main";
+			} else {
+				tPath = "/main" + path.substring(idx);
+			}
+		}
+		*/
+		
+		return tPath;
 	}
 
 	/*

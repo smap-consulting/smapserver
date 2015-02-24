@@ -218,7 +218,6 @@ public class ExportSurveyMedia extends Application {
 				pstmtGetData = connectionResults.prepareStatement(sqlDesc.sql); 
 				ResultSet rs = pstmtGetData.executeQuery();
 				while(rs.next()) {
-					System.out.println("    #####: " + rs.getString("prikey") + rs.getString("picture"));
 					/*
 					 * Get the target name
 					 */
@@ -240,6 +239,11 @@ public class ExportSurveyMedia extends Application {
 						mediafilename += UtilityMethods.cleanName(v);
 					}
 					String source_file = rs.getString(media_name);
+					
+					// Remove hostname if this is include (only for old data)
+					if(source_file != null && !source_file.startsWith("attachments")) {
+						source_file = source_file.substring(source_file.indexOf("attachments"));
+					}
 					int idx = source_file.lastIndexOf('.');
 					String ext = "";
 					if(idx >= 0) {
