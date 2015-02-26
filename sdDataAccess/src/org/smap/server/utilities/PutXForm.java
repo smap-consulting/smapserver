@@ -30,7 +30,7 @@ public class PutXForm {
     /*
      * Load the XForm into an object based model
      */
-    public SurveyTemplate put(InputStream is) throws Exception {
+    public SurveyTemplate put(InputStream is, String user, String basePath) throws Exception {
     	template = null;
      	    	
 
@@ -42,6 +42,8 @@ public class PutXForm {
 		
 		template = new SurveyTemplate();
 		template.createSurvey();
+		template.setUser(user);
+		template.setBasePath(basePath);
 		processElement(rootElement);   	   		
     		
     	return template;
@@ -569,6 +571,8 @@ public class PutXForm {
 		if(appNode != null) {
 			appearance = appNode.getNodeValue();
 			q.setAppearance(appearance);
+			// Survey level manifests can be set in the appearance attribute
+			template.addManifestFromAppearance(appearance, questionRef);	
 		}
     	
     	if(eName.equals("group")) {
@@ -960,7 +964,13 @@ public class PutXForm {
 	    			
 	    		} else if (name.equals("calculate")) {
 	   				q.setCalculate(attribute.getNodeValue()); 
-	   	   			q.setSource("user");	// Set source as it may not have been set in the body
+	   				
+	   				// Survey level manifests can be set in the appearance attribute
+	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);	
+	   				
+	   				if(q.getType() == null && !q.getType().startsWith("begin")) {
+	   					q.setSource("user");	// Set source as it may not have been set in the body
+	   				}
 	    		} else {
 	    			System.out.println("Warning, bind attribute ignored (" + name + ":" + attribute.getNodeValue());
 	    		}

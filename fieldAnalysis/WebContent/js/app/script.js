@@ -65,9 +65,11 @@ $(document).ready(function() {
 		        			language = $('#export_language option:selected').val(),
 		        			displayName = $('#export_survey option:selected').text(),
 			        		format = $('#exportformat').val(),
+			        		mediaQuestion = $('#export_media_question').val(),
 			        		split_locn = $('#splitlocn:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
-			        		forms = [];
+			        		forms = [],
+			        		name_questions = [];
 		        			
 		        		if(sId == "-1") {
 		        			alert("Please select a survey");
@@ -115,7 +117,22 @@ $(document).ready(function() {
 		        			var type = "trail";			// Todo allow selection of events or trail
 		        			url = exportSurveyLocationURL(sId, displayName, forms[0], traceFormat, type);
 		        		
-		        		} else {
+		        		} else if(format === "media") {
+		        			forms = $(':radio:checked', '.shapeforms').map(function() {
+		        			      return this.value;
+		        			    }).get();
+		        			if(forms.length === 0) {
+		        				alert("A form must be selected");
+			        			return(false);
+		        			}	
+		        			
+		        			name_questions = $(':checkbox:checked', '.mediaselect').map(function() {
+		        			      return this.value;
+		        			    }).get();
+		        			
+		        			url = exportSurveyMediaURL(sId, displayName, forms[0], mediaQuestion, name_questions.join(','));
+		        		
+		        		}else {
 
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
 		        			      return this.value;
@@ -145,11 +162,12 @@ $(document).ready(function() {
 			questions;
 		
 		if(!languages) {
-			getLanguageList(sId);		// Retrieve the languages and questions for the default language
+			getLanguageList(sId, addMediaPickList);		// Retrieve the languages and questions for the default language
 		} else {
 			setSurveyViewLanguages(languages, undefined, '#settings_language', false );
 			setSurveyViewLanguages(languages, undefined, '#export_language', true );
 			questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name);
+			addMediaPickList();
 		}
 		
 		// Add the form list for osm export an identifying forms to include in spreadsheet export
@@ -159,7 +177,7 @@ $(document).ready(function() {
 		} else {
 			addFormPickList(sMeta);
 		}
-		
+
 		// Update the thingsat model if we changed the survey
 		if($('#exportformat').val() === "thingsat") {
 			showModel();
@@ -178,23 +196,26 @@ $(document).ready(function() {
 		
 		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia').hide();
 			$('.showosm,.showro,.showlang').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
+			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showshape,.showro,.showlang').show();
 		} else if(format === "stata") {
-			$('.showxls,.showosm,.showthingsat').hide();
+			$('.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		} else if(format === "thingsat") {
-			$('.showxls,.showosm').hide();
+			$('.showxls,.showosm, .showmedia').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 			showModel();			// Show the thingsat model
 		} else if(format === "trail") {
-			$('.showxls,.showosm,.showro,.showlang,.showthingsat').hide();
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia').hide();
 			$('.showshape,.showspreadsheet').show();
+		} else if(format === "media") {
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia').hide();
+			$('.showshape,.showspreadsheet,.showmedia, .showlang').show();
 		} else {
-			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showxls,.showspreadsheet,.showro,.showlang').show();
 		}
 	});
@@ -313,6 +334,62 @@ $(window).load(function() {
  	
 });
 
+/*
+ * Add the pick list for media export
+ */
+function addMediaPickList() {
+	
+	var sId = $('#export_survey option:selected').val(),
+		languages = globals.gSelector.getSurveyLanguages(sId),
+		questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name),
+		i,
+		h = [];
+		idx = -1,
+		h2 = [];
+		idx2 = -1;
+	
+	console.log("media pick list");
+	console.log(questions);
+	
+	/*
+	 * Add the media question select list
+	 */
+	for(i = 0; i < questions.length; i++) {
+		if(questions[i].type === "image" || questions[i].type === "video" || questions[i].type === "audio") {
+			h[++idx] = '<option value="';
+			h[++idx] = questions[i].id;
+			h[++idx] = '">';
+			h[++idx] = questions[i].name;
+			h[++idx] = '</option>';
+		} else if(questions[i].name !== "_task_key") {
+			
+			if(questions[i].type === "string" ||
+				questions[i].type === "select1" ||
+				questions[i].type === "date" ||
+				questions[i].type === "dateTime" ||
+				questions[i].type === "int" ||
+				questions[i].type === "decimal" ||
+				questions[i].type === "barcode" ||
+				questions[i].type === "geopoint"
+				) {
+				
+				h2[++idx2] = '<div class="checkbox"><label><input type="checkbox" name="mediaselect" value="';
+				h2[++idx2] = questions[i].id;
+				h2[++idx2] = '" class="mediaselectoption"/>';
+				h2[++idx2] = questions[i].name;
+				h2[++idx2] = '</label></div>';
+			}
+			
+		}
+	}
+	if(idx === -1) {
+		alert("No images, video, audio found");
+	}
+	$('#export_media_question').html(h.join(''));
+	$('.mediaselect').html(h2.join(''));
+
+}
+
 /* 
  * Show a newo4J model of the survey
  */
@@ -340,6 +417,9 @@ function showModel() {
 		}
 	});
 }
+
+
+
 /*
  * Add a list of forms to pick from during export
  */
@@ -757,6 +837,27 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	}
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
+	
+	return encodeURI(url);
+}
+
+function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions) {
+
+	var url = "/surveyKPI/exportSurveyMedia/";
+	
+	filename = filename.replace('/', '_');	// remove slashes from the filename
+	
+	
+	
+	url += sId;
+	url += "/" + filename;
+	
+	url+="?form=" + form;
+	url+="&mediaquestion=" + mediaQuestion;
+	if(nameQuestions && nameQuestions.trim().length > 0) {
+		url+="&namequestions=" + nameQuestions;
+	}
+
 	
 	return encodeURI(url);
 }

@@ -23,7 +23,7 @@ public class SDDataSource {
 
 			Connection c = ds.getConnection();
 			c.setAutoCommit(true);		// Can't rely on auto commit being set to true when connection comes from pool
-			System.out.println("Got definitions connection: " + c.toString());
+			log.info("Got definitions connection: " + c.toString());
 			return c;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error getting SD data source", e);

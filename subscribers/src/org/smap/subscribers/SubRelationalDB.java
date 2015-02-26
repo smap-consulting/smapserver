@@ -43,8 +43,10 @@ import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
@@ -53,6 +55,9 @@ import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.exceptions.SQLInsertException;
 import org.smap.server.utilities.UtilityMethods;
 import org.w3c.dom.Document;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 
 public class SubRelationalDB extends Subscriber {
@@ -131,6 +136,7 @@ public class SubRelationalDB extends Subscriber {
 		DocumentBuilder db = null;
 		Document xmlConf = null;		
 		Connection connection = null;
+		Survey survey = null;
 		try {
 				
 			// Get the connection details for the database with survey definitions
@@ -159,10 +165,10 @@ public class SubRelationalDB extends Subscriber {
 			// Authorisation - Access
 		    Class.forName(dbClassMeta);		 
 			connection = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);
-			Authorise a = new Authorise(null, Authorise.ENUM);
+			//Authorise a = new Authorise(null, Authorise.ENUM);
 			SurveyManager sm = new SurveyManager();
-			Survey survey = sm.getSurveyId(connection, templateName);	// Get the survey id from the templateName / key
-			boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
+			survey = sm.getSurveyId(connection, templateName);	// Get the survey from the templateName / ident
+			//boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
 			try {
 				if (connection != null) {
 					connection.close();
@@ -171,12 +177,10 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Failed to close connection");
 			    e.printStackTrace();
 			}
-			if(!isAuthorised) {
-				throw new Exception("The user " + remoteUser + 
-						" was not allowed to submit this survey(" + sId + ")");
-			}
-
-			
+			//if(!isAuthorised) {
+			//	throw new Exception("The user " + remoteUser + 
+			//			" was not allowed to submit this survey(" + templateName + ")");
+			//}	
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -187,10 +191,9 @@ public class SubRelationalDB extends Subscriber {
 
 		try {
 			
-			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId);
+			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id);
 			applyNotifications(ue_id, remoteUser, server);
-			se.setStatus("success");
-			
+			se.setStatus("success");			
 			
 		} catch (SQLInsertException e) {
 			
@@ -210,7 +213,6 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtGetUploadEvent = null;
 		PreparedStatement pstmtGetNotifications = null;
 		PreparedStatement pstmtUpdateUploadEvent = null;
-		PreparedStatement pstmtGetAdminEmail = null;
 		PreparedStatement pstmtNotificationLog = null;
 		
 		Connection connectionSD = null;
@@ -221,7 +223,6 @@ public class SubRelationalDB extends Subscriber {
 		
 			NotificationManager fm = new NotificationManager();
 			fm.notifyForSubmission(connectionSD, 
-					pstmtGetAdminEmail, 
 					pstmtGetUploadEvent, 
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
@@ -237,7 +238,6 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
 			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
-			try {if (pstmtGetAdminEmail != null) {pstmtGetAdminEmail.close();}} catch (SQLException e) {}
 			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {
@@ -255,7 +255,8 @@ public class SubRelationalDB extends Subscriber {
 	 * Write the submission to the database
 	 */
 	private void writeAllTableContent(SurveyInstance instance, String remoteUser, 
-			String server, String device, String formStatus, String updateId) throws SQLInsertException {
+			String server, String device, String formStatus, String updateId,
+			int sId) throws SQLInsertException {
 			
 		String response = null;
 		Connection cResults = null;
@@ -267,7 +268,7 @@ public class SubRelationalDB extends Subscriber {
 			cResults = DriverManager.getConnection(database, user, password);
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
 			statement = cResults.createStatement();
-				
+			
 			cResults.setAutoCommit(false);
 			IE topElement = instance.getTopElement();
 			
@@ -276,8 +277,20 @@ public class SubRelationalDB extends Subscriber {
 				String msg = "Error: Top element name " + topElement.getName() + " in survey did not match a form in the template";
 				throw new Exception(msg);
 			}
-			Keys keys = writeTableContent(topElement, statement, 0, instance.getTemplateName(), 
-					remoteUser, server, device, instance.getUuid(), formStatus, instance.getVersion(), cResults);
+			Keys keys = writeTableContent(
+					topElement, 
+					statement, 
+					0, 
+					instance.getTemplateName(), 
+					remoteUser, 
+					server, 
+					device, 
+					instance.getUuid(), 
+					formStatus, 
+					instance.getVersion(), 
+					cResults,
+					cMeta,
+					sId);
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
@@ -360,11 +373,20 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Method to write the table content
 	 */
-	private  Keys writeTableContent(IE element, Statement statement, int parent_key, String sName, 
-			String remoteUser, String server, String device, 
-			String uuid, String formStatus, 
+	private  Keys writeTableContent(
+			IE element, 
+			Statement statement, 
+			int parent_key, 
+			String sName, 
+			String remoteUser, 
+			String server, 
+			String device, 
+			String uuid, 
+			String formStatus, 
 			int version,
-			Connection cRel) throws SQLException, Exception {
+			Connection cRel,
+			Connection cMeta,
+			int sId) throws SQLException, Exception {
 
 		Keys keys = new Keys();
 		
@@ -395,6 +417,8 @@ public class SubRelationalDB extends Subscriber {
 				if(keys.duplicateKeys.size() > 0 && getDuplicatePolicy() == DUPLICATE_DROP) {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
+				// Apply any updates that have been made to the table structure since the last submission
+				applyTableChanges(cMeta, cRel, sId);
 			}
 			
 			boolean isBad = false;
@@ -452,7 +476,7 @@ public class SubRelationalDB extends Subscriber {
 		List<IE> childElements = element.getChildren();
 		for(IE child : childElements) {
 			writeTableContent(child, statement, parent_key, sName, remoteUser, server, device, 
-					uuid, formStatus, version, cRel);
+					uuid, formStatus, version, cRel, cMeta, sId);
 		}
 		
 		return keys;
@@ -470,18 +494,21 @@ public class SubRelationalDB extends Subscriber {
 					"from information_schema.columns " +
 					"where table_name = ? and column_name = '_version';";
 		
-		System.out.println("Sql: " + sql + " : " + tablename);
+		PreparedStatement pstmt = null;
 		try {
-			PreparedStatement pstmt = cRel.prepareStatement(sql);
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
+			System.out.println("SQL: " + pstmt.toString());
+			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				hasVersion = true;
 			}
-			pstmt.close();
+
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 		
 		return hasVersion;
@@ -679,7 +706,7 @@ public class SubRelationalDB extends Subscriber {
 						File dstThumbsFile = new File(dstThumbsPath);
 						File dstFlvFile = new File(dstFlvPath);
 	
-						String contentType = Utilities.getContentType(srcName);
+						String contentType = org.smap.sdal.Utilities.UtilityMethods.getContentType(srcName);
 		
 						try {
 							System.out.println("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
@@ -797,23 +824,6 @@ public class SubRelationalDB extends Subscriber {
 		return value;
 	}
 	
-	/*
-	 * Move attachments
-	 *
-	void moveAttachments(String folder, String srcMain, int idx, String dstName) throws IOException {
-
-		File aDir = new File(folder);
-		Collection<File> files = FileUtils.listFiles(aDir, new WildcardFileFilter(srcMain + "*"), new WildcardFileFilter("*"));
-		ArrayList <File> fileA = new ArrayList<File> (files);
-		for (int i = 0; i < fileA.size(); i++) {
-			String atName = fileA.get(i).getName();
-			String dstExt = atName.substring(idx);
-			
-		   System.out.println("Moving attachment: " + atName + " to: " + dstName + dstExt);
-		   FileUtils.moveFile(new File(folder + atName), new File(folder + dstName + dstExt));
-		}
-	}
-	*/
 	
 	/*
 	 * Create the table if it does not already exits in the database
@@ -917,7 +927,10 @@ public class SubRelationalDB extends Subscriber {
 							
 			for(Question q : columns) {
 				
-				if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+				boolean hasExternalOptions = MediaUtilities.isAppearanceExternalFile(q.getAppearance());
+				
+				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+				if(q.getSource() != null) {
 					
 					// Set column type for postgres
 					String colType = q.getType();
@@ -974,8 +987,13 @@ public class SubRelationalDB extends Subscriber {
 							List<Option> optionList = new ArrayList <Option> (options);
 							UtilityMethods.sortOptions(optionList);	
 							for(Option option : optionList) {
-								String name = SurveyTemplate.getOptionName(option, q.getName());
-								sql += ", " + UtilityMethods.cleanName(name) + " integer";
+								
+								// Create if its an external choice and this question uses external choices
+								//  or its not an external choice and this question does not use external choices
+								if(hasExternalOptions && option.getExternalFile() || !hasExternalOptions && !option.getExternalFile()) {
+									String name = SurveyTemplate.getOptionName(option, q.getName());
+									sql += ", " + UtilityMethods.cleanName(name) + " integer";
+								}
 							}
 						} else {
 							System.out.println("Warning: No Options for Select:" + q.getName());
@@ -1089,6 +1107,97 @@ public class SubRelationalDB extends Subscriber {
 		} catch (Exception e) {
 			e.printStackTrace();
     	}
+		
+	}
+	
+	/*
+	 * Apply any table changes for this version
+	 */
+	private void applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws SQLException {
+		
+		String sqlGet = "select c_id, changes "
+				+ "from survey_change "
+				+ "where apply_results = 'true' "
+				+ "and s_id = ? ";
+			
+		String sqlGetTable = "select f.table_name from form f, question q " +
+				" where q.f_id = f.f_id " +
+				" and q.q_id = ?";
+		
+		String sqlUpdateChange = "update survey_change "
+				+ "set apply_results = 'false' "
+				+ "where c_id = ? ";
+		
+		PreparedStatement pstmtGet = null;
+		PreparedStatement pstmtGetTable = null;
+		PreparedStatement pstmtAlterTable = null;
+		PreparedStatement pstmtUpdateChange = null;
+		
+		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		
+		System.out.println("######## Apply table changes");
+		try {
+			
+			pstmtGet = connectionSD.prepareStatement(sqlGet);
+			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
+			pstmtUpdateChange = connectionSD.prepareStatement(sqlUpdateChange);
+			
+			pstmtGet.setInt(1, sId);
+			System.out.println("SQL: " + pstmtGet.toString());
+			
+			ResultSet rs = pstmtGet.executeQuery();
+			while(rs.next()) {
+				int cId = rs.getInt(1);
+				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
+				int qId = ci.qId;
+				
+				// Get the table and column
+				pstmtGetTable.setInt(1, qId);
+				ResultSet rsTable = pstmtGetTable.executeQuery();
+				String table = null;
+				if(rsTable.next()) {
+					table = rsTable.getString(1);
+				
+					String column = ci.name + "__" + ci.key;
+				
+					// Alter the table
+					boolean tableAltered = true;
+					String sqlAlterTable = "alter table " + table + " add column " + column + " integer;";
+					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+					System.out.println("SQL: " + pstmtAlterTable.toString());
+					try {
+						pstmtAlterTable.executeUpdate();
+					} catch (Exception e) {
+						// Report but otherwise ignore any errors
+						// No need to roll back if the survey_change table is not updated, 
+						System.out.println("Error altering table -- continuing");
+						e.printStackTrace();
+						
+						// Only record the update as failed if the problem was not due to the column already existing
+						String msg = e.getMessage();
+						if(msg == null || !msg.contains("already exists")) {
+							tableAltered = false;
+						}
+					}
+					
+					// Record the table as having been altered
+					if(tableAltered) {
+						pstmtUpdateChange.setInt(1, cId);
+						pstmtUpdateChange.executeUpdate();
+					}
+				} else {
+					System.out.println("Error table not found: " + pstmtGetTable.toString());
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (Exception e) {}
+			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (Exception e) {}
+			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
+		}
 		
 	}
 

@@ -18,7 +18,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 package com.cloudtec.fieldManager;
-
+/*
 import java.io.File;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -46,7 +46,7 @@ import org.smap.sdal.Utilities.SDDataSource;
   
 /**
  * Servlet implementation class CommonsFileUploadServlet
- */
+ *
 public class MediaUpload extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
@@ -57,14 +57,14 @@ public class MediaUpload extends HttpServlet {
 	
     /**
      * @see HttpServlet#HttpServlet()
-     */
+     *
     public MediaUpload() {
         super();
     }
     
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
+	 *
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
  
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
@@ -85,7 +85,7 @@ public class MediaUpload extends HttpServlet {
 		try {
 			/*
 			 * Parse the request
-			 */
+			 *
 			List<?> items = uploadHandler.parseRequest(request);
 			Iterator<?> itr = items.iterator();
 			String sId = null;
@@ -332,3 +332,4 @@ public class MediaUpload extends HttpServlet {
 	
 	
 }
+*/

@@ -33,29 +33,25 @@ requirejs.config({
       	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
       	       '../../../../js/libs/jquery-1.8.3.min'
       	       ],
-      	jquery_ui: [
-      	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
-      	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'
-      	       ],
        	lang_location: '../'
     },
     shim: {
-    	'jquery_ui': ['jquery'],
-    	'responsivemobilemenu': ['jquery'],
-    	'app/common': ['jquery']
+    	'app/common': ['jquery'],
+    	'bootstrap.min': ['jquery']
     }
 });
 
 require([
          'jquery', 
+         'bootstrap.min',
          'app/common', 
-         'jquery_ui', 
-         'responsivemobilemenu', 
          'app/globals',
          'app/localise'
-         ], function($, common, jquery_ui, responsivemobilemenu, globals, localise) {
+         ], function($, bootstrap, common, globals, localise) {
 
 $(document).ready(function() {
+	
+	localise.setlang();		// Localise HTML
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
@@ -65,12 +61,11 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
-		//$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 		getSurveysForList(globals.gCurrentProject);			// Get surveys
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
  	 });
 	
-	enableUserProfile();
+	enableUserProfileBS();
 });
 
 function projectSet() {
@@ -108,23 +103,22 @@ function getSurveysForList(projectId) {
  */
 function completeSurveyList(surveyList) {
 	
-	$('#forms').empty();
+	var i,
+		h = [],
+		idx = -1,
+		$formList = $('#form_list');
 
 	for(i = 0; i < surveyList.length; i++) {
-
-		var $link = $('<a />').attr("class", "formLink")
-        	.text(surveyList[i].displayName);
-     
-		$link.attr("href", "/webforms/formXML.php"+"?key=" + surveyList[i].ident)
-			.attr("target", "_blank")
-			.addClass("online");
 		
-		$link.button();
-		$('#forms').append($link).append('<br/>');	
-
-
+		h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webforms/formXML.php?key=';
+		h[++idx] = surveyList[i].ident;
+		h[++idx] = '">';
+		h[++idx] = surveyList[i].displayName;
+		h[++idx] = '</a>';
+		
+	}
 	
-	}	
+	$formList.html(h.join(''));
 }
 
 });

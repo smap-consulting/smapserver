@@ -54,7 +54,7 @@ public class OptionList extends Application {
 	
 	@GET
 	@Produces("application/json")
-	public String getCountQuestions(@Context HttpServletRequest request,
+	public String getOptions(@Context HttpServletRequest request,
 			@PathParam("sId") int sId, 
 			@PathParam("language") String language,
 			@PathParam("qId") int qId) { 
@@ -74,10 +74,6 @@ public class OptionList extends Application {
 		
 		JSONArray jaOptions = new JSONArray();
 
-		/*
-		 * For this survey get all the questions that can have "counts"
-		 *  that is "select one" and "select multiple" questions
-		 */
 		PreparedStatement pstmt = null;
 		try {
 			String sql = null;

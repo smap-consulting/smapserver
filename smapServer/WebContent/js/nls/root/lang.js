@@ -1,7 +1,7 @@
 define({
 	"m_home": "Home",
 	"m_admin": "Admin",
-	"m_tm": "Form Management",
+	"m_tm": "Forms",
 	"m_analysis": "Analysis",
 	"m_reports": "Reports",
 	"m_refresh": "Refresh",
@@ -19,6 +19,12 @@ define({
 	"m_section": "Section",
 	"m_notify": "Notifications",
 	"m_view": "View",
+	"m_attach": "Load Attachments",
+	"m_modules": "Modules",
+	"m_open": "Open",
+	"m_new": "New",
+	"m_import": "Import",
+	"m_calculations": "Calculations",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -68,6 +74,7 @@ define({
 	"c_node": "Node",
 	"c_relation": "Relation",
 	"c_from": "From",
+	"c_subject": "Subject",
 	"c_to": "To",
 	"c_properties": "Properties",
 	"c_question": "Question",
@@ -119,7 +126,7 @@ define({
 	
 	// Analysis
 	"a_exp_title": "Export Results",
-	"a_exp_leg1": "Select a form",
+	"a_exp_leg1": "Select a survey",
 	"a_exp_leg2": "Output format:",
 	"a_exp_notes": "Export notes:",
 	"a_exp_split": "Split lat / lon:",
@@ -153,6 +160,7 @@ define({
 	"msg_add_notification": "Add Notification",
 	"msg_edit_notification": "Edit Notification",
 	"msg_sel_form": "Select Form:",
+	"msg_sel_media": "Select Media Question:",
 	"msg_err_save": "Error: Save failed: ",
 	"msg_err_del": "Error: Delete failed: ",
 	"msg_err_upd": "Error: Update failed: ",

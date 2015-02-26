@@ -162,7 +162,8 @@ public class ExportSurveyThingsat extends Application {
 					null,
 					false,
 					true,
-					request.getServerName().toLowerCase());
+					request.getServerName().toLowerCase(),
+					null);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

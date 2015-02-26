@@ -298,6 +298,8 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 		if(max > min) {
 			var diff = max - min;
 			var val = 4 * (matrix[data.optionIdx][i] - min) / diff;		// Normalise value to 5 levels
+		} else if(matrix[data.optionIdx][i] > 0) {
+			val = 4;
 		} else {
 			val = 0;
 		}
@@ -406,7 +408,6 @@ function loadFeatures(map, key, item, ext_g, bounds, layers, isPeriod, md) {
                             for(var i = 0; i < feature.cluster.length; i++) {
                                 newValue += feature.cluster[i].attributes.value;
                             }
-                            feature.attributes.value = Math.round(newValue / feature.cluster.length);
                             feature.attributes.value = Math.round(newValue / feature.cluster.length);
                         } 
                         return pix;

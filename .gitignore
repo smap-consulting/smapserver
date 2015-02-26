@@ -1,6 +1,8 @@
 *.tgz
 smapServer/smapServer
 fieldAnalysis/fieldAnalysis
+surveyKPI/build
+surveyMobileAPI/build/classes/.gitignore
 
 # Eclipse artifacts
 *.pydevproject

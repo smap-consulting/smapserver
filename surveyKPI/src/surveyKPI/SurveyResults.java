@@ -35,15 +35,19 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /*
- * Delete a surveys results
+ * Delete results for a survey
  */
-
 @Path("/surveyResults/{sId}")
 public class SurveyResults extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
+	
+	private static Logger log =
+			 Logger.getLogger(Results.class.getName());
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
@@ -56,15 +60,14 @@ public class SurveyResults extends Application {
 
 		@DELETE
 		public Response deleteSurveyResults(@Context HttpServletRequest request,
-				@PathParam("sId") String sId) { 
+				@PathParam("sId") int sId) { 
 			
 			Response response = null;
 			
 			try {
 			    Class.forName("org.postgresql.Driver");	 
 			} catch (ClassNotFoundException e) {
-			    System.out.println("Survey: Error: Can't find PostgreSQL JDBC Driver");
-			    e.printStackTrace();
+				log.log(Level.SEVERE, "Survey: Error: Can't find PostgreSQL JDBC Driver", e);
 			    return Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
 			}
 			
@@ -75,8 +78,7 @@ public class SurveyResults extends Application {
 			
 			ArrayList<String> tables = new ArrayList<String> ();
 			// Escape any quotes
-			if(sId != null) {
-				sId = sId.replace("'", "''"); 
+			if(sId > 0) {
 	
 				String sql = null;				
 				Connection connectionRel = null; 
@@ -87,11 +89,12 @@ public class SurveyResults extends Application {
 					// Delete tables associated with this survey
 					
 					sql = "SELECT DISTINCT f.table_name FROM form f " +
-							"WHERE f.s_id = " + sId + " " +
+							"WHERE f.s_id = ? " +
 							"ORDER BY f.table_name;";						
 				
-					System.out.println("Delete get tables: " + sql);
-					pstmt = connectionSD.prepareStatement(sql);	 			
+					pstmt = connectionSD.prepareStatement(sql);	
+					pstmt.setInt(1, sId);
+					log.info("Get tables for delete: " + pstmt.toString());
 					ResultSet resultSet = pstmt.executeQuery();
 						
 					while (resultSet.next()) {					
@@ -104,17 +107,16 @@ public class SurveyResults extends Application {
 						String tableName = tables.get(i);					
 
 						sql = "TRUNCATE TABLE " + tableName + ";";
-						System.out.println("Delete truncates: " + sql);
+						log.info("Delete table contents: " + sql);
 						Statement stmtRel = connectionRel.createStatement();
 						stmtRel.executeUpdate(sql);
-						System.out.println("Deleted"); 
+						log.info("userevent: " + request.getRemoteUser() + " : delete results : " + tableName + " in survey : "+ sId); 
 					}
 					
-					System.out.println("Building response");
 					response = Response.ok("").build();
 					
 				} catch (SQLException e) {
-				    System.out.println("Survey: Connection Failed! Check output console");
+					log.log(Level.SEVERE, "Survey: Connection Failed! Check output console");
 				    e.printStackTrace();
 				    response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				} finally {
@@ -125,27 +127,24 @@ public class SurveyResults extends Application {
 					} catch (SQLException e) {
 					
 					}
-					System.out.println("closed pstmt");
+
 					try {
 						if (connectionSD != null) {
 							connectionSD.close();
 							connectionSD = null;
 						}
 					} catch (SQLException e) {
-						System.out.println("Survey: Failed to close connection");
-					    e.printStackTrace();
+						log.log(Level.SEVERE,"Survey: Failed to close connection", e);
 					}
-					System.out.println("closed sd");
+
 					try {
 						if (connectionRel != null) {
 							connectionRel.close();
 							connectionRel = null;
 						}
 					} catch (SQLException e) {
-						System.out.println("Survey: Failed to close connection");
-					    e.printStackTrace();
+						log.log(Level.SEVERE, "Survey: Failed to close connection", e);
 					}
-					System.out.println("closed rel");
 				}
 			}
 

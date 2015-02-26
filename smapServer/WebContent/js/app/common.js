@@ -18,6 +18,46 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 var gWait = 0;		// This javascript file only
 
+/* 
+ * ==============================================================
+ * Task Functions
+ * ==============================================================
+ */
+
+function addPendingTask(taskId, assignmentId, status, source) {
+	var i,
+		duplicate = false,
+		assignment;
+	
+	assignment = {
+			assignment_id: assignmentId,
+			assignment_status: status,
+			task_id: taskId			
+			};
+	globals.gPendingUpdates.push(assignment);
+	
+	if(source === "table") {
+		updateMapTaskSelections(taskId, true);
+	} else if(source === "map") {
+		$('#tasks_table').find('[data-taskid=' + taskId + ']').prop("checked", true).closest('tr').addClass("info");
+	}
+}
+
+function removePendingTask(taskId, source) {
+	var i;
+	for (i = 0; i < globals.gPendingUpdates.length; i++) {
+		if(globals.gPendingUpdates[i].task_id === taskId) {
+			globals.gPendingUpdates.splice(i,1);
+			break;
+		}
+	}
+	if(source === "table") {
+		updateMapTaskSelections(taskId, false);
+	} else if(source === "map") {
+		$('#tasks_table').find('[data-taskid=' + taskId + ']').prop("checked", false).closest('tr').removeClass("info");
+	}
+}
+
 /*
  * ===============================================================
  * Project Functions
@@ -452,13 +492,18 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 				updateUserDetails(data, getOrganisationsFn);
 			}
 			
+			if(!dontGetCurrentSurvey) {	// Hack, on edit screen current survey is set as parameter not from the user's defaults
+				globals.gCurrentSurvey = data.current_survey_id;
+			}
+			globals.gCurrentProject = data.current_project_id;
+			$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
+			
 			if(getProjects) {
-				globals.gCurrentProject = data.current_project_id;
-				if(!dontGetCurrentSurvey) {	// Hack, on edit screen current survey is set as parameter not from the user's defaults
-					globals.gCurrentSurvey = data.current_survey_id;
-				}
-				$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 				getMyProjects(globals.gCurrentProject, callback, getAll);	// Get projects 
+			} else {
+				if(typeof callback !== "undefined") {
+					callback(globals.gCurrentSurvey);				// Call the callback with the correct current project
+				}
 			}
 
 		},
@@ -751,5 +796,135 @@ function questionMetaURL (sId, lang, qId) {
 	return url;
 }
 
+/*
+ * Get a survey details - depends on globals being set
+ */
+function getSurveyDetails(callback) {
 
+	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
+	console.log("Getting survey: " + globals.gCurrentSurvey);
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.model.survey = data;
+			globals.model.setSettings();
+			console.log("Survey");
+			console.log(data);
+			setLanguages(data.languages);
+			
+			if(typeof callback == "function") {
+				callback();
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				if(xhr.status == 404) {
+					// The current survey has probably been deleted or the user no longer has access
+					globals.gCurrentSurvey = undefined;
+					return;		
+				}
+				alert("Error: Failed to get survey: " + err);
+			}
+		}
+	});	
+	
+	/*
+	 * Set the languages for the editor
+	 */
+	function setLanguages(languages) {
+		
+		var h = [],
+			idx = -1,
+			$lang = $('.language_list'),
+			$lang1 = $('#language1'),
+			$lang2 = $('#language2'),
+			i;
+		
+		gLanguage1 = 0;	// Language indexes used for translations
+		gLanguage2 = 0;
+		if(languages.length > 1) {
+			gLanguage2 = 1;
+		}
 
+		for (i = 0; i < languages.length; i++) {
+			h[++idx] = '<option value="';
+				h[++idx] = i;
+				h[++idx] = '">';
+				h[++idx] = languages[i];
+			h[++idx] = '</option>';
+		}
+		$lang.empty().append(h.join(""));
+		$lang1.val(gLanguage1);
+		$lang2.val(gLanguage2)
+	}
+}
+
+/*
+ * Validate start and end dates
+ */
+function validDates() {
+	var $d1 = $('#startDate'),
+		$d2 = $('#endDate'),
+		d1 = $d1.data("DateTimePicker").getDate(),
+		d2 = $d2.data("DateTimePicker").getDate()
+			
+	if(!d1 || !d1.isValid()) {
+		$('#ut_alert').show().text("Invalid Start Date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);		
+		return false;
+	}
+	
+	if(!d2 || !d2.isValid()) {
+		$('#ut_alert').show().text("Invalid End Date");
+		setTimeout(function() {
+			$('.form-control', '#endDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	if(d1 > d2) {
+		$('#ut_alert').show().text("End date must be greater than or the same as the start date");
+		setTimeout(function() {
+			$('.form-control', '#startDate').focus();
+	    }, 0);	
+		return false;
+	}
+	
+	$('#ut_alert').hide();
+	return true;
+}
+
+/*
+ * Convert a date into UTC
+ */
+function getUtcDate($element, start, end) {
+	
+	var theDate,
+		utcDate;
+	
+	if(start) {
+		theDate = $element.data("DateTimePicker").getDate().startOf('day');
+	} else if (end) {
+		theDate = $element.data("DateTimePicker").getDate().endOf('day');
+	} else {
+		theDate = $element.data("DateTimePicker").getDate();
+	}
+	
+	utcDate = moment.utc(theDate);
+	
+	console.log("date:" + theDate.format("YYYY-MM-DD HH:mm:ss"));
+	console.log("UTC:" + utcDate.format("YYYY-MM-DD HH:mm:ss"));
+	
+	return utcDate.valueOf();
+
+}

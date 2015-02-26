@@ -50,9 +50,7 @@ require.config({
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
-    	lang_location: '../../../../js',
-    	d3: '//d3js.org/d3.v3.min'
+    	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
@@ -61,8 +59,8 @@ require.config({
     	}
     });
 
-require(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'], 
-		function($, jquery_ui, rmm, localise, globals, d3) {
+require(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'], 
+		function($, jquery_ui, rmm, localise, globals) {
 	
 	var width = 960,
     height = 500;

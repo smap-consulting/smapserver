@@ -1,12 +1,15 @@
 
+FileETag None
+ExpiresActive On   
+     	
 <VirtualHost *:80>
 	ServerAdmin webmaster@localhost
 	DocumentRoot /var/www/smap
 	DBDriver pgsql
 	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
     
-    ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
-    ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
+    ProxyPass         /fieldManagerServer   ajp://localhost:8009/fieldManagerServer timeout=600
+    ProxyPassReverse  /fieldManagerServer   ajp://localhost:8009/fieldManagerServer
         
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
     ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
@@ -43,7 +46,7 @@
 
     <Directory /var/www/smap>
     	Options FollowSymLinks
-        ExpiresDefault A300
+        ExpiresDefault A7776000
         AllowOverride None
         Require all granted
     </Directory>
@@ -69,11 +72,11 @@
 
 # Local access points for webforms
     <Location /formXMLLocal>
-       	Require ip  127.0.0.1
+       	Require host  localhost
 	</Location>
 
 	<Location /instanceXMLLocal>
-    	Require ip  127.0.0.1
+    	Require host  localhost
 	</Location>
 	    	
 	# survey mobile API module. Require enumerator access
@@ -173,8 +176,8 @@
 	</Directory>
 	
 	# Media files
-	alias /media /smap/media
-	<Directory /smap/media>
+	alias /media {your_files}/media
+	<Directory {your_files}/media>
 		Options FollowSymLinks
         AuthType Digest
         AuthName "smap"

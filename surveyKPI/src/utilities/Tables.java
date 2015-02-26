@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Logger;
+
+import surveyKPI.Results;
 
 /*
 This file is part of SMAP.
@@ -28,6 +31,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 public class Tables {
+	
+	private static Logger log =
+			 Logger.getLogger(Results.class.getName());
 	
 	private class TableInfo {
 		private int fId;
@@ -67,7 +73,6 @@ public class Tables {
 	
 	// add a table
 	public void add(String name, int fId, int parent) {
-		System.out.println("Add table to iTables: " + name);
 		iTables.put(name, new TableInfo(name, fId, parent));
 	}
 
@@ -88,7 +93,7 @@ public class Tables {
 		ResultSet resultSet = pstmt.executeQuery();
 		ArrayList <TableInfo> allTables = new ArrayList<TableInfo> ();
 		while(resultSet.next()) {
-			System.out.println("Adding table: " + resultSet.getString(1));
+			
 			allTables.add(new TableInfo(
 					resultSet.getString(1),
 					resultSet.getInt(2),
@@ -97,9 +102,9 @@ public class Tables {
 		}
 		
 		// Debug
-		for(int i = 0; i < allTables.size(); i++) {
-			System.out.println("  All tables: " + allTables.get(i).getTName());
-		}
+		//for(int i = 0; i < allTables.size(); i++) {
+		//	System.out.println("  All tables: " + allTables.get(i).getTName());
+		//}
 		pstmt.close();
 		
 		// 2) For each table in the query add any tables between it and another table in the query
@@ -113,7 +118,7 @@ public class Tables {
 		HashMap <String, TableInfo> acceptedNewTables = new HashMap<String, TableInfo> ();
 		while (itr.hasNext()) {
 			TableInfo ti = itr.next();	// starting point
-			System.out.println("Starting point:" + ti.getTName());
+			
 			boolean hasAncestor = false;
 			while((pTable = getParent(ti, allTables)) != null) {
 				if(iTables.get(pTable.getTName()) != null) {
@@ -140,19 +145,18 @@ public class Tables {
 			itr = t.iterator();
 			while (itr.hasNext()) {
 				TableInfo nt = itr.next();
-				System.out.println("Adding accepted new table: " + nt.getTName());
 				getParent(nt, allTables);	// Set the parent name
 				iTables.put(nt.getTName(), nt);
 			}
 		}
 		
 		// Debug
-		t = iTables.values(); 
-		itr = t.iterator();
-		while (itr.hasNext()) {
-			TableInfo nt = itr.next();
-			System.out.println("Final set of tables: " + nt.getTName());
-		}
+		//t = iTables.values(); 
+		//itr = t.iterator();
+		//while (itr.hasNext()) {
+		//	TableInfo nt = itr.next();
+		//	log.info("Final set of tables: " + nt.getTName());
+		//}
 	}
 	
 	/*

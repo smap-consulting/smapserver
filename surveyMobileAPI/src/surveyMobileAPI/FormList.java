@@ -142,7 +142,7 @@ public class FormList extends Application {
 			TranslationManager translationMgr = new TranslationManager();
 			for (int i = 0; i < surveys.size(); i++ ) {
 				Survey s = surveys.get(i);
-				s.setHasManifest(translationMgr.hasManifest(connectionSD, pstmt, user, s.getId())); 
+				s.setHasManifest(translationMgr.hasManifest(connectionSD, user, s.getId())); 
 			}
 			
 			XformsJavaRosa formList = processXForm(host, portNumber, surveys);	

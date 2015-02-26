@@ -33,35 +33,63 @@ require.config({
     },
     shim: {
     	'app/common': ['jquery'],
-        'foundation.min': ['jquery'],
-        'jquery.autosize.min': ['jquery']
+        'bootstrap.min': ['jquery'],
+        'jquery.autosize.min': ['jquery'],
+        'jquery-drag-ui.min': ['jquery'],
+        'bootstrap.file-input': ['bootstrap.min'],
+    	'bootbox.min': ['bootstrap.min']
+        
     }
 });
 
 require([
          'jquery',
          'app/common', 
-         'foundation.min', 
+         'bootstrap.min', 
          'modernizr',
          'app/localise',
-         'app/ssc',
          'app/globals',
-         'app/csv',
-         'jquery.autosize.min'], 
-		function($, common, foundation, modernizr, lang, ssc, globals, csv) {
+         'jquery-drag-ui.min',
+         'jquery.autosize.min',
+         'bootstrap.file-input',
+         'bootbox.min'], 
+		function($, common, bootstrap, modernizr, lang, globals, jquery_ui) {
 
 
-var	gMode = "settings",
+var	gMode = "survey",
 	gTempQuestions = [],
-	gLanguage1 = 0,
-	gLanguage2 = 0;
+	gLanguage = 0,
+	gIndex = 0,			// Unique index to each question
+	$gCurrentRow,		// Currently selected row
+	gCollapsedPanels = [];
+
+// Media globals
+var gUrl,			// url to submit to
+	gBaseUrl = '/surveyKPI/upload/media',
+	gSId;
+
+// Media Modal Parameters
+var gNewVal,
+	gSelFormId,
+	gSelId,
+	gOptionList,
+	gQname,
+	gElement,
+	gNewVal,
+	gIsSurveyLevel;
+
+
+'use strict';
 
 $(document).ready(function() {
-	
+  
 	var i,
 		params,
 		pArray = [],
-		param = [];
+		param = [],
+		dont_get_current_survey = true;
+	
+	localise.setlang();		// Localise HTML
 	
 	// Get the parameters and start editing a survey if one was passed as a parameter
 	params = location.search.substr(location.search.indexOf("?") + 1)
@@ -78,42 +106,78 @@ $(document).ready(function() {
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurveyList, false, true, undefined, true, true);
+	if(globals.gCurrentSurvey > 0) {
+		dont_get_current_survey = true;		// The current survey was passed in the parameters
+	} else {
+		dont_get_current_survey = false;		// The current survey was not passed in the parameters
+	}
+	getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
+	getFilesFromServer();		// Get the organisational level media files
+
+	/*
+	 * Refresh the view when the selected property changes
+	 */
+	$('#selProperty').change(function() {
+		var i;
+	
+		refreshView();
+		
+	});
+	
+	// Add menu functions
+	$('#m_open').off().click(function() {	// Open an existing form
+		if(globals.model.changes.length > 0) {
+			if (confirm("You have unsaved changes are you sure you want to leave?")) {
+				$('#openFormModal').modal('show');
+			}
+		} else {
+			$('#openFormModal').modal('show');
+		}
+		
+	});
+	$('.m_save_survey').off().click(function() {	// Save a survey to the server
+		globals.model.save(surveyListDone);
+	});
 
 	// Add menu functions
-	$('#m_get_survey').off().click(function() {	// Get a survey from Smap
-		$('#smap').foundation('reveal', 'open');
-	});
-	$('.m_save_survey').off().click(function() {	// Save a survey to Smap
-		globals.model.save();
-		getSurvey();
-	});
+	$('#m_media').off().click(function() {	// MEDIA
+		// Set up media dialog to manage loading and deleting of media
+		$('.mediaManage').show();
+		$('.mediaSelect').hide();
+		$('#mediaModalLabel').html("Manage Media Files");
+		$('#mediaModal table').off();
+		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
+		
+		// Make sure all types of media are shown
+		$('tr.image, tr.audio, tr.video,tr.unknown').show();
+		// Close any drop downmenus
+		$('.dropdown-toggle').parent().removeClass("open");
+		$('.navbar-collapse').removeClass("in");
+		
+		// Set the default destination 
+		if($('#orgLevelTab').hasClass("active")) {
+			gUrl = gBaseUrl;
+			$('#survey_id').val("");				// clear the survey id in the forms hidden field
+			gIsSurveyLevel = false;
+		} else {
+			gUrl = gBaseUrl + '?sId=' + gSId;
+    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    		gIsSurveyLevel = true;
+		}
+		$('#mediaModal').modal('show');
 
-	// Add menu functions
-	$('#m_simple_edit').off().click(function() {	// Edit a survey
-		gMode = "simple_edit";
-		refreshView(gMode);
 	});
-	$('#m_translate').off().click(function() {	// Translate languages
-		gMode = "translate";
-		refreshView(gMode);
-	});
+	
 	$('#m_settings').off().click(function() {	// Get a survey from Smap
-		gMode = "settings";
-		refreshView(gMode);
+		
+		// Close any drop downmenus
+		$('.dropdown-toggle').parent().removeClass("open");
+		$('.navbar-collapse').removeClass("in");
+		
+		$('#settingsModal').modal('show');
 	});
-	$('#m_changes').off().click(function() {	// View the changes to this survey
-		gMode = "changes";
-		refreshView(gMode);
-	});
-	$('#m_undo').off().click(function() {	// Undo last change
-		globals.model.undo();
-		refreshView(gMode);
-	});
-	$('#m_redo').off().click(function() {	// Redo last change
-		globals.model.redo();
-		refreshView(gMode);
-	});
+
+
 	$('#save_settings').off().click(function() {	// Save settings to Smap
 		globals.model.save_settings();
 	});
@@ -126,18 +190,9 @@ $(document).ready(function() {
 		getSurveyList();
  	 });
 	
-	$('#get_survey').off().click(function() {
-		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
-		getSurvey();
-		$('#smap').foundation('reveal', 'close');
- 	 });
-	
 	$('.language_list').off().change(function() {
-		gLanguage1 = $('#language1').val();
-		gLanguage2 = $('#language2').val();
-		refreshView(gMode);
-		//$('#set_language').foundation('reveal', 'close');
+		gLanguage = $(this).val();
+		refreshView();
  	 });
 	
 	// Check for changes in settings
@@ -161,28 +216,808 @@ $(document).ready(function() {
 		alert("failed");
 	});
 	
-	ssc.init();	// initialise the Server Side Calculations section
-	csv.init();	// initialise the add csv file section
+	
+	enableUserProfileBS();
+	
+	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
+	function autocollapse() {
+	    var $navbar = $('.navbar');
+	    $navbar.removeClass('collapsed'); 
+	    if($navbar.innerHeight() > 60) // check if we've got 2 lines
+	        $navbar.addClass('collapsed'); // force collapse mode
+	}
+	$(document).on('ready', autocollapse);
+	$(window).on('resize', autocollapse);
+	
+	/*
+	 * Add check prior to the user leaving the screen
+	 */
+	window.onbeforeunload = function() {
+		if(globals.model.changes.length > 0) {
+			return "You have unsaved changes are you sure you want to leave?";
+		}
+	};
+
+	/*
+	 * Set up media files
+	 */
+    $('#surveyLevelTab a').click(function (e) {
+    	if(gSId) {
+    		e.preventDefault();
+    		$(this).tab('show');
+    		gUrl = gBaseUrl + '?sId=' + gSId;
+    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    		gIsSurveyLevel = true;
+    		
+    		$('#orgPanel').hide();
+    		$('#surveyPanel').show();
+    	}
+    })
+    
+    $('#orgLevelTab a').click(function (e) {
+    	  e.preventDefault();
+    	  $(this).tab('show');
+    	  gUrl = gBaseUrl;
+    	  $('#survey_id').val("");				// clear the survey id in the forms hidden field
+  		  gIsSurveyLevel = false;
+    	  
+    	  $('#orgPanel').show();
+    	  $('#surveyPanel').hide();
+    })
+    	
+    $('.file-inputs').bootstrapFileInput();
+    
+    /*
+     * Submit the files
+     */
+    $('#submitFiles').click( function() {
+    	console.log("Serialize");
+    	var sId = $('#survey_id').val();
+    	var f = document.forms.namedItem("fileupload");
+    	var formData = new FormData(f);
+    	
+    	addHourglass();
+        $.ajax({
+            url: gUrl,
+            type: 'POST',
+            xhr: function () {
+            	var myXhr = $.ajaxSettings.xhr();
+        		if(myXhr.upload){ 
+        			myXhr.upload.addEventListener('progress', progressFn, false); 
+        		}
+        		return myXhr;
+            },
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData:false,
+            success: function(data) {
+    			removeHourglass();
+            	var surveyId = sId;
+            	console.log("Success");
+            	console.log(data);
+            	refreshMediaView(data, surveyId);
+            	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
+            	document.forms.namedItem("fileupload").reset();
+            	
+            },
+            error: function(xhr, textStatus, err) {
+    			removeHourglass();
+  				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
+
+				}
+            }
+        });
+    });
+    
+    /*
+     * Open a new form
+     */
+	$('#get_form').off().click(function() {
+		globals.gCurrentSurvey = $('#form_name option:selected').val();
+		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id
+		globals.model.setHasChanges(0);		// Clear any existing changes from a previous form
+		getSurveyDetails(surveyDetailsDone);
+ 	 });
+	
+    /*
+     * Save a selected media file
+     */
+	$('#mediaSelectSave').click(function() {
+		if(gNewVal) {
+			if(gOptionList) {
+				type = "option";
+			} else {
+				type = "question";
+			}
+			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname);
+		}
+	});
+	
+	$('#removeMedia').click(function() {
+
+		if(gOptionList) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname);
 		
-	$(document).foundation();		// Add foundation styling
-	
-	
+	});
 });
+
+function enableDragablePanels() {
+	var panelList = $('#formList');
+
+    panelList.sortable({
+        // Only make the .panel-heading child elements support dragging.
+        // Omit this to make the entire <li>...</li> draggable.
+        handle: '.panel-heading', 
+        update: function() {
+            $('.panel', panelList).each(function(index, elem) {
+                 var $listItem = $(elem),
+                     newIndex = $listItem.index();
+
+                 // Persist the new indices.
+            });
+        }
+    });
+}
 
 function getSurveyList() {
 	console.log("getSurveyList: " + globals.gCurrentSurvey);
 	if(globals.gCurrentSurvey > 0) {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, getSurvey);
+		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
 	} else {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
 	}
 }
 
 
-function getSurvey() {
+function surveyListDone() {
+	getSurveyDetails(surveyDetailsDone);
+}
 
-	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
-	console.log("Getting survey: " + globals.gCurrentSurvey);
+function surveyDetailsDone() {
+	// Get survey level files
+	if(globals.gCurrentSurvey) {
+		$('#surveyLevelTab').removeClass("disabled");
+		getFilesFromServer(globals.gCurrentSurvey);
+	}
+	
+	// Update edit view
+	updateSettingsData();
+	refreshView();
+}
+/*
+ * Show the form on the screen
+ */
+function refreshView() {
+	
+	var i,
+		survey = globals.model.survey,
+		key,
+		h = [],
+		idx = -1;
+	
+	if(survey) {
+		if(survey.forms && survey.forms.length > 0) {
+			for(i = 0; i < survey.forms.length; i++) {
+				if(survey.forms[i].parentform == 0) {
+					h[++idx] = addQuestions(survey.forms[i], i);
+					break
+				}
+			}
+		}
+	}
+	
+	// Get the current list of collapsed panels
+	gCollapsedPanels = [];
+	gIndex = 0;
+	$('.in').each(function(){
+		gCollapsedPanels.push($(this).attr("id"));
+	});
+	
+	// Update the form view
+	$('#formList').html(h.join(""));
+	
+	// Restore collapsed panels
+	for(i = 0; i < gCollapsedPanels.length; i++) {
+		console.log("collapsed: " + gCollapsedPanels[i]);
+		$('#' + gCollapsedPanels[i]).addClass("in");
+	}
+	
+	//enableDragablePanels();
+	
+	$('.labelProp').change(function(){
+		event.preventDefault();
+		var $this = $(this),
+			$parent = $this.parent(),
+			formIndex = $parent.data("fid"),
+			itemIndex = $parent.data("id"),
+			newVal = $this.val(),
+			type,
+			optionList = $parent.data("list_name"),
+			qname = $parent.data("qname");
+		
+		if($parent.hasClass("option")) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname); // TODO Hint
+
+	});
+	
+	$('.mediaProp').off().click(function(){
+		event.preventDefault();
+		
+		var $this = $(this);
+		mediaPropSelected($this);
+
+	});
+}
+
+function mediaPropSelected($this) {
+	var $parent = $this.closest('td'),
+		$immedParent = $this.closest('div');
+	
+	// Set up media view
+	gElement = $this.data("element");
+	gSelFormId = $parent.data("fid");
+	gSelId = $parent.data("id");
+	gOptionList = $parent.data("list_name"); 
+	gQname = $parent.data("qname"); 
+	$gCurrentRow = $parent;
+		
+	$('.mediaManage').hide();						// MEDIA
+	$('.mediaSelect').show();
+	$('#mediaModalLabel').html("Select Media File");
+	
+	// Remove any current selections
+	$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
+	
+	// Only show relevant media
+	$('tr.image, tr.audio, tr.video,tr.unknown').hide();
+	$('tr.' + gElement).show();
+	
+	$('#mediaModal table').on('click', 'tbody tr', function(e) {
+		var $sel = $(this);
+		
+		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other seelcted rows
+	    $sel.addClass('success');
+	 
+	    gNewVal = $sel.find('.filename').text();		    
+	   
+	});
+	
+	// Set the status of the remove button
+	$empty = $immedParent.find('.emptyMedia');
+	if($empty.length > 0) {
+		$('#removeMedia').addClass("disabled");
+	} else {
+		$('#removeMedia').removeClass("disabled");
+	}
+	
+	// On double click save and exit
+	$('#mediaModal table').on('dblclick', 'tbody tr', function(e) {
+		var $sel = $(this);
+		
+	    gNewVal = $sel.find('.filename').text();		    
+	    $('#mediaSelectSave').trigger("click");
+	});
+	
+	$('#mediaModal').modal('show');
+
+}
+/*
+ * Update the list of languages and other settings data
+ */
+function updateSettingsData() {
+	var i,
+		languages = globals.model.survey.languages,
+		key,
+		h = [],
+		idx = -1;
+	
+	for(i = 0; i < languages.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = i;
+		h[++idx] = '">';
+		h[++idx] = languages[i];
+		h[++idx] = '</option>';
+	}
+	$('.language_list').html(h.join(""));
+	$('.survey_name').val(globals.model.survey.displayName);
+	$('.survey_name_view').html(globals.model.survey.displayName);
+	$('#set_survey_ident').val(globals.model.survey.ident);
+}
+
+
+/*
+ * Add the questions for a form
+ */
+function addQuestions(form, fId) {
+	var i,
+		question,
+		h = [],
+		idx = -1;
+	
+	if(form) {
+		for(i = 0; i < form.questions.length; i++) {
+			question = form.questions[i];
+			// Ignore the following questions
+			if(question.name === '_task_key' || 
+					question.name === 'instanceID' || 
+					question.name === 'meta' || 
+					question.name === 'meta_groupEnd') {
+				continue;
+			}
+			if(question.type === "end group") {
+				h[++idx] = '</ol>';
+				h[++idx] = '</div>';
+				h[++idx] = '</li>';
+				continue;
+			}
+			if(question.type === "end repeat") {
+				continue;
+			}
+			h[++idx] = addOneQuestion(question, fId, i);
+		}
+	}
+	return h.join("");
+}
+
+function addOneQuestion(question, fId, id) {
+	var h = [],
+		idx = -1;
+	
+	h[++idx] = addPanelStyle(question.type);
+	h[++idx] = '<div class="panel-heading">';
+		//h[++idx] = '<div class="container">';
+		//	h[++idx] = '<div class="row">';
+			h[++idx] = '<table class="table">';
+				//h[++idx] = '<div class="col-sm-2 col-xs-4 head1">';
+				h[++idx] = '<td class="q_type_col">';
+					h[++idx] = addQType(question.type, question.calculation);
+				h[++idx] = '</td>';
+				//h[++idx] = '<div class="col-sm-3 col-xs-8 head2"><input class="qname" value="';
+				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
+				h[++idx] = question.name;
+				h[++idx] = '" type="text"></td>';
+				h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
+				h[++idx] = '<td class="q_icons_col">';
+					//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
+					h[++idx] = '<a data-toggle="collapse"  href="#collapse';
+					h[++idx] = ++gIndex;
+					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
+			h[++idx] = '</td>';
+			h[++idx] = '</table>';
+		//h[++idx] = '</div>';
+	//h[++idx] = '</div>';
+	h[++idx] = '<div id="collapse';
+	h[++idx] = gIndex;
+	h[++idx] = '" class="panel-body collapse';
+	if(question.type.indexOf("select") === 0) {
+		h[++idx] = ' selectquestion';
+	}
+	h[++idx] = '">';
+	if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
+		h[++idx] = addSubForm(question, globals.model.survey.forms[fId].id);
+	} else if(question.type.indexOf("select") === 0) {
+		h[++idx] = addOptions(question, fId);
+	} 
+	
+	if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
+		h[++idx] = '<ol>';
+	} else { 
+		h[++idx] = '</div>';
+		h[++idx] = '</li>';
+	}
+	
+	return h.join("");
+}
+
+function addPanelStyle(type) {
+	
+	if(type === "begin repeat" || type === "begin group") {
+		return '<li class="panel panel-warning">';
+	} else {
+		return '<li class="panel panel-success">';		
+	}
+}
+
+function addQType(type, calculation) {
+	if(type === "string" && !calculation) {
+		return '<span class="glyphicon glyphicon-font edit_type"></span>';	
+	} else if(type === "select1") {
+		return '<img class="edit_image" src="/images/select1_64.png">';
+	} else if(type === "select") {
+		return '<img class="edit_image" src="/images/select_64.png">';
+	} else if(type === "begin repeat") {
+		return '<span class="glyphicon glyphicon-repeat edit_type"></span>';
+	} else if(type === "begin group") {
+		return '<span class="glyphicon glyphicon-folder-open edit_type"></span>';
+	} else if(type === "image") {
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-camera edit_type"></span></div>';
+	} else if(type === "audio") {
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-volume-up edit_type"></span></div>';
+	} else if(type === "video") {
+		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-facetime-video edit_type"></span></div>';
+	} else if(type === "geopoint") {
+		return '<span class="glyphicon glyphicon-map-marker edit_type"></span>';
+	} else if(type === "dateTime" || type === "date") {
+		return '<span class="glyphicon glyphicon-calendar edit_type"></span>';
+	} else if(type === "time") {
+		return '<span class="glyphicon glyphicon-time edit_type"></span>';
+	} else if(type === "barcode") {
+		return '<span class="glyphicon glyphicon-barcode edit_type"></span>';
+	}  else if(type === "int") {
+		return '<span class="edit_type">#</span>';
+	} else if(type === "decimal") {
+		return '<span class="edit_type">#.#</span>';
+	} else if(type === "geolinestring") {
+		return '<img class="edit_image" src="/images/linestring_64.png">';
+	} else if(type === "geopolygon") {
+		return '<img class="edit_image" src="/images/polygon_64.png">';
+	} else if(type === "string" && calculation) {
+		return '<img class="edit_image" src="/images/calc_64.png">';
+	} else {
+		return '<span class="glyphicon glyphicon-record edit_type"></span>';
+	}
+}
+
+/*
+ * One of the questions properties will be featured so that it can be edited in the header without expanding the question
+ */
+function addFeaturedProperty(question, fId, id, list_name, qname) {
+	
+	var h = [],
+		idx = -1,
+		type = "question";
+	
+	if(list_name) {
+		type = "option";
+	}
+	
+	h[++idx] = '<td class="q_label_col ';
+	h[++idx] = type;
+	h[++idx] = '" data-fid="';
+	h[++idx] = fId;
+	h[++idx] = '" data-id="';
+	h[++idx] = id;
+	if(qname) {
+		h[++idx] = '" data-qname="';
+		h[++idx] = qname;
+	}
+	if(list_name) {
+		h[++idx] = '" data-list_name="';
+		h[++idx] = list_name;
+		type = "option";
+	}
+	h[++idx] = '">';
+	h[++idx] = getFeaturedMarkup(question, type);
+	h[++idx] = '</td>';
+	return h.join("");
+}
+
+/*
+ * Get Featured Markup for the question
+ */
+function getFeaturedMarkup(question, type) {
+	var h = [],
+		idx = -1,
+		selProperty = $('#selProperty').val(),
+		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
+	
+	if(selProperty === "label") {
+		h[++idx] = '<textarea class="labelProp" placeholder="Label"';
+		if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
+			h[++idx] = ' readonly tabindex="-1">';
+			h[++idx] = 'Label not required';
+		} else {
+			h[++idx] = ' tabindex="';
+			h[++idx] = gIndex;
+			h[++idx] = '">';
+			h[++idx] = question.labels[gLanguage].text;
+		}
+		h[++idx] = '</textarea>';
+	} else if(selProperty === "media") {
+		h[++idx] = '<div class="row">';
+			if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
+				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
+				h[++idx] = naMedia;
+				h[++idx] = '</div>';
+			} else {
+				h[++idx] = addMedia("Image", 
+						question.labels[gLanguage].image, 
+						question.labels[gLanguage].imageUrl, 
+						question.labels[gLanguage].imageThumb);
+		        
+				h[++idx] = addMedia("Video", 
+						question.labels[gLanguage].video, 
+						question.labels[gLanguage].videoUrl, 
+						question.labels[gLanguage].videoThumb);
+				
+				h[++idx] = addMedia("Audio", 
+						question.labels[gLanguage].audio, 
+						question.labels[gLanguage].audioUrl, 
+						question.labels[gLanguage].audioThumb);
+				
+
+			}
+			
+		h[++idx] = '</div>';		// End of row
+
+	}
+	
+	return h.join("");
+}
+
+/*
+ * Add a media type
+ */
+function addMedia(label, mediaIdent, url, thumbUrl) {
+	var h = [],
+		idx = -1,
+		emptyMedia = '<div class="emptyMedia text-center">Empty</div>',
+		lcLabel = label.toLowerCase();
+	
+	h[++idx] = '<div class="col-sm-3 ';
+	h[++idx] = lcLabel;
+	h[++idx] = 'Element">';
+	if(mediaIdent) {
+		h[++idx] = '<a target="_blank" href="';
+		h[++idx] = url
+		h[++idx] = '"';
+	} else {
+		h[++idx] = "<div";
+	}
+	h[++idx] = ' class="thumbnail preview">';
+
+	if(mediaIdent) {
+		if(thumbUrl || (lcLabel === "image" && url)) {
+			h[++idx] = '<img height="100" width="100" src="';
+			if(thumbUrl) {
+				h[++idx] = thumbUrl;
+			} else {
+				h[++idx] = url;
+			}
+			h[++idx] = '">';
+		} else {
+			h[++idx] = addQType(lcLabel)
+		}
+	} else {
+		h[++idx] = emptyMedia;
+	}
+
+	if(mediaIdent) {
+		h[++idx] = '</a>';
+	} else {
+		h[++idx] = '</div>';
+	}
+    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
+    h[++idx] = label.toLowerCase();
+    h[++idx] = '">';
+    h[++idx] = lcLabel;
+    h[++idx] = '</a>';
+ 
+    h[++idx] = '</div>';
+    
+    return h.join("");
+}
+/*
+ * Add subform
+ */
+function addSubForm(question, parentId) {
+	
+	var h = [],
+		idx = -1,
+		formName,
+		survey = globals.model.survey,
+		forms = [],
+		i,
+		form;
+	
+	h[++idx] = '<ol class="list-unstyled">';
+	
+	// Get the form
+	formName = question.name;
+	forms = survey.forms;
+	for(i = 0; i < forms.length; i++) {
+		form = forms[i];
+		if(forms[i].parentform === parentId) {
+			h[++idx] = addQuestions(forms[i], i);
+			break;
+		}
+	}
+	
+	h[++idx] = '</ol>';
+	
+	return h.join("");
+}
+
+/*
+ * Show the options
+ */
+function addOptions(question, fId) {
+	var survey = globals.model.survey,
+		options = survey.optionLists[question.list_name],
+		h = [],
+		idx = -1,
+		i;
+	
+	if(options) {
+		for(i = 0; i < options.length; i++) {
+			h[++idx] = addOneOption(options[i], fId, i, question.list_name, question.name);
+		}
+	}
+	return h.join("");
+}
+
+/*
+ * Add a single option
+ */
+function addOneOption(option, fId, id, list_name, qname) {
+	var h = [],
+		idx = -1;
+
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
+	h[++idx] = option.value;
+	h[++idx] = '" type="text"></td>';
+	h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
+	//h[++idx] = '<td class="q_icons_col">';	TODO Add Deletion
+	//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
+	//h[++idx] = '</td>';
+	h[++idx] = '</table>';
+
+	return h.join("");
+}
+
+/*
+ * Call this to update a label
+ * Label processing is different than other attributes since it has to be applied to multiple languages
+ * Parameters:
+ * 	element:  text || hint || image || video || audio
+ *  newVal: The new value for the label
+ *  type: question || option
+ */
+function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname) {
+	
+	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
+		markup,
+		survey = globals.model.survey,
+		i;
+	
+	console.log(survey);
+	if(type === "question") {
+		item.push({
+			form: formIndex,
+			question: itemIndex
+		});
+		
+		// Update the in memory survey model
+		if(element === "text") {
+			survey.forms[formIndex].questions[itemIndex].labels[gLanguage][element] = newVal;
+		} else {
+			// For non text changes update all languages
+			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
+				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
+				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+			}
+		}
+	} else {
+		item.push({
+			optionList: optionList,
+			qname: qname,
+			option: itemIndex
+		});
+		if(element === "text") {
+			survey.optionLists[optionList][itemIndex].labels[gLanguage][element] = newVal;
+		} else {
+			// For non text changes update all languages
+			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
+				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
+				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+			}
+		}
+	}
+	
+	// Add the change to the list of changes to be applied
+	globals.model.modLabel(gLanguage, item, newVal, element);
+	
+	
+	// Update the current markup
+	if(element === "image") {	
+		
+		markup = addMedia("Image", 
+				newVal, 
+				getUrl(survey.o_id, survey.ident, newVal, false, 'image'), 
+				getUrl(survey.o_id, survey.ident, newVal, true, 'image')
+				);
+		
+	} else if(element === "video") {
+		
+		markup = addMedia("Video", 
+				newVal, 
+				getUrl(survey.o_id, survey.ident, newVal, false, 'video'), 
+				getUrl(survey.o_id, survey.ident, newVal, true, 'video')
+				);
+		
+	} else if(element === "audio") {
+		
+		markup = addMedia("Audio", 
+				newVal, 
+				getUrl(survey.o_id, survey.ident, newVal, false, 'audio'), 
+				undefined
+				);	
+
+	}
+	
+	if($gCurrentRow) {
+		$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
+		$('.mediaProp', $gCurrentRow).off().click(function(){
+			event.preventDefault();	
+			var $this = $(this);
+			mediaPropSelected($this);
+		});
+	}
+}
+
+/*
+ * Media functions
+ */
+function getUrl(o_id, s_ident, newVal, thumbs, type) {
+	var url = "/media/",
+		filebase,
+		ext;
+	
+	if(gIsSurveyLevel) {
+		url += s_ident;
+		url += "/";
+		if(thumbs) {
+			url += "thumbs/"; 
+		}
+		url += newVal;
+	} else {
+		url += "organisation/";
+		url += o_id;
+		url += "/";
+		if(thumbs) {
+			url += "thumbs/"; 
+		}
+		if(type === "image") {
+			url += newVal;
+		} else {
+			// Replace the video's extension with jpg
+			index = newVal.lastIndexOf('.');
+			filebase = newVal.substr(0, index);
+			url += filebase + ".jpg";		
+		}
+	}
+	
+	return url;
+}
+
+function progressFn(e) {
+	if(e.lengthComputable){
+        var w = (100.0 * e.loaded) / e.total;
+        $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
+    }
+}
+
+function getFilesFromServer(sId) {
+	
+	var url = gBaseUrl;
+	if(sId) {
+		gSId = sId;
+		url += '?sId=' + sId;
+	}
+	console.log("Getting media: " + url);
 	
 	addHourglass();
 	$.ajax({
@@ -191,310 +1026,128 @@ function getSurvey() {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			globals.model.survey = data;
-			globals.model.setSettings();
-			console.log("Survey");
+			
+			var surveyId = sId;
 			console.log(data);
-			setLanguages(data.languages);
-			
-			// Set the link to the media editor
-			$('#m_media').attr("href", '/fieldManager/browseForms.jsp?id=' + globals.gCurrentSurvey + '&name=' + data.displayName);
-			
-			refreshView(gMode);
+			refreshMediaView(data, surveyId);
+
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to get survey: " + err);
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
 			}
 		}
 	});	
 }
 
-function setLanguages(languages) {
-	
-	var h = [],
-		idx = -1,
-		$lang = $('.language_list'),
-		$lang1 = $('#language1'),
-		$lang2 = $('#language2'),
-		i;
-	
-	gLanguage1 = 0;	// Language indexes used for translations
-	gLanguage2 = 0;
-	if(languages.length > 1) {
-		gLanguage2 = 1;
-	}
-
-	for (i = 0; i < languages.length; i++) {
-		h[++idx] = '<option value="';
-			h[++idx] = i;
-			h[++idx] = '">';
-			h[++idx] = languages[i];
-		h[++idx] = '</option>';
-	}
-	$lang.empty().append(h.join(""));
-	$lang1.val(gLanguage1);
-	$lang2.val(gLanguage2)
-}
-
-function refreshView(mode) {
+function refreshMediaView(data, sId) {
 	
 	var i,
-		j,
-		qList = [],
-		index = -1,
 		survey = globals.model.survey,
-		numberLanguages = survey.languages.length,
-		key,
-		options = [];
+		$element,
+		h = [],
+		idx = -1,
+		files;
 	
-	gTempQuestions = [];
+	if(survey && sId) {
+		// Set the display name
+		$('#formName').html(survey.displayName);
+		$('#survey_id').val(sId);
+		gSId = sId;
+	}
 	
-	// Modify Template to reflect view parameters
-	
-	if(mode === "simple_edit") {
-		$('#survey').empty().append("<h1>Not available</h1>");
-		showTranslate();
-		//$('#survey').html(Mustache.to_html( $('#tpl').html(), gQuestions));
-		//$('#survey select').each(function(){
-		//	$(this).val($(this).attr("data-sel"));
-		//});
-	} else if(mode === "translate") {
+	if(data) {
+		files = data.files;
 		
-		// Add all unique questions from all forms
-		for(i = 0; i < survey.forms.length; i++) {
-			console.log("Form name: " + survey.forms[i].name);
-			var formQuestions = survey.forms[i].questions; 
-			for(j = 0; j < formQuestions.length; j++) {
-				
-				if(formQuestions[j].labels[gLanguage1].text) {
-					if((index = $.inArray(formQuestions[j].labels[gLanguage1].text, qList)) > -1) {
-						console.log(formQuestions[j].labels[gLanguage1].text);
-						gTempQuestions[index].indexes.push({
-							form: i,
-							question: j
-						});
-						console.log(gTempQuestions[index]);
-					} else {
-						qList.push(formQuestions[j].labels[gLanguage1].text);
-						gTempQuestions.push({
-							label_a: formQuestions[j].labels[gLanguage1].text,
-							label_b: formQuestions[j].labels[gLanguage2].text,
-							indexes: [{
-								form: i,
-								question: j
-							}]
-						});
-					}
-				}
-			}
+		if(sId) {
+			$element = $('#filesSurvey');
+		} else {
+			$element = $('#filesOrg');
 		}
-		// Add all unique options from all option lists
-		for(key in survey.optionLists) {
-			console.log("Option list: " + key);
-			var options = survey.optionLists[key]; 
-			for(j = 0; j < options.length; j++) {
-				
-				console.log("Option:" + options[j]);
-
-				if(options[j].labels[gLanguage1].text) {
-					if((index = $.inArray(options[j].labels[gLanguage1].text, qList)) > -1) {
-						console.log(options[j].labels[gLanguage1].text);
-						gTempQuestions[index].indexes.push({
-							optionList: key,
-							option: j
-						});
-						console.log(gTempQuestions[index]);
-					} else {
-						qList.push(options[j].labels[gLanguage1].text);
-						gTempQuestions.push({
-							label_a: options[j].labels[gLanguage1].text,
-							label_b: options[j].labels[gLanguage2].text,
-							indexes: [{
-								optionList: key,
-								option: j
-							}]
-						});
-					}
-				}
+		
+		for(i = 0; i < files.length; i++){
+			h[++idx] = '<tr class="';
+			h[++idx] = files[i].type;
+			h[++idx] = '">';
+			h[++idx] = '<td class="preview">';
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = files[i].url;
+			h[++idx] = '">';
+			if(files[i].type == "audio") {
+				h[++idx] = addQType("audio");
+			} else {
+				h[++idx] = '<img src="';
+				h[++idx] = files[i].thumbnailUrl;
+				h[++idx] = '" alt="';
+				h[++idx] = files[i].name;
+				h[++idx] = '">';
 			}
-		}
-		qList = [];		// clear temporary question list	
+			h[++idx] = '</a>';
 
-		showTranslate();
-		setTranslateHtml($('#translate .questions'), gTempQuestions, survey);
-		var questionsedited="0";
-		$(".lang_b").first().focus();
-		$(".lang_b").change(function(){
-			event.preventDefault();
-			var $this = $(this);
-			var index = $this.data("index");
-			var newVal = $this.val();
-			console.log(gTempQuestions[index]);
-			console.log("New val:" + newVal);
-			globals.model.modLabel(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
-			$('.qcount').empty().append('Translations made: ' + (++questionsedited))
+
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="filename">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].name;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].size;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
+				h[++idx] = files[i].deleteUrl;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
+				h[++idx] = ' Delete';
+				h[++idx] = '</button>';
+			h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+		}
+		
+
+		$element.html(h.join(""));
+	
+		$('.media_del', $element).click(function () {
+			delete_media($(this).data('url'));
 		});
-
-		
-	} else if(mode === "settings") {
-		$('#set_survey_name').val(globals.model.survey.displayName);
-		$('#set_survey_ident').val(globals.model.survey.ident);
-		ssc.setHtml('#sscList', globals.model.survey.sscList);
-		csv.setHtml('#csvList', globals.model.survey.surveyManifest);
-		showSettings();
-	} else if(mode === "changes") {
-		setChangesHtml($('#changes'), survey.changes, survey);
-		showChanges();
-	} else {
-		alert("unknown mode");
-		refreshView("simple_edit");
-	}
-	$('#survey').foundation();
 	
+	}	
 }
 
-// Show the translation view
-function showTranslate() {
-	$("#translate").show();
-	$("#settings,#changes").hide();
+function delete_media(url) {
+	addHourglass();
+	$.ajax({
+		url: url,
+		type: 'DELETE',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			console.log(data);
+			
+			var address = url;
+			if(url.indexOf('organisation') > 0) {
+				refreshMediaView(data);
+			} else {
+				refreshMediaView(data, gSId);
+			}
+	
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
 }
-
-// Show the settings view
-function showSettings() {
-	$("#translate, #changes").hide();
-	$("#settings").show();
-}
-
-//Show the changes to this survey
-function showChanges() {
-	$("#translate, #settings").hide();
-	$("#changes").show();
-}
-
-/*
- * Convert JSON to html
- * Mustache is preferred however once you start needing helper functions this is more 
- * straightforward
- */
-function setTranslateHtml($element, questions, survey) {
-	var h =[],
-		idx = -1,
-		i;
-	
-	h[++idx] = '<div class="ribbon">';
-		h[++idx] = '<div class="large-12 columns">';
-			h[++idx] = '<h1 class="pagetitle"> Translating Survey:<span class="thick">';
-			h[++idx] = survey.displayName;
-			h[++idx] = '</span></h1>';
-		h[++idx] = '</div>';
-	h[++idx] = '</div>';
-	
-
-	for(i = 0; i < questions.length; i++) {
-		h[++idx] = '<div class="fullest-width row center ribbonwrapper">';
-			h[++idx] = '<div class="ribbon">';
-				h[++idx] = '<div class="small-12 medium-6 columns">';
-					h[++idx] = '<textarea class="lang_a" tabindex="-1" readonly>';
-						h[++idx] = questions[i].label_a;
-					h[++idx] = '</textarea>';
-				h[++idx] = '</div>';
-				h[++idx] = '<div class="small-12 medium-6 columns">';
-					h[++idx] = '<textarea class="lang_b" tabindex="';
-						h[++idx] = i + 1;
-						h[++idx] = '" data-index="';
-						h[++idx] = i;
-						h[++idx] = '">';
-						h[++idx] = questions[i].label_b;
-					h[++idx] = '</textarea>';
-				h[++idx] = '</div>';	
-			h[++idx] = '</div>';
-		h[++idx] = '</div>';
-	}
-
-	
-	$element.html(h.join(''));
-	translateHtmlFixup($element);
-	
-}
-
-function translateHtmlFixup($element) {
-
-	//$('.lang_a', $element).before('<h6 class="qtype">Original Language</h6>');
-	//$('.lang_b', $element).before('<h6 class="qtype">Translated Language</h6>');
-	$(document).on('focus', '.lang_a, .lang_b', function(event) {
-		event.preventDefault();
-		var half_height = $(window).height()/2.5;
-		$("html, body").animate({ 
-			scrollTop: 
-			($(this).offset().top 
-				-half_height) 
-			},100);
-		$(this).autosize();
-		$(this).parent().prev().find('.lang_a').autosize();
-	});
-
-}
-
-/*
- * Convert change log JSON to html
- */
-function setChangesHtml($element, changes, survey) {
-	var h =[],
-		idx = -1,
-		i;
-	
-	h[++idx] = '<table border="1" width=100%">';
-	
-	// write the table headings
-	h[++idx] = '<thead>';
-		h[++idx] = '<tr>';
-			h[++idx] = '<th>Version</th>';
-			h[++idx] = '<th>Change</th>';
-			h[++idx] = '<th>Changed By</th>';
-			h[++idx] = '<th>When changed</th>';
-		h[++idx] = '</tr>';
-	h[++idx] = '</thead>';
-	
-	// Write the table body
-	h[++idx] = '<body>';
-	for(i = 0; i < changes.length; i++) {
-		
-		h[++idx] = '<tr>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].version;
-			h[++idx] = '</td>';	
-			h[++idx] = '<td>';
-			// Description
-				h[++idx] = changes[i].type;
-				h[++idx] = ' ';
-				h[++idx] = changes[i].name;
-				h[++idx] = ' changed to: <span style="color:blue;">';
-				h[++idx] = changes[i].newVal;
-				h[++idx] = '</span>';
-				h[++idx] = ' from: <span style="color:red;">';
-				h[++idx] = changes[i].oldVal;
-				h[++idx] = '</span>';
-			// End Description
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].userName;
-			h[++idx] = '</td>';
-			h[++idx] = '<td>';
-			h[++idx] = changes[i].updatedTime;
-			h[++idx] = '</td>';
-		h[++idx] = '</tr>';
-	}
-	h[++idx] = '</body>';
-	
-	h[++idx] = '</table>';
-	
-	$element.html(h.join(''));
-	
-	
-}
-
 });

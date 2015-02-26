@@ -19,18 +19,22 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.managers;
 
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
-import org.smap.sdal.model.Survey;
-import org.smap.sdal.model.Translation;
+import org.smap.sdal.Utilities.MediaUtilities;
+import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.model.ManifestValue;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 public class TranslationManager {
@@ -48,64 +52,156 @@ public class TranslationManager {
 					" and u.ident = ? " +
 					" and t.s_id = ?; ";
 	
-	public List<Translation> getManifestBySurvey(Connection sd, 
-			PreparedStatement pstmt,
+	public List<ManifestValue> getManifestBySurvey(Connection sd, 
 			String user, 
-			int surveyId
+			int surveyId,
+			String basePath,
+			String surveyIdent
 			)	throws SQLException {
 		
-		ArrayList<Translation> translations = new ArrayList<Translation>();	// Results of request
+		HashMap<String, String> files = new HashMap<String, String> ();
+		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
+		int oId = MediaUtilities.getOrganisationId(sd, user);
 		
-		ResultSet resultSet = null;
-		String sql = "select t.t_id, t.s_id, t.language, t.text_id, t.type, t.value " +
+		String sqlQuestionLevel = "select t.text_id, t.type, t.value " +
 				manifestQuerySql;
+		PreparedStatement pstmtQuestionLevel = null;
 		
-		pstmt = sd.prepareStatement(sql);	 			
-		pstmt.setString(1, user);
-		pstmt.setInt(2, surveyId);
-		resultSet = pstmt.executeQuery();
+		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null; ";
+		PreparedStatement pstmtSurveyLevel = null;
 		
-		while (resultSet.next()) {								
-
-			Translation t = new Translation();
-			t.setId(resultSet.getInt(1));
-			t.setSurveyId(resultSet.getInt(2));
-			t.setLanguage(resultSet.getString(3));
-			t.setTextId(resultSet.getString(4));
-			t.setType(resultSet.getString(5));
-			t.setValue(resultSet.getString(6));
+		try {
 			
-			translations.add(t);
-		} 
-		return translations;
+			/*
+			 * Get Question and Option level manifests from the translation table
+			 */
+			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
+			pstmtQuestionLevel.setString(1, user);
+			pstmtQuestionLevel.setInt(2, surveyId);
+			System.out.println("Question level manifests: " + pstmtQuestionLevel.toString());
+			ResultSet rs = pstmtQuestionLevel.executeQuery();
+			
+			while (rs.next()) {								
+	
+				ManifestValue m = new ManifestValue();
+				m.sId = surveyId;
+				m.text_id = rs.getString(1);
+				m.type = rs.getString(2);
+				m.value = rs.getString(3);
+								
+				if(m.value != null) {
+					// Get file name from value (Just for legacy, new media should be stored as the file name only)
+					int idx = m.value.lastIndexOf('/');	
+					m.fileName = m.value.substring(idx + 1);					
+					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);		// Url will be null if file does not exist
+					
+					// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
+					if(files.get(m.fileName) == null) {
+						files.put(m.fileName, m.fileName);
+						manifests.add(m);
+					}
+				}
+			} 
+			
+			/*
+			 * Get Survey Level manifests from survey table
+			 */
+			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
+			pstmtSurveyLevel.setInt(1, surveyId);
+			log.info("SQL survey level manifests:" + pstmtSurveyLevel.toString());
+			
+			rs = pstmtSurveyLevel.executeQuery();
+			if(rs.next()) {
+				String manifestString = rs.getString(1);
+				Type type = new TypeToken<ArrayList<String>>(){}.getType();
+				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
+				
+				for(int i = 0; i < manifestList.size(); i++) {
+					
+					ManifestValue m = new ManifestValue();
+					m.sId = surveyId;
+					m.type = "csv";
+					
+					m.fileName = manifestList.get(i);
+					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
+					
+					manifests.add(m);
+				}
+			}
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}
+			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
+		}
+		
+		log.info("Manifest length: " + manifests.size());
+		
+		return manifests;
 	}
 	
 	/*
 	 * Returns true if the user can access the survey and that survey has a manifest
 	 */
 	public boolean hasManifest(Connection sd, 
-			PreparedStatement pstmt,
 			String user, 
 			int surveyId
 			)	throws SQLException {
 		
 		boolean hasManifest = false;
 		
-		String sql = "select count(*) " +
+		/*
+		 * Test for a question level manifest
+		 */
+		String sqlQuestionLevel = "select count(*) " +
 				manifestQuerySql;
 		
-		ResultSet resultSet = null;
-		pstmt = sd.prepareStatement(sql);	 			
-		pstmt.setString(1, user);
-		pstmt.setInt(2, surveyId);
-		resultSet = pstmt.executeQuery();
+		String sqlSurveyLevel = "select count(*) from survey where s_id = ? and manifest is not null";
 		
-		if(resultSet.next()) {
-			if(resultSet.getInt(1) > 0) {
-				hasManifest = true;
+		PreparedStatement pstmtQuestionLevel = null;
+		PreparedStatement pstmtSurveyLevel = null;
+		
+		try {
+			ResultSet resultSet = null;
+			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
+			pstmtQuestionLevel.setString(1, user);
+			pstmtQuestionLevel.setInt(2, surveyId);
+			
+			log.info("SQL: " + pstmtQuestionLevel.toString());
+			resultSet = pstmtQuestionLevel.executeQuery();
+			
+			if(resultSet.next()) {
+				if(resultSet.getInt(1) > 0) {
+					hasManifest = true;
+				}
 			}
+			
+			if(!hasManifest) {
+				/*
+				 * Test for a survey level manifest
+				 */
+				pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);
+				pstmtSurveyLevel.setInt(1, surveyId);
+				resultSet = pstmtSurveyLevel.executeQuery();
+				
+				if(resultSet.next()) {
+					if(resultSet.getInt(1) > 0) {
+						hasManifest = true;
+					}
+				}
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}
+			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
 		}
 		
 		return hasManifest;	
 	}
+	
 }

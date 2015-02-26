@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'd3'],
-		function($, jquery_ui, rmm, localise, globals, d3) {
+define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
+		function($, jquery_ui, rmm, localise, globals) {
 
 	$(document).ready(function() {
 		

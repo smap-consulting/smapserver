@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class Form {
 	public int id;
 	public String name;
+	public int parentform;
 	public ArrayList<Question> questions = new ArrayList<Question> ();
 
 }

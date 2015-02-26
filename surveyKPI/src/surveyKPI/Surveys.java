@@ -152,7 +152,10 @@ public class Surveys extends Application {
 		return response;
 	}
 	
-	// JSON
+	/*
+	 * Get details on a survey
+	 * Used to get the data in order to edit the survey
+	 */
 	@GET
 	@Path("/{sId}")
 	@Produces("application/json")
@@ -178,11 +181,20 @@ public class Surveys extends Application {
 		
 		org.smap.sdal.model.Survey survey = null;
 		
+		// Get the base path
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		System.out.println("Files parameter: " + basePath);
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		
 		Response response = null;
 		PreparedStatement pstmt = null;
 		SurveyManager sm = new SurveyManager();
 		try {
-			survey = sm.getById(connectionSD, pstmt, request.getRemoteUser(), sId, true);
+			survey = sm.getById(connectionSD, pstmt, request.getRemoteUser(), sId, true, basePath);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -213,6 +225,9 @@ public class Surveys extends Application {
 		return response;
 	}
 
+	/*
+	 * Apply updates to the survey
+	 */
 	@PUT
 	@Path("/save/{sId}")
 	@Produces("application/json")
@@ -239,95 +254,14 @@ public class Surveys extends Application {
 		
 		Type type = new TypeToken<ArrayList<ChangeSet>>(){}.getType();
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);
-		int userId = 0;
-		
-		ChangeResponse resp = new ChangeResponse();	// Response object
-		resp.changeSet = changes;
-		
+		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);	
 		Response response = null;
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtLang = null;
-		PreparedStatement pstmtChangeLog = null;
-		SurveyManager sm = new SurveyManager();
+
 		try {
-			
-			// Create prepared statements
-			String sqlLang = "update translation set value = ? " +
-					"where s_id = ? and language = ? and text_id = ? and type = ? and value = ?;";
-			pstmtLang = connectionSD.prepareStatement(sqlLang);
-			
-			String sqlChangeLog = "insert into survey_change " +
-					"(s_id, version, changes, user_id, updated_time) " +
-					"values(?, ?, ?, ?, ?)";
-			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
-			
-			connectionSD.setAutoCommit(false);
-			
-			// update version number of survey and get the new version
-			String sqlUpdateVersion = "update survey set version = version + 1 where s_id = ?";
-			String sqlGetVersion = "select version from survey where s_id = ?";
-			pstmt = connectionSD.prepareStatement(sqlUpdateVersion);
-			pstmt.setInt(1, sId);
-			pstmt.execute();
-			pstmt.close();
-			
-			pstmt = connectionSD.prepareStatement(sqlGetVersion);
-			pstmt.setInt(1, sId);
-			ResultSet rs = pstmt.executeQuery();
-			rs.next();
-			resp.version = rs.getInt(1);
-			pstmt.close();
-			
-			/*
-			 * Get the user id
-			 * This should be saved rather than the ident as a user could be deleted
-			 *  then a new user created with the same ident but its a different user
-			 */
-			String sqlGetUser = "select id from users where ident = ?";
-			pstmt = connectionSD.prepareStatement(sqlGetUser);
-			pstmt.setString(1, request.getRemoteUser());
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				userId = rs.getInt(1);
-			}
-			pstmt.close();
-			
-			for(ChangeSet cs : changes) {			
-				
-				// Process each change set separately and roll back to a save point if it fails
-				Savepoint sp = connectionSD.setSavepoint();
-				try {
+	
+			SurveyManager sm = new SurveyManager();
+			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, sId, request.getRemoteUser(), changes);
 					
-					sm.applyChanges(pstmtLang, 
-							pstmtChangeLog,
-							userId, 
-							sId, 
-							cs.type, 
-							cs.items,
-							resp.version,
-							gson);
-					
-					// Success
-					cs.updateFailed = false;
-					resp.success++;
-				} catch (Exception e) {
-					
-					// Failure
-					connectionSD.rollback(sp);
-					System.out.println(e.getMessage());
-					cs.updateFailed = true;
-					cs.errorMsg = e.getMessage();
-					resp.failed++;
-				}
-				
-			}
-			
-			connectionSD.commit();
-			System.out.println("Survey update to version: " + resp.version + ". " + 
-					resp.success + " successful changes and " + 
-					resp.failed + " failed changes");
-						
 			String respString = gson.toJson(resp);	// Create the response	
 			response = Response.ok(respString).build();
 			
@@ -338,9 +272,8 @@ public class Surveys extends Application {
 			response = Response.serverError().build();
 		} finally {
 			
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtLang != null) {pstmtLang.close();}} catch (SQLException e) {}
-			try {if (pstmtChangeLog != null) {pstmtChangeLog.close();}} catch (SQLException e) {}
+			
+
 			
 			try {
 				if (connectionSD != null) {
@@ -390,16 +323,15 @@ public class Surveys extends Application {
 		org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 		
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtSSC = null;
-		PreparedStatement pstmtDelSSC = null;
-		PreparedStatement pstmtM1 = null;
-		PreparedStatement pstmtM2 = null;
-		PreparedStatement pstmtM3 = null;
-		PreparedStatement pstmtM4 = null;
-		PreparedStatement pstmtM5 = null;
-		PreparedStatement pstmtM6 = null;
+		//PreparedStatement pstmtSSC = null;
+		//PreparedStatement pstmtDelSSC = null;
+		//PreparedStatement pstmtM1 = null;
+		//PreparedStatement pstmtM2 = null;
+		//PreparedStatement pstmtM3 = null;
+		//PreparedStatement pstmtM4 = null;
+		//PreparedStatement pstmtM5 = null;
+		//PreparedStatement pstmtM6 = null;
 		try {
-			connectionSD.setAutoCommit(false);
 		
 			String sql = "update survey set display_name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
 		
@@ -418,31 +350,32 @@ public class Surveys extends Application {
 			}
 			
 			// Delete the old server side calculates
-			sql = "delete from ssc where s_id = ?;";
-			pstmtDelSSC = connectionSD.prepareStatement(sql);
-			pstmtDelSSC.setInt(1, sId);
-			pstmtDelSSC.executeUpdate();
+			//sql = "delete from ssc where s_id = ?;";
+			//pstmtDelSSC = connectionSD.prepareStatement(sql);
+			//pstmtDelSSC.setInt(1, sId);
+			//pstmtDelSSC.executeUpdate();
 			
 			// Save the server side calculations
-			sql = "insert into ssc (s_id, f_id, name, function, units) values " +
-					" (?, ?, ?, ?, ?); ";
-			pstmtSSC = connectionSD.prepareStatement(sql);
-			for(int i = 0; i < survey.sscList.size(); i++) {
+			//sql = "insert into ssc (s_id, f_id, name, function, units) values " +
+			//		" (?, ?, ?, ?, ?); ";
+			//pstmtSSC = connectionSD.prepareStatement(sql);
+			//for(int i = 0; i < survey.sscList.size(); i++) {
 				
-				ServerSideCalculate ssc = survey.sscList.get(i);
-				pstmtSSC.setInt(1, sId);
-				pstmtSSC.setInt(2, ssc.getFormId());
-				pstmtSSC.setString(3, ssc.getName());
-				pstmtSSC.setString(4, ssc.getFunction());
-				pstmtSSC.setString(5, ssc.getUnits());
-				pstmtSSC.executeUpdate();
+			//	ServerSideCalculate ssc = survey.sscList.get(i);
+			//	pstmtSSC.setInt(1, sId);
+			//	pstmtSSC.setInt(2, ssc.getFormId());
+			//	pstmtSSC.setString(3, ssc.getName());
+			//	pstmtSSC.setString(4, ssc.getFunction());
+			//	pstmtSSC.setString(5, ssc.getUnits());
+			//	pstmtSSC.executeUpdate();
 				
-				System.out.println("Inserting: " + ssc.getName());
-			}
+			//	System.out.println("Inserting: " + ssc.getName());
+			//}
 			
 			/*
 			 * Save the manifest entries
-			 */
+			 * Deprecated - now moved to media management page
+			 *
 			System.out.println("Saving manifest entries: " + survey.surveyManifest.size());
 		    
 		    // 1) Get the languages
@@ -461,7 +394,10 @@ public class Surveys extends Application {
 	    			"values (nextval('t_seq'),?,?,?,?,?);"; 
 	    	pstmtM5 = connectionSD.prepareStatement(sqlM5);
 	    	
+	    	/*
+	    	 * No longer required
 	    	String sqlGetIdent = "select ident from survey where s_id = ?;"; 
+	    	    	 
 	    	pstmtM6 = connectionSD.prepareStatement(sqlGetIdent);
 		    SurveyManager sm = new SurveyManager();
 		    for(int i = 0; i < survey.surveyManifest.size(); i++) {
@@ -469,27 +405,24 @@ public class Surveys extends Application {
 		    	sm.saveSurveyManifest(connectionSD, pstmtM1, pstmtM2, pstmtM3, pstmtM4, pstmtM5,
 		    			pstmtM6, sId, survey.surveyManifest.get(i));
 		    }
+		    */
 
-			
-			
-			connectionSD.commit();
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
-			try{connectionSD.rollback();}catch(Exception ex){};
 			log.log(Level.SEVERE,"No data available", e);
-		    response = Response.serverError().entity("No data available").build();
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
-			if (pstmtDelSSC != null) try {pstmtDelSSC.close();} catch (SQLException e) {}
-			if (pstmtSSC != null) try {pstmtSSC.close();} catch (SQLException e) {}
-			if (pstmtM1 != null) try {pstmtM1.close();} catch (SQLException e) {}
-			if (pstmtM2 != null) try {pstmtM2.close();} catch (SQLException e) {}
-			if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
-			if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
-			if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
-			if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
+			//if (pstmtDelSSC != null) try {pstmtDelSSC.close();} catch (SQLException e) {}
+			//if (pstmtSSC != null) try {pstmtSSC.close();} catch (SQLException e) {}
+			//if (pstmtM1 != null) try {pstmtM1.close();} catch (SQLException e) {}
+			//if (pstmtM2 != null) try {pstmtM2.close();} catch (SQLException e) {}
+			//if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
+			//if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
+			//if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
+			//if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {

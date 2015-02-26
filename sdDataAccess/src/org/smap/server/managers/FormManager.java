@@ -56,7 +56,7 @@ public class FormManager {
 	@SuppressWarnings("unchecked")
 	public List<Form> getBySurveyId(int surveyId) {
 		EntityManager em = pc.getEntityManager();
-		System.out.println("Survey ID " + surveyId);
+
 		Query query = em.createQuery(
 				"SELECT f FROM FORM f WHERE f.surveyOwner.id = ?1")
 				.setParameter(1, surveyId);
@@ -146,7 +146,6 @@ public class FormManager {
 			em.getTransaction().begin();
 
 			for (Form f : formList) {
-				System.out.println("Persisting form(" + f.getId() + "): " + f.getName());
 				em.persist(f);
 			}
 			em.getTransaction().commit();

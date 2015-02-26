@@ -53,6 +53,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
+import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.server.entities.SubscriberEvent;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -195,17 +196,17 @@ public class SubUshahidi extends Subscriber {
 	    	    
 	    		// Ushahidi parameters take only part of the full date, and part of the location
 	    		if(name.equals("incident_date")) {	// Only the year, day month part of the date is used
-	    			parValue = Utilities.getPartDate(parValue, "MM/dd/yyyy");
+	    			parValue = UtilityMethods.getPartDate(parValue, "MM/dd/yyyy");
 	    		} else if(name.equals("incident_hour")) {	// Only the hour part of the date is used
-	    			parValue = Utilities.getPartDate(parValue, "hh");
+	    			parValue = UtilityMethods.getPartDate(parValue, "hh");
 	    		} else if(name.equals("incident_minute")) {	// Only the minute part of the date is used
-	    			parValue = Utilities.getPartDate(parValue, "mm");
+	    			parValue = UtilityMethods.getPartDate(parValue, "mm");
 	    		} else if(name.equals("incident_ampm")) {	// Only the am/pm part of the date is used
-	    			parValue = Utilities.getPartDate(parValue, "aa").toLowerCase();
+	    			parValue = UtilityMethods.getPartDate(parValue, "aa").toLowerCase();
 	    		} else if(name.equals("latitude")) {	// Only the lat part of the location is used
-	    			parValue = Utilities.getPartLocation(parValue, "lat");
+	    			parValue = UtilityMethods.getPartLocation(parValue, "lat");
 	    		} else if(name.equals("longitude")) {	// Only the lon part of the location is used
-	    			parValue = Utilities.getPartLocation(parValue, "lon");
+	    			parValue = UtilityMethods.getPartLocation(parValue, "lon");
 	    		}
 	    		
 	    		// Set some default values if the results data is deficient

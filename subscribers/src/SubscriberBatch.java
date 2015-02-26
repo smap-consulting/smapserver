@@ -192,7 +192,7 @@ public class SubscriberBatch {
 										SurveyTemplate template = new SurveyTemplate();
 										
 										template.readDatabase(templateName);					
-										template.extendInstance(instance);	// Extend the instance with information from the template
+										template.extendInstance(instance, true);	// Extend the instance with information from the template
 										// instance.getTopElement().printIEModel("   ");	// Debug
 										
 										// Get attachments from incomplete submissions

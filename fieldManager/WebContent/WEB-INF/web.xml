@@ -2,8 +2,22 @@
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
   <display-name>fieldManager</display-name>
   <welcome-file-list>
-    <welcome-file>templateManagement.html</welcome-file>
+    <welcome-file></welcome-file>
   </welcome-file-list>
+   <servlet>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>com.sun.jersey.config.property.packages</param-name>
+      <param-value>com.cloudtec.fieldManager</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
+  <!-- 
   <servlet>
     <servlet-name>TemplateUpload</servlet-name>
     <servlet-class>com.cloudtec.fieldManager.TemplateUpload</servlet-class>
@@ -42,4 +56,5 @@
     <servlet-name>MediaUpload</servlet-name>
     <url-pattern>/MediaUpload</url-pattern>
   </servlet-mapping>
+  -->
 </web-app>

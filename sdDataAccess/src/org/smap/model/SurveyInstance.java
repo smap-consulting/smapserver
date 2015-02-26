@@ -56,6 +56,7 @@ public class SurveyInstance {
 		// Create instance elements
 		topInstanceElement = new IE(rootElement.getNodeName(), rootElement.getTextContent());
 		String path = "/" + rootElement.getNodeName();
+		//String path = "/main";				// SMAP assumes path always starts with /main
 		topInstanceElement.setPath(path);
 		
 		processElement(rootElement, topInstanceElement, path);   	

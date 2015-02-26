@@ -224,18 +224,20 @@ public class GetXForm {
 								base = "images";
 							}
 							String fileLocn = trans.getValue();	// Location of file on disk, only file name is used by fieldTask
-							int idx = fileLocn.lastIndexOf('/');
-							String filename;
-							if(idx > 0) {
-								filename = fileLocn.substring(idx+1);
-							} else {
-								filename = fileLocn;
+							String filename = "";
+							if(fileLocn != null) {
+								int idx = fileLocn.lastIndexOf('/');
+								if(idx > 0) {
+									filename = fileLocn.substring(idx+1);
+								} else {
+									filename = fileLocn;
+								}
 							}
 							
 							valueElement.setTextContent("jr://" + base + "/" + filename);
 							
 						} else {
-							// The text could be an xml fragment, hence the tortured code that follows
+							// The text could be an xml fragment
 							try {
 								xfragDoc = builder.parse(new InputSource(new StringReader(trans.getValueXML())));
 								Element rootFrag = xfragDoc.getDocumentElement();

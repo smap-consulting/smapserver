@@ -119,7 +119,7 @@ var gExpandedPanelSeq;	// Set to the sequence number of a newly created panel
 $(document).ready(function() {
 	
 	var aDate;
-	
+	console.log("panels");
 	localise.setlang();		// Localise HTML
 	
     // Add a new panel button click

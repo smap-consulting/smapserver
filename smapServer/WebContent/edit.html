@@ -4,274 +4,414 @@
 	<meta name="keywords" content="" />
 	<meta name="description" content="" />
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=0.7">
 
 	<title>Form Builder</title>
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,800" rel="stylesheet" type="text/css">
-	<link rel="stylesheet" href="css/app.css" />
-	<!-- <link rel="stylesheet" href="/css/foundation.min.css" /> 
-	<style>.name h1 img {width:30px;}</style>	Temporary while styles are sorted 
-	-->
-	<style> 
-		textarea.lang_a, textarea.lang_b {overflow: hidden; word-wrap: break-word; resize: horizontal; height: 66px;}
-		textarea.lang_b:focus {background-color: green; }
-		.csv_btn_rem {
-			display: inline;
-			font-size: 18px;
-			height: 24px;
-			width: 24px;
-			line-height: 14px;
-			text-align: center;
-			margin: 1px;
-			padding: 2px;
-			font-weight: bold;
-			text-decoration: none;
-			color: white;
-			visited: white;
-			border: 1px solid #a1a1a1;
-			border-radius: 2px;
-			background: rgba(0, 60, 136, 0.5);
-		}
-	</style>
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<!-- <link rel="stylesheet" href="/css/app.css" /> -->
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
     <script data-main="js/edit" src="js/libs/require.js"></script>
 </head>
-<body class="backdos">
-	<!-- NAV BAR -->
-	<div class="fixed" id="nav">
-	  <nav class="top-bar" data-topbar>
-	    <ul class="title-area">
-	      <li class="name">
-	        <h1><a href="http://www.smap.com.au"><img src="/images/logo.png" /><span class="thick">SMAP</span> Consulting</a></h1>
-	      </li>
-	       <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
-	      <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
-	    </ul>
-	
-	    <section class="top-bar-section">
-	      <!-- Right Nav gridfix -->
-	      <ul class="right">
-	      	 <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-	     	 <li><a id="m_admin" href="/fieldManager">Admin</a></li>
-	     	 <li><a id="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-	     	 <!--  
-	        <li class="has-dropdown"><a href="#">File</a>
-	        	<ul class="dropdown">
-	        		<li><a id="m_get_survey" href="#">Get Survey</a>
-	        		<li><a id="m_save_survey" href="#">Save Survey</a>
-	        	</ul>
-	        </li> 
-	        -->
-	        <li class="has-dropdown"><a href="#">View</a>
-	        	<ul class="dropdown">
-	        		<li><a id="m_settings" href="#">Settings</a>
-	        		<!--  <li><a id="m_simple_edit" href="#">Edit</a> -->
-	        		<li><a id="m_translate" href="#">Translate</a>
-	        		<li><a id="m_media" href="#">Media</a>
-	        		<li><a id="m_changes" href="#">Changes</a>
-	        	</ul>
-	        </li> 
-			<!--  <li><a id="m_language" href="#">Languages</a></li> -->
-	        <li><a id="m_undo" href="#">Undo</a></li>
-	        <li><a id="m_redo" href="#">Redo</a></li>	
-			<li><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
-	      </ul>
-	
-	      
-	    </section>
-	  </nav>
-	</div>
-	
-	<!-- END NAV BAR -->
-	
-	<div class="uno" id="main_page">
-	
-		<div id="changes" style="display:none;">
-			<table border="1" width=100%">
-				<thead>
+<body>
+
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+     	 Form Builder
+      </a>
+    </div>
+	<nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav navbar-right">
+      	<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            
+            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+            <li class="disabled restrict_role admin_role analyst_role"><a href="#"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
+            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
+            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
+            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
+          
+          </ul>
+        </li> 
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a id="c_save" class="m_save_survey" href="#">Save</a></li>
+            <li><a id="m_open" href="#">Open</a></li>
+            <li class="disabled"><a id="m_new" href="#">New</a></li>
+            <li class="disabled"><a id="m_import" href="#">Import</a>
+            <li role="presentation" class="divider"></li>
+            <li><a id="m_media" href="#">Media</a></li>
+            <li><a id="m_settings" href="#">Settings</a></li>
+          </ul>
+        </li> 
+ 
+		<li><a id="m_translate" href="translate.html">Translate</a>
+		<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
+		<li><a id="m_changes" href="/changes.html">Changes</a>
+           
+                      
+	    <!-- 
+	   	<li><a id="m_undo" href="#">Undo</a></li>
+	    <li><a id="m_redo" href="#">Redo</a></li>
+	    -->
+		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+        <li>
+         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+			</a>
+		</li>
+      </ul>
+      	
+	</nav>
+
+  </div>
+</header>
+
+<div id="edit_statusbar">
+	<div class="container">
+		<div class="panel panel-info header_style">
+			<table class="table">
+				<tr>
+				<td><span class="form-control survey_name_view" tabindex="-1"></span></td>
+				<td><select class="form-control language_list" id="language" tabindex="-1"></select></td>
+				<td><a type="button" class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled">Save <span class="badge">0</span></a><td>
+				</tr>
+				
+			</table>			
+			<div id="formListHeader" >
+				<table class="table">
 					<tr>
-						<th>Name</th>
-						<th>Form</th>
-						<th>Function</th>
-						<th>Units</th>
-						<th>Parameters</th>
-						<th>Delete</th>
+						<td class="q_type_col">Type</td>
+						<td class="q_name_col">Name</td>
+						<td class="q_label_col">
+							<select class="form-control" id="selProperty">
+								<option value="label">Question Text</option>
+								<option value="media">Media</option>
+							</select>
+						</td>
+						<td class="q_icons_col"></td>
 					</tr>
-				</thead>
-				<tbody id="sscList">
-				</tbody>
-			</table>
-		</div>
-		
-		<div id="translate" style="display:none;">
-			<div class="errorcount">
-  				<div class="large-4 small-4 columns">
-  					<span id="successLabel" class="success round radius label"><span class="counter">0</span> Successful Changes</span>
-        			<span id="failedLabel" class="alert round radius label"><span class="counter">0</span> Failed Changes</span>
-    				<p class="qcount">Translations Made: </p>		
-  				</div>
-	  			<div class="tabhint large-4 columns">
-	    			<p class="tabhint"> Once you've filled a form field, press tab to go to the next one! </p>
-	  			</div>
-	  			<div class="large-4 small-8 columns ecount">
-	    			<a class="button tiny white m_save_survey disabled" disabled="disabled">Save Translations</a>
-	 			 </div>
-	 		 </div>
-	 		 <div class="errorcount" style="top: 90px;">
-	 			 	<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language1" class="language_list" tabindex="-1"></select>
-					</div>
-					<div class="small-12 medium-6 columns" style="line-height: 30px;">
-						<select id="language2" class="language_list" tabindex="-1"></select></div>
-					</div>
- 			 <div class="questions translate"></div>
-		</div>
-		
-
-		<div id="settings">
-  		<h2>Settings</h2>
-  		<p>The survey settings can be saved by clicking the "Save Settings" button.  This will not
-  		create a new version of the survey and will not save any changes you have made to the survey
-  		proper such as changes to questions.  The undo and redo buttons are not used for
-  		information on this page</p>
-  		<form>
-  			<div class="large-12 columns">
-	      		<label>Survey Name:
-	        		<input id="set_survey_name" type="text" placeholder="Enter the name of the survey" />
-	      		</label>
-    		</div>
-    		 <div class="large-12 columns">
-	      		<label>Survey Identifier:
-	        		<input id="set_survey_ident" type="text"  readonly/>
-	      		</label>
-    		</div>
-    		<div class="large-12 columns">
-				<label>Project :</label>
-				<select id="set_project_name" class="project_list">
-				</select>
+				</table>	
 			</div>
-			<div class="large-12 columns">
-				<label>Default Language :</label>
-				<select id="set_default_language" class="language_list">
-				</select>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<ol id="formList" class="list-unstyled">
+	</ol>
+</div>
+
+
+<div style="display:none;">
+	<div class="panel panel-info">
+		<div class="panel-heading">
+        		<a data-toggle="collapse"  href="#collapseOne">
+					Collapse <span class="glyphicon glyphicon-collapse-down pull-right"></span>
+        		</a>	
+		</div>
+		<div id="collapseOne" class="panel-body collapse">
+			<div class="panel panel-level-1">
+				<div class="panel-heading">
+					Heading
+				</div>
+				<div class="panel-body">
+					Body
+				</div>"
 			</div>
-		</form>
-		<dl class="accordion" data-accordion>
-  			<dd class="accordion-navigation">
-    			<a href="#panel1">Server Side Calculations</a>
-    			<div id="panel1" class="content">
-    			
-    				<table id="fl" border="1" width=100%">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Form</th>
-								<th>Function</th>
-								<th>Units</th>
-								<th>Parameters</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="sscList">
-						</tbody>
-					</table>
-	
-					<button id="add_ssc">Add Calculated Value</button>
-					
-    			</div>
-    		</dd>
-    			<dd class="accordion-navigation">
-    			<a href="#panel2">Attach CSV Files</a>
-    			<div id="panel2" class="content">
-    				<table id="csv_manifest_list" class="tablesorter" border="1" width=100%">
-						<thead>
-							<tr>
-								<th>File</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="csvList">
-						</tbody>
-					</table>
-					
-					<button id="add_csv">Attach CSV file</button>
-					
-    			</div>
-    		</dd>
-    	</dl>
-    			
-		<div class="large-12">
-			<button id="save_settings" class="button radius text-center" disabled="disabled">Save Settings</button>
-		</div>		
 
-	
-	</div>
-	<div id="footer">
-        Website created by <a href="http://blog.smap.com.au">Smap Consulting</a> (c) March, 2011
-        , design by <a href="http://wilfhorsfall.com ">Will Horsfall</a>
-	</div>
-	<!-- end #footer -->
-
-	<!-- Modals -->
-	<div id="smap" class="reveal-modal" data-reveal>
-  		<h2>Get Survey</h2>
-  		<form class="custom">
-			<label for="project_name">Project :</label>
-			<select id="project_name" class="project_list">
-			</select>
-			<label for="survey_name">Survey :</label>
-			<select id="survey_name" class="survey_select">
-			</select>
-		</form>
-
-		<div class="large-12">
-			<input id="get_survey" class="button radius text-center" value="Get Survey">
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					Heading
+				</div>
+				<div class="panel-body">
+					<div class="panel panel-level-1">
+						<div class="panel-heading">
+							Heading
+						</div>
+						<div class="panel-body">
+							Body
+						</div>
+					</div>
+				</div>"
+			</div>
 		</div>
-  		<a class="close-reveal-modal">&#215;</a>
 	</div>
+</div>      
+	    
 	
-	<!-- Popup to add a server side calculation function -->
-	<div id="add_ssc_popup" class="reveal-modal" data-reveal>
-		<label for="ssc_function">function:</label>
-		<select id="ssc_function">
-			<option value=""></option>
-			<option value="area">Area</option>
-			<option value="length">Length / Perimeter</option>
-		</select><br/>
-		<label for="ssc_units">Units:</label>
-		<select id="ssc_units">
-		</select><br/>
-		<label for="ssc_name" required>Name: </label>
-		<input type="text" id="ssc_name"><br/>
-		<label for="ssc_form">Form: </label>
-		<select id="ssc_form">
-		</select>
-		
-		
-		<div class="large-12">
-			<input id="add_ssc_done" class="button radius text-center" value="Done">
-			<input id="add_ssc_cancel" class="button radius text-center" value="Cancel">
-		</div>
-  		<a class="close-reveal-modal">&#215;</a>
-	</div>
-	
-	<div id="upload_media" class="reveal-modal" data-reveal>
-  		<h2>Upload Media</h2>
-  			<form id="media_controls" name="add_media_form" action="	/surveyKPI/upload/media" enctype="multipart/form-data" method="POST" 
-				class="ui-body ui-body-a ui-corner-all">
-			<input id="sId" type="hidden" name="survey_id" value="" style="display:none;"/>	
-			<label for="file">File:</label> 
-			<input type="file" name="tname" id="file" size="30"/><br/>
-			<input id="upload_media_done" class="button radius text-center" value="Upload">
-		</form>
+<!-- Informational -->
+<div id="infobox" class="alert alert-warning alert-dismissible" role="alert" style="display:none;">
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	<span id="errormesg"></span>
+</div>
 
-  		<a class="close-reveal-modal">&#215;</a>
-	</div>
+<!-- Setting Dialog -->
+<div id="settingsModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   		 	<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="settingsLabel">Settings</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal">
+					
+					<div class="form-group">
+						<label for="set_survey_name" class="lang col-sm-2 control-label">Form Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="set_survey_name" required class="form-control survey_name" tabindex="1">
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_survey_ident" class="lang col-sm-2 control-label">Form Ident</label>
+						<div class="col-sm-10">
+							<input type="text" id="set_survey_ident" readonly class="form-control" tabindex="2">
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_project_name" class="lang col-sm-2 control-label">Project</label>
+						<div class="col-sm-10">
+							<select id="set_project_name" class="form-control project_list" tabindex="3"></select>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="set_default_language" class="lang col-sm-2 control-label">Default Language</label>
+						<div class="col-sm-10">
+							<select id="set_default_language" class="form-control language_list" tabindex="4"></select>
+						</div>
+					</div>
+				</form>		
+			</div>
+			
+			<div class="modal-footer">
+	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+	            <button id="save_settings" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="true">Save</button>
+	        </div>
+	        
+		</div>
+  	</div>	
+</div>
 	
+
+<!-- Modals -->
+<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
+   			</div>
+		     <div class="modal-body">
+		  		<form role="form" class="form-horizontal">
+		  			<div class="form-group">
+						<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+						<div class="col-sm-10">
+							<select id="project_name" class="project_list form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="form_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
+						<div class="col-sm-10">
+							<select id="form_name" class="survey_select form-control"></select>
+						</div>
+					</div>
+				</form>
+			</div>
+
+			<div class="modal-footer">
+	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+	            <button id="get_form" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="m_open">Open</button>
+	        </div>
+		</div>
+	</div>
+</div>
+	
+
+<!-- Modal for managing media -->
+<div id="mediaModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="mediaModalLabel"></h4>
+   			</div>
+   			<div class="container">
+		    <div class="modal-body row">
+   				<ul class="nav nav-tabs" role="tablist">
+       				<li id="orgLevelTab" role="presentation" class="active"><a href="#">Organisation</a></li>
+       				<li id="surveyLevelTab" role="presentation" class="disabled"><a href="#">Form</a></li>
+
+   				</ul>
+   
+   				<!-- The file upload form used as target for the file upload widget -->
+   				<form enctype="multipart/form-data" name="fileupload">
+       
+       			<input id="survey_id" type="hidden" name="survey_id" >
+       			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
+       			<div class="row fileupload-buttonbar mediaManage">
+           			<div class="col-lg-7">
+                		<!-- The fileinput-button span is used to style the file input field as button -->
+
+                		<input name="files" title="Add files..." class="file-inputs" type="file" multiple
+                			accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mpeg, audio/mp3, audio/x-wav, text/csv">
+                
+                		<button type="button" id="submitFiles" class="btn btn-primary">
+                    		<i class="glyphicon glyphicon-upload"></i>
+                    		<span>Start upload</span>
+                		</button>
+                		<button type="reset" class="btn btn-warning cancel">
+                    		<i class="glyphicon glyphicon-ban-circle"></i>
+                    		<span>Cancel upload</span>
+                		</button>
+                		
+                		<!-- The global file processing state -->
+                		<span class="fileupload-process"></span>
+           			</div>
+           			<!-- The global progress state -->
+           			<div class="col-lg-5 fileupload-progress fade">
+                		<!-- The global progress bar -->
+                		<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    		<div class="progress-bar progress-bar-success" style="width:0%;"></div>
+                		</div>
+         
+            		</div>
+       			</div>
+  				</form>   
+
+				<!-- Status -->
+				<div id="upload_msg" class="alert alert-success mediaManage" role="alert"></div>
+		
+				<!-- The global progress bar -->
+			    <div id="progress" class="progress mediaManage">
+			        <div class="progress-bar progress-bar-success"></div>
+			    </div>
+	    
+	   			<!-- The container for the uploaded Survey files -->
+			    <div id="surveyPanel" class="col-med-10" style="display:none;">
+				    <h4 id="formName"></h4>
+				    
+				    <div class="table-responsive">
+					    <table role="presentation" class="table table-striped col-md-10">
+					       	<tbody id="filesSurvey">
+				   			</tbody>
+					    </table>
+				    </div>
+			    </div>
+			   
+				<!-- The container for the uploaded Survey files -->
+				<div id="orgPanel" class="col-med-10">
+			    	<h4>Organisation</h4>
+							    
+					<div class="table-responsive">
+			   			<table role="presentation" class="table table-striped col-md-10">
+			   				<tbody id="filesOrg">
+			   				</tbody>
+			    		</table>
+			    	</div>
+		    	</div>
+	
+			</div>	<!-- End Body -->
+			</div>
+
+			<div class="modal-footer">
+				<button id="removeMedia" type="button" class="btn btn-danger" data-dismiss="modal" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Remove</button>
+	           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+	           	<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
+	       	</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+<!-- Modal to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
 </body>
 </html>

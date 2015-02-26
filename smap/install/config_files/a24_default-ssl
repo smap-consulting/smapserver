@@ -12,6 +12,9 @@ SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
 
 SSLProtocol All -SSLv2 -SSLv3
 
+FileETag None
+ExpiresActive On
+	   
 <FilesMatch "\.(cgi|shtml|phtml|php)$">
 	SSLOptions +StdEnvVars
 </FilesMatch>
@@ -33,11 +36,9 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	DBDriver pgsql
 	DBDParams "host=localhost dbname=survey_definitions user=ws password=ws1234"
 	DirectoryIndex index.html index.htm index.shtml
-		
-	ExpiresActive On
 
-    ProxyPass         /fieldManager   ajp://localhost:8009/fieldManager timeout=600
-    ProxyPassReverse  /fieldManager   ajp://localhost:8009/fieldManager
+    ProxyPass         /fieldManagerServer   ajp://localhost:8009/fieldManagerServer timeout=600
+    ProxyPassReverse  /fieldManagerServer   ajp://localhost:8009/fieldManagerServer
 
     ProxyPass         /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
     ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
@@ -66,7 +67,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
     <Directory /var/www/smap>
     	Options FollowSymLinks
-        ExpiresDefault A300
+        ExpiresDefault A7776000
         AllowOverride None
         Require all granted
     </Directory>
@@ -92,11 +93,11 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
 # Local access points for webforms
     <Location /formXMLLocal>
-       	Require ip  127.0.0.1
+       	Require host  localhost
 	</Location>
 
 	<Location /instanceXMLLocal>
-    	Require ip  127.0.0.1
+    	Require host  localhost
 	</Location>
 	
 # survey mobile API module. Require enumerator access

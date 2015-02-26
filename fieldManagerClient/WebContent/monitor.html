@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Monitoring</title>
+
+<link rel=StyleSheet href="/css/smap.css" type="text/css">
+<link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
+<link type="text/css" media="all" href="/css/Aristo/Aristo.css" rel="stylesheet" />
+<link rel="stylesheet" href="/css/responsivemobilemenu.css" type="text/css"/>
+
+<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+<script src="/js/libs/modernizr.js"></script>
+<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
+<script data-main="js/monitor_main" src="/js/libs/require.js"></script>
+
+</head>
+<body>
+
+<div>
+	<div class="rmm noPrint" data-menu-style = "minimal">
+		<ul>
+			<li><a class="lang" data-lang="m_home" href="/index.html" target="_top">Home</a></li>
+			<li><a class="lang" data-lang="m_tm" href="templateManagement.html" target="_top">Form Management</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+			<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
+			<li class="restrict_role analyst_role user_trail"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>
+			<li><a id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
+			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+		</ul>
+	</div>
+	<p style="clear: both;"></p>
+	<div id="header">
+		<div id="username"></div>
+		<div id="banner">Monitoring</div>
+	</div>
+</div>	<!-- Header -->
+
+
+	<div id="aside">
+		<form id="mon_controls">
+			<fieldset id="showsource" class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Source</legend>
+				<input type="radio" name="showsource" value="forms" checked="checked"/> Forms<br/>
+				<input type="radio" name="showsource" value="uploaded" /> Submitted<br/> 
+				<input type="radio" name="showsource" value="forwarded"/> Forwarded<br/>  
+				<input type="radio" name="showsource" value="notifications"/> Notifications<br/>  
+			</fieldset>
+			<fieldset id="showtype" class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Show</legend>
+				<input type="radio" name="showtype" value="totals" checked="checked"/> Totals<br/> 
+				<input type="radio" name="showtype" value="instances"/> Instances (last 200)<br/>  
+			</fieldset>
+			<fieldset class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Data</legend>
+				<label for="project_name">Project</label>
+				<select class="project_list" id="project_name"></select><br/>
+				<label for="survey">Survey: </label>
+				<select id="survey" class="survey_select">
+				</select>
+			</fieldset>
+			<fieldset id="groupsurvey" style="display:none;" class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Group Totals by</legend>
+				<input type="radio" name="groupsurvey" value="device" checked="checked"/>Device<br/> 
+				<input type="radio" name="groupsurvey" value="month"/>Month<br/> 
+				<input type="radio" name="groupsurvey" value="week"/>Week<br/> 
+				<input type="radio" name="groupsurvey" value="day"/>Day<br/> 
+			</fieldset>
+			<fieldset id="showstatus" class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Include</legend>
+					<input type="checkbox" name="showstatus" value="success" checked="checked"/> Success<br/> 
+					<input type="checkbox" name="showstatus" value="errors" checked="checked"/> Errors<br/> 
+					<input type="checkbox" name="showstatus" value="not_loaded" checked="checked"/> Not Loaded<br/>
+					<input type="checkbox" name="showstatus" value="duplicates" checked="checked"/> Duplicates<br/>  
+					<input type="checkbox" name="showstatus" value="merged" checked="checked"/> Merged<br/>  
+			</fieldset>
+			<fieldset id="showtarget" class="ui-widget-content">
+				<legend class="ui-widget-header ui-corner-all">Show As</legend>
+				<input type="radio" name="target" value="table" id="tableradio" checked="checked"/> Table<br/> 
+				<!-- <input type="radio" name="target" value="graph"/> Graph<br/> -->
+				<span class="showmap"><input type="radio" name="target" value="map"/> Map<br/></span> 
+			</fieldset>
+			<div id="layers" style="display:none;">
+				<h1>Layers</h1>
+				<div id="current_layers">
+				</div>
+				<button id="zoomData" type="button">Zoom to Data</button><br/>
+				<button id="zoomRegions" type="button">Zoom to Grids</button><br/>
+				<button id="addLayer" type="button">Show Grids</button><br/>
+				<button id="removeLayer" type="button">Clear Grids</button><br/>
+				<button id="createLayer" type="button">Create Grid</button><br/>
+				<button id="deleteLayer" type="button">Delete Grids</button><br/>	
+			</div>
+		</form>
+	</div>
+
+	<div id="scroll_zone_indent">
+		<div id="scroll_controls_indent">
+		<div id="events_table_msg"></div>
+		<div class="get_less_more" style="display:none;">
+			<button class="get_less">&lt;&lt;&lt;</button>
+			<button class="get_more">&gt;&gt;&gt;</button>
+			<span class="get_less_more_text">Page 1 of 1</span>
+		</div>
+	</div>
+		<div id="monitor">
+			<div id="map"></div>
+			<div id="events_table">
+				<table id="events" class="tablesorter">
+					<thead>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+
+<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none; z-index:2000;" alt="hourglass" height="60" width="60"/>
+
+<!-- Popup to show features when a user clicks on a geometry item -->
+<div id="features" class="feature-panel-right"></div>
+
+<!-- Popup to allow the user to add a region as an overlay -->
+<div id="regions" style="display:none;">
+	<h1>Select a layer to add to the map as an overlay</h1>
+	<select id="available_regions"></select>
+</div>
+
+<!-- Popup to allow the user to create a region as an overlay -->
+<div id="region_create" style="display:none;">
+	<h1>Create a new region</h1>
+	<p>Enter a name for the region and the width of each cell in meters. 
+	Click on the map to set the centre of one of the cells. Press the "shift"
+	button and drag the mouse to set the bounds.</p>
+	<form id="region_create_form">
+		<label for="region_name">Name (lowercase, no spaces or numbers)</label>
+		<input type="text" id="region_name" pattern="[a-z]+"><br/>
+		<label for="region_width">Cell Width (in Meters. greater than 10)</label>
+		<input type="text" id="region_width" required><br/>
+		<label for="region_centre">Centre: (use mouse)</label>
+		<input type="text" id="region_centre" readonly=readonly><br/>	
+		<label for="region_bounds">Bounds: (use shift - mouse)</label>
+		<input type="text" id="region_bounds" readonly=readonly><br/>
+		<input type="submit" id="region_submit" value="Create Grid" />
+	</form>	
+</div>
+
+<!-- Popup to allow the user to delete regions -->
+<div id="regions_delete" style="display:none;">
+	<h1>Select the regions that you want to delete</h1>
+	<div></div>
+</div>
+
+	<!-- Popup to allow the user to edit their own details -->
+	<div id="modify_me_popup" style="display:none;">
+	
+		<div class="left_panel">
+			<form id="me_edit_form">
+				<label for="me_name">Name</label>
+				<input type="text" id="me_name" required><br/>
+				<select id="me_language"></select><br/>
+				<label for="me_email">Email</label>
+				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
+				<span id="reset_me_password_fields" style="display:none;">
+					<label for="reset_me_password">Reset Password</label>
+					<input type="checkbox" id="reset_me_password"/><br/>
+				</span>
+				<span id="password_me_fields" style="display:none;">
+					<label for="me_password">Password</label>
+					<input id="me_password" type="password"><br/>	
+					<label for="me_password_confirm">Confirm Password</label>
+					<input id="me_password_confirm" type="password"><br/>	
+				</span>		
+			</form>	
+		</div>
+	</div>
+	
+	<script src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
+
+</body>
+</html>

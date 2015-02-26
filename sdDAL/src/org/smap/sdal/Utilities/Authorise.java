@@ -161,13 +161,15 @@ public class Authorise {
 				" and s.s_id = ? " +
 				" and u.ident = ? " +
 				" and s.deleted = ?;"; 
-		log.info("isValidSurvey" + sql + " : " + sId + " : " + user + " : " + isDeleted);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setString(2, user);
 			pstmt.setBoolean(3, isDeleted);
+			
+			log.info("IsValidSurvey: " + pstmt.toString());
+			
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
@@ -339,7 +341,6 @@ public class Authorise {
 				" and p.id = t.p_id " +
 				" and t.id = ? " +
 				" and u.ident = ?;";
-		// log.info(sql + " : " + tId + " : " + user);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
@@ -349,6 +350,10 @@ public class Authorise {
 			resultSet.next();
 			
 			count = resultSet.getInt(1);
+			
+			if(count == 0) {
+				log.info("Validation of task failed: " + pstmt.toString());
+			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error in Authorisation", e);
 			sqlError = true;

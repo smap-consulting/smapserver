@@ -38,6 +38,8 @@
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
+	<script src="/js/libs/d3.v3.min.js"></script>
 	<script data-main="js/dashboard_main" src="/js/libs/require.js"></script>
 	
 	
@@ -51,7 +53,7 @@
 			<!-- Menu Bar -->
 			<ul>
 				<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-				<li><a class="lang" data-lang="m_admin" href="/fieldManager/" title="Admin">Admin</a></li>
+				<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">Admin</a></li>
 				<li><a class="lang" data-lang="m_reports" href="reports.html" title="Reports">Reports</a></li>
 				<li><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
 				<li><a class="lang" data-lang="m_export" id="exportMenu" href="#" title="Export">Export</a></li> 
@@ -126,6 +128,7 @@
 					<option value="csv">CSV</option>
 					<option value="osm">OSM</option>
 					<option value="shape">Shape File</option>
+					<option value="media">Media</option>
 					<option value="kml">KML / KMZ</option>
 					<option value="vrt">VRT / CSV</option>
 					<option value="stata">Stata / CSV</option>
@@ -164,6 +167,15 @@
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all lang" data-lang="msg_sel_form">Select form:</legend>
 					<div class="shapeforms"></div>
+				</fieldset>
+			</div>
+			<div class="showmedia" style="display:none;">
+				<fieldset class="ui-widget-content">
+					<legend class="ui-widget-header ui-corner-all lang" data-lang="msg_sel_media">Select Media:</legend>
+					<label for="export_media_question" >Media Question</label><br/>
+					<select id="export_media_question"></select><br/>
+					<h4> Create media file name with:</h4>
+					<div class="mediaselect"></div>
 				</fieldset>
 			</div>
 			

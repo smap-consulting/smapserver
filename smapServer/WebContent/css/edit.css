@@ -1,0 +1,392 @@
+//typography
+
+.moremargin{margin-bottom:7.25rem}
+
+.lowercase {text-transform: none !important; color: white;}
+
+.center {text-align: center;}
+
+.thick {font-weight:800;}
+
+
+.gridfix {max-width: 1050px;
+	margin-right: auto;
+	margin-left: auto;}
+
+
+.section {
+	padding-top:5.5rem;
+padding-bottom:5.5rem;
+}
+
+.question{
+	padding-top: 3.5em;
+	padding-bottom:8.5em;
+}
+
+.right-align{text-align: right;}
+
+
+.option {color: white; margin-right: 10px;
+	&:hover{color: darken(white, 20%);}}
+
+h1, h2, h3, h4, h5, h6 {font-family: $prime-font;  color: white; font-weight:300}
+
+.pagetitle {margin-bottom: 4rem;}
+
+
+.explain {img {height: 20px;
+width: 20px;}}
+
+.childlogicactive { p{font-size: 15px; color: white;}
+}
+
+
+.top-bar{
+	img{max-height: 40px; padding-right: 5px;}
+}
+
+#signup {margin-right: 15px;}
+
+.addnew {.button{margin-bottom: 0px;}}
+
+.button.tiny{padding:0.5rem !important;}
+
+.optioninsert {margin-bottom: 26px;}
+
+.qtype {color: rgba(255,255,255, 0.5);}
+
+.otherspecify {border: white 3px solid;
+	padding: 18px;}
+
+
+//ribbons ion colour
+
+.fullest-width {position: relative; 
+display: block; 
+width: 100%; 
+max-width: 100%;
+background: no-repeat center center fixed;
+-webkit-background-size: cover; 
+-moz-background-size: cover; 
+-o-background-size: cover; 
+background-size: cover;
+
+	&:nth-of-type(4n+1){background-color: #638463;;
+		.white {color: #638463;;}
+		.triangle{border-color: #333333 transparent transparent transparent;}
+		} 
+	&:nth-of-type(4n+2){background-color: #425b63;
+		.white{color:$dos;}
+		.triangle{border-color: #638463; transparent transparent transparent;}
+	} 
+	&:nth-of-type(4n+3){background-color: #f16d5f;	
+		.white{color:#f16d5f;}	
+		.triangle{border-color: #425b63 transparent transparent transparent;}
+} 
+	&:nth-of-type(4n+4){background-color: #333333;
+			.white{color:#333333;
+				&:hover{background-color:#425b63;}
+			}
+			.triangle{border-color: #f16d5f transparent transparent transparent;}
+} 
+
+}
+
+//ribbons turn grey when added a class of .grey
+.grey {&:nth-of-type(2n+1){background-color: #b3b3b3; .disabled{background-color: #cccccc; color: #b3b3b3;} .triangle{border-color: #cccccc transparent transparent transparent!important;}
+}
+&:nth-of-type(2n+2){background-color: #cccccc; .disabled{background-color: #b3b3b3; color: #cccccc;} .triangle{border-color: #b3b3b3 transparent transparent transparent!important;}}
+}
+
+//triangle shaping and positioning (colours dictated by ribbons)
+.triangle{width: 0;
+height: 0;
+border-style: solid;
+border-width: 54px 100px 0 100px;
+position: absolute;
+top: 0;
+left:50%;
+margin-left:-100px;
+}
+
+//background colours for body and modals
+.backuno {background-color: #638463;}
+
+.backdos {background-color: #425b63;}
+
+.paneltitle {
+img {width: 45px;
+	height: 45px;
+	border-bottom:none;}
+}
+
+.button, .top-bar-section ul li > a.button  {background: $three;}
+
+.ghost {display:none;}
+
+.hidden{opacity:0}
+
+//buttons need the class .white
+
+.white {background-color: white;
+	color: #638463;
+}
+
+.uno {
+	color: #638463;
+}
+.dos {
+	color: #425b63;
+}
+.tres {
+	color: #f16d5f;
+}
+.quatro {
+	color: #333333;
+}
+:hover{
+	background-color: rgba(#333333, 0.5);}
+}
+
+
+//checkboxes
+.checkboxes {margin-bottom: 20px;}
+
+input[type=radio].css-checkbox {
+							display:none!important;
+						}
+
+						input[type=radio].css-checkbox + label.css-label {
+							padding-left:33px;
+							height:27px; 
+							display:inline-block;
+							line-height:27px;
+							background-repeat:no-repeat;
+							background-position: 0 0;
+							font-size:15px;
+							vertical-align:middle;
+							cursor:pointer;
+
+						}
+
+						input[type=radio].css-checkbox:checked + label.css-label {
+							background-position: 0 -27px;
+						}
+						label.css-label {
+				background-image:url(../img/check.png);
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				color: white;
+				font-weight: 300;
+			}
+
+input[type=checkbox].css-checkbox {
+							display:none!important;
+						}
+
+						input[type=checkbox].css-checkbox + label.css-label {
+							padding-left:33px;
+							height:27px; 
+							display:inline-block;
+							line-height:27px;
+							background-repeat:no-repeat;
+							background-position: 0 0;
+							font-size:15px;
+							vertical-align:middle;
+							cursor:pointer;
+
+						}
+
+						input[type=checkbox].css-checkbox:checked + label.css-label {
+							background-position: 0 -27px;
+						}
+						label.css-label {
+				background-image:url(../check.png);
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				color: white;
+				font-weight: 300;
+			}
+
+.typelabel {height: 45px;
+margin-left: 5px;}
+
+.statusbar {
+	position:fixed;
+	top:50px;
+	background-color:rgba(0,0,0);
+	color: white;
+	max-height:50px;
+	line-height: 50px;
+	z-index: 10;
+	width: 100%;
+}
+.ecount {text-align: right;
+	.white{color: black;
+		&:hover{color:white}
+		}
+	}
+.tabhint {display:none; 
+	text-transform: none; 
+	text-align: center;}
+@media #{$large-only} {
+.tabhint{display: inline;} }
+
+.requiredoff {background-color: #638463;;
+color: white!important;
+border: 1px white solid;}
+
+.requiredOn {background-color: #f16d5f;
+color: white!important;
+border: 1px white solid;}
+
+
+
+//drop zone (drag and drop file upload)
+@media #{$medium-up} { 
+.zonedrop{padding: 100px;
+	border: white dashed 2px;
+	margin-bottom: 20px;}
+}
+
+@media #{$small-only} { 
+	.zonedrop{h3{display:none;}}
+}
+
+//accordion
+
+.content {.row {margin-bottom: 10px !important;
+	margin-top: 10px !important;}}
+
+//textareas
+
+translate textarea {
+	margin-bottom: 4rem;
+}
+
+textarea {padding-top: 20px; 
+	padding-left: 20px; 
+	padding-right: 20px; 
+	background-color: rgba(0,0,0,0); 
+	color: white; 
+	border: 3px solid white; 
+	text-align: center; 
+	transition: height 0.2s;
+	-webkit-transition: height 0.2s;
+	-moz-transition: height 0.2s;
+	
+		
+   }
+
+		:-moz-placeholder { /* Firefox 18- */
+		   color: white; 
+		 
+		}
+
+		::-moz-placeholder {  /* Firefox 19+ */
+		   color: white; 
+		 
+		}
+
+		:-ms-input-placeholder {  
+		   color: white; 
+		 
+		}
+}
+
+textarea:focus{background:rgba(0,0,0,0.1);}
+
+input[type="text"] {background-color: rgba(0,0,0,0); color: white; border: 3px solid white; text-align: center; }
+	::-webkit-input-placeholder {
+   color: white;
+   &:focus {background-color: rgba(0,0,0,0) !important;}
+}
+
+:-moz-placeholder { /* Firefox 18- */
+   color: white; 
+ 
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+   color: white; 
+ 
+}
+
+:-ms-input-placeholder {  
+   color: white; 
+ 
+}
+
+
+@media only screen and (max-width: 40.063em) {
+	.ribbon{
+		textarea:nth-of-type(1){
+			margin-bottom: 1.5rem;
+		}
+		} } /* min-width 641px, medium screens */
+
+input[type="text"], input[type="password"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="month"], input[type="week"], input[type="email"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], textarea {min-height: 51px;}
+
+//removing placeholder text on focus
+
+input:focus::-webkit-input-placeholder{
+    color: transparent!important;
+}
+input:focus::-moz-placeholder{
+    color: transparent!important;
+}
+input:focus:-moz-placeholder{
+    color: transparent!important;
+}
+
+textarea:focus::-webkit-input-placeholder{
+    color: transparent!important;
+}
+textarea:focus::-moz-placeholder{
+    color: transparent!important;
+}
+textarea:focus:-moz-placeholder{
+    color: transparent!important;
+}
+
+
+
+/* TITLE CREATION */
+.vacantonentry {display: none;}
+.postfix.button {height: 66px;}
+.postfix {height: 51px;}
+
+textarea.lang_a, textarea.lang_b {
+	overflow: hidden; word-wrap: break-word; resize: horizontal; height: 66px;
+}
+
+textarea.lang_b:focus {
+	background-color: green; 
+}
+		
+.csv_btn_rem {
+	display: inline;
+	font-size: 18px;
+	height: 24px;
+	width: 24px;
+	line-height: 14px;
+	text-align: center;
+	margin: 1px;
+	padding: 2px;
+	font-weight: bold;
+	text-decoration: none;
+	color: white;
+	visited: white;
+	border: 1px solid #a1a1a1;
+	border-radius: 2px;
+	background: rgba(0, 60, 136, 0.5);
+}

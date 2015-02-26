@@ -32,4 +32,6 @@ public class SqlWhereClause {
 	public String oValue;
 	public String qText;
 	public int qInteger;
+	public long qStartDate;
+	public long qEndDate;
 }

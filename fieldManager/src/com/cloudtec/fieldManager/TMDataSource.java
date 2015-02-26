@@ -1,5 +1,5 @@
 package com.cloudtec.fieldManager;
-
+/*
 import java.sql.Connection;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
@@ -36,3 +36,4 @@ public class TMDataSource {
 	
 
 }
+*/

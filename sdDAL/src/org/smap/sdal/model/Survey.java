@@ -9,6 +9,7 @@ import java.util.HashMap;
  */
 public class Survey {
 	public int id;
+	public int o_id;
 	public int p_id;
 	public String pName;
 	public String name;

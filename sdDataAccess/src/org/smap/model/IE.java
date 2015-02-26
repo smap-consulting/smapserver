@@ -101,6 +101,7 @@ public class IE {
 	
 	/*
 	 * Get the key for this record.  Only set if this survey is being updated
+	 * Deprecated
 	 */
 	public String getKey() {
 		String qn = null;

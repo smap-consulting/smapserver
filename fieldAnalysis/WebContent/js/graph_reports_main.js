@@ -39,7 +39,6 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	openlayers: '../../../../js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../js'
     },
     shim: {
@@ -70,16 +69,17 @@ require([
          'app/graph-functions',
          'app/graph-reports',
          
-         'jqplot/jquery.jqplot.min',
-         'jqplot/plugins/jqplot.highlighter.min',
-         'jqplot/plugins/jqplot.cursor.min',
-         'jqplot/plugins/jqplot.dateAxisRenderer.min',
-         'jqplot/plugins/jqplot.barRenderer.min',
-         'jqplot/plugins/jqplot.categoryAxisRenderer.min',
-         'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
-         'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
-         'jqplot/plugins/jqplot.canvasTextRenderer.min',
-         'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
+         'main/jqplot_main',
+        // 'jqplot/jquery.jqplot.min',
+        // 'jqplot/plugins/jqplot.highlighter.min',
+        // 'jqplot/plugins/jqplot.cursor.min',
+        // 'jqplot/plugins/jqplot.dateAxisRenderer.min',
+        // 'jqplot/plugins/jqplot.barRenderer.min',
+        // 'jqplot/plugins/jqplot.categoryAxisRenderer.min',
+        // 'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
+        // 'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
+        // 'jqplot/plugins/jqplot.canvasTextRenderer.min',
+        // 'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
          
          ], function($, jquery_ui, modernizr, rmm, crf, localise, 
         		 graph_functions, graph_reports) {

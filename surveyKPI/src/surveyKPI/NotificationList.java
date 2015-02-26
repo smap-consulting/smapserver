@@ -539,14 +539,12 @@ public class NotificationList extends Application {
 		PreparedStatement pstmtGetUploadEvent = null;
 		PreparedStatement pstmtGetNotifications = null;
 		PreparedStatement pstmtUpdateUploadEvent = null;
-		PreparedStatement pstmtGetAdminEmail = null;
 		PreparedStatement pstmtNotificationLog = null;
 		
 		
 		try {
 			NotificationManager fm = new NotificationManager();
 			fm.notifyForSubmission(connectionSD, 
-					pstmtGetAdminEmail, 
 					pstmtGetUploadEvent, 
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
@@ -566,7 +564,6 @@ public class NotificationList extends Application {
 			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
 			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
-			try {if (pstmtGetAdminEmail != null) {pstmtGetAdminEmail.close();}} catch (SQLException e) {}
 			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {

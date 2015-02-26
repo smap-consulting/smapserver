@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.UtilityMethods;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
@@ -57,17 +58,18 @@ public class NotificationManager {
 				" f.remote_s_id, f.remote_s_name, f.remote_host, f.remote_user, " +
 				"f.target, s.display_name, f.notify_details, " +
 				"f.remote_password " +
-				" from forward f " +
-				" where f.enabled = 'true' ";
+				" from forward f, survey s " +
+				" where f.s_id = s.s_id " +
+				" and f.enabled = 'true' ";
 		
 		if(forward_only) {
-			sql += " and f.target = 'forward'";
+			sql += " and f.target = 'forward' and f.remote_host is not null";
 		} else {
 			sql += " and f.target != 'forward'";
 		}
 		
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		pstmt = sd.prepareStatement(sql);	 			
+		pstmt = sd.prepareStatement(sql);	
 
 		resultSet = pstmt.executeQuery();
 		addToList(resultSet, forwards, true);
@@ -271,7 +273,6 @@ public class NotificationManager {
 	 * Apply any notification for the passed in submission
 	 */
 	public void notifyForSubmission(Connection sd, 
-			PreparedStatement pstmt,
 			PreparedStatement pstmtGetUploadEvent, 
 			PreparedStatement pstmtGetNotifications, 
 			PreparedStatement pstmtUpdateUploadEvent, 
@@ -322,8 +323,8 @@ public class NotificationManager {
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Get the admin email
-		String adminEmail = UtilityMethods.getAdminEmail(sd, pstmt, remoteUser);
-		int o_id = UtilityMethods.getOrganisationId(sd, pstmt, remoteUser);
+		String adminEmail = UtilityMethods.getAdminEmail(sd, remoteUser);
+		int o_id = MediaUtilities.getOrganisationId(sd, remoteUser);
 		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
 		
 		
@@ -358,7 +359,7 @@ public class NotificationManager {
 				String notify_details = null;			// Notification log
 				String error_details = null;			// Notification log
 				if(target.equals("email")) {
-					String smtp_host = UtilityMethods.getSmtpHost(sd, pstmt, remoteUser);
+					String smtp_host = UtilityMethods.getSmtpHost(sd, null, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						String emails = "";
 						for(String email : nd.emails) {
@@ -368,14 +369,24 @@ public class NotificationManager {
 							}
 							emails += email;
 						}
+						String subject = "Smap Notification";
+						if(nd.subject != null) {
+							subject = nd.subject;
+						}
+						String from = "smap";
+						if(nd.from != null) {
+							from = nd.from;
+						}
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
 						
 						try {
-							UtilityMethods.sendEmail(emails, 
+							UtilityMethods.sendEmail(
+									emails, 
 									null, 
 									"notify", 
-									"Smap Notification", 
+									subject, 	
+									from,		
 									null, 
 									null, 
 									null, 

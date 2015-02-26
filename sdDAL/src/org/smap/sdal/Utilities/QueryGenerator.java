@@ -49,7 +49,8 @@ public class QueryGenerator {
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			boolean add_record_uuid,
 			boolean add_record_suid,
-			String hostname) throws Exception {
+			String hostname,
+			ArrayList<String> requiredColumns) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
 		
@@ -134,7 +135,8 @@ public class QueryGenerator {
 					exp_ro,
 					labelListMap,
 					connectionSD, 
-					connectionResults);
+					connectionResults,
+					requiredColumns);
 		} catch (Exception e) {
 			throw new Exception(e.getMessage()); 
 		} finally {
@@ -210,7 +212,8 @@ public class QueryGenerator {
 			boolean exp_ro,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			Connection connectionSD,
-			Connection connectionResults) throws SQLException {
+			Connection connectionResults,
+			ArrayList<String> requiredColumns) throws SQLException {
 		
 		int colLimit = 10000;
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
@@ -239,7 +242,8 @@ public class QueryGenerator {
 						exp_ro,
 						labelListMap,
 						connectionSD,
-						connectionResults);
+						connectionResults,
+						requiredColumns);
 			}
 		}
 			
@@ -310,7 +314,22 @@ public class QueryGenerator {
 				}
 			} 
 			
-			if(name.equals("prikey") && parentForm > 0) {	// Only return the primary key of the top level survey form
+			if(requiredColumns != null) {
+				boolean wantThisOne = false;
+				for(int j = 0; j < requiredColumns.size(); j++) {
+					if(requiredColumns.get(j).equals(name)) {
+						wantThisOne = true;
+						break;
+					} else if(name.equals("prikey") && requiredColumns.get(j).equals("_prikey_highest")
+							&& sqlDesc.gotPriKey == false) {
+						wantThisOne = true;
+						break;
+					}
+				}
+				if(!wantThisOne) {
+					continue;
+				}
+			} else if(name.equals("prikey") && parentForm > 0) {	// Only return the primary key of the top level survey form
 				continue;
 			}
 			

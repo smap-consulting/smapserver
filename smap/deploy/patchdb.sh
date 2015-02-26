@@ -84,4 +84,58 @@ then
 echo "Applying patches for version 14.11"
 sudo chown -R tomcat7 /smap/attachments
 fi
-echo "1412" > ~/smap_version
+
+
+# version 15.01
+if [ $version -lt "1501" ]
+then
+echo "Applying patches for version 15.01"
+sudo mkdir /smap/media/organisation
+sudo chown -R tomcat7 /smap/media
+fi
+echo "1501" > ~/smap_version
+
+# version 15.02
+if [ $version -lt "1502" ]
+then
+echo "Applying patches for version 15.02"
+sudo rm /var/lib/tomcat7/webapps/fieldManager.war
+
+# Copy the new apache configuration files
+a24=`sudo apachectl -version | grep -c "2\.4"`
+
+read -r -p 'Do you want to replace the apache configuration files with the latest version. Your original file will be saved with an added extension of .bu. If not you can apply changes manually by referring to the release notes.? (y/n) ' choice
+case $choice in
+        n|N) break;;
+        y|Y)
+
+	# Set flag if this is apache2.4
+	a24=`sudo apachectl -version | grep -c "2\.4"`
+	a_default_xml="/etc/apache2/sites-available/default"						
+	a_default_ssl_xml="/etc/apache2/sites-available/default-ssl"				
+	a_config_dir="/etc/apache2/sites-available"	
+	cd ../install
+	if [ $a24 -eq 0 ]; then	
+		echo "Setting up Apache 2.2"
+		sudo mv $a_default_xml $a_default_xml.bu
+		cat config_files/default | sed "s#{your_files}#$filelocn#g" > config_files/default.fix2
+		sudo cp config_files/default.fix2 $a_default_xml
+
+		sudo mv $a_default_ssl_xml $a_default_ssl_xml.bu
+		cat config_files/default-ssl | sed "s#{your_files}#$filelocn#g" > config_files/default-ssl.fix2
+		sudo cp config_files/default-ssl.fix2 $a_default_ssl_xml
+	fi
+	if [ $a24 -eq 1 ]; then	
+		echo "Setting up Apache 2.4"
+		cat config_files/a24_default | sed "s#{your_files}#$filelocn#g" > config_files/default.fix2
+		sudo cp $a_config_dir/000-default.conf $a_config_dir/000-default.conf.bu
+		sudo cp config_files/default.fix2 $a_config_dir/000-default.conf
+
+		cat config_files/a24_default-ssl | sed "s#{your_files}#$filelocn#g" > config_files/default-ssl.fix2
+		sudo cp $a_config_dir/default-ssl.conf $a_config_dir/default-ssl.conf.bu
+		sudo cp config_files/default-ssl.fix2 $a_config_dir/default-ssl.conf
+	fi
+	cd ../deploy
+esac
+fi
+echo "1501" > ~/smap_version

@@ -19,11 +19,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 define([
          'jquery',
-         'foundation.min', 
          'modernizr',
          'app/localise',
          'app/globals'], 
-		function($, foundation, modernizr, lang, globals) {
+		function($, modernizr, lang, globals) {
 
 	return {
 	
@@ -39,50 +38,7 @@ define([
 		
 		var i;
 		
-		$('#add_ssc_done').off().click(function(){
-	
-			var fn = $('#ssc_function').val(),
-				name = $('#ssc_name').val(),
-				formId = $('#ssc_form option:selected').val(),
-				form = $('#ssc_form option:selected').text();
-			
-			if(fn === "") {
-				alert("You must select a function");
-				return false;
-			}
-			if(name === "") {
-				alert("You must specify a name");
-				return false;
-			}
-			if(typeof form === "undefined" || form === "") {
-				alert("You must specify a form");
-				return false;
-			}
-			for(i = 0; i < globals.model.survey.sscList.length; i++) {
-				if(globals.model.survey.sscList[i].name === name) {
-					alert("There is an existing calculation with that name");
-					return false;
-				}
-			}
-			
-			// Add the new ssc to the list
-			var newSSC = {
-					name: name,
-					fn: fn,
-					units: $('#ssc_units').val(),
-					form: form,
-					formId: formId
-			}
-			globals.model.survey.sscList.push(newSSC);
-			setHtml('#sscList', globals.model.survey.sscList);
-			globals.model.settingsChange();
-			$('#add_ssc_popup').foundation('reveal', 'close');
 		
-		});
-		
-		$('#add_ssc_cancel').off().click(function(){
-			$('#add_ssc_popup').foundation('reveal', 'close');
-		});
 		
 		/*
 		 * Add options for units
@@ -109,11 +65,10 @@ define([
 			}
 		});
 			
-		$('#add_ssc').off().click(function() {	
-			$('#ssc_name').val($('#ssc_function').val());		// Default name to name of function
-			$('#add_ssc_popup').foundation('reveal', 'open');
+		$('#add_ssc_modal').on('show.bs.modal', function (event) {
+			  $(this).find("form")[0].reset();
+			  
 		});
-					
 	}
 
 
@@ -142,19 +97,12 @@ define([
 					h[++idx] = '</td>';	
 					h[++idx] = '<td><button value="';
 					h[++idx] = i;
-					h[++idx] = '" class="ssc_btn_rem">-</button></td>';
+					h[++idx] = '" class="btn btn-danger ssc_btn_rem"><span class="glyphicon glyphicon-trash edit_icon"></span></button></td>';
 					
 				h[++idx] = '</tr>';
 			}
 	
 			$(selector).html(h.join(''));
-			
-			$('.ssc_btn_rem').click(function () {
-				var id = $(this).val();
-				globals.model.survey.sscList.splice(id,1);
-				globals.model.settingsChange();
-				setHtml('#sscList', globals.model.survey.sscList);
-			});
 		}
 		
 	}
@@ -175,7 +123,10 @@ define([
 				console.log("Forms");
 				console.log(data);
 				if(data.length === 0) {
-					alert("No forms found that can be used for function " + fn);
+					$('#ssc_alert').show().text("No forms found that can be used for function " + fn);
+					setTimeout(function() {
+						$('#ssc_function').focus();
+						}, 0);		
 				} else {
 					
 					for(i = 0; i < data.length; i++) {
@@ -193,41 +144,13 @@ define([
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
-					alert("Error: Failed to get list of forms: " + err);
-					$('#add_ssc_popup').foundation('reveal', 'close');
+					$('#ssc_alert').show().text("Error: Failed to get list of forms: " + err);
+
 				}
 			}
 		});
 	}
 	
-	/*
-	function saveSSC() {
-		
-		var name = $('#ssc_name').val(),
-			form = $('#ssc_form option:selected').val(),
-			fn = $('#ssc_function').val(),
-			units = $('#ssc_units').val();
-		
-		addHourglass();
-		$.ajax({
-			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
-			  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + fn + "/add",
-			  data: { 
-				  form: form,
-				  name: name,
-				  units: units
-				  },
-			  success: function(data, status) {
-				  removeHourglass();
-			  }, error: function(xhr, textStatus, err) {
-				  removeHourglass();
-				  console.log(xhr);
-				  alert("Failed to add server side calculation: " + xhr.responseText); 
-			  }
-		});
-	}
-	*/
+
 
 });

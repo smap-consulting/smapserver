@@ -45,9 +45,9 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.Translation;
-
 import org.apache.commons.codec.digest.*;
 
 
@@ -121,56 +121,57 @@ public class FormsManifest {
 			/*
 			 * Get the per-question and per-option media files from the translation table
 			 */
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			System.out.println("Files parameter: " + basePath);
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+				basePath = "/ebs1/servers/" + host;
+			}
+			
 			TranslationManager translationMgr = new TranslationManager();
-			List<Translation> translationList = translationMgr.
-					getManifestBySurvey(connectionSD, pstmt, request.getRemoteUser(),
-					survey.id);
+			
+			List<ManifestValue> manifestList = translationMgr.
+					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
-			HashMap<String, String> files = new HashMap<String, String> ();
-			for( Translation t : translationList) {
-				
-					String filelocn = t.getValue();
-
-					FileInputStream fis = null;
-					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-					System.out.println("Files parameter: " + basePath);
-					if(basePath == null) {
-						basePath = "/smap";
-					} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-						basePath = "/ebs1/servers/" + host;
-					}
+			
+			for( ManifestValue m : manifestList) {
 					
-					String filePath = basePath + "/media/" + filelocn;
-					System.out.println("Media file:" + filePath);
+				if(m.filePath != null) {
+					FileInputStream fis = null;
+					
+					log.info("Media file:" + m.filePath);
 					try {
-						fis = new FileInputStream( new File(filePath) );
+						fis = new FileInputStream( new File(m.filePath) );
 					} catch (Exception e) {
 						System.out.println(e.getMessage());
 					}
 
-					if(fis != null)
-					{
+					if(fis != null)	{
 						String md5 = DigestUtils.md5Hex( fis );
 						// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
-						if(files.get(md5) == null) {
-							files.put(md5, md5);
-							String url = protocol + host + "/media/" + filelocn;
+						//if(files.get(md5) == null) {
+						//	files.put(md5, md5);
+							String fullUrl = protocol + host + m.url;
 	
 							// Get the filename
-							int idx = filelocn.lastIndexOf('/');
-							String filename;
-							if(idx > 0) {
-								filename = filelocn.substring(idx + 1);
-							} else {
-								filename = filelocn;
-							}
+							//int idx = filelocn.lastIndexOf('/');
+							//String filename;
+							//if(idx > 0) {
+							//	filename = filelocn.substring(idx + 1);
+							//} else {
+							//	filename = filelocn;
+							//}
 							responseStr.append("<mediaFile>");
-							responseStr.append("<filename>" + filename + "</filename>\n");
+							responseStr.append("<filename>" + m.fileName + "</filename>\n");
 							responseStr.append("<hash>md5:" + md5 + "</hash>\n");
-							responseStr.append("<downloadUrl>" + url + "</downloadUrl>\n");
+							responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
 							responseStr.append("</mediaFile>");
-						}
+				//		}
 					}
+				} else {
+					log.info("Error: manifest with null file path");
+				}
 			}
 			responseStr.append("</manifest>\n");
 		} catch (Exception e) {

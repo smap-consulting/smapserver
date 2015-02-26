@@ -25,33 +25,20 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethods;
 
-import taskModel.FormLocator;
-import taskModel.TaskAssignment;
-import taskModel.TaskResponse;
-
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -114,10 +101,11 @@ public class PasswordReset extends Application {
 					System.out.println("Sending email");
 					
 					String smtp_host = null;
-					if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, pstmt, request.getRemoteUser())) != null) {
-						String adminEmail = UtilityMethods.getAdminEmail(connectionSD, pstmt, request.getRemoteUser());
+					if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, email, request.getRemoteUser())) != null) {
+						String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
 						ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, email);
-					    UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", null, interval, 
+					    String sender = "reset@" + request.getServerName();
+						UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", sender, null, interval, 
 					    		idents, null, adminEmail, smtp_host, request.getServerName());
 					    response = Response.ok().build();
 					} else {

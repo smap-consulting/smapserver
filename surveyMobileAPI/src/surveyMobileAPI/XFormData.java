@@ -125,7 +125,7 @@ public class XFormData {
 				
 				SurveyTemplate template = new SurveyTemplate();
 				template.readDatabase(templateName);										
-				template.extendInstance(si);
+				template.extendInstance(si, false);
 				
 				thisInstanceId = si.getUuid();
 

@@ -442,14 +442,15 @@ public class UserList extends Application {
 						if(u.sendEmail) {
 							System.out.println("Check if email enabled: " + u.sendEmail);
 							String smtp_host = null;
-							if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, pstmt, request.getRemoteUser())) != null) {
+							if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, null, request.getRemoteUser())) != null) {
 								System.out.println("Send email");
-								String adminEmail = UtilityMethods.getAdminEmail(connectionSD, pstmt, request.getRemoteUser());
+								String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
 								String interval = "48 hours";
 								String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, u.email);
+								String sender = "newuser@" + request.getServerName();
 								UtilityMethods.sendEmail(u.email, uuid, "newuser", 
-										"Account created on Smap", adminName, interval, idents, null, adminEmail, smtp_host,
+										"Account created on Smap", sender, adminName, interval, idents, null, adminEmail, smtp_host,
 										request.getServerName());
 							} else {
 								throw new Exception("Email not enabled - set passwords directly");

@@ -51,7 +51,7 @@ define(function() {
 		gCurrentUserName: undefined,
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
-		gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
+		//gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
 		
 		model: new Model()
 
@@ -260,12 +260,13 @@ define(function() {
 	
 		
 		// Save the survey
-		this.save = function() {
+		this.save = function(callback) {
 			
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
 			var changesString = JSON.stringify(this.changes);
 			console.log("Saving as: " + url);			
 			
+			globals.model.setHasChanges(0);
 			addHourglass();
 			$.ajax({
 				url: url,
@@ -274,9 +275,15 @@ define(function() {
 				cache: false,
 				data: { changes: changesString },
 				success: function(data) {
+					var responseFn = callback;
+					
 					removeHourglass();
+					
 					// Reset the set of pending updates
-					globals.model.setHasChanges(0);
+					//getSurveyDetails(surveyDetailsDone);
+					if(typeof responseFn === "function") { 
+						responseFn();
+					}
 					
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
@@ -298,14 +305,15 @@ define(function() {
 			
 		};
 		
-		// Update settings when the number of changes to apply transitions to or from 0
+		// Update settings when the number of changes to apply changes 
 		this.setHasChanges = function(numberChanges) {
 			if(numberChanges === 0) {
 				globals.model.changes = [];
 				globals.model.currentChange = 0;
-				$('.m_save_survey').addClass("disabled").attr("disabled", true);
+				$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
+				
 			} else {
-				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
+				$('.m_save_survey').removeClass("disabled").attr("disabled", false).find('.badge').html(numberChanges);
 			}
 		}
 		
@@ -328,10 +336,17 @@ define(function() {
 					  removeHourglass();
 					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
-					  alert("Settings saved"); 
-				  }, error: function(data, status) {
-					  removeHourglass();
-					  alert("Failed to update survey settings"); 
+					  
+					  $('.survey_name_view').html(globals.model.survey.displayName);
+					  $('#settingsModal').modal("hide");
+				  },
+				  error: function(xhr, textStatus, err) {
+					  removeHourglass();  	
+					  if(xhr.readyState == 0 || xhr.status == 0) {
+					      return;  // Not an error
+					 } else {
+						 alert("hi");
+					 }
 				  }
 			});
 			
@@ -387,7 +402,7 @@ define(function() {
 			}
 		}
 		
-		// Modify a label for a question or an option when done as part of a language change
+		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
 		this.modLabel = function(language, changedQ, newVal, element) {
 			
 			var labelMod = {
@@ -397,7 +412,8 @@ define(function() {
 			
 			var i,
 				label = {},
-				item;
+				item,
+				qname;
 				
 			
 			for(i = 0; i < changedQ.length; i++) {
@@ -410,9 +426,11 @@ define(function() {
 					label.type = "question";
 					item = this.survey.forms[label.formIdx].questions[label.questionIdx];
 					label.name = item.name;	
+					label.qId = item.id;
 				} else {
 					// For options
 					label.optionListIdx = changedQ[i].optionList;
+					qname = changedQ[i].qname;
 					label.optionIdx = changedQ[i].option;
 					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];
 					label.type = "option";
@@ -424,9 +442,20 @@ define(function() {
 				label.element = element;
 				label.language = language;
 				
-				// The following items are to write the change to the database
-				label.languageName = this.survey.languages[language];
-				label.transId = item.text_id;
+				label.languageName = this.survey.languages[language];			// For logging the event
+				var form = this.survey.forms[label.formIdx];
+
+				if(item.text_id) {
+					label.key = item.text_id;
+				} else {
+					// Create reference for this new Label		
+					if(typeof changedQ[i].form !== "undefined") {
+						label.key = "/" + form.name + "/" + item.name + ":label";	// TODO hint
+					} else {
+						label.key = "/" + form.name + "/" + qname + "/" + item.name + ":label";
+					}
+				}
+
 				
 				labelMod.items.push(label);
 			}
@@ -443,9 +472,7 @@ define(function() {
 			var current =  {
 				displayName: $('#set_survey_name').val(),
 				p_id: $('#set_project_name option:selected').val(),
-				def_lang: $('#set_default_language option:selected').text(),
-				sscList: this.survey.sscList,
-				surveyManifest: this.survey.surveyManifest
+				def_lang: $('#set_default_language option:selected').text()
 			}
 			
 			// Update the model to reflect the current values
@@ -461,9 +488,7 @@ define(function() {
 		this.setSettings = function() {
 			this.savedSettings = JSON.stringify({
 				displayName: this.survey.displayName,
-				project_id: String(this.survey.p_id),
-				def_lang: this.survey.def_lang,
-				sscList: this.survey.sscList
+				project_id: String(this.survey.p_id)
 			});
 		} 
 		
