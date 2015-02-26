@@ -419,7 +419,7 @@ function getMedia(property) {
 					tab[++idx] = thisTg;
 					tab[++idx] = '">';
 					tab[++idx] = '<thead><tr>';
-					tab[++idx] = '<th>Select</th><th>Task</th><th>location</th>';
+					tab[++idx] = '<th>Select</th><th>Task</th><th>Status</th><th>location</th>';
 					
 					addressParams = settings.data.task_groups[currentTg].tg_address_params;
 					$.each(item.properties, function(key, value) {
