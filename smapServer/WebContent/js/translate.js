@@ -175,7 +175,7 @@ function refreshView() {
 	}
 	
 	// Set the display name
-	$('#formName').html(survey.displayName);
+	$('.formName').html(survey.displayName);
 			
 	// Add all unique questions from all forms
 	for(i = 0; i < survey.forms.length; i++) {

@@ -29,7 +29,9 @@ require.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
+    	bootbox: 'bootbox.min',
     	lang_location: '..'
+
     },
     shim: {
     	'app/common': ['jquery'],
@@ -37,7 +39,7 @@ require.config({
         'jquery.autosize.min': ['jquery'],
         'jquery-drag-ui.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
-    	'bootbox.min': ['bootstrap.min']
+    	'bootbox': ['bootstrap.min']
         
     }
 });
@@ -46,14 +48,13 @@ require([
          'jquery',
          'app/common', 
          'bootstrap.min', 
-         'modernizr',
          'app/localise',
          'app/globals',
          'jquery-drag-ui.min',
          'jquery.autosize.min',
          'bootstrap.file-input',
-         'bootbox.min'], 
-		function($, common, bootstrap, modernizr, lang, globals, jquery_ui) {
+         'bootbox'], 
+		function($, common, bootstrap, lang, globals, jquery_ui, jqas, bsfi, bootbox) {
 
 
 var	gMode = "survey",
@@ -88,6 +89,8 @@ $(document).ready(function() {
 		pArray = [],
 		param = [],
 		dont_get_current_survey = true;
+	
+	window.bootbox = bootbox;
 	
 	localise.setlang();		// Localise HTML
 	
@@ -532,7 +535,7 @@ function updateSettingsData() {
 	}
 	$('.language_list').html(h.join(""));
 	$('.survey_name').val(globals.model.survey.displayName);
-	$('.survey_name_view').html(globals.model.survey.displayName);
+	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
 }
 
@@ -1054,7 +1057,7 @@ function refreshMediaView(data, sId) {
 	
 	if(survey && sId) {
 		// Set the display name
-		$('#formName').html(survey.displayName);
+		$('.formName').html(survey.displayName);
 		$('#survey_id').val(sId);
 		gSId = sId;
 	}

@@ -349,6 +349,7 @@ public class SurveyManager {
 				
 				// Get the language labels
 				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
+				q.labels_orig = q.labels;		// Set the original label values
 				
 				/*
 				 * If this is a select question get the options
@@ -369,6 +370,7 @@ public class SurveyManager {
 							
 							// Get the labels for the option
 							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
+							o.labels_orig = o.labels;
 							options.add(o);
 						}
 						

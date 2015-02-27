@@ -276,6 +276,9 @@ define(function() {
 				data: { changes: changesString },
 				success: function(data) {
 					var responseFn = callback;
+					var h = [],
+						idx = -1,
+						i;
 					
 					removeHourglass();
 					
@@ -288,10 +291,35 @@ define(function() {
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
 					$('#successLabel .counter').html(data.success);
-					$('#failedLabel .counter').html(data.failed);				
-					if(data.failed > 0) {
-						alert(data.failed + " changes failed. Click on red label to review.");
+					$('#failedLabel .counter').html(data.failed);	
+					
+					if(data.success > 0) {
+						h[++idx] = '<div class="alert alert-success" role="alert">';
+						h[++idx] = '<p>';
+						h[++idx] = data.success;
+						h[++idx] = " changes successfully applied";
+						h[++idx] = '</p>'
+						h[++idx] = '<ol>';
+						for(i = 0; i < data.changeSet.length; i++) {
+							h[++idx] = addUpdateMessage(data.changeSet[i], false);
+						}
+						h[++idx] = '</ol>';
+						h[++idx] = '</div>';
 					}
+					if(data.failed > 0) {
+						h[++idx] = '<div class="alert alert-danger" role="alert">';
+						h[++idx] = data.failed;
+						h[++idx] = " changes failed";
+						console.log(data);
+						h[++idx] = '<ol>';
+						for(i = 0; i < data.changeSet.length; i++) {
+							h[++idx] = addUpdateMessage(data.changeSet[i], true);
+						}
+						h[++idx] = '</ol>';
+						h[++idx] = '</div>';
+					}
+					bootbox.alert(h.join(""));
+
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -337,7 +365,7 @@ define(function() {
 					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
 					  
-					  $('.survey_name_view').html(globals.model.survey.displayName);
+					  $('.formName').html(globals.model.survey.displayName);
 					  $('#settingsModal').modal("hide");
 				  },
 				  error: function(xhr, textStatus, err) {
@@ -345,7 +373,7 @@ define(function() {
 					  if(xhr.readyState == 0 || xhr.status == 0) {
 					      return;  // Not an error
 					 } else {
-						 alert("hi");
+						 bootbox.alert("Error saving settings. " + xhr.responseText);
 					 }
 				  }
 			});
@@ -438,7 +466,7 @@ define(function() {
 				}
 					
 				label.newVal = newVal;
-				label.oldVal = item.labels[language][element];
+				label.oldVal = item.labels_orig[language][element];
 				label.element = element;
 				label.language = language;
 				
@@ -503,6 +531,24 @@ define(function() {
 		}
 	}
 	
+	function addUpdateMessage(data, forError) {
+		var h = [],
+			idx = -1,
+			j;
+		
+		if(data.updateFailed && forError || !data.updateFailed && !forError) {
+			for(j = 0; j < data.items.length; j++) {
+				h[++idx] = '<li>';
+				h[++idx] = 'Question: ';
+				h[++idx] = data.items[j].name;
+				h[++idx] = ' ';
+				h[++idx] = data.errorMsg;
+				h[++idx] = '</li>'
+			}
+		}
+		
+		return h.join("");
+	}
 
 	
 });

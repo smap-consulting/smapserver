@@ -51,14 +51,13 @@ require([
          'jquery', 
          'app/common',
          'bootstrap.min', 
-         'modernizr', 
          'app/localise',
          'app/globals',
          'ol3/js/ol',
          'moment.min',
          'bootstrap-datetimepicker.min'
          
-         ], function($, common, bootstrap, modernizr, localise, globals) {
+         ], function($, common, bootstrap, localise, globals) {
 
 var gOverlayHasFeature;
 var gTrailData;
