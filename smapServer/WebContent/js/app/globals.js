@@ -263,8 +263,7 @@ define(function() {
 		this.save = function(callback) {
 			
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
-			var changesString = JSON.stringify(this.changes);
-			console.log("Saving as: " + url);			
+			var changesString = JSON.stringify(this.changes);		
 			
 			globals.model.setHasChanges(0);
 			addHourglass();
@@ -310,7 +309,6 @@ define(function() {
 						h[++idx] = '<div class="alert alert-danger" role="alert">';
 						h[++idx] = data.failed;
 						h[++idx] = " changes failed";
-						console.log(data);
 						h[++idx] = '<ol>';
 						for(i = 0; i < data.changeSet.length; i++) {
 							h[++idx] = addUpdateMessage(data.changeSet[i], true);
@@ -507,8 +505,6 @@ define(function() {
 			this.survey.displayName = current.displayName;
 			this.survey.p_id = current.p_id;
 			this.survey.def_lang = current.def_lang;
-			console.log("updated model");
-			console.log(this.survey);
 			
 			return current;
 		} 

@@ -363,7 +363,6 @@ public class NotificationManager {
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						String emails = "";
 						for(String email : nd.emails) {
-							System.out.println("+++ emailing to: " + email + " : " + docUrl);
 							if(emails.length() > 0) {
 								emails += ";";
 							}
@@ -380,6 +379,10 @@ public class NotificationManager {
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
 						
+						System.out.println("+++ emailing to: " + emails + " : " + docUrl + 
+								" from: " + from + 
+								" subject: " + subject +
+								" smtp_host: " + smtp_host);
 						try {
 							UtilityMethods.sendEmail(
 									emails, 
