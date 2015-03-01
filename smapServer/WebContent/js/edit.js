@@ -897,6 +897,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		i;
 	
 	console.log(survey);
+	
 	if(type === "question") {
 		item.push({
 			form: formIndex,
@@ -979,20 +980,23 @@ function getUrl(o_id, s_ident, newVal, thumbs, type) {
 		filebase,
 		ext;
 	
-	if(gIsSurveyLevel) {
-		url += s_ident;
-		url += "/";
-		if(thumbs) {
-			url += "thumbs/"; 
+	if(newVal) {
+		if(gIsSurveyLevel) {
+			url += s_ident;
+			url += "/";
+			if(thumbs) {
+				url += "thumbs/"; 
+			}
+			url += newVal;
+		} else {
+			url += "organisation/";
+			url += o_id;
+			url += "/";
+			if(thumbs) {
+				url += "thumbs/"; 
+			}
 		}
-		url += newVal;
-	} else {
-		url += "organisation/";
-		url += o_id;
-		url += "/";
-		if(thumbs) {
-			url += "thumbs/"; 
-		}
+		
 		if(type === "image") {
 			url += newVal;
 		} else {
@@ -1001,6 +1005,8 @@ function getUrl(o_id, s_ident, newVal, thumbs, type) {
 			filebase = newVal.substr(0, index);
 			url += filebase + ".jpg";		
 		}
+	} else {
+		url = undefined;
 	}
 	
 	return url;

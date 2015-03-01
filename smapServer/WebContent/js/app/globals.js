@@ -482,13 +482,15 @@ define(function() {
 					}
 				}
 
-				
 				labelMod.items.push(label);
 			}
 			
-			this.currentChange = this.changes.push(labelMod) - 1;
+			removeDuplicateChange(this.changes, labelMod);
+			if(labelMod.items[0].newVal !== labelMod.items[0].oldVal) {		// Add if the value has changed
+				this.currentChange = this.changes.push(labelMod) - 1;
+				this.doChange();				// Apply the current change
+			}
 			this.setHasChanges(this.changes.length);
-			this.doChange();				// Apply the current change
 		};
 		
 		/*
@@ -524,6 +526,39 @@ define(function() {
 			} else {
 				$('#save_settings').attr("disabled", true);
 			}
+		}
+	}
+	
+	/*
+	 * If this is the second time an element has been modified then remove the original modification
+	 * Only check the first item as if the first item is a duplicate all should be duplicates
+	 */
+	function removeDuplicateChange(changes, change) {
+		var j, 
+			item,
+			newItem;
+		
+		for(j = 0; j < changes.length; j++) {
+			
+				item = changes[j].items[0];
+				newItem = change.items[0];
+
+				if(item.language === newItem.language 
+						&& item.type === newItem.type) {
+					if(
+							(newItem.type === "question" && 
+									newItem.questionIdx === item.questionIdx &&
+									newItem.formIdx === item.formIdx) ||
+							(newItem.type === "option" && 
+									newItem.optionIdx === item.optionIdx &&
+									newItem.name === item.name) ) {
+						
+						changes.splice(j,1);	// Remove this item
+						return;					
+						
+					}
+				}
+			
 		}
 	}
 	
