@@ -911,7 +911,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
 				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
-				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
 			}
 		}
 	} else {
@@ -926,7 +926,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
 				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
-				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
 			}
 		}
 	}
@@ -987,7 +987,6 @@ function getUrl(o_id, s_ident, newVal, thumbs, type) {
 			if(thumbs) {
 				url += "thumbs/"; 
 			}
-			url += newVal;
 		} else {
 			url += "organisation/";
 			url += o_id;
@@ -997,13 +996,13 @@ function getUrl(o_id, s_ident, newVal, thumbs, type) {
 			}
 		}
 		
-		if(type === "image") {
-			url += newVal;
-		} else {
-			// Replace the video's extension with jpg
-			index = newVal.lastIndexOf('.');
-			filebase = newVal.substr(0, index);
-			url += filebase + ".jpg";		
+		url += newVal;
+
+		// Videos and other derived thumbnails will have type jpg
+		if(type !== "image") {			
+			index = urll.lastIndexOf('.');
+			filebase = url.substr(0, index);
+			url = filebase + ".jpg";		
 		}
 	} else {
 		url = undefined;
