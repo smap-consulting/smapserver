@@ -18,5 +18,6 @@ public class Question {
 	public String calculation;
 	public boolean inMeta;			// Set true if the question is in the meta group
 	public ArrayList<Label> labels = new ArrayList<Label> ();
+	public ArrayList<Label> labels_orig = new ArrayList<Label> ();
 	
 }

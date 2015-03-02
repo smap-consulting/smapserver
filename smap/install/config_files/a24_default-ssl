@@ -81,8 +81,18 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         Require valid-user
 	</Directory>
 
-	# field manager module
+	# field manager client module
 	<Location /fieldManager>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+	
+	# field manager module
+	<Location /fieldManagerServer>
         AuthType Digest
         AuthName "smap"
         AuthDigestDomain /

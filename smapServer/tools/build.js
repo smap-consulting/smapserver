@@ -9,7 +9,8 @@
     	jquery: 'jquery-1.8.3.min',
     	jquery_ui: 'empty:',
     	app: '../app',
-    	lang_location: '..'
+    	lang_location: '..',
+	bootbox: 'bootbox.min'
     },
     dir: '../smapServer',
     modules: [

@@ -12,5 +12,6 @@ public class Option {
 	public String value;
 	public String defLabel;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
+	public ArrayList<Label> labels_orig = new ArrayList<Label> ();
 	public String text_id;
 }

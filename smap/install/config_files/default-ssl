@@ -83,9 +83,18 @@ NameVirtualHost *:443
         allow from all
 	</Directory>
 
-
-	# field manager module
+	# field manager client module
 	<Location /fieldManager>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+	
+	# field manager module
+	<Location /fieldManagerServer>
         AuthType Digest
         AuthName "smap"
 		AuthDigestDomain /

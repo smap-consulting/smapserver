@@ -20,11 +20,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Entry point for report list page
  */
 
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
+
 requirejs.config({
     baseUrl: '/fieldAnalysis/js/libs',
     waitSeconds: 0,
     paths: {
      	app: '../app',
+     	main: '..',
     	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
     	jquery: [
@@ -45,43 +51,25 @@ requirejs.config({
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],
     	
-       	'jqplot/jquery.jqplot.min': ['jquery_ui'],
-    	'jqplot/plugins/jqplot.highlighter.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.cursor.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.dateAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.barRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.categoryAxisRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.canvasTextRenderer.min': ['jqplot/jquery.jqplot.min'],
-    	'jqplot/plugins/jqplot.enhancedLegendRenderer.min': ['jqplot/jquery.jqplot.min']
+    	'main/jqplot_main': ['jquery'],
+    	'app/graph-functions': ['main/jqplot_main']
+    	
     	}
     });
 
 
 require([
          'jquery',  
-         'jquery_ui',
-         'modernizr', 
+         'jquery_ui', 
          'rmm', 
          'crf', 
          'localise', 
          'app/graph-functions',
          'app/graph-reports',
          
-         'main/jqplot_main',
-        // 'jqplot/jquery.jqplot.min',
-        // 'jqplot/plugins/jqplot.highlighter.min',
-        // 'jqplot/plugins/jqplot.cursor.min',
-        // 'jqplot/plugins/jqplot.dateAxisRenderer.min',
-        // 'jqplot/plugins/jqplot.barRenderer.min',
-        // 'jqplot/plugins/jqplot.categoryAxisRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
-        // 'jqplot/plugins/jqplot.canvasTextRenderer.min',
-        // 'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
+         'main/jqplot_main'
          
-         ], function($, jquery_ui, modernizr, rmm, crf, localise, 
+         ], function($, jquery_ui, rmm, crf, localise, 
         		 graph_functions, graph_reports) {
 	
 	var data_source = $("#data_source").text();

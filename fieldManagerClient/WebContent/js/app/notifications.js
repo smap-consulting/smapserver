@@ -241,7 +241,7 @@ function edit_notification(idx) {
 		$('#target').val(notification.target);
 		setTargetDependencies(notification.target)
 		
-		$('#survey').val(notification.s_name);
+		$('#survey').val(notification.s_id);
 		if(notification.notifyDetails && notification.notifyDetails.emails) {
 			$('#notify_emails').val(notification.notifyDetails.emails.join(";"));
 			$('#from_email').val(notification.notifyDetails.from);

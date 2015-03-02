@@ -88,8 +88,8 @@
 		<div class="panel panel-info header_style">
 			<table class="table">
 				<tr>
-				<td><span class="form-control survey_name_view" tabindex="-1"></span></td>
-				<td><select class="form-control language_list" id="language" tabindex="-1"></select></td>
+				<td><h4>Form: <span class="formName"></span></h4></td>
+				<td><select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></td>
 				<td><a type="button" class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled">Save <span class="badge">0</span></a><td>
 				</tr>
 				
@@ -100,7 +100,7 @@
 						<td class="q_type_col">Type</td>
 						<td class="q_name_col">Name</td>
 						<td class="q_label_col">
-							<select class="form-control" id="selProperty">
+							<select class="form-control" id="selProperty" data-toggle="tooltip"  data-container="body" title="Select the attribute of the questions and choices that you want to edit">
 								<option value="label">Question Text</option>
 								<option value="media">Media</option>
 							</select>
@@ -308,7 +308,7 @@
 	    
 	   			<!-- The container for the uploaded Survey files -->
 			    <div id="surveyPanel" class="col-med-10" style="display:none;">
-				    <h4 id="formName"></h4>
+				    <h4 class="formName"></h4>
 				    
 				    <div class="table-responsive">
 					    <table role="presentation" class="table table-striped col-md-10">

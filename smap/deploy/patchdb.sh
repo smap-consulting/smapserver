@@ -114,6 +114,7 @@ case $choice in
 	a_default_xml="/etc/apache2/sites-available/default"						
 	a_default_ssl_xml="/etc/apache2/sites-available/default-ssl"				
 	a_config_dir="/etc/apache2/sites-available"	
+	filelocn="/smap"
 	cd ../install
 	if [ $a24 -eq 0 ]; then	
 		echo "Setting up Apache 2.2"

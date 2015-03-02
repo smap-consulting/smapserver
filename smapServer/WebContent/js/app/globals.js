@@ -263,8 +263,7 @@ define(function() {
 		this.save = function(callback) {
 			
 			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
-			var changesString = JSON.stringify(this.changes);
-			console.log("Saving as: " + url);			
+			var changesString = JSON.stringify(this.changes);		
 			
 			globals.model.setHasChanges(0);
 			addHourglass();
@@ -276,6 +275,9 @@ define(function() {
 				data: { changes: changesString },
 				success: function(data) {
 					var responseFn = callback;
+					var h = [],
+						idx = -1,
+						i;
 					
 					removeHourglass();
 					
@@ -288,10 +290,34 @@ define(function() {
 					// Report success and failure
 					globals.model.lastChanges = data.changeSet;
 					$('#successLabel .counter').html(data.success);
-					$('#failedLabel .counter').html(data.failed);				
-					if(data.failed > 0) {
-						alert(data.failed + " changes failed. Click on red label to review.");
+					$('#failedLabel .counter').html(data.failed);	
+					
+					if(data.success > 0) {
+						h[++idx] = '<div class="alert alert-success" role="alert">';
+						h[++idx] = '<p>';
+						h[++idx] = data.success;
+						h[++idx] = " changes successfully applied";
+						h[++idx] = '</p>'
+						h[++idx] = '<ol>';
+						for(i = 0; i < data.changeSet.length; i++) {
+							h[++idx] = addUpdateMessage(data.changeSet[i], false);
+						}
+						h[++idx] = '</ol>';
+						h[++idx] = '</div>';
 					}
+					if(data.failed > 0) {
+						h[++idx] = '<div class="alert alert-danger" role="alert">';
+						h[++idx] = data.failed;
+						h[++idx] = " changes failed";
+						h[++idx] = '<ol>';
+						for(i = 0; i < data.changeSet.length; i++) {
+							h[++idx] = addUpdateMessage(data.changeSet[i], true);
+						}
+						h[++idx] = '</ol>';
+						h[++idx] = '</div>';
+					}
+					bootbox.alert(h.join(""));
+
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -337,7 +363,7 @@ define(function() {
 					  globals.model.savedSettings = settings;
 					  $('#save_settings').attr("disabled", true);
 					  
-					  $('.survey_name_view').html(globals.model.survey.displayName);
+					  $('.formName').html(globals.model.survey.displayName);
 					  $('#settingsModal').modal("hide");
 				  },
 				  error: function(xhr, textStatus, err) {
@@ -345,7 +371,7 @@ define(function() {
 					  if(xhr.readyState == 0 || xhr.status == 0) {
 					      return;  // Not an error
 					 } else {
-						 alert("hi");
+						 bootbox.alert("Error saving settings. " + xhr.responseText);
 					 }
 				  }
 			});
@@ -438,7 +464,7 @@ define(function() {
 				}
 					
 				label.newVal = newVal;
-				label.oldVal = item.labels[language][element];
+				label.oldVal = item.labels_orig[language][element];
 				label.element = element;
 				label.language = language;
 				
@@ -456,13 +482,15 @@ define(function() {
 					}
 				}
 
-				
 				labelMod.items.push(label);
 			}
 			
-			this.currentChange = this.changes.push(labelMod) - 1;
+			removeDuplicateChange(this.changes, labelMod);
+			if(labelMod.items[0].newVal !== labelMod.items[0].oldVal) {		// Add if the value has changed
+				this.currentChange = this.changes.push(labelMod) - 1;
+				this.doChange();				// Apply the current change
+			}
 			this.setHasChanges(this.changes.length);
-			this.doChange();				// Apply the current change
 		};
 		
 		/*
@@ -479,8 +507,6 @@ define(function() {
 			this.survey.displayName = current.displayName;
 			this.survey.p_id = current.p_id;
 			this.survey.def_lang = current.def_lang;
-			console.log("updated model");
-			console.log(this.survey);
 			
 			return current;
 		} 
@@ -503,6 +529,57 @@ define(function() {
 		}
 	}
 	
+	/*
+	 * If this is the second time an element has been modified then remove the original modification
+	 * Only check the first item as if the first item is a duplicate all should be duplicates
+	 */
+	function removeDuplicateChange(changes, change) {
+		var j, 
+			item,
+			newItem;
+		
+		for(j = 0; j < changes.length; j++) {
+			
+				item = changes[j].items[0];
+				newItem = change.items[0];
+
+				if(item.language === newItem.language 
+						&& item.type === newItem.type) {
+					if(
+							(newItem.type === "question" && 
+									newItem.questionIdx === item.questionIdx &&
+									newItem.formIdx === item.formIdx) ||
+							(newItem.type === "option" && 
+									newItem.optionIdx === item.optionIdx &&
+									newItem.name === item.name) ) {
+						
+						changes.splice(j,1);	// Remove this item
+						return;					
+						
+					}
+				}
+			
+		}
+	}
+	
+	function addUpdateMessage(data, forError) {
+		var h = [],
+			idx = -1,
+			j;
+		
+		if(data.updateFailed && forError || !data.updateFailed && !forError) {
+			for(j = 0; j < data.items.length; j++) {
+				h[++idx] = '<li>';
+				h[++idx] = 'Question: ';
+				h[++idx] = data.items[j].name;
+				h[++idx] = ' ';
+				h[++idx] = data.errorMsg;
+				h[++idx] = '</li>'
+			}
+		}
+		
+		return h.join("");
+	}
 
 	
 });

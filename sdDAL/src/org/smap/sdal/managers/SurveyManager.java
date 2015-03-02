@@ -349,6 +349,7 @@ public class SurveyManager {
 				
 				// Get the language labels
 				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
+				q.labels_orig = q.labels;		// Set the original label values
 				
 				/*
 				 * If this is a select question get the options
@@ -369,6 +370,7 @@ public class SurveyManager {
 							
 							// Get the labels for the option
 							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
+							o.labels_orig = o.labels;
 							options.add(o);
 						}
 						
@@ -649,6 +651,7 @@ public class SurveyManager {
 		PreparedStatement pstmtLangNew = null;
 		PreparedStatement pstmtNewQuestionLabel = null;
 		PreparedStatement pstmtDeleteLabel = null;
+		PreparedStatement pstmtLanguages = null;
 		
 		log.info("Apply label changes");
 		try {
@@ -667,52 +670,39 @@ public class SurveyManager {
 			String sqlDeleteLabel = "delete from translation where s_id = ? and text_id = ? and type = ?;";
 			pstmtDeleteLabel = connectionSD.prepareStatement(sqlDeleteLabel);
 			
+			 // Get the languages
+		    String sqlLanguage = "select distinct language from translation where s_id = ?;";
+			List<String> lang = new ArrayList<String>();
+			pstmtLanguages = connectionSD.prepareStatement(sqlLanguage);
+			pstmtLanguages.setInt(1, sId);
+			ResultSet rs = pstmtLanguages.executeQuery();
+			while(rs.next()) {
+				lang.add(rs.getString(1));
+			}
+			if(lang.size() == 0) {
+				lang.add("language");	// Default 
+			}
+			
 			for(ChangeItem ci : changeItemList) {
 			
 				if(ci.oldVal != null && ci.newVal != null) {
-					pstmtLangOldVal.setString(1, ci.newVal);
-					pstmtLangOldVal.setInt(2, sId);
-					pstmtLangOldVal.setString(3, ci.languageName);
-					pstmtLangOldVal.setString(4, ci.key);
 					if(ci.element.equals("text")) {
-						transType = "none";
+						updateLabel(ci, ci.languageName, pstmtLangOldVal, sId);
 					} else {
-						transType = ci.element;
-					}
-					pstmtLangOldVal.setString(5,  transType);
-					pstmtLangOldVal.setString(6, ci.oldVal);
-
-					log.info("Update question translation: " + pstmtLangOldVal.toString());
-					
-					int count = pstmtLangOldVal.executeUpdate();
-					if(count == 0) {
-						log.info("Error: Element already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-					}
-				} else {
-					if(ci.newVal != null) {
-						pstmtLangNew.setString(1, ci.newVal);
-						pstmtLangNew.setInt(2, sId);
-						pstmtLangNew.setString(3, ci.languageName);
-						pstmtLangNew.setString(4, ci.key);
-						if(ci.element.equals("text")) {
-							transType = "none";
-						} else {
-							transType = ci.element;
+						// For media update all the languages
+						for(int i = 0; i < lang.size(); i++) {
+							updateLabel(ci, lang.get(i), pstmtLangOldVal, sId);
 						}
-						pstmtLangNew.setString(5,  transType);
-						
-						log.info("Insert new question label: " + pstmtLangNew.toString());
-						
-						pstmtLangNew.executeUpdate();
+					}
+					
+				} else {
+					if(ci.element.equals("text")) {
+						addLabel(ci, ci.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
 					} else {
-						// Only media labels get deleted
-						pstmtDeleteLabel.setInt(1, sId);
-						pstmtDeleteLabel.setString(2, ci.key);
-						pstmtDeleteLabel.setString(3, ci.element);
-						log.info("Delete media label: " + pstmtDeleteLabel.toString());
-						pstmtDeleteLabel.executeUpdate();
-						ci.key = null;		// Clear the key in the question table
+						// For media update all the languages
+						for(int i = 0; i < lang.size(); i++) {
+							addLabel(ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel);
+						}
 					}
 					 
 					// Add the new text id to the question
@@ -746,7 +736,68 @@ public class SurveyManager {
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
+	}
+	
+	/*
+	 * Update a label
+	 */
+	public void updateLabel(ChangeItem ci, String language, PreparedStatement pstmtLangOldVal, int sId) throws SQLException, Exception {
+		
+		String transType = null;
+		
+		pstmtLangOldVal.setString(1, ci.newVal);
+		pstmtLangOldVal.setInt(2, sId);
+		pstmtLangOldVal.setString(3, language);
+		pstmtLangOldVal.setString(4, ci.key);
+		if(ci.element.equals("text")) {
+			transType = "none";
+		} else {
+			transType = ci.element;
+		}
+		pstmtLangOldVal.setString(5,  transType);
+		pstmtLangOldVal.setString(6, ci.oldVal);
+
+		log.info("Update question translation: " + pstmtLangOldVal.toString());
+		
+		int count = pstmtLangOldVal.executeUpdate();
+		if(count == 0) {
+			log.info("Error: Element already modified");
+			throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+		}
+	}
+	
+	public void addLabel(ChangeItem ci, String language, PreparedStatement pstmtLangNew, int sId, PreparedStatement pstmtDeleteLabel) throws SQLException, Exception {
+		
+		String transType = null;
+		
+		if(ci.newVal != null) {
+			
+			pstmtLangNew.setString(1, ci.newVal);
+			pstmtLangNew.setInt(2, sId);
+			pstmtLangNew.setString(3, language);
+			pstmtLangNew.setString(4, ci.key);
+			if(ci.element.equals("text")) {
+				transType = "none";
+			} else {
+				transType = ci.element;
+			}
+			pstmtLangNew.setString(5,  transType);
+			
+			log.info("Insert new question label: " + pstmtLangNew.toString());
+			
+			pstmtLangNew.executeUpdate();
+		} else {
+			// Only media labels can have new val set to null and hence be deleted hence delete for all languages
+			pstmtDeleteLabel.setInt(1, sId);
+			pstmtDeleteLabel.setString(2, ci.key);
+			pstmtDeleteLabel.setString(3, ci.element);
+			log.info("Delete media label: " + pstmtDeleteLabel.toString());
+			pstmtDeleteLabel.executeUpdate();
+			ci.key = null;		// Clear the key in the question table
+		}
+		
 	}
 	
 	/*

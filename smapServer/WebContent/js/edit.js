@@ -29,7 +29,9 @@ require.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
+    	bootbox: 'bootbox.min',
     	lang_location: '..'
+
     },
     shim: {
     	'app/common': ['jquery'],
@@ -37,7 +39,7 @@ require.config({
         'jquery.autosize.min': ['jquery'],
         'jquery-drag-ui.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
-    	'bootbox.min': ['bootstrap.min']
+    	'bootbox': ['bootstrap.min']
         
     }
 });
@@ -46,14 +48,13 @@ require([
          'jquery',
          'app/common', 
          'bootstrap.min', 
-         'modernizr',
          'app/localise',
          'app/globals',
          'jquery-drag-ui.min',
          'jquery.autosize.min',
          'bootstrap.file-input',
-         'bootbox.min'], 
-		function($, common, bootstrap, modernizr, lang, globals, jquery_ui) {
+         'bootbox'], 
+		function($, common, bootstrap, lang, globals, jquery_ui, jqas, bsfi, bootbox) {
 
 
 var	gMode = "survey",
@@ -88,6 +89,8 @@ $(document).ready(function() {
 		pArray = [],
 		param = [],
 		dont_get_current_survey = true;
+	
+	window.bootbox = bootbox;
 	
 	localise.setlang();		// Localise HTML
 	
@@ -532,7 +535,7 @@ function updateSettingsData() {
 	}
 	$('.language_list').html(h.join(""));
 	$('.survey_name').val(globals.model.survey.displayName);
-	$('.survey_name_view').html(globals.model.survey.displayName);
+	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
 }
 
@@ -894,6 +897,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		i;
 	
 	console.log(survey);
+	
 	if(type === "question") {
 		item.push({
 			form: formIndex,
@@ -907,7 +911,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
 				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
-				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
 			}
 		}
 	} else {
@@ -922,7 +926,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			// For non text changes update all languages
 			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
 				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
-				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, undefined);
+				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
 			}
 		}
 	}
@@ -976,28 +980,32 @@ function getUrl(o_id, s_ident, newVal, thumbs, type) {
 		filebase,
 		ext;
 	
-	if(gIsSurveyLevel) {
-		url += s_ident;
-		url += "/";
-		if(thumbs) {
-			url += "thumbs/"; 
-		}
-		url += newVal;
-	} else {
-		url += "organisation/";
-		url += o_id;
-		url += "/";
-		if(thumbs) {
-			url += "thumbs/"; 
-		}
-		if(type === "image") {
-			url += newVal;
+	if(newVal) {
+		if(gIsSurveyLevel) {
+			url += s_ident;
+			url += "/";
+			if(thumbs) {
+				url += "thumbs/"; 
+			}
 		} else {
-			// Replace the video's extension with jpg
-			index = newVal.lastIndexOf('.');
-			filebase = newVal.substr(0, index);
-			url += filebase + ".jpg";		
+			url += "organisation/";
+			url += o_id;
+			url += "/";
+			if(thumbs) {
+				url += "thumbs/"; 
+			}
 		}
+		
+		url += newVal;
+
+		// Videos and other derived thumbnails will have type jpg
+		if(type !== "image") {			
+			index = urll.lastIndexOf('.');
+			filebase = url.substr(0, index);
+			url = filebase + ".jpg";		
+		}
+	} else {
+		url = undefined;
 	}
 	
 	return url;
@@ -1054,7 +1062,7 @@ function refreshMediaView(data, sId) {
 	
 	if(survey && sId) {
 		// Set the display name
-		$('#formName').html(survey.displayName);
+		$('.formName').html(survey.displayName);
 		$('#survey_id').val(sId);
 		gSId = sId;
 	}
