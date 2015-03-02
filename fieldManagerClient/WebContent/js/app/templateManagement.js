@@ -94,8 +94,6 @@ $(document).ready(function() {
             	console.log("Done");
             	console.log(data);
             	projectSet(data, surveyId);
-       
-            	document.forms.namedItem("uploadForm").reset();
             	
             	// Check for errors in the form
             	if(data && data.status === "error") {
@@ -103,6 +101,7 @@ $(document).ready(function() {
             		var sendto = data.administrator || '';
             		$('#email_button').attr("href", "mailto:" + data.administrator + "?subject=Error loading template&body=" + msgToText(data));
             	} else {
+            		document.forms.namedItem("uploadForm").reset();
             		$('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("Template Loaded");
             	}
             },
