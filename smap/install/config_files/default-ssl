@@ -85,7 +85,7 @@ NameVirtualHost *:443
 
 
 	# field manager module
-	<Location /fieldManager>
+	<Location /fieldManagerServer>
         AuthType Digest
         AuthName "smap"
 		AuthDigestDomain /

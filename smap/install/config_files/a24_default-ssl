@@ -82,7 +82,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	</Directory>
 
 	# field manager module
-	<Location /fieldManager>
+	<Location /fieldManagerServer>
         AuthType Digest
         AuthName "smap"
         AuthDigestDomain /
