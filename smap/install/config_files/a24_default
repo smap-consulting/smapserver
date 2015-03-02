@@ -60,7 +60,17 @@ ExpiresActive On
         Require valid-user
 	</Directory>
 
-	# field manager module
+	# field manager client module
+	<Location /fieldManager>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+	</Location>
+	
+	# field manager server module
 	<Location /fieldManagerServer>
         AuthType Digest
         AuthName "smap"

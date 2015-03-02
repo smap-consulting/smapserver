@@ -63,7 +63,7 @@ require.config({
     	'app/jqplot_image': ['jquery'],
     	'app/map-functions': ['jquery'],
     	'app/map-ol': ['jquery', 'globals'],
-    	'app/graph-functions': ['jquery'],
+    	'app/graph-functions': ['main/jqplot_main'],
     	'app/graph-view2': ['jquery'],
     	'app/table-functions': ['jquery'],
     	'app/table-view': ['jquery'],

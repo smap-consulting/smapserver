@@ -907,6 +907,7 @@ public class ReportListSvc extends Application {
 		if((format.equals("html") || format.equals("embed")) && report.smap.data_type.equals("graph")) {
 			respBuf.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/fieldAnalysis/js/libs/jqplot/jquery.jqplot.css\" />");
 			respBuf.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/fieldAnalysis/js/libs/jqplot/examples.min.css\" />");
+			
 		}
 		respBuf.append("</head>");
 		
@@ -943,6 +944,7 @@ public class ReportListSvc extends Application {
 					
 					URL urlFile = new URL(report.url);	
 					String [] line;
+					log.info("Opening CSVReader on stream at: "  + report.url);
 					in = new CSVReader(new InputStreamReader(urlFile.openStream()));
 					line = in.readNext();
 					if(line != null && line.length > 0) {
@@ -1083,7 +1085,8 @@ public class ReportListSvc extends Application {
 
 				respBuf.append("<span id=\"data_source\" style=\"display:none;\">");
 					respBuf.append(report.smap.data_url);
-				respBuf.append("</span>");		
+				respBuf.append("</span>");	
+				respBuf.append("<script src=\"/js/libs/modernizr.js\"></script>");
 				respBuf.append("<script data-main=\"/fieldAnalysis/js/graph_reports_main\" src=\"/js/libs/require.js\"></script>");
 				
 			}
