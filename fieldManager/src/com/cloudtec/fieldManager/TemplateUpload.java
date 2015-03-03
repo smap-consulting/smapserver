@@ -189,10 +189,10 @@ public class TemplateUpload extends Application {
 						if(surveyIdent != null) {
 							surveyIdent = surveyIdent.trim();
 						}
-						System.out.println("Survey Ident: " + surveyIdent);
+						log.info("Survey Ident: " + surveyIdent);
 					
 					}else {
-						System.out.println("Unknown field name = "+item.getFieldName()+", Value = "+item.getString());
+						log.info("Unknown field name = "+item.getFieldName()+", Value = "+item.getString());
 					}
 				} else {
 					uploadedFile = (FileItem) item;
@@ -200,7 +200,7 @@ public class TemplateUpload extends Application {
 			} 
 			
 			//Handle Uploaded files.
-			System.out.println("Field Name = "+ uploadedFile.getFieldName()+
+			log.info("Field Name = "+ uploadedFile.getFieldName()+
 				", File Name = "+ uploadedFile.getName()+
 				", Content type = "+ uploadedFile.getContentType()+
 				", File Size = "+ uploadedFile.getSize());
@@ -219,7 +219,6 @@ public class TemplateUpload extends Application {
 				mesgArray.add(" '");
 				mesgArray.add(projectName);
 				mesgArray.add("'");
-				System.out.println(mesgArray.toString());
 				
 				ArrayList<String> hints = new ArrayList<String>(); 
 				hints.add("$e_h_rename");
@@ -237,16 +236,15 @@ public class TemplateUpload extends Application {
 					resp.hints.add("Check the 'name' and 'list_name' columns for accented characters.");
 					resp.hints.add("Finally: Contact tech support, this may be a system error.");
 				}
-				//System.out.println(resp.errMesg.toString());
 				
 				log.info("Error reported in upload");
-				return getErrorResponse(request,  mesgArray, resp.hints, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  resp.errMesg, resp.hints, serverName, projectName, displayName, fileName);
 
 			}
 			File templateFile = new File(resp.fileName);
 			
 			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			System.out.println("Files parameter: " + basePath);
+			log.info("Files parameter: " + basePath);
 			if(basePath == null) {
 				basePath = "/smap";
 			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
@@ -266,7 +264,6 @@ public class TemplateUpload extends Application {
 				model.getSurvey().setFileName(resp.fileName);
 			} else {
 				mesgArray.add("No survey name");		// TODO Language
-				System.out.println(mesgArray.toString());
 				
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 			}
@@ -276,7 +273,6 @@ public class TemplateUpload extends Application {
 				model.getSurvey().setProjectId(projectId);
 			} else {
 				mesgArray.add("No project");		// TODO Language
-				System.out.println(mesgArray.toString());
 
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 			}
@@ -301,7 +297,6 @@ public class TemplateUpload extends Application {
 					mesg += formsWithError.get(i);
 				}
 				mesgArray.add(mesg);		// TODO Language
-				System.out.println(mesgArray.toString());
 				
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 			} 
@@ -317,7 +312,6 @@ public class TemplateUpload extends Application {
 					mesg += duplicateNames.get(i);
 				}
 				mesgArray.add(mesg);		// TODO Language
-				System.out.println(mesgArray.toString());
 				
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 				
@@ -334,7 +328,6 @@ public class TemplateUpload extends Application {
 					mesg += duplicateOptionNames.get(i);
 				}
 				mesgArray.add(mesg);		// TODO Language
-				System.out.println(mesgArray.toString());
 
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 			} 
@@ -350,7 +343,6 @@ public class TemplateUpload extends Application {
 					mesg += manReadQuestions.get(i);
 				}
 				mesgArray.add(mesg);		// TODO Language
-				System.out.println(mesgArray.toString());
 				
 				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
 			} 
@@ -369,12 +361,10 @@ public class TemplateUpload extends Application {
 			log.log(Level.SEVERE,"Error encountered while parsing the request", ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
-			System.out.println(ex.getMessage());
 			log.log(Level.SEVERE,"Error encountered while uploading file",ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		}
 		
-		System.out.println("Returning response:" + response.getStatus());
 		return response;
 
 	}
@@ -460,6 +450,7 @@ public class TemplateUpload extends Application {
 	        boolean hasSystemError = false;
 	        boolean hasValidationError = false;
 	        boolean hasDisplayConditionError = false;
+	        boolean hasParseError = false;
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
@@ -566,24 +557,30 @@ public class TemplateUpload extends Application {
 	        		response.foundErrorMsg = true;
         		} else if(line.contains("XFormParseException")) {	
         			
-        			System.out.println("Xform Parse Exception: " + line);
-        			int posStart = line.lastIndexOf("line:");
-        			int posEnd = line.lastIndexOf(" Couldn");
-        			if(posStart != -1 && posEnd != -1) {
-        				response.errMesg.add("$e_text");
-        				response.errMesg.add(" '");
-        				String name = line.substring(posStart + 5, posEnd);
-        				response.errMesg.add(name); 
-        				response.errMesg.add("'");
-        				response.foundErrorMsg = true;
-        			} else {
-        				posStart = line.indexOf(':');
-        				if(posStart != -1) {
-        					String name = line.substring(posStart + 1);
-            				response.hints.add(name);
-            				response.foundErrorMsg = true;
-        				}
-        				
+        			if(!hasParseError) {
+	        			System.out.println("Xform Parse Exception Found Parsing now: " + line);
+	        			int posStart = line.lastIndexOf("line:");
+	        			int posEnd = line.lastIndexOf(" Couldn");
+	        			System.out.println("Start: " + posStart + " : " + posEnd);
+	        			if(posStart != -1 && posEnd != -1) {
+	        				response.errMesg.add("$e_text");
+	        				response.errMesg.add(" '");
+	        				String name = line.substring(posStart + 5, posEnd);
+	        				response.errMesg.add(name); 
+	        				response.errMesg.add("'");
+	        				response.foundErrorMsg = true;
+	        			} else {
+	        				posStart = line.indexOf(':');
+	        				System.out.println("Start2: " + posStart);
+	        				if(posStart != -1) {
+	        					String name = line.substring(posStart + 1);
+	            				response.hints.add(name);
+	            				response.foundErrorMsg = true;
+	        				}
+	        				
+	        			}
+	        			System.out.println("Response: " + response.errMesg.size());
+	        			hasParseError = true;
         			}
 	        		
         		} else if(line.startsWith("======") 
@@ -591,13 +588,18 @@ public class TemplateUpload extends Application {
         				|| line.startsWith("  ") 
         				|| line.startsWith("[Fatal Error]") 
         				|| line.startsWith(">>") 
-        				|| line.startsWith("processing")) {
+        				|| line.startsWith("processing") 
+        				|| line.trim().startsWith("at org")
+        				|| line.trim().startsWith("at sun")
+        				|| line.trim().startsWith("at java") 
+        				|| line.trim().startsWith("Result: Invalid")
+        				|| line.trim().length() == 0) {
         			// ignore all of the above
         		} else if(line.startsWith("Content is not allowed in prolog")) {
         			response.errMesg.add(line);
         			response.hints.add("Did you select an XLS file?");
         		} else {
-        			response.errMesg.add(line);
+        			response.hints.add(line);
         		}
 
 	        }   
