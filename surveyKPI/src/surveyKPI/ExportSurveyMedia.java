@@ -91,7 +91,6 @@ public class ExportSurveyMedia extends Application {
 	public Response exportMedia (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
-			@QueryParam("form") int fId,
 			@QueryParam("mediaquestion") int mediaQuestion,			
 			@QueryParam("namequestions") String nameQuestionIdList) {
 
@@ -184,7 +183,7 @@ public class ExportSurveyMedia extends Application {
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,
 						sId,
-						fId,
+						mediaQInfo.getFId(),
 						language, 
 						"media", 
 						urlprefix,
