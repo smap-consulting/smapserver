@@ -45,6 +45,7 @@ public class QueryGenerator {
 			String language, 
 			String format,
 			String urlprefix,
+			boolean wantUrl,
 			boolean exp_ro,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			boolean add_record_uuid,
@@ -132,6 +133,7 @@ public class QueryGenerator {
 					pstmtQLabel,
 					pstmtListLabels,
 					urlprefix,
+					wantUrl,
 					exp_ro,
 					labelListMap,
 					connectionSD, 
@@ -209,6 +211,7 @@ public class QueryGenerator {
 			PreparedStatement pstmtQLabel,
 			PreparedStatement pstmtListLabels,
 			String urlprefix,
+			boolean wantUrl,
 			boolean exp_ro,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			Connection connectionSD,
@@ -239,6 +242,7 @@ public class QueryGenerator {
 						pstmtQLabel,
 						pstmtListLabels,
 						urlprefix,
+						wantUrl,
 						exp_ro,
 						labelListMap,
 						connectionSD,
@@ -406,7 +410,7 @@ public class QueryGenerator {
 						colBuf.append("timezone('UTC', "); 
 					}
 				
-					if(isAttachment) {	// Add the name of the column
+					if(isAttachment && wantUrl) {	// Add the url prefix to the file
 						colBuf.append("'" + urlprefix + "' || " + tName + "." + name);
 					} else {
 						colBuf.append(tName + "." + name);

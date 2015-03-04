@@ -187,7 +187,8 @@ public class ExportSurveyMedia extends Application {
 						fId,
 						language, 
 						"media", 
-						urlprefix, 
+						urlprefix,
+						false,
 						false,
 						labelListMap,
 						false,
@@ -244,7 +245,10 @@ public class ExportSurveyMedia extends Application {
 					
 						// Remove hostname if this is included (only for old data)
 						if(source_file != null && !source_file.startsWith("attachments")) {
-							source_file = source_file.substring(source_file.indexOf("attachments"));
+							int idx = source_file.indexOf("attachments");
+							if(idx >= 0) {
+								source_file = source_file.substring(source_file.indexOf("attachments"));
+							}
 						}
 						int idx = source_file.lastIndexOf('.');
 						String ext = "";
