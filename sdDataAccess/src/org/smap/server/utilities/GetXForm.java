@@ -86,6 +86,9 @@ public class GetXForm {
     		// Write the survey to a string and return it to the calling program
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
         	transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        	transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        	transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        	
         	DOMSource source = new DOMSource(outputXML);
         	transformer.transform(source, outStream);
         	
@@ -249,6 +252,7 @@ public class GetXForm {
 	
 						if(!type.equals("none")) {
 							valueElement.setAttribute("form", type);
+							System.out.println("t3: "+ valueElement.getTextContent());
 						}
 			
 						textElement.appendChild(valueElement);
