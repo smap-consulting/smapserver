@@ -91,7 +91,6 @@ public class ExportSurveyMedia extends Application {
 	public Response exportMedia (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
-			@QueryParam("form") int fId,
 			@QueryParam("mediaquestion") int mediaQuestion,			
 			@QueryParam("namequestions") String nameQuestionIdList) {
 
@@ -184,10 +183,11 @@ public class ExportSurveyMedia extends Application {
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,
 						sId,
-						fId,
+						mediaQInfo.getFId(),
 						language, 
 						"media", 
-						urlprefix, 
+						urlprefix,
+						false,
 						false,
 						labelListMap,
 						false,
@@ -240,28 +240,34 @@ public class ExportSurveyMedia extends Application {
 					}
 					String source_file = rs.getString(media_name);
 					
-					// Remove hostname if this is include (only for old data)
-					if(source_file != null && !source_file.startsWith("attachments")) {
-						source_file = source_file.substring(source_file.indexOf("attachments"));
-					}
-					int idx = source_file.lastIndexOf('.');
-					String ext = "";
-					if(idx >= 0) {
-						ext = source_file.substring(idx);
-					}
-					mediafilename = mediafilename + ext;
-					System.out.println("File is: " + mediafilename); 
+					if(source_file != null) {		// A media file may not exist for this record
 					
-					/*
-					 * Copy the file
-					 */
-					String mf = basePath + "/" + source_file;
-					File source = new File(mf);
-					if (source.exists()) {
-						File dest = new File(filePath + "/" + mediafilename);
-						FileUtils.copyFile(source, dest);				
-					} else {
-						log.info("Error: media file does not exist: " + mf);
+						// Remove hostname if this is included (only for old data)
+						if(source_file != null && !source_file.startsWith("attachments")) {
+							int idx = source_file.indexOf("attachments");
+							if(idx >= 0) {
+								source_file = source_file.substring(source_file.indexOf("attachments"));
+							}
+						}
+						int idx = source_file.lastIndexOf('.');
+						String ext = "";
+						if(idx >= 0) {
+							ext = source_file.substring(idx);
+						}
+						mediafilename = mediafilename + ext;
+						System.out.println("File is: " + mediafilename); 
+						
+						/*
+						 * Copy the file
+						 */
+						String mf = basePath + "/" + source_file;
+						File source = new File(mf);
+						if (source.exists()) {
+							File dest = new File(filePath + "/" + mediafilename);
+							FileUtils.copyFile(source, dest);				
+						} else {
+							log.info("Error: media file does not exist: " + mf);
+						}
 					}
 					
 				}

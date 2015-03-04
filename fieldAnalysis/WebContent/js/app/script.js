@@ -118,19 +118,22 @@ $(document).ready(function() {
 		        			url = exportSurveyLocationURL(sId, displayName, forms[0], traceFormat, type);
 		        		
 		        		} else if(format === "media") {
-		        			forms = $(':radio:checked', '.shapeforms').map(function() {
+		        			/*
+		        			 * 
+		        			 *forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			if(forms.length === 0) {
 		        				alert("A form must be selected");
 			        			return(false);
-		        			}	
+		        			}
+		        			*/	
 		        			
 		        			name_questions = $(':checkbox:checked', '.mediaselect').map(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			
-		        			url = exportSurveyMediaURL(sId, displayName, forms[0], mediaQuestion, name_questions.join(','));
+		        			url = exportSurveyMediaURL(sId, displayName, undefined, mediaQuestion, name_questions.join(','));
 		        		
 		        		}else {
 
@@ -212,8 +215,8 @@ $(document).ready(function() {
 			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia').hide();
 			$('.showshape,.showspreadsheet').show();
 		} else if(format === "media") {
-			$('.showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia').hide();
-			$('.showshape,.showspreadsheet,.showmedia, .showlang').show();
+			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia').hide();
+			$('.showspreadsheet,.showmedia, .showlang').show();
 		} else {
 			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
 			$('.showxls,.showspreadsheet,.showro,.showlang').show();
@@ -852,8 +855,7 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 	url += sId;
 	url += "/" + filename;
 	
-	url+="?form=" + form;
-	url+="&mediaquestion=" + mediaQuestion;
+	url+="?mediaquestion=" + mediaQuestion;
 	if(nameQuestions && nameQuestions.trim().length > 0) {
 		url+="&namequestions=" + nameQuestions;
 	}
