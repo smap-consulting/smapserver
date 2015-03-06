@@ -99,11 +99,9 @@ $(document).ready(function() {
 	pArray = params.split("&");
 	for (i = 0; i < pArray.length; i++) {
 		param = pArray[i].split("=");
-		console.log("param:" + param[0] +":");
 		if ( param[0] === "id" ) {
 			globals.gCurrentSurvey = param[1];
 			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
-			console.log("Passed in survey is: " + globals.gCurrentSurvey);
 		}
 	}
 	
@@ -336,7 +334,7 @@ $(document).ready(function() {
 			} else {
 				type = "question";
 			}
-			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname);
+			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname, "media");
 		}
 	});
 	
@@ -347,7 +345,7 @@ $(document).ready(function() {
 		} else {
 			type = "question";
 		}
-		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname);
+		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname, "media");
 		
 	});
 });
@@ -395,10 +393,32 @@ function surveyDetailsDone() {
 	updateSettingsData();
 	refreshView();
 }
+
+function refreshView() {
+	var selProperty = $('#selProperty').val();
+	
+	if(selProperty === "layout") {
+		refreshLayout();
+	} else {
+		refreshForm();
+	}
+}
+
+/*
+ * Refresh the view for the Layout property
+ */
+function refreshLayout() {
+	var h = [],
+	idx = -1;
+	
+	// Update the form view
+	$('#formList').html(h.join(""));
+}
+
 /*
  * Show the form on the screen
  */
-function refreshView() {
+function refreshForm() {
 	
 	var i,
 		survey = globals.model.survey,
@@ -406,6 +426,11 @@ function refreshView() {
 		h = [],
 		idx = -1;
 	
+	/*
+	 * Process the questions in the top level form (parent is 0) 
+	 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
+	 * 
+	 */
 	if(survey) {
 		if(survey.forms && survey.forms.length > 0) {
 			for(i = 0; i < survey.forms.length; i++) {
@@ -438,6 +463,7 @@ function refreshView() {
 	$('.labelProp').change(function(){
 		event.preventDefault();
 		var $this = $(this),
+			prop = $this.data("prop"),
 			$parent = $this.parent(),
 			formIndex = $parent.data("fid"),
 			itemIndex = $parent.data("id"),
@@ -451,7 +477,8 @@ function refreshView() {
 		} else {
 			type = "question";
 		}
-		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname); // TODO Hint
+
+		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname, prop); // TODO Hint
 
 	});
 	
@@ -580,27 +607,20 @@ function addOneQuestion(question, fId, id) {
 	
 	h[++idx] = addPanelStyle(question.type);
 	h[++idx] = '<div class="panel-heading">';
-		//h[++idx] = '<div class="container">';
-		//	h[++idx] = '<div class="row">';
-			h[++idx] = '<table class="table">';
-				//h[++idx] = '<div class="col-sm-2 col-xs-4 head1">';
-				h[++idx] = '<td class="q_type_col">';
-					h[++idx] = addQType(question.type, question.calculation);
-				h[++idx] = '</td>';
-				//h[++idx] = '<div class="col-sm-3 col-xs-8 head2"><input class="qname" value="';
-				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
+		h[++idx] = '<table class="table">';
+			h[++idx] = '<td class="q_type_col">';
+				h[++idx] = addQType(question.type, question.calculation);
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 				h[++idx] = question.name;
-				h[++idx] = '" type="text"></td>';
-				h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
-				h[++idx] = '<td class="q_icons_col">';
-					//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
-					h[++idx] = '<a data-toggle="collapse"  href="#collapse';
-					h[++idx] = ++gIndex;
-					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
+			h[++idx] = '" type="text"></td>';
+			h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
+			h[++idx] = '<td class="q_icons_col">';
+				h[++idx] = '<a data-toggle="collapse"  href="#collapse';
+				h[++idx] = ++gIndex;
+				h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
 			h[++idx] = '</td>';
 			h[++idx] = '</table>';
-		//h[++idx] = '</div>';
-	//h[++idx] = '</div>';
 	h[++idx] = '<div id="collapse';
 	h[++idx] = gIndex;
 	h[++idx] = '" class="panel-body collapse';
@@ -714,21 +734,10 @@ function getFeaturedMarkup(question, type) {
 	var h = [],
 		idx = -1,
 		selProperty = $('#selProperty').val(),
+		selLabel = $('#selProperty :selected').text(),
 		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 	
-	if(selProperty === "label") {
-		h[++idx] = '<textarea class="labelProp" placeholder="Label"';
-		if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
-			h[++idx] = ' readonly tabindex="-1">';
-			h[++idx] = 'Label not required';
-		} else {
-			h[++idx] = ' tabindex="';
-			h[++idx] = gIndex;
-			h[++idx] = '">';
-			h[++idx] = question.labels[gLanguage].text;
-		}
-		h[++idx] = '</textarea>';
-	} else if(selProperty === "media") {
+	 if(selProperty === "media") {
 		h[++idx] = '<div class="row">';
 			if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
 				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
@@ -748,13 +757,32 @@ function getFeaturedMarkup(question, type) {
 				h[++idx] = addMedia("Audio", 
 						question.labels[gLanguage].audio, 
 						question.labels[gLanguage].audioUrl, 
-						question.labels[gLanguage].audioThumb);
-				
-
+						question.labels[gLanguage].audioThumb);		
 			}
 			
 		h[++idx] = '</div>';		// End of row
 
+	} else {
+		h[++idx] = '<textarea class="labelProp" placeholder="';
+		h[++idx] = selLabel;
+		h[++idx] = '" data-prop="';
+		h[++idx] = selProperty;
+		h[++idx] = '"';
+		if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
+			h[++idx] = ' readonly tabindex="-1">';
+			h[++idx] = selLabel;
+			h[++idx] = ' not required';
+		} else {
+			h[++idx] = ' tabindex="';
+			h[++idx] = gIndex;
+			h[++idx] = '">';
+			if(selProperty === "label") { 
+				h[++idx] = question.labels[gLanguage].text;
+			} else {
+				h[++idx] = question[selProperty];
+			}
+		}
+		h[++idx] = '</textarea>';
 	}
 	
 	return h.join("");
@@ -889,7 +917,7 @@ function addOneOption(option, fId, id, list_name, qname) {
  *  newVal: The new value for the label
  *  type: question || option
  */
-function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname) {
+function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname, prop) {
 	
 	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
 		markup,
@@ -906,7 +934,11 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		
 		// Update the in memory survey model
 		if(element === "text") {
-			survey.forms[formIndex].questions[itemIndex].labels[gLanguage][element] = newVal;
+			if(prop === "label") {
+				survey.forms[formIndex].questions[itemIndex].labels[gLanguage][element] = newVal;
+			} else {
+				survey.forms[formIndex].questions[itemIndex][prop] = newVal;		//XXX
+			}
 		} else {
 			// For non text changes update all languages
 			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
@@ -932,7 +964,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	}
 	
 	// Add the change to the list of changes to be applied
-	globals.model.modLabel(gLanguage, item, newVal, element);
+	globals.model.modLabel(gLanguage, item, newVal, element, prop);
 	
 	
 	// Update the current markup

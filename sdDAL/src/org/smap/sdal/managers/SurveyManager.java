@@ -151,7 +151,7 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, s.def_lang, u.o_id" +
+		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, s.def_lang, u.o_id, s.class" +
 				" from survey s, users u, user_project up, project p" +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -178,6 +178,7 @@ public class SurveyManager {
 			s.setPId(resultSet.getInt(7));
 			s.def_lang = resultSet.getString(8);
 			s.o_id = resultSet.getInt(9);
+			s.surveyClass = resultSet.getString(10);
 			
 		} 
 		
@@ -267,7 +268,11 @@ public class SurveyManager {
 		// Get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
 		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, "
-				+ "q.source, q.calculate from question q "
+				+ "q.source, q.calculate, "
+				+ "q.seq, " 
+				+ "q.defaultanswer, "
+				+ "q.appearance " 
+				+ "from question q "
 				+ "where q.f_id = ? "
 				+ "and q.qname != '_instanceid' "
 				+ "order by q.seq asc;";
@@ -333,6 +338,9 @@ public class SurveyManager {
 				q.hint_id = rsGetQuestions.getString(6);
 				q.source = rsGetQuestions.getString(7);
 				q.calculation = rsGetQuestions.getString(8);
+				q.seq = rsGetQuestions.getInt(9);
+				q.defaultanswer = rsGetQuestions.getString(10);
+				q.appearance = rsGetQuestions.getString(11);
 				
 				// Track if this question is in the meta group
 				if(q.name.equals("meta")) {
@@ -349,7 +357,7 @@ public class SurveyManager {
 				
 				// Get the language labels
 				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
-				q.labels_orig = q.labels;		// Set the original label values
+				//q.labels_orig = q.labels;		// Set the original label values
 				
 				/*
 				 * If this is a select question get the options
@@ -370,11 +378,12 @@ public class SurveyManager {
 							
 							// Get the labels for the option
 							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
-							o.labels_orig = o.labels;
+							//o.labels_orig = o.labels;
 							options.add(o);
 						}
 						
 						s.optionLists.put(q.list_name, options);
+						s.optionLists_orig.put(q.list_name, options);
 					}
 				}
 							
@@ -382,6 +391,7 @@ public class SurveyManager {
 			}
 			
 			s.forms.add(f);
+			s.forms_orig.add(f);
 			
 		} 
 		
@@ -399,22 +409,6 @@ public class SurveyManager {
 			ssc.setFormId(rsGetSSC.getInt(7));
 			s.sscList.add(ssc);
 		}
-		
-		// Add the survey manifests
-		/*
-		 * No longer needed survey level manifests are now in the survey table
-		pstmt7.setInt(1, s.getId());	
-		resultSet7 = pstmt7.executeQuery();
-		
-		while (resultSet7.next()) {
-			ManifestValue mv = new ManifestValue();
-			mv.value = resultSet7.getString(1);
-			mv.filename = resultSet7.getString(2);		// Set the filename to the ext id
-			mv.type = resultSet7.getString(3);
-
-			s.surveyManifest.add(mv);
-		}
-		*/
 		
 		// Add the change log
 		pstmtGetChanges.setInt(1, s.getId());
@@ -447,17 +441,17 @@ public class SurveyManager {
 	
 	
 	/*
-	 * Get a Survey containing project and the block status 
+	 * Get the project id and the block status of a survey given its ident
 	 */
 	public Survey getSurveyId(Connection sd, String key) {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.p_id, s.s_id, s.blocked " +
+		String sql = "select s.p_id, s.s_id, s.blocked, s.class " +
 				" from survey s" +
 				" where s.ident = ?; ";
 		
-		String sql2 = "select s.p_id, s.s_id, s.blocked " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
+		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
 				" from survey s" +
 				" where s.s_id = ?; ";
 		
@@ -475,6 +469,8 @@ public class SurveyManager {
 				s.setPId(resultSet.getInt(1));
 				s.setId(resultSet.getInt(2));
 				s.setBlocked(resultSet.getBoolean(3));
+				s.surveyClass = resultSet.getString(4);
+				
 				
 			} else {	// Attempt to find the survey assuming the ident is the survey id
 				pstmt2 = sd.prepareStatement(sql2);	
@@ -490,6 +486,7 @@ public class SurveyManager {
 					s.setPId(resultSet.getInt(1));
 					s.setId(resultSet.getInt(2));
 					s.setBlocked(resultSet.getBoolean(3));
+					s.surveyClass = resultSet.getString(4);
 				} else {			
 					log.info("Error: survey not found");
 				}
@@ -579,6 +576,8 @@ public class SurveyManager {
 						
 						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 						
+					} else {
+						applyProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.type);
 					}
 					
 					
@@ -935,6 +934,88 @@ public class SurveyManager {
 			try {if (pstmtOptionInsert != null) {pstmtOptionInsert.close();}} catch (SQLException e) {}
 			try {if (pstmtOptionGet != null) {pstmtOptionGet.close();}} catch (SQLException e) {}
 			try {if (pstmtMaxSeq != null) {pstmtMaxSeq.close();}} catch (SQLException e) {}
+		}
+	}
+		
+	/*
+	 * Apply property changes
+	 * This can be any simple property type such as relevance
+	 */
+	public void applyProperty(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version,
+			String property) throws Exception {
+
+		PreparedStatement pstmtProperty1 = null;
+		PreparedStatement pstmtProperty2 = null;
+		
+		/*
+		 * Validate the passed in property and make sure it is one that is ok to update
+		 */
+		if(property.equals("appearance")) {
+			 
+		
+			try {
+				
+				// Create prepared statements, one for the case where an existing value is being updated
+				String sqlProperty1 = "update question set " + property + " = ? " +
+						"where q_id = ? and " + property + " = ?;";
+				pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
+				
+				String sqlProperty2 = "update question set " + property + " = ? " +
+						"where q_id = ? and " + property + " is null;";
+				pstmtProperty2 = connectionSD.prepareStatement(sqlProperty2);
+				
+				for(ChangeItem ci : changeItemList) {
+					
+					int count = 0;
+
+					if(ci.oldVal != null && !ci.oldVal.equals("NULL")) {
+						pstmtProperty1.setString(1, ci.newVal);
+						pstmtProperty1.setInt(2, ci.qId);
+						pstmtProperty1.setString(3, ci.oldVal);
+						log.info("Update question property: " + pstmtProperty1.toString());
+						count = pstmtProperty1.executeUpdate();
+					} else {
+						pstmtProperty2.setString(1, ci.newVal);
+						pstmtProperty2.setInt(2, ci.qId);
+						log.info("Update question property: " + pstmtProperty2.toString());
+						count = pstmtProperty2.executeUpdate();
+					}
+					if(count == 0) {
+						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+					}
+					
+					
+					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.newVal + " survey: " + sId);
+					
+					// Write the change log
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(ci));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setBoolean(5,false);
+					pstmtChangeLog.setTimestamp(6, getTimeStamp());
+					pstmtChangeLog.execute();
+				}
+			} catch (Exception e) {
+				
+				String msg = e.getMessage();
+				if(msg == null || !msg.startsWith("Already modified")) {
+					log.log(Level.SEVERE,"Error", e);
+				}
+				throw e;
+			} finally {
+				try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
+				try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
+			
+			}
+		} else {
+			throw new Exception("Error: Invalid property could not update: " + property);
 		}
 	}
 	

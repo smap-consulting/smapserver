@@ -247,7 +247,7 @@ function refreshView() {
 		var newVal = $this.val();
 		console.log(gTempQuestions[index]);
 		console.log("New val:" + newVal);
-		globals.model.modLabel(gLanguage2, gTempQuestions[index].indexes, newVal, "text");
+		globals.model.modLabel(gLanguage2, gTempQuestions[index].indexes, newVal, "text", "label");
 		$('.qcount').empty().append('Translations made: ' + (++questionsedited))
 	});
 

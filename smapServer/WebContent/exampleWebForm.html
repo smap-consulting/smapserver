@@ -1,0 +1,224 @@
+<!DOCTYPE html><html lang='en'  class='no-js'><head><link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>
+<link type='text/css' href='/build/css/default.css' media='all' rel='stylesheet' />
+<link type='text/css' href='/build/css/webform_formhub.css' media='all' rel='stylesheet' />
+<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />
+<link type='text/css' href='/build/css/formhub.css' media='all' rel='stylesheet' />
+<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>
+<link rel='shortcut icon' href='images/favicon.ico'>
+<link rel='apple-touch-icon-precomposed' sizes='144x144' href='images/fieldTask_144_144_min.png'>
+<link rel='apple-touch-icon-precomposed' sizes='114x114' href='images/fieldTask_114_114_min.png'>
+<link rel='apple-touch-icon-precomposed' sizes='72x72' href='images/fieldTask_72_72_min.png'>
+<link rel='apple-touch-icon-precomposed' href='images/fieldTask_57_57_min.png'>
+<meta charset='utf-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1.0' />
+<meta name='apple-mobile-web-app-capable' content='yes' />
+<!--[if lt IE 10]><script type='text/javascript'>window.location = 'modern_browsers';</script><![endif]-->
+
+
+<!--  
+<script src="js/libs/modernizr.js"></script>
+<script data-main="js/wf_main" src="js/libs/require.js"></script>
+-->
+
+<script type='text/javascript'>
+settings = {};
+data={};
+data.modelStr='<root xmlns:jr="http://openrosa.org/javarosa" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xf="http://www.w3.org/2002/xforms"><model><instance><main id="s1_559" project="A new projectd" version="1"><_device/><_start/><_end/><_task_key/><age/><a><name/></a><meta><instanceId/><instanceID/></meta></main></instance></model></root>';
+</script>
+<script src="/build/js/combined.min.js"></script>
+</head>
+<body class='clearfix edit'><div id='feedback-bar' class='alert alert-warning'>
+<span class='glyphicon glyphicon-info-sign'></span>
+<button class='close'>&times;</button>
+</div>
+<aside class='side-slider'>
+<button type='button' class='close' data-dismiss='side-slider' aria-hidden='true'>×</button>
+<nav></nav>
+<div class='content'>
+</div>
+</aside>
+<button class='handle side-slider-toggle open'></button>
+<button class='handle side-slider-toggle close'></button>
+<div class='side-slider-toggle slider-overlay'></div>
+<div class='main'>
+<article class='paper'>
+<header class='form-header clearfix'>
+<div class='offline-enabled'>
+<div title='Records Queued' class='queue-length side-slider-toggle'>0</div>
+</div>
+<button onclick='return false;' class='print' title='Print this Form'> </button>
+<span class='form-language-selector'><span>Choose Language</span></span>
+<div class='form-progress'></div>
+<a href='http://www.smap.com.au/' title='Smap'>
+<span class='logo-wrapper'>
+<img src='images/smap_logo.png' alt='logo'>
+</span>
+</a>
+</header>
+<root xmlns:jr="http://openrosa.org/javarosa" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xf="http://www.w3.org/2002/xforms">
+<form novalidate="novalidate" autocomplete="off" class="or clearfix" id="s1_559">
+<!--This form was created by transforming a OpenRosa-flavored (X)Form using an XSLT sheet created by Enketo LLC.--><section class="form-logo"> </section>
+<h3 id="form-title">a</h3>
+<select id="form-languages" style="display:none;" data-default-lang="language">
+<option value="language">language</option> </select>
+
+
+<label class="question non-select ">
+<span lang="language" class="question-label active" data-itext-id="/main/age:label">age</span>
+<input type="number" name="/main/age" data-type-xml="int"/>
+</label>
+<section class="or-group-data " name="/main/a">
+<label class="question non-select ">
+<span lang="language" class="question-label active" data-itext-id="/main/a/name:label">name</span>
+<input type="text" name="/main/a/name" data-type-xml="string"/>
+</label>
+            </section>
+<!--end of group -->
+
+<fieldset style="display:none;" id="or-preload-items">
+<label class="calculation non-select ">
+<input type="hidden" name="/main/_device" data-preload="property" data-preload-params="deviceid" data-type-xml="string"/>
+</label>
+<label class="calculation non-select ">
+<input type="hidden" name="/main/_start" data-preload="timestamp" data-preload-params="start" data-type-xml="dateTime"/>
+</label>
+<label class="calculation non-select ">
+<input type="hidden" name="/main/_end" data-preload="timestamp" data-preload-params="end" data-type-xml="dateTime"/>
+</label>
+<label class="calculation non-select ">
+<input type="hidden" name="/main/_task_key" data-preload="tasks" data-preload-params="" data-type-xml="string"/>
+</label>
+</fieldset>
+<fieldset style="display:none;" id="or-calculated-items">
+<label class="calculation non-select ">
+<input type="hidden" name="/main/a" data-calculate="field-list" data-type-xml="string"/>
+</label>
+<label class="calculation non-select ">
+<input type="hidden" name="/main/meta/instanceId" data-calculate="concat('uuid:', uuid())" data-type-xml="string"/>
+</label>
+</fieldset>
+</form>
+</root>
+<section class='form-footer'>
+<div class='content'>
+<fieldset class='draft question'><div class='option-wrapper'><label class='select'><input class='ignore' type='checkbox' name='draft'/><span class='option-label'>Save as Draft</span></label></div></fieldset>
+<div class='main-controls'>
+<a class='previous-page disabled' href='#'>Back</a>
+<a class='btn btn-primary large next-page' href='#'>Next</span></a>
+</div>
+<a class='btn btn-default disabled first-page' href='#'>Return to Beginning</a>
+<a class='btn btn-default disabled last-page' href='#'>Go to End</a>
+</div>
+</section> <!-- end form-footer -->
+</article>
+</div> <!-- end main -->
+<!-- Start Dialogs -->
+<div id='dialog-alert' class='modal fade' role='dialog' aria-labelledby='alert dialog' aria-hidden='true'  data-keyboard='true'>
+<div class='modal-dialog'>
+<div class='modal-content'>
+<div class='modal-header'>
+<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+<h3></h3>
+</div>
+<div class='modal-body'>
+<p class=''></p>
+</div>
+<div class='modal-footer'>
+<span class='self-destruct-timer'></span>
+<button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button>
+</div>
+</div>
+</div>
+</div>  <!-- end dialog-alert -->
+<div id='dialog-confirm' class='modal fade' role='dialog' aria-labelledby='confirmation dialog' aria-hidden='true'  data-keyboard='true'>
+<div class='modal-dialog'>
+<div class='modal-content'>
+<div class='modal-header'>
+<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+<h3></h3>
+</div>
+<div class='modal-body'>
+<p class='alert alert-danger'></p>
+<p class='msg'></p>
+</div>
+<div class='modal-footer'>
+<span class='self-destruct-timer'></span>
+<button class='negative btn'>Close</button>
+<button class='positive btn btn-primary'>Confirm</button>
+</div>
+</div>
+</div>
+</div>   <!-- end dialog-confirm -->
+<div id='dialog-save' class='modal fade' role='dialog' aria-labelledby='save dialog' aria-hidden='true' data-keyboard='true'>
+<div class='modal-dialog'>
+<div class='modal-content'>
+<div class='modal-header'>
+<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+<h3></h3>
+</div>
+<div class='modal-body'>
+<form onsubmit='return false;'>
+<div class='alert alert-danger'></div>
+<label>
+<span>Record Name</span>
+<span class='or-hint active'>This name allows you to easily find your draft record to finish it later. The record name will not be submitted to the server.</span>
+<input name='record-name' type='text' required='required'/>
+</label>
+</form>
+</div>
+<div class='modal-footer'>
+<button class='negative btn'>Close</button>
+<button class='positive btn btn-primary'>Save &amp; Close</button>
+</div>
+</div>
+</div>
+</div> <!-- end dialog-save -->
+<div id='dialog-print' class='modal fade' role='dialog' aria-labelledby='print dialog' aria-hidden='true'  data-keyboard='true'>
+<div class='modal-dialog'>
+<div class='modal-content'>
+<div class='modal-header'>
+<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+<h3 class='select-format'>Select Print Settings</h3>
+<h3 class='progress'>Preparing...</h3>
+</div><div class='modal-body'>
+<section class='progress'>
+<p>Working hard to prepare your optimized print view. Hold on!</p>
+<progress></progress>
+</section>
+<section class='select-format'>
+<p>To prepare an optimized print, please select the print settings below</p>
+<form onsubmit='return false;'>
+<fieldset>
+<legend>Paper Size</legend>
+<label>
+<input name='format' type='radio' value='A4' required checked/>
+<span>A4</span>
+</label>
+<label>
+<input name='format' type='radio' value='letter' required/>
+<span>Letter</span>
+</label>
+</fieldset>
+<fieldset>
+<legend>Paper Orientation</legend>
+<label>
+<input name='orientation' type='radio' value='portrait' required checked/>
+<span>Portrait</span>
+</label>
+<label>
+<input name='orientation' type='radio' value='landscape' required/>
+<span>Landscape</span>
+</label>
+</fieldset>
+</form>
+<p class='alert alert-info'>Remember to set these same print settings in the browser's print menu afterwards!</p>
+</section>
+</div>
+<div class='modal-footer'>
+<button class='negative btn'>Close</button>
+<button class='positive btn btn-primary'>Prepare</button>
+</div>
+</div>
+</div>
+</div> <!-- end dialog-print for grid -->
+</body></html>

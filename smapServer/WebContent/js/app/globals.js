@@ -397,9 +397,7 @@ define(function() {
 							labels[label.language][label.element] = label.newVal;
 					}
 				}
-			} else {
-				alert("Error: unknown item type: " + change.type);
-			}
+			} 
 			
 		}
 		
@@ -429,10 +427,10 @@ define(function() {
 		}
 		
 		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
-		this.modLabel = function(language, changedQ, newVal, element) {
+		this.modLabel = function(language, changedQ, newVal, element, prop) {
 			
 			var labelMod = {
-					type: "label",
+					type: prop,
 					items: []
 			}
 			
@@ -451,6 +449,7 @@ define(function() {
 					label.questionIdx = changedQ[i].question;
 					label.type = "question";
 					item = this.survey.forms[label.formIdx].questions[label.questionIdx];
+					item_orig = this.survey.forms_orig[label.formIdx].questions[label.questionIdx];
 					label.name = item.name;	
 					label.qId = item.id;
 				} else {
@@ -459,12 +458,17 @@ define(function() {
 					qname = changedQ[i].qname;
 					label.optionIdx = changedQ[i].option;
 					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];
+					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];
 					label.type = "option";
 					label.name = label.optionListIdx;		// The option list name
 				}
 					
 				label.newVal = newVal;
-				label.oldVal = item.labels_orig[language][element];
+				if(prop === "label") {
+					label.oldVal = item_orig.labels[language][element]; 
+				} else {
+					label.oldVal = item_orig[prop];
+				}
 				label.element = element;
 				label.language = language;
 				

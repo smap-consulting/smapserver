@@ -243,8 +243,7 @@ public class Surveys extends Application {
 		    return Response.serverError().build();
 		}
 		
-		System.out.println("Save survey:" + sId);
-		System.out.println("Changes: " + changesString);
+		log.info("Save survey:" + sId + " : " + changesString);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");		
