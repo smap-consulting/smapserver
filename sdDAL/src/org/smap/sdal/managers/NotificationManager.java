@@ -349,7 +349,7 @@ public class NotificationManager {
 				 * Create the document
 				 * TODO: Allow creation of PDFs, reports, aggregations
 				 */
-				String docUrl = "/webforms/formXML.php"+"?key=" + ident +
+				String docUrl = "/webForm/" + ident +
 						"&datakey=instanceid&datakeyvalue=" + instanceId;
 				
 				/*

@@ -96,7 +96,7 @@ public class WebForm extends Application{
 		
 		Response response;
 		
-		log.info("webForm:" + formIdent);
+		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue);
 		
 		// Authorisation - Access
 		try {
@@ -143,11 +143,14 @@ public class WebForm extends Application{
 			
 			// If required get the instanceXML
 			String instanceXML = null;
+			String dataToEditId = null;
 			if(datakey != null && datakeyvalue != null) {
-				
+				xForm = new GetXForm();
+				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0);
+				// TODO get dataToEdit unique instance Id
 			}
 			// Convert to HTML
-			outputHTML.append(addDocument(request, formXML, instanceXML, survey.surveyClass));
+			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass));
 			
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
@@ -164,8 +167,11 @@ public class WebForm extends Application{
 	/*
 	 * Add the HTML
 	 */
-	private StringBuffer addDocument(HttpServletRequest request, String formXML, 
-			String instanceXML, String surveyClass) 
+	private StringBuffer addDocument(HttpServletRequest request, 
+			String formXML, 
+			String instanceXML,
+			String dataToEditId,
+			String surveyClass) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -180,7 +186,7 @@ public class WebForm extends Application{
 		output.append(">\n");
 				
 		output.append(addHead(request, formXML, instanceXML, surveyClass));
-		output.append(addBody(request, formXML));
+		output.append(addBody(request, formXML, dataToEditId));
 
 		output.append("</html>\n");			
 		return output;
@@ -252,7 +258,7 @@ public class WebForm extends Application{
 		// Instance Data
 		if(instanceXML != null) {
 			output.append("data.instanceStrToEdit='");
-			output.append(instanceXML);
+			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
 			// TODO data_to_edit_id
 		}
@@ -262,7 +268,7 @@ public class WebForm extends Application{
 	/*
 	 * Add the body
 	 */
-	private StringBuffer addBody(HttpServletRequest request, String formXML) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addBody(HttpServletRequest request, String formXML, String dataToEditId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
@@ -270,7 +276,7 @@ public class WebForm extends Application{
 		output.append(getAside());
 		output.append(openMain());
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
-		output.append(closeMain());
+		output.append(closeMain(dataToEditId));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -469,7 +475,7 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer closeMain() {
+	private StringBuffer closeMain(String dataToEditId) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<section class='form-footer'>\n");
@@ -478,15 +484,12 @@ public class WebForm extends Application{
 		output.append("<div class='main-controls'>\n");
 		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
 		
-		/*
-		 * TODO Submit button logic
-		 *
-		if(empty($data_to_edit_id)) {
-			echo "<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>";
+		if(dataToEditId != null) {
+			output.append("<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>\n");
 		} else {
-			echo "<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>";
+			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
 		}
-		*/
+		
 		output.append("<a class='btn btn-primary large next-page' href='#'>Next</span></a>\n");
 		
 		output.append("</div>\n");	// main controls

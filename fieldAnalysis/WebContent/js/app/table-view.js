@@ -343,7 +343,7 @@ function addRightClickToTable($elem, sId, view) {
 				//alert("You cannot edit a record that has been replaced by another record");
 				alert(localise.set["msg_no_edit_rep"]);
 			} else {
-				document.location.href = "/webforms/formXML.php"+"?key=" + survey_ident +
+				document.location.href = "/webForm/" + survey_ident +
 						"&datakey=prikey&datakeyvalue="+pkey;
 			}
 			return false;

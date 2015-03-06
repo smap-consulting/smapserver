@@ -19,6 +19,10 @@ local.properties
 .settings/
 .loadpath
 
+# enketo 
+combined.min.js
+enketo-core.min.js
+
 # External tool builders
 .externalToolBuilders/
 

@@ -474,7 +474,12 @@ public class SurveyManager {
 				
 			} else {	// Attempt to find the survey assuming the ident is the survey id
 				pstmt2 = sd.prepareStatement(sql2);	
-				int sId = Integer.parseInt(key);
+				int sId = 0;
+				try {
+					sId = Integer.parseInt(key);
+				} catch (Exception e) {
+					
+				}
 				pstmt2.setInt(1, sId);
 				
 				log.info("Sql: " + pstmt.toString());
