@@ -165,7 +165,9 @@ $(document).ready(function() {
 			questions;
 		
 		if(!languages) {
-			getLanguageList(sId, addMediaPickList);		// Retrieve the languages and questions for the default language
+			if(sId > 0) {
+				getLanguageList(sId, addMediaPickList);		// Retrieve the languages and questions for the default language
+			}
 		} else {
 			setSurveyViewLanguages(languages, undefined, '#settings_language', false );
 			setSurveyViewLanguages(languages, undefined, '#export_language', true );
@@ -343,16 +345,14 @@ $(window).load(function() {
 function addMediaPickList() {
 	
 	var sId = $('#export_survey option:selected').val(),
+		format = $('#exportformat').val(),
 		languages = globals.gSelector.getSurveyLanguages(sId),
 		questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name),
 		i,
-		h = [];
+		h = [],
 		idx = -1,
-		h2 = [];
+		h2 = [],
 		idx2 = -1;
-	
-	console.log("media pick list");
-	console.log(questions);
 	
 	/*
 	 * Add the media question select list
@@ -385,7 +385,7 @@ function addMediaPickList() {
 			
 		}
 	}
-	if(idx === -1) {
+	if(idx === -1 && format === "media") {
 		alert("No images, video, audio found");
 	}
 	$('#export_media_question').html(h.join(''));
