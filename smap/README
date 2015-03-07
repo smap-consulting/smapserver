@@ -17,12 +17,21 @@ sudo ./patchdb.sh
 sudo ./deploy.sh
 
 Version 15.02
+The following chages are applied by the patchdb.sh script.  You may need to apply them manually of you have customised your
+installation.
+
    - Changes the name of the fieldManager war file to fieldManagerServer.war.  The reverse proxy settings in the 
      apache configuration filese will need to be changed. For example to:
      
     ProxyPass         /fieldManagerServer   ajp://localhost:8009/fieldManagerServer timeout=600
     ProxyPassReverse  /fieldManagerServer   ajp://localhost:8009/fieldManagerServer
-    
+
+	- You can remove the old fieldManager.war file
+	  sudo rm /var/lib/tomcat7/webapps/fieldManager.war
+	  
+	- Add a folder called "organisation" under the media folder.  The default would be /smap/media/orgnisation
+	  however you may have specified a different base directory {your location/media/organisation
+	  Set the owner of this folder to "tomcat7"    
 Version 14.10.02 needs the following added to /etc/apache2/sites-available/default-ssl.conf (Assuming version 2.4 of Apache)
 Add after the <location /surveyKPI> entry
 

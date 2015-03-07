@@ -67,7 +67,7 @@ NameVirtualHost *:443
 
     <Directory /var/www/smap>
         Options -Indexes FollowSymLinks MultiViews
-		ExpiresDefault A300
+		ExpiresDefault A30000
         AllowOverride None
         Order allow,deny
         allow from all
