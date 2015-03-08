@@ -521,7 +521,7 @@ public class UtilityMethods {
 		    log.info("Sending email from: " + sender);
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-			log.info("Messaging Exception");
+			log.log(Level.SEVERE, "Messaging Exception");
 			throw new Exception(me.getMessage());
 		}
 	}

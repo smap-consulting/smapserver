@@ -287,6 +287,7 @@ public class Authorise {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pId);
 			pstmt.setString(2, user);
+			log.info("IsValidProject: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
