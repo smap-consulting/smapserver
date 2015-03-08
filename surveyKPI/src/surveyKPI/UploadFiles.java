@@ -101,7 +101,6 @@ public class UploadFiles extends Application {
 		fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
-		boolean commitOpen = false;
 		Connection connectionSD = null; 
 
 		try {
@@ -132,6 +131,7 @@ public class UploadFiles extends Application {
 					} else if(item.getFieldName().equals("settings")) {
 						try {
 							settings = item.getString();
+							System.out.println("Has settings ######: " + settings);
 						} catch (Exception e) {
 							
 						}
@@ -175,6 +175,8 @@ public class UploadFiles extends Application {
 					mediaInfo.setServer(request.getRequestURL().toString());
 					
 					String folderPath = mediaInfo.getPath();
+					fileName = mediaInfo.getFileName(fileName);
+					System.out.println("Filename: " + fileName);
 					if(folderPath != null) {						
 						String filePath = folderPath + "/" + fileName;
 					    File savedFile = new File(filePath);

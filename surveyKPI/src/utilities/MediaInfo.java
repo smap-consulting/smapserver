@@ -51,6 +51,7 @@ public class MediaInfo {
 	String folderUrl = null;
 	String folderPath = null;
 	String server = null;
+	String settings = null;
 	
 	public MediaInfo(File f) {			
 		folder = f;
@@ -88,13 +89,17 @@ public class MediaInfo {
 	/*
 	 * Set media folder to the organisation folder for the provided user
 	 */
-	public boolean setFolder(String basePath, String user, String settings, Connection conn) {
+	public boolean setFolder(String basePath, String user, String aSettings, Connection conn) {
 		boolean status = false;
 		
 		// Get the organisation id
 		String organisationId = null;
 		String sql = "select o_id from users where ident = ?;";
 		PreparedStatement pstmt = null;
+		
+		settings = aSettings;
+		
+		System.out.println("Settings: " + settings);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);	
@@ -203,6 +208,15 @@ public class MediaInfo {
 	
 	public String getPath() {
 		return folderPath;
+	}
+	
+	public String getFileName(String initialFileName) {
+		String fileName = initialFileName;
+		
+		if(settings != null && settings.equals("true")) {
+			fileName = "bannerLogo";
+		}
+		return fileName;
 	}
 	
 	/*

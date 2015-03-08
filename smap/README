@@ -32,6 +32,10 @@ installation.
 	- Add a folder called "organisation" under the media folder.  The default would be /smap/media/orgnisation
 	  however you may have specified a different base directory {your location/media/organisation
 	  Set the owner of this folder to "tomcat7"    
+	  
+	  You may need to reinstall pyxform.  If you get an error when uploading a template that states that pyxform module
+	  is missing then reinstall pyxform using the commands in section 16 of the install.sh script.
+	  
 Version 14.10.02 needs the following added to /etc/apache2/sites-available/default-ssl.conf (Assuming version 2.4 of Apache)
 Add after the <location /surveyKPI> entry
 

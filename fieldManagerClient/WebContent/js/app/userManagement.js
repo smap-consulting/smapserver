@@ -26,7 +26,8 @@ var gUsers,
 	gControlOrganisationCount,
 	gCurrentProjectIndex,	// Set while editing a projects details
 	gCurrentOrganisationIndex,
-	gCurrentUserIndex;		// Set while editing a users details
+	gCurrentUserIndex,		// Set while editing a users details
+	gOrgId;
 
 $(document).ready(function() {
 
@@ -102,11 +103,10 @@ $(document).ready(function() {
      * Submit the banner logo
      */
     $('#submitBanner').click( function() {
-    	console.log("Serialize");
+
+    	$('#settingsFlag').val("true");
     	var f = document.forms.namedItem("fileupload");
     	var formData = new FormData(f);
-    	
-    	$('#settings_flag').val("true");
     	
     	addHourglass();
         $.ajax({
@@ -119,7 +119,8 @@ $(document).ready(function() {
             success: function(data) {
     			removeHourglass();
             	console.log("Success");
-            	refreshBannerLogo();
+            	setBannerLogo(gOrgId);
+            	
             	$('#upload_msg').val("");
             	document.forms.namedItem("fileupload").reset();
             	
@@ -1022,9 +1023,16 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_send_trail;
 			}
 		});
+		gOrgId = org.id;
+		setBannerLogo(org.id);
 
 	}
 	$('#create_organisation_popup').modal("show");
+}
+
+function setBannerLogo(orgId) {
+	var d = new Date();
+	$('#o_banner_logo').attr("src", "/media/organisation/" + orgId + "/settings/bannerlogo" + "?" + d.valueOf() );
 }
 
 /*
