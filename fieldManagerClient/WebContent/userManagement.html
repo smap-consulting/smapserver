@@ -265,12 +265,12 @@
 				<form class="form" role="form" id="organisation_create_form">
 
 					<fieldset>
-					<div class="form-group">
-						<label for="o_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="o_name" class="form-control" tabindex="1" required><br/>
+						<div class="form-group">
+							<label for="o_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+							<div class="col-sm-10">
+								<input type="text" id="o_name" class="form-control" tabindex="1" required><br/>
+							</div>
 						</div>
-					</div>
 					</fieldset>
 					<fieldset>
 						<legend>Publishing options:</legend>
@@ -288,15 +288,6 @@
 						<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="7"/> Allow editing of results</label></div> 
 					</fieldset>
 					<fieldset>
-						<legend>Appearance:</legend>
-						<div class="form-group">
-							<label for="o_banner_logo" class="lang col-sm-2 control-label">Banner Logo: </label>
-							<div class="col-sm-10">
-								<input class="form-control" type="text" id="o_banner_logo" tabindex="8">
-							</div>
-						</div>
-					</fieldset>
-					<fieldset>
 						<legend>Emails:</legend>
 						<div class="form-group">
 							<label for="o_admin_email" class="lang col-sm-2 control-label">Help: </label>
@@ -312,6 +303,33 @@
 						</div>
 					</fieldset>
 				</form>	
+				<form enctype="multipart/form-data" name="fileupload">
+					<fieldset>
+						<legend>Appearance:</legend>
+						<input id="settingsFlag" type="hidden" name="settings" >
+						<label for="o_banner_logo" class="lang col-sm-2 control-label">Banner Logo: </label>
+						<div class="col-sm-10">
+							<img id="o_banner_logo" class="form-control banner-logo" src="">
+						</div>
+						<div class="form-group">
+      						<input id="settings" type="hidden" name="settings" >
+      						<div class="input-group">
+      							<span class="input-group-btn">
+        							<input name="files" title="Add" class="file-inputs" type="file" accept="image/png, image/jpeg, image/gif">
+      							</span>
+     					 		<input type="text" id="upload_msg" class="form-control" placeholder="New Banner...">
+     					 		<span class="input-group-btn">
+        							<button type="button" id="submitBanner" class="btn btn-primary">
+	                    		<i class="glyphicon glyphicon-upload"></i>
+	                    		<span>upload</span>
+	                		</button>
+      							</span>
+    						</div>
+
+           				</div>
+           			
+					</fieldset>
+				</form>
 			</div>
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close" tabindex="11">Close</button>

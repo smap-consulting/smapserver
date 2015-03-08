@@ -37,6 +37,7 @@ requirejs.config({
     	jquery: '../../../../js/libs/jquery-1.8.3.min',
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	bootbox: '../../../../js/libs/bootbox.min',
+    	bootstrapfileinput: '../../../../js/libs/bootstrap.file-input',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	crf: '../../../../js/libs/commonReportFunctions',
@@ -56,7 +57,8 @@ require([
          'localise', 
          'globals',
          'bootbox',
-         'app/userManagement'
+         'app/userManagement',
+         'bootstrapfileinput'
          
          ], function($, bootstrap, common, localise, globals) {});
 

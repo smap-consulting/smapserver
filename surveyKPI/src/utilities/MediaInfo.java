@@ -88,7 +88,7 @@ public class MediaInfo {
 	/*
 	 * Set media folder to the organisation folder for the provided user
 	 */
-	public boolean setFolder(String basePath, String user, Connection conn) {
+	public boolean setFolder(String basePath, String user, String settings, Connection conn) {
 		boolean status = false;
 		
 		// Get the organisation id
@@ -106,6 +106,9 @@ public class MediaInfo {
 				
 				organisationId = resultSet.getString(1);	
 				folderUrl = "media/organisation/" + organisationId;
+				if(settings != null && !settings.equals("false")) {
+					folderUrl += "/settings";
+				}
 				folderPath = basePath + "/" + folderUrl;
 				folder = new File(folderPath);
 				

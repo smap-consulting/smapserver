@@ -93,6 +93,7 @@ public class UploadFiles extends Application {
 
 		String original_url = "/edit.html?mesg=error loading media file";
 		int sId = -1;
+		String settings = "false";
 	
 		log.info("upload files - media -----------------------");
 		log.info("    Server:" + serverName);
@@ -128,6 +129,13 @@ public class UploadFiles extends Application {
 							
 						}
 						log.info("surveyId:" + sId);
+					} else if(item.getFieldName().equals("settings")) {
+						try {
+							settings = item.getString();
+						} catch (Exception e) {
+							
+						}
+						log.info("Upload media settings:" + settings);
 					}
 					
 				} else if(!item.isFormField()) {
@@ -160,8 +168,9 @@ public class UploadFiles extends Application {
 					MediaInfo mediaInfo = new MediaInfo();
 					if(sId > 0) {
 						mediaInfo.setFolder(basePath, sId, null, connectionSD);
-					} else {		
-						mediaInfo.setFolder(basePath, user, connectionSD);				 
+					} else {	
+						// Upload to organisations folder
+						mediaInfo.setFolder(basePath, user, settings, connectionSD);				 
 					}
 					mediaInfo.setServer(request.getRequestURL().toString());
 					
@@ -249,7 +258,7 @@ public class UploadFiles extends Application {
 			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
-			mediaInfo.setFolder(basePath, request.getRemoteUser(), connectionSD);				 
+			mediaInfo.setFolder(basePath, request.getRemoteUser(), "false", connectionSD);				 
 		
 			MediaResponse mResponse = new MediaResponse ();
 		    mResponse.files = mediaInfo.get();			
@@ -366,7 +375,7 @@ public class UploadFiles extends Application {
 			if(sId > 0) {
 				mediaInfo.setFolder(basePath, sId, null, connectionSD);
 			} else {		
-				mediaInfo.setFolder(basePath, user, connectionSD);				 
+				mediaInfo.setFolder(basePath, user, "false", connectionSD);				 
 			}
 			
 			log.info("Media query on: " + mediaInfo.getPath());

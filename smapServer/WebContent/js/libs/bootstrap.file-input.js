@@ -87,16 +87,14 @@ $.fn.bootstrapFileInput = function() {
     $('body').on('change', '.file-input-wrapper input[type=file]', function(){
 
       var fileName,
-      		fileDesc;
+      		fileDesc,
+      		$this = $(this),
+      		$target = $('#upload_msg');
      
-
-      // Remove any previous file names
-      //$(this).parent().next('.file-input-name').remove();
-     
-      if (!!$(this).prop('files') && $(this).prop('files').length > 1) {
+      if ($this.prop('files') && $this.prop('files').length > 1) {
     	  fileDesc = 'Selected: ';
-    	  for(i = 0; i < $(this).prop('files').length; i++) {
-    		  fileName = $(this)[0].files[i].name;
+    	  for(i = 0; i < $this.prop('files').length; i++) {
+    		  fileName = $this[0].files[i].name;
     		  fileName = fileName.substring(fileName.lastIndexOf('\\') + 1, fileName.length);
     		  if(i > 0) {
     			  fileDesc += ', ';
@@ -105,7 +103,7 @@ $.fn.bootstrapFileInput = function() {
     	  }
       }
       else {
-    	fileName = $(this).val();
+    	fileName = $this.val();
         fileName = fileName.substring(fileName.lastIndexOf('\\') + 1, fileName.length);
         fileDesc = 'Selected: ' + fileName;
       }
@@ -115,7 +113,11 @@ $.fn.bootstrapFileInput = function() {
         return;
       }
 
-      $('#upload_msg').addClass('alert-success').removeClass('alert-danger').html(fileDesc);
+      if($target.hasClass("alert")) {
+    	  $target.addClass('alert-success').removeClass('alert-danger').html(fileDesc);
+      } else {
+    	  $target.val(fileDesc);
+      }
       var w = 0;
       $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
       /*
