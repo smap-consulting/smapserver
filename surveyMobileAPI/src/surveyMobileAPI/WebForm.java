@@ -57,6 +57,7 @@ import org.apache.commons.io.IOUtils;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.MediaUtilities;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
@@ -107,6 +108,7 @@ public class WebForm extends Application{
 
 		Survey survey = null;
 		String user = request.getRemoteUser();
+		int orgId = 0;
 		
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
@@ -115,6 +117,14 @@ public class WebForm extends Application{
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key
     		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
+    		
+    		// Get the organisation id
+    		try {
+    			orgId = MediaUtilities.getOrganisationId(connectionSD, user);
+    		} catch (Exception e) {
+    			
+    		}
+    		
     		try {
             	if (connectionSD != null) {
             		connectionSD.close();
@@ -128,6 +138,7 @@ public class WebForm extends Application{
         }
 		// End Authorisation
 
+		
 		StringBuffer outputHTML = new StringBuffer();
 		
 		// Generate the web form
@@ -150,7 +161,7 @@ public class WebForm extends Application{
 				// TODO get dataToEdit unique instance Id
 			}
 			// Convert to HTML
-			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass));
+			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass, orgId));
 			
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
@@ -171,7 +182,8 @@ public class WebForm extends Application{
 			String formXML, 
 			String instanceXML,
 			String dataToEditId,
-			String surveyClass) 
+			String surveyClass,
+			int orgId) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -186,7 +198,7 @@ public class WebForm extends Application{
 		output.append(">\n");
 				
 		output.append(addHead(request, formXML, instanceXML, surveyClass));
-		output.append(addBody(request, formXML, dataToEditId));
+		output.append(addBody(request, formXML, dataToEditId, orgId));
 
 		output.append("</html>\n");			
 		return output;
@@ -203,6 +215,7 @@ public class WebForm extends Application{
 		output.append("<head>\n");
 		output.append("<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
 
+		output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform_formhub.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
 		if(surveyClass != null && surveyClass.trim().contains("theme-grid")) {
@@ -268,13 +281,13 @@ public class WebForm extends Application{
 	/*
 	 * Add the body
 	 */
-	private StringBuffer addBody(HttpServletRequest request, String formXML, String dataToEditId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addBody(HttpServletRequest request, String formXML, String dataToEditId, int orgId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(openMain());
+		output.append(openMain(orgId));		// TODO get orgId
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		output.append(closeMain(dataToEditId));
 		output.append(getDialogs());
@@ -453,7 +466,7 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer openMain() {
+	private StringBuffer openMain(int orgId) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div class='main'>\n");
@@ -465,11 +478,13 @@ public class WebForm extends Application{
 					output.append("<button onclick='return false;' class='print' title='Print this Form'> </button>\n");
 					output.append("<span class='form-language-selector'><span>Choose Language</span></span>\n");
 					output.append("<div class='form-progress'></div>\n");
-					output.append("<a href='http://www.smap.com.au/' title='Smap'>\n");
-						output.append("<span class='logo-wrapper'>\n");
-							output.append("<img src='images/smap_logo.png' alt='logo'>\n");
-						output.append("</span>\n");
-					output.append("</a>\n");
+
+					output.append("<span class='logo-wrapper'>\n");
+						output.append("<img class='banner_logo' src='/media/organisation/");
+						output.append(orgId);
+						output.append("/settings/bannerLogo' onerror=\"if(this.src.indexOf('smap_logo.png') < 0) this.src='/images/smap_logo.png';\" alt='logo'>\n");
+					output.append("</span>\n");
+
 				output.append("</header>\n");
 			
 		return output;
