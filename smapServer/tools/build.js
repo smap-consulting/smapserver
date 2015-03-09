@@ -10,7 +10,8 @@
     	jquery_ui: 'empty:',
     	app: '../app',
     	lang_location: '..',
-	bootbox: 'bootbox.min'
+	bootbox: 'bootbox.min',
+	bootstrap: 'bootstrap.min'
     },
     dir: '../smapServer',
     modules: [
@@ -21,7 +22,7 @@
             name: '../edit',
         },
         {
-            name: '../webForms',
+            name: '../webFormLauncher',
         },
         {
             name: '../passwords',

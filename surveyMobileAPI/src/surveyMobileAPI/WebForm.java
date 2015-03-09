@@ -245,7 +245,7 @@ public class WebForm extends Application{
 		output.append("<![endif]-->\n");
 			
 		output.append(addData(request, formXML, instanceXML));
-		output.append("<script type='text/javascript' src='/build/js/combined.min.js'></script>\n");
+		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
 		
 		output.append("</head>\n");
 		
@@ -261,16 +261,18 @@ public class WebForm extends Application{
 		
 		output.append("<script type='text/javascript'>\n");
 		output.append("settings = {};\n");
-		output.append("data = {};\n");
+		//output.append("data = {};\n");
 		
 		// Data model
-		output.append("data.modelStr='");
+		//output.append("data.modelStr='");
+		output.append("modelStr='");
 		output.append(transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
 		// Instance Data
 		if(instanceXML != null) {
-			output.append("data.instanceStrToEdit='");
+			//output.append("data.instanceStrToEdit='");
+			output.append("instanceStrToEdit='");
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
 			// TODO data_to_edit_id

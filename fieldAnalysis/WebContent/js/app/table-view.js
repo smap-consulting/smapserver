@@ -344,7 +344,7 @@ function addRightClickToTable($elem, sId, view) {
 				alert(localise.set["msg_no_edit_rep"]);
 			} else {
 				document.location.href = "/webForm/" + survey_ident +
-						"&datakey=prikey&datakeyvalue="+pkey;
+						"?datakey=prikey&datakeyvalue="+pkey;
 			}
 			return false;
 		});

@@ -1,2 +1,2 @@
 #!/bin/sh
-cp ~/git/enketo-core2/build/js/combined.min.js WebContent/build/js
+cp ~/git/enketo-core/build/js/combined.min.js WebContent/js/libs
