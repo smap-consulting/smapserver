@@ -235,26 +235,168 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get the default language for a survey
+	 * Get the answer for a specific question and a specific instance
 	 */
-	public static ArrayList<String> getResponseForQuestion(Connection results, int sId, int qId, String instanceId) throws Exception {
+	public static ArrayList<String> getResponseForQuestion(Connection sd, Connection results, int sId, int qId, String instanceId) throws SQLException {
 		
-		PreparedStatement pstmtDefLang = null;
-		PreparedStatement pstmtDefLang2 = null;
+		PreparedStatement pstmtQuestion = null;
+		PreparedStatement pstmtOption = null;
+		PreparedStatement pstmtResults = null;
 		
-		String x = "1";
+		String sqlQuestion = "select qType, qName, f_id from question where q_id = ?";
+		String sqlOption = "select ovalue from option where q_id = ?";
+		
+		String qType = null;
+		String qName = null;
+		int fId = 0;
+		
 		ArrayList<String> responses = new ArrayList<String> ();
 		try {
-			int a = Integer.parseInt(x);
+			pstmtQuestion = sd.prepareStatement(sqlQuestion);
+			pstmtQuestion.setInt(1, qId);
+			log.info("GetResponseForQuestion: " + pstmtQuestion.toString());
+			ResultSet rs = pstmtQuestion.executeQuery();
+			if(rs.next()) {
+				qType = rs.getString(1);
+				qName = rs.getString(2);
+				fId = rs.getInt(3);
+				
+				ArrayList<String> tableStack = getTableStack(sd, fId);
+				ArrayList<String> options = new ArrayList<String> ();
+				
+				// First table is for the question, last is for the instance id
+				StringBuffer query = new StringBuffer();		
+				
+				// Add the select
+				if(qType.equals("select")) {
+					pstmtOption = sd.prepareStatement(sqlOption);
+					pstmtOption.setInt(1, qId);
+					
+					log.info("Get Options: " + pstmtOption.toString());
+					ResultSet rsOptions = pstmtOption.executeQuery();
+					
+					query.append("select ");
+					int count = 0;
+					while(rsOptions.next()) {
+						String oName = rsOptions.getString(1);
+						options.add(oName);
+						
+						if(count > 0) {
+							query.append(",");
+						}
+						query.append(" t0.");
+						query.append(qName);
+						query.append("__");
+						query.append(oName);
+						query.append(" as ");
+						query.append(oName);
+						count++;
+					}
+					query.append(" from ");
+				} else {
+					query.append("select t0." + qName + " from ");
+				}
+				
+				// Add the tables
+				for(int i = 0; i < tableStack.size(); i++) {
+					if(i > 0) {
+						query.append(",");
+					}
+					query.append(tableStack.get(i));
+					query.append(" t");
+					query.append(i);
+				}
+				
+				// Add the join
+				query.append(" where ");
+				if(tableStack.size() > 1) {
+					for(int i = 1; i < tableStack.size(); i++) {
+						if(i > 1) {
+							query.append(" and ");
+						}
+						query.append("t");
+						query.append(i - 1);
+						query.append(".parkey = t");
+						query.append(i);
+						query.append(".prikey");
+					}
+				}
+				
+				// Add the instance
+				if(tableStack.size() > 1) {
+					query.append(" and ");
+				}
+				query.append(" t");
+				query.append(tableStack.size() - 1);
+				query.append(".instanceID = ?");
+				
+				pstmtResults = results.prepareStatement(query.toString());
+				pstmtResults.setString(1, instanceId);
+				log.info("Get results for a question: " + pstmtResults.toString());
+				
+				rs = pstmtResults.executeQuery();
+				while(rs.next()) {
+					if(qType.equals("select")) {
+						for(String option : options) {
+							int isSelected = rs.getInt(option);
+							
+							if(isSelected > 0) { 
+								String email=option.replaceFirst("_amp_", "@");
+								email=email.replaceAll("_dot_", ".");
+								log.info("******** " + email);
+								responses.add(email);
+							}
+						}
+					} else {
+						log.info("******** " + rs.getString(1));
+						responses.add(rs.getString(1));
+					}
+				}
+			}
 	
-		} catch(Exception e) {
+		} catch(SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
-			try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
-			try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
+			try {if (pstmtQuestion != null) {pstmtQuestion.close();}} catch (SQLException e) {}
+			try {if (pstmtOption != null) {pstmtOption.close();}} catch (SQLException e) {}
+			try {if (pstmtResults != null) {pstmtResults.close();}} catch (SQLException e) {}
 		}
 		return responses;
+	}
+	
+	/*
+	 * Starting from the past in question get all the tables up to the highest parent that are part of this survey
+	 */
+	public static ArrayList<String> getTableStack(Connection sd, int fId) throws SQLException {
+		ArrayList<String> tables = new ArrayList<String> ();
+		
+		PreparedStatement pstmtTable = null;
+		String sqlTable = "select table_name, parentform from form where f_id = ?";
+		
+		try {
+			pstmtTable = sd.prepareStatement(sqlTable);
+			
+			while (fId > 0) {
+				pstmtTable.setInt(1, fId);
+				ResultSet rs = pstmtTable.executeQuery();
+				if(rs.next()) {
+					tables.add(rs.getString(1));
+					fId = rs.getInt(2);
+				} else {
+					fId = 0;
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtTable != null) {pstmtTable.close();}} catch (SQLException e) {}
+		}	
+		
+		return tables;
+		
 	}
 	
 }

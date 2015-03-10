@@ -100,6 +100,10 @@ public class QuestionList extends Application {
 			String sqlEnd = null;
 			ResultSet resultSet = null;
 
+			if(language.equals("none")) {
+				language = GeneralUtilityMethods.getDefaultLanguage(connectionSD, sId);
+			}
+			
 			sql1 = "SELECT q.q_id, q.qtype, t.value, q.qname " +
 					" FROM form f " +
 					" INNER JOIN question q " +

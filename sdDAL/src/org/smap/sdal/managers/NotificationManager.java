@@ -281,7 +281,7 @@ public class NotificationManager {
 			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
-			String serverName) throws SQLException, Exception {
+			String serverName) throws SQLException {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
@@ -364,12 +364,14 @@ public class NotificationManager {
 					String smtp_host = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						ArrayList<String> emailList = null;
+						System.out.println("Email question: " + nd.emailQuestion);
 						if(nd.emailQuestion > 0) {
-							emailList = GeneralUtilityMethods.getResponseForQuestion(cResults, s_id, nd.emailQuestion, instanceId);
+							emailList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, s_id, nd.emailQuestion, instanceId);
 						} else {
 							emailList = new ArrayList<String> ();
 						}
 						
+						// Add the per question emails to the static emails
 						for(String email : nd.emails) {
 							emailList.add(email);
 						}

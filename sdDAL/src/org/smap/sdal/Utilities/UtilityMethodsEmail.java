@@ -312,7 +312,7 @@ public class UtilityMethodsEmail {
 		String sqlEmail = "select o.smtp_host " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
-				" and u.ident = ?;";
+				" and u.email = ?;";
 		
 		String sqlServer = "select smtp_host " +
 				" from server ";

@@ -276,6 +276,8 @@ public class WebForm extends Application{
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
 			// TODO data_to_edit_id
+		} else {
+			output.append("instanceStrToEdit=undefined;");
 		}
 		output.append("</script>\n");
 		return output;
