@@ -968,7 +968,7 @@ public class PutXForm {
 	   				// Survey level manifests can be set in the appearance attribute
 	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);	
 	   				
-	   				if(q.getType() == null && !q.getType().startsWith("begin")) {
+	   				if(q.getType() == null || !q.getType().startsWith("begin")) {
 	   					q.setSource("user");	// Set source as it may not have been set in the body
 	   				}
 	    		} else {
