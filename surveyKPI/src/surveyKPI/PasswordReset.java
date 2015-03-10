@@ -32,7 +32,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import java.sql.*;
@@ -94,18 +94,18 @@ public class PasswordReset extends Application {
 			try {				
 				
 				String interval = "1 hour";
-				String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, email, interval);
+				String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, email, interval);
 				
 				if(uuid != null) {
 					// Update succeeded
 					System.out.println("Sending email");
 					
 					String smtp_host = null;
-					if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, email, request.getRemoteUser())) != null) {
-						String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
-						ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, email);
+					if((smtp_host = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser())) != null) {
+						String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
+						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset@" + request.getServerName();
-						UtilityMethods.sendEmail(email, uuid, "reset", "Password Reset", sender, null, interval, 
+						UtilityMethodsEmail.sendEmail(email, uuid, "reset", "Password Reset", sender, null, interval, 
 					    		idents, null, adminEmail, smtp_host, request.getServerName());
 					    response = Response.ok().build();
 					} else {

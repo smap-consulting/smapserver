@@ -33,10 +33,10 @@ import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 
 
-public class UtilityMethods {
+public class UtilityMethodsEmail {
 	
 	private static Logger log =
-			 Logger.getLogger(UtilityMethods.class.getName());
+			 Logger.getLogger(UtilityMethodsEmail.class.getName());
 	
 	private static String [] reservedSQL = new String [] {
 		"all",

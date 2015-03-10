@@ -53,7 +53,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.server.entities.SubscriberEvent;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -196,17 +196,17 @@ public class SubUshahidi extends Subscriber {
 	    	    
 	    		// Ushahidi parameters take only part of the full date, and part of the location
 	    		if(name.equals("incident_date")) {	// Only the year, day month part of the date is used
-	    			parValue = UtilityMethods.getPartDate(parValue, "MM/dd/yyyy");
+	    			parValue = UtilityMethodsEmail.getPartDate(parValue, "MM/dd/yyyy");
 	    		} else if(name.equals("incident_hour")) {	// Only the hour part of the date is used
-	    			parValue = UtilityMethods.getPartDate(parValue, "hh");
+	    			parValue = UtilityMethodsEmail.getPartDate(parValue, "hh");
 	    		} else if(name.equals("incident_minute")) {	// Only the minute part of the date is used
-	    			parValue = UtilityMethods.getPartDate(parValue, "mm");
+	    			parValue = UtilityMethodsEmail.getPartDate(parValue, "mm");
 	    		} else if(name.equals("incident_ampm")) {	// Only the am/pm part of the date is used
-	    			parValue = UtilityMethods.getPartDate(parValue, "aa").toLowerCase();
+	    			parValue = UtilityMethodsEmail.getPartDate(parValue, "aa").toLowerCase();
 	    		} else if(name.equals("latitude")) {	// Only the lat part of the location is used
-	    			parValue = UtilityMethods.getPartLocation(parValue, "lat");
+	    			parValue = UtilityMethodsEmail.getPartLocation(parValue, "lat");
 	    		} else if(name.equals("longitude")) {	// Only the lon part of the location is used
-	    			parValue = UtilityMethods.getPartLocation(parValue, "lon");
+	    			parValue = UtilityMethodsEmail.getPartLocation(parValue, "lon");
 	    		}
 	    		
 	    		// Set some default values if the results data is deficient

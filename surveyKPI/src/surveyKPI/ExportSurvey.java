@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 /*
  * Provides a survey level export of a survey as CSV
@@ -1127,7 +1127,7 @@ public class ExportSurvey extends Application {
 					if(qType.equals("select1")) {
 						questionText += " " + name + "=" + label;
 					} else if(oName != null) {
-						String cleanName = UtilityMethods.cleanName(name);
+						String cleanName = UtilityMethodsEmail.cleanName(name);
 						if(cleanName.equals(oName)) {
 							questionText += " " + label;
 						}
@@ -1198,10 +1198,10 @@ public class ExportSurvey extends Application {
 					c.q_name = q_name;
 					c.q_type = q_type;
 					c.q_id = q_id;
-					c.col_name = UtilityMethods.cleanName(q_name);
+					c.col_name = UtilityMethodsEmail.cleanName(q_name);
 					c.o_id = resultSetOptions.getInt("o_id");
 					c.o_name = resultSetOptions.getString("ovalue");
-					c.col_name = UtilityMethods.cleanName(q_name) + "__" + UtilityMethods.cleanName(c.o_name);
+					c.col_name = UtilityMethodsEmail.cleanName(q_name) + "__" + UtilityMethodsEmail.cleanName(c.o_name);
 				}
 			} else {
 				Column c = new Column();
@@ -1209,7 +1209,7 @@ public class ExportSurvey extends Application {
 				c.q_name = q_name;
 				c.q_type = q_type;
 				c.q_id = q_id;
-				c.col_name = UtilityMethods.cleanName(q_name);
+				c.col_name = UtilityMethodsEmail.cleanName(q_name);
 			}
 		
 		}

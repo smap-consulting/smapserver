@@ -40,7 +40,7 @@ import org.codehaus.jettison.json.JSONString;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -580,7 +580,7 @@ public class Results extends Application {
 									value = resultSet.getString(oi.getName());
 								} else {
 									optionName = resultSet.getString(aQ.getName());
-									optionName = UtilityMethods.cleanName(optionName);
+									optionName = UtilityMethodsEmail.cleanName(optionName);
 									if(optionName != null && optionName.equals(oi.getName())) {
 										value = "1";
 									} else {

@@ -14,10 +14,10 @@ import java.util.logging.Logger;
 import org.smap.sdal.model.ChangeItem;
 
 
-public class MediaUtilities {
+public class GeneralUtilityMethods {
 	
 	private static Logger log =
-			 Logger.getLogger(MediaUtilities.class.getName());
+			 Logger.getLogger(GeneralUtilityMethods.class.getName());
 	
 	/*
 	 * Get the organisation id for the user
@@ -196,5 +196,65 @@ public class MediaUtilities {
 		return languages;
 	}
 	
+	/*
+	 * Get the default language for a survey
+	 */
+	public static String getDefaultLanguage(Connection connectionSD, int sId) throws SQLException {
+		
+		PreparedStatement pstmtDefLang = null;
+		PreparedStatement pstmtDefLang2 = null;
+		
+		String deflang = null;
+		try {
+			
+			String sqlDefLang = "select def_lang from survey where s_id = ?; ";
+			pstmtDefLang = connectionSD.prepareStatement(sqlDefLang);
+			pstmtDefLang.setInt(1, sId);
+			ResultSet resultSet = pstmtDefLang.executeQuery();
+			if (resultSet.next()) {
+				deflang = resultSet.getString(1);
+				if(deflang == null) {
+					// Just get the first language in the list	
+					String sqlDefLang2 = "select distinct language from translation where s_id = ?; ";
+					pstmtDefLang2 = connectionSD.prepareStatement(sqlDefLang2);
+					pstmtDefLang2.setInt(1, sId);
+					ResultSet resultSet2 = pstmtDefLang2.executeQuery();
+					if (resultSet2.next()) {
+						deflang = resultSet2.getString(1);
+					}
+				}
+			}
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
+			try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
+		}
+		return deflang;
+	}
+	
+	/*
+	 * Get the default language for a survey
+	 */
+	public static ArrayList<String> getResponseForQuestion(Connection results, int sId, int qId, String instanceId) throws Exception {
+		
+		PreparedStatement pstmtDefLang = null;
+		PreparedStatement pstmtDefLang2 = null;
+		
+		String x = "1";
+		ArrayList<String> responses = new ArrayList<String> ();
+		try {
+			int a = Integer.parseInt(x);
+	
+		} catch(Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
+			try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
+		}
+		return responses;
+	}
 	
 }

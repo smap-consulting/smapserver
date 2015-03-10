@@ -35,7 +35,7 @@ import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -180,7 +180,7 @@ public class Review extends Application {
 
 			if(resultSet.next()) {
 				table = resultSet.getString(1);
-				name = UtilityMethods.cleanName(resultSet.getString(2));
+				name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 				qtype = resultSet.getString(3);
 				
 				if(!qtype.equals("string") && !qtype.equals("select1")) {
@@ -792,7 +792,7 @@ public class Review extends Application {
 
 				if(resultSet.next()) {
 					ri.table = resultSet.getString(1);
-					ri.qname = UtilityMethods.cleanName(resultSet.getString(2));
+					ri.qname = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 					ri.qtype = resultSet.getString(3);
 				} else {
 					throw new ApplicationException("Table not found for question: " + ri.q_id);
@@ -824,7 +824,7 @@ public class Review extends Application {
 
 				if(resultSet.next()) {
 					table = resultSet.getString(1);
-					filter_name = UtilityMethods.cleanName(resultSet.getString(2));
+					filter_name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 				} else {
 					throw new ApplicationException("Table not found for question: " + u.qFilter);
 				}
@@ -965,7 +965,7 @@ public class Review extends Application {
 			// Get the old value for this question
 			String sqlGetCurrentValue = null;
 			if(ri.qtype.equals("select")) {
-				String cleanOname = UtilityMethods.cleanName(ri.newValue);
+				String cleanOname = UtilityMethodsEmail.cleanName(ri.newValue);
 				sqlGetCurrentValue = "select " + ri.qname + "__" + cleanOname + " from " + ri.table;
 			} else {
 				sqlGetCurrentValue = "select " + ri.qname + " from " + ri.table;
@@ -1017,7 +1017,7 @@ public class Review extends Application {
 			 * Update data
 			 */
 			if(ui.qtype.equals("select")) {
-				String cleanOname = UtilityMethods.cleanName(ui.newValue);
+				String cleanOname = UtilityMethodsEmail.cleanName(ui.newValue);
 				sqlData = "update " + ui.table + " set " + ui.qname + "__" + cleanOname + " = ? where prikey = ?;";
 			} else {
 				sqlData = "update " + ui.table + " set " + ui.qname + " = ? where prikey = ?;";	

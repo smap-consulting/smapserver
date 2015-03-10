@@ -52,7 +52,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
@@ -228,7 +228,7 @@ public class ExportSurveyMedia extends Application {
 							if(mediafilename.trim().length() > 0) {
 								mediafilename += "_";
 							}
-							mediafilename += UtilityMethods.cleanName(v);
+							mediafilename += UtilityMethodsEmail.cleanName(v);
 						}
 					}
 					String v = rs.getString("prikey");
@@ -236,7 +236,7 @@ public class ExportSurveyMedia extends Application {
 						if(mediafilename.trim().length() > 0) {
 							mediafilename += "_";
 						}
-						mediafilename += UtilityMethods.cleanName(v);
+						mediafilename += UtilityMethodsEmail.cleanName(v);
 					}
 					String source_file = rs.getString(media_name);
 					

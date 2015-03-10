@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import model.MediaItem;
 import surveyKPI.Dashboard;
@@ -164,7 +164,7 @@ public class MediaInfo {
 				if(server != null) {
 					mi.url = server + folderUrl + "/" + mi.name;
 					
-					String contentType = UtilityMethods.getContentType(mi.name);
+					String contentType = UtilityMethodsEmail.getContentType(mi.name);
 					String thumbName = mi.name;
 					
 					// Set type

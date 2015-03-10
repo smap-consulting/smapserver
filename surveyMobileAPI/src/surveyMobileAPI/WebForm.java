@@ -57,7 +57,7 @@ import org.apache.commons.io.IOUtils;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.MediaUtilities;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
@@ -120,7 +120,7 @@ public class WebForm extends Application{
     		
     		// Get the organisation id
     		try {
-    			orgId = MediaUtilities.getOrganisationId(connectionSD, user);
+    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
     		} catch (Exception e) {
     			
     		}

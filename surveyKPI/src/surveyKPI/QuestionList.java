@@ -31,6 +31,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import java.sql.*;
@@ -197,7 +198,7 @@ public class QuestionList extends Application {
 	/*
 	 * Returns a list of all questions for the passed in survey starting from the passed in form
 	 *  and adding questions from parent forms
-	 * This is used for selecting valid questions in an export where only a single line througn the form 
+	 * This is used for selecting valid questions in an export where only a single line through the form 
 	 *  hierarchy is allowed
 	 *  Only questions that have a data source are returned. The others are pseudo questions
 	 *  used for example to indicate the beginning or end of a group
@@ -228,29 +229,10 @@ public class QuestionList extends Application {
 		
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtGetParent = null;
-		PreparedStatement pstmtDefLang = null;
-		PreparedStatement pstmtDefLang2 = null;
 		
 		try {
 			if(language.equals("none")) {
-				// A language should be set for thingsat exports, use the default
-				String sqlDefLang = "select def_lang from survey where s_id = ?; ";
-				pstmtDefLang = connectionSD.prepareStatement(sqlDefLang);
-				pstmtDefLang.setInt(1, sId);
-				ResultSet resultSet = pstmtDefLang.executeQuery();
-				if (resultSet.next()) {
-					language = resultSet.getString(1);
-					if(language == null) {
-						// Just get the first language in the list	
-						String sqlDefLang2 = "select distinct language from translation where s_id = ?; ";
-						pstmtDefLang2 = connectionSD.prepareStatement(sqlDefLang2);
-						pstmtDefLang2.setInt(1, sId);
-						ResultSet resultSet2 = pstmtDefLang2.executeQuery();
-						if (resultSet2.next()) {
-							language = resultSet2.getString(1);
-						}
-					}
-				}
+				language = GeneralUtilityMethods.getDefaultLanguage(connectionSD, sId);
 			}
 			
 			String sql = "SELECT q.q_id, q.qtype, t.value, q.qname " +
@@ -297,8 +279,7 @@ public class QuestionList extends Application {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} finally {
-			try {if (pstmtDefLang != null) {pstmtDefLang.close();	}} catch (SQLException e) {	}
-			try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();	}} catch (SQLException e) {	}
+			
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetParent != null) {pstmtGetParent.close();	}} catch (SQLException e) {	}
 			try {

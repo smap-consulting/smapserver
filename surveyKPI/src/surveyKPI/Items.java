@@ -39,7 +39,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import utilities.QuestionInfo;
 import utilities.Tables;
@@ -554,7 +554,7 @@ public class Items extends Application {
 			ResultSet tableSet = pstmt.executeQuery();
 			if(tableSet.next()) {
 				int fId = tableSet.getInt(1);
-				UtilityMethods.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId);
+				UtilityMethodsEmail.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId);
 			} else {
 				throw new Exception("Could not get form id");
 			}

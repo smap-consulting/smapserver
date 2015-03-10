@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
@@ -125,7 +125,7 @@ public class QuestionManager {
 					o.seq = rsOptions.getInt("seq");
 					o.text_id = rsOptions.getString("label_id");
 					
-					UtilityMethods.getLabels( sd, survey, o.text_id, null, o.labels, null, 0);
+					UtilityMethodsEmail.getLabels( sd, survey, o.text_id, null, o.labels, null, 0);
 				}
 				
 				questions.add(q);

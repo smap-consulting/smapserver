@@ -26,8 +26,8 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.smap.sdal.Utilities.MediaUtilities;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 public class QuestionInfo {
 	
@@ -95,7 +95,7 @@ public class QuestionInfo {
 				tableName = resultSet.getString(1);
 				fId = resultSet.getInt(2);
 				parentFId = resultSet.getInt(3);
-				qName = UtilityMethods.cleanName(resultSet.getString(4));
+				qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
 				qType = resultSet.getString(5);
 				qLabel = resultSet.getString(6);
 				qCalculate = resultSet.getString(7);
@@ -120,7 +120,7 @@ public class QuestionInfo {
 				if(qType.startsWith("select")) {
 					o = new ArrayList<OptionInfo> ();
 					
-					qExternalChoices = MediaUtilities.isAppearanceExternalFile(qAppearance);
+					qExternalChoices = GeneralUtilityMethods.isAppearanceExternalFile(qAppearance);
 					
 					sql = "SELECT o.oValue, t.value, t.type" + 
 							" FROM option o, question q, translation t" +
@@ -148,7 +148,7 @@ public class QuestionInfo {
 					}
 					while(resultSet.next()) {
 						String name;
-						String value = UtilityMethods.cleanName(resultSet.getString(1));
+						String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
 						String label = resultSet.getString(2);
 						String type = resultSet.getString(3);
 						if(select) {
@@ -201,7 +201,7 @@ public class QuestionInfo {
 			tableName = resultSet.getString(1);
 			fId = resultSet.getInt(2);
 			parentFId = resultSet.getInt(3);
-			qName = UtilityMethods.cleanName(resultSet.getString(4));
+			qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
 			qType = resultSet.getString(5);
 			qCalculate = resultSet.getString(6);
 			
@@ -241,7 +241,7 @@ public class QuestionInfo {
 				}
 				while(resultSet.next()) {
 					String name;
-					String value = UtilityMethods.cleanName(resultSet.getString(1));
+					String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
 					if(select) {
 						name = qName + "__" + value;
 					} else {
@@ -285,7 +285,7 @@ public class QuestionInfo {
 			tableName = resultSet.getString(1);
 			fId = resultSet.getInt(2);
 			parentFId = resultSet.getInt(3);
-			qName = UtilityMethods.cleanName(resultSet.getString(4));
+			qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
 			qType = "ssc";
 			fn = resultSet.getString(5);
 			units = resultSet.getString(6);
@@ -334,7 +334,7 @@ public class QuestionInfo {
 				}
 				while(resultSet.next()) {
 					String name;
-					String value = UtilityMethods.cleanName(resultSet.getString(1));
+					String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
 					String label = resultSet.getString(2);
 					String type = resultSet.getString(3);
 					if(select) {

@@ -57,7 +57,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.smap.model.SurveyInstance;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.server.entities.SubscriberEvent;
 
 
@@ -310,7 +310,7 @@ public class SmapForward extends Subscriber {
 	
 	            File f = files.get(j);
 	            String fileName = f.getName();
-	            ct = ContentType.create(UtilityMethods.getContentType(fileName));
+	            ct = ContentType.create(UtilityMethodsEmail.getContentType(fileName));
 	            FileBody fba = new FileBody(f, ct, fileName);
 		        entityBuilder.addPart(fileName, fba);
 		

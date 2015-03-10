@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.smap.sdal.Utilities.MediaUtilities;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.ManifestValue;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -61,7 +61,7 @@ public class TranslationManager {
 		
 		HashMap<String, String> files = new HashMap<String, String> ();
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
-		int oId = MediaUtilities.getOrganisationId(sd, user);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 		
 		String sqlQuestionLevel = "select t.text_id, t.type, t.value " +
 				manifestQuerySql;
@@ -93,7 +93,7 @@ public class TranslationManager {
 					// Get file name from value (Just for legacy, new media should be stored as the file name only)
 					int idx = m.value.lastIndexOf('/');	
 					m.fileName = m.value.substring(idx + 1);					
-					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);		// Url will be null if file does not exist
+					UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);		// Url will be null if file does not exist
 					
 					// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
 					if(files.get(m.fileName) == null) {
@@ -123,7 +123,7 @@ public class TranslationManager {
 					m.type = "csv";
 					
 					m.fileName = manifestList.get(i);
-					UtilityMethods.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
+					UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
 					
 					manifests.add(m);
 				}

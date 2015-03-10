@@ -43,7 +43,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -442,14 +442,14 @@ public class UserList extends Application {
 						if(u.sendEmail) {
 							System.out.println("Check if email enabled: " + u.sendEmail);
 							String smtp_host = null;
-							if((smtp_host = UtilityMethods.getSmtpHost(connectionSD, null, request.getRemoteUser())) != null) {
+							if((smtp_host = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser())) != null) {
 								System.out.println("Send email");
-								String adminEmail = UtilityMethods.getAdminEmail(connectionSD, request.getRemoteUser());
+								String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
 								String interval = "48 hours";
-								String uuid = UtilityMethods.setOnetimePassword(connectionSD, pstmt, u.email, interval);
-								ArrayList<String> idents = UtilityMethods.getIdentsFromEmail(connectionSD, pstmt, u.email);
+								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
+								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								String sender = "newuser@" + request.getServerName();
-								UtilityMethods.sendEmail(u.email, uuid, "newuser", 
+								UtilityMethodsEmail.sendEmail(u.email, uuid, "newuser", 
 										"Account created on Smap", sender, adminName, interval, idents, null, adminEmail, smtp_host,
 										request.getServerName());
 							} else {

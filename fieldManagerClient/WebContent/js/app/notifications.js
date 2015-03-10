@@ -80,9 +80,33 @@ $(document).ready(function() {
 		edit_notification();
 		$('#addNotificationPopup').modal("show");
 	});
+	
+	// Add response to a source survey being selected 
+	$('#survey').change(function() {
+		surveyChanged();
+	});
 		
 	enableUserProfileBS();
 });	
+
+function surveyChanged(qId) {
+	
+	var language = "none",
+		sId = $('#survey').val(),
+		qList;
+	
+	if(!qId) {
+		qId = "-1";
+	}
+	
+	qList = globals.gSelector.getSurveyQuestions(sId, language);
+	
+	if(!qList) {
+		getQuestionList(sId, language, qId, "-1", undefined, false, undefined);
+	} else {
+		setSurveyViewQuestions(qList, qId);
+	}
+}
 
 function setTargetDependencies(target) {
 	if(target === "email") { 
@@ -95,7 +119,8 @@ function setTargetDependencies(target) {
 }
 
 function projectSet() {
-	loadSurveys(globals.gCurrentProject, undefined, false, false);			// Get surveys
+	
+	loadSurveys(globals.gCurrentProject, undefined, false, false, surveyChanged);			// Get surveys
 	getNotifications(globals.gCurrentProject);
 }
 
@@ -167,6 +192,7 @@ function saveEmail() {
 	notification.target = "email";
 	notification.notifyDetails = {};
 	notification.notifyDetails.emails = $('#notify_emails').val().split(";");
+	notification.notifyDetails.emailQuestion = $('#email_question').val();
 	notification.notifyDetails.from = $('#from_email').val();
 	notification.notifyDetails.subject = $('#email_subject').val();
 	
@@ -245,6 +271,9 @@ function edit_notification(idx) {
 		if(notification.notifyDetails && notification.notifyDetails.emails) {
 			$('#notify_emails').val(notification.notifyDetails.emails.join(";"));
 			$('#from_email').val(notification.notifyDetails.from);
+			if(notification.notifyDetails.emailQuestion) {
+				surveyChanged(notification.notifyDetails.emailQuestion);
+			}
 			$('#email_subject').val(notification.notifyDetails.subject);
 		}
 		$('#fwd_rem_survey_id').val(notification.remote_s_ident);
@@ -274,7 +303,7 @@ function edit_notification(idx) {
 }
 
 /*
- * Load the surveys from the server and populate the survey table
+ * Load the existing notifications from the server
  */
 function getNotifications(projectId) {
 

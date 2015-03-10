@@ -1,6 +1,6 @@
 package utilities;
 
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 /*
 This file is part of SMAP.
@@ -33,7 +33,7 @@ public class OptionInfo {
 	
 	public OptionInfo(String oName, String oValue, String oLabel, String oType) {
 		this.oValue = oValue;
-		this.oName = UtilityMethods.cleanName(oName);
+		this.oName = UtilityMethodsEmail.cleanName(oName);
 		this.oLabel = oLabel;
 		this.oType = oType;
 	}
@@ -73,7 +73,7 @@ public class OptionInfo {
 	}
 	
 	public void setOName(String v) {
-		oName = UtilityMethods.cleanName(v);
+		oName = UtilityMethodsEmail.cleanName(v);
 	}
 	
 	public void setOLabel(String v) {

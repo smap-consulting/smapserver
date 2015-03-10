@@ -33,7 +33,7 @@ import model.Project;
 import model.User;
 
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -137,7 +137,7 @@ public class UserSvc extends Application {
 			/*
 			 * Set a flag if email is enabled on the server
 			 */
-			user.sendEmail = UtilityMethods.getSmtpHost(connectionSD, null, request.getRemoteUser()) != null;
+			user.sendEmail = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser()) != null;
 			
 			/*
 			 * Get the groups that the user belongs to

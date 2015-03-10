@@ -36,9 +36,9 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.MediaUtilities;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
@@ -184,10 +184,10 @@ public class UploadFiles extends Application {
 					    item.write(savedFile);
 					    
 					    // Create thumbnails
-					    UtilityMethods.createThumbnail(fileName, folderPath, savedFile);
+					    UtilityMethodsEmail.createThumbnail(fileName, folderPath, savedFile);
 					    
 					    // Apply changes from CSV files to survey definition
-					    String contentType = UtilityMethods.getContentType(fileName);
+					    String contentType = UtilityMethodsEmail.getContentType(fileName);
 					    if(contentType.equals("text/csv")) {
 					    	applyCSVChanges(connectionSD, user, sId, fileName, savedFile, basePath, mediaInfo);
 					    }
@@ -475,7 +475,7 @@ public class UploadFiles extends Application {
 			cs.items = new ArrayList<ChangeItem> ();
 			changes.add(cs);
 			
-			MediaUtilities.getOptionsFromFile(
+			GeneralUtilityMethods.getOptionsFromFile(
 					connectionSD,
 					cs.items,
 					csvFile,

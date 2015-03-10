@@ -9,8 +9,8 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.smap.sdal.Utilities.MediaUtilities;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
 
@@ -272,14 +272,16 @@ public class NotificationManager {
 	/*
 	 * Apply any notification for the passed in submission
 	 */
-	public void notifyForSubmission(Connection sd, 
+	public void notifyForSubmission(
+			Connection sd, 
+			Connection cResults,
 			PreparedStatement pstmtGetUploadEvent, 
 			PreparedStatement pstmtGetNotifications, 
 			PreparedStatement pstmtUpdateUploadEvent, 
 			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
-			String serverName) throws SQLException {
+			String serverName) throws SQLException, Exception {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
@@ -323,8 +325,8 @@ public class NotificationManager {
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Get the admin email
-		String adminEmail = UtilityMethods.getAdminEmail(sd, remoteUser);
-		int o_id = MediaUtilities.getOrganisationId(sd, remoteUser);
+		String adminEmail = UtilityMethodsEmail.getAdminEmail(sd, remoteUser);
+		int o_id = GeneralUtilityMethods.getOrganisationId(sd, remoteUser);
 		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
 		
 		
@@ -359,10 +361,21 @@ public class NotificationManager {
 				String notify_details = null;			// Notification log
 				String error_details = null;			// Notification log
 				if(target.equals("email")) {
-					String smtp_host = UtilityMethods.getSmtpHost(sd, null, remoteUser);
+					String smtp_host = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
-						String emails = "";
+						ArrayList<String> emailList = null;
+						if(nd.emailQuestion > 0) {
+							emailList = GeneralUtilityMethods.getResponseForQuestion(cResults, s_id, nd.emailQuestion, instanceId);
+						} else {
+							emailList = new ArrayList<String> ();
+						}
+						
 						for(String email : nd.emails) {
+							emailList.add(email);
+						}
+						// TODO validate email list
+						String emails = "";
+						for(String email : emailList) {
 							if(emails.length() > 0) {
 								emails += ";";
 							}
@@ -384,7 +397,7 @@ public class NotificationManager {
 								" subject: " + subject +
 								" smtp_host: " + smtp_host);
 						try {
-							UtilityMethods.sendEmail(
+							UtilityMethodsEmail.sendEmail(
 									emails, 
 									null, 
 									"notify", 

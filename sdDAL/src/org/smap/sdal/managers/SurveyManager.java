@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.smap.sdal.Utilities.MediaUtilities;
-import org.smap.sdal.Utilities.UtilityMethods;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
@@ -299,10 +299,10 @@ public class SurveyManager {
 		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
 		
 		// Get the available languages
-		s.languages = MediaUtilities.getLanguagesForSurvey(sd, s.id);
+		s.languages = GeneralUtilityMethods.getLanguagesForSurvey(sd, s.id);
 		
 		// Get the organisation id
-		int oId = MediaUtilities.getOrganisationId(sd, user);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 		
 		// Set the default language if it has not previously been set
 		if(s.def_lang == null) {
@@ -356,7 +356,7 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
-				UtilityMethods.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
+				UtilityMethodsEmail.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				//q.labels_orig = q.labels;		// Set the original label values
 				
 				/*
@@ -377,7 +377,7 @@ public class SurveyManager {
 							o.text_id = rsGetOptions.getString(3);
 							
 							// Get the labels for the option
-							UtilityMethods.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
+							UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
 							//o.labels_orig = o.labels;
 							options.add(o);
 						}
@@ -841,7 +841,7 @@ public class SurveyManager {
 			String sqlMaxSeq = "select max(seq) from option where q_id = ?;";
 			pstmtMaxSeq = connectionSD.prepareStatement(sqlMaxSeq);
 		
-			ArrayList<String> languages = MediaUtilities.getLanguagesForSurvey(connectionSD, sId);
+			ArrayList<String> languages = GeneralUtilityMethods.getLanguagesForSurvey(connectionSD, sId);
 			int currentQId = -1;
 			int maxSeq = -1;
 			ResultSet rs = null;

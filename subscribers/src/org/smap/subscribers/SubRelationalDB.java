@@ -43,7 +43,7 @@ import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.MediaUtilities;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
@@ -216,13 +216,17 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtNotificationLog = null;
 		
 		Connection connectionSD = null;
+		Connection cResults = null;
 		
 		try {
 			Class.forName(dbClass);	 
 			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
+			cResults = DriverManager.getConnection(database, user, password);
 		
 			NotificationManager fm = new NotificationManager();
-			fm.notifyForSubmission(connectionSD, 
+			fm.notifyForSubmission(
+					connectionSD, 
+					cResults,
 					pstmtGetUploadEvent, 
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
@@ -244,6 +248,15 @@ public class SubRelationalDB extends Subscriber {
 				if (connectionSD != null) {
 					connectionSD.close();
 					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -552,7 +565,7 @@ public class SubRelationalDB extends Subscriber {
 				// Mark the records replaced
 				for(int i = 0; i < existingKeys.size(); i++) {	
 					int dupKey = existingKeys.get(i);
-					org.smap.sdal.Utilities.UtilityMethods.markRecord(cRel, cMeta, tableName, true, bad_reason, dupKey, s_id, f_id);
+					org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, true, bad_reason, dupKey, s_id, f_id);
 				}
 			}
 			pstmt.close();		
@@ -706,7 +719,7 @@ public class SubRelationalDB extends Subscriber {
 						File dstThumbsFile = new File(dstThumbsPath);
 						File dstFlvFile = new File(dstFlvPath);
 	
-						String contentType = org.smap.sdal.Utilities.UtilityMethods.getContentType(srcName);
+						String contentType = org.smap.sdal.Utilities.UtilityMethodsEmail.getContentType(srcName);
 		
 						try {
 							System.out.println("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
@@ -927,7 +940,7 @@ public class SubRelationalDB extends Subscriber {
 							
 			for(Question q : columns) {
 				
-				boolean hasExternalOptions = MediaUtilities.isAppearanceExternalFile(q.getAppearance());
+				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance());
 				
 				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				if(q.getSource() != null) {

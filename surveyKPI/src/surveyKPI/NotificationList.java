@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,6 +46,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+
 import model.Remote;
 
 import org.apache.http.HttpEntity;
@@ -72,6 +74,8 @@ import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.ODKForm;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.XformsJavaRosa;
+
+import utilities.ResultsDataSource;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -379,11 +383,10 @@ public class NotificationList extends Application {
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
-		System.out.println("s_id: " + n.s_id);
-		System.out.println("Remote s_id: " + n.remote_s_ident);
+		log.info("Update notification for survey: " + n.s_id + " Remote s_id: " + 
+				n.remote_s_ident + " Email Question: " + n.notifyDetails.emailQuestion );
 		
 		PreparedStatement pstmt = null;
-		
 		
 		try {
 			a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false);
@@ -512,7 +515,7 @@ public class NotificationList extends Application {
 	
 	/*
 	 * Apply notifications for the supplied upload event
-	 * Debug only block this or remove
+	 * THis is only for debuggin.  Should be blocked or removed.
 	 */
 	@Path("/apply/{ue_id}")
 	@GET
@@ -531,7 +534,8 @@ public class NotificationList extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Notification List");
+		Connection cResults = ResultsDataSource.getConnection();
 		//a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
@@ -544,7 +548,9 @@ public class NotificationList extends Application {
 		
 		try {
 			NotificationManager fm = new NotificationManager();
-			fm.notifyForSubmission(connectionSD, 
+			fm.notifyForSubmission(
+					connectionSD, 
+					cResults,
 					pstmtGetUploadEvent, 
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
