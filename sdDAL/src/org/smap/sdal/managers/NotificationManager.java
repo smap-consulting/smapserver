@@ -5,8 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -162,6 +165,9 @@ public class NotificationManager {
 		pstmt.executeUpdate();
 	}
 	
+	/*
+	 * Check that the server is not forwarding to the same survey on the same server
+	 */
 	public boolean isFeedbackLoop(Connection con, String server, Notification n) throws SQLException {
 		boolean loop = false;
 		
@@ -170,7 +176,7 @@ public class NotificationManager {
 		String [] hostParts = n.remote_host.split("//");
 		remote_host = hostParts[1];
 		
-		System.out.println("Current server is: " + server + " : " + remote_host);
+		log.info("Checking for forwardign feedback loop. Current server is: " + server + " : " + remote_host);
 		
 		// Get the ident of the local survey to compare with the remote ident
 		PreparedStatement pstmt;
@@ -180,7 +186,7 @@ public class NotificationManager {
 		ResultSet rs = pstmt.executeQuery(); 
 		if(rs.next()) {
 			String local_ident = rs.getString(1);
-			System.out.println("Local ident is: " + local_ident + " : " + n.remote_s_ident);
+			log.info("Local ident is: " + local_ident + " : " + n.remote_s_ident);
 			if(local_ident != null && local_ident.equals(n.remote_s_ident) && remote_host.equals(server)) {
 				loop = true;
 			}
@@ -299,7 +305,7 @@ public class NotificationManager {
 		String ident = null;
 		String instanceId = null;
 		
-		System.out.println("notifyForSubmission:: " + ue_id);
+		log.info("notifyForSubmission:: " + ue_id);
 				
 		String sqlGetUploadEvent = "select ue.s_id, ue.ident, ue.instanceid " +
 				" from upload_event ue " +
@@ -327,8 +333,6 @@ public class NotificationManager {
 		// Get the admin email
 		String adminEmail = UtilityMethodsEmail.getAdminEmail(sd, remoteUser);
 		int o_id = GeneralUtilityMethods.getOrganisationId(sd, remoteUser);
-		System.out.println("Organisation for user " + remoteUser + " is " + o_id);
-		
 		
 		// Get the details from the upload event
 		pstmtGetUploadEvent.setInt(1, ue_id);
@@ -338,11 +342,11 @@ public class NotificationManager {
 			ident = rs.getString(2);
 			instanceId = rs.getString(3);
 			
-			System.out.println("Get notifications:: " + s_id + " : " + ident + " : " + instanceId);
+			log.info("Get notifications:: " + s_id + " : " + ident + " : " + instanceId);
 			pstmtGetNotifications.setInt(1, s_id);
 			rsNotifications = pstmtGetNotifications.executeQuery();
 			while(rsNotifications.next()) {
-				System.out.println("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
+				log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
 				String target = rsNotifications.getString(1);
 				String notifyDetailsString = rsNotifications.getString(2);
 				NotifyDetails nd = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
@@ -364,24 +368,32 @@ public class NotificationManager {
 					String smtp_host = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
 					if(smtp_host != null && smtp_host.trim().length() > 0) {
 						ArrayList<String> emailList = null;
-						System.out.println("Email question: " + nd.emailQuestion);
+						log.info("Email question: " + nd.emailQuestion);
 						if(nd.emailQuestion > 0) {
 							emailList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, s_id, nd.emailQuestion, instanceId);
 						} else {
 							emailList = new ArrayList<String> ();
 						}
 						
-						// Add the per question emails to the static emails
+						// Add the static emails to the per question emails
 						for(String email : nd.emails) {
-							emailList.add(email);
-						}
-						// TODO validate email list
-						String emails = "";
-						for(String email : emailList) {
-							if(emails.length() > 0) {
-								emails += ";";
+							if(email.length() > 0) {
+								log.info("Adding static email: " + email); 
+								emailList.add(email);
 							}
-							emails += email;
+						}
+						
+						// Convert emails into a semi colon separated string
+						String emails = "";
+						for(String email : emailList) {			
+							if(isValidEmail(email)) {
+								if(emails.length() > 0) {
+									emails += ";";
+								}
+								emails += email;
+							} else {
+								log.info("Email Notifications: Discarding invalid email: " + email);
+							}
 						}
 						String subject = "Smap Notification";
 						if(nd.subject != null) {
@@ -394,7 +406,7 @@ public class NotificationManager {
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
 						
-						System.out.println("+++ emailing to: " + emails + " : " + docUrl + 
+						log.info("+++ emailing to: " + emails + " : " + docUrl + 
 								" from: " + from + 
 								" subject: " + subject +
 								" smtp_host: " + smtp_host);
@@ -419,13 +431,13 @@ public class NotificationManager {
 					} else {
 						status = "error";
 						error_details = "smtp_host not set";
-						System.out.println("Error: Attempt to do email notification but email server not set");
+						log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
 					}
 					
 				} else {
 					status = "error";
 					error_details = "Invalid target" + target;
-					System.out.println("Error: Invalid target" + target);
+					log.log(Level.SEVERE, "Error: Invalid target" + target);
 				}
 				
 				// Write log message
@@ -443,6 +455,20 @@ public class NotificationManager {
 			pstmtUpdateUploadEvent.executeUpdate();
 			
 		}
+	}
+	
+	/*
+	 * Validate an email
+	 */
+	public boolean isValidEmail(String email) {
+		boolean isValid = true;
+		try {
+		      InternetAddress emailAddr = new InternetAddress(email);
+		      emailAddr.validate();
+		   } catch (AddressException ex) {
+		      isValid = false;
+		   }
+		return isValid;
 	}
 }
 
