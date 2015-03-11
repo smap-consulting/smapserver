@@ -55,6 +55,7 @@ public class GetXForm {
 	private int BODY = 3;
 	private Form firstForm;
 	SurveyTemplate template = null;
+	private String gInstanceId = null;
 
 	private static Logger log =
 			 Logger.getLogger(GetXForm.class.getName());
@@ -962,6 +963,13 @@ public class GetXForm {
     	return instanceXML;
     }
     
+    /*
+     * Getter for the instanceId
+     */
+    public String getInstanceId() {
+    	return gInstanceId;
+    }
+    
 	/*
 	 * Make sure the primary key is valid and can return data
 	 */
@@ -1207,7 +1215,9 @@ public class GetXForm {
     				// Set some default values for task management questions
     				if(item.name != null && item.name.equals("_task_key")) {
     					item.value = priKey.value;
-    				} 
+    				} else if(item.name != null && item.name.equals("instanceID")) {
+    					gInstanceId = item.value;
+    				}
     				
     				// Create the question element
         			Element childElement = null;

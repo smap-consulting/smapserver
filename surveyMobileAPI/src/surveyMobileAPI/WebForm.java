@@ -158,6 +158,12 @@ public class WebForm extends Application{
 			if(datakey != null && datakeyvalue != null) {
 				xForm = new GetXForm();
 				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0);
+				dataToEditId = xForm.getInstanceId();
+				
+				/*
+				 * Let us assume that the datakey is always the instanceID, 
+				 * at least for those situation where the data is to be updated
+				 */
 				// TODO get dataToEdit unique instance Id
 			}
 			// Convert to HTML
@@ -197,7 +203,7 @@ public class WebForm extends Application{
 		}
 		output.append(">\n");
 				
-		output.append(addHead(request, formXML, instanceXML, surveyClass));
+		output.append(addHead(request, formXML, instanceXML, dataToEditId, surveyClass));
 		output.append(addBody(request, formXML, dataToEditId, orgId));
 
 		output.append("</html>\n");			
@@ -207,7 +213,7 @@ public class WebForm extends Application{
 	/*
 	 * Add the head section
 	 */
-	private String addHead(HttpServletRequest request, String formXML, String instanceXML, String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private String addHead(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId, String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		
 		StringBuffer output = new StringBuffer();
 
@@ -241,10 +247,15 @@ public class WebForm extends Application{
 		output.append("<meta name='viewport' content='width=device-width, initial-scale=1.0' />\n");
 		output.append("<meta name='apple-mobile-web-app-capable' content='yes' />\n");
 		output.append("<!--[if lt IE 10]>");
-	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>");
+	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
 		output.append("<![endif]-->\n");
 			
-		output.append(addData(request, formXML, instanceXML));
+		output.append(addData(request, formXML, instanceXML, dataToEditId));
+		// Development
+		//output.append("<script type='text/javascript' data-main='src/js/main-webform' src='/js/libs/require.js'></script>\n");
+		//output.append("<script type='text/javascript' data-main='lib/enketo-core/app' src='/js/libs/require.js'></script>\n");
+		
+		// Production
 		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
 		
 		output.append("</head>\n");
@@ -256,28 +267,36 @@ public class WebForm extends Application{
 	/*
 	 * Add the data
 	 */
-	private StringBuffer addData(HttpServletRequest request, String formXML, String instanceXML) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addData(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<script type='text/javascript'>\n");
 		output.append("settings = {};\n");
-		//output.append("data = {};\n");
+		
+		output.append("data = {};\n");    // enketo 2
 		
 		// Data model
-		//output.append("data.modelStr='");
-		output.append("modelStr='");
+		
+		output.append("data.modelStr='");		// enketo2
+		//output.append("modelStr='");			// enketo1
 		output.append(transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
 		// Instance Data
 		if(instanceXML != null) {
-			//output.append("data.instanceStrToEdit='");
-			output.append("instanceStrToEdit='");
+			output.append("data.instanceStrToEdit='");			// enketo2
+			//output.append("instanceStrToEdit='");				// enketo1
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
-			// TODO data_to_edit_id
+			
+		} 
+		
+		if(dataToEditId != null) {
+			output.append("instanceStrToEditId;");
 		} else {
-			output.append("instanceStrToEdit=undefined;");
+			output.append("instanceStrToEditId='");
+			output.append(dataToEditId);
+			output.append("';");
 		}
 		output.append("</script>\n");
 		return output;
@@ -503,7 +522,7 @@ public class WebForm extends Application{
 		output.append("<div class='main-controls'>\n");
 		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
 		
-		if(dataToEditId != null) {
+		if(dataToEditId == null) {
 			output.append("<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>\n");
 		} else {
 			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");

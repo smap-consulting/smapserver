@@ -315,7 +315,7 @@ public class UtilityMethodsEmail {
 				" where u.o_id = o.id " +
 				" and u.email = ?;";
 		
-		String sqlServer = "select smtp_host, o.email_domain " +
+		String sqlServer = "select smtp_host, email_domain " +
 				" from server ";
 		
 		PreparedStatement pstmt = null;
