@@ -16,7 +16,14 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
+Version 15.03
+-------------
+If you are using email you will need to add your email domain to the organisation setings or the server table if you
+are using the same email server for all organisations. For example if you want your emails to come from
+joe@organisation.net then your email domain will be organisation.net
+
 Version 15.02
+-------------
 The following chages are applied by the patchdb.sh script.  You may need to apply them manually of you have customised your
 installation.
 

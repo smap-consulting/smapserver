@@ -60,7 +60,8 @@ ALTER SEQUENCE regions_seq OWNER TO ws;
 -- Server level defaults
 DROP TABLE IF EXISTS server CASCADE;
 create TABLE server (
-	smtp_host text
+	smtp_host text,
+	smtp_domain text
 	);
 ALTER TABLE server OWNER TO ws;
 
@@ -81,6 +82,7 @@ create TABLE organisation (
 	changed_by text,
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled
+	smtp_domain text,
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);

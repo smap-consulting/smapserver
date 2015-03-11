@@ -33,8 +33,10 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.EmailServer;
 
 import com.google.gson.Gson;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -100,13 +102,14 @@ public class PasswordReset extends Application {
 					// Update succeeded
 					System.out.println("Sending email");
 					
-					String smtp_host = null;
-					if((smtp_host = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser())) != null) {
+					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
+					if(emailServer.smtpHost != null) {
+
 						String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
-					    String sender = "reset@" + request.getServerName();
+					    String sender = "reset";
 						UtilityMethodsEmail.sendEmail(email, uuid, "reset", "Password Reset", sender, null, interval, 
-					    		idents, null, adminEmail, smtp_host, request.getServerName());
+					    		idents, null, adminEmail, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

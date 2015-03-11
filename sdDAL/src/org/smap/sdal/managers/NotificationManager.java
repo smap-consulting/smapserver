@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
 
@@ -365,8 +366,8 @@ public class NotificationManager {
 				String notify_details = null;			// Notification log
 				String error_details = null;			// Notification log
 				if(target.equals("email")) {
-					String smtp_host = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
-					if(smtp_host != null && smtp_host.trim().length() > 0) {
+					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
+					if(emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
 						ArrayList<String> emailList = null;
 						log.info("Email question: " + nd.emailQuestion);
 						if(nd.emailQuestion > 0) {
@@ -409,7 +410,7 @@ public class NotificationManager {
 						log.info("+++ emailing to: " + emails + " : " + docUrl + 
 								" from: " + from + 
 								" subject: " + subject +
-								" smtp_host: " + smtp_host);
+								" smtp_host: " + emailServer.smtpHost);
 						try {
 							UtilityMethodsEmail.sendEmail(
 									emails, 
@@ -422,7 +423,8 @@ public class NotificationManager {
 									null, 
 									docUrl, 
 									adminEmail, 
-									smtp_host,
+									emailServer.smtpHost,
+									emailServer.emailDomain,
 									serverName);
 						} catch(Exception e) {
 							status = "error";

@@ -44,6 +44,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.EmailServer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -441,16 +442,22 @@ public class UserList extends Application {
 						// Send a notification email to the user
 						if(u.sendEmail) {
 							System.out.println("Check if email enabled: " + u.sendEmail);
-							String smtp_host = null;
-							if((smtp_host = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser())) != null) {
+							EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser());
+							if(emailServer.smtpHost != null) {
+
 								System.out.println("Send email");
 								String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
 								String interval = "48 hours";
 								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
-								String sender = "newuser@" + request.getServerName();
+								String sender = "newuser";
 								UtilityMethodsEmail.sendEmail(u.email, uuid, "newuser", 
-										"Account created on Smap", sender, adminName, interval, idents, null, adminEmail, smtp_host,
+										"Account created on Smap", sender, adminName, interval, 
+										idents, 
+										null, 
+										adminEmail, 
+										emailServer.smtpHost,
+										emailServer.emailDomain,
 										request.getServerName());
 							} else {
 								throw new Exception("Email not enabled - set passwords directly");

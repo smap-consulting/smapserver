@@ -238,3 +238,7 @@ ALTER TABLE survey add column manifest text;
 -- Changes required to Tasks page
 ALTER TABLE task_group add column p_id integer;
 
+-- Upgrade to: 15.03 from 15.02
+alter table organisation add column smtp_domain text;
+alter table server add column smtp_domain text;
+

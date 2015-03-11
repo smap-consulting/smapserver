@@ -28,6 +28,7 @@ import javax.mail.internet.MimeMessage;
 
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
@@ -297,24 +298,24 @@ public class UtilityMethodsEmail {
 	/*
 	 * Get the smtp host for the organisation that the user belongs to
 	 */
-	static public String getSmtpHost(
+	static public EmailServer getSmtpHost(
 			Connection sd, 
 			String email,
 			String user) throws SQLException {
 		
-		String smtpHost = null;
+		EmailServer emailServer = new EmailServer();
 		
-		String sqlIdent = "select o.smtp_host " +
+		String sqlIdent = "select o.smtp_host, o.email_domain " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
 		
-		String sqlEmail = "select o.smtp_host " +
+		String sqlEmail = "select o.smtp_host, o.email_domain " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.email = ?;";
 		
-		String sqlServer = "select smtp_host " +
+		String sqlServer = "select smtp_host, o.email_domain " +
 				" from server ";
 		
 		PreparedStatement pstmt = null;
@@ -329,10 +330,11 @@ public class UtilityMethodsEmail {
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
+					emailServer.emailDomain = rs.getString(2);
 					if(host != null) {
 						host = host.trim();
 						if(host.length() > 0) {
-							smtpHost = host;
+							emailServer.smtpHost = host;
 						}
 					}		
 				}
@@ -347,33 +349,35 @@ public class UtilityMethodsEmail {
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
+					emailServer.emailDomain = rs.getString(2);
 					if(host != null) {
 						host = host.trim();
 						if(host.length() > 0) {
-							smtpHost = host;
+							emailServer.smtpHost = host;
 						}
 					}		
 				}
 			} else {
 			
 			}
-			System.out.println("Using organisation email: " + smtpHost);
+			log.info("Organisation email host: " + emailServer.smtpHost);
 		
 			/*
 			 * If the smtp_host was not set at the organisation level try the server level defaults
 			 */
-			if(smtpHost == null) {
+			if(emailServer.smtpHost == null) {
 
 				try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sqlServer);
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
+					emailServer.emailDomain = rs.getString(2);
 					if(host != null && host.trim().length() > 0) {
-						smtpHost = rs.getString(1);
+						emailServer.smtpHost = rs.getString(1);
 					}
 				}
-				System.out.println("Using server email: " + smtpHost);
+				log.info("Using server email: " + emailServer.smtpHost);
 			}
 			
 		} catch (SQLException e) {
@@ -382,7 +386,7 @@ public class UtilityMethodsEmail {
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		}
-		return smtpHost;
+		return emailServer;
 	}
 	
 	// Set a one time password
@@ -429,6 +433,7 @@ public class UtilityMethodsEmail {
 			String docURL,
 			String adminEmail,
 			String smtp_host,
+			String emailDomain,
 			String serverName) throws Exception  {
 		
 		if(smtp_host == null) {
@@ -450,7 +455,14 @@ public class UtilityMethodsEmail {
 			}
 		    msg.setRecipients(rt,	InternetAddress.parse(email, false));
 		    msg.setSubject(subject);
+		    
+		    if(emailDomain == null) {
+		    	sender = sender + "@" + serverName;
+		    } else {
+		    	sender = sender + "@" + emailDomain;
+		    }
 		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
+		    log.info("Sending email from: " + sender);
 		    
 		    StringBuffer identString = new StringBuffer();
 	    	int count = 0;
@@ -514,8 +526,6 @@ public class UtilityMethodsEmail {
 
 		    }
 		    
-		    //String from = type + "@" + serverName;
-			//msg.setFrom(new InternetAddress(from));
 		    msg.setText(txtMessage.toString());
 		    msg.setHeader("X-Mailer", "msgsend");
 		    log.info("Sending email from: " + sender);

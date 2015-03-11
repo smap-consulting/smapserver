@@ -139,4 +139,4 @@ case $choice in
 	cd ../deploy
 esac
 fi
-echo "1501" > ~/smap_version
+echo "1503" > ~/smap_version
