@@ -273,18 +273,18 @@ public class WebForm extends Application{
 		output.append("<script type='text/javascript'>\n");
 		output.append("settings = {};\n");
 		
-		output.append("data = {};\n");    // enketo 2
+		output.append("surveyData = {};\n");    // enketo 2
 		
 		// Data model
 		
-		output.append("data.modelStr='");		// enketo2
+		output.append("surveyData.modelStr='");		// enketo2
 		//output.append("modelStr='");			// enketo1
 		output.append(transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
 		// Instance Data
 		if(instanceXML != null) {
-			output.append("data.instanceStrToEdit='");			// enketo2
+			output.append("surveyData.instanceStr='");			// enketo2
 			//output.append("instanceStrToEdit='");				// enketo1
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
@@ -292,11 +292,11 @@ public class WebForm extends Application{
 		} 
 		
 		if(dataToEditId != null) {
-			output.append("instanceStrToEditId;");
+			output.append("surveyData.instanceStrToEditId = undefined;\n");
 		} else {
-			output.append("instanceStrToEditId='");
+			output.append("surveyData.instanceStrToEditId='");
 			output.append(dataToEditId);
-			output.append("';");
+			output.append("';\n");
 		}
 		output.append("</script>\n");
 		return output;
