@@ -690,6 +690,7 @@ public class SubRelationalDB extends Subscriber {
 				
 			} else if(qType.equals("audio") || qType.equals("video") || qType.equals("image")) {
 			
+				System.out.println("Processing media. Value: " + value);
 				if(value == null || value.length() == 0) {
 					value = "null";
 				} else {
@@ -721,6 +722,7 @@ public class SubRelationalDB extends Subscriber {
 	
 						String contentType = org.smap.sdal.Utilities.UtilityMethodsEmail.getContentType(srcName);
 		
+						System.out.println("Content Type: " + contentType);
 						try {
 							System.out.println("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
 							FileUtils.forceMkdir(dstDirFile);
@@ -736,6 +738,7 @@ public class SubRelationalDB extends Subscriber {
 						// Create a URL that references the attachment (but without the hostname or scheme)
 						value = "'attachments/" + surveyName + "/" + dstName + "." + srcExt + "'";
 					} else {
+						System.out.println("Source file does not exist: " + srcPathFile.getName());
 						value = "'" + value + "'";
 					}
 					

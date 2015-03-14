@@ -915,9 +915,6 @@ public class EventList extends Application {
 			sId = Integer.parseInt(sName);
 		}
 		
-		System.out.println("Getting forms");
-		System.out.println("Project id:" + projectId);
-		System.out.println("Survey id:" + sId);
 		String user = request.getRemoteUser();
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");

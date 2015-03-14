@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -95,9 +96,7 @@ public class XFormData {
 		String templateName = null;
 		String form_status = request.getHeader("form_status");
 		boolean incomplete = false;	// Set true if odk has more attachments to send
-		
-		System.out.println("Form status: " + form_status);
-
+	
 		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
 		if(basePath == null) {
 			basePath = "/smap";
@@ -120,7 +119,7 @@ public class XFormData {
 	        	// This will get a default location if one exists
 				templateName = si.getTemplateName();
 				
-				saveDetails = saveToDisk(item, request, basePath, null, templateName);
+				saveDetails = saveToDisk(item, request, basePath, null, templateName, null);
 				log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
 				
 				SurveyTemplate template = new SurveyTemplate();
@@ -141,18 +140,24 @@ public class XFormData {
 		while (iter.hasNext()) {
 		    FileItem item = (FileItem) iter.next();	 
 		    String fieldName = item.getFieldName();
+		    String dataUrl = null;
 		    
 		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
 		    	// Check to see if this form field indicates the submission is incomplete
-		    	if(item.getFieldName().equals("*isIncomplete*") && item.getString().equals("yes")) {
+		    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
 		    		System.out.println("    ++++++ Incomplete Submission");
 		    		incomplete = true;
+		    	} else if ((dataUrl = item.getString()).startsWith("data:")) {
+		    		// File Attachment from web forms
+		    		SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, 
+		    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7));
+		    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 		    	} else {
 		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
 		    	}		    	
 		    } else {
 		        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
-		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, templateName);
+		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, templateName, null);
 			    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 		        }
 		    }
@@ -204,20 +209,27 @@ public class XFormData {
 		log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 	}
 	
-	private SaveDetails saveToDisk(FileItem item, HttpServletRequest request, 
-			String basePath, String instanceDir, String templateName) throws Exception {
+	private SaveDetails saveToDisk(
+			FileItem item, 
+			HttpServletRequest request, 
+			String basePath, 
+			String instanceDir, 
+			String templateName,
+			String base64Data) throws Exception {
 		
-		System.out.println("Save to disk: " + item.getName());
 		SaveDetails saveDetails = new SaveDetails();
 		
+		// Set the item name
 		String itemName = item.getName();
-		if(itemName == null) {
-			// Uploaded data had not been stored as a file
-			saveDetails.origSurveyIdent = "none";
-		} else {
-			String[] splitFileName = item.getName().split("[/]");
-			saveDetails.origSurveyIdent = splitFileName[splitFileName.length-1].replaceAll("[ ]", "\\ ");
+		if(base64Data != null) {
+			itemName = item.getFieldName();
 		}
+		if(itemName == null) {
+			itemName = "none";
+		}
+		String[] splitFileName = itemName.split("[/]");
+		saveDetails.origSurveyIdent = splitFileName[splitFileName.length-1].replaceAll("[ ]", "\\ ");
+		log.info("Save to disk: " + saveDetails.origSurveyIdent);
 		
 		/*
 		 * Use UUID's for the instance folder and the name of the instance xml file
@@ -240,10 +252,14 @@ public class XFormData {
 		
 
 	    saveDetails.filePath = instancePath + "/" + saveDetails.fileName; 
-	    System.out.println("Saving to:" + saveDetails.filePath);
+	    log.info("Saving to:" + saveDetails.filePath);
 	    try{
 	        File savedFile = new File(saveDetails.filePath);
-	        item.write(savedFile);
+	        if(base64Data != null) {
+	        	FileUtils.writeByteArrayToFile(savedFile, Base64.decodeBase64(base64Data));
+	        } else {
+	        	item.write(savedFile);
+	        }
 	    }
 	    catch(Exception e){
 	        e.printStackTrace();

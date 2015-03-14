@@ -1133,7 +1133,6 @@ public class SurveyTemplate {
 		 * Get the forms
 		 */	
 		List <Form> formList = fPersist.getBySurvey(survey);
-		System.out.println("Getting forms: " + survey.getId() + " : " + formList.size());
 		for(int i= 0; i < formList.size(); i++) {
 			String ref = formList.get(i).getPath();
 			if(ref != null) {
