@@ -208,12 +208,18 @@ $(document).ready(function() {
  * Convert an error response into HTML
  */
 function getResponseHtml(msg) {
-	var i;
+	var i,
+		frag;
 	
 	msg.mesg = "";
 	for(i = 0; i < msg.mesgArray.length; i++) {
 		if(msg.mesgArray[i].indexOf("$") === 0) {
-			msg.mesg += localise.set[msg.mesgArray[i].substring(1)];
+			frag = localise.set[msg.mesgArray[i].substring(1)];
+			if(frag && frag.length > 0) {
+				msg.mesg += localise.set[msg.mesgArray[i].substring(1)];
+			} else {
+				msg.mesg += msg.mesgArray[i];
+			}
 		} else {
 			msg.mesg += msg.mesgArray[i];
 		}
@@ -222,7 +228,10 @@ function getResponseHtml(msg) {
 	if(msg.hints) {
 		for(i = 0; i < msg.hints.length; i++) {
 			if(msg.hints[i].indexOf("$") === 0) {
-				msg.hints[i] = localise.set[msg.hints[i].substring(1)];
+				frag = localise.set[msg.hints[i].substring(1)];
+				if(frag && frag.length > 0) {
+					msg.hints[i] = frag;
+				}
 			} 
 		}
 	}
