@@ -1032,7 +1032,7 @@ function openOrganisationDialog(existing, organisationIndex) {
 
 function setBannerLogo(orgId) {
 	var d = new Date();
-	$('#o_banner_logo').attr("src", "/media/organisation/" + orgId + "/settings/bannerlogo" + "?" + d.valueOf() );
+	$('#o_banner_logo').attr("src", "/media/organisation/" + orgId + "/settings/bannerLogo" + "?" + d.valueOf() );
 }
 
 /*

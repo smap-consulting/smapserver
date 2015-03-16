@@ -45,6 +45,7 @@ requirejs.config({
     },
     shim: {
        	'bootstrap': ['jquery'],
+       	'bootstrapfileinput': ['jquery'],
     	'bootbox': ['bootstrap'],
     	'common': ['jquery']
     	}

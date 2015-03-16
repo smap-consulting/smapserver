@@ -357,7 +357,7 @@ public class NotificationManager {
 				 * TODO: Allow creation of PDFs, reports, aggregations
 				 */
 				String docUrl = "/webForm/" + ident +
-						"&datakey=instanceid&datakeyvalue=" + instanceId;
+						"?datakey=instanceid&datakeyvalue=" + instanceId;
 				
 				/*
 				 * Send document to target
