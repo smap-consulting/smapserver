@@ -19,6 +19,7 @@
     	openlayers: '../../../../smapServer/WebContent/js/libs/OpenLayers/OpenLayers',
     	lang_location: '../../../../smapServer/WebContent/js',
 	bootstrap: '../../../../smapServer/WebContent/js/libs/bootstrap.min',
+    	bootstrapfileinput: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	bootbox: '../../../../smapServer/WebContent/js/libs/bootbox.min',
 	moment: '../../../../smapServer/WebContent/js/libs/moment.min',
 	datetimepicker: '../../../../smapServer/WebContent/js/libs/bootstrap-datetimepicker.min',

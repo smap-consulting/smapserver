@@ -44,7 +44,9 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
     ProxyPassReverse  /formXMLLocal ajp://localhost:8009/surveyMobileAPI/formXML
     ProxyPass         /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
     ProxyPassReverse  /instanceXMLLocal ajp://localhost:8009/surveyMobileAPI/instanceXML
-    
+
+    ProxyPass         /webForm ajp://localhost:8009/surveyMobileAPI/webForm
+    ProxyPassReverse  /webForm ajp://localhost:8009/surveyMobileAPI/webForm    
     ProxyPass         /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPassReverse  /formList ajp://localhost:8009/surveyMobileAPI/formList
     ProxyPass         /formXML ajp://localhost:8009/surveyMobileAPI/formXML
@@ -119,6 +121,15 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
      </Location>
+     
+     <Location /webForm>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+    </Location>
 
     <Location /formXML>
      	AuthType Digest

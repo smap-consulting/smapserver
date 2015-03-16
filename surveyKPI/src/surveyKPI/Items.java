@@ -190,7 +190,7 @@ public class Items extends Application {
 				
 				// Get the number of records
 				sql = "SELECT count(*) FROM " + tName + ";";
-				log.info(sql);	
+				log.info("Get the number of records: " + sql);	
 				pstmt = connection.prepareStatement(sql);	 			
 				ResultSet resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
@@ -199,7 +199,8 @@ public class Items extends Application {
 				
 				// Get the number of bad records
 				sql = "SELECT count(*) FROM " + tName + " where _bad = 'true';";
-				log.info(sql);	
+				log.info("Get the number of bad records: " + sql);
+				if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 				pstmt = connection.prepareStatement(sql);	 			
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
@@ -220,7 +221,7 @@ public class Items extends Application {
 				
 				// Get the columns
 				sql = "SELECT * FROM " + tName + " LIMIT 1;";
-				log.info(sql);
+				log.info("Get the columns: " + sql);
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql);	 			
 				resultSet = pstmt.executeQuery();

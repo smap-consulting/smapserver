@@ -22,6 +22,21 @@ If you are using email you will need to add your email domain to the organisatio
 are using the same email server for all organisations. For example if you want your emails to come from
 joe@organisation.net then your email domain will be organisation.net
 
+The following needs to be added to the apache configuration files. This is for the new webforms
+interface that uses a java web service rather than PHP.
+    ProxyPass         /webForm ajp://localhost:8009/surveyMobileAPI/webForm
+    ProxyPassReverse  /webForm ajp://localhost:8009/surveyMobileAPI/webForm
+    
+    <Location /webForm>
+        AuthType Digest
+        AuthName "smap"
+        AuthDigestDomain /
+        AuthDigestProvider dbd
+        AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+        Require valid-user
+    </Location>
+    
+
 Version 15.02
 -------------
 The following chages are applied by the patchdb.sh script.  You may need to apply them manually of you have customised your
