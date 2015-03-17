@@ -32,9 +32,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
+import utilities.MediaInfo;
+import model.MediaResponse;
 import model.Organisation;
 import model.Project;
 import model.User;
@@ -43,10 +50,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -140,7 +150,7 @@ public class OrganisationList extends Application {
 	
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(organisations);
-			System.out.println("response: " + resp);
+			log.info("response: " + resp);
 			response = Response.ok(resp).build();
 			
 				
@@ -168,11 +178,15 @@ public class OrganisationList extends Application {
 	 * Update the settings
 	 */
 	@POST
-	@Consumes("application/json")
-	public Response updateOrganisation(@Context HttpServletRequest request, @FormParam("organisations") String organisations) { 
+	public Response updateOrganisation(@Context HttpServletRequest request) { 
 		
 		Response response = null;
-		System.out.println("Organisation List:" + organisations);
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
+		fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+		
+		String serverName = request.getServerName();
+		String user = request.getRemoteUser();
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -186,16 +200,56 @@ public class OrganisationList extends Application {
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-OrganisationList");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
-		
-		Type type = new TypeToken<ArrayList<Organisation>>(){}.getType();		
-		ArrayList<Organisation> oArray = new Gson().fromJson(organisations, type);
-		
+
+		FileItem logoItem = null;
+		String fileName = null;
+		String organisations = null;
 		PreparedStatement pstmt = null;
 		try {
-			String sql = null;
-			int o_id;
-			ResultSet resultSet = null;
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
 
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+				
+					
+					if(item.getFieldName().equals("settings")) {
+						try {
+							organisations = item.getString();
+						} catch (Exception e) {
+							
+						}
+					}
+					
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					if(item.getSize() > 0) {
+						logoItem = item;
+						fileName = item.getName();
+						fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
+					}
+					
+				}
+
+			}
+			
+			Type type = new TypeToken<ArrayList<Organisation>>(){}.getType();		
+			ArrayList<Organisation> oArray = new Gson().fromJson(organisations, type);
+				
+				
+			String sql = null;
 				
 			for(int i = 0; i < oArray.size(); i++) {
 				Organisation o = oArray.get(i);
@@ -207,7 +261,7 @@ public class OrganisationList extends Application {
 							"changed_by, admin_email, smtp_host, changed_ts) " +
 							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
-					pstmt = connectionSD.prepareStatement(sql);
+					pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setString(1, o.name);
 					pstmt.setBoolean(2, o.allow_email);
 					pstmt.setBoolean(3, o.allow_facebook);
@@ -220,6 +274,16 @@ public class OrganisationList extends Application {
 					pstmt.setString(10, o.smtp_host);
 					log.info("SQL: " + sql + " : " + o.name);
 					pstmt.executeUpdate();
+					
+					// Save the logo, if it has been passed
+					if(fileName != null) {
+						ResultSet rs = pstmt.getGeneratedKeys();
+			            if (rs.next()) {
+			            	writeLogo(request, connectionSD, fileName, logoItem, rs.getString(1));
+			            } 
+			            rs.close();
+						
+					}
 						 
 				} else {
 					// Existing organisation
@@ -255,6 +319,10 @@ public class OrganisationList extends Application {
 					log.info("SQL: " + sql + ":" + o.name + ":" + o.id);
 					pstmt.executeUpdate();
 			
+					// Save the logo, if it has been passed
+					if(fileName != null) {
+						writeLogo(request, connectionSD, fileName, logoItem, String.valueOf(o.id));
+					}
 					
 				}
 			
@@ -270,6 +338,10 @@ public class OrganisationList extends Application {
 				response = Response.serverError().build();
 				log.log(Level.SEVERE,"Error", e);
 			}
+		} catch (FileUploadException ex) {
+			response = Response.serverError().entity(ex.getMessage()).build();
+			log.log(Level.SEVERE,"Error", ex);
+			
 		} finally {
 			
 			try {
@@ -292,6 +364,41 @@ public class OrganisationList extends Application {
 		return response;
 	}
 	
+	private void writeLogo(HttpServletRequest request, 
+			Connection connectionSD, 
+			String fileName, 
+			FileItem logoItem,
+			String organisationId) {
+	
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");		
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		
+		MediaInfo mediaInfo = new MediaInfo();
+		mediaInfo.setFolder(basePath, request.getRemoteUser(), organisationId, connectionSD, true);				 
+		mediaInfo.setServer(request.getRequestURL().toString());
+		
+		String folderPath = mediaInfo.getPath();
+		fileName = mediaInfo.getFileName(fileName);
+		if(folderPath != null) {						
+			String filePath = folderPath + "/bannerLogo";
+		    File savedFile = new File(filePath);
+		    log.info("Saving file to: " + filePath);
+		    try {
+				logoItem.write(savedFile);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	
+		} else {
+			log.log(Level.SEVERE, "Media folder not found");
+		}
+	}
+	
 	/*
 	 * Delete project
 	 */
@@ -300,7 +407,6 @@ public class OrganisationList extends Application {
 	public Response delOrganisation(@Context HttpServletRequest request, @FormParam("organisations") String organisations) { 
 		
 		Response response = null;
-		System.out.println("Organisation List:" + organisations);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -341,7 +447,7 @@ public class OrganisationList extends Application {
 				if(resultSet.next()) {
 					int count = resultSet.getInt(1);
 					if(count > 0) {
-						System.out.println("Count:" + count);
+						log.info("Count of undeleted projects:" + count);
 						throw new Exception("Error: Organisation " + o.name + " has undeleted projects.");
 					}
 				} else {
@@ -350,7 +456,8 @@ public class OrganisationList extends Application {
 					
 				sql = "DELETE FROM organisation o " +  
 						" WHERE o.id = ?; ";			
-							
+				
+				if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o.id);
 				log.info("SQL: " + sql + ":" + o.id);
@@ -450,7 +557,7 @@ public class OrganisationList extends Application {
 			pstmt3 = connectionSD.prepareStatement(sql3);	
 			pstmt4 = connectionSD.prepareStatement(sql4);	
 
-			System.out.println("Move USers");
+			log.info("Move Users");
 			// Move Users
 			for(int i = 0; i < uArray.size(); i++) {
 				pstmt.setInt(1, orgId);

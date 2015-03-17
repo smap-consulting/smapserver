@@ -127,16 +127,18 @@ public class PasswordReset extends Application {
 			} catch (SQLException e) {
 				
 				String msg = e.getMessage();
+				String respMsg = "Database Error";
 				if(msg.contains("does not exist")) {
 					log.info("No data: " + msg);
+					respMsg = "Database Error: No data";
 				} else {
 					log.log(Level.SEVERE,"Exception", e);
 				}	
-				response = Response.status(Status.NOT_FOUND).entity(msg).build();
+				response = Response.status(Status.NOT_FOUND).entity(respMsg).build();
 	
 			} catch (Exception e) {
 				log.log(Level.SEVERE,"Exception", e);
-				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity("System Error").build();
 			} finally {
 				
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}

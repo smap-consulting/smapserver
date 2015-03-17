@@ -89,41 +89,42 @@ public class MediaInfo {
 	/*
 	 * Set media folder to the organisation folder for the provided user
 	 */
-	public boolean setFolder(String basePath, String user, String aSettings, Connection conn) {
+	public boolean setFolder(String basePath, 
+			String user, 
+			String organisationId, 
+			Connection conn, 
+			boolean settings) {
 		boolean status = false;
 		
-		// Get the organisation id
-		String organisationId = null;
+		// Get the organisation id if it has not been provided
 		String sql = "select o_id from users where ident = ?;";
 		PreparedStatement pstmt = null;
 		
-		settings = aSettings;
-		
-		System.out.println("Settings: " + settings);
 		
 		try {
-			pstmt = conn.prepareStatement(sql);	
-			pstmt.setString(1, user);
-			log.info("SQL: " + pstmt.toString() );
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			if(resultSet.next()) {
+			if(organisationId == null) {
+				pstmt = conn.prepareStatement(sql);	
+				pstmt.setString(1, user);
+				log.info("SQL: " + pstmt.toString() );
 				
-				organisationId = resultSet.getString(1);	
-				folderUrl = "media/organisation/" + organisationId;
-				if(settings != null && !settings.equals("false")) {
-					folderUrl += "/settings";
+				ResultSet resultSet = pstmt.executeQuery();
+				if(resultSet.next()) {			
+					organisationId = resultSet.getString(1);
+				} else {
+					throw new Exception("Organisation not found for user: " + user);
 				}
-				folderPath = basePath + "/" + folderUrl;
-				folder = new File(folderPath);
-				
-				createFolders(folderPath);
-				
-				status = true;
-				
-			} else {
-				throw new Exception("Organisation not found for user: " + user);
 			}
+				
+			folderUrl = "media/organisation/" + organisationId;
+			if(settings) {
+				folderUrl += "/settings";
+			}
+			folderPath = basePath + "/" + folderUrl;
+			folder = new File(folderPath);
+				
+			createFolders(folderPath);
+				
+			status = true;
 							
 			
 		} catch (Exception e) {

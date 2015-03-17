@@ -101,7 +101,7 @@ $(document).ready(function() {
     
     /*
      * Submit the banner logo
-     */
+     *
     $('#submitBanner').click( function() {
 
     	$('#settingsFlag').val("true");
@@ -136,6 +136,7 @@ $(document).ready(function() {
             }
         });
     });
+    */
     
     // Function to save a users details
     $('#userDetailsSave').click(function(e) {
@@ -230,115 +231,9 @@ $(document).ready(function() {
 		$(this).find('input[type=text],textarea,select').filter(':visible:first').focus();
 	});
     
-	 // Initialse the create user dialog
     /*
-	 $('#create_user_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			width:650,
-			height:400,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: "Save",
-		        	click: function() {
-
-		        		var userList = [],
-		        			user = {},
-		        			error = false,
-		        			validIdent = new RegExp('^[a-z0-9]+$'),
-		        			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
-		        			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
-		        		
-		        		if(gCurrentUserIndex === -1) {
-		        			user.id = -1;
-		        		} else {
-		        			user.id = gUsers[gCurrentUserIndex].id;
-		        		}
-		        		user.ident = $('#user_ident').val();
-		        		user.name = $('#user_name').val();
-		        		user.email = $('#user_email').val();
-		        		if(gCurrentUserIndex === -1 && send_email == "send_email") {
-		        			user.sendEmail = true;
-		        		} else {
-		        			user.sendEmail = false;
-		        		}
-		        		
-		        		// Validations
-		        		if(user.ident.len)
-		        		if(!user.ident.match(validIdent)) {
-		        			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
-		        			$('#user_ident').focus();
-	        				return false;
-		        		}
-		        		if(user.ident.indexOf(' ') !== -1) {
-		        			alert("Spaces are not allowed in the user ident");
-		        			$('#user_ident').focus();
-	        				return false;
-		        		}
-		        		if(user.email.length > 0) {
-		        			if(!validEmail.test(user.email)) {
-		        				error = true;
-		        				alert("Email is not valid");
-		        				$('#user_email').focus();
-		        				return false;
-		        			}
-		        		}
-		        		
-	        			// For a new user, email must be specified if the send email check box is set
-	        			if(user.sendEmail && user.email.length === 0) {
-		        			error = true;
-		        			alert("If sending an email to the user then email address must be specified");
-		        			$('#user_email').focus();
-		        			return false;
-	        			}
-
-		        		if($('#user_password').is(':visible')) {
-		        			user.password = $('#user_password').val();
-		        			if(user.password.length < 2) {
-		        				error = true;
-		        				user.password = undefined;
-		        				alert("Passwords, if specified, must be longer than 1 character");
-		        				$('#user_password').focus();
-		        				return false;
-		        			}
-		        			if($('#user_password_confirm').val() !== user.password) {
-		        				error = true;
-		        				user.password = undefined;
-		        				alert("Passwords do not match");
-		        				$('#user_password').focus();
-		        				return false;
-		        			}
-		        		} else {
-		        			user.password = undefined;
-		        		}
-		        		
-		        		user.groups = [];
-		        		user.projects = [];
-		        		$('#user_groups').find('input:checked').each(function(index) {
-		        			user.groups[index] = {id: $(this).val()};
-		        		});
-		        		$('#user_projects').find('input:checked').each(function(index) {
-		        			user.projects[index] = {id: $(this).val()};
-
-		        		});
-		        		userList[0] = user;
-		        		writeUserDetails(userList, $(this));	// Save the user details to the database
-		        	} 		
-		        }
-			]
-		}
-	 );
-	 
-	 */
-    
+     * Save a project details
+     */
     $('#projectSave').click(function(){
 		var projectList = [],
 			project = {},
@@ -386,79 +281,6 @@ $(document).ready(function() {
 
     });
     
-	 // Initialse the create project dialog
-    /*
-	 $('#create_project_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			width:300,
-			height:200,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: "Save",
-		        	click: function() {
-
-		        		var projectList = [],
-		        			project = {},
-		        			error = false,
-		        			$dialog;
-		        		
-		        		if(gCurrentProjectIndex === -1) {
-		        			project.id = -1;
-		        		} else {
-		        			project.id = globals.gProjectList[gCurrentProjectIndex].id;
-		        		}
-		        		
-		        		project.name = $('#p_name').val();
-		        		  		
-		        		projectList[0] = project;
-		        		var projectString = JSON.stringify(projectList);
-		        		
-		        		addHourglass();
-		        		$dialog = $(this);
-		        		$.ajax({
-		        			  type: "POST",
-		        			  contentType: "application/json",
-		        			  dataType: "json",
-		        			  async: false,
-		        			  url: "/surveyKPI/projectList",
-		        			  data: { projects: projectString },
-		        			  success: function(data, status) {
-		        				  removeHourglass();
-		        				  getUsers();
-		        				  getProjects();
-		        				  $dialog.dialog("close");
-		        			  },
-		        			  error: function(xhr, textStatus, err) {
-		        				  removeHourglass();
-
-		        				  if(xhr.readyState == 0 || xhr.status == 0) {
-		        			              return;  // Not an error
-		        				  } else {
-		        					  var msg = err;
-		        					  if(err.indexOf("Conflict") >= 0) {
-		        						  msg = "Duplicate project name";
-		        					  }
-		        					  alert("Error: Failed to save project details: " + msg);
-		        				  }
-		        			  }
-		        		});   		
-		
-		        	}
-		        		
-		        }
-			]
-		}
-	 );
-	 */
     
     /*
      * Save the organisation details
@@ -519,31 +341,35 @@ $(document).ready(function() {
 		}
 		organisationList[0] = organisation;	
 		var organisationString = JSON.stringify(organisationList);
-
+    	
+		$('#orgSettings').val(organisationString);
+    	var f = document.forms.namedItem("organisationsave");
+    	var formData = new FormData(f);
+    	
 		addHourglass();
 		$.ajax({
-			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
-			  async: false,
+              type: 'POST',
+              data: formData,
+              cache: false,
+              contentType: false,
+              processData:false,
 			  url: "/surveyKPI/organisationList",
-			  data: { organisations: organisationString },
 			  success: function(data, status) {
 				  removeHourglass();
 				  getOrganisations();
 				  $('#create_organisation_popup').modal("hide");
 			  }, error: function(xhr, textStatus, err) {	
+				  document.forms.namedItem("organisationsave").reset();
 				  removeHourglass();
-					removeHourglass();
-					if(xhr.readyState == 0 || xhr.status == 0) {
-			              return;  // Not an error
-					} else {
-						var msg = err;
-    					if(err.indexOf("Conflict") >= 0) {
+				  if(xhr.readyState == 0 || xhr.status == 0) {
+					  return;  // Not an error
+				  } else {
+					  var msg = err;
+					  if(err.indexOf("Conflict") >= 0) {
     						msg = "Duplicate organisation name";
-    					}
-						alert("Error organisation details not saved: " + msg);
-					}
+					  }
+					  alert("Error organisation details not saved: " + msg);
+				  }
 			  }
 		});
 	

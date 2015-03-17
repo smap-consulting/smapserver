@@ -93,12 +93,12 @@ public class UploadFiles extends Application {
 
 		String original_url = "/edit.html?mesg=error loading media file";
 		int sId = -1;
-		String settings = "false";
+		//String settings = "false";
 	
 		log.info("upload files - media -----------------------");
 		log.info("    Server:" + serverName);
 		
-		fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
 		Connection connectionSD = null; 
@@ -128,7 +128,9 @@ public class UploadFiles extends Application {
 							
 						}
 						log.info("surveyId:" + sId);
-					} else if(item.getFieldName().equals("settings")) {
+					}
+					/*
+					else if(item.getFieldName().equals("settings")) {
 						try {
 							settings = item.getString();
 							System.out.println("Has settings ######: " + settings);
@@ -137,6 +139,7 @@ public class UploadFiles extends Application {
 						}
 						log.info("Upload media settings:" + settings);
 					}
+					*/
 					
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
@@ -170,7 +173,7 @@ public class UploadFiles extends Application {
 						mediaInfo.setFolder(basePath, sId, null, connectionSD);
 					} else {	
 						// Upload to organisations folder
-						mediaInfo.setFolder(basePath, user, settings, connectionSD);				 
+						mediaInfo.setFolder(basePath, user, null, connectionSD, false);				 
 					}
 					mediaInfo.setServer(request.getRequestURL().toString());
 					
@@ -260,7 +263,7 @@ public class UploadFiles extends Application {
 			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
-			mediaInfo.setFolder(basePath, request.getRemoteUser(), "false", connectionSD);				 
+			mediaInfo.setFolder(basePath, request.getRemoteUser(), null, connectionSD, false);				 
 		
 			MediaResponse mResponse = new MediaResponse ();
 		    mResponse.files = mediaInfo.get();			
@@ -377,7 +380,7 @@ public class UploadFiles extends Application {
 			if(sId > 0) {
 				mediaInfo.setFolder(basePath, sId, null, connectionSD);
 			} else {		
-				mediaInfo.setFolder(basePath, user, "false", connectionSD);				 
+				mediaInfo.setFolder(basePath, user, null, connectionSD, false);				 
 			}
 			
 			log.info("Media query on: " + mediaInfo.getPath());
