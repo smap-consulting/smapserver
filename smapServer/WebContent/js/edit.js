@@ -860,7 +860,7 @@ function addSubForm(question, parentId) {
 	forms = survey.forms;
 	for(i = 0; i < forms.length; i++) {
 		form = forms[i];
-		if(forms[i].parentform === parentId) {
+		if(forms[i].parentform === parentId && forms[i].parentQuestion === question.id) {			
 			h[++idx] = addQuestions(forms[i], i);
 			break;
 		}

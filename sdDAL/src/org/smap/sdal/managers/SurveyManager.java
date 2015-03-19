@@ -41,6 +41,7 @@ import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Question;
+import org.smap.sdal.model.Results;
 import org.smap.sdal.model.ServerSideCalculate;
 import org.smap.sdal.model.Survey;
 
@@ -142,12 +143,14 @@ public class SurveyManager {
 		return exists;
 	}
 	
-	public Survey getById(Connection sd, PreparedStatement pstmt,
+	public Survey getById(Connection sd, 
+			Connection cResults,
 			String user,
 			int sId,
-			boolean full,	// Get the full details of the survey
-			String basePath
-			) throws Exception {
+			boolean full,		// Get the full details of the survey
+			String basePath,
+			String instanceId	// If set get the results for this instance
+			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
@@ -159,31 +162,45 @@ public class SurveyManager {
 				" and u.ident = ? " +
 				" and s.s_id = ?; ";
 	
-		pstmt = sd.prepareStatement(sql);	 			
-		pstmt.setString(1, user);
-		pstmt.setInt(2, sId);
-
-		log.info(sql + " : " + user + " : " + sId);
-		resultSet = pstmt.executeQuery();
-
-		if (resultSet.next()) {								
-
-			s = new Survey();
-			s.setId(resultSet.getInt(1));
-			s.setName(resultSet.getString(2));
-			s.setIdent(resultSet.getString(3));
-			s.setDisplayName(resultSet.getString(4));
-			s.setDeleted(resultSet.getBoolean(5));
-			s.setPName(resultSet.getString(6));
-			s.setPId(resultSet.getInt(7));
-			s.def_lang = resultSet.getString(8);
-			s.o_id = resultSet.getInt(9);
-			s.surveyClass = resultSet.getString(10);
-			
-		} 
+		log.info("getsurvey by id, instance: " + instanceId);
+		PreparedStatement pstmt = null;
 		
-		if(full && s != null) {
-			populateSurvey(sd, s, basePath, user);
+		try {
+			pstmt = sd.prepareStatement(sql);	 			
+			pstmt.setString(1, user);
+			pstmt.setInt(2, sId);
+	
+			log.info("Get Survey info: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();	
+			if (resultSet.next()) {								
+	
+				s = new Survey();
+				s.setId(resultSet.getInt(1));
+				s.setName(resultSet.getString(2));
+				s.setIdent(resultSet.getString(3));
+				s.setDisplayName(resultSet.getString(4));
+				s.setDeleted(resultSet.getBoolean(5));
+				s.setPName(resultSet.getString(6));
+				s.setPId(resultSet.getInt(7));
+				s.def_lang = resultSet.getString(8);
+				s.o_id = resultSet.getInt(9);
+				s.surveyClass = resultSet.getString(10);
+				
+			} 
+			
+			if(full && s != null) {
+				populateSurvey(sd, s, basePath, user);
+				if(instanceId != null) {
+					s.results = getResults(s.getFirstForm(), -1, 0,	cResults, instanceId, -1, s);
+				}
+			}
+		} catch (SQLException e) {
+			throw e;
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
 		}
 		return s;
 		
@@ -262,7 +279,7 @@ public class SurveyManager {
 		
 		// Get the forms belonging to this survey
 		ResultSet rsGetForms = null;
-		String sqlGetForms = "select f.f_id, f.name, f.parentform from form f where f.s_id = ?;";
+		String sqlGetForms = "select f.f_id, f.name, f.parentform, f.parentquestion, f.table_name from form f where f.s_id = ?;";
 		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
 		
 		// Get the questions belonging to a form
@@ -280,7 +297,7 @@ public class SurveyManager {
 
 		// Get the options belonging to a question		
 		ResultSet rsGetOptions = null;
-		String sqlGetOptions = "select o.o_id, o.ovalue as value, o.label_id  from option o where q_id = ? order by seq";
+		String sqlGetOptions = "select o.o_id, o.ovalue as value, o.label_id, o.externalfile  from option o where q_id = ? order by seq";
 		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
 		
 		// Get the server side calculations
@@ -318,8 +335,9 @@ public class SurveyManager {
 			f.id = rsGetForms.getInt(1);
 			f.name = rsGetForms.getString(2);
 			f.parentform =rsGetForms.getInt(3); 
-			
-			
+			f.parentQuestion = rsGetForms.getInt(4);
+			f.tableName = rsGetForms.getString(5);
+				
 			/*
 			 * Get the questions for this form
 			 */
@@ -341,6 +359,9 @@ public class SurveyManager {
 				q.seq = rsGetQuestions.getInt(9);
 				q.defaultanswer = rsGetQuestions.getString(10);
 				q.appearance = rsGetQuestions.getString(11);
+				
+				// add column name (not currently in the database but it should be)
+				q.colName = UtilityMethodsEmail.cleanName(q.name);
 				
 				// Track if this question is in the meta group
 				if(q.name.equals("meta")) {
@@ -375,6 +396,7 @@ public class SurveyManager {
 							o.id = rsGetOptions.getInt(1);
 							o.value = rsGetOptions.getString(2);
 							o.text_id = rsGetOptions.getString(3);
+							o.externalFile = rsGetOptions.getBoolean(4);
 							
 							// Get the labels for the option
 							UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
@@ -1023,5 +1045,200 @@ public class SurveyManager {
 			throw new Exception("Error: Invalid property could not update: " + property);
 		}
 	}
+	
+    /*
+     * Get the results
+     * @param form
+     * @param id
+     * @param parentId
+     */
+    ArrayList<ArrayList<Results>> getResults(Form form, 
+    		int id, 
+    		int parentId, 
+    		Connection cResults,
+    		String instanceId,
+    		int parentKey,
+    		Survey s) throws SQLException{
+ 
+    	ArrayList<ArrayList<Results>> output = new ArrayList<ArrayList<Results>> ();
+    	
+    	/*
+    	 * Retrieve the results record from the database (excluding select questions)
+    	 *  Select questions are retrieved using a separate query as there are multiple 
+    	 *  columns per question
+    	 */
+    	String sql = "select prikey";
+    	ArrayList<Question> questions = form.questions;
+    	PreparedStatement pstmt = null;
+    	PreparedStatement pstmtSelect = null;
+    	
+    	try {
+	    	for(Question q : questions) {
+	    		String col = null;
+	    				
+	    		if(s.getSubForm(form, q) == null) {
+	    			// This question is not a place holder for a subform
+	    			if(q.source != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+			    		String qType = q.type;
+			    		if(qType.equals("geopoint")) {
+			    			col = "ST_AsText(" + q.colName + ")";
+			    		} else if(qType.equals("select")){
+			    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
+			    		} else {
+			    			col = q.colName;
+			    		}
+			
+			    		sql += "," + col;
+	    			}
+	    		}
+	
+	    	}
+	    	sql += " from " + form.tableName;
+	    	if(parentId == 0) {
+	    		sql += " where instanceId = ?;";
+	    	} else {
+	    		sql += " where parkey = ?;";
+	    	}
+	
+	    	pstmt = cResults.prepareStatement(sql);	 
+	    	if(instanceId != null) {
+	    		pstmt.setString(1, instanceId);;
+	    	} else {
+	    		pstmt.setInt(1, parentKey);
+	    	}
+	    	log.info("Retrieving results: " + pstmt.toString());
+	    	ResultSet resultSet = pstmt.executeQuery();
+			
+	    	// For each record returned from the database add the data values to the instance
+	    	while(resultSet.next()) {
+	    		
+	    		ArrayList<Results> record = new ArrayList<Results> ();
+	    		
+	    		String priKey = resultSet.getString(1);
+	    		int newParentKey = resultSet.getInt(1);
+	    		record.add(new Results("prikey", "question", priKey, false));
+	    		
+	    		/*
+	    		 * Add data for the remaining questions
+	    		 */
+	    		int index = 2;
+	    		
+	    		for(Question q : questions) {
+	    			
+	    			String qName = q.name;
+					String qType = q.type; 
+					String qSource = q.source;
+					
+	    			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
+		    			Form subForm = s.getSubForm(form, q);
+		    			
+		    			if(subForm != null) {	
+		    				Results nr = new Results(qName, "form", null, false);
+		    				System.out.println("Creating sub form");
+		    				nr.subForm = getResults(subForm, 
+		    			    		subForm.id, 
+		    			    		id, 
+		    			    		cResults,
+		    			    		null,
+		    			    		newParentKey,
+		    			    		s);
+		    				System.out.println("Done");
+		            		record.add(nr);
+		    			}
+		    			
+		    		} else if(qType.equals("begin group")) { 
+		    			
+		    			record.add(new Results(qName, "bg", null, false));
+		    			
+		    		} else if(qType.equals("end group")) { 
+		    			
+		    			record.add(new Results(qName, "eg", null, false));
+		    			
+		    		} else if(qType.equals("select")) {		// Get the data from all the option columns
+		    				
+						String sqlSelect = "select ";
+						ArrayList<Option> options = new ArrayList<Option>(q.getValidChoices(s));
+	
+						boolean hasColumns = false;
+						for(Option option : options) {
+							if(hasColumns) {
+								sqlSelect += ",";
+							}
+							sqlSelect += q.colName + "__" + UtilityMethodsEmail.cleanName(option.value); 
+							hasColumns = true;
+						}
+						sqlSelect += " from " + form.tableName + " where prikey=" + priKey + ";";
+			
+						if(pstmtSelect != null) try {pstmtSelect.close();} catch(Exception e) {};
+				    	pstmtSelect = cResults.prepareStatement(sqlSelect);	 			
+				    	ResultSet resultSetOptions = pstmtSelect.executeQuery();
+				    	resultSetOptions.next();		// There will only be one record
+			    		
+				    	Results nr = new Results(qName, "select", null, false);
+				    	hasColumns = false;
+				    	for(Option option : options) {
+				    		String opt = q.colName + "__" + UtilityMethodsEmail.cleanName(option.value);
+				    		boolean optSet = resultSetOptions.getBoolean(opt);
+					    	nr.choices.add(new Results(option.value, "choice", null, optSet)); 
+
+				    		
+						}
+				    	record.add(nr);	
+					
+	    			} else if(qType.equals("select1")) {		// Get the data from all the option columns
+	    				
+	    				ArrayList<Option> options = new ArrayList<Option>(q.getValidChoices(s));
+	    				Results nr = new Results(qName, "select1", null, false);
+	    				String value = resultSet.getString(index);
+	
+	    				for(Option option : options) {
+				    		boolean optSet = option.value.equals(value) ? true : false;	
+					    	nr.choices.add(new Results(option.value, "choice", null, optSet)); 
+	    				}
+				    	record.add(nr);	
+
+			    		
+					} else if(qSource != null) {
+	  
+	    				String value = resultSet.getString(index);
+	 				
+	    				if(value != null && qType.equals("geopoint")) {
+	    					int idx1 = value.indexOf('(');
+	    					int idx2 = value.indexOf(')');
+	    					if(idx1 > 0 && (idx2 > idx1)) {
+		    					value = value.substring(idx1 + 1, idx2 );
+		    					// These values are in the order longitude latitude.  This needs to be reversed for the XForm
+		    					String [] coords = value.split(" ");
+		    					if(coords.length > 1) {
+		    						value = coords[1] + " " + coords[0] + " 0 0";
+		    					}
+	    					} else {
+	    						log.severe("Invalid value for geopoint: " + value);
+	    						value = null;
+	    					}
+	    				} 
+	    				
+	    				// Ignore data not provided by user
+	    				if(!qSource.equals("user")) {	
+	    					value="";
+	    				}
+	
+	            		record.add(new Results(qName, "question", value, false));
+	
+		    			index++;
+	    			}
+	    			
+	    		}
+	    		output.add(record);
+	    	}  
+    	} catch (SQLException e) {
+    		throw e;
+    	} finally {
+    		if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+    		if(pstmtSelect != null) try {pstmtSelect.close();} catch(Exception e) {};
+    	}
+    	
+		return output;
+    }
 	
 }

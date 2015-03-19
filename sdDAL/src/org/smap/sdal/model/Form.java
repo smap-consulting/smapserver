@@ -10,6 +10,8 @@ public class Form {
 	public int id;
 	public String name;
 	public int parentform;
+	public int parentQuestion;
+	public String tableName;		// Name of the table that holds the results for this form
 	public ArrayList<Question> questions = new ArrayList<Question> ();
 
 }

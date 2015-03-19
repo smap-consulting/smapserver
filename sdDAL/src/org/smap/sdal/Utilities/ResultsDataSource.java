@@ -25,7 +25,7 @@ public class ResultsDataSource {
 
 			Connection c = ds.getConnection();
 			c.setAutoCommit(true);		// Can't rely on auto commit being set to true when connection comes from pool
-			System.out.println("Got results connection: " + requester + " : " + c.toString());
+			log.info("Got results connection: " + requester + " : " + c.toString());
 			return c;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error getting results datasource", e);

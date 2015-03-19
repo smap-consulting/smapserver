@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -73,7 +74,7 @@ public class GetXForm {
        	this.template = template;
   	    	
     	try {
-    		System.out.println("Getting survey as XML-------------------------------");
+    		log.info("Getting survey as XML-------------------------------");
     		// Create a new XML Document
     		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     		DocumentBuilder b = dbf.newDocumentBuilder();    		
@@ -85,7 +86,7 @@ public class GetXForm {
            	// Get the first form
            	String firstFormRef = template.getFirstFormRef();
            	if(firstFormRef == null) {
-           		System.out.println("Error: First Form Reference is null");
+           		log.log(Level.SEVERE, "Error: First Form Reference is null");
            	}
            	firstForm = template.getForm(firstFormRef);
   		
@@ -263,7 +264,6 @@ public class GetXForm {
 	
 						if(!type.equals("none")) {
 							valueElement.setAttribute("form", type);
-							System.out.println("t3: "+ valueElement.getTextContent());
 						}
 			
 						textElement.appendChild(valueElement);
@@ -327,7 +327,7 @@ public class GetXForm {
 	    			}
 	    			
 	    		} else {
-	    			System.out.println("----------Not enabled:" + q.getName());
+	    			log.info("----------Not enabled:" + q.getName());
 	    		}
 	    	}
 
@@ -354,7 +354,7 @@ public class GetXForm {
 						t.setEnabled(true);
 					}
 				} else {
-					System.out.println("Error in enableTranslationRef(): No types for:" + ref);
+					log.info("Error in enableTranslationRef(): No types for:" + ref);
 				}
 			}
 		}
@@ -380,7 +380,7 @@ public class GetXForm {
      */
     public void populateCascadeInstance(Document outputDoc, Element parent, String instance) {
     	
-    	System.out.println("TODO: Add value name and label name for instance:" + instance);
+    	log.info("TODO: Add value name and label name for instance:" + instance);
 
     	
     }
@@ -685,7 +685,7 @@ public class GetXForm {
 				|| type.equals("geolinestring") || type.equals("geopolygon")) {	
 			questionElement = outputXML.createElement("group");
 		} else {
-			System.out.println("Warning Unknown type- populateBodyQuestion: " + type);
+			log.info("Warning Unknown type- populateBodyQuestion: " + type);
 			questionElement = outputXML.createElement("input");
 		}
 		
@@ -911,7 +911,7 @@ public class GetXForm {
 
        	// Get template details
 		String firstFormRef = template.getFirstFormRef();
-		System.out.println("First form ref: " + firstFormRef);
+		log.info("First form ref: " + firstFormRef);
 		Form firstForm = template.getForm(firstFormRef);
 		
 		// Get database driver and connection to the results database
@@ -944,7 +944,7 @@ public class GetXForm {
 		} else if(key != null && keyval != null)  {
 			// Create a blank form containing only the key values
 			hasData = true;
-			System.out.println("Outputting blank form");
+			log.info("Outputting blank form");
 			populateBlankForm(outputXML, firstForm, connection,  template, null, sId, key, keyval, templateName);
 		} 
 		
@@ -980,7 +980,7 @@ public class GetXForm {
 	
 		String sql = "select count(*) from " + table + " where prikey = ? " +
 				"and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
-		System.out.println("Checking primary key: " + sql + " : " + priKey);
+		log.info("Checking primary key: " + sql + " : " + priKey);
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		pstmt.setInt(1, priKey);
 		
@@ -1030,7 +1030,7 @@ public class GetXForm {
 		}
 		String sql = "select prikey from " + table + " where " + key + " = ? " +
 				"and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
-		System.out.println("Getting primary key: " + sql + " : " + keyval);
+		
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		if(type.equals("string") || type.equals("barcode")) {
 			pstmt.setString(1, keyval);
@@ -1045,6 +1045,7 @@ public class GetXForm {
 		ResultSet rs = null;
 		boolean hasKey;
 		try {
+			log.info("Getting primary key: " + pstmt.toString());
 			rs = pstmt.executeQuery();
 			hasKey = rs.next();
 		} catch (Exception e) {
@@ -1095,7 +1096,7 @@ public class GetXForm {
 				value = keyval;
 			} 
 			
-			System.out.println("Qtype: " + qType + " qName: " + qName);
+			log.info("Qtype: " + qType + " qName: " + qName);
 			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
 			
 				Form subForm = template.getSubForm(form, q);
@@ -1130,7 +1131,7 @@ public class GetXForm {
     		if(item.subForm != null) {
 				populateBlankForm(outputDoc, item.subForm, connection, template, currentParent, sId, key, keyval, survey_ident);				
     		} else if (item.begin_group) { 
-    			System.out.println("Begin group: " + item.name);
+
     			Element childElement = null;
     			childElement = outputDoc.createElement(item.name);
         		currentParent.appendChild(childElement);
@@ -1140,13 +1141,11 @@ public class GetXForm {
 					
     		} else if (item.end_group) { 
     				
-    			System.out.println("End group: " + item.name);
     			currentParent = elementStack.pop();
     				
     		} else {  // Question
     				
 				// Create the question element
-    			System.out.println("Question: " + item.name);
     			Element childElement = null;
 				childElement = outputDoc.createElement(item.name);
 				childElement.setTextContent(item.value);
@@ -1265,7 +1264,6 @@ public class GetXForm {
     			// This question is not a place holder for a subform
     			if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 		    		String qType = q.getType();
-		    		log.fine("    QType:" + qType );
 		    		if(qType.equals("geopoint")) {
 		    			col = "ST_AsText(" + q.getColName() + ")";
 		    		} else if(qType.equals("select")){
@@ -1311,7 +1309,6 @@ public class GetXForm {
 				String qSource = q.getSource();
 				
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
-    				System.out.println("Repeat: " + qName + " : " + qType);
 	    			Form subForm = template.getSubForm(form, q);
 	    			
 	    			if(subForm != null) {	
@@ -1320,17 +1317,14 @@ public class GetXForm {
 	    			
 	    		} else if(qType.equals("begin group")) { 
 	    			
-	    			System.out.println("Begin group: " + qName + " : " + qType);
 	    			record.add(new Results(qName, null, null, true, false));
 	    			
 	    		} else if(qType.equals("end group")) { 
 	    			
-	    			System.out.println("End group: " + qName + " : " + qType);
 	    			record.add(new Results(qName, null, null, false, true));
 	    			
 	    		} else if(qType.equals("select")) {		// Get the data from all the option columns
 	    				
-	    			System.out.println("Select: " + qName + " : " + qType);
 					String sqlSelect = "select ";
 					List<Option> options = new ArrayList<Option>(q.getValidChoices());
 					UtilityMethods.sortOptions(options);	// Order within an XForm is not actually required, this is just for consistency of reading
@@ -1369,11 +1363,9 @@ public class GetXForm {
 				
     			} else if(qSource != null) {
   
-    				System.out.println("Other: " + qName + " : " + qType);
     				String value = resultSet.getString(index);
     				log.info("     value: " + value);
-
-    				
+ 				
     				if(value != null && qType.equals("geopoint")) {
     					int idx1 = value.indexOf('(');
     					int idx2 = value.indexOf(')');

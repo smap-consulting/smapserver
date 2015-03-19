@@ -11,6 +11,7 @@ public class Option {
 	public int seq;
 	public String value;
 	public String defLabel;
+	public boolean externalFile;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	//public ArrayList<Label> labels_orig = new ArrayList<Label> ();
 	public String text_id;

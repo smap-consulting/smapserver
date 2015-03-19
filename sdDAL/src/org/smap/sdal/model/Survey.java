@@ -2,6 +2,7 @@ package org.smap.sdal.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /*
  * Survey Class
@@ -29,6 +30,7 @@ public class Survey {
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
 	public ArrayList<ChangeItem> changes  = new ArrayList<ChangeItem> ();
+	public ArrayList<ArrayList<Results>> results = null;				// Results for a specific instance
 	
 	// Getters
 	public int getId() {return id;}; 
@@ -40,6 +42,32 @@ public class Survey {
 	public boolean getDeleted() { return deleted;};
 	public boolean getBlocked() { return blocked;};
 	public boolean hasManifest() { return hasManifest;};
+	
+	public Form getFirstForm() {
+		Form form = null;
+		
+		for(int i = 0; i < forms.size(); i++) {
+			Form f = forms.get(i);
+			if(f.parentform == 0) {
+				form = f;
+				break;
+			}
+		}
+		return form;
+	}
+	
+	public Form getSubForm(Form form, Question q) {
+		Form subForm = null;
+
+		for(int i = 0; i < forms.size(); i++) {
+			Form f = forms.get(i);
+			if(f.parentform == form.id && f.parentQuestion == q.id) {
+				subForm = f;
+				break;
+			}
+		}
+		return subForm;
+	}
 	
 	// Setters
 	public void setId(int v) { id = v;};

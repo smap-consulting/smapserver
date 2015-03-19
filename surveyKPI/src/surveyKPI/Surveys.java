@@ -35,6 +35,7 @@ import javax.ws.rs.core.Response;
 import model.Settings;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
@@ -173,7 +174,7 @@ public class Surveys extends Application {
 		System.out.println("Get survey:" + sId);
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
@@ -191,10 +192,10 @@ public class Surveys extends Application {
 		}
 		
 		Response response = null;
-		PreparedStatement pstmt = null;
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			survey = sm.getById(connectionSD, pstmt, request.getRemoteUser(), sId, true, basePath);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -208,12 +209,20 @@ public class Surveys extends Application {
 			response = Response.serverError().build();
 		} finally {
 			
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
 					connectionSD = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
 				}
 				
 			} catch (SQLException e) {
