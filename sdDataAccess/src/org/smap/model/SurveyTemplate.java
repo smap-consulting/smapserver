@@ -342,6 +342,7 @@ public class SurveyTemplate {
 		q.setName(questionName);
 		//q.setReference(questionRef);
 		q.setPath(questionRef);
+		System.out.println("######### Create Question: " + questionName + " : " + questionRef);
 		q.setSeq(-1);	// Default to -1 until actual sequence is known
 		questions.put(questionRef, q);
 	}

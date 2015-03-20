@@ -328,7 +328,7 @@ public class GeneralUtilityMethods {
 				}
 				query.append(" t");
 				query.append(tableStack.size() - 1);
-				query.append(".instanceID = ?");
+				query.append(".instanceid = ?");
 				
 				pstmtResults = results.prepareStatement(query.toString());
 				pstmtResults.setString(1, instanceId);

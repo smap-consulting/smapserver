@@ -277,15 +277,13 @@ public class WebForm extends Application{
 		
 		// Data model
 		
-		output.append("surveyData.modelStr='");		// enketo2
-		//output.append("modelStr='");			// enketo1
+		output.append("surveyData.modelStr='");
 		output.append(transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
 		// Instance Data
 		if(instanceXML != null) {
-			output.append("surveyData.instanceStr='");			// enketo2
-			//output.append("instanceStrToEdit='");				// enketo1
+			output.append("surveyData.instanceStrToEdit='");			
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
 			

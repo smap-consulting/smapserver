@@ -1095,7 +1095,7 @@ public class SurveyManager {
 	    	}
 	    	sql += " from " + form.tableName;
 	    	if(parentId == 0) {
-	    		sql += " where instanceId = ?;";
+	    		sql += " where instanceid = ?;";
 	    	} else {
 	    		sql += " where parkey = ?;";
 	    	}
