@@ -3,7 +3,7 @@ smapServer/smapServer
 fieldAnalysis/fieldAnalysis
 surveyKPI/build
 surveyMobileAPI/build/classes/.gitignore
-smapServer/WebContent/build
+smapServer/WebContent/build/js
 
 # Eclipse artifacts
 *.pydevproject
