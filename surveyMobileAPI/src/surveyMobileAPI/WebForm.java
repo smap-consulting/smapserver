@@ -289,7 +289,7 @@ public class WebForm extends Application{
 			
 		} 
 		
-		if(dataToEditId != null) {
+		if(dataToEditId == null) {
 			output.append("surveyData.instanceStrToEditId = undefined;\n");
 		} else {
 			output.append("surveyData.instanceStrToEditId='");

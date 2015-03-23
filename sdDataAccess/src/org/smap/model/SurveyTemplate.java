@@ -1462,7 +1462,6 @@ public class SurveyTemplate {
 		try {
 			for(Question q : questionList) {
 	
-				System.out.println(q.toString());
 				if(q.getType().equals("select")) {
 					
 					// Check to see if this appearance references a manifest file
