@@ -192,7 +192,8 @@ public class SurveyManager {
 			if(full && s != null) {
 				populateSurvey(sd, s, basePath, user);
 				if(instanceId != null) {
-					s.results = getResults(s.getFirstForm(), -1, 0,	cResults, instanceId, -1, s);
+					Form ff = s.getFirstForm();
+					s.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, -1, s);
 				}
 			}
 		} catch (SQLException e) {
@@ -1052,7 +1053,8 @@ public class SurveyManager {
      * @param id
      * @param parentId
      */
-    ArrayList<ArrayList<Results>> getResults(Form form, 
+    ArrayList<ArrayList<Results>> getResults(Form form,
+    		int fIdx,
     		int id, 
     		int parentId, 
     		Connection cResults,
@@ -1116,14 +1118,16 @@ public class SurveyManager {
 	    		
 	    		String priKey = resultSet.getString(1);
 	    		int newParentKey = resultSet.getInt(1);
-	    		record.add(new Results("prikey", "question", priKey, false));
+	    		record.add(new Results("prikey", "key", priKey, false, fIdx, -1, 0)); 
 	    		
 	    		/*
 	    		 * Add data for the remaining questions
 	    		 */
 	    		int index = 2;
 	    		
+	    		int qIdx = -1;					// Index into question array for this form
 	    		for(Question q : questions) {
+	    			qIdx++;
 	    			
 	    			String qName = q.name;
 					String qType = q.type; 
@@ -1133,9 +1137,10 @@ public class SurveyManager {
 		    			Form subForm = s.getSubForm(form, q);
 		    			
 		    			if(subForm != null) {	
-		    				Results nr = new Results(qName, "form", null, false);
+		    				Results nr = new Results(qName, "form", null, false, fIdx, qIdx, 0);
 		    				System.out.println("Creating sub form");
 		    				nr.subForm = getResults(subForm, 
+		    						s.getFormIdx(subForm.id),
 		    			    		subForm.id, 
 		    			    		id, 
 		    			    		cResults,
@@ -1148,11 +1153,11 @@ public class SurveyManager {
 		    			
 		    		} else if(qType.equals("begin group")) { 
 		    			
-		    			record.add(new Results(qName, "bg", null, false));
+		    			record.add(new Results(qName, qType, null, false, fIdx, qIdx, 0));
 		    			
 		    		} else if(qType.equals("end group")) { 
 		    			
-		    			record.add(new Results(qName, "eg", null, false));
+		    			record.add(new Results(qName, qType, null, false, fIdx, qIdx, 0));
 		    			
 		    		} else if(qType.equals("select")) {		// Get the data from all the option columns
 		    				
@@ -1174,12 +1179,14 @@ public class SurveyManager {
 				    	ResultSet resultSetOptions = pstmtSelect.executeQuery();
 				    	resultSetOptions.next();		// There will only be one record
 			    		
-				    	Results nr = new Results(qName, "select", null, false);
+				    	Results nr = new Results(qName, qType, null, false, fIdx, qIdx, 0);
 				    	hasColumns = false;
+				    	int oIdx = -1;
 				    	for(Option option : options) {
+				    		oIdx++;
 				    		String opt = q.colName + "__" + UtilityMethodsEmail.cleanName(option.value);
 				    		boolean optSet = resultSetOptions.getBoolean(opt);
-					    	nr.choices.add(new Results(option.value, "choice", null, optSet)); 
+					    	nr.choices.add(new Results(option.value, "choice", null, optSet, fIdx, qIdx, oIdx)); 
 
 				    		
 						}
@@ -1188,12 +1195,14 @@ public class SurveyManager {
 	    			} else if(qType.equals("select1")) {		// Get the data from all the option columns
 	    				
 	    				ArrayList<Option> options = new ArrayList<Option>(q.getValidChoices(s));
-	    				Results nr = new Results(qName, "select1", null, false);
+	    				Results nr = new Results(qName, qType, null, false, fIdx, qIdx, 0);
 	    				String value = resultSet.getString(index);
-	
+	    				
+	    				int oIdx = -1;
 	    				for(Option option : options) {
+	    					oIdx++;
 				    		boolean optSet = option.value.equals(value) ? true : false;	
-					    	nr.choices.add(new Results(option.value, "choice", null, optSet)); 
+					    	nr.choices.add(new Results(option.value, "choice", null, optSet, fIdx, qIdx, oIdx)); 
 	    				}
 				    	record.add(nr);	
 
@@ -1223,7 +1232,7 @@ public class SurveyManager {
 	    					value="";
 	    				}
 	
-	            		record.add(new Results(qName, "question", value, false));
+	            		record.add(new Results(qName, qType, value, false, fIdx, qIdx, 0));
 	
 		    			index++;
 	    			}

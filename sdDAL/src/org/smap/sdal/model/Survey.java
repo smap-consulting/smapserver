@@ -69,6 +69,18 @@ public class Survey {
 		return subForm;
 	}
 	
+	public int getFormIdx(int formId) {
+		int idx = -1;
+		for(int i = 0; i < forms.size(); i++) {
+			Form f = forms.get(i);
+			if(f.id == formId) {
+				idx = i;
+				break;
+			}
+		}
+		return idx;
+	}
+	
 	// Setters
 	public void setId(int v) { id = v;};
 	public void setPId(int v) { p_id = v;};

@@ -34,18 +34,27 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Results;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.List;
+import com.itextpdf.text.ListItem;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.ZapfDingbatsList;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.GrayColor;
 import com.itextpdf.text.pdf.PdfContentByte;
@@ -53,23 +62,7 @@ import com.itextpdf.text.pdf.PdfFormField;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.RadioCheckField;
 
-/*
- * Provides a survey level export of a survey as CSV
- * If the optional parameter "flat" is passed then this is a flat export where 
- *   children are appended to the end of the parent record.
- *   
- * If this parameter is not passed then a pivot style export is created.
- *  * For example for a parent form with a repeating group of children we might get:
- *    P1 C1
- *    P1 C2
- *    P1 C3
- *    P2 C4
- *    P2 C5
- *    P3 ...    // No children
- *    P4 C6
- *    etc
- *    
- */
+
 @Path("/pdf/{sId}/{instance}")
 public class CreatePDF extends Application {
 	
@@ -85,6 +78,7 @@ public class CreatePDF extends Application {
 		return s;
 	}
 	
+	public static Font WingDings = null;
 
 	
 	@GET
@@ -124,18 +118,37 @@ public class CreatePDF extends Application {
 		SurveyManager sm = new SurveyManager();
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		try {
+			
+			// Get fonts and embed them
+			String os = System.getProperty("os.name");
+			log.info("Operating System:" + os);
+			
+			if(os.startsWith("Mac")) {
+				FontFactory.register("/Library/Fonts/Wingdings.ttf", "wingdings");
+			} else {
+				// Assume on Linux
+			}
+			WingDings = FontFactory.getFont("wingdings", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 12); 
+			
+			/*
+			 * Get the results
+			 */
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId);
-			ArrayList<ArrayList<Results>> results = survey.results;		
+			ArrayList<ArrayList<Results>> results = survey.results;	
+			
+			/*
+			 * Create the PDF
+			 */
 			if(filename != null) {
+				
 				Document document = new Document();
 				PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(filename));
-				writer.setInitialLeading(300);
+				writer.setInitialLeading(16);
 				document.open();
 				
-				String indent = "";
-				int lines = 0;
 				for(int i = 0; i < results.size(); i++) {
-					lines = processForm(document, writer, results.get(i), indent, lines);		
+					processForm(document, results.get(i), survey, basePath);		
 				}
 				document.close();
 			}
@@ -179,60 +192,88 @@ public class CreatePDF extends Application {
 		return response;
 	}
 	
-	private int processForm(Document document, PdfWriter writer, ArrayList<Results> record, String indent, int lines) throws DocumentException, IOException {
-		document.add(new Paragraph(indent + "---------------- Start Form --------------------"));
-		lines = incrementLines(document, lines);
+	private void processForm(
+			Document document,  
+			ArrayList<Results> record,
+			org.smap.sdal.model.Survey survey,
+			String basePath) throws DocumentException, IOException {
 		for(int j = 0; j < record.size(); j++) {
 			Results r = record.get(j);
 			if(r.resultsType.equals("form")) {
-				indent += "    ";
 				for(int k = 0; k < r.subForm.size(); k++) {
-					lines = processForm(document, writer, r.subForm.get(k), indent, lines);
+					processForm(document, r.subForm.get(k), survey, basePath);
 				} 
-			} else if(r.resultsType.startsWith("select")) {
-				processSelect(document, writer, r.choices, indent + "    ", lines);
-				lines = incrementLines(document, lines);
-			} else {
-				document.add(new Paragraph(indent + r.name + " : " + r.value));
-				lines = incrementLines(document, lines);
+			} else if(r.qIdx >= 0) {
+				// Process the question
+				int languageIdx = 0;		// TODO get language in parameters
+				Form form = survey.forms.get(r.fIdx);
+				org.smap.sdal.model.Question q = form.questions.get(r.qIdx);
+				Label label = q.labels.get(languageIdx);
+			
+				addQuestion(document, label);
+				
+				if(r.resultsType.startsWith("select")) {
+					processSelect(document, r, survey, label);
+				} if (r.resultsType.equals("image")) {
+					System.out.println("Image: " + r.value);
+					Image img = Image.getInstance(basePath + "/" + r.value);
+					img.scaleToFit(200, 300);
+					document.add(img);
+				} else {
+					String v = r.value;
+					if(v == null) {
+						v = "";
+					}
+					document.add(new Paragraph("    " + v));
+				}
 			}
 		}
-		document.add(new Paragraph(indent + "---------------- End Form ----------------------"));
-		lines = incrementLines(document, lines);
 		
-		return lines;
+		return;
 	}
 	
-	private int incrementLines(Document document, int lines) {
-		if(lines == 3) {
-			lines = 0;
-			document.newPage();
-		} else {
-			lines++;
-		}
-		return lines;		
+	/*
+	 * Add the question label, hint, and any media
+	 */
+	private void addQuestion(
+			Document document, 
+			Label label) throws DocumentException {
+		document.add(new Paragraph(label.text));
 	}
-	private int processSelect(Document document, PdfWriter writer, ArrayList<Results> select, String indent, int lines) throws DocumentException, IOException {
-		PdfContentByte canvas = writer.getDirectContent();
-		Font font = new Font (FontFamily.HELVETICA, 18);
-		PdfFormField radiogroup = PdfFormField.createRadioButton(writer, true);
-		radiogroup.setFieldName("Field Name");
-				
-		for(int j = 0; j < select.size(); j++) {
-			Results r = select.get(j);
-			Rectangle rect = new Rectangle(40, 806 - j * 40, 60, 788 - j * 40 );
-			RadioCheckField radio = new RadioCheckField(writer, rect, null, r.name);
-			radio.setBorderColor(GrayColor.GRAYWHITE);
-			radio.setCheckType(RadioCheckField.TYPE_CIRCLE);
-			PdfFormField field = radio.getRadioField();
-			radiogroup.addKid(field);
-			ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT, new Phrase(r.name, font), 70, 790 - j * 40, 0);
-			document.add(new Paragraph(indent + r.name + " : " + r.isSet));
-		}
-		writer.addAnnotation(radiogroup);
-		return lines++;
+	
+	private void processSelect(Document document, 
+			Results r, 
+			org.smap.sdal.model.Survey survey,
+			Label label) throws DocumentException, IOException {
+
+		List list = new List();
+		list.setAutoindent(false);
+		list.setSymbolIndent(24);
 		
+		boolean isSelect = r.resultsType.equals("select") ? true : false;
+		for(Results aChoice : r.choices) {
+			ListItem item = new ListItem(aChoice.name);
+			
+			if(isSelect) {
+				if(aChoice.isSet) {
+					item.setListSymbol(new Chunk("\376", WingDings)); 
+				} else {
+					item.setListSymbol(new Chunk("\250", WingDings)); 
+				}
+			} else {
+				if(aChoice.isSet) {
+					item.setListSymbol(new Chunk("\244", WingDings)); 
+				} else {
+					item.setListSymbol(new Chunk("\241", WingDings)); 
+				}
+			}
+			list.add(item);
+			
+		}
+		document.add(list);
 	}
+	
+	
 	
 
 }
