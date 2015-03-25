@@ -822,7 +822,7 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 
 	var url = "/surveyKPI/exportSurvey/";
 	
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	exp_ro = exp_ro || false;
 	
@@ -848,7 +848,7 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 
 	var url = "/surveyKPI/exportSurveyMedia/";
 	
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	
 	
@@ -873,7 +873,7 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 		form,
 		ways = [];
 		
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	exp_ro = exp_ro || false;
 	
@@ -906,7 +906,7 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	
 	exp_ro = exp_ro || false;
 	
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	// Remove the ":false" from the form id which used by xls exports
 	//form = form.substring(0, form.lastIndexOf(":"));
@@ -930,7 +930,7 @@ function exportSurveyThingsatURL (sId, filename, form, language) {
 	var url = "/surveyKPI/exportSurveyThingsat/";
 	
 	
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	url += sId;
 	url += "/" + filename;
@@ -948,7 +948,7 @@ function exportSurveyLocationURL (sId, filename, form, format, type) {
 	var url = "/surveyKPI/exportSurveyLocation/";
 	
 	
-	filename = filename.replace('/', '_');	// remove slashes from the filename
+	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
 	
 	url += sId;
 	url += "/" + filename;
