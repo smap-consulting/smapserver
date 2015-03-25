@@ -63,6 +63,7 @@ class SaveDetails {
 	String instanceDir = null;
 	String filePath = null;
 	String origSurveyIdent = null;
+	int iosImageCount = 0;
 }
 
 public class XFormData {
@@ -119,7 +120,7 @@ public class XFormData {
 	        	// This will get a default location if one exists
 				templateName = si.getTemplateName();
 				
-				saveDetails = saveToDisk(item, request, basePath, null, templateName, null);
+				saveDetails = saveToDisk(item, request, basePath, null, templateName, null, 0);
 				log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
 				
 				SurveyTemplate template = new SurveyTemplate();
@@ -137,6 +138,7 @@ public class XFormData {
     	 * Return error if save to disk fails (exception thrown)
     	 */
 		iter = items.iterator();
+		int iosImageCount = 0;
 		while (iter.hasNext()) {
 		    FileItem item = (FileItem) iter.next();	 
 		    String fieldName = item.getFieldName();
@@ -145,19 +147,22 @@ public class XFormData {
 		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
 		    	// Check to see if this form field indicates the submission is incomplete
 		    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
-		    		System.out.println("    ++++++ Incomplete Submission");
+		    		log.info("    ++++++ Incomplete Submission");
 		    		incomplete = true;
 		    	} else if ((dataUrl = item.getString()).startsWith("data:")) {
 		    		// File Attachment from web forms
 		    		SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, 
-		    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7));
+		    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7), iosImageCount);
+		    		iosImageCount = attachSaveDetails.iosImageCount;
 		    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 		    	} else {
 		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
 		    	}		    	
 		    } else {
 		        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
-		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, templateName, null);
+		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, 
+		        			saveDetails.instanceDir, templateName, null, iosImageCount);
+		        	iosImageCount = attachSaveDetails.iosImageCount;
 			    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 		        }
 		    }
@@ -215,9 +220,11 @@ public class XFormData {
 			String basePath, 
 			String instanceDir, 
 			String templateName,
-			String base64Data) throws Exception {
+			String base64Data,
+			int iosImageCount) throws Exception {
 		
 		SaveDetails saveDetails = new SaveDetails();
+		saveDetails.iosImageCount = iosImageCount;
 		
 		// Set the item name
 		String itemName = item.getName();
@@ -231,6 +238,16 @@ public class XFormData {
 		saveDetails.origSurveyIdent = splitFileName[splitFileName.length-1].replaceAll("[ ]", "\\ ");
 		log.info("Save to disk: " + saveDetails.origSurveyIdent);
 		
+		/*
+		 * Modify file name if it is image.jpg
+		 *  ios (version 4 at least) always sets image file names to image.jpg
+		 *  When sending from webforms on ios if the file name is image.jpg it the data will be changed to refer to image_0.jpg, image_1.jpg
+		 *  We need to rename the files to match these names 
+		 */
+		if(saveDetails.origSurveyIdent.equals("image.jpg")) {
+			saveDetails.origSurveyIdent = "image_" + iosImageCount + ".jpg";
+			saveDetails.iosImageCount++;
+		}
 		/*
 		 * Use UUID's for the instance folder and the name of the instance xml file
 		 * The folder and the instance file should have the same name as this is the odk convention
