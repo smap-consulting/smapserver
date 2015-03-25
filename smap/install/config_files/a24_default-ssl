@@ -149,6 +149,11 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
+	
+# results submitted with an authentication key
+	<Location /submission/key>
+		Require all granted
+    </Location>
 
 	<Location /instanceXML>
         AuthType Digest

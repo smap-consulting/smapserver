@@ -47,6 +47,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.server.entities.MissingTemplateException;
@@ -85,18 +86,20 @@ public class Upload extends Application {
 	
 	/*
 	 * New Submission
+	 * No Key - login required
 	 */
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response postInstance(
 			@Context HttpServletRequest request) throws IOException {
 		
-		System.out.println("New submssion");
-		return submission(request, null);
+		log.info("New submssion");
+		return submission(request, null, null);
 	}
 	
 	/*
 	 * Update
+	 * No Key login required
 	 */
 	@POST
 	@Path("/{instanceId}")
@@ -105,11 +108,42 @@ public class Upload extends Application {
 			@Context HttpServletRequest request,
 	        @PathParam("instanceId") String instanceId) throws IOException {
 		
-		System.out.println("Update submssion: " + instanceId);
-		return submission(request, instanceId);
+		log.info("Update submssion: " + instanceId);
+		return submission(request, instanceId, null);
 	}
 	
-	private Response submission(HttpServletRequest request,  String instanceId) 
+	/*
+	 * New Submission
+	 * Authentication key included
+	 */
+	@POST
+	@Path("/key/{key}")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response postInstanceWithKey(
+			@Context HttpServletRequest request,
+			@PathParam("key") String key) throws IOException {
+		
+		log.info("New submssion with key");
+		return submission(request, null, key);
+	}
+	
+	/*
+	 * Update
+	 * No Key login required
+	 */
+	@POST
+	@Path("/key/{key}/{instanceId}")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response postUpdateInstanceWithKey(
+			@Context HttpServletRequest request,
+			@PathParam("key") String key,
+	        @PathParam("instanceId") String instanceId) throws IOException {
+		
+		log.info("Update submssion with key: " + instanceId);
+		return submission(request, instanceId, key);
+	}
+	
+	private Response submission(HttpServletRequest request,  String instanceId, String key) 
 			throws IOException {
 	
 		Response response = null;
@@ -123,7 +157,30 @@ public class Upload extends Application {
 		}
 
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		
+		/*
+		 * Authenticate the user using either the user id associated with the key, if provided, or the
+		 *  user id they provided on login
+		 */
+		String user = null;
+		if(key != null) {
+			try {
+				user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		} else {
+			user = request.getRemoteUser();
+		}
+		
+		if(user == null) {
+			log.info("Error: Attempting to upload results: user not found");
+			throw new AuthorisationException();
+		} else {
+			log.info("User: " + user);
+		}
+		
+		a.isAuthorised(connectionSD, user);
 		
 		try {
 			if (connectionSD != null) {
@@ -136,15 +193,13 @@ public class Upload extends Application {
 
 		// Extract the data
 		try {
-			System.out.println("");
-			System.out.println("Upload Started ================= " + instanceId + " ==============");
+			log.info("Upload Started ================= " + instanceId + " ==============");
 			log.info("Url:" + request.getRequestURI());
 			XFormData xForm = new XFormData();
-			xForm.loadMultiPartMime(request, request.getRemoteUser(), instanceId);
-			log.info("User:" + request.getRemoteUser());
+			xForm.loadMultiPartMime(request, user, instanceId);
 			log.info("Server:" + request.getServerName());
-			System.out.println("Info: Upload finished ---------------- " + instanceId + " ------------");
-			System.out.println("");
+			log.info("userevent: " + user + " : uploaded results : " + instanceId + " : " + key );	
+			log.info("Info: Upload finished ---------------- " + instanceId + " ------------");
 			
 			response = Response.created(uriInfo.getBaseUri()).status(HttpServletResponse.SC_CREATED)
 					.entity(RESPONSE_MSG1 + 	"<message>Upload Success</message>" + RESPONSE_MSG2)

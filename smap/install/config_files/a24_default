@@ -130,6 +130,11 @@ ExpiresActive On
         Require valid-user
 	</Location>
 
+# results submitted with an authentication key
+	<Location /submission/key>
+		Require all granted
+    </Location>
+    
 	<Location /instanceXML>
         AuthType Digest
         AuthName "smap"

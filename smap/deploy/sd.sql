@@ -242,3 +242,17 @@ ALTER TABLE task_group add column p_id integer;
 alter table organisation add column email_domain text;
 alter table server add column email_domain text;
 
+-- Create the dynamic users for webform submission
+DROP SEQUENCE IF EXISTS dynamic_users_seq CASCADE;
+CREATE SEQUENCE dynamic_users_seq START 1;
+ALTER SEQUENCE dynamic_users_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS dynamic_users CASCADE;
+CREATE TABLE dynamic_users (
+	id INTEGER DEFAULT NEXTVAL('dynamic_users_seq') CONSTRAINT pk_dynamic_users PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	survey_ident text,
+	access_key varchar(41)
+	);
+ALTER TABLE dynamic_users OWNER TO ws;
+

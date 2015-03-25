@@ -110,6 +110,7 @@ public class WebForm extends Application{
 		Survey survey = null;
 		String user = request.getRemoteUser();
 		int orgId = 0;
+		String accessKey = null;
 		
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
@@ -122,12 +123,15 @@ public class WebForm extends Application{
     		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
-    		// Get the organisation id
+    		// Get the organisation id and an access key
     		try {
     			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
+    			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
     		} catch (Exception e) {
-    			
+    			log.log(Level.SEVERE, "WebForm", e);
     		}
+    		
+    		System.out.println("GUID: " + accessKey);
     		
     		try {
             	if (connectionSD != null) {
@@ -171,7 +175,7 @@ public class WebForm extends Application{
 				// TODO get dataToEdit unique instance Id
 			}
 			// Convert to HTML
-			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass, orgId));
+			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass, orgId, accessKey));
 			
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
@@ -193,7 +197,8 @@ public class WebForm extends Application{
 			String instanceXML,
 			String dataToEditId,
 			String surveyClass,
-			int orgId) 
+			int orgId,
+			String accessKey) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -207,7 +212,7 @@ public class WebForm extends Application{
 		}
 		output.append(">\n");
 				
-		output.append(addHead(request, formXML, instanceXML, dataToEditId, surveyClass));
+		output.append(addHead(request, formXML, instanceXML, dataToEditId, surveyClass, accessKey));
 		output.append(addBody(request, formXML, dataToEditId, orgId));
 
 		output.append("</html>\n");			
@@ -217,7 +222,12 @@ public class WebForm extends Application{
 	/*
 	 * Add the head section
 	 */
-	private String addHead(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId, String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private String addHead(HttpServletRequest request, 
+			String formXML, 
+			String instanceXML, 
+			String dataToEditId, 
+			String surveyClass,
+			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		
 		StringBuffer output = new StringBuffer();
 
@@ -254,7 +264,7 @@ public class WebForm extends Application{
 	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
 		output.append("<![endif]-->\n");
 			
-		output.append(addData(request, formXML, instanceXML, dataToEditId));
+		output.append(addData(request, formXML, instanceXML, dataToEditId, accessKey));
 		// Development
 		//output.append("<script type='text/javascript' data-main='src/js/main-webform' src='/js/libs/require.js'></script>\n");
 		//output.append("<script type='text/javascript' data-main='lib/enketo-core/app' src='/js/libs/require.js'></script>\n");
@@ -271,7 +281,10 @@ public class WebForm extends Application{
 	/*
 	 * Add the data
 	 */
-	private StringBuffer addData(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addData(HttpServletRequest request, 
+			String formXML, String instanceXML, 
+			String dataToEditId,
+			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<script type='text/javascript'>\n");
@@ -293,6 +306,7 @@ public class WebForm extends Application{
 			
 		} 
 		
+		// Add identifier of existing record, use this as a key on results submission to update an existing record
 		if(dataToEditId == null) {
 			output.append("surveyData.instanceStrToEditId = undefined;\n");
 		} else {
@@ -300,6 +314,16 @@ public class WebForm extends Application{
 			output.append(dataToEditId);
 			output.append("';\n");
 		}
+		
+		// Add access key for authentication
+		if(accessKey == null) {
+			output.append("surveyData.key = undefined;\n");
+		} else {
+			output.append("surveyData.key='");
+			output.append(accessKey);
+			output.append("';\n");
+		}
+		
 		output.append("</script>\n");
 		return output;
 	}

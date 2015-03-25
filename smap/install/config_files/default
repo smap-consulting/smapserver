@@ -141,6 +141,13 @@ ExpiresActive On
         allow from all
 	</Location>
 
+# results submitted with an authentication key
+	<Location /submission/key>
+		Order allow,deny
+		Satisfy any
+        allow from all
+    </Location>
+    
 	<Location /instanceXML>
         AuthType Digest
         AuthName "smap"

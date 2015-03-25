@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,6 +54,117 @@ public class GeneralUtilityMethods {
 		return o_id;
 	}
 	
+	/*
+	 * Get an access key to allow results for a form to be securely submitted
+	 */
+	public static String  getNewAccessKey(
+			Connection sd, 
+			String userIdent,
+			String surveyIdent) throws SQLException {
+		
+		String key = null;
+		int userId = -1;
+		
+		String sqlGetUserId = "select u.id from users u where u.ident = ?;";
+		PreparedStatement pstmtGetUserId = null;
+		 
+		String sqlClearKey = "delete from dynamic_users " +
+				" where u_id =  ? " +
+				" and survey_ident = ?;";		
+		PreparedStatement pstmtClearKey = null;
+		
+		String sqlAddKey = "insert into dynamic_users (u_id, survey_ident, access_key) " +
+				" values (?, ?, ?);";		
+		PreparedStatement pstmtAddKey = null;
+		
+		log.info("GetNewAccessKey");
+		try {
+		
+			/*
+			 * Get the user id
+			 */
+			pstmtGetUserId = sd.prepareStatement(sqlGetUserId);
+			pstmtGetUserId.setString(1, userIdent);
+			log.info("Get User id:" + pstmtGetUserId.toString() );
+			ResultSet rs = pstmtGetUserId.executeQuery();
+			if(rs.next()) {
+				userId = rs.getInt(1);
+			}
+			
+			/*
+			 * Clear any old keys for this user and this survey
+			 */
+			pstmtClearKey = sd.prepareStatement(sqlClearKey);
+			pstmtClearKey.setInt(1, userId);
+			pstmtClearKey.setString(2, surveyIdent);
+			log.info("Clear old keys:" + pstmtClearKey.toString());
+			pstmtClearKey.executeUpdate();
+			
+			/*
+			 * Get the new access key
+			 */
+			key = String.valueOf(UUID.randomUUID());
+			
+			/*
+			 * Save the key in the dynamic users table
+			 */
+			pstmtAddKey = sd.prepareStatement(sqlAddKey);
+			pstmtAddKey.setInt(1, userId);
+			pstmtAddKey.setString(2, surveyIdent);
+			pstmtAddKey.setString(3, key);
+			log.info("Add new key:" + pstmtAddKey.toString());
+			pstmtAddKey.executeUpdate();
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtGetUserId != null) { pstmtGetUserId.close();}} catch (SQLException e) {}
+			try {if (pstmtClearKey != null) { pstmtClearKey.close();}} catch (SQLException e) {}
+			try {if (pstmtAddKey != null) { pstmtAddKey.close();}} catch (SQLException e) {}
+		}
+		
+		return key;
+	}
+	
+	/*
+	 * Get a dynamic user's details from their unique key
+	 */
+	public static String  getDynamicUser(
+			Connection sd, 
+			String key) throws SQLException {
+		
+		String userIdent = null;
+		
+		String sqlGetUserDetails = "select u.ident from users u, dynamic_users d " +
+				" where u.id = d.u_id " +
+				" and d.access_key = ?";
+		PreparedStatement pstmtGetUserDetails = null;
+		
+		log.info("GetDynamicUser");
+		try {
+		
+			/*
+			 * Get the user id
+			 */
+			pstmtGetUserDetails = sd.prepareStatement(sqlGetUserDetails);
+			pstmtGetUserDetails.setString(1, key);
+			log.info("Get User details:" + pstmtGetUserDetails.toString() );
+			ResultSet rs = pstmtGetUserDetails.executeQuery();
+			if(rs.next()) {
+				userIdent = rs.getString(1);
+			}		
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtGetUserDetails != null) { pstmtGetUserDetails.close();}} catch (SQLException e) {}
+		}
+		
+		return userIdent;
+	}
 	/*
 	 * Return true if this questions appearance means that choices come from an external file
 	 */
