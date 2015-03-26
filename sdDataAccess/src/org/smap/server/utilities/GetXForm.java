@@ -884,7 +884,6 @@ public class GetXForm {
         	List<String> keyList = new ArrayList<String>(cvs.keySet());
         	for(String k : keyList) {
         		String v = cvs.get(k);
-        		System.out.println("+++ " + k);		// TODO change storage of filters so that spaces are OK
         		Element keyElement = outputXML.createElement(k);
         		keyElement.setTextContent(v);
         		itemElement.appendChild(keyElement);

@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 @Entity(name="OPTION")
 public class Option implements Serializable{
@@ -174,6 +179,12 @@ public class Option implements Serializable{
     
     // Set the filter text string from the list of key value pairs
     public void setCascadeFilters() {
+    	
+    	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		cascade_filters = gson.toJson(cascadeKeyValues);
+    	System.out.println("++++++++++ setCascadeFilter: " + cascade_filters);
+    	
+    	/*
     	List<String> keyList = new ArrayList<String>(cascadeKeyValues.keySet());
     	String filter = "";
     	int count = 0;
@@ -184,19 +195,36 @@ public class Option implements Serializable{
     		filter += k + " " + cascadeKeyValues.get(k);
     	}
     	cascade_filters = filter;
+    	*/
     }
     
     // Set the key value pairs from the filter text string
     public void setCascadeKeyValues() {
-    	cascadeKeyValues.clear();
     	
-    	String [] kvs = cascade_filters.split(" ");
-    	
-    	for(int i = 0; i < kvs.length; i += 2) {
-    		if((i + 1) < kvs.length) {
-    			cascadeKeyValues.put(kvs[i], kvs[i+1]);
-    		}
+    	// Handle legacy case where a json string was not used to store cascade filters
+    	if ((cascade_filters == null) || (cascade_filters.trim().length() == 0)) {
+    		cascade_filters = "{}";
+    	} 
+    	if(cascade_filters.trim().startsWith("{") && cascade_filters.trim().endsWith("}")) {
+    		// New JSON storage
+	    	Type type = new TypeToken<HashMap<String, String>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			cascadeKeyValues = gson.fromJson(cascade_filters, type);
+    	} else {
+    		// Process cascade key values as space separated key values
+        	cascadeKeyValues.clear();
+        	
+        	String [] kvs = cascade_filters.split(" ");
+        	
+        	for(int i = 0; i < kvs.length; i += 2) {
+        		if((i + 1) < kvs.length) {
+        			cascadeKeyValues.put(kvs[i], kvs[i+1]);
+        		}
+        	}
     	}
+		
+		System.out.println("%%%%%%%%%%%%%% setCascadeKeyValues: " + cascadeKeyValues);
+		
     }
     
 
