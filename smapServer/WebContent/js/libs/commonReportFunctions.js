@@ -154,7 +154,7 @@ function getMedia(property) {
 			media.type = "image";
 			media.url = property; 
 			media.thumbNail = thumbNail;
-		} else if(ext === "mp4" || ext === "3gp" || ext === "flv" || ext === "m4p") {
+		} else if(ext === "mp4" || ext === "3gp" || ext === "flv" || ext === "m4p" || ext === "mov") {
 			media.type = "video";
 			media.url = flv; 
 			media.thumbNail = thumbNail;
