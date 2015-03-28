@@ -243,6 +243,8 @@ public class TemplateUpload extends Application {
 				log.info("Error reported in upload");
 				return getErrorResponse(request,  resp.errMesg, resp.hints, resp.warnings, serverName, projectName, displayName, fileName);
 
+			} else {
+				warnings = resp.warnings;
 			}
 			File templateFile = new File(resp.fileName);
 			
@@ -461,6 +463,7 @@ public class TemplateUpload extends Application {
 	        boolean hasDisplayConditionError = false;
 	        boolean hasParseError = false;
 	        boolean hasWarnings = false;
+	        String lastLine = "";
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
@@ -612,11 +615,17 @@ public class TemplateUpload extends Application {
         			response.hints.add(line);
         		}
 	        	
-	        	if(hasWarnings) {
-	        		response.warnings.add(line);
-	        	}
 	        	
-	        	// Warnings
+	        	// Handle warnings
+	        	if(line.startsWith("Conversion complete")) {
+	        		hasWarnings = false;
+	        	}       	
+	        	if(hasWarnings) {
+	        		if(!line.equals(lastLine)) {		// remove duplicates
+	        			response.warnings.add(line);
+	        			lastLine = line;
+	        		}
+	        	}
 	        	if(line.startsWith("Warnings:")) {
 	        		hasWarnings = true;
 	        	}

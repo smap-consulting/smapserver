@@ -65,7 +65,7 @@ $(document).ready(function() {
 	// Upload File
     $('#submitFile').click( function(e) {
     	
-    	$('#up_alert, up_warning').hide();
+    	$('#up_alert, #up_warnings').hide();
     	e.preventDefault();
     	console.log("Sending form");
     	var sId = $('#survey_id').val();
@@ -107,7 +107,7 @@ $(document).ready(function() {
             	
             	// Check for warnings in the form
             	if(data && data.warnings && data.warnings.length > 0) {
-            		$('#up_warnings').show().html(getResponseHtml(data));
+            		$('#up_warnings').show().html(warningMsgToHtml(data));
             	}
             	
             },
@@ -143,7 +143,7 @@ $(document).ready(function() {
 	
 	// On change of template name, hide any previous results
 	$('#templateName').keydown(function(){
-		$('#up_alert').hide();
+		$('#up_alert, #up_warnings').hide();
 	});
 	
 	// Change function on file selected
@@ -153,7 +153,7 @@ $(document).ready(function() {
 		var fileName = $this[0].files[0].name;
 		var newTemplateName;
 		
-		$('#up_alert').hide();
+		$('#up_alert, #up_warnings').hide();
 		
 		if(templateName && templateName.trim().length > 0) {
 			// ignore - leave user specified name
@@ -707,70 +707,5 @@ function executeBlock(template, set) {
 	});
 }
 
-/*
- * Get available surveys from a remote host
- *
-function getRemoteSurveys() {
-	
-	var host,
-		user,
-		password,
-		remote = {},
-		remoteString;
-	
-	remote.address = $('#fwd_host').val();
-	remote.user = $('#fwd_user').val();
-	remote.password = $('#fwd_password').val();
-	
-	
-	if(!remote.address || remote.address.length == 0) {
-		alert(localise.set["msg_val_rh"]);
-		$('#fwd_host').focus();
-		return;
-	} else if(!remote.user || remote.user.length == 0) {
-		alert(localise.set["msg_val_u_id"]);
-		$('#fwd_user').focus();
-		return;
-	} else if(!remote.password || remote.user.password == 0) {
-		alert(localise.set["msg_val_pass"]);
-		$('#fwd_password').focus();
-		return;
-	}
-	
-	
-	$('#select_fwd_survey_pop h1').html("Retrieving survey");
-	$('#select_fwd_survey_pop').dialog("open");
-	
-	remoteString = JSON.stringify(remote);
-	addHourglass();
-	$.ajax({
-		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
-		  async: true,
-		  url: "/surveyKPI/forwards/getRemoteSurveys",
-		  data: { remote: remoteString },
-		  success: function(data, status) {
-			  removeHourglass();
-			  updateRemoteSurveys(data);
-		  },
-		  error: function(xhr, textStatus, err) {
-				removeHourglass();
-				$('#fwd_rem_survey').empty();
-				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					var msg;
-					if(xhr.responseText.indexOf("RSA premaster") >= 0) {				
-						msg = localise.set["msg_err_cert"];
-					} else {
-						msg = xhr.responseText;
-					}
-					alert(localise.set["msg_err_get_f"] + msg);
-				}
-			}
-	});
 
-}
-*/
 });	

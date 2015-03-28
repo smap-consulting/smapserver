@@ -290,7 +290,7 @@ public class WebForm extends Application{
 		output.append("<script type='text/javascript'>\n");
 		output.append("settings = {};\n");
 		
-		output.append("surveyData = {};\n");    // enketo 2
+		output.append("surveyData = {};\n");    
 		
 		// Data model
 		
