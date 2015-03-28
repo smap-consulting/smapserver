@@ -464,7 +464,7 @@ define(function() {
 				}
 					
 				label.newVal = newVal;
-				if(prop === "label") {
+				if(prop === "label" || prop === "media") {
 					label.oldVal = item_orig.labels[language][element]; 
 				} else {
 					label.oldVal = item_orig[prop];

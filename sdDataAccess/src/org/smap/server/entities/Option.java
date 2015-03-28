@@ -182,7 +182,6 @@ public class Option implements Serializable{
     	
     	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		cascade_filters = gson.toJson(cascadeKeyValues);
-    	System.out.println("++++++++++ setCascadeFilter: " + cascade_filters);
     	
     	/*
     	List<String> keyList = new ArrayList<String>(cascadeKeyValues.keySet());
@@ -222,8 +221,6 @@ public class Option implements Serializable{
         		}
         	}
     	}
-		
-		System.out.println("%%%%%%%%%%%%%% setCascadeKeyValues: " + cascadeKeyValues);
 		
     }
     

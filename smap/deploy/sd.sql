@@ -256,3 +256,6 @@ CREATE TABLE dynamic_users (
 	);
 ALTER TABLE dynamic_users OWNER TO ws;
 
+-- Class in survey too small
+alter table survey alter column class set data type text;
+

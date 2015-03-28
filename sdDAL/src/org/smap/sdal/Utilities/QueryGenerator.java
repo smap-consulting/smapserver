@@ -26,6 +26,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
 
@@ -37,6 +38,9 @@ import org.smap.sdal.model.SqlDesc;
  * Create a query to retrieve results data
  */
 public class QueryGenerator {
+	
+	private static Logger log =
+			 Logger.getLogger(QueryGenerator.class.getName());
 
 	public static SqlDesc gen(Connection connectionSD, 
 			Connection connectionResults, 
@@ -79,7 +83,7 @@ public class QueryGenerator {
 			ResultSet resultSet = pstmt.executeQuery();
 			if(!resultSet.next()) {
 				String msg = "Exporting survey to " + format + ", Form not found:" + sId + ":" + fId;
-				System.out.println(msg);
+				log.info(msg);
 				throw new Exception(msg);
 			}
 			
@@ -186,7 +190,7 @@ public class QueryGenerator {
 		//shpSqlBuf.append(";");
 		sqlDesc.sql = shpSqlBuf.toString();
 		
-		System.out.println("Generated SQL: " + shpSqlBuf);
+		log.info("Generated SQL: " + shpSqlBuf);
 		
 		return sqlDesc;
 	}
@@ -252,7 +256,6 @@ public class QueryGenerator {
 		}
 			
 		String sql = "SELECT * FROM " + tName + " LIMIT 1;";
-		System.out.println(sql);
 		
 		try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
 		pstmtCols = connectionResults.prepareStatement(sql);	 			
@@ -290,9 +293,8 @@ public class QueryGenerator {
 			if(type.equals("geometry")) {
 				String sqlGeom = "SELECT GeometryType(" + name + ") FROM " + tName + ";";
 
-				System.out.println("SQL:" + sqlGeom + " : " + parentForm);
-
 				pstmtGeom = connectionResults.prepareStatement(sqlGeom);
+				log.info("Get geometry type: " + pstmtGeom.toString());
 				ResultSet rsGeom = pstmtGeom.executeQuery();
 				
 				/*
@@ -311,7 +313,7 @@ public class QueryGenerator {
 						} else if(geomName.startsWith("POINT")) {
 							sqlDesc.geometry_type = "wkbPoint";
 						} else {
-							System.out.println("Error unknown geometry:  " + geomName);
+							log.info("Error unknown geometry:  " + geomName);
 						}
 						break;
 					}
@@ -362,7 +364,7 @@ public class QueryGenerator {
 					}
 					list_name = validStataName(list_name);	// Make sure the list name is a valid stata name
 					if(!exp_ro && ro) {
-						System.out.println("Dropping readonly: " + name);
+						log.info("Dropping readonly: " + name);
 						continue;			// Drop read only columns if they are not selected to be exported				
 					}
 					
@@ -378,7 +380,6 @@ public class QueryGenerator {
 				if(!language.equals("none")) {
 					label = getQuestionLabel(pstmtQLabel, sId, text_id, language);
 					// Get the list labels if this is a select question
-					System.out.println("Getting option labels for: " + name + " : " + label + " : " + qType);
 					if(qType != null && qType.equals("select1")) {
 						optionListLabels = new ArrayList<OptionDesc> ();
 						needsReplace = getListLabels(pstmtListLabels, sId, qId, language, optionListLabels);
@@ -511,7 +512,6 @@ public class QueryGenerator {
 			od.value = rs.getString(1);
 			od.label = rs.getString(2);
 			od.replace = false;
-			System.out.println("options: " + od.value + " : " + od.label);
 			
 			// Attempt to set a numeric value for the option
 			try {

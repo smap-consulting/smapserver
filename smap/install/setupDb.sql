@@ -264,7 +264,7 @@ CREATE TABLE survey (
 	deleted boolean default false,					-- Soft delete indicator
 	display_name text not null,
 	def_lang text,
-	class varchar(10),
+	class text,
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey
 	last_updated_time DATE

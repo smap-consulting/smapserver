@@ -272,7 +272,6 @@ $(document).ready(function() {
      * Submit the files
      */
     $('#submitFiles').click( function() {
-    	console.log("Serialize");
     	var sId = $('#survey_id').val();
     	var f = document.forms.namedItem("fileupload");
     	var formData = new FormData(f);
@@ -295,8 +294,6 @@ $(document).ready(function() {
             success: function(data) {
     			removeHourglass();
             	var surveyId = sId;
-            	console.log("Success");
-            	console.log(data);
             	refreshMediaView(data, surveyId);
             	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
             	document.forms.namedItem("fileupload").reset();
@@ -369,7 +366,6 @@ function enableDragablePanels() {
 }
 
 function getSurveyList() {
-	console.log("getSurveyList: " + globals.gCurrentSurvey);
 	if(globals.gCurrentSurvey > 0) {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
 	} else {
@@ -454,7 +450,6 @@ function refreshForm() {
 	
 	// Restore collapsed panels
 	for(i = 0; i < gCollapsedPanels.length; i++) {
-		console.log("collapsed: " + gCollapsedPanels[i]);
 		$('#' + gCollapsedPanels[i]).addClass("in");
 	}
 	
@@ -924,8 +919,6 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		survey = globals.model.survey,
 		i;
 	
-	console.log(survey);
-	
 	if(type === "question") {
 		item.push({
 			form: formIndex,
@@ -1057,7 +1050,6 @@ function getFilesFromServer(sId) {
 		gSId = sId;
 		url += '?sId=' + sId;
 	}
-	console.log("Getting media: " + url);
 	
 	addHourglass();
 	$.ajax({
@@ -1068,7 +1060,6 @@ function getFilesFromServer(sId) {
 			removeHourglass();
 			
 			var surveyId = sId;
-			console.log(data);
 			refreshMediaView(data, surveyId);
 
 		},
@@ -1170,7 +1161,6 @@ function delete_media(url) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			console.log(data);
 			
 			var address = url;
 			if(url.indexOf('organisation') > 0) {

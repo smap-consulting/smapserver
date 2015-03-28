@@ -595,8 +595,8 @@ public class SurveyManager {
 				Savepoint sp = connectionSD.setSavepoint();
 				try {
 					
-					log.info("applyChanges: " + cs.type);
-					if(cs.type.equals("label")) {
+					log.info("SurveyManager, applyChanges. Change set type: " + cs.type);
+					if(cs.type.equals("label") || cs.type.equals("media")) {
 						
 						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 
@@ -725,6 +725,13 @@ public class SurveyManager {
 				} else {
 					if(ci.element.equals("text")) {
 						addLabel(ci, ci.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+
+						// Add the new text id to the question
+						pstmtNewQuestionLabel.setString(1, ci.key);
+						pstmtNewQuestionLabel.setInt(2, ci.qId);
+						log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
+						pstmtNewQuestionLabel.executeUpdate();
+						
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
@@ -732,11 +739,7 @@ public class SurveyManager {
 						}
 					}
 					 
-					// Add the new text id to the question
-					pstmtNewQuestionLabel.setString(1, ci.key);
-					pstmtNewQuestionLabel.setInt(2, ci.qId);
-					log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
-					pstmtNewQuestionLabel.executeUpdate();
+
 				}
 				
 				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
@@ -1138,7 +1141,7 @@ public class SurveyManager {
 		    			
 		    			if(subForm != null) {	
 		    				Results nr = new Results(qName, "form", null, false, fIdx, qIdx, 0);
-		    				System.out.println("Creating sub form");
+
 		    				nr.subForm = getResults(subForm, 
 		    						s.getFormIdx(subForm.id),
 		    			    		subForm.id, 
@@ -1147,7 +1150,7 @@ public class SurveyManager {
 		    			    		null,
 		    			    		newParentKey,
 		    			    		s);
-		    				System.out.println("Done");
+
 		            		record.add(nr);
 		    			}
 		    			

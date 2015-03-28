@@ -105,7 +105,7 @@ public class QuestionManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			
-			System.out.println("SQL: " + pstmt.toString());
+			log.info("Get questions: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 	
 			while (resultSet.next()) {								

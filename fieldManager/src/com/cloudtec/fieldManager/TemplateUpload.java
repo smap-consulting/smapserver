@@ -93,6 +93,7 @@ public class TemplateUpload extends Application {
 		String fileName;
 		String administrator;
 		ArrayList<String> hints;
+		ArrayList<String> warnings;
 	}
 
     private class SaveResponse {
@@ -100,6 +101,7 @@ public class TemplateUpload extends Application {
     	public String fileName = null;
     	public ArrayList<String> errMesg = new ArrayList<String> ();
     	public ArrayList<String> hints = new ArrayList<String> ();
+    	public ArrayList<String> warnings = new ArrayList<String> ();
     	boolean foundErrorMsg;
     }
     
@@ -121,6 +123,7 @@ public class TemplateUpload extends Application {
 		String fileName = null;
 		String serverName = request.getServerName();
 		FileItem uploadedFile = null;
+		ArrayList<String> warnings = new ArrayList<String>(); 
 		
 		Response response = null;
 
@@ -223,7 +226,7 @@ public class TemplateUpload extends Application {
 				ArrayList<String> hints = new ArrayList<String>(); 
 				hints.add("$e_h_rename");
 				
-				return getErrorResponse(request,  mesgArray, hints, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, hints, warnings, serverName, projectName, displayName, fileName);
 			} 	
 			
 			/*
@@ -238,7 +241,7 @@ public class TemplateUpload extends Application {
 				}
 				
 				log.info("Error reported in upload");
-				return getErrorResponse(request,  resp.errMesg, resp.hints, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  resp.errMesg, resp.hints, resp.warnings, serverName, projectName, displayName, fileName);
 
 			}
 			File templateFile = new File(resp.fileName);
@@ -265,7 +268,7 @@ public class TemplateUpload extends Application {
 			} else {
 				mesgArray.add("No survey name");		// TODO Language
 				
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			}
 			
 			// Set the project id to the one entered by the user 
@@ -274,7 +277,7 @@ public class TemplateUpload extends Application {
 			} else {
 				mesgArray.add("No project");		// TODO Language
 
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			}
 			
 			// Set the survey ident to the one entered by the user 
@@ -298,7 +301,7 @@ public class TemplateUpload extends Application {
 				}
 				mesgArray.add(mesg);		// TODO Language
 				
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			} 
 			
 			// If there are duplicate question names in a form then throw an error
@@ -313,7 +316,7 @@ public class TemplateUpload extends Application {
 				}
 				mesgArray.add(mesg);		// TODO Language
 				
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 				
 			} 	
 			
@@ -329,7 +332,7 @@ public class TemplateUpload extends Application {
 				}
 				mesgArray.add(mesg);		// TODO Language
 
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			} 
 			
 			// If there are mandatory read only questions without a relevance or constraints that don't reference the current question then throw an error
@@ -344,14 +347,20 @@ public class TemplateUpload extends Application {
 				}
 				mesgArray.add(mesg);		// TODO Language
 				
-				return getErrorResponse(request,  mesgArray, null, serverName, projectName, displayName, fileName);
+				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			} 
 			
 			//model.printModel();
 			model.writeDatabase();				// write the survey definitions
 			model.writeExternalChoices();		// Update the survey definitions with choices from csv files
 			log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
-				
+			
+			// Return warnings only
+			if(warnings.size() > 0) {
+				return getErrorResponse(request,  null, null, warnings, serverName, projectName, displayName, fileName);
+			}
+			
+			// Return OK with no messages
 			response = Response.ok().build();	
 			
 		} catch(AuthorisationException ex) {
@@ -451,6 +460,7 @@ public class TemplateUpload extends Application {
 	        boolean hasValidationError = false;
 	        boolean hasDisplayConditionError = false;
 	        boolean hasParseError = false;
+	        boolean hasWarnings = false;
 	        while ( (line = br.readLine()) != null) {
 	        	System.out.println("** " + line);
 	        	if(line.startsWith("errors") || line.startsWith("Invalid") || 
@@ -601,6 +611,15 @@ public class TemplateUpload extends Application {
         		} else {
         			response.hints.add(line);
         		}
+	        	
+	        	if(hasWarnings) {
+	        		response.warnings.add(line);
+	        	}
+	        	
+	        	// Warnings
+	        	if(line.startsWith("Warnings:")) {
+	        		hasWarnings = true;
+	        	}
 
 	        }   
 	        
@@ -684,7 +703,9 @@ public class TemplateUpload extends Application {
 	
 	private Response getErrorResponse(HttpServletRequest request, 
 			ArrayList<String> mesgArray, 
-			ArrayList<String> hints, String serverName, 
+			ArrayList<String> hints, 
+			ArrayList<String> warnings,
+			String serverName, 
 			String projectName, 
 			String surveyName, 
 			String fileName) throws ServletException, IOException {
@@ -723,7 +744,11 @@ public class TemplateUpload extends Application {
 		}
 		
 		Message m = new Message();
-		m.status = "error";
+		if(mesgArray != null) {
+			m.status = "error";
+		} else {
+			m.status = "warning";
+		}
 		m.mesgArray = mesgArray;
 		m.host = serverName;
 		m.project = projectName;
@@ -731,6 +756,7 @@ public class TemplateUpload extends Application {
 		m.fileName = fileName;
 		m.administrator = admin_email;
 		m.hints = hints;
+		m.warnings = warnings;
 		
 		log.info("Returning error response: " + m.toString());
 		

@@ -120,9 +120,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 				</div>
 
 			</div>
-			<div class="col-md-12 text-center">
-				<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-			</div>
 		</div>
 
 		<div class="col-md-6 col-xs-12">
@@ -140,9 +137,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					<span data-lang="tm_g_temp_i4" class="lang"></span>
 					<a href="http://build.opendatakit.org/">odkBuild</a>
 					</p>
+					<div class="col-md-12 text-center">
+						<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+					</div>
 					<br>
 					<h3 data-lang="tm_ul_f" class="lang">Upload a Form</h3>
 					<div id="up_alert" style="display:none;" class="alert alert-success" role="alert"></div>
+					<div id="up_warnings" style="display:none;" class="alert alert-warning" role="alert"></div>
 					<form role="form" id="uploadForm" name="uploadForm" accept-charset="utf-8" 
 							class="ui-body ui-body-a ui-corner-all">
 						<fieldset id="templateUpload">

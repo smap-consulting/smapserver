@@ -27,18 +27,20 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
 
 <xsl:stylesheet
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xalan="http://xml.apache.org/xalan"
     xmlns:xf="http://www.w3.org/2002/xforms"
     xmlns:h="http://www.w3.org/1999/xhtml"
     xmlns:ev="http://www.w3.org/2001/xml-events"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:jr="http://openrosa.org/javarosa"
-    xmlns:exsl="http://exslt.org/common"
+    xmlns:exslt="http://exslt.org/common"
     xmlns:str="http://exslt.org/strings"
     xmlns:dyn="http://exslt.org/dynamic"
-    extension-element-prefixes="exsl str dyn"
     version="1.0"
     >
 
+    <!-- extension-element-prefixes="exslt str dyn" -->
+    
     <xsl:output method="xml" omit-xml-declaration="yes" encoding="UTF-8" indent="yes"/><!-- for xml: version="1.0" -->
 
     <xsl:variable name="upper-case" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
@@ -64,17 +66,37 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     </xsl:variable>
 
     <xsl:template match="/">
-    	<xsl:if test="not(function-available('exsl:node-set'))">
-            <xsl:message terminate="yes">FATAL ERROR: exsl:node-set function is not available in this XSLT processor</xsl:message>
+    	
+    	<xsl:message>
+    		<xsl:copy-of select="xalan:checkEnvironment()"/>
+  		</xsl:message>
+  
+  		<!--
+    	<xsl:if test="not(function-available('exslt:node-set'))">
+            <xsl:message terminate="yes">FATAL ERROR: exslt:node-set function is not available in this XSLT processor</xsl:message>
         </xsl:if>
+        <xsl:if test="not(function-available('exslt:nodeset'))">
+            <xsl:message terminate="yes">FATAL ERROR: exslt:nodeset function is not available in this XSLT processor</xsl:message>
+        </xsl:if>
+        -->
+        <xsl:if test="not(function-available('xalan:nodeset'))">
+            <xsl:message terminate="yes">FATAL ERROR: xalan:nodeset function is not available in this XSLT processor</xsl:message>
+        </xsl:if>
+        <!-- Replaced with template
         <xsl:if test="not(function-available('str:replace'))">
             <xsl:message terminate="yes">FATAL ERROR: str:replace function is not available in this XSLT processor</xsl:message>
         </xsl:if>
+        -->
         <xsl:if test="not(function-available('dyn:evaluate'))">
             <xsl:message terminate="yes">FATAL ERROR: dyn:evaluate function is not available in this XSLT processor</xsl:message>
         </xsl:if>
         <xsl:if test="not(function-available('str:tokenize'))">
             <xsl:message terminate="yes">FATAL ERROR: str:tokenize function is not available in this XSLT processor</xsl:message>
+        </xsl:if>
+    	
+        
+        <xsl:if test="not(function-available('dyn:evaluate'))">
+            <xsl:message terminate="yes">FATAL ERROR: dyn:evaluate function is not available in this XSLT processor</xsl:message>
         </xsl:if>
         <xsl:for-each select="/h:html/h:head/xf:model/xf:bind">
         	<xsl:if test="not(substring(./@nodeset, 1, 1) = '/')">
@@ -336,7 +358,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     <xsl:template name="appearance">
         <xsl:if test="@appearance">
             <xsl:variable name="appearances" select="str:tokenize(@appearance)" />
-            <xsl:for-each select="exsl:node-set($appearances)">
+            <xsl:for-each select="xalan:nodeset($appearances)">
                 <xsl:value-of select="concat('or-appearance-', normalize-space(translate(., $upper-case, $lower-case)), ' ')"/>
             </xsl:for-each>
         </xsl:if>
@@ -477,15 +499,15 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
             <!-- better to use default language if defined and otherwise span[1] -->
             <xsl:choose>
                 <!-- TODO: IT WOULD BE MORE EFFICIENT TO EXTRACT THIS FROM exsl:node-set($label_translations) -->
-                <xsl:when test="exsl:node-set($label_translations)/span[@lang=$default-lang]">
-                    <xsl:value-of select="exsl:node-set($label_translations)/span[@lang=$default-lang] " />
+                <xsl:when test="xalan:nodeset($label_translations)/span[@lang=$default-lang]">
+                    <xsl:value-of select="xalan:nodeset($label_translations)/span[@lang=$default-lang] " />
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:value-of select="exsl:node-set($label_translations)/span[1] " />
+                    <xsl:value-of select="xalan:nodeset($label_translations)/span[1] " />
                 </xsl:otherwise>
             </xsl:choose>
         </option>
-        <xsl:for-each select="exsl:node-set($label_translations)/span" >
+        <xsl:for-each select="xalan:nodeset($label_translations)/span" >
             <span>
                 <xsl:attribute name="data-option-value">
                     <xsl:value-of select="$value" />
@@ -532,7 +554,15 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
         <xsl:variable name="value-ref" select="./xf:value/@ref" />
         <xsl:variable name="label-ref" select="./xf:label/@ref" />
         <xsl:variable name="iwq" select="substring-before(substring-after(@nodeset, 'instance('),')/')" />
-        <xsl:variable name="instance-path" select="str:replace(substring-after(@nodeset, ')'), '/', '/xf:')" />
+ 
+   		<xsl:variable name="instance-path">    
+			<xsl:call-template name="replace-string">
+			  <xsl:with-param name="from" select="substring-after(@nodeset, ')')"/>
+			  <xsl:with-param name="replace" select="'/'" />
+			  <xsl:with-param name="with" select="'/xf:'"/>
+			</xsl:call-template>
+		</xsl:variable> 
+ 		
         <xsl:variable name="instance-path-nofilter">
             <xsl:call-template name="strip-filter">
                 <xsl:with-param name="string" select="$instance-path"/>
@@ -654,7 +684,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
                 <xsl:choose>
                     <xsl:when test="not(./xf:itemset)">
                         <option value="">...</option>
-                        <xsl:for-each select="exsl:node-set($options)/option">
+                        <xsl:for-each select="xalan:nodeset($options)/option">
                             <xsl:copy-of select="."/>
                         </xsl:for-each>
                     </xsl:when>
@@ -666,7 +696,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
             </select>            
             <span class="or-option-translations" style="display:none;">
                 <xsl:if test="not(./xf:itemset) and $translated = 'true'">
-                    <xsl:for-each select="exsl:node-set($options)/span">
+                    <xsl:for-each select="xalan:nodeset($options)/span">
                         <xsl:copy-of select="." />
                     </xsl:for-each>
                 </xsl:if>
@@ -1311,4 +1341,26 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
+    
+    <!-- Template function to replace string in xslt1.0 from http://stackoverflow.com/questions/7520762/xslt-1-0-string-replace-function -->
+    <xsl:template name="replace-string">
+  		<xsl:param name="from"/>
+  		<xsl:param name="replace"/>
+  		<xsl:param name="with"/>
+
+	  	<xsl:choose>
+	      <xsl:when test="contains($from,$replace)">
+	        <xsl:value-of select="substring-before($from,$replace)"/>
+	        <xsl:value-of select="$with"/>
+	        <xsl:call-template name="replace-string">
+	          <xsl:with-param name="from" select="substring-after($from,$replace)"/>
+	          <xsl:with-param name="replace" select="$replace"/>
+	          <xsl:with-param name="with" select="$with"/>
+	        </xsl:call-template>
+	      </xsl:when>
+	      <xsl:otherwise>
+	        <xsl:value-of select="$from"/>
+	      </xsl:otherwise>
+	    </xsl:choose>
+ 	</xsl:template>
 </xsl:stylesheet>

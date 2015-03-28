@@ -326,7 +326,7 @@ public class UtilityMethodsEmail {
 			if(user != null) {
 				pstmt = sd.prepareStatement(sqlIdent);
 				pstmt.setString(1, user);
-				System.out.println("SQL:" + pstmt.toString());
+				log.info("Get smtp_host, SQL:" + pstmt.toString());
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
@@ -345,7 +345,7 @@ public class UtilityMethodsEmail {
 				 */
 				pstmt = sd.prepareStatement(sqlEmail);
 				pstmt.setString(1, email);
-				System.out.println("SQL:" + pstmt.toString());
+				log.info("Get smtp_host, SQL:" + pstmt.toString());
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
@@ -698,6 +698,7 @@ public class UtilityMethodsEmail {
 				pstmt.setInt(1, s.id);
 				pstmt.setString(2, s.languages.get(i));
 				pstmt.setString(3, text_id);
+				log.info("Get labels: " + pstmt.toString());
 				
 				ResultSet resultSet = pstmt.executeQuery();		
 				while(resultSet.next()) {
@@ -709,7 +710,7 @@ public class UtilityMethodsEmail {
 						l.text = v;
 					} else if(basePath != null && oId > 0) {
 						getFileUrl(manifest, s.ident, v, basePath, oId);
-						System.out.println("Url: " + manifest.url + " : " + v);
+						log.info("Url: " + manifest.url + " : " + v);
 						if(t.equals("image")) {
 							l.image = v;
 							l.imageUrl = manifest.url;
@@ -733,6 +734,7 @@ public class UtilityMethodsEmail {
 					pstmt.setString(2, s.languages.get(i));
 					pstmt.setString(3, hint_id);
 					
+					log.info("Get hint: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					
 					if(resultSet.next()) {

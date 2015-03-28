@@ -78,7 +78,7 @@ public class TranslationManager {
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
 			pstmtQuestionLevel.setString(1, user);
 			pstmtQuestionLevel.setInt(2, surveyId);
-			System.out.println("Question level manifests: " + pstmtQuestionLevel.toString());
+			log.info("Question level manifests: " + pstmtQuestionLevel.toString());
 			ResultSet rs = pstmtQuestionLevel.executeQuery();
 			
 			while (rs.next()) {								

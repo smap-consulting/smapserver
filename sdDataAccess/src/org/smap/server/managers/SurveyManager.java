@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.managers;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -28,6 +29,7 @@ import javax.persistence.Query;
 
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.Survey;
+
 
 /**
  * 
@@ -39,6 +41,9 @@ public class SurveyManager {
 
 	//private EntityManager em = null;
 	private PersistenceContext pc = null;
+	
+	private static Logger log =
+			 Logger.getLogger(SurveyManager.class.getName());
 
 	public SurveyManager(PersistenceContext pc) {
 		// em = pc.getEntityManager();
@@ -169,7 +174,7 @@ public class SurveyManager {
 			em.persist(s);
 			String ident = s.getIdent();
 			
-			System.out.println("Persisting to ident: " + ident);
+			log.info("Persisting to ident: " + ident);
 			
 			// Set the survey ident to a temporary value based on survey id if an ident was not specified
 			if(ident == null || ident.trim().length() == 0) {
@@ -181,6 +186,7 @@ public class SurveyManager {
 			em.getTransaction().commit();
 		} catch (PersistenceException e) {
 			// TODO handle exceptions, specifically constraint violations
+			e.printStackTrace();
 		} finally {
 		}
 	}

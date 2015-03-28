@@ -53,7 +53,9 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.xalan.processor.TransformerFactoryImpl;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
@@ -130,8 +132,6 @@ public class WebForm extends Application{
     		} catch (Exception e) {
     			log.log(Level.SEVERE, "WebForm", e);
     		}
-    		
-    		System.out.println("GUID: " + accessKey);
     		
     		try {
             	if (connectionSD != null) {
@@ -358,12 +358,19 @@ public class WebForm extends Application{
 		
 		StreamSource styleSource = new StreamSource(request.getServletContext().getResourceAsStream(xslt));
 		
-		Transformer transformer = TransformerFactory.newInstance().newTransformer(styleSource);
+		TransformerFactory tf = TransformerFactory.newInstance("org.apache.xalan.processor.TransformerFactoryImpl",null);
+		tf.setAttribute(TransformerFactoryImpl.FEATURE_SOURCE_LOCATION, Boolean.TRUE);
+		tf.setAttribute(TransformerFactoryImpl.FEATURE_OPTIMIZE, Boolean.FALSE);
+		
+		Transformer transformer = tf.newTransformer(styleSource);
     	//transformer.setOutputProperty(OutputKeys.INDENT, "yes");
     	transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
     	transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-    		
-		transformer.transform(source, output);
+    	
+    	
+
+    	transformer.transform(source, output);
+    	
 		
 		return writer.toString();
 	}

@@ -65,7 +65,7 @@ $(document).ready(function() {
 	// Upload File
     $('#submitFile').click( function(e) {
     	
-    	$('#up_alert').hide();
+    	$('#up_alert, up_warning').hide();
     	e.preventDefault();
     	console.log("Sending form");
     	var sId = $('#survey_id').val();
@@ -104,6 +104,12 @@ $(document).ready(function() {
             		document.forms.namedItem("uploadForm").reset();
             		$('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("Template Loaded");
             	}
+            	
+            	// Check for warnings in the form
+            	if(data && data.warnings && data.warnings.length > 0) {
+            		$('#up_warnings').show().html(getResponseHtml(data));
+            	}
+            	
             },
             error: function(xhr, textStatus, err) {
 				removeHourglass();
@@ -236,7 +242,6 @@ function getResponseHtml(msg) {
 		}
 	}
 	
-	console.log(msg);
 	return msgToHtml(msg);
 }
 
@@ -261,6 +266,26 @@ function msgToHtml(msg) {
 	h[++idx] = '<span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>';
 	h[++idx] = '<span class="lang" data-lang="m_help"> Get Help</span>';
 	h[++idx] = '</a>';
+	
+	return h.join('');
+}
+
+/*
+ * Convert the warning response to html
+ */
+function warningMsgToHtml(msg) {
+	var idx = -1,
+		h = [];
+	
+	h[++idx] = '<span class="sr-only"> Warnings:</span>';
+	h[++idx] = "Warnings:";
+	h[++idx] = '<ul>';
+	for(i = 0; msg.warnings && i < msg.warnings.length; i++) {
+		h[++idx] = '<li>';
+		h[++idx] = msg.warnings[i];
+		h[++idx] = '</li>';
+	}
+	h[++idx] = '</ul>';
 	
 	return h.join('');
 }

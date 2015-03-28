@@ -123,9 +123,8 @@ public class UserTrail extends Application {
 		
 		Timestamp startDate = new Timestamp(start_t);
 		Timestamp endDate = new Timestamp(end_t);
-		
-		System.out.println("Project id:" + projectId);		
-		System.out.println("Getting trail between" + startDate.toGMTString() + " and " + endDate.toGMTString());;
+			
+		log.info("Getting trail between" + startDate.toGMTString() + " and " + endDate.toGMTString());;
 
 		String user = request.getRemoteUser();
 		// Authorisation - Access
@@ -226,7 +225,7 @@ public class UserTrail extends Application {
 			response = Response.serverError().entity(e.getMessage()).build();
 		}
 		
-		System.out.println("Get Survey Locations: Project id:" + projectId);
+		log.info("Get Survey Locations: Project id:" + projectId);
 
 		String user = request.getRemoteUser();
 		// Authorisation - Access

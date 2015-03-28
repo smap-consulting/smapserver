@@ -171,8 +171,6 @@ public class Surveys extends Application {
 		    return Response.serverError().build();
 		}
 		
-		System.out.println("Get survey:" + sId);
-		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());

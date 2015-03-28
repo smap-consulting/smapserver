@@ -600,7 +600,8 @@ public class GetXForm {
 			if(type.equals("audio") || type.equals("video") || type.equals("image")) {
 				type = "binary";
 			}
-			if(!type.equals("select") && !type.equals("select1") && !type.equals("begin group") && !type.equals("repeat group")) {
+			// Following commented out check for select and select1 seems to be obsolete 27/3/2015 as odk sets type of select questions in bind
+			if(/*!type.equals("select") && !type.equals("select1") &&*/ !type.equals("begin group") && !type.equals("repeat group")) {
 				questionElement.setAttribute("type", type);
 			}
 		}

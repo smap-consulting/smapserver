@@ -198,7 +198,6 @@ public class GeneralUtilityMethods {
 			// Get Header
 			String line = br.readLine();
 			String cols [] = parser.parseLine(line);
-			System.out.println("Header: " + line);
 	       
 			CSVFilter filter = new CSVFilter(cols, qAppearance);								// Get a filter
 			ValueLabelCols vlc = getValueLabelCols(connectionSD, qId, qName, cols);		// Identify the columns in the CSV file that have the value and label
@@ -208,7 +207,6 @@ public class GeneralUtilityMethods {
 				if(line != null) {
 					String [] optionCols = parser.parseLine(line);
 					if(filter.isIncluded(optionCols)) {
-						System.out.println("        ## Include " + line);
 		    		   
 						ChangeItem c = new ChangeItem();
 						c.qId = qId;
@@ -221,7 +219,7 @@ public class GeneralUtilityMethods {
 						ciList.add(c);
 		    		   
 					} else {
-						System.out.println("        ## Ignore " + line);
+						// ignore line
 					}
 				}
 			}
@@ -258,7 +256,6 @@ public class GeneralUtilityMethods {
 			if(rs.next()) {
 				String valueName = rs.getString(1);
 				String labelName = rs.getString(2);
-				System.out.println("Value column: " + valueName + " : " + labelName);
 				
 				vlc.value = -1;
 				vlc.label = -1;
