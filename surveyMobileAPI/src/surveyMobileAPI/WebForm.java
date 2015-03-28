@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,6 +64,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 import org.smap.server.utilities.GetXForm;
 
@@ -160,20 +163,48 @@ public class WebForm extends Application{
 			GetXForm xForm = new GetXForm();
 			String formXML = xForm.get(template);		
 			
-			// If required get the instanceXML
+			// If required get the instance data 
 			String instanceXML = null;
 			String dataToEditId = null;
 			if(datakey != null && datakeyvalue != null) {
 				xForm = new GetXForm();
 				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0);
 				dataToEditId = xForm.getInstanceId();
-				
-				/*
-				 * Let us assume that the datakey is always the instanceID, 
-				 * at least for those situation where the data is to be updated
-				 */
-				// TODO get dataToEdit unique instance Id
 			}
+			
+			/*
+			 * Get the media manifest so we can set the url's of media files used the form
+			 */
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+				basePath = "/ebs1/servers/" + request.getServerName();
+			}
+			TranslationManager translationMgr = new TranslationManager();	
+			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+			List<ManifestValue> manifestList = translationMgr.
+					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, formIdent);
+    		try {
+            	if (connectionSD != null) {
+            		connectionSD.close();
+            		connectionSD = null;
+            	}
+            } catch (SQLException e) {
+            	log.log(Level.SEVERE, "Failed to close connection", e);
+            }
+    		
+    		for(int i = 0; i < manifestList.size(); i++) {
+    			System.out.println(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
+    			String type = manifestList.get(i).type;
+    			String name = manifestList.get(i).fileName;
+    			String url = manifestList.get(i).url;
+    			if(type.equals("image")) {
+    				type = "images";
+    			}
+    			formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
+    		}
+			
 			// Convert to HTML
 			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass, orgId, accessKey));
 			

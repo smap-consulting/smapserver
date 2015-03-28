@@ -971,6 +971,7 @@ public class GetXForm {
     	return gInstanceId;
     }
     
+    
 	/*
 	 * Make sure the primary key is valid and can return data
 	 */

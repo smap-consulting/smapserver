@@ -122,7 +122,6 @@ public class FormsManifest {
 			 * Get the per-question and per-option media files from the translation table
 			 */
 			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			System.out.println("Files parameter: " + basePath);
 			if(basePath == null) {
 				basePath = "/smap";
 			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
