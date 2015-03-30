@@ -133,7 +133,7 @@ public class UserList extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
-			log.info("SQL: " + sql + ":" + request.getRemoteUser());
+			log.info("Get organisation: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
@@ -159,9 +159,11 @@ public class UserList extends Application {
 						" left outer join project on project.id = user_project.p_id " +
 						" where users.o_id = ? " +
 						" order by users.ident, groups.name;";
+				
+				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o_id);
-				log.info("SQL: " + sql + ":" + o_id);
+				log.info("Get user list: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				
 				String current_user = null;
@@ -276,7 +278,7 @@ public class UserList extends Application {
 
 		Response response = null;
 		
-		System.out.println("userList for project: " + projectId);
+		log.info("userList for project: " + projectId);
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -301,12 +303,25 @@ public class UserList extends Application {
 		try {
 			String sql = null;
 			ResultSet resultSet = null;
+			int o_id = 0;
 			
 			/*
-			 * Get the users for this organisation
-			 * Do this in one outer join query rather than running separate group and project queries for 
-			 *  each user. This is to reduce the need for potentially a large number of queries if
-			 *  an organisation had a large number of users
+			 * Get the organisation
+			 */
+			sql = "SELECT u.o_id " +
+					" FROM users u " +  
+					" WHERE u.ident = ?;";				
+						
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setString(1, request.getRemoteUser());
+			log.info("Get organisation: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				o_id = resultSet.getInt(1);
+			}
+			
+			/*
+			 * Get the users for this project
 			 */
 			sql = "SELECT u.id as id, " +
 					"u.ident as ident, " +
@@ -315,10 +330,14 @@ public class UserList extends Application {
 					"from users u, user_project up " +			
 					"where u.id = up.u_id " +
 					"and up.p_id = ? " +
+					"and u.o_id = ? " +
 					"order by u.ident";
+			
+			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, projectId);
-			log.info("SQL: " + sql + ":" + projectId);
+			pstmt.setInt(2, o_id);
+			log.info("Get users for project: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 							
 			User user = null;
@@ -487,6 +506,7 @@ public class UserList extends Application {
 							} else {
 								sql = "delete from user_group where u_id = ? and g_id != 4;";		// Cannot change super user group
 							}
+							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setInt(1, u.id);
 							log.info("SQL: " + sql + ":" + u.id);
@@ -494,6 +514,7 @@ public class UserList extends Application {
 							
 							// Delete existing user projects
 							sql = "delete from user_project where u_id = ?;";
+							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setInt(1, u.id);
 							log.info("SQL: " + sql + ":" + u.id);
@@ -525,6 +546,7 @@ public class UserList extends Application {
 								pwdString = u.ident + ":smap:" + u.password;
 							}
 						
+							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setString(1, u.ident);
 							pstmt.setString(2, "smap");

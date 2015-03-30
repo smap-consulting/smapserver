@@ -195,7 +195,7 @@ public class WebForm extends Application{
             }
     		
     		for(int i = 0; i < manifestList.size(); i++) {
-    			System.out.println(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
+    			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
     			String type = manifestList.get(i).type;
     			String name = manifestList.get(i).fileName;
     			String url = manifestList.get(i).url;
@@ -326,7 +326,12 @@ public class WebForm extends Application{
 		// Data model
 		
 		output.append("surveyData.modelStr='");
-		output.append(transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", ""));
+		String dataDoc=transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
+	
+		// We only want the model
+		dataDoc = dataDoc.substring(dataDoc.indexOf("<model>"), dataDoc.lastIndexOf("</root>"));
+		
+		output.append(dataDoc.replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
 		// Instance Data
@@ -390,7 +395,7 @@ public class WebForm extends Application{
 		StreamSource styleSource = new StreamSource(request.getServletContext().getResourceAsStream(xslt));
 		
 		TransformerFactory tf = TransformerFactory.newInstance("org.apache.xalan.processor.TransformerFactoryImpl",null);
-		tf.setAttribute(TransformerFactoryImpl.FEATURE_SOURCE_LOCATION, Boolean.TRUE);
+		//tf.setAttribute(TransformerFactoryImpl.FEATURE_SOURCE_LOCATION, Boolean.TRUE);
 		tf.setAttribute(TransformerFactoryImpl.FEATURE_OPTIMIZE, Boolean.FALSE);
 		
 		Transformer transformer = tf.newTransformer(styleSource);
