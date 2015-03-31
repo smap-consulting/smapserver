@@ -66,10 +66,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     </xsl:variable>
 
     <xsl:template match="/">
-    	
-    	<xsl:message>
-    		<xsl:copy-of select="xalan:checkEnvironment()"/>
-  		</xsl:message>
+    	<xsl:message>Template match /</xsl:message>
   
   		<!--
     	<xsl:if test="not(function-available('exslt:node-set'))">
@@ -470,6 +467,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
 
     <xsl:template match="xf:item" mode="select-option">
         <xsl:param name="tolerate-spaces" />
+         <xsl:message>template match xf item</xsl:message>
         <xsl:variable name="label_translations">
             <xsl:apply-templates select="xf:label" />
         </xsl:variable>
@@ -523,6 +521,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     <xsl:template match="xf:itemset" mode="templates">
         <xsl:param name="nodeset" />
         <xsl:param name="binding"/>
+        <xsl:message>template match xf:itemset</xsl:message>
         <xsl:choose>
             <xsl:when test="$binding">
                 <label class="itemset-template">
@@ -551,6 +550,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     </xsl:template>
     
     <xsl:template match="xf:itemset" mode="labels">
+    	<xsl:message>template match itemset with mode labels</xsl:message>
         <xsl:variable name="value-ref" select="./xf:value/@ref" />
         <xsl:variable name="label-ref" select="./xf:label/@ref" />
         <xsl:variable name="iwq" select="substring-before(substring-after(@nodeset, 'instance('),')/')" />
@@ -910,6 +910,9 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     
 
     <xsl:template match="xf:label | xf:hint | xf:bind/@jr:constraintMsg">
+    	<xsl:message>
+    		<xsl:value-of select="name(.)"/>: <xsl:value-of select="."/>
+    	</xsl:message>
         <xsl:variable name="class">
             <xsl:if test="local-name() = 'constraintMsg'">
                 <xsl:value-of select="'or-constraint-msg'" />
@@ -926,11 +929,15 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
         </xsl:variable>
         <xsl:choose>
             <xsl:when test="not(string(./@ref)) and ( string(.) or string(./xf:output/@value) ) and not(contains(.,'itext('))">
+                <xsl:message>
+    				<xsl:value-of select="name(.)"/>: <xsl:value-of select="."/>
+    			</xsl:message>
                 <span lang="">                    
                     <xsl:attribute name="class">
                         <xsl:value-of select="concat($class, ' active')" />
                     </xsl:attribute>
-                    <xsl:call-template name="text-content" />
+                    <xsl:value-of select="."/>
+                   <!--  <xsl:call-template name="text-content" /> smap -->
                 </span>
             </xsl:when>
             <xsl:otherwise>
@@ -968,6 +975,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     </xsl:template>
 
      <xsl:template match="xf:output">
+     	<xsl:message>template x:output</xsl:message>
         <span class="or-output">
             <xsl:variable name="itext"
                     select="substring(substring-after(@value, 'itext('),2,string-length(substring-after(@value, 'itext('))-3)"/>
@@ -989,6 +997,10 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
     </xsl:template>
 
     <xsl:template name="text-content">
+    
+        <xsl:message>
+    		text-content <xsl:value-of select="name(.)"/>: <xsl:value-of select="."/>
+    	</xsl:message>
         <xsl:if test="string-length(.) = 0">
             <xsl:text><!-- avoids self-closing tags on empty elements -->
             </xsl:text>

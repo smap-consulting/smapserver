@@ -20,7 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package surveyMobileAPI;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -44,18 +43,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.xalan.processor.TransformerFactoryImpl;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
@@ -68,8 +63,6 @@ import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 import org.smap.server.utilities.GetXForm;
-
-import com.google.gson.Gson;
 
 
 /*
@@ -264,7 +257,7 @@ public class WebForm extends Application{
 
 		// head
 		output.append("<head>\n");
-		output.append("<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
+		output.append("<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
 
 		output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform_formhub.css' media='all' rel='stylesheet' />\n");
@@ -330,7 +323,6 @@ public class WebForm extends Application{
 	
 		// We only want the model
 		dataDoc = dataDoc.substring(dataDoc.indexOf("<model>"), dataDoc.lastIndexOf("</root>"));
-		
 		output.append(dataDoc.replace("\n", "").replace("\r", ""));
 		output.append("';\n");
 		
@@ -373,6 +365,7 @@ public class WebForm extends Application{
 
 		output.append(getAside());
 		output.append(openMain(orgId));		// TODO get orgId
+		//log.info(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		output.append(closeMain(dataToEditId));
 		output.append(getDialogs());
