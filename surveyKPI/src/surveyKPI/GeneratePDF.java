@@ -45,10 +45,8 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Result;
 import org.w3c.dom.Document;
-import org.w3c.tidy.Tidy;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
-import com.lowagie.text.pdf.BaseFont;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -125,7 +123,7 @@ public class GeneratePDF extends Application {
 				String os = System.getProperty("os.name");
 				log.info("Operating System:" + os);
 				if(os.startsWith("Mac")) {
-					renderer.getFontResolver().addFont("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+					//renderer.getFontResolver().addFont("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 				} else {
 					// Assume on Linux
 				}
@@ -135,13 +133,7 @@ public class GeneratePDF extends Application {
 			    //            "</head>";
 			    //String htmlFooter = "\n</html>";
 			        
-				Tidy tidy = new Tidy();
-		        tidy.setQuiet(true);
-		        tidy.setXmlTags(false);
-		        tidy.setShowWarnings(false);
-		        tidy.setInputEncoding("UTF-8");
-		        tidy.setOutputEncoding("UTF-8");
-		        tidy.setXHTML(true);
+				
 		        
 		        
 				StringBuffer outputHTML = new StringBuffer();
@@ -150,13 +142,13 @@ public class GeneratePDF extends Application {
 				File inputFile = new File("/users/neilpenman/input.html");
 				String htmlDocument = FileUtils.readFileToString(inputFile);
 		       // String htmlDocument = htmlHeader + "hello" + htmlFooter;
-		        Document document = tidy.parseDOM(new ByteArrayInputStream(htmlDocument.getBytes("UTF-8")), null);
+		        //Document document = tidy.parseDOM(new ByteArrayInputStream(htmlDocument.getBytes("UTF-8")), null);
 		        
 				//renderer.setDocument("http://localhost/webForm/s1_585");
-				renderer.setDocument(document, null);
+				//renderer.setDocument(document, null);
 				renderer.layout();
 				FileOutputStream fos = new FileOutputStream( filename );
-				renderer.createPDF( fos );
+				//renderer.createPDF( fos );
 				fos.close();
 				
 			}

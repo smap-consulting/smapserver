@@ -68,8 +68,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/core-renderer.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/iText-2.0.8.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/itextpdf-5.5.5.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jtidy-r938.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
