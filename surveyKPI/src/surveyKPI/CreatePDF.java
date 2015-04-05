@@ -1,8 +1,28 @@
 package surveyKPI;
 
+/*
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -34,12 +54,15 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
-import org.smap.sdal.model.Results;
+import org.smap.sdal.model.Result;
+import org.smap.sdal.model.Row;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -54,16 +77,27 @@ import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.ZapfDingbatsList;
+import com.itextpdf.text.html.simpleparser.HTMLWorker;
+import com.itextpdf.text.html.simpleparser.StyleSheet;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.GrayColor;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfFormField;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.RadioCheckField;
 
+/*
+ * Creates a PDF
+ * HTML Fragments 
+ *   <h3>  - Use for group Labels
+ *   .group - group elements
+ *   .hint - Hints
+ */
 
-@Path("/pdf/{sId}/{instance}")
+@Path("/pdf/{sId}")
 public class CreatePDF extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -79,6 +113,8 @@ public class CreatePDF extends Application {
 	}
 	
 	public static Font WingDings = null;
+	private StyleSheet styles = null;
+	private static int GROUP_WIDTH_DEFAULT = 4;
 
 	
 	@GET
@@ -86,7 +122,7 @@ public class CreatePDF extends Application {
 	@Produces("application/json")
 	public Response getPDF (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@PathParam("instance") String instanceId,
+			@QueryParam("instance") String instanceId,
 			@QueryParam("filename") String filename) {
 
 		try {
@@ -134,19 +170,21 @@ public class CreatePDF extends Application {
 			/*
 			 * Get the results
 			 */
-			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId);
-			ArrayList<ArrayList<Results>> results = survey.results;	
+			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
+			ArrayList<ArrayList<Result>> results = survey.results;	
 			
 			/*
 			 * Create the PDF
 			 */
 			if(filename != null) {
 				
+				createStyles();
+				
 				Document document = new Document();
 				PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(filename));
 				writer.setInitialLeading(16);
 				document.open();
-				
+		        
 				for(int i = 0; i < results.size(); i++) {
 					processForm(document, results.get(i), survey, basePath);		
 				}
@@ -192,13 +230,21 @@ public class CreatePDF extends Application {
 		return response;
 	}
 	
+	/*
+	 * Process the form
+	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
+	 *  can be applied to showing the form on the screen and generating the PDF
+	 */
 	private void processForm(
 			Document document,  
-			ArrayList<Results> record,
+			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
 			String basePath) throws DocumentException, IOException {
+		
+		int groupWidth = 4;
+		
 		for(int j = 0; j < record.size(); j++) {
-			Results r = record.get(j);
+			Result r = record.get(j);
 			if(r.resultsType.equals("form")) {
 				for(int k = 0; k < r.subForm.size(); k++) {
 					processForm(document, r.subForm.get(k), survey, basePath);
@@ -207,25 +253,19 @@ public class CreatePDF extends Application {
 				// Process the question
 				int languageIdx = 0;		// TODO get language in parameters
 				Form form = survey.forms.get(r.fIdx);
-				org.smap.sdal.model.Question q = form.questions.get(r.qIdx);
-				Label label = q.labels.get(languageIdx);
+				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
+				Label label = question.labels.get(languageIdx);
 			
-				addQuestion(document, label);
-				
-				if(r.resultsType.startsWith("select")) {
-					processSelect(document, r, survey, label);
-				} if (r.resultsType.equals("image")) {
-					System.out.println("Image: " + r.value);
-					Image img = Image.getInstance(basePath + "/" + r.value);
-					img.scaleToFit(200, 300);
-					document.add(img);
+				if(question.type.equals("begin group")) {
+					groupWidth = processGroup(document, question, label);
+					System.out.println("######### group width: " + groupWidth);
 				} else {
-					String v = r.value;
-					if(v == null) {
-						v = "";
-					}
-					document.add(new Paragraph("    " + v));
+					Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
+					document.add(processRow(row, basePath));
+					j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
+					//addQuestion(document, survey, question, label, r, basePath);
 				}
+				
 			}
 		}
 		
@@ -233,25 +273,189 @@ public class CreatePDF extends Application {
 	}
 	
 	/*
-	 * Add the question label, hint, and any media
+	 * Add a row of questions
+	 * Each row is created as a table
+	 * converts questions and results to display items
+	 * As many display items are added as will fit in the current groupWidth
+	 * If the total width of the display items does not add up to the groupWidth then the last item
+	 *  will be extended so that the total is equal to the group width
 	 */
-	private void addQuestion(
-			Document document, 
-			Label label) throws DocumentException {
-		document.add(new Paragraph(label.text));
+	private Row prepareRow(
+			int groupWidth, 
+			ArrayList<Result> record, 
+			org.smap.sdal.model.Survey survey, 
+			int offest,
+			int languageIdx) {
+		
+		Row row = new Row();
+		row.groupWidth = groupWidth;
+		
+		int totalWidth = 0;
+		for(int i = offest; i < record.size(); i++) {
+			Result r = record.get(i);
+			
+			Form form = survey.forms.get(r.fIdx);
+			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
+			Label label = question.labels.get(languageIdx);
+			
+			// Decide whether or not to add the next question to this row
+			int qWidth  = question.getWidth();
+			System.out.println("   +++ " + label.text + " width: " + qWidth);
+			if(qWidth == 0) {
+				// Adjust zero width questions to have the width of the rest of the row
+				qWidth = groupWidth - totalWidth;
+			}
+			if(qWidth > 0 && (totalWidth == 0 || (qWidth + totalWidth <= groupWidth))) {
+				// Include this question
+				DisplayItem di = new DisplayItem();
+				di.width = qWidth;
+				di.text = label.text == null ? "" : label.text;
+				di.hint = label.hint ==  null ? "" : label.hint;
+				di.type = question.type;
+				di.choices = r.choices;
+				row.items.add(di);
+				
+				totalWidth += qWidth;
+			} else {
+				// Adjust width of last question added so that the total is the full width of the row
+				if(totalWidth < groupWidth) {
+					row.items.get(row.items.size() - 1).width += (groupWidth - totalWidth);
+				}
+				break;
+			}
+			
+			
+		}
+		return row;
 	}
 	
-	private void processSelect(Document document, 
-			Results r, 
+	/*
+	 * Add the table row to the document
+	 */
+	PdfPTable processRow(Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
+		PdfPTable table = new PdfPTable(row.groupWidth);
+		System.out.println("++++ New Row width: " + row.groupWidth);
+		for(DisplayItem di : row.items) {
+			di.debug();
+			table.addCell(addDisplayItem(di, basePath));
+		}
+		return table;
+	}
+	
+	/*
+	 * Add the question label, hint, and any media
+	 */
+	private PdfPCell addDisplayItem(DisplayItem di, String basePath) throws BadElementException, MalformedURLException, IOException {
+			
+		PdfPCell cell = new PdfPCell();
+		
+		// Add label
+		StringBuffer html = new StringBuffer();
+		html.append("<span class='label'>");
+		html.append(di.text);
+		html.append("</span>");
+		html.append("<span class='hint'>");
+		html.append(di.hint);
+		html.append("</span>");
+		ArrayList<Element> objects = 
+				(ArrayList<Element>) HTMLWorker.parseToList(new StringReader(html.toString()), styles, null);
+		for(Element element : objects) {
+			cell.addElement(element);
+		}
+		
+		
+		if(di.type.startsWith("select")) {
+			cell = processSelect(di);
+		} else if (di.type.equals("image")) {
+			if(di.value != null && !di.value.equals("")) {
+				Image img = Image.getInstance(basePath + "/" + di.value);
+				img.scaleToFit(200, 300);
+				cell.addElement(img);
+			} else {
+				// TODO add empty image
+			}
+			
+		} else {
+			// Todo process other question types
+			
+		}
+		cell.setColspan(di.width);
+		return cell;
+	}
+	
+	/*
+	 * Add the question label, hint, and any media
+	 *
+	private void addQuestion(
+			Document document, 
 			org.smap.sdal.model.Survey survey,
-			Label label) throws DocumentException, IOException {
+			org.smap.sdal.model.Question question,
+			Label label,
+			Result result,
+			String basePath) throws DocumentException, IOException {
+		
 
+		
+		System.out.println("++++++ result type: " + result.resultsType);
+		if(result.resultsType.startsWith("select")) {
+			processSelect(document, result, survey, label);
+		} else if (result.resultsType.equals("image")) {
+			System.out.println("Image: " + result.value);
+			if(!result.value.equals("")) {
+				Image img = Image.getInstance(basePath + "/" + result.value);
+				img.scaleToFit(200, 300);
+				document.add(img);
+			} else {
+				// TODO add empty image
+			}
+			
+		} else {
+			String v = result.value;
+			if(v == null) {
+				v = "";
+			}
+			document.add(new Paragraph("    " + v));
+		}
+		
+	}
+	*/
+	
+	
+	private int processGroup(
+			Document document, 
+			org.smap.sdal.model.Question question, 
+			Label label
+			) throws IOException, DocumentException {
+		
+		
+		StringBuffer html = new StringBuffer();
+		html.append("<span class='group'><h3>");
+		html.append(label.text);
+		html.append("</h3></span>");
+		ArrayList<Element> objects = 
+				(ArrayList<Element>) HTMLWorker.parseToList(new StringReader(html.toString()), styles, null);
+		for(Element element : objects) {
+			document.add(element);
+		}
+		
+		int width = question.getWidth();
+		if(width <= 0) {
+			width = GROUP_WIDTH_DEFAULT;
+		}
+		
+		return width;
+	}
+	
+	private PdfPCell processSelect(DisplayItem di) { 
+
+		PdfPCell cell = new PdfPCell();
+		
 		List list = new List();
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
 		
-		boolean isSelect = r.resultsType.equals("select") ? true : false;
-		for(Results aChoice : r.choices) {
+		boolean isSelect = di.type.equals("select") ? true : false;
+		for(Result aChoice : di.choices) {
 			ListItem item = new ListItem(aChoice.name);
 			
 			if(isSelect) {
@@ -270,10 +474,16 @@ public class CreatePDF extends Application {
 			list.add(item);
 			
 		}
-		document.add(list);
+		cell.addElement(list);
+		return cell;
 	}
 	
-	
+	private void createStyles() {
+		styles = new StyleSheet();
+		styles.loadTagStyle("h3", "font-size", "20px");
+		styles.loadStyle("group", "color", "#ce4f07");
+		
+	}
 	
 
 }

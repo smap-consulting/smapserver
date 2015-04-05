@@ -20,8 +20,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package surveyMobileAPI;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
@@ -192,10 +196,12 @@ public class WebForm extends Application{
     			String type = manifestList.get(i).type;
     			String name = manifestList.get(i).fileName;
     			String url = manifestList.get(i).url;
-    			if(type.equals("image")) {
-    				type = "images";
+    			if(url != null) {
+	    			if(type.equals("image")) {
+	    				type = "images";
+	    			}
+	    			formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
     			}
-    			formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
     		}
 			
 			// Convert to HTML
@@ -246,7 +252,7 @@ public class WebForm extends Application{
 	/*
 	 * Add the head section
 	 */
-	private String addHead(HttpServletRequest request, 
+	private StringBuffer addHead(HttpServletRequest request, 
 			String formXML, 
 			String instanceXML, 
 			String dataToEditId, 
@@ -298,8 +304,7 @@ public class WebForm extends Application{
 		
 		output.append("</head>\n");
 		
-		return output.toString();		
-		
+		return output;
 	}
 	
 	/*

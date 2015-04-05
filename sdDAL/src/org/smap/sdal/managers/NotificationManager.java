@@ -384,12 +384,12 @@ public class NotificationManager {
 							}
 						}
 						
-						// Convert emails into a semi colon separated string
+						// Convert emails into a comma separated string
 						String emails = "";
 						for(String email : emailList) {			
 							if(isValidEmail(email)) {
 								if(emails.length() > 0) {
-									emails += ";";
+									emails += ",";
 								}
 								emails += email;
 							} else {
