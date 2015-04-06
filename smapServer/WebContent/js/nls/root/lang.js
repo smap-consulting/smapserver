@@ -106,7 +106,8 @@ define({
 	"ft": "File Type",
 	"ft_xls": "XLS Form",
 	"ft_xml": "XML Form",
-	"ft_pdf": "PDF Form",
+	"ft_codebook": "Codebook",
+	"ft_pdf": "PDF Template",
 	
 	// Template Management
 	"tm_s_del": "Show deleted forms",

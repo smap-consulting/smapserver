@@ -1133,7 +1133,7 @@ public class SurveyManager {
 	    		
 		    		String priKey = resultSet.getString(1);
 		    		int newParentKey = resultSet.getInt(1);
-		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0)); 
+		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null)); 
 	    		
 		    		addDataForQuestions(
 		    				cResults,
@@ -1157,7 +1157,7 @@ public class SurveyManager {
 	    		
 	    		String priKey = "";
 	    		int newParentKey = 0;
-	    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0)); 
+	    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null)); 
     		
 	    		addDataForQuestions(
 	    				cResults,
@@ -1212,12 +1212,13 @@ public class SurveyManager {
 			String qName = q.name;
 			String qType = q.type; 
 			String qSource = q.source;
+			String listName = q.list_name;
 			
 			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
     			Form subForm = s.getSubForm(form, q);
     			
     			if(subForm != null) {	
-    				Result nr = new Result(qName, "form", null, false, fIdx, qIdx, 0);
+    				Result nr = new Result(qName, "form", null, false, fIdx, qIdx, 0, null);
 
     				nr.subForm = getResults(subForm, 
     						s.getFormIdx(subForm.id),
@@ -1233,11 +1234,11 @@ public class SurveyManager {
     			
     		} else if(qType.equals("begin group")) { 
     			
-    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0));
+    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
     			
     		} else if(qType.equals("end group")) { 
     			
-    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0));
+    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
     			
     		} else if(qType.equals("select")) {		// Get the data from all the option columns
     				
@@ -1262,7 +1263,7 @@ public class SurveyManager {
 			    	resultSetOptions.next();		// There will only be one record
 				}
 	    		
-		    	Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0);
+		    	Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, listName);
 		    	hasColumns = false;
 		    	int oIdx = -1;
 		    	for(Option option : options) {
@@ -1272,7 +1273,7 @@ public class SurveyManager {
 		    		if(resultSetOptions != null) {
 		    			optSet = resultSetOptions.getBoolean(opt);
 		    		}
-			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx)); 
+			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName)); 
 
 		    		
 				}
@@ -1281,7 +1282,7 @@ public class SurveyManager {
 			} else if(qType.equals("select1")) {		// Get the data from all the option columns
 				
 				ArrayList<Option> options = new ArrayList<Option>(q.getValidChoices(s));
-				Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0);
+				Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, null);
 				String value = "";
 				if(resultSet != null) {
 					value = resultSet.getString(index);
@@ -1291,7 +1292,7 @@ public class SurveyManager {
 				for(Option option : options) {
 					oIdx++;
 		    		boolean optSet = option.value.equals(value) ? true : false;	
-			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx)); 
+			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName)); 
 				}
 		    	record.add(nr);	
 
@@ -1324,7 +1325,7 @@ public class SurveyManager {
 					value="";
 				}
 
-        		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0));
+        		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0, null));
 
     			index++;
 			}

@@ -25,6 +25,7 @@ var	gSurveys,		// Only in this java script file
 	gControlRestore,
 	gShowDeleted = false,
 	gSelectedTemplate,
+	gSelectedTemplateName,
 	gRemote_host,
 	gRemote_user;	
 	
@@ -136,8 +137,11 @@ $(document).ready(function() {
 		type = $("input[name='download_type']:checked", "#download_template").val();
 		language = $('#download_language option:selected').val();
 
-		docURL = "/surveyKPI/survey/" + gSelectedTemplate + "/download?type=" + type + "&language=" + language;
-			  
+		if(type === "pdf") {
+			docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;	
+		} else {
+			docURL = "/surveyKPI/survey/" + gSelectedTemplate + "/download?type=" + type + "&language=" + language;	
+		}
 		window.location.href = docURL;
 	});
 	
@@ -171,7 +175,7 @@ $(document).ready(function() {
 	// Change function on download file type
 	$("input[name='download_type']", "#download_template").change(function() {
 		var type = $("input[name='download_type']:checked", "#download_template").val();
-		if(type === "pdf") {
+		if(type === "pdf" || type == "codebook") {
 			$('#download_language_div').show();
 		} else {
 			$('#download_language_div').hide();
@@ -489,8 +493,8 @@ function completeSurveyList() {
 				$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
 			});
 		});
-		name = $(this).parent().siblings(".displayName").text();
-		$('h4', '#download_template').append(" " + name);
+		gSelectedTemplateName = $(this).parent().siblings(".displayName").text();
+		$('h4', '#download_template').append(" " + gSelectedTemplateName);
 		$('#download_template').modal('show');
 	});
 	

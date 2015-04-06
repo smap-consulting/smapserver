@@ -7,12 +7,14 @@ public class DisplayItem {
 
 	public int width;
 	public String value;
+	public String name;
 	public String hint;
 	public String text;
 	public String type;
-	public ArrayList<Result> choices = null;
+	public boolean isSet = false;
+	public ArrayList<DisplayItem> choices = null;
 	
 	public void debug() {
-		System.out.println("========\n   width: " + width + "\n   value: " + value + "\n     text: " + text + "\n    " + type  );
+		System.out.println("======== Display Item:   width: " + width + "   value: " + value + " text: " + text + " : " + type  );
 	}
 }

@@ -148,31 +148,24 @@ public class Neo4J  {
 		
 
 		if(isRelation) {
-			System.out.println("======================= Is Relation =================");
-			System.out.println("    " + name);
 			Property sourceSelectMultipleProperty = things.nodes.get(source).getSelectMultiple();
 			Property targetSelectMultipleProperty = things.nodes.get(target).getSelectMultiple();
 			
 			if(sourceSelectMultipleProperty != null && targetSelectMultipleProperty != null) {
-				System.out.println("    Target and Source have select multiple");
 				for(String sourceOption : sourceSelectMultipleProperty.optionValues) {
 					for(String targetOption : targetSelectMultipleProperty.optionValues) {
 						writeRecord(rs, things, null, sourceOption, targetOption);
 					}
 				}
 			} else if(sourceSelectMultipleProperty != null) {
-				System.out.println("    Source has select multiple");
 				for(String sourceOption : sourceSelectMultipleProperty.optionValues) {
 					writeRecord(rs, things, null, sourceOption, null);
 				}
 			} else if(targetSelectMultipleProperty != null) {
-				System.out.println("    Target has select multiple");
 				for(String targetOption : targetSelectMultipleProperty.optionValues) {
-					System.out.println("    Writing relation for targetOption: " + targetOption);
 					writeRecord(rs, things, null, null, targetOption);
 				}
 			} else  {
-				System.out.println("    No Select Multiples");
 				writeRecord(rs, things, null, null, null);
 			}
 			

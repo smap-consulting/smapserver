@@ -7,6 +7,7 @@ public class Result {
 	public int fIdx;			// Form Index
 	public int qIdx;			// Question Index
 	public int cIdx;			// Choice Index
+	public String listName;		// List name if this was a choice
 	public String name;
 	public String value;
 	public boolean isSet;		// Used with choices
@@ -15,7 +16,7 @@ public class Result {
 	public ArrayList<Result> choices = null;
 	public Label label;
 	
-	public Result (String n, String t, String v, boolean set, int f, int q, int c) {
+	public Result (String n, String t, String v, boolean set, int f, int q, int c, String ln) {
 		name = n;
 		resultsType = t;
 		value = v;
@@ -23,6 +24,7 @@ public class Result {
 		fIdx = f;
 		qIdx = q;
 		cIdx = c;
+		listName = ln;
 		
 		if(t.startsWith("select")) {
 			choices = new ArrayList<Result> ();

@@ -57,6 +57,7 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
+import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
 
@@ -118,18 +119,21 @@ public class CreatePDF extends Application {
 
 	
 	@GET
-	//@Produces("application/x-download")
+	@Path("/debug")
 	@Produces("application/json")
-	public Response getPDF (@Context HttpServletRequest request, 
+	public Response getPDFDebug (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@QueryParam("instance") String instanceId,
-			@QueryParam("filename") String filename) {
+			@QueryParam("language") String language,
+			@QueryParam("filename") String filename) throws Exception {
 
+		Response response = null;
+		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    return Response.serverError().build();
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
 		}
 		
 		log.info("Create PDF from survey:" + sId + " for record: " + instanceId);
@@ -138,7 +142,14 @@ public class CreatePDF extends Application {
 		Connection connectionSD = SDDataSource.getConnection("createPDF");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
-		// End Authorisation
+		// End Authorisation 
+		
+		if(language != null) {
+			language = language.replace("'", "''");	// Escape apostrophes
+		} else {
+			language = "none";
+		}
+		
 		
 		org.smap.sdal.model.Survey survey = null;
 		
@@ -150,7 +161,119 @@ public class CreatePDF extends Application {
 			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
 		}
 		
-		Response response = null;
+		SurveyManager sm = new SurveyManager();
+		Connection cResults = ResultsDataSource.getConnection("createPDF");
+		try {
+			
+			/*
+			 * Get the results
+			 */
+			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
+			// Return data as JSON - Debug only
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(survey);
+			response = Response.ok(resp).build();
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+			throw new Exception("SQL Error: " + e.getMessage());
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			throw new Exception("Exception: " + e.getMessage());
+		} finally {
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+
+	}
+	
+	@GET
+	//@Produces("application/pdf")
+	@Produces("application/x-download")
+	//@Produces("application/json")
+	public void getPDF (@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("sId") int sId,
+			@QueryParam("instance") String instanceId,
+			@QueryParam("language") String language,
+			@QueryParam("filename") String filename) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+		
+		log.info("Create PDF from survey:" + sId + " for record: " + instanceId);
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("createPDF");	
+		a.isAuthorised(connectionSD, request.getRemoteUser());		
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		// End Authorisation 
+		
+		/*
+		 * Get parameters
+		 */
+		if(filename == null || filename.trim().length() == 0) {
+			filename = "template";
+		}
+		String escapedFileName = null;
+		try {
+			escapedFileName = URLDecoder.decode(filename, "UTF-8");
+			escapedFileName = URLEncoder.encode(escapedFileName, "UTF-8");
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Encoding Filename Error", e);
+		}
+		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
+		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
+
+		
+		escapedFileName = escapedFileName + ".pdf";
+		
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + escapedFileName +"\"");	
+		response.setStatus(HttpServletResponse.SC_OK);
+		
+		if(language != null) {
+			language = language.replace("'", "''");	// Escape apostrophes
+		} else {
+			language = "none";
+		}
+		
+		
+		org.smap.sdal.model.Survey survey = null;
+		
+		// Get the base path
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		
 		SurveyManager sm = new SurveyManager();
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		try {
@@ -175,34 +298,28 @@ public class CreatePDF extends Application {
 			
 			/*
 			 * Create the PDF
-			 */
-			if(filename != null) {
-				
-				createStyles();
-				
-				Document document = new Document();
-				PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(filename));
-				writer.setInitialLeading(16);
-				document.open();
-		        
-				for(int i = 0; i < results.size(); i++) {
-					processForm(document, results.get(i), survey, basePath);		
-				}
-				document.close();
-			}
+			 */			
+			createStyles();
 			
-			// Return data as JSON - Debug only
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(survey);
-			response = Response.ok(resp).build();
+			Document document = new Document();
+			PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+			writer.setInitialLeading(16);
+			document.open();
+	        
+			int languageIdx = getLanguageIdx(survey, language);
+			System.out.println("++++++++++++++++ Language Idx:" + languageIdx);
+			for(int i = 0; i < results.size(); i++) {
+				processForm(document, results.get(i), survey, basePath, languageIdx);		
+			}
+			document.close();
 			
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "SQL Error", e);
-			response = Response.serverError().build();
+			throw new Exception("SQL Error: " + e.getMessage());
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			response = Response.serverError().build();
+			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
 			try {
@@ -227,9 +344,24 @@ public class CreatePDF extends Application {
 			
 		}
 
-		return response;
 	}
 	
+	/*
+	 * Get the index in the language array for the provided language
+	 */
+	private int getLanguageIdx(org.smap.sdal.model.Survey survey, String language) {
+		int idx = 0;
+		
+		if(survey != null && survey.languages != null) {
+			for(int i = 0; i < survey.languages.size(); i++) {
+				if(survey.languages.get(i).equals(language)) {
+					idx = i;
+					break;
+				}
+			}
+		}
+		return idx;
+	}
 	/*
 	 * Process the form
 	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
@@ -239,7 +371,8 @@ public class CreatePDF extends Application {
 			Document document,  
 			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
-			String basePath) throws DocumentException, IOException {
+			String basePath,
+			int languageIdx) throws DocumentException, IOException {
 		
 		int groupWidth = 4;
 		
@@ -247,11 +380,11 @@ public class CreatePDF extends Application {
 			Result r = record.get(j);
 			if(r.resultsType.equals("form")) {
 				for(int k = 0; k < r.subForm.size(); k++) {
-					processForm(document, r.subForm.get(k), survey, basePath);
+					processForm(document, r.subForm.get(k), survey, basePath, languageIdx);
 				} 
 			} else if(r.qIdx >= 0) {
 				// Process the question
-				int languageIdx = 0;		// TODO get language in parameters
+				
 				Form form = survey.forms.get(r.fIdx);
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				Label label = question.labels.get(languageIdx);
@@ -288,6 +421,7 @@ public class CreatePDF extends Application {
 			int languageIdx) {
 		
 		Row row = new Row();
+		System.out.println("Prepare row");
 		row.groupWidth = groupWidth;
 		
 		int totalWidth = 0;
@@ -300,7 +434,6 @@ public class CreatePDF extends Application {
 			
 			// Decide whether or not to add the next question to this row
 			int qWidth  = question.getWidth();
-			System.out.println("   +++ " + label.text + " width: " + qWidth);
 			if(qWidth == 0) {
 				// Adjust zero width questions to have the width of the rest of the row
 				qWidth = groupWidth - totalWidth;
@@ -312,8 +445,14 @@ public class CreatePDF extends Application {
 				di.text = label.text == null ? "" : label.text;
 				di.hint = label.hint ==  null ? "" : label.hint;
 				di.type = question.type;
-				di.choices = r.choices;
+				di.name = question.name;
+				di.choices = convertChoiceListToDisplayItems(
+						survey, 
+						question,
+						r.choices, 
+						languageIdx);
 				row.items.add(di);
+				System.out.println("Adding display item: " + di.text + " : " + di == null ? "" : di.choices == null ? "" : di.choices.size());
 				
 				totalWidth += qWidth;
 			} else {
@@ -330,11 +469,38 @@ public class CreatePDF extends Application {
 	}
 	
 	/*
+	 * Convert the results  and survey definition arrays to display items
+	 */
+	ArrayList<DisplayItem> convertChoiceListToDisplayItems(
+			org.smap.sdal.model.Survey survey, 
+			org.smap.sdal.model.Question question,
+			ArrayList<Result> choiceResults,
+			int languageIdx) {
+		
+		System.out.println("convertChoiceListToDisplayItems: " + choiceResults);
+		ArrayList<DisplayItem> diList = null;
+		if(choiceResults != null) {
+			diList = new ArrayList<DisplayItem>();
+			for(Result r : choiceResults) {
+
+				Option option = survey.optionLists.get(r.listName).get(r.cIdx);
+				Label label = option.labels.get(languageIdx);
+				System.out.println("Choice: " + label.text);
+				DisplayItem di = new DisplayItem();
+				di.text = label.text == null ? "" : label.text;
+				di.type = "choice";
+				diList.add(di);
+			}
+		}
+		return diList;
+	}
+	
+	/*
 	 * Add the table row to the document
 	 */
 	PdfPTable processRow(Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
 		PdfPTable table = new PdfPTable(row.groupWidth);
-		System.out.println("++++ New Row width: " + row.groupWidth);
+		System.out.println("++++ process Rows " + row.items.size());
 		for(DisplayItem di : row.items) {
 			di.debug();
 			table.addCell(addDisplayItem(di, basePath));
@@ -349,14 +515,22 @@ public class CreatePDF extends Application {
 			
 		PdfPCell cell = new PdfPCell();
 		
+		System.out.println("Add display item: "  + di.name + " width: " + di.width);
 		// Add label
 		StringBuffer html = new StringBuffer();
 		html.append("<span class='label'>");
-		html.append(di.text);
+		if(di.text != null && di.text.trim().length() > 0) {
+			html.append(di.text);
+		} else {
+			html.append(di.name);
+		}
 		html.append("</span>");
 		html.append("<span class='hint'>");
-		html.append(di.hint);
+		if(di.hint != null) {
+			html.append(di.hint);
 		html.append("</span>");
+		}
+		System.out.println("html: " + html.toString());
 		ArrayList<Element> objects = 
 				(ArrayList<Element>) HTMLWorker.parseToList(new StringReader(html.toString()), styles, null);
 		for(Element element : objects) {
@@ -365,7 +539,7 @@ public class CreatePDF extends Application {
 		
 		
 		if(di.type.startsWith("select")) {
-			cell = processSelect(di);
+			processSelect(cell, di);
 		} else if (di.type.equals("image")) {
 			if(di.value != null && !di.value.equals("")) {
 				Image img = Image.getInstance(basePath + "/" + di.value);
@@ -382,43 +556,6 @@ public class CreatePDF extends Application {
 		cell.setColspan(di.width);
 		return cell;
 	}
-	
-	/*
-	 * Add the question label, hint, and any media
-	 *
-	private void addQuestion(
-			Document document, 
-			org.smap.sdal.model.Survey survey,
-			org.smap.sdal.model.Question question,
-			Label label,
-			Result result,
-			String basePath) throws DocumentException, IOException {
-		
-
-		
-		System.out.println("++++++ result type: " + result.resultsType);
-		if(result.resultsType.startsWith("select")) {
-			processSelect(document, result, survey, label);
-		} else if (result.resultsType.equals("image")) {
-			System.out.println("Image: " + result.value);
-			if(!result.value.equals("")) {
-				Image img = Image.getInstance(basePath + "/" + result.value);
-				img.scaleToFit(200, 300);
-				document.add(img);
-			} else {
-				// TODO add empty image
-			}
-			
-		} else {
-			String v = result.value;
-			if(v == null) {
-				v = "";
-			}
-			document.add(new Paragraph("    " + v));
-		}
-		
-	}
-	*/
 	
 	
 	private int processGroup(
@@ -446,17 +583,16 @@ public class CreatePDF extends Application {
 		return width;
 	}
 	
-	private PdfPCell processSelect(DisplayItem di) { 
+	private void processSelect(PdfPCell cell, DisplayItem di) { 
 
-		PdfPCell cell = new PdfPCell();
-		
+		System.out.println("****** processSelect length: " + di.choices.size());
 		List list = new List();
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
 		
 		boolean isSelect = di.type.equals("select") ? true : false;
-		for(Result aChoice : di.choices) {
-			ListItem item = new ListItem(aChoice.name);
+		for(DisplayItem aChoice : di.choices) {
+			ListItem item = new ListItem(aChoice.text);
 			
 			if(isSelect) {
 				if(aChoice.isSet) {
@@ -472,10 +608,12 @@ public class CreatePDF extends Application {
 				}
 			}
 			list.add(item);
+			System.out.println("Add item:-----------------: " + aChoice.text);
+			aChoice.debug();
 			
 		}
 		cell.addElement(list);
-		return cell;
+
 	}
 	
 	private void createStyles() {
