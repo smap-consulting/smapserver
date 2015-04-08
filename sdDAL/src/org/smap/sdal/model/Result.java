@@ -11,14 +11,14 @@ public class Result {
 	public String name;
 	public String value;
 	public boolean isSet;		// Used with choices
-	public String resultsType;	// form || bg (begin group) || eg (end group) || question type || choice 
+	public String type;	// form || choice || key || a question type
 	public ArrayList<ArrayList<Result>> subForm = null;
 	public ArrayList<Result> choices = null;
 	public Label label;
 	
 	public Result (String n, String t, String v, boolean set, int f, int q, int c, String ln) {
 		name = n;
-		resultsType = t;
+		type = t;
 		value = v;
 		isSet = set;
 		fIdx = f;

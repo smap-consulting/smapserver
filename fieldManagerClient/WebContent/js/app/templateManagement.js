@@ -481,7 +481,6 @@ function completeSurveyList() {
 	});
 	
 	$('.pdf_td').click(function(e) {
-		var name;
 		
 		gSelectedTemplate = $(this).val();
 		$.getJSON("/surveyKPI/languages/" + gSelectedTemplate, function(data) {

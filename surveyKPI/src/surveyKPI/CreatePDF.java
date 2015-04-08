@@ -18,20 +18,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -47,12 +41,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
@@ -74,21 +65,22 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Font.FontFamily;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.ZapfDingbatsList;
-import com.itextpdf.text.html.simpleparser.HTMLWorker;
-import com.itextpdf.text.html.simpleparser.StyleSheet;
 import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.ColumnText;
-import com.itextpdf.text.pdf.GrayColor;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfFormField;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.pdf.RadioCheckField;
+import com.itextpdf.tool.xml.ElementList;
+import com.itextpdf.tool.xml.XMLWorker;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
+import com.itextpdf.tool.xml.css.CssFile;
+import com.itextpdf.tool.xml.css.StyleAttrCSSResolver;
+import com.itextpdf.tool.xml.html.Tags;
+import com.itextpdf.tool.xml.parser.XMLParser;
+import com.itextpdf.tool.xml.pipeline.css.CSSResolver;
+import com.itextpdf.tool.xml.pipeline.css.CssResolverPipeline;
+import com.itextpdf.tool.xml.pipeline.end.ElementHandlerPipeline;
+import com.itextpdf.tool.xml.pipeline.html.HtmlPipeline;
+import com.itextpdf.tool.xml.pipeline.html.HtmlPipelineContext;
 
 /*
  * Creates a PDF
@@ -114,9 +106,14 @@ public class CreatePDF extends Application {
 	}
 	
 	public static Font WingDings = null;
-	private StyleSheet styles = null;
+	public static Font arial = null;
 	private static int GROUP_WIDTH_DEFAULT = 4;
+	private static final String DEFAULT_CSS = "/resources/css/default_pdf.css";
 
+	private class Parser {
+		XMLParser xmlParser = null;
+		ElementList elements = null;
+	}
 	
 	@GET
 	@Path("/debug")
@@ -210,9 +207,7 @@ public class CreatePDF extends Application {
 	}
 	
 	@GET
-	//@Produces("application/pdf")
 	@Produces("application/x-download")
-	//@Produces("application/json")
 	public void getPDF (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
@@ -284,22 +279,25 @@ public class CreatePDF extends Application {
 			
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/Wingdings.ttf", "wingdings");
+				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "arial");
 			} else {
 				// Assume on Linux
 			}
 			WingDings = FontFactory.getFont("wingdings", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
+			arial = FontFactory.getFont("arial", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
 			
 			/*
 			 * Get the results
 			 */
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
 			ArrayList<ArrayList<Result>> results = survey.results;	
-			
+			 
 			/*
 			 * Create the PDF
 			 */			
-			createStyles();
+			Parser parser = getXMLParser(request);
 			
 			Document document = new Document();
 			PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
@@ -307,9 +305,8 @@ public class CreatePDF extends Application {
 			document.open();
 	        
 			int languageIdx = getLanguageIdx(survey, language);
-			System.out.println("++++++++++++++++ Language Idx:" + languageIdx);
 			for(int i = 0; i < results.size(); i++) {
-				processForm(document, results.get(i), survey, basePath, languageIdx);		
+				processForm(parser, document, results.get(i), survey, basePath, languageIdx);		
 			}
 			document.close();
 			
@@ -368,6 +365,7 @@ public class CreatePDF extends Application {
 	 *  can be applied to showing the form on the screen and generating the PDF
 	 */
 	private void processForm(
+			Parser parser,
 			Document document,  
 			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
@@ -378,9 +376,9 @@ public class CreatePDF extends Application {
 		
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
-			if(r.resultsType.equals("form")) {
+			if(r.type.equals("form")) {
 				for(int k = 0; k < r.subForm.size(); k++) {
-					processForm(document, r.subForm.get(k), survey, basePath, languageIdx);
+					processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx);
 				} 
 			} else if(r.qIdx >= 0) {
 				// Process the question
@@ -389,20 +387,43 @@ public class CreatePDF extends Application {
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				Label label = question.labels.get(languageIdx);
 			
-				if(question.type.equals("begin group")) {
-					groupWidth = processGroup(document, question, label);
-					System.out.println("######### group width: " + groupWidth);
-				} else {
-					Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
-					document.add(processRow(row, basePath));
-					j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
-					//addQuestion(document, survey, question, label, r, basePath);
+				if(includeResult(r, question.inMeta)) {
+					if(question.type.equals("begin group")) {
+						groupWidth = processGroup(parser, document, question, label);
+					} else {
+						Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
+						document.add(processRow(parser, row, basePath));
+						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
+						//addQuestion(document, survey, question, label, r, basePath);
+					}
 				}
 				
 			}
 		}
 		
 		return;
+	}
+	
+	/*
+	 * Make a decision as to whether this result should be included in the PDF
+	 */
+	private boolean includeResult(Result r, boolean inMeta) {
+		boolean include = true;
+		
+		if(r.name == null) {
+			include = false;
+		} else if(r.name.startsWith("meta") && r.type.equals("begin group")){
+			include = false;
+		} else if(inMeta) {
+			include = false;
+		} else if(r.name.startsWith("meta_group")) {
+			include = false;
+		} else if(r.name.equals("_task_key")) {
+			include = false;
+		}
+		
+		
+		return include;
 	}
 	
 	/*
@@ -421,7 +442,6 @@ public class CreatePDF extends Application {
 			int languageIdx) {
 		
 		Row row = new Row();
-		System.out.println("Prepare row");
 		row.groupWidth = groupWidth;
 		
 		int totalWidth = 0;
@@ -446,13 +466,13 @@ public class CreatePDF extends Application {
 				di.hint = label.hint ==  null ? "" : label.hint;
 				di.type = question.type;
 				di.name = question.name;
+				di.value = r.value;
 				di.choices = convertChoiceListToDisplayItems(
 						survey, 
 						question,
 						r.choices, 
 						languageIdx);
 				row.items.add(di);
-				System.out.println("Adding display item: " + di.text + " : " + di == null ? "" : di.choices == null ? "" : di.choices.size());
 				
 				totalWidth += qWidth;
 			} else {
@@ -477,7 +497,6 @@ public class CreatePDF extends Application {
 			ArrayList<Result> choiceResults,
 			int languageIdx) {
 		
-		System.out.println("convertChoiceListToDisplayItems: " + choiceResults);
 		ArrayList<DisplayItem> diList = null;
 		if(choiceResults != null) {
 			diList = new ArrayList<DisplayItem>();
@@ -485,10 +504,10 @@ public class CreatePDF extends Application {
 
 				Option option = survey.optionLists.get(r.listName).get(r.cIdx);
 				Label label = option.labels.get(languageIdx);
-				System.out.println("Choice: " + label.text);
 				DisplayItem di = new DisplayItem();
 				di.text = label.text == null ? "" : label.text;
 				di.type = "choice";
+				di.isSet = r.isSet;
 				diList.add(di);
 			}
 		}
@@ -498,12 +517,11 @@ public class CreatePDF extends Application {
 	/*
 	 * Add the table row to the document
 	 */
-	PdfPTable processRow(Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
+	PdfPTable processRow(Parser parser, Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
 		PdfPTable table = new PdfPTable(row.groupWidth);
-		System.out.println("++++ process Rows " + row.items.size());
 		for(DisplayItem di : row.items) {
 			di.debug();
-			table.addCell(addDisplayItem(di, basePath));
+			table.addCell(addDisplayItem(parser, di, basePath));
 		}
 		return table;
 	}
@@ -511,11 +529,10 @@ public class CreatePDF extends Application {
 	/*
 	 * Add the question label, hint, and any media
 	 */
-	private PdfPCell addDisplayItem(DisplayItem di, String basePath) throws BadElementException, MalformedURLException, IOException {
+	private PdfPCell addDisplayItem(Parser parser, DisplayItem di, String basePath) throws BadElementException, MalformedURLException, IOException {
 			
 		PdfPCell cell = new PdfPCell();
-		
-		System.out.println("Add display item: "  + di.name + " width: " + di.width);
+		 
 		// Add label
 		StringBuffer html = new StringBuffer();
 		html.append("<span class='label'>");
@@ -530,10 +547,11 @@ public class CreatePDF extends Application {
 			html.append(di.hint);
 		html.append("</span>");
 		}
-		System.out.println("html: " + html.toString());
-		ArrayList<Element> objects = 
-				(ArrayList<Element>) HTMLWorker.parseToList(new StringReader(html.toString()), styles, null);
-		for(Element element : objects) {
+		
+		
+		parser.elements.clear();
+		parser.xmlParser.parse(new StringReader(html.toString()));
+		for(Element element : parser.elements) {
 			cell.addElement(element);
 		}
 		
@@ -541,7 +559,7 @@ public class CreatePDF extends Application {
 		if(di.type.startsWith("select")) {
 			processSelect(cell, di);
 		} else if (di.type.equals("image")) {
-			if(di.value != null && !di.value.equals("")) {
+			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
 				Image img = Image.getInstance(basePath + "/" + di.value);
 				img.scaleToFit(200, 300);
 				cell.addElement(img);
@@ -551,7 +569,7 @@ public class CreatePDF extends Application {
 			
 		} else {
 			// Todo process other question types
-			
+			cell.addElement(new Paragraph(di.value));
 		}
 		cell.setColspan(di.width);
 		return cell;
@@ -559,6 +577,7 @@ public class CreatePDF extends Application {
 	
 	
 	private int processGroup(
+			Parser parser,
 			Document document, 
 			org.smap.sdal.model.Question question, 
 			Label label
@@ -569,9 +588,10 @@ public class CreatePDF extends Application {
 		html.append("<span class='group'><h3>");
 		html.append(label.text);
 		html.append("</h3></span>");
-		ArrayList<Element> objects = 
-				(ArrayList<Element>) HTMLWorker.parseToList(new StringReader(html.toString()), styles, null);
-		for(Element element : objects) {
+		
+		parser.elements.clear();
+		parser.xmlParser.parse(new StringReader(html.toString()));
+		for(Element element : parser.elements) {
 			document.add(element);
 		}
 		
@@ -585,7 +605,6 @@ public class CreatePDF extends Application {
 	
 	private void processSelect(PdfPCell cell, DisplayItem di) { 
 
-		System.out.println("****** processSelect length: " + di.choices.size());
 		List list = new List();
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
@@ -608,18 +627,50 @@ public class CreatePDF extends Application {
 				}
 			}
 			list.add(item);
-			System.out.println("Add item:-----------------: " + aChoice.text);
-			aChoice.debug();
+			//aChoice.debug();
 			
 		}
 		cell.addElement(list);
 
 	}
 	
-	private void createStyles() {
-		styles = new StyleSheet();
-		styles.loadTagStyle("h3", "font-size", "20px");
-		styles.loadStyle("group", "color", "#ce4f07");
+	private Parser getXMLParser(HttpServletRequest request) {
+		
+		Parser parser = new Parser();
+		
+        // CSS
+		 CSSResolver cssResolver = new StyleAttrCSSResolver();
+		 try {
+		     CssFile cssFile = XMLWorkerHelper.getCSS( request.getServletContext().getResourceAsStream(DEFAULT_CSS));
+		     cssResolver.addCss(cssFile);
+		 } catch(Exception e) {
+			 log.log(Level.SEVERE, "Failed to get CSS file", e);
+			 cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
+		 }
+ 
+        // HTML
+        HtmlPipelineContext htmlContext = new HtmlPipelineContext(null);
+        htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
+        htmlContext.autoBookmark(false);
+ 
+        // Pipelines
+        parser.elements = new ElementList();
+        ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
+        HtmlPipeline html = new HtmlPipeline(htmlContext, end);
+        CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
+ 
+        // XML Worker
+        XMLWorker worker = new XMLWorker(css, true);        
+        parser.xmlParser = new XMLParser(worker);
+        
+        return parser;
+        
+		//styles = new StyleSheet();
+		
+		//styles.loadTagStyle("body", "face", "arial");
+		//styles.loadTagStyle("h3", "font-size", "20px");
+		//styles.loadStyle("group", "color", "#ce4f07");	
+		//styles.loadTagStyle("body", "encoding", BaseFont.IDENTITY_H);
 		
 	}
 	

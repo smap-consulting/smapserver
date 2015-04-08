@@ -19,6 +19,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Show an entire survey in a table
  */
+var gSelectedTemplate,
+	gInstanceId;
+
 function setTableSurvey(view) {
 
 	var $selHead = $('#p' + view.pId).find('.phead'),
@@ -87,6 +90,26 @@ function setTableSurvey(view) {
 		showTable(currentTable, view, data[currentTable], data[currentTable].tableName, sMeta.survey_ident);
 	}
 
+	/*
+	 * Enable the dialog to create a PDF of an instance or edit in WebForms
+	 */
+	$('#instance_functions_popup').dialog(
+		{
+			autoOpen: false, closeOnEscape:true, draggable:true, model:true,
+			show:"drop",
+			zIndex: 2000,
+			buttons: [
+		        {
+		        	text: "Ok",
+		        	click: function() {
+		        		$(this).dialog("close");
+		        	}
+		        }
+			]
+		}
+	);
+	$('#download_edit, #download_pdf').button();
+	
 	// Enable the export and delete button
 	$selFoot.find('.tExport').button().off().click(function() {
 		exportTable($(this), view);
@@ -164,7 +187,7 @@ function showTable(tableIdx, view, tableItems, tableName, survey_ident) {
 	}
 	
 	if(tableItems && tableItems.features && tableItems.features.length > 0) {
-		generateTable(elemMain, tableItems, "", survey_ident);
+		generateTable(elemMain, tableItems, "", survey_ident, view.sId);
 		addRightClickToTable($selMain, view.sId, view);
 		$selMain.find('table').tablesorter();
 		addMoreLessButtons($selMain, view, tableName, tableItems);
@@ -215,7 +238,7 @@ function setTableQuestion(view) {
 	 * Get all the features for all the items in this form, 
 	 */ 
 	if(data) {
-		generateTable(elemMain, data, disp_desc, undefined);
+		generateTable(elemMain, data, disp_desc, undefined, 0);
 		addRightClickToTable($selMain, view.sId);
 	} else {
 		$selHead.html("No data available");
@@ -332,13 +355,39 @@ function addRightClickToTable($elem, sId, view) {
 	}
 	
 	function tableEditFn(survey, theView) {
+		
 		$elem.find('.menu_button').off().click(function(e) {
 			var $this = $(this);
 			var pkey = $this.data("pkey");
 			var survey_ident = $this.data("ident");	
 			var isBad = $this.parent().parent().find('.bad_r').size() !== 0;
 			var isReplaced = $this.parent().parent().find('.bad_replaced').size() !== 0;
+			var sId =  $this.data("id");	
+			var instanceid = $this.data("instanceid");
 			
+			$.getJSON("/surveyKPI/languages/" + sId, function(data) {
+
+				var $languageSelect = $('#download_language');
+				$languageSelect.empty();
+				
+				$.each(data, function(j, item) {
+					$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
+				});
+			});
+			
+			gSelectedTemplate = sId;
+			gInstanceId = instanceid;
+			
+			if(isBad && isReplaced) {
+				$('#download_edit').button("disable");
+			} else {
+				$('#download_edit').button("enable");
+				$('#download_edit').attr("href", "/webForm/" + survey_ident + "?datakey=prikey&datakeyvalue="+pkey);
+			}
+			
+			$('#instance_functions_popup').dialog("open");
+			
+			/*
 			if(isBad && isReplaced) {
 				//alert("You cannot edit a record that has been replaced by another record");
 				alert(localise.set["msg_no_edit_rep"]);
@@ -346,11 +395,26 @@ function addRightClickToTable($elem, sId, view) {
 				document.location.href = "/webForm/" + survey_ident +
 						"?datakey=prikey&datakeyvalue="+pkey;
 			}
+			*/
 			return false;
 		});
+		
 	}
 	
 	toggleBadFn(sId, view);
 	tableEditFn(sId, view);
 }
+
+$('#download_pdf').click(function () {
+	var docURL,
+	language;
+
+	language = $('#download_language option:selected').val();
+
+	docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + "instance" + 
+		"&language=" + language + "&instance=" + gInstanceId;	
+	
+	window.location.href = docURL;
+	$('#instance_functions_popup').dialog("close");
+});
 

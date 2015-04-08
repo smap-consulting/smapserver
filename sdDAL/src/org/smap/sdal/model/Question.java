@@ -68,13 +68,11 @@ public class Question {
 		/*
 		 * If the width has not been set yet attempt to get it from appearance
 		 */
-		System.out.println("Getting width: " + appearance);
 		if(width == -1) {
 			width = 0;
 			if(appearance != null) {
 				if(appearance.matches("w[0-9]")) {		// TODO proper regex to match any w[0-9]
 					
-					System.out.println("Appearance is set");
 					int idx1 = appearance.indexOf('w');	// TODO do this properly
 					int idx2 = appearance.indexOf(' ', idx1);
 					String sWidth = null;
@@ -83,7 +81,6 @@ public class Question {
 					} else {
 						sWidth = appearance.substring(idx1 + 1);
 					}
-					System.out.println("Found matching group width of: " + appearance);
 					try {
 						width = Integer.parseInt(sWidth);
 					} catch (Exception e) {

@@ -337,6 +337,25 @@
 		</div>
 	</div>
 
+	<!-- Popup to allow the user to download a PDF of the instance or edit it using a WebForm -->
+	<div id="instance_functions_popup" style="display:none;">
+	
+		<form role="form">
+			<fieldset>
+				<legend class="lang" data-lang="c_action">Action:</legend>
+				<a id="download_edit" class="instance_functions" target="_blank" href="#">Edit instance in WebForm</a><br/>
+   				<a id="download_pdf" class="instance_functions" href="#">Download PDF of Instance</a>
+   			</fieldset>
+			<div id="download_language_div">
+				<fieldset>
+					<legend class="lang" data-lang="c_lang">Language</legend>
+					<select id="download_language" class="form-control"></select>
+				</fieldset>							
+			</div>
+		</form>
+								
+	</div>
+
 
 	<script type="text/javascript" src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script> 
      

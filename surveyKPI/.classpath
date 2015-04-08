@@ -69,5 +69,6 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/core-renderer.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/itextpdf-5.5.5.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlworker-5.5.4.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

@@ -20,7 +20,7 @@ var gTab = [];
 	gIdx = -1;
 
 
-function generateTable(elementId, data, disp_desc, survey_ident) {
+function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 	
 	console.log("generate table");
 	var i,j,k,
@@ -201,10 +201,14 @@ function generateTable(elementId, data, disp_desc, survey_ident) {
 				if(typeof globals !== "undefined" && globals.gCanEdit) {
 					// Add a button to edit the survey data in web forms
 					gTab[++gIdx] = '<td>';
-					gTab[++gIdx] = '<div class="menu_button context_table" data-pkey="';
+					gTab[++gIdx] = '<div class="menu_button btn context_table dropdown-toggle" type="button" data-toggle="dropdown" data-pkey="';
 						gTab[++gIdx] = groups[i].properties.prikeys[0];
 						gTab[++gIdx] = '" data-ident="';
 						gTab[++gIdx] = survey_ident;
+						gTab[++gIdx] = '" data-id="';
+						gTab[++gIdx] = sId;
+						gTab[++gIdx] = '" data-instanceid="';
+						gTab[++gIdx] = groups[i].properties.instanceid;
 						gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
 					gTab[++gIdx] = '</td>';
 				}

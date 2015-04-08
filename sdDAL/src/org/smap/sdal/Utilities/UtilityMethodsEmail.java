@@ -698,7 +698,7 @@ public class UtilityMethodsEmail {
 				pstmt.setInt(1, s.id);
 				pstmt.setString(2, s.languages.get(i));
 				pstmt.setString(3, text_id);
-				log.info("Get labels: " + pstmt.toString());
+				//log.info("Get labels: " + pstmt.toString());
 				
 				ResultSet resultSet = pstmt.executeQuery();		
 				while(resultSet.next()) {
@@ -734,7 +734,7 @@ public class UtilityMethodsEmail {
 					pstmt.setString(2, s.languages.get(i));
 					pstmt.setString(3, hint_id);
 					
-					log.info("Get hint: " + pstmt.toString());
+					//log.info("Get hint: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					
 					if(resultSet.next()) {

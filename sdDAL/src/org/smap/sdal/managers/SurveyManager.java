@@ -294,7 +294,7 @@ public class SurveyManager {
 				+ "q.appearance " 
 				+ "from question q "
 				+ "where q.f_id = ? "
-				+ "and q.qname != '_instanceid' "
+				//+ "and q.qname != '_instanceid' "
 				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
@@ -1235,10 +1235,12 @@ public class SurveyManager {
     		} else if(qType.equals("begin group")) { 
     			
     			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
+    			index--;		// Decrement the index as the begin group was not in the SQL query
     			
     		} else if(qType.equals("end group")) { 
     			
     			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
+    			index--;		// Decrement the index as the end group was not in the SQL query
     			
     		} else if(qType.equals("select")) {		// Get the data from all the option columns
     				
@@ -1278,6 +1280,8 @@ public class SurveyManager {
 		    		
 				}
 		    	record.add(nr);	
+		    	
+		    	index--;		// Decrement the index as the select multiple was not in the SQL query
 			
 			} else if(qType.equals("select1")) {		// Get the data from all the option columns
 				
@@ -1327,8 +1331,13 @@ public class SurveyManager {
 
         		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0, null));
 
-    			index++;
 			}
+			try {
+				System.out.println("Index: " + index + " : " + q.name + " : " + q.type + " ; " + resultSet.getString(index));
+			} catch (Exception e) {
+				
+			}
+			index++;
 			
 		}
     }
