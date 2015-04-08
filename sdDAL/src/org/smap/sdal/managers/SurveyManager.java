@@ -1232,6 +1232,10 @@ public class SurveyManager {
             		record.add(nr);
     			}
     			
+    			if(qType.equals("begin repeat")) {
+    				index--;		// Decrement the index as the begin repeat was not in the SQL query
+    			}
+    			
     		} else if(qType.equals("begin group")) { 
     			
     			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));

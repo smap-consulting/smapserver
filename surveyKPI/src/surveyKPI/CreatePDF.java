@@ -301,7 +301,7 @@ public class CreatePDF extends Application {
 			
 			Document document = new Document();
 			PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
-			writer.setInitialLeading(16);
+			writer.setInitialLeading(12);
 			document.open();
 	        
 			int languageIdx = getLanguageIdx(survey, language);
@@ -394,7 +394,6 @@ public class CreatePDF extends Application {
 						Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
 						document.add(processRow(parser, row, basePath));
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
-						//addQuestion(document, survey, question, label, r, basePath);
 					}
 				}
 				
