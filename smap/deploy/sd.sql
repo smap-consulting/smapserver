@@ -259,3 +259,5 @@ ALTER TABLE dynamic_users OWNER TO ws;
 -- Class in survey too small
 alter table survey alter column class set data type text;
 
+-- User configuration for PDF reports
+alter table users add column settings text;

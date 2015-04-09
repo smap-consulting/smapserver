@@ -164,7 +164,7 @@ public class Survey extends Application {
 						source_name = source_name + ".xml";
 					} else if(type.equals("xls")) {
 						source_name = source_name + ".xls";
-					} else if(type.equals("pdf")) {
+					} else if(type.equals("codebook")) {
 						source_name = source_name + ".xml";		// input name is xml for a pdf file
 					}
 					
@@ -191,8 +191,8 @@ public class Survey extends Application {
 						target_name = target_name + ".xml";
 					} else if(type.equals("xls")) {
 						target_name = target_name + ".xls";
-					} else if(type.equals("pdf")) {
-						target_name = target_name + ".xml";		// input name is xml for a pdf file
+					} else if(type.equals("codebook")) {
+						target_name = target_name + ".xml";		// input name is xml for a codebook file
 					}
 							
 					if(type.equals("xls")) {
@@ -213,7 +213,7 @@ public class Survey extends Application {
 				
 					try {  		
 		        		int code = 0;
-						if(type.equals("pdf")) {
+						if(type.equals("codebook")) {
 							Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/gettemplate.sh " + source_name +
 									" " + language +
 		        					" >> /var/log/tomcat7/survey.log 2>&1"});
@@ -227,7 +227,7 @@ public class Survey extends Application {
 		                dis.readFully(fileData);
 		                dis.close();
 		                
-		                if(type.equals("pdf")) {
+		                if(type.equals("codebook")) {
 		                	builder.header("Content-type","application/pdf; charset=UTF-8");
 		                } else if(type.equals("xls")) {
 		                	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");

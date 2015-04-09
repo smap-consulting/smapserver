@@ -18,6 +18,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -26,6 +27,7 @@ import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -41,6 +43,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -65,9 +68,12 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.XMLWorker;
@@ -106,7 +112,7 @@ public class CreatePDF extends Application {
 	}
 	
 	public static Font WingDings = null;
-	public static Font arial = null;
+	public static Font defaultFont = null;
 	private static int GROUP_WIDTH_DEFAULT = 4;
 	private static final String DEFAULT_CSS = "/resources/css/default_pdf.css";
 
@@ -279,13 +285,16 @@ public class CreatePDF extends Application {
 			
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/Wingdings.ttf", "wingdings");
-				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "arial");
-			} else {
-				// Assume on Linux
+				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
+			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
+				// Linux / Unix
+				FontFactory.register("/usr/share/fonts/truetype/Wingdings.ttf", "wingdings");
+				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
 			}
+			
 			WingDings = FontFactory.getFont("wingdings", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
-			arial = FontFactory.getFont("arial", BaseFont.IDENTITY_H, 
+			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
 			/*
@@ -293,22 +302,42 @@ public class CreatePDF extends Application {
 			 */
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
 			ArrayList<ArrayList<Result>> results = survey.results;	
-			 
-			/*
-			 * Create the PDF
-			 */			
-			Parser parser = getXMLParser(request);
 			
-			Document document = new Document();
-			PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
-			writer.setInitialLeading(12);
-			document.open();
-	        
-			int languageIdx = getLanguageIdx(survey, language);
-			for(int i = 0; i < results.size(); i++) {
-				processForm(parser, document, results.get(i), survey, basePath, languageIdx);		
+			/*
+			 * Get a template for the PDF report if it exists
+			 * The template name will be the same as the XLS form name but with an extension of pdf
+			 */
+			int idx = survey.name.lastIndexOf('.');
+			String templateName = survey.name.substring(0, idx) + ".pdf";
+			System.out.println("Get the pdf template: " + templateName);
+			File templateFile = new File(templateName);
+			if(templateFile.exists()) {
+				// File the template
+				System.out.println("Template Exists");
+				
+				PdfReader reader = new PdfReader(templateName);
+				PdfStamper stamper = new PdfStamper(reader, response.getOutputStream());
+				fillTemplate(stamper.getAcroFields(), results.get(0));
+				stamper.setFormFlattening(true);
+				stamper.close();
+			} else {
+			
+				/*
+				 * Create a PDF without the template
+				 */			
+				Parser parser = getXMLParser(request);
+				
+				Document document = new Document();
+				PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+				writer.setInitialLeading(12);
+				document.open();
+		        
+				int languageIdx = getLanguageIdx(survey, language);
+				for(int i = 0; i < results.size(); i++) {
+					processForm(parser, document, results.get(i), survey, basePath, languageIdx);		
+				}
+				document.close();
 			}
-			document.close();
 			
 			
 		} catch (SQLException e) {
@@ -341,6 +370,33 @@ public class CreatePDF extends Application {
 			
 		}
 
+	}
+	
+	/*
+	 * Fill the template with data from the survey
+	 */
+	private static void fillTemplate(AcroFields pdfForm, ArrayList<Result> record) throws IOException, DocumentException {
+		try {
+			
+			boolean status = false;
+			String value = "";
+			for(Result r : record) {
+				if(r.type.equals("select1")) {
+					for(Result c : r.choices) {
+						if(c.isSet) {
+							value = c.name;
+							break;
+						}
+					}
+				} else {
+					value = r.value;
+				}
+				status = pdfForm.setField(r.name, value);
+				System.out.println("Set field: " + status + " : " + r.name + " : " + value);
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error filling template", e);
+		}
 	}
 	
 	/*
@@ -663,13 +719,6 @@ public class CreatePDF extends Application {
         parser.xmlParser = new XMLParser(worker);
         
         return parser;
-        
-		//styles = new StyleSheet();
-		
-		//styles.loadTagStyle("body", "face", "arial");
-		//styles.loadTagStyle("h3", "font-size", "20px");
-		//styles.loadStyle("group", "color", "#ce4f07");	
-		//styles.loadTagStyle("body", "encoding", BaseFont.IDENTITY_H);
 		
 	}
 	
