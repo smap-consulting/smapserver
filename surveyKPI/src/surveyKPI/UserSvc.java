@@ -98,11 +98,13 @@ public class UserSvc extends Application {
 			 */
 			sql = "SELECT u.id as id, " +
 					"u.name as name, " +
+					"u.settings as settings, " +
 					"u.language as language, " +
 					"u.email as email, " +
 					"u.current_project_id as current_project_id, " +
 					"u.current_survey_id as current_survey_id, " +
 					"o.name as organisation_name, " +
+					"o.company_name as company_name, " +
 					"o.allow_email, " +
 					"o.allow_facebook, " +
 					"o.allow_twitter, " +
@@ -122,11 +124,13 @@ public class UserSvc extends Application {
 				user.id = resultSet.getInt("id");
 				user.ident = request.getRemoteUser();
 				user.name = resultSet.getString("name");
+				user.settings = resultSet.getString("settings");
 				user.language = resultSet.getString("language");
 				user.email = resultSet.getString("email");
 				user.current_project_id = resultSet.getInt("current_project_id");
 				user.current_survey_id = resultSet.getInt("current_survey_id");
 				user.organisation_name = resultSet.getString("organisation_name");
+				user.company_name = resultSet.getString("company_name");
 				user.allow_email = resultSet.getBoolean("allow_email");
 				user.allow_facebook = resultSet.getBoolean("allow_facebook");
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
@@ -148,6 +152,7 @@ public class UserSvc extends Application {
 					" and ug.u_id = ? " +
 					" order by g.name;";
 			
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, user.id);
 			log.info("SQL: " + sql + ":" + user.id);
@@ -172,6 +177,7 @@ public class UserSvc extends Application {
 					" and up.u_id = ? " +
 					" order by p.name;";
 
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, user.id);
 			log.info("SQL: " + sql + ":" + user.id);
@@ -292,6 +298,7 @@ public class UserSvc extends Application {
 					// Do not update the password
 					sql = "update users set " +
 							" name = ?, " + 
+							" settings = ?, " + 
 							" language = ?, " + 
 							" email = ? " +
 							" where " +
@@ -300,6 +307,7 @@ public class UserSvc extends Application {
 					// Update the password
 					sql = "update users set " +
 							" name = ?, " + 
+							" settings = ?, " + 
 							" language = ?, " + 
 							" email = ?, " +
 							" password = md5(?) " +
@@ -311,13 +319,14 @@ public class UserSvc extends Application {
 				
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setString(1, u.name);
-				pstmt.setString(2, u.language);
-				pstmt.setString(3, u.email);
+				pstmt.setString(2, u.settings);
+				pstmt.setString(3, u.language);
+				pstmt.setString(4, u.email);
 				if(u.password == null) {
-					pstmt.setString(4, ident);
-				} else {
-					pstmt.setString(4, pwdString);
 					pstmt.setString(5, ident);
+				} else {
+					pstmt.setString(5, pwdString);
+					pstmt.setString(6, ident);
 				}
 				
 				log.info("userevent: " + request.getRemoteUser() + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);

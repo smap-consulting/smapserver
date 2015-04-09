@@ -21,6 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class Organisation {
 	public int id;
 	public String name;
+	public String company_name;
 	public boolean allow_email;
 	public boolean allow_facebook;
 	public boolean allow_twitter;

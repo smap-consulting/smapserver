@@ -270,35 +270,39 @@
 							<div class="col-sm-10">
 								<input type="text" id="o_name" class="form-control" tabindex="1" required><br/>
 							</div>
+							<label for="o_company_name" data-lang="c_company_name" class="lang col-sm-2 control-label">Company Name</label>
+							<div class="col-sm-10">
+								<input type="text" id="o_company_name" class="form-control" tabindex="2" required><br/>
+							</div>
 						</div>
 					</fieldset>
 					<fieldset>
 						<legend>Publishing options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="2" /> Email</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="3" /> Facebook</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="4" /> Twitter</label></div>
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="3" /> Email</label></div>
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="4" /> Facebook</label></div>
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="5" /> Twitter</label></div>
 					</fieldset>
 					<fieldset>
 						<legend>FieldTask options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="5"/> Delete submitted results from the phone</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="6"/> Send location data on path of user</label></div>
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="6"/> Delete submitted results from the phone</label></div>
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="7"/> Send location data on path of user</label></div>
 					</fieldset>
 					<fieldset>
 						<legend>Other options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="7"/> Allow editing of results</label></div> 
+						<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="8"/> Allow editing of results</label></div> 
 					</fieldset>
 					<fieldset>
 						<legend>Emails:</legend>
 						<div class="form-group">
 							<label for="o_admin_email" class="lang col-sm-2 control-label">Help: </label>
 							<div class="col-sm-10">
-								<input class="form-control" type="text" id="o_admin_email" tabindex="8">
+								<input class="form-control" type="text" id="o_admin_email" tabindex="9">
 							</div>
 						</div>
 						<div class="form-group">
 							<label for="o_smtp_host" class="lang col-sm-2 control-label">Smtp host: </label>
 							<div class="col-sm-10">
-								<input class="form-control" type="text" id="o_smtp_host" tabindex="9">
+								<input class="form-control" type="text" id="o_smtp_host" tabindex="10">
 							</div>
 						</div>
 					</fieldset>
@@ -309,7 +313,7 @@
 						<input id="orgSettings" type="hidden" name="settings" >
 						<label for="o_banner_logo" class="lang col-sm-2 control-label">Banner Logo: </label>
 						<div class="col-sm-10">
-							<img id="o_banner_logo" class="form-control banner-logo" src="">
+							<img id="o_banner_logo" class="form-control" src="">
 						</div>
 						<div class="form-group">
       						<div class="input-group">
@@ -317,18 +321,8 @@
         							<input name="files" title="Add" class="file-inputs" type="file" accept="image/png, image/jpeg, image/gif">
       							</span>
      					 		<input type="text" id="upload_msg" class="form-control" placeholder="New Banner...">
-     					 		<!-- 
-     					 		<span class="input-group-btn">
-        							<button type="button" id="submitBanner" class="btn btn-primary">
-	                    				<i class="glyphicon glyphicon-upload"></i>
-	                    				<span>upload</span>
-	                				</button>
-      							</span>
-      							-->
     						</div>
-
-           				</div>
-           			
+         				</div>           			
 					</fieldset>
 				</form>
 			</div>

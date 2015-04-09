@@ -73,6 +73,7 @@ DROP TABLE IF EXISTS organisation CASCADE;
 create TABLE organisation (
 	id INTEGER DEFAULT NEXTVAL('organisation_seq') CONSTRAINT pk_organisation PRIMARY KEY,
 	name text,
+	company_name text,
 	allow_email boolean,
 	allow_facebook boolean,
 	allow_twitter boolean,

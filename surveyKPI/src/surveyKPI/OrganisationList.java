@@ -114,6 +114,7 @@ public class OrganisationList extends Application {
 			 * Get the organisation
 			 */
 			sql = "select id, name, " +
+					" company_name, " +
 					" allow_email, " +
 					" allow_facebook, " +
 					" allow_twitter, " +
@@ -135,6 +136,7 @@ public class OrganisationList extends Application {
 				Organisation org = new Organisation();
 				org.id = resultSet.getInt("id");
 				org.name = resultSet.getString("name");
+				org.company_name = resultSet.getString("company_name");
 				org.allow_email = resultSet.getBoolean("allow_email");
 				org.allow_facebook = resultSet.getBoolean("allow_facebook");
 				org.allow_twitter = resultSet.getBoolean("allow_twitter"); 
@@ -184,9 +186,6 @@ public class OrganisationList extends Application {
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
 		fileItemFactory.setSizeThreshold(1*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
-		
-		String serverName = request.getServerName();
-		String user = request.getRemoteUser();
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -256,22 +255,23 @@ public class OrganisationList extends Application {
 				if(o.id == -1) {
 					// New organisation
 						
-					sql = "insert into organisation (name, " +
+					sql = "insert into organisation (name, company_name, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
 							"changed_by, admin_email, smtp_host, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setString(1, o.name);
-					pstmt.setBoolean(2, o.allow_email);
-					pstmt.setBoolean(3, o.allow_facebook);
-					pstmt.setBoolean(4, o.allow_twitter);
-					pstmt.setBoolean(5, o.can_edit);
-					pstmt.setBoolean(6, o.ft_delete_submitted);
-					pstmt.setBoolean(7, o.ft_send_trail);
-					pstmt.setString(8, request.getRemoteUser());
-					pstmt.setString(9, o.admin_email);
-					pstmt.setString(10, o.smtp_host);
+					pstmt.setString(2, o.company_name);
+					pstmt.setBoolean(3, o.allow_email);
+					pstmt.setBoolean(4, o.allow_facebook);
+					pstmt.setBoolean(5, o.allow_twitter);
+					pstmt.setBoolean(6, o.can_edit);
+					pstmt.setBoolean(7, o.ft_delete_submitted);
+					pstmt.setBoolean(8, o.ft_send_trail);
+					pstmt.setString(9, request.getRemoteUser());
+					pstmt.setString(10, o.admin_email);
+					pstmt.setString(11, o.smtp_host);
 					log.info("SQL: " + sql + " : " + o.name);
 					pstmt.executeUpdate();
 					
@@ -290,6 +290,7 @@ public class OrganisationList extends Application {
 
 					sql = "update organisation set " +
 							" name = ?, " + 
+							" company_name = ?, " + 
 							" allow_email = ?, " +
 							" allow_facebook = ?, " +
 							" allow_twitter = ?, " +
@@ -305,16 +306,17 @@ public class OrganisationList extends Application {
 				
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setString(1, o.name);
-					pstmt.setBoolean(2, o.allow_email);
-					pstmt.setBoolean(3, o.allow_facebook);
-					pstmt.setBoolean(4, o.allow_twitter);
-					pstmt.setBoolean(5, o.can_edit);
-					pstmt.setBoolean(6, o.ft_delete_submitted);
-					pstmt.setBoolean(7, o.ft_send_trail);
-					pstmt.setString(8, o.admin_email);
-					pstmt.setString(9, o.smtp_host);
-					pstmt.setString(10, request.getRemoteUser());
-					pstmt.setInt(11, o.id);
+					pstmt.setString(2, o.company_name);
+					pstmt.setBoolean(3, o.allow_email);
+					pstmt.setBoolean(4, o.allow_facebook);
+					pstmt.setBoolean(5, o.allow_twitter);
+					pstmt.setBoolean(6, o.can_edit);
+					pstmt.setBoolean(7, o.ft_delete_submitted);
+					pstmt.setBoolean(8, o.ft_send_trail);
+					pstmt.setString(9, o.admin_email);
+					pstmt.setString(10, o.smtp_host);
+					pstmt.setString(11, request.getRemoteUser());
+					pstmt.setInt(12, o.id);
 							
 					log.info("SQL: " + sql + ":" + o.name + ":" + o.id);
 					pstmt.executeUpdate();

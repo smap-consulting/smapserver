@@ -260,6 +260,13 @@ function updateUserDetails(data, getOrganisationsFn) {
 	if(!globals.gSendTrail) {
 		$('.user_trail').hide();
 	}
+	// 	Customer configurable details - the configurable part is TODO
+	var userDetails = JSON.parse(data.settings);
+
+	$('#my_name').val(data.name);			// Add the name to the configurable list
+	
+	$('#my_title').val(userDetails.title);
+	$('#my_license').val(userDetails.license);
 }
 
 function addLanguageOptions($elem, current) {

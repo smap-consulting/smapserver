@@ -24,6 +24,7 @@ public class User {
 	public int id;
 	public String ident;
 	public String name;
+	public String settings;		// JSON for customer configurable settings
 	public String language;
 	public String email;
 	public String password;
@@ -35,6 +36,7 @@ public class User {
 	public int current_project_id;
 	public int current_survey_id;
 	public String organisation_name;
+	public String company_name;
 	public ArrayList<Group> groups;
 	public ArrayList<Project> projects;
 	public boolean keepProjects;

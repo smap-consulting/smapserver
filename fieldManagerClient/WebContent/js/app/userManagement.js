@@ -300,6 +300,7 @@ $(document).ready(function() {
 		}
 	
 		organisation.name = $('#o_name').val();
+		organisation.company_name = $('#o_company_name').val();
 		organisation.admin_email = $('#o_admin_email').val();
 		organisation.smtp_host = $('#o_smtp_host').val();
 	
@@ -375,116 +376,6 @@ $(document).ready(function() {
 	
     });
     
-    /*
-	 // Initialse the create organisation dialog
-	 $('#create_organisation_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title: "Create Organisation",
-			width:380,
-			height:550,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: "Save",
-		        	click: function() {
-		        		var organisationList = [],
-	        			organisation = {},
-	        			error = false,
-	        			options=[],
-	        			i,
-	           			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm;
-	        		
-		        		if(gCurrentOrganisationIndex === -1) {
-		        			organisation.id = -1;
-		        		} else {
-		        			organisation.id = gOrganisationList[gCurrentOrganisationIndex].id;
-		        		}
-	        		
-		        		organisation.name = $('#o_name').val();
-		        		organisation.admin_email = $('#o_admin_email').val();
-		        		organisation.smtp_host = $('#o_smtp_host').val();
-		        		
-		        		// Validate
-		        		if(organisation.name.length === 0) {
-		        			alert("Name must be specified");
-	        				$('#o_name').focus();
-	        				return false;
-		        		}
-		        		if(organisation.admin_email.length > 0) {
-			        		if(!validEmail.test(organisation.admin_email)) {
-		        				error = true;
-		        				alert("Email is not valid");
-		        				$('#o_admin_email').focus();
-		        				return false;
-		        			}
-		        		}
-		        		
-		        		options = $(".puboption:checked").map(function(){
-		        	        	return $(this).val();
-		        	    	}).toArray();
-		        		
-		        		console.log("options");
-		        		console.log(options);
-		        		for(i = 0; i < options.length; i++) {
-		        			if(options[i] === "email") {
-		        				organisation.allow_email = true;
-		        			} else if(options[i] === "facebook") {
-		        				organisation.allow_facebook = true;
-		        			} else if(options[i] === "twitter") {
-		        				organisation.allow_twitter = true;
-		        			} else if(options[i] === "can_edit") {
-		        				organisation.can_edit = true;
-		        			} else if(options[i] === "ft_delete_submitted") {
-		        				organisation.ft_delete_submitted = true;
-		        			} else if(options[i] === "ft_send_trail") {
-		        				organisation.ft_send_trail = true;
-		        			}
-		        		}
-		        		organisationList[0] = organisation;	
-		        		var organisationString = JSON.stringify(organisationList);
-
-		        		$dialog = $(this);
-		        		addHourglass();
-		        		$.ajax({
-		        			  type: "POST",
-		        			  contentType: "application/json",
-		        			  dataType: "json",
-		        			  async: false,
-		        			  url: "/surveyKPI/organisationList",
-		        			  data: { organisations: organisationString },
-		        			  success: function(data, status) {
-		        				  removeHourglass();
-		        				  getOrganisations();
-		        				  $dialog.dialog("close");
-		        			  }, error: function(xhr, textStatus, err) {	
-		        				  removeHourglass();
-		        					removeHourglass();
-		        					if(xhr.readyState == 0 || xhr.status == 0) {
-		        			              return;  // Not an error
-		        					} else {
-		        						var msg = err;
-			        					if(err.indexOf("Conflict") >= 0) {
-			        						msg = "Duplicate organisation name";
-			        					}
-		        						alert("Error organisation details not saved: " + msg);
-		        					}
-		        			  }
-		        		});
-		        	}
-	        	}	        	
-		        	
-			]
-		}
-	 );
-	 */
 	 $('#organisationMove').click(function(){
 		 var users = [],
 			projects =[],
@@ -831,6 +722,7 @@ function openOrganisationDialog(existing, organisationIndex) {
 	$('#organisation_create_form')[0].reset();
 	if(existing) {
 		$('#o_name').val(org.name);
+		$('#o_company_name').val(org.company_name);
 		$('#o_admin_email').val(org.admin_email);
 		$('#o_smtp_host').val(org.smtp_host);
 		$('.puboption').each(function() {

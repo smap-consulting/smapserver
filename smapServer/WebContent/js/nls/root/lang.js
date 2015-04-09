@@ -37,6 +37,7 @@ define({
 	"c_forms": "Forms",
 	"c_forward": "Forward",
 	"c_name": "Name",
+	"c_company_name": "Company Name",
 	"c_type": "Type",
 	"c_file": "File",
 	"c_host": "Host",

@@ -76,31 +76,83 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	  </div>
 	</header>
 
-
-	<div class="container">
-		<div class="row">	   	
-	   		<div class="col-md-6 col-xs-12">
-				<div id="filters">
-					<form role="form" class="form-horizontal" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
-						</div>
-					</form>	
+<div class="container">
+    <ul class="nav nav-pills tab_controls" role="tablist">
+        <li id="formsTab" role="presentation" class="active"><a href="#">Web Forms</a></li>
+        <li id="userTab" role="presentation"><a href="#">My Settings</a></li>
+    </ul>
+    
+    <div id="formsPanel" >
+		<div class="container">
+			<div class="row">	   	
+		   		<div class="col-md-6 col-xs-12">
+					<div id="filters">
+						<form role="form" class="form-horizontal" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+							<div class="col-sm-8">
+								<select class="project_list form-control" id="project_name"></select>
+							</div>
+						</form>	
+					</div>
 				</div>
 			</div>
+	
+			<div class="container">
+				<div id="form_list"></div>	    
+			</div>
 		</div>
+	</div>
+		
+	<div id="userPanel" style="display:none;">
+	
+			<form role="form" class="form-horizontal" id="me_edit_form">
+				<div class="form-group">
+					<label for="my_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+					<div class="col-sm-10">
+						<input type="text" id="my_name" required class="form-control">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="my_title" data-lang="c_title" class="lang col-sm-2 control-label">Title</label>
+					<div class="col-sm-10">
+						<input type="text" id="my_title" class="form-control">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="my_license" data-lang="c_license" class="lang col-sm-2 control-label">License Number</label>
+					<div class="col-sm-10">
+						<input type="text" id="my_license" class="form-control">
+					</div>
+				</div>				
+			</form>	
+			<!--
+			<form enctype="multipart/form-data" name="signaturesave">
+					<fieldset>
+						<input id="userSettings" type="hidden" name="settings" >
+						<label for="my_signature" class="lang col-sm-2 control-label">Signature: </label>
+						<div class="col-sm-10">
+							<img id="my_signature" class="form-control" src="">
+						</div>
+						<div class="form-group">
+      						<div class="input-group">
+      							<span class="input-group-btn">
+        							<input name="files" title="Add" class="file-inputs" type="file" accept="image/png, image/jpeg, image/gif">
+      							</span>
+     					 		<input type="text" id="upload_msg" class="form-control" placeholder="New Signature...">
+    						</div>
+         				</div>           			
+					</fieldset>
+				</form>
+			-->
+			<button id="userDetailsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+	</div>		
 
-		<div class="container">
-
-			<div id="form_list"></div>	    
-
-		</div>
 		
 		<div class="col-md-12 text-center">
 			<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 		</div>
     </div>
+</div>
     
 <!-- Popup to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

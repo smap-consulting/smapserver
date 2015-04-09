@@ -65,13 +65,50 @@ $(document).ready(function() {
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);		// Save the current project id
  	 });
 	
+	// Set up the tabs
+    $('#userTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		
+		$('#formsPanel').hide();
+		$('#userPanel').show();
+    })
+    $('#formsTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#formsPanel').show();
+		$('#userPanel').hide();
+    })
+	
+    /*
+	 * Save the user details
+	 * There is some overlap between this and saving the user profile
+	 */
+	$('#userDetailsSave').off().click(function() {
+		var user = globals.gLoggedInUser,
+			userDetails = {},
+			userList = [],
+			error = false,
+			userList;
+		
+		user.name = $('#my_name').val();
+		
+		userDetails.title = $('#my_title').val();
+		userDetails.license = $('#my_license').val();
+		user.settings = JSON.stringify(userDetails);
+			
+		user.current_project_id = 0;	// Tell service to ignore project id and update other details
+		user.current_survey_id = 0;
+		saveCurrentUser(user);			// Save the updated user details to disk	 
+	});
+    
 	enableUserProfileBS();
 });
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys
 }
-
 
 
 function getSurveysForList(projectId) {

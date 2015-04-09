@@ -334,3 +334,11 @@ td.completed, td.submitted {
 .selectquestion {
 	background-color: yellow;
 }
+
+.project_list {
+	margin-bottom: 10px;
+}
+
+.tab_controls {
+	margin-bottom: 50px;
+}

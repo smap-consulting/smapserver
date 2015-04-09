@@ -261,3 +261,4 @@ alter table survey alter column class set data type text;
 
 -- User configuration for PDF reports
 alter table users add column settings text;
+alter table organisation add column company_name text;
