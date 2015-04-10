@@ -25,11 +25,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import org.smap.sdal.Utilities.SDDataSource;
 
-import model.Project;
+import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.Project;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;

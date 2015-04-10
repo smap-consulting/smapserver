@@ -33,10 +33,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import model.Group;
-import model.Project;
 import model.Settings;
-import model.User;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -45,6 +42,9 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.Project;
+import org.smap.sdal.model.User;
+import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -186,10 +186,10 @@ public class UserList extends Application {
 						user.ident = ident;
 						user.name = resultSet.getString("name");
 						user.email = resultSet.getString("email");
-						user.groups = new ArrayList<Group> ();
+						user.groups = new ArrayList<UserGroup> ();
 						user.projects = new ArrayList<Project> ();
 						
-						Group group = new Group();
+						UserGroup group = new UserGroup();
 						group.name = group_name;
 						group.id = group_id;
 						if(group_id != 4 || isOrgUser) {
@@ -210,7 +210,7 @@ public class UserList extends Application {
 						if(current_group != null && !current_group.equals(group_name)) {
 						
 							// new group
-							Group group = new Group();
+							UserGroup group = new UserGroup();
 							group.name = group_name;
 							if(group_id != 4 || isOrgUser) {
 								user.groups.add(group);
@@ -648,7 +648,7 @@ public class UserList extends Application {
 		System.out.println("Update groups and projects user id:" + u_id);
 		
 		for(int j = 0; j < u.groups.size(); j++) {
-			Group g = u.groups.get(j);
+			UserGroup g = u.groups.get(j);
 			if(g.id != 4 || isOrgUser) {
 				sql = "insert into user_group (u_id, g_id) values (?, ?);";
 				pstmt = conn.prepareStatement(sql);

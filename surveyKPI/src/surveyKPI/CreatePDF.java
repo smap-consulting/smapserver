@@ -21,6 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -44,19 +45,24 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import model.Settings;
+
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
+import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
@@ -75,6 +81,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.PushbuttonField;
 import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.XMLWorker;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
@@ -266,6 +273,7 @@ public class CreatePDF extends Application {
 		
 		
 		org.smap.sdal.model.Survey survey = null;
+		User user = null;
 		
 		// Get the base path
 		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
@@ -276,6 +284,7 @@ public class CreatePDF extends Application {
 		}
 		
 		SurveyManager sm = new SurveyManager();
+		UserManager um = new UserManager();
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		try {
 			
@@ -298,10 +307,13 @@ public class CreatePDF extends Application {
 				    BaseFont.EMBEDDED, 10); 
 			
 			/*
-			 * Get the results
+			 * Get the results and details of the user that submitted the survey
 			 */
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
-			ArrayList<ArrayList<Result>> results = survey.results;	
+			System.out.println("User Ident: " + survey.instance.user);
+			if(survey.instance.user != null) {
+				user = um.getByIdent(connectionSD, survey.instance.user);
+			}
 			
 			/*
 			 * Get a template for the PDF report if it exists
@@ -317,7 +329,10 @@ public class CreatePDF extends Application {
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, response.getOutputStream());
-				fillTemplate(stamper.getAcroFields(), results.get(0));
+				fillTemplate(stamper.getAcroFields(), survey.instance.results.get(0), basePath);
+				if(user != null) {
+					fillTemplateUserDetails(stamper.getAcroFields(), user);
+				}
 				stamper.setFormFlattening(true);
 				stamper.close();
 			} else {
@@ -333,8 +348,8 @@ public class CreatePDF extends Application {
 				document.open();
 		        
 				int languageIdx = getLanguageIdx(survey, language);
-				for(int i = 0; i < results.size(); i++) {
-					processForm(parser, document, results.get(i), survey, basePath, languageIdx);		
+				for(int i = 0; i < survey.instance.results.size(); i++) {
+					processForm(parser, document, survey.instance.results.get(i), survey, basePath, languageIdx);		
 				}
 				document.close();
 			}
@@ -375,7 +390,7 @@ public class CreatePDF extends Application {
 	/*
 	 * Fill the template with data from the survey
 	 */
-	private static void fillTemplate(AcroFields pdfForm, ArrayList<Result> record) throws IOException, DocumentException {
+	private static void fillTemplate(AcroFields pdfForm, ArrayList<Result> record, String basePath) throws IOException, DocumentException {
 		try {
 			
 			boolean status = false;
@@ -388,12 +403,51 @@ public class CreatePDF extends Application {
 							break;
 						}
 					}
+				} else if(r.type.equals("image")) {
+					System.out.println("adding image: " + r.name);
+					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(r.name);
+					if(ad != null) {
+						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
+						ad.setProportionalIcon(true);
+						ad.setImage(Image.getInstance(basePath + "/" + r.value));
+						pdfForm.replacePushbuttonField(r.name, ad.getField());
+					}
 				} else {
 					value = r.value;
 				}
 				status = pdfForm.setField(r.name, value);
 				System.out.println("Set field: " + status + " : " + r.name + " : " + value);
 			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error filling template", e);
+		}
+	}
+	
+	private class UserSettings {
+		String title;
+		String license;
+	}
+	/*
+	 * Fill the template with data from the survey
+	 */
+	private static void fillTemplateUserDetails(AcroFields pdfForm, User user) throws IOException, DocumentException {
+		try {
+					
+			pdfForm.setField("user_name", user.name);
+			pdfForm.setField("user_company", user.company_name);
+			
+			/*
+			 * User configurable data TODO This should be an array of key value pairs
+			 * As interim use a hard coded class to hold the data
+			 */
+			String settings = user.settings;
+			Type type = new TypeToken<UserSettings>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			UserSettings us = gson.fromJson(settings, type);
+			
+			pdfForm.setField("user_title", us.title);
+			pdfForm.setField("user_license", us.license);
+				
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);
 		}

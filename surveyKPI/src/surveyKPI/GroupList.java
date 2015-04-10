@@ -28,15 +28,12 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import model.Group;
-import model.Project;
-import model.User;
-
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -93,7 +90,7 @@ public class GroupList extends Application {
 		 * 
 		 */	
 		PreparedStatement pstmt = null;
-		ArrayList<Group> groups = new ArrayList<Group> ();
+		ArrayList<UserGroup> groups = new ArrayList<UserGroup> ();
 		
 		try {
 			String sql = null;
@@ -108,7 +105,7 @@ public class GroupList extends Application {
 			log.info("SQL: " + sql);
 			resultSet = pstmt.executeQuery();
 			while(resultSet.next()) {
-				Group group = new Group();
+				UserGroup group = new UserGroup();
 				group.id = resultSet.getInt("id");
 				group.name = resultSet.getString("name");
 				groups.add(group);

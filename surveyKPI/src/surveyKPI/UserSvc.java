@@ -28,12 +28,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import model.Group;
-import model.Project;
-import model.User;
 
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.UserManager;
+import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,7 +39,6 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -83,135 +80,19 @@ public class UserSvc extends Application {
 		// Authorisation - Not required
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserSvc");
 		
-		/*
-		 * 
-		 */	
-		PreparedStatement pstmt = null;
-		User user = new User ();
-		
+		UserManager um = new UserManager();
+		User user = null;
 		try {
-			String sql = null;
-			ResultSet resultSet = null;			
-				
-			/*
-			 * Get the user details
-			 */
-			sql = "SELECT u.id as id, " +
-					"u.name as name, " +
-					"u.settings as settings, " +
-					"u.language as language, " +
-					"u.email as email, " +
-					"u.current_project_id as current_project_id, " +
-					"u.current_survey_id as current_survey_id, " +
-					"o.name as organisation_name, " +
-					"o.company_name as company_name, " +
-					"o.allow_email, " +
-					"o.allow_facebook, " +
-					"o.allow_twitter, " +
-					"o.can_edit, " +
-					"o.ft_send_trail " +
-					" from users u, organisation o " +
-					" where u.ident = ? " +
-					" and u.o_id = o.id " +
-					" order by u.ident;"; 
-			
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setString(1, request.getRemoteUser());
-			log.info("SQL: " + sql + ":" + request.getRemoteUser());
-			resultSet = pstmt.executeQuery();
-		
-			while(resultSet.next()) {
-				user.id = resultSet.getInt("id");
-				user.ident = request.getRemoteUser();
-				user.name = resultSet.getString("name");
-				user.settings = resultSet.getString("settings");
-				user.language = resultSet.getString("language");
-				user.email = resultSet.getString("email");
-				user.current_project_id = resultSet.getInt("current_project_id");
-				user.current_survey_id = resultSet.getInt("current_survey_id");
-				user.organisation_name = resultSet.getString("organisation_name");
-				user.company_name = resultSet.getString("company_name");
-				user.allow_email = resultSet.getBoolean("allow_email");
-				user.allow_facebook = resultSet.getBoolean("allow_facebook");
-				user.allow_twitter = resultSet.getBoolean("allow_twitter");
-				user.can_edit = resultSet.getBoolean("can_edit");
-				user.ft_send_trail = resultSet.getBoolean("ft_send_trail");
-			}
-			
-			/*
-			 * Set a flag if email is enabled on the server
-			 */
-			user.sendEmail = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser()) != null;
-			
-			/*
-			 * Get the groups that the user belongs to
-			 */
-			sql = "SELECT g.id as id, g.name as name " +
-					" from groups g, user_group ug " +
-					" where g.id = ug.g_id " +
-					" and ug.u_id = ? " +
-					" order by g.name;";
-			
-			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, user.id);
-			log.info("SQL: " + sql + ":" + user.id);
-			resultSet = pstmt.executeQuery();
-			
-			while(resultSet.next()) {
-				if(user.groups == null) {
-					user.groups = new ArrayList<Group> ();
-				}
-				Group group = new Group();
-				group.id = resultSet.getInt("id");
-				group.name = resultSet.getString("name");
-				user.groups.add(group);
-			}
-			
-			/*
-			 * Get the projects that the user belongs to
-			 */
-			sql = "SELECT p.id as id, p.name as name " +
-					" from project p, user_project up " +
-					" where p.id = up.p_id " +
-					" and up.u_id = ? " +
-					" order by p.name;";
+			user = um.getByIdent(connectionSD, request.getRemoteUser());
 
-			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, user.id);
-			log.info("SQL: " + sql + ":" + user.id);
-			resultSet = pstmt.executeQuery();
-			
-			while(resultSet.next()) {
-				if(user.projects == null) {
-					user.projects = new ArrayList<Project> ();
-				}
-				Project project = new Project();
-				project.id = resultSet.getInt("id");
-				project.name = resultSet.getString("name");
-				user.projects.add(project);
-			}
-					
-				
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(user);
 			response = Response.ok(resp).build();
-						
-				
+			
 		} catch (Exception e) {
-			
-			log.log(Level.SEVERE,"Error: ", e);
-		    response = Response.serverError().build();
-		    
+			log.log(Level.SEVERE, e.getMessage(), e);
+			response = Response.serverError().build();
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			
-			}
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
@@ -221,6 +102,7 @@ public class UserSvc extends Application {
 				log.log(Level.SEVERE,"Failed to close connection: ", e);
 			}
 		}
+		
 
 		return response;
 	}

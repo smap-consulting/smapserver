@@ -195,7 +195,15 @@ public class SurveyManager {
 				populateSurvey(sd, s, basePath, user);
 				if(getResults) {
 					Form ff = s.getFirstForm();
-					s.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, -1, s);
+					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s);
+					ArrayList<Result> topForm = s.instance.results.get(0);
+					// Get the user ident that submitted the survey
+					for(Result r : topForm) {
+						if(r.type.equals("user")) {
+							s.instance.user = r.value;
+							break;
+						}
+					}
 				}
 			}
 		} catch (SQLException e) {
@@ -1075,7 +1083,14 @@ public class SurveyManager {
     	 *  Select questions are retrieved using a separate query as there are multiple 
     	 *  columns per question
     	 */
-    	String sql = "select prikey";
+    	String sql = null;
+    	boolean isTopLevel = false;
+    	if(parentKey == 0) {
+    		sql = "select prikey, _user ";		// Get user if this is a top level form
+    		isTopLevel = true;
+    	} else {
+    		sql = "select prikey ";
+    	}
     	ArrayList<Question> questions = form.questions;
     	PreparedStatement pstmt = null;
     	PreparedStatement pstmtSelect = null;
@@ -1132,8 +1147,14 @@ public class SurveyManager {
 		    		ArrayList<Result> record = new ArrayList<Result> ();
 	    		
 		    		String priKey = resultSet.getString(1);
-		    		int newParentKey = resultSet.getInt(1);
-		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null)); 
+		    		int newParentKey = resultSet.getInt(1);   		
+		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null));
+		    		
+		    		if(isTopLevel) {
+		    			String user = resultSet.getString(2);
+		    			record.add(new Result("user", "user", user, false, fIdx, -1, 0, null));
+		    			System.out.println("Adding user record: " + user);
+		    		}
 	    		
 		    		addDataForQuestions(
 		    				cResults,
@@ -1146,7 +1167,8 @@ public class SurveyManager {
 		    				questions, 
 		    				fIdx, 
 		    				id,
-		    				pstmtSelect);
+		    				pstmtSelect,
+		    				isTopLevel);
 
 		    		output.add(record);
 		    	}
@@ -1158,6 +1180,10 @@ public class SurveyManager {
 	    		String priKey = "";
 	    		int newParentKey = 0;
 	    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null)); 
+	    		
+	    		if(isTopLevel) {
+	    			record.add(new Result("user", "user", null, false, fIdx, -1, 0, null)); 
+	    		}
     		
 	    		addDataForQuestions(
 	    				cResults,
@@ -1170,7 +1196,8 @@ public class SurveyManager {
 	    				questions, 
 	    				fIdx, 
 	    				id,
-	    				pstmtSelect);
+	    				pstmtSelect,
+	    				isTopLevel);
 
 	    		output.add(record);
 	    	}
@@ -1199,11 +1226,15 @@ public class SurveyManager {
     		ArrayList<Question> questions,
     		int fIdx,
     		int id,
-    		PreparedStatement pstmtSelect) throws SQLException {
+    		PreparedStatement pstmtSelect,
+    		boolean isTopLevel) throws SQLException {
 		/*
-		 * Add data for the remaining questions
+		 * Add data for the remaining questions (prikey and user have already been extracted)
 		 */
 		int index = 2;
+		if(isTopLevel) {
+			index = 3;
+		}
 		
 		int qIdx = -1;					// Index into question array for this form
 		for(Question q : questions) {

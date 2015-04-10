@@ -30,7 +30,8 @@ public class Survey {
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
 	public ArrayList<ChangeItem> changes  = new ArrayList<ChangeItem> ();
-	public ArrayList<ArrayList<Result>> results = null;				// Results for a specific instance
+	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
+
 	
 	// Getters
 	public int getId() {return id;}; 

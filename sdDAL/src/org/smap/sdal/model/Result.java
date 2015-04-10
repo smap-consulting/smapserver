@@ -11,7 +11,7 @@ public class Result {
 	public String name;
 	public String value;
 	public boolean isSet;		// Used with choices
-	public String type;	// form || choice || key || a question type
+	public String type;	// form || choice || key || || user || a question type
 	public ArrayList<ArrayList<Result>> subForm = null;
 	public ArrayList<Result> choices = null;
 	public Label label;

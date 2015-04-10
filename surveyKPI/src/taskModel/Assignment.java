@@ -1,6 +1,6 @@
 package taskModel;
 
-import model.User;
+import org.smap.sdal.model.User;
 
 public class Assignment {
 	public int assignment_id;

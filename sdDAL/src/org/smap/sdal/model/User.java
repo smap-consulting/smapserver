@@ -1,4 +1,6 @@
-package model;
+package org.smap.sdal.model;
+
+import java.util.ArrayList;
 
 /*
 This file is part of SMAP.
@@ -18,7 +20,26 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-public class Group {
+public class User {
 	public int id;
+	public String ident;
 	public String name;
+	public String settings;		// JSON for customer configurable settings
+	public String language;
+	public String email;
+	public String password;
+	public boolean allow_email;
+	public boolean allow_facebook;
+	public boolean allow_twitter;
+	public boolean can_edit;
+	public boolean ft_send_trail;
+	public int current_project_id;
+	public int current_survey_id;
+	public String organisation_name;
+	public String company_name;
+	public ArrayList<UserGroup> groups;
+	public ArrayList<Project> projects;
+	public boolean keepProjects;
+	public boolean sendEmail;
+	
 }

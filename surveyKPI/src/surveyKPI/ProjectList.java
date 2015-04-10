@@ -33,9 +33,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
-
-import model.Project;
-import model.User;
+import org.smap.sdal.model.Project;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

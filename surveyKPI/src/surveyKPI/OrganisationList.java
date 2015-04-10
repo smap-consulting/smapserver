@@ -39,12 +39,12 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Project;
+import org.smap.sdal.model.User;
 
 import utilities.MediaInfo;
 import model.MediaResponse;
 import model.Organisation;
-import model.Project;
-import model.User;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
