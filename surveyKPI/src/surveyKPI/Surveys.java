@@ -444,7 +444,7 @@ public class Surveys extends Application {
 			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
 		}	
 		
-		fileName = UtilityMethodsEmail.getSafeTemplateName(fileName);
+		fileName = GeneralUtilityMethods.getSafeTemplateName(fileName);
 		fileName = fileName + ".pdf";
 		
 		String folderPath = basePath + "/templates/" + pId ;						

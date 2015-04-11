@@ -57,6 +57,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.server.managers.PersistenceContext;
@@ -399,7 +400,7 @@ public class TemplateUpload extends Application {
 		SaveResponse response = new SaveResponse();
 		
 		// Remove special characters from the target name
-		targetName = UtilityMethodsEmail.getSafeTemplateName(targetName);
+		targetName = GeneralUtilityMethods.getSafeTemplateName(targetName);
 		
 		boolean isXLS = false;
 		boolean isXLSX = false;
