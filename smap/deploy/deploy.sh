@@ -85,7 +85,8 @@ then
         cp -v ~/custom/subscribers/default/* /usr/bin/smap/default
 fi
 
-
+# Delete temporary files
+sudo rm -rf /smap/temp/*
 
 service subscribers start
 service subscribers_fwd start

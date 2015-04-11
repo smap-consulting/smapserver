@@ -329,7 +329,9 @@ public class CreatePDF extends Application {
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, response.getOutputStream());
-				fillTemplate(stamper.getAcroFields(), survey.instance.results.get(0), basePath);
+				for(int i = 0; i < survey.instance.results.size(); i++) {
+					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i);
+				}
 				if(user != null) {
 					fillTemplateUserDetails(stamper.getAcroFields(), user);
 				}
@@ -390,13 +392,25 @@ public class CreatePDF extends Application {
 	/*
 	 * Fill the template with data from the survey
 	 */
-	private static void fillTemplate(AcroFields pdfForm, ArrayList<Result> record, String basePath) throws IOException, DocumentException {
+	private void fillTemplate(
+			AcroFields pdfForm, 
+			ArrayList<Result> record, 
+			String basePath,
+			String formName,
+			int repeatIndex) throws IOException, DocumentException {
 		try {
 			
 			boolean status = false;
 			String value = "";
 			for(Result r : record) {
-				if(r.type.equals("select1")) {
+				
+				String fieldName = getFieldName(formName, repeatIndex, r.name);
+				
+				if(r.type.equals("form")) {
+					for(int k = 0; k < r.subForm.size(); k++) {
+						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k);
+					} 
+				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
 						if(c.isSet) {
 							value = c.name;
@@ -404,8 +418,8 @@ public class CreatePDF extends Application {
 						}
 					}
 				} else if(r.type.equals("image")) {
-					System.out.println("adding image: " + r.name);
-					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(r.name);
+					System.out.println("adding image: " + fieldName);
+					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 					if(ad != null) {
 						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 						ad.setProportionalIcon(true);
@@ -414,22 +428,34 @@ public class CreatePDF extends Application {
 						} catch (Exception e) {
 							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
 						}
-						pdfForm.replacePushbuttonField(r.name, ad.getField());
+						pdfForm.replacePushbuttonField(fieldName, ad.getField());
+						System.out.println("Adding image to: " + fieldName);
 					}
 				} else {
 					value = r.value;
 				}
 				if(value != null && !value.equals("") && !r.type.equals("image")) {
-					status = pdfForm.setField(r.name, value);
-					System.out.println("Set field: " + status + " : " + r.name + " : " + value);
+					status = pdfForm.setField(fieldName, value);			
+					System.out.println("Set field: " + status + " : " + fieldName + " : " + value);
 				} else {
-					System.out.println("Skipping field: " + status + " : " + r.name + " : " + value);
+					System.out.println("Skipping field: " + status + " : " + fieldName + " : " + value);
 				}
 				
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);
 		}
+	}
+	
+	private String getFieldName(String formName, int index, String qName) {
+		String name = null;
+		
+		if(formName == null || formName.equals("")) {
+			name = qName;
+		} else {
+			name = formName + "[" + index + "]." + qName;
+		}
+		return name;
 	}
 	
 	private class UserSettings {
@@ -454,8 +480,10 @@ public class CreatePDF extends Application {
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			UserSettings us = gson.fromJson(settings, type);
 			
-			pdfForm.setField("user_title", us.title);
-			pdfForm.setField("user_license", us.license);
+			if(us != null) {
+				pdfForm.setField("user_title", us.title);
+				pdfForm.setField("user_license", us.license);
+			}
 				
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);
