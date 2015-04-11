@@ -34,9 +34,14 @@ import javax.ws.rs.core.Response;
 
 import model.Settings;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
@@ -44,14 +49,19 @@ import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.ServerSideCalculate;
 import org.smap.sdal.model.Survey;
 
+import utilities.MediaInfo;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -182,7 +192,6 @@ public class Surveys extends Application {
 		
 		// Get the base path
 		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		System.out.println("Files parameter: " + basePath);
 		if(basePath == null) {
 			basePath = "/smap";
 		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
@@ -301,14 +310,14 @@ public class Surveys extends Application {
 	 */
 	@Path("/save_settings/{sId}")
 	@POST
-	@Consumes("application/json")
 	public Response rename(@Context HttpServletRequest request,
-			@PathParam("sId") int sId,
-			@FormParam("settings") String settings) { 
+			@PathParam("sId") int sId) { 
 		
 		Response response = null;
 		
-		System.out.println("Update settings: " + settings);
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
+		fileItemFactory.setSizeThreshold(5*1024*1024); // 5 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -324,24 +333,58 @@ public class Surveys extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
-		Type type = new TypeToken<org.smap.sdal.model.Survey>(){}.getType();
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
-		
+		FileItem pdfItem = null;
+		String fileName = null;
+		String settings = null;
+				
 		PreparedStatement pstmt = null;
-		//PreparedStatement pstmtSSC = null;
-		//PreparedStatement pstmtDelSSC = null;
-		//PreparedStatement pstmtM1 = null;
-		//PreparedStatement pstmtM2 = null;
-		//PreparedStatement pstmtM3 = null;
-		//PreparedStatement pstmtM4 = null;
-		//PreparedStatement pstmtM5 = null;
-		//PreparedStatement pstmtM6 = null;
-		try {
 		
+		try {
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+				
+					
+					if(item.getFieldName().equals("settings")) {
+						try {
+							settings = item.getString();
+						} catch (Exception e) {
+							
+						}
+					}
+					
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					if(item.getSize() > 0) {
+						pdfItem = item;
+						fileName = item.getName();
+						fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
+					}					
+				}
+
+			}
+			
+			Type type = new TypeToken<org.smap.sdal.model.Survey>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
+			
 			String sql = "update survey set display_name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
 		
-			System.out.println("Saving survey: " + sql + " : " + survey.displayName);
+			log.info("Saving survey: " + sql + " : " + survey.displayName);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
 			pstmt.setString(2, survey.def_lang);
@@ -355,80 +398,21 @@ public class Surveys extends Application {
 				log.info("Info: Survey updated");
 			}
 			
-			// Delete the old server side calculates
-			//sql = "delete from ssc where s_id = ?;";
-			//pstmtDelSSC = connectionSD.prepareStatement(sql);
-			//pstmtDelSSC.setInt(1, sId);
-			//pstmtDelSSC.executeUpdate();
+			if(fileName != null) {  // Save the file				
+	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
+			}
 			
-			// Save the server side calculations
-			//sql = "insert into ssc (s_id, f_id, name, function, units) values " +
-			//		" (?, ?, ?, ?, ?); ";
-			//pstmtSSC = connectionSD.prepareStatement(sql);
-			//for(int i = 0; i < survey.sscList.size(); i++) {
-				
-			//	ServerSideCalculate ssc = survey.sscList.get(i);
-			//	pstmtSSC.setInt(1, sId);
-			//	pstmtSSC.setInt(2, ssc.getFormId());
-			//	pstmtSSC.setString(3, ssc.getName());
-			//	pstmtSSC.setString(4, ssc.getFunction());
-			//	pstmtSSC.setString(5, ssc.getUnits());
-			//	pstmtSSC.executeUpdate();
-				
-			//	System.out.println("Inserting: " + ssc.getName());
-			//}
-			
-			/*
-			 * Save the manifest entries
-			 * Deprecated - now moved to media management page
-			 *
-			System.out.println("Saving manifest entries: " + survey.surveyManifest.size());
-		    
-		    // 1) Get the languages
-		    String sqlM1 = "select distinct language from translation where s_id = ?;";
-		    pstmtM1 = connectionSD.prepareStatement(sqlM1);
-	    	String sqlM2 = "SELECT qtext_id FROM question WHERE q_id = ?;"; 
-	    	pstmtM2 = connectionSD.prepareStatement(sqlM2);
-	    	String sqlM3 = "SELECT label_id FROM option WHERE o_id = ?;"; 
-	    	pstmtM3 = connectionSD.prepareStatement(sqlM3);
-	    	String sqlM4 = "delete FROM translation " +
-	    			" where s_id = ? " +
-	    			" and text_id = ? " + 
-	    			" and type = ? ";
-	    	pstmtM4 = connectionSD.prepareStatement(sqlM4);
-	    	String sqlM5 = "insert into translation (t_id, s_id, text_id, type, value,language) " +
-	    			"values (nextval('t_seq'),?,?,?,?,?);"; 
-	    	pstmtM5 = connectionSD.prepareStatement(sqlM5);
-	    	
-	    	/*
-	    	 * No longer required
-	    	String sqlGetIdent = "select ident from survey where s_id = ?;"; 
-	    	    	 
-	    	pstmtM6 = connectionSD.prepareStatement(sqlGetIdent);
-		    SurveyManager sm = new SurveyManager();
-		    for(int i = 0; i < survey.surveyManifest.size(); i++) {
-		    	System.out.println(survey.surveyManifest.get(i).filename);
-		    	sm.saveSurveyManifest(connectionSD, pstmtM1, pstmtM2, pstmtM3, pstmtM4, pstmtM5,
-		    			pstmtM6, sId, survey.surveyManifest.get(i));
-		    }
-		    */
-
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"No data available", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Exception loading settings", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
-			//if (pstmtDelSSC != null) try {pstmtDelSSC.close();} catch (SQLException e) {}
-			//if (pstmtSSC != null) try {pstmtSSC.close();} catch (SQLException e) {}
-			//if (pstmtM1 != null) try {pstmtM1.close();} catch (SQLException e) {}
-			//if (pstmtM2 != null) try {pstmtM2.close();} catch (SQLException e) {}
-			//if (pstmtM3 != null) try {pstmtM3.close();} catch (SQLException e) {}
-			//if (pstmtM4 != null) try {pstmtM4.close();} catch (SQLException e) {}
-			//if (pstmtM5 != null) try {pstmtM5.close();} catch (SQLException e) {}
-			//if (pstmtM6 != null) try {pstmtM6.close();} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
@@ -443,6 +427,36 @@ public class Surveys extends Application {
 		}
 
 		return response;
+	}
+	
+	/*
+	 * Write the PDF to disk
+	 */
+	private void writePdf(HttpServletRequest request, 
+			String fileName, 
+			FileItem pdfItem,
+			int pId) {
+	
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");		
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}	
+		
+		fileName = UtilityMethodsEmail.getSafeTemplateName(fileName);
+		fileName = fileName + ".pdf";
+		
+		String folderPath = basePath + "/templates/" + pId ;						
+		String filePath = folderPath + "/" + fileName;
+	    File savedFile = new File(filePath);
+	    log.info("Saving file to: " + filePath);
+	    try {
+			pdfItem.write(savedFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	 
 	}
 }
 

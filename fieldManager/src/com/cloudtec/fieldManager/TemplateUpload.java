@@ -58,6 +58,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.SurveyManager;
 import org.smap.server.utilities.PutXForm;
@@ -398,11 +399,7 @@ public class TemplateUpload extends Application {
 		SaveResponse response = new SaveResponse();
 		
 		// Remove special characters from the target name
-	    String specRegex = "[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]";
-		targetName = targetName.replaceAll(specRegex, "");	
-		targetName = targetName.replaceAll(" ", "_");
-		// The target name is not shown to users so it doesn't need to support unicode, however pyxform fails if it includes unicode chars
-		targetName = targetName.replaceAll("\\P{Print}", "_");	// remove all non printable (non ascii) characters. 
+		targetName = UtilityMethodsEmail.getSafeTemplateName(targetName);
 		
 		boolean isXLS = false;
 		boolean isXLSX = false;

@@ -137,7 +137,20 @@ public class UtilityMethodsEmail {
 	};
 
 
-    
+    /*
+     * Get Safe Template File Name
+     *  Returns safe file names from the display name for the template
+     */
+	static public String getSafeTemplateName(String targetName) {
+		String specRegex = "[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]";
+		targetName = targetName.replaceAll(specRegex, "");	
+		targetName = targetName.replaceAll(" ", "_");
+		// The target name is not shown to users so it doesn't need to support unicode, however pyxform fails if it includes unicode chars
+		targetName = targetName.replaceAll("\\P{Print}", "_");	// remove all non printable (non ascii) characters. 
+	
+		return targetName;
+	}
+	
 	/*
 	 * Remove any characters from the name that will prevent it being used as a database column name
 	 */

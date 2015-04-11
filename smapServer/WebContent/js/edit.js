@@ -207,6 +207,9 @@ $(document).ready(function() {
 	$('#set_default_language').change(function() {
 		globals.model.settingsChange();
 	});
+	$('#addPdfTemplate').off().click(function() {
+		globals.model.settingsAddPdfClicked();
+	});
 
 	// Check for selection of the label indicating successful updates and the one indicating failed
 	$('#successLabel').off().click(function() {

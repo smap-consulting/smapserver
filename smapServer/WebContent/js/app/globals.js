@@ -257,6 +257,7 @@ define(function() {
 		this.changes = [];
 		this.currentChange = 0;
 		this.savedSettings = undefined;
+		this.forcceSettingsChange = false;	// Set tr
 	
 		
 		// Save the survey
@@ -347,20 +348,22 @@ define(function() {
 		this.save_settings = function() {
 			
 			var settings = JSON.stringify(this.getSettings());
-			
+			$('#pdfSettings').val(settings);
+	    	var f = document.forms.namedItem("pdftemplate");
+	    	var formData = new FormData(f);
 			
 			addHourglass();
 			$.ajax({
 				  type: "POST",
-				  contentType: "application/json",
-				  dataType: "json",
+				  data: formData,
+				  cache: false,
+	              contentType: false,
+	              processData:false,
 				  url: "/surveyKPI/surveys/save_settings/" + globals.gCurrentSurvey,
-				  data: {
-					  settings: settings
-				  },
 				  success: function(data, status) {
 					  removeHourglass();
 					  globals.model.savedSettings = settings;
+					  globals.model.forceSettingsChange = false;
 					  $('#save_settings').attr("disabled", true);
 					  
 					  $('.formName').html(globals.model.survey.displayName);
@@ -501,11 +504,11 @@ define(function() {
 		 * Functions for managing settings
 		 */
 		this.getSettings = function() {
-			var current =  {
-				displayName: $('#set_survey_name').val(),
-				p_id: $('#set_project_name option:selected').val(),
-				def_lang: $('#set_default_language option:selected').text()
-			}
+			var current =  this.createSettingsObject(
+				$('#set_survey_name').val(),
+				$('#set_project_name option:selected').val(),
+				$('#set_default_language option:selected').text()
+			);
 			
 			// Update the model to reflect the current values
 			this.survey.displayName = current.displayName;
@@ -516,20 +519,44 @@ define(function() {
 		} 
 		
 		this.setSettings = function() {
-			this.savedSettings = JSON.stringify({
-				displayName: this.survey.displayName,
-				project_id: String(this.survey.p_id)
-			});
+			this.savedSettings = JSON.stringify(this.createSettingsObject(this.survey.displayName, 
+					this.survey.p_id, this.survey.def_lang));
+			this.forceSettingsChange = false;
 		} 
+		
+		this.createSettingsObject = function(displayName, p_id, def_lang) {
+			
+			var projId;
+			if(typeof p_id === "string") {
+				projId = parseInt(p_id);
+			} else {
+				projId = p_id;
+			}
+			return {
+				displayName: displayName,
+				p_id: projId,
+				def_lang: def_lang
+			}
+		}
 		
 		this.settingsChange = function() {
 			var current = globals.model.getSettings();
 			
-			if(JSON.stringify(current) !== globals.model.savedSettings) {
+			if(JSON.stringify(current) !== globals.model.savedSettings || globals.model.forceSettingsChange) {
 				$('#save_settings').attr("disabled", false);
 			} else {
 				$('#save_settings').attr("disabled", true);
 			}
+		}
+		
+		/*
+		 * If the user select a pdfTemplate that has been modified but its name has not changed then
+		 * the settings values will not be different but we want to enable an upload of the new template.
+		 * Hence set the forceSettingChange flag.
+		 */
+		this.settingsAddPdfClicked = function() {
+			globals.model.forceSettingsChange = true;
+			$('#save_settings').attr("disabled", false);
 		}
 	}
 	

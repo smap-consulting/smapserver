@@ -409,14 +409,23 @@ public class CreatePDF extends Application {
 					if(ad != null) {
 						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 						ad.setProportionalIcon(true);
-						ad.setImage(Image.getInstance(basePath + "/" + r.value));
+						try {
+							ad.setImage(Image.getInstance(basePath + "/" + r.value));
+						} catch (Exception e) {
+							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
+						}
 						pdfForm.replacePushbuttonField(r.name, ad.getField());
 					}
 				} else {
 					value = r.value;
 				}
-				status = pdfForm.setField(r.name, value);
-				System.out.println("Set field: " + status + " : " + r.name + " : " + value);
+				if(value != null && !value.equals("") && !r.type.equals("image")) {
+					status = pdfForm.setField(r.name, value);
+					System.out.println("Set field: " + status + " : " + r.name + " : " + value);
+				} else {
+					System.out.println("Skipping field: " + status + " : " + r.name + " : " + value);
+				}
+				
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);

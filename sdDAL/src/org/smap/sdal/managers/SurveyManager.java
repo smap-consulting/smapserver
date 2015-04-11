@@ -90,7 +90,7 @@ public class SurveyManager {
 		if(projectId != 0) {
 			pstmt.setInt(2, projectId);
 		}
-		log.info(sql + " : " + user + " : " + projectId);
+		log.info("Get surveys: " + pstmt.toString());
 		resultSet = pstmt.executeQuery();
 
 		while (resultSet.next()) {								
@@ -126,7 +126,7 @@ public class SurveyManager {
 			pstmt.setString(1, displayName);
 			pstmt.setInt(2, projectId);
 
-			log.info(pstmt.toString());
+			log.info("Check for existence of survey: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 
 			if (resultSet.next()) {		
@@ -164,7 +164,6 @@ public class SurveyManager {
 				" and u.ident = ? " +
 				" and s.s_id = ?; ";
 	
-		log.info("getsurvey by id, instance: " + instanceId);
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -515,7 +514,7 @@ public class SurveyManager {
 				}
 				pstmt2.setInt(1, sId);
 				
-				log.info("Sql: " + pstmt.toString());
+				log.info("Find survey: " + pstmt2.toString());
 				
 				resultSet = pstmt2.executeQuery();
 				
@@ -690,7 +689,6 @@ public class SurveyManager {
 		PreparedStatement pstmtDeleteLabel = null;
 		PreparedStatement pstmtLanguages = null;
 		
-		log.info("Apply label changes");
 		try {
 			
 			// Create prepared statements, one for the case where an existing value is being updated
@@ -896,8 +894,6 @@ public class SurveyManager {
 						maxSeq = rs.getInt(1);
 					}			
 				}
-				
-				log.info("Maximum sequence number: " + maxSeq);
 				
 				// Get the text_id for this option
 				pstmtOptionGet.setInt(1, ci.qId);

@@ -202,7 +202,21 @@
 							<select id="set_default_language" class="form-control language_list" tabindex="4"></select>
 						</div>
 					</div>
-				</form>		
+				</form>	
+				<form enctype="multipart/form-data" name="pdftemplate">
+					<fieldset>
+						<legend>Pdf Template:</legend>
+						<input id="pdfSettings" type="hidden" name="settings" >
+						<div class="form-group">
+      						<div class="input-group">
+      							<span class="input-group-btn">
+        							<input id="addPdfTemplate" name="files" title="Add" class="file-inputs" type="file" >
+      							</span>
+     					 		<input type="text" id="upload_msg" class="form-control" placeholder="PDF Template...">
+    						</div>
+         				</div>           			
+					</fieldset>
+				</form>	
 			</div>
 			
 			<div class="modal-footer">

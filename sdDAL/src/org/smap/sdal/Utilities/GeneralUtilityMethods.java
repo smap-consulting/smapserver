@@ -55,6 +55,74 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the survey ident from the id
+	 */
+	static public String getSurveyIdent(
+			Connection sd, 
+			int surveyId) throws SQLException {
+		
+		 String surveyIdent = null;
+		
+		String sqlGetSurveyIdent = "select ident " +
+				" from survey " +
+				" where s_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetSurveyIdent);
+			pstmt.setInt(1, surveyId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				surveyIdent = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return surveyIdent;
+	}
+	
+	/*
+	 * Get the survey project id from the survey id
+	 */
+	static public int getProjectId(
+			Connection sd, 
+			int surveyId) throws SQLException {
+		
+		int p_id = 0;
+		
+		String sqlGetSurveyIdent = "select p_id " +
+				" from survey " +
+				" where s_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetSurveyIdent);
+			pstmt.setInt(1, surveyId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				p_id = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return p_id;
+	}
+	
+	/*
 	 * Get an access key to allow results for a form to be securely submitted
 	 */
 	public static String  getNewAccessKey(
