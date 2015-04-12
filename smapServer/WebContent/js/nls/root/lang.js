@@ -100,6 +100,8 @@ define({
 	"c_start": "Start",
 	"c_back": "Back",
 	"c_target": "Target",
+	"c_content": "Content",
+	"c_attach": "Attach",
 	"c_details": "Details",
 	"c_action": "Action",
 	

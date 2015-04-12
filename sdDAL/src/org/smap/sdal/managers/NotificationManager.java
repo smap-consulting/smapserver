@@ -356,8 +356,16 @@ public class NotificationManager {
 				 * Create the document
 				 * TODO: Allow creation of PDFs, reports, aggregations
 				 */
-				String docUrl = "/webForm/" + ident +
-						"?datakey=instanceid&datakeyvalue=" + instanceId;
+				String docUrl = null;
+				if(nd.attach != null) {
+					if(nd.attach.equals("pdf")) {
+						docUrl = "/surveyKPI/pdf/" + s_id +
+								"?instance=" + instanceId;
+					} else if(nd.attach.equals("pdf")) {
+						docUrl = "/webForm/" + ident +
+								"?datakey=instanceid&datakeyvalue=" + instanceId;
+					}
+				}
 				
 				/*
 				 * Send document to target
@@ -396,6 +404,9 @@ public class NotificationManager {
 								log.info("Email Notifications: Discarding invalid email: " + email);
 							}
 						}
+						
+						log.info("userevent: " + remoteUser + " sending email of '" + docUrl + "' to " + emails);
+						
 						String subject = "Smap Notification";
 						if(nd.subject != null) {
 							subject = nd.subject;
@@ -410,13 +421,15 @@ public class NotificationManager {
 						log.info("+++ emailing to: " + emails + " : " + docUrl + 
 								" from: " + from + 
 								" subject: " + subject +
-								" smtp_host: " + emailServer.smtpHost);
+								" smtp_host: " + emailServer.smtpHost +
+								" email_domain" + emailServer.emailDomain);
 						try {
 							UtilityMethodsEmail.sendEmail(
 									emails, 
 									null, 
 									"notify", 
-									subject, 	
+									subject, 
+									nd.content,
 									from,		
 									null, 
 									null, 

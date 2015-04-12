@@ -303,6 +303,7 @@ $(document).ready(function() {
 		organisation.company_name = $('#o_company_name').val();
 		organisation.admin_email = $('#o_admin_email').val();
 		organisation.smtp_host = $('#o_smtp_host').val();
+		organisation.email_domain = $('#o_email_domain').val();
 	
 		// Validate
 		if(organisation.name.length === 0) {
@@ -725,6 +726,7 @@ function openOrganisationDialog(existing, organisationIndex) {
 		$('#o_company_name').val(org.company_name);
 		$('#o_admin_email').val(org.admin_email);
 		$('#o_smtp_host').val(org.smtp_host);
+		$('#o_email_domain').val(org.email_domain);
 		$('.puboption').each(function() {
 			console.log("option: " + $(this).val() );
 			if($(this).val() === "email") {

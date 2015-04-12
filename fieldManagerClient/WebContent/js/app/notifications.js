@@ -195,6 +195,8 @@ function saveEmail() {
 	notification.notifyDetails.emailQuestion = $('#email_question').val();
 	notification.notifyDetails.from = $('#from_email').val();
 	notification.notifyDetails.subject = $('#email_subject').val();
+	notification.notifyDetails.content = $('#email_content').val();
+	notification.notifyDetails.attach = $('#email_attach').val();
 	
 	return notification;
 }
@@ -275,6 +277,8 @@ function edit_notification(idx) {
 				surveyChanged(notification.notifyDetails.emailQuestion);
 			}
 			$('#email_subject').val(notification.notifyDetails.subject);
+			$('#email_content').val(notification.notifyDetails.content);
+			$('#email_attach').val(notification.notifyDetails.attach);
 		}
 		$('#fwd_rem_survey_id').val(notification.remote_s_ident);
 		$('#fwd_rem_survey_nm').val(notification.remote_s_name);	
@@ -491,7 +495,16 @@ function updateNotificationList(data) {
 		// details
 		h[++idx] = '<td>';
 		if(data[i].target === "email" && data[i].notifyDetails) {
-			h[++idx] = data[i].notifyDetails.emails.join(";");
+			if((data[i].notifyDetails.emails.length > 0 && data[i].notifyDetails.emails[0].trim().length > 0) || (data[i].notifyDetails.emailQuestion && data[i].notifyDetails.emailQuestion > 0)) {
+				h[++idx] = 'Send ' + data[i].notifyDetails.attach + ' to ';
+				h[++idx] = data[i].notifyDetails.emails.join(","); 
+				if(data[i].notifyDetails.emailQuestion && data[i].notifyDetails.emailQuestion > 0) {
+					if(data[i].notifyDetails.emails.length > 0 && data[i].notifyDetails.emails[0].trim().length > 0) {
+						h[++idx] = ', and'
+					}
+					h[++idx] = ' emails entered in response to a question';
+				}
+			}
 		} else if(data[i].target === "forward"){
 			h[++idx] = data[i].remote_host;
 			h[++idx] = ':';

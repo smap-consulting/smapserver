@@ -32,4 +32,5 @@ public class Organisation {
 	public String changed_ts;
 	public String admin_email;
 	public String smtp_host;
+	public String email_domain;
 }

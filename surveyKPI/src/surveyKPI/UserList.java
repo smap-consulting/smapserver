@@ -376,7 +376,7 @@ public class UserList extends Application {
 	}
 	
 	/*
-	 * Update the settings
+	 * Update the settings or create new user
 	 */
 	@POST
 	@Consumes("application/json")
@@ -460,18 +460,18 @@ public class UserList extends Application {
 						
 						// Send a notification email to the user
 						if(u.sendEmail) {
-							System.out.println("Check if email enabled: " + u.sendEmail);
+							log.info("Checking to see if email enabled: " + u.sendEmail);
 							EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser());
 							if(emailServer.smtpHost != null) {
 
-								System.out.println("Send email");
+								log.info("Send email");
 								String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
 								String interval = "48 hours";
 								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								String sender = "newuser";
 								UtilityMethodsEmail.sendEmail(u.email, uuid, "newuser", 
-										"Account created on Smap", sender, adminName, interval, 
+										"Account created on Smap", null, sender, adminName, interval, 
 										idents, 
 										null, 
 										adminEmail, 

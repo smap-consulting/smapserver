@@ -124,7 +124,8 @@ public class OrganisationList extends Application {
 					" changed_by, " +
 					" changed_ts," +
 					" admin_email, " +
-					" smtp_host " +
+					" smtp_host, " +
+					" email_domain " +
 					" from organisation " + 
 					" order by name ASC;";			
 						
@@ -147,6 +148,7 @@ public class OrganisationList extends Application {
 				org.changed_ts = resultSet.getString("changed_ts");
 				org.admin_email = resultSet.getString("admin_email");
 				org.smtp_host = resultSet.getString("smtp_host");
+				org.email_domain = resultSet.getString("email_domain");
 				organisations.add(org);
 			}
 	
@@ -257,8 +259,8 @@ public class OrganisationList extends Application {
 						
 					sql = "insert into organisation (name, company_name, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
-							"changed_by, admin_email, smtp_host, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+							"changed_by, admin_email, smtp_host, email_domain, changed_ts) " +
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setString(1, o.name);
@@ -272,6 +274,7 @@ public class OrganisationList extends Application {
 					pstmt.setString(9, request.getRemoteUser());
 					pstmt.setString(10, o.admin_email);
 					pstmt.setString(11, o.smtp_host);
+					pstmt.setString(12, o.email_domain);
 					log.info("SQL: " + sql + " : " + o.name);
 					pstmt.executeUpdate();
 					
@@ -299,6 +302,7 @@ public class OrganisationList extends Application {
 							" ft_send_trail = ?, " +
 							" admin_email = ?, " +
 							" smtp_host = ?, " +
+							" email_domain = ?, " +
 							" changed_by = ?, " + 
 							" changed_ts = now() " + 
 							" where " +
@@ -315,8 +319,9 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(8, o.ft_send_trail);
 					pstmt.setString(9, o.admin_email);
 					pstmt.setString(10, o.smtp_host);
-					pstmt.setString(11, request.getRemoteUser());
-					pstmt.setInt(12, o.id);
+					pstmt.setString(11, o.email_domain);
+					pstmt.setString(12, request.getRemoteUser());
+					pstmt.setInt(13, o.id);
 							
 					log.info("SQL: " + sql + ":" + o.name + ":" + o.id);
 					pstmt.executeUpdate();

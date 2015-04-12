@@ -424,6 +424,7 @@ public class UtilityMethodsEmail {
 			String uuid, 
 			String type, 
 			String subject,
+			String content,
 			String sender,
 			String adminName,
 			String interval,
@@ -459,9 +460,9 @@ public class UtilityMethodsEmail {
 		    } else {
 		    	sender = sender + "@" + emailDomain;
 		    }
-		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
 		    log.info("Sending email from: " + sender);
-		    
+		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
+	    
 		    StringBuffer identString = new StringBuffer();
 	    	int count = 0;
 	    	if(idents != null) {
@@ -474,7 +475,9 @@ public class UtilityMethodsEmail {
 	    	}
 		    
 		    StringBuffer txtMessage = new StringBuffer("");
-		    if(type.equals("reset")) {
+		    if(content != null) {
+		    	txtMessage.append(content);			// User has specified email content
+		    } else if(type.equals("reset")) {
 			    txtMessage.append("Goto https://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
