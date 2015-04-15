@@ -32,7 +32,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 /*
- * Provides a survey level export of a survey as CSV
+ * Provides a survey level export of a survey as an XLS file
  * If the optional parameter "flat" is passed then this is a flat export where 
  *   children are appended to the end of the parent record.
  *   
@@ -396,33 +396,6 @@ public class ExportSurvey extends Application {
 				 */
 				for(FormDesc f : formList) {
 
-					//f.debugForm();
-					/*
-					 * Get the max number of repeating elements in this table
-					 */
-					/*
-					f.maxRepeats = 1;		// Default to one for the top level form, or pivot output
-					if(f.flat) {
-						if(f.parent != null) {
-							
-								sql = "select max(t.cnt)  from " +
-									"(select count(parkey) cnt " +
-									" from " + f.table_name +
-									" where _bad = 'false' " +
-									 " group by parkey) AS t;";
-							
-							if(pstmt2 != null) {pstmt2.close();};
-							pstmt2 = connectionResults.prepareStatement(sql);
-							if(resultSet2 != null) {resultSet2.close();};
-							resultSet2 = pstmt2.executeQuery();
-							while (resultSet2.next()) {
-								f.maxRepeats = resultSet2.getInt(1);
-								log.fine("Max repeats for (" + f.table_name + ") is " + f.maxRepeats); 
-							}
-						}
-					}
-					*/
-					// End Flat
 					
 					// Get the question names and identifiers
 					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
@@ -964,6 +937,7 @@ public class ExportSurvey extends Application {
 				
 			} else {
 				boolean found_non_matching_record = false;
+				boolean hasMatchingRecord = false;
 				if(number_records == 0) {
 					if(index < formList.size() - 1) {
 						
@@ -983,6 +957,17 @@ public class ExportSurvey extends Application {
 						closeRecord(outWriter, in, csv);
 					}
 				} else {
+					/*
+					 * First check all the records to see if there is at least one matching record
+					 */
+					for(int i = 0; i < number_records; i++) {
+						RecordDesc rd = f.records.get(i);
+						
+						if(parent == null || parent.equals(rd.parkey)) {
+							hasMatchingRecord = true;
+						}
+					}
+					
 					for(int i = 0; i < number_records; i++) {
 						RecordDesc rd = f.records.get(i);
 						
@@ -1008,6 +993,7 @@ public class ExportSurvey extends Application {
 							/*
 							 * Non matching record  Continue processing the other forms in the list once.
 							 * This is only done once as multiple non matching records are effectively duplicates
+							 * It is also only done if we have not already found a matching record as 
 							 *  
 							 */
 							if(!found_non_matching_record) {
@@ -1028,7 +1014,13 @@ public class ExportSurvey extends Application {
 									
 									appendToOutput(outWriter, newRec , nextForm, formList, index + 1, filter);
 								} else {
-									closeRecord(outWriter, in, csv);
+									/*
+									 * Add the record if there are no matching records for this form
+									 * This means that if a child form was not completed the main form will still be shown (outer join)
+									 */
+									if(!hasMatchingRecord) {
+										closeRecord(outWriter, in, csv);
+									}
 								}
 							}
 						}
