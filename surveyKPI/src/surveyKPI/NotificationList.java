@@ -545,6 +545,13 @@ public class NotificationList extends Application {
 		PreparedStatement pstmtUpdateUploadEvent = null;
 		PreparedStatement pstmtNotificationLog = null;
 		
+		// Get the base path
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
 		
 		try {
 			NotificationManager fm = new NotificationManager();
@@ -555,7 +562,10 @@ public class NotificationList extends Application {
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
 					pstmtNotificationLog, 
-					ue_id, request.getRemoteUser(), request.getServerName());	
+					ue_id, 
+					request.getRemoteUser(), 
+					request.getServerName(),
+					basePath);	
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {

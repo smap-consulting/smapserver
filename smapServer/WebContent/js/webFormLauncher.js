@@ -46,8 +46,9 @@ require([
          'bootstrap.min',
          'app/common', 
          'app/globals',
-         'app/localise'
-         ], function($, bootstrap, common, globals, localise) {
+         'app/localise',
+         'bootstrap.file-input'
+         ], function($, bootstrap, common, globals, localise, bsfi) {
 
 $(document).ready(function() {
 	
@@ -100,11 +101,54 @@ $(document).ready(function() {
 			
 		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		user.current_survey_id = 0;
-		saveCurrentUser(user);			// Save the updated user details to disk	 
+		
+		var settings = JSON.stringify(user);
+		$('#userSettings').val(settings);
+    	var f = document.forms.namedItem("signaturesave");
+    	var formData = new FormData(f);
+    	
+		saveUserDetails(formData);			// Save the updated user details to disk	 
 	});
+    
+    $('.file-inputs').bootstrapFileInput();
     
 	enableUserProfileBS();
 });
+
+/*
+ * Save the currently logged on user's details
+ */
+function saveUserDetails(formData) {
+
+	$('#up_alert').hide();
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  data: formData,
+		  cache: false,
+          contentType: false,
+          processData:false,
+		  url: "/surveyKPI/user/details",
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("User details saved");
+			  // Update the signature value
+			  var user = JSON.parse(data);
+			  $('#my_signature').attr("src", user.signature);
+			  // updateUserDetails(data, undefined);
+		  },
+		  error: function(xhr, textStatus, err) {
+			  removeHourglass();  	
+			  if(xhr.readyState == 0 || xhr.status == 0) {
+			      return;  // Not an error
+			 } else {
+				 $('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error profile not saved" + xhr.responseText);
+			 }
+		  }
+	});
+	
+};
+	
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys

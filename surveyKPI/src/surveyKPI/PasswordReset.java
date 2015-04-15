@@ -109,7 +109,7 @@ public class PasswordReset extends Application {
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset";
 						UtilityMethodsEmail.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
-					    		idents, null, adminEmail, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
+					    		idents, null, null, adminEmail, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

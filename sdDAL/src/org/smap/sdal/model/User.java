@@ -25,6 +25,7 @@ public class User {
 	public String ident;
 	public String name;
 	public String settings;		// JSON for customer configurable settings
+	public String signature;
 	public String language;
 	public String email;
 	public String password;

@@ -474,6 +474,7 @@ public class UserList extends Application {
 										"Account created on Smap", null, sender, adminName, interval, 
 										idents, 
 										null, 
+										null,
 										adminEmail, 
 										emailServer.smtpHost,
 										emailServer.emailDomain,

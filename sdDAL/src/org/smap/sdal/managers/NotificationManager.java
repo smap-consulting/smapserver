@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -288,7 +289,8 @@ public class NotificationManager {
 			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
-			String serverName) throws SQLException {
+			String serverName,
+			String basePath) throws SQLException {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
@@ -356,13 +358,31 @@ public class NotificationManager {
 				 * Create the document
 				 * TODO: Allow creation of PDFs, reports, aggregations
 				 */
-				String docUrl = null;
+				System.out.println("Attach: " + nd.attach);
+				String docURL = null;
+				String filePath = null;
 				if(nd.attach != null) {
+					System.out.println("Attaching link to email: " + nd.attach);
 					if(nd.attach.equals("pdf")) {
-						docUrl = "/surveyKPI/pdf/" + s_id +
-								"?instance=" + instanceId;
-					} else if(nd.attach.equals("pdf")) {
-						docUrl = "/webForm/" + ident +
+						//docUrl = "/surveyKPI/pdf/" + s_id + "?instance=" + instanceId;
+						docURL = null;
+						
+						// Create temporary PDF and get file name
+						PDFManager pm = new PDFManager();
+						filePath = pm.createTemporaryPdfFile(
+								sd,
+								cResults,
+								basePath, 
+								String.valueOf(UUID.randomUUID()) + ".pdf", 	// filename
+								remoteUser,
+								"none", 
+								s_id, 
+								instanceId);
+						
+						System.out.println("Temporary PDF file: " + filePath);
+						
+					} else {
+						docURL = "/webForm/" + ident +
 								"?datakey=instanceid&datakeyvalue=" + instanceId;
 					}
 				}
@@ -405,20 +425,20 @@ public class NotificationManager {
 							}
 						}
 						
-						log.info("userevent: " + remoteUser + " sending email of '" + docUrl + "' to " + emails);
+						log.info("userevent: " + remoteUser + " sending email of '" + docURL + "' to " + emails);
 						
 						String subject = "Smap Notification";
-						if(nd.subject != null) {
+						if(nd.subject != null && nd.subject.trim().length() > 0) {
 							subject = nd.subject;
 						}
 						String from = "smap";
-						if(nd.from != null) {
+						if(nd.from != null && nd.from.trim().length() > 0) {
 							from = nd.from;
 						}
 						
-						notify_details = "Sending email to: " + emails + " containing link " + docUrl;
+						notify_details = "Sending email to: " + emails + " containing link " + docURL;
 						
-						log.info("+++ emailing to: " + emails + " : " + docUrl + 
+						log.info("+++ emailing to: " + emails + " : " + docURL + 
 								" from: " + from + 
 								" subject: " + subject +
 								" smtp_host: " + emailServer.smtpHost +
@@ -434,7 +454,8 @@ public class NotificationManager {
 									null, 
 									null, 
 									null, 
-									docUrl, 
+									docURL, 
+									filePath,
 									adminEmail, 
 									emailServer.smtpHost,
 									emailServer.emailDomain,

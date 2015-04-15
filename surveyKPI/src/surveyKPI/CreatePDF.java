@@ -324,16 +324,17 @@ public class CreatePDF extends Application {
 			System.out.println("Get the pdf template: " + templateName);
 			File templateFile = new File(templateName);
 			if(templateFile.exists()) {
-				// File the template
+				
 				System.out.println("Template Exists");
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, response.getOutputStream());
+				int languageIdx = getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i);
+					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
 				}
 				if(user != null) {
-					fillTemplateUserDetails(stamper.getAcroFields(), user);
+					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
 				}
 				stamper.setFormFlattening(true);
 				stamper.close();
@@ -397,28 +398,39 @@ public class CreatePDF extends Application {
 			ArrayList<Result> record, 
 			String basePath,
 			String formName,
-			int repeatIndex) throws IOException, DocumentException {
+			int repeatIndex,
+			org.smap.sdal.model.Survey survey,
+			int languageIdx) throws IOException, DocumentException {
 		try {
 			
 			boolean status = false;
 			String value = "";
 			for(Result r : record) {
 				
+				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k);
+						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
 					} 
 				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
 						if(c.isSet) {
-							value = c.name;
+							// value = c.name;
+							if(c.name.equals("other")) {
+								hideLabel = true;
+							}
+							
+							Option option = survey.optionLists.get(c.listName).get(c.cIdx);
+							Label label = option.labels.get(languageIdx);
+							value = label.text;
+							
 							break;
 						}
 					}
 				} else if(r.type.equals("image")) {
-					System.out.println("adding image: " + fieldName);
+					System.out.println("adding image: " + fieldName + " : " + r.value);
 					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 					if(ad != null) {
 						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -430,15 +442,26 @@ public class CreatePDF extends Application {
 						}
 						pdfForm.replacePushbuttonField(fieldName, ad.getField());
 						System.out.println("Adding image to: " + fieldName);
+					} else {
+						System.out.println("Picture field: " + fieldName + " not found");
 					}
 				} else {
 					value = r.value;
 				}
+	
 				if(value != null && !value.equals("") && !r.type.equals("image")) {
 					status = pdfForm.setField(fieldName, value);			
 					System.out.println("Set field: " + status + " : " + fieldName + " : " + value);
+					if(hideLabel) {
+						pdfForm.removeField(fieldName);
+					}
+							
 				} else {
 					System.out.println("Skipping field: " + status + " : " + fieldName + " : " + value);
+				}
+				
+				if(value == null || value.trim().equals("")) {
+					pdfForm.removeField(fieldName);
 				}
 				
 			}
@@ -462,10 +485,11 @@ public class CreatePDF extends Application {
 		String title;
 		String license;
 	}
+	
 	/*
 	 * Fill the template with data from the survey
 	 */
-	private static void fillTemplateUserDetails(AcroFields pdfForm, User user) throws IOException, DocumentException {
+	private static void fillTemplateUserDetails(AcroFields pdfForm, User user, String basePath) throws IOException, DocumentException {
 		try {
 					
 			pdfForm.setField("user_name", user.name);
@@ -483,6 +507,22 @@ public class CreatePDF extends Application {
 			if(us != null) {
 				pdfForm.setField("user_title", us.title);
 				pdfForm.setField("user_license", us.license);
+				
+				System.out.println("adding signature: " + user.signature);
+				PushbuttonField ad = pdfForm.getNewPushbuttonFromField("user_signature");
+				if(ad != null) {
+					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
+					ad.setProportionalIcon(true);
+					try {
+						ad.setImage(Image.getInstance(basePath + "/" + user.signature));
+					} catch (Exception e) {
+						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
+					}
+					pdfForm.replacePushbuttonField("user_signature", ad.getField());
+					System.out.println("Adding image to: signature");
+				} else {
+					System.out.println("Picture field: user_signature not found");
+				}
 			}
 				
 		} catch (Exception e) {

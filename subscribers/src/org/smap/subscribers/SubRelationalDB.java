@@ -231,7 +231,10 @@ public class SubRelationalDB extends Subscriber {
 					pstmtGetNotifications, 
 					pstmtUpdateUploadEvent, 
 					pstmtNotificationLog, 
-					ue_id, remoteUser, server);	
+					ue_id, 
+					remoteUser, 
+					server,
+					gBasePath);	
 			
 		} catch (SQLException e) {
 			e.printStackTrace();

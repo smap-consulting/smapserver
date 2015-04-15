@@ -122,6 +122,7 @@ CREATE TABLE users (
 	realm text,
 	name text,
 	settings text,				-- User configurable settings
+	signature text,
 	language varchar(10),
 	location text,
 	has_gps boolean,

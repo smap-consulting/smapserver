@@ -267,6 +267,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 		var userDetails = JSON.parse(data.settings);
 		$('#my_title').val(userDetails.title);
 		$('#my_license').val(userDetails.license);
+		$('#my_signature').attr("src", data.signature);
 	}
 }
 

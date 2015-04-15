@@ -29,6 +29,11 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileUtils;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.User;
@@ -37,10 +42,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,7 +118,7 @@ public class UserSvc extends Application {
 	}
 	
 	/*
-	 * Update the users details
+	 * Update the user settings
 	 */
 	@POST
 	@Consumes("application/json")
@@ -245,6 +255,197 @@ public class UserSvc extends Application {
 		return response;
 	}
 
+	/*
+	 * Update the user details
+	 * This service should be merged with the preceeding one however:
+	 *  current the user settings can be updated from many places
+	 *  user details on the webform screen adds a user signature which requires
+	 *  a multi part mime update however for the moment we will try and avoid
+	 *  affecting the other locations that update settings
+	 */
+	@POST
+	@Path("/details")
+	public Response updateUserDetails(@Context HttpServletRequest request) { 
+		
+		Response response = null;
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
+		fileItemFactory.setSizeThreshold(5*1024*1024); // 5 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Not Required
+		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserSvc");
+		
+		FileItem sigItem = null;
+		String fileName = null;
+		String sigPath = null;
+		String userFolderPath = null;
+		String sigFolderPath = null;
+		String sigUrl = null;
+		String settings = null;
+		
+		PreparedStatement pstmt = null;
+		try {	
+			
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+				
+					if(item.getFieldName().equals("settings")) {
+						try {
+							settings = item.getString();
+						} catch (Exception e) {
+							
+						}
+					}
+					
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					// Get the base path
+					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+					if(basePath == null) {
+						basePath = "/smap";
+					} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+						basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+					}
+					
+					if(item.getSize() > 0) {
+						sigItem = item;
+						fileName = String.valueOf(UUID.randomUUID());
+						int userId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
+						userFolderPath = basePath + "/media/" +  userId;
+						sigFolderPath = userFolderPath + "/sig";
+						sigPath = sigFolderPath + "/" + fileName;
+						sigUrl = "/media/" +  userId + "/sig/" + fileName;
+												
+						// 1. Create the project folder if it does not exist
+					    File folder = new File(userFolderPath);
+					    FileUtils.forceMkdir(folder);
+					    
+					    // 2. Delete any existing signature files
+					    folder = new File(sigFolderPath);
+					    try { 	
+							FileUtils.deleteDirectory(folder);
+						} catch (IOException e) {
+							log.log(Level.SEVERE, "Error deleting signatre directory");
+						}
+					    
+					    // 3. Create the signature folder
+					    folder = new File(sigFolderPath);
+					    FileUtils.forceMkdir(folder);
+					    
+					    // 3. Save the file
+					    File savedFile = new File(sigPath);
+					    item.write(savedFile);
+					}					
+				}
+
+			}
+			
+			Type type = new TypeToken<User>(){}.getType();		
+			User u = new Gson().fromJson(settings, type);		
+			
+			// Ensure email is null if it has not been set
+			if(u.email != null && u.email.trim().isEmpty()) {
+				u.email = null;
+			}
+		
+
+			String sql = null;
+			String ident = request.getRemoteUser();
+			
+			if(sigPath == null) {
+				// Do not update the signature
+				sql = "update users set " +
+						" name = ?, " + 
+						" settings = ?, " + 
+						" where " +
+						" ident = ?;";
+			} else {
+				// Update the signature
+				sql = "update users set " +
+						" name = ?, " + 
+						" settings = ?, " + 
+						" signature = ? " +
+						" where " +
+						" ident = ?;";
+				
+			}
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setString(1, u.name);
+			pstmt.setString(2, u.settings);
+			if(sigPath == null) {
+				pstmt.setString(3, ident);
+			} else {
+				pstmt.setString(3, sigUrl);
+				pstmt.setString(4, ident);
+			}
+			
+			log.info("userevent: " + request.getRemoteUser() + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);
+			pstmt.executeUpdate();
+			
+			// Set the updated signature and return the user id TODO fix this hacky code
+			u.signature = sigUrl;
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(u);
+			
+			response = Response.ok(resp).build();
+						
+		} catch (SQLException e) {
+
+			response = Response.serverError().build();
+			log.log(Level.SEVERE,"Error", e);
+			
+		} catch (Exception e) {
+
+			response = Response.serverError().build();
+			log.log(Level.SEVERE,"Error", e);
+			
+		} finally {
+			
+			try {
+				if (pstmt != null) {
+					pstmt.close();
+				}
+			} catch (SQLException e) {
+			}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
 
 
 }

@@ -191,7 +191,7 @@ function saveEmail() {
 
 	notification.target = "email";
 	notification.notifyDetails = {};
-	notification.notifyDetails.emails = $('#notify_emails').val().split(";");
+	notification.notifyDetails.emails = $('#notify_emails').val().split(",");
 	notification.notifyDetails.emailQuestion = $('#email_question').val();
 	notification.notifyDetails.from = $('#from_email').val();
 	notification.notifyDetails.subject = $('#email_subject').val();

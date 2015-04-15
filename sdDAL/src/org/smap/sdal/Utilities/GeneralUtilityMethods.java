@@ -54,6 +54,40 @@ public class GeneralUtilityMethods {
 		return o_id;
 	}
 	
+	/*
+	 * Get the user id from the user ident
+	 */
+	static public int getUserId(
+			Connection sd, 
+			String user) throws SQLException {
+		
+		int u_id = -1;
+		
+		String sqlGetUserId = "select id " +
+				" from users u " +
+				" where u.ident = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetUserId);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				u_id = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return u_id;
+	}
+	
     /*
      * Get Safe Template File Name
      *  Returns safe file names from the display name for the template
@@ -535,12 +569,20 @@ public class GeneralUtilityMethods {
 								String email=option.replaceFirst("_amp_", "@");
 								email=email.replaceAll("_dot_", ".");
 								log.info("******** " + email);
+								String emails[] = email.split(",");
 								responses.add(email);
 							}
 						}
 					} else {
 						log.info("******** " + rs.getString(1));
-						responses.add(rs.getString(1));
+						String email = rs.getString(1);
+						if(email != null) {
+							String [] emails = email.split(",");
+							for(int i = 0; i < emails.length; i++) {
+								responses.add(emails[i]);
+							}
+						}
+						
 					}
 				}
 			}

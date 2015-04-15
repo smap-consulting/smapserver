@@ -60,6 +60,7 @@ public class UserManager {
 			sql = "SELECT u.id as id, " +
 					"u.name as name, " +
 					"u.settings as settings, " +
+					"u.signature as signature, " +
 					"u.language as language, " +
 					"u.email as email, " +
 					"u.current_project_id as current_project_id, " +
@@ -86,6 +87,7 @@ public class UserManager {
 				user.ident = ident;
 				user.name = resultSet.getString("name");
 				user.settings = resultSet.getString("settings");
+				user.signature = resultSet.getString("signature");
 				user.language = resultSet.getString("language");
 				user.email = resultSet.getString("email");
 				user.current_project_id = resultSet.getInt("current_project_id");

@@ -18,13 +18,20 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.BodyPart;
 import javax.mail.Message;
 import javax.mail.Message.RecipientType;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ChangeItem;
@@ -430,6 +437,7 @@ public class UtilityMethodsEmail {
 			String interval,
 			ArrayList<String> idents,
 			String docURL,
+			String filePath,
 			String adminEmail,
 			String smtp_host,
 			String emailDomain,
@@ -444,7 +452,7 @@ public class UtilityMethodsEmail {
 			Properties props = System.getProperties();
 			props.put("mail.smtp.host", smtp_host);	
 			Session session = Session.getInstance(props, null);
-			session.setDebug(true);
+			//session.setDebug(true);
 			Message msg = new MimeMessage(session);
 			
 			if(type.equals("notify")) {
@@ -452,7 +460,11 @@ public class UtilityMethodsEmail {
 			} else {
 				rt = Message.RecipientType.TO;
 			}
-		    msg.setRecipients(rt,	InternetAddress.parse(email, false));
+			
+			log.info("Sending to email addresses: " + email);
+			InternetAddress[] emailArray = InternetAddress.parse(email);
+			System.out.println("Number of email addresses: " + emailArray.length);
+		    msg.setRecipients(rt,	emailArray);
 		    msg.setSubject(subject);
 		    
 		    if(emailDomain == null) {
@@ -475,8 +487,15 @@ public class UtilityMethodsEmail {
 	    	}
 		    
 		    StringBuffer txtMessage = new StringBuffer("");
-		    if(content != null) {
+		    if(content != null && content.trim().length() > 0) {
 		    	txtMessage.append(content);			// User has specified email content
+			    txtMessage.append("\n");
+			    
+			    // Add a link to the report if docURL is not null
+			    if(docURL != null) {
+				    txtMessage.append(serverName);
+				    txtMessage.append(docURL);
+			    }
 		    } else if(type.equals("reset")) {
 			    txtMessage.append("Goto https://");
 			    txtMessage.append(serverName);
@@ -517,17 +536,41 @@ public class UtilityMethodsEmail {
 		    } else if(type.equals("notify")) {
 			    txtMessage.append("This is a notification from Smap server http://");
 			    txtMessage.append(serverName);
-			    txtMessage.append("\n");
-			    txtMessage.append(serverName);
-			    txtMessage.append(docURL);
-			    txtMessage.append("\n");
-			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
-			    txtMessage.append(adminEmail);
-			    txtMessage.append(".");
+			    
+			    // TODO make this generic
+			    txtMessage.append(" on behalf of BCA Certifiers Australia Pty Ltd.");
+			    txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to support@zarkman.com.");
+			    txtMessage.append("\n\n");
+			    txtMessage.append("If you need to contact BCA Certifiers regarding the attached Inspection Record please use the contact details provided below:");
+			    txtMessage.append("\n\n");
+			    txtMessage.append("BCA Certifiers Australia Pty Ltd - Unit 3/2-6 Shea Street, Phillip ACT 2606\n");
+			    txtMessage.append("P (02) 6285 1199 | F (02) 6285 2795 | E mail@bcacertifiers.com.au");
+			    txtMessage.append("\n\n");
+			    if(docURL != null) {
+				    txtMessage.append(serverName);
+				    txtMessage.append(docURL);
+			    }
 
 		    }
 		    
-		    msg.setText(txtMessage.toString());
+		    BodyPart messageBodyPart = new MimeBodyPart();
+		    //msg.setText(txtMessage.toString());
+		    messageBodyPart.setText(txtMessage.toString());
+		    Multipart multipart = new MimeMultipart();
+		    multipart.addBodyPart(messageBodyPart);
+		    
+		    // Add file attachments if they exist
+		    if(filePath != null) {			 
+			    messageBodyPart = new MimeBodyPart();
+			    DataSource source = new FileDataSource(filePath);
+			    messageBodyPart.setDataHandler(new DataHandler(source));
+		        messageBodyPart.setFileName(filePath);
+		        multipart.addBodyPart(messageBodyPart);
+		    }
+	        
+
+	        msg.setContent(multipart);
+		    
 		    msg.setHeader("X-Mailer", "msgsend");
 		    log.info("Sending email from: " + sender);
 		    Transport.send(msg);
