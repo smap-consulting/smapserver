@@ -435,7 +435,7 @@ function refreshForm() {
 			for(i = 0; i < survey.forms.length; i++) {
 				if(survey.forms[i].parentform == 0) {
 					h[++idx] = addQuestions(survey.forms[i], i);
-					break
+					break;
 				}
 			}
 		}
@@ -514,7 +514,7 @@ function mediaPropSelected($this) {
 	$('#mediaModal table').on('click', 'tbody tr', function(e) {
 		var $sel = $(this);
 		
-		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other seelcted rows
+		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');	// Un mark any other selcted rows
 	    $sel.addClass('success');
 	 
 	    gNewVal = $sel.find('.filename').text();		    
@@ -532,6 +532,15 @@ function mediaPropSelected($this) {
 	// On double click save and exit
 	$('#mediaModal table').on('dblclick', 'tbody tr', function(e) {
 		var $sel = $(this);
+		
+	    gNewVal = $sel.find('.filename').text();		    
+	    $('#mediaSelectSave').trigger("click");
+	});
+	
+	// If the user clicks on "Add" save and exit
+	
+	$('.mediaAdd').on('click', function(e) {
+		var $sel = $(this).closest('tr');
 		
 	    gNewVal = $sel.find('.filename').text();		    
 	    $('#mediaSelectSave').trigger("click");
@@ -1118,8 +1127,6 @@ function refreshMediaView(data, sId) {
 				h[++idx] = '">';
 			}
 			h[++idx] = '</a>';
-
-
 			h[++idx] = '</td>';
 			h[++idx] = '<td class="filename">';
 				h[++idx] = '<p>';
@@ -1139,6 +1146,12 @@ function refreshMediaView(data, sId) {
 				h[++idx] = ' Delete';
 				h[++idx] = '</button>';
 			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaSelect">';
+				h[++idx] = '<button class="mediaAdd btn btn-success">';
+				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
+					h[++idx] = ' Add';
+				h[++idx] = '</button>';
+		h[++idx] = '</td>';
 			
 			
 			h[++idx] = '</tr>';
