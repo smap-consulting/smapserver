@@ -459,7 +459,7 @@ function refreshForm() {
 	//enableDragablePanels();
 	
 	$('.labelProp').change(function(){
-		event.preventDefault();
+
 		var $this = $(this),
 			prop = $this.data("prop"),
 			$parent = $this.parent(),
@@ -481,7 +481,6 @@ function refreshForm() {
 	});
 	
 	$('.mediaProp').off().click(function(){
-		event.preventDefault();
 		
 		var $this = $(this);
 		mediaPropSelected($this);
@@ -993,7 +992,6 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	if($gCurrentRow) {
 		$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
 		$('.mediaProp', $gCurrentRow).off().click(function(){
-			event.preventDefault();	
 			var $this = $(this);
 			mediaPropSelected($this);
 		});
