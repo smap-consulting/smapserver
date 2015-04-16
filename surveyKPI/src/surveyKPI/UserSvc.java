@@ -24,10 +24,13 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -255,6 +258,32 @@ public class UserSvc extends Application {
 		return response;
 	}
 
+
+	/*
+	 * No Key - Get the user from apache authentication
+	 */
+	@POST
+	@Path("/details")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response postUserDetailsNoKey(
+			@Context HttpServletRequest request) throws IOException {
+		
+		return updateUserDetails(request, null);
+	}
+	
+	/*
+	 * No Key Get the user from the provided key
+	 */
+	@POST
+	@Path("/details/key/{instanceId}")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response postUpdateInstance(
+			@Context HttpServletRequest request,
+	        @PathParam("key") String key) throws IOException {
+		
+		return updateUserDetails(request, key);
+	}
+
 	/*
 	 * Update the user details
 	 * This service should be merged with the preceeding one however:
@@ -263,9 +292,7 @@ public class UserSvc extends Application {
 	 *  a multi part mime update however for the moment we will try and avoid
 	 *  affecting the other locations that update settings
 	 */
-	@POST
-	@Path("/details")
-	public Response updateUserDetails(@Context HttpServletRequest request) { 
+	private Response updateUserDetails(@Context HttpServletRequest request, String key) { 
 		
 		Response response = null;
 		
@@ -285,6 +312,7 @@ public class UserSvc extends Application {
 		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserSvc");
 		
+		
 		FileItem sigItem = null;
 		String fileName = null;
 		String sigPath = null;
@@ -292,9 +320,25 @@ public class UserSvc extends Application {
 		String sigFolderPath = null;
 		String sigUrl = null;
 		String settings = null;
+		String user = null;
 		
 		PreparedStatement pstmt = null;
 		try {	
+			
+			/*
+			 * Get the user
+			 */
+			if(key != null) {
+				try {
+					user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				log.info("Getting user with key: " + key);
+			} else {
+				user = request.getRemoteUser();
+			}
+			log.info("user: " + user);
 			
 			/*
 			 * Parse the request
@@ -335,7 +379,7 @@ public class UserSvc extends Application {
 					if(item.getSize() > 0) {
 						sigItem = item;
 						fileName = String.valueOf(UUID.randomUUID());
-						int userId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
+						int userId = GeneralUtilityMethods.getUserId(connectionSD, user);
 						userFolderPath = basePath + "/media/" +  userId;
 						sigFolderPath = userFolderPath + "/sig";
 						sigPath = sigFolderPath + "/" + fileName;
@@ -375,7 +419,7 @@ public class UserSvc extends Application {
 		
 
 			String sql = null;
-			String ident = request.getRemoteUser();
+			String ident = user;
 			
 			if(sigPath == null) {
 				// Do not update the signature
@@ -406,10 +450,10 @@ public class UserSvc extends Application {
 			}
 			
 			log.info("Update user details: " + pstmt.toString());
-			log.info("userevent: " + request.getRemoteUser() + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);
+			log.info("userevent: " + ident + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);
 			pstmt.executeUpdate();
 			
-			// Set the updated signature and return the user id TODO fix this hacky code
+			// Set the updated signature and return it in the user id 
 			u.signature = sigUrl;
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(u);

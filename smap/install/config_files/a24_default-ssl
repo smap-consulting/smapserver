@@ -186,7 +186,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         Require valid-user
 	</Location>
 	
-# surveyKPI module
+	# surveyKPI module
  	<Location /surveyKPI>
 		AuthType Digest
         AuthName "smap"
@@ -196,6 +196,12 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         Require valid-user
 	</Location>
 
+	# Allow iphones to upload images to user details
+    <Location /surveyKPI/user/details/key>
+    	allow from all
+        Satisfy Any
+    </Location>
+    
 	<Location /surveyKPI/reports/view>
         Require all granted
     </Location>

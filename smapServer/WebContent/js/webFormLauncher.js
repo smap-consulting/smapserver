@@ -118,8 +118,15 @@ $(document).ready(function() {
 /*
  * Save the currently logged on user's details
  */
-function saveUserDetails(formData) {
+function saveUserDetails(formData, key) {
 
+	var url = "/surveyKPI/user/details";
+	
+	// If this is an iphone we might need to do the upload with a unique key
+	if(key) {
+		url = url + "/key/" + key;
+	}
+	
 	$('#up_alert').hide();
 	addHourglass();
 	$.ajax({
@@ -128,7 +135,7 @@ function saveUserDetails(formData) {
 		  cache: false,
           contentType: false,
           processData:false,
-		  url: "/surveyKPI/user/details",
+		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
 			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("User details saved");
@@ -138,10 +145,18 @@ function saveUserDetails(formData) {
 			  // updateUserDetails(data, undefined);
 		  },
 		  error: function(xhr, textStatus, err) {
-			  removeHourglass();  	
-			  if(xhr.readyState == 0 || xhr.status == 0) {
-			      return;  // Not an error
-			 } else {
+			  var originalFormData = formData,
+			  	  originalKey = key;
+			  
+			  removeHourglass(); 
+			  
+			  /*
+			   * If there is an error retry after gettign an authentication key
+			   * Safari on ios seems to return a status of 0 for a 401 error
+			   */
+			  if(!originalKey) {
+				  getKey(originalFormData);
+			  } else {
 				 $('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error profile not saved" + xhr.responseText);
 			 }
 		  }
@@ -149,6 +164,28 @@ function saveUserDetails(formData) {
 	
 };
 	
+function getKey(formData) {
+	
+	addHourglass();
+	$.ajax({
+		url: '/surveyKPI/login/key?form=user',
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			var passedFormData = formData;
+			removeHourglass();
+			saveUserDetails(passedFormData, data.key);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of surveys: " + err);
+			}
+		}
+	});	
+}
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys

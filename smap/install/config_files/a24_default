@@ -176,6 +176,12 @@ ExpiresActive On
         Require valid-user
 	</Location>
 
+	# Allow iphones to upload images to user details
+    <Location /surveyKPI/user/details/key>
+    	allow from all
+        Satisfy Any
+    </Location>
+
 	<Location /surveyKPI/reports/view>
         Require all granted
     </Location>

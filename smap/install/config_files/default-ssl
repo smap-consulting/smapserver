@@ -195,6 +195,12 @@ NameVirtualHost *:443
         allow from all
 	</Location>
 
+	# Allow iphones to upload images to user details
+    <Location /surveyKPI/user/details/key>
+    	allow from all
+        Satisfy Any
+    </Location>
+    
 	# Reports
 	<Location /surveyKPI/reports/view>
 		Order allow,deny
