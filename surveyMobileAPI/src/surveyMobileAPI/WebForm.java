@@ -102,7 +102,6 @@ public class WebForm extends Application{
 		
 		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue);
 		
-		// Authorisation - Access
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
@@ -114,6 +113,7 @@ public class WebForm extends Application{
 		int orgId = 0;
 		String accessKey = null;
 		
+		// Authorisation 
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
             a.isAuthorised(connectionSD, user);
@@ -131,16 +131,16 @@ public class WebForm extends Application{
     			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
     		} catch (Exception e) {
     			log.log(Level.SEVERE, "WebForm", e);
+    		} finally {
+    			try {
+	            	if (connectionSD != null) {
+	            		connectionSD.close();
+	            		connectionSD = null;
+	            	}
+	            } catch (SQLException e) {
+	            	log.log(Level.SEVERE, "Failed to close connection", e);
+	            }
     		}
-    		
-    		try {
-            	if (connectionSD != null) {
-            		connectionSD.close();
-            		connectionSD = null;
-            	}
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }
         } else {
         	throw new AuthorisationException();
         }
@@ -180,16 +180,26 @@ public class WebForm extends Application{
 			}
 			TranslationManager translationMgr = new TranslationManager();	
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
-			List<ManifestValue> manifestList = translationMgr.
-					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, formIdent);
-    		try {
-            	if (connectionSD != null) {
-            		connectionSD.close();
-            		connectionSD = null;
-            	}
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }
+			List<ManifestValue> manifestList = null;
+			try {
+				manifestList = translationMgr.getManifestBySurvey(
+						connectionSD, 
+						request.getRemoteUser(), 
+						survey.id, 
+						basePath, 
+						formIdent);
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+			} finally {
+				try {
+	            	if (connectionSD != null) {
+	            		connectionSD.close();
+	            		connectionSD = null;
+	            	}
+	            } catch (SQLException e) {
+	            	log.log(Level.SEVERE, "Failed to close connection", e);
+	            }
+			}
     		
     		for(int i = 0; i < manifestList.size(); i++) {
     			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);

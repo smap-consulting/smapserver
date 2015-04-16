@@ -405,6 +405,7 @@ public class UserSvc extends Application {
 				pstmt.setString(4, ident);
 			}
 			
+			log.info("Update user details: " + pstmt.toString());
 			log.info("userevent: " + request.getRemoteUser() + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);
 			pstmt.executeUpdate();
 			
