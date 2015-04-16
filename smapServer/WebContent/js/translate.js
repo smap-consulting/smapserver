@@ -110,17 +110,6 @@ $(document).ready(function() {
 		//$('#set_language').foundation('reveal', 'close');
  	 });
 	
-	// Check for changes in settings
-	$('#set_survey_name').keyup(function(){
-		globals.model.settingsChange();
-	});
-	$('#set_project_name').change(function() {
-		saveCurrentProject($('#set_project_name option:selected').val(), globals.gCurrentSurvey);	// Save the current project id
-		globals.model.settingsChange();
-	});
-	$('#set_default_language').change(function() {
-		globals.model.settingsChange();
-	});
 
 	// Check for selection of the label indicating successful updates and the one indicating failed
 	$('#successLabel').off().click(function() {

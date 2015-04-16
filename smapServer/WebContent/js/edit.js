@@ -557,7 +557,8 @@ function updateSettingsData() {
 		languages = globals.model.survey.languages,
 		key,
 		h = [],
-		idx = -1;
+		idx = -1,
+		defLangIdx = 0;
 	
 	for(i = 0; i < languages.length; i++) {
 		h[++idx] = '<option value="';
@@ -565,11 +566,16 @@ function updateSettingsData() {
 		h[++idx] = '">';
 		h[++idx] = languages[i];
 		h[++idx] = '</option>';
+		
+		if(globals.model.survey.def_lang === languages[i]) {
+			defLangIdx = i;
+		}
 	}
 	$('.language_list').html(h.join(""));
 	$('.survey_name').val(globals.model.survey.displayName);
 	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
+	$('#set_default_language').val(defLangIdx);
 }
 
 

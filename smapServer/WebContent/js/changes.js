@@ -80,9 +80,7 @@ $(document).ready(function() {
 		refreshView(gMode);
 	});
 
-	$('#save_settings').off().click(function() {	// Save settings to Smap
-		globals.model.save_settings();
-	});
+
 	
 	// Add responses to events
 	$('#project_name').change(function() {
@@ -100,26 +98,7 @@ $(document).ready(function() {
 		//$('#set_language').foundation('reveal', 'close');
  	 });
 	
-	// Check for changes in settings
-	$('#set_survey_name').keyup(function(){
-		globals.model.settingsChange();
-	});
-	$('#set_project_name').change(function() {
-		saveCurrentProject($('#set_project_name option:selected').val(), globals.gCurrentSurvey);	// Save the current project id
-		globals.model.settingsChange();
-	});
-	$('#set_default_language').change(function() {
-		globals.model.settingsChange();
-	});
 
-	// Check for selection of the label indicating successful updates and the one indicating failed
-	$('#successLabel').off().click(function() {
-		alert("success");
-	});
-	// Check for selection of the label indicating successful updates and the one indicating failed
-	$('#failedLabel').off().click(function() {
-		alert("failed");
-	});
 	
 	enableUserProfileBS();
 });
@@ -136,70 +115,6 @@ function getSurveyList() {
 function surveyListDone() {
 	getSurveyDetails(refreshView);
 }
-
-/*
-function getSurvey() {
-
-	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
-	console.log("Getting survey: " + globals.gCurrentSurvey);
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			globals.model.survey = data;
-			globals.model.setSettings();
-			console.log("Survey");
-			console.log(data);
-			setLanguages(data.languages);
-			
-			// Set the link to the media editor
-			$('#m_media').attr("href", '/fieldManager/browseForms.jsp?id=' + globals.gCurrentSurvey + '&name=' + data.displayName);
-			
-			refreshView();
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get survey: " + err);
-			}
-		}
-	});	
-}
-
-
-function setLanguages(languages) {
-	
-	var h = [],
-		idx = -1,
-		$lang = $('.language_list'),
-		$lang1 = $('#language1'),
-		$lang2 = $('#language2'),
-		i;
-	
-	gLanguage1 = 0;	// Language indexes used for translations
-	gLanguage2 = 0;
-	if(languages.length > 1) {
-		gLanguage2 = 1;
-	}
-
-	for (i = 0; i < languages.length; i++) {
-		h[++idx] = '<option value="';
-			h[++idx] = i;
-			h[++idx] = '">';
-			h[++idx] = languages[i];
-		h[++idx] = '</option>';
-	}
-	$lang.empty().append(h.join(""));
-	$lang1.val(gLanguage1);
-	$lang2.val(gLanguage2)
-}
-*/
 
 function refreshView() {
 	

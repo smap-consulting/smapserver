@@ -65,19 +65,6 @@ $(document).ready(function() {
 	$('#m_open').off().click(function() {	// Open an existing form
 		$('#openFormModal').modal('show');
 	});
-	
-	
-	// Check for changes in settings
-	$('#set_survey_name').keyup(function(){
-		globals.model.settingsChange();
-	});
-	$('#set_project_name').change(function() {
-		saveCurrentProject($('#set_project_name option:selected').val(), globals.gCurrentSurvey);	// Save the current project id
-		globals.model.settingsChange();
-	});
-	$('#set_default_language').change(function() {
-		globals.model.settingsChange();
-	});
 
     /*
      * Open a new form
