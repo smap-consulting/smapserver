@@ -150,7 +150,7 @@ function getMedia(property) {
 		// Create a media object
 		media = new Object();
 		media.name = name;
-		if(ext === "jpg" || ext === "png" || ext === "gif" || ext === "jpeg") {
+		if(ext === "jpg" || ext === "png" || ext === "gif" || ext === "jpeg" || ext === "ico") {
 			media.type = "image";
 			media.url = property; 
 			media.thumbNail = thumbNail;

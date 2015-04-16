@@ -387,15 +387,6 @@ function addRightClickToTable($elem, sId, view) {
 			
 			$('#instance_functions_popup').dialog("open");
 			
-			/*
-			if(isBad && isReplaced) {
-				//alert("You cannot edit a record that has been replaced by another record");
-				alert(localise.set["msg_no_edit_rep"]);
-			} else {
-				document.location.href = "/webForm/" + survey_ident +
-						"?datakey=prikey&datakeyvalue="+pkey;
-			}
-			*/
 			return false;
 		});
 		
