@@ -84,6 +84,7 @@ create TABLE organisation (
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled
 	email_domain text,
+	default_email_content text,
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);

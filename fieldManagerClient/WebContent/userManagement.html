@@ -278,44 +278,86 @@
 							</div>
 						</div>
 					</fieldset>
-					<fieldset>
-						<legend>Publishing options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="3" /> Email</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="4" /> Facebook</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="5" /> Twitter</label></div>
-					</fieldset>
-					<fieldset>
-						<legend>FieldTask options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="6"/> Delete submitted results from the phone</label></div>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="7"/> Send location data on path of user</label></div>
-					</fieldset>
-					<fieldset>
-						<legend>Other options:</legend>
-						<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="8"/> Allow editing of results</label></div> 
-					</fieldset>
-					<fieldset>
-						<legend>Emails:</legend>
-						
-						<div class="form-group">
-							<label for="o_admin_email" class="lang col-sm-4 control-label">Email for Help: </label>
-							<div class="col-sm-8">
+					<div class="panel-group" role="tablist" aria-multiselectable="true">
+ 							<div class="panel panel-default">
+   							<div class="panel-heading" role="tab" id="publishingOptions">
+								<h4 class="panel-title">
+					       			<a data-toggle="collapse" data-parent="#show_publishing_params" href="#collapsePublishingOptions" aria-expanded="true" aria-controls="collapseLayers">
+					         				Report Publishing Options
+					       			</a>
+				     			</h4>
+   							</div>
+			    			<div id="collapsePublishingOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+					
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="3" /> Email</label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="4" /> Facebook</label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="5" /> Twitter</label></div>
+							</div>
+								
+						</div>
+					</div>
+					
+					<div class="panel-group" role="tablist" aria-multiselectable="true">
+ 							<div class="panel panel-default">
+   							<div class="panel-heading" role="tab" id="fieldtaskOptions">
+								<h4 class="panel-title">
+					       			<a data-toggle="collapse" data-parent="#show_fieldtask_params" href="#collapseFieldtaskOptions" aria-expanded="true" aria-controls="collapseLayers">
+					         				FieldTask options
+					       			</a>
+				     			</h4>
+   							</div>
+			    			<div id="collapseFieldtaskOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      								
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="6"/> Delete submitted results from the phone</label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="7"/> Send location data on path of user</label></div>
+							</div>
+								
+						</div>
+					</div>
+
+					<div class="panel-group" role="tablist" aria-multiselectable="true">
+ 							<div class="panel panel-default">
+   							<div class="panel-heading" role="tab" id="emailOptions">
+								<h4 class="panel-title">
+					       			<a data-toggle="collapse" data-parent="#show_email_params" href="#collapseEmailOptions" aria-expanded="true" aria-controls="collapseLayers">
+					         				Email Options
+					       			</a>
+				     			</h4>
+   							</div>
+			    			<div id="collapseEmailOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+					
+								<label for="o_admin_email" class="lang control-label">Email to get Help:</label>
 								<input class="form-control" type="text" id="o_admin_email" tabindex="9">
+
+								<label for="o_smtp_host" class="lang col-sm-4 control-label">Smtp Host: </label>
+								<input class="form-control" type="text" id="o_smtp_host" tabindex="10">
+								
+								<label for="o_email_domain" class="lang col-sm-4 control-label">Email Domain: </label>
+								<input class="form-control" type="text" id="o_email_domain" tabindex="11">
+								
+								<label for="o_default_email_content" data-lang="c_content" class="lang col-sm-2 control-label">Content</label>
+								<textarea id="o_default_email_content" class="labelProp form-control" placeholder="Default Email content"></textarea>
 							</div>
+								
 						</div>
-						<div class="form-group">
-							<label for="o_smtp_host" class="lang col-sm-4 control-label">Smtp Host: </label>
-							<div class="col-sm-8">
-								<input class="form-control" type="text" id="o_smtp_host" tabindex="9">
+					</div>
+					
+					<div class="panel-group" role="tablist" aria-multiselectable="true">
+ 							<div class="panel panel-default">
+   							<div class="panel-heading" role="tab" id="otherOptions">
+								<h4 class="panel-title">
+					       			<a data-toggle="collapse" data-parent="#show_fieldtask_params" href="#collapseOtherOptions" aria-expanded="true" aria-controls="collapseLayers">
+					         				Other options
+					       			</a>
+				     			</h4>
+   							</div>
+			    			<div id="collapseOtherOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      								
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="8"/> Allow editing of results</label></div> 
 							</div>
+								
 						</div>
-						<div class="form-group">
-							<label for="o_email_domain" class="lang col-sm-4 control-label">Email Domain: </label>
-							<div class="col-sm-8">
-								<input class="form-control" type="text" id="o_email_domain" tabindex="9">
-							</div>
-						</div>
+					</div>
 						
-					</fieldset>
+					
 				</form>	
 				<form enctype="multipart/form-data" name="organisationsave">
 					<fieldset>

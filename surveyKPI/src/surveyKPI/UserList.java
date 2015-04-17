@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
@@ -465,7 +466,8 @@ public class UserList extends Application {
 							if(emailServer.smtpHost != null) {
 
 								log.info("Send email");
-								String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
+								Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
+								
 								String interval = "48 hours";
 								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
@@ -475,7 +477,7 @@ public class UserList extends Application {
 										idents, 
 										null, 
 										null,
-										adminEmail, 
+										organisation.admin_email, 
 										emailServer.smtpHost,
 										emailServer.emailDomain,
 										request.getServerName());

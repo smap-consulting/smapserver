@@ -18,6 +18,7 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
+import org.smap.sdal.model.Organisation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -333,9 +334,8 @@ public class NotificationManager {
 		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
-		// Get the admin email
-		String adminEmail = UtilityMethodsEmail.getAdminEmail(sd, remoteUser);
-		int o_id = GeneralUtilityMethods.getOrganisationId(sd, remoteUser);
+		// Get the organisation defaults
+		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, remoteUser);
 		
 		// Get the details from the upload event
 		pstmtGetUploadEvent.setInt(1, ue_id);
@@ -356,15 +356,12 @@ public class NotificationManager {
 				
 				/*
 				 * Create the document
-				 * TODO: Allow creation of PDFs, reports, aggregations
 				 */
-				System.out.println("Attach: " + nd.attach);
 				String docURL = null;
 				String filePath = null;
 				if(nd.attach != null) {
 					System.out.println("Attaching link to email: " + nd.attach);
 					if(nd.attach.equals("pdf")) {
-						//docUrl = "/surveyKPI/pdf/" + s_id + "?instance=" + instanceId;
 						docURL = null;
 						
 						// Create temporary PDF and get file name
@@ -435,6 +432,12 @@ public class NotificationManager {
 						if(nd.from != null && nd.from.trim().length() > 0) {
 							from = nd.from;
 						}
+						String content = null;
+						if(nd.content != null && nd.content.trim().length() > 0) {
+							content = nd.content;
+						} else {
+							content = organisation.default_email_content;
+						}
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docURL;
 						
@@ -449,14 +452,14 @@ public class NotificationManager {
 									null, 
 									"notify", 
 									subject, 
-									nd.content,
+									content,
 									from,		
 									null, 
 									null, 
 									null, 
 									docURL, 
 									filePath,
-									adminEmail, 
+									organisation.admin_email, 
 									emailServer.smtpHost,
 									emailServer.emailDomain,
 									serverName);
@@ -477,7 +480,7 @@ public class NotificationManager {
 				}
 				
 				// Write log message
-				pstmtNotificationLog.setInt(1, o_id);
+				pstmtNotificationLog.setInt(1, organisation.id);
 				pstmtNotificationLog.setString(2, notify_details);
 				pstmtNotificationLog.setString(3, status);
 				pstmtNotificationLog.setString(4, error_details);

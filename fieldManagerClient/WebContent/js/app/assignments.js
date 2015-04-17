@@ -314,31 +314,6 @@ $(document).ready(function() {
 		updateTaskParams();
 	});
 	
-	/*
-	$('#task_params').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			title: "Edit Address Parameters",
-			width: 500,
-			show:"drop",
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {
-		        		$(this).dialog("close");
-		        	}
-		        },
-		        {
-		        	text: "Save Changes",
-		        	click: function() {
-		        		updateTaskParams();
-		        		$(this).dialog("close");
-		        	}
-		        }
-			]
-		}
-	);
-	*/
 	
 	enableUserProfileBS();										// Enable user profile button	
 	$('#refreshMenu').click(function(e) {	// Add refresh action

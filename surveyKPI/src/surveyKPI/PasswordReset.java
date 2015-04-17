@@ -34,6 +34,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.Organisation;
 
 import com.google.gson.Gson;
 
@@ -105,11 +106,12 @@ public class PasswordReset extends Application {
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
 					if(emailServer.smtpHost != null) {
 
-						String adminEmail = UtilityMethodsEmail.getAdminEmail(connectionSD, request.getRemoteUser());
+						Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
+
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset";
 						UtilityMethodsEmail.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
-					    		idents, null, null, adminEmail, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
+					    		idents, null, null, organisation.admin_email, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

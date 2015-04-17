@@ -80,11 +80,6 @@ public class SubRelationalDB extends Subscriber {
 		}
 	}
 	
-	private class UpdateResults {
-		public String sql;
-		public boolean hasColumns;
-	}
-	
 	private class Keys {
 		ArrayList<Integer> duplicateKeys = new ArrayList<Integer>();
 		int newKey = 0;

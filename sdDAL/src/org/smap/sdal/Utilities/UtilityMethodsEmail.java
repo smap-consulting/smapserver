@@ -38,6 +38,7 @@ import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
+import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Survey;
 
 
@@ -265,13 +266,14 @@ public class UtilityMethodsEmail {
 	/*
 	 * Get the administrator email for the organisation that the user belongs to
 	 */
-	static public String getAdminEmail(
+	static public Organisation getOrganisationDefaults(
 			Connection sd, 
 			String user) throws SQLException {
 		
-		String adminEmail = "<admin email not set>";
+		Organisation o = new Organisation();
 		
-		String sqlGetAdminEmail = "select o.admin_email " +
+		String sqlOrganisation = "select o.id, o.name, o.company_name, o.admin_email, o.smtp_host, " +
+				" o.email_domain, o.default_email_content " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
@@ -280,14 +282,18 @@ public class UtilityMethodsEmail {
 		
 		try {
 			
-			pstmt = sd.prepareStatement(sqlGetAdminEmail);
+			pstmt = sd.prepareStatement(sqlOrganisation);
 			pstmt.setString(1, user);
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				String email = rs.getString(1);
-				if(email != null && email.trim().length() > 0) {
-					adminEmail = rs.getString(1);
-				}
+				o.id = rs.getInt(1);
+				o.name = rs.getString(2);
+				o.company_name = rs.getString(3);
+				o.admin_email = rs.getString(4);
+				o.smtp_host = rs.getString(5);
+				o.email_domain = rs.getString(6);
+				o.default_email_content = rs.getString(7);
+				
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
@@ -295,7 +301,7 @@ public class UtilityMethodsEmail {
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (Exception e) {}
 		}
-		return adminEmail;
+		return o;
 	}
 	
 
@@ -538,13 +544,8 @@ public class UtilityMethodsEmail {
 			    txtMessage.append(serverName);
 			    
 			    // TODO make this generic
-			    txtMessage.append(" on behalf of BCA Certifiers Australia Pty Ltd.");
-			    txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to support@zarkman.com.");
-			    txtMessage.append("\n\n");
-			    txtMessage.append("If you need to contact BCA Certifiers regarding the attached Inspection Record please use the contact details provided below:");
-			    txtMessage.append("\n\n");
-			    txtMessage.append("BCA Certifiers Australia Pty Ltd - Unit 3/2-6 Shea Street, Phillip ACT 2606\n");
-			    txtMessage.append("P (02) 6285 1199 | F (02) 6285 2795 | E mail@bcacertifiers.com.au");
+			    txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");
+			    txtMessage.append(adminEmail);
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
 				    txtMessage.append(serverName);
