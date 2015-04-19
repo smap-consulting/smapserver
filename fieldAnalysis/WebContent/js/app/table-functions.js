@@ -208,7 +208,11 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 						gTab[++gIdx] = '" data-id="';
 						gTab[++gIdx] = sId;
 						gTab[++gIdx] = '" data-instanceid="';
-						gTab[++gIdx] = groups[i].properties.instanceid;
+						if(groups[i].properties.instanceid) {
+							gTab[++gIdx] = groups[i].properties.instanceid;
+						} else {
+							gTab[++gIdx] = groups[i].properties._instanceid;		// Legacy instanceid name
+						}
 						gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
 					gTab[++gIdx] = '</td>';
 				}

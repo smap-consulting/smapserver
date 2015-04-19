@@ -177,7 +177,12 @@ public class PDFManager {
 			 * The template name will be the same as the XLS form name but with an extension of pdf
 			 */
 			int idx = survey.name.lastIndexOf('.');
-			String templateName = survey.name.substring(0, idx) + ".pdf";
+			String templateName = null;
+			if(idx > 0) {
+				templateName = survey.name.substring(0, idx) + ".pdf";
+			} else {
+				templateName = survey.name + ".pdf";
+			}
 			log.info("Attempt to get a pdf template with name: " + templateName);
 			File templateFile = new File(templateName);
 			
@@ -197,7 +202,7 @@ public class PDFManager {
 				stamper.setFormFlattening(true);
 				stamper.close();
 			} else {
-				log.info("++++No template exists");
+				log.info("++++No template exists creating a pdf file prgrammatically");
 				
 				/*
 				 * Create a PDF without the template
@@ -533,6 +538,10 @@ public class PDFManager {
 		} else if(r.name.startsWith("meta_group")) {
 			include = false;
 		} else if(r.name.equals("_task_key")) {
+			include = false;
+		} else if(r.name.equals("_instanceid")) {
+			include = false;
+		} else if(r.name.equals("_task_replace")) {
 			include = false;
 		}
 		

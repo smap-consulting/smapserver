@@ -1099,6 +1099,7 @@ public class SurveyManager {
     		 * this request is for a child form and real data is required
     		 */
     		if(instanceId != null || parentKey > 0) {
+    			String instanceName = null;
 		    	for(Question q : questions) {
 		    		String col = null;
 		    				
@@ -1114,6 +1115,11 @@ public class SurveyManager {
 				    			col = q.colName;
 				    		}
 				
+				    		// _instanceid is the legacy name for the instanceid column
+				    		// instanceid the standard name adopted by odk
+				    		if (col.equals("_instanceid") || col.equals("instanceid")) {
+				    			instanceName = col;
+				    		}
 				    		sql += "," + col;
 		    			}
 		    		}
@@ -1121,7 +1127,7 @@ public class SurveyManager {
 		    	}
 		    	sql += " from " + form.tableName;
 		    	if(parentId == 0) {
-		    		sql += " where instanceid = ?;";
+		    		sql += " where " + instanceName + " = ?;";
 		    	} else {
 		    		sql += " where parkey = ?;";
 		    	}
@@ -1353,11 +1359,6 @@ public class SurveyManager {
 						value = null;
 					}
 				} 
-				
-				// Ignore data not provided by user
-				if(!qSource.equals("user")) {	
-					value="";
-				}
 
         		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0, null));
 

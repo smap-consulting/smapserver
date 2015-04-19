@@ -271,7 +271,6 @@ $(document).ready(function() {
 			  type: "POST",
 			  contentType: "application/json",
 			  dataType: "json",
-			  async: false,
 			  url: "/surveyKPI/projectList",
 			  data: { projects: projectString },
 			  success: function(data, status) {
@@ -593,8 +592,6 @@ function getOrganisations() {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			console.log("org data");
-			console.log(data);
 			gOrganisationList = data;
 			updateOrganisationTable();
 			updateOrganisationList();

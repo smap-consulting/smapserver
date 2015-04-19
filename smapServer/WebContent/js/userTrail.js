@@ -289,7 +289,6 @@ function getUserList(projectId) {
 		dataType: 'json',
 		success: function(data) {
 			removeHourglass();
-			console.log(data);
 			updateUserList(data);
 			getData();
 
@@ -299,7 +298,6 @@ function getUserList(projectId) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				console.log("Error: Failed to get user list: " + err);
 				alert("Error: Failed to get user list: " + err);
 			}
 		}
@@ -336,11 +334,6 @@ function getData() {
 	
 	var startUtc = moment.utc(startDate),
 		endUtc = moment.utc(endDate);
-	
-	//console.log("start:" + startDate.format("YYYY-MM-DD HH:mm:ss"));
-	//console.log("end:" + endDate.format("YYYY-MM-DD HH:mm:ss"));
-	//console.log("start UTC:" + startUtc.format("YYYY-MM-DD HH:mm:ss"));
-	//console.log("end UTC:" + endUtc.format("YYYY-MM-DD HH:mm:ss"));
 		
 	getTrailData(startUtc.valueOf(), endUtc.valueOf());
 	getSurveyLocations(startUtc.valueOf(), endUtc.valueOf());
@@ -363,8 +356,6 @@ function getTrailData(startDate, endDate) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();		
-			console.log("Got user trail");
-			console.log(data);
 			gTrailData = data;
 			showUserTrail();
 			
@@ -397,8 +388,6 @@ function getSurveyLocations(startDate, endDate) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();		
-			console.log("Got survey locations");
-			console.log(data);
 			gSurveyLocations = data;
 			showSurveyLocations();
 			

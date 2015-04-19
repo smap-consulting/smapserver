@@ -656,7 +656,7 @@ public class UserList extends Application {
 		String sql;
 		PreparedStatement pstmt = null;
 		
-		System.out.println("Update groups and projects user id:" + u_id);
+		log.info("Update groups and projects user id:" + u_id);
 		
 		for(int j = 0; j < u.groups.size(); j++) {
 			UserGroup g = u.groups.get(j);
