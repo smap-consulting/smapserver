@@ -18,17 +18,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -45,55 +36,16 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import model.Settings;
-
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.managers.UserManager;
-import org.smap.sdal.model.DisplayItem;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Label;
-import org.smap.sdal.model.Option;
-import org.smap.sdal.model.Result;
-import org.smap.sdal.model.Row;
-import org.smap.sdal.model.User;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.Chunk;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.List;
-import com.itextpdf.text.ListItem;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.AcroFields;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfStamper;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.pdf.PushbuttonField;
 import com.itextpdf.tool.xml.ElementList;
-import com.itextpdf.tool.xml.XMLWorker;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
-import com.itextpdf.tool.xml.css.CssFile;
-import com.itextpdf.tool.xml.css.StyleAttrCSSResolver;
-import com.itextpdf.tool.xml.html.Tags;
 import com.itextpdf.tool.xml.parser.XMLParser;
-import com.itextpdf.tool.xml.pipeline.css.CSSResolver;
-import com.itextpdf.tool.xml.pipeline.css.CssResolverPipeline;
-import com.itextpdf.tool.xml.pipeline.end.ElementHandlerPipeline;
-import com.itextpdf.tool.xml.pipeline.html.HtmlPipeline;
-import com.itextpdf.tool.xml.pipeline.html.HtmlPipelineContext;
 
 /*
  * Creates a PDF
@@ -120,13 +72,7 @@ public class CreatePDF extends Application {
 	
 	public static Font WingDings = null;
 	public static Font defaultFont = null;
-	private static int GROUP_WIDTH_DEFAULT = 4;
-	private static final String DEFAULT_CSS = "/resources/css/default_pdf.css";
 
-	private class Parser {
-		XMLParser xmlParser = null;
-		ElementList elements = null;
-	}
 	
 	@GET
 	@Path("/debug")
@@ -221,6 +167,84 @@ public class CreatePDF extends Application {
 	
 	@GET
 	@Produces("application/x-download")
+	public void getPDFService (@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("sId") int sId,
+			@QueryParam("instance") String instanceId,
+			@QueryParam("language") String language,
+			@QueryParam("filename") String filename) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+		
+		log.info("Create PDF from survey:" + sId + " for record: " + instanceId);
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("createPDF");	
+		a.isAuthorised(connectionSD, request.getRemoteUser());		
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		// End Authorisation 
+		
+		Connection cResults = ResultsDataSource.getConnection("createPDF");
+		
+		// Get the base path
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		
+		try {
+			PDFManager pm = new PDFManager();
+			pm.createPdf(
+					connectionSD,
+					cResults,
+					response.getOutputStream(),
+					basePath, 
+					request.getRemoteUser(),
+					"none", 
+					sId, 
+					instanceId,
+					filename,
+					response);
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			throw new Exception("Exception: " + e.getMessage());
+		} finally {
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+	}
+	
+	/*
+	@GET
+	@Path("/x")
+	@Produces("application/x-download")
 	public void getPDF (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
@@ -243,9 +267,7 @@ public class CreatePDF extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation 
 		
-		/*
-		 * Get parameters
-		 */
+		// Get Parameters
 		if(filename == null || filename.trim().length() == 0) {
 			filename = "template";
 		}
@@ -306,26 +328,22 @@ public class CreatePDF extends Application {
 			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
-			/*
-			 * Get the results and details of the user that submitted the survey
-			 */
+			// Get the results and details of the user that submitted the survey
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
 			System.out.println("User Ident: " + survey.instance.user);
 			if(survey.instance.user != null) {
 				user = um.getByIdent(connectionSD, survey.instance.user);
 			}
 			
-			/*
-			 * Get a template for the PDF report if it exists
-			 * The template name will be the same as the XLS form name but with an extension of pdf
-			 */
+			 // Get a template for the PDF report if it exists
+			 // The template name will be the same as the XLS form name but with an extension of pdf
 			int idx = survey.name.lastIndexOf('.');
 			String templateName = survey.name.substring(0, idx) + ".pdf";
 			System.out.println("Get the pdf template: " + templateName);
 			File templateFile = new File(templateName);
 			if(templateFile.exists()) {
 				
-				System.out.println("Template Exists");
+				log.info("Template Exists");
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, response.getOutputStream());
@@ -340,10 +358,8 @@ public class CreatePDF extends Application {
 				stamper.close();
 			} else {
 			
-				/*
-				 * Create a PDF without the template
-				 */			
-				Parser parser = getXMLParser(request);
+				 // Create a PDF without the template		
+				Parser parser = getXMLParser();
 				
 				Document document = new Document();
 				PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
@@ -389,10 +405,10 @@ public class CreatePDF extends Application {
 		}
 
 	}
-	
+	*/
 	/*
 	 * Fill the template with data from the survey
-	 */
+	 *
 	private void fillTemplate(
 			AcroFields pdfForm, 
 			ArrayList<Result> record, 
@@ -485,20 +501,18 @@ public class CreatePDF extends Application {
 		String title;
 		String license;
 	}
-	
+	*/
 	/*
 	 * Fill the template with data from the survey
-	 */
+	 *
 	private static void fillTemplateUserDetails(AcroFields pdfForm, User user, String basePath) throws IOException, DocumentException {
 		try {
 					
 			pdfForm.setField("user_name", user.name);
 			pdfForm.setField("user_company", user.company_name);
 			
-			/*
-			 * User configurable data TODO This should be an array of key value pairs
-			 * As interim use a hard coded class to hold the data
-			 */
+			 // User configurable data TODO This should be an array of key value pairs
+			 // As interim use a hard coded class to hold the data
 			String settings = user.settings;
 			Type type = new TypeToken<UserSettings>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -529,10 +543,10 @@ public class CreatePDF extends Application {
 			log.log(Level.SEVERE, "Error filling template", e);
 		}
 	}
-	
+	*/
 	/*
 	 * Get the index in the language array for the provided language
-	 */
+	 *
 	private int getLanguageIdx(org.smap.sdal.model.Survey survey, String language) {
 		int idx = 0;
 		
@@ -546,11 +560,12 @@ public class CreatePDF extends Application {
 		}
 		return idx;
 	}
+	*/
 	/*
 	 * Process the form
 	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
 	 *  can be applied to showing the form on the screen and generating the PDF
-	 */
+	 *
 	private void processForm(
 			Parser parser,
 			Document document,  
@@ -589,10 +604,10 @@ public class CreatePDF extends Application {
 		
 		return;
 	}
-	
+	*/
 	/*
 	 * Make a decision as to whether this result should be included in the PDF
-	 */
+	 *
 	private boolean includeResult(Result r, boolean inMeta) {
 		boolean include = true;
 		
@@ -611,7 +626,7 @@ public class CreatePDF extends Application {
 		
 		return include;
 	}
-	
+	*/
 	/*
 	 * Add a row of questions
 	 * Each row is created as a table
@@ -619,7 +634,7 @@ public class CreatePDF extends Application {
 	 * As many display items are added as will fit in the current groupWidth
 	 * If the total width of the display items does not add up to the groupWidth then the last item
 	 *  will be extended so that the total is equal to the group width
-	 */
+	 *
 	private Row prepareRow(
 			int groupWidth, 
 			ArrayList<Result> record, 
@@ -673,10 +688,10 @@ public class CreatePDF extends Application {
 		}
 		return row;
 	}
-	
+	*/
 	/*
 	 * Convert the results  and survey definition arrays to display items
-	 */
+	 *
 	ArrayList<DisplayItem> convertChoiceListToDisplayItems(
 			org.smap.sdal.model.Survey survey, 
 			org.smap.sdal.model.Question question,
@@ -699,10 +714,10 @@ public class CreatePDF extends Application {
 		}
 		return diList;
 	}
-	
+	*/
 	/*
 	 * Add the table row to the document
-	 */
+	 *
 	PdfPTable processRow(Parser parser, Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
 		PdfPTable table = new PdfPTable(row.groupWidth);
 		for(DisplayItem di : row.items) {
@@ -711,10 +726,10 @@ public class CreatePDF extends Application {
 		}
 		return table;
 	}
-	
+	*/
 	/*
 	 * Add the question label, hint, and any media
-	 */
+	 *
 	private PdfPCell addDisplayItem(Parser parser, DisplayItem di, String basePath) throws BadElementException, MalformedURLException, IOException {
 			
 		PdfPCell cell = new PdfPCell();
@@ -820,14 +835,14 @@ public class CreatePDF extends Application {
 
 	}
 	
-	private Parser getXMLParser(HttpServletRequest request) {
+	private Parser getXMLParser() {
 		
 		Parser parser = new Parser();
 		
         // CSS
 		 CSSResolver cssResolver = new StyleAttrCSSResolver();
 		 try {
-		     CssFile cssFile = XMLWorkerHelper.getCSS( request.getServletContext().getResourceAsStream(DEFAULT_CSS));
+		     CssFile cssFile = XMLWorkerHelper.getCSS( new FileInputStream(DEFAULT_CSS));
 		     cssResolver.addCss(cssFile);
 		 } catch(Exception e) {
 			 log.log(Level.SEVERE, "Failed to get CSS file", e);
@@ -852,6 +867,6 @@ public class CreatePDF extends Application {
         return parser;
 		
 	}
-	
+	*/
 
 }

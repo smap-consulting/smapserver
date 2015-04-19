@@ -141,12 +141,22 @@ $(document).ready(function() {
     // Function to save a users details
     $('#userDetailsSave').click(function(e) {
 		var userList = [],
-		user = {},
-		error = false,
-		validIdent = new RegExp('^[a-z0-9]+$'),
-		validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
-		send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
+			user = {},
+			error = false,
+			validIdent = new RegExp('^[a-z0-9]+$'),
+			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
+			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
 	
+		// Ignore click if button disabled
+		console.log($('#userDetailsSave').attr("disabled"));
+		if($('#userDetailsSave').attr("disabled") == "disabled") {
+			return;
+		}
+		
+		// Disable the save button to prevent double clicking
+		$('#userDetailsSave').attr("disabled", true);
+		console.log($('#userDetailsSave').attr("disabled"));
+		
 		if(gCurrentUserIndex === -1) {
 			user.id = -1;
 		} else {
@@ -166,11 +176,13 @@ $(document).ready(function() {
 		if(!user.ident.match(validIdent)) {
 			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
 			$('#user_ident').focus();
+			$('#userDetailsSave').attr("disabled", false);
 			return false;
 		}
 		if(user.ident.indexOf(' ') !== -1) {
 			alert("Spaces are not allowed in the user ident");
 			$('#user_ident').focus();
+			$('#userDetailsSave').attr("disabled", false);
 			return false;
 		}
 		if(user.email.length > 0) {
@@ -178,6 +190,7 @@ $(document).ready(function() {
 				error = true;
 				alert("Email is not valid");
 				$('#user_email').focus();
+				$('#userDetailsSave').attr("disabled", false);
 				return false;
 			}
 		}
@@ -187,6 +200,7 @@ $(document).ready(function() {
 			error = true;
 			alert("If sending an email to the user then email address must be specified");
 			$('#user_email').focus();
+			$('#userDetailsSave').attr("disabled", false);
 			return false;
 		}
 	
@@ -197,6 +211,7 @@ $(document).ready(function() {
 				user.password = undefined;
 				alert("Passwords, if specified, must be longer than 1 character");
 				$('#user_password').focus();
+				$('#userDetailsSave').attr("disabled", false);
 				return false;
 			}
 			if($('#user_password_confirm').val() !== user.password) {
@@ -204,6 +219,7 @@ $(document).ready(function() {
 				user.password = undefined;
 				alert("Passwords do not match");
 				$('#user_password').focus();
+				$('#userDetailsSave').attr("disabled", false);
 				return false;
 			}
 		} else {
@@ -774,13 +790,11 @@ function writeUserDetails(userList, $dialog) {
 		  data: { users: userString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  //if(typeof $dialog !== "undefined") {
-				  $('#create_user_popup').modal("show");
-				  //$dialog.modal("close");
-			  //}
+			  $('#userDetailsSave').attr("disabled", false);
 			  getUsers();
 		  }, error: function(xhr, textStatus, err) {
 			  removeHourglass();
+			  $('#userDetailsSave').attr("disabled", false);
 			  if(xhr.readyState == 0 || xhr.status == 0) {
 				  return;  // Not an error
 			  } else {

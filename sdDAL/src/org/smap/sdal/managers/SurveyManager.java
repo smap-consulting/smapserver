@@ -668,7 +668,7 @@ public class SurveyManager {
 	}
 	
 	/*
-	 * ========================= Type specific update fuction
+	 * ========================= Type specific update functions
 	 */
 	
 	/*
@@ -1149,7 +1149,6 @@ public class SurveyManager {
 		    		if(isTopLevel) {
 		    			String user = resultSet.getString(2);
 		    			record.add(new Result("user", "user", user, false, fIdx, -1, 0, null));
-		    			System.out.println("Adding user record: " + user);
 		    		}
 	    		
 		    		addDataForQuestions(
@@ -1364,7 +1363,7 @@ public class SurveyManager {
 
 			}
 			try {
-				System.out.println("Index: " + index + " : " + q.name + " : " + q.type + " ; " + resultSet.getString(index));
+				//System.out.println("Index: " + index + " : " + q.name + " : " + q.type + " ; " + resultSet.getString(index));
 			} catch (Exception e) {
 				
 			}

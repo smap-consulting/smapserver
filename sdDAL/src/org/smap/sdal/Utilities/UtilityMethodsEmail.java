@@ -443,7 +443,8 @@ public class UtilityMethodsEmail {
 			String interval,
 			ArrayList<String> idents,
 			String docURL,
-			String filePath,
+			String filePath,	// The next two parameters are for an attachment TODO make an array
+			String filename,
 			String adminEmail,
 			String smtp_host,
 			String emailDomain,
@@ -453,6 +454,7 @@ public class UtilityMethodsEmail {
 			throw new Exception("smtp_host not available");
 		}
 		
+		System.out.println("Send email. filename: " + filename);
 		RecipientType rt = null;
 		try {
 			Properties props = System.getProperties();
@@ -544,7 +546,7 @@ public class UtilityMethodsEmail {
 			    txtMessage.append(serverName);
 			    
 			    // TODO make this generic
-			    txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");
+			    txtMessage.append(". Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");
 			    txtMessage.append(adminEmail);
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
@@ -555,7 +557,6 @@ public class UtilityMethodsEmail {
 		    }
 		    
 		    BodyPart messageBodyPart = new MimeBodyPart();
-		    //msg.setText(txtMessage.toString());
 		    messageBodyPart.setText(txtMessage.toString());
 		    Multipart multipart = new MimeMultipart();
 		    multipart.addBodyPart(messageBodyPart);
@@ -565,7 +566,7 @@ public class UtilityMethodsEmail {
 			    messageBodyPart = new MimeBodyPart();
 			    DataSource source = new FileDataSource(filePath);
 			    messageBodyPart.setDataHandler(new DataHandler(source));
-		        messageBodyPart.setFileName(filePath);
+		        messageBodyPart.setFileName(filename);
 		        multipart.addBodyPart(messageBodyPart);
 		    }
 	        

@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -359,22 +360,32 @@ public class NotificationManager {
 				 */
 				String docURL = null;
 				String filePath = null;
+				String filename = "instance";
 				if(nd.attach != null) {
 					System.out.println("Attaching link to email: " + nd.attach);
 					if(nd.attach.equals("pdf")) {
 						docURL = null;
 						
 						// Create temporary PDF and get file name
+						filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID()) + ".pdf";
+						FileOutputStream outputStream = null;
+						try {
+							outputStream = new FileOutputStream(filePath); 
+						} catch (Exception e) {
+							log.log(Level.SEVERE, "Error creating temporary PDF file", e);
+						}
 						PDFManager pm = new PDFManager();
-						filePath = pm.createTemporaryPdfFile(
+						filename = pm.createPdf(
 								sd,
 								cResults,
+								outputStream,
 								basePath, 
-								String.valueOf(UUID.randomUUID()) + ".pdf", 	// filename
 								remoteUser,
 								"none", 
 								s_id, 
-								instanceId);
+								instanceId,
+								null,
+								null);
 						
 						System.out.println("Temporary PDF file: " + filePath);
 						
@@ -459,6 +470,7 @@ public class NotificationManager {
 									null, 
 									docURL, 
 									filePath,
+									filename,
 									organisation.admin_email, 
 									emailServer.smtpHost,
 									emailServer.emailDomain,

@@ -49,7 +49,7 @@ cp $deploy_from/*.war /var/lib/tomcat7/webapps
 # deploy webforms
 if [ -e $deploy_from/webforms.tgz ]
 then
-		echo "Updating webforms"
+	echo "Updating webforms"
         rm -rf /var/www/smap/webforms
         mkdir /var/www/smap/webforms
         tar -xzf $deploy_from/webforms.tgz -C /var/www/smap/
@@ -66,6 +66,10 @@ cp $deploy_from/subscribers.jar /usr/bin/smap
 cp $deploy_from/codebook.jar /usr/bin/smap
 cp -r $deploy_from/subscribers/default /usr/bin/smap
 cp -r $deploy_from/subscribers/etc/* /usr/bin/smap
+cp -r $deploy_from/resources /usr/bin/smap
+cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
+
+
 chmod +x /usr/bin/smap/*.sh
 
 cd /var/log/subscribers

@@ -472,10 +472,18 @@ public class UserList extends Application {
 								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								String sender = "newuser";
-								UtilityMethodsEmail.sendEmail(u.email, uuid, "newuser", 
-										"Account created on Smap", null, sender, adminName, interval, 
+								UtilityMethodsEmail.sendEmail(
+										u.email, 
+										uuid, 
+										"newuser", 
+										"Account created on Smap", 
+										null, 
+										sender, 
+										adminName, 
+										interval, 
 										idents, 
 										null, 
+										null,
 										null,
 										organisation.admin_email, 
 										emailServer.smtpHost,

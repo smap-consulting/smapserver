@@ -402,8 +402,7 @@ $('#download_pdf').click(function () {
 
 	language = $('#download_language option:selected').val();
 
-	docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + "instance" + 
-		"&language=" + language + "&instance=" + gInstanceId;	
+	docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?language=" + language + "&instance=" + gInstanceId;	
 	
 	window.location.href = docURL;
 	$('#instance_functions_popup').dialog("close");

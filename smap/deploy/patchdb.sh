@@ -139,4 +139,8 @@ case $choice in
 	cd ../deploy
 esac
 fi
+echo "1502" > ~/smap_version
+# version 15.03
+sudo mkdir /usr/bin/smap/resources
+sudo mkdir /usr/bin/smap/resources/css
 echo "1503" > ~/smap_version

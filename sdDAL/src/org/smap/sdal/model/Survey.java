@@ -82,17 +82,6 @@ public class Survey {
 		return idx;
 	}
 	
-	// Setters
-	public void setId(int v) { id = v;};
-	public void setPId(int v) { p_id = v;};
-	public void setPName(String v) { pName = v;};
-	public void setName(String v) { name = v;};
-	public void setIdent(String v) { ident = v;};
-	public void setDisplayName(String v) { displayName = v;};
-	public void setDeleted(boolean v) { deleted = v;};
-	public void setBlocked(boolean v) { blocked = v;};
-	public void setHasManifest(boolean v) { hasManifest = v;};
-	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
 		return esc(displayName);
@@ -108,4 +97,32 @@ public class Survey {
 		}
 		return out;
 	}
+	
+	// Get a name for the survey instance
+	public String getInstanceName() {
+		String instanceName = "survey";
+		
+		ArrayList<Result> results = instance.results.get(0);
+		
+		for(Result r : results) {
+			if(r.name.toLowerCase().equals("instancename")) {	
+				if(r.value != null && r.value.trim().length() != 0) {
+					instanceName = r.value;		
+				}
+				break;
+			}
+		}
+		return instanceName;
+	}
+	// Setters
+	public void setId(int v) { id = v;};
+	public void setPId(int v) { p_id = v;};
+	public void setPName(String v) { pName = v;};
+	public void setName(String v) { name = v;};
+	public void setIdent(String v) { ident = v;};
+	public void setDisplayName(String v) { displayName = v;};
+	public void setDeleted(boolean v) { deleted = v;};
+	public void setBlocked(boolean v) { blocked = v;};
+	public void setHasManifest(boolean v) { hasManifest = v;};
+	
 }
