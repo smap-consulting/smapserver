@@ -116,7 +116,7 @@ $.fn.bootstrapFileInput = function() {
       if($target.hasClass("alert")) {
     	  $target.addClass('alert-success').removeClass('alert-danger').html(fileDesc);
       } else {
-    	  $target.val(fileDesc);
+    	  $target.html(fileDesc);
       }
       var w = 0;
       $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 

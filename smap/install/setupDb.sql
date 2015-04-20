@@ -112,7 +112,7 @@ create TABLE regions (
 ALTER TABLE regions OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS users_seq CASCADE;
-CREATE SEQUENCE users_seq START 1;
+CREATE SEQUENCE users_seq START 2;
 ALTER SEQUENCE users_seq OWNER TO ws;
 
 DROP TABLE IF EXISTS users CASCADE;
@@ -132,7 +132,7 @@ CREATE TABLE users (
 	has_data boolean,
 	has_sms boolean,
 	phone_number text,
-	email text UNIQUE,
+	email text,
 	device_id text,
 	max_dist_km integer,
 	user_role text,

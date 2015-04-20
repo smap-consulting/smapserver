@@ -262,5 +262,6 @@ alter table survey alter column class set data type text;
 -- User configuration for PDF reports
 alter table users add column settings text;
 alter table users add column signature text;
+alter table users drop constraint users_email_key;
 alter table organisation add column company_name text;
 alter table organisation add column default_email_content text;
