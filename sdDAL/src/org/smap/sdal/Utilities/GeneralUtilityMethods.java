@@ -2,7 +2,9 @@ package org.smap.sdal.Utilities;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +14,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
 
 
@@ -19,6 +23,43 @@ public class GeneralUtilityMethods {
 	
 	private static Logger log =
 			 Logger.getLogger(GeneralUtilityMethods.class.getName());
+	
+	/*
+	 * Rename template files
+	 */
+	static public void renameTemplateFiles(String oldName, String newName, String basePath, int orgId ) throws IOException {
+		
+		String oldFileName = convertDisplayNameToFileName(oldName);
+		String newFileName = convertDisplayNameToFileName(newName);
+		
+		
+		String directory = basePath + "/templates/" + orgId;
+		log.info("Renaming files in " + directory + " from: " + oldFileName + " to " + newFileName);
+		File dir = new File(directory);
+		FileFilter fileFilter = new WildcardFileFilter(oldFileName + ".*");
+		File[] files = dir.listFiles(fileFilter);
+		 for (int i = 0; i < files.length; i++) {
+		   log.info("renaming file: " + files[i]);
+		   String filepath = files[i].getPath();
+		   String ext = filepath.substring(filepath.indexOf('.'));
+		   String newPath = directory + "/" + newFileName + ext;
+		   FileUtils.moveFile(files[i], new File(newPath));
+		   
+		 }
+	}
+	
+	/*
+	 * convert display name to file name
+	 */
+	static public String convertDisplayNameToFileName(String name) {
+		// Remove special characters from the display name.  Use the display name rather than the source name as old survey files had spaces replaced by "_" wheras source name had the space removed
+	    String specRegex = "[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]";
+		String file_name = name.replaceAll(specRegex, "");	
+		file_name = file_name.replaceAll(" ", "_");
+		file_name = file_name.replaceAll("\\P{Print}", "_");	// remove all non printable (non ascii) characters. 
+		
+		return file_name;
+	}
 	
 	/*
 	 * Get the organisation id for the user

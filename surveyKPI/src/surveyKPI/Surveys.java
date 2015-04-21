@@ -335,9 +335,11 @@ public class Surveys extends Application {
 		
 		FileItem pdfItem = null;
 		String fileName = null;
+		String newSurveyName = null;
 		String settings = null;
 				
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGet = null;
 		
 		try {
 			/*
@@ -382,14 +384,34 @@ public class Surveys extends Application {
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 			
-			String sql = "update survey set display_name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
+			// Get the existing survey display name and plain old name
+			String sqlGet = "select name, display_name from survey where s_id = ?";
+			pstmtGet = connectionSD.prepareStatement(sqlGet);	
+			pstmtGet.setInt(1, sId);
+			
+			String originalDisplayName = null;
+			String originalName = null;
+			ResultSet rs = pstmtGet.executeQuery();
+			if(rs.next()) {
+				originalName = rs.getString(1);
+				originalDisplayName = rs.getString(2);
+			}
+			
+			int idx = originalName.lastIndexOf('/');
+			if(idx > 0) {
+				newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName);
+			}
+			
+			// Update the settings
+			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
 		
 			log.info("Saving survey: " + sql + " : " + survey.displayName);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
-			pstmt.setString(2, survey.def_lang);
-			pstmt.setInt(3, survey.p_id);
-			pstmt.setInt(4, sId);
+			pstmt.setString(2, newSurveyName);
+			pstmt.setString(3, survey.def_lang);
+			pstmt.setInt(4, survey.p_id);
+			pstmt.setInt(5, sId);
 			int count = pstmt.executeUpdate();
 
 			if(count == 0) {
@@ -402,16 +424,35 @@ public class Surveys extends Application {
 	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
 			}
 			
+			// If the display name has changed rename template files
+			if(originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) {
+				
+				// Get base path to files
+				String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+				if(basePath == null) {
+					basePath = "/smap";
+				} else if(basePath.equals("/ebs1")) {
+					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+				}
+				
+				// Get organisation ID
+				int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
+			
+				// Rename files
+				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, orgId);
+			}
+			
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
-			log.log(Level.SEVERE,"No data available", e);
+			log.log(Level.SEVERE,"sql error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception loading settings", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
+			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
 			
 			try {

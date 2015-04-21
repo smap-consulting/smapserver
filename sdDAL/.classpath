@@ -17,5 +17,6 @@
 	<classpathentry kind="lib" path="Libraries/javax.mail.jar"/>
 	<classpathentry kind="lib" path="Libraries/itextpdf-5.5.5.jar"/>
 	<classpathentry kind="lib" path="Libraries/xmlworker-5.5.4.jar"/>
+	<classpathentry kind="lib" path="Libraries/commons-io-2.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

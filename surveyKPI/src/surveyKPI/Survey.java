@@ -39,6 +39,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
@@ -184,11 +185,8 @@ public class Survey extends Application {
 						basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
 					}
 					
-					// Remove special characters from the display name.  Use the display name rather than the source name as old survey files had spaces replaced by "_" wheras source name had the space removed
-				    String specRegex = "[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]";
-					String target_name = display_name.replaceAll(specRegex, "");	
-					target_name = target_name.replaceAll(" ", "_");
-					target_name = target_name.replaceAll("\\P{Print}", "_");	// remove all non printable (non ascii) characters. 
+					String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
+				
 
 					if(type.equals("xml")) {
 						target_name = target_name + ".xml";

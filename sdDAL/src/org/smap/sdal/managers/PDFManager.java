@@ -134,8 +134,6 @@ public class PDFManager {
 			log.info("Operating System:" + os);
 			
 			if(os.startsWith("Mac")) {
-				//FontFactory.register("/Library/Fonts/Symbols.ttf", "wingdings");
-				//FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
 				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
