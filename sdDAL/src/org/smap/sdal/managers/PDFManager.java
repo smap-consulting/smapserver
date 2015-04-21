@@ -202,7 +202,7 @@ public class PDFManager {
 				stamper.setFormFlattening(true);
 				stamper.close();
 			} else {
-				log.info("++++No template exists creating a pdf file prgrammatically");
+				log.info("++++No template exists creating a pdf file programmatically");
 				
 				/*
 				 * Create a PDF without the template
