@@ -187,13 +187,14 @@ public class Survey extends Application {
 					
 					String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
 				
-
 					if(type.equals("xml")) {
 						target_name = target_name + ".xml";
 					} else if(type.equals("xls")) {
 						target_name = target_name + ".xls";
 					} else if(type.equals("codebook")) {
 						target_name = target_name + ".xml";		// input name is xml for a codebook file
+					} else {
+						log.info("Error: unknown download type: " + type);
 					}
 							
 					if(type.equals("xls")) {
@@ -205,6 +206,7 @@ public class Survey extends Application {
 					idx = source_name.lastIndexOf('.');
 				}
 
+				
 				if(idx > 0) {
 					filepath = source_name.substring(0, idx) + "." + ext;
 					filename = filepath.substring(idx2 + 1);

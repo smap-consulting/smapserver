@@ -399,7 +399,7 @@ public class Surveys extends Application {
 			
 			int idx = originalName.lastIndexOf('/');
 			if(idx > 0) {
-				newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName);
+				newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) + ".xml";
 			}
 			
 			// Update the settings
