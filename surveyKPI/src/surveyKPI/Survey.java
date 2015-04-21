@@ -51,7 +51,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -178,13 +181,8 @@ public class Survey extends Application {
 				if(idx2 < 0) {
 					// Probably this is an old survey that is missing the path in the name
 					log.info("Adding path to old survey");
-					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-					if(basePath == null) {
-						basePath = "/smap";
-					} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-						basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-					}
-					
+		
+					String basePath = GeneralUtilityMethods.getBasePath(request);
 					String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
 				
 					if(type.equals("xml")) {
@@ -521,6 +519,7 @@ public class Survey extends Application {
 					"where s.s_id = ?;";
 			
 			log.info(sql);
+			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			resultSet = pstmt.executeQuery();
@@ -875,6 +874,29 @@ public class Survey extends Application {
 					log.info("userevent: " + request.getRemoteUser() + " : un delete survey : " + sId);
 				
 				} else {
+					
+					// Get the survey ident and name
+					String surveyIdent = null;
+					String surveyName = null;
+					String surveyDisplayName = null;
+					sql = "SELECT s.name, s.ident, s.display_name " +
+							"FROM survey s " + 
+							"where s.s_id = ?;";
+					
+					pstmtIdent = connectionSD.prepareStatement(sql);
+					pstmtIdent.setInt(1, sId);
+					log.info("Get survey name and ident: " + pstmtIdent.toString());
+					ResultSet resultSet = pstmtIdent.executeQuery();
+					
+					if (resultSet.next()) {		
+						surveyName = resultSet.getString("name");
+						surveyIdent = resultSet.getString("ident");
+						surveyDisplayName = resultSet.getString("display_name");
+					}
+					
+					// Get the organisation id
+					int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
+					
 					/*
 					 * Delete the survey. Either a soft or a hard delete
 					 */
@@ -892,7 +914,7 @@ public class Survey extends Application {
 							log.info(sql);
 							pstmt = connectionSD.prepareStatement(sql);	
 							pstmt.setInt(1, sId);
-							ResultSet resultSet = pstmt.executeQuery();
+							resultSet = pstmt.executeQuery();
 							
 							while (resultSet.next() && (delData || !nonEmptyDataTables)) {		
 								
@@ -937,25 +959,7 @@ public class Survey extends Application {
 							basePath = "/smap";
 						} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
 							basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-						}
-						
-						// Get the survey ident and name
-						String surveyIdent = null;
-						String surveyName = null;
-						sql = "SELECT s.name, s.ident " +
-								"FROM survey s " + 
-								"where s.s_id = ?;";
-						
-						log.info(sql);
-						pstmtIdent = connectionSD.prepareStatement(sql);
-						pstmtIdent.setInt(1, sId);
-						ResultSet resultSet = pstmtIdent.executeQuery();
-						
-						if (resultSet.next()) {		
-							surveyName = resultSet.getString("name");
-							surveyIdent = resultSet.getString("ident");
-						}
-							
+						}	
 						
 						/*
 						 * Delete any attachments
@@ -981,29 +985,10 @@ public class Survey extends Application {
 							log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
 						}
 					    
-						/*
-						 * Delete the templates
-						 */
 
+					    // Delete the templates
 						try {
-								
-							int idx = surveyName.lastIndexOf('.');						
-							File f1 = new File(surveyName);
-							
-							String xlsPath = null;
-							File f2 = null;
-							if(idx > 0) {
-								xlsPath = surveyName.substring(0, idx) + ".xls";
-								f2 = new File(xlsPath);
-							}			
-					
-						    log.info("Deleting templates for survey: " + sId + " : " + surveyName);
-						    f1.delete();
-						    if(f2 != null) {
-						    	f2.delete();
-						    }
-							
-
+							GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, orgId );
 						} catch (Exception e) {
 							log.info("Error deleting templates: " + surveyName + " : " + e.getMessage());
 						}
@@ -1012,6 +997,7 @@ public class Survey extends Application {
 						if(delData || !nonEmptyDataTables) {
 							sql = "DELETE FROM survey WHERE s_id = ?;";	
 							log.info(sql + " : " + sId);
+							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setInt(1, sId);
 							pstmt.execute();
@@ -1021,6 +1007,7 @@ public class Survey extends Application {
 						if(delData || !nonEmptyDataTables) {
 							sql = "DELETE FROM changeset WHERE s_id = ?;";	
 							log.info(sql + " : " + sId);
+							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 							pstmt = connectionRel.prepareStatement(sql);
 							pstmt.setInt(1, sId);
 							pstmt.execute();
@@ -1030,19 +1017,38 @@ public class Survey extends Application {
 				
 					} else {
 						
+						// Add date and time to the display name
+						DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss");
+						Calendar cal = Calendar.getInstance();
+						String newDisplayName = surveyDisplayName + "_" + dateFormat.format(cal.getTime());
+						
+						// Update the "name"
+						int idx = surveyName.lastIndexOf('/');
+						String newName = surveyName;
+						if(idx > 0) {
+							newName = surveyName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(newDisplayName) + ".xml";
+						}
+						
 						// Update the survey definition to indicate that the survey has been deleted
 						// Add the current date and time to the name and display name to ensure the deleted survey has a unique name 
 						sql = "update survey set " +
 								" deleted='true', " +
-								" name = name || to_char(current_timestamp, '_YYYY_MM_DD_HH24_MI_SS'), " +
-								" display_name = display_name || to_char(current_timestamp, '_YYYY_MM_DD_HH24_MI_SS') " +
+								" name = ?, " +
+								" display_name = ? " +
 								"where s_id = ?;";	
-						log.info(sql + " : " + sId);
+					
 						pstmt = connectionSD.prepareStatement(sql);
-						pstmt.setInt(1, sId);
+						pstmt.setString(1, newName);
+						pstmt.setString(2, newDisplayName);
+						pstmt.setInt(3, sId);
+						log.info("Soft delete survey: " + pstmt.toString());
 						pstmt.executeUpdate();
-						pstmt.close();
+						
 						log.info("userevent: " + request.getRemoteUser() + " : soft delete survey : " + sId);
+						
+						// Rename files
+						String basePath = GeneralUtilityMethods.getBasePath(request);
+						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, orgId);
 					}
 					
 					/*
@@ -1068,6 +1074,11 @@ public class Survey extends Application {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "SQL Error", e);
 			    return "Error: Failed to delete";
+			    
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Error", e);
+			    return "Error: Failed to delete";
+			    
 			} finally {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				try {if (pstmtDelTem != null) {pstmtDelTem.close();}} catch (SQLException e) {}

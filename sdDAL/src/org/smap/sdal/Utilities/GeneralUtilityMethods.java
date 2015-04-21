@@ -14,6 +14,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
@@ -23,6 +25,19 @@ public class GeneralUtilityMethods {
 	
 	private static Logger log =
 			 Logger.getLogger(GeneralUtilityMethods.class.getName());
+
+	/*
+	 * Get Base Path
+	 */
+	static public String getBasePath(HttpServletRequest request) {
+		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+		if(basePath == null) {
+			basePath = "/smap";
+		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
+		}
+		return basePath;
+	}
 	
 	/*
 	 * Rename template files
@@ -45,6 +60,25 @@ public class GeneralUtilityMethods {
 		   String newPath = directory + "/" + newFileName + ext;
 		   FileUtils.moveFile(files[i], new File(newPath));
 		   
+		 }
+	}
+	
+	/*
+	 * Rename template files
+	 */
+	static public void deleteTemplateFiles(String name, String basePath, int orgId ) throws IOException {
+		
+		String fileName = convertDisplayNameToFileName(name);
+		
+		
+		String directory = basePath + "/templates/" + orgId;
+		log.info("Deleting files in " + directory + " with stem: " + fileName);
+		File dir = new File(directory);
+		FileFilter fileFilter = new WildcardFileFilter(name + ".*");
+		File[] files = dir.listFiles(fileFilter);
+		 for (int i = 0; i < files.length; i++) {
+		   log.info("deleting file: " + files[i]);
+		   files[i].delete();
 		 }
 	}
 	
