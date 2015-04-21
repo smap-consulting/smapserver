@@ -99,45 +99,6 @@ $(document).ready(function() {
     // Style the upload buttons
     $('.file-inputs').bootstrapFileInput();
     
-    /*
-     * Submit the banner logo
-     *
-    $('#submitBanner').click( function() {
-
-    	$('#settingsFlag').val("true");
-    	var f = document.forms.namedItem("fileupload");
-    	var formData = new FormData(f);
-    	
-    	addHourglass();
-        $.ajax({
-            url: '/surveyKPI/upload/media',
-            type: 'POST',
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData:false,
-            success: function(data) {
-    			removeHourglass();
-            	console.log("Success");
-            	setBannerLogo(gOrgId);
-            	
-            	$('#upload_msg').val("");
-            	document.forms.namedItem("fileupload").reset();
-            	
-            },
-            error: function(xhr, textStatus, err) {
-    			removeHourglass();
-  				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					alert("Upload failed: " + err);
-
-				}
-            }
-        });
-    });
-    */
-    
     // Function to save a users details
     $('#userDetailsSave').click(function(e) {
 		var userList = [],

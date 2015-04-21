@@ -135,6 +135,11 @@ public class Survey extends Application {
 			String display_name = null;
 			String filename = null;
 			String filepath = null;
+			
+			String ext = type;		
+			if(type.equals("codebook")) {
+				ext = "pdf";		// Codebooks are written as PDF files 
+			}
 					
 			String sql = null;
 			ResultSet resultSet = null;
@@ -205,7 +210,7 @@ public class Survey extends Application {
 				}
 
 				if(idx > 0) {
-					filepath = source_name.substring(0, idx) + "." + type;
+					filepath = source_name.substring(0, idx) + "." + ext;
 					System.out.println("Returning file: " + filepath);
 					filename = filepath.substring(idx2 + 1);
 					System.out.println("filename: " + filename);
