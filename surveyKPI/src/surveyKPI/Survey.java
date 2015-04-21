@@ -159,12 +159,10 @@ public class Survey extends Application {
 			if (resultSet.next()) {				
 				source_name = resultSet.getString(1);
 				display_name = resultSet.getString(2);
-        		System.out.println("Downloading: " + source_name);  
 				int idx = source_name.lastIndexOf('.');
 				int idx2 = source_name.lastIndexOf('/');
 				
 				if(idx < 0) {
-					System.out.println("Adding extension");
 					if(type.equals("xml")) {
 						source_name = source_name + ".xml";
 					} else if(type.equals("xls")) {
@@ -178,7 +176,7 @@ public class Survey extends Application {
 				
 				if(idx2 < 0) {
 					// Probably this is an old survey that is missing the path in the name
-					System.out.println("Adding path");
+					log.info("Adding path to old survey");
 					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
 					if(basePath == null) {
 						basePath = "/smap";
@@ -211,10 +209,7 @@ public class Survey extends Application {
 
 				if(idx > 0) {
 					filepath = source_name.substring(0, idx) + "." + ext;
-					System.out.println("Returning file: " + filepath);
 					filename = filepath.substring(idx2 + 1);
-					System.out.println("filename: " + filename);
-					System.out.println("language: " + language);
 				
 					try {  		
 		        		int code = 0;
@@ -431,7 +426,6 @@ public class Survey extends Application {
 						resultSetBounds = pstmt3.executeQuery();
 						if(resultSetBounds.next()) {
 							bounds = resultSetBounds.getString(1);
-							System.out.println("Table: " + tableName + " bounds: " + bounds);
 							if(bounds != null) {
 								addToSurveyBounds(bbox, bounds);
 							}
@@ -668,7 +662,6 @@ public class Survey extends Application {
 		
 		Response response = null;
 		
-		System.out.println("Updating model: " + model);
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
@@ -970,7 +963,7 @@ public class Survey extends Application {
 						String fileFolder = basePath + "/attachments/" + surveyIdent;
 					    File folder = new File(fileFolder);
 					    try {
-					    	System.out.println("Deleting attachments folder: " + fileFolder);
+					    	log.info("Deleting attachments folder: " + fileFolder);
 							FileUtils.deleteDirectory(folder);
 						} catch (IOException e) {
 							log.info("Error deleting attachments directory:" + fileFolder + " : " + e.getMessage());
@@ -982,7 +975,7 @@ public class Survey extends Application {
 						fileFolder = basePath + "/uploadedSurveys/" + surveyIdent;
 					    folder = new File(fileFolder);
 					    try {
-					    	System.out.println("Deleting uploaded files for survey: " + surveyName + " in folder: " + fileFolder);
+					    	log.info("Deleting uploaded files for survey: " + surveyName + " in folder: " + fileFolder);
 							FileUtils.deleteDirectory(folder);
 						} catch (IOException e) {
 							log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
@@ -1004,7 +997,7 @@ public class Survey extends Application {
 								f2 = new File(xlsPath);
 							}			
 					
-						    System.out.println("Deleting templates for survey: " + sId + " : " + surveyName);
+						    log.info("Deleting templates for survey: " + sId + " : " + surveyName);
 						    f1.delete();
 						    if(f2 != null) {
 						    	f2.delete();
@@ -1107,7 +1100,6 @@ public class Survey extends Application {
 		int idx = bounds.indexOf('(');
 		if(idx > 0) {
 			String b2 = bounds.substring(idx + 1, bounds.length() - 1);
-			System.out.println("B2: " + b2);
 			String [] coords = b2.split(",");
 			if(coords.length > 1) {
 				String [] c1 = coords[0].split(" ");

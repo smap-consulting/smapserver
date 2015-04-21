@@ -493,7 +493,7 @@ function completeSurveyList() {
 			});
 		});
 		gSelectedTemplateName = $(this).parent().siblings(".displayName").text();
-		$('h4', '#download_template').append(" " + gSelectedTemplateName);
+		$('h4', '#download_template').html("Download " + gSelectedTemplateName);
 		$('#download_template').modal('show');
 	});
 	

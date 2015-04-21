@@ -179,16 +179,16 @@ public class PDFManager {
 			int idx = survey.name.lastIndexOf('.');
 			String templateName = null;
 			if(idx > 0) {
-				templateName = survey.name.substring(0, idx) + ".pdf";
+				templateName = survey.name.substring(0, idx) + "_template.pdf";
 			} else {
-				templateName = survey.name + ".pdf";
+				templateName = survey.name + "_template.pdf";
 			}
 			log.info("Attempt to get a pdf template with name: " + templateName);
 			File templateFile = new File(templateName);
 			
 			if(templateFile.exists()) {
 				
-				System.out.println("Template Exists");
+				log.info("PDF Template Exists");
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
@@ -316,7 +316,6 @@ public class PDFManager {
 						}
 					}
 				} else if(r.type.equals("image")) {
-					System.out.println("adding image: " + fieldName + " : " + r.value);
 					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 					if(ad != null) {
 						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -327,9 +326,9 @@ public class PDFManager {
 							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
 						}
 						pdfForm.replacePushbuttonField(fieldName, ad.getField());
-						System.out.println("Adding image to: " + fieldName);
+						log.info("Adding image to: " + fieldName);
 					} else {
-						System.out.println("Picture field: " + fieldName + " not found");
+						//log.info("Picture field: " + fieldName + " not found");
 					}
 				} else {
 					value = r.value;
@@ -337,13 +336,13 @@ public class PDFManager {
 	
 				if(value != null && !value.equals("") && !r.type.equals("image")) {
 					status = pdfForm.setField(fieldName, value);			
-					System.out.println("Set field: " + status + " : " + fieldName + " : " + value);
+					log.info("Set field: " + status + " : " + fieldName + " : " + value);
 					if(hideLabel) {
 						pdfForm.removeField(fieldName);
 					}
 							
 				} else {
-					System.out.println("Skipping field: " + status + " : " + fieldName + " : " + value);
+					//log.info("Skipping field: " + status + " : " + fieldName + " : " + value);
 				}
 				
 				if(value == null || value.trim().equals("")) {
@@ -394,7 +393,6 @@ public class PDFManager {
 				pdfForm.setField("user_title", us.title);
 				pdfForm.setField("user_license", us.license);
 				
-				System.out.println("adding signature: " + user.signature);
 				PushbuttonField ad = pdfForm.getNewPushbuttonFromField("user_signature");
 				if(ad != null) {
 					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -405,9 +403,9 @@ public class PDFManager {
 						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
 					}
 					pdfForm.replacePushbuttonField("user_signature", ad.getField());
-					System.out.println("Adding image to: signature");
+					log.info("Adding image to: signature");
 				} else {
-					System.out.println("Picture field: user_signature not found");
+					//log.info("Picture field: user_signature not found");
 				}
 			}
 				

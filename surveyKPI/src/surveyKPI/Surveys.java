@@ -445,7 +445,7 @@ public class Surveys extends Application {
 		}	
 		
 		fileName = GeneralUtilityMethods.getSafeTemplateName(fileName);
-		fileName = fileName + ".pdf";
+		fileName = fileName + "_template.pdf";
 		
 		String folderPath = basePath + "/templates/" + pId ;						
 		String filePath = folderPath + "/" + fileName;
