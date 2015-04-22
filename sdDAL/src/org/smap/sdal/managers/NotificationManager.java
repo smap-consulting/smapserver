@@ -219,7 +219,8 @@ public class NotificationManager {
 				" and s.p_id = up.p_id" +
 				" and s.s_id = f.s_id" +
 				" and u.ident = ? " +
-				" and s.p_id = ?; ";
+				" and s.p_id = ? " + 
+				" and s.deleted = 'false'";
 		
 		try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		pstmt = sd.prepareStatement(sql);	 			

@@ -205,7 +205,7 @@ alter table upload_event add column notifications_applied boolean;
 alter table upload_event add column instanceid varchar(41);
 alter table forward add column target text;
 alter table forward add column notify_details text;
-update forward set target = 'forward';
+update forward set target = 'forward' where target is null;
 alter table organisation add column smtp_host text;
 
 -- Create notification_log table

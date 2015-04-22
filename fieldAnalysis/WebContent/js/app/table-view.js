@@ -278,8 +278,7 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 		toValue = "f";
 	}
 	
-	//var reason = prompt("Please provide a reason","");
-	var reason = prompt(localise.set["msg_err_upd"],"");
+	var reason = prompt(localise.set["msg_reason"],"");
 	
 	$.ajax({
 		  type: "POST",

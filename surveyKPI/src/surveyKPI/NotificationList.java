@@ -468,7 +468,6 @@ public class NotificationList extends Application {
 					" from forward " +
 					" where id = ?";
 			
-			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 			pstmt = connectionSD.prepareStatement(sql);	
 			log.info("Delete forward, validate survey:" + sql);
 			pstmt.setInt(1, id);	
