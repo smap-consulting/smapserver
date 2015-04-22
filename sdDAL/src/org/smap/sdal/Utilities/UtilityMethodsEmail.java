@@ -374,21 +374,24 @@ public class UtilityMethodsEmail {
 			log.info("Organisation email host: " + emailServer.smtpHost);
 		
 			/*
-			 * If the smtp_host was not set at the organisation level try the server level defaults
+			 * If the smtp_host or the email_domain was not set at the organisation level try the server level defaults
 			 */
-			if(emailServer.smtpHost == null) {
+			if(emailServer.smtpHost == null || emailServer.emailDomain == null) {
 
 				try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sqlServer);
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String host = rs.getString(1);
-					emailServer.emailDomain = rs.getString(2);
-					if(host != null && host.trim().length() > 0) {
-						emailServer.smtpHost = rs.getString(1);
+					String domain = rs.getString(2);
+					if(emailServer.smtpHost == null) {
+						emailServer.smtpHost = host;
+					}
+					if(emailServer.emailDomain == null) {
+						emailServer.emailDomain = domain;
 					}
 				}
-				log.info("Using server email: " + emailServer.smtpHost);
+				log.info("Using server email: " + emailServer.smtpHost + " domain: " + emailServer.emailDomain);
 			}
 			
 		} catch (SQLException e) {
@@ -462,7 +465,6 @@ public class UtilityMethodsEmail {
 			Session session = Session.getInstance(props, null);
 			//session.setDebug(true);
 			Message msg = new MimeMessage(session);
-			
 			if(type.equals("notify")) {
 				rt = Message.RecipientType.BCC;
 			} else {
@@ -576,6 +578,7 @@ public class UtilityMethodsEmail {
 		    msg.setHeader("X-Mailer", "msgsend");
 		    log.info("Sending email from: " + sender);
 		    Transport.send(msg);
+		    
 		} catch(MessagingException me) {
 			log.log(Level.SEVERE, "Messaging Exception");
 			throw new Exception(me.getMessage());
