@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
@@ -174,13 +175,10 @@ public class PDFManager {
 			 * Get a template for the PDF report if it exists
 			 * The template name will be the same as the XLS form name but with an extension of pdf
 			 */
-			int idx = survey.name.lastIndexOf('.');
-			String templateName = null;
-			if(idx > 0) {
-				templateName = survey.name.substring(0, idx) + "_template.pdf";
-			} else {
-				templateName = survey.name + "_template.pdf";
-			}
+			String templateName = basePath + "/templates/" + survey.p_id + "/" + 
+					GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) +
+					"_template.pdf";
+			
 			log.info("Attempt to get a pdf template with name: " + templateName);
 			File templateFile = new File(templateName);
 			

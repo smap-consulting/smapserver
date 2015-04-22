@@ -499,10 +499,11 @@ public class UtilityMethodsEmail {
 		    StringBuffer txtMessage = new StringBuffer("");
 		    if(content != null && content.trim().length() > 0) {
 		    	txtMessage.append(content);			// User has specified email content
-			    txtMessage.append("\n");
+			    txtMessage.append("\n\n");
 			    
 			    // Add a link to the report if docURL is not null
 			    if(docURL != null) {
+			    	txtMessage.append("http://");
 				    txtMessage.append(serverName);
 				    txtMessage.append(docURL);
 			    }
@@ -552,6 +553,7 @@ public class UtilityMethodsEmail {
 			    txtMessage.append(adminEmail);
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
+			    	txtMessage.append("http://");
 				    txtMessage.append(serverName);
 				    txtMessage.append(docURL);
 			    }

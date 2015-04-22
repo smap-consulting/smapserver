@@ -136,10 +136,13 @@ public class Survey extends Application {
 		
 		PreparedStatement pstmt = null;
 		try {
-			String source_name = null;
+			String sourceName = null;
 			String display_name = null;
+			String fileBasePath = null;		// File path excluding extensions
 			String filename = null;
 			String filepath = null;
+			String sourceExt = null;
+			int projectId = 0;
 			
 			String ext = type;		
 			if(type.equals("codebook")) {
@@ -152,7 +155,7 @@ public class Survey extends Application {
 			/*
 			 * Get the survey name (file name)
 			 */
-			sql = "SELECT s.name, s.display_name " +
+			sql = "SELECT s.display_name, s.p_id " +
 					"FROM survey s " + 
 					"where s.s_id = ?;";
 			
@@ -162,90 +165,81 @@ public class Survey extends Application {
 			resultSet = pstmt.executeQuery();
 			
 			if (resultSet.next()) {				
-				source_name = resultSet.getString(1);
-				display_name = resultSet.getString(2);
-				int idx = source_name.lastIndexOf('.');
-				int idx2 = source_name.lastIndexOf('/');
+				display_name = resultSet.getString(1);
+				projectId = resultSet.getInt(2);
 				
-				if(idx < 0) {
-					if(type.equals("xml")) {
-						source_name = source_name + ".xml";
-					} else if(type.equals("xls")) {
-						source_name = source_name + ".xls";
-					} else if(type.equals("codebook")) {
-						source_name = source_name + ".xml";		// input name is xml for a pdf file
-					}
-					
-					idx = source_name.lastIndexOf('.');
+				String basePath = GeneralUtilityMethods.getBasePath(request);
+				String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
+				
+				fileBasePath = basePath + "/templates/" + projectId + "/" + target_name; 			
+
+				if(type.equals("xml")) {
+					sourceExt = ".xml";
+				} else if(type.equals("xls")) {
+					sourceExt = ".xls";
+				} else if(type.equals("codebook")) {
+					sourceExt = ".xml";		// input name is xml for a pdf file
 				}
+				sourceName = fileBasePath + sourceExt;
 				
-				if(idx2 < 0) {
-					// Probably this is an old survey that is missing the path in the name
-					log.info("Adding path to old survey");
-		
-					String basePath = GeneralUtilityMethods.getBasePath(request);
-					String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
-				
-					if(type.equals("xml")) {
-						target_name = target_name + ".xml";
-					} else if(type.equals("xls")) {
-						target_name = target_name + ".xls";
-					} else if(type.equals("codebook")) {
-						target_name = target_name + ".xml";		// input name is xml for a codebook file
-					} else {
-						log.info("Error: unknown download type: " + type);
-					}
+				System.out.println("FileBasePath: " + fileBasePath);
+				System.out.println("SourceName: " + sourceName);
+
+				// Check for the existence of the source file, if it isn't at the standard location try obsolete locations
+				File sourceFile = new File(sourceName);
+				if(!sourceFile.exists()) {
+					// Probably this is an old survey that is missing the projectId path in the path
+					log.info("Locating old survey");
 							
 					if(type.equals("xls")) {
-						source_name = basePath + "/templates/xls/" + target_name;	// Old xls files were in their own folder
+						fileBasePath = basePath + "/templates/xls/" + target_name; // Old xls files were in their own folder
 					} else {
-						source_name = basePath + "/templates/" + target_name;
+						fileBasePath = basePath + "/templates/" + target_name;
 					}
-					idx2 = source_name.lastIndexOf('/');
-					idx = source_name.lastIndexOf('.');
+					sourceName =  fileBasePath + sourceExt;	
+					
+					System.out.println("Second go FileBasePath: " + fileBasePath);
+					System.out.println("Second go SourceName: " + sourceName);
 				}
 
+				filepath = fileBasePath + "." + ext;
+				filename = target_name + "." + ext;
 				
-				if(idx > 0) {
-					filepath = source_name.substring(0, idx) + "." + ext;
-					filename = filepath.substring(idx2 + 1);
-				
-					try {  		
-		        		int code = 0;
-						if(type.equals("codebook")) {
-							Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/gettemplate.sh " + source_name +
-									" " + language +
-		        					" >> /var/log/tomcat7/survey.log 2>&1"});
-							code = proc.waitFor();
-						}
-		                log.info("Process exitValue: " + code);
-		        		
-		                File file = new File(filepath);
-		                byte [] fileData = new byte[(int)file.length()];
-		                DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		                dis.readFully(fileData);
-		                dis.close();
-		                
-		                if(type.equals("codebook")) {
-		                	builder.header("Content-type","application/pdf; charset=UTF-8");
-		                } else if(type.equals("xls")) {
-		                	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
-		                } else if(type.equals("xml")) {
-		                	builder.header("Content-type","text/xml; charset=UTF-8");
-		                }
-		                builder.header("Content-Disposition", "attachment;Filename=" + filename);
-						builder.entity(fileData);
-						
-						response = builder.build();
-		                
-		    		} catch (Exception e) {
-		    			log.log(Level.SEVERE, "", e);
-		    			response = Response.serverError().entity("<h1>Error retrieving " + type + " file</h1><p>" + e.getMessage() + "</p>").build();
-		        	}
-				} else {
-					response = Response.serverError().entity("Invalid survey name: " + source_name).build();
+				try {  		
+	        		int code = 0;
+					if(type.equals("codebook")) {
+						Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/gettemplate.sh " + sourceName +
+								" " + language +
+	        					" >> /var/log/tomcat7/survey.log 2>&1"});
+						code = proc.waitFor();
+					}
+	                log.info("Process exitValue: " + code);
+	        		
+	                File file = new File(filepath);
+	                byte [] fileData = new byte[(int)file.length()];
+	                DataInputStream dis = new DataInputStream(new FileInputStream(file));
+	                dis.readFully(fileData);
+	                dis.close();
+	                
+	                if(type.equals("codebook")) {
+	                	builder.header("Content-type","application/pdf; charset=UTF-8");
+	                } else if(type.equals("xls")) {
+	                	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
+	                } else if(type.equals("xml")) {
+	                	builder.header("Content-type","text/xml; charset=UTF-8");
+	                }
+	                builder.header("Content-Disposition", "attachment;Filename=" + filename);
+					builder.entity(fileData);
 					
-				}
+					response = builder.build();
+	                
+	    		} catch (Exception e) {
+	    			log.log(Level.SEVERE, "", e);
+	    			response = Response.serverError().entity("<h1>Error retrieving " + type + " file</h1><p>" + e.getMessage() + "</p>").build();
+	        	}
+			} else {
+				response = Response.serverError().entity("Invalid survey name: " + sourceName).build();
+				
 			}
 	
 			
@@ -1028,10 +1022,13 @@ public class Survey extends Application {
 						String newDisplayName = surveyDisplayName + "_" + dateFormat.format(cal.getTime());
 						
 						// Update the "name"
-						int idx = surveyName.lastIndexOf('/');
-						String newName = surveyName;
-						if(idx > 0) {
-							newName = surveyName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(newDisplayName) + ".xml";
+						String newName = null;
+						if(surveyName != null) {
+							int idx = surveyName.lastIndexOf('/');
+							newName = surveyName;
+							if(idx > 0) {
+								newName = surveyName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(newDisplayName) + ".xml";
+							}
 						}
 						
 						// Update the survey definition to indicate that the survey has been deleted
@@ -1053,7 +1050,7 @@ public class Survey extends Application {
 						
 						// Rename files
 						String basePath = GeneralUtilityMethods.getBasePath(request);
-						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, projectId);
+						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, projectId, projectId);
 					}
 					
 					/*

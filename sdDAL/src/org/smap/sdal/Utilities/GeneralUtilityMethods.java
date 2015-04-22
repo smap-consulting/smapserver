@@ -42,25 +42,58 @@ public class GeneralUtilityMethods {
 	/*
 	 * Rename template files
 	 */
-	static public void renameTemplateFiles(String oldName, String newName, String basePath, int projectId ) throws IOException {
+	static public void renameTemplateFiles(String oldName, String newName, String basePath, int oldProjectId, int newProjectId ) throws IOException {
 		
 		String oldFileName = convertDisplayNameToFileName(oldName);
 		String newFileName = convertDisplayNameToFileName(newName);
-		
-		
-		String directory = basePath + "/templates/" + projectId;
-		log.info("Renaming files in " + directory + " from: " + oldFileName + " to " + newFileName);
-		File dir = new File(directory);
+			
+		String fromDirectory = basePath + "/templates/" + oldProjectId;
+		String toDirectory = basePath + "/templates/" + newProjectId;
+			
+		log.info("Renaming files from " + fromDirectory + "/" + oldFileName + " to " + toDirectory + "/" + newFileName);
+		File dir = new File(fromDirectory);
 		FileFilter fileFilter = new WildcardFileFilter(oldFileName + ".*");
 		File[] files = dir.listFiles(fileFilter);
-		 for (int i = 0; i < files.length; i++) {
-		   log.info("renaming file: " + files[i]);
-		   String filepath = files[i].getPath();
-		   String ext = filepath.substring(filepath.indexOf('.'));
-		   String newPath = directory + "/" + newFileName + ext;
-		   FileUtils.moveFile(files[i], new File(newPath));
-		   
-		 }
+		
+		if(files.length > 0) {
+			moveFiles(files, toDirectory, newFileName);  
+		} else {
+			
+			// Try the old /templates/xls location for files
+			fromDirectory = basePath + "/templates/XLS";
+			dir = new File(fromDirectory);
+			files = dir.listFiles(fileFilter);
+			moveFiles(files, toDirectory, newFileName); 
+			
+			// try the /templates location
+			fromDirectory = basePath + "/templates";
+			dir = new File(fromDirectory);
+			files = dir.listFiles(fileFilter);
+			moveFiles(files, toDirectory, newFileName); 
+			
+		}
+
+		 
+	}
+	
+	/*
+	 * Move an array of files to a new location
+	 */
+	static void moveFiles(File[] files, String toDirectory, String newFileName)  {
+		if(files != null) {	// Can be null if the directory did not exist
+			for (int i = 0; i < files.length; i++) {
+			   log.info("renaming file: " + files[i]);
+			   String filepath = files[i].getPath();
+			   String ext = filepath.substring(filepath.lastIndexOf('.'));
+			   String newPath = toDirectory + "/" + newFileName + ext;
+			   try {
+				   FileUtils.moveFile(files[i], new File(newPath));
+			   } catch (IOException e) {
+				   log.info("Error moving " + files[i] + " to " + newPath + ", message: " + e.getMessage() );
+				   
+			   }
+			}
+		}
 	}
 	
 	/*

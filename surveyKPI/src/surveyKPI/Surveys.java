@@ -384,24 +384,26 @@ public class Surveys extends Application {
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 			
-			// Get the existing survey display name and plain old name
+			// Get the existing survey display name, plain old name and project id
 			String sqlGet = "select name, display_name, p_id from survey where s_id = ?";
 			pstmtGet = connectionSD.prepareStatement(sqlGet);	
 			pstmtGet.setInt(1, sId);
 			
 			String originalDisplayName = null;
 			String originalName = null;
-			int projectId = 0;
+			int originalProjectId = 0;
 			ResultSet rs = pstmtGet.executeQuery();
 			if(rs.next()) {
 				originalName = rs.getString(1);
 				originalDisplayName = rs.getString(2);
-				projectId = rs.getInt(3);
+				originalProjectId = rs.getInt(3);
 			}
 			
-			int idx = originalName.lastIndexOf('/');
-			if(idx > 0) {
-				newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) + ".xml";
+			if(originalName != null) {
+				int idx = originalName.lastIndexOf('/');
+				if(idx > 0) {
+					newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) + ".xml";
+				}
 			}
 			
 			// Update the settings
@@ -426,19 +428,15 @@ public class Surveys extends Application {
 	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
 			}
 			
-			// If the display name has changed rename template files
-			if(originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) {
+			// If the display name or project id has changed rename template files
+			if((originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) 
+					|| originalProjectId != survey.p_id) {
 				
 				// Get base path to files
-				String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-				if(basePath == null) {
-					basePath = "/smap";
-				} else if(basePath.equals("/ebs1")) {
-					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-				}
+				String basePath = GeneralUtilityMethods.getBasePath(request); 
 				
 				// Rename files
-				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, projectId);
+				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, originalProjectId, survey.p_id);
 			}
 			
 			response = Response.ok().build();
