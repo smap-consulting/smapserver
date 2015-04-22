@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ServerSideCalculate;
 
@@ -440,10 +441,12 @@ public class Survey extends Application {
 					DateInfo di = dateInfoList.get(i);
 					if(fId == di.fId) {
 						try {
-							sql = "select min(" + di.name + "), max(" + di.name + ") FROM " + tableName + ";";
-							log.info("Get max, min dates: " + sql);
+							String name = UtilityMethodsEmail.cleanName(di.name);
+							sql = "select min(" + name + "), max(" + name + ") FROM " + tableName + ";";
+							
 							try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
 							pstmt2 = connectionRel.prepareStatement(sql);
+							log.info("Get max, min dates: " + pstmt2.toString());
 							resultSetTable = pstmt2.executeQuery();
 							if(resultSetTable.next()) {
 								di.first = resultSetTable.getDate(1);

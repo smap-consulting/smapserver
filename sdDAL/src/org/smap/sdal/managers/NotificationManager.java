@@ -452,11 +452,11 @@ public class NotificationManager {
 						
 						notify_details = "Sending email to: " + emails + " containing link " + docURL;
 						
-						log.info("+++ emailing to: " + emails + " : " + docURL + 
+						log.info("+++ emailing to: " + emails + " docUrl: " + docURL + 
 								" from: " + from + 
 								" subject: " + subject +
 								" smtp_host: " + emailServer.smtpHost +
-								" email_domain" + emailServer.emailDomain);
+								" email_domain: " + emailServer.emailDomain);
 						try {
 							UtilityMethodsEmail.sendEmail(
 									emails, 

@@ -277,7 +277,7 @@ public class WebForm extends Application{
 
 		output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform_formhub.css' media='all' rel='stylesheet' />\n");
-		output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
+		//output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
 		if(surveyClass != null && surveyClass.trim().contains("theme-grid")) {
 			output.append("<link type='text/css' href='/build/css/grid.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/grid-print.css' media='print' rel='stylesheet'/>\n");	
