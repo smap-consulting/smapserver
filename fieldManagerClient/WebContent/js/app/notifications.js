@@ -271,7 +271,7 @@ function edit_notification(idx) {
 		
 		$('#survey').val(notification.s_id);
 		if(notification.notifyDetails && notification.notifyDetails.emails) {
-			$('#notify_emails').val(notification.notifyDetails.emails.join(";"));
+			$('#notify_emails').val(notification.notifyDetails.emails.join(","));
 			$('#from_email').val(notification.notifyDetails.from);
 			if(notification.notifyDetails.emailQuestion) {
 				surveyChanged(notification.notifyDetails.emailQuestion);
