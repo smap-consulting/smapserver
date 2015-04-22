@@ -385,16 +385,18 @@ public class Surveys extends Application {
 			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 			
 			// Get the existing survey display name and plain old name
-			String sqlGet = "select name, display_name from survey where s_id = ?";
+			String sqlGet = "select name, display_name, p_id from survey where s_id = ?";
 			pstmtGet = connectionSD.prepareStatement(sqlGet);	
 			pstmtGet.setInt(1, sId);
 			
 			String originalDisplayName = null;
 			String originalName = null;
+			int projectId = 0;
 			ResultSet rs = pstmtGet.executeQuery();
 			if(rs.next()) {
 				originalName = rs.getString(1);
 				originalDisplayName = rs.getString(2);
+				projectId = rs.getInt(3);
 			}
 			
 			int idx = originalName.lastIndexOf('/');
@@ -435,11 +437,8 @@ public class Surveys extends Application {
 					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
 				}
 				
-				// Get organisation ID
-				int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
-			
 				// Rename files
-				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, orgId);
+				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, projectId);
 			}
 			
 			response = Response.ok().build();

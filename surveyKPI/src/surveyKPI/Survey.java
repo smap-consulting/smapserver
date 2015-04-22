@@ -882,7 +882,8 @@ public class Survey extends Application {
 					String surveyIdent = null;
 					String surveyName = null;
 					String surveyDisplayName = null;
-					sql = "SELECT s.name, s.ident, s.display_name " +
+					int projectId = 0;
+					sql = "SELECT s.name, s.ident, s.display_name, s.p_id " +
 							"FROM survey s " + 
 							"where s.s_id = ?;";
 					
@@ -895,10 +896,11 @@ public class Survey extends Application {
 						surveyName = resultSet.getString("name");
 						surveyIdent = resultSet.getString("ident");
 						surveyDisplayName = resultSet.getString("display_name");
+						projectId = resultSet.getInt("p_id");
 					}
 					
 					// Get the organisation id
-					int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
+					//int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
 					
 					/*
 					 * Delete the survey. Either a soft or a hard delete
@@ -991,7 +993,7 @@ public class Survey extends Application {
 
 					    // Delete the templates
 						try {
-							GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, orgId );
+							GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, projectId );
 						} catch (Exception e) {
 							log.info("Error deleting templates: " + surveyName + " : " + e.getMessage());
 						}
@@ -1051,7 +1053,7 @@ public class Survey extends Application {
 						
 						// Rename files
 						String basePath = GeneralUtilityMethods.getBasePath(request);
-						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, orgId);
+						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, projectId);
 					}
 					
 					/*

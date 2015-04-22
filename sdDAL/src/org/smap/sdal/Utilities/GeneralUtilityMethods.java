@@ -42,13 +42,13 @@ public class GeneralUtilityMethods {
 	/*
 	 * Rename template files
 	 */
-	static public void renameTemplateFiles(String oldName, String newName, String basePath, int orgId ) throws IOException {
+	static public void renameTemplateFiles(String oldName, String newName, String basePath, int projectId ) throws IOException {
 		
 		String oldFileName = convertDisplayNameToFileName(oldName);
 		String newFileName = convertDisplayNameToFileName(newName);
 		
 		
-		String directory = basePath + "/templates/" + orgId;
+		String directory = basePath + "/templates/" + projectId;
 		log.info("Renaming files in " + directory + " from: " + oldFileName + " to " + newFileName);
 		File dir = new File(directory);
 		FileFilter fileFilter = new WildcardFileFilter(oldFileName + ".*");
@@ -66,15 +66,15 @@ public class GeneralUtilityMethods {
 	/*
 	 * Rename template files
 	 */
-	static public void deleteTemplateFiles(String name, String basePath, int orgId ) throws IOException {
+	static public void deleteTemplateFiles(String name, String basePath, int projectId ) throws IOException {
 		
 		String fileName = convertDisplayNameToFileName(name);
 		
 		
-		String directory = basePath + "/templates/" + orgId;
+		String directory = basePath + "/templates/" + projectId;
 		log.info("Deleting files in " + directory + " with stem: " + fileName);
 		File dir = new File(directory);
-		FileFilter fileFilter = new WildcardFileFilter(name + ".*");
+		FileFilter fileFilter = new WildcardFileFilter(fileName + ".*");
 		File[] files = dir.listFiles(fileFilter);
 		 for (int i = 0; i < files.length; i++) {
 		   log.info("deleting file: " + files[i]);
