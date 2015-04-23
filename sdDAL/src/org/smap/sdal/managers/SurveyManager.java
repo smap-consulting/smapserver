@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.managers;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -188,6 +189,11 @@ public class SurveyManager {
 				s.o_id = resultSet.getInt(9);
 				s.surveyClass = resultSet.getString(10);
 				
+				// Get the pdf template
+				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
+				if(templateFile.exists()) {
+					s.pdfTemplateName = templateFile.getName();
+				}
 			} 
 			
 			if(full && s != null) {

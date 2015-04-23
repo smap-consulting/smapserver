@@ -342,3 +342,8 @@ td.completed, td.submitted {
 .tab_controls {
 	margin-bottom: 50px;
 }
+
+.fileupload-buttonbar {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}

@@ -39,6 +39,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
@@ -708,15 +709,16 @@ public class UserList extends Application {
 		ArrayList<User> uArray = new Gson().fromJson(users, type);
 		
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtUpdate = null;
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
 		try {	
 			String sql = null;
 			int o_id;
 			ResultSet resultSet = null;
 			
-			connectionSD.setAutoCommit(false);
-			
 			/*
-			 * Get the organisation
+			 * Get the organisation of the person calling this service
 			 */
 			sql = "SELECT u.o_id " +
 					" FROM users u " +  
@@ -724,7 +726,8 @@ public class UserList extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
-			log.info("SQL: " + sql + ":" + request.getRemoteUser());
+			log.info("Get user organisation and id: " + pstmt.toString());
+			
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
@@ -737,15 +740,20 @@ public class UserList extends Application {
 							" WHERE u.id = ? " +
 							" AND u.o_id = ?;";				
 								
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setInt(1, u.id);
-					pstmt.setInt(2, o_id);
-					log.info("SQL: " + sql + ":" + u.id + ":" + o_id);
-					pstmt.executeUpdate();
+					pstmtUpdate = connectionSD.prepareStatement(sql);
+					pstmtUpdate.setInt(1, u.id);
+					pstmtUpdate.setInt(2, o_id);
+					log.info("Delete user: " + pstmt.toString());
+					
+					int count = pstmtUpdate.executeUpdate();
+					
+					// If a user was deleted then delete their directories
+					if(count > 0) {						
+						GeneralUtilityMethods.deleteDirectory(basePath + "/media/users/" + u.id);
+					}					
 
 				}
 		
-				connectionSD.commit();			
 				response = Response.ok().build();
 			} else {
 				log.log(Level.SEVERE,"Error: No organisation");
@@ -757,15 +765,18 @@ public class UserList extends Application {
 			log.info("sql state:" + state);
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
 			
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
 					connectionSD.close();
 				}
 			} catch (SQLException e) {

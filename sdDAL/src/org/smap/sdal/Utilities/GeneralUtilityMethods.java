@@ -97,7 +97,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Rename template files
+	 * Delete template files
 	 */
 	static public void deleteTemplateFiles(String name, String basePath, int projectId ) throws IOException {
 		
@@ -113,6 +113,41 @@ public class GeneralUtilityMethods {
 		   log.info("deleting file: " + files[i]);
 		   files[i].delete();
 		 }
+	}
+	
+	/*
+	 * Delete a directory
+	 */
+	static public void deleteDirectory(String directory) {
+		
+		File dir = new File(directory);
+		
+		File[] files = dir.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			log.info("deleting file: " + files[i]);
+			if(files[i].isDirectory()) {
+				deleteDirectory(files[i].getAbsolutePath());
+			} else {
+				files[i].delete();
+			}		
+		}
+		log.info("Deleting directory " + directory);
+		dir.delete();
+	}
+	
+	/*
+	 * Get the PDF Template File
+	 */
+	static public File getPdfTemplate(String basePath, String displayName, int pId) {
+		
+		String templateName = basePath + "/templates/" + pId + "/" + 
+				convertDisplayNameToFileName(displayName) +
+				"_template.pdf";
+		
+		log.info("Attempt to get a pdf template with name: " + templateName);
+		File templateFile = new File(templateName);
+		
+		return templateFile;
 	}
 	
 	/*

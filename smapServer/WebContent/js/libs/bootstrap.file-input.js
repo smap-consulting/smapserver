@@ -89,7 +89,7 @@ $.fn.bootstrapFileInput = function() {
       var fileName,
       		fileDesc,
       		$this = $(this),
-      		$target = $('#upload_msg');
+      		$target = $('.upload_file_msg');
      
       if ($this.prop('files') && $this.prop('files').length > 1) {
     	  fileDesc = 'Selected: ';
@@ -114,23 +114,14 @@ $.fn.bootstrapFileInput = function() {
       }
 
       if($target.hasClass("alert")) {
-    	  $target.addClass('alert-success').removeClass('alert-danger').html(fileDesc);
+    	  $target.addClass('alert-success').removeClass('alert-danger').html(fileDesc).val(fileDesc);
       } else {
     	  $target.html(fileDesc);
+    	  $target.val(fileDesc);
       }
       var w = 0;
       $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
-      /*
-      var selectedFileNamePlacement = $(this).data('filename-placement');
-      if (selectedFileNamePlacement === 'inside') {
-        // Print the fileName inside
-        $(this).siblings('span').html(fileName);
-        $(this).attr('title', fileName);
-      } else {
-        // Print the fileName aside (right after the the button)
-        $(this).parent().after('<span class="file-input-name">'+fileName+'</span>');
-      }
-      */
+   
     });
 
   });

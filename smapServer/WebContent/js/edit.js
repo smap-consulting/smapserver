@@ -576,6 +576,7 @@ function updateSettingsData() {
 	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
 	$('#set_default_language').val(defLangIdx);
+	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 }
 
 

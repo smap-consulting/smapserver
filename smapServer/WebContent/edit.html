@@ -211,12 +211,13 @@
 					<fieldset>
 						<legend>Pdf Template:</legend>
 						<input id="pdfSettings" type="hidden" name="settings" >
+						
 						<div class="form-group">
       						<div class="input-group">
       							<span class="input-group-btn">
-        							<input id="addPdfTemplate" name="files" title="Add" class="file-inputs" type="file" >
+        							<input id="addPdfTemplate" name="files" title="Add" class="file-inputs" type="file" accept="application/pdf">
       							</span>
-     					 		<input type="text" id="upload_msg_pdf" class="form-control" placeholder="PDF Template...">
+     					 		<input type="text" class="upload_file_msg form-control" placeholder="None selected ...">
     						</div>
          				</div>           			
 					</fieldset>
@@ -319,7 +320,7 @@
   				</form>   
 
 				<!-- Status -->
-				<div id="upload_msg" class="alert alert-success mediaManage" role="alert"></div>
+				<div id="upload_msg" class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
 		
 				<!-- The global progress bar -->
 			    <div id="progress" class="progress mediaManage">

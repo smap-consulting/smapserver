@@ -179,16 +179,12 @@ public class PDFManager {
 			 * Get a template for the PDF report if it exists
 			 * The template name will be the same as the XLS form name but with an extension of pdf
 			 */
-			String templateName = basePath + "/templates/" + survey.p_id + "/" + 
-					GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) +
-					"_template.pdf";
-			
-			log.info("Attempt to get a pdf template with name: " + templateName);
-			File templateFile = new File(templateName);
+			File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, survey.displayName, survey.p_id);
 			
 			if(templateFile.exists()) {
 				
 				log.info("PDF Template Exists");
+				String templateName = templateFile.getName();
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, outputStream);

@@ -31,6 +31,7 @@ public class Survey {
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
 	public ArrayList<ChangeItem> changes  = new ArrayList<ChangeItem> ();
 	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
+	public String pdfTemplateName;
 
 	
 	// Getters

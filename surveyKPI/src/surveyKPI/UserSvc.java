@@ -380,16 +380,21 @@ public class UserSvc extends Application {
 						sigItem = item;
 						fileName = String.valueOf(UUID.randomUUID());
 						int userId = GeneralUtilityMethods.getUserId(connectionSD, user);
-						userFolderPath = basePath + "/media/" +  userId;
+						
+						userFolderPath = basePath + "/media/users/" +  userId;
 						sigFolderPath = userFolderPath + "/sig";
 						sigPath = sigFolderPath + "/" + fileName;
-						sigUrl = "/media/" +  userId + "/sig/" + fileName;
+						sigUrl = "/media/users/" +  userId + "/sig/" + fileName;
 												
-						// 1. Create the project folder if it does not exist
-					    File folder = new File(userFolderPath);
+						// 1. Create the users folder if it does not exist
+						File folder = new File(basePath + "/media/users/");
+						FileUtils.forceMkdir(folder);
+						
+						// 2. Create the folder for the individual user if it does not exist
+						folder = new File(userFolderPath);
 					    FileUtils.forceMkdir(folder);
 					    
-					    // 2. Delete any existing signature files
+					    // 3. Delete any existing signature files
 					    folder = new File(sigFolderPath);
 					    try { 	
 							FileUtils.deleteDirectory(folder);
@@ -397,11 +402,11 @@ public class UserSvc extends Application {
 							log.log(Level.SEVERE, "Error deleting signatre directory");
 						}
 					    
-					    // 3. Create the signature folder
+					    // 4. Create the signature folder
 					    folder = new File(sigFolderPath);
 					    FileUtils.forceMkdir(folder);
 					    
-					    // 3. Save the file
+					    // 5. Save the file
 					    File savedFile = new File(sigPath);
 					    item.write(savedFile);
 					}					
