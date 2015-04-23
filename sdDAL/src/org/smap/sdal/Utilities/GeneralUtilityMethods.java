@@ -72,7 +72,6 @@ public class GeneralUtilityMethods {
 			moveFiles(files, toDirectory, newFileName); 
 			
 		}
-
 		 
 	}
 	
@@ -83,11 +82,12 @@ public class GeneralUtilityMethods {
 		if(files != null) {	// Can be null if the directory did not exist
 			for (int i = 0; i < files.length; i++) {
 			   log.info("renaming file: " + files[i]);
-			   String filepath = files[i].getPath();
-			   String ext = filepath.substring(filepath.lastIndexOf('.'));
+			   String filename = files[i].getName();
+			   String ext = filename.substring(filename.lastIndexOf('.'));
 			   String newPath = toDirectory + "/" + newFileName + ext;
 			   try {
 				   FileUtils.moveFile(files[i], new File(newPath));
+				   log.info("Moved " + files[i] + " to " + newPath );
 			   } catch (IOException e) {
 				   log.info("Error moving " + files[i] + " to " + newPath + ", message: " + e.getMessage() );
 				   

@@ -37,10 +37,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.itextpdf.text.Font;
@@ -192,12 +194,7 @@ public class CreatePDF extends Application {
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		
 		// Get the base path
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		try {
 			PDFManager pm = new PDFManager();

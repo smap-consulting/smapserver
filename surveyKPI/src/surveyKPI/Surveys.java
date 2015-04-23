@@ -416,6 +416,7 @@ public class Surveys extends Application {
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setInt(4, survey.p_id);
 			pstmt.setInt(5, sId);
+			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
 
 			if(count == 0) {

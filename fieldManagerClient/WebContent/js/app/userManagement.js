@@ -133,8 +133,7 @@ $(document).ready(function() {
 		}
 		
 		// Validations
-		if(user.ident.len)
-		if(!user.ident.match(validIdent)) {
+		if(!user.ident.match(validIdent) || user.ident.length == 0) {
 			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
 			$('#user_ident').focus();
 			$('#userDetailsSave').attr("disabled", false);

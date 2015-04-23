@@ -163,6 +163,10 @@ public class PDFManager {
 			log.info("Filename passed to createPDF is: " + filename);
 			if(filename == null) {
 				filename = survey.getInstanceName() + ".pdf";
+			} else {
+				if(!filename.endsWith(".pdf")) {
+					filename += ".pdf";
+				}
 			}
 			
 			// If the PDF is to be returned in an http response then set the file name now
