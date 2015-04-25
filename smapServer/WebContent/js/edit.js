@@ -53,21 +53,31 @@ require([
          'jquery-drag-ui.min',
          'jquery.autosize.min',
          'bootstrap.file-input',
-         'bootbox'], 
-		function($, common, bootstrap, lang, globals, jquery_ui, jqas, bsfi, bootbox) {
+         'bootbox',
+         'app/question',
+         'app/editorMarkup'], 
+		function(
+				$, 
+				common, 
+				bootstrap, 
+				lang, 
+				globals, 
+				jquery_ui, 
+				jqas, 
+				bsfi, 
+				bootbox,
+				question,
+				markup) {
 
 
 var	gMode = "survey",
 	gTempQuestions = [],
-	gLanguage = 0,
-	gIndex = 0,			// Unique index to each question
-	$gCurrentRow,		// Currently selected row
+	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [];
 
 // Media globals
 var gUrl,			// url to submit to
-	gBaseUrl = '/surveyKPI/upload/media',
-	gSId;
+	gBaseUrl = '/surveyKPI/upload/media';
 
 // Media Modal Parameters
 var gNewVal,
@@ -430,11 +440,12 @@ function refreshForm() {
 	 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
 	 * 
 	 */
+	globals.gElementIndex = 0;
 	if(survey) {
 		if(survey.forms && survey.forms.length > 0) {
 			for(i = 0; i < survey.forms.length; i++) {
 				if(survey.forms[i].parentform == 0) {
-					h[++idx] = addQuestions(survey.forms[i], i);
+					h[++idx] = markup.addQuestions(survey.forms[i], i);
 					break;
 				}
 			}
@@ -443,13 +454,15 @@ function refreshForm() {
 	
 	// Get the current list of collapsed panels
 	gCollapsedPanels = [];
-	gIndex = 0;
 	$('.in').each(function(){
 		gCollapsedPanels.push($(this).attr("id"));
 	});
 	
 	// Update the form view
 	$('#formList').html(h.join(""));
+	
+	// Question add control
+	$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
 	
 	// Restore collapsed panels
 	for(i = 0; i < gCollapsedPanels.length; i++) {
@@ -458,6 +471,9 @@ function refreshForm() {
 	
 	//enableDragablePanels();
 	
+	/*
+	 * Respond to changes in the focus attribute
+	 */
 	$('.labelProp').change(function(){
 
 		var $this = $(this),
@@ -485,6 +501,17 @@ function refreshForm() {
 		var $this = $(this);
 		mediaPropSelected($this);
 
+	});
+	
+	/*
+	 * Respond to request to add a new question
+	 */
+	$('.add_question').off().click(function() {
+		var $this = $(this),
+			qIndex = $(this).data("index"),
+			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
+		
+		question.add(qIndex, locn);
 	});
 }
 
@@ -579,228 +606,6 @@ function updateSettingsData() {
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 }
 
-
-/*
- * Add the questions for a form
- */
-function addQuestions(form, fId) {
-	var i,
-		question,
-		h = [],
-		idx = -1;
-	
-	if(form) {
-		for(i = 0; i < form.questions.length; i++) {
-			question = form.questions[i];
-			// Ignore the following questions
-			if(question.name === '_task_key' || 
-					question.name === 'instanceID' || 
-					question.name === 'meta' || 
-					question.name === 'meta_groupEnd') {
-				continue;
-			}
-			if(question.type === "end group") {
-				h[++idx] = '</ol>';
-				h[++idx] = '</div>';
-				h[++idx] = '</li>';
-				continue;
-			}
-			if(question.type === "end repeat") {
-				continue;
-			}
-			h[++idx] = addOneQuestion(question, fId, i);
-		}
-	}
-	return h.join("");
-}
-
-function addOneQuestion(question, fId, id) {
-	var h = [],
-		idx = -1;
-	
-	h[++idx] = addPanelStyle(question.type);
-	h[++idx] = '<div class="panel-heading">';
-		h[++idx] = '<table class="table">';
-			h[++idx] = '<td class="q_type_col">';
-				h[++idx] = addQType(question.type, question.calculation);
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
-				h[++idx] = question.name;
-			h[++idx] = '" type="text"></td>';
-			h[++idx] = addFeaturedProperty(question, fId, id, undefined, undefined);
-			h[++idx] = '<td class="q_icons_col">';
-				h[++idx] = '<a data-toggle="collapse"  href="#collapse';
-				h[++idx] = ++gIndex;
-				h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
-			h[++idx] = '</td>';
-			h[++idx] = '</table>';
-	h[++idx] = '<div id="collapse';
-	h[++idx] = gIndex;
-	h[++idx] = '" class="panel-body collapse';
-	if(question.type.indexOf("select") === 0) {
-		h[++idx] = ' selectquestion';
-	}
-	h[++idx] = '">';
-	if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
-		h[++idx] = addSubForm(question, globals.model.survey.forms[fId].id);
-	} else if(question.type.indexOf("select") === 0) {
-		h[++idx] = addOptions(question, fId);
-	} 
-	
-	if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
-		h[++idx] = '<ol>';
-	} else { 
-		h[++idx] = '</div>';
-		h[++idx] = '</li>';
-	}
-	
-	return h.join("");
-}
-
-function addPanelStyle(type) {
-	
-	if(type === "begin repeat" || type === "begin group") {
-		return '<li class="panel panel-warning">';
-	} else {
-		return '<li class="panel panel-success">';		
-	}
-}
-
-function addQType(type, calculation) {
-	if(type === "string" && !calculation) {
-		return '<span class="glyphicon glyphicon-font edit_type"></span>';	
-	} else if(type === "select1") {
-		return '<img class="edit_image" src="/images/select1_64.png">';
-	} else if(type === "select") {
-		return '<img class="edit_image" src="/images/select_64.png">';
-	} else if(type === "begin repeat") {
-		return '<span class="glyphicon glyphicon-repeat edit_type"></span>';
-	} else if(type === "begin group") {
-		return '<span class="glyphicon glyphicon-folder-open edit_type"></span>';
-	} else if(type === "image") {
-		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-camera edit_type"></span></div>';
-	} else if(type === "audio") {
-		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-volume-up edit_type"></span></div>';
-	} else if(type === "video") {
-		return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-facetime-video edit_type"></span></div>';
-	} else if(type === "geopoint") {
-		return '<span class="glyphicon glyphicon-map-marker edit_type"></span>';
-	} else if(type === "dateTime" || type === "date") {
-		return '<span class="glyphicon glyphicon-calendar edit_type"></span>';
-	} else if(type === "time") {
-		return '<span class="glyphicon glyphicon-time edit_type"></span>';
-	} else if(type === "barcode") {
-		return '<span class="glyphicon glyphicon-barcode edit_type"></span>';
-	}  else if(type === "int") {
-		return '<span class="edit_type">#</span>';
-	} else if(type === "decimal") {
-		return '<span class="edit_type">#.#</span>';
-	} else if(type === "geolinestring") {
-		return '<img class="edit_image" src="/images/linestring_64.png">';
-	} else if(type === "geopolygon") {
-		return '<img class="edit_image" src="/images/polygon_64.png">';
-	} else if(type === "string" && calculation) {
-		return '<img class="edit_image" src="/images/calc_64.png">';
-	} else {
-		return '<span class="glyphicon glyphicon-record edit_type"></span>';
-	}
-}
-
-/*
- * One of the questions properties will be featured so that it can be edited in the header without expanding the question
- */
-function addFeaturedProperty(question, fId, id, list_name, qname) {
-	
-	var h = [],
-		idx = -1,
-		type = "question";
-	
-	if(list_name) {
-		type = "option";
-	}
-	
-	h[++idx] = '<td class="q_label_col ';
-	h[++idx] = type;
-	h[++idx] = '" data-fid="';
-	h[++idx] = fId;
-	h[++idx] = '" data-id="';
-	h[++idx] = id;
-	if(qname) {
-		h[++idx] = '" data-qname="';
-		h[++idx] = qname;
-	}
-	if(list_name) {
-		h[++idx] = '" data-list_name="';
-		h[++idx] = list_name;
-		type = "option";
-	}
-	h[++idx] = '">';
-	h[++idx] = getFeaturedMarkup(question, type);
-	h[++idx] = '</td>';
-	return h.join("");
-}
-
-/*
- * Get Featured Markup for the question
- */
-function getFeaturedMarkup(question, type) {
-	var h = [],
-		idx = -1,
-		selProperty = $('#selProperty').val(),
-		selLabel = $('#selProperty :selected').text(),
-		naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
-	
-	 if(selProperty === "media") {
-		h[++idx] = '<div class="row">';
-			if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
-				h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
-				h[++idx] = naMedia;
-				h[++idx] = '</div>';
-			} else {
-				h[++idx] = addMedia("Image", 
-						question.labels[gLanguage].image, 
-						question.labels[gLanguage].imageUrl, 
-						question.labels[gLanguage].imageThumb);
-		        
-				h[++idx] = addMedia("Video", 
-						question.labels[gLanguage].video, 
-						question.labels[gLanguage].videoUrl, 
-						question.labels[gLanguage].videoThumb);
-				
-				h[++idx] = addMedia("Audio", 
-						question.labels[gLanguage].audio, 
-						question.labels[gLanguage].audioUrl, 
-						question.labels[gLanguage].audioThumb);		
-			}
-			
-		h[++idx] = '</div>';		// End of row
-
-	} else {
-		h[++idx] = '<textarea class="labelProp" placeholder="';
-		h[++idx] = selLabel;
-		h[++idx] = '" data-prop="';
-		h[++idx] = selProperty;
-		h[++idx] = '"';
-		if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
-			h[++idx] = ' readonly tabindex="-1">';
-			h[++idx] = selLabel;
-			h[++idx] = ' not required';
-		} else {
-			h[++idx] = ' tabindex="';
-			h[++idx] = gIndex;
-			h[++idx] = '">';
-			if(selProperty === "label") { 
-				h[++idx] = question.labels[gLanguage].text;
-			} else {
-				h[++idx] = question[selProperty];
-			}
-		}
-		h[++idx] = '</textarea>';
-	}
-	
-	return h.join("");
-}
-
 /*
  * Add a media type
  */
@@ -853,74 +658,7 @@ function addMedia(label, mediaIdent, url, thumbUrl) {
     
     return h.join("");
 }
-/*
- * Add subform
- */
-function addSubForm(question, parentId) {
-	
-	var h = [],
-		idx = -1,
-		formName,
-		survey = globals.model.survey,
-		forms = [],
-		i,
-		form;
-	
-	h[++idx] = '<ol class="list-unstyled">';
-	
-	// Get the form
-	formName = question.name;
-	forms = survey.forms;
-	for(i = 0; i < forms.length; i++) {
-		form = forms[i];
-		if(forms[i].parentform === parentId && forms[i].parentQuestion === question.id) {			
-			h[++idx] = addQuestions(forms[i], i);
-			break;
-		}
-	}
-	
-	h[++idx] = '</ol>';
-	
-	return h.join("");
-}
 
-/*
- * Show the options
- */
-function addOptions(question, fId) {
-	var survey = globals.model.survey,
-		options = survey.optionLists[question.list_name],
-		h = [],
-		idx = -1,
-		i;
-	
-	if(options) {
-		for(i = 0; i < options.length; i++) {
-			h[++idx] = addOneOption(options[i], fId, i, question.list_name, question.name);
-		}
-	}
-	return h.join("");
-}
-
-/*
- * Add a single option
- */
-function addOneOption(option, fId, id, list_name, qname) {
-	var h = [],
-		idx = -1;
-
-	h[++idx] = '<table class="table">';
-	h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
-	h[++idx] = option.value;
-	h[++idx] = '" type="text"></td>';
-	h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
-	//h[++idx] = '<td class="q_icons_col">';	TODO Add Deletion
-	//h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon1"></span>';
-	//h[++idx] = '</td>';
-	h[++idx] = '</table>';
-
-	return h.join("");
-}
 
 /*
  * Call this to update a label
@@ -1077,7 +815,7 @@ function getFilesFromServer(sId) {
 			removeHourglass();
 			
 			var surveyId = sId;
-			refreshMediaView(data, surveyId);
+			markup.refreshMediaView(data, surveyId);
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -1091,88 +829,7 @@ function getFilesFromServer(sId) {
 	});	
 }
 
-function refreshMediaView(data, sId) {
-	
-	var i,
-		survey = globals.model.survey,
-		$element,
-		h = [],
-		idx = -1,
-		files;
-	
-	if(survey && sId) {
-		// Set the display name
-		$('.formName').html(survey.displayName);
-		$('#survey_id').val(sId);
-		gSId = sId;
-	}
-	
-	if(data) {
-		files = data.files;
-		
-		if(sId) {
-			$element = $('#filesSurvey');
-		} else {
-			$element = $('#filesOrg');
-		}
-		
-		for(i = 0; i < files.length; i++){
-			h[++idx] = '<tr class="';
-			h[++idx] = files[i].type;
-			h[++idx] = '">';
-			h[++idx] = '<td class="preview">';
-			h[++idx] = '<a target="_blank" href="';
-			h[++idx] = files[i].url;
-			h[++idx] = '">';
-			if(files[i].type == "audio") {
-				h[++idx] = addQType("audio");
-			} else {
-				h[++idx] = '<img src="';
-				h[++idx] = files[i].thumbnailUrl;
-				h[++idx] = '" alt="';
-				h[++idx] = files[i].name;
-				h[++idx] = '">';
-			}
-			h[++idx] = '</a>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="filename">';
-				h[++idx] = '<p>';
-				h[++idx] = files[i].name;
-				h[++idx] = '</p>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaManage">';
-				h[++idx] = '<p>';
-				h[++idx] = files[i].size;
-				h[++idx] = '</p>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaManage">';
-				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
-				h[++idx] = files[i].deleteUrl;
-				h[++idx] = '">';
-				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
-				h[++idx] = ' Delete';
-				h[++idx] = '</button>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaSelect">';
-				h[++idx] = '<button class="mediaAdd btn btn-success">';
-				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
-					h[++idx] = ' Add';
-				h[++idx] = '</button>';
-		h[++idx] = '</td>';
-			
-			
-			h[++idx] = '</tr>';
-		}
-		
 
-		$element.html(h.join(""));
-	
-		$('.media_del', $element).click(function () {
-			delete_media($(this).data('url'));
-		});
-	
-	}	
-}
 
 function delete_media(url) {
 	addHourglass();

@@ -24,7 +24,6 @@ define(function() {
 	
 		gProjectList: undefined,
 		gCurrentProject: 0,
-		gCurrentLanguage: undefined,
 		gCurrentSurvey: 0,
 		gCurrentLayer: undefined,
 		gLoggedInUser: undefined,
@@ -51,7 +50,12 @@ define(function() {
 		gCurrentUserName: undefined,
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
-		//gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
+		
+		// Editor
+		gElementIndex: 0,				
+		gCurrentFormId: 0,
+		gSId: 0,
+		gLanguage: 0,
 		
 		model: new Model()
 
