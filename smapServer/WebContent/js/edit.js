@@ -358,7 +358,27 @@ $(document).ready(function() {
 		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname, "media");
 		
 	});
+	
+	setUpQuestionTypeDialog();
+
+	
 });
+
+//Set up question type dialog
+function setUpQuestionTypeDialog() {
+	var i,
+		types = globals.model.qTypes,
+		$elem = $('#typeModalButtonGrp'),
+		h = [],
+		idx = -1;
+	
+	for(i = 0; i < types.length; i++) {
+		h[++idx] = '<button type="button" class="btn btn-primary">';
+		h[++idx] = types[i].name;
+		h[++idx] = '</button>';
+	}	
+	$elem.html(h.join(''));
+}
 
 function enableDragablePanels() {
 	var panelList = $('#formList');
@@ -461,20 +481,27 @@ function refreshForm() {
 	// Update the form view
 	$('#formList').html(h.join(""));
 	
-	// Question add control
-	$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
-	
 	// Restore collapsed panels
 	for(i = 0; i < gCollapsedPanels.length; i++) {
 		$('#' + gCollapsedPanels[i]).addClass("in");
 	}
 	
+	respondToEvents($('#formList'));
+	
+	$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
+
 	//enableDragablePanels();
 	
-	/*
-	 * Respond to changes in the focus attribute
-	 */
-	$('.labelProp').change(function(){
+
+}
+
+function respondToEvents($context) {
+	
+	// Add tooltips
+	$('.has_tt', $context).tooltip();
+	
+	// Respond to changes in the attribute that currently has focus
+	$('.labelProp', $context).change(function(){
 
 		var $this = $(this),
 			prop = $this.data("prop"),
@@ -496,24 +523,33 @@ function refreshForm() {
 
 	});
 	
-	$('.mediaProp').off().click(function(){
+	// Selected a media property
+	$('.mediaProp', $context).off().click(function(){
 		
 		var $this = $(this);
 		mediaPropSelected($this);
 
 	});
 	
-	/*
-	 * Respond to request to add a new question
-	 */
-	$('.add_question').off().click(function() {
+	// Add new question
+	$('.add_question', $context).off().click(function() {
 		var $this = $(this),
 			qIndex = $(this).data("index"),
 			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
 		
 		question.add(qIndex, locn);
 	});
+	
+	// Select types
+	$('.question_type', $context).off().click(function() {
+		var $this = $(this),
+			qIndex = $(this).data("index");
+		
+		question.setType(qIndex);
+	});
+	
 }
+
 
 function mediaPropSelected($this) {
 	var $parent = $this.closest('td'),

@@ -223,6 +223,8 @@ tr.deleted td a {
 	margin-right: 0px;
 	margin-left: 0px;
 	color: black;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
 }
 
 .edit_image {
@@ -231,7 +233,15 @@ tr.deleted td a {
 	margin-bottom:31px;
 	margin-right: 0px;
 	margin-left: 0px;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
 }
+
+.edit_type:hover, .edit_image:hover {
+	opacity: 0.3;
+}
+
+
 
 .qname {
 	width: 100%;

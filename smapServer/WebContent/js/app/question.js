@@ -32,7 +32,8 @@ define([
 
 	return {	
 		init: init,
-		add: add
+		add: add,
+		setType: setType
 	};
 	
 	var gEditor;
@@ -87,8 +88,13 @@ define([
 		} else {
 			$relatedElement.before(markup.addOneQuestion(newQuestion, fIndex, splicePoint));
 		}
+		// TODO apply events
 		
 		// 5. Create changeset to be applied on save
+	}
+	
+	function setType() {
+		$('#typeModal').modal('show');
 	}
 
 

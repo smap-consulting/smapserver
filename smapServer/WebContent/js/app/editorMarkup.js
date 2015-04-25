@@ -114,10 +114,42 @@ define([
 	}
 	
 	function addQType(type, calculation) {
+		
+		var i,
+			types = globals.model.qTypes,
+			h = [],
+			idx = -1;
+	
+	for(i = 0; i < types.length; i++) {
+		if(types[i].type === type) {
+			h[++idx] = '<span class="question_type has_tt" title="';
+			h[++idx] = types[i].name;
+			h[++idx] = '">';
+			if(types[i].glyphicon) {
+				h[++idx] = '<span class="glyphicon glyphicon-';
+				h[++idx] = types[i].glyphicon; 
+				h[++idx] = ' edit_type"></span>';
+			} else if(types[i].image) {
+				h[++idx] = '<img class="edit_image" src="';
+				h[++idx] = types[i].image; 
+				h[++idx] = '">';
+			} else if(types[i].text) {
+				h[++idx] = '<span class="edit_type">';
+				h[++idx] = types[i].text; 
+				h[++idx] = '</span>';
+			}
+			h[++idx] = '</span>';
+			break;
+		}
+	}	
+	return h.join('');
+	/*
+	$elem.html(h.join(''));
+		
 		if(type === "string" && !calculation) {
 			return '<span class="glyphicon glyphicon-font edit_type"></span>';	
 		} else if(type === "select1") {
-			return '<img class="edit_image" src="/images/select1_64.png">';
+			return '<span class="question_type"><img class="edit_image" src="/images/select1_64.png"></span>';
 		} else if(type === "select") {
 			return '<img class="edit_image" src="/images/select_64.png">';
 		} else if(type === "begin repeat") {
@@ -151,6 +183,7 @@ define([
 		} else {
 			return '<span class="glyphicon glyphicon-record edit_type"></span>';
 		}
+		*/
 	}
 	
 	/*
