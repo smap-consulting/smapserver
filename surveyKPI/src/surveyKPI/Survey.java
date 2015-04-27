@@ -181,9 +181,6 @@ public class Survey extends Application {
 					sourceExt = ".xml";		// input name is xml for a pdf file
 				}
 				sourceName = fileBasePath + sourceExt;
-				
-				System.out.println("FileBasePath: " + fileBasePath);
-				System.out.println("SourceName: " + sourceName);
 
 				// Check for the existence of the source file, if it isn't at the standard location try obsolete locations
 				File sourceFile = new File(sourceName);
@@ -197,9 +194,6 @@ public class Survey extends Application {
 						fileBasePath = basePath + "/templates/" + target_name;
 					}
 					sourceName =  fileBasePath + sourceExt;	
-					
-					System.out.println("Second go FileBasePath: " + fileBasePath);
-					System.out.println("Second go SourceName: " + sourceName);
 				}
 
 				filepath = fileBasePath + "." + ext;

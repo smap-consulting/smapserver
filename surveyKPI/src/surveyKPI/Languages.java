@@ -75,8 +75,7 @@ public class Languages extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
+		    log.log(Level.SEVERE, "SQL Exception", e);
 			response = Response.serverError().build();
 		    return response;
 		}

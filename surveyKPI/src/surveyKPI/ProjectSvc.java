@@ -175,7 +175,6 @@ public class ProjectSvc extends Application {
 				}
 				
 				// Add the item data to the data object
-				System.out.println("Item_link:" + item_link);
 				if(item_link != null) {
 					JSONObject item = new JSONObject();
 					item.put("caption", item_caption);

@@ -187,8 +187,6 @@ public class Review extends Application {
 					throw new ApplicationException("Unsupported question type: " + qtype);
 				}
 				
-				System.out.println("Table: " + table + " : " + name);
-				
 				if (pstmt != null) {
 					pstmt.close();
 				}
@@ -312,13 +310,12 @@ public class Review extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
+		    log.log(Level.SEVERE, "SQL Exception", e);
 		    return Response.serverError().entity(e.getMessage()).build();
 
 		}
 		
-		System.out.println("===========getReferencedQuestion: " + sId + " : " + language + " : " + qId);
+		log.info("===========getReferencedQuestion: " + sId + " : " + language + " : " + qId);
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
@@ -326,7 +323,6 @@ public class Review extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
-		System.out.println("------- Passed authorisation");
 		Response response = null;
 
 		ArrayList<RelevanceQuestion> relResults = new ArrayList<RelevanceQuestion> ();
@@ -381,7 +377,6 @@ public class Review extends Application {
 			
 			if(resultSet.next()) {
 				String relevance = resultSet.getString(1);
-				System.out.println("Relevance: " + relevance);
 				
 				/*
 				 * Get the paths of any select questions referenced in this relevance statement
@@ -393,7 +388,6 @@ public class Review extends Application {
 					
 					PathAndValue pAndV = paths.get(i);
 					String path = pAndV.path;
-					System.out.println("Path: " + path);
 					
 					/*
 					 * Get the question details
@@ -418,7 +412,7 @@ public class Review extends Application {
 							pstmtGetOption.setString(1, language);
 							pstmtGetOption.setInt(2, q.qId);
 							pstmtGetOption.setInt(3, sId);
-							System.out.println("Getting options for question: " + q.qId);
+
 							ResultSet resultSetOptions = pstmtGetOption.executeQuery();
 							while(resultSetOptions.next()) {
 								RelevanceOption o = new RelevanceOption();
@@ -440,8 +434,7 @@ public class Review extends Application {
 			response = Response.ok(resp).build();
 				
 		} catch (SQLException e) {
-		    System.out.println("Connection Failed! Check output console");
-		    e.printStackTrace();
+		    log.log(Level.SEVERE, "SQL Exception", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
@@ -455,8 +448,7 @@ public class Review extends Application {
 					connectionSD = null;
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
+				log.log(Level.SEVERE, "SQL Exception", e);
 			}
 		}
 
@@ -607,7 +599,6 @@ public class Review extends Application {
 				
 		Connection dConnection = ResultsDataSource.getConnection("surveyKPI-Audit");
 		
-		System.out.println("Get Changeset Details: " + csId + " : " + sId);
 		try {
 
 			/*
@@ -727,7 +718,6 @@ public class Review extends Application {
 		/*
 		 * Get the updates
 		 */
-		System.out.println("+++++++++++++++++Applying Updates:" + updates);
 		Type updateType = new TypeToken<ReviewUpdate>() {}.getType();
 		ReviewUpdate u = new Gson().fromJson(updates, updateType);
 
@@ -851,27 +841,22 @@ public class Review extends Application {
 				throw new ApplicationException("Can't get records to update");
 			}
 			
-			//for(int i = 0; i < uiList.size(); i++) {
-			//	UpdateItem ui = uiList.get(i);
-			//	System.out.println("Update Item: " + ui.qId + " : " + ui.oldValue + " : " + ui.newValue);
-			//}
-			
 			// Create an entry for this changeset and get the changeset id
-			System.out.println("Get changeset id: " + sqlInsertChangeset);
+			
 			pstmtInsertChangeset.setString(1, userName);
 			pstmtInsertChangeset.setInt(2, sId);
 			pstmtInsertChangeset.setString(3, u.reason);
 			pstmtInsertChangeset.setString(4, u.description);
+			
+			log.info("Get changeset id: " + pstmtInsertChangeset.toString());
 			pstmtInsertChangeset.executeUpdate();
 			resultSet = pstmtInsertChangeset.getGeneratedKeys();
 			if(resultSet.next()) {
 				csId = resultSet.getInt(1);
-				System.out.println("Changeset id: "+ csId);
 			} else {
 				throw new ApplicationException("Failed to create changeset entry");
 			}
 			
-			System.out.println("Apply updates");
 			applyUpdateItems (
 					csId,
 					uiList,
@@ -981,7 +966,6 @@ public class Review extends Application {
 			ResultSet resultSet = pstmtGetCurrentValue.executeQuery();
 			if(resultSet.next()) {
 				ui.oldValue = resultSet.getString(1);
-			System.out.println("Current values: " + ui.oldValue);
 			} else {
 				throw new ApplicationException("Current value not found");
 			}
@@ -999,11 +983,8 @@ public class Review extends Application {
 			PreparedStatement pstmtInsertChangeHistory
 			) throws ApplicationException, SQLException, Exception {
 		
-		System.out.println("+++ applyUpdateItems");
-		
 		// Update to table and change history must be in a single transaction
 		dConnection.setAutoCommit(false);
-		System.out.println("*****Autocommit false");
 		
 		/*
 		 * Get the current value and primary key of each record that is to change
@@ -1062,17 +1043,13 @@ public class Review extends Application {
 					pstmtInsertChangeHistory.setString(9, "");
 				}
 				
-				System.out.println("Insert Change History: " + "insert into change_history(c_id, q_id, r_id, old_value, " +
-						"new_value, qname, qtype, tablename, oname) " +
-						" values(?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				log.info("Insert change history: " + pstmtInsertChangeHistory.toString());
 				pstmtInsertChangeHistory.executeUpdate();
 				
 				dConnection.commit();
-				System.out.println("********Commit");
 			} 
 		}
 		try {dConnection.setAutoCommit(true);} catch (Exception e) {}
-		System.out.println("*****Autocommit true");
 	}
 	
 

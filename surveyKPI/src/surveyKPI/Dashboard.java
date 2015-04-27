@@ -227,7 +227,7 @@ public class Dashboard extends Application {
 		}
 		
 		String user = request.getRemoteUser();
-		System.out.println("Settings:" + settings);
+		log.info("Settings:" + settings);
 		
 		Type type = new TypeToken<ArrayList<Settings>>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -244,7 +244,6 @@ public class Dashboard extends Application {
 
 		try {
 			connectionSD.setAutoCommit(false);
-			System.out.println("Start Transaction connectionSD");
 			
 			String sqlDelView = "delete from dashboard_settings " +
 					"where (ds_id = ? or ds_layer_id = ?) " +
@@ -296,16 +295,15 @@ public class Dashboard extends Application {
 					
 					if(s.id != -1 && s.state.equals("deleted")) {
 
-						System.out.println("Delete View");
 						pstmtDelView.setInt(1, s.id);
 						pstmtDelView.setInt(2, s.id);
 						pstmtDelView.setString(3, user);
+						log.info("Delete view: " + pstmtDelView.toString());
 						pstmtDelView.executeUpdate();
 					
 					} else if(s.id == -1) {
 						
 						//==========================  Insert the new view 
-						System.out.println("Insert View");
 						pstmtAddView.setString(1, s.state);
 						pstmtAddView.setInt(2, s.seq);
 						pstmtAddView.setString(3, s.title);
@@ -331,13 +329,12 @@ public class Dashboard extends Application {
 						pstmtAddView.setDate(23, s.toDate);
 						pstmtAddView.setBoolean(24, s.qId_is_calc);
 						pstmtAddView.setString(25, s.filter);
+						log.info("Add view: " + pstmtAddView.toString());
 						pstmtAddView.executeUpdate();		
 
 					} else {
 						
 						//==========================  Update the existing view
-						System.out.println("Update View");
-						System.out.println("timeGroup: " + s.timeGroup);
 						pstmtReplaceView.setString(1, s.state);
 						pstmtReplaceView.setInt(2, s.seq);
 						pstmtReplaceView.setString(3, s.title);
@@ -365,6 +362,7 @@ public class Dashboard extends Application {
 						pstmtReplaceView.setInt(25, s.id);
 						pstmtReplaceView.setString(26, user);
 						
+						log.info("Update view: " + pstmtReplaceView.toString());
 						pstmtReplaceView.executeUpdate();
 					}
 					
@@ -376,7 +374,6 @@ public class Dashboard extends Application {
 				
 		} catch (Exception e) {
 			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-			System.out.println("Rollback connectionSD");
 			response = Response.serverError().build();
 			log.log(Level.SEVERE,"Error", e);
 		} finally {

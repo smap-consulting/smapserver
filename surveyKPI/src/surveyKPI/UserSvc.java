@@ -128,7 +128,6 @@ public class UserSvc extends Application {
 	public Response updateUser(@Context HttpServletRequest request, @FormParam("user") String user) { 
 		
 		Response response = null;
-		System.out.println("User details:" + user);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 

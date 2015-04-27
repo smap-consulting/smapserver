@@ -457,7 +457,6 @@ public class UtilityMethodsEmail {
 			throw new Exception("smtp_host not available");
 		}
 		
-		System.out.println("Send email. filename: " + filename);
 		RecipientType rt = null;
 		try {
 			Properties props = System.getProperties();
@@ -473,7 +472,7 @@ public class UtilityMethodsEmail {
 			
 			log.info("Sending to email addresses: " + email);
 			InternetAddress[] emailArray = InternetAddress.parse(email);
-			System.out.println("Number of email addresses: " + emailArray.length);
+			log.info("Number of email addresses: " + emailArray.length);
 		    msg.setRecipients(rt,	emailArray);
 		    msg.setSubject(subject);
 		    

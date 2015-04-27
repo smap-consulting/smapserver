@@ -129,17 +129,6 @@ public class UploadFiles extends Application {
 						}
 						log.info("surveyId:" + sId);
 					}
-					/*
-					else if(item.getFieldName().equals("settings")) {
-						try {
-							settings = item.getString();
-							System.out.println("Has settings ######: " + settings);
-						} catch (Exception e) {
-							
-						}
-						log.info("Upload media settings:" + settings);
-					}
-					*/
 					
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
@@ -179,7 +168,7 @@ public class UploadFiles extends Application {
 					
 					String folderPath = mediaInfo.getPath();
 					fileName = mediaInfo.getFileName(fileName);
-					System.out.println("Filename: " + fileName);
+
 					if(folderPath != null) {						
 						String filePath = folderPath + "/" + fileName;
 					    File savedFile = new File(filePath);

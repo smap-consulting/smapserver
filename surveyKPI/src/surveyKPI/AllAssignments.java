@@ -61,6 +61,7 @@ import utilities.QuestionInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.sql.*;
@@ -72,6 +73,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /*
  * Used by an administrator or analyst to view task status and make updates
@@ -964,6 +967,7 @@ public class AllAssignments extends Application {
 		String fileName = null;
 		String filePath = null;
 		File savedFile = null;
+		String contentType = null;
 		int sId = 0;
 		int fId = 0;
 		String tableName = null;
@@ -990,7 +994,7 @@ public class AllAssignments extends Application {
 					
 					
 				} else if(!item.isFormField()) {
-					// Handle Uploaded files.
+					// Handle Uploaded file
 					log.info("Field Name = "+item.getFieldName()+
 						", File Name = "+item.getName()+
 						", Content type = "+item.getContentType()+
@@ -1000,6 +1004,7 @@ public class AllAssignments extends Application {
 					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
 					if(item.getSize() > 0) {
+					    contentType = item.getContentType();
 						fileName = String.valueOf(UUID.randomUUID());
 						
 						filePath = basePath + "/temp/" + fileName + ".csv";
@@ -1023,6 +1028,45 @@ public class AllAssignments extends Application {
 			// Prepare the statement to get the column names in the survey that are to be updated
 			pstmtGetCol = connectionSD.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(1, fId);
+			
+			// If this is a zip file extract the contents and set the path to the expand csv file that should be inside
+			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
+			log.info("Content Type: " + contentType);
+			if(contentType.equals("application/zip")) {
+				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
+				File zipFolder = new File(zipFolderPath);
+				if(!zipFolder.exists()) {
+					zipFolder.mkdir();
+				}
+				ZipInputStream zis = new ZipInputStream(new FileInputStream(savedFile));
+				ZipEntry ze = null;
+				byte[] buffer = new byte[1024];
+				while((ze = zis.getNextEntry()) != null) {
+					String zFileName = ze.getName();
+					if(!zFileName.startsWith("__MAC")) {	// Files added by macintosh zip utility
+						
+						log.info("File in zip: " + ze.getName());
+						File zFile = new File(zipFolderPath + File.separator + zFileName);
+						if(zFileName.endsWith(".csv")) {
+							savedFile = zFile;
+						}
+						new File(zFile.getParent()).mkdirs();	// Make sure path is complete 
+					
+						if(ze.isDirectory()) {
+							zFile.mkdir();
+						} else {
+							FileOutputStream fos = new FileOutputStream(zFile);
+							int len;
+				            while ((len = zis.read(buffer)) > 0) {
+				            	fos.write(buffer, 0, len);
+				            }
+				            fos.close();
+						}
+					}
+		            zis.closeEntry();
+				}
+				zis.close();
+			}
 			
 			// Process the csv file
 			log.info("Form Id: " + fId);
