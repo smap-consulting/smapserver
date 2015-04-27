@@ -35,11 +35,9 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.CSVParser;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
@@ -921,6 +919,7 @@ public class AllAssignments extends Application {
 		int index;
 		String name;
 		String type;
+		String geomCol;
 	}
 	
 	/*
@@ -971,7 +970,10 @@ public class AllAssignments extends Application {
 		File savedFile = null;
 		String contentType = null;
 		int sId = 0;
-		String sIdent = null;	// Survey Ident
+		String sIdent = null;		// Survey Ident
+		boolean hasGeopoint = false;
+		int lonIndex = -1;			// Column containing longitude TODO support multiple geometries
+		int latIndex = -1;			// Column containing latitude
 		int fId = 0;
 		String tableName = null;
 		boolean clear_existing = false;
@@ -1084,7 +1086,9 @@ public class AllAssignments extends Application {
 				zis.close();
 			}
 			
-			// Process the csv file
+			/*
+			 * Process the CSV file
+			 */
 			log.info("Form Id: " + fId);
 			if(savedFile != null && fId != 0) {
 
@@ -1093,6 +1097,7 @@ public class AllAssignments extends Application {
 				line = reader.readNext();
 				ArrayList<Column> columns = new ArrayList<Column> ();
 				if(line != null && line.length > 0) {
+					
 					// Assume first line is the header
 					for(int i = 0; i < line.length; i++) {
 						log.info("Header: " + line[i]);
@@ -1102,48 +1107,87 @@ public class AllAssignments extends Application {
 						Column col = getColumn(pstmtGetCol, colName);
 						if(col != null) {
 							col.index = i;
-							columns.add(col);
+							if(col.geomCol != null) {
+								// Do not add the geom columns to the list of columns to be parsed
+								if(col.geomCol.equals("lon")) {
+									lonIndex = i;
+								} else if(col.geomCol.equals("lat")) {
+									latIndex = i;
+								}
+							} else {
+								columns.add(col);
+							}
 						}
 					}
 					
 					log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
 					
-					// Create the insert statement
+					/*
+					 * Create the insert statement
+					 */		
+					boolean moreThanOneCol = false;
 					StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
 					for(int i = 0; i < columns.size(); i++) {
+						
+						Column col = columns.get(i);
+						
 						if(i > 0) {
+							moreThanOneCol = true;
 							sqlInsert.append(",");
 						}
-						Column col = columns.get(i);
 						sqlInsert.append(col.name);
+
 					}
+					
+					// Add the gemoetry column if lat and lon were provided in the csv
+					if(lonIndex >= 0 && latIndex >= 0 ) {
+						if(moreThanOneCol) {
+							sqlInsert.append(",");
+						}
+						hasGeopoint = true;
+						sqlInsert.append("the_geom");
+					}
+					
 					sqlInsert.append(") values("); 
 					for(int i = 0; i < columns.size(); i++) {
+						
 						if(i > 0) {
 							sqlInsert.append(",");
 						}
 						sqlInsert.append("?");
 					}
+					
+					// Add the geometry value
+					if(hasGeopoint) {
+						if(moreThanOneCol) {
+							sqlInsert.append(",");
+						}
+						sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
+					}
 					sqlInsert.append(");");
 					
 					pstmtInsert = results.prepareStatement(sqlInsert.toString());
 					
-					// Get the data
+					/*
+					 * Get the data
+					 */
 					log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
 					results.setAutoCommit(false);
 					if(clear_existing) {
 						String sqlDeleteExisting = "truncate " + tableName + ";";
 						pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+						
 						log.info("Clearing results: " + pstmtDeleteExisting.toString());
 						pstmtDeleteExisting.executeUpdate();
 					}
 					
 					while ((line = reader.readNext()) != null) {
 						
+						int index = 1;
 						for(int i = 0; i < columns.size(); i++) {
 							Column col = columns.get(i);
-							String value = line[col.index];
-							
+							String value = line[col.index];				
+
 							// If the data references a media file then process the attachement
 							if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
 								
@@ -1157,10 +1201,25 @@ public class AllAssignments extends Application {
 								}
 							}
 							
-							pstmtInsert.setString(i + 1, value);
+							pstmtInsert.setString(index++, value);
 							
 						}
-						log.info("Inserting row: " + pstmtInsert);
+						
+						// Add the geopoint value if it exists
+						if(hasGeopoint) {
+							String lon = line[lonIndex];
+							String lat = line[latIndex];
+							if(lon == null) {
+								lon = "0.0";
+							}
+							if(lat == null) {
+								lat = "0.0";
+							}
+							pstmtInsert.setString(index++, lon);
+							pstmtInsert.setString(index++, lat);
+							
+						}
+						log.info("Inserting row: " + pstmtInsert.toString());
 						pstmtInsert.executeUpdate();
 						
 				    }
@@ -1208,13 +1267,23 @@ public class AllAssignments extends Application {
 	 */
 	private Column getColumn(PreparedStatement pstmtGetCol, String qName) throws SQLException {
 		Column col = null;
+		String geomCol = null;
+		
 		String colName = UtilityMethodsEmail.cleanName(qName);	// Convert question name to a column name
+		
+		// Cater for lat, lon columns which map to a geopoint
+		if(colName.equals("lat") || colName.equals("lon")) {
+			geomCol = colName;
+			colName = "the_geom";
+		} 
+		
 		pstmtGetCol.setString(2, colName);
 		ResultSet rs = pstmtGetCol.executeQuery();
 		if(rs.next()) {
 			// This column name is in the survey
 			col = new Column();
 			col.name = colName;
+			col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
 			col.type = rs.getString("qtype");
 		}
 		return col;
