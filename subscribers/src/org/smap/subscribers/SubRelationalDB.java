@@ -703,38 +703,12 @@ public class SubRelationalDB extends Subscriber {
 					File srcPathFile = new File(srcXmlDirFile.getAbsolutePath() + "/" + srcName);
 					
 					if(srcPathFile.exists()) {
-					
-						String srcExt = "";
-						int idx = srcName.lastIndexOf('.');
-						if(idx > 0) {
-							srcExt = srcName.substring(idx+1);
-						}
-						String dstName = String.valueOf(UUID.randomUUID());
-						String dstDir = gBasePath + "/attachments/" + surveyName;
-						String dstThumbsPath = gBasePath + "/attachments/" + surveyName + "/thumbs";
-						String dstFlvPath = gBasePath + "/attachments/" + surveyName + "/flv";
-						File dstPathFile = new File(dstDir + "/" + dstName + "." + srcExt);
-						File dstDirFile = new File(dstDir);
-						File dstThumbsFile = new File(dstThumbsPath);
-						File dstFlvFile = new File(dstFlvPath);
-	
-						String contentType = org.smap.sdal.Utilities.UtilityMethodsEmail.getContentType(srcName);
-		
-						System.out.println("Content Type: " + contentType);
-						try {
-							System.out.println("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
-							FileUtils.forceMkdir(dstDirFile);
-							FileUtils.forceMkdir(dstThumbsFile);
-							FileUtils.forceMkdir(dstFlvFile);
-							FileUtils.copyFile(srcPathFile, dstPathFile);
-							processAttachment(dstName, dstDir, contentType,srcExt);
-							
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						// Create a URL that references the attachment (but without the hostname or scheme)
-						value = "'attachments/" + surveyName + "/" + dstName + "." + srcExt + "'";
+						value = "'" + GeneralUtilityMethods.createAttachments(
+								srcName, 
+								srcPathFile, 
+								gBasePath, 
+								surveyName) + "'";
+
 					} else {
 						System.out.println("Source file does not exist: " + srcPathFile.getName());
 						value = "'" + value + "'";
@@ -1099,30 +1073,6 @@ public class SubRelationalDB extends Subscriber {
 		return duplicateKeys;
 	}
 	
-	/*
-	 * Create thumbnails, reformat video files etc
-	 */
-	private void processAttachment(String fileName, String destDir, String contentType, String ext) {
-
-    	String cmd = "/usr/bin/smap/processAttachment.sh " + fileName + " " + destDir + " " + contentType +
-    			" " + ext +
- 				" >> /var/log/subscribers/attachments.log 2>&1";
-		System.out.println("Exec: " + cmd);
-		try {
-
-			Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", cmd});
-    		
-    		int code = proc.waitFor();
-    		System.out.println("Attachment processing finished with status:" + code);
-    		if(code != 0) {
-    			System.out.println("Error: Attachment processing failed");
-    		}
-    		
-		} catch (Exception e) {
-			e.printStackTrace();
-    	}
-		
-	}
 	
 	/*
 	 * Apply any table changes for this version

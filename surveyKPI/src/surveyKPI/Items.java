@@ -124,8 +124,7 @@ public class Items extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
 		
@@ -137,17 +136,16 @@ public class Items extends Application {
 				" where s.s_id = f.s_id " +
 				" and f.table_name = ?;";
 		int sId = 0;
-		String survey_ident = null;
+
 		try {
 			PreparedStatement pstmtAuth = connectionSD.prepareStatement(sql);
 			pstmtAuth.setString(1, tName);
-			log.info(sql + " : " + tName);
+			log.info("Authorisation: " + pstmtAuth.toString());
 			
 			ResultSet tableSet = pstmtAuth.executeQuery();
 	
 			if(tableSet.next()) {
 				sId = tableSet.getInt(1);
-				survey_ident = tableSet.getString(2);
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error in Authorisation", e);
@@ -155,7 +153,7 @@ public class Items extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		System.out.println("Filter: " + sFilter);
+		log.info("Filter: " + sFilter);
 		
 		Tables tables = new Tables(sId);
 		
@@ -338,7 +336,7 @@ public class Items extends Application {
 					
 					QuestionInfo fQ = new QuestionInfo(sId, filter.qId, connectionSD);	
 					tables.add(fQ.getTableName(), fQ.getFId(), fQ.getParentFId());
-					System.out.println("Filter expression: " + fQ.getFilterExpression(filter.value, null));
+					log.info("Filter expression: " + fQ.getFilterExpression(filter.value, null));
 					
 					if(sqlFilter.length() > 0) {
 						sqlFilter += " and " + fQ.getFilterExpression(filter.value, null);
@@ -376,12 +374,13 @@ public class Items extends Application {
 				}
 				sql2 += whereClause;
 				sql2 += " ORDER BY prikey " + sqlLimit +";";
-				System.out.println(sql2);
 				
 				// Close the statement and result set
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-				pstmt = connection.prepareStatement(sql2);	 			
+				pstmt = connection.prepareStatement(sql2);
+				
+				log.info("Get Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				rsMetaData = resultSet.getMetaData();
 	
@@ -483,8 +482,7 @@ public class Items extends Application {
 						connectionSD = null;
 					}
 				} catch (SQLException e) {
-					System.out.println("Failed to close connection");
-				    e.printStackTrace();
+					log.log(Level.SEVERE,"Error: Failed to close connection", e);
 				}
 				
 				try {
@@ -493,8 +491,7 @@ public class Items extends Application {
 						connection = null;
 					}
 				} catch (SQLException e) {
-					System.out.println("Failed to close connection");
-				    e.printStackTrace();
+					log.log(Level.SEVERE,"Error: Failed to close connection", e);
 				}
 			}
 		}
@@ -540,7 +537,7 @@ public class Items extends Application {
 		Connection cRel = null; 
 		PreparedStatement pstmt = null;
 		try {
-			System.out.println("New toggle bad");
+			log.info("New toggle bad");
 			cRel = ResultsDataSource.getConnection("surveyKPI-Items");
 			
 			// Get the form id

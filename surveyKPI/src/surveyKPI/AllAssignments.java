@@ -66,6 +66,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -919,6 +920,7 @@ public class AllAssignments extends Application {
 	private class Column {
 		int index;
 		String name;
+		String type;
 	}
 	
 	/*
@@ -957,7 +959,7 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtGetFormId = null;
 		
 		// SQL to get a column name from the survey
-		String sqlGetCol = "select qname from question where f_id = ? and qname = ?";
+		String sqlGetCol = "select qname, qtype from question where f_id = ? and qname = ?";
 		PreparedStatement pstmtGetCol = null;
 		
 		// Prepared Statements used in the clearing and inserting of data
@@ -969,12 +971,17 @@ public class AllAssignments extends Application {
 		File savedFile = null;
 		String contentType = null;
 		int sId = 0;
+		String sIdent = null;	// Survey Ident
 		int fId = 0;
 		String tableName = null;
 		boolean clear_existing = false;
+		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		try {
+			
+			// Get the base path
+			String basePath = GeneralUtilityMethods.getBasePath(request);
 			
 			// Get the items from the multi part mime
 			List<?> items = uploadHandler.parseRequest(request);
@@ -988,6 +995,8 @@ public class AllAssignments extends Application {
 					if(item.getFieldName().equals("survey")) {
 						sId = Integer.parseInt(item.getString());
 						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+						
+						sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 					} else if(item.getFieldName().equals("clear_existing")) {
 						clear_existing = true;
 					}
@@ -999,9 +1008,6 @@ public class AllAssignments extends Application {
 						", File Name = "+item.getName()+
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
-					
-					// Get the base path
-					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
 					if(item.getSize() > 0) {
 					    contentType = item.getContentType();
@@ -1055,6 +1061,16 @@ public class AllAssignments extends Application {
 						if(ze.isDirectory()) {
 							zFile.mkdir();
 						} else {
+							// Save the filename and File for processing with each record of data
+							
+							// Remove the path from the filename - every file in the zip file must have a unique name
+							int idx = zFileName.lastIndexOf('/');
+							if(idx > 0) {
+								zFileName = zFileName.substring(idx + 1);
+							}
+							mediaFiles.put(zFileName, zFile);
+							
+							// Write the file
 							FileOutputStream fos = new FileOutputStream(zFile);
 							int len;
 				            while ((len = zis.read(buffer)) > 0) {
@@ -1079,8 +1095,9 @@ public class AllAssignments extends Application {
 				if(line != null && line.length > 0) {
 					// Assume first line is the header
 					for(int i = 0; i < line.length; i++) {
-						System.out.println("Header: " + line[i]);
+						log.info("Header: " + line[i]);
 						String colName = line[i].replace("'", "''");	// Escape apostrophes
+						
 						// If this column is in the survey then add it to the list of columns to be processed
 						Column col = getColumn(pstmtGetCol, colName);
 						if(col != null) {
@@ -1126,7 +1143,22 @@ public class AllAssignments extends Application {
 						for(int i = 0; i < columns.size(); i++) {
 							Column col = columns.get(i);
 							String value = line[col.index];
+							
+							// If the data references a media file then process the attachement
+							if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
+								
+								File srcPathFile = mediaFiles.get(value);
+								if(srcPathFile != null) {
+									value = GeneralUtilityMethods.createAttachments(
+										value, 
+										srcPathFile, 
+										basePath, 
+										sIdent);
+								}
+							}
+							
 							pstmtInsert.setString(i + 1, value);
+							
 						}
 						log.info("Inserting row: " + pstmtInsert);
 						pstmtInsert.executeUpdate();
@@ -1183,6 +1215,7 @@ public class AllAssignments extends Application {
 			// This column name is in the survey
 			col = new Column();
 			col.name = colName;
+			col.type = rs.getString("qtype");
 		}
 		return col;
 	}

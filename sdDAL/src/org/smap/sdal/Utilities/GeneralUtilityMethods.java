@@ -164,6 +164,74 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * 
+	 */
+	static public String createAttachments(String srcName, File srcPathFile, String basePath, String surveyName) {
+		
+		log.info("Create attachments");
+		
+		String value = null;
+		String srcExt = "";
+		
+		int idx = srcName.lastIndexOf('.');
+		if(idx > 0) {
+			srcExt = srcName.substring(idx+1);
+		}
+		
+		String dstName = String.valueOf(UUID.randomUUID());
+		String dstDir = basePath + "/attachments/" + surveyName;
+		String dstThumbsPath = basePath + "/attachments/" + surveyName + "/thumbs";
+		String dstFlvPath = basePath + "/attachments/" + surveyName + "/flv";
+		File dstPathFile = new File(dstDir + "/" + dstName + "." + srcExt);
+		File dstDirFile = new File(dstDir);
+		File dstThumbsFile = new File(dstThumbsPath);
+		File dstFlvFile = new File(dstFlvPath);
+
+		String contentType = org.smap.sdal.Utilities.UtilityMethodsEmail.getContentType(srcName);
+
+		try {
+			log.info("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
+			FileUtils.forceMkdir(dstDirFile);
+			FileUtils.forceMkdir(dstThumbsFile);
+			FileUtils.forceMkdir(dstFlvFile);
+			FileUtils.copyFile(srcPathFile, dstPathFile);
+			processAttachment(dstName, dstDir, contentType,srcExt);
+			
+		} catch (IOException e) {
+			log.log(Level.SEVERE,"Error", e);
+		}
+		// Create a URL that references the attachment (but without the hostname or scheme)
+		value = "attachments/" + surveyName + "/" + dstName + "." + srcExt;
+		
+		return value;
+	}
+	
+	/*
+	 * Create thumbnails, reformat video files etc
+	 */
+	private static void processAttachment(String fileName, String destDir, String contentType, String ext) {
+
+    	String cmd = "/usr/bin/smap/processAttachment.sh " + fileName + " " + destDir + " " + contentType +
+    			" " + ext +
+ 				" >> /var/log/subscribers/attachments.log 2>&1";
+		log.info("Exec: " + cmd);
+		try {
+
+			Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", cmd});
+    		
+    		int code = proc.waitFor();
+    		log.info("Attachment processing finished with status:" + code);
+    		if(code != 0) {
+    			log.info("Error: Attachment processing failed");
+    		}
+    		
+		} catch (Exception e) {
+			e.printStackTrace();
+    	}
+		
+	}
+	
+	/*
 	 * Get the organisation id for the user
 	 */
 	static public int getOrganisationId(
@@ -485,7 +553,7 @@ public class GeneralUtilityMethods {
 	       
 		       // TODO delete all file options that were not in the latest file (file version number)
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			try {br.close();} catch(Exception e) {};
 		}
