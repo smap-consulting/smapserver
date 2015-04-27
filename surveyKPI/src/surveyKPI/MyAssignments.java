@@ -196,6 +196,7 @@ public class MyAssignments extends Application {
 					"t.url," +
 					"s.ident as form_ident," +
 					"s.version as form_version," +
+					"s.p_id as pid," +
 					"t.initial_data," +
 					"t.schedule_at," +
 					"a.status as assignment_status," +
@@ -220,7 +221,8 @@ public class MyAssignments extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, userName);
-			log.info("Getting assignments: " + sql + " : " + userName);
+			
+			log.info("Getting assignments: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 
 			int t_id = 0;
@@ -242,6 +244,7 @@ public class MyAssignments extends Application {
 				ta.task.id = t_id;
 				ta.task.type = resultSet.getString("type");
 				ta.task.title = resultSet.getString("title");
+				ta.task.pid = resultSet.getString("pid");
 				ta.task.url = resultSet.getString("url");
 				ta.task.form_id = resultSet.getString("form_ident");		// Form id is survey ident
 				ta.task.form_version = resultSet.getString("form_version");
@@ -302,7 +305,8 @@ public class MyAssignments extends Application {
 					"s.ident, " +
 					"s.version, " +
 					"s.display_name, " +
-					"p.name " +
+					"p.name, " +
+					"p.id as pid " +
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
@@ -312,7 +316,8 @@ public class MyAssignments extends Application {
 						
 			pstmtGetForms = connectionSD.prepareStatement(sql);	
 			pstmtGetForms.setString(1, userName);
-			log.info("Getting forms: " + sql + " : " + userName);
+			
+			log.info("Getting forms: " + pstmtGetForms.toString());
 			resultSet = pstmtGetForms.executeQuery();
 			
 			String hostname = request.getServerName();
@@ -331,6 +336,7 @@ public class MyAssignments extends Application {
 				fl.version = resultSet.getInt("version");
 				fl.name = resultSet.getString("display_name");
 				fl.project = resultSet.getString("name");
+				fl.pid = resultSet.getInt("pid");
 				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
 				
 				tr.forms.add(fl);

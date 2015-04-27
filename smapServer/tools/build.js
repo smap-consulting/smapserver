@@ -11,7 +11,8 @@
     	app: '../app',
     	lang_location: '..',
 	bootbox: 'bootbox.min',
-	bootstrap: 'bootstrap.min'
+	bootstrap: 'bootstrap.min',
+        bootstrapfileinput: 'bootstrap.file-input',
     },
     dir: '../smapServer',
     modules: [

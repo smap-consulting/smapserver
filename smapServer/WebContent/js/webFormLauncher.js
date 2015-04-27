@@ -46,7 +46,8 @@ require([
          'bootstrap.min',
          'app/common', 
          'app/globals',
-         'app/localise'
+         'app/localise',
+         'bootstrapfileinput'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 $(document).ready(function() {
@@ -193,7 +194,8 @@ function projectSet() {
 
 function getSurveysForList(projectId) {
 
-	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=false&deleted=false";
+	//var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=false&deleted=false";
+	url="/surveyKPI/myassignments";
 	
 	addHourglass();
 	$.ajax({
@@ -201,8 +203,9 @@ function getSurveysForList(projectId) {
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
+			var filterProject = projectId;
 			removeHourglass();
-			completeSurveyList(data);
+			completeSurveyList(data, filterProject);
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
@@ -217,22 +220,46 @@ function getSurveysForList(projectId) {
 
 /*
  * Fill in the survey list
+ * XXXX
  */
-function completeSurveyList(surveyList) {
+function completeSurveyList(surveyList, filterProjectId) {
 	
 	var i,
 		h = [],
 		idx = -1,
-		$formList = $('#form_list');
+		$formList = $('#form_list'),
+		formList = surveyList.forms,
+		taskList = surveyList.data,
+		params;
 
-	for(i = 0; i < surveyList.length; i++) {
-		
-		h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
-		h[++idx] = surveyList[i].ident;
-		h[++idx] = '">';
-		h[++idx] = surveyList[i].displayName;
-		h[++idx] = '</a>';
-		
+	// Add the forms
+	for(i = 0; i < formList.length; i++) {
+		if(!filterProjectId || filterProjectId == formList[i].pid) {
+			h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
+			h[++idx] = formList[i].ident;
+			h[++idx] = '">';
+			h[++idx] = formList[i].name;
+			h[++idx] = '</a>';	
+		} 
+	}
+	
+	// Add the tasks
+	for(i = 0; i < taskList.length; i++) {
+		if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
+			h[++idx] = '<a role="button" class="btn btn-danger btn-block btn-lg" target="_blank" href="/webForm/';
+			h[++idx] = taskList[i].task.form_id;
+			if(taskList[i].task.initial_data) {
+				// Add the initial data parameters
+				params = taskList[i].task.initial_data;
+				params = params.substring(params.indexOf('?'));
+				h[++idx] = params;
+			} else {	// Launch the form without data
+				
+			}
+			h[++idx] = '">';
+			h[++idx] = taskList[i].task.title;
+			h[++idx] = '</a>';	
+		} 
 	}
 	
 	$formList.html(h.join(''));
