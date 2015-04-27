@@ -21,6 +21,7 @@
 	bootstrap: '../../../../smapServer/WebContent/js/libs/bootstrap.min',
     	bootstrapfileinput: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	bootbox: '../../../../smapServer/WebContent/js/libs/bootbox.min',
+	file_input: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	moment: '../../../../smapServer/WebContent/js/libs/moment.min',
 	datetimepicker: '../../../../smapServer/WebContent/js/libs/bootstrap-datetimepicker.min',
 	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu'

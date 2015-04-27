@@ -16,7 +16,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 'bootbox'], 
+define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 
+        'bootbox'], 
 		function($, bootstrap, ol_mgmt, common, lang, bootbox) {
 	
 							// The following globals are only in this java script file
@@ -137,6 +138,54 @@ $(document).ready(function() {
 		globals.gPendingUpdates = [];
 	})
 	
+	// Load a file containing tasks
+	$('.file-inputs').bootstrapFileInput();
+	$('#loadTasks').button().off().click(function () {
+		// open the modal
+		document.forms.namedItem("loadtasks").reset();
+		$('#load_tasks_alert').hide();
+		$('#clear_existing_alert').hide();
+		$('#load_tasks').modal("show");
+	});
+	
+	$('#clear_existing').change(function(){
+		var isset = $("#clear_existing:checked").val()
+		if(isset) {
+			$('#clear_existing_alert').show();
+		} else {
+			$('#clear_existing_alert').hide();
+		}
+	});
+	
+	$('#loadTasksSave').off().click(function() {
+		
+		var url = "/surveyKPI/assignments/load";
+		var f = document.forms.namedItem("loadtasks");
+    	var formData = new FormData(f);
+		
+		$('#load_tasks_alert').hide();
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  data: formData,
+			  cache: false,
+	          contentType: false,
+	          processData:false,
+			  url: url,
+			  success: function(data, status) {
+				  removeHourglass();
+				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html("File Loaded");
+				  //$('#load_tasks').modal("hide");
+			  },
+			  error: function(xhr, textStatus, err) {
+				 
+				  removeHourglass(); 
+				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error file not loaded: " + xhr.responseText);
+				 
+			  }
+		});
+	});
+		
 	// Create new task group
 	$('#addTaskGroup').button().click(function () {
 		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),

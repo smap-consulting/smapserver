@@ -32,11 +32,19 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.CSVParser;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,14 +56,20 @@ import taskModel.Features;
 import taskModel.Geometry;
 import taskModel.TaskAddress;
 import taskModel.TaskAddressSettings;
+import utilities.CSVReader;
 import utilities.QuestionInfo;
-import utilities.Tables;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -566,6 +580,7 @@ public class AllAssignments extends Application {
 								 * Get the source form ident
 								 */
 								pstmtGetSurveyIdent.setInt(1, as.source_survey_id);
+								if(resultSet != null) try {resultSet.close();} catch(Exception e) {};
 								resultSet = pstmtGetSurveyIdent.executeQuery();
 								String source_survey_ident = null;
 								if(resultSet.next()) {
@@ -896,6 +911,236 @@ public class AllAssignments extends Application {
 		}
 		
 		return response;
+	}
+	
+	private class Column {
+		int index;
+		String name;
+	}
+	
+	/*
+	 * Load tasks, that is survey results, from a file
+	 */
+	@POST
+	@Path("/load")
+	public Response loadTasksFromFile(@Context HttpServletRequest request) { 
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
+		    e.printStackTrace();
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		log.info("Load tasks from file");
+		
+		String userName = request.getRemoteUser();	
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		// End role based authorisation - Check access to the requested survey once the survey id has been extracted
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
+		fileItemFactory.setSizeThreshold(20*1024*1024); // 20 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+
+		// SQL to get the form id of the top level form for the survey
+		String sqlGetFormId = "select f_id, table_name from form where s_id = ? and (parentform is null or parentform = 0)";
+		PreparedStatement pstmtGetFormId = null;
+		
+		// SQL to get a column name from the survey
+		String sqlGetCol = "select qname from question where f_id = ? and qname = ?";
+		PreparedStatement pstmtGetCol = null;
+		
+		// Prepared Statements used in the clearing and inserting of data
+		PreparedStatement pstmtDeleteExisting = null;
+		PreparedStatement pstmtInsert = null;
+		
+		String fileName = null;
+		String filePath = null;
+		File savedFile = null;
+		int sId = 0;
+		int fId = 0;
+		String tableName = null;
+		boolean clear_existing = false;
+		
+		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
+		try {
+			
+			// Get the items from the multi part mime
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+				
+					if(item.getFieldName().equals("survey")) {
+						sId = Integer.parseInt(item.getString());
+						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+					} else if(item.getFieldName().equals("clear_existing")) {
+						clear_existing = true;
+					}
+					
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					// Get the base path
+					String basePath = GeneralUtilityMethods.getBasePath(request);
+					
+					if(item.getSize() > 0) {
+						fileName = String.valueOf(UUID.randomUUID());
+						
+						filePath = basePath + "/temp/" + fileName + ".csv";
+					    savedFile = new File(filePath);
+					    item.write(savedFile);
+					}					
+				}
+
+			}
+			
+			// Get the form id for the top level form of this survey
+			pstmtGetFormId = connectionSD.prepareStatement(sqlGetFormId);
+			pstmtGetFormId.setInt(1, sId);
+			log.info("Get top level form: " + pstmtGetFormId.toString());
+			ResultSet rs = pstmtGetFormId.executeQuery();
+			if(rs.next()) {
+				fId = rs.getInt(1);
+				tableName = rs.getString(2);
+			}
+			
+			// Prepare the statement to get the column names in the survey that are to be updated
+			pstmtGetCol = connectionSD.prepareStatement(sqlGetCol);
+			pstmtGetCol.setInt(1, fId);
+			
+			// Process the csv file
+			log.info("Form Id: " + fId);
+			if(savedFile != null && fId != 0) {
+
+				String [] line;
+				CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(savedFile)));
+				line = reader.readNext();
+				ArrayList<Column> columns = new ArrayList<Column> ();
+				if(line != null && line.length > 0) {
+					// Assume first line is the header
+					for(int i = 0; i < line.length; i++) {
+						System.out.println("Header: " + line[i]);
+						String colName = line[i].replace("'", "''");	// Escape apostrophes
+						// If this column is in the survey then add it to the list of columns to be processed
+						Column col = getColumn(pstmtGetCol, colName);
+						if(col != null) {
+							col.index = i;
+							columns.add(col);
+						}
+					}
+					
+					log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
+					
+					// Create the insert statement
+					StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
+					for(int i = 0; i < columns.size(); i++) {
+						if(i > 0) {
+							sqlInsert.append(",");
+						}
+						Column col = columns.get(i);
+						sqlInsert.append(col.name);
+					}
+					sqlInsert.append(") values("); 
+					for(int i = 0; i < columns.size(); i++) {
+						if(i > 0) {
+							sqlInsert.append(",");
+						}
+						sqlInsert.append("?");
+					}
+					sqlInsert.append(");");
+					
+					pstmtInsert = results.prepareStatement(sqlInsert.toString());
+					
+					// Get the data
+					log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
+					results.setAutoCommit(false);
+					if(clear_existing) {
+						String sqlDeleteExisting = "truncate " + tableName + ";";
+						pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+						log.info("Clearing results: " + pstmtDeleteExisting.toString());
+						pstmtDeleteExisting.executeUpdate();
+					}
+					
+					while ((line = reader.readNext()) != null) {
+						
+						for(int i = 0; i < columns.size(); i++) {
+							Column col = columns.get(i);
+							String value = line[col.index];
+							pstmtInsert.setString(i + 1, value);
+						}
+						log.info("Inserting row: " + pstmtInsert);
+						pstmtInsert.executeUpdate();
+						
+				    }
+					results.commit();
+
+				}
+			}
+			
+				
+		} catch (NotFoundException e) {
+			log.log(Level.SEVERE,"", e);
+			
+			throw new NotFoundException();
+			
+		} catch (Exception e) {
+			response = Response.serverError().build();
+			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			log.log(Level.SEVERE,"", e);
+			
+		} finally {
+			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
+			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"", e);
+			}
+			try {
+				if (results != null) {
+					results.setAutoCommit(true);
+					results.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Check to see if a question is in a form
+	 */
+	private Column getColumn(PreparedStatement pstmtGetCol, String qName) throws SQLException {
+		Column col = null;
+		String colName = UtilityMethodsEmail.cleanName(qName);	// Convert question name to a column name
+		pstmtGetCol.setString(2, colName);
+		ResultSet rs = pstmtGetCol.executeQuery();
+		if(rs.next()) {
+			// This column name is in the survey
+			col = new Column();
+			col.name = colName;
+		}
+		return col;
 	}
 	
 	/*

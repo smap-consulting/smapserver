@@ -43,7 +43,8 @@ requirejs.config({
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	bootbox: '../../../../js/libs/bootbox.min',
     	crf: '../../../../js/libs/commonReportFunctions',
-    	lang_location: '../../../../js'
+    	lang_location: '../../../../js',
+    	file_input: '../../../../js/libs/bootstrap.file-input'
     },
     shim: {
 
@@ -53,7 +54,9 @@ requirejs.config({
     	'bootbox': ['bootstrap'],
     	'jquery-barcode': ['jquery'],
     	'app/plugins': ['jquery'],
-    	'crf': ['jquery']
+    	'crf': ['jquery'],
+    	'file_input': ['jquery'],
+    	'app/assignments': ['file_input']
 	
     	}
     });
@@ -71,7 +74,8 @@ require([
          'jquery-barcode',
          'crf',
          'moment',
-         'datetimepicker'
+         'datetimepicker',
+         'file_input'
          
          ], function($, bootstrap, common, localise, globals) {});
 

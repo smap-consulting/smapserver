@@ -103,6 +103,7 @@
 					<button class="btn btn-info btn-block" id="zoomData" type="button">Zoom to Data</button>
 					<button class="btn btn-success btn-block" id="assignUser" type="button">Assign Users</button>
 					<button class="btn btn-success btn-block" id="addTaskGroup" type="button">Add Task Group</button>
+					<button class="btn btn-success btn-block" id="loadTasks" type="button">Load Tasks From File</button>
 					<button class="btn btn-danger btn-block" id="deleteTasks" type="button">Delete Selected</button>
 					<button class="btn btn-info btn-block" id="tasks_print" onclick="window.print();">Print</button>
 					
@@ -143,6 +144,50 @@
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
             	<button id="assignUserSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to load tasks from a file -->
+<div id="load_tasks" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="loadTasksLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="loadTasksLabel">Load Tasks From a File</h4>
+   			</div>
+		     <div class="modal-body">
+				<div class="container-fluid">
+					<form role="form" class="form-horizontal" enctype="multipart/form-data" name="loadtasks">
+		
+						<div class="form-group">
+							<label for="survey_to_update" class="col-sm-2 control-label">Survey</label>
+							<div class="col-sm-10">
+								<select class="survey_select form-control" id="survey_to_update" name="survey"></select>
+							</div>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" name="clear_existing" value="clear_existing" id="clear_existing">Clear existing tasks
+							</label>
+						</div>
+						<div id="clear_existing_alert" style="display:none;" class="alert alert-warning" role="alert">This will clear all the existing data in the survey. Are you sure you want to do this?</div>
+						<div class="form-group">
+	     					<div class="input-group">
+	     						<span class="input-group-btn">
+	       							<input name="files" title="Add" class="file-inputs" type="file" accept="text/csv, application/zip">
+	     						</span>
+	    					 	<input type="text" id="upload_msg" class="upload_file_msg form-control" placeholder="File with tasks...">
+	   						</div>
+	        			</div>           			
+					</form>
+					<div id="load_tasks_alert" style="display:none;" class="alert alert-success" role="alert"></div>
+				</div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="loadTasksSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

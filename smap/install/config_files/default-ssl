@@ -9,6 +9,10 @@ CustomLog ${APACHE_LOG_DIR}/ssl_access.log combined
 
 SSLCertificateFile    /etc/ssl/certs/ssl-cert-snakeoil.pem
 SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+SSLProtocol All -SSLv2 -SSLv3
+
+FileETag None
+ExpiresActive On
 
 <FilesMatch "\.(cgi|shtml|phtml|php)$">
 	SSLOptions +StdEnvVars
@@ -69,7 +73,7 @@ NameVirtualHost *:443
 
     <Directory /var/www/smap>
         Options -Indexes FollowSymLinks MultiViews
-		ExpiresDefault A30000
+		ExpiresDefault A7776000
         AllowOverride None
         Order allow,deny
         allow from all

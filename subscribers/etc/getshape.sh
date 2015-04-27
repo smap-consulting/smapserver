@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -lt 5 ]; then
-        echo "usage $0 database geomtable sql file_name format"
+        echo "usage $0 database table sql file_name format"
         exit
 fi
 

@@ -46,8 +46,7 @@ require([
          'bootstrap.min',
          'app/common', 
          'app/globals',
-         'app/localise',
-         'bootstrap.file-input'
+         'app/localise'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 $(document).ready(function() {

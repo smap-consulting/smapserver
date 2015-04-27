@@ -369,12 +369,7 @@ public class UserSvc extends Application {
 						", File Size = "+item.getSize());
 					
 					// Get the base path
-					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-					if(basePath == null) {
-						basePath = "/smap";
-					} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-						basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-					}
+					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
 					if(item.getSize() > 0) {
 						sigItem = item;

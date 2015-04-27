@@ -115,11 +115,12 @@ public class ProjectList extends Application {
 						" from project " + 
 						" where o_id = ? " +
 						" order by name ASC;";				
-							
+					
+				if(pstmt != null) try {pstmt.close();} catch (Exception e) {};
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o_id);
 
-				log.info("SQL: " + sql + ":" + o_id);
+				log.info("Get project list: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				while(resultSet.next()) {
 					Project project = new Project();
@@ -219,11 +220,12 @@ public class ProjectList extends Application {
 						sql = "insert into project (name, o_id, changed_by, changed_ts) " +
 								" values (?, ?, ?, now());";
 						
+						try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 						pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 						pstmt.setString(1, p.name);
 						pstmt.setInt(2, o_id);
 						pstmt.setString(3, request.getRemoteUser());
-						log.info("SQL: " + sql + " : " + p.name + " : " + o_id);
+						log.info("Insert project: " + pstmt.toString());
 						pstmt.executeUpdate();
 						ResultSet rs = pstmt.getGeneratedKeys();
 						if(rs.next()) {
@@ -238,7 +240,7 @@ public class ProjectList extends Application {
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setInt(1, u_id);
 							pstmt.setInt(2, p_id);
-							log.info("SQL: " + sql + " : " + u_id + " : " + p_id);
+							log.info("Add the user to the project " + pstmt.toString());
 							pstmt.executeUpdate();
 							pstmt.close();
 						}
@@ -267,12 +269,13 @@ public class ProjectList extends Application {
 									" where " +
 									" id = ?;";
 						
+							try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setString(1, p.name);
 							pstmt.setString(2, request.getRemoteUser());
 							pstmt.setInt(3, p.id);
 							
-							log.info("SQL: " + sql + ":" + p.name + ":" + p.id);
+							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();
 			
 						}
@@ -359,7 +362,7 @@ public class ProjectList extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
-			log.info("SQL: " + sql + ":" + request.getRemoteUser());
+			log.info("Get the organisation: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
@@ -395,11 +398,12 @@ public class ProjectList extends Application {
 					sql = "DELETE FROM project p " +  
 							" WHERE p.id = ? " +
 							" AND p.o_id = ?;";				
-								
+						
+					try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, p.id);
 					pstmt.setInt(2, o_id);
-					log.info("SQL: " + sql + ":" + p.id + ":" + o_id);
+					log.info("Delete project: " + pstmt.toString());
 					pstmt.executeUpdate();
 
 				}
