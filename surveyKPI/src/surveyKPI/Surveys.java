@@ -191,12 +191,7 @@ public class Surveys extends Application {
 		org.smap.sdal.model.Survey survey = null;
 		
 		// Get the base path
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		Response response = null;
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
@@ -407,15 +402,16 @@ public class Surveys extends Application {
 			}
 			
 			// Update the settings
-			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, p_id = ? where s_id = ?;";		
+			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, p_id = ? where s_id = ?;";		
 		
 			log.info("Saving survey: " + sql + " : " + survey.displayName);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
 			pstmt.setString(2, newSurveyName);
 			pstmt.setString(3, survey.def_lang);
-			pstmt.setInt(4, survey.p_id);
-			pstmt.setInt(5, sId);
+			pstmt.setBoolean(4, survey.task_file);
+			pstmt.setInt(5, survey.p_id);
+			pstmt.setInt(6, sId);
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
 

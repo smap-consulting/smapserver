@@ -75,7 +75,6 @@ then
 echo "Applying patches for version 14.10"
 sudo chown -R tomcat7 /var/log/subscribers
 fi
-echo "1410" > ~/smap_version
 
 # version 14.11
 # Yes 14.11 patches being reapplied as last release was actually 14.10.02
@@ -93,7 +92,6 @@ echo "Applying patches for version 15.01"
 sudo mkdir /smap/media/organisation
 sudo chown -R tomcat7 /smap/media
 fi
-echo "1501" > ~/smap_version
 
 # version 15.02
 if [ $version -lt "1502" ]
@@ -143,4 +141,5 @@ echo "1502" > ~/smap_version
 # version 15.03
 sudo mkdir /usr/bin/smap/resources
 sudo mkdir /usr/bin/smap/resources/css
-echo "1503" > ~/smap_version
+# version 15.04
+echo "1504" > ~/smap_version

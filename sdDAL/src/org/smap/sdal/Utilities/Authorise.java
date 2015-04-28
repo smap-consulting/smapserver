@@ -90,6 +90,7 @@ public class Authorise {
 				pstmt.setString(i + 2, permittedGroups.get(i));
 			}
 
+			log.info("isAuthorised: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
@@ -222,12 +223,13 @@ public class Authorise {
 		String sql = "select count(*) from survey s " +
 				" where s.s_id = ? " +
 				" and s.blocked = ?;"; 
-		log.info("isBlocked" + sql + " : " + sId + " : " + isBlocked);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setBoolean(2, isBlocked);
+			
+			log.info("isBlocked: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
@@ -266,6 +268,64 @@ public class Authorise {
  		
 		return true;
 	}
+	
+	/*
+	 * Verify that the survey can load tasks from a file
+	 */
+	public boolean canLoadTasks(Connection conn, int sId)
+			throws ServerException, AuthorisationException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+
+		String sql = "select count(*) from survey s " +
+				" where s.s_id = ? " +
+				" and s.task_file = 'true';"; 
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			
+			log.info("Verify can load tasks: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation - cannot load tasks", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for can load tasks: survey was: " + sId);
+ 			
+			try {
+				if (conn != null) {
+					conn.close();
+					conn = null;
+				}
+			} catch (SQLException e3) {
+				log.log(Level.SEVERE,"Failed to close connection", e3);
+			}
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
 
 	/*
 	 * Verify that the user is entitled to access this project
@@ -281,7 +341,6 @@ public class Authorise {
 				" and p.id = up.p_id" +
 				" and p.id = ? " +
 				" and u.ident = ?;";
-		//log.info(sql + " : " + pId + " : " + user);
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
@@ -347,6 +406,8 @@ public class Authorise {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, tId);
 			pstmt.setString(2, user);
+			
+			log.info("Is valid task: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
@@ -406,12 +467,14 @@ public class Authorise {
 				" and t.id = a.task_id " +
 				" and a.id = ? " +
 				" and u.ident = ?;";
-		//log.info(sql + " : " + aId + " : " + user);
+		
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, aId);
 			pstmt.setString(2, user);
+			
+			log.info("Is valid assignment: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			

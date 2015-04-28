@@ -37,6 +37,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
+import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
@@ -997,6 +998,7 @@ public class AllAssignments extends Application {
 					if(item.getFieldName().equals("survey")) {
 						sId = Integer.parseInt(item.getString());
 						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+						a.canLoadTasks(connectionSD, sId);
 						
 						sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 					} else if(item.getFieldName().equals("clear_existing")) {
@@ -1229,6 +1231,11 @@ public class AllAssignments extends Application {
 			}
 			
 				
+		} catch (AuthorisationException e) {
+			log.log(Level.SEVERE,"", e);
+			
+			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this survey").build();
+			
 		} catch (NotFoundException e) {
 			log.log(Level.SEVERE,"", e);
 			

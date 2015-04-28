@@ -268,6 +268,7 @@ CREATE TABLE survey (
 	deleted boolean default false,					-- Soft delete indicator
 	display_name text not null,
 	def_lang text,
+	task_file boolean,								-- allow loading of tasks from a file
 	class text,
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey

@@ -169,7 +169,7 @@ $(document).ready(function() {
 
 	});
 	
-	$('#m_settings').off().click(function() {	// Get a survey from Smap
+	$('#m_settings').off().click(function() {	// Show the settings dialog
 		
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
@@ -205,6 +205,9 @@ $(document).ready(function() {
 		globals.model.settingsChange();
 	});
 	$('#set_default_language').change(function() {
+		globals.model.settingsChange();
+	});
+	$('#task_file').change(function() {
 		globals.model.settingsChange();
 	});
 	$('#addPdfTemplate').off().click(function() {

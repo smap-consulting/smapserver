@@ -243,11 +243,9 @@ alter table organisation add column email_domain text;
 alter table server add column email_domain text;
 
 -- Create the dynamic users for webform submission
-DROP SEQUENCE IF EXISTS dynamic_users_seq CASCADE;
 CREATE SEQUENCE dynamic_users_seq START 1;
 ALTER SEQUENCE dynamic_users_seq OWNER TO ws;
 
-DROP TABLE IF EXISTS dynamic_users CASCADE;
 CREATE TABLE dynamic_users (
 	id INTEGER DEFAULT NEXTVAL('dynamic_users_seq') CONSTRAINT pk_dynamic_users PRIMARY KEY,
 	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -265,3 +263,6 @@ alter table users add column signature text;
 alter table users drop constraint users_email_key;
 alter table organisation add column company_name text;
 alter table organisation add column default_email_content text;
+
+-- Upgrade to: 15.04 from 15.03
+alter table survey add column task_file boolean;
