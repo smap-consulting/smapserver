@@ -109,83 +109,7 @@ public class MyAssignments extends Application {
 		
 		try {
 			String sql = null;
-			ResultSet results = null;
 			
-			/*
-			 * Disable dynamic assignments
-			 * 
-			int assignmentCount = 0;
-			
-			// Start transaction scope
-			connectionSD.setAutoCommit(false);
-
-			// 1. Get the number of assignments for the user
-			sql = "select count(*) " +
-					"FROM tasks t, assignments a, users u " +
-					"WHERE t.id = a.task_id " +
-					"AND a.assignee = u.id " +
-					"and (a.status = 'pending' or a.status = 'accepted') " +
-					"AND u.name = ?;";
-			pstmt = connectionSD.prepareStatement(sql);	 
-			pstmt.setString(1, userName);
-
-			results =  pstmt.executeQuery();
-			if(results.next()) {
-				assignmentCount = results.getInt(1);
-			}
-			
-			// 2. Dynamically generate assignments for tasks with assignment mode "dynamic"
-			// TODO: Use current location of user to restrict potential dynamic tasks
-			if(assignmentCount < 10) {	// TODO Make this count configurable
-				System.out.println("Generating assignments.");
-				
-				// Get the users primary key
-				sql = "select id from users " +
-						"where ident = ?;"; 
-						
-				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setString(1, userName);
-				results = pstmt.executeQuery();
-				int userId = 0;
-				if(results.next()) {
-					userId = results.getInt(1);
-				} else {
-					log.severe("Failed to get user id");
-				}
-				
-				// Get open dynamic tasks that (TODO) meet the selection criteria
-				sql = "select id from tasks " +
-						"where dynamic_open = 'true' " +
-						"and assignment_mode = 'dynamic' " +
-						"limit ?";
-				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setInt(1, 10 - assignmentCount);
-				results = pstmt.executeQuery();
-				
-				// When grabbing the task check that it is still open in case another user has got it since the previous query
-				sql = "update tasks set dynamic_open = 'false' where id = ? and dynamic_open = 'true';";
-				PreparedStatement pstmtDynamic = connectionSD.prepareStatement(sql);
-				sql = "insert into assignments " +
-						" (assignee, status, task_id, assigned_date, last_status_changed_date) " +
-						" values (?, 'pending', ?, now(), now());";
-				PreparedStatement pstmtUpdate = connectionSD.prepareStatement(sql);
-				
-				while(results.next()) {
-					int taskId = results.getInt(1);
-					pstmtDynamic.setInt(1, taskId);
-					int rowsUpdated = pstmtDynamic.executeUpdate();
-					// Ignore if the task has been updated by a different user
-					if(rowsUpdated > 0) {
-						// Create the assignment				
-						pstmtUpdate.setInt(1, userId);
-						pstmtUpdate.setInt(2, taskId);
-						pstmtUpdate.execute();
-					}
-					
-					connectionSD.commit();
-				}
-			}
-			*/
 			connectionSD.setAutoCommit(true);
 			
 			// Get the assignments
@@ -279,12 +203,10 @@ public class MyAssignments extends Application {
 					ResultSet resultSetGeo = pstmtGeo.executeQuery();
 					if(resultSetGeo.next()) {
 						String geoString = resultSetGeo.getString(1);
-						System.out.println("Geo string is:" + geoString);
 						int startIdx = geoString.lastIndexOf('(');			// Assume no multi polygons
 						int endIdx = geoString.indexOf(')');
 						if(startIdx > 0 && endIdx > 0) {
 							String geoString2 = geoString.substring(startIdx + 1, endIdx);
-							System.out.println(geoString2);
 							ta.location.geometry.type = geo_type;
 							ta.location.geometry.coordinates = geoString2.split(",");
 						}
@@ -294,7 +216,7 @@ public class MyAssignments extends Application {
 				
 				// Add the new task assignment to the list of task assignments
 				tr.taskAssignments.add(ta);
-				System.out.println("Created assignment for task:" + ta.task.id);
+				log.info("Created assignment for task:" + ta.task.id);
 			}
 			
 			/*
@@ -410,8 +332,7 @@ public class MyAssignments extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
+			log.log(Level.SEVERE,"Can't find Postgres JDBC driver", e);
 			response = Response.serverError().build();
 		    return response;
 		}
@@ -426,7 +347,7 @@ public class MyAssignments extends Application {
 		log.info("Response:" + assignInput);
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
 			
-		System.out.println("Device:" + tr.deviceId + " for user " + request.getRemoteUser());
+		log.info("Device:" + tr.deviceId + " for user " + request.getRemoteUser());
 		
 		// TODO that the status is valid (A different range of status values depending on the role of the user)
 		
@@ -441,21 +362,20 @@ public class MyAssignments extends Application {
 
 			connectionSD.setAutoCommit(false);
 			for(TaskAssignment ta : tr.taskAssignments) {
-				System.out.println("+++++Task Assignment: " + ta.assignment.assignment_status);
+				log.info("+++++Task Assignment: " + ta.assignment.assignment_status);
 				
 				/*
 				 * If the updated status = "cancelled" then this is an acknowledgment of the status set on the server
 				 *   hence update the server status to "deleted"
 				 */
 				if(ta.assignment.assignment_status.equals("cancelled")) {
-					System.out.println("Assignment:" + ta.assignment.assignment_id + " acknowledge cancel");
+					log.info("Assignment:" + ta.assignment.assignment_id + " acknowledge cancel");
 					
 					sql = "delete from tasks where id in (select a.task_id from assignments a " +
 							"where a.id = ? " + 
 							"and a.assignee IN (SELECT id FROM users u " +
 								"where u.ident = ?));";
 					pstmt = connectionSD.prepareStatement(sql);	
-					log.info("Cancelled:  "+ sql + " : " + ta.assignment.assignment_id + " : " + userName);
 					pstmt.setInt(1, ta.assignment.assignment_id);
 					pstmt.setString(2, userName);
 				} else {
@@ -466,12 +386,12 @@ public class MyAssignments extends Application {
 							"and a.assignee IN (SELECT id FROM users u " +
 								"where u.ident = ?);";
 					pstmt = connectionSD.prepareStatement(sql);
-					log.info("Cancelled: "+ sql + " : " + ta.assignment.assignment_status + " : " + ta.assignment.assignment_id + " : " + userName);
 					pstmt.setString(1, ta.assignment.assignment_status);
 					pstmt.setInt(2, ta.assignment.assignment_id);
 					pstmt.setString(3, userName);
 				}
-							
+				
+				log.info("update assignments: " + pstmt.toString());
 				pstmt.executeUpdate();
 			}
 			
@@ -485,11 +405,13 @@ public class MyAssignments extends Application {
 			if(rs.next()) {
 				int userId = rs.getInt(1);
 				
-				System.out.println("Updating downloaded forms for user " + userName + " with id " + userId + " and deviceId" + tr.deviceId);
+				log.info("Updating downloaded forms for user " + userName + " with id " + userId + " and deviceId" + tr.deviceId);
 				sql = "delete from form_downloads where u_id = ? and device_id = ?;";
 				pstmtFormsDelete = connectionSD.prepareStatement(sql);
 				pstmtFormsDelete.setInt(1, userId);
 				pstmtFormsDelete.setString(2, tr.deviceId);
+				
+				log.info("Delete existing form downloads: " + pstmtFormsDelete.toString());
 				pstmtFormsDelete.executeUpdate();
 				
 				sql = "insert into form_downloads (" +
@@ -528,12 +450,14 @@ public class MyAssignments extends Application {
 					pstmtTasks.setInt(1, userId);
 					pstmtTasks.setString(2, tr.deviceId);
 					for(TaskCompletionInfo tci : tr.taskCompletionInfo) {
-						System.out.println("    Adding task: " + tci.uuid);
+
 						pstmtTasks.setString(3, tci.ident);
 						pstmtTasks.setInt(4, tci.version);
 						pstmtTasks.setString(5, tci.uuid);
 						pstmtTasks.setString(6, "POINT(" + tci.lon + " " + tci.lat + ")");
 						pstmtTasks.setTimestamp(7, new Timestamp(tci.actFinish));
+						
+						log.info("Insert task: " + pstmtTasks.toString());
 						pstmtTasks.executeUpdate();
 					}
 					
@@ -554,10 +478,12 @@ public class MyAssignments extends Application {
 					pstmtTrail.setInt(1, userId);
 					pstmtTrail.setString(2, tr.deviceId);
 					for(PointEntry pe : tr.userTrail) {
-						System.out.println("    Adding point: " + pe.toString());
+						log.info("    Adding point: " + pe.toString());
 						
 						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
 						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
+						
+						log.info("Insert into trail: " + pstmtTrail.toString());
 						pstmtTrail.executeUpdate();
 					}
 					
@@ -570,7 +496,7 @@ public class MyAssignments extends Application {
 				
 		} catch (Exception e) {		
 			response = Response.serverError().build();
-		    e.printStackTrace();
+			log.log(Level.SEVERE,"Exception", e);
 		    try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
 			
@@ -585,9 +511,8 @@ public class MyAssignments extends Application {
 					connectionSD.setAutoCommit(true);
 					connectionSD.close();
 				} 
-			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
+			} catch (SQLException e) {	
+				log.log(Level.SEVERE,"SQL Exception", e);
 			}
 		}
 		

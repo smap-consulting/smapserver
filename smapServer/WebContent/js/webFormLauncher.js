@@ -233,33 +233,40 @@ function completeSurveyList(surveyList, filterProjectId) {
 		params;
 
 	// Add the forms
-	for(i = 0; i < formList.length; i++) {
-		if(!filterProjectId || filterProjectId == formList[i].pid) {
-			h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
-			h[++idx] = formList[i].ident;
-			h[++idx] = '">';
-			h[++idx] = formList[i].name;
-			h[++idx] = '</a>';	
-		} 
+	if(formList) {
+		for(i = 0; i < formList.length; i++) {
+			if(!filterProjectId || filterProjectId == formList[i].pid) {
+				h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
+				h[++idx] = formList[i].ident;
+				h[++idx] = '">';
+				h[++idx] = formList[i].name;
+				h[++idx] = '</a>';	
+			} 
+		}
 	}
 	
 	// Add the tasks
-	for(i = 0; i < taskList.length; i++) {
-		if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
-			h[++idx] = '<a role="button" class="btn btn-danger btn-block btn-lg" target="_blank" href="/webForm/';
-			h[++idx] = taskList[i].task.form_id;
-			if(taskList[i].task.initial_data) {
-				// Add the initial data parameters
-				params = taskList[i].task.initial_data;
-				params = params.substring(params.indexOf('?'));
-				h[++idx] = params;
-			} else {	// Launch the form without data
-				
-			}
-			h[++idx] = '">';
-			h[++idx] = taskList[i].task.title;
-			h[++idx] = '</a>';	
-		} 
+	if(taskList) {
+		for(i = 0; i < taskList.length; i++) {
+			if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
+				h[++idx] = '<a role="button" class="btn btn-danger btn-block btn-lg" target="_blank" href="/webForm/';
+				h[++idx] = taskList[i].task.form_id;
+				if(taskList[i].task.initial_data) {
+					// Add the initial data parameters
+					params = taskList[i].task.initial_data;
+					params = params.substring(params.indexOf('?'));
+					// TODO Hack to fix inconistency in parameter names between webforms and fieldTask
+					params = params.replace("key=", "datakey=");
+					params = params.replace("keyval=", "datakeyvalue=");
+					h[++idx] = params;
+				} else {	// Launch the form without data
+					
+				}
+				h[++idx] = '">';
+				h[++idx] = taskList[i].task.title;
+				h[++idx] = '</a>';	
+			} 
+		}
 	}
 	
 	$formList.html(h.join(''));
