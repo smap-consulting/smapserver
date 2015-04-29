@@ -20,12 +20,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package surveyMobileAPI;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
@@ -95,12 +91,13 @@ public class WebForm extends Application{
 	public Response getForm(@Context HttpServletRequest request,
 			@PathParam("key") String formIdent,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
-			@QueryParam("datakeyvalue") String datakeyvalue
+			@QueryParam("datakeyvalue") String datakeyvalue,
+			@QueryParam("assignmentid") int assignmentId
 			) throws IOException {
 		
 		Response response;
 		
-		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue);
+		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue + "assignmentId:" + assignmentId);
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -215,7 +212,7 @@ public class WebForm extends Application{
     		}
 			
 			// Convert to HTML
-			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, survey.surveyClass, orgId, accessKey));
+			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
 			
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
@@ -236,6 +233,7 @@ public class WebForm extends Application{
 			String formXML, 
 			String instanceXML,
 			String dataToEditId,
+			int assignmentId,
 			String surveyClass,
 			int orgId,
 			String accessKey) 
@@ -252,7 +250,7 @@ public class WebForm extends Application{
 		}
 		output.append(">\n");
 				
-		output.append(addHead(request, formXML, instanceXML, dataToEditId, surveyClass, accessKey));
+		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, accessKey));
 		output.append(addBody(request, formXML, dataToEditId, orgId));
 
 		output.append("</html>\n");			
@@ -266,6 +264,7 @@ public class WebForm extends Application{
 			String formXML, 
 			String instanceXML, 
 			String dataToEditId, 
+			int assignmentId,
 			String surveyClass,
 			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		
@@ -304,12 +303,7 @@ public class WebForm extends Application{
 	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
 		output.append("<![endif]-->\n");
 			
-		output.append(addData(request, formXML, instanceXML, dataToEditId, accessKey));
-		// Development
-		//output.append("<script type='text/javascript' data-main='src/js/main-webform' src='/js/libs/require.js'></script>\n");
-		//output.append("<script type='text/javascript' data-main='lib/enketo-core/app' src='/js/libs/require.js'></script>\n");
-		
-		// Production
+		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
 		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
 		
 		output.append("</head>\n");
@@ -323,6 +317,7 @@ public class WebForm extends Application{
 	private StringBuffer addData(HttpServletRequest request, 
 			String formXML, String instanceXML, 
 			String dataToEditId,
+			int assignmentId,
 			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
@@ -346,7 +341,6 @@ public class WebForm extends Application{
 			output.append("surveyData.instanceStrToEdit='");			
 			output.append(instanceXML.replace("\n", "").replace("\r", ""));
 			output.append("';\n");
-			
 		} 
 		
 		// Add identifier of existing record, use this as a key on results submission to update an existing record
@@ -356,6 +350,16 @@ public class WebForm extends Application{
 			output.append("surveyData.instanceStrToEditId='");
 			output.append(dataToEditId);
 			output.append("';\n");
+		}
+		
+		// Add the assignment id if this was set
+		if(assignmentId == 0) {
+			output.append("surveyData.assignmentId = undefined;\n");
+		} else {
+			output.append("surveyData.assignmentId='");
+			output.append(assignmentId);
+			output.append("';\n");
+
 		}
 		
 		// Add access key for authentication
@@ -379,8 +383,7 @@ public class WebForm extends Application{
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(openMain(orgId));		// TODO get orgId
-		//log.info(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
+		output.append(openMain(orgId));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		output.append(closeMain(dataToEditId));
 		output.append(getDialogs());
