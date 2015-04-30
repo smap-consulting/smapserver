@@ -259,9 +259,13 @@ function completeSurveyList(surveyList, filterProjectId) {
 					params = params.replace("key=", "datakey=");
 					params = params.replace("keyval=", "datakeyvalue=");
 					h[++idx] = params;
+					// Add the assignment id
+					h[++idx] = '&assignment_id=';
 				} else {	// Launch the form without data
-					
+					// Add the assignment id
+					h[++idx] = '?assignment_id=';
 				}
+				h[++idx] = taskList[i].assignment.assignment_id; 
 				h[++idx] = '">';
 				h[++idx] = taskList[i].task.title;
 				h[++idx] = '</a>';	

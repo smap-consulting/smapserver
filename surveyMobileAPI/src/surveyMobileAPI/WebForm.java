@@ -92,7 +92,7 @@ public class WebForm extends Application{
 			@PathParam("key") String formIdent,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
 			@QueryParam("datakeyvalue") String datakeyvalue,
-			@QueryParam("assignmentid") int assignmentId
+			@QueryParam("assignment_id") int assignmentId
 			) throws IOException {
 		
 		Response response;
