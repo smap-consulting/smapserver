@@ -138,6 +138,7 @@ public class MyAssignments extends Application {
 					"and u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
 					"and s.deleted = 'false' " +
+					"and s.blocked = 'false' " +
 					"and a.assignee = u.id " +
 					"and (a.status = 'pending' or a.status = 'cancelled' or a.status = 'missed' " +
 						"or a.status = 'accepted') " +

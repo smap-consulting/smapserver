@@ -172,6 +172,27 @@ tr.deleted td a {
 	cursor: move;
 }
 
+.editor_element {
+	position: relative;
+}
+
+.first_element {
+	margin-top: 20px;
+}
+
+.add_button {
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.428571429;
+  border-radius: 15px;
+  position: absolute;
+  left:0px;
+  top: -25px;
+}
+
 /*
 /* Icons */
 
@@ -202,6 +223,8 @@ tr.deleted td a {
 	margin-right: 0px;
 	margin-left: 0px;
 	color: black;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
 }
 
 .edit_image {
@@ -210,7 +233,15 @@ tr.deleted td a {
 	margin-bottom:31px;
 	margin-right: 0px;
 	margin-left: 0px;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
 }
+
+.edit_type:hover, .edit_image:hover {
+	opacity: 0.3;
+}
+
+
 
 .qname {
 	width: 100%;

@@ -24,7 +24,6 @@ define(function() {
 	
 		gProjectList: undefined,
 		gCurrentProject: 0,
-		gCurrentLanguage: undefined,
 		gCurrentSurvey: 0,
 		gCurrentLayer: undefined,
 		gLoggedInUser: undefined,
@@ -51,7 +50,12 @@ define(function() {
 		gCurrentUserName: undefined,
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
-		//gDeleteSelected: false,		// When set if the user clicks on a task it will be marked for deletion
+		
+		// Editor
+		gElementIndex: 0,				
+		gCurrentFormId: 0,
+		gSId: 0,
+		gLanguage: 0,
 		
 		model: new Model()
 
@@ -258,6 +262,103 @@ define(function() {
 		this.currentChange = 0;
 		this.savedSettings = undefined;
 		this.forcceSettingsChange = false;	
+
+		this.qTypes =[{
+				name: "Text",
+				type: "string",
+				glyphicon: "font"
+			},
+			{
+				name: "Select One",
+				type: "select1",
+				image: "/images/select1_64.png"
+			},
+			{
+				name: "Select Multiple",
+				type: "select",
+				image: "/images/select_64.png"
+			},
+			{
+				name: "Repeating Group",
+				type: "begin repeat",
+				glyphicon: "repeat"
+			},
+			{
+				name: "Group",
+				type: "begin repeat",
+				glyphicon: "folder-open"
+			},
+			{
+				name: "Image",
+				type: "image",
+				glyphicon: "camera"
+			},
+			{
+				name: "Audio",
+				type: "audio",
+				glyphicon: "volume-up"
+			},
+			{
+				name: "Video",
+				type: "video",
+				glyphicon: "facetime-video"
+			},
+			{
+				name: "GPS Point",
+				type: "geopoint",
+				glyphicon: "map-marker"
+			},
+			{
+				name: "Date",
+				type: "date",
+				glyphicon: "calendar"
+			},
+			{
+				name: "Date and Time",
+				type: "dateTime",
+				glyphicon: "calendar"
+			},
+			{
+				name: "Time",
+				type: "time",
+				glyphicon: "time"
+			},
+			{
+				name: "Barcode",
+				type: "barcode",
+				glyphicon: "barcode"
+			},
+			{
+				name: "Integer",
+				type: "int",
+				text: "#"
+			},
+			{
+				name: "Decimal",
+				type: "decimal",
+				text: "#.#"
+			},
+			{
+				name: "GPS Line",
+				type: "geolinestring",
+				image: "/images/linestring_64.png"
+			},
+			{
+				name: "GPS Area",
+				type: "geopolygon",
+				image: "/images/polygon_64.png"
+			},
+			{
+				name: "Calculation",
+				type: "string",
+				calculation: true,
+				image: "/images/calc_64.png"
+			},
+			{
+				name: "Unknown Type",
+				glyphicon: "record"
+			}
+		];
 	
 		
 		// Save the survey

@@ -546,65 +546,64 @@ function questionChanged() {
 function setAddressOptions() {
 	
 	var sId = $('#survey').val();
-	// Get the survey meta data
-	addHourglass();
- 	$.ajax({
-		url: "/surveyKPI/survey/" + sId + "/getMeta",
-		dataType: 'json',
-		success: function(data) {
-			
-			addHourglass();
-			
-			// Get the data for the top level table
-			$.ajax({
-				url: "/surveyKPI/table/" + data.top_table,
-				dataType: 'json',
-				cache: false,
-				success: function(table) {
-					var colname,
-					h = [],
-					idx = -1,
-					i,j;
-					removeHourglass();
-					
-					gTaskParams = [];
-					j = 0;
-					for(i = 0; i < table.columns.length; i++) {
-						colname = table.columns[i].name;
+	
+	if(sId) {
+		// Get the survey meta data
+		addHourglass();
+	 	$.ajax({
+			url: "/surveyKPI/survey/" + sId + "/getMeta",
+			dataType: 'json',
+			success: function(data) {
+				
+				addHourglass();
+				
+				// Get the data for the top level table
+				$.ajax({
+					url: "/surveyKPI/table/" + data.top_table,
+					dataType: 'json',
+					cache: false,
+					success: function(table) {
+						var colname,
+						h = [],
+						idx = -1,
+						i,j;
+						removeHourglass();
 						
-						if(colname !== "prikey" && colname !== "parkey" && 
-								colname !== "the_geom" &&
-								colname !== "geo_type" &&
-								colname.indexOf("_") !== 0) {
-							gTaskParams[j++] = {selected:false, name:colname, isBarcode:false}; 
+						gTaskParams = [];
+						j = 0;
+						for(i = 0; i < table.columns.length; i++) {
+							colname = table.columns[i].name;
 							
+							if(colname !== "prikey" && colname !== "parkey" && 
+									colname !== "the_geom" &&
+									colname !== "geo_type" &&
+									colname.indexOf("_") !== 0) {
+								gTaskParams[j++] = {selected:false, name:colname, isBarcode:false}; 
+								
+							}
+						}
+	
+						displayTaskParams();
+	
+					},
+					error: function(xhr, textStatus, err) {
+						removeHourglass();
+						if(xhr.readyState == 0 || xhr.status == 0) {
+				              return;  // Not an error
+						} else {
+							alert("Error: Failed to get table description: " + err);
 						}
 					}
-
-					displayTaskParams();
-
-				},
-				error: function(xhr, textStatus, err) {
-					removeHourglass();
-					if(xhr.readyState == 0 || xhr.status == 0) {
-			              return;  // Not an error
-					} else {
-						alert("Error: Failed to get table description: " + err);
-					}
-				}
-			});	
-			
-			removeHourglass();
-		},
-		error: function(data) {
-			removeHourglass();
-			//$('#status_msg_msg').empty().text("Error failed to get data for survey:" + sId);
-			//$("#status_msg").dialog("open");
-			bootbox.alert("Error failed to get data for survey:" + sId);
-			//refreshSurveyData(panelView, undefined, dataView);
-
-		}
-	});
+				});	
+				
+				removeHourglass();
+			},
+			error: function(data) {
+				removeHourglass();			
+				bootbox.alert("Error failed to get data for survey:" + sId);
+			}
+		});
+	}
  	
  	
 }
