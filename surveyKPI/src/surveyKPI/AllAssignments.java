@@ -44,13 +44,13 @@ import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Assignment;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import taskModel.AssignFromSurvey;
-import taskModel.Assignment;
 import taskModel.Features;
 import taskModel.Geometry;
 import taskModel.TaskAddress;
@@ -745,7 +745,7 @@ public class AllAssignments extends Application {
 						if(f.properties != null && f.properties.title != null && !f.properties.title.equals("null")) {
 							title = as.project_name + " : " + as.survey_name + " : " + f.properties.title;
 						} else {
-							title = as.project_name + " : " + as.survey_name + " : " + i;
+							title = as.project_name + " : " + as.survey_name;
 						}
 						pstmtInsert.setString(3, title);
 						pstmtInsert.setInt(4, as.form_id);
@@ -755,10 +755,8 @@ public class AllAssignments extends Application {
 						pstmtInsert.setString(8, null);			// Initial data url
 						pstmtInsert.setInt(9, 0);				// Initial data record id
 						pstmtInsert.setString(10, null);		// Address TBD
-						log.info(insertSql1 + "," + geoType + "," + insertSql2 + " : " + as.survey_name + " : " + title + 
-								" : " + as.form_id + " : " + target_form_url + " : " + 
-								"POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")" +
-								" : " + initial_data_url);
+						
+						log.info("Insert task: " + pstmtInsert.toString()); 
 						int count = pstmtInsert.executeUpdate();
 						if(count != 1) {
 							log.info("Error: Failed to insert task");

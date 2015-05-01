@@ -74,6 +74,9 @@ public class UploadEvent implements Serializable {
 	@Column(name="update_id")
 	private String updateId;
 	
+	@Column(name="assignment_id")
+	private int assignmentId;
+	
 	@Column(name="instanceid")
 	private String instanceId;
 
@@ -151,6 +154,10 @@ public class UploadEvent implements Serializable {
 		return updateId;
 	}
 	
+	public int getAssignmentId() {
+		return assignmentId;
+	}
+	
 	public String getStatus() {
 		return status;
 	}
@@ -221,6 +228,10 @@ public class UploadEvent implements Serializable {
 	
 	public void setUpdateId(String v) {
 		updateId = v;
+	}
+	
+	public void setAssignmentId(int v) {
+		assignmentId = v;
 	}
 	
 	public void setInstanceId(String v) {

@@ -163,7 +163,7 @@ public class SubRelationalDB extends Subscriber {
 			//Authorise a = new Authorise(null, Authorise.ENUM);
 			SurveyManager sm = new SurveyManager();
 			survey = sm.getSurveyId(connection, templateName);	// Get the survey from the templateName / ident
-			//boolean isAuthorised = a.isValidSurvey(connection, remoteUser, survey.id, false );
+
 			try {
 				if (connection != null) {
 					connection.close();
@@ -172,10 +172,7 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Failed to close connection");
 			    e.printStackTrace();
 			}
-			//if(!isAuthorised) {
-			//	throw new Exception("The user " + remoteUser + 
-			//			" was not allowed to submit this survey(" + templateName + ")");
-			//}	
+		
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -188,6 +185,7 @@ public class SubRelationalDB extends Subscriber {
 			
 			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id);
 			applyNotifications(ue_id, remoteUser, server);
+			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
 			
 		} catch (SQLInsertException e) {
@@ -199,6 +197,69 @@ public class SubRelationalDB extends Subscriber {
 			
 		return;
 	}
+	
+	/*
+	 * Apply any changes to assignment status
+	 */
+	private void applyAssignmentStatus(int ue_id, String remoteUser) {
+		
+		Connection connectionSD = null;
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGetUploadEvent = null;
+		
+		String sqlGetUploadEvent = "select ue.assignment_id " +
+				" from upload_event ue " +
+				" where ue.ue_id = ? and ue.assignment_id is not null;";
+		
+
+		String sql = "UPDATE assignments a SET status = 'complete' " +
+				"where a.id = ? " + 
+				"and a.assignee IN (SELECT id FROM users u " +
+					"where u.ident = ?);";
+		
+		
+		try {
+			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
+			
+			pstmtGetUploadEvent = connectionSD.prepareStatement(sqlGetUploadEvent);
+			pstmt = connectionSD.prepareStatement(sql);
+ 		
+			pstmtGetUploadEvent.setInt(1, ue_id);
+			ResultSet rs = pstmtGetUploadEvent.executeQuery();
+			
+			if(rs.next()) {
+				int assignment_id = rs.getInt(1);
+				if(assignment_id > 0) {
+					pstmt.setInt(1, assignment_id);
+					pstmt.setString(2, remoteUser);
+					System.out.println("Updating assignment status: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
+				
+
+			}
+			
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		
+		}
+	}
+		
+	
 	
 	/*
 	 * Apply notifications

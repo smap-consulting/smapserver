@@ -249,7 +249,7 @@ function completeSurveyList(surveyList, filterProjectId) {
 	if(taskList) {
 		for(i = 0; i < taskList.length; i++) {
 			if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
-				h[++idx] = '<a role="button" class="btn btn-danger btn-block btn-lg" target="_blank" href="/webForm/';
+				h[++idx] = '<a role="button" class="task btn btn-warning btn-block btn-lg" target="_blank" href="/webForm/';
 				h[++idx] = taskList[i].task.form_id;
 				if(taskList[i].task.initial_data) {
 					// Add the initial data parameters
@@ -267,13 +267,16 @@ function completeSurveyList(surveyList, filterProjectId) {
 				}
 				h[++idx] = taskList[i].assignment.assignment_id; 
 				h[++idx] = '">';
-				h[++idx] = taskList[i].task.title;
+				h[++idx] = taskList[i].task.title + " (task id: " + taskList[i].task.id + ")";
 				h[++idx] = '</a>';	
 			} 
 		}
 	}
 	
 	$formList.html(h.join(''));
+	$formList.find('.task').off().click(function(){
+		$(this).removeClass('btn-warning').addClass('btn-success');
+	});
 }
 
 });

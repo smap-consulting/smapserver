@@ -31,12 +31,12 @@ import javax.ws.rs.core.Response;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import taskModel.Assignment;
 import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
 import taskModel.Geometry;
@@ -49,8 +49,6 @@ import taskModel.TaskResponse;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -338,10 +336,9 @@ public class MyAssignments extends Application {
 		    return response;
 		}
 		
-		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		// End Authorisation
+		
+		// Authorisation nor required a user can only update their own assignments
 
 		String userName = request.getRemoteUser();
 		

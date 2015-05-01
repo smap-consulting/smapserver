@@ -80,7 +80,10 @@ public class XFormData {
 		
 	}
 	
-	public void loadMultiPartMime(HttpServletRequest request, String user, String updateInstanceId) 
+	public void loadMultiPartMime(
+				HttpServletRequest request, 
+				String user, 
+				String updateInstanceId) 
 			throws SurveyBlockedException, MissingSurveyException, IOException, FileUploadException, 
 			MissingTemplateException, AuthorisationException, Exception {
 
@@ -92,6 +95,7 @@ public class XFormData {
 		DiskFileItemFactory  factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		List <FileItem> items = upload.parseRequest(request);
+		int assignmentId = 0;
 		
 		serverName = request.getServerName();
 		SurveyInstance si = null;
@@ -158,6 +162,13 @@ public class XFormData {
 		    		iosImageCount = attachSaveDetails.iosImageCount;
 		    		iosVideoCount = attachSaveDetails.iosVideoCount;
 		    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
+		    	} else if(fieldName.equals("assignment_id"))  {
+		    		log.info("Got assignment id ++++++++++++++++++" + item.getString());
+		    		try {
+		    			assignmentId = Integer.parseInt(item.getString());
+		    		} catch (Exception e) {
+		    			
+		    		}
 		    	} else {
 		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
 		    	}		    	
@@ -206,6 +217,7 @@ public class XFormData {
 		ue.setFileName(saveDetails.fileName);
 		ue.setSurveyName(si.getDisplayName());
 		ue.setUpdateId(updateInstanceId);
+		ue.setAssignmentId(assignmentId);
 		ue.setInstanceId(thisInstanceId);
 		ue.setLocation(si.getSurveyGeopoint());
 		ue.setImei(si.getImei());
