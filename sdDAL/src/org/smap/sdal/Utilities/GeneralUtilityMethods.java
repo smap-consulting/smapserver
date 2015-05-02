@@ -123,13 +123,15 @@ public class GeneralUtilityMethods {
 		File dir = new File(directory);
 		
 		File[] files = dir.listFiles();
-		for (int i = 0; i < files.length; i++) {
-			log.info("deleting file: " + files[i]);
-			if(files[i].isDirectory()) {
-				deleteDirectory(files[i].getAbsolutePath());
-			} else {
-				files[i].delete();
-			}		
+		if(files != null) {
+			for (int i = 0; i < files.length; i++) {
+				log.info("deleting file: " + files[i]);
+				if(files[i].isDirectory()) {
+					deleteDirectory(files[i].getAbsolutePath());
+				} else {
+					files[i].delete();
+				}		
+			}
 		}
 		log.info("Deleting directory " + directory);
 		dir.delete();
