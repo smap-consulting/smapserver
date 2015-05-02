@@ -286,6 +286,10 @@ function addLanguageOptions($elem, current) {
 			            name: "French"
 			         },
 			         {
+				         	locale: "hi",
+				            name: "Hindi"
+						 },
+			         {
 			         	locale: "pt",
 			            name: "Portugese"
 					 },
