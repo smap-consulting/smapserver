@@ -67,6 +67,7 @@ $(document).ready(function() {
 			        		format = $('#exportformat').val(),
 			        		mediaQuestion = $('#export_media_question').val(),
 			        		split_locn = $('#splitlocn:checked').prop("checked"),
+			        		merge_select_multiple = $('#mergeSelectMultiple:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		forms = [],
 			        		name_questions = [];
@@ -118,16 +119,6 @@ $(document).ready(function() {
 		        			url = exportSurveyLocationURL(sId, displayName, forms[0], traceFormat, type);
 		        		
 		        		} else if(format === "media") {
-		        			/*
-		        			 * 
-		        			 *forms = $(':radio:checked', '.shapeforms').map(function() {
-		        			      return this.value;
-		        			    }).get();
-		        			if(forms.length === 0) {
-		        				alert("A form must be selected");
-			        			return(false);
-		        			}
-		        			*/	
 		        			
 		        			name_questions = $(':checkbox:checked', '.mediaselect').map(function() {
 		        			      return this.value;
@@ -136,7 +127,7 @@ $(document).ready(function() {
 		        			url = exportSurveyMediaURL(sId, displayName, undefined, mediaQuestion, name_questions.join(','));
 		        		
 		        		}else {
-
+		        			// XLS export
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
@@ -145,7 +136,7 @@ $(document).ready(function() {
 		        				alert("At least one form must be selected");
 			        			return(false);
 		        			}
-		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms, exportReadOnly);
+		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms, exportReadOnly, merge_select_multiple);
 		        		}
 		        		
 		        		$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
@@ -818,7 +809,7 @@ function exportTableURL (table, format) {
 /*
  * Web service handler for exporting an entire survey to CSV
  */
-function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro) {
+function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple) {
 
 	var url = "/surveyKPI/exportSurvey/";
 	
@@ -837,6 +828,9 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	url += "&format=" + format;
 	if(format === "xls" && split_locn === true) {
 		url += "&split_locn=true";
+	}
+	if(format === "xls" && merge_select_multiple === true) {
+		url += "&merge_select_multiple=true";
 	}
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;

@@ -134,6 +134,7 @@ define({
 	"a_exp_leg2": "Output format:",
 	"a_exp_notes": "Export notes:",
 	"a_exp_split": "Split lat / lon:",
+	"a_exp_merge": "Merge select multiple in one column:",
 	"a_sel_ways": "Select ways (if any):",
 	"a_sel_forms": "Select forms to include:",
 	"a_sel_model": "Edit survey model",

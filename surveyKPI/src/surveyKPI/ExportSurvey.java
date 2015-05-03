@@ -162,6 +162,7 @@ public class ExportSurvey extends Application {
 			@PathParam("filename") String filename,
 			@QueryParam("flat") boolean flat,
 			@QueryParam("split_locn") boolean split_locn,
+			@QueryParam("merge_select_multiple") boolean merge_select_multiple,
 			@QueryParam("language") String language,
 			@QueryParam("format") String format,
 			@QueryParam("exp_ro") boolean exp_ro,
@@ -170,7 +171,8 @@ public class ExportSurvey extends Application {
 			@Context HttpServletResponse response) {
 
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
-		System.out.println("urlprefix: " + urlprefix);
+		HashMap<String, String> selectMultipleColumnNames = new HashMap<String, String> ();
+		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -184,8 +186,8 @@ public class ExportSurvey extends Application {
 		    }
 		}
 		
-		System.out.println("New export, format:" + format + " flat:" + flat + " split:" + split_locn + 
-				" forms:" + include_forms + " filename: " + filename);
+		log.info("New export, format:" + format + " flat:" + flat + " split:" + split_locn + 
+				" forms:" + include_forms + " filename: " + filename + ", merge select: " + merge_select_multiple);
 		
 		if(format.equals("csv")) {		// Only 2 formats currently supported:  CSV or XLS = not CSV
 			csv = true;
@@ -423,29 +425,57 @@ public class ExportSurvey extends Application {
 							pstmtQType.setString(2, name);
 							ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
+							boolean isSelectMultiple = false;
+							String selectMultipleQuestionName = null;
+							String optionName = null;
 							if(rsType.next()) {
 								String qType = rsType.getString(1);
 								boolean ro = rsType.getBoolean(2);
 								
 								if(!exp_ro && ro) {
-									System.out.println("Dropping readonly: " + name);
+									log.info("Dropping readonly: " + name);
 									continue;			// Drop read only columns if they are not selected to be exported				
 								}
 								
 								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
 									isAttachment = true;
 								}
+							} else {
+								// Possibly a select multiple
+								if(name.contains("__")) {
+									isSelectMultiple = true;
+									selectMultipleQuestionName = name.substring(0, name.indexOf("__"));
+									optionName = name.substring(name.indexOf("__") + 2);
+								}
 							}
 							
 							
 							String colName = name;
+							if(isSelectMultiple && merge_select_multiple) {
+								colName = selectMultipleQuestionName;
+								
+								// Add the name of sql column to a look up table for the get data stage
+								selMultChoiceNames.put(name, optionName);
+							}
 							if(f.maxRepeats > 1) {	// Columns need to be repeated horizontally
 								colName += "_" + (k + 1);
 							}
 							if(type.startsWith("timestamp")) {
 								colName += " (GMT)";
 							}
-							if(!name.equals("prikey")) {	// Primary key is only added once for all the tables
+							
+							// If the user has requested that select multiples be merged then we only want the question added once
+							boolean skipSelectMultipleOption = false;
+							if(isSelectMultiple && merge_select_multiple) {
+								String n = selectMultipleColumnNames.get(colName);
+								if(n != null) {
+									skipSelectMultipleOption = true;
+								} else {
+									selectMultipleColumnNames.put(colName, colName);
+								}
+							}
+							
+							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
 									qName.append(getContent(colName, true,false, colName, type, split_locn));
 									if(!language.equals("none")) {
@@ -563,18 +593,16 @@ public class ExportSurvey extends Application {
 				/*
 				 * Add the data
 				 */
-				getData(connectionResults, outWriter, formList, topForm, flat, split_locn);
+				getData(connectionResults, outWriter, formList, topForm, flat, split_locn, merge_select_multiple, selMultChoiceNames);
 				if(!csv) {
 					outWriter.print("</tbody><table></body></html>");
 				}
 				
-				System.out.println("Content Type:" + response.getContentType());
-				System.out.println("Buffer Size:" + response.getBufferSize());
-				System.out.println("Flushing buffers");
+				log.info("Content Type:" + response.getContentType());
+				log.info("Buffer Size:" + response.getBufferSize());
+				log.info("Flushing buffers");
 				outWriter.flush(); 
 				outWriter.close();
-				//response.flushBuffer();
-
 			
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "SQL Error", e);
@@ -787,7 +815,7 @@ public class ExportSurvey extends Application {
 	 * The function is called recursively until the last table
 	 */
 	private void getData(Connection connectionResults, PrintWriter outWriter, 
-			ArrayList<FormDesc> formList, FormDesc f, boolean flat, boolean split_locn) {
+			ArrayList<FormDesc> formList, FormDesc f, boolean flat, boolean split_locn, boolean merge_select_multiple, HashMap<String, String> choiceNames) {
 		
 		String sql = null;
 		PreparedStatement pstmt = null;
@@ -805,13 +833,12 @@ public class ExportSurvey extends Application {
 		}
 		sql += " ORDER BY prikey ASC;";	
 		
-		System.out.println("Sql: " + sql);
-		
 		try {
 			pstmt = connectionResults.prepareStatement(sql);
 			if(f.parkey != null) {
 				pstmt.setInt(1, Integer.parseInt(f.parkey));
 			}
+			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			rsMetaData = resultSet.getMetaData();
 			
@@ -828,6 +855,8 @@ public class ExportSurvey extends Application {
 				
 				
 				// Add the other questions to the output record
+				String currentSelectMultipleQuestionName = null;
+				String multipleChoiceValue = null;
 				for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
 											
 					String columnName = rsMetaData.getColumnName(i);
@@ -837,8 +866,45 @@ public class ExportSurvey extends Application {
 					if(value == null) {
 						value = "";	
 					}
+					
+					if(merge_select_multiple) {
+						String choice = choiceNames.get(columnName);
+						if(choice != null) {
+							// Have to handle merge of select multiple
+							String selectMultipleQuestionName = columnName.substring(0, columnName.indexOf("__"));
+							if(currentSelectMultipleQuestionName == null) {
+								currentSelectMultipleQuestionName = selectMultipleQuestionName;
+								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != rsMetaData.getColumnCount())) {
+								// Continuing on with the same select multiple and its not the end of the record
+								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							} else if (i == rsMetaData.getColumnCount()) {
+								//  Its the end of the record		
+								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
+							} else {
+								// A second select multiple directly after the first - write out the previous
+								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
 								
-					record.append(getContent(value, false, false, columnName, columnType, split_locn));
+								// Restart process for the new select multiple
+								currentSelectMultipleQuestionName = selectMultipleQuestionName;
+								multipleChoiceValue = null;
+								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							}
+						} else {
+							if(multipleChoiceValue != null) {
+								// Write out the previous multiple choice value before continuing with the non multiple choice value
+								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								
+								// Restart Process
+								multipleChoiceValue = null;
+								currentSelectMultipleQuestionName = null;
+							}
+							record.append(getContent(value, false, false, columnName, columnType, split_locn));
+						}
+					} else {
+						record.append(getContent(value, false, false, columnName, columnType, split_locn));
+					}
 				}
 				f.addRecord(prikey, f.parkey, record);
 								
@@ -847,7 +913,7 @@ public class ExportSurvey extends Application {
 					for(int j = 0; j < f.children.size(); j++) {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
-						getData(connectionResults, outWriter, formList, nextForm, flat, split_locn);
+						getData(connectionResults, outWriter, formList, nextForm, flat, split_locn, merge_select_multiple, choiceNames);
 					}
 				}
 				
@@ -879,6 +945,28 @@ public class ExportSurvey extends Application {
 			}
 		}
 		
+	}
+	
+	/*
+	 * 
+	 */
+	String updateMultipleChoiceValue(String dbValue, String choiceName, String currentValue) {
+		boolean isSet = false;
+		String newValue = currentValue;
+		
+		if(dbValue.equals("1")) {
+			isSet = true;
+		}
+		
+		if(isSet) {
+			if(currentValue == null) {
+				newValue = choiceName;
+			} else {
+				newValue += " " + choiceName;
+			}
+		}
+		
+		return newValue;
 	}
 	
 	/*
@@ -918,7 +1006,7 @@ public class ExportSurvey extends Application {
 					newRec.append(f.records.get(i).record);
 				}
 				
-				System.out.println("flat------>" + f.table_name + "Number records: " + number_records);
+				log.info("flat------>" + f.table_name + "Number records: " + number_records);
 				// Pad up to max repeats
 				for(int i = number_records; i < f.maxRepeats; i++) {
 					StringBuffer record = new StringBuffer();
@@ -1028,7 +1116,7 @@ public class ExportSurvey extends Application {
 				}
 			}
 		} else {
-			System.out.println("Ignoring invisible form: " + f.table_name);
+			log.info("Ignoring invisible form: " + f.table_name);
 			// Proceed with any lower level forms
 			if(index < formList.size() - 1) {
 				appendToOutput(outWriter, in , formList.get(index + 1), 
