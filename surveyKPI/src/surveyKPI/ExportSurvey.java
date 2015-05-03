@@ -479,7 +479,7 @@ public class ExportSurvey extends Application {
 								if(f.visible) {	// Add column headings if the form is visible
 									qName.append(getContent(colName, true,false, colName, type, split_locn));
 									if(!language.equals("none")) {
-										qText.append(getContent(getQuestion(connectionSD, name, sId, f, language), true, false, name, type, split_locn));
+										qText.append(getContent(getQuestion(connectionSD, name, sId, f, language, merge_select_multiple), true, false, name, type, split_locn));
 									}
 								}
 							}
@@ -541,7 +541,7 @@ public class ExportSurvey extends Application {
 							if(f.visible) {	// Add column headings if the form is visible
 								qName.append(getContent(colName, true,false, colName, sscType, split_locn));
 								if(!language.equals("none")) {
-									qText.append(getContent(getQuestion(connectionSD, sscName, sId, f, language), true, false, sscName, sscType, split_locn));
+									qText.append(getContent(getQuestion(connectionSD, sscName, sId, f, language, merge_select_multiple), true, false, sscName, sscType, split_locn));
 								}
 							}
 							
@@ -721,6 +721,10 @@ public class ExportSurvey extends Application {
 			String columnType, boolean split_locn) {
 
 		String out = in;
+		if(out == null) {
+			out = "";
+		}
+		
 		if(csv) {
 			if(out.startsWith("//")) {
 				out = "https:" + out;
@@ -881,6 +885,7 @@ public class ExportSurvey extends Application {
 							} else if (i == rsMetaData.getColumnCount()) {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								
 								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
@@ -1143,7 +1148,7 @@ public class ExportSurvey extends Application {
 		}
 	}
 	
-	private String getQuestion(Connection conn, String colName, int sId, FormDesc form, String language) throws SQLException {
+	private String getQuestion(Connection conn, String colName, int sId, FormDesc form, String language, boolean merge_select_multiple) throws SQLException {
 		String questionText = "";
 		String qName = null;
 		String oName = null;
@@ -1204,9 +1209,11 @@ public class ExportSurvey extends Application {
 				while (resultSet.next()) {
 					String name = resultSet.getString("ovalue");
 					String label = resultSet.getString("otext");
-					if(qType.equals("select1")) {
+					if(qType.equals("select1") || merge_select_multiple) {
+						// Put all options in the same column
 						questionText += " " + name + "=" + label;
 					} else if(oName != null) {
+						// Only one option in each column
 						String cleanName = UtilityMethodsEmail.cleanName(name);
 						if(cleanName.equals(oName)) {
 							questionText += " " + label;
