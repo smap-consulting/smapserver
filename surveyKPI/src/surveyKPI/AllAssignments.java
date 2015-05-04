@@ -919,6 +919,7 @@ public class AllAssignments extends Application {
 		String name;
 		String type;
 		String geomCol;
+		ArrayList<String> choices = null;
 	}
 	
 	/*
@@ -957,8 +958,12 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtGetFormId = null;
 		
 		// SQL to get a column name from the survey
-		String sqlGetCol = "select qname, qtype from question where f_id = ? and qname = ?";
+		String sqlGetCol = "select q_id, qname, qtype from question where f_id = ? and qname = ?";
 		PreparedStatement pstmtGetCol = null;
+		
+		// SQL to get choices for a select question
+		String sqlGetChoices = "select ovalue from option where q_id = ?";
+		PreparedStatement pstmtGetChoices = null;
 		
 		// Prepared Statements used in the clearing and inserting of data
 		PreparedStatement pstmtDeleteExisting = null;
@@ -1037,6 +1042,9 @@ public class AllAssignments extends Application {
 			pstmtGetCol = connectionSD.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(1, fId);
 			
+			// Prepare the statement to get select choices
+			pstmtGetChoices = connectionSD.prepareStatement(sqlGetChoices);
+			
 			// If this is a zip file extract the contents and set the path to the expand csv file that should be inside
 			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
 			log.info("Content Type: " + contentType);
@@ -1100,11 +1108,10 @@ public class AllAssignments extends Application {
 					
 					// Assume first line is the header
 					for(int i = 0; i < line.length; i++) {
-						log.info("Header: " + line[i]);
 						String colName = line[i].replace("'", "''");	// Escape apostrophes
 						
 						// If this column is in the survey then add it to the list of columns to be processed
-						Column col = getColumn(pstmtGetCol, colName);
+						Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName);
 						if(col != null) {
 							col.index = i;
 							if(col.geomCol != null) {
@@ -1135,11 +1142,20 @@ public class AllAssignments extends Application {
 							moreThanOneCol = true;
 							sqlInsert.append(",");
 						}
-						sqlInsert.append(col.name);
+						if(col.type.equals("select")) {
+							for(int j = 0; j < col.choices.size(); j++) {
+								if(j > 0) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append(UtilityMethodsEmail.cleanName(col.name + "__" + col.choices.get(j)));
+							}
+						} else {
+							sqlInsert.append(UtilityMethodsEmail.cleanName(col.name));
+						}
 
 					}
 					
-					// Add the gemoetry column if lat and lon were provided in the csv
+					// Add the geometry column if latitude and longitude were provided in the csv
 					if(lonIndex >= 0 && latIndex >= 0 ) {
 						if(moreThanOneCol) {
 							sqlInsert.append(",");
@@ -1151,10 +1167,22 @@ public class AllAssignments extends Application {
 					sqlInsert.append(") values("); 
 					for(int i = 0; i < columns.size(); i++) {
 						
+						Column col = columns.get(i);
+						
 						if(i > 0) {
 							sqlInsert.append(",");
 						}
-						sqlInsert.append("?");
+						if(col.type.equals("select")) {
+							
+							for(int j = 0; j < col.choices.size(); j++) {
+								if(j > 0) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append("?");
+							}
+						} else {
+							sqlInsert.append("?");
+						}
 					}
 					
 					// Add the geometry value
@@ -1201,7 +1229,35 @@ public class AllAssignments extends Application {
 								}
 							}
 							
-							pstmtInsert.setString(index++, value);
+							if(col.type.equals("select")) {
+								String [] choices = value.split("\\s");
+								for(int k = 0; k < col.choices.size(); k++) {
+									String cVal = UtilityMethodsEmail.cleanName(col.choices.get(k));
+									boolean hasChoice = false;
+									for(int l = 0; l < choices.length; l++) {
+										if(cVal.equals(UtilityMethodsEmail.cleanName(choices[l]))) {
+											hasChoice = true;
+											break;
+										}
+									}
+									if(hasChoice) {
+										pstmtInsert.setInt(index++, 1);
+									} else {
+										pstmtInsert.setInt(index++, 0);
+									}
+									
+								}
+							} else if(col.type.equals("int")) {
+								int iVal = 0;
+								try { iVal = Integer.parseInt(value);} catch (Exception e) {}
+								pstmtInsert.setInt(index++, iVal);
+							} else if(col.type.equals("decimal")) {
+								double dVal = 0.0;
+								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
+								pstmtInsert.setDouble(index++, dVal);
+							} else {
+								pstmtInsert.setString(index++, value);
+							}
 							
 						}
 						
@@ -1247,6 +1303,7 @@ public class AllAssignments extends Application {
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetChoices != null) {pstmtGetChoices.close();}} catch (SQLException e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
@@ -1270,7 +1327,7 @@ public class AllAssignments extends Application {
 	/*
 	 * Check to see if a question is in a form
 	 */
-	private Column getColumn(PreparedStatement pstmtGetCol, String qName) throws SQLException {
+	private Column getColumn(PreparedStatement pstmtGetCol, PreparedStatement pstmtGetChoices, String qName) throws SQLException {
 		Column col = null;
 		String geomCol = null;
 		
@@ -1290,6 +1347,20 @@ public class AllAssignments extends Application {
 			col.name = colName;
 			col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
 			col.type = rs.getString("qtype");
+			
+			if(col.type.startsWith("select")) {
+				
+				// Get choices for this select question
+				int qId = rs.getInt("q_id");
+				
+				col.choices = new ArrayList<String> ();
+				pstmtGetChoices.setInt(1, qId);
+				log.info("Get choices:" + pstmtGetChoices.toString());
+				ResultSet rsChoices = pstmtGetChoices.executeQuery();
+				while(rsChoices.next()) {
+					col.choices.add(rsChoices.getString("ovalue"));
+				}
+			}
 		}
 		return col;
 	}
