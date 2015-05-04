@@ -202,7 +202,7 @@ $(document).ready(function() {
  	 });
 	
 	$('.language_list').off().change(function() {
-		gLanguage = $(this).val();
+		globals.gLanguage = $(this).val();
 		refreshView();
  	 });
 	
@@ -491,7 +491,7 @@ function refreshForm() {
 	
 	respondToEvents($('#formList'));
 	
-	$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
+	//$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
 
 	//enableDragablePanels();
 	
@@ -645,59 +645,6 @@ function updateSettingsData() {
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 }
 
-/*
- * Add a media type
- */
-function addMedia(label, mediaIdent, url, thumbUrl) {
-	var h = [],
-		idx = -1,
-		emptyMedia = '<div class="emptyMedia text-center">Empty</div>',
-		lcLabel = label.toLowerCase();
-	
-	h[++idx] = '<div class="col-sm-3 ';
-	h[++idx] = lcLabel;
-	h[++idx] = 'Element">';
-	if(mediaIdent) {
-		h[++idx] = '<a target="_blank" href="';
-		h[++idx] = url
-		h[++idx] = '"';
-	} else {
-		h[++idx] = "<div";
-	}
-	h[++idx] = ' class="thumbnail preview">';
-
-	if(mediaIdent) {
-		if(thumbUrl || (lcLabel === "image" && url)) {
-			h[++idx] = '<img height="100" width="100" src="';
-			if(thumbUrl) {
-				h[++idx] = thumbUrl;
-			} else {
-				h[++idx] = url;
-			}
-			h[++idx] = '">';
-		} else {
-			h[++idx] = addQType(lcLabel)
-		}
-	} else {
-		h[++idx] = emptyMedia;
-	}
-
-	if(mediaIdent) {
-		h[++idx] = '</a>';
-	} else {
-		h[++idx] = '</div>';
-	}
-    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
-    h[++idx] = label.toLowerCase();
-    h[++idx] = '">';
-    h[++idx] = lcLabel;
-    h[++idx] = '</a>';
- 
-    h[++idx] = '</div>';
-    
-    return h.join("");
-}
-
 
 /*
  * Call this to update a label
@@ -710,7 +657,7 @@ function addMedia(label, mediaIdent, url, thumbUrl) {
 function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname, prop) {
 	
 	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
-		markup,
+		newMarkup,
 		survey = globals.model.survey,
 		i;
 	
@@ -723,7 +670,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		// Update the in memory survey model
 		if(element === "text") {
 			if(prop === "label") {
-				survey.forms[formIndex].questions[itemIndex].labels[gLanguage][element] = newVal;
+				survey.forms[formIndex].questions[itemIndex].labels[globals.gLanguage][element] = newVal;
 			} else {
 				survey.forms[formIndex].questions[itemIndex][prop] = newVal;		//XXX
 			}
@@ -741,7 +688,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			option: itemIndex
 		});
 		if(element === "text") {
-			survey.optionLists[optionList][itemIndex].labels[gLanguage][element] = newVal;
+			survey.optionLists[optionList][itemIndex].labels[globals.gLanguage][element] = newVal;
 		} else {
 			// For non text changes update all languages
 			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
@@ -752,13 +699,13 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	}
 	
 	// Add the change to the list of changes to be applied
-	globals.model.modLabel(gLanguage, item, newVal, element, prop);
+	globals.model.modLabel(globals.gLanguage, item, newVal, element, prop);
 	
 	
 	// Update the current markup
 	if(element === "image") {	
 		
-		markup = addMedia("Image", 
+		newMarkup = markup.addMedia("Image", 
 				newVal, 
 				getUrl(survey.o_id, survey.ident, newVal, false, 'image'), 
 				getUrl(survey.o_id, survey.ident, newVal, true, 'image')
@@ -766,7 +713,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		
 	} else if(element === "video") {
 		
-		markup = addMedia("Video", 
+		newMarkup = markup.addMedia("Video", 
 				newVal, 
 				getUrl(survey.o_id, survey.ident, newVal, false, 'video'), 
 				getUrl(survey.o_id, survey.ident, newVal, true, 'video')
@@ -774,7 +721,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		
 	} else if(element === "audio") {
 		
-		markup = addMedia("Audio", 
+		newMarkup = markup.addMedia("Audio", 
 				newVal, 
 				getUrl(survey.o_id, survey.ident, newVal, false, 'audio'), 
 				undefined
@@ -783,7 +730,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	}
 	
 	if($gCurrentRow) {
-		$gCurrentRow.find('.' + element + 'Element').replaceWith(markup);
+		$gCurrentRow.find('.' + element + 'Element').replaceWith(newMarkup);
 		$('.mediaProp', $gCurrentRow).off().click(function(){
 			var $this = $(this);
 			mediaPropSelected($this);
@@ -854,7 +801,7 @@ function getFilesFromServer(sId) {
 			removeHourglass();
 			
 			var surveyId = sId;
-			markup.refreshMediaView(data, surveyId);
+			refreshMediaView(data, surveyId);
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -896,5 +843,93 @@ function delete_media(url) {
 			}
 		}
 	});	
+	
 }
+
+/*
+ * Refresh the view of any attached media if the available media items has changed
+ */
+function refreshMediaView(data, sId) {
+	
+	var i,
+		survey = globals.model.survey,
+		$element,
+		h = [],
+		idx = -1,
+		files;
+	
+	if(survey && sId) {
+		// Set the display name
+		$('.formName').html(survey.displayName);
+		$('#survey_id').val(sId);
+		gSId = sId;
+	}
+	
+	if(data) {
+		files = data.files;
+		
+		if(sId) {
+			$element = $('#filesSurvey');
+		} else {
+			$element = $('#filesOrg');
+		}
+		
+		for(i = 0; i < files.length; i++){
+			h[++idx] = '<tr class="';
+			h[++idx] = files[i].type;
+			h[++idx] = '">';
+			h[++idx] = '<td class="preview">';
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = files[i].url;
+			h[++idx] = '">';
+			if(files[i].type == "audio") {
+				h[++idx] = markup.addQType("audio");
+			} else {
+				h[++idx] = '<img src="';
+				h[++idx] = files[i].thumbnailUrl;
+				h[++idx] = '" alt="';
+				h[++idx] = files[i].name;
+				h[++idx] = '">';
+			}
+			h[++idx] = '</a>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="filename">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].name;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].size;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
+				h[++idx] = files[i].deleteUrl;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
+				h[++idx] = ' Delete';
+				h[++idx] = '</button>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaSelect">';
+				h[++idx] = '<button class="mediaAdd btn btn-success">';
+				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
+					h[++idx] = ' Add';
+				h[++idx] = '</button>';
+		h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+		}
+		
+
+		$element.html(h.join(""));
+	
+		$('.media_del', $element).click(function () {
+			delete_media($(this).data('url'));
+		});
+	
+	}	
+}
+
 });

@@ -33,9 +33,9 @@ define([
 		addOneQuestion: addOneQuestion,
 		addPanelStyle: addPanelStyle,
 		addQType: addQType,
-		refreshMediaView: refreshMediaView,
 		addFeaturedProperty: addFeaturedProperty,
-		addQuestions: addQuestions
+		addQuestions: addQuestions,
+		addMedia: addMedia
 	};
 
 	function addOneQuestion(question, fIndex, qIndex) {
@@ -281,91 +281,6 @@ define([
 		return h.join("");
 	}
 	
-	/*
-	 * Refresh the view of any attached media if the available media items has changed
-	 */
-	function refreshMediaView(data, sId) {
-		
-		var i,
-			survey = globals.model.survey,
-			$element,
-			h = [],
-			idx = -1,
-			files;
-		
-		if(survey && sId) {
-			// Set the display name
-			$('.formName').html(survey.displayName);
-			$('#survey_id').val(sId);
-			gSId = sId;
-		}
-		
-		if(data) {
-			files = data.files;
-			
-			if(sId) {
-				$element = $('#filesSurvey');
-			} else {
-				$element = $('#filesOrg');
-			}
-			
-			for(i = 0; i < files.length; i++){
-				h[++idx] = '<tr class="';
-				h[++idx] = files[i].type;
-				h[++idx] = '">';
-				h[++idx] = '<td class="preview">';
-				h[++idx] = '<a target="_blank" href="';
-				h[++idx] = files[i].url;
-				h[++idx] = '">';
-				if(files[i].type == "audio") {
-					h[++idx] = addQType("audio");
-				} else {
-					h[++idx] = '<img src="';
-					h[++idx] = files[i].thumbnailUrl;
-					h[++idx] = '" alt="';
-					h[++idx] = files[i].name;
-					h[++idx] = '">';
-				}
-				h[++idx] = '</a>';
-				h[++idx] = '</td>';
-				h[++idx] = '<td class="filename">';
-					h[++idx] = '<p>';
-					h[++idx] = files[i].name;
-					h[++idx] = '</p>';
-				h[++idx] = '</td>';
-				h[++idx] = '<td class="mediaManage">';
-					h[++idx] = '<p>';
-					h[++idx] = files[i].size;
-					h[++idx] = '</p>';
-				h[++idx] = '</td>';
-				h[++idx] = '<td class="mediaManage">';
-					h[++idx] = '<button class="media_del btn btn-danger" data-url="';
-					h[++idx] = files[i].deleteUrl;
-					h[++idx] = '">';
-					h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
-					h[++idx] = ' Delete';
-					h[++idx] = '</button>';
-				h[++idx] = '</td>';
-				h[++idx] = '<td class="mediaSelect">';
-					h[++idx] = '<button class="mediaAdd btn btn-success">';
-					h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
-						h[++idx] = ' Add';
-					h[++idx] = '</button>';
-			h[++idx] = '</td>';
-				
-				
-				h[++idx] = '</tr>';
-			}
-			
-
-			$element.html(h.join(""));
-		
-			$('.media_del', $element).click(function () {
-				delete_media($(this).data('url'));
-			});
-		
-		}	
-	}
 	
 	/*
 	 * Show the options
@@ -467,6 +382,58 @@ define([
 		return h.join("");
 	}
 
+	/*
+	 * Add a media type
+	 */
+	function addMedia(label, mediaIdent, url, thumbUrl) {
+		var h = [],
+			idx = -1,
+			emptyMedia = '<div class="emptyMedia text-center">Empty</div>',
+			lcLabel = label.toLowerCase();
+		
+		h[++idx] = '<div class="col-sm-3 ';
+		h[++idx] = lcLabel;
+		h[++idx] = 'Element">';
+		if(mediaIdent) {
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = url
+			h[++idx] = '"';
+		} else {
+			h[++idx] = "<div";
+		}
+		h[++idx] = ' class="thumbnail preview">';
+
+		if(mediaIdent) {
+			if(thumbUrl || (lcLabel === "image" && url)) {
+				h[++idx] = '<img height="100" width="100" src="';
+				if(thumbUrl) {
+					h[++idx] = thumbUrl;
+				} else {
+					h[++idx] = url;
+				}
+				h[++idx] = '">';
+			} else {
+				h[++idx] = addQType(lcLabel)
+			}
+		} else {
+			h[++idx] = emptyMedia;
+		}
+
+		if(mediaIdent) {
+			h[++idx] = '</a>';
+		} else {
+			h[++idx] = '</div>';
+		}
+	    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
+	    h[++idx] = label.toLowerCase();
+	    h[++idx] = '">';
+	    h[++idx] = lcLabel;
+	    h[++idx] = '</a>';
+	 
+	    h[++idx] = '</div>';
+	    
+	    return h.join("");
+	}
 
 
 });
