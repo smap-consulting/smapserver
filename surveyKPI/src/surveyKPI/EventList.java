@@ -326,6 +326,11 @@ public class EventList extends Application {
 			filter = " and n.id < ? ";
 		}
 		
+		int sId = 0;
+		if(sName != null && !sName.equals("_all")) {
+			sId = Integer.parseInt(sName);
+		}
+		
 		JSONObject jo = new JSONObject();
 
 		PreparedStatement pstmt = null;
@@ -339,28 +344,33 @@ public class EventList extends Application {
 			jTotals.put("more_recs", 0);	// Default
 			
 			String sql = null;
-			if(sName == null || sName.equals("_all")) {
-				String projSelect = "";
-				if(projectId != 0) {	// set to 0 to get all available projects
-					projSelect = "AND up.p_id = ? ";
-				}
-				sql = "SELECT n.id, n.status, n.notify_details, n.status_details, n.event_time " +
-						"from notification_log n, users u " +
-						"where u.ident = ? " +
-						"and u.o_id = n.o_id " +
-						projSelect +
-						filter +
-						" ORDER BY n.id desc;";
-			
-				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setString(1, user);
-				int argIdx = 2;
-				if(start_key > 0) {
-					pstmt.setInt(argIdx++, start_key);
-				}	
-			} else {
-				System.out.println("Not all");
+			String projSurveySelect = "";
+			if(sId > 0) {
+				projSurveySelect = "and n.s_id = ? ";
+			} else if(projectId > 0) {
+				projSurveySelect = "and n.p_id = ? ";
 			}
+				
+			sql = "SELECT n.id, n.status, n.notify_details, n.status_details, n.event_time " +
+					"from notification_log n, users u " +
+					"where u.ident = ? " +
+					"and u.o_id = n.o_id " +
+					filter +
+					projSurveySelect +
+					" ORDER BY n.id desc;";
+		
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setString(1, user);
+			int argIdx = 2;
+			if(start_key > 0) {
+				pstmt.setInt(argIdx++, start_key);
+			}
+			if(sId > 0) {
+				pstmt.setInt(argIdx++, sId);
+			} else if(projectId > 0) {
+				pstmt.setInt(argIdx++, projectId);
+			}
+			
 			log.info("Events List: " + pstmt.toString());
 
 			 resultSet = pstmt.executeQuery();
@@ -369,7 +379,6 @@ public class EventList extends Application {
 			 int maxRec = 0;
 			 while (resultSet.next()) {
 				 String status = resultSet.getString("status");
-				 String statusDetails = resultSet.getString("status_details");
 				 if(
 						 (status != null && !hideSuccess && status.equals("success")) ||
 						 (status != null && !hideErrors && status.equals("error")) 
@@ -461,7 +470,7 @@ public class EventList extends Application {
 	@Produces("application/json")
 	@Path("/notifications/{projectId}/{sName}/totals")
 	public String getNotificationTotals(@Context HttpServletRequest request, 
-			@PathParam("projectId") int projectId,
+			@PathParam("projectId") int pId,
 			@PathParam("sName") String sName,
 			@QueryParam("hide_errors") boolean hideErrors,
 			@QueryParam("hide_success") boolean hideSuccess
@@ -485,12 +494,17 @@ public class EventList extends Application {
 		
 		PreparedStatement pstmt = null;
 
+		int sId = 0;
+		if(sName != null && !sName.equals("_all")) {
+			sId = Integer.parseInt(sName);
+		}
+		
 		try {
 			if(!hideSuccess) {
-				addNotificationTotals("success", user, pstmt, connectionSD,	sList); 
+				addNotificationTotals("success", user, pstmt, connectionSD,	sList, pId, sId); 
 			}
 			if(!hideErrors) {
-				addNotificationTotals("error", user, pstmt, connectionSD,	sList); 
+				addNotificationTotals("error", user, pstmt, connectionSD, sList, pId, sId); 
 			}
 			
 			
@@ -867,22 +881,36 @@ public class EventList extends Application {
 			String user,
 			PreparedStatement pstmt, 
 			Connection connectionSD,
-			HashMap<String,StatusTotal> sList) throws SQLException {
+			HashMap<String,StatusTotal> sList,
+			int pId,
+			int sId) throws SQLException {
 		
 		String sql = null;
 		
+		String filter = "";
+		if(sId > 0) {		// surveyId is always a stronger filter than projectId
+			filter = "and n.s_id = ?";
+		} else if(pId > 0) {				
+			filter = "and n.p_id = ?";
+		}
 			
 		sql = "SELECT count(*) " +
 				"from notification_log n, users u " +
 				"where u.ident = ? " +
 				"and n.o_id = u.o_id " +
-				"and n.status = ?;";
+				"and n.status = ?" +
+				filter +
+				";";
 
 		try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		pstmt = connectionSD.prepareStatement(sql);
 		pstmt.setString(1, user);			
 		pstmt.setString(2, status);
-			
+		if(sId > 0) {
+			pstmt.setInt(3, sId);
+		} else if(pId > 0) {
+			pstmt.setInt(3, pId);
+		}
 
 		log.info("Event totals: " + pstmt.toString());
 		ResultSet resultSet = pstmt.executeQuery();

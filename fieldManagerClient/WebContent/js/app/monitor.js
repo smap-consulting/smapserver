@@ -25,7 +25,7 @@ $(document).ready(function() {
 	
 	localise.setlang();		// Localise HTML
 	
-	getLoggedInUser(projectChanged, false, true, undefined);
+	getLoggedInUser(projectChanged, true, true, undefined);
 	 
 	refreshRegions();
 	
