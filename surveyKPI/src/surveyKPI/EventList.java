@@ -91,8 +91,8 @@ public class EventList extends Application {
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
 		
-		System.out.println("Project id:" + projectId);
-		System.out.println("Survey id:" + sName);
+		log.info("Get events, Project id: " + projectId + " Survey id: " + sName);
+
 		String user = request.getRemoteUser();
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
@@ -178,7 +178,7 @@ public class EventList extends Application {
 				}
 			}
 
-			 log.info("Events List: " + sql + " : " + user + " : " + projectId + " : " + start_key);
+			 log.info("Events List: " + pstmt.toString());
 
 			 resultSet = pstmt.executeQuery();
 			 JSONArray ja = new JSONArray();	
@@ -296,8 +296,10 @@ public class EventList extends Application {
 	 */
 	@GET
 	@Produces("application/json")
-	@Path("/notifications")
+	@Path("/notifications/{projectId}/{sName}")
 	public String getNotificationEvents(@Context HttpServletRequest request, 
+			@PathParam("projectId") int projectId,
+			@PathParam("sName") String sName,
 			@QueryParam("hide_errors") boolean hideErrors,
 			@QueryParam("hide_success") boolean hideSuccess,
 			@QueryParam("start_key") int start_key,
@@ -336,20 +338,30 @@ public class EventList extends Application {
 			jTotals.put("rec_limit", rec_limit);
 			jTotals.put("more_recs", 0);	// Default
 			
-			String sql = "SELECT n.id, n.status, n.notify_details, n.status_details, n.event_time " +
+			String sql = null;
+			if(sName == null || sName.equals("_all")) {
+				String projSelect = "";
+				if(projectId != 0) {	// set to 0 to get all available projects
+					projSelect = "AND up.p_id = ? ";
+				}
+				sql = "SELECT n.id, n.status, n.notify_details, n.status_details, n.event_time " +
 						"from notification_log n, users u " +
 						"where u.ident = ? " +
 						"and u.o_id = n.o_id " +
+						projSelect +
 						filter +
 						" ORDER BY n.id desc;";
+			
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setString(1, user);
 				int argIdx = 2;
 				if(start_key > 0) {
 					pstmt.setInt(argIdx++, start_key);
 				}	
-
-			 log.info("Events List: " + sql + " : " + user + " : " + start_key);
+			} else {
+				System.out.println("Not all");
+			}
+			log.info("Events List: " + pstmt.toString());
 
 			 resultSet = pstmt.executeQuery();
 			 JSONArray ja = new JSONArray();	
@@ -447,8 +459,10 @@ public class EventList extends Application {
 	// Get totals for notifications
 	@GET
 	@Produces("application/json")
-	@Path("/notifications/totals")
+	@Path("/notifications/{projectId}/{sName}/totals")
 	public String getNotificationTotals(@Context HttpServletRequest request, 
+			@PathParam("projectId") int projectId,
+			@PathParam("sName") String sName,
 			@QueryParam("hide_errors") boolean hideErrors,
 			@QueryParam("hide_success") boolean hideSuccess
 			) {
@@ -550,8 +564,6 @@ public class EventList extends Application {
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
 		
-		System.out.println("Project id:" + projectId);
-		System.out.println("Survey id:" + sName);
 		String user = request.getRemoteUser();
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
@@ -679,7 +691,6 @@ public class EventList extends Application {
 			subscriberSelect = "AND se.subscriber != 'results_db' and se.subscriber is not null ";
 		}
 		
-		System.out.println("Group by: " + groupby);
 		String sql = null;
 		if(sName == null || sName.equals("_all")) {
 			String projSelect = "";
@@ -710,7 +721,6 @@ public class EventList extends Application {
 					"GROUP BY " + aggregate +
 					" ORDER BY " + aggregate + " desc;";
 
-			System.out.println("SQL Totals: " + sql);
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
@@ -820,7 +830,7 @@ public class EventList extends Application {
 			pstmt.setInt(2, Integer.parseInt(sName));
 		}
 
-		 log.info("Events List: " + sql + " : " + user + " : " + sName);
+		log.info("Get events: " + pstmt.toString());
 
 		 ResultSet resultSet = pstmt.executeQuery();
 		 while (resultSet.next()) {
@@ -868,13 +878,13 @@ public class EventList extends Application {
 				"and n.o_id = u.o_id " +
 				"and n.status = ?;";
 
-		System.out.println("SQL Notification Totals: " + sql + " : " + user + " : " + status);
 		try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		pstmt = connectionSD.prepareStatement(sql);
 		pstmt.setString(1, user);			
 		pstmt.setString(2, status);
 			
 
+		log.info("Event totals: " + pstmt.toString());
 		ResultSet resultSet = pstmt.executeQuery();
 		if (resultSet.next()) {
 			int count = resultSet.getInt(1);
@@ -955,8 +965,6 @@ public class EventList extends Application {
 			}
 			jo.put("all_surveys", js);
 			
-			System.out.println("surveyIdent:" + surveyIdent);
-			
 			if(sId == -1) {
 				sql = "select u.ident, u.name, fd.device_id, fd.form_ident, fd.form_version " +
 						"from users u inner join user_project up on u.id = up.u_id " +
@@ -975,14 +983,13 @@ public class EventList extends Application {
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			if(sId == -1) {
-				System.out.println("SQL: " + sql + " : " + projectId + " : " + projectId);
 				pstmt.setInt(1, projectId);
 				pstmt.setInt(2, projectId);
 			} else {
-				System.out.println("SQL: " + sql + " : " + projectId + " : " + surveyIdent);
 				pstmt.setInt(1, projectId);
 				pstmt.setString(2, surveyIdent);
 			}
+			log.info("Get form downloads: " + pstmt.toString());
 			rs = pstmt.executeQuery();
 			
 	

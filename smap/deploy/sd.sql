@@ -267,3 +267,5 @@ alter table organisation add column default_email_content text;
 -- Upgrade to: 15.04 from 15.03
 alter table survey add column task_file boolean;
 alter table upload_event add column assignment_id integer;
+alter table notification_log add column p_id integer;
+alter table notification_log add column s_id integer;

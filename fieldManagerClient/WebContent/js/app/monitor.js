@@ -409,7 +409,7 @@ function refreshData(projectId, surveyId, start_rec) {
 		
 		var url;
 		if(showSourceE === "notifications") {
-			url = "/surveyKPI/eventList/notifications";
+			url = "/surveyKPI/eventList/notifications/" + projectId + "/" + surveyId;
 		} else {
 			url = "/surveyKPI/eventList/" + projectId + "/" + surveyId;
 		}

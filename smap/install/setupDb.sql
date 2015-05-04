@@ -398,6 +398,8 @@ DROP TABLE IF EXISTS notification_log;
 CREATE TABLE public.notification_log (
 	id integer default nextval('notification_log_seq') not null PRIMARY KEY,
 	o_id integer,
+	p_id integer,
+	s_id integer,
 	notify_details text,
 	status text,	
 	status_details text,

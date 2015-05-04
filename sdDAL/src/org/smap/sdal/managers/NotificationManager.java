@@ -308,12 +308,13 @@ public class NotificationManager {
 		ResultSet rs = null;
 		ResultSet rsNotifications = null;
 		int s_id = 0;
+		int p_id = 0;
 		String ident = null;
 		String instanceId = null;
 		
 		log.info("notifyForSubmission:: " + ue_id);
 				
-		String sqlGetUploadEvent = "select ue.s_id, ue.ident, ue.instanceid " +
+		String sqlGetUploadEvent = "select ue.s_id, ue.ident, ue.instanceid, ue.p_id " +
 				" from upload_event ue " +
 				" where ue.ue_id = ?;";
 		try {if (pstmtGetUploadEvent != null) { pstmtGetUploadEvent.close();}} catch (SQLException e) {}
@@ -331,8 +332,8 @@ public class NotificationManager {
 		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
 		
 		String sqlNotificationLog = "insert into notification_log " +
-				"(o_id, notify_details, status, status_details, event_time) " +
-				"values( ?, ?, ?, ?, now()); ";
+				"(o_id, p_id, s_id, notify_details, status, status_details, event_time) " +
+				"values( ?, ?,?, ?, ?, ?, now()); ";
 		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
@@ -346,9 +347,10 @@ public class NotificationManager {
 			s_id = rs.getInt(1);
 			ident = rs.getString(2);
 			instanceId = rs.getString(3);
+			p_id = rs.getInt(4);
 			
-			log.info("Get notifications:: " + s_id + " : " + ident + " : " + instanceId);
 			pstmtGetNotifications.setInt(1, s_id);
+			log.info("Get notifications:: " + pstmtGetNotifications.toString());
 			rsNotifications = pstmtGetNotifications.executeQuery();
 			while(rsNotifications.next()) {
 				log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
@@ -494,9 +496,12 @@ public class NotificationManager {
 				
 				// Write log message
 				pstmtNotificationLog.setInt(1, organisation.id);
-				pstmtNotificationLog.setString(2, notify_details);
-				pstmtNotificationLog.setString(3, status);
-				pstmtNotificationLog.setString(4, error_details);
+				pstmtNotificationLog.setInt(2, p_id);
+				pstmtNotificationLog.setInt(3, s_id);
+				pstmtNotificationLog.setString(4, notify_details);
+				pstmtNotificationLog.setString(5, status);
+				pstmtNotificationLog.setString(6, error_details);
+				log.info("Writing notification log: " + pstmtNotificationLog.toString());
 				pstmtNotificationLog.executeUpdate();
 			}
 			
