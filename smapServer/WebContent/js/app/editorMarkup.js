@@ -45,7 +45,7 @@ define([
 		h[++idx] = addPanelStyle(question.type, fIndex, qIndex);
 		
 		h[++idx] = '<div class="panel-heading">';
-			//h[++idx] = addNewQuestionButton();   Disable for 1504 release
+			h[++idx] = addNewQuestionButton(); 
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
 					h[++idx] = addQType(question.type, question.calculation);

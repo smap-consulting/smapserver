@@ -91,10 +91,33 @@ define([
 		// TODO apply events
 		
 		// 5. Create changeset to be applied on save
+		newQuestion.index = splicePoint;
+		newQuestion.fIndex = fIndex;
+		newQuestion.type = "question";
+		addElementToChangeset(newQuestion);
+
 	}
 	
 	function setType() {
 		$('#typeModal').modal('show');
+	}
+	
+	function addElementToChangeset(element) {
+		
+		var item = [],	
+			newMarkup,
+			survey = globals.model.survey,
+			i;
+		
+		item.push({
+			action: "new",
+			element: element
+		});
+		
+		// Add the change to the list of changes to be applied
+		globals.model.addElement(item);
+		
+	
 	}
 
 

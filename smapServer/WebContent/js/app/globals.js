@@ -530,6 +530,14 @@ define(function() {
 			}
 		}
 		
+		// Add a question, option or language
+		this.addElement = function(item) {
+			
+			this.currentChange = this.changes.push(item) - 1;
+			this.doChange();				// Apply the current change
+			this.setHasChanges(this.changes.length);
+		}
+		
 		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
 		this.modLabel = function(language, changedQ, newVal, element, prop) {
 			
