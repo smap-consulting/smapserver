@@ -184,7 +184,7 @@ public class PDFManager {
 			if(templateFile.exists()) {
 				
 				log.info("PDF Template Exists");
-				String templateName = templateFile.getName();
+				String templateName = templateFile.getAbsolutePath();
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, outputStream);

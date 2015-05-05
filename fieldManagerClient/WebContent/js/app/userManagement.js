@@ -196,7 +196,7 @@ $(document).ready(function() {
 	
 		});
 		userList[0] = user;
-		writeUserDetails(userList, $(this));	// Save the user details to the database
+		writeUserDetails(userList, $('#create_user_popup'));	// Save the user details to the database
  		
     });
   
@@ -749,10 +749,12 @@ function writeUserDetails(userList, $dialog) {
 			  removeHourglass();
 			  $('#userDetailsSave').attr("disabled", false);
 			  getUsers();
+			  $dialog.modal("hide");
 		  }, error: function(xhr, textStatus, err) {
 			  removeHourglass();
 			  $('#userDetailsSave').attr("disabled", false);
 			  if(xhr.readyState == 0 || xhr.status == 0) {
+				  $dialog.modal("hide");
 				  return;  // Not an error
 			  } else {
 				  if(xhr.status === 409) {
