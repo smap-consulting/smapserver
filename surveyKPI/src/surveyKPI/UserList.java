@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
@@ -473,7 +474,8 @@ public class UserList extends Application {
 								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
 								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
 								String sender = "newuser";
-								UtilityMethodsEmail.sendEmail(
+								EmailManager em = new EmailManager();
+								em.sendEmail(
 										u.email, 
 										uuid, 
 										"newuser", 

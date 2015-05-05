@@ -461,7 +461,8 @@ public class NotificationManager {
 								" smtp_host: " + emailServer.smtpHost +
 								" email_domain: " + emailServer.emailDomain);
 						try {
-							UtilityMethodsEmail.sendEmail(
+							EmailManager em = new EmailManager();
+							em.sendEmail(
 									emails, 
 									null, 
 									"notify", 
