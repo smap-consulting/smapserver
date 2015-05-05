@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 
@@ -110,7 +111,9 @@ public class PasswordReset extends Application {
 
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset";
-						UtilityMethodsEmail.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
+					    
+					    EmailManager em = new EmailManager();
+						em.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
 					    		idents, null, null, null, organisation.admin_email, emailServer.smtpHost, emailServer.emailDomain, request.getServerName());
 					    response = Response.ok().build();
 					} else {
