@@ -94,31 +94,19 @@ define([
 		newQuestion.index = splicePoint;
 		newQuestion.fIndex = fIndex;
 		newQuestion.type = "question";
-		addElementToChangeset(newQuestion);
-
+		
+		var item = [];
+		item.push({
+			action: "new",
+			element: element
+		});
+		
+		globals.model.addElement(item);
 	}
 	
 	function setType() {
 		$('#typeModal').modal('show');
 	}
 	
-	function addElementToChangeset(element) {
-		
-		var item = [],	
-			newMarkup,
-			survey = globals.model.survey,
-			i;
-		
-		item.push({
-			action: "new",
-			element: element
-		});
-		
-		// Add the change to the list of changes to be applied
-		globals.model.addElement(item);
-		
-	
-	}
-
 
 });

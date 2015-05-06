@@ -489,8 +489,7 @@ public class UserList extends Application {
 										null,
 										null,
 										organisation.admin_email, 
-										emailServer.smtpHost,
-										emailServer.emailDomain,
+										emailServer,
 										request.getServerName());
 							} else {
 								throw new Exception("Email not enabled - set passwords directly");

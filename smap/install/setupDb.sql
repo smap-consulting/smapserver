@@ -61,7 +61,10 @@ ALTER SEQUENCE regions_seq OWNER TO ws;
 DROP TABLE IF EXISTS server CASCADE;
 create TABLE server (
 	smtp_host text,
-	email_domain text
+	email_domain text,
+	email_user text,
+	email_password text,
+	email_port integer
 	);
 ALTER TABLE server OWNER TO ws;
 
@@ -84,6 +87,9 @@ create TABLE organisation (
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled
 	email_domain text,
+	email_user text,
+	email_password text,
+	email_port integer,
 	default_email_content text,
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);

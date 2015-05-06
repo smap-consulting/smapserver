@@ -33,5 +33,8 @@ public class Organisation {
 	public String admin_email;
 	public String smtp_host;
 	public String email_domain;
+	public String email_user;
+	public String email_password;
+	public int email_port;
 	public String default_email_content;
 }
