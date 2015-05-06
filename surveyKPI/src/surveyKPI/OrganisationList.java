@@ -119,10 +119,13 @@ public class OrganisationList extends Application {
 					" ft_delete_submitted," +
 					" ft_send_trail," +
 					" changed_by, " +
-					" changed_ts," +
+					" changed_ts," + 
 					" admin_email, " +
 					" smtp_host, " +
 					" email_domain, " +
+					" email_user, " +
+					" email_password, " +
+					" email_port, " +
 					" default_email_content " +
 					" from organisation " + 
 					" order by name ASC;";			
@@ -147,6 +150,9 @@ public class OrganisationList extends Application {
 				org.admin_email = resultSet.getString("admin_email");
 				org.smtp_host = resultSet.getString("smtp_host");
 				org.email_domain = resultSet.getString("email_domain");
+				org.email_user = resultSet.getString("email_user");
+				org.email_password = resultSet.getString("email_password");
+				org.email_port = resultSet.getInt("email_port");
 				org.default_email_content = resultSet.getString("default_email_content");
 				organisations.add(org);
 			}
@@ -258,8 +264,9 @@ public class OrganisationList extends Application {
 						
 					sql = "insert into organisation (name, company_name, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
-							"changed_by, admin_email, smtp_host, email_domain, default_email_content, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+							"changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
+							"email_port, default_email_content, changed_ts) " +
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setString(1, o.name);
@@ -274,7 +281,10 @@ public class OrganisationList extends Application {
 					pstmt.setString(10, o.admin_email);
 					pstmt.setString(11, o.smtp_host);
 					pstmt.setString(12, o.email_domain);
-					pstmt.setString(13, o.default_email_content);
+					pstmt.setString(13, o.email_user);
+					pstmt.setString(14, o.email_password);
+					pstmt.setInt(15, o.email_port);
+					pstmt.setString(16, o.default_email_content);
 					log.info("Insert organisation: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
@@ -303,6 +313,9 @@ public class OrganisationList extends Application {
 							" admin_email = ?, " +
 							" smtp_host = ?, " +
 							" email_domain = ?, " +
+							" email_user = ?, " +
+							" email_password = ?, " +
+							" email_port = ?, " +
 							" default_email_content = ?, " +
 							" changed_by = ?, " + 
 							" changed_ts = now() " + 
@@ -321,9 +334,12 @@ public class OrganisationList extends Application {
 					pstmt.setString(9, o.admin_email);
 					pstmt.setString(10, o.smtp_host);
 					pstmt.setString(11, o.email_domain);
-					pstmt.setString(12, o.default_email_content);
-					pstmt.setString(13, request.getRemoteUser());
-					pstmt.setInt(14, o.id);
+					pstmt.setString(12, o.email_user);
+					pstmt.setString(13, o.email_password);
+					pstmt.setInt(14, o.email_port);
+					pstmt.setString(15, o.default_email_content);
+					pstmt.setString(16, request.getRemoteUser());
+					pstmt.setInt(17, o.id);
 							
 					log.info("Update organisation: " + pstmt.toString());
 					pstmt.executeUpdate();

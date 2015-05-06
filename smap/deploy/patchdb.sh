@@ -138,8 +138,14 @@ case $choice in
 esac
 fi
 echo "1502" > ~/smap_version
+
 # version 15.03
+if [ $version -lt "1503" ]
+then
 sudo mkdir /usr/bin/smap/resources
 sudo mkdir /usr/bin/smap/resources/css
+echo "1503" > ~/smap_version
+fi
+
 # version 15.04
 echo "1504" > ~/smap_version

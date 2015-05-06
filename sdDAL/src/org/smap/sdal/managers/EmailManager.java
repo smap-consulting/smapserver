@@ -21,6 +21,8 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import org.smap.sdal.model.EmailServer;
+
 /*****************************************************************************
 
 This file is part of SMAP.
@@ -54,9 +56,7 @@ public class EmailManager {
 	private class Authenticator extends javax.mail.Authenticator {
 		private PasswordAuthentication authentication;
 
-		public Authenticator() {
-			String username = "auth-user";
-			String password = "auth-password";
+		public Authenticator(String username, String password) {
 			authentication = new PasswordAuthentication(username, password);
 		}
 
@@ -80,23 +80,47 @@ public class EmailManager {
 			String filePath,	// The next two parameters are for an attachment TODO make an array
 			String filename,
 			String adminEmail,
-			String smtp_host,
-			String emailDomain,
+			EmailServer emailServer,
 			String serverName) throws Exception  {
 		
-		if(smtp_host == null) {
+		if(emailServer.smtpHost == null) {
 			throw new Exception("smtp_host not available");
 		}
 		
 		RecipientType rt = null;
 		try {
 			Properties props = System.getProperties();
-			props.put("mail.smtp.host", smtp_host);	
+			props.put("mail.smtp.host", emailServer.smtpHost);	
 			
-			Authenticator authenticator = new Authenticator();
-			props.setProperty("mail.smtp.submitter", authenticator.getPasswordAuthentication().getUserName());
-			props.setProperty("mail.smtp.auth", "true");
+			Authenticator authenticator = null;
 			
+			// Create an authenticator if the user name and password is available
+			if(emailServer.emailUser != null && emailServer.emailPassword != null 
+					&& emailServer.emailUser.trim().length() > 0 
+					&& emailServer.emailPassword.trim().length() > 0) {
+				String authUser = emailServer.emailUser + "@" + emailServer.emailDomain;
+				authenticator = new Authenticator(authUser, emailServer.emailPassword);
+				props.setProperty("mail.smtp.submitter", authenticator.getPasswordAuthentication().getUserName());
+				props.setProperty("mail.smtp.auth", "true");
+				props.setProperty("mail.smtp.starttls.enable", "true");
+				if(emailServer.emailPort > 0) {
+					props.setProperty("mail.smtp.port", String.valueOf(emailServer.emailPort));
+				} else {
+					props.setProperty("mail.smtp.port", "587");	
+				}
+				
+				sender = emailServer.emailUser;
+				
+				log.info("Trying to send email with authentication");
+			} else {
+				if(emailServer.emailPort > 0) {
+					props.setProperty("mail.smtp.port", String.valueOf(emailServer.emailPort));
+				} else {
+					// Use default port (25?)
+				}
+				log.info("No authentication");
+			}
+		
 			Session session = Session.getInstance(props, authenticator);
 			//session.setDebug(true);
 			Message msg = new MimeMessage(session);
@@ -112,10 +136,10 @@ public class EmailManager {
 		    msg.setRecipients(rt,	emailArray);
 		    msg.setSubject(subject);
 		    
-		    if(emailDomain == null) {
+		    if(emailServer.emailDomain == null) {
 		    	sender = sender + "@" + serverName;
 		    } else {
-		    	sender = sender + "@" + emailDomain;
+		    	sender = sender + "@" + emailServer.emailDomain;
 		    }
 		    log.info("Sending email from: " + sender);
 		    msg.setFrom(InternetAddress.parse(sender, false)[0]);

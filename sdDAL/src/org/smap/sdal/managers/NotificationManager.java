@@ -476,8 +476,7 @@ public class NotificationManager {
 									filePath,
 									filename,
 									organisation.admin_email, 
-									emailServer.smtpHost,
-									emailServer.emailDomain,
+									emailServer,
 									serverName);
 						} catch(Exception e) {
 							status = "error";
