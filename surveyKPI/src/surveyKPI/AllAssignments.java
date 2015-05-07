@@ -64,6 +64,7 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1255,7 +1256,16 @@ public class AllAssignments extends Application {
 								double dVal = 0.0;
 								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
 								pstmtInsert.setDouble(index++, dVal);
-							} else {
+							} else if(col.type.equals("date")) {
+								Date dateVal = Date.valueOf(value); 
+								pstmtInsert.setDate(index++, dateVal);
+							} else if(col.type.equals("datetime")) {
+								SimpleDateFormat form = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+								java.util.Date uDate = form.parse(value);
+								Timestamp tsVal = new Timestamp(uDate.getTime());
+								
+								pstmtInsert.setTimestamp(index++, tsVal);
+							}else {
 								pstmtInsert.setString(index++, value);
 							}
 							
