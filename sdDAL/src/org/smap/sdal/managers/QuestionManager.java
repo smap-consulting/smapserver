@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
@@ -139,6 +140,53 @@ public class QuestionManager {
 		}
 		
 		return questions;
+		
+	}
+	
+	/*
+	 * Save to the database
+	 */
+	public void save(Connection sd, ArrayList<Question> questions) throws SQLException {
+		
+		PreparedStatement pstmt = null;
+		String sql = "insert into question (f_id, seq, q_id, qname, qtype, qtext_id, list_name, infotext_id, "
+				+ "source, calculate, "
+				+ "seq, " 
+				+ "defaultanswer, "
+				+ "appearance) " 
+				+ "values (?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?);";
+
+		PreparedStatement pstmtUpdateSeq = null;
+		String sqlUpdateSeq = "update question set seq = seq + 1 where where f_id = ? and seq >= ?;";
+		
+		try {
+			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			
+			for(Question q : questions) {
+				
+				// Update sequence numbers of questions after the question to be inserted
+				if(pstmtUpdateSeq != null) try{pstmtUpdateSeq.close();} catch(Exception e) {}
+				pstmtUpdateSeq.setInt(1, q.fId);
+				pstmtUpdateSeq.setInt(1, q.seq);
+				pstmtUpdateSeq.executeUpdate();
+				
+				// Insert the question
+				if(pstmt != null) try{pstmt.close();} catch(Exception e) {}
+				pstmt.setInt(1, q.fId );
+				pstmt.setInt(2, q.seq );
+				pstmt.setString(3, q.name );
+				
+				pstmt.executeUpdate();
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
 		
 	}
 	

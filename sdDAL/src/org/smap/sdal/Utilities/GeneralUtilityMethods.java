@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.PropertyChange;
 
 
 public class GeneralUtilityMethods {
@@ -538,12 +539,13 @@ public class GeneralUtilityMethods {
 					if(filter.isIncluded(optionCols)) {
 		    		   
 						ChangeItem c = new ChangeItem();
-						c.qId = qId;
-						c.name = qName;					// Add for logging
+						c.property = new PropertyChange();
+						c.property.qId = qId;
+						c.property.name = qName;					// Add for logging
 						c.fileName = csvFileName;		// Add for logging
-						c.qType = qType;
-						c.newVal = optionCols[vlc.label];
-						c.key = optionCols[vlc.value];
+						c.property.qType = qType;
+						c.property.newVal = optionCols[vlc.label];
+						c.property.key = optionCols[vlc.value];
 		    		  
 						ciList.add(c);
 		    		   
@@ -842,6 +844,41 @@ public class GeneralUtilityMethods {
 		}	
 		
 		return tables;
+		
+	}
+	
+	/*
+	 * Return true if the passed in column name is in the table
+	 */
+	public static boolean hasColumn(Connection sd, String tableName, String columnName) throws SQLException {
+		
+		boolean result = false;
+		
+		String sql = "select count(*) from information_schema.columns where table_name = ? " +
+				"and column_name = ?;";
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1,  tableName);
+			pstmt.setString(2,  columnName);
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				if(rs.getInt(1) > 0) {
+					result = true;
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return result;
 		
 	}
 	

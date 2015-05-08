@@ -35,9 +35,10 @@ define([
 		addQType: addQType,
 		addFeaturedProperty: addFeaturedProperty,
 		addQuestions: addQuestions,
-		addMedia: addMedia
+		addMedia: addMedia,
+		refresh: refresh
 	};
-
+	
 	function addOneQuestion(question, fIndex, qIndex) {
 		var h = [],
 			idx = -1;
@@ -120,70 +121,30 @@ define([
 			h = [],
 			idx = -1;
 	
-	for(i = 0; i < types.length; i++) {
-		if(types[i].type === type) {
-			h[++idx] = '<span class="question_type has_tt" title="';
-			h[++idx] = types[i].name;
-			h[++idx] = '">';
-			if(types[i].glyphicon) {
-				h[++idx] = '<span class="glyphicon glyphicon-';
-				h[++idx] = types[i].glyphicon; 
-				h[++idx] = ' edit_type"></span>';
-			} else if(types[i].image) {
-				h[++idx] = '<img class="edit_image" src="';
-				h[++idx] = types[i].image; 
+		for(i = 0; i < types.length; i++) {
+			if(types[i].type === type) {
+				h[++idx] = '<span class="question_type has_tt" title="';
+				h[++idx] = types[i].name;
 				h[++idx] = '">';
-			} else if(types[i].text) {
-				h[++idx] = '<span class="edit_type">';
-				h[++idx] = types[i].text; 
+				if(types[i].glyphicon) {
+					h[++idx] = '<span class="glyphicon glyphicon-';
+					h[++idx] = types[i].glyphicon; 
+					h[++idx] = ' edit_type"></span>';
+				} else if(types[i].image) {
+					h[++idx] = '<img class="edit_image" src="';
+					h[++idx] = types[i].image; 
+					h[++idx] = '">';
+				} else if(types[i].text) {
+					h[++idx] = '<span class="edit_type">';
+					h[++idx] = types[i].text; 
+					h[++idx] = '</span>';
+				}
 				h[++idx] = '</span>';
+				break;
 			}
-			h[++idx] = '</span>';
-			break;
-		}
-	}	
-	return h.join('');
-	/*
-	$elem.html(h.join(''));
-		
-		if(type === "string" && !calculation) {
-			return '<span class="glyphicon glyphicon-font edit_type"></span>';	
-		} else if(type === "select1") {
-			return '<span class="question_type"><img class="edit_image" src="/images/select1_64.png"></span>';
-		} else if(type === "select") {
-			return '<img class="edit_image" src="/images/select_64.png">';
-		} else if(type === "begin repeat") {
-			return '<span class="glyphicon glyphicon-repeat edit_type"></span>';
-		} else if(type === "begin group") {
-			return '<span class="glyphicon glyphicon-folder-open edit_type"></span>';
-		} else if(type === "image") {
-			return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-camera edit_type"></span></div>';
-		} else if(type === "audio") {
-			return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-volume-up edit_type"></span></div>';
-		} else if(type === "video") {
-			return '<div style="width:100%;" class="text-center"><span class="glyphicon glyphicon-facetime-video edit_type"></span></div>';
-		} else if(type === "geopoint") {
-			return '<span class="glyphicon glyphicon-map-marker edit_type"></span>';
-		} else if(type === "dateTime" || type === "date") {
-			return '<span class="glyphicon glyphicon-calendar edit_type"></span>';
-		} else if(type === "time") {
-			return '<span class="glyphicon glyphicon-time edit_type"></span>';
-		} else if(type === "barcode") {
-			return '<span class="glyphicon glyphicon-barcode edit_type"></span>';
-		}  else if(type === "int") {
-			return '<span class="edit_type">#</span>';
-		} else if(type === "decimal") {
-			return '<span class="edit_type">#.#</span>';
-		} else if(type === "geolinestring") {
-			return '<img class="edit_image" src="/images/linestring_64.png">';
-		} else if(type === "geopolygon") {
-			return '<img class="edit_image" src="/images/polygon_64.png">';
-		} else if(type === "string" && calculation) {
-			return '<img class="edit_image" src="/images/calc_64.png">';
-		} else {
-			return '<span class="glyphicon glyphicon-record edit_type"></span>';
-		}
-		*/
+		}	
+		return h.join('');
+
 	}
 	
 	/*
@@ -435,5 +396,104 @@ define([
 	    return h.join("");
 	}
 
+	/*
+	 * Show the form on the screen
+	 */
+	function refreshForm() {
+		
+		var i,
+			survey = globals.model.survey,
+			key,
+			h = [],
+			idx = -1;
+		
+		/*
+		 * Process the questions in the top level form (parent is 0) 
+		 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
+		 * 
+		 */
+		globals.gElementIndex = 0;
+		if(survey) {
+			if(survey.forms && survey.forms.length > 0) {
+				for(i = 0; i < survey.forms.length; i++) {
+					if(survey.forms[i].parentform == 0) {
+						h[++idx] = markup.addQuestions(survey.forms[i], i);
+						break;
+					}
+				}
+			}
+		}
+		
+		// Get the current list of collapsed panels
+		gCollapsedPanels = [];
+		$('.in').each(function(){
+			gCollapsedPanels.push($(this).attr("id"));
+		});
+		
+		// Update the form view
+		$('#formList').html(h.join(""));
+		
+		// Restore collapsed panels
+		for(i = 0; i < gCollapsedPanels.length; i++) {
+			$('#' + gCollapsedPanels[i]).addClass("in");
+		}
+		
+		respondToEvents($('#formList'));
+		
+		//$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
+
+		//enableDragablePanels();
+		
+
+	}
+	
+	/*
+	 * Show the form on the screen
+	 */
+	function refresh() {
+		
+		var i,
+			survey = globals.model.survey,
+			key,
+			h = [],
+			idx = -1;
+		
+		/*
+		 * Process the questions in the top level form (parent is 0) 
+		 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
+		 * 
+		 */
+		globals.gElementIndex = 0;
+		if(survey) {
+			if(survey.forms && survey.forms.length > 0) {
+				for(i = 0; i < survey.forms.length; i++) {
+					if(survey.forms[i].parentform == 0) {
+						h[++idx] = addQuestions(survey.forms[i], i);
+						break;
+					}
+				}
+			}
+		}
+		
+		// Get the current list of collapsed panels
+		gCollapsedPanels = [];
+		$('.in').each(function(){
+			gCollapsedPanels.push($(this).attr("id"));
+		});
+		
+		// Update the form view
+		$('#formList').html(h.join(""));
+		
+		// Restore collapsed panels
+		for(i = 0; i < gCollapsedPanels.length; i++) {
+			$('#' + gCollapsedPanels[i]).addClass("in");
+		}
+		
+		return $('#formList');		// Return the context of the updated HTML so that events can be applied
+
+		//enableDragablePanels();
+		
+
+	}
 
 });

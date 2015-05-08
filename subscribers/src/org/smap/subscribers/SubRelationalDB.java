@@ -1174,7 +1174,7 @@ public class SubRelationalDB extends Subscriber {
 			while(rs.next()) {
 				int cId = rs.getInt(1);
 				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
-				int qId = ci.qId;
+				int qId = ci.property.qId;
 				
 				// Get the table and column
 				pstmtGetTable.setInt(1, qId);
@@ -1183,7 +1183,7 @@ public class SubRelationalDB extends Subscriber {
 				if(rsTable.next()) {
 					table = rsTable.getString(1);
 				
-					String column = ci.name + "__" + ci.key;
+					String column = ci.property.name + "__" + ci.property.key;
 				
 					// Alter the table
 					boolean tableAltered = true;

@@ -282,9 +282,6 @@ public class Surveys extends Application {
 			response = Response.serverError().build();
 		} finally {
 			
-			
-
-			
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();

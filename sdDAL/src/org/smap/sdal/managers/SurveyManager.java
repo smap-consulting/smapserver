@@ -621,8 +621,18 @@ public class SurveyManager {
 						
 						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 						
-					} else {
+					} else if(cs.type.equals("property")) {
+						
+						// Update a property
 						applyProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.type);
+						
+					} else if(cs.type.equals("question")) {
+						
+						// Add/delete questions
+						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.type, cs.action);
+						
+					} else {
+						throw new Exception("Error: unknown changeset type: " + cs.type);
 					}
 					
 					
@@ -728,9 +738,9 @@ public class SurveyManager {
 			
 			for(ChangeItem ci : changeItemList) {
 			
-				if(ci.oldVal != null && ci.newVal != null) {
-					if(ci.element.equals("text")) {
-						updateLabel(ci, ci.languageName, pstmtLangOldVal, sId);
+				if(ci.property.oldVal != null && ci.property.newVal != null) {
+					if(ci.property.propType.equals("text")) {
+						updateLabel(ci, ci.property.languageName, pstmtLangOldVal, sId);
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
@@ -739,12 +749,12 @@ public class SurveyManager {
 					}
 					
 				} else {
-					if(ci.element.equals("text")) {
-						addLabel(ci, ci.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+					if(ci.property.propType.equals("text")) {
+						addLabel(ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
 
 						// Add the new text id to the question
-						pstmtNewQuestionLabel.setString(1, ci.key);
-						pstmtNewQuestionLabel.setInt(2, ci.qId);
+						pstmtNewQuestionLabel.setString(1, ci.property.key);
+						pstmtNewQuestionLabel.setInt(2, ci.property.qId);
 						log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 						pstmtNewQuestionLabel.executeUpdate();
 						
@@ -758,7 +768,7 @@ public class SurveyManager {
 
 				}
 				
-				log.info("userevent: " + userId + " : modify survey label : " + ci.key + " to: " + ci.newVal + " survey: " + sId + " language: " + ci.languageName + " labelId: "  + transType);
+				log.info("userevent: " + userId + " : modify survey label : " + ci.property.key + " to: " + ci.property.newVal + " survey: " + sId + " language: " + ci.property.languageName + " labelId: "  + transType);
 				
 				// Write the change log
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -793,17 +803,17 @@ public class SurveyManager {
 		
 		String transType = null;
 		
-		pstmtLangOldVal.setString(1, ci.newVal);
+		pstmtLangOldVal.setString(1, ci.property.newVal);
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
-		pstmtLangOldVal.setString(4, ci.key);
-		if(ci.element.equals("text")) {
+		pstmtLangOldVal.setString(4, ci.property.key);
+		if(ci.property.propType.equals("text")) {
 			transType = "none";
 		} else {
-			transType = ci.element;
+			transType = ci.property.propType;
 		}
 		pstmtLangOldVal.setString(5,  transType);
-		pstmtLangOldVal.setString(6, ci.oldVal);
+		pstmtLangOldVal.setString(6, ci.property.oldVal);
 
 		log.info("Update question translation: " + pstmtLangOldVal.toString());
 		
@@ -818,16 +828,16 @@ public class SurveyManager {
 		
 		String transType = null;
 		
-		if(ci.newVal != null) {
+		if(ci.property.newVal != null) {
 			
-			pstmtLangNew.setString(1, ci.newVal);
+			pstmtLangNew.setString(1, ci.property.newVal);
 			pstmtLangNew.setInt(2, sId);
 			pstmtLangNew.setString(3, language);
-			pstmtLangNew.setString(4, ci.key);
-			if(ci.element.equals("text")) {
+			pstmtLangNew.setString(4, ci.property.key);
+			if(ci.property.propType.equals("text")) {
 				transType = "none";
 			} else {
-				transType = ci.element;
+				transType = ci.property.propType;
 			}
 			pstmtLangNew.setString(5,  transType);
 			
@@ -837,11 +847,11 @@ public class SurveyManager {
 		} else {
 			// Only media labels can have new val set to null and hence be deleted hence delete for all languages
 			pstmtDeleteLabel.setInt(1, sId);
-			pstmtDeleteLabel.setString(2, ci.key);
-			pstmtDeleteLabel.setString(3, ci.element);
+			pstmtDeleteLabel.setString(2, ci.property.key);
+			pstmtDeleteLabel.setString(3, ci.property.propType);
 			log.info("Delete media label: " + pstmtDeleteLabel.toString());
 			pstmtDeleteLabel.executeUpdate();
-			ci.key = null;		// Clear the key in the question table
+			ci.property.key = null;		// Clear the key in the question table
 		}
 		
 	}
@@ -894,9 +904,9 @@ public class SurveyManager {
 				int count = 0;		// Count of changes for this change item
 			
 				// Get the max sequence number
-				if(currentQId != ci.qId) {
+				if(currentQId != ci.property.qId) {
 					// Get current maximum sequence
-					pstmtMaxSeq.setInt(1, ci.qId);
+					pstmtMaxSeq.setInt(1, ci.property.qId);
 					rs = pstmtMaxSeq.executeQuery();
 					if(rs.next()) {
 						maxSeq = rs.getInt(1);
@@ -904,18 +914,18 @@ public class SurveyManager {
 				}
 				
 				// Get the text_id for this option
-				pstmtOptionGet.setInt(1, ci.qId);
-				pstmtOptionGet.setString(2, ci.key);
+				pstmtOptionGet.setInt(1, ci.property.qId);
+				pstmtOptionGet.setString(2, ci.property.key);
 				log.info("Get text_id for option: " + pstmtOptionGet.toString());
 				rs = pstmtOptionGet.executeQuery();
 				if(rs.next()) {
 					
 					String text_id = rs.getString(1);
 					
-					pstmtLangUpdate.setString(1, ci.newVal);
+					pstmtLangUpdate.setString(1, ci.property.newVal);
 					pstmtLangUpdate.setInt(2, sId);
 					pstmtLangUpdate.setString(3, text_id);
-					pstmtLangUpdate.setString(4, ci.newVal);
+					pstmtLangUpdate.setString(4, ci.property.newVal);
 					log.info("Update existing option label: " + pstmtLangUpdate.toString());
 					count = pstmtLangUpdate.executeUpdate();
 					
@@ -925,19 +935,19 @@ public class SurveyManager {
 					
 					// Set text id
 					maxSeq++;
-					String text_id = "external_" + ci.qId + "_" + maxSeq;
+					String text_id = "external_" + ci.property.qId + "_" + maxSeq;
 					// Insert new option		
-					pstmtOptionInsert.setInt(1, ci.qId);
+					pstmtOptionInsert.setInt(1, ci.property.qId);
 					pstmtOptionInsert.setInt(2, maxSeq);
 					pstmtOptionInsert.setString(3, text_id);
-					pstmtOptionInsert.setString(4, ci.key);
+					pstmtOptionInsert.setString(4, ci.property.key);
 					count = pstmtOptionInsert.executeUpdate();
 					
 					// Set label
 					pstmtLangInsert.setInt(1, sId);
 					pstmtLangInsert.setString(3, text_id);
 					pstmtLangInsert.setString(4, "none");
-					pstmtLangInsert.setString(5, ci.newVal);
+					pstmtLangInsert.setString(5, ci.property.newVal);
 					for(String language : languages) {
 						pstmtLangInsert.setString(2, language);
 						count += pstmtLangInsert.executeUpdate();
@@ -953,7 +963,7 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(ci));
 					pstmtChangeLog.setInt(4,userId);
-					if(ci.qType != null && ci.qType.equals("select")) {
+					if(ci.property.qType != null && ci.property.qType.equals("select")) {
 						pstmtChangeLog.setBoolean(5, true);
 					} else {
 						pstmtChangeLog.setBoolean(5, false);
@@ -992,50 +1002,49 @@ public class SurveyManager {
 			int sId, 
 			int userId,
 			int version,
-			String property) throws Exception {
+			String type) throws Exception {
 
 		PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
 		
-		/*
-		 * Validate the passed in property and make sure it is one that is ok to update
-		 */
-		if(property.equals("appearance")) {
-			 
+		try {
 		
-			try {
+			for(ChangeItem ci : changeItemList) {
 				
-				// Create prepared statements, one for the case where an existing value is being updated
-				String sqlProperty1 = "update question set " + property + " = ? " +
-						"where q_id = ? and " + property + " = ?;";
-				pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
-				
-				String sqlProperty2 = "update question set " + property + " = ? " +
-						"where q_id = ? and " + property + " is null;";
-				pstmtProperty2 = connectionSD.prepareStatement(sqlProperty2);
-				
-				for(ChangeItem ci : changeItemList) {
+				// TODO Check that property exists first
+				String property = ci.property.prop;
+				if(GeneralUtilityMethods.hasColumn(connectionSD, "question", property)) {
+			
+					// Create prepared statements, one for the case where an existing value is being updated
+					String sqlProperty1 = "update question set " + property + " = ? " +
+							"where q_id = ? and " + property + " = ?;";
+					pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
+					
+					String sqlProperty2 = "update question set " + property + " = ? " +
+							"where q_id = ? and " + property + " is null;";
+					pstmtProperty2 = connectionSD.prepareStatement(sqlProperty2);
 					
 					int count = 0;
-
-					if(ci.oldVal != null && !ci.oldVal.equals("NULL")) {
-						pstmtProperty1.setString(1, ci.newVal);
-						pstmtProperty1.setInt(2, ci.qId);
-						pstmtProperty1.setString(3, ci.oldVal);
+		
+					if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+						pstmtProperty1.setString(1, ci.property.newVal);
+						pstmtProperty1.setInt(2, ci.property.qId);
+						pstmtProperty1.setString(3, ci.property.oldVal);
 						log.info("Update question property: " + pstmtProperty1.toString());
 						count = pstmtProperty1.executeUpdate();
 					} else {
-						pstmtProperty2.setString(1, ci.newVal);
-						pstmtProperty2.setInt(2, ci.qId);
+						pstmtProperty2.setString(1, ci.property.newVal);
+						pstmtProperty2.setInt(2, ci.property.qId);
 						log.info("Update question property: " + pstmtProperty2.toString());
 						count = pstmtProperty2.executeUpdate();
 					}
+					
 					if(count == 0) {
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
-					
-					
-					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.newVal + " survey: " + sId);
+						
+						
+					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
 					
 					// Write the change log
 					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -1046,21 +1055,77 @@ public class SurveyManager {
 					pstmtChangeLog.setBoolean(5,false);
 					pstmtChangeLog.setTimestamp(6, getTimeStamp());
 					pstmtChangeLog.execute();
+					
+				} else {
+					throw new Exception("Unknown property: " + property);
 				}
-			} catch (Exception e) {
-				
-				String msg = e.getMessage();
-				if(msg == null || !msg.startsWith("Already modified")) {
-					log.log(Level.SEVERE,"Error", e);
-				}
-				throw e;
-			} finally {
-				try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
-				try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
-			
 			}
-		} else {
-			throw new Exception("Error: Invalid property could not update: " + property);
+			
+		} catch (Exception e) {
+			
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
+			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
+		
+		}
+	
+	}
+	
+	/*
+	 * Apply add / delete questions
+	 * This can be any simple property type such as relevance
+	 */
+	public void applyQuestion(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version,
+			String type,
+			String action) throws Exception {
+		
+		QuestionManager qm = new QuestionManager();
+		ArrayList<Question> questions = new ArrayList<Question> ();
+		 
+		try {
+		
+			for(ChangeItem ci : changeItemList) {
+					
+				questions.add(ci.question);
+				
+				log.info("userevent: " + userId + (action.equals("add") ? " : add question : " : " : delete question : ") + ci.question.name + " survey: " + sId);
+				
+				// Write the change log
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				pstmtChangeLog.setInt(1, sId);
+				pstmtChangeLog.setInt(2, version);
+				pstmtChangeLog.setString(3, gson.toJson(ci));
+				pstmtChangeLog.setInt(4,userId);
+				pstmtChangeLog.setBoolean(5,false);
+				pstmtChangeLog.setTimestamp(6, getTimeStamp());
+				pstmtChangeLog.execute();
+			} 
+			
+			if(action.equals("add")) {
+				qm.save(connectionSD, questions);
+			} else {
+				// TODO delete questions
+			}
+			
+		} catch (Exception e) {
+				
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			
 		}
 	}
 	

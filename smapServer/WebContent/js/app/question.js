@@ -27,8 +27,9 @@ define([
          'modernizr',
          'app/localise',
          'app/globals',
-         'app/editorMarkup'], 
-		function($, modernizr, lang, globals, markup) {
+         'app/editorMarkup',
+         'app/changeset'], 
+		function($, modernizr, lang, globals, markup, changeset) {
 
 	return {	
 		init: init,
@@ -95,13 +96,18 @@ define([
 		newQuestion.fIndex = fIndex;
 		newQuestion.type = "question";
 		
-		var item = [];
-		item.push({
-			action: "new",
-			element: element
-		});
+		change = {
+				changeType: "label",		// survey | form | language | question | option | (property | label | media) last three are types of property change
+				action: "add",
+				question: {
+					
+				}
+	
+		};
 		
-		globals.model.addElement(item);
+		$context = changeset.add(change);
+		respondToEvents($context);				// Add events on to the altered html
+		
 	}
 	
 	function setType() {

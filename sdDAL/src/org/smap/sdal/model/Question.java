@@ -11,6 +11,7 @@ import java.util.logging.Logger;
  */
 public class Question {
 	public int id;
+	public int fId;
 	public String name;
 	public String colName;			// The name of the database column for this question
 	public String type;

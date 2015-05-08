@@ -55,7 +55,8 @@ require([
          'bootstrap.file-input',
          'bootbox',
          'app/question',
-         'app/editorMarkup'], 
+         'app/editorMarkup',
+         'app/changeset'], 
 		function(
 				$, 
 				common, 
@@ -67,7 +68,8 @@ require([
 				bsfi, 
 				bootbox,
 				question,
-				markup) {
+				markup,
+				changeset) {
 
 
 var	gMode = "survey",
@@ -147,7 +149,7 @@ $(document).ready(function() {
 		
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
-		globals.model.save(surveyListDone);
+		changeset.save(surveyListDone);
 	});
 
 	// Add menu functions
@@ -437,63 +439,14 @@ function refreshView() {
 }
 
 /*
- * Refresh the view for the Layout property
- */
-function refreshLayout() {
-	var h = [],
-	idx = -1;
-	
-	// Update the form view
-	$('#formList').html(h.join(""));
-}
-
-/*
  * Show the form on the screen
  */
 function refreshForm() {
 	
-	var i,
-		survey = globals.model.survey,
-		key,
-		h = [],
-		idx = -1;
+	var $context;
 	
-	/*
-	 * Process the questions in the top level form (parent is 0) 
-	 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
-	 * 
-	 */
-	globals.gElementIndex = 0;
-	if(survey) {
-		if(survey.forms && survey.forms.length > 0) {
-			for(i = 0; i < survey.forms.length; i++) {
-				if(survey.forms[i].parentform == 0) {
-					h[++idx] = markup.addQuestions(survey.forms[i], i);
-					break;
-				}
-			}
-		}
-	}
-	
-	// Get the current list of collapsed panels
-	gCollapsedPanels = [];
-	$('.in').each(function(){
-		gCollapsedPanels.push($(this).attr("id"));
-	});
-	
-	// Update the form view
-	$('#formList').html(h.join(""));
-	
-	// Restore collapsed panels
-	for(i = 0; i < gCollapsedPanels.length; i++) {
-		$('#' + gCollapsedPanels[i]).addClass("in");
-	}
-	
-	respondToEvents($('#formList'));
-	
-	//$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
-
-	//enableDragablePanels();
+	$context = markup.refresh();
+	respondToEvents($context);
 	
 
 }
@@ -656,126 +609,43 @@ function updateSettingsData() {
  */
 function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname, prop) {
 	
-	var item = [],		// An array is used because the translate page can push multiple questions / options into the list that share the same text
-		newMarkup,
-		survey = globals.model.survey,
-		i;
+	var $context,
+		change;
 	
-	if(type === "question") {
-		item.push({
-			form: formIndex,
-			question: itemIndex
-		});
-		
-		// Update the in memory survey model
-		if(element === "text") {
-			if(prop === "label") {
-				survey.forms[formIndex].questions[itemIndex].labels[globals.gLanguage][element] = newVal;
-			} else {
-				survey.forms[formIndex].questions[itemIndex][prop] = newVal;		//XXX
-			}
-		} else {
-			// For non text changes update all languages
-			for(i = 0; i < survey.forms[formIndex].questions[itemIndex].labels.length; i++) {
-				survey.forms[formIndex].questions[itemIndex].labels[i][element] = newVal;
-				survey.forms[formIndex].questions[itemIndex].labels[i][element + "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
-			}
-		}
-	} else {
-		item.push({
-			optionList: optionList,
-			qname: qname,
-			option: itemIndex
-		});
-		if(element === "text") {
-			survey.optionLists[optionList][itemIndex].labels[globals.gLanguage][element] = newVal;
-		} else {
-			// For non text changes update all languages
-			for(i = 0; i < survey.optionLists[optionList][itemIndex].labels.length; i++) {
-				survey.optionLists[optionList][itemIndex].labels[i][element] = newVal;
-				survey.optionLists[optionList][itemIndex].labels[i][element+ "Url"] = getUrl(survey.o_id, survey.ident, newVal, false, element);
-			}
-		}
-	}
-	
-	// Add the change to the list of changes to be applied
-	globals.model.modLabel(globals.gLanguage, item, newVal, element, prop);
-	
-	
-	// Update the current markup
-	if(element === "image") {	
-		
-		newMarkup = markup.addMedia("Image", 
-				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false, 'image'), 
-				getUrl(survey.o_id, survey.ident, newVal, true, 'image')
-				);
-		
-	} else if(element === "video") {
-		
-		newMarkup = markup.addMedia("Video", 
-				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false, 'video'), 
-				getUrl(survey.o_id, survey.ident, newVal, true, 'video')
-				);
-		
-	} else if(element === "audio") {
-		
-		newMarkup = markup.addMedia("Audio", 
-				newVal, 
-				getUrl(survey.o_id, survey.ident, newVal, false, 'audio'), 
-				undefined
-				);	
+	change = {
+			changeType: "label",		// survey | form | language | question | option | (property | label | media) last three are types of property change
+										// Also option_update which is not used by the editor
+			action: "update",
+			property: {
+				qId: undefined,				// qId must be set to apply the change
+				qType: undefined,			// Question type
+				type: type,					// question or option
+				name: undefined,			// name of the question or the option list
+				propType: element,			// text or image or video or audio
+				prop: prop,					// Property to be changed, for example: label or appearance
+				languageName: undefined,	// Language Name
+				allLanguages: false,		// Set true if all languages should be updated with a new label
+				
+				newVal: newVal,				// New value to be applied
+				oldVal: undefined,			// Old value for this property
+				key: undefined,				// or Translation the "text_id", For option updates the option "value"
+				
+				// Helper values temporary indexes to access the model which has values for the question or option to be updated
+				qname: qname,					// Question name used when updating an option
+				language: globals.gLanguage,	// Index into language array
+				formIndex: formIndex,		// Index into the array of forms
+				itemIndex: itemIndex,		// Index into the form or choice list (for choices)
 
-	}
+				optionList: optionList,		// Name of the choice list (if this is an choice update)	
+				isSurveyLevel: gIsSurveyLevel	// Set true for media if the media was added at the survey level rather than organisation
+			}
+	};
 	
-	if($gCurrentRow) {
-		$gCurrentRow.find('.' + element + 'Element').replaceWith(newMarkup);
-		$('.mediaProp', $gCurrentRow).off().click(function(){
-			var $this = $(this);
-			mediaPropSelected($this);
-		});
-	}
+	$context = changeset.add(change);
+	respondToEvents($context);				// Add events on to the altered html
+	
 }
 
-/*
- * Media functions
- */
-function getUrl(o_id, s_ident, newVal, thumbs, type) {
-	var url = "/media/",
-		filebase,
-		ext;
-	
-	if(newVal) {
-		if(gIsSurveyLevel) {
-			url += s_ident;
-			url += "/";
-			if(thumbs) {
-				url += "thumbs/"; 
-			}
-		} else {
-			url += "organisation/";
-			url += o_id;
-			url += "/";
-			if(thumbs) {
-				url += "thumbs/"; 
-			}
-		}
-		
-		url += newVal;
-
-		// Videos and other derived thumbnails will have type jpg
-		if(type !== "image") {			
-			index = urll.lastIndexOf('.');
-			filebase = url.substr(0, index);
-			url = filebase + ".jpg";		
-		}
-	} else {
-		url = undefined;
-	}
-	
-	return url;
-}
 
 function progressFn(e) {
 	if(e.lengthComputable){

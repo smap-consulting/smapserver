@@ -359,91 +359,7 @@ define(function() {
 				glyphicon: "record"
 			}
 		];
-	
 		
-		// Save the survey
-		this.save = function(callback) {
-			
-			var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey;
-			var changesString = JSON.stringify(this.changes);		
-			
-			globals.model.setHasChanges(0);
-			addHourglass();
-			$.ajax({
-				url: url,
-				type: 'PUT',
-				dataType: 'json',
-				cache: false,
-				data: { changes: changesString },
-				success: function(data) {
-					var responseFn = callback;
-					var h = [],
-						idx = -1,
-						i;
-					
-					removeHourglass();
-					
-					// Reset the set of pending updates
-					//getSurveyDetails(surveyDetailsDone);
-					if(typeof responseFn === "function") { 
-						responseFn();
-					}
-					
-					// Report success and failure
-					globals.model.lastChanges = data.changeSet;
-					$('#successLabel .counter').html(data.success);
-					$('#failedLabel .counter').html(data.failed);	
-					
-					if(data.success > 0) {
-						h[++idx] = '<div class="alert alert-success" role="alert">';
-						h[++idx] = '<p>';
-						h[++idx] = data.success;
-						h[++idx] = " changes successfully applied";
-						h[++idx] = '</p>'
-						h[++idx] = '<ol>';
-						for(i = 0; i < data.changeSet.length; i++) {
-							h[++idx] = addUpdateMessage(data.changeSet[i], false);
-						}
-						h[++idx] = '</ol>';
-						h[++idx] = '</div>';
-					}
-					if(data.failed > 0) {
-						h[++idx] = '<div class="alert alert-danger" role="alert">';
-						h[++idx] = data.failed;
-						h[++idx] = " changes failed";
-						h[++idx] = '<ol>';
-						for(i = 0; i < data.changeSet.length; i++) {
-							h[++idx] = addUpdateMessage(data.changeSet[i], true);
-						}
-						h[++idx] = '</ol>';
-						h[++idx] = '</div>';
-					}
-					bootbox.alert(h.join(""));
-
-				},
-				error: function(xhr, textStatus, err) {
-					removeHourglass();
-					if(xhr.readyState == 0 || xhr.status == 0) {
-			              return;  // Not an error
-					} else {
-						alert("Error: Failed to save survey: " + err);
-					}
-				}
-			});	
-			
-		};
-		
-		// Update settings when the number of changes to apply changes 
-		this.setHasChanges = function(numberChanges) {
-			if(numberChanges === 0) {
-				globals.model.changes = [];
-				globals.model.currentChange = 0;
-				$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
-				
-			} else {
-				$('.m_save_survey').removeClass("disabled").attr("disabled", false).find('.badge').html(numberChanges);
-			}
-		}
 		
 		// Save the settings for the survey
 		this.save_settings = function() {
@@ -483,6 +399,7 @@ define(function() {
 		};
 		
 		// Apply the current change
+		/*
 		this.doChange = function() {
 			
 			var change = this.changes[this.currentChange];
@@ -530,6 +447,7 @@ define(function() {
 			}
 		}
 		
+		
 		// Add a question, option or language
 		this.addElement = function(item) {
 			
@@ -539,6 +457,7 @@ define(function() {
 		}
 		
 		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
+		
 		this.modLabel = function(language, changedQ, newVal, element, prop) {
 			
 			var labelMod = {
@@ -557,35 +476,35 @@ define(function() {
 
 				// For questions
 				if(typeof changedQ[i].form !== "undefined") {
-					label.formIdx = changedQ[i].form;
-					label.questionIdx = changedQ[i].question;
-					label.type = "question";
-					item = this.survey.forms[label.formIdx].questions[label.questionIdx];
-					item_orig = this.survey.forms_orig[label.formIdx].questions[label.questionIdx];
-					label.name = item.name;	
-					label.qId = item.id;
+					label.formIdx = changedQ[i].form;													// done
+					label.questionIdx = changedQ[i].question;											// done
+					label.type = "question";															// done
+					item = this.survey.forms[label.formIdx].questions[label.questionIdx];				// done
+					item_orig = this.survey.forms_orig[label.formIdx].questions[label.questionIdx];		// done
+					label.name = item.name;																// done
+					label.qId = item.id;																// done
 				} else {
 					// For options
-					label.optionListIdx = changedQ[i].optionList;
-					qname = changedQ[i].qname;
-					label.optionIdx = changedQ[i].option;
-					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];
-					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];
-					label.type = "option";
-					label.name = label.optionListIdx;		// The option list name
+					label.optionListIdx = changedQ[i].optionList;										// done
+					qname = changedQ[i].qname;															// done
+					label.optionIdx = changedQ[i].option;												// done
+					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];				// done
+					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];		// done
+					label.type = "option";																// done
+					label.name = label.optionListIdx;		// The option list name						// done
 				}
 					
-				label.newVal = newVal;
-				if(prop === "label" || prop === "media") {
-					label.oldVal = item_orig.labels[language][element]; 
+				label.newVal = newVal;																	// done
+				if(prop === "label" || prop === "media") {												// done
+					label.oldVal = item_orig.labels[language][element]; 								// done
 				} else {
-					label.oldVal = item_orig[prop];
+					label.oldVal = item_orig[prop];														// done
 				}
-				label.element = element;
-				label.language = language;
+				label.element = element;																// done
+				label.language = language;																// done
 				
-				label.languageName = this.survey.languages[language];			// For logging the event
-				var form = this.survey.forms[label.formIdx];
+				label.languageName = this.survey.languages[language];			// For logging the event // done
+				var form = this.survey.forms[label.formIdx];											// done
 
 				if(item.text_id) {
 					label.key = item.text_id;
@@ -608,7 +527,7 @@ define(function() {
 			}
 			this.setHasChanges(this.changes.length);
 		};
-		
+		*/
 		/*
 		 * Functions for managing settings
 		 */
@@ -676,58 +595,6 @@ define(function() {
 			globals.model.forceSettingsChange = true;
 			$('#save_settings').attr("disabled", false);
 		}
-	}
-	
-	/*
-	 * If this is the second time an element has been modified then remove the original modification
-	 * Only check the first item as if the first item is a duplicate all should be duplicates
-	 */
-	function removeDuplicateChange(changes, change) {
-		var j, 
-			item,
-			newItem;
-		
-		for(j = 0; j < changes.length; j++) {
-			
-				item = changes[j].items[0];
-				newItem = change.items[0];
-
-				if(item.language === newItem.language 
-						&& item.type === newItem.type) {
-					if(
-							(newItem.type === "question" && 
-									newItem.questionIdx === item.questionIdx &&
-									newItem.formIdx === item.formIdx) ||
-							(newItem.type === "option" && 
-									newItem.optionIdx === item.optionIdx &&
-									newItem.name === item.name) ) {
-						
-						changes.splice(j,1);	// Remove this item
-						return;					
-						
-					}
-				}
-			
-		}
-	}
-	
-	function addUpdateMessage(data, forError) {
-		var h = [],
-			idx = -1,
-			j;
-		
-		if(data.updateFailed && forError || !data.updateFailed && !forError) {
-			for(j = 0; j < data.items.length; j++) {
-				h[++idx] = '<li>';
-				h[++idx] = 'Question: ';
-				h[++idx] = data.items[j].name;
-				h[++idx] = ' ';
-				h[++idx] = data.errorMsg;
-				h[++idx] = '</li>'
-			}
-		}
-		
-		return h.join("");
 	}
 
 	
