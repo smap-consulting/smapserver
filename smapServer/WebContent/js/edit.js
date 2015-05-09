@@ -490,10 +490,12 @@ function respondToEvents($context) {
 	// Add new question
 	$('.add_question', $context).off().click(function() {
 		var $this = $(this),
+			$context,						// Updated Html
 			qIndex = $(this).data("index"),
 			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
 		
-		question.add(qIndex, locn);
+		$context = question.add(qIndex, locn);
+		respondToEvents($context);				// Add events on to the altered html
 	});
 	
 	// Select types

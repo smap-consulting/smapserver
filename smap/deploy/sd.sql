@@ -275,3 +275,7 @@ alter table server add column email_port integer;
 alter table organisation add column email_user text;
 alter table organisation add column email_password text;
 alter table organisation add column email_port integer;
+
+-- Upgrade to: 15.05 from 15.04
+drop index formid_sequence ;
+alter table question alter column qname set not null;

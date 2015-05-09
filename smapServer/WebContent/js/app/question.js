@@ -53,60 +53,51 @@ define([
 	function add(qItem, locn) {		
 		
 		var $relatedElement = $("#question" + qItem),
-			$relatedQuestionElement,
+			$relatedQuestion,
 			fIndex,
 			qIndexOther,
 			splicePoint = 0,
 			survey = globals.model.survey,
-			newQuestion = {};
+			type;
 		
 		if($relatedElement.size() > 0) {
-			$relatedQuestionElement = $relatedElement.find('.question');
-			fIndex = $relatedQuestionElement.data("fid");
-			qIndexOther = $relatedQuestionElement.data("id");
+			$relatedQuestion = $relatedElement.find('.question');
+			fIndex = $relatedQuestion.data("fid");
+			qIndexOther = $relatedQuestion.data("id");
 		} else {
 			// TODO First question in the form
 			fIndex = 0;
 		}
 		
-		console.log("Adding question: " + qItem + " : " + locn + " : " + fIndex + " : " + qIndexOther );
-		console.log(survey.forms[fIndex].questions[qIndexOther])
+		// Choose type
+		type = "dateTime";		// TODO
 		
-		// 1. Choose type
-		newQuestion.type = "dateTime";		// TODO
-		
-		// 3. Update internal modal so that refresh will not lose the changes
+		// Get the sequence of the question
 		splicePoint = qIndexOther;
 		if(locn === "after") {
 			++splicePoint;
 		} 
 
-		survey.forms[fIndex].questions.splice(splicePoint, 0, newQuestion);
 		
-		// 4. Add Markup
-		if(locn === "after") {
-			$relatedElement.after(markup.addOneQuestion(newQuestion, fIndex, splicePoint));
-		} else {
-			$relatedElement.before(markup.addOneQuestion(newQuestion, fIndex, splicePoint));
-		}
-		// TODO apply events
-		
-		// 5. Create changeset to be applied on save
-		newQuestion.index = splicePoint;
-		newQuestion.fIndex = fIndex;
-		newQuestion.type = "question";
+		// Create changeset to be applied on save
+
 		
 		change = {
-				changeType: "label",		// survey | form | language | question | option | (property | label | media) last three are types of property change
+				changeType: "question",		// survey | form | language | question | option | (property | label | media) last three are types of property change
 				action: "add",
 				question: {
+					seq: splicePoint,
+					type: type,
 					
+					// Helper values 
+					formIndex: fIndex,
+					locn: locn,							// Whether the new question was added before or after the related question
+					$relatedElement: $relatedElement	// Jquery element that is next to the new question
 				}
-	
 		};
 		
 		$context = changeset.add(change);
-		respondToEvents($context);				// Add events on to the altered html
+		return $context;;				// Add events on to the altered html
 		
 	}
 	

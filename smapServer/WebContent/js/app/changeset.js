@@ -32,6 +32,7 @@ define([
 
 	var changes = [];
 	
+	
 	return {	
 		add: add,
 		undo: undo,
@@ -49,7 +50,7 @@ define([
 		console.log(change);
 		
 		// 1. Add to changeset array
-		_addToChangesetArray(change);
+		addToChangesetArray(change);
 		
 		// 2. Apply to model
 		refresh = updateModel(change);
@@ -61,7 +62,7 @@ define([
 		if(refresh) {
 			$context = markup.refresh();
 		} else {
-			$context = _updateHtmlElement(change);
+			$context = updateHtmlElement(change);
 		}
 		
 		return $context;
@@ -147,65 +148,74 @@ define([
 	/*
 	 * Add a single change item to the array of changes (changeset)
 	 */
-	function _addToChangesetArray(change) {
+	function addToChangesetArray(change) {
 		
 		var ci = {
-				type: change.changeType,
+				changeType: change.changeType,
+				action: change.action,
 				items: []
 			},
 			survey = globals.model.survey,
 			item,
 			item_orig,
-			form;
+			form,
+			applyChange = true;
 
 		/*
 		 * Add additional parameters to change object
 		 */	
-		if(change.property.type === "question") {
-			item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
-			item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
-			change.property.name = item.name;
-			change.property.qId = item.qId;
-		} else {
-			item = survey.optionLists[change.property.optionList][label.itemIndex];
-			item_orig = survey.optionLists_orig[change.property.optionList][label.itemIndex];	
-			change.property.name = change.property.optionList;
-		}
-		
-		if(change.changeType === "label" || change.changeType === "media") {
-			change.property.oldVal = item_orig.labels[change.property.language][change.property.propType]; 
-			
-			// Add a reference for the label
-			form = survey.forms[change.property.formIndex];
-			if(item.text_id) {
-				change.property.key = item.text_id;
+		if(change.changeType === "label" || change.changeType === "media" || change.changeType === "property") {
+			if(change.property.type === "question") {
+				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
+				item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
+				change.property.name = item.name;
+				change.property.qId = item.qId;
 			} else {
-				// Create reference for this new Label		
-				if(change.property.type === "question") {
-					change.property.key = "/" + form.name + "/" + item.name + ":label";	
-				} else {
-					change.property.key = "/" + form.name + "/" + change.property.qname + "/" + item.name + ":label";
-				}
+				item = survey.optionLists[change.property.optionList][label.itemIndex];
+				item_orig = survey.optionLists_orig[change.property.optionList][label.itemIndex];	
+				change.property.name = change.property.optionList;
 			}
-		} else {
-			change.property.oldVal = item_orig[change.property.prop];
-		}
 			
-		change.property.languageName = survey.languages[change.property.language];			// For logging the event
+			if(change.changeType === "label" || change.changeType === "media") {
+				change.property.oldVal = item_orig.labels[change.property.language][change.property.propType]; 
+				
+				// Add a reference for the label
+				form = survey.forms[change.property.formIndex];
+				if(item.text_id) {
+					change.property.key = item.text_id;
+				} else {
+					// Create reference for this new Label		
+					if(change.property.type === "question") {
+						change.property.key = "/" + form.name + "/" + item.name + ":label";	
+					} else {
+						change.property.key = "/" + form.name + "/" + change.property.qname + "/" + item.name + ":label";
+					}
+				}
+			} else {
+				change.property.oldVal = item_orig[change.property.prop];
+			}
+				
+			change.property.languageName = survey.languages[change.property.language];			// For logging the event
 		
+		} else if(change.changeType === "question") {
+			form = survey.forms[change.question.formIndex];
+			change.question.fId = form.id;
+		}
 
-		
-		
-		
-		
 		
 		/*
 		 * Add the change item to the array
 		 */
 		ci.items.push(change);
-		removeDuplicateChange(changes, ci);
-		if(change.property.newVal !== change.property.oldVal) {		// Add if the value has changed
-			changes.push(ci);
+		if(change.action !== "add") {
+			applyChange = removeDuplicateChange(changes, ci);
+		}
+		if(applyChange) {
+			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
+				changes.push(ci);
+			} else if(change.action === "add") {
+				changes.push(ci);
+			}
 		}
 		setHasChanges(changes.length);
 		
@@ -213,7 +223,7 @@ define([
 	
 	/*
 	 * If this is the second time an element has been modified then remove the original modification
-	 * Only check the first item as if the first item is a duplicate all should be duplicates
+	 * If this is a property change on a new element then update the element here
 	 */
 	function removeDuplicateChange(changes, change) {
 		
@@ -252,8 +262,7 @@ define([
 	 */ 
 	function setHasChanges(numberChanges) {
 		if(numberChanges === 0) {
-			globals.model.changes = [];
-			globals.model.currentChange = 0;
+			changes = [];
 			$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
 			
 		} else {
@@ -302,6 +311,14 @@ define([
 					}
 				}
 			}
+		} else if(change.ChangeType === "question") {
+			if(change.action === "add") {
+				survey.forms[change.question.fIndex].questions.splice(change.question.seq, 0, change.question);
+			} else if(change.action === "delete") {
+				// TODO
+			} else {
+				console.log("Unknown action: " + change.action);
+			}
 		}
 		
 		return refresh;	
@@ -310,7 +327,7 @@ define([
 	/*
 	 * Update the modified HTML element
 	 */
-	function _updateHtmlElement(change) {
+	function updateHtmlElement(change) {
 		var newMarkup,
 			survey = globals.model.survey,
 			$changedRow;
@@ -341,25 +358,41 @@ define([
 						);	
 	
 			}
+			
+			if(newMarkup) {
+				if(change.type === "question") {
+					$changedRow = $('#formList').find('td.question').filter(function(index){
+						var $this = $(this);
+						return $this.data("fid") == change.formIndex && $this.data("id") == change.itemIndex;
+					});
+				} else {
+					// changed row for choices
+				}
+				if($changedRow) {
+					$changedRow.find('.' + change.propType + 'Element').replaceWith(newMarkup);
+					$('.mediaProp', $changedRow).off().click(function(){
+						var $this = $(this);
+						mediaPropSelected($this);
+					});
+				}
+			}
+		} else if(change.changeType === "question") {
+			if(change.action === "add") {
+				if(change.question.locn === "after") {
+					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.fIndex, change.question.seq));
+					$changedRow = change.question.$relatedElement.after();
+				} else {
+					change.question.$relatedElement.before(markup.addOneQuestion(change.question, change.question.fIndex, change.question.seq));
+					$changedRow = change.question.$relatedElement.after();
+				}
+				delete change.question.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
+			} else if(change.action === "delete") {
+				// TODO
+			}
 		}
 		
-		if(newMarkup) {
-			if(change.type === "question") {
-				$changedRow = $('#formList').find('td.question').filter(function(index){
-					var $this = $(this);
-					return $this.data("fid") == change.formIndex && $this.data("id") == change.itemIndex;
-				});
-			} else {
-				// changed row for choices
-			}
-			if($changedRow) {
-				$changedRow.find('.' + change.propType + 'Element').replaceWith(newMarkup);
-				$('.mediaProp', $changedRow).off().click(function(){
-					var $this = $(this);
-					mediaPropSelected($this);
-				});
-			}
-		}
+
+		return $changedRow;
 	}
 	
 	/*

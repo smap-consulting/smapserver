@@ -612,27 +612,27 @@ public class SurveyManager {
 				Savepoint sp = connectionSD.setSavepoint();
 				try {
 					
-					log.info("SurveyManager, applyChanges. Change set type: " + cs.type);
-					if(cs.type.equals("label") || cs.type.equals("media")) {
+					log.info("SurveyManager, applyChanges. Change set type: " + cs.changeType);
+					if(cs.changeType.equals("label") || cs.changeType.equals("media")) {
 						
 						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 
-					} else if(cs.type.equals("option_update")) {
+					} else if(cs.changeType.equals("option_update")) {
 						
-						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
+						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
 						
-					} else if(cs.type.equals("property")) {
+					} else if(cs.changeType.equals("property")) {
 						
 						// Update a property
-						applyProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.type);
+						applyProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
 						
-					} else if(cs.type.equals("question")) {
+					} else if(cs.changeType.equals("question")) {
 						
 						// Add/delete questions
-						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.type, cs.action);
+						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
 					} else {
-						throw new Exception("Error: unknown changeset type: " + cs.type);
+						throw new Exception("Error: unknown changeset type: " + cs.changeType);
 					}
 					
 					
@@ -868,7 +868,8 @@ public class SurveyManager {
 			ArrayList<ChangeItem> changeItemList, 
 			int sId, 
 			int userId,
-			int version) throws Exception {
+			int version,
+			String changeType) throws Exception {
 		
 		PreparedStatement pstmtLangInsert = null;
 		PreparedStatement pstmtLangUpdate = null;

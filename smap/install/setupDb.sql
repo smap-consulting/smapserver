@@ -320,7 +320,7 @@ CREATE TABLE question (
 	q_id INTEGER DEFAULT NEXTVAL('q_seq') CONSTRAINT pk_question PRIMARY KEY,
 	f_id INTEGER REFERENCES form ON DELETE CASCADE,
 	seq INTEGER,
-	qName text,
+	qName text NOT NULL,
 	qType text,
 	question text,
 	qtext_id text,
@@ -346,8 +346,6 @@ CREATE TABLE question (
 	list_name text				-- Name of a set of options common across multiple questions
 	);
 ALTER TABLE question OWNER TO ws;
-DROP INDEX IF EXISTS formId_sequence;
-CREATE UNIQUE INDEX formId_sequence ON question(f_id, seq);
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
 CREATE INDEX infotext_id_sequence ON question(infotext_id);
 	
@@ -413,14 +411,6 @@ CREATE TABLE public.notification_log (
 	);
 ALTER TABLE notification_log OWNER TO ws;
 
--- Question group Deprecated, (only used by SmapMobile) replaced by start and end of group columns on question table
-DROP TABLE IF EXISTS question_group;
-CREATE TABLE question_group (
-	g_id INTEGER CONSTRAINT pk_group PRIMARY KEY,
-	qFirst INTEGER,
-	qLast INTEGER
-	);
-ALTER TABLE question_group OWNER TO ws;
 
 -- form can be long, short, image, audio, video
 DROP TABLE IF EXISTS translation;

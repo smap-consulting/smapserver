@@ -149,3 +149,10 @@ fi
 
 # version 15.04
 echo "1504" > ~/smap_version
+
+
+# version 15.05
+if [ $version -lt "1505" ]
+then
+echo "1505" > ~/smap_version
+fi

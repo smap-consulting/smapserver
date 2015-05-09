@@ -149,33 +149,42 @@ public class QuestionManager {
 	public void save(Connection sd, ArrayList<Question> questions) throws SQLException {
 		
 		PreparedStatement pstmt = null;
-		String sql = "insert into question (f_id, seq, q_id, qname, qtype, qtext_id, list_name, infotext_id, "
+		String sql = "insert into question (q_id, f_id, seq, qname, qtype, qtext_id, list_name, infotext_id, "
 				+ "source, calculate, "
-				+ "seq, " 
 				+ "defaultanswer, "
 				+ "appearance) " 
-				+ "values (?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?);";
 
 		PreparedStatement pstmtUpdateSeq = null;
-		String sqlUpdateSeq = "update question set seq = seq + 1 where where f_id = ? and seq >= ?;";
+		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmt = sd.prepareStatement(sql);
 			
 			for(Question q : questions) {
 				
 				// Update sequence numbers of questions after the question to be inserted
-				if(pstmtUpdateSeq != null) try{pstmtUpdateSeq.close();} catch(Exception e) {}
 				pstmtUpdateSeq.setInt(1, q.fId);
-				pstmtUpdateSeq.setInt(1, q.seq);
+				pstmtUpdateSeq.setInt(2, q.seq);
+				
+				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
 				
 				// Insert the question
-				if(pstmt != null) try{pstmt.close();} catch(Exception e) {}
 				pstmt.setInt(1, q.fId );
 				pstmt.setInt(2, q.seq );
 				pstmt.setString(3, q.name );
+				pstmt.setString(4, q.type );
+				pstmt.setString(5, q.text_id );
+				pstmt.setString(6, q.list_name );
+				pstmt.setString(7, q.hint_id );
+				pstmt.setString(8, q.source );
+				pstmt.setString(9, q.calculation );
+				pstmt.setString(10, q.defaultanswer );
+				pstmt.setString(11, q.appearance);
 				
+				log.info("Insert question: " + pstmt.toString());
 				pstmt.executeUpdate();
 			}
 			

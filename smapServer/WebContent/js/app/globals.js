@@ -258,8 +258,8 @@ define(function() {
 	function Model() {
 		
 		this.survey = undefined;
-		this.changes = [];
-		this.currentChange = 0;
+		//this.changes = [];
+		//this.currentChange = 0;
 		this.savedSettings = undefined;
 		this.forcceSettingsChange = false;	
 
