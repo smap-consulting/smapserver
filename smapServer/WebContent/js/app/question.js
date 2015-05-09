@@ -47,14 +47,14 @@ define([
 	 * Add a new question
 	 * qItem: the html element id for the closest question to where we want to add the new question
 	 * locn: "before" or "after".  Whether to add the new question "before" or "after" the reference question
-	 * fIndex: The index of the form in the array of forms that are part of the survey model
+	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
 	function add(qItem, locn) {		
 		
 		var $relatedElement = $("#question" + qItem),
 			$relatedQuestion,
-			fIndex,
+			formIndex,
 			qIndexOther,
 			splicePoint = 0,
 			survey = globals.model.survey,
@@ -62,18 +62,18 @@ define([
 		
 		if($relatedElement.size() > 0) {
 			$relatedQuestion = $relatedElement.find('.question');
-			fIndex = $relatedQuestion.data("fid");
+			formIndex = $relatedQuestion.data("fid");
 			qIndexOther = $relatedQuestion.data("id");
 		} else {
 			// TODO First question in the form
-			fIndex = 0;
+			formIndex = 0;
 		}
 		
 		// Choose type
 		type = "dateTime";		// TODO
 		
 		// Get the sequence of the question
-		splicePoint = qIndexOther;
+		splicePoint = getSplicePoint(qIndexOther, survey.forms[formIndex]);
 		if(locn === "after") {
 			++splicePoint;
 		} 
@@ -90,7 +90,7 @@ define([
 					type: type,
 					
 					// Helper values 
-					formIndex: fIndex,
+					formIndex: formIndex,
 					locn: locn,							// Whether the new question was added before or after the related question
 					$relatedElement: $relatedElement	// Jquery element that is next to the new question
 				}
@@ -103,6 +103,21 @@ define([
 	
 	function setType() {
 		$('#typeModal').modal('show');
+	}
+	
+	/*
+	 * Get the index of the question into array that holds the question sequences
+	 */
+	function getSplicePoint(indexOther, form) {
+		var i;
+		
+		for(i = 0; i < form.qSeq.length; i++) {
+			if(form.qSeq[i] === indexOther) {
+				return i;
+			}
+		}
+		alert("Could not insert question");
+		return 0;
 	}
 	
 

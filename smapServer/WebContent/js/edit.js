@@ -133,13 +133,13 @@ $(document).ready(function() {
 	$('#selProperty').change(function() {
 		var i;
 	
-		refreshView();
+		refreshForm();
 		
 	});
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
-		if(globals.model.changes.length > 0) {
+		if(changeset.changes.length > 0) {
 			if (confirm("You have unsaved changes are you sure you want to leave?")) {
 				$('#openFormModal').modal('show');
 			}
@@ -205,7 +205,7 @@ $(document).ready(function() {
 	
 	$('.language_list').off().change(function() {
 		globals.gLanguage = $(this).val();
-		refreshView();
+		refreshForm();
  	 });
 	
 	// Check for changes in settings
@@ -252,7 +252,7 @@ $(document).ready(function() {
 	 * Add check prior to the user leaving the screen
 	 */
 	window.onbeforeunload = function() {
-		if(globals.model.changes.length > 0) {
+		if(changeset.changes.length > 0) {
 			return "You have unsaved changes are you sure you want to leave?";
 		}
 	};
@@ -425,18 +425,10 @@ function surveyDetailsDone() {
 	
 	// Update edit view
 	updateSettingsData();
-	refreshView();
+	refreshForm();
 }
 
-function refreshView() {
-	var selProperty = $('#selProperty').val();
-	
-	if(selProperty === "layout") {
-		refreshLayout();
-	} else {
-		refreshForm();
-	}
-}
+
 
 /*
  * Show the form on the screen
@@ -456,7 +448,7 @@ function respondToEvents($context) {
 	// Add tooltips
 	$('.has_tt', $context).tooltip();
 	
-	// Respond to changes in the attribute that currently has focus
+	// Respond to changes in the label field - this would change the property that has focus
 	$('.labelProp', $context).change(function(){
 
 		var $this = $(this),
@@ -476,6 +468,21 @@ function respondToEvents($context) {
 		}
 
 		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname, prop); // TODO Hint
+
+	});
+	
+	// Update the name
+	$('.qname', $context).change(function(){
+
+		var $this = $(this),
+			$parent = $this.parent(),
+			$row = $parent.parent();
+			$label = $row.find(".q_label_col");
+			formIndex = $label.data("fid"),
+			itemIndex = $label.data("id"),
+			newVal = $this.val();
+		
+		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") 
 
 	});
 	
@@ -612,10 +619,17 @@ function updateSettingsData() {
 function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qname, prop) {
 	
 	var $context,
-		change;
+		change,
+		changeType;
+	
+	if(prop === "label" || prop === "media")
+		changeType = prop;
+	else {
+		changeType = "property";
+	}
 	
 	change = {
-			changeType: "label",		// survey | form | language | question | option | (property | label | media) last three are types of property change
+			changeType: changeType,		// survey | form | language | question | option | (property | label | media) last three are types of property change
 										// Also option_update which is not used by the editor
 			action: "update",
 			property: {

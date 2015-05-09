@@ -36,7 +36,8 @@ define([
 	return {	
 		add: add,
 		undo: undo,
-		save: save
+		save: save,
+		changes: changes
 	};
 
 	/*
@@ -81,6 +82,8 @@ define([
 		console.log("Saving survey");
 		console.log(changes);
 		
+		setHasChanges(0);
+		
 		addHourglass();
 		$.ajax({
 			url: url,
@@ -95,7 +98,6 @@ define([
 					i;
 				
 				removeHourglass();			
-				setHasChanges(0);
 				
 				if(typeof responseFn === "function") { 
 					responseFn();
@@ -135,10 +137,15 @@ define([
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
+				
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
 					alert("Error: Failed to save survey: " + err);
+				}
+						
+				if(typeof responseFn === "function") { 
+					responseFn();
 				}
 			}
 		});	
@@ -169,10 +176,10 @@ define([
 				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
 				item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
 				change.property.name = item.name;
-				change.property.qId = item.qId;
+				change.property.qId = item.id;
 			} else {
-				item = survey.optionLists[change.property.optionList][label.itemIndex];
-				item_orig = survey.optionLists_orig[change.property.optionList][label.itemIndex];	
+				item = survey.optionLists[change.property.optionList][change.property.itemIndex];
+				item_orig = survey.optionLists_orig[change.property.optionList][change.property.itemIndex];	
 				change.property.name = change.property.optionList;
 			}
 			
@@ -192,7 +199,9 @@ define([
 					}
 				}
 			} else {
-				change.property.oldVal = item_orig[change.property.prop];
+				if(item_orig) {
+					change.property.oldVal = item_orig[change.property.prop];
+				}
 			}
 				
 			change.property.languageName = survey.languages[change.property.language];			// For logging the event
@@ -248,13 +257,24 @@ define([
 									newItem.property.itemIndex === item.property.itemIndex &&
 									newItem.property.optionList === item.property.optionList) ) {
 						
+						// This property change already exists - remove the old one
 						changes.splice(j,1);	// Remove this item
-						return;					
+						return true;			// Apply the new one				
 						
 					}
 				}
+			} else if(newItem.action === "update" && item.question) {
+				if(newItem.property.type === "question" && 
+						newItem.property.itemIndex === item.question.itemIndex &&
+						newItem.property.formIndex === item.question.formIndex) {
+					
+					item.question[newItem.property.prop] = newItem.property.newVal;
+					return false;
+					
+				}
 			}
 		}
+		return true;
 	}
 	
 	/*
@@ -276,7 +296,8 @@ define([
 	function updateModel(change) {
 		var refresh = false,		// Set to true if the page needs to be refreshed with this change
 			survey = globals.model.survey,
-			property;
+			property,
+			length;
 		
 		if(change.property) {
 			/*
@@ -311,9 +332,11 @@ define([
 					}
 				}
 			}
-		} else if(change.ChangeType === "question") {
-			if(change.action === "add") {
-				survey.forms[change.question.fIndex].questions.splice(change.question.seq, 0, change.question);
+		} else if(change.changeType === "question") {
+			if(change.action === "add") {			
+				length = survey.forms[change.question.formIndex].questions.push(change.question);			// Add the new question to the end of the array of questions
+				change.question.itemIndex = length -1;
+				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
 			} else if(change.action === "delete") {
 				// TODO
 			} else {
@@ -379,11 +402,11 @@ define([
 		} else if(change.changeType === "question") {
 			if(change.action === "add") {
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.fIndex, change.question.seq));
-					$changedRow = change.question.$relatedElement.after();
+					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
+					$changedRow = change.question.$relatedElement.next();
 				} else {
-					change.question.$relatedElement.before(markup.addOneQuestion(change.question, change.question.fIndex, change.question.seq));
-					$changedRow = change.question.$relatedElement.after();
+					change.question.$relatedElement.before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
+					$changedRow = change.question.$relatedElement.prev();
 				}
 				delete change.question.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {

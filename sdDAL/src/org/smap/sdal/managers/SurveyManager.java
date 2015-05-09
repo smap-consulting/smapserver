@@ -1013,7 +1013,8 @@ public class SurveyManager {
 			for(ChangeItem ci : changeItemList) {
 				
 				// TODO Check that property exists first
-				String property = ci.property.prop;
+				String property = translateProperty(ci.property.prop);
+				
 				if(GeneralUtilityMethods.hasColumn(connectionSD, "question", property)) {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
@@ -1077,6 +1078,24 @@ public class SurveyManager {
 	
 	}
 	
+	/*
+	 * The names of question properties in the table don't exactly match the names in the survey model
+	 * translate them here
+	 */
+	private String translateProperty(String in) {
+		String out = in;
+		
+		if(in.equals("name")) {
+			out = "qname";
+		} else if(in.equals("type")) {
+			out = "qtype";
+		} else if(in.equals("text_id")) {
+			out = "qtext_id";
+		} else if(in.equals("hint_id")) {
+			out = "infotext_id";
+		}
+		return out;
+	}
 	/*
 	 * Apply add / delete questions
 	 * This can be any simple property type such as relevance

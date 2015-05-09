@@ -39,11 +39,11 @@ define([
 		refresh: refresh
 	};
 	
-	function addOneQuestion(question, fIndex, qIndex) {
+	function addOneQuestion(question, formIndex, qIndex) {
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = addPanelStyle(question.type, fIndex, qIndex);
+		h[++idx] = addPanelStyle(question.type, formIndex, qIndex);
 		
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addNewQuestionButton(); 
@@ -54,7 +54,7 @@ define([
 				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 					h[++idx] = question.name;
 				h[++idx] = '" type="text"></td>';
-				h[++idx] = addFeaturedProperty(question, fIndex, qIndex, undefined, undefined);
+				h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
 				h[++idx] = '<td class="q_icons_col">';
 					h[++idx] = '<a data-toggle="collapse"  href="#collapse';
 					h[++idx] = globals.gElementIndex;
@@ -69,9 +69,9 @@ define([
 		}
 		h[++idx] = '">';
 		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
-			h[++idx] = addSubForm(question, globals.model.survey.forms[fIndex].id);
+			h[++idx] = addSubForm(question, globals.model.survey.forms[formIndex].id);
 		} else if(question.type.indexOf("select") === 0) {
-			h[++idx] = addOptions(question, fIndex);
+			h[++idx] = addOptions(question, formIndex);
 		} 
 		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
@@ -94,13 +94,13 @@ define([
 		return h.join('');
 	}
 	
-	function addPanelStyle(type, fIndex, qIndex) {
+	function addPanelStyle(type, formIndex, qIndex) {
 		
 		var h = [],
 			idx = -1;
 		
 		h[++idx] = '<li class="panel editor_element';
-		if(fIndex === 0 && qIndex === 0) { // First editor element in the form
+		if(formIndex === 0 && qIndex === 0) { // First editor element in the form
 			h[++idx] = ' first_element ';
 		}
 		if(type === "begin repeat" || type === "begin group") {
@@ -319,8 +319,9 @@ define([
 			idx = -1;
 		
 		if(form) {
-			for(i = 0; i < form.questions.length; i++) {
-				question = form.questions[i];
+			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
+			for(i = 0; i < form.qSeq.length; i++) {
+				question = form.questions[form.qSeq[i]];
 				// Ignore the following questions
 				if(question.name === '_task_key' || 
 						question.name === 'instanceID' || 
@@ -337,12 +338,26 @@ define([
 				if(question.type === "end repeat") {
 					continue;
 				}
-				h[++idx] = addOneQuestion(question, fId, i);
+				h[++idx] = addOneQuestion(question, fId, form.qSeq[i]);
 			}
 		}
 		return h.join("");
 	}
 
+	/*
+	 * Add the array containing the question sequence
+	 * This will initially be the same as the order of questions but as new questions are added in the editor
+	 *  then these new questions will be at the end of the question array
+	 */
+	function addQuestionSequence(form) {
+		if(!form.qSeq) {
+			form.qSeq = [];
+			for(i = 0; i < form.questions.length; i++) {
+				form.qSeq[i] = i;		// Assume initial sequence corresponds to order of questions
+			}
+		}
+	}
+	
 	/*
 	 * Add a media type
 	 */
@@ -394,57 +409,6 @@ define([
 	    h[++idx] = '</div>';
 	    
 	    return h.join("");
-	}
-
-	/*
-	 * Show the form on the screen
-	 */
-	function refreshForm() {
-		
-		var i,
-			survey = globals.model.survey,
-			key,
-			h = [],
-			idx = -1;
-		
-		/*
-		 * Process the questions in the top level form (parent is 0) 
-		 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
-		 * 
-		 */
-		globals.gElementIndex = 0;
-		if(survey) {
-			if(survey.forms && survey.forms.length > 0) {
-				for(i = 0; i < survey.forms.length; i++) {
-					if(survey.forms[i].parentform == 0) {
-						h[++idx] = markup.addQuestions(survey.forms[i], i);
-						break;
-					}
-				}
-			}
-		}
-		
-		// Get the current list of collapsed panels
-		gCollapsedPanels = [];
-		$('.in').each(function(){
-			gCollapsedPanels.push($(this).attr("id"));
-		});
-		
-		// Update the form view
-		$('#formList').html(h.join(""));
-		
-		// Restore collapsed panels
-		for(i = 0; i < gCollapsedPanels.length; i++) {
-			$('#' + gCollapsedPanels[i]).addClass("in");
-		}
-		
-		respondToEvents($('#formList'));
-		
-		//$('#formList').append('<button class="add_question" data-locn="after" data-index="' + globals.gElementIndex +'">Add Question</button>');
-
-		//enableDragablePanels();
-		
-
 	}
 	
 	/*
