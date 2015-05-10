@@ -623,13 +623,13 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		changeType;
 	
 	if(prop === "label" || prop === "media")
-		changeType = prop;
+		changeType = "label";
 	else {
 		changeType = "property";
 	}
 	
 	change = {
-			changeType: changeType,		// survey | form | language | question | option | (property | label | media) last three are types of property change
+			changeType: changeType,		// survey | form | language | question | option | (property | label) last two are types of property change
 										// Also option_update which is not used by the editor
 			action: "update",
 			property: {
@@ -637,7 +637,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 				qType: undefined,			// Question type
 				type: type,					// question or option
 				name: undefined,			// name of the question or the option list
-				propType: element,			// text or image or video or audio
+				propType: element,			// text or image or video or audio or video
 				prop: prop,					// Property to be changed, for example: label or appearance
 				languageName: undefined,	// Language Name
 				allLanguages: false,		// Set true if all languages should be updated with a new label

@@ -171,7 +171,7 @@ define([
 		/*
 		 * Add additional parameters to change object
 		 */	
-		if(change.changeType === "label" || change.changeType === "media" || change.changeType === "property") {
+		if(change.changeType === "label" || change.changeType === "property") {
 			if(change.property.type === "question") {
 				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
 				item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
@@ -183,7 +183,7 @@ define([
 				change.property.name = change.property.optionList;
 			}
 			
-			if(change.changeType === "label" || change.changeType === "media") {
+			if(change.changeType === "label") {
 				change.property.oldVal = item_orig.labels[change.property.language][change.property.propType]; 
 				
 				// Add a reference for the label
@@ -356,43 +356,43 @@ define([
 			$changedRow;
 		
 		if(change.changeType === "label") {
-			if(change.propType === "image") {	
+			if(change.property.propType === "image") {	
 				
 				newMarkup = markup.addMedia("Image", 
-						change.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.newVal, false, 'image', change.isSurveyLevel), 
-						_getUrl(survey.o_id, survey.ident, change.newVal, true, 'image', change.isSurveyLevel)
+						change.property.newVal, 
+						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'image', change.property.isSurveyLevel), 
+						_getUrl(survey.o_id, survey.ident, change.property.newVal, true, 'image', change.property.isSurveyLevel)
 						);
 				
-			} else if(change.propType === "video") {
+			} else if(change.property.propType === "video") {
 				
 				newMarkup = markup.addMedia("Video", 
-						change.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.newVal, false, 'video', change.isSurveyLevel), 
-						_getUrl(survey.o_id, survey.ident, change.newVal, true, 'video', change.isSurveyLevel)
+						change.propery.newVal, 
+						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'video', change.property.isSurveyLevel), 
+						_getUrl(survey.o_id, survey.ident, change.property.newVal, true, 'video', change.property.isSurveyLevel)
 						);
 				
-			} else if(change.propType === "audio") {
+			} else if(change.property.propType === "audio") {
 				
 				newMarkup = markup.addMedia("Audio", 
-						change.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.newVal, false, 'audio', change.isSurveyLevel), 
+						change.property.newVal, 
+						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'audio', change.property.isSurveyLevel), 
 						undefined
 						);	
 	
 			}
 			
 			if(newMarkup) {
-				if(change.type === "question") {
+				if(change.property.type === "question") {
 					$changedRow = $('#formList').find('td.question').filter(function(index){
 						var $this = $(this);
-						return $this.data("fid") == change.formIndex && $this.data("id") == change.itemIndex;
+						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 				} else {
 					// changed row for choices
 				}
 				if($changedRow) {
-					$changedRow.find('.' + change.propType + 'Element').replaceWith(newMarkup);
+					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);
 					$('.mediaProp', $changedRow).off().click(function(){
 						var $this = $(this);
 						mediaPropSelected($this);

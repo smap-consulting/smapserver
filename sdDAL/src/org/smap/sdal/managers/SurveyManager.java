@@ -613,7 +613,7 @@ public class SurveyManager {
 				try {
 					
 					log.info("SurveyManager, applyChanges. Change set type: " + cs.changeType);
-					if(cs.changeType.equals("label") || cs.changeType.equals("media")) {
+					if(cs.changeType.equals("label")) {
 						
 						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 

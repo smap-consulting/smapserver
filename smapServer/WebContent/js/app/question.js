@@ -83,7 +83,7 @@ define([
 
 		
 		change = {
-				changeType: "question",		// survey | form | language | question | option | (property | label | media) last three are types of property change
+				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
 				action: "add",
 				question: {
 					seq: splicePoint,
