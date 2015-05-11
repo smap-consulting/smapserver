@@ -57,9 +57,17 @@ define([
 				h[++idx] = '" type="text"></td>';
 				h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
 				h[++idx] = '<td class="q_icons_col">';
-					h[++idx] = '<a data-toggle="collapse"  href="#collapse';
+					h[++idx] = '<div class="btn-group">';
+					h[++idx] = '<a class="btn btn-default" data-toggle="collapse"  href="#collapse';
 					h[++idx] = globals.gElementIndex;
-					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_collapse_icon"></span></a>';
+					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon"></span></a>';
+					
+					h[++idx] = '<button class="btn btn-default">';
+					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon" data-id="question';
+					h[++idx] = globals.gElementIndex;
+					h[++idx]='"></span>';
+					h[++idx]='</button>';
+					
 				h[++idx] = '</td>';
 				h[++idx] = '</table>';
 		h[++idx] = '<div id="collapse';

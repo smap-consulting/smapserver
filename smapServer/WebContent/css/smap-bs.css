@@ -148,12 +148,12 @@ tr.deleted td a {
 
 
 .q_type_col {
-	width: 30px;
+	width: 5%;
 
 }
 
 .q_icons_col {
-	width: 30px;	
+	width: 10%;	
 
 }
 
@@ -164,7 +164,7 @@ tr.deleted td a {
 }
 
 .q_label_col {
-	width: 65%;
+	width: 60%;
 	min-width: 260px;	
 }
 
@@ -196,8 +196,12 @@ tr.deleted td a {
 /*
 /* Icons */
 
-.q_icons_col > .glyphicon-trash {
+.q_icons_col .glyphicon-trash {
 	color: red;
+}
+
+.q_icons_col .btn {
+	padding: 3px 4px;
 }
 .edit_icon1 {
 	font-size: 20px;
@@ -207,7 +211,7 @@ tr.deleted td a {
 	margin-left: 0px;
 	color: black;
 }
-.edit_collapse_icon {
+.edit_icon {
 	font-size: 30px;
 	margin-top: 3px;
 	margin-bottom:7px;
