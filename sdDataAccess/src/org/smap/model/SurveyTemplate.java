@@ -1483,7 +1483,8 @@ public class SurveyTemplate {
 									log.info("We have found a manifest link to " + filename);
 									
 									ChangeSet cs = new ChangeSet();
-									cs.changeType = "option_update";
+									cs.changeType = "option";
+									cs.source = "file";
 									cs.items = new ArrayList<ChangeItem> ();
 									changes.add(cs);
 	

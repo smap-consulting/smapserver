@@ -304,7 +304,7 @@ public class PDFManager {
 								hideLabel = true;
 							}
 							
-							Option option = survey.optionLists.get(c.listName).get(c.cIdx);
+							Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
 							Label label = option.labels.get(languageIdx);
 							value = label.text;
 							
@@ -632,7 +632,7 @@ public class PDFManager {
 			diList = new ArrayList<DisplayItem>();
 			for(Result r : choiceResults) {
 
-				Option option = survey.optionLists.get(r.listName).get(r.cIdx);
+				Option option = survey.optionLists.get(r.listName).options.get(r.cIdx);
 				Label label = option.labels.get(languageIdx);
 				DisplayItem di = new DisplayItem();
 				di.text = label.text == null ? "" : label.text;

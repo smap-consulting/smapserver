@@ -199,4 +199,72 @@ public class QuestionManager {
 		
 	}
 	
+	/*
+	 * Save options
+	 */
+	public void saveOptions(Connection sd, ArrayList<Option> options) throws SQLException {
+		
+		PreparedStatement pstmtGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id " +
+				"from question q, survey s, form f " +
+				"where q.f_id = f.f_id " + 
+				"and f.f_id = s.f_id " +
+				"and s.s_id = ?" +
+				"and q.list_name = ?";
+		
+		PreparedStatement pstmt = null;
+		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
+				"values (nextval('o_seq'), ?, ?, ?, ?, ?, 'false');";
+
+		PreparedStatement pstmtUpdateSeq = null;
+		String sqlUpdateSeq = "update option set seq = seq + 1 where q_id = ? and seq >= ?;";
+		
+		try {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmt = sd.prepareStatement(sql);
+			
+			for(Option o : options) {
+				
+				// Get the questions from the form that use this option list
+				pstmtGetQuestions.setInt(1, o.sId);
+				pstmtGetQuestions.setString(2,  o.optionList);
+				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
+				ResultSet rs = pstmtGetQuestions.executeQuery();
+				
+				while (rs.next()) {
+				
+					int qId = rs.getInt(1);
+					
+					// Update sequence numbers of options after the option to be inserted
+					pstmtUpdateSeq.setInt(1, qId);
+					pstmtUpdateSeq.setInt(2, o.seq);
+					
+					log.info("Update sequences: " + pstmtUpdateSeq.toString());
+					pstmtUpdateSeq.executeUpdate();
+					
+					// Insert the option
+					pstmt.setInt(1, qId );
+					pstmt.setInt(2, o.seq );
+					pstmt.setString(3, o.text_id );
+					pstmt.setString(4, o.value );
+					pstmt.setString(5, o.cascadeFilters );			
+					
+					log.info("Insert question: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
 }

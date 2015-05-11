@@ -41,6 +41,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
+import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.ServerSideCalculate;
@@ -403,9 +404,10 @@ public class SurveyManager {
 				 */
 				if(q.type.startsWith("select")) {
 					// Only add the options if this option list has not already been added by another question
-					ArrayList<Option> options = s.optionLists.get(q.list_name);
-					if(options == null) {				
-						options = new ArrayList<Option> ();
+					OptionList optionList = s.optionLists.get(q.list_name);
+					if(optionList == null) {
+						optionList = new OptionList ();
+						optionList.options = new ArrayList<Option> ();
 						
 						pstmtGetOptions.setInt(1, q.id);
 						rsGetOptions = pstmtGetOptions.executeQuery();
@@ -419,11 +421,11 @@ public class SurveyManager {
 							// Get the labels for the option
 							UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
 							//o.labels_orig = o.labels;
-							options.add(o);
+							optionList.options.add(o);
 						}
 						
-						s.optionLists.put(q.list_name, options);
-						s.optionLists_orig.put(q.list_name, options);
+						s.optionLists.put(q.list_name, optionList);
+						s.optionLists_orig.put(q.list_name, optionList);
 					}
 				}
 							
@@ -617,9 +619,9 @@ public class SurveyManager {
 						
 						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
 
-					} else if(cs.changeType.equals("option_update")) {
+					} else if(cs.changeType.equals("option") && cs.source != null && cs.source.equals("file")) {
 						
-						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
+						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.source);
 						
 					} else if(cs.changeType.equals("property")) {
 						
@@ -630,6 +632,11 @@ public class SurveyManager {
 						
 						// Add/delete questions
 						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						
+					} else if(cs.changeType.equals("option")) {
+						
+						// Add/delete options changed by the editor
+						applyOptionFromEditor(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
 					} else {
 						throw new Exception("Error: unknown changeset type: " + cs.changeType);
@@ -764,8 +771,6 @@ public class SurveyManager {
 							addLabel(ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel);
 						}
 					}
-					 
-
 				}
 				
 				log.info("userevent: " + userId + " : modify survey label : " + ci.property.key + " to: " + ci.property.newVal + " survey: " + sId + " language: " + ci.property.languageName + " labelId: "  + transType);
@@ -869,7 +874,8 @@ public class SurveyManager {
 			int sId, 
 			int userId,
 			int version,
-			String changeType) throws Exception {
+			String changeType,
+			String source) throws Exception {
 		
 		PreparedStatement pstmtLangInsert = null;
 		PreparedStatement pstmtLangUpdate = null;
@@ -958,7 +964,8 @@ public class SurveyManager {
 				
 				// Write the change log
 				if(count > 0) {
-					ci.changeType = "option_update";
+					ci.changeType = "option";
+					ci.source = source;
 					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 					pstmtChangeLog.setInt(1, sId);
 					pstmtChangeLog.setInt(2, version);
@@ -1096,6 +1103,7 @@ public class SurveyManager {
 		}
 		return out;
 	}
+	
 	/*
 	 * Apply add / delete questions
 	 * This can be any simple property type such as relevance
@@ -1135,6 +1143,59 @@ public class SurveyManager {
 				qm.save(connectionSD, questions);
 			} else {
 				// TODO delete questions
+			}
+			
+		} catch (Exception e) {
+				
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			
+		}
+	}
+	
+	/*
+	 * Apply add / delete choices from the editor
+	 * This can be any simple property type such as relevance
+	 */
+	public void applyOptionFromEditor(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version,
+			String type,
+			String action) throws Exception {
+		
+		QuestionManager qm = new QuestionManager();
+		ArrayList<Option> options = new ArrayList<Option> ();
+		 
+		try {
+		
+			for(ChangeItem ci : changeItemList) {
+					
+				options.add(ci.option);
+				
+				log.info("userevent: " + userId + (action.equals("add") ? " : add option : " : " : delete option : ") + ci.option.value + " survey: " + sId);
+				
+				// Write the change log
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				pstmtChangeLog.setInt(1, sId);
+				pstmtChangeLog.setInt(2, version);
+				pstmtChangeLog.setString(3, gson.toJson(ci));
+				pstmtChangeLog.setInt(4,userId);
+				pstmtChangeLog.setBoolean(5,false);
+				pstmtChangeLog.setTimestamp(6, getTimeStamp());
+				pstmtChangeLog.execute();
+			} 
+			
+			if(action.equals("add")) {
+				qm.saveOptions(connectionSD, options);
+			} else {
+				// TODO delete options
 			}
 			
 		} catch (Exception e) {

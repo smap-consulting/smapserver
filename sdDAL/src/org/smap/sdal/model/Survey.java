@@ -24,8 +24,8 @@ public class Survey {
 	public boolean hasManifest;
 	public ArrayList<Form> forms = new ArrayList<Form> ();
 	public ArrayList<Form> forms_orig = new ArrayList<Form> ();		// Original values so that the client can track changes while editing
-	public HashMap<String, ArrayList<Option>> optionLists = new HashMap<String, ArrayList<Option>> ();
-	public HashMap<String, ArrayList<Option>> optionLists_orig = new HashMap<String, ArrayList<Option>> ();
+	public HashMap<String, OptionList> optionLists = new HashMap<String, OptionList> ();
+	public HashMap<String, OptionList> optionLists_orig = new HashMap<String, OptionList> ();
 	public ArrayList<String> languages = new ArrayList<String> (); 
 	public ArrayList<Group> groups  = new ArrayList<Group> ();
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();

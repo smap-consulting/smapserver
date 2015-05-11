@@ -34,6 +34,7 @@ define([
 	return {	
 		init: init,
 		add: add,
+		addOption: addOption,
 		setType: setType
 	};
 	
@@ -56,9 +57,10 @@ define([
 			$relatedQuestion,
 			formIndex,
 			qIndexOther,
-			splicePoint = 0,
+			seq = 0,
 			survey = globals.model.survey,
-			type;
+			type,
+			i;
 		
 		if($relatedElement.size() > 0) {
 			$relatedQuestion = $relatedElement.find('.question');
@@ -73,21 +75,20 @@ define([
 		type = "dateTime";		// TODO
 		
 		// Get the sequence of the question
-		splicePoint = getSplicePoint(qIndexOther, survey.forms[formIndex]);
+		seq = getSequenceQuestion(qIndexOther, survey.forms[formIndex]);
 		if(locn === "after") {
-			++splicePoint;
+			++seq;
 		} 
 
 		
-		// Create changeset to be applied on save
-
-		
+		// Create changeset to be applied on save		
 		change = {
 				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
 				action: "add",
 				question: {
-					seq: splicePoint,
+					seq: seq,
 					type: type,
+					labels: [],
 					
 					// Helper values 
 					formIndex: formIndex,
@@ -96,8 +97,72 @@ define([
 				}
 		};
 		
+		// Add default empty languages
+		for(i = 0; i < survey.languages.length; i++) {
+			change.question.labels.push({text:""});
+		}
 		$context = changeset.add(change);
-		return $context;;				// Add events on to the altered html
+		return $context;				// Add events on to the altered html
+		
+	}
+	
+	/*
+	 * Add a new option
+	 * oItem: the html element id for the closest option to where we want to add the new option
+	 */
+	function addOption(oItem, locn) {		
+		
+		var $relatedElement = $("#option" + oItem).parent(),
+			$relatedOption,
+			formIndex,
+			optionIndex,
+			qName,
+			optionList,
+			oIndexOther,		
+			seq = 0,
+			survey = globals.model.survey;
+		
+		if($relatedElement.size() > 0) {
+			$relatedOption = $relatedElement.find('.option');
+			qName = $relatedOption.data("qname");
+			formIndex = $relatedOption.data("fid");
+			optionList = $relatedOption.data("list_name");
+			oIndexOther = $relatedOption.data("id");
+		} else {
+			// TODO First option in the question
+		}
+		
+		// Get the sequence of the option
+		seq = getSequenceOption(oIndexOther, survey.optionLists[optionList]);
+		if(locn === "after") {
+			++seq;
+		} 
+		
+		// Create changeset to be applied on save
+		change = {
+				changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "add",				// add | update | delete
+				source: "editor",
+				option: {
+					seq: seq,
+					optionList: optionList,
+					sId: survey.id,
+					labels: [],
+					
+					// Helper values 
+					qName: qName,
+					formIndex: formIndex,
+					locn: locn,							// Whether the new question was added before or after the related question
+					$relatedElement: $relatedElement	// Jquery element that is next to the new question
+				}
+		};
+		
+		// Add default empty languages
+		for(i = 0; i < survey.languages.length; i++) {
+			change.option.labels.push({text:""});
+		}
+		$context = changeset.add(change);
+		return $context;				// Add events on to the altered html
 		
 	}
 	
@@ -106,13 +171,28 @@ define([
 	}
 	
 	/*
-	 * Get the index of the question into array that holds the question sequences
+	 * Get the display sequence of the question
 	 */
-	function getSplicePoint(indexOther, form) {
+	function getSequenceQuestion(indexOther, form) {
 		var i;
 		
 		for(i = 0; i < form.qSeq.length; i++) {
 			if(form.qSeq[i] === indexOther) {
+				return i;
+			}
+		}
+		alert("Could not insert question");
+		return 0;
+	}
+	
+	/*
+	 * Get the display sequence of the option
+	 */
+	function getSequenceOption(indexOther, optionList) {
+		var i;
+		
+		for(i = 0; i < optionList.oSeq.length; i++) {
+			if(optionList.oSeq[i] === indexOther) {
 				return i;
 			}
 		}

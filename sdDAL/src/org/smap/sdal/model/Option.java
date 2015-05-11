@@ -13,6 +13,10 @@ public class Option {
 	public String defLabel;
 	public boolean externalFile;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
-	//public ArrayList<Label> labels_orig = new ArrayList<Label> ();
 	public String text_id;
+	public String cascadeFilters;
+	
+	// Used in updates
+	public String optionList;	
+	public int sId;			// Survey used in updates
 }

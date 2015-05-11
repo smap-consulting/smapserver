@@ -335,7 +335,7 @@ $(document).ready(function() {
 	$('#get_form').off().click(function() {
 		globals.gCurrentSurvey = $('#form_name option:selected').val();
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id
-		globals.model.setHasChanges(0);		// Clear any existing changes from a previous form
+		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
 		getSurveyDetails(surveyDetailsDone);
  	 });
 	
@@ -505,6 +505,16 @@ function respondToEvents($context) {
 		respondToEvents($context);				// Add events on to the altered html
 	});
 	
+	// Add new option
+	$('.add_option', $context).off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			qItem = $(this).data("index"),
+			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
+		
+		$context = question.addOption(qItem, locn);
+		respondToEvents($context);				// Add events on to the altered html
+	});
 	// Select types
 	$('.question_type', $context).off().click(function() {
 		var $this = $(this),
@@ -630,8 +640,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	change = {
 			changeType: changeType,		// survey | form | language | question | option | (property | label) last two are types of property change
-										// Also option_update which is not used by the editor
-			action: "update",
+			action: "update",			// add | delete | update
+			source: "editor",				// editor | file
 			property: {
 				qId: undefined,				// qId must be set to apply the change
 				qType: undefined,			// Question type

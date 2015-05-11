@@ -463,7 +463,8 @@ public class UploadFiles extends Application {
 			 * Create a changeset
 			 */
 			ChangeSet cs = new ChangeSet();
-			cs.changeType = "option_update";
+			cs.changeType = "option";
+			cs.source = "file";
 			cs.items = new ArrayList<ChangeItem> ();
 			changes.add(cs);
 			

@@ -197,7 +197,7 @@ function refreshView() {
 	// Add all unique options from all option lists
 	for(key in survey.optionLists) {
 		console.log("Option list: " + key);
-		var options = survey.optionLists[key]; 
+		var options = survey.optionLists[key].options; 
 		for(j = 0; j < options.length; j++) {
 			
 			console.log("Option:" + options[j]);

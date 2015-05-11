@@ -52,7 +52,7 @@ define(function() {
 		gPendingUpdates: [],
 		
 		// Editor
-		gElementIndex: 0,				
+		gElementIndex: 0,			// Manage creation of unique identifier for each element (question, option) in editor			
 		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,

@@ -31,6 +31,7 @@ define([
 
 	return {	
 		addOneQuestion: addOneQuestion,
+		addOneOption: addOneOption,
 		addPanelStyle: addPanelStyle,
 		addQType: addQType,
 		addFeaturedProperty: addFeaturedProperty,
@@ -246,16 +247,19 @@ define([
 	/*
 	 * Show the options
 	 */
-	function addOptions(question, fId) {
+	function addOptions(question, formIndex) {
 		var survey = globals.model.survey,
-			options = survey.optionLists[question.list_name],
+			optionList = survey.optionLists[question.list_name],
+			oSeq,
 			h = [],
 			idx = -1,
 			i;
 		
-		if(options) {
-			for(i = 0; i < options.length; i++) {
-				h[++idx] = addOneOption(options[i], fId, i, question.list_name, question.name);
+		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
+		oSeq = optionList.oSeq;
+		if(oSeq) {
+			for(i = 0; i < oSeq.length; i++) {
+				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name);
 			}
 		}
 		return h.join("");
@@ -267,15 +271,30 @@ define([
 	function addOneOption(option, fId, id, list_name, qname) {
 		var h = [],
 			idx = -1;
-
-		h[++idx] = '<table class="table">';
+		
+		h[++idx] = '<div class="editor_element">';
+		h[++idx] = addNewOptionButton();
+		h[++idx] = '<table class="table" id="option';
+		h[++idx] = globals.gElementIndex;
+		h[++idx] = '">';
 		h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 		h[++idx] = option.value;
 		h[++idx] = '" type="text"></td>';
 		h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
 		h[++idx] = '</table>';
+		h[++idx] = '</div>';
 
 		return h.join("");
+	}
+	
+	function addNewOptionButton() {
+		var h = [],
+			idx = -1;
+		h[++idx] = '<button type="button" class="add_option btn btn-success add_button" data-locn="before" data-index="';
+		h[++idx] = ++globals.gElementIndex;		
+		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
+		
+		return h.join('');
 	}
 	
 	/*
@@ -354,6 +373,18 @@ define([
 			form.qSeq = [];
 			for(i = 0; i < form.questions.length; i++) {
 				form.qSeq[i] = i;		// Assume initial sequence corresponds to order of questions
+			}
+		}
+	}
+	
+	/*
+	 * Add the array containing the option sequence
+	 */
+	function addOptionSequence(optionList) {
+		if(!optionList.oSeq) {
+			optionList.oSeq = [];
+			for(i = 0; i < optionList.options.length; i++) {
+				optionList.oSeq[i] = i;
 			}
 		}
 	}

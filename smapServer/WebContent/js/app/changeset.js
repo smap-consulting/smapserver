@@ -37,7 +37,8 @@ define([
 		add: add,
 		undo: undo,
 		save: save,
-		changes: changes
+		changes: changes,
+		setHasChanges: setHasChanges
 	};
 
 	/*
@@ -46,9 +47,6 @@ define([
 	function add(change) {
 		var refresh,
 			$context;
-		
-		console.log("Add change");
-		console.log(change);
 		
 		// 1. Add to changeset array
 		addToChangesetArray(change);
@@ -178,8 +176,8 @@ define([
 				change.property.name = item.name;
 				change.property.qId = item.id;
 			} else {
-				item = survey.optionLists[change.property.optionList][change.property.itemIndex];
-				item_orig = survey.optionLists_orig[change.property.optionList][change.property.itemIndex];	
+				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
+				item_orig = survey.optionLists_orig[change.property.optionList].options[change.property.itemIndex];	
 				change.property.name = change.property.optionList;
 			}
 			
@@ -322,16 +320,19 @@ define([
 				}
 			} else {
 				if(property.propType === "text") {
-					survey.optionLists[property.optionList][property.itemIndex].labels[property.language][property.propType] = property.newVal;
+					survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
 				} else {
 					// For non text changes update all languages
-					for(i = 0; i < survey.optionLists[property.optionList][property.itemIndex].labels.length; i++) {
-						survey.optionLists[property.optionList][property.itemIndex].labels[i][property.propType] = property.newVal;
-						survey.optionLists[property.optionList][property.itemIndex].labels[i][property.propType + "Url"] = 
+					for(i = 0; i < survey.optionLists[property.optionList].options[property.itemIndex].labels.length; i++) {
+						survey.optionLists[property.optionList].options[property.itemIndex].labels[i][property.propType] = property.newVal;
+						survey.optionLists[property.optionList].options[property.itemIndex].labels[i][property.propType + "Url"] = 
 							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType);
 					}
 				}
 			}
+			
+			refresh = false;	// Update markup solely for this Property
+			
 		} else if(change.changeType === "question") {
 			if(change.action === "add") {			
 				length = survey.forms[change.question.formIndex].questions.push(change.question);			// Add the new question to the end of the array of questions
@@ -342,6 +343,19 @@ define([
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
+			refresh = false;	// Update markup solely for this question
+			
+		} else if(change.changeType === "option") {
+			if(change.action === "add") {			
+				length = survey.optionLists[change.option.optionList].options.push(change.option);			// Add the new question to the end of the array of questions
+				change.option.itemIndex = length -1;
+				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	// Update the option sequence array
+			} else if(change.action === "delete") {
+				// TODO
+			} else {
+				console.log("Unknown action: " + change.action);
+			}
+			refresh = false;	// Update markup solely for this option
 		}
 		
 		return refresh;	
@@ -409,6 +423,20 @@ define([
 					$changedRow = change.question.$relatedElement.prev();
 				}
 				delete change.question.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
+			} else if(change.action === "delete") {
+				// TODO
+			}
+		} else if(change.changeType === "option") {
+			if(change.action === "add") {
+				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.seq, change.option.optionList, change.option.qName);
+				if(change.option.locn === "after") {
+					change.option.$relatedElement.after(newMarkup);
+					$changedRow = change.option.$relatedElement.next();
+				} else {
+					change.option.$relatedElement.before(newMarkup);
+					$changedRow = change.option.$relatedElement.prev();
+				}
+				delete change.option.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
 				// TODO
 			}
