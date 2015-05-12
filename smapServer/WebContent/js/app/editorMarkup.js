@@ -63,7 +63,7 @@ define([
 					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon"></span></a>';
 					
 					h[++idx] = '<button class="btn btn-default">';
-					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon" data-id="question';
+					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="question';
 					h[++idx] = globals.gElementIndex;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';

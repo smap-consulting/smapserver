@@ -146,7 +146,7 @@ public class QuestionManager {
 	/*
 	 * Save to the database
 	 */
-	public void save(Connection sd, ArrayList<Question> questions) throws SQLException {
+	public void save(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
 		
 		PreparedStatement pstmt = null;
 		String sql = "insert into question (q_id, f_id, seq, qname, qtype, qtext_id, list_name, infotext_id, "
@@ -186,6 +186,52 @@ public class QuestionManager {
 				
 				log.info("Insert question: " + pstmt.toString());
 				pstmt.executeUpdate();
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
+	/*
+	 * Save to the database
+	 */
+	public void delete(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
+		
+		PreparedStatement pstmt = null;
+		String sql = "delete from question q where q_id = ? and q.q_id in " +
+				" (select q_id from question q, form f where q.q_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
+
+		PreparedStatement pstmtUpdateSeq = null;
+		String sqlUpdateSeq = "update question set seq = seq - 1 where f_id = ? and seq >= ? and f_id in " +
+				"(select f_id from form where s_id = ?)";
+		
+		try {
+			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmt = sd.prepareStatement(sql);
+			
+			for(Question q : questions) {
+				
+				// Insert the question
+				pstmt.setInt(1, q.id );
+				pstmt.setInt(2, sId );
+				
+				log.info("Delete question: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				// Update sequence numbers of questions after the question that has been deleted
+				pstmtUpdateSeq.setInt(1, q.fId);
+				pstmtUpdateSeq.setInt(2, q.seq);
+				pstmtUpdateSeq.setInt(3, sId);
+				
+				log.info("Update sequences: " + pstmtUpdateSeq.toString());
+				pstmtUpdateSeq.executeUpdate();
 			}
 			
 			

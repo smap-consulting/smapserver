@@ -505,6 +505,16 @@ function respondToEvents($context) {
 		respondToEvents($context);				// Add events on to the altered html
 	});
 	
+	// Delete question
+	$('.delete_question', $context).off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			qItem = $(this).data("id"),
+			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
+		
+		$context = question.deleteQuestion(qItem);
+	});
+	
 	// Add new option
 	$('.add_option', $context).off().click(function() {
 		var $this = $(this),

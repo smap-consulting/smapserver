@@ -1140,9 +1140,11 @@ public class SurveyManager {
 			} 
 			
 			if(action.equals("add")) {
-				qm.save(connectionSD, questions);
+				qm.save(connectionSD, sId, questions);
+			} else if(action.equals("delete")) {
+				qm.delete(connectionSD, sId, questions);
 			} else {
-				// TODO delete questions
+				log.info("Unkown action: " + action);
 			}
 			
 		} catch (Exception e) {

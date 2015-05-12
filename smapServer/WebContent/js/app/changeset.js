@@ -55,7 +55,7 @@ define([
 		refresh = updateModel(change);
 		
 		/*
-		 * Apply any HTML changes either directly to the changed element or by refreshing using
+		 * Apply any HTML changes either directly to the changed element, or by refreshing the whole form using
 		 * the updated model
 		 */
 		if(refresh) {
@@ -205,8 +205,11 @@ define([
 			change.property.languageName = survey.languages[change.property.language];			// For logging the event
 		
 		} else if(change.changeType === "question") {
+			item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
 			form = survey.forms[change.question.formIndex];
 			change.question.fId = form.id;
+			change.question.qId = item.id;
+
 		}
 
 		
@@ -220,7 +223,7 @@ define([
 		if(applyChange) {
 			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
 				changes.push(ci);
-			} else if(change.action === "add") {
+			} else if(change.action === "add" || change.action === "delete") {
 				changes.push(ci);
 			}
 		}
@@ -236,12 +239,22 @@ define([
 		
 		var j, 
 			item,
-			newItem;
+			newItem,
+			element;
 		
+		newItem = change.items[0];
+		if(newItem.question) {
+			element = newItem.question;
+		} else if(newItem.option) {
+			element = newItem.option;
+		} else if(newItem.property) {
+			element = newItem.property;
+		}
+			
 		for(j = 0; j < changes.length; j++) {
 			
 			item = changes[j].items[0];
-			newItem = change.items[0];
+			
 			
 			if(newItem.action === "update" && item.property) {
 
@@ -249,11 +262,11 @@ define([
 						&& item.type === newItem.type) {		// Question or option
 					if(
 							(newItem.property.type === "question" && 
-									newItem.property.itemIndex === item.property.itemIndex &&
-									newItem.property.formIndex === item.property.formIndex) ||
+									element.itemIndex === item.property.itemIndex &&
+									element.formIndex === item.property.formIndex) ||
 							(newItem.property.type === "option" && 
-									newItem.property.itemIndex === item.property.itemIndex &&
-									newItem.property.optionList === item.property.optionList) ) {
+									element.itemIndex === item.property.itemIndex &&
+									element.optionList === item.property.optionList) ) {
 						
 						// This property change already exists - remove the old one
 						changes.splice(j,1);	// Remove this item
@@ -262,13 +275,20 @@ define([
 					}
 				}
 			} else if(newItem.action === "update" && item.question) {
-				if(newItem.property.type === "question" && 
-						newItem.property.itemIndex === item.question.itemIndex &&
-						newItem.property.formIndex === item.question.formIndex) {
+				if(element.type === "question" && 
+						element.itemIndex === item.question.itemIndex &&
+						element.formIndex === item.question.formIndex) {
 					
-					item.question[newItem.property.prop] = newItem.property.newVal;
+					item.question[element.prop] = element.newVal;
 					return false;
 					
+				}
+			} else if(newItem.action === "delete") {
+				if(element.type === "question" &&
+						element.itemIndex === item.question.itemIndex &&
+						element.formIndex === item.question.formIndex) {
+					changes.splice(j,1);	// Remove this item
+					// Continue to remove all matching changes
 				}
 			}
 		}
@@ -339,7 +359,7 @@ define([
 				change.question.itemIndex = length -1;
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
 			} else if(change.action === "delete") {
-				// TODO
+				survey.forms[change.question.formIndex].qSeq.splice(change.question.itemIndex, 1);	// Remove item from the sequence array		
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
@@ -424,7 +444,8 @@ define([
 				}
 				delete change.question.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
-				// TODO
+				change.question.$deletedElement.remove();
+				delete change.question.$deletedElement;
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
@@ -438,7 +459,8 @@ define([
 				}
 				delete change.option.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
-				// TODO
+				change.option.$deletedElement.remove();
+				delete change.option.$deletedElement;
 			}
 		}
 		

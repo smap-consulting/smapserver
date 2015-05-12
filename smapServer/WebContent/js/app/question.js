@@ -34,6 +34,7 @@ define([
 	return {	
 		init: init,
 		add: add,
+		deleteQuestion: deleteQuestion,
 		addOption: addOption,
 		setType: setType
 	};
@@ -107,6 +108,35 @@ define([
 	}
 	
 	/*
+	 * Delete a question
+	 */
+	function deleteQuestion(item) {
+		var $deletedElement = $('#' + item),
+			$deletedQuestion = $deletedElement.find('.question'),
+			formIndex = $deletedQuestion.data("fid"),
+			itemIndex = $deletedQuestion.data("id"),
+			change,
+			survey = globals.model.survey,
+			seq;
+		
+		seq = getSequenceQuestion(itemIndex, survey.forms[formIndex]);
+		
+		change = {
+				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "delete",
+				question: {
+					
+					// Helper values 
+					seq: seq,
+					formIndex: formIndex,
+					itemIndex: itemIndex,
+					$deletedElement: $deletedElement	// Jquery element that is next to the new question
+				}
+		};
+		changeset.add(change);
+	}
+	
+	/*
 	 * Add a new option
 	 * oItem: the html element id for the closest option to where we want to add the new option
 	 */
@@ -173,11 +203,11 @@ define([
 	/*
 	 * Get the display sequence of the question
 	 */
-	function getSequenceQuestion(indexOther, form) {
+	function getSequenceQuestion(qIndex, form) {
 		var i;
 		
 		for(i = 0; i < form.qSeq.length; i++) {
-			if(form.qSeq[i] === indexOther) {
+			if(form.qSeq[i] === qIndex) {
 				return i;
 			}
 		}
