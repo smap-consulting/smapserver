@@ -1195,9 +1195,9 @@ public class SurveyManager {
 			} 
 			
 			if(action.equals("add")) {
-				qm.saveOptions(connectionSD, options);
+				qm.saveOptions(connectionSD, sId, options);
 			} else {
-				// TODO delete options
+				qm.deleteOptions(connectionSD, sId, options);
 			}
 			
 		} catch (Exception e) {

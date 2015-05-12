@@ -289,6 +289,17 @@ define([
 		h[++idx] = option.value;
 		h[++idx] = '" type="text"></td>';
 		h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
+		
+		// Add button bar
+		h[++idx] = '<td class="q_icons_col">';
+		h[++idx] = '<div class="btn-group">';
+		h[++idx] = '<button class="btn btn-default">';
+		h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_option" data-id="option';
+		h[++idx] = globals.gElementIndex;
+		h[++idx]='"></span>';
+		h[++idx]='</button>';		
+		h[++idx] = '</td>';
+		
 		h[++idx] = '</table>';
 		h[++idx] = '</div>';
 

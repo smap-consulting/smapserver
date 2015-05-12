@@ -205,11 +205,17 @@ define([
 			change.property.languageName = survey.languages[change.property.language];			// For logging the event
 		
 		} else if(change.changeType === "question") {
-			item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
-			form = survey.forms[change.question.formIndex];
-			change.question.fId = form.id;
-			change.question.qId = item.id;
-
+			if(change.action === "delete") {
+				item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
+				form = survey.forms[change.question.formIndex];
+				change.question.fId = form.id;
+				change.question.qId = item.id;
+			}
+		} else if(change.changeType === "option") {
+			if(change.action === "delete") {
+				item = survey.optionLists[change.option.optionList].options[change.option.itemIndex];
+				change.option.value = item.value;
+			}
 		}
 
 		
@@ -239,21 +245,29 @@ define([
 		
 		var j, 
 			item,
+			element,
 			newItem,
-			element;
+			newElement;
 		
 		newItem = change.items[0];
 		if(newItem.question) {
-			element = newItem.question;
+			newElement = newItem.question;
 		} else if(newItem.option) {
-			element = newItem.option;
+			newElement = newItem.option;
 		} else if(newItem.property) {
-			element = newItem.property;
+			newElement = newItem.property;
 		}
 			
 		for(j = 0; j < changes.length; j++) {
 			
 			item = changes[j].items[0];
+			if(item.question) {
+				element = item.question;
+			} else if(item.option) {
+				element = item.option;
+			} else if(item.property) {
+				element = item.property;
+			}
 			
 			
 			if(newItem.action === "update" && item.property) {
@@ -261,12 +275,12 @@ define([
 				if(item.language === newItem.language 
 						&& item.type === newItem.type) {		// Question or option
 					if(
-							(newItem.property.type === "question" && 
-									element.itemIndex === item.property.itemIndex &&
-									element.formIndex === item.property.formIndex) ||
-							(newItem.property.type === "option" && 
-									element.itemIndex === item.property.itemIndex &&
-									element.optionList === item.property.optionList) ) {
+							(newElement.type === "question" && 
+									newElement.itemIndex === element.itemIndex &&
+									newElement.formIndex === element.formIndex) ||
+							(newElement.type === "option" && 
+									newElement.itemIndex === element.itemIndex &&
+									newElement.optionList === element.optionList) ) {
 						
 						// This property change already exists - remove the old one
 						changes.splice(j,1);	// Remove this item
@@ -275,18 +289,21 @@ define([
 					}
 				}
 			} else if(newItem.action === "update" && item.question) {
-				if(element.type === "question" && 
-						element.itemIndex === item.question.itemIndex &&
-						element.formIndex === item.question.formIndex) {
+				if(newElement.type === "question" && 
+						newElement.itemIndex === element.itemIndex &&
+						newElement.formIndex === element.formIndex) {
 					
-					item.question[element.prop] = element.newVal;
+					item.question[newElement.prop] = newElement.newVal;
 					return false;
 					
 				}
 			} else if(newItem.action === "delete") {
-				if(element.type === "question" &&
-						element.itemIndex === item.question.itemIndex &&
-						element.formIndex === item.question.formIndex) {
+				/*
+				 * Remove any modifications to this deleted element
+				 */
+				if((newElement.type === "question" || newElement.type === "option") &&
+						newElement.itemIndex === element.itemIndex &&
+						newElement.formIndex === element.formIndex) {
 					changes.splice(j,1);	// Remove this item
 					// Continue to remove all matching changes
 				}
@@ -359,7 +376,7 @@ define([
 				change.question.itemIndex = length -1;
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
 			} else if(change.action === "delete") {
-				survey.forms[change.question.formIndex].qSeq.splice(change.question.itemIndex, 1);	// Remove item from the sequence array		
+				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array		
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
@@ -371,7 +388,7 @@ define([
 				change.option.itemIndex = length -1;
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	// Update the option sequence array
 			} else if(change.action === "delete") {
-				// TODO
+				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 1);	// Remove item from the sequence array		
 			} else {
 				console.log("Unknown action: " + change.action);
 			}

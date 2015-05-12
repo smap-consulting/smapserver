@@ -218,7 +218,7 @@ public class QuestionManager {
 			
 			for(Question q : questions) {
 				
-				// Insert the question
+				// Delete the question
 				pstmt.setInt(1, q.id );
 				pstmt.setInt(2, sId );
 				
@@ -248,15 +248,19 @@ public class QuestionManager {
 	/*
 	 * Save options
 	 */
-	public void saveOptions(Connection sd, ArrayList<Option> options) throws SQLException {
+	public void saveOptions(Connection sd, int sId, ArrayList<Option> options) throws SQLException {
 		
 		PreparedStatement pstmtGetQuestions = null;
+		/*
+		 * Get all questions which match the list_name
+		 * Where the survey was loaded from XLS this list name in the table may be null 
+		 * however the list name will be equal to the question id
+		 */
 		String sqlGetQuestions = "select q.q_id " +
-				"from question q, survey s, form f " +
+				"from question q, form f " +
 				"where q.f_id = f.f_id " + 
-				"and f.f_id = s.f_id " +
-				"and s.s_id = ?" +
-				"and q.list_name = ?";
+				"and f.s_id = ? " +
+				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
 		
 		PreparedStatement pstmt = null;
 		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
@@ -272,9 +276,15 @@ public class QuestionManager {
 			
 			for(Option o : options) {
 				
+				int optionListAsQId = 0;
+				try {
+					optionListAsQId = Integer.parseInt(o.optionList);
+				} catch (Exception e) {	
+				}
 				// Get the questions from the form that use this option list
-				pstmtGetQuestions.setInt(1, o.sId);
+				pstmtGetQuestions.setInt(1, sId);
 				pstmtGetQuestions.setString(2,  o.optionList);
+				pstmtGetQuestions.setInt(3, optionListAsQId);
 				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 				ResultSet rs = pstmtGetQuestions.executeQuery();
 				
@@ -298,6 +308,79 @@ public class QuestionManager {
 					
 					log.info("Insert question: " + pstmt.toString());
 					pstmt.executeUpdate();
+				}
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
+	/*
+	 * Delete options
+	 */
+	public void deleteOptions(Connection sd, int sId, ArrayList<Option> options) throws SQLException {
+		
+		PreparedStatement pstmtGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id " +
+				"from question q, form f " +
+				"where q.f_id = f.f_id " + 
+				"and f.s_id = ? " +
+				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
+		
+		PreparedStatement pstmt = null;
+		String sql = "delete from option " +
+				" where q_id = ? " +
+				" and ovalue = ?;";					// Can't use o_id because of the option list can be in many questions
+
+		PreparedStatement pstmtUpdateSeq = null;
+		String sqlUpdateSeq = "update option set seq = seq - 1 where q_id = ? and seq >= ?;";
+		
+		try {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmt = sd.prepareStatement(sql);
+			
+			for(Option o : options) {
+				
+				int optionListAsQId = 0;
+				try {
+					optionListAsQId = Integer.parseInt(o.optionList);
+				} catch (Exception e) {
+					
+				}
+			
+				// Get the questions from the form that use this option list
+				pstmtGetQuestions.setInt(1, sId);
+				pstmtGetQuestions.setString(2,  o.optionList);
+				pstmtGetQuestions.setInt(3, optionListAsQId);
+				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
+				ResultSet rs = pstmtGetQuestions.executeQuery();
+				
+				while (rs.next()) {
+				
+					int qId = rs.getInt(1);
+					
+					// Delete the option
+					pstmt.setInt(1, qId );
+					pstmt.setString(2, o.value );
+					
+					log.info("Delete option: " + pstmt.toString());
+					pstmt.executeUpdate();
+					
+					// Update sequence numbers of options after the option to be inserted
+					pstmtUpdateSeq.setInt(1, qId);
+					pstmtUpdateSeq.setInt(2, o.seq);
+					
+					log.info("Update sequences: " + pstmtUpdateSeq.toString());
+					pstmtUpdateSeq.executeUpdate();
 				}
 			}
 			

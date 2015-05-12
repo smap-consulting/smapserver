@@ -36,7 +36,7 @@ define([
 		add: add,
 		deleteQuestion: deleteQuestion,
 		addOption: addOption,
-		setType: setType
+		deleteOption: deleteOption
 	};
 	
 	var gEditor;
@@ -137,6 +137,37 @@ define([
 	}
 	
 	/*
+	 * Delete an option
+	 */
+	function deleteOption(item) {
+		var $deletedElement = $('#' + item),
+			$deletedOption = $deletedElement.find('.option'),
+			formIndex = $deletedOption.data("fid"),
+			itemIndex = $deletedOption.data("id"),
+			optionList = $deletedOption.data("list_name"),
+			change,
+			survey = globals.model.survey,
+			seq;
+		
+		seq = getSequenceOption(itemIndex, survey.optionLists[optionList]);
+		
+		change = {
+				changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "delete",
+				option: {
+					
+					// Helper values 
+					seq: seq,
+					optionList: optionList,
+					formIndex: formIndex,
+					itemIndex: itemIndex,
+					$deletedElement: $deletedElement	// Jquery element that is next to the new question
+				}
+		};
+		changeset.add(change);
+	}
+	
+	/*
 	 * Add a new option
 	 * oItem: the html element id for the closest option to where we want to add the new option
 	 */
@@ -194,10 +225,6 @@ define([
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
-	}
-	
-	function setType() {
-		$('#typeModal').modal('show');
 	}
 	
 	/*

@@ -378,11 +378,22 @@ function setUpQuestionTypeDialog() {
 		idx = -1;
 	
 	for(i = 0; i < types.length; i++) {
-		h[++idx] = '<button type="button" class="btn btn-primary">';
+		h[++idx] = '<button type="button" class="btn btn-primary question_type" value="';
+		h[++idx] = types[i].type;
+		h[++idx] = '">';
 		h[++idx] = types[i].name;
 		h[++idx] = '</button>';
 	}	
 	$elem.html(h.join(''));
+	
+	$('.question_type', $elem).off().click(function(){
+		var type = $(this).val();
+		
+		alert("Question type: " + type);
+		
+		updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type") 
+	});
+	
 }
 
 function enableDragablePanels() {
@@ -498,10 +509,10 @@ function respondToEvents($context) {
 	$('.add_question', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			qIndex = $(this).data("index"),
+			item = $(this).data("index"),
 			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.add(qIndex, locn);
+		$context = question.add(item, locn);
 		respondToEvents($context);				// Add events on to the altered html
 	});
 	
@@ -509,28 +520,39 @@ function respondToEvents($context) {
 	$('.delete_question', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			qItem = $(this).data("id"),
-			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
+			item = $(this).data("id");
 		
-		$context = question.deleteQuestion(qItem);
+		$context = question.deleteQuestion(item);
 	});
 	
 	// Add new option
 	$('.add_option', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			qItem = $(this).data("index"),
+			item = $(this).data("index"),
 			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.addOption(qItem, locn);
+		$context = question.addOption(item, locn);
 		respondToEvents($context);				// Add events on to the altered html
 	});
+	
+	// Delete option
+	$('.delete_option', $context).off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			item = $(this).data("id");
+		
+		$context = question.deleteOption(item);
+	});
+	
 	// Select types
 	$('.question_type', $context).off().click(function() {
-		var $this = $(this),
-			qIndex = $(this).data("index");
+		var $questionElement = $(this).closest('tr').find('.question');
 		
-		question.setType(qIndex);
+		gFormIndex = $questionElement.data("fid");
+		gItemIndex = $questionElement.data("index");
+		$('#typeModal').modal('show');
+
 	});
 	
 }

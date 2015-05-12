@@ -18,5 +18,4 @@ public class Option {
 	
 	// Used in updates
 	public String optionList;	
-	public int sId;			// Survey used in updates
 }
