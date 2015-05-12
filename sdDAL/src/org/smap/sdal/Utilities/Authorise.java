@@ -81,8 +81,6 @@ public class Authorise {
 		}
 		sql += ");";
 		
-		log.info(sql + " user: " + user);
-		
 		try {
 			pstmt = conn.prepareStatement(sql); 	
 			pstmt.setString(1, user);
@@ -190,6 +188,73 @@ public class Authorise {
 		
  		if(count == 0) {
  			log.info("Survey validation failed for: " + user + " survey was: " + sId);
+ 			
+			try {
+				if (conn != null) {
+					conn.close();
+					conn = null;
+				}
+			} catch (SQLException e3) {
+				log.log(Level.SEVERE,"Failed to close connection", e3);
+			}
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the question is in the survey
+	 */
+	public boolean isValidQuestion(Connection conn, String user, int sId, int qId)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey has not been soft deleted and exists or alternately 
+		 *    that it has been soft deleted and exists
+		 * 2) Make sure survey is in a project that the user has access to
+		 */
+
+		String sql = "select count(*) from question q, form f " +
+				" where q.f_id = f.f_id" +
+				" and f.s_id = ?" +
+				" and q.q_id = ?;"; 
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, qId);
+			
+			log.info("IsValidQuestion: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Question validation failed for question: " + qId + " survey was: " + sId);
  			
 			try {
 				if (conn != null) {

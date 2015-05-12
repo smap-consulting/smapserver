@@ -256,15 +256,27 @@ public class Surveys extends Application {
 		
 		log.info("Save survey:" + sId + " : " + changesString);
 		
+		Type type = new TypeToken<ArrayList<ChangeSet>>(){}.getType();
+		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);	
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");		
 		a.isAuthorised(connectionSD, request.getRemoteUser());	
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
-		// End Authorisation
 		
-		Type type = new TypeToken<ArrayList<ChangeSet>>(){}.getType();
-		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);	
+		for(ChangeSet cs : changes) {
+			for (ChangeItem ci : cs.items) {
+				// Option changes are not checked as they are explicitly applied to all option lists in the provided survey
+				if(ci.question != null) {
+					a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.question.id);
+				} else if(ci.property != null) {
+					a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
+				}
+			}
+		}
+		// End Authorisation
+
 		Response response = null;
 
 		try {
