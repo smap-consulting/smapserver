@@ -266,97 +266,116 @@ define(function() {
 		this.qTypes =[{
 				name: "Text",
 				type: "string",
-				glyphicon: "font"
+				glyphicon: "font",
+				canSelect: true
 			},
 			{
 				name: "Select One",
 				type: "select1",
-				image: "/images/select1_64.png"
+				image: "/images/select1_64.png",
+				canSelect: true
 			},
 			{
 				name: "Select Multiple",
 				type: "select",
-				image: "/images/select_64.png"
+				image: "/images/select_64.png",
+				canSelect: true
 			},
 			{
-				name: "Repeating Group",
+				name: "Form",
 				type: "begin repeat",
-				glyphicon: "repeat"
+				glyphicon: "repeat",
+				canSelect: true
 			},
 			{
 				name: "Group",
 				type: "begin repeat",
-				glyphicon: "folder-open"
+				glyphicon: "folder-open",
+				canSelect: true
 			},
 			{
 				name: "Image",
 				type: "image",
-				glyphicon: "camera"
+				glyphicon: "camera",
+				canSelect: true
 			},
 			{
 				name: "Audio",
 				type: "audio",
-				glyphicon: "volume-up"
+				glyphicon: "volume-up",
+				canSelect: true
 			},
 			{
 				name: "Video",
 				type: "video",
-				glyphicon: "facetime-video"
+				glyphicon: "facetime-video",
+				canSelect: true
 			},
 			{
 				name: "GPS Point",
 				type: "geopoint",
-				glyphicon: "map-marker"
+				glyphicon: "map-marker",
+				canSelect: true
 			},
 			{
 				name: "Date",
 				type: "date",
-				glyphicon: "calendar"
+				glyphicon: "calendar",
+				canSelect: true
 			},
 			{
 				name: "Date and Time",
 				type: "dateTime",
-				glyphicon: "calendar"
+				glyphicon: "calendar",
+				canSelect: true
 			},
 			{
 				name: "Time",
 				type: "time",
-				glyphicon: "time"
+				glyphicon: "time",
+				canSelect: true
 			},
 			{
 				name: "Barcode",
 				type: "barcode",
-				glyphicon: "barcode"
+				glyphicon: "barcode",
+				canSelect: true
 			},
 			{
 				name: "Integer",
 				type: "int",
-				text: "#"
+				text: "#",
+				canSelect: true
 			},
 			{
 				name: "Decimal",
 				type: "decimal",
-				text: "#.#"
+				text: "#.#",
+				canSelect: true
 			},
 			{
 				name: "GPS Line",
 				type: "geolinestring",
-				image: "/images/linestring_64.png"
+				image: "/images/linestring_64.png",
+				canSelect: true
 			},
 			{
 				name: "GPS Area",
 				type: "geopolygon",
-				image: "/images/polygon_64.png"
+				image: "/images/polygon_64.png",
+				canSelect: true
 			},
 			{
 				name: "Calculation",
 				type: "string",
 				calculation: true,
-				image: "/images/calc_64.png"
+				image: "/images/calc_64.png",
+				canSelect: true
 			},
 			{
 				name: "Unknown Type",
-				glyphicon: "record"
+				glyphicon: "record",
+				canSelect: false
 			}
 		];
 		

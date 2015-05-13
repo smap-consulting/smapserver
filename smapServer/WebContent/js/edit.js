@@ -364,34 +364,65 @@ $(document).ready(function() {
 		
 	});
 	
-	setUpQuestionTypeDialog();
+	setupQuestionTypeDialog();
 
 	
 });
 
 //Set up question type dialog
-function setUpQuestionTypeDialog() {
+function setupQuestionTypeDialog() {
 	var i,
 		types = globals.model.qTypes,
 		$elem = $('#typeModalButtonGrp'),
 		h = [],
-		idx = -1;
+		idx = -1,
+		count;
 	
+	count = 0;
 	for(i = 0; i < types.length; i++) {
-		h[++idx] = '<button type="button" class="btn btn-primary question_type" value="';
-		h[++idx] = types[i].type;
-		h[++idx] = '">';
-		h[++idx] = types[i].name;
-		h[++idx] = '</button>';
+		
+		if(types[i].canSelect) {
+			if((count % 4) === 0) {
+				if(count > 0) {
+					h[++idx] = '</div>';			// End of a row
+				}
+				h[++idx] = '<div class="row margin-bottom">';		// Start of a row
+			}
+			
+			h[++idx] = '<div class="col-md-3 col-xs-2">';	// Start col
+			h[++idx] = '<button type="button" class="btn btn-large question_type full_width_btn" value="';
+			h[++idx] = types[i].type;
+			h[++idx] = '">';
+			if(types[i].glyphicon) {
+				h[++idx] = '<span class="glyphicon glyphicon-';
+				h[++idx] = types[i].glyphicon; 
+				h[++idx] = ' edit_type_select"></span><br/>';
+			} else if(types[i].image) {
+				h[++idx] = '<img class="edit_image_select" src="';
+				h[++idx] = types[i].image; 
+				h[++idx] = '"></img><br/>';
+			} else if(types[i].text) {
+				h[++idx] = '<span class="edit_type_select">';
+				h[++idx] = types[i].text; 
+				h[++idx] = '</span><br/>';
+			}
+			h[++idx] = types[i].name;
+			h[++idx] = '</button>';
+			h[++idx] = '</div>';		// End col
+			
+			count++;
+		}
 	}	
+	
+	h[++idx] = '</div>';	// End of a row
+	
 	$elem.html(h.join(''));
 	
 	$('.question_type', $elem).off().click(function(){
 		var type = $(this).val();
 		
-		alert("Question type: " + type);
-		
-		updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type") 
+		updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
+		$('#typeModal').modal('hide');
 	});
 	
 }
@@ -550,7 +581,7 @@ function respondToEvents($context) {
 		var $questionElement = $(this).closest('tr').find('.question');
 		
 		gFormIndex = $questionElement.data("fid");
-		gItemIndex = $questionElement.data("index");
+		gItemIndex = $questionElement.data("id");
 		$('#typeModal').modal('show');
 
 	});

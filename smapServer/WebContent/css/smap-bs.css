@@ -220,10 +220,25 @@ tr.deleted td a {
 	color: black;
 }
 
+.full_width_btn {
+	width: 100%;
+}
+
 .edit_type {
 	font-size: 30px;
 	margin-top: 16px;
 	margin-bottom:36px;
+	margin-right: 0px;
+	margin-left: 0px;
+	color: black;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
+}
+
+.edit_type_select {
+	font-size: 20px;
+	margin-top: 4px;
+	margin-bottom:4px;
 	margin-right: 0px;
 	margin-left: 0px;
 	color: black;
@@ -241,11 +256,23 @@ tr.deleted td a {
 	opacity: 1;
 }
 
+.edit_image_select {
+	height: 20px;
+	margin-top: 4px;
+	margin-bottom: 4px;
+	margin-right: 0px;
+	margin-left: 0px;
+	transition: all 0.3s ease 0s;
+	opacity: 1;
+}
+
 .edit_type:hover, .edit_image:hover {
 	opacity: 0.3;
 }
 
-
+.margin-bottom {
+	margin-bottom: 15px;
+}
 
 .qname {
 	width: 100%;
