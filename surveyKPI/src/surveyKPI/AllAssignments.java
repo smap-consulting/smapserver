@@ -958,7 +958,8 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtGetFormId = null;
 		
 		// SQL to get a column name from the survey
-		String sqlGetCol = "select q_id, qname, qtype from question where f_id = ? and qname = ?";
+		// Note convert question names in the database to lower case as instanceName is not lower case already
+		String sqlGetCol = "select q_id, qname, qtype from question where f_id = ? and lower(qname) = ?";
 		PreparedStatement pstmtGetCol = null;
 		
 		// SQL to get choices for a select question
@@ -1047,6 +1048,11 @@ public class AllAssignments extends Application {
 			
 			// If this is a zip file extract the contents and set the path to the expand csv file that should be inside
 			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
+			
+			if(contentType == null) {
+				throw new Exception("Missing file");
+			}
+			
 			log.info("Content Type: " + contentType);
 			if(contentType.equals("application/zip")) {
 				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
@@ -1129,174 +1135,183 @@ public class AllAssignments extends Application {
 					
 					log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
 					
-					/*
-					 * Create the insert statement
-					 */		
-					boolean moreThanOneCol = false;
-					StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
-					for(int i = 0; i < columns.size(); i++) {
-						
-						Column col = columns.get(i);
-						
-						if(i > 0) {
-							moreThanOneCol = true;
-							sqlInsert.append(",");
-						}
-						if(col.type.equals("select")) {
-							for(int j = 0; j < col.choices.size(); j++) {
-								if(j > 0) {
-									sqlInsert.append(",");
-								}
-								sqlInsert.append(UtilityMethodsEmail.cleanName(col.name + "__" + col.choices.get(j)));
-							}
-						} else {
-							sqlInsert.append(UtilityMethodsEmail.cleanName(col.name));
-						}
-
-					}
-					
-					// Add the geometry column if latitude and longitude were provided in the csv
-					if(lonIndex >= 0 && latIndex >= 0 ) {
-						if(moreThanOneCol) {
-							sqlInsert.append(",");
-						}
-						hasGeopoint = true;
-						sqlInsert.append("the_geom");
-					}
-					
-					sqlInsert.append(") values("); 
-					for(int i = 0; i < columns.size(); i++) {
-						
-						Column col = columns.get(i);
-						
-						if(i > 0) {
-							sqlInsert.append(",");
-						}
-						if(col.type.equals("select")) {
+					if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
+									
+						/*
+						 * Create the insert statement
+						 */		
+						boolean moreThanOneCol = false;
+						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
+						for(int i = 0; i < columns.size(); i++) {
 							
-							for(int j = 0; j < col.choices.size(); j++) {
-								if(j > 0) {
-									sqlInsert.append(",");
+							Column col = columns.get(i);
+							
+							if(i > 0) {
+								moreThanOneCol = true;
+								sqlInsert.append(",");
+							}
+							if(col.type.equals("select")) {
+								for(int j = 0; j < col.choices.size(); j++) {
+									if(j > 0) {
+										sqlInsert.append(",");
+									}
+									sqlInsert.append(UtilityMethodsEmail.cleanName(col.name + "__" + col.choices.get(j)));
 								}
+							} else {
+								sqlInsert.append(UtilityMethodsEmail.cleanName(col.name));
+							}
+	
+						}
+						
+						// Add the geometry column if latitude and longitude were provided in the csv
+						if(lonIndex >= 0 && latIndex >= 0 ) {
+							if(moreThanOneCol) {
+								sqlInsert.append(",");
+							}
+							hasGeopoint = true;
+							sqlInsert.append("the_geom");
+						}
+						
+						sqlInsert.append(") values("); 
+						for(int i = 0; i < columns.size(); i++) {
+							
+							Column col = columns.get(i);
+							
+							if(i > 0) {
+								sqlInsert.append(",");
+							}
+							if(col.type.equals("select")) {
+								
+								for(int j = 0; j < col.choices.size(); j++) {
+									if(j > 0) {
+										sqlInsert.append(",");
+									}
+									sqlInsert.append("?");
+								}
+							} else {
 								sqlInsert.append("?");
 							}
-						} else {
-							sqlInsert.append("?");
-						}
-					}
-					
-					// Add the geometry value
-					if(hasGeopoint) {
-						if(moreThanOneCol) {
-							sqlInsert.append(",");
-						}
-						sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
-					}
-					sqlInsert.append(");");
-					
-					pstmtInsert = results.prepareStatement(sqlInsert.toString());
-					
-					/*
-					 * Get the data
-					 */
-					log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
-					results.setAutoCommit(false);
-					if(clear_existing) {
-						String sqlDeleteExisting = "truncate " + tableName + ";";
-						pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
-						
-						log.info("Clearing results: " + pstmtDeleteExisting.toString());
-						pstmtDeleteExisting.executeUpdate();
-					}
-					
-					while ((line = reader.readNext()) != null) {
-						
-						int index = 1;
-						for(int i = 0; i < columns.size(); i++) {
-							Column col = columns.get(i);
-							String value = line[col.index];				
-
-							// If the data references a media file then process the attachement
-							if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
-								
-								File srcPathFile = mediaFiles.get(value);
-								if(srcPathFile != null) {
-									value = GeneralUtilityMethods.createAttachments(
-										value, 
-										srcPathFile, 
-										basePath, 
-										sIdent);
-								}
-							}
-							
-							if(col.type.equals("select")) {
-								String [] choices = value.split("\\s");
-								for(int k = 0; k < col.choices.size(); k++) {
-									String cVal = UtilityMethodsEmail.cleanName(col.choices.get(k));
-									boolean hasChoice = false;
-									for(int l = 0; l < choices.length; l++) {
-										if(cVal.equals(UtilityMethodsEmail.cleanName(choices[l]))) {
-											hasChoice = true;
-											break;
-										}
-									}
-									if(hasChoice) {
-										pstmtInsert.setInt(index++, 1);
-									} else {
-										pstmtInsert.setInt(index++, 0);
-									}
-									
-								}
-							} else if(col.type.equals("int")) {
-								int iVal = 0;
-								try { iVal = Integer.parseInt(value);} catch (Exception e) {}
-								pstmtInsert.setInt(index++, iVal);
-							} else if(col.type.equals("decimal")) {
-								double dVal = 0.0;
-								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
-								pstmtInsert.setDouble(index++, dVal);
-							} else {
-								pstmtInsert.setString(index++, value);
-							}
-							
 						}
 						
-						// Add the geopoint value if it exists
+						// Add the geometry value
 						if(hasGeopoint) {
-							String lon = line[lonIndex];
-							String lat = line[latIndex];
-							if(lon == null) {
-								lon = "0.0";
+							if(moreThanOneCol) {
+								sqlInsert.append(",");
 							}
-							if(lat == null) {
-								lat = "0.0";
-							}
-							pstmtInsert.setString(index++, lon);
-							pstmtInsert.setString(index++, lat);
-							
+							sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
 						}
-						log.info("Inserting row: " + pstmtInsert.toString());
-						pstmtInsert.executeUpdate();
+						sqlInsert.append(");");
 						
-				    }
-					results.commit();
+						pstmtInsert = results.prepareStatement(sqlInsert.toString());
+						
+						/*
+						 * Get the data
+						 */
+						log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
+						results.setAutoCommit(false);
+						if(clear_existing) {
+							String sqlDeleteExisting = "truncate " + tableName + ";";
+							pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+							
+							log.info("Clearing results: " + pstmtDeleteExisting.toString());
+							pstmtDeleteExisting.executeUpdate();
+						}
+						
+						while ((line = reader.readNext()) != null) {
+							
+							int index = 1;
+							for(int i = 0; i < columns.size(); i++) {
+								Column col = columns.get(i);
+								String value = line[col.index].trim();				
+	
+								// If the data references a media file then process the attachement
+								if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
+									
+									File srcPathFile = mediaFiles.get(value);
+									if(srcPathFile != null) {
+										value = GeneralUtilityMethods.createAttachments(
+											value, 
+											srcPathFile, 
+											basePath, 
+											sIdent);
+									}
+								}
+								
+								if(col.type.equals("select")) {
+									String [] choices = value.split("\\s");
+									for(int k = 0; k < col.choices.size(); k++) {
+										String cVal = UtilityMethodsEmail.cleanName(col.choices.get(k));
+										boolean hasChoice = false;
+										for(int l = 0; l < choices.length; l++) {
+											if(cVal.equals(UtilityMethodsEmail.cleanName(choices[l]))) {
+												hasChoice = true;
+												break;
+											}
+										}
+										if(hasChoice) {
+											pstmtInsert.setInt(index++, 1);
+										} else {
+											pstmtInsert.setInt(index++, 0);
+										}
+										
+									}
+								} else if(col.type.equals("int")) {
+									int iVal = 0;
+									try { iVal = Integer.parseInt(value);} catch (Exception e) {}
+									pstmtInsert.setInt(index++, iVal);
+								} else if(col.type.equals("decimal")) {
+									double dVal = 0.0;
+									try { dVal = Double.parseDouble(value);} catch (Exception e) {}
+									pstmtInsert.setDouble(index++, dVal);
+								} else {
+									pstmtInsert.setString(index++, value);
+								}
+								
+							}
+							
+							// Add the geopoint value if it exists
+							if(hasGeopoint) {
+								String lon = line[lonIndex];
+								String lat = line[latIndex];
+								if(lon == null) {
+									lon = "0.0";
+								}
+								if(lat == null) {
+									lat = "0.0";
+								}
+								pstmtInsert.setString(index++, lon);
+								pstmtInsert.setString(index++, lat);
+								
+							}
+							log.info("Inserting row: " + pstmtInsert.toString());
+							pstmtInsert.executeUpdate();
+							
+					    }
+						results.commit();
+						
+					} else {
+						throw new Exception("No columns found that match questions in this form.");
+					}
+					
+				}	
+				
 
-				}
 			}
+			
 			
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
-			
-			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this survey").build();
+			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this form. You need to enable loading tasks for this form in the form settings in the editor page.").build();
 			
 		} catch (NotFoundException e) {
 			log.log(Level.SEVERE,"", e);
-			
+			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			throw new NotFoundException();
 			
 		} catch (Exception e) {
-			response = Response.serverError().build();
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			log.log(Level.SEVERE,"", e);
 			
@@ -1340,6 +1355,7 @@ public class AllAssignments extends Application {
 		} 
 		
 		pstmtGetCol.setString(2, colName);
+		log.info("Get column: " + pstmtGetCol.toString());
 		ResultSet rs = pstmtGetCol.executeQuery();
 		if(rs.next()) {
 			// This column name is in the survey
