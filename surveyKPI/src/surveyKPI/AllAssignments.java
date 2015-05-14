@@ -1189,26 +1189,7 @@ public class AllAssignments extends Application {
 									}
 									sqlInsert.append("?");
 								}
-							} else if(col.type.equals("int")) {
-								int iVal = 0;
-								try { iVal = Integer.parseInt(value);} catch (Exception e) {}
-								pstmtInsert.setInt(index++, iVal);
-							} else if(col.type.equals("decimal")) {
-								double dVal = 0.0;
-								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
-								pstmtInsert.setDouble(index++, dVal);
-							} else if(col.type.equals("date")) {
-								Date dateVal = Date.valueOf(value); 
-								pstmtInsert.setDate(index++, dateVal);
-							} else if(col.type.equals("datetime")) {
-								SimpleDateFormat form = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-								java.util.Date uDate = form.parse(value);
-								Timestamp tsVal = new Timestamp(uDate.getTime());
-								
-								pstmtInsert.setTimestamp(index++, tsVal);
-							}else {
-								pstmtInsert.setString(index++, value);
-							}
+							} 
 						}
 						
 						// Add the geometry value
@@ -1281,7 +1262,16 @@ public class AllAssignments extends Application {
 									double dVal = 0.0;
 									try { dVal = Double.parseDouble(value);} catch (Exception e) {}
 									pstmtInsert.setDouble(index++, dVal);
-								} else {
+								} else if(col.type.equals("date")) {
+									Date dateVal = Date.valueOf(value); 
+									pstmtInsert.setDate(index++, dateVal);
+								} else if(col.type.equals("datetime")) {
+									SimpleDateFormat form = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+									java.util.Date uDate = form.parse(value);
+									Timestamp tsVal = new Timestamp(uDate.getTime());
+									
+									pstmtInsert.setTimestamp(index++, tsVal);
+								}else {
 									pstmtInsert.setString(index++, value);
 								}
 								
