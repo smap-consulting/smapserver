@@ -64,6 +64,9 @@ import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
 import org.smap.server.utilities.GetXForm;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 
 /*
  * Return a survey as a webform
@@ -83,19 +86,53 @@ public class WebForm extends Application{
 		s.add(WebForm.class);
 		return s;
 	}
-
 	
-	// Respond with HTML no matter what is requested
+	class JsonResponse {
+		String data;
+		String main; 
+	}
+
+	// Respond with JSON
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getFormJson(@Context HttpServletRequest request,
+			@PathParam("key") String formIdent,
+			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
+			@QueryParam("datakeyvalue") String datakeyvalue,
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("callback") String callback
+			) throws IOException {
+		
+		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback);
+	}
+	
+	// Respond with HTML
 	@GET
 	@Produces(MediaType.TEXT_HTML)
-	public Response getForm(@Context HttpServletRequest request,
+	public Response getFormHTML(@Context HttpServletRequest request,
 			@PathParam("key") String formIdent,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
 			@QueryParam("datakeyvalue") String datakeyvalue,
 			@QueryParam("assignment_id") int assignmentId
 			) throws IOException {
 		
-		Response response;
+		System.out.println("Requesting HTML");
+		return getWebform(request, "html", formIdent, datakey, datakeyvalue, assignmentId, null);
+	}
+	
+	
+	/*
+	 * Get the response as either HTML or JSON
+	 */
+	private Response getWebform(HttpServletRequest request, 
+			String mimeType, 
+			String formIdent, 
+			String datakey, 
+			String datakeyvalue, 
+			int assignmentId,
+			String callback) {
+		
+		Response response = null;
 		
 		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue + "assignmentId:" + assignmentId);
 		
@@ -144,7 +181,7 @@ public class WebForm extends Application{
 		// End Authorisation
 
 		
-		StringBuffer outputHTML = new StringBuffer();
+		StringBuffer outputString = new StringBuffer();
 		
 		// Generate the web form
 		try {	    
@@ -211,12 +248,29 @@ public class WebForm extends Application{
     			}
     		}
 			
-			// Convert to HTML
-			outputHTML.append(addDocument(request, formXML, instanceXML, dataToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
-			
+			// Convert to HTML / Json
+    		if(mimeType.equals("json")) {
+    			JsonResponse jr = new JsonResponse();
+    			jr.data = addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey).toString();
+    			jr.main = addMain(request, formXML, dataToEditId, orgId).toString();
+    				
+    			if(callback != null) {
+    				outputString.append(callback + " (");
+    			}
+    			Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
+				outputString.append(gsonResp.toJson(jr));
+				if(callback != null) {
+					outputString.append(")");
+				}
+    		} else {
+    			outputString.append(addDocument(request, formXML, instanceXML, dataToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
+    		}
+    		
+			response = Response.status(Status.OK).entity(outputString.toString()).build();
+    		
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
-			response = Response.status(Status.OK).entity(outputHTML.toString()).build();
+
 		
 		} catch (Exception e) {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
@@ -383,12 +437,23 @@ public class WebForm extends Application{
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(openMain(orgId));
-		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
-		output.append(closeMain(dataToEditId));
+		output.append(addMain(request, formXML, dataToEditId, orgId));
 		output.append(getDialogs());
 		
 		output.append("</body>");
+		return output;
+	}
+	
+	/*
+	 * Get the "Main" element of an enketo form
+	 */
+	private StringBuffer addMain(HttpServletRequest request, String formXML, String dataToEditId, int orgId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+		StringBuffer output = new StringBuffer();
+		
+		output.append(openMain(orgId));
+		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
+		output.append(closeMain(dataToEditId));
+		
 		return output;
 	}
 	
