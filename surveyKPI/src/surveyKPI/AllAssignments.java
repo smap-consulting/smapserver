@@ -391,7 +391,7 @@ public class AllAssignments extends Application {
 				pstmtTaskGroup.setString(1, as.task_group_name);
 				pstmtTaskGroup.setInt(2, projectId);
 				pstmtTaskGroup.setString(3, addressParams);
-				log.info("Sql: " + tgSql + " : " + as.task_group_name + " : " + addressParams);
+				log.info("Insert into task group: " + pstmtTaskGroup.toString());
 				pstmtTaskGroup.execute();
 				keys = pstmtTaskGroup.getGeneratedKeys();
 				if(keys.next()) {
@@ -471,9 +471,10 @@ public class AllAssignments extends Application {
 							"where f.s_id = ? " + 
 							"order by f.table_name;";		
 				
-					log.info(sql + " : " + sId);
 					pstmt = connectionSD.prepareStatement(sql);	 
 					pstmt.setInt(1, sId);
+					
+					log.info("Get forms and row counts" + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 		
 					while (resultSet.next()) {
@@ -511,7 +512,7 @@ public class AllAssignments extends Application {
 							// Check to see if this form has geometry columns
 							boolean hasGeom = false;
 							pstmtCheckGeom.setString(1, tableName);
-							log.info("Sql: " + checkGeomSQL + " : " + tableName);
+							log.info("Check for geometry coulumn: " + pstmtCheckGeom.toString());
 							ResultSet resultSetGeom = pstmtCheckGeom.executeQuery();
 							if(resultSetGeom.next()) {
 								if(resultSetGeom.getInt(1) > 0) {
@@ -535,12 +536,14 @@ public class AllAssignments extends Application {
 								
 								PreparedStatement pstmt2 = connectionSD.prepareStatement(sql);	 
 								pstmt2.setInt(1, sId);
+								
+								log.info("Get subform with geometry: " + pstmt2.toString());
 								ResultSet resultSet2 = pstmt2.executeQuery();
 					
 								while (resultSet2.next()) {
 									String aTable = resultSet2.getString(1);
 									pstmtCheckGeom.setString(1, aTable);
-									log.info("Sql: " + checkGeomSQL + " : " + aTable);
+									log.info("Check geom: " + pstmtCheckGeom.toString());
 									resultSetGeom = pstmtCheckGeom.executeQuery();
 									if(resultSetGeom.next()) {
 										if(resultSetGeom.getInt(1) > 0) {
@@ -551,11 +554,15 @@ public class AllAssignments extends Application {
 								}
 								pstmt2.close();
 								resultSet2.close();
-								getTaskSql = "select " + tableName + 
-										".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
-								getTaskSqlWhere = " from " + tableName + ", " + tableName2 + " where " + tableName +".prikey = " + tableName2 + 	".parkey " +
-										" and " + tableName + "._bad = 'false'";
-								getTaskSqlEnd = "group by " + tableName + ".prikey ";
+								getTaskSql = "select t1.prikey, ST_AsText(ST_MakeLine(t2.the_geom)) as the_geom ";
+								// getTaskSqlWhere = " from " + tableName + ", " + tableName2 +
+								//		" where " + tableName +".prikey = " + tableName2 + 	".parkey " +
+								//		" and " + tableName + "._bad = 'false'";
+								
+								getTaskSqlWhere = " from " + tableName + " t1 left outer join " + tableName2 + " t2 " +
+										" on t1.prikey = t2.parkey " +
+										" where t1._bad = 'false'";							
+								getTaskSqlEnd = "group by t1.prikey ";
 							}
 							
 							// Finally if we still haven't found a geometry column then set all locations to 0, 0
@@ -566,7 +573,6 @@ public class AllAssignments extends Application {
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 								
-								log.info("where: " + getTaskSqlWhere);
 							}
 							
 										
@@ -680,7 +686,7 @@ public class AllAssignments extends Application {
 									
 									pstmtInsert.setString(10, addressString);			// Address
 									
-									log.info("SQL: " + pstmtInsert.toString());
+									log.info("Insert Task: " + pstmtInsert.toString());
 									
 									int count = pstmtInsert.executeUpdate();
 									if(count != 1) {
@@ -696,7 +702,7 @@ public class AllAssignments extends Application {
 												pstmtAssign.setString(2, "accepted");
 												pstmtAssign.setInt(3, taskId);
 												
-												log.info("SQL:" + pstmtAssign.toString());
+												log.info("Assign user to task:" + pstmtAssign.toString());
 												
 												pstmtAssign.executeUpdate();
 											}
