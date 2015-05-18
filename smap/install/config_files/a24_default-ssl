@@ -31,6 +31,10 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 <VirtualHost *:443>
 	ServerAdmin webmaster@localhost
 
+# CORS
+	Header add Access-Control-Allow-Credentials true
+    Header add Access-Control-Allow-Headers "Authorization"
+                
 	DocumentRoot /var/www/smap
 	SSLEngine on
 	DBDriver pgsql
@@ -80,7 +84,6 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
 	</Directory>
 
 	# field manager client module
@@ -123,19 +126,20 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
      </Location>
      
      <Location /webForm>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
     </Location>
 
     <Location /formXML>
-     	AuthType Digest
+     	AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
        	Require valid-user
 	</Location>
@@ -188,12 +192,14 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	
 	# surveyKPI module
  	<Location /surveyKPI>
-		AuthType Digest
+		AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
 	</Location>
 
 	# Allow iphones to upload images to user details

@@ -87,8 +87,15 @@ public class WebForm extends Application{
 		return s;
 	}
 	
+	class SurveyData {
+		String modelStr;
+		String instanceStrToEdit;
+		String dataToEditId;
+		int assignmentId;
+		String accessKey;
+	}
 	class JsonResponse {
-		String data;
+		SurveyData surveyData = new SurveyData();
 		String main; 
 	}
 
@@ -103,6 +110,8 @@ public class WebForm extends Application{
 			@QueryParam("callback") String callback
 			) throws IOException {
 		
+		log.info("Requesting json");
+		System.out.println("Origin: " + request.getHeaderNames().toString());
 		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback);
 	}
 	
@@ -113,11 +122,20 @@ public class WebForm extends Application{
 			@PathParam("key") String formIdent,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
 			@QueryParam("datakeyvalue") String datakeyvalue,
-			@QueryParam("assignment_id") int assignmentId
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("callback") String callback
 			) throws IOException {
 		
-		System.out.println("Requesting HTML");
-		return getWebform(request, "html", formIdent, datakey, datakeyvalue, assignmentId, null);
+		String type = "html";
+		if(callback != null) {
+			// I guess they really want JSONP
+			type = "json";
+			
+		} 
+		log.info("Requesting " + type);
+		
+		System.out.println();
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback);
 	}
 	
 	
@@ -251,8 +269,23 @@ public class WebForm extends Application{
 			// Convert to HTML / Json
     		if(mimeType.equals("json")) {
     			JsonResponse jr = new JsonResponse();
-    			jr.data = addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey).toString();
-    			jr.main = addMain(request, formXML, dataToEditId, orgId).toString();
+    			jr.surveyData.modelStr = getModelStr(request, formXML).toString();
+    			if(instanceXML != null) {
+    				jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
+    			}
+    			jr.surveyData.dataToEditId = dataToEditId;
+
+    			// Add the assignment id if this was set
+    			if(assignmentId != 0) {
+    				jr.surveyData.assignmentId = assignmentId;
+    			}
+    			
+    			// Add access key for authentication
+    			if(accessKey != null) {
+    				jr.surveyData.accessKey = accessKey;
+    			}
+    			
+    			jr.main = addMain(request, formXML, dataToEditId, orgId, true).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -373,6 +406,7 @@ public class WebForm extends Application{
 			String dataToEditId,
 			int assignmentId,
 			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+		
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<script type='text/javascript'>\n");
@@ -383,11 +417,7 @@ public class WebForm extends Application{
 		// Data model
 		
 		output.append("surveyData.modelStr='");
-		String dataDoc=transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
-	
-		// We only want the model
-		dataDoc = dataDoc.substring(dataDoc.indexOf("<model>"), dataDoc.lastIndexOf("</root>"));
-		output.append(dataDoc.replace("\n", "").replace("\r", ""));
+		output.append(getModelStr(request, formXML));
 		output.append("';\n");
 		
 		// Instance Data
@@ -428,6 +458,25 @@ public class WebForm extends Application{
 		output.append("</script>\n");
 		return output;
 	}
+	
+	/*
+	 * Get the model string
+	 */
+	private StringBuffer getModelStr(HttpServletRequest request, String formXML) 
+			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+		
+		StringBuffer output = new StringBuffer();
+		
+		String dataDoc=transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
+		
+		// We only want the model
+		dataDoc = dataDoc.substring(dataDoc.indexOf("<model>"), dataDoc.lastIndexOf("</root>"));
+		output.append(dataDoc.replace("\n", "").replace("\r", ""));
+		
+		return output;
+		
+	}
+	
 	/*
 	 * Add the body
 	 */
@@ -437,7 +486,7 @@ public class WebForm extends Application{
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -447,12 +496,14 @@ public class WebForm extends Application{
 	/*
 	 * Get the "Main" element of an enketo form
 	 */
-	private StringBuffer addMain(HttpServletRequest request, String formXML, String dataToEditId, int orgId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addMain(HttpServletRequest request, String formXML, String dataToEditId, int orgId, boolean minimal) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
-		output.append(openMain(orgId));
+		output.append(openMain(orgId, minimal));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
-		output.append(closeMain(dataToEditId));
+		if(!minimal) {
+			output.append(closeMain(dataToEditId));
+		}
 		
 		return output;
 	}
@@ -634,11 +685,12 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer openMain(int orgId) {
+	private StringBuffer openMain(int orgId, boolean minimal) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div class='main'>\n");
 			output.append("<article class='paper'>\n");
+			if(!minimal) {
 				output.append("<header class='form-header clearfix'>\n");
 					output.append("<div class='offline-enabled'>\n");
 						output.append("<div title='Records Queued' class='queue-length side-slider-toggle'>0</div>\n");
@@ -654,7 +706,7 @@ public class WebForm extends Application{
 					output.append("</span>\n");
 
 				output.append("</header>\n");
-			
+			}
 		return output;
 	}
 	
