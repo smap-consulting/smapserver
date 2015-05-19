@@ -342,7 +342,7 @@ public class AllAssignments extends Application {
 		    return response;
 		}
 		
-		log.info("Assignment:" + settings);
+		log.info("++++++++++++++++++++++++++++++++++++++ Assignment:" + settings);
 		AssignFromSurvey as = new Gson().fromJson(settings, AssignFromSurvey.class);
 
 		log.info("User id: " + as.user_id);
@@ -553,15 +553,15 @@ public class AllAssignments extends Application {
 								}
 								pstmt2.close();
 								resultSet2.close();
-								getTaskSql = "select t1.prikey, ST_AsText(ST_MakeLine(t2.the_geom)) as the_geom ";
+								getTaskSql = "select " + tableName + ".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
 								// getTaskSqlWhere = " from " + tableName + ", " + tableName2 +
 								//		" where " + tableName +".prikey = " + tableName2 + 	".parkey " +
 								//		" and " + tableName + "._bad = 'false'";
 								
-								getTaskSqlWhere = " from " + tableName + " t1 left outer join " + tableName2 + " t2 " +
-										" on t1.prikey = t2.parkey " +
-										" where t1._bad = 'false'";							
-								getTaskSqlEnd = "group by t1.prikey ";
+								getTaskSqlWhere = " from " + tableName + " left outer join " + tableName2 + 
+										" on " + tableName + ".prikey = " + tableName2 + ".parkey " +
+										" where " + tableName + "._bad = 'false'";							
+								getTaskSqlEnd = "group by " + tableName + ".prikey ";
 							}
 							
 							// Finally if we still haven't found a geometry column then set all locations to 0, 0
@@ -605,7 +605,7 @@ public class AllAssignments extends Application {
 	
 								if(pstmt != null) {pstmt.close();};
 								pstmt = connectionRel.prepareStatement(getTaskSql);	
-								log.info("SQL Get Tasks: " + pstmt.toString());
+								log.info("SQL Get Tasks: ----------------------- " + pstmt.toString());
 								resultSet = pstmt.executeQuery();
 								while (resultSet.next()) {
 					
