@@ -374,13 +374,13 @@ function completeSurveyList() {
 	h = [],
 	idx = -1;
 	
-	h[++idx] = '<table class="table">';
+	h[++idx] = '<table class="table" style="table-layout:fixed;">';
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
-	h[++idx] = '<th></th>';
-	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
-	h[++idx] = '<th>' + localise.set["c_block"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_download"] + '</th>';
+	h[++idx] = '<th class="col-md-1"></th>';
+	h[++idx] = '<th class="col-md-7">' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th class="col-md-2">' + localise.set["c_block"] + '</th>';
+	h[++idx] = '<th class="col-md-2">' + localise.set["c_download"] + '</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody class="table-striped">';
@@ -403,9 +403,9 @@ function completeSurveyList() {
 			h[++idx] = survey.id;
 			h[++idx] = '&name=';
 			h[++idx] = encodeURI(survey.displayName);
-			h[++idx] = '">';
+			h[++idx] = '"><span style="word-wrap: break-word;">';
 			h[++idx] = survey.displayName;
-			h[++idx] = '</a></td>';
+			h[++idx] = '</span></a></td>';
 			h[++idx] = '<td class="control_block"><input type="checkbox" name="block" value="';
 			h[++idx] = survey.id;
 			h[++idx] = '" ';
