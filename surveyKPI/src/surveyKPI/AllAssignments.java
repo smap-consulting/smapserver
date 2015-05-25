@@ -968,6 +968,10 @@ public class AllAssignments extends Application {
 		String sqlGetFormId = "select f_id, table_name from form where s_id = ? and (parentform is null or parentform = 0)";
 		PreparedStatement pstmtGetFormId = null;
 		
+		// SQL to get the table names of all the forms in the survey 
+		String sqlGetTableNames = "select table_name from form where s_id = ?";
+		PreparedStatement pstmtGetTableNames = null;
+		
 		// SQL to get a column name from the survey
 		// Note convert question names in the database to lower case as instanceName is not lower case already
 		String sqlGetCol = "select q_id, qname, qtype from question where f_id = ? and lower(qname) = ?";
@@ -1199,7 +1203,9 @@ public class AllAssignments extends Application {
 									}
 									sqlInsert.append("?");
 								}
-							} 
+							} else {
+								sqlInsert.append("?");
+							}
 						}
 						
 						// Add the geometry value
@@ -1219,11 +1225,19 @@ public class AllAssignments extends Application {
 						log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
 						results.setAutoCommit(false);
 						if(clear_existing) {
-							String sqlDeleteExisting = "truncate " + tableName + ";";
-							pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+							pstmtGetTableNames = connectionSD.prepareStatement(sqlGetTableNames);
+							pstmtGetTableNames.setInt(1, sId);
+							ResultSet rsTabs = pstmtGetTableNames.executeQuery();
+							while(rsTabs.next()) {
+								
+								String sqlDeleteExisting = "truncate " + rsTabs.getString(1) + ";";
+								if(pstmtDeleteExisting != null) try {pstmtDeleteExisting.close();} catch(Exception e) {}
+								pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+								
+								log.info("Clearing results: " + pstmtDeleteExisting.toString());
+								pstmtDeleteExisting.executeUpdate();
+							}
 							
-							log.info("Clearing results: " + pstmtDeleteExisting.toString());
-							pstmtDeleteExisting.executeUpdate();
 						}
 						
 						while ((line = reader.readNext()) != null) {
@@ -1315,8 +1329,6 @@ public class AllAssignments extends Application {
 				
 
 			}
-			
-			
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
@@ -1336,6 +1348,7 @@ public class AllAssignments extends Application {
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetTableNames != null) {pstmtGetTableNames.close();}} catch (SQLException e) {}
 			try {if (pstmtGetChoices != null) {pstmtGetChoices.close();}} catch (SQLException e) {}
 			try {
 				if (connectionSD != null) {
