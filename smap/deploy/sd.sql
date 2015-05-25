@@ -279,3 +279,11 @@ alter table organisation add column email_port integer;
 -- Upgrade to: 15.05 from 15.04
 drop index formid_sequence ;
 alter table question alter column qname set not null;
+alter table question alter column visible set default 'true';
+alter table question alter column mandatory set default 'false';
+alter table question alter column readOnly set default 'false';
+alter table question alter column enabled set default 'true';
+
+# Starting to add the column_name explicitely to question
+alter table question add column column_name text;
+update question set column_name = lower(qname) where column_name is null;

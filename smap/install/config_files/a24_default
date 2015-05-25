@@ -36,6 +36,7 @@ ExpiresActive On
 
 # To force all connections, other than from a mobile phone to be https, uncomment the following lines  
 #  and substitute the hostname of the server for the hostname in curly braces 
+#    Redirect permanent /webForm.html https://{hostname}/webForm.html
 #    Redirect permanent /fieldAnalysis https://{hostname}/fieldAnalysis
 #    Redirect permanent /fieldManager https://{hostname}/fieldManager
 #    Redirect permanent /attachments https://{hostname}/attachments

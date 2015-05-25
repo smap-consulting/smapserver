@@ -167,7 +167,7 @@ public class WebForm extends Application{
 		
 		// Authorisation 
 		if(user != null) {
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-WebForm");
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key

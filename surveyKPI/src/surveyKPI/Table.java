@@ -26,6 +26,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.ResultsDataSource;
+import org.smap.sdal.Utilities.SDDataSource;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,11 +57,11 @@ public class Table extends Application {
 	
 	private class Column {
 		String name;
+		String type;
 	}
 	
 	private class TableDesc {
 		ArrayList<Column> columns = new ArrayList<Column> ();
-		String column_name;
 	}
 
 	
@@ -72,6 +73,7 @@ public class Table extends Application {
 		
 		Response response = null;
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGetType = null;
 		TableDesc t = new TableDesc(); 
 		
 		if(tableName != null) {
@@ -86,6 +88,7 @@ public class Table extends Application {
 			}
 	
 			Connection connectionRel = null; 
+			Connection connectionSD = null;
 			try {
 				
 				String sql = "select column_name from information_schema.columns where table_name = ? " +
@@ -94,10 +97,25 @@ public class Table extends Application {
 				pstmt = connectionRel.prepareStatement(sql);
 				pstmt.setString(1,  tableName);
 				
+				connectionSD = SDDataSource.getConnection("surveyKPI-Table");
+				String sqlGetType = "select q.qtype from question q, form f " +
+						" where q.f_id = f.f_id" +
+						" and f.table_name = ? " +
+						" and q.column_name = ?;";
+				pstmtGetType = connectionSD.prepareStatement(sqlGetType);
+				pstmtGetType.setString(1, tableName);
+				
 				ResultSet resultSet = pstmt.executeQuery();
 				while(resultSet.next()) {
-					Column c = new Column();
+					Column c = new Column();					
 					c.name = resultSet.getString("column_name");
+					
+					pstmtGetType.setString(2, c.name);
+					ResultSet rsType = pstmtGetType.executeQuery();
+					if(rsType.next()) {
+						c.type = rsType.getString("qtype");
+					}
+					
 					t.columns.add(c);
 				}
 				
@@ -113,7 +131,8 @@ public class Table extends Application {
 
 			} finally {
 				if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
-				if (connectionRel != null) try { connectionRel.close();	} catch(SQLException e) {};
+				if(pstmtGetType != null) try {	pstmtGetType.close(); } catch(SQLException e) {};
+				if (connectionSD != null) try { connectionSD.close();	} catch(SQLException e) {};
 			}
 
 		}

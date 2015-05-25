@@ -154,5 +154,6 @@ echo "1504" > ~/smap_version
 # version 15.05
 if [ $version -lt "1505" ]
 then
+# Initialise the column name value in question:
 echo "1505" > ~/smap_version
 fi

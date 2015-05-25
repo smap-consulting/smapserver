@@ -676,7 +676,11 @@ public class AllAssignments extends Application {
 											if(add.selected) {
 												TaskAddress ta = new TaskAddress();
 												ta.name = add.name;
-												ta.value = resultSet.getString(add.name);
+												if(add.isMedia) {
+													ta.value = urlprefix + resultSet.getString(add.name);
+												} else {
+													ta.value = resultSet.getString(add.name);
+												}
 												addressArray.add(ta);
 											}
 										}

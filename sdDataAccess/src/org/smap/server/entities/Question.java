@@ -65,6 +65,9 @@ public class Question implements Serializable {
 
 	@Column(name = "qName")
 	private String name;
+	
+	@Column(name = "column_name")
+	private String column_name;
 
 	@Column(name = "qType")
 	private String qType = "string";
@@ -114,8 +117,8 @@ public class Question implements Serializable {
 	@Column(name = "appearance")
 	private String appearance;
 	
-	@Column(name = "enabled")
-	private boolean enabled = true;
+	//@Column(name = "enabled")
+	//private boolean enabled = true;
 	
 	@Column(name = "path")
 	private String path;	// Xpath to this question
@@ -177,7 +180,7 @@ public class Question implements Serializable {
 	}
 	
 	public String getColName() {
-		return UtilityMethods.cleanName(name);
+		return UtilityMethods.cleanName(name);		// TODO return column_name attribute
 	}
 
 	public String getType() {
@@ -248,26 +251,14 @@ public class Question implements Serializable {
 		return appearance;
 	}
 	
-	public boolean getEnabled() {
-		return enabled;
+	public boolean getEnabled() {		// deprecate
+		return true;
 	}
 	
 	public String getPath() {
 
 		String tPath = null;
 		tPath = path;
-		/*
-		if(path.startsWith("/main")) {
-			tPath = path;
-		} else {
-			int idx = path.indexOf('/', 1);
-			if(idx < 0) {
-				tPath = "/main";
-			} else {
-				tPath = "/main" + path.substring(idx);
-			}
-		}
-		*/
 		
 		return tPath;
 	}
@@ -297,8 +288,8 @@ public class Question implements Serializable {
 	}
 
 	public void setName(String name) {
-		//this.name = UtilityMethods.cleanName(name).toLowerCase();
 		this.name = name;
+		this.column_name = UtilityMethods.cleanName(name);
 	}
 
 	public void setType(String type) {
@@ -369,9 +360,11 @@ public class Question implements Serializable {
 		appearance = v;
 	}
 	
+	/*
 	public void setEnabled(boolean v) {
 		enabled = v;
 	}
+	*/
 
 	public void setFormRef(String formRef) {
 		this.formRef = formRef;

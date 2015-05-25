@@ -564,21 +564,30 @@ function setAddressOptions() {
 					cache: false,
 					success: function(table) {
 						var colname,
-						h = [],
-						idx = -1,
-						i,j;
+							coltype,
+							sMedia,
+							h = [],
+							idx = -1,
+							i,j;
 						removeHourglass();
 						
 						gTaskParams = [];
 						j = 0;
 						for(i = 0; i < table.columns.length; i++) {
 							colname = table.columns[i].name;
+							coltype = table.columns[i].type;
 							
 							if(colname !== "prikey" && colname !== "parkey" && 
 									colname !== "the_geom" &&
 									colname !== "geo_type" &&
 									colname.indexOf("_") !== 0) {
-								gTaskParams[j++] = {selected:false, name:colname, isBarcode:false}; 
+								
+								if(coltype && (coltype === "image" || coltype === "audio" || coltype === "video")) {
+									isMedia = true;
+								} else {
+									isMedia = false;
+								}
+								gTaskParams[j++] = {selected:false, name:colname, isBarcode:false, isMedia: isMedia}; 
 								
 							}
 						}
@@ -956,15 +965,19 @@ function updateTaskParams() {
 	
 	var name,
 		selected,
-		isBarcode;
+		isBarcode,
+		isMedia,
+		updatedTaskParams = [];
 	
-	gTaskParams = [];
+	
 	$('#task_params_table').find('tbody tr').each(function(index){
 		name = $(this).find('td.task_name').text();
 		selected = $(this).find('td.task_selected input').is(':checked');
 		isBarcode = $(this).find('td.task_isBarcode input').is(':checked');
-		gTaskParams[index] = {selected: selected, name: name, isBarcode: isBarcode};
+		isMedia = gTaskParams[index].isMedia;
+		updatedTaskParams[index] = {selected: selected, name: name, isBarcode: isBarcode, isMedia: isMedia};
 	});
+	gTaskParams = updatedTaskParams;
 	
 	if(gTaskGroupIndex !== -1) {	// An existing set of task parameters was being edited
 		// Update the array of task params
