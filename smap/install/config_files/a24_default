@@ -82,15 +82,6 @@ ExpiresActive On
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
-
-# Local access points for webforms
-    <Location /formXMLLocal>
-       	Require host  localhost
-	</Location>
-
-	<Location /instanceXMLLocal>
-    	Require host  localhost
-	</Location>
 	    	
 	# survey mobile API module. Require enumerator access
      <Location /formList>
@@ -108,7 +99,9 @@ ExpiresActive On
         AuthDigestDomain /
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
     </Location>
 
 
@@ -128,7 +121,9 @@ ExpiresActive On
         AuthDigestProvider dbd
         AuthDigestNonceLifetime -1
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
 	</Location>
 
 # results submitted with an authentication key

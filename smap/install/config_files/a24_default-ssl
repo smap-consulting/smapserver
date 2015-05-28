@@ -105,15 +105,6 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
-
-# Local access points for webforms
-    <Location /formXMLLocal>
-       	Require host  localhost
-	</Location>
-
-	<Location /instanceXMLLocal>
-    	Require host  localhost
-	</Location>
 	
 # survey mobile API module. Require enumerator access
      <Location /formList>
@@ -145,13 +136,15 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	</Location>
 	
 	<Location /submission>
-    	AuthType Digest
+    	AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDigestNonceLifetime -1
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
 	</Location>
 	
 # results submitted with an authentication key

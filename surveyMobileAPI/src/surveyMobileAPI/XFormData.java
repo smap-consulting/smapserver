@@ -94,6 +94,7 @@ public class XFormData {
 		PersistenceContext pc = new PersistenceContext("pgsql_jpa");
 		DiskFileItemFactory  factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
+		
 		List <FileItem> items = upload.parseRequest(request);
 		int assignmentId = 0;
 		
@@ -145,11 +146,13 @@ public class XFormData {
 		iter = items.iterator();
 		int iosImageCount = 0;
 		int iosVideoCount = 0;
+		log.info("############################ Saving everything to disk  ######################");
 		while (iter.hasNext()) {
 		    FileItem item = (FileItem) iter.next();	 
 		    String fieldName = item.getFieldName();
 		    String dataUrl = null;
 		    
+		    log.info("==== Item: " + fieldName);
 		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
 		    	// Check to see if this form field indicates the submission is incomplete
 		    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
@@ -182,6 +185,7 @@ public class XFormData {
 		        }
 		    }
 		}
+		log.info("####################### End of Saving everything to disk ##############################");
 		
 		Connection connectionSD = null;
 		Survey survey = null;
