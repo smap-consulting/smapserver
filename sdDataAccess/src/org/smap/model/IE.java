@@ -16,8 +16,8 @@ public class IE {
 	private String tableName = null;
 	private String value = null;
 	private String type = null;	
-	private String fType = null;
 	private String qType = null;
+	private boolean phoneOnly = false;		// Security setting to prevent sensitive data being stored on server
 	private int seq = 0;
 	private String path = null;	// The path by which this element is known in the XML template
 	private ArrayList <IE> children = new ArrayList <IE> ();
@@ -56,6 +56,10 @@ public class IE {
 		return qType;
 	}
 	
+	public boolean isPhoneOnly() {
+		return phoneOnly;
+	}
+	
 	public int getSeq() {
 		return seq;
 	}
@@ -82,6 +86,10 @@ public class IE {
 	
 	public void setQType(String qType) {
 		this.qType = qType;
+	}
+	
+	public void setPhoneOnly(boolean v) {
+		this.phoneOnly = v;
 	}
 	
 	public void setSeq(int seq) {

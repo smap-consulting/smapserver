@@ -478,7 +478,7 @@ public class SubRelationalDB extends Subscriber {
 			String sql = null;	
 			
 			/*
-			 * If this is the top level survey then 
+			 * If this is the top leve form then 
 			 *   1) create all the tables for this survey if they do not already exist
 			 *   2) Check if this survey is a duplicate
 			 */
@@ -529,7 +529,7 @@ public class SubRelationalDB extends Subscriber {
 						sql += ",'true','" + bad_reason + "'";
 					}
 				}
-				sql += addSqlValues(columns, sName, device, server);
+				sql += addSqlValues(columns, sName, device, server, false);
 				sql += ");";
 				
 				System.out.println("        SQL statement: " + sql);
@@ -691,21 +691,23 @@ public class SubRelationalDB extends Subscriber {
 		return sql;
 	}
 	
-	String addSqlValues(List<IE> columns, String sName, String device, String server) {
+	String addSqlValues(List<IE> columns, String sName, String device, String server, boolean phoneOnly) {
 		String sql = "";
 		for(IE col : columns) {
+			boolean colPhoneOnly = phoneOnly || col.isPhoneOnly();	// Set phone only if the group is phone only or just this column
 			String colType = col.getQType();
+			
 			if(colType.equals("select")) {
 				List<IE> options = col.getChildren();
 				UtilityMethods.sortElements(options);
 				for(IE option : options) {
-					sql += "," + option.getValue();
+					sql += "," + (colPhoneOnly ? "" : option.getValue());
 				}
 			} else if(colType.equals("begin group")) {
 				// Non repeating group, process these child columns at the same level as the parent
-				sql += addSqlValues(col.getQuestions(), sName, device, server);
+				sql += addSqlValues(col.getQuestions(), sName, device, server, colPhoneOnly);
 			} else {
-				sql += "," + getDbString(col, sName, device, server);
+				sql += "," + getDbString(col, sName, device, server, colPhoneOnly);
 			}				
 		}
 		return sql;
@@ -714,160 +716,170 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Format the value into a string appropriate to its type
 	 */
-	String getDbString(IE col, String surveyName, String device, String server) {
+	String getDbString(IE col, String surveyName, String device, String server, boolean phoneOnly) {
 		
 		String qType = col.getQType();
 		String value = col.getValue();	// Escape quotes and trim
-		if(value != null) {
-			value = col.getValue().replace("'", "''").trim();	// Escape quotes and trim
-
-			if(qType.equals("string") || qType.equals("select1") || qType.equals("barcode")) {
-				value = "'" + value + "'";
-				
-			} else if(qType.equals("int") || qType.equals("decimal")) {
-				if(value.length() == 0) {
-					value = "null";
-				}
-				
-			} else if(qType.equals("date") || qType.equals("dateTime") || qType.equals("time") ) {
-				if(value.length() > 0) {
-					value = "'" + col.getValue() + "'";
-				} else {
-					value = "null";
-				}
-				
-			} else if(qType.equals("geopoint")) {
-				// Geo point parameters are separated by a space and in the order Y X
-				// To store as a Point in the db this order needs to be reversed
-				String params[] = value.split(" ");
-				if(params.length > 1) {
-					value = "ST_GeomFromText('POINT(" + params[1] + " " + params[0] + ")', 4326)";
-				} else {
-					System.out.println("Error: Invalid geometry point detected: " + value);
-					value = "null";
-				}
-				
-			} else if(qType.equals("audio") || qType.equals("video") || qType.equals("image")) {
-			
-				System.out.println("Processing media. Value: " + value);
-				if(value == null || value.length() == 0) {
-					value = "null";
-				} else {
-					/*
-					 * If this is a new file then rename the attachment to use a UUID
-					 * Where this is an update to an existing survey and the file has not been re-submitted then 
-					 * leave its value unchanged
-					 */
-					String srcName = value;
-					File srcXmlFile = new File(gFilePath);
-					File srcXmlDirFile = srcXmlFile.getParentFile();
-					File srcPathFile = new File(srcXmlDirFile.getAbsolutePath() + "/" + srcName);
+		
+		if(phoneOnly) {
+			if(qType.equals("string")) {
+				value = "'xxxx'";			// Provide feedback to user that this value was withheld
+			} else {
+				value = "null";				// For non string types will just set to null
+			}
+		} else {
+		
+			if(value != null) {
+				value = col.getValue().replace("'", "''").trim();	// Escape quotes and trim
+	
+				if(qType.equals("string") || qType.equals("select1") || qType.equals("barcode")) {
+					value = "'" + value + "'";
 					
-					if(srcPathFile.exists()) {
-						value = "'" + GeneralUtilityMethods.createAttachments(
-								srcName, 
-								srcPathFile, 
-								gBasePath, 
-								surveyName) + "'";
-
-					} else {
-						System.out.println("Source file does not exist: " + srcPathFile.getName());
-						value = "'" + value + "'";
+				} else if(qType.equals("int") || qType.equals("decimal")) {
+					if(value.length() == 0) {
+						value = "null";
 					}
 					
-				}
-			} else if(qType.equals("geoshape") || qType.equals("geotrace")) {
-				/*
-				 * ODK polygon / linestring
-				 * The coordinates are in a String separated by ;
-				 * Each coordinate consists of space separated lat lon height accuracy
-				 *   Actually I'm not sure about the last two but they will be ignored anyway
-				 *   To store as a Point in the db this order needs to be reversed to (lon lat)
-				 */
-				int min_points = 3;
-				StringBuffer ptString = null;
-				if(qType.equals("geoshape")) {
-					min_points = 2;
-				}
-				
-				String coords[] = value.split(";");
-				if(coords.length >= min_points) {
-					if(qType.equals("geoshape")) {
-							ptString = new StringBuffer("ST_GeomFromText('POLYGON((");
-					} else {
-						ptString = new StringBuffer("ST_GeomFromText('LINESTRING(");
-					}
-					for(int i = 0; i < coords.length; i++) {
-						String [] points = coords[i].split(" ");
-						if(points.length > 1) {
-							if(i > 0) {
-								ptString.append(",");
-							}
-							ptString.append(points[1]);
-							ptString.append(" ");
-							ptString.append(points[0]);
-						} else {
-							System.out.println("Error: " + qType + " Badly formed point." + coords[i]);
-						}
-					}
-					if(qType.equals("geoshape")) {
-						ptString.append("))', 4326)");
-					} else {
-						ptString.append(")', 4326)");
-					}
-					value = ptString.toString();
-					
-				} else {
-					value = "null";
-					System.out.println("Error: " + qType + " Insufficient points for " + qType + ": " + coords.length);
-				}
-				System.out.println("Value for geoshape: " + value);
-				
-			} else if(qType.equals("geopolygon") || qType.equals("geolinestring")) {
-				// Complex types
-				IE firstPoint = null;
-				String ptString = "";
-				List<IE> points = col.getChildren();
-				int number_points = points.size();
-				if(number_points < 3 && qType.equals("geopolygon")) {
-					value = "null";
-					System.out.println("Error: Insufficient points for polygon." + number_points);
-				} else if(number_points < 2 && qType.equals("geolinestring")) {
-					value = "null";
-					System.out.println("Error: Insufficient points for line." + number_points);
-				} else {
-					for(IE point : points) {
-						
-						String params[] = point.getValue().split(" ");
-						if(params.length > 1) {
-							if(firstPoint == null) {
-								firstPoint = point;		// Used to loop back for a polygon
-							} else {
-								ptString += ",";
-							}
-							ptString += params[1] + " " + params[0];
-						}
-					}
-					if(ptString.length() > 0) {
-						if(qType.equals("geopolygon")) {
-							if(firstPoint != null) {
-								String params[] = firstPoint.getValue().split(" ");
-								if(params.length > 1) {
-									ptString += "," + params[1] + " " + params[0];
-								}
-							}
-							value = "ST_GeomFromText('POLYGON((" + ptString + "))', 4326)";
-						} else if(qType.equals("geolinestring")) {
-							value = "ST_GeomFromText('LINESTRING(" + ptString + ")', 4326)";
-						}
+				} else if(qType.equals("date") || qType.equals("dateTime") || qType.equals("time") ) {
+					if(value.length() > 0) {
+						value = "'" + col.getValue() + "'";
 					} else {
 						value = "null";
 					}
-				}
+					
+				} else if(qType.equals("geopoint")) {
+					// Geo point parameters are separated by a space and in the order Y X
+					// To store as a Point in the db this order needs to be reversed
+					String params[] = value.split(" ");
+					if(params.length > 1) {
+						value = "ST_GeomFromText('POINT(" + params[1] + " " + params[0] + ")', 4326)";
+					} else {
+						System.out.println("Error: Invalid geometry point detected: " + value);
+						value = "null";
+					}
+					
+				} else if(qType.equals("audio") || qType.equals("video") || qType.equals("image")) {
 				
+					System.out.println("Processing media. Value: " + value);
+					if(value == null || value.length() == 0) {
+						value = "null";
+					} else {
+						/*
+						 * If this is a new file then rename the attachment to use a UUID
+						 * Where this is an update to an existing survey and the file has not been re-submitted then 
+						 * leave its value unchanged
+						 */
+						String srcName = value;
+						File srcXmlFile = new File(gFilePath);
+						File srcXmlDirFile = srcXmlFile.getParentFile();
+						File srcPathFile = new File(srcXmlDirFile.getAbsolutePath() + "/" + srcName);
+						
+						if(srcPathFile.exists()) {
+							value = "'" + GeneralUtilityMethods.createAttachments(
+									srcName, 
+									srcPathFile, 
+									gBasePath, 
+									surveyName) + "'";
+	
+						} else {
+							System.out.println("Source file does not exist: " + srcPathFile.getName());
+							value = "'" + value + "'";
+						}
+						
+					}
+				} else if(qType.equals("geoshape") || qType.equals("geotrace")) {
+					/*
+					 * ODK polygon / linestring
+					 * The coordinates are in a String separated by ;
+					 * Each coordinate consists of space separated lat lon height accuracy
+					 *   Actually I'm not sure about the last two but they will be ignored anyway
+					 *   To store as a Point in the db this order needs to be reversed to (lon lat)
+					 */
+					int min_points = 3;
+					StringBuffer ptString = null;
+					if(qType.equals("geoshape")) {
+						min_points = 2;
+					}
+					
+					String coords[] = value.split(";");
+					if(coords.length >= min_points) {
+						if(qType.equals("geoshape")) {
+								ptString = new StringBuffer("ST_GeomFromText('POLYGON((");
+						} else {
+							ptString = new StringBuffer("ST_GeomFromText('LINESTRING(");
+						}
+						for(int i = 0; i < coords.length; i++) {
+							String [] points = coords[i].split(" ");
+							if(points.length > 1) {
+								if(i > 0) {
+									ptString.append(",");
+								}
+								ptString.append(points[1]);
+								ptString.append(" ");
+								ptString.append(points[0]);
+							} else {
+								System.out.println("Error: " + qType + " Badly formed point." + coords[i]);
+							}
+						}
+						if(qType.equals("geoshape")) {
+							ptString.append("))', 4326)");
+						} else {
+							ptString.append(")', 4326)");
+						}
+						value = ptString.toString();
+						
+					} else {
+						value = "null";
+						System.out.println("Error: " + qType + " Insufficient points for " + qType + ": " + coords.length);
+					}
+					System.out.println("Value for geoshape: " + value);
+					
+				} else if(qType.equals("geopolygon") || qType.equals("geolinestring")) {
+					// Complex types
+					IE firstPoint = null;
+					String ptString = "";
+					List<IE> points = col.getChildren();
+					int number_points = points.size();
+					if(number_points < 3 && qType.equals("geopolygon")) {
+						value = "null";
+						System.out.println("Error: Insufficient points for polygon." + number_points);
+					} else if(number_points < 2 && qType.equals("geolinestring")) {
+						value = "null";
+						System.out.println("Error: Insufficient points for line." + number_points);
+					} else {
+						for(IE point : points) {
+							
+							String params[] = point.getValue().split(" ");
+							if(params.length > 1) {
+								if(firstPoint == null) {
+									firstPoint = point;		// Used to loop back for a polygon
+								} else {
+									ptString += ",";
+								}
+								ptString += params[1] + " " + params[0];
+							}
+						}
+						if(ptString.length() > 0) {
+							if(qType.equals("geopolygon")) {
+								if(firstPoint != null) {
+									String params[] = firstPoint.getValue().split(" ");
+									if(params.length > 1) {
+										ptString += "," + params[1] + " " + params[0];
+									}
+								}
+								value = "ST_GeomFromText('POLYGON((" + ptString + "))', 4326)";
+							} else if(qType.equals("geolinestring")) {
+								value = "ST_GeomFromText('LINESTRING(" + ptString + ")', 4326)";
+							}
+						} else {
+							value = "null";
+						}
+					}
+					
+				}
+			} else {
+				value = "null";
 			}
-		} else {
-			value = "null";
 		}
 		
 		return value;

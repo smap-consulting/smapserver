@@ -1398,14 +1398,14 @@ public class SurveyTemplate {
 			// Set the question type for "begin group" questions
 			if(q.getType() != null && q.getType().equals("begin group")) {
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly());
 				
 			}
 			
 			if(q.getSource() != null) {
 				// Extend any other questions that have a source (ie not meta data)
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly());
 				
 				// Set the overall survey location to the last geopoint type found in the survey				
 				if(q.getType().equals("geopoint") || q.getType().equals("geoshape") || q.getType().equals("geotrace")) {
