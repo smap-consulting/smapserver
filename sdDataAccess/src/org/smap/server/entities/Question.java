@@ -513,4 +513,19 @@ public class Question implements Serializable {
 		returnBuffer.append("readonly=" + this.readOnly);
 		return returnBuffer.toString();
 	}
+	
+	/*
+	 * Return true if the appearance includes "phoneonly" 
+	 * This indicates that the survey results should not be stored on the server
+	 */
+	 public boolean getPhoneOnly() {
+		 boolean po = false;
+		 
+		 if(appearance != null) {
+			 if(appearance.contains("phoneonly")) {
+				 po = true;
+			 }
+		 }
+		 return po;
+	 }
 }
