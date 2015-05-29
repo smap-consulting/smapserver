@@ -311,10 +311,10 @@ public class TemplateUpload extends Application {
 			// If there are duplicate question names in a form then throw an error
 			ArrayList<String> duplicateNames = null;
 			if((duplicateNames = model.duplicateNames()).size() > 0) {		
-				String mesg = "Error: The following question names are duplicates:";
+				String mesg = "Error: The following question names are duplicates (only the first 63 characters are checked)";
 				for(int i = 0; i < duplicateNames.size(); i++) {
 					if(i > 0) {
-						mesg += ",";
+						mesg += ", ";
 					}
 					mesg += duplicateNames.get(i);
 				}

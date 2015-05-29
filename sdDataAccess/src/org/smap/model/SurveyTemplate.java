@@ -43,6 +43,8 @@ public class SurveyTemplate {
 	private static Logger log =
 			 Logger.getLogger(SurveyTemplate.class.getName());
 	
+	private static int LENGTH_COLUMN_NAME = 63;   // 63 max size of postgresql column names
+	
 	//private Connection connection;
 	PersistenceContext pc = null;
 	FormManager fPersist = null;
@@ -682,7 +684,11 @@ public class SurveyTemplate {
 		List<Question> questionList = new ArrayList<Question>(questions.values());
 		for (Question q : questionList) {
 			String qName = q.getName();
-			String cleanName = UtilityMethods.cleanName(qName);
+			
+			String cleanName = UtilityMethods.cleanName(qName);	
+			if(cleanName.length() > LENGTH_COLUMN_NAME) {
+				cleanName = cleanName.substring(0, LENGTH_COLUMN_NAME);
+			}
 			Form f = getForm(q.getFormRef());
 			String fName = null;
 			if(f != null) {
