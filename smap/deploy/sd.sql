@@ -284,6 +284,6 @@ alter table question alter column mandatory set default 'false';
 alter table question alter column readOnly set default 'false';
 alter table question alter column enabled set default 'true';
 
-# Starting to add the column_name explicitely to question
+-- Starting to add the column_name explicitely to question
 alter table question add column column_name text;
 update question set column_name = lower(qname) where column_name is null;
