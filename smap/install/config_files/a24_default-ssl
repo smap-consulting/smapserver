@@ -66,6 +66,11 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
     
     ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
     ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
+
+# Add CORS for zarkman inspector
+Header add Access-Control-Allow-Origin "http://localhost:8100"
+Header add Access-Control-Allow-Credentials true
+Header add Access-Control-Allow-Headers "Authorization"
    
     <Directory />
     	Require all denied
@@ -119,6 +124,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
      <Location /webForm>
         AuthType Basic
         AuthName "smap"
+        AuthBasicUseDigestAlgorithm MD5
         AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         <LimitExcept OPTIONS>
@@ -132,7 +138,9 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
         AuthBasicUseDigestAlgorithm MD5
         AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-       	Require valid-user
+        <LimitExcept OPTIONS>
+       		Require valid-user
+       	</LimitExcept>
 	</Location>
 	
 	<Location /submission>

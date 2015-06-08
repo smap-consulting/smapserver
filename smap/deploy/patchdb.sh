@@ -52,6 +52,7 @@ then
 	sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform
 	sudo rm -rf /usr/bin/smap/pyxform
 	sudo cp -r src/pyxform/pyxform/ /usr/bin/smap/
+	sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 	sudo a2enmod headers
 fi
 
