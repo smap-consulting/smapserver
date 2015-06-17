@@ -56,6 +56,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
@@ -72,7 +73,7 @@ import com.google.gson.GsonBuilder;
  * Return a survey as a webform
  */
 
-@Path("/webForm/{key}")
+@Path("/webForm")
 public class WebForm extends Application{
 	
 	Authorise a = new Authorise(null, Authorise.ENUM);
@@ -101,9 +102,11 @@ public class WebForm extends Application{
 
 	// Respond with JSON
 	@GET
+	@Path("/key/{ident}/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFormJson(@Context HttpServletRequest request,
-			@PathParam("key") String formIdent,
+			@PathParam("ident") String formIdent,
+			@PathParam("key") String authorisationKey,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
 			@QueryParam("datakeyvalue") String datakeyvalue,
 			@QueryParam("assignment_id") int assignmentId,
@@ -111,15 +114,38 @@ public class WebForm extends Application{
 			) throws IOException {
 		
 		log.info("Requesting json");
-		System.out.println("Origin: " + request.getHeaderNames().toString());
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback);
+		
+		String user = null;		
+		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+		
+		try {
+			user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		if (user == null) {
+			log.info("User not found for key");
+			throw new JsonAuthorisationException();
+		}
+		
+		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user);
 	}
 	
 	// Respond with HTML
 	@GET
+	@Path("/{ident}")
 	@Produces(MediaType.TEXT_HTML)
 	public Response getFormHTML(@Context HttpServletRequest request,
-			@PathParam("key") String formIdent,
+			@PathParam("ident") String formIdent,
 			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
 			@QueryParam("datakeyvalue") String datakeyvalue,
 			@QueryParam("assignment_id") int assignmentId,
@@ -135,7 +161,7 @@ public class WebForm extends Application{
 		log.info("Requesting " + type);
 		
 		System.out.println();
-		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback);
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, request.getRemoteUser());
 	}
 	
 	
@@ -148,7 +174,8 @@ public class WebForm extends Application{
 			String datakey, 
 			String datakeyvalue, 
 			int assignmentId,
-			String callback) {
+			String callback,
+			String user) {
 		
 		Response response = null;
 		
@@ -161,7 +188,6 @@ public class WebForm extends Application{
 		}
 
 		Survey survey = null;
-		String user = request.getRemoteUser();
 		int orgId = 0;
 		String accessKey = null;
 		

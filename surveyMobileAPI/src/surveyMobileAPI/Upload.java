@@ -99,7 +99,7 @@ public class Upload extends Application {
 	
 	/*
 	 * Update
-	 * Key provided - use this to authenticate
+	 * No Key provided login required
 	 */
 	@POST
 	@Path("/{instanceId}")
@@ -129,7 +129,7 @@ public class Upload extends Application {
 	
 	/*
 	 * Update
-	 * No Key login required
+	 * Key Provided
 	 */
 	@POST
 	@Path("/key/{key}/{instanceId}")

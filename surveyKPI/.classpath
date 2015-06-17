@@ -62,13 +62,9 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-fileupload-1.2.2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDAL"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javax.mail.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java se 7">
-		<attributes>
-			<attribute name="owner.project.facets" value="java"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/core-renderer.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/itextpdf-5.5.5.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlworker-5.5.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

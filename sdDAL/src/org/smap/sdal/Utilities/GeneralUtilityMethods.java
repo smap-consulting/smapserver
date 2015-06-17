@@ -398,18 +398,28 @@ public class GeneralUtilityMethods {
 		String sqlGetUserId = "select u.id from users u where u.ident = ?;";
 		PreparedStatement pstmtGetUserId = null;
 		 
-		String sqlClearKey = "delete from dynamic_users " +
-				" where u_id =  ? " +
-				" and survey_ident = ?;";		
-		PreparedStatement pstmtClearKey = null;
+		String sqlClearObsoleteKeys = "delete from dynamic_users " +
+				" where expiry < now() " +
+				" or expiry is null;";		
+		PreparedStatement pstmtClearObsoleteKeys = null;
 		
-		String sqlAddKey = "insert into dynamic_users (u_id, survey_ident, access_key) " +
-				" values (?, ?, ?);";		
+		String interval = "20 days";
+		String sqlAddKey = "insert into dynamic_users (u_id, survey_ident, access_key, expiry) " +
+				" values (?, ?, ?, timestamp 'now' + interval '" + interval + "');";		
 		PreparedStatement pstmtAddKey = null;
 		
-		log.info("GetNewAccessKey");
+		String sqlGetKey = "select access_key from dynamic_users where u_id = ?;";	
+		PreparedStatement pstmtGetKey = null;
+		
+		log.info("GetAccessKey");
 		try {
 		
+			/*
+			 * Delete any expired keys
+			 */
+			pstmtClearObsoleteKeys = sd.prepareStatement(sqlClearObsoleteKeys);
+			pstmtClearObsoleteKeys.executeUpdate();
+			
 			/*
 			 * Get the user id
 			 */
@@ -422,28 +432,35 @@ public class GeneralUtilityMethods {
 			}
 			
 			/*
-			 * Clear any old keys for this user and this survey
+			 * Get the existing access key
 			 */
-			pstmtClearKey = sd.prepareStatement(sqlClearKey);
-			pstmtClearKey.setInt(1, userId);
-			pstmtClearKey.setString(2, surveyIdent);
-			log.info("Clear old keys:" + pstmtClearKey.toString());
-			pstmtClearKey.executeUpdate();
+			pstmtGetKey = sd.prepareStatement(sqlGetKey);
+			pstmtGetKey.setInt(1, userId);
+			rs = pstmtGetKey.executeQuery();
+			if(rs.next()) {
+				key = rs.getString(1);
+			}
 			
 			/*
-			 * Get the new access key
+			 * Get a new key if necessary
 			 */
-			key = String.valueOf(UUID.randomUUID());
-			
-			/*
-			 * Save the key in the dynamic users table
-			 */
-			pstmtAddKey = sd.prepareStatement(sqlAddKey);
-			pstmtAddKey.setInt(1, userId);
-			pstmtAddKey.setString(2, surveyIdent);
-			pstmtAddKey.setString(3, key);
-			log.info("Add new key:" + pstmtAddKey.toString());
-			pstmtAddKey.executeUpdate();
+			if(key == null) {
+				
+				/*
+				 * Get the new access key
+				 */
+				key = String.valueOf(UUID.randomUUID());
+				
+				/*
+				 * Save the key in the dynamic users table
+				 */
+				pstmtAddKey = sd.prepareStatement(sqlAddKey);
+				pstmtAddKey.setInt(1, userId);
+				pstmtAddKey.setString(2, surveyIdent);
+				pstmtAddKey.setString(3, key);
+				log.info("Add new key:" + pstmtAddKey.toString());
+				pstmtAddKey.executeUpdate();
+			}
 			
 			
 		} catch(SQLException e) {
@@ -451,11 +468,43 @@ public class GeneralUtilityMethods {
 			throw e;
 		} finally {
 			try {if (pstmtGetUserId != null) { pstmtGetUserId.close();}} catch (SQLException e) {}
-			try {if (pstmtClearKey != null) { pstmtClearKey.close();}} catch (SQLException e) {}
+			try {if (pstmtClearObsoleteKeys != null) { pstmtClearObsoleteKeys.close();}} catch (SQLException e) {}
 			try {if (pstmtAddKey != null) { pstmtAddKey.close();}} catch (SQLException e) {}
+			try {if (pstmtGetKey != null) { pstmtGetKey.close();}} catch (SQLException e) {}
 		}
 		
 		return key;
+	}
+	
+	/*
+	 * Delete access keys for a user when they log out
+	 */
+	public static void  deleteAccessKeys(
+			Connection sd, 
+			String userIdent) throws SQLException {
+		
+		String sqlDeleteKeys = "delete from dynamic_users d where d.u_id in " +
+				"(select u.id from users u where u.ident = ?);";
+		PreparedStatement pstmtDeleteKeys = null;
+		
+		log.info("DeleteAccessKeys");
+		try {
+		
+			/*
+			 * Delete any keys for this user
+			 */
+			pstmtDeleteKeys = sd.prepareStatement(sqlDeleteKeys);
+			pstmtDeleteKeys.executeUpdate();
+
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtDeleteKeys != null) { pstmtDeleteKeys.close();}} catch (SQLException e) {}
+		}
+		
 	}
 	
 	/*
@@ -469,7 +518,8 @@ public class GeneralUtilityMethods {
 		
 		String sqlGetUserDetails = "select u.ident from users u, dynamic_users d " +
 				" where u.id = d.u_id " +
-				" and d.access_key = ?";
+				" and d.access_key = ? " +
+				" and d.expiry > now();";
 		PreparedStatement pstmtGetUserDetails = null;
 		
 		log.info("GetDynamicUser");

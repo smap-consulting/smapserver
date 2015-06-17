@@ -160,7 +160,8 @@ CREATE TABLE dynamic_users (
 	id INTEGER DEFAULT NEXTVAL('dynamic_users_seq') CONSTRAINT pk_dynamic_users PRIMARY KEY,
 	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
 	survey_ident text,
-	access_key varchar(41)
+	access_key varchar(41),
+	expiry timestamp
 	);
 ALTER TABLE dynamic_users OWNER TO ws;
 

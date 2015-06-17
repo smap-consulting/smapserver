@@ -30,10 +30,6 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
 <VirtualHost *:443>
 	ServerAdmin webmaster@localhost
-
-# CORS
-	Header add Access-Control-Allow-Credentials true
-    Header add Access-Control-Allow-Headers "Authorization"
                 
 	DocumentRoot /var/www/smap
 	SSLEngine on
@@ -67,10 +63,10 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
     ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
     ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
 
-# Add CORS for zarkman inspector
-Header add Access-Control-Allow-Origin "http://localhost:8100"
-Header add Access-Control-Allow-Credentials true
-Header add Access-Control-Allow-Headers "Authorization"
+	# Add CORS for zarkman inspector
+	Header add Access-Control-Allow-Origin "http://localhost:8100"
+	Header add Access-Control-Allow-Credentials true
+	Header add Access-Control-Allow-Headers "Authorization"
    
     <Directory />
     	Require all denied
@@ -132,6 +128,11 @@ Header add Access-Control-Allow-Headers "Authorization"
         </LimitExcept>
     </Location>
 
+   # Access controlled by a key
+    <Location /webForm/key>
+      	Require all granted 
+    </Location>
+    
     <Location /formXML>
      	AuthType Basic
         AuthName "smap"
@@ -203,8 +204,13 @@ Header add Access-Control-Allow-Headers "Authorization"
         </LimitExcept>
 	</Location>
 
-	# Allow iphones to upload images to user details
+	# Access with an authentication key
     <Location /surveyKPI/user/details/key>
+    	allow from all
+        Satisfy Any
+    </Location>
+    
+    <Location /surveyKPI/myassignments/key>
     	allow from all
         Satisfy Any
     </Location>

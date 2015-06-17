@@ -407,9 +407,9 @@ function enableUserProfileBS () {
 		jQuery.ajax({
 		    type: "GET",
 			cache: false,
-		    url: "/fieldManager/templateManagement.html",
-		    username: "shkdhasfkhd",
-		    password: "sieinkdnfkdf",
+		    url: "/surveyKPI/logout",
+		    //username: "shkdhasfkhd",
+		    //password: "sieinkdnfkdf",
 		    error: function(data, status) {
 				  window.location.href="/";
 			},

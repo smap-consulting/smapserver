@@ -23,12 +23,16 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
@@ -72,16 +76,55 @@ public class MyAssignments extends Application {
 		return s;
 	}
 
+	/*
+	 * Get assignments for user authenticated with credentials
+	 */
+	@GET
+	@Produces("application/json")
+	public Response getTasksCredentials(@Context HttpServletRequest request) {
+		return getTasks(request, request.getRemoteUser());
+	}
+	
+	/*
+	 * Get assignments for user authenticated with a key
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/key/{key}")
+	public Response getTaskskey(
+			@PathParam("key") String key,
+			@Context HttpServletRequest request) {
+		
+		String user = null;		
+		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+		
+		try {
+			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		if (user == null) {
+			log.info("User not found for key");
+			throw new JsonAuthorisationException();
+		}
+		return getTasks(request, user);
+	}
 	
 	/*
 	 * Return the list of tasks allocated to the requesting user
 	 */
-	@GET
-	@Produces("application/json")
-	public Response getTasks(@Context HttpServletRequest request) {
+	public Response getTasks(HttpServletRequest request, String userName) {
 		
 		Response response = null;
-		String userName = request.getRemoteUser();
 		
 		TaskResponse tr = new TaskResponse();
 		tr.message = "OK Task retrieved";	// Overwritten if there is an error
@@ -97,7 +140,7 @@ public class MyAssignments extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isAuthorised(connectionSD, userName);
 		// End Authorisation
 		
 		PreparedStatement pstmtGetForms = null;
