@@ -66,7 +66,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	# Add CORS for zarkman inspector
 	Header add Access-Control-Allow-Origin "http://localhost:8100"
 	Header add Access-Control-Allow-Credentials true
-	Header add Access-Control-Allow-Headers "Authorization"
+	Header add Access-Control-Allow-Headers "Authorization Content-Type"
    
     <Directory />
     	Require all denied
@@ -206,13 +206,11 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
 	# Access with an authentication key
     <Location /surveyKPI/user/details/key>
-    	allow from all
-        Satisfy Any
+  		Require all granted
     </Location>
     
     <Location /surveyKPI/myassignments/key>
-    	allow from all
-        Satisfy Any
+   		Require all granted
     </Location>
     
 	<Location /surveyKPI/reports/view>
@@ -240,13 +238,13 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 		Require all granted
     </location>
 
-	alias /attachments {your_files}/attachments
-    <Directory {your_files}/attachments>
+	alias /attachments /smap/attachments
+    <Directory /smap/attachments>
 		Require all granted
 	</Directory>
 		
-	alias /media {your_files}/media
-    <Directory {your_files}/media>
+	alias /media /smap/media
+    <Directory /smap/media>
 		Options FollowSymLinks
 		AuthType Digest
 		AuthName "smap"

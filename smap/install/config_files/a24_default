@@ -34,6 +34,11 @@ ExpiresActive On
     ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
     ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
 
+	# Add CORS for zarkman inspector
+	Header add Access-Control-Allow-Origin "http://localhost:8100"
+	Header add Access-Control-Allow-Credentials true
+	Header add Access-Control-Allow-Headers "Authorization Content-Type"
+	
 # To force all connections, other than from a mobile phone to be https, uncomment the following lines  
 #  and substitute the hostname of the server for the hostname in curly braces 
 #    Redirect permanent /webForm.html https://{hostname}/webForm.html
@@ -148,10 +153,12 @@ ExpiresActive On
 	<Location /xformsManifest>
 		AuthType Digest
         AuthName "smap"
-        AuthDigestDomain /
+        AuthBasicUseDigestAlgorithm MD5
         AuthDigestProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
-        Require valid-user
+        <LimitExcept OPTIONS>
+        	Require valid-user
+        </LimitExcept>
     </Location>
 	
 	<Location /htmlManifest>
@@ -169,7 +176,7 @@ ExpiresActive On
 
 	# surveyKPI module
 	<Location /surveyKPI>
-		AuthType Digest
+		AuthType Basic
         AuthName "smap"
         AuthDigestDomain /
         AuthDigestProvider dbd
@@ -179,13 +186,11 @@ ExpiresActive On
 
 	# Access with an authentication key
     <Location /surveyKPI/user/details/key>
-    	allow from all
-        Satisfy Any
+   		Require all granted
     </Location>
     
     <Location /surveyKPI/myassignments/key>
-    	allow from all
-        Satisfy Any
+    	Require all granted
     </Location>
 
 	<Location /surveyKPI/reports/view>
@@ -209,14 +214,14 @@ ExpiresActive On
 		Require all granted
     </location>
 	
-	alias /attachments {your_files}/attachments
-	<Directory {your_files}/attachments>
+	alias /attachments /smap/attachments
+	<Directory /smap/attachments>
 		Require all granted
 	</Directory>
 	
 	# Media files
-	alias /media {your_files}/media
-	<Directory {your_files}/media>
+	alias /media /smap/media
+	<Directory /smap/media>
 		Options FollowSymLinks
         AuthType Digest
         AuthName "smap"
