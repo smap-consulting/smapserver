@@ -167,11 +167,6 @@ public class MyAssignments extends Application {
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
 					"t.address as address, " +
-					"t.country as country, " +
-					"t.postcode as postcode, " +
-					"t.locality as locality, " +
-					"t.street as street, " +
-					"t.number as number, " +
 					"t.geo_type as geo_type " +
 					"from tasks t, assignments a, users u, survey s, user_project up " +
 					"where t.id = a.task_id " +
@@ -221,11 +216,6 @@ public class MyAssignments extends Application {
 				ta.assignment.assignment_id = resultSet.getInt("assignment_id");
 				ta.assignment.assignment_status = resultSet.getString("assignment_status");
 
-				ta.location.country = resultSet.getString("country");
-				ta.location.postcode = resultSet.getString("postcode");
-				ta.location.locality = resultSet.getString("locality");
-				ta.location.street = resultSet.getString("street");
-				ta.location.number = resultSet.getString("number");
 				
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates

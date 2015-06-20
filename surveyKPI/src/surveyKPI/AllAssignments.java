@@ -152,11 +152,6 @@ public class AllAssignments extends Application {
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
 					"t.address as address, " +
-					"t.country as country, " +
-					"t.postcode as postcode, " +
-					"t.locality as locality, " +
-					"t.street as street, " +
-					"t.number as number, " +
 					"t.geo_type as geo_type, " +
 					"u.id as user_id, " +
 					"u.ident as ident, " +
@@ -417,7 +412,6 @@ public class AllAssignments extends Application {
 							"geo_type, ";
 							
 				String insertSql2 =	"initial_data, " +
-							"existing_record," +
 							"address," +
 							"schedule_at) " +
 						"values (" +
@@ -429,7 +423,6 @@ public class AllAssignments extends Application {
 							"?, " +
 							"?, ST_GeomFromText(?, 4326), " +
 							"?, " +
-							"?," +
 							"?," +
 							"now());";
 				
@@ -555,9 +548,6 @@ public class AllAssignments extends Application {
 								pstmt2.close();
 								resultSet2.close();
 								getTaskSql = "select " + tableName + ".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
-								// getTaskSqlWhere = " from " + tableName + ", " + tableName2 +
-								//		" where " + tableName +".prikey = " + tableName2 + 	".parkey " +
-								//		" and " + tableName + "._bad = 'false'";
 								
 								getTaskSqlWhere = " from " + tableName + " left outer join " + tableName2 + 
 										" on " + tableName + ".prikey = " + tableName2 + ".parkey " +
@@ -624,7 +614,6 @@ public class AllAssignments extends Application {
 									}
 									
 									String location = null;
-									int recordId = resultSet.getInt(1);
 									log.info("Has geom: " +hasGeom);
 									if(hasGeom) {
 										location = resultSet.getString("the_geom");
@@ -662,7 +651,6 @@ public class AllAssignments extends Application {
 									pstmtInsert.setString(6, geoType);
 									pstmtInsert.setString(7, location);
 									pstmtInsert.setString(8, initial_data_url);			// Initial data
-									pstmtInsert.setInt(9, recordId);			// Initial data
 									
 									/*
 									 * Create address JSON string
@@ -688,7 +676,7 @@ public class AllAssignments extends Application {
 										addressString = gson.toJson(addressArray); 
 									}
 									
-									pstmtInsert.setString(10, addressString);			// Address
+									pstmtInsert.setString(9, addressString);			// Address
 									
 									log.info("Insert Task: " + pstmtInsert.toString());
 									

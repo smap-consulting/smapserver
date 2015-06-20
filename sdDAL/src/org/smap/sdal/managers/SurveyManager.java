@@ -145,6 +145,9 @@ public class SurveyManager {
 		return exists;
 	}
 	
+	/*
+	 * Get a survey definition
+	 */
 	public Survey getById(
 			Connection sd, 
 			Connection cResults,

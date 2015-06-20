@@ -2,7 +2,6 @@ package org.smap.sdal.Utilities;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -13,29 +12,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.Message.RecipientType;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-
-import org.smap.sdal.managers.TranslationManager;
-import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
@@ -180,9 +160,20 @@ public class UtilityMethodsEmail {
 	/*
 	 * Mark a record and all its children as either bad or good
 	 */
-	static public void markRecord(Connection cRel, Connection cSD, String tName, boolean value, String reason, int key, int sId, int fId) throws Exception {
-		// TODO add optimistic locking		
-		String sql = "update " + tName + " set _bad = ?, _bad_reason = ? " + 
+	static public void markRecord(Connection cRel, 
+			Connection cSD, 
+			String tName, 
+			boolean value, 
+			String reason, 
+			int key, 
+			int sId, 
+			int fId,
+			boolean modified,
+			boolean isChild) throws Exception {
+	
+		String sql = "update " + tName + " set _bad = ?, _bad_reason = ?, _modified = ? " + 
+				" where prikey = ? and _modified = 'false';";
+		String sqlChild = "update " + tName + " set _bad = ?, _bad_reason = ? " + 
 				" where prikey = ?;";
 		
 		PreparedStatement pstmt = null;
@@ -190,14 +181,25 @@ public class UtilityMethodsEmail {
 		
 		try {
 			
-			pstmt = cRel.prepareStatement(sql);
+			if(isChild) {
+				pstmt = cRel.prepareStatement(sqlChild);
+			} else {
+				pstmt = cRel.prepareStatement(sql);
+			}
 			pstmt.setBoolean(1, value);
 			pstmt.setString(2, reason);
-			pstmt.setInt(3, key);
+			if(isChild) {
+				pstmt.setInt(3, key);
+			} else {
+				pstmt.setBoolean(3, modified);
+				pstmt.setInt(4, key);
+			}
+			
+			log.info("Mark record" + pstmt.toString());
 			int count = pstmt.executeUpdate();
 			
 			if(count != 1) {
-				throw new Exception("Upate count not equal to 1");
+				throw new Exception("Failed to update record");
 			}
 			
 			// Get the child tables
@@ -205,6 +207,8 @@ public class UtilityMethodsEmail {
 					" where f.s_id = ? " + 
 					" and f.parentform = ?;";
 			log.info(sql + " : " + sId + " : " + fId);
+			
+			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = cSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, fId);
@@ -217,6 +221,8 @@ public class UtilityMethodsEmail {
 				// Get the child records to be updated
 				sql = "select prikey from " + childTable + 
 						" where parkey = ?;";
+				
+				if (pstmt2 != null) try {pstmt2.close();} catch(Exception e) {};
 				pstmt2 = cRel.prepareStatement(sql);	
 				pstmt2.setInt(1, key);
 				log.info(pstmt2.toString());
@@ -224,7 +230,8 @@ public class UtilityMethodsEmail {
 				ResultSet childRecs = pstmt2.executeQuery();
 				while(childRecs.next()) {
 					int childKey = childRecs.getInt(1);
-					markRecord(cRel, cSD, childTable, value, reason, childKey, sId, childFormId);
+					markRecord(cRel, cSD, childTable, value, reason, childKey, 
+							sId, childFormId, modified, true);
 				}
 			}
 		} catch (SQLException e) {

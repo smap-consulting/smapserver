@@ -1216,7 +1216,7 @@ public class GetXForm {
     				// Set some default values for task management questions
     				if(item.name != null && item.name.equals("_task_key")) {
     					item.value = priKey.value;
-    				} else if(item.name != null && item.name.equals("instanceID")) {
+    				} else if(item.name != null && item.name.toLowerCase().equals("instanceid")) {
     					gInstanceId = item.value;
     				}
     				

@@ -380,9 +380,9 @@ public class SubRelationalDB extends Subscriber {
 				if(updateId != null) {
 					System.out.println("Existing unique id:" + updateId);
 					existingKey = getKeyFromId(cResults, topElement, updateId);
-				} else {		
-					existingKey = topElement.getKey(); 	// Old way of checking for updates - deprecate
-				}
+				} //else {		
+				//	existingKey = topElement.getKey(); 	// Old way of checking for updates - deprecate
+				//}
 				
 				if(existingKey != null) {
 					System.out.println("Existing key:" + existingKey);
@@ -478,7 +478,7 @@ public class SubRelationalDB extends Subscriber {
 			String sql = null;	
 			
 			/*
-			 * If this is the top leve form then 
+			 * If this is the top level form then 
 			 *   1) create all the tables for this survey if they do not already exist
 			 *   2) Check if this survey is a duplicate
 			 */
@@ -624,7 +624,8 @@ public class SubRelationalDB extends Subscriber {
 				// Mark the records replaced
 				for(int i = 0; i < existingKeys.size(); i++) {	
 					int dupKey = existingKeys.get(i);
-					org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, true, bad_reason, dupKey, s_id, f_id);
+					org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, 
+							true, bad_reason, dupKey, s_id, f_id, true, false);
 				}
 			}
 			pstmt.close();		
@@ -890,13 +891,14 @@ public class SubRelationalDB extends Subscriber {
 	 * Create the table if it does not already exits in the database
 	 */
 	void createTable(Statement statement, String tableName, String sName) {
-		String sql = "select count(*) from information_schema.tables where table_name =\'" + tableName + "\';";
+		String sql = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
+		
 		System.out.println("SQL:" + sql);
 		try {
 			ResultSet res = statement.executeQuery(sql);
 			int count = 0;
 			
-			while(res.next()) {
+			if(res.next()) {
 				count = res.getInt(1);
 			}
 			if(count > 0) {
@@ -926,11 +928,8 @@ public class SubRelationalDB extends Subscriber {
 			
 			List<Form> forms = template.getAllForms();	
 			connection.setAutoCommit(false);
-			for(Form form : forms) {
-				// create the table for all form types including complex questions such as geopolygon etc
-				//if(form.getType().equals("form")) {
-					writeTableStructure(form, statement);
-				//}
+			for(Form form : forms) {		
+				writeTableStructure(form, statement);
 				connection.commit();
 			}	
 			connection.setAutoCommit(true);
@@ -979,11 +978,11 @@ public class SubRelationalDB extends Subscriber {
 	
 			/*
 			 * Create default columns
-			 * only add _user and _version to the top level form
+			 * only add _user and _version, _complete, _modified to the top level form
 			 */
 			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text";
 			if(!form.hasParent()) {
-				sql += ", _user text, _version text";
+				sql += ", _user text, _version text, _complete boolean default true, _modified boolean default false";
 			}
 							
 			for(Question q : columns) {

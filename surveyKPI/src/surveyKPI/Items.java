@@ -552,7 +552,7 @@ public class Items extends Application {
 			ResultSet tableSet = pstmt.executeQuery();
 			if(tableSet.next()) {
 				int fId = tableSet.getInt(1);
-				UtilityMethodsEmail.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId);
+				UtilityMethodsEmail.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId, false, false);
 			} else {
 				throw new Exception("Could not get form id");
 			}

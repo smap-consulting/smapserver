@@ -504,33 +504,12 @@ CREATE TABLE public.tasks (
 	title text,
 	url text,
 	form_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
-	existing_record integer,
-	assignment_mode text,
-	repeats integer,
 	initial_data text,
-	need_gps boolean,
-	need_camera boolean,
-	need_barcode boolean,
-	need_rfid boolean,
-	priority integer,
 	schedule_at date,
-	due_date date,
-	created_date date,
-	created_by integer,
     from_date date,
-    status text,
-    dynamic_open boolean default 'true',
     address text,
-    "number" text,
-	street text,
-	locality text,
-	postcode text,
-	country text,
 	geo_type text,
-	p_id integer REFERENCES project(id),
-	CONSTRAINT creator FOREIGN KEY (created_by)
-      REFERENCES users (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
+	p_id integer REFERENCES project(id)
 );
 SELECT AddGeometryColumn('tasks', 'geo_linestring', 4326, 'LINESTRING', 2);
 SELECT AddGeometryColumn('tasks', 'geo_polygon', 4326, 'POLYGON', 2);

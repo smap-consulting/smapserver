@@ -139,9 +139,11 @@ then
 	fi
 #	sudo a2ensite  $a_config_dir/smap.conf
 #	sudo a2ensite  $a_config_dir/smap-ssl.conf
-#	sudo apache2 reload
+#	sudo service apache2 reload
 
 	cd ../deploy
 
+# Patch the database
+java -jar version1/patch1505.jar apply survey_definitions results
 echo "1505" > ~/smap_version
 fi

@@ -12,8 +12,5 @@ public class Task {
 	public String form_version;
 	public String initial_data;
 	public Date scheduled_at;
-	public Date from_date;
-	public Date due_date;
-	public Date created_date;
 	public String address;			// Key value pairs representing an unstructured address
 }
