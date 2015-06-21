@@ -818,6 +818,7 @@ function stopAnimation(reset, md) {
 				key_orig = key;
 				
 				if(key !== "prikeys" && key !== "_task_key" 
+					&& key !== "_task_replace" && key !== "_modified"
 					&& key !== "parkey" && key !== "_instanceid"
 						&& key !== "instanceid") {
 					
@@ -838,6 +839,9 @@ function stopAnimation(reset, md) {
 						}
 					} else if (key === "_bad_reason") {
 						key = "Reason";
+					} else if (key === "_complete") {
+						key = "Complete";
+						value = (value === "t") ? "Yes" : "No";
 					}
 					
 					h[++idx] = '<tr>';

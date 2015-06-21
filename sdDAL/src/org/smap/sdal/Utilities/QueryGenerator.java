@@ -281,7 +281,7 @@ public class QueryGenerator {
 			type = rsMetaData.getColumnTypeName(i);
 			
 			if(name.equals("parkey") ||	name.equals("_bad") ||	name.equals("_bad_reason")
-					||	name.equals("_task_key") ||	name.equals("_task_replace")
+					||	name.equals("_task_key") ||	name.equals("_task_replace") ||	name.equals("_modified")
 					||	name.equals("_instanceid") ||	name.equals("instanceid")) {
 				continue;
 			}

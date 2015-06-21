@@ -321,6 +321,8 @@ $(document).ready(function() {
 				organisation.ft_delete_submitted = true;
 			} else if(options[i] === "ft_send_trail") {
 				organisation.ft_send_trail = true;
+			} else if(options[i] === "ft_sync_incomplete") {
+				organisation.ft_sync_incomplete = true;
 			}
 		}
 		organisationList[0] = organisation;	
@@ -725,6 +727,8 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_delete_submitted;
 			} else if($(this).val() === "ft_send_trail") {
 				this.checked = org.ft_send_trail;
+			} else if($(this).val() === "ft_sync_incomplete") {
+				this.checked = org.ft_sync_incomplete;
 			}
 		});
 		gOrgId = org.id;

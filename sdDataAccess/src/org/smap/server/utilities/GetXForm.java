@@ -980,8 +980,10 @@ public class GetXForm {
 		String table = firstForm.getTableName().replace("'", "''");	// Escape apostrophes
 		boolean isValid = false;
 	
+		// There is a double check below on whether or not the record has been modified / replaced
+		// This was added in version 15.05, at some point it may be safe to remove the check for the "Replaced by " string and _bad
 		String sql = "select count(*) from " + table + " where prikey = ? " +
-				"and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
+				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
 		log.info("Checking primary key: " + sql + " : " + priKey);
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		pstmt.setInt(1, priKey);
@@ -1031,7 +1033,7 @@ public class GetXForm {
 			throw new ApplicationException("Key: " + key + " not found");
 		}
 		String sql = "select prikey from " + table + " where " + key + " = ? " +
-				"and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
+				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
 		
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		if(type.equals("string") || type.equals("barcode")) {

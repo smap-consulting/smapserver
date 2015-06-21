@@ -118,6 +118,7 @@ public class OrganisationList extends Application {
 					" can_edit, " +
 					" ft_delete_submitted," +
 					" ft_send_trail," +
+					" ft_sync_incomplete," +
 					" changed_by, " +
 					" changed_ts," + 
 					" admin_email, " +
@@ -145,6 +146,7 @@ public class OrganisationList extends Application {
 				org.can_edit = resultSet.getBoolean("can_edit");
 				org.ft_delete_submitted = resultSet.getBoolean("ft_delete_submitted");
 				org.ft_send_trail = resultSet.getBoolean("ft_send_trail");
+				org.ft_sync_incomplete = resultSet.getBoolean("ft_sync_incomplete");
 				org.changed_by = resultSet.getString("changed_by");
 				org.changed_ts = resultSet.getString("changed_ts");
 				org.admin_email = resultSet.getString("admin_email");
@@ -264,9 +266,9 @@ public class OrganisationList extends Application {
 						
 					sql = "insert into organisation (name, company_name, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
-							"changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
+							"ft_sync_incomplete, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
 							"email_port, default_email_content, changed_ts) " +
-							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+							" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 					
 					pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setString(1, o.name);
@@ -277,14 +279,15 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(6, o.can_edit);
 					pstmt.setBoolean(7, o.ft_delete_submitted);
 					pstmt.setBoolean(8, o.ft_send_trail);
-					pstmt.setString(9, request.getRemoteUser());
-					pstmt.setString(10, o.admin_email);
-					pstmt.setString(11, o.smtp_host);
-					pstmt.setString(12, o.email_domain);
-					pstmt.setString(13, o.email_user);
-					pstmt.setString(14, o.email_password);
-					pstmt.setInt(15, o.email_port);
-					pstmt.setString(16, o.default_email_content);
+					pstmt.setBoolean(9, o.ft_sync_incomplete);
+					pstmt.setString(10, request.getRemoteUser());
+					pstmt.setString(11, o.admin_email);
+					pstmt.setString(12, o.smtp_host);
+					pstmt.setString(13, o.email_domain);
+					pstmt.setString(14, o.email_user);
+					pstmt.setString(15, o.email_password);
+					pstmt.setInt(16, o.email_port);
+					pstmt.setString(17, o.default_email_content);
 					log.info("Insert organisation: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
@@ -310,6 +313,7 @@ public class OrganisationList extends Application {
 							" can_edit = ?, " +
 							" ft_delete_submitted = ?, " +
 							" ft_send_trail = ?, " +
+							" ft_sync_incomplete = ?, " +
 							" admin_email = ?, " +
 							" smtp_host = ?, " +
 							" email_domain = ?, " +
@@ -331,15 +335,16 @@ public class OrganisationList extends Application {
 					pstmt.setBoolean(6, o.can_edit);
 					pstmt.setBoolean(7, o.ft_delete_submitted);
 					pstmt.setBoolean(8, o.ft_send_trail);
-					pstmt.setString(9, o.admin_email);
-					pstmt.setString(10, o.smtp_host);
-					pstmt.setString(11, o.email_domain);
-					pstmt.setString(12, o.email_user);
-					pstmt.setString(13, o.email_password);
-					pstmt.setInt(14, o.email_port);
-					pstmt.setString(15, o.default_email_content);
-					pstmt.setString(16, request.getRemoteUser());
-					pstmt.setInt(17, o.id);
+					pstmt.setBoolean(9, o.ft_sync_incomplete);
+					pstmt.setString(10, o.admin_email);
+					pstmt.setString(11, o.smtp_host);
+					pstmt.setString(12, o.email_domain);
+					pstmt.setString(13, o.email_user);
+					pstmt.setString(14, o.email_password);
+					pstmt.setInt(15, o.email_port);
+					pstmt.setString(16, o.default_email_content);
+					pstmt.setString(17, request.getRemoteUser());
+					pstmt.setInt(18, o.id);
 							
 					log.info("Update organisation: " + pstmt.toString());
 					pstmt.executeUpdate();

@@ -30,6 +30,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import model.Filter;
 
@@ -560,8 +561,13 @@ public class Items extends Application {
 			response = Response.ok().build();
 				
 		} catch (Exception e) {
-			response = Response.serverError().build();
-			log.log(Level.SEVERE,"Error", e);
+			String msg = e.getMessage();
+			if(msg.equals("Failed to update record")) {
+				response = Response.status(Status.OK).entity("Record cannot be modified").build();
+			} else {
+				response = Response.serverError().build();
+				log.log(Level.SEVERE,"Error", e);
+			}
 		} finally {
 			
 			try {

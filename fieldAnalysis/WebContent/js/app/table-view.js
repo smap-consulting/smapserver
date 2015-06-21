@@ -293,7 +293,7 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 				  theView.dirty = true;
 			  }
 		  }, error: function(data, status) {
-			  alert(localise.set["msg_err_upd"] + " " + err);
+			  alert(data.responseText);
 			  //alert("Error: Failed to update record"); 
 		  }
 	});

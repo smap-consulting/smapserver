@@ -28,6 +28,7 @@ public class Organisation {
 	public boolean can_edit;
 	public boolean ft_delete_submitted;
 	public boolean ft_send_trail;
+	public boolean ft_sync_incomplete;
 	public String changed_by;
 	public String changed_ts;
 	public String admin_email;

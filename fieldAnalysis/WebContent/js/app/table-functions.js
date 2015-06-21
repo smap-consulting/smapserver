@@ -142,7 +142,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 	for(j = 0; j < repeatCols; j++) {
 		for(i = 0; i < numberCols; i++) {	
 			if(cols[i] !== "_instanceid" && cols[i] !== "instanceid" && cols[i] !== "_task_key" && 
-					cols[i] !== "_task_replace"&& cols[i] !== "prikey") {
+					cols[i] !== "_task_replace"&& cols[i] !== "prikey" && cols[i] !== "_modified") {
 				gTab[++gIdx] = '<th>';
 				gTab[++gIdx] = cols[i];
 				gTab[++gIdx] = '</th>';
@@ -227,7 +227,8 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 				params = "";
 				key = cols[k];
 	
-				if(key !== "_instanceid" && key !== "instanceid" && key !== "_task_key" && key !== "_task_replace" && key !== "prikey") {
+				if(key !== "_instanceid" && key !== "instanceid" && key !== "_task_key" && 
+						key !== "_task_replace" && key !== "prikey" && key !== "_modified") {
 					if (isGrouped && fn === "none") {
 						// Grouped but no aggregating function. Show as an array
 						for(j = 0; j < groups[i].properties[key].length; j++) {
@@ -255,14 +256,18 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 						} else if(key === "_bad") {
 							if(val === "f") {
 								params = 'class="good_r" pkey="' + groups[i].properties.prikeys[0] + '"';
+								val = "No";
 							} else {
 								params = 'class="bad_r" pkey="' + groups[i].properties.prikeys[0] + '"';
+								val = "Yes";
 							}
 						} else if(key === "_bad_reason") {
 							if(val && val.indexOf("Replaced by") === 0) {	
 								params = 'class="bad_replaced"';
 							}
-						}
+						} else if(key === "_complete") {
+							val = (val === "f") ? "No" : "Yes";
+						} 
 						gTab[++gIdx] = '<td ' + params + '>';
 						if(val === "0") {
 							gTab[++gIdx] = "";

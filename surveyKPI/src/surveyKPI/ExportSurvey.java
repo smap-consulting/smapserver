@@ -415,7 +415,7 @@ public class ExportSurvey extends Application {
 							
 							// Ignore the following columns
 							if(name.equals("parkey") ||	name.equals("_bad") ||	name.equals("_bad_reason")
-									||	name.equals("_task_key") ||	name.equals("_task_replace")
+									||	name.equals("_task_key") ||	name.equals("_task_replace") ||	name.equals("_modified")
 									||	name.equals("_instanceid") ||	name.equals("instanceid")) {
 								continue;
 							}
@@ -778,6 +778,9 @@ public class ExportSurvey extends Application {
 					out = "<td>" + "<a href=\"https:" + out + "\">https:" + out + "</a></td>";
 				} else if(columnName.equals("_device")) {
 					out = "<td class='xl1'>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
+						
+				} else if(columnName.equals("_complete")) {
+					out = (out.equals("f")) ? "<td>No</td>" : "<td>Yes</td>"; 
 						
 				} else if(columnType == "timestamp") {
 					// Convert the timestamp to the excel format specified in the xl2 mso-format

@@ -275,9 +275,6 @@ public class MyAssignments extends Application {
 			resultSet = pstmtGetForms.executeQuery();
 			
 			String hostname = request.getServerName();
-			if(hostname.equals("localhost")) {
-					hostname = "10.0.2.2";	// For android emulator
-			}
 			
 			TranslationManager translationMgr = new TranslationManager();
 			
@@ -302,7 +299,8 @@ public class MyAssignments extends Application {
 			tr.settings = new FieldTaskSettings();
 			sql = "SELECT " +
 					"o.ft_delete_submitted," +
-					"o.ft_send_trail " +
+					"o.ft_send_trail, " +
+					"o.ft_sync_incomplete " +
 					"from organisation o, users u " +
 					"where u.o_id = o.id " +
 					"and u.ident = ?;";
@@ -315,6 +313,7 @@ public class MyAssignments extends Application {
 			if(resultSet.next()) {
 				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
+				tr.settings.ft_sync_incomplete = resultSet.getBoolean(3);
 			}
 			
 			/*

@@ -83,6 +83,7 @@ create TABLE organisation (
 	can_edit boolean,
 	ft_delete_submitted boolean,
 	ft_send_trail boolean,
+	ft_sync_incomplete boolean,
 	changed_by text,
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled

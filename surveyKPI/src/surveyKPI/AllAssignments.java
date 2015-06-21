@@ -439,9 +439,7 @@ public class AllAssignments extends Application {
 				 * Todo: Generate form url and initial instance url in myassignments service
 				 */
 				String hostname = request.getServerName();
-				if(hostname.equals("localhost")) {
-						hostname = "10.0.2.2";	// For android emulator
-				}
+			
 				pstmtGetSurveyIdent.setInt(1, as.form_id);
 				resultSet = pstmtGetSurveyIdent.executeQuery();
 				String initial_data_url = null;
@@ -752,8 +750,7 @@ public class AllAssignments extends Application {
 						pstmtInsert.setString(6, "POINT");
 						pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
 						pstmtInsert.setString(8, null);			// Initial data url
-						pstmtInsert.setInt(9, 0);				// Initial data record id
-						pstmtInsert.setString(10, null);		// Address TBD
+						pstmtInsert.setString(9, null);		// Address TBD
 						
 						log.info("Insert task: " + pstmtInsert.toString()); 
 						int count = pstmtInsert.executeUpdate();

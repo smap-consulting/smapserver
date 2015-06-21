@@ -30,7 +30,7 @@ window.log = function(){
 /*
  * Write questions as a table
  * @author	Neil Penman
- */
+ *
 (function($) {
 	$.fn.questionListGenerator = function( sId, data ) {
 
@@ -61,11 +61,11 @@ window.log = function(){
 	};	
 		
 })(jQuery);
-
+*/
 /*
  * Write regions as a select list
  * @author	Neil Penman
- */
+ *
 (function($) {
 	$.fn.regionListGenerator = function( sId, data ) {
 
@@ -92,11 +92,11 @@ window.log = function(){
 	};	
 		
 })(jQuery);
-
+*/
 /*
  * Generate a table with all the properties for a selected item
  * @author	Neil Penman
- */
+ *
 (function($) {
 	$.fn.featureSelect = function( data, clusterData ) {
 		
@@ -144,11 +144,11 @@ window.log = function(){
 	};
 		
 })(jQuery);
-
+*/
 /*
  * Generate a table with all the records for the selected form
  * @author	Neil Penman
- */
+ *
 (function($) {
 	$.fn.tableGenerator3 = function( options ) {
 		
@@ -188,9 +188,7 @@ window.log = function(){
 					
 				}
 				tab[++idx] = '<tr>';
-				/*
-				 * Write the location if it exists
-				 */
+			
 				if(item.geometry) {
 					tab[++idx] = '<td class="' + settings.colClass + '">' + item.geometry.type + '[' + item.geometry.coordinates + ']' + '</td>';
 				} else {
@@ -229,7 +227,7 @@ window.log = function(){
 	};
 		
 })(jQuery);
-
+*/
 /*
 function addAnchors (property) {
 	var output = property;
@@ -301,7 +299,7 @@ function getMedia(property) {
 /*
  * Generate media data
  * @author	Neil Penman
- */
+ *
 (function($) {
 	$.fn.mediaGeneratorSurvey = function( data ) {
 		
@@ -353,7 +351,7 @@ function getMedia(property) {
 	};
 		
 })(jQuery);
-
+*/
 /*
  * Generate a table of tasks
  * @author	Neil Penman
@@ -501,6 +499,7 @@ function getMedia(property) {
 		
 })(jQuery);
 
+
 function formatCoords(coords) {
 	
 	var cList = [],
@@ -552,3 +551,4 @@ function getProperty(properties, property) {
 	
 	return "";
 }
+
