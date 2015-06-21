@@ -380,9 +380,9 @@ public class SubRelationalDB extends Subscriber {
 				if(updateId != null) {
 					System.out.println("Existing unique id:" + updateId);
 					existingKey = getKeyFromId(cResults, topElement, updateId);
-				} //else {		
-				//	existingKey = topElement.getKey(); 	// Old way of checking for updates - deprecate
-				//}
+				} else {		
+					existingKey = topElement.getKey(); 	// Old way of checking for updates - deprecate
+				}
 				
 				if(existingKey != null) {
 					System.out.println("Existing key:" + existingKey);
