@@ -316,7 +316,7 @@ public class AllAssignments extends Application {
 	}
 	
 	/*
-	 * Add a task for every survey result that has location
+	 * Add a task for every survey
 	 * Add a task for the array of locations passed in the input parameters
 	 */
 	@POST
@@ -411,7 +411,9 @@ public class AllAssignments extends Application {
 							"url, " +
 							"geo_type, ";
 							
-				String insertSql2 =	"initial_data, " +
+				String insertSql2 =	
+							"initial_data, " +
+							"update_id," +
 							"address," +
 							"schedule_at) " +
 						"values (" +
@@ -421,7 +423,9 @@ public class AllAssignments extends Application {
 							"?, " +
 							"?, " +
 							"?, " +
-							"?, ST_GeomFromText(?, 4326), " +
+							"?, " +	
+							"ST_GeomFromText(?, 4326), " +
+							"?, " +
 							"?, " +
 							"?," +
 							"now());";
@@ -443,6 +447,7 @@ public class AllAssignments extends Application {
 				pstmtGetSurveyIdent.setInt(1, as.form_id);
 				resultSet = pstmtGetSurveyIdent.executeQuery();
 				String initial_data_url = null;
+				String instanceId = null;
 				String target_form_url = null;
 				if(resultSet.next()) {
 					String target_form_ident = resultSet.getString(1);
@@ -518,7 +523,8 @@ public class AllAssignments extends Application {
 							
 							if(hasGeom) {
 								log.info("Has geometry");
-								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom ";
+								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom," +
+										tableName + ".instanceid";
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 							} else {
@@ -545,7 +551,9 @@ public class AllAssignments extends Application {
 								}
 								pstmt2.close();
 								resultSet2.close();
-								getTaskSql = "select " + tableName + ".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom ";
+								getTaskSql = "select " + tableName + 
+										".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom, " +
+										tableName + ".instanceid";
 								
 								getTaskSqlWhere = " from " + tableName + " left outer join " + tableName2 + 
 										" on " + tableName + ".prikey = " + tableName2 + ".parkey " +
@@ -557,7 +565,8 @@ public class AllAssignments extends Application {
 							if(!hasGeom) {
 								log.info("No geometry columns found");
 								
-								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom ";
+								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom, " +
+										tableName + ".instanceid";
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 								
@@ -592,7 +601,7 @@ public class AllAssignments extends Application {
 								}
 								getTaskSql += getTaskSqlEnd;
 	
-								if(pstmt != null) {pstmt.close();};
+								if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 								pstmt = connectionRel.prepareStatement(getTaskSql);	
 								log.info("SQL Get Tasks: ----------------------- " + pstmt.toString());
 								resultSet = pstmt.executeQuery();
@@ -608,7 +617,8 @@ public class AllAssignments extends Application {
 									 */
 									if(as.update_results && (as.source_survey_id == as.form_id)) {
 										initial_data_url = "http://" + hostname + "/instanceXML/" + 
-										source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);
+												source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);		// deprecated
+										instanceId = resultSet.getString("instanceid");										// New way to identify existing records to be updated
 									}
 									
 									String location = null;
@@ -648,7 +658,8 @@ public class AllAssignments extends Application {
 									pstmtInsert.setString(5, target_form_url);	
 									pstmtInsert.setString(6, geoType);
 									pstmtInsert.setString(7, location);
-									pstmtInsert.setString(8, initial_data_url);			// Initial data
+									pstmtInsert.setString(8, initial_data_url);			// Initial data deprecated
+									pstmtInsert.setString(9, instanceId);				// Initial data
 									
 									/*
 									 * Create address JSON string
@@ -674,7 +685,7 @@ public class AllAssignments extends Application {
 										addressString = gson.toJson(addressArray); 
 									}
 									
-									pstmtInsert.setString(9, addressString);			// Address
+									pstmtInsert.setString(10, addressString);			// Address
 									
 									log.info("Insert Task: " + pstmtInsert.toString());
 									

@@ -163,6 +163,7 @@ public class MyAssignments extends Application {
 					"s.version as form_version," +
 					"s.p_id as pid," +
 					"t.initial_data," +
+					"t.update_id," +
 					"t.schedule_at," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
@@ -210,6 +211,7 @@ public class MyAssignments extends Application {
 				ta.task.form_id = resultSet.getString("form_ident");		// Form id is survey ident
 				ta.task.form_version = resultSet.getString("form_version");
 				ta.task.initial_data = resultSet.getString("initial_data");
+				ta.task.update_id = resultSet.getString("update_id");
 				ta.task.scheduled_at = resultSet.getDate("schedule_at");
 				ta.task.address = resultSet.getString("address");
 				

@@ -11,6 +11,7 @@ public class Task {
 	public String form_id;
 	public String form_version;
 	public String initial_data;
+	public String update_id;
 	public Date scheduled_at;
 	public String address;			// Key value pairs representing an unstructured address
 }
