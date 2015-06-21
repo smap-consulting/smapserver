@@ -510,6 +510,7 @@ CREATE TABLE public.tasks (
     from_date date,
     address text,
 	geo_type text,
+	update_id text,
 	p_id integer REFERENCES project(id)
 );
 SELECT AddGeometryColumn('tasks', 'geo_linestring', 4326, 'LINESTRING', 2);

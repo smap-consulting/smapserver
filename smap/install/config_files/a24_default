@@ -37,7 +37,7 @@ ExpiresActive On
 	# Add CORS for zarkman inspector
 	Header add Access-Control-Allow-Origin "http://localhost:8100"
 	Header add Access-Control-Allow-Credentials true
-	Header add Access-Control-Allow-Headers "Authorization Content-Type"
+	Header add Access-Control-Allow-Headers "Authorization Content-Type form_status"
 	
 # To force all connections, other than from a mobile phone to be https, uncomment the following lines  
 #  and substitute the hostname of the server for the hostname in curly braces 

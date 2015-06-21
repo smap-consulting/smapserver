@@ -291,3 +291,4 @@ update question set column_name = lower(qname) where column_name is null;
 -- Zarkman Inspector
 alter table dynamic_users add column expiry timestamp;
 alter table organisation add column ft_sync_incomplete boolean;
+alter table tasks add column update_id text;

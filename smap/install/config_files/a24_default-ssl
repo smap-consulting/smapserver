@@ -66,7 +66,7 @@ BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 	# Add CORS for zarkman inspector
 	Header add Access-Control-Allow-Origin "http://localhost:8100"
 	Header add Access-Control-Allow-Credentials true
-	Header add Access-Control-Allow-Headers "Authorization Content-Type"
+	Header add Access-Control-Allow-Headers "Authorization Content-Type form_status"
    
     <Directory />
     	Require all denied
