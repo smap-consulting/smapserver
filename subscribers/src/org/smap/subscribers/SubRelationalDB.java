@@ -366,7 +366,9 @@ public class SubRelationalDB extends Subscriber {
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
-				if(getDuplicatePolicy() == DUPLICATE_REPLACE) {
+				if((formStatus != null && 
+						(formStatus.equals("draft") || formStatus.equals("incomplete"))) ||
+						getDuplicatePolicy() == DUPLICATE_REPLACE) {
 					System.out.println("Replacing existing record with " + keys.newKey);
 					replaceExistingRecord(cResults, cMeta, topElement, keys.duplicateKeys, keys.newKey);		// Mark the existing record as being replaced
 				} else {
@@ -486,7 +488,9 @@ public class SubRelationalDB extends Subscriber {
 			if(parent_key == 0) {	// top level survey has a parent key of 0
 				createTable(statement, tableName, sName);
 				keys.duplicateKeys = checkDuplicate(statement, tableName, uuid);
-				if(keys.duplicateKeys.size() > 0 && getDuplicatePolicy() == DUPLICATE_DROP) {
+				if(keys.duplicateKeys.size() > 0 && (
+						getDuplicatePolicy() == DUPLICATE_DROP || 
+						(formStatus != null && formStatus != "draft" && formStatus != "incomplete"))) {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
 				// Apply any updates that have been made to the table structure since the last submission
@@ -494,10 +498,12 @@ public class SubRelationalDB extends Subscriber {
 			}
 			
 			boolean isBad = false;
+			String complete = "true";
 			String bad_reason = null;
-			if(formStatus != null && formStatus.equals("incomplete")) {
+			if(formStatus != null && (formStatus.equals("incomplete") || formStatus.equals("draft"))) {
 				isBad = true;
 				bad_reason = "incomplete";
+				complete = "false";
 			}
 			
 			/*
@@ -508,7 +514,7 @@ public class SubRelationalDB extends Subscriber {
 				boolean hasVersion = hasVersion(cRel, tableName);
 				sql = "INSERT INTO " + tableName + " (parkey";
 				if(parent_key == 0) {
-					sql += ",_user";	// Add remote user automatically (top level table only)
+					sql += ",_user, _modified";	// Add remote user, _modified automatically (top level table only)
 					if(hasVersion) {
 						sql += ",_version";
 					}
@@ -521,7 +527,7 @@ public class SubRelationalDB extends Subscriber {
 				
 				sql += ") VALUES (" + parent_key;
 				if(parent_key == 0) {
-					sql += ",'" + remoteUser + "'";	
+					sql += ",'" + remoteUser + "', '" + complete + "'";	
 					if(hasVersion) {
 						sql += "," + version;
 					}

@@ -122,21 +122,20 @@ then
 # Copy the new apache configuration files
 
 	# Set flag if this is apache2.4
-	a24=`sudo apachectl -version | grep -c "2\.4"`
-	a_config_dir="/etc/apache2/sites-available"	
-	cd ../install
-	sudo mv $a_config_dir/smap.conf $a_config_dir/smap.conf.bu
-	sudo mv $a_config_dir/smap-ssl.conf $a_config_dir/smap-ssl.conf.bu
-	if [ $a24 -eq 0 ]; then	
-		echo "Setting up Apache 2.2"
-		sudo cp config_files/default $a_config_dir/smap.conf
-		sudo cp config_files/default-ssl $a_config_dir/smap-ssl.conf
-	fi
-	if [ $a24 -eq 1 ]; then	
-		echo "Setting up Apache 2.4"
-		sudo cp config_files/a24_default $a_config_dir/smap.conf
-		sudo cp config_files/a24_default-ssl $a_config_dir/smap-ssl.conf
-	fi
+        a24=`sudo apachectl -version | grep -c "2\.4"`
+        a_config_dir="/etc/apache2/sites-available"
+        cd ../install
+        sudo mv $a_config_dir/smap-volatile.conf $a_config_dir/smap-volatile.conf.bu
+        if [ $a24 -eq 0 ]; then
+                echo "Setting up Apache 2.2"
+                sudo cp config_files/volatile $a_config_dir/smap-volatile.conf
+        fi
+        if [ $a24 -eq 1 ]; then
+                echo "Setting up Apache 2.4"
+                sudo cp config_files/a24_volatile $a_config_dir/smap-volatile.conf
+        fi
+        service apache2 restart
+
 #	sudo a2ensite  $a_config_dir/smap.conf
 #	sudo a2ensite  $a_config_dir/smap-ssl.conf
 #	sudo service apache2 reload
