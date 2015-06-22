@@ -175,6 +175,7 @@ $(document).ready(function() {
     		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
     		gIsSurveyLevel = true;
 		}
+		$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
 		$('#mediaModal').modal('show');
 
 	});
@@ -612,6 +613,7 @@ function mediaPropSelected($this) {
 	    $('#mediaSelectSave').trigger("click");
 	});
 	
+	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
 	$('#mediaModal').modal('show');
 
 }

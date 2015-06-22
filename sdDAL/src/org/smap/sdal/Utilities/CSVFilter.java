@@ -34,7 +34,7 @@ public class CSVFilter {
 		public int function;	// 1: contains, 2: startswith, 3: endswith, 4: matches 
 		public String value;
 	}
-	private boolean includeAll = false;
+	private boolean includeAll = true;
 	private Rule r1 = null;
 	private Rule r2 = null;		// Secondary filter rule
 	
