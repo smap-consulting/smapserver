@@ -268,6 +268,7 @@ public class MyAssignments extends Application {
 					"and s.p_id = up.p_id " +
 					"and p.id = up.p_id " +
 					"and s.deleted = 'false' " +
+					"and s.blocked = 'false'" +
 					"and u.ident = ?;";
 						
 			pstmtGetForms = connectionSD.prepareStatement(sql);	
