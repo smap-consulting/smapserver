@@ -255,6 +255,8 @@ public class SurveyManager {
 				" and f.f_id = q.f_id " +
 				" and q.appearance like 'search(''" + csvRoot + "''%' " +
 				" and s.p_id = p.id" +
+				" and s.deleted = 'false'" +
+				" and s.blocked = 'false'" +
 				" and p.o_id = u.o_id" +
 				" and u.ident = ? " +
 				"order BY s.display_name;";
