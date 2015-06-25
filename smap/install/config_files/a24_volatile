@@ -29,7 +29,7 @@
 	# Add CORS for zarkman inspector
 	Header add Access-Control-Allow-Origin "http://localhost:8100"
 	Header add Access-Control-Allow-Credentials true
-	Header add Access-Control-Allow-Headers "Authorization Content-Type form_status"
+	Header add Access-Control-Allow-Headers "Authorization, Content-Type, form_status"
     
     <Directory />
     	Require all denied

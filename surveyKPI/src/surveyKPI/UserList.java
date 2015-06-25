@@ -386,7 +386,6 @@ public class UserList extends Application {
 	public Response updateUser(@Context HttpServletRequest request, @FormParam("users") String users) { 
 		
 		Response response = null;
-		System.out.println("User List:" + users);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -691,7 +690,6 @@ public class UserList extends Application {
 	public Response delUser(@Context HttpServletRequest request, @FormParam("users") String users) { 
 		
 		Response response = null;
-		System.out.println("User List:" + users);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 

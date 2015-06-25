@@ -125,6 +125,8 @@ public class SubRelationalDB extends Subscriber {
 		if(gBasePath == null || gBasePath.equals("/ebs1")) {
 			gBasePath = "/ebs1/servers/" + server.toLowerCase();
 		}
+		formStatus = (formStatus == null) ? "complete" : formStatus;
+		
 		System.out.println("base path: " + gBasePath);
 		// Open the configuration file
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -488,9 +490,9 @@ public class SubRelationalDB extends Subscriber {
 			if(parent_key == 0) {	// top level survey has a parent key of 0
 				createTable(statement, tableName, sName);
 				keys.duplicateKeys = checkDuplicate(statement, tableName, uuid);
-				if(keys.duplicateKeys.size() > 0 && (
-						getDuplicatePolicy() == DUPLICATE_DROP || 
-						(formStatus != null && formStatus != "draft" && formStatus != "incomplete"))) {
+				if(keys.duplicateKeys.size() > 0 && 
+						getDuplicatePolicy() == DUPLICATE_DROP && 
+						formStatus.equals("complete")) {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
 				// Apply any updates that have been made to the table structure since the last submission

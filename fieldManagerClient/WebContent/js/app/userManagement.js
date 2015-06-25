@@ -99,6 +99,17 @@ $(document).ready(function() {
     // Style the upload buttons
     $('.file-inputs').bootstrapFileInput();
     
+    // Copy user ident to email if it is a valid email
+    $('#user_ident').blur(function(){
+    	var validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
+    		ident = $('#user_ident').val();
+    	
+    	if(validEmail.test(ident)) {
+    		$('#user_email').val(ident);
+    	}
+    	
+    });
+    
     // Function to save a users details
     $('#userDetailsSave').click(function(e) {
 		var userList = [],
@@ -106,6 +117,7 @@ $(document).ready(function() {
 			error = false,
 			validIdent = new RegExp('^[a-z0-9]+$'),
 			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
+			validEmail2 = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
 			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
 	
 		// Ignore click if button disabled
@@ -133,8 +145,9 @@ $(document).ready(function() {
 		}
 		
 		// Validations
-		if(!user.ident.match(validIdent) || user.ident.length == 0) {
-			alert("User ident must be specified and only include lowercase characters from a-z and numbers.  No spaces.");
+		if((!validIdent.test(user.ident) && !validEmail.test(user.ident)) || user.ident.length == 0) {
+			alert("User ident must be specified and either be an email address or " +
+					"only include lowercase characters from a-z and numbers.  No spaces.");
 			$('#user_ident').focus();
 			$('#userDetailsSave').attr("disabled", false);
 			return false;
@@ -146,7 +159,7 @@ $(document).ready(function() {
 			return false;
 		}
 		if(user.email.length > 0) {
-			if(!validEmail.test(user.email)) {
+			if(!validEmail2.test(user.email)) {
 				error = true;
 				alert("Email is not valid");
 				$('#user_email').focus();

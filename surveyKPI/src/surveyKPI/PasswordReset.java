@@ -47,8 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
- * Get the values of the passed in text question and the history of changes
- * Only return non null values or null values which have a history of changes
+  *Forgotton password
  */
 
 @Path("/onetimelogon")

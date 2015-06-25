@@ -403,7 +403,7 @@ public class GeneralUtilityMethods {
 				" or expiry is null;";		
 		PreparedStatement pstmtClearObsoleteKeys = null;
 		
-		String interval = "20 days";
+		String interval = "7 days";
 		String sqlAddKey = "insert into dynamic_users (u_id, survey_ident, access_key, expiry) " +
 				" values (?, ?, ?, timestamp 'now' + interval '" + interval + "');";		
 		PreparedStatement pstmtAddKey = null;
