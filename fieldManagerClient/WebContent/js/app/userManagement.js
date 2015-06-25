@@ -115,7 +115,7 @@ $(document).ready(function() {
 		var userList = [],
 			user = {},
 			error = false,
-			validIdent = new RegExp('^[a-z0-9]+$'),
+			validIdent = new RegExp('^[a-z0-9_]+$'),
 			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
 			validEmail2 = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
 			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
