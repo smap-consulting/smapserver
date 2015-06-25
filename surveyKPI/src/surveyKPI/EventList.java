@@ -136,19 +136,20 @@ public class EventList extends Application {
 				sql = "SELECT se.se_id, ue.ue_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
 						"se.status as se_status, se.reason as se_reason, " +
 						"ue.status as ue_status, ue.reason as ue_reason, " +
-						"se.dest as dest, ue.ident " +
-						"FROM upload_event ue " +
+						"se.dest as dest, ue.ident," +
+						"ue.status as upload_status, ue.reason as upload_reason " +
+						"from upload_event ue " +
 						"left outer join subscriber_event se " +
 						"on ue.ue_id = se.ue_id " +
 						"inner join user_project up " +
 						"on ue.p_id = up.p_id " +
 						"inner join users u " +
 						"on up.u_id = u.id " +
-						"WHERE u.ident = ? " +
+						"where u.ident = ? " +
 						subscriberSelect +
 						projSelect +
 						filter +
-						" ORDER BY ue.ue_id desc;";
+						" order by ue.ue_id desc;";
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setString(1, user);
 				int argIdx = 2;
@@ -163,18 +164,27 @@ public class EventList extends Application {
 				sql = "SELECT se.se_id, ue.ue_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
 						"se.status as se_status, se.reason as se_reason, " +
 						"ue.status as ue_status, ue.reason as ue_reason, " +
-						"se.dest as dest, ue.ident " +
+						"se.dest as dest, ue.ident, " +
+						"ue.status as upload_status, ue.reason as upload_reason " +
 						"FROM upload_event ue " +
 						"left outer join subscriber_event se " +
 						"on ue.ue_id = se.ue_id " +
-						"WHERE ue.s_id = ? " +
+						"inner join user_project up " +
+						"on ue.p_id = up.p_id " +
+						"inner join users u " +
+						"on up.u_id = u.id " +
+						"where u.ident = ? " +
+						"and ue.s_id = ? " +
+						"AND up.p_id = ? " +
 						subscriberSelect +
 						filter +
 						" ORDER BY ue.ue_id desc;";
 				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setInt(1, Integer.parseInt(sName));
+				pstmt.setString(1, user);
+				pstmt.setInt(2, Integer.parseInt(sName));
+				pstmt.setInt(3, projectId);
 				if(start_key > 0) {
-					pstmt.setInt(2, start_key);
+					pstmt.setInt(4, start_key);
 				}
 			}
 
@@ -187,6 +197,14 @@ public class EventList extends Application {
 			 while (resultSet.next()) {
 				 String status = resultSet.getString("se_status");
 				 String se_reason = resultSet.getString("se_reason");
+				 String upload_status = resultSet.getString("upload_status");
+				 String upload_reason = resultSet.getString("upload_reason");
+				 
+				 if(upload_status.equals("error")) {	// Didn't make it to the subscriber
+					 status = "error";
+					 se_reason = upload_reason;
+				 }
+				 
 				 if(
 						 (status == null && !hideNotLoaded) ||
 						 (status != null && !hideSuccess && status.equals("success")) ||
@@ -234,13 +252,12 @@ public class EventList extends Application {
 					jp.put("dest", resultSet.getString("dest"));
 					jp.put("imei", resultSet.getString("imei"));
 					jp.put("ident", resultSet.getString("ident"));
-					String reason = resultSet.getString("se_reason");
-					if(status == null) {
-						status = "not_loaded";
-						reason = "Not added to database";
+					if(status == null) {					// Not loaded by subscriber
+							status = "not_loaded";
+							se_reason = "Not added to database";
 					}
 					jp.put("status", status);
-					jp.put("reason", reason);
+					jp.put("reason", se_reason);
 					jr.put("properties", jp);
 					ja.put(jr);
 					
@@ -689,7 +706,7 @@ public class EventList extends Application {
 		if(status.equals("success")) {
 			selectStatus = "AND se.status = 'success' ";
 		} else if(status.equals("errors")) {
-			selectStatus = "AND se.status = 'error' AND se.reason not like 'Duplicate survey:%' ";
+			selectStatus = "AND (ue.status = 'error' or (coalesce(se.status,'') = 'error' AND coalesce(se.reason,'') not like 'Duplicate survey:%')) ";
 		} else if(status.equals("not_loaded")) {
 			selectStatus = "AND se.status is null ";
 		} else if(status.equals("duplicates")) {
@@ -723,11 +740,14 @@ public class EventList extends Application {
 			
 			sql = "SELECT count(*), ue.survey_name " +
 					getDest +
-					"FROM upload_event ue, subscriber_event se, user_project up, users u " +
+					"FROM upload_event ue " +
+					"left outer join subscriber_event se " +
+					"on ue.ue_id = se.ue_id " +
+					"inner join user_project up " +
+					"on ue.p_id = up.p_id " +
+					"inner join users u " +
+					"on up.u_id = u.id " +
 					"WHERE u.ident = ? " +
-					"AND ue.ue_id = se.ue_id " +
-					"AND ue.p_id = up.p_id " +
-					"AND up.u_id = u.id " +
 					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
 					subscriberSelect +
 					selectStatus +
@@ -755,13 +775,17 @@ public class EventList extends Application {
 			
 			sql = "SELECT count(*), ue.imei " +
 					getDest +
-					"FROM upload_event ue, subscriber_event se, user_project up, users u " +
+					"FROM upload_event ue " +
+					"left outer join subscriber_event se " +
+					"on ue.ue_id = se.ue_id " +
+					"inner join user_project up " +
+					"on ue.p_id = up.p_id " +
+					"inner join users u " +
+					"on up.u_id = u.id " +
 					"WHERE u.ident = ? " +
 					"AND ue.s_id = ? " +
-					"AND ue.ue_id = se.ue_id " +
-					"AND ue.p_id = up.p_id " +
-					"AND up.u_id = u.id " +
 					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"AND up.p_id = ? " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -770,6 +794,7 @@ public class EventList extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
 			pstmt.setInt(2, Integer.parseInt(sName));
+			pstmt.setInt(3, projectId);
 		} else if(groupby.equals("month")) {
 			
 			String aggregate = "extract(year from upload_time) || '-' || extract(month from upload_time)";
@@ -780,13 +805,17 @@ public class EventList extends Application {
 			} 
 			
 			sql = "SELECT count(*), " + aggregate +
-					"FROM upload_event ue, subscriber_event se, user_project up, users u " +
+					"FROM upload_event ue " +
+					"left outer join subscriber_event se " +
+					"on ue.ue_id = se.ue_id " +
+					"inner join user_project up " +
+					"on ue.p_id = up.p_id " +
+					"inner join users u " +
+					"on up.u_id = u.id " +
 					"WHERE u.ident = ? " +
 					"AND ue.s_id = ? " +
-					"AND ue.ue_id = se.ue_id " +
-					"AND ue.p_id = up.p_id " +
-					"AND up.u_id = u.id " +
 					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"AND up.p_id = ? " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -795,6 +824,7 @@ public class EventList extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
 			pstmt.setInt(2, Integer.parseInt(sName));
+			pstmt.setInt(3, projectId);
 		} else if(groupby.equals("week")) {
 			
 
@@ -804,13 +834,17 @@ public class EventList extends Application {
 			} 
 			
 			sql = "SELECT count(*), " + aggregate +
-					"FROM upload_event ue, subscriber_event se, user_project up, users u " +
+					"FROM upload_event ue " +
+					"left outer join subscriber_event se " +
+					"on ue.ue_id = se.ue_id " +
+					"inner join user_project up " +
+					"on ue.p_id = up.p_id " +
+					"inner join users u " +
+					"on up.u_id = u.id " +
 					"WHERE u.ident = ? " +
 					"AND ue.s_id = ? " +
-					"AND ue.ue_id = se.ue_id " +
-					"AND ue.p_id = up.p_id " +
-					"AND up.u_id = u.id " +
 					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"AND up.p_id = ? " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -819,6 +853,7 @@ public class EventList extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
 			pstmt.setInt(2, Integer.parseInt(sName));
+			pstmt.setInt(3, projectId);
 		} else if(groupby.equals("day")) {
 			
 			String aggregate = "extract(year from upload_time) || '-' || extract(month from upload_time) || '-' || extract(day from upload_time)";	
@@ -827,13 +862,17 @@ public class EventList extends Application {
 			}
 			
 			sql = "SELECT count(*), " + aggregate +
-					"FROM upload_event ue, subscriber_event se, user_project up, users u " +
+					"FROM upload_event ue " +
+					"left outer join subscriber_event se " +
+					"on ue.ue_id = se.ue_id " +
+					"inner join user_project up " +
+					"on ue.p_id = up.p_id " +
+					"inner join users u " +
+					"on up.u_id = u.id " +
 					"WHERE u.ident = ? " +
 					"AND ue.s_id = ? " +
-					"AND ue.ue_id = se.ue_id " +
-					"AND ue.p_id = up.p_id " +
-					"AND up.u_id = u.id " +
 					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"AND up.p_id = ? " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -842,9 +881,10 @@ public class EventList extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
 			pstmt.setInt(2, Integer.parseInt(sName));
+			pstmt.setInt(3, projectId);
 		}
 
-		log.info("Get events: " + pstmt.toString());
+		log.info("Get totals for events: " + pstmt.toString());
 
 		 ResultSet resultSet = pstmt.executeQuery();
 		 while (resultSet.next()) {

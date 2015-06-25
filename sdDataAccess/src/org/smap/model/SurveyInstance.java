@@ -3,6 +3,8 @@ package org.smap.model;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -15,6 +17,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class SurveyInstance {
+	
+	private static Logger log =
+			 Logger.getLogger(SurveyInstance.class.getName());
 	
 	private String templateName = null;
 	private String displayName = null;
@@ -197,7 +202,7 @@ public class SurveyInstance {
 				   		ie.setPath(childPath);
 						processElement(n, ie, childPath);	// Recursively process the XML tree
 					} else {
-						System.out.println("Ignoring template node: " + n.getTextContent());
+						log.info("Ignoring template node: " + n.getTextContent());
 					}
 				}
 			}

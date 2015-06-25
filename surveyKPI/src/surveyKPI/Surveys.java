@@ -434,6 +434,11 @@ public class Surveys extends Application {
 	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
 			}
 			
+			// If the project id has changed update the project in the upload events so that the monitor will still show all events
+			if(originalProjectId != survey.p_id) {
+				GeneralUtilityMethods.updateUploadEvent(connectionSD, survey.p_id, sId);
+			}
+			
 			// If the display name or project id has changed rename template files
 			if((originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) 
 					|| originalProjectId != survey.p_id) {

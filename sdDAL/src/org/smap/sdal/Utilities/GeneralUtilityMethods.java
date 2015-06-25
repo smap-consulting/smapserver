@@ -302,6 +302,35 @@ public class GeneralUtilityMethods {
 		return u_id;
 	}
 	
+	/*
+	 * Get the user id from the user ident
+	 */
+	static public void updateUploadEvent(
+			Connection sd, 
+			int pId,
+			int sId) throws SQLException {
+	
+		
+		String updatePId = "update upload_event set p_id = ? where s_id = ?;"; 
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(updatePId);
+			pstmt.setInt(1, pId);
+			pstmt.setInt(2, sId);
+			pstmt.executeUpdate();	
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+
+	}
+	
     /*
      * Get Safe Template File Name
      *  Returns safe file names from the display name for the template
@@ -348,6 +377,51 @@ public class GeneralUtilityMethods {
 		}
 		
 		return surveyIdent;
+	}
+	
+	/*
+	 * Return true if the upload error has already been reported
+	 * This function is used to prevent large numbers of duplicate errors beign recorded when 
+	 *  submission of bad results is automatically retried
+	 */
+	public static boolean hasUploadErrorBeenReported(
+			Connection sd, 
+			String user, 
+			String device, 
+			String ident, 
+			String reason) throws SQLException {
+		
+		boolean reported = false;
+		
+		String sqlReport = "select count(*) from upload_event " +
+				"where user_name = ? " +
+				"and imei = ? " +
+				"and ident = ? " +
+				"and reason = ?;";
+			
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlReport);
+			pstmt.setString(1, user);
+			pstmt.setString(2, device);
+			pstmt.setString(3, ident);
+			pstmt.setString(4, reason);
+			log.info("Has error been reported: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				reported = (rs.getInt(1) > 0) ? true : false;	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return reported;
 	}
 	
 	/*

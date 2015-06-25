@@ -494,11 +494,11 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.p_id, s.s_id, s.blocked, s.class " +
+		String sql = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name " +
 				" from survey s" +
 				" where s.ident = ?; ";
 		
-		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
+		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
 				" from survey s" +
 				" where s.s_id = ?; ";
 		
@@ -517,6 +517,8 @@ public class SurveyManager {
 				s.setId(resultSet.getInt(2));
 				s.setBlocked(resultSet.getBoolean(3));
 				s.surveyClass = resultSet.getString(4);
+				s.deleted = resultSet.getBoolean(5);
+				s.displayName = resultSet.getString(6);
 				
 				
 			} else {	// Attempt to find the survey assuming the ident is the survey id
@@ -539,6 +541,8 @@ public class SurveyManager {
 					s.setId(resultSet.getInt(2));
 					s.setBlocked(resultSet.getBoolean(3));
 					s.surveyClass = resultSet.getString(4);
+					s.deleted = resultSet.getBoolean(5);
+					s.displayName = resultSet.getString(6);
 				} else {			
 					log.info("Error: survey not found");
 				}

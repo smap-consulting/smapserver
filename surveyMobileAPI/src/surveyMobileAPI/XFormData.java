@@ -47,6 +47,8 @@ import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
@@ -193,11 +195,24 @@ public class XFormData {
 			SurveyManager sm = new SurveyManager();
 			connectionSD = SDDataSource.getConnection("surveyMobileAPI-XFormData");
 			survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-					
-			a.isValidSurvey(connectionSD, user, survey.id, false);		// Throw an exception of the user is not authorised to upload this survey		
+			
+			if(survey.getDeleted()) {
+				String reason = survey.displayName + " has been deleted";
+				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(connectionSD, user, si.getImei(), templateName, reason)) {
+					writeUploadError(user, survey, templateName, si, pc, reason);
+				}
+				throw new NotFoundException();
+			}
 			if(survey.getBlocked()) {	// Throw an exception if the survey has been blocked form accepting any more submssions
+				String reason = survey.displayName + " has been blocked";
+				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(connectionSD, user, si.getImei(), templateName, reason)) {
+					writeUploadError(user, survey, templateName, si, pc, reason);
+				}
 				throw new SurveyBlockedException();
 			}
+			
+			a.isValidSurvey(connectionSD, user, survey.id, false);		// Throw an exception of the user is not authorised to upload this survey		
+		
 		} finally {
 			try {
 				if (connectionSD != null) {
@@ -219,7 +234,7 @@ public class XFormData {
 		ue.setProjectId(survey.getPId());
 		ue.setUploadTime(new Date());	
 		ue.setFileName(saveDetails.fileName);
-		ue.setSurveyName(si.getDisplayName());
+		ue.setSurveyName(survey.getDisplayName());
 		ue.setUpdateId(updateInstanceId);
 		ue.setAssignmentId(assignmentId);
 		ue.setInstanceId(thisInstanceId);
@@ -232,6 +247,25 @@ public class XFormData {
 		uem.persist(ue);
 		
 		log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
+	}
+	
+	private void writeUploadError(String user, Survey survey, String templateName, 
+			SurveyInstance si, PersistenceContext pc, String reason) throws Exception {
+		log.info("Writing upload error");
+		UploadEvent ue = new UploadEvent();
+		ue.setUserName(user);
+		ue.setServerName(serverName);
+		ue.setSurveyId(survey.id);
+		ue.setIdent(templateName);
+		ue.setProjectId(survey.getPId());
+		ue.setUploadTime(new Date());	
+		ue.setSurveyName(survey.getDisplayName());
+		ue.setLocation(si.getSurveyGeopoint());
+		ue.setImei(si.getImei());
+		ue.setStatus("error"); // Not really needed any more as status is really set in the subscriber event
+		ue.setReason(reason);
+		UploadEventManager uem = new UploadEventManager(pc);
+		uem.persist(ue);
 	}
 	
 	private SaveDetails saveToDisk(
