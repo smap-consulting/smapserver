@@ -89,6 +89,7 @@ public class ExportSurveyMisc extends Application {
 	 *  writes the result to a file that is zipped and then downloaded.
 	 * For all of these formats the SQL is created from the passed in form and includes
 	 *  all columns from the parent forms.
+	 * A parameter excludeparents=true to only return the single form
 	 */
 	@GET
 	@Path("/shape")
@@ -99,6 +100,7 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("form") int fId,
 			@QueryParam("language") String language,
 			@QueryParam("exp_ro") boolean exp_ro,
+			@QueryParam("excludeparents") boolean excludeParents,
 			@QueryParam("format") String format) {
 
 		ResponseBuilder builder = Response.ok();
@@ -193,6 +195,7 @@ public class ExportSurveyMisc extends Application {
 						urlprefix, 
 						true,
 						exp_ro,
+						excludeParents,
 						labelListMap,
 						false,
 						false,

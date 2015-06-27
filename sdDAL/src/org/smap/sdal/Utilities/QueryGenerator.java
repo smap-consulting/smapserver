@@ -51,6 +51,7 @@ public class QueryGenerator {
 			String urlprefix,
 			boolean wantUrl,
 			boolean exp_ro,
+			boolean excludeParents,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			boolean add_record_uuid,
 			boolean add_record_suid,
@@ -139,6 +140,7 @@ public class QueryGenerator {
 					urlprefix,
 					wantUrl,
 					exp_ro,
+					excludeParents,
 					labelListMap,
 					connectionSD, 
 					connectionResults,
@@ -217,6 +219,7 @@ public class QueryGenerator {
 			String urlprefix,
 			boolean wantUrl,
 			boolean exp_ro,
+			boolean excludeParents,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			Connection connectionSD,
 			Connection connectionResults,
@@ -226,7 +229,7 @@ public class QueryGenerator {
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
 			colLimit = 244;
 		}
-		if(parentForm > 0) {
+		if(parentForm > 0 && !excludeParents) {
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, parentForm);
 			ResultSet resultSet = pstmt.executeQuery();
@@ -248,6 +251,7 @@ public class QueryGenerator {
 						urlprefix,
 						wantUrl,
 						exp_ro,
+						excludeParents,
 						labelListMap,
 						connectionSD,
 						connectionResults,

@@ -189,6 +189,7 @@ public class ExportSurveyMedia extends Application {
 						urlprefix,
 						false,
 						false,
+						false,
 						labelListMap,
 						false,
 						false,
