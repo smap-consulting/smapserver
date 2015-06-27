@@ -2,6 +2,8 @@ package taskModel;
 
 import java.util.List;
 
+import org.smap.sdal.model.Project;
+
 import com.google.gson.annotations.SerializedName;
 
 public class TaskResponse {
@@ -15,4 +17,5 @@ public class TaskResponse {
 	public FieldTaskSettings settings;
 	public List<TaskCompletionInfo> taskCompletionInfo;
 	public List<PointEntry> userTrail;
+	public List<Project> projects;
 }

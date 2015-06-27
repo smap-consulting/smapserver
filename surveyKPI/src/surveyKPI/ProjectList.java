@@ -111,7 +111,7 @@ public class ProjectList extends Application {
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
 				
-				sql = "select id, name, changed_by, changed_ts " +
+				sql = "select id, name, description, changed_by, changed_ts " +
 						" from project " + 
 						" where o_id = ? " +
 						" order by name ASC;";				
@@ -126,6 +126,7 @@ public class ProjectList extends Application {
 					Project project = new Project();
 					project.id = resultSet.getInt("id");
 					project.name = resultSet.getString("name");
+					project.desc = resultSet.getString("description");
 					project.changed_by = resultSet.getString("changed_by");
 					project.changed_ts = resultSet.getString("changed_ts");
 					projects.add(project);
@@ -217,14 +218,15 @@ public class ProjectList extends Application {
 						// New project
 						connectionSD.setAutoCommit(false);
 						
-						sql = "insert into project (name, o_id, changed_by, changed_ts) " +
-								" values (?, ?, ?, now());";
+						sql = "insert into project (name, description, o_id, changed_by, changed_ts) " +
+								" values (?, ?, ?, ?, now());";
 						
 						try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 						pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 						pstmt.setString(1, p.name);
-						pstmt.setInt(2, o_id);
-						pstmt.setString(3, request.getRemoteUser());
+						pstmt.setString(2, p.desc);
+						pstmt.setInt(3, o_id);
+						pstmt.setString(4, request.getRemoteUser());
 						log.info("Insert project: " + pstmt.toString());
 						pstmt.executeUpdate();
 						ResultSet rs = pstmt.getGeneratedKeys();
@@ -264,6 +266,7 @@ public class ProjectList extends Application {
 						if(resultSet.next()) {
 							sql = "update project set " +
 									" name = ?, " + 
+									" description = ?, " + 
 									" changed_by = ?, " + 
 									" changed_ts = now() " + 
 									" where " +
@@ -272,8 +275,9 @@ public class ProjectList extends Application {
 							try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setString(1, p.name);
-							pstmt.setString(2, request.getRemoteUser());
-							pstmt.setInt(3, p.id);
+							pstmt.setString(2, p.desc);
+							pstmt.setString(3, request.getRemoteUser());
+							pstmt.setInt(4, p.id);
 							
 							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();

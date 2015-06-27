@@ -33,6 +33,7 @@ define({
 	"ss_su": "Get Smap Uploader",
 	
 	// Common
+	"c_desc": "Description",
 	"c_project": "Select Project",
 	"c_forms": "Forms",
 	"c_forward": "Forward",

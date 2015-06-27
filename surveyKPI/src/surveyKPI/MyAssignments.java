@@ -36,6 +36,7 @@ import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
+import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
@@ -145,6 +146,7 @@ public class MyAssignments extends Application {
 		
 		PreparedStatement pstmtGetForms = null;
 		PreparedStatement pstmtGetSettings = null;
+		PreparedStatement pstmtGetProjects = null;
 		PreparedStatement pstmtGeo = null;
 		PreparedStatement pstmt = null;
 		
@@ -318,6 +320,31 @@ public class MyAssignments extends Application {
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
 				tr.settings.ft_sync_incomplete = resultSet.getBoolean(3);
 			}
+			
+			/*
+			 * Get the projects
+			 */
+			tr.projects = new ArrayList<Project> ();
+			sql = "select p.id, p.name, p.description " +
+					" from users u, user_project up, project p " + 
+					"where u.id = up.u_id " +
+					"and p.id = up.p_id " +
+					"and u.ident = ? " +
+					" order by name ASC;";	
+			
+			pstmtGetProjects = connectionSD.prepareStatement(sql);	
+			pstmtGetProjects.setString(1, userName);
+			log.info("Getting projects: " + pstmtGetProjects.toString());
+			resultSet = pstmtGetProjects.executeQuery();
+			
+			while(resultSet.next()) {
+				Project p = new Project();
+				p.id = resultSet.getInt(1);
+				p.name = resultSet.getString(2);
+				p.desc = resultSet.getString(3);
+				tr.projects.add(p);
+			}
+			
 			
 			/*
 			 * Return the response

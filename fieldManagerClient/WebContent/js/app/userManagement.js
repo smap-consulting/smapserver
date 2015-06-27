@@ -235,6 +235,7 @@ $(document).ready(function() {
 		}
 	
 		project.name = $('#p_name').val();
+		project.desc = $('#p_desc').val();
 	  		
 		projectList[0] = project;
 		var projectString = JSON.stringify(projectList);
@@ -703,6 +704,7 @@ function openProjectDialog(existing, projectIndex) {
 	$('#project_create_form')[0].reset();
 	if(existing) {
 		$('#p_name').val(globals.gProjectList[projectIndex].name);
+		$('#p_desc').val(globals.gProjectList[projectIndex].desc);
 	}
 	$('#create_project_popup').modal("show");
 }
