@@ -339,6 +339,8 @@ function getData() {
 				h[++idx] = '<td class="review_update_other">';
 				h[++idx] = '<input type="text" data-orig="';
 				h[++idx] = data[i].targetQuestion;
+				h[++idx] = '" data-idx="';
+				h[++idx] = i;
 				h[++idx] = '" value="';
 				h[++idx] = data[i].targetQuestion;
 				h[++idx] = '">';
@@ -346,10 +348,22 @@ function getData() {
 				h[++idx] = "<tr>";	
 			}
 			
-			$elem.append(h.join(''));
+			// Add row for other text update button
+			h[++idx] = '<tr><td></td><td></td><td></td>';
+			h[++idx] = '<td class="review_update_other">';
+			h[++idx] = '<button id="target_update_btn" type="button">Update</button>';
+			h[++idx] = '</td>';
+			h[++idx] = '</tr>;'
+				
+			
+			$elem.html(h.join(''));
 			$('.review_update').button().click(function(e) {
 				gTextIdx = $(this).val();
 				textUpdate();
+			});
+			
+			$('#target_update_btn').button().click(function(e) {
+				saveTargetResults();
 			});
 			
 			if($('#other_target_cb').is(':checked')) {
@@ -476,53 +490,72 @@ function saveTargetResults() {
 	
 	var updateString,
 		newValue,
-		newUpdates = [];
+		oldValue,
+		newUpdates = [],
+		idx;
+	
+		
 
 		// for each item where value has changed
-		newValue = $('#tu_new_text').val();
+	$('.review_update_other input').each(function(index){
+		var $this = $(this);
 		
-		gUpdate.reviewItems.push( 
-				{
-					q_id: gTextId
-				}
-			);
-			gUpdate.qFilter = gTextId,
+		if($this.data("orig") != $this.val()) {
+			gUpdate.reviewItems = [];
+			
+			console.log("val: " + $this.val() + " has changed");
+			
+			newValue = $this.val();
+			oldValue = $this.data("orig");
+			gTextIdx = $this.data("idx");
+			
+			// Filter on the main question
+			gUpdate.qFilter = gTextId;
 			gUpdate.valueFilter = gTextValues[gTextIdx].text;
 			
+			// Filter on the target question
+			gUpdate.qFilterTarget = gTextOtherId;
+			gUpdate.targetValueFilter = oldValue;
+			
 			gCountRecords = parseInt(gTextValues[gTextIdx].count);
+			
+			// Set description of change
+			gUpdate.description = "Replace value (" + oldValue + ") in ";
+			gUpdate.description += gCountRecords;
+			gUpdate.description += " records with (" + newValue + ")";
+			
+			gUpdate.reason = "";
+			
+			gUpdate.reviewItems.push( {
+				q_id: gTextOtherId,
+				newValue: newValue
+			});
+
+			
+			updateString = JSON.stringify(gUpdate);
+		 	addHourglass();
+			$.ajax({
+				  type: "POST",
+				  contentType: "application/json",
+				  dataType: "json",
+				  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
+				  data: { updates: updateString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  getData();
+					  
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  console.log("Error: Failed to save updates");
+				  }
+			});
+
+		}
+		
+	});
 	
+		
 	
-	
-		// Set description of change
-		gUpdate.description = "Replace value (" + gUpdate.valueFilter + ") in ";
-		gUpdate.description += gCountRecords;
-	
-		gUpdate.description += " records with (" + newValue + ")";
-	
-	
-		// Create combined list of all items to be updated
-		gUpdate.reviewItems = gUpdate.reviewItems.concat(newUpdates);
-	
-		gUpdate.reason = "";
-	
-		updateString = JSON.stringify(gUpdate);
-	
-		addHourglass();
-		$.ajax({
-			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
-			  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
-			  data: { updates: updateString },
-			  success: function(data, status) {
-				  removeHourglass();
-				  getData();
-				  
-			  }, error: function(data, status) {
-				  removeHourglass();
-				  console.log("Error: Failed to save updates");
-			  }
-		});
 	
 }
 
@@ -531,7 +564,7 @@ function targetHasChanged() {
 	
 	$('.review_update_other input').each(function(index){
 		var $this = $(this);
-		if($this.data("orig") !== $this.val()) {
+		if($this.data("orig") != $this.val()) {
 			console.log("val: " + $this.val() + " has changed");
 			changed = true;
 		}
