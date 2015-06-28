@@ -26,6 +26,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -75,6 +76,8 @@ public class Review extends Application {
 		}
 	}
 	
+	boolean autoCommit;
+	
 	/*
 	 * One ReviewUpdate object per question for select_one and text questions
 	 * One ReviewUpdate object per question / option pair for select_multiple questions
@@ -94,6 +97,8 @@ public class Review extends Application {
 	private class ReviewUpdate {
 		int qFilter;		// Filter question id
 		String valueFilter;	// If r_id is 0 then use this to identify values that records that need to be changed
+		int qFilterTarget;	// Optional secondary filter
+		String targetValueFilter;
 		int r_id;			// If greater than 0 then restrict change to this record
 		
 		String reason;
@@ -116,6 +121,7 @@ public class Review extends Application {
 	private class Result {
 		String text;
 		String count;
+		String targetQuestion;
 	}
 	private ArrayList<Result> results = new ArrayList<Result> ();
 
@@ -137,17 +143,24 @@ public class Review extends Application {
 	@Produces("application/json")
 	public Response getDistinctTextResults(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,				// Survey Id
-			@PathParam("qId") int qId				// Question Id 
+			@PathParam("qId") int qId,				// Question Id 
+			@QueryParam("targetQuestion") int targetQId				// Target Question Id 
 			) { 
 	
 		Response response = null;
 		String table = null;
 		String name = null;
 		String qtype = null;
+		String targetName = null;
+		String targetType = null;
+		boolean hasTarget = false;
 		PreparedStatement  pstmt = null;
+		PreparedStatement  pstmtTarget = null;
 
 		Connection dConnection = null;
-				
+			
+		log.info("Other question id: " + targetQId);
+		
 		// Get the Postgres driver
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -173,15 +186,37 @@ public class Review extends Application {
 					" where f.f_id = q.f_id" +
 					" and q.q_id = ?";
 	
-			log.info(sql + " : " + qId);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setInt(1, qId);
+			log.info("Get question: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 
 			if(resultSet.next()) {
 				table = resultSet.getString(1);
 				name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 				qtype = resultSet.getString(3);
+				
+				// If data for antarget question is also required then ensure it is in the same table and get the question name
+				if(targetQId > 0) {
+					String sqlTarget = "select q.qname, qtype from form f, question q " +
+							" where f.f_id = q.f_id" +
+							" and f.table_name = ?" +
+							" and q.q_id = ?";
+					
+					pstmtTarget = connectionSD.prepareStatement(sqlTarget);	
+					pstmtTarget.setString(1, table);
+					pstmtTarget.setInt(2, targetQId);
+					log.info("Get question: " + pstmtTarget.toString());
+					ResultSet rsTarget = pstmtTarget.executeQuery();
+					if(rsTarget.next()) {
+						targetName = rsTarget.getString(1);
+						targetType = rsTarget.getString(2);
+						hasTarget = true;
+					}
+					log.info("Target name: " + targetName);
+					
+				}
+				
 				
 				if(!qtype.equals("string") && !qtype.equals("select1")) {
 					throw new ApplicationException("Unsupported question type: " + qtype);
@@ -194,19 +229,29 @@ public class Review extends Application {
 				/*
 				 * Get the data
 				 */
-				sql = "select distinct " + name + ",count(*) from " + table +		
+				String targetN = "";
+				if(hasTarget) {
+					targetN = "," + targetName;
+				}
+				sql = "select distinct " + name + targetN + ",count(*) from " + table +		
 						" where _bad = 'false' " +
 						" and " + name + " is not null " +
-						" group by " + name +
-						" order by " + name + ";";
-				pstmt = dConnection.prepareStatement(sql);	
+						" group by " + name + targetN +
+						" order by " + name + targetN +";";
+				pstmt = dConnection.prepareStatement(sql);
+				log.info("Getting data for review: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				
 				while(resultSet.next()) {
 					
 					Result r = new Result();
 					r.text = resultSet.getString(1);
-					r.count = resultSet.getString(2);
+					if(hasTarget) {
+						r.targetQuestion = resultSet.getString(2);
+						r.count = resultSet.getString(3);
+					} else {
+						r.count = resultSet.getString(2);
+					}
 					
 					results.add(r);
 				}
@@ -241,13 +286,8 @@ public class Review extends Application {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtTarget != null) {pstmtTarget.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
@@ -715,6 +755,8 @@ public class Review extends Application {
 		PreparedStatement pstmtInsertChangeHistory = null;
 		PreparedStatement pstmtGetRecords = null;
 
+		autoCommit = true;
+		
 		/*
 		 * Get the updates
 		 */
@@ -803,8 +845,14 @@ public class Review extends Application {
 			
 			} else if (u.qFilter > 0 ) {
 				
+				boolean hasTargetFilter = false;
+				if(u.qFilterTarget > 0) {
+					hasTargetFilter = true;
+				}
+				
 				// Get the record ids using the question filter
 				String filter_name = null;
+				String target_filter_name = null;
 				String table = null;
 				
 				// Get the filter question name and type
@@ -819,11 +867,29 @@ public class Review extends Application {
 					throw new ApplicationException("Table not found for question: " + u.qFilter);
 				}
 				
+				if(hasTargetFilter) {
+					pstmtGetTable.setInt(2, u.qFilterTarget);
+					resultSet = pstmtGetTable.executeQuery();
+					if(resultSet.next()) {
+						// Table should be the same as for the primary question filter
+						target_filter_name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
+					} else {
+						throw new ApplicationException("Table not found for question: " + u.qFilterTarget);
+					}
+					
+				}
+				
+				String targetFilter = "";
+				if(hasTargetFilter) {
+					targetFilter = "and " + target_filter_name + " = ? ";
+				}
 				// Get the record ids that match the filter
-				String sqlGetRecords = "select prikey from " +  table + " where " + filter_name + " = ?;";
-				try {if (pstmtGetRecords != null) {pstmtGetRecords.close();}} catch (SQLException e) {}
+				String sqlGetRecords = "select prikey from " +  table + " where " + filter_name + " = ? " + targetFilter +";";
 				pstmtGetRecords = dConnection.prepareStatement(sqlGetRecords);
 				pstmtGetRecords.setString(1, u.valueFilter);
+				if(hasTargetFilter) {
+					pstmtGetRecords.setString(2, u.targetValueFilter);
+				}
 				
 				ResultSet resultSet3 = pstmtGetRecords.executeQuery();
 				while(resultSet3.next()) {
@@ -957,12 +1023,12 @@ public class Review extends Application {
 			}
 			sqlGetCurrentValue += " where prikey = ?" ;
 			
-			log.info("Get Current Value: " + sqlGetCurrentValue + " : " + rId);
 			try {if (pstmtGetCurrentValue != null) {pstmtGetCurrentValue.close();}} catch (SQLException e) {}
 			pstmtGetCurrentValue = dConnection.prepareStatement(sqlGetCurrentValue);
 			pstmtGetCurrentValue.setInt(1, rId);
 			
 			// Get the current value 
+			log.info("Get Current Value: " + pstmtGetCurrentValue.toString());
 			ResultSet resultSet = pstmtGetCurrentValue.executeQuery();
 			if(resultSet.next()) {
 				ui.oldValue = resultSet.getString(1);
@@ -985,6 +1051,7 @@ public class Review extends Application {
 		
 		// Update to table and change history must be in a single transaction
 		dConnection.setAutoCommit(false);
+		autoCommit = false;
 		
 		/*
 		 * Get the current value and primary key of each record that is to change
@@ -1017,7 +1084,7 @@ public class Review extends Application {
 			}
 			pstmtData.setInt(2, ui.rId);
 			
-			log.info("Modifying data record: " + sqlData + " : " + ui.newValue + " : " + ui.rId);
+			log.info("Modifying data record: " + pstmtData.toString());
 			pstmtData.executeUpdate();
 				
 			/*
@@ -1050,6 +1117,7 @@ public class Review extends Application {
 			} 
 		}
 		try {dConnection.setAutoCommit(true);} catch (Exception e) {}
+		autoCommit = true;
 	}
 	
 
@@ -1183,8 +1251,9 @@ public class Review extends Application {
 				pstmtGetLaterChangeset.setInt(1, csId);
 				pstmtGetLaterChangeset.setInt(2, ui.qId);
 				pstmtGetLaterChangeset.setInt(3, ui.rId);
+				log.info("Reverse valid check: " + pstmtGetLaterChangeset.toString());
 				ResultSet rsValid = pstmtGetLaterChangeset.executeQuery();
-				log.info("Reverse valid check: " + sqlGetLaterChangeset + " : " + csId + " : " + ui.qId + " : " + ui.rId);
+				
 				if(rsValid.next()) {
 					int laterChangeset = rsValid.getInt(1);
 					throw new InvalidUndoException("A later changeset modifies question " + ui.qId + ", record " + 
@@ -1207,15 +1276,18 @@ public class Review extends Application {
 
 		} catch (InvalidUndoException e) {
 			
-			try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-			
+			if(!autoCommit) {
+				try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			}
 		    String msg = e.getMessage();
 		    log.info(msg);
 			response = Response.status(Status.BAD_REQUEST).entity(msg).build();
 
 		} catch (ApplicationException e) {
 			
-			try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			if(!autoCommit) {
+				try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			}
 			
 		    String msg = e.getMessage();
 		    log.info(msg);
@@ -1223,8 +1295,9 @@ public class Review extends Application {
 
 		} catch (SQLException e) {
 			
-			try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-			
+			if(!autoCommit) {
+				try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			}
 		    log.log(Level.SEVERE,"Exception", e);
 		    String msg = e.getMessage();
 			
@@ -1233,7 +1306,9 @@ public class Review extends Application {
 
 		} catch (Exception e) {
 			
-			try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			if(!autoCommit) {
+				try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			}
 			
 			log.log(Level.SEVERE,"Exception", e);
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();

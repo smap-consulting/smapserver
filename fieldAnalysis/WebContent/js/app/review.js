@@ -29,7 +29,8 @@ var gTextValues,
 	gHasText,
 	gCountRecords = 0,
 	gRelevance = [],
-	gTextId;			// The id of the selected text question	
+	gTextId,			// The id of the selected text question	
+	gTextOtherId;		// The id of the other selected text question
 
 $(document).ready(function() {
 	
@@ -69,6 +70,22 @@ $(document).ready(function() {
 		getRelevance();
  	 });
 	
+	// Set change function on the other text question
+	$('#target_question_name').change(function() {
+		getData();
+ 	 });
+	
+	// Set change function on the "other target" checkbox
+	$('#other_target_cb').change(function() {
+		var $this = $(this);
+		if($this.is(':checked')) {
+			$('#target_question_name_cont, .review_update_other').show();
+		} else {
+			$('#target_question_name_cont, .review_update_other').hide();
+		}
+ 	 });
+	$('#target_question_name_cont, .review_update_other').hide();
+	
 	// Add change functions to update dialog
 	$('#tu_existing_option').change(function() {
 		$('#tu_existing_text').val("");
@@ -90,9 +107,26 @@ $(document).ready(function() {
 	 * Enable Menu events
 	 */
 	$('.rmm').delegate('#refreshMenu', 'click', function(e) {
+		
 		e.preventDefault();
-		getData();
+		if(targetHasChanged()) {
+			if (confirm("You have made some changes and not saved them, are you sure you want to refresh?")) {
+
+				getData();
+			}
+		} else {
+			getData();
+		}
 	}); 
+	
+	/*
+	 * Add check prior to the user leaving the screen
+	 */
+	window.onbeforeunload = function() {
+		if(targetHasChanged()) {
+			return "You have unsaved changes are you sure you want to leave?";
+		}
+	};
 });
 
 function enableTextUpdate() {
@@ -231,7 +265,7 @@ function getReviewLanguageList() {
 
 function getTextQuestions() {
 	var i,
-		$text_name = $('#text_name');
+		$text_name = $('#text_name,#target_question_name');
 	
 	gCurrentLanguage = $('#language_name option:selected').val();
 	
@@ -267,14 +301,19 @@ function getData() {
 		i,
 		h = [],
 		idx = -1,
-		$textUpdate = $('#text_update');
+		$textUpdate = $('#text_update'),
+		textOtherOption = "";
 	
 	gTextId = $('#text_name option:selected').val();
+	gTextOtherId = $('#target_question_name option:selected').val();
+	
+	textOtherOption = "?targetQuestion=" + gTextOtherId;
+
 	$elem.empty();
 	
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/results/distinct/" + gTextId,
+		url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/results/distinct/" + gTextId + textOtherOption,
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
@@ -297,14 +336,42 @@ function getData() {
 				h[++idx] = i;
 				h[++idx] = '"><img src="img/rightarrow.png" height="16" width="16"></button>';
 				h[++idx] = '</td>';
+				h[++idx] = '<td class="review_update_other">';
+				h[++idx] = '<input type="text" data-orig="';
+				h[++idx] = data[i].targetQuestion;
+				h[++idx] = '" data-idx="';
+				h[++idx] = i;
+				h[++idx] = '" value="';
+				h[++idx] = data[i].targetQuestion;
+				h[++idx] = '">';
+				h[++idx] = '</td>';
 				h[++idx] = "<tr>";	
 			}
 			
-			$elem.append(h.join(''));
+			// Add row for other text update button
+			h[++idx] = '<tr><td></td><td></td><td></td>';
+			h[++idx] = '<td class="review_update_other">';
+			h[++idx] = '<button id="target_update_btn" type="button">Update</button>';
+			h[++idx] = '</td>';
+			h[++idx] = '</tr>;'
+				
+			
+			$elem.html(h.join(''));
 			$('.review_update').button().click(function(e) {
 				gTextIdx = $(this).val();
 				textUpdate();
 			});
+			
+			$('#target_update_btn').button().click(function(e) {
+				saveTargetResults();
+			});
+			
+			if($('#other_target_cb').is(':checked')) {
+				$('#target_question_name_cont, .review_update_other').show();
+			} else {
+				$('#target_question_name_cont, .review_update_other').hide();
+			}
+			
 
 		},
 		error: function(xhr, textStatus, err) {
@@ -414,6 +481,99 @@ function textUpdate() {
 	
 	$('#text_update_popup').dialog("open");
 }
+
+
+/*
+ * Save any changes to the "other" question
+ */
+function saveTargetResults() {
+	
+	var updateString,
+		newValue,
+		oldValue,
+		newUpdates = [],
+		idx;
+	
+		
+
+		// for each item where value has changed
+	$('.review_update_other input').each(function(index){
+		var $this = $(this);
+		
+		if($this.data("orig") != $this.val()) {
+			gUpdate.reviewItems = [];
+			
+			console.log("val: " + $this.val() + " has changed");
+			
+			newValue = $this.val();
+			oldValue = $this.data("orig");
+			gTextIdx = $this.data("idx");
+			
+			// Filter on the main question
+			gUpdate.qFilter = gTextId;
+			gUpdate.valueFilter = gTextValues[gTextIdx].text;
+			
+			// Filter on the target question
+			gUpdate.qFilterTarget = gTextOtherId;
+			gUpdate.targetValueFilter = oldValue;
+			
+			gCountRecords = parseInt(gTextValues[gTextIdx].count);
+			
+			// Set description of change
+			gUpdate.description = "Replace value (" + oldValue + ") in ";
+			gUpdate.description += gCountRecords;
+			gUpdate.description += " records with (" + newValue + ")";
+			
+			gUpdate.reason = "";
+			
+			gUpdate.reviewItems.push( {
+				q_id: gTextOtherId,
+				newValue: newValue
+			});
+
+			
+			updateString = JSON.stringify(gUpdate);
+		 	addHourglass();
+			$.ajax({
+				  type: "POST",
+				  contentType: "application/json",
+				  dataType: "json",
+				  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
+				  data: { updates: updateString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  getData();
+					  
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  console.log("Error: Failed to save updates");
+				  }
+			});
+
+		}
+		
+	});
+	
+		
+	
+	
+}
+
+function targetHasChanged() {
+	changed = false;
+	
+	$('.review_update_other input').each(function(index){
+		var $this = $(this);
+		if($this.data("orig") != $this.val()) {
+			console.log("val: " + $this.val() + " has changed");
+			changed = true;
+		}
+		
+	});
+	
+	return changed;
+}
+
 
 });
 
