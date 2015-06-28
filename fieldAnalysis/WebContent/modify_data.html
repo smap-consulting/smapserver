@@ -68,6 +68,14 @@
 			Question:
 			<select id="text_name"></select>
 			</p>
+			<p>
+			Update a different question to the source question:
+			<input type="checkbox" name="other_target" id="other_target_cb">
+			<span id="target_question_name_cont" style="display:none;">
+				Question to update:
+				<select id="target_question_name"></select>
+			</span>
+			</p>
 			
 			<div id="review-container">		
 				<table class="tablesorter">
@@ -76,6 +84,7 @@
 						<th>Text</th>
 						<th>Count</th>
 						<th>Update</th>
+						<th class="review_update_other">Update target question</th>
 					</tr>	
 					</thead>
 					<tbody>

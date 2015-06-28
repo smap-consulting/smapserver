@@ -26,6 +26,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -116,6 +117,7 @@ public class Review extends Application {
 	private class Result {
 		String text;
 		String count;
+		String targetQuestion;
 	}
 	private ArrayList<Result> results = new ArrayList<Result> ();
 
@@ -137,17 +139,24 @@ public class Review extends Application {
 	@Produces("application/json")
 	public Response getDistinctTextResults(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,				// Survey Id
-			@PathParam("qId") int qId				// Question Id 
+			@PathParam("qId") int qId,				// Question Id 
+			@QueryParam("targetQuestion") int targetQId				// Target Question Id 
 			) { 
 	
 		Response response = null;
 		String table = null;
 		String name = null;
 		String qtype = null;
+		String targetName = null;
+		String targetType = null;
+		boolean hasTarget = false;
 		PreparedStatement  pstmt = null;
+		PreparedStatement  pstmtTarget = null;
 
 		Connection dConnection = null;
-				
+			
+		log.info("Other question id: " + targetQId);
+		
 		// Get the Postgres driver
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -173,15 +182,37 @@ public class Review extends Application {
 					" where f.f_id = q.f_id" +
 					" and q.q_id = ?";
 	
-			log.info(sql + " : " + qId);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setInt(1, qId);
+			log.info("Get question: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 
 			if(resultSet.next()) {
 				table = resultSet.getString(1);
 				name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 				qtype = resultSet.getString(3);
+				
+				// If data for antarget question is also required then ensure it is in the same table and get the question name
+				if(targetQId > 0) {
+					String sqlTarget = "select q.qname, qtype from form f, question q " +
+							" where f.f_id = q.f_id" +
+							" and f.table_name = ?" +
+							" and q.q_id = ?";
+					
+					pstmtTarget = connectionSD.prepareStatement(sqlTarget);	
+					pstmtTarget.setString(1, table);
+					pstmtTarget.setInt(2, targetQId);
+					log.info("Get question: " + pstmtTarget.toString());
+					ResultSet rsTarget = pstmtTarget.executeQuery();
+					if(rsTarget.next()) {
+						targetName = rsTarget.getString(1);
+						targetType = rsTarget.getString(2);
+						hasTarget = true;
+					}
+					log.info("Target name: " + targetName);
+					
+				}
+				
 				
 				if(!qtype.equals("string") && !qtype.equals("select1")) {
 					throw new ApplicationException("Unsupported question type: " + qtype);
@@ -194,19 +225,29 @@ public class Review extends Application {
 				/*
 				 * Get the data
 				 */
-				sql = "select distinct " + name + ",count(*) from " + table +		
+				String targetN = "";
+				if(hasTarget) {
+					targetN = "," + targetName;
+				}
+				sql = "select distinct " + name + targetN + ",count(*) from " + table +		
 						" where _bad = 'false' " +
 						" and " + name + " is not null " +
-						" group by " + name +
-						" order by " + name + ";";
-				pstmt = dConnection.prepareStatement(sql);	
+						" group by " + name + targetN +
+						" order by " + name + targetN +";";
+				pstmt = dConnection.prepareStatement(sql);
+				log.info("Getting data for review: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				
 				while(resultSet.next()) {
 					
 					Result r = new Result();
 					r.text = resultSet.getString(1);
-					r.count = resultSet.getString(2);
+					if(hasTarget) {
+						r.targetQuestion = resultSet.getString(2);
+						r.count = resultSet.getString(3);
+					} else {
+						r.count = resultSet.getString(2);
+					}
 					
 					results.add(r);
 				}
@@ -241,13 +282,8 @@ public class Review extends Application {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtTarget != null) {pstmtTarget.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
