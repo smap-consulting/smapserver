@@ -363,6 +363,29 @@ function enableUserProfile () {
 		        }, {
 		        	text: "Logout",
 		        	click: function() {
+		        		// Call logout function
+		        		jQuery.ajax({
+		        		    type: "GET",
+		        			cache: false,
+		        		    url: "/surveyKPI/logout",
+		        		    error: function(data, status) {
+		        				  window.location.href="/";
+		        			},
+		        			success: function(data,status) {
+		        				window.location.href="/";
+		        			}
+		        		});
+		        		
+		        		// For firefox need to do an invalid logon to logout
+		        		jQuery.ajax({
+		        		    type: "GET",
+		        			cache: false,
+		        		    url: "/fieldManager/templateManagement.html",
+		        		    username: "shkdhasfkhd",
+		        		    password: "sieinkdnfkdf"
+		        		});
+		        	
+		        		/*
 		        		jQuery.ajax({
 		        		    type: "GET",
 		        			cache: false,
@@ -376,8 +399,11 @@ function enableUserProfile () {
 		        				window.location.href="/";
 		        			}
 		        		});
+		        		*/
 		        		$(this).dialog("close");
+		        		
 		        	}
+		        	
 		        }
 			]
 		}
@@ -404,18 +430,27 @@ function enableUserProfileBS () {
 	 * User logout
 	 */
 	$('#userProfileLogout').click(function() {
+		
+		// Call logout function
 		jQuery.ajax({
 		    type: "GET",
 			cache: false,
 		    url: "/surveyKPI/logout",
-		    //username: "shkdhasfkhd",
-		    //password: "sieinkdnfkdf",
 		    error: function(data, status) {
 				  window.location.href="/";
 			},
 			success: function(data,status) {
 				window.location.href="/";
 			}
+		});
+		
+		// For firefox need to do an invalid logon to logout
+		jQuery.ajax({
+		    type: "GET",
+			cache: false,
+		    url: "/fieldManager/templateManagement.html",
+		    username: "shkdhasfkhd",
+		    password: "sieinkdnfkdf"
 		});
 	});
 	

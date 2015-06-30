@@ -76,7 +76,7 @@ public class Logout extends Application {
 			}
 		}
 		
-		// Throw an authorisation exception to close browser session
+		// Throw an authorisation exception to close browser session (chrome works with this at least)
 		throw new AuthorisationException();
 		
 

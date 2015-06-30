@@ -568,6 +568,7 @@ public class GeneralUtilityMethods {
 			 * Delete any keys for this user
 			 */
 			pstmtDeleteKeys = sd.prepareStatement(sqlDeleteKeys);
+			pstmtDeleteKeys.setString(1, userIdent);
 			pstmtDeleteKeys.executeUpdate();
 
 			
