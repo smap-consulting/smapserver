@@ -26,6 +26,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -91,15 +92,54 @@ public class WebForm extends Application{
 	class SurveyData {
 		String modelStr;
 		String instanceStrToEdit;
-		String dataToEditId;
+		String instanceStrToEditId;
 		int assignmentId;
 		String accessKey;
+		ArrayList<String> files; 
 	}
 	class JsonResponse {
 		SurveyData surveyData = new SurveyData();
 		String main; 
 	}
+	
 
+	// Respond with JSON
+		@GET
+		@Path("/key/instance/{ident}/{updateid}/{key}")
+		@Produces(MediaType.APPLICATION_JSON)
+		public Response getInstanceJson(@Context HttpServletRequest request,
+				@PathParam("ident") String formIdent,
+				@PathParam("updateid") String updateid,	// Unique id of instance data
+				@PathParam("key") String authorisationKey
+				) throws IOException {
+			
+			log.info("Requesting json instance");
+			
+			String user = null;		
+			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+			
+			try {
+				user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if (connectionSD != null) {
+						connectionSD.close();
+					}
+				} catch (SQLException e) {
+					log.log(Level.SEVERE, "Failed to close connection", e);
+				}
+			}
+			
+			if (user == null) {
+				log.info("User not found for key");
+				throw new JsonAuthorisationException();
+			}
+			
+			return getInstanceData(request, formIdent, updateid, user);
+		}
+		
 	// Respond with JSON
 	@GET
 	@Path("/key/{ident}/{key}")
@@ -203,7 +243,7 @@ public class WebForm extends Application{
     		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
-    		// Get the organisation id and an access key
+    		// Get the organisation id and an access key to upload the results of this form (used from iPhones which do not do authentication on POSTs)
     		try {
     			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
     			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
@@ -240,11 +280,11 @@ public class WebForm extends Application{
 			
 			// If required get the instance data 
 			String instanceXML = null;
-			String dataToEditId = null;
+			String instanceStrToEditId = null;
 			if(datakey != null && datakeyvalue != null) {
 				xForm = new GetXForm();
 				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0);
-				dataToEditId = xForm.getInstanceId();
+				instanceStrToEditId = xForm.getInstanceId();
 			}
 			
 			/*
@@ -299,7 +339,7 @@ public class WebForm extends Application{
     			if(instanceXML != null) {
     				jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
     			}
-    			jr.surveyData.dataToEditId = dataToEditId;
+    			jr.surveyData.instanceStrToEditId = instanceStrToEditId;
 
     			// Add the assignment id if this was set
     			if(assignmentId != 0) {
@@ -311,7 +351,7 @@ public class WebForm extends Application{
     				jr.surveyData.accessKey = accessKey;
     			}
     			
-    			jr.main = addMain(request, formXML, dataToEditId, orgId, true).toString();
+    			jr.main = addMain(request, formXML, instanceStrToEditId, orgId, true).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -322,7 +362,7 @@ public class WebForm extends Application{
 					outputString.append(")");
 				}
     		} else {
-    			outputString.append(addDocument(request, formXML, instanceXML, dataToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
+    			outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
     		}
     		
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
@@ -763,6 +803,140 @@ public class WebForm extends Application{
 		output.append("</div> <!-- end main -->\n");
 
 		return output;
+	}
+	
+	/*
+	 * Get the response as either HTML or JSON
+	 */
+	private Response getInstanceData(HttpServletRequest request, 
+			String formIdent, 
+			String updateid, 
+			String user) {
+		
+		Response response = null;
+		
+		log.info("webForm:" + formIdent + " updateid:" + updateid + " user: " + user);
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		}
+
+		Survey survey = null;
+		int orgId = 0;
+		String accessKey = null;
+		StringBuffer outputString = new StringBuffer();
+		
+		// Authorisation 
+		if(user != null) {
+			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-WebForm");
+            a.isAuthorised(connectionSD, user);
+    		SurveyManager sm = new SurveyManager();
+    		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key
+    		if(survey == null) {
+    			throw new NotFoundException();
+    		}
+    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+    		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
+    		
+    		// Get the organisation id 
+    		try {
+    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
+    		} catch (Exception e) {
+    			log.log(Level.SEVERE, "WebForm", e);
+    		} finally {
+    			try {
+	            	if (connectionSD != null) {
+	            		connectionSD.close();
+	            		connectionSD = null;
+	            	}
+	            } catch (SQLException e) {
+	            	log.log(Level.SEVERE, "Failed to close connection", e);
+	            }
+    		}
+        } else {
+        	throw new AuthorisationException();
+        }
+		// End Authorisation
+		
+		// Get the data
+		try {	    
+
+			// Get the XML of the Form
+			SurveyTemplate template = new SurveyTemplate();
+			template.readDatabase(survey.id);
+			
+			//template.printModel();	// debug
+			GetXForm xForm = new GetXForm();
+			//String formXML = xForm.get(template);		
+			
+			// If required get the instance data 
+			String instanceXML = null;
+			String dataKey = "instanceid";
+			
+			System.out.println("Getting instance data");
+			xForm = new GetXForm();
+			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0);
+			
+			SurveyData sd = new SurveyData();
+    		sd.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
+    		sd.instanceStrToEditId = updateid;
+    		
+			/*
+			 * Get the media manifest so we can set the url's of media files used the form
+			 */
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+				basePath = "/ebs1/servers/" + request.getServerName();
+			}
+			TranslationManager translationMgr = new TranslationManager();	
+			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+			List<ManifestValue> manifestList = null;
+			try {
+				manifestList = translationMgr.getManifestBySurvey(
+						connectionSD, 
+						request.getRemoteUser(), 
+						survey.id, 
+						basePath, 
+						formIdent);
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+			} finally {
+				try {
+	            	if (connectionSD != null) {
+	            		connectionSD.close();
+	            		connectionSD = null;
+	            	}
+	            } catch (SQLException e) {
+	            	log.log(Level.SEVERE, "Failed to close connection", e);
+	            }
+			}
+    		
+    		for(int i = 0; i < manifestList.size(); i++) {
+    			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
+    			String type = manifestList.get(i).type;
+    			String name = manifestList.get(i).fileName;
+    			sd.files.add(name);
+    		}		
+    		
+    		Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
+			outputString.append(gsonResp.toJson(sd));
+				
+    		
+			response = Response.status(Status.OK).entity(outputString.toString()).build();
+    		
+			log.info("userevent: " + user + " : instanceData : " + formIdent + " : updateId : " + updateid);	
+			
+
+		} catch (Exception e) {
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			log.log(Level.SEVERE, e.getMessage(), e);
+		} 
+				
+		return response;
 	}
 
 }

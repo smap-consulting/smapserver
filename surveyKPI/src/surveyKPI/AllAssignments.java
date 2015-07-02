@@ -761,7 +761,8 @@ public class AllAssignments extends Application {
 						pstmtInsert.setString(6, "POINT");
 						pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
 						pstmtInsert.setString(8, null);			// Initial data url
-						pstmtInsert.setString(9, null);		// Address TBD
+						pstmtInsert.setString(9, instanceId);
+						pstmtInsert.setString(10, null);		// Address TBD
 						
 						log.info("Insert task: " + pstmtInsert.toString()); 
 						int count = pstmtInsert.executeUpdate();

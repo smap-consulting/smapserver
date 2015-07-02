@@ -349,7 +349,7 @@ public class MyAssignments extends Application {
 			/*
 			 * Return the response
 			 */
-			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("dd/MM/yyyy hh:mm").create();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd hh:mm").create();
 			String resp = gson.toJson(tr);
 			response = Response.ok(resp).build();
 				

@@ -922,6 +922,7 @@ public class GetXForm {
 		/*
 		 * Replace the primary key with the primary key of the record that matches the passed in key and key value
 		 */
+		System.out.println("Key: " + key + " : " + keyval);
 		if(key != null && keyval != null) { 
 			if(key.equals("prikey")) {
 				priKey = Integer.parseInt(keyval);
@@ -930,6 +931,7 @@ public class GetXForm {
 				}
 			} else {
 				priKey = getPrimaryKey(connection, firstForm, key, keyval);
+				System.out.println("Primary key: " + priKey);
 			}
 		} else {
 			if(!priKeyValid(connection, firstForm, priKey)) {
