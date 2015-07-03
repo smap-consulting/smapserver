@@ -50,7 +50,7 @@ define([
 			h[++idx] = addNewQuestionButton(); 
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
-					h[++idx] = addQType(question.type, question.calculation);
+					h[++idx] = addQType(question.type);
 				h[++idx] = '</td>';
 				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 					h[++idx] = question.name;
@@ -123,7 +123,7 @@ define([
 		return h.join('');
 	}
 	
-	function addQType(type, calculation) {
+	function addQType(type) {
 		
 		var i,
 			types = globals.model.qTypes,

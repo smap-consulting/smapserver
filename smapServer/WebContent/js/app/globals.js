@@ -267,110 +267,146 @@ define(function() {
 				name: "Text",
 				type: "string",
 				glyphicon: "font",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Select One",
 				type: "select1",
 				image: "/images/select1_64.png",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Select Multiple",
 				type: "select",
 				image: "/images/select_64.png",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Form",
 				type: "begin repeat",
 				glyphicon: "repeat",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Group",
 				type: "begin repeat",
 				glyphicon: "folder-open",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Image",
 				type: "image",
 				glyphicon: "camera",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Audio",
 				type: "audio",
 				glyphicon: "volume-up",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Video",
 				type: "video",
 				glyphicon: "facetime-video",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "GPS Point",
 				type: "geopoint",
 				glyphicon: "map-marker",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Date",
 				type: "date",
 				glyphicon: "calendar",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Date and Time",
 				type: "dateTime",
 				glyphicon: "calendar",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Time",
 				type: "time",
 				glyphicon: "time",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Barcode",
 				type: "barcode",
 				glyphicon: "barcode",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Integer",
 				type: "int",
 				text: "#",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "Decimal",
 				type: "decimal",
 				text: "#.#",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "GPS Line",
 				type: "geolinestring",
 				image: "/images/linestring_64.png",
-				canSelect: true
+				canSelect: true,
+				visible: true,
+				source: "user"
 			},
 			{
 				name: "GPS Area",
 				type: "geopolygon",
 				image: "/images/polygon_64.png",
-				canSelect: true
+				canSelect: true,
+				visible:true,
+				source: "user"
 			},
 			{
 				name: "Calculation",
 				type: "string",
 				calculation: true,
 				image: "/images/calc_64.png",
-				canSelect: true
+				canSelect: true,
+				visible:true,
+				source: "user"
 			},
 			{
 				name: "Unknown Type",

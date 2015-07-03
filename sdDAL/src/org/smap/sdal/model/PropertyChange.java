@@ -24,4 +24,9 @@ public class PropertyChange {
 	public String oldVal;			// Old value - used for optimistic locking during interactive editing
 	public String key;				// For Translation the "text_id" 
 									// For option updates the option "value"
+	
+	// Type specific supplementary changes required
+	public boolean setVisible;		// If true change the visibility and source parameter of the question
+	public boolean visibleValue;	// What to set the visibility to
+	public String sourceValue;		// Set the source 
 }

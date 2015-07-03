@@ -175,6 +175,9 @@ define([
 				item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
 				change.property.name = item.name;
 				change.property.qId = item.id;
+				if(change.changeType === "property") {
+					setTypeSpecificChanges(change.property.prop, change);
+				}
 			} else {
 				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
 				item_orig = survey.optionLists_orig[change.property.optionList].options[change.property.itemIndex];	
@@ -235,6 +238,25 @@ define([
 		}
 		setHasChanges(changes.length);
 		
+	}
+	
+	/*
+	 * Annotate a change item with changes that are dependent on the type of the property
+	 */
+	function setTypeSpecificChanges(type, change) {
+		var i;
+		if(type === "type") {
+			var typeList = globals.model.qTypes;
+			
+			for(i = 0; i < typeList.length; i++) {
+				if(change.property.newVal === typeList[i].type) {
+					change.property.setVisible = true;
+					change.property.visibleValue = typeList[i].visible;
+					change.property.sourceValue = typeList[i].source;
+					break;
+				}
+			}
+		}
 	}
 	
 	/*
@@ -478,6 +500,24 @@ define([
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.remove();
 				delete change.option.$deletedElement;
+			}
+		} else if(change.changeType === "property") {
+			// Apply any markup changes that result from a property change
+			if(change.property.prop === "type") {
+				
+				// 1. Get the changed question row
+				$changedRow = $('#formList').find('td.question').filter(function(index){
+					var $this = $(this);
+					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+				});
+				$changedRow = $changedRow.closest('tr');
+				
+				// 1. Update the type icon for the question
+				newMarkup = markup.addQType(change.property.newVal);
+				if($changedRow) {
+					$changedRow.find('.q_type_col').html(newMarkup);
+				}
+				// 2. Apply other type specific DOM changes
 			}
 		}
 		

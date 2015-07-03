@@ -391,7 +391,7 @@ function setupQuestionTypeDialog() {
 			}
 			
 			h[++idx] = '<div class="col-md-3 col-xs-2">';	// Start col
-			h[++idx] = '<button type="button" class="btn btn-large question_type full_width_btn" value="';
+			h[++idx] = '<button type="button" class="btn btn-large question_type_sel full_width_btn" value="';
 			h[++idx] = types[i].type;
 			h[++idx] = '">';
 			if(types[i].glyphicon) {
@@ -418,13 +418,6 @@ function setupQuestionTypeDialog() {
 	h[++idx] = '</div>';	// End of a row
 	
 	$elem.html(h.join(''));
-	
-	$('.question_type', $elem).off().click(function(){
-		var type = $(this).val();
-		
-		updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
-		$('#typeModal').modal('hide');
-	});
 	
 }
 
@@ -583,7 +576,19 @@ function respondToEvents($context) {
 		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");
-		$('#typeModal').modal('show');
+		
+		$('.question_type_sel', '#typeModalButtonGrp').off().click(function(){
+			var type = $(this).val();
+			
+			updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
+			$('#typeModal').modal('hide');
+		});
+		
+		$('#typeModal').modal({
+				keyboard: true,
+				backdrop: 'static',
+				show: true
+			});
 
 	});
 	

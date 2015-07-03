@@ -1023,13 +1023,17 @@ public class SurveyManager {
 
 		PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
+		PreparedStatement pstmtDependent = null;
 		
 		try {
 		
 			for(ChangeItem ci : changeItemList) {
 				
-				// TODO Check that property exists first
 				String property = translateProperty(ci.property.prop);
+				
+				System.out.println("+++++++ Set visible: " + ci.property.setVisible + " : " + 
+						ci.property.visibleValue + " ====== Set source ==== " + 
+						ci.property.sourceValue);
 				
 				if(GeneralUtilityMethods.hasColumn(connectionSD, "question", property)) {
 			
@@ -1038,9 +1042,15 @@ public class SurveyManager {
 							"where q_id = ? and " + property + " = ?;";
 					pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
 					
+					// One for the case where the property has not been set before
 					String sqlProperty2 = "update question set " + property + " = ? " +
 							"where q_id = ? and " + property + " is null;";
 					pstmtProperty2 = connectionSD.prepareStatement(sqlProperty2);
+					
+					// Update for dependent properties
+					String sqlDependent = "update question set visible = ?, source = ? " +
+							"where q_id = ?;";
+					pstmtDependent = connectionSD.prepareStatement(sqlDependent);
 					
 					int count = 0;
 		
@@ -1055,6 +1065,14 @@ public class SurveyManager {
 						pstmtProperty2.setInt(2, ci.property.qId);
 						log.info("Update question property: " + pstmtProperty2.toString());
 						count = pstmtProperty2.executeUpdate();
+					}
+					
+					if(ci.property.setVisible) {
+						pstmtDependent.setBoolean(1, ci.property.visibleValue);
+						pstmtDependent.setString(2, ci.property.sourceValue);
+						pstmtDependent.setInt(3, ci.property.qId);
+						log.info("Update dependent properties: " + pstmtDependent.toString());
+						pstmtDependent.executeUpdate();
 					}
 					
 					if(count == 0) {
@@ -1089,6 +1107,7 @@ public class SurveyManager {
 		} finally {
 			try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
+			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
 		
 		}
 	
