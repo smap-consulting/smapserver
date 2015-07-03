@@ -367,7 +367,15 @@ define([
 					if(property.prop === "label") {
 						survey.forms[property.formIndex].questions[property.itemIndex].labels[property.language][property.propType] = property.newVal;
 					} else {
-						survey.forms[property.formIndex].questions[property.itemIndex][property.prop] = property.newVal;		//XXX
+						survey.forms[property.formIndex].questions[property.itemIndex][property.prop] = property.newVal;		//Other properties
+						
+						// Set type dependent properties
+						if(property.setVisible) {
+							change.property.setVisible = true;
+							survey.forms[property.formIndex].questions[property.itemIndex]["visible"] = property.visibleValue;
+							survey.forms[property.formIndex].questions[property.itemIndex]["source"] = property.sourceValue;
+						}
+						
 					}
 				} else {
 					// For non text changes update all languages
@@ -510,12 +518,17 @@ define([
 					var $this = $(this);
 					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 				});
-				$changedRow = $changedRow.closest('tr');
 				
-				// 1. Update the type icon for the question
-				newMarkup = markup.addQType(change.property.newVal);
+				
+				// 1. Update the question
+				//newMarkup = markup.addQType(change.property.newVal);
+				newMarkup = markup.addOneQuestion(
+						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
+						change.property.formIndex, 
+						change.property.itemIndex);
+				$changedRow = $changedRow.closest('li');
 				if($changedRow) {
-					$changedRow.find('.q_type_col').html(newMarkup);
+					$changedRow.replaceWith(newMarkup);
 				}
 				// 2. Apply other type specific DOM changes
 			}
