@@ -257,8 +257,9 @@ public class UtilityMethodsEmail {
 		
 		/*
 		 * Get the table name and column name containing the text data
+		 * Do a case insensitive check
 		 */
-		String sql = "select ident from users where email = ?";
+		String sql = "select ident from users where email ilike ?";
 
 		pstmt = connectionSD.prepareStatement(sql);	
 		pstmt.setString(1, email);
@@ -332,7 +333,7 @@ public class UtilityMethodsEmail {
 		String sqlEmail = "select o.smtp_host, o.email_domain, o.email_user, o.email_password, o.email_port " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
-				" and u.email = ?;";
+				" and u.email ilike ?;";
 		
 		String sqlServer = "select smtp_host, email_domain, email_user, email_password, email_port " +
 				" from server ";
@@ -471,11 +472,12 @@ public class UtilityMethodsEmail {
 		
 		/*
 		 * Update the users table by adding the UUID and expiry time
+		 * Do a case insensitive test against email
 		 */
 		String sql = "update users set" +
 				" one_time_password = ?," +
 				" one_time_password_expiry = timestamp 'now' + interval '" + interval + "' " +		
-				" where email = ?";
+				" where email ilike ?";
 
 		log.info(sql + " : " + uuid + " : "  + email);
 		pstmt = connectionSD.prepareStatement(sql);	

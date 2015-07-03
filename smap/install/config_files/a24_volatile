@@ -182,6 +182,11 @@
         Require all granted
     </Location>
 
+	# Request password reset
+	<Location /surveyKPI/onetimelogon>
+		Require all granted
+	</Location>
+	
 	<Location /surveyKPI/reports/oembed.json>
 		Require all granted
 	</Location>
