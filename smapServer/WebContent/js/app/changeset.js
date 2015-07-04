@@ -371,7 +371,6 @@ define([
 						
 						// Set type dependent properties
 						if(property.setVisible) {
-							change.property.setVisible = true;
 							survey.forms[property.formIndex].questions[property.itemIndex]["visible"] = property.visibleValue;
 							survey.forms[property.formIndex].questions[property.itemIndex]["source"] = property.sourceValue;
 						}
