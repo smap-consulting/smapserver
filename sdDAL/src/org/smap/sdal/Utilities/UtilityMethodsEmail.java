@@ -715,6 +715,68 @@ public class UtilityMethodsEmail {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 		}
 	}
+	
+	/*
+	 * Set labels for an option or question
+	 */
+	public static void setLabels(Connection sd,
+			int sId, 
+			String path, 
+			ArrayList<Label> labels,
+			String basePath) throws SQLException {
+		
+		ArrayList<String> languages = new ArrayList<String>();
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			/*
+			 * Get the languages
+			 */
+			languages = GeneralUtilityMethods.getLanguagesForSurvey(sd, sId);
+			log.info("Adding labels for: " + languages.toString());
+			
+			//String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
+			String sql = "insert into translation (s_id, language, text_id, type, value) " +
+					"values (?, ?, ?, ?, ?)";
+			
+			pstmt = sd.prepareStatement(sql);
+			
+			for(int i = 0; i < languages.size(); i++) {
+	
+				Label l = labels.get(i);
+				
+				// Set common values
+				pstmt.setInt(1, sId);
+				pstmt.setString(2, languages.get(i));
+				
+				
+				// Update text
+				pstmt.setString(3, path + ":label");
+				pstmt.setString(4, "none");
+				pstmt.setString(5, l.text);
+				log.info("Update text label: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				// Update hint
+				pstmt.setString(3, path + ":hint");
+				pstmt.setString(4, "none");
+				pstmt.setString(5, l.hint);
+				log.info("Update hint label: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				// TODO media types
+				
+	
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
+		}
+	}
 		
 	/*
 	 * Get the partial (URL) of the file and its file path or null if the file does not exist

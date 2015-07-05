@@ -176,7 +176,7 @@ define([
 				change.property.name = item.name;
 				change.property.qId = item.id;
 				if(change.changeType === "property") {
-					setTypeSpecificChanges(change.property.prop, change);
+					setTypeSpecificChanges(change.property.prop, change, survey);
 				}
 			} else {
 				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
@@ -185,7 +185,9 @@ define([
 			}
 			
 			if(change.changeType === "label") {
-				change.property.oldVal = item_orig.labels[change.property.language][change.property.propType]; 
+				if(item_orig) {
+					change.property.oldVal = item_orig.labels[change.property.language][change.property.propType]; 
+				}
 				
 				// Add a reference for the label
 				form = survey.forms[change.property.formIndex];
@@ -208,10 +210,10 @@ define([
 			change.property.languageName = survey.languages[change.property.language];			// For logging the event
 		
 		} else if(change.changeType === "question") {
+			form = survey.forms[change.question.formIndex];
+			change.question.fId = form.id;
 			if(change.action === "delete") {
 				item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
-				form = survey.forms[change.question.formIndex];
-				change.question.fId = form.id;
 				change.question.qId = item.id;
 			}
 		} else if(change.changeType === "option") {
@@ -243,7 +245,7 @@ define([
 	/*
 	 * Annotate a change item with changes that are dependent on the type of the property
 	 */
-	function setTypeSpecificChanges(type, change) {
+	function setTypeSpecificChanges(type, change, survey) {
 		var i;
 		if(type === "type") {
 			var typeList = globals.model.qTypes;
@@ -256,6 +258,9 @@ define([
 					break;
 				}
 			}
+		} else if(type === "name") {
+			var form = survey.forms[change.property.formIndex];
+			change.property.path = "/" + form.name + "/" + change.property.newVal;				
 		}
 	}
 	
@@ -305,8 +310,8 @@ define([
 									newElement.optionList === element.optionList) ) {
 						
 						// This property change already exists - remove the old one
-						changes.splice(j,1);	// Remove this item
-						return true;			// Apply the new one				
+						changes.splice(j,1);	// Remove this item and apply the new one
+						return true;							
 						
 					}
 				}
@@ -316,6 +321,9 @@ define([
 						newElement.formIndex === element.formIndex) {
 					
 					item.question[newElement.prop] = newElement.newVal;
+					if(newElement.prop === "name") {
+						item.question["path"] = newElement.path;
+					}
 					return false;
 					
 				}
@@ -528,8 +536,15 @@ define([
 				$changedRow = $changedRow.closest('li');
 				if($changedRow) {
 					$changedRow.replaceWith(newMarkup);
+					
+					// Since we replaced the row we had better get the replaced row so that actions can be reapplied
+					$changedRow = $('#formList').find('td.question').filter(function(index){
+						var $this = $(this);
+						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+					});
+					$changedRow = $changedRow.closest('li');
 				}
-				// 2. Apply other type specific DOM changes
+	
 			}
 		}
 		

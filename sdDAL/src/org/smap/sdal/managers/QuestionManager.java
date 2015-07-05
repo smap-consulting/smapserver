@@ -146,14 +146,15 @@ public class QuestionManager {
 	/*
 	 * Save to the database
 	 */
-	public void save(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
+	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
 		PreparedStatement pstmt = null;
-		String sql = "insert into question (q_id, f_id, seq, qname, qtype, qtext_id, list_name, infotext_id, "
+		String sql = "insert into question (q_id, f_id, seq, qname, qtype, qtext_id, "
+				+ "list_name, infotext_id, "
 				+ "source, calculate, "
 				+ "defaultanswer, "
-				+ "appearance) " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?);";
+				+ "appearance, visible, path) " 
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?);";
 
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -176,16 +177,20 @@ public class QuestionManager {
 				pstmt.setInt(2, q.seq );
 				pstmt.setString(3, q.name );
 				pstmt.setString(4, q.type );
-				pstmt.setString(5, q.text_id );
+				pstmt.setString(5, q.path + ":label" );
 				pstmt.setString(6, q.list_name );
-				pstmt.setString(7, q.hint_id );
+				pstmt.setString(7, q.path + ":hint" );
 				pstmt.setString(8, q.source );
 				pstmt.setString(9, q.calculation );
 				pstmt.setString(10, q.defaultanswer );
 				pstmt.setString(11, q.appearance);
+				pstmt.setBoolean(12, q.visible);
+				pstmt.setString(13, q.path);
 				
 				log.info("Insert question: " + pstmt.toString());
 				pstmt.executeUpdate();
+				
+				UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
 			}
 			
 			
@@ -200,12 +205,12 @@ public class QuestionManager {
 	}
 	
 	/*
-	 * Save to the database
+	 * Delete
 	 */
 	public void delete(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
 		
 		PreparedStatement pstmt = null;
-		String sql = "delete from question q where q_id = ? and q.q_id in " +
+		String sql = "delete from question q where qname = ? and q.q_id in " +
 				" (select q_id from question q, form f where q.q_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
 
 		PreparedStatement pstmtUpdateSeq = null;
@@ -219,7 +224,7 @@ public class QuestionManager {
 			for(Question q : questions) {
 				
 				// Delete the question
-				pstmt.setInt(1, q.id );
+				pstmt.setString(1, q.name );
 				pstmt.setInt(2, sId );
 				
 				log.info("Delete question: " + pstmt.toString());

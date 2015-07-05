@@ -17,18 +17,19 @@ public class Question {
 	public String type;
 	public String text_id;
 	public String hint_id;
+	public String path;
 	public String list_name;		// A reference to the list of options
 	public int seq;
 	public String defaultanswer;
 	public String appearance;
 	public String source;
 	public String calculation;
+	public boolean visible;
 	public boolean inMeta;			// Set true if the question is in the meta group
 	int width = -1;						// Display width, generated from appearance column 
 									//  (for the moment - should probably have its own database 
-									//  entry but I want to maintain compatability with xlsform)
+									//  entry but I want to maintain compatibility with xlsform)
 	public ArrayList<Label> labels = new ArrayList<Label> ();
-	//public ArrayList<Label> labels_orig = new ArrayList<Label> ();
 	
 	private static Logger log =
 			 Logger.getLogger(Question.class.getName());

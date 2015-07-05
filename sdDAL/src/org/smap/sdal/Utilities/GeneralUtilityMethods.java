@@ -738,7 +738,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get languages for a survey
 	 */
-	public static ArrayList<String> getLanguagesForSurvey(Connection connectionSD, int sId) throws Exception {
+	public static ArrayList<String> getLanguagesForSurvey(Connection connectionSD, int sId) throws SQLException {
 		
 		PreparedStatement pstmtLanguages = null;
 		
@@ -752,7 +752,7 @@ public class GeneralUtilityMethods {
 			while(rs.next()) {
 				languages.add(rs.getString(1));
 			}
-		} catch(Exception e) {
+		} catch(SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {

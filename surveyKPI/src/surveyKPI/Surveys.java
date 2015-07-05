@@ -268,9 +268,8 @@ public class Surveys extends Application {
 		for(ChangeSet cs : changes) {
 			for (ChangeItem ci : cs.items) {
 				// Option changes are not checked as they are explicitly applied to all option lists in the provided survey
-				if(ci.question != null && !cs.action.equals("add")) {
-					a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.question.id);
-				} else if(ci.property != null) {
+				// Delete questions are auto validated in the delete sql statement
+				if(ci.property != null) {
 					a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
 				}
 			}
