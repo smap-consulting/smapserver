@@ -28,7 +28,7 @@ define({
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
-	"ss_welcome2": "A description of changes in this release can be found here:",
+	"ss_welcome2": "Changes in this release",
 	"ss_ft": "Get Field Task",
 	"ss_su": "Get Smap Uploader",
 	

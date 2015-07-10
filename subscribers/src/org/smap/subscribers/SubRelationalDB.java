@@ -516,7 +516,7 @@ public class SubRelationalDB extends Subscriber {
 				boolean hasVersion = hasVersion(cRel, tableName);
 				sql = "INSERT INTO " + tableName + " (parkey";
 				if(parent_key == 0) {
-					sql += ",_user, _modified";	// Add remote user, _modified automatically (top level table only)
+					sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
 					if(hasVersion) {
 						sql += ",_version";
 					}

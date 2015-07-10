@@ -57,6 +57,7 @@ public class GetXForm {
 	private Form firstForm;
 	SurveyTemplate template = null;
 	private String gInstanceId = null;
+	private ArrayList<String> gFilenames;
 
 	private static Logger log =
 			 Logger.getLogger(GetXForm.class.getName());
@@ -909,6 +910,9 @@ public class GetXForm {
 		
        	Writer outWriter = new StringWriter();
        	Result outStream = new StreamResult(outWriter);
+       	
+       	gFilenames = new ArrayList<String> ();
+    	gInstanceId = null;
 
        	// Get template details
 		String firstFormRef = template.getFirstFormRef();
@@ -971,6 +975,10 @@ public class GetXForm {
      */
     public String getInstanceId() {
     	return gInstanceId;
+    }
+    
+    public ArrayList<String> getFilenames() {
+    	return gFilenames;
     }
     
     
@@ -1108,20 +1116,20 @@ public class GetXForm {
 				Form subForm = template.getSubForm(form, q);
     			
     			if(subForm != null) {	
-            		record.add(new Results(qName, subForm, null, false, false));
+            		record.add(new Results(qName, subForm, null, false, false, false, null));
     			}
     			
     		} else if(qType.equals("begin group")) { 
     			
-    			record.add(new Results(qName, null, null, true, false));
+    			record.add(new Results(qName, null, null, true, false,false, null));
     			
     		} else if(qType.equals("end group")) { 
     			
-    			record.add(new Results(qName, null, null, false, true));
+    			record.add(new Results(qName, null, null, false, true,false, null));
     			
     		} else {
 
-        		record.add(new Results(qName, null, value, false, false));
+        		record.add(new Results(qName, null, value, false, false,false, null));
 			}
 		}
     	
@@ -1222,6 +1230,8 @@ public class GetXForm {
     					item.value = priKey.value;
     				} else if(item.name != null && item.name.toLowerCase().equals("instanceid")) {
     					gInstanceId = item.value;
+    				}  else if(item.media && item.filename != null) {
+    					gFilenames.add(item.filename);
     				}
     				
     				// Create the question element
@@ -1300,7 +1310,7 @@ public class GetXForm {
     		List<Results> record = new ArrayList<Results> ();
     		
     		String priKey = resultSet.getString(1);
-    		record.add(new Results("prikey", null, priKey, false, false));
+    		record.add(new Results("prikey", null, priKey, false, false, false, null));
     		
     		/*
     		 * Add data for the remaining questions
@@ -1318,16 +1328,16 @@ public class GetXForm {
 	    			Form subForm = template.getSubForm(form, q);
 	    			
 	    			if(subForm != null) {	
-	            		record.add(new Results(qName, subForm, null, false, false));
+	            		record.add(new Results(qName, subForm, null, false, false, false, null));
 	    			}
 	    			
 	    		} else if(qType.equals("begin group")) { 
 	    			
-	    			record.add(new Results(qName, null, null, true, false));
+	    			record.add(new Results(qName, null, null, true, false, false, null));
 	    			
 	    		} else if(qType.equals("end group")) { 
 	    			
-	    			record.add(new Results(qName, null, null, false, true));
+	    			record.add(new Results(qName, null, null, false, true, false, null));
 	    			
 	    		} else if(qType.equals("select")) {		// Get the data from all the option columns
 	    				
@@ -1365,12 +1375,25 @@ public class GetXForm {
 			    		}
 					}
 			    	
-	        		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false));
+	        		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
 				
-    			} else if(qSource != null) {
+	    		} else if(qType.equals("image") || qType.equals("audio") || qType.equals("video") ) {		// Get the file name
+	    			
+	    			String value = resultSet.getString(index);
+	    			String filename = null;
+	    			if(value != null) {
+	    				int idx = value.lastIndexOf('/');
+	    				if(idx > -1) {
+	    					filename = value.substring(idx + 1);
+	    				}
+	    				gFilenames.add(filename);
+	    			}
+	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
+	    			index++;
+	    			
+	    		} else if(qSource != null) {
   
     				String value = resultSet.getString(index);
-    				log.info("     value: " + value);
  				
     				if(value != null && qType.equals("geopoint")) {
     					int idx1 = value.indexOf('(');
@@ -1393,7 +1416,7 @@ public class GetXForm {
     					value="";
     				}
 
-            		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false));
+            		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
 
 	    			index++;
     			}

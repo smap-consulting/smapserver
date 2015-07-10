@@ -20,7 +20,7 @@ define(
     "m_section": "Section",
     "m_notify": "Notifications",
     "ss_welcome": "Bienvenu dans Smap Server Version:",
-    "ss_welcome2": "La description des changements inclus dans cette version peut être trouvé ici:",
+    "ss_welcome2": "La description des changements inclus dans cette version peut être trouvé ici",
     "ss_ft": "Obtenir Field Task",
     "ss_su": "Obtenir Smap Uploader",
     "c_project": "Sélectionné un Projet",

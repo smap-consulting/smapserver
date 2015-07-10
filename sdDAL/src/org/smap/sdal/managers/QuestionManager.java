@@ -190,7 +190,9 @@ public class QuestionManager {
 				log.info("Insert question: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
+				// Set the labels
 				UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
+				
 			}
 			
 			

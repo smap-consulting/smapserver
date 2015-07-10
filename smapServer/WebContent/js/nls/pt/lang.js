@@ -17,7 +17,7 @@ define(
     "m_help": "Ajuda",
     "m_forgot_password": "Recuperar Palavra-Chave",
     "ss_welcome": "Bem Vindo ao Servidor SMAP Versão:",
-    "ss_welcome2": "A descrição das alterações nesta versão podem ser encontradas aqui:",
+    "ss_welcome2": "A descrição das alterações nesta versão podem ser encontradas aqui",
     "ss_ft": "Descarregar Field Task",
     "ss_su": "Descarregar Smap Uploader",
     "c_project": "Selecione Projeto",

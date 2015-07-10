@@ -806,7 +806,7 @@ public class WebForm extends Application{
 	}
 	
 	/*
-	 * Get the response as either HTML or JSON
+	 * Get instance data as JSON
 	 */
 	private Response getInstanceData(HttpServletRequest request, 
 			String formIdent, 
@@ -824,8 +824,6 @@ public class WebForm extends Application{
 		}
 
 		Survey survey = null;
-		int orgId = 0;
-		String accessKey = null;
 		StringBuffer outputString = new StringBuffer();
 		
 		// Authorisation 
@@ -840,21 +838,6 @@ public class WebForm extends Application{
     		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
-    		// Get the organisation id 
-    		try {
-    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
-    		} catch (Exception e) {
-    			log.log(Level.SEVERE, "WebForm", e);
-    		} finally {
-    			try {
-	            	if (connectionSD != null) {
-	            		connectionSD.close();
-	            		connectionSD = null;
-	            	}
-	            } catch (SQLException e) {
-	            	log.log(Level.SEVERE, "Failed to close connection", e);
-	            }
-    		}
         } else {
         	throw new AuthorisationException();
         }
@@ -882,45 +865,7 @@ public class WebForm extends Application{
 			SurveyData sd = new SurveyData();
     		sd.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
     		sd.instanceStrToEditId = updateid;
-    		
-			/*
-			 * Get the media manifest so we can set the url's of media files used the form
-			 */
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			if(basePath == null) {
-				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-				basePath = "/ebs1/servers/" + request.getServerName();
-			}
-			TranslationManager translationMgr = new TranslationManager();	
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
-			List<ManifestValue> manifestList = null;
-			try {
-				manifestList = translationMgr.getManifestBySurvey(
-						connectionSD, 
-						request.getRemoteUser(), 
-						survey.id, 
-						basePath, 
-						formIdent);
-			} catch (Exception e) {
-				log.log(Level.SEVERE, e.getMessage(), e);
-			} finally {
-				try {
-	            	if (connectionSD != null) {
-	            		connectionSD.close();
-	            		connectionSD = null;
-	            	}
-	            } catch (SQLException e) {
-	            	log.log(Level.SEVERE, "Failed to close connection", e);
-	            }
-			}
-    		
-    		for(int i = 0; i < manifestList.size(); i++) {
-    			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
-    			String type = manifestList.get(i).type;
-    			String name = manifestList.get(i).fileName;
-    			sd.files.add(name);
-    		}		
+    		sd.files = xForm.getFilenames();	
     		
     		Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
 			outputString.append(gsonResp.toJson(sd));
