@@ -281,7 +281,7 @@ drop index formid_sequence ;
 alter table question alter column qname set not null;
 alter table question alter column visible set default 'true';
 alter table question alter column mandatory set default 'false';
-alter table question alter column readOnly set default 'false';
+alter table question alter column readonly set default 'false';
 alter table question alter column enabled set default 'true';
 
 -- Starting to add the column_name explicitely to question

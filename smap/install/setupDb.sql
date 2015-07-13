@@ -334,7 +334,7 @@ CREATE TABLE question (
 	visible BOOLEAN default true,
 	source text,
 	source_param text,
-	readOnly BOOLEAN default false,
+	readonly BOOLEAN default false,
 	mandatory BOOLEAN default false,
 	relevant text,
 	calculate text,

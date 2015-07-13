@@ -93,10 +93,14 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton() {
+	function addNewQuestionButton(after) {
 		var h = [],
 			idx = -1;
-		h[++idx] = '<button type="button" class="add_question btn btn-success add_button" data-locn="before" data-index="';
+		h[++idx] = '<button type="button" class="add_question btn btn-success ';
+		h[++idx] = after ? 'add_button_after' : 'add_button';
+		h[++idx] = '" data-locn="';
+		h[++idx] = after ? 'after" ' : 'before" ';
+		h[++idx] = '" data-index="';
 		h[++idx] = globals.gElementIndex;
 		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
 		
@@ -378,6 +382,7 @@ define([
 				}
 				h[++idx] = addOneQuestion(question, fId, form.qSeq[i]);
 			}
+			h[++idx] = addNewQuestionButton(true); 
 		}
 		return h.join("");
 	}
