@@ -512,7 +512,9 @@ function setSurveyViewControl(view) {
 	$display_panel.empty().append('<option value="-1">This Chart</option>');
 	for (var i = 0; i < views.length; i++) {
 		if(views[i].pId != view.pId && views[i].type == "map" && views[i].layerId < 1) {
-			$display_panel.append('<option value="' + views[i].id + '">' + views[i].title + '</option>');
+			if(views[i].state !== "deleted") {
+				$display_panel.append('<option value="' + views[i].id + '">' + views[i].title + '</option>');
+			}
 		}
 	}
 	if(view.type == "map") {

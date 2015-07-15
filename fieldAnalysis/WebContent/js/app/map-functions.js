@@ -224,7 +224,8 @@ function setFeatureValue(data, pId1, pId2, view, title, map) {
 			}
 		}
 	}
-	pareto.sort(function(a,b) {return grandTotal[b] - grandTotal[a];});
+	// Disable pareto sorting - button order should not change as new data arrives
+	//pareto.sort(function(a,b) {return grandTotal[b] - grandTotal[a];});
 	
 	/*
 	 *  Option buttons are not required if no aggregating function has been applied to the data

@@ -161,11 +161,12 @@ function setMap(view, secondaryLayer) {
 	//if($btn.length) {
 	//	selectedButton=$btn.val();
 	//}
-
-	$dataButtons.empty();
+	
+	//$dataButtons.empty();
 	
 	// Add the layer(s) for the selected panel
 	if(!secondaryLayer) {
+		
 		if(view.results) {
 			for(i = 0; i < view.results.length; i++) {
 				addLayer(view.results[i], view.pId, view.pId, view, view.title + i + " " + view.pId, map);
@@ -201,13 +202,15 @@ function setMap(view, secondaryLayer) {
 
 
 /*
- * Add a button to access the settings of a seccondary layer
+ * Add a button to access the settings of a secondary layer
  */
 function addSettingsButton(title, pIdSecondary, pIdPrimary) {
-	var $settingsLayer = $('#mLayerSettings' + pIdPrimary);
+	var $settingsLayer = $('#mLayerSettings' + pIdPrimary),
+		$existingButton = $('button[value="' + pIdSecondary + '"]', $settingsLayer );
 	
-	$settingsLayer.append('<button class="layerSettings" value="' + pIdSecondary + '">' + title + '</button>');
-	
+	if($existingButton.length === 0) { 
+		$settingsLayer.append('<button class="layerSettings" value="' + pIdSecondary + '">' + title + '</button>');
+	}
 }
 
 
