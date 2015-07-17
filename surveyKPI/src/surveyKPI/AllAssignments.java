@@ -428,7 +428,7 @@ public class AllAssignments extends Application {
 							"?, " +
 							"?, " +
 							"?," +
-							"now());";
+							"now() + interval '7 days');";		// Schedule for 1 week (TODO allow user to set)
 				
 				String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
 				pstmtAssign = connectionSD.prepareStatement(assignSQL);

@@ -22,6 +22,8 @@ package org.smap.subscribers;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -729,6 +731,12 @@ public class SubRelationalDB extends Subscriber {
 		
 		String qType = col.getQType();
 		String value = col.getValue();	// Escape quotes and trim
+		try {
+			new PrintStream(System.out, true, "UTF-8").println("value: " + value);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		if(phoneOnly) {
 			if(qType.equals("string")) {
@@ -779,6 +787,14 @@ public class SubRelationalDB extends Subscriber {
 						 * leave its value unchanged
 						 */
 						String srcName = value;
+						
+						try {
+							new PrintStream(System.out, true, "UTF-8").println("Creating file: " + srcName);
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
 						File srcXmlFile = new File(gFilePath);
 						File srcXmlDirFile = srcXmlFile.getParentFile();
 						File srcPathFile = new File(srcXmlDirFile.getAbsolutePath() + "/" + srcName);
@@ -791,7 +807,12 @@ public class SubRelationalDB extends Subscriber {
 									surveyName) + "'";
 	
 						} else {
-							System.out.println("Source file does not exist: " + srcPathFile.getName());
+							try {
+								new PrintStream(System.out, true, "UTF-8").println("Source file does not exist: " + srcPathFile.getAbsolutePath());
+							} catch (UnsupportedEncodingException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 							value = "'" + value + "'";
 						}
 						

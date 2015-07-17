@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -27,6 +28,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.AuthorisationException;
@@ -118,6 +120,53 @@ public class MyAssignments extends Application {
 			throw new JsonAuthorisationException();
 		}
 		return getTasks(request, user);
+	}
+	
+	/*
+	 * Get assignments for user authenticated with a key
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/key/{key}")
+	public Response updateTasksKey(
+			@PathParam("key") String key,
+			@FormParam("assignInput") String assignInput,
+			@Context HttpServletRequest request) {
+		
+		String user = null;		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UpdateTasksKey");
+		
+		try {
+			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		if (user == null) {
+			log.info("User not found for key");
+			throw new JsonAuthorisationException();
+		}
+
+		return updateTasks(request, assignInput, user);
+	}
+	
+	/*
+	 * Update assignments for user authenticated with credentials
+	 */
+	@POST
+	@Produces("application/json")
+	public Response updateTasksCredentials(
+			@Context HttpServletRequest request, 
+			@FormParam("assignInput") String assignInput) {
+		return updateTasks(request, assignInput, request.getRemoteUser());
 	}
 	
 	/*
@@ -385,9 +434,9 @@ public class MyAssignments extends Application {
 	/*
 	 * Update the task assignment
 	 */
-	@POST
-	public Response setAssignment(@Context HttpServletRequest request, 
-			@FormParam("assignInput") String assignInput) { 
+	public Response updateTasks(@Context HttpServletRequest request, 
+			String assignInput,
+			String userName) { 
 
 		Response response = null;
 		try {
@@ -401,13 +450,11 @@ public class MyAssignments extends Application {
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
 		
 		// Authorisation nor required a user can only update their own assignments
-
-		String userName = request.getRemoteUser();
 		
 		log.info("Response:" + assignInput);
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
 			
-		log.info("Device:" + tr.deviceId + " for user " + request.getRemoteUser());
+		log.info("Device:" + tr.deviceId + " for user " + userName);
 		
 		// TODO that the status is valid (A different range of status values depending on the role of the user)
 		
