@@ -142,9 +142,6 @@ then
 
 	cd ../deploy
 
-# Patch the database
-java -jar version1/patch1505.jar apply survey_definitions results
-echo "1505" > ~/smap_version
 fi
 
 # version 15.05

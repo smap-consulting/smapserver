@@ -207,23 +207,39 @@ public class Upload extends Application {
 					.header(OPEN_ROSA_VERSION_HEADER, OPEN_ROSA_VERSION).build();
 					
 		} catch (SurveyBlockedException e) {
-			log.info(e.getMessage());
-			response = Response.status(Status.FORBIDDEN).entity(e.getMessage()).build();
+			log.info(getErrorMessage(key, e.getMessage()));
+			response = Response.status(Status.FORBIDDEN).entity(getErrorMessage(key, e.getMessage())).build();
 		} catch (AuthorisationException e) {
 			log.info(e.getMessage());
-			response = Response.status(Status.UNAUTHORIZED).entity(e.getMessage()).build();
+			response = Response.status(Status.UNAUTHORIZED).entity(getErrorMessage(key, e.getMessage())).build();
 		} catch (NotFoundException e) {
 			log.info(e.getMessage());
-			response = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+			response = Response.status(Status.NOT_FOUND).entity(getErrorMessage(key, e.getMessage())).build();
 		} catch (MissingTemplateException e) {
 			log.log(Level.SEVERE, "", e);
-			response = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+			response = Response.status(Status.NOT_FOUND).entity(getErrorMessage(key, e.getMessage())).build();
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "", e);
-			response = Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+			response = Response.status(Status.BAD_REQUEST).entity(getErrorMessage(key, e.getMessage())).build();
 		}
 
 		return response;
+	}
+	
+	/*
+	 * Format an error message
+	 * If the submission was called with a key value set then respond with JSON
+	 */
+	String getErrorMessage(String key, String error) {
+		String msg = error;
+		
+		if(key != null) {
+			msg = "{" +
+					"\"status\": \"error\"," +
+					"\"message\": \"" + error + "\"" +
+					"}";
+		}
+		return msg;
 	}
 	
 	/*

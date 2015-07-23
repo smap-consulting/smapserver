@@ -947,12 +947,14 @@ public class GetXForm {
 		boolean hasData = false;
 		if(priKey > 0) {
 			hasData = true;
-			populateForm(outputXML, firstForm, priKey, -1, connection, template, null, sId, templateName);    
+			populateForm(outputXML, firstForm, priKey, -1, connection, template, 
+					null, sId, templateName, false);    
 		} else if(key != null && keyval != null)  {
 			// Create a blank form containing only the key values
 			hasData = true;
 			log.info("Outputting blank form");
-			populateBlankForm(outputXML, firstForm, connection,  template, null, sId, key, keyval, templateName);
+			populateBlankForm(outputXML, firstForm, connection,  template, null, 
+					sId, key, keyval, templateName, false);
 		} 
 		
    		// Write the survey to a string and return it to the calling program
@@ -1087,7 +1089,9 @@ public class GetXForm {
 	}
 	
 	/*
-     * Create a blank form populated only by the key data
+     * Create a blank form 
+     *   a) populated only by the key data or
+     *   b) as a java rosa template
      * @param outputDoc
      */
     public void populateBlankForm(Document outputDoc, Form form, Connection connection, SurveyTemplate template,
@@ -1095,7 +1099,8 @@ public class GetXForm {
     		int sId,
     		String key,
     		String keyval,
-    		String survey_ident) throws SQLException {
+    		String survey_ident,
+    		boolean isTemplate) throws SQLException {
 	
  		List<Results> record = new ArrayList<Results> ();
  		
@@ -1143,7 +1148,8 @@ public class GetXForm {
     		item= record.get(j);   			
 
     		if(item.subForm != null) {
-				populateBlankForm(outputDoc, item.subForm, connection, template, currentParent, sId, key, keyval, survey_ident);				
+				populateBlankForm(outputDoc, item.subForm, connection, template, 
+						currentParent, sId, key, keyval, survey_ident, isTemplate);				
     		} else if (item.begin_group) { 
 
     			Element childElement = null;
@@ -1170,6 +1176,9 @@ public class GetXForm {
    		
 		// Append this new form to its parent (if the parent is null append to output doc)
 		if(parentElement != null) {
+			if(isTemplate) {
+				currentParent.setAttribute("jr:template", ""); 
+			}
 			parentElement.appendChild(currentParent);
 		} else {
 			currentParent.setAttribute("id", survey_ident);
@@ -1187,10 +1196,11 @@ public class GetXForm {
     		SurveyTemplate template,
     		Element parentElement,
     		int sId,
-    		String survey_ident) throws SQLException {
+    		String survey_ident,
+    		boolean isFirstSubForm) throws SQLException {
 	
 		List<List<Results>> results = getResults(form, id, parentId, connection, template);  // Add the child elements
-    	
+    	boolean generatedTemplate = false;
 		// For each record returned from the database add a form element
     	for(int i = 0; i < results.size(); i++) {
     		
@@ -1209,8 +1219,12 @@ public class GetXForm {
     			item= record.get(j);   			
 
     			if(item.subForm != null) {
+    				boolean needTemplate = (!generatedTemplate && (parentElement == null));
+    				System.out.println("xxx need template: " + needTemplate);
     				populateForm(outputDoc, item.subForm, -1, 
-    						Integer.parseInt(priKey.value), connection, template, currentParent, sId, survey_ident);
+    						Integer.parseInt(priKey.value), connection, template, 
+    						currentParent, sId, survey_ident, 
+    						needTemplate);
     			} else if (item.begin_group) { 
     				Element childElement = null;
     				childElement = outputDoc.createElement(item.name);
@@ -1230,7 +1244,7 @@ public class GetXForm {
     					item.value = priKey.value;
     				} else if(item.name != null && item.name.toLowerCase().equals("instanceid")) {
     					gInstanceId = item.value;
-    				}  else if(item.media && item.filename != null) {
+    				}  else if(item.media && item.filename != null && !item.filename.equals("null")) {
     					gFilenames.add(item.filename);
     				}
     				
@@ -1244,6 +1258,19 @@ public class GetXForm {
     		}
     		// Append this new form to its parent (if the parent is null append to output doc)
     		if(parentElement != null) {
+    			/*
+    			 * The following code attempts to put a template section into instance data 
+    			 * however it does not appear to be needed
+    			 * This template section is probably only required in the form model
+    			 *
+    			 
+    			if(isFirstSubForm && !generatedTemplate) {
+    				 Add a template for enketo
+    				populateBlankForm(outputDoc, form, connection,  template, 
+    						parentElement, sId, null, null, survey_ident, true);
+    				generatedTemplate = true;
+    			}
+    			*/
     			parentElement.appendChild(currentParent);
     		} else {
     			currentParent.setAttribute("id", survey_ident);
@@ -1386,7 +1413,9 @@ public class GetXForm {
 	    				if(idx > -1) {
 	    					filename = value.substring(idx + 1);
 	    				}
-	    				gFilenames.add(filename);
+	    				if(filename != null && !filename.equals("null")) {
+	    					gFilenames.add(filename);
+	    				}
 	    			}
 	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
 	    			index++;
