@@ -108,8 +108,12 @@ public class UtilityMethods {
 	};
 
 	public static String getLastFromPath(String path) {
-		int startIdx = path.lastIndexOf('/') + 1;
-		return path.substring(startIdx);
+		if(path != null) {
+			int startIdx = path.lastIndexOf('/') + 1;
+			return path.substring(startIdx);
+		} else {
+			return null;
+		}
 	}
 	
 	public static String getGroupFromPath(String path) {

@@ -283,6 +283,10 @@ alter table question alter column visible set default 'true';
 alter table question alter column mandatory set default 'false';
 alter table question alter column readonly set default 'false';
 alter table question alter column enabled set default 'true';
+update question set visible = 'true' where visible is null;
+update question set mandatory = 'false' where mandatory is null;
+update question set readonly = 'false' where readonly is null;
+update question set enabled = 'true' where enabled is null;
 
 -- Starting to add the column_name explicitely to question
 alter table question add column column_name text;

@@ -98,12 +98,16 @@ public class WebForm extends Application{
 		ArrayList<String> files; 
 	}
 	class JsonResponse {
+		List<ManifestValue> manifestList;
 		SurveyData surveyData = new SurveyData();
 		String main; 
 	}
 	
 
-	// Respond with JSON
+	/*
+	 * Get instance data
+	 * Respond with JSON
+	 */
 		@GET
 		@Path("/key/instance/{ident}/{updateid}/{key}")
 		@Produces(MediaType.APPLICATION_JSON)
@@ -140,7 +144,10 @@ public class WebForm extends Application{
 			return getInstanceData(request, formIdent, updateid, user);
 		}
 		
-	// Respond with JSON
+	/*
+	 * Get form data
+	 * Respond with JSON
+	 */
 	@GET
 	@Path("/key/{ident}/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -218,6 +225,7 @@ public class WebForm extends Application{
 			String user) {
 		
 		Response response = null;
+		JsonResponse jr = null;
 		
 		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue + "assignmentId:" + assignmentId);
 		
@@ -290,19 +298,15 @@ public class WebForm extends Application{
 			/*
 			 * Get the media manifest so we can set the url's of media files used the form
 			 */
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			if(basePath == null) {
-				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-				basePath = "/ebs1/servers/" + request.getServerName();
-			}
+			String basePath = GeneralUtilityMethods.getBasePath(request);
+		
 			TranslationManager translationMgr = new TranslationManager();	
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
 			List<ManifestValue> manifestList = null;
 			try {
 				manifestList = translationMgr.getManifestBySurvey(
 						connectionSD, 
-						request.getRemoteUser(), 
+						user, 
 						survey.id, 
 						basePath, 
 						formIdent);
@@ -319,22 +323,36 @@ public class WebForm extends Application{
 	            }
 			}
     		
+			if(mimeType.equals("json")) {
+				jr = new JsonResponse();
+				jr.manifestList = new ArrayList<ManifestValue> ();
+			}
+
     		for(int i = 0; i < manifestList.size(); i++) {
     			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : " + manifestList.get(i).type);
     			String type = manifestList.get(i).type;
     			String name = manifestList.get(i).fileName;
     			String url = manifestList.get(i).url;
-    			if(url != null) {
-	    			if(type.equals("image")) {
-	    				type = "images";
-	    			}
-	    			formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
+    			if(type.equals("image")) {
+    				type = "images";
     			}
-    		}
+    			if(url != null) {
+    				if(mimeType.equals("json")) {
+    					ManifestValue mv = new ManifestValue();	// Create a new version of the manifest to send to a client that doesn't have unneeded data
+    					mv.type = type;
+    					mv.fileName = name;
+    					mv.url = url;
+    					jr.manifestList.add(mv);
+    				} else {
+    					formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
+    				}
+    			}
+			}
+    		
 			
 			// Convert to HTML / Json
     		if(mimeType.equals("json")) {
-    			JsonResponse jr = new JsonResponse();
+    			
     			jr.surveyData.modelStr = getModelStr(request, formXML).toString();
     			if(instanceXML != null) {
     				jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
