@@ -99,6 +99,7 @@
 	disableUploadTimeout="false"
     connectionUploadTimeout="36000000"  
     connectionTimeout="60000"
+    address="0.0.0.0"
 	redirectPort="443" />
     
 

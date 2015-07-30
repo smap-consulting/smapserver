@@ -310,6 +310,7 @@ echo '##### Add shared memory setting to sysctl.conf'
 
 sudo cp /etc/sysctl.conf /etc/sysctl.conf.bu
 echo "kernel.shmmax=67068800" | sudo tee -a /etc/sysctl.conf 
+# TODO add "-Djava.net.preferIPv4Stack=true" to JAVA_OPTS
 
 echo '##### Increase shared memory available to tomcat'
 sudo cp /etc/default/tomcat7  /etc/default/tomcat7.bu
