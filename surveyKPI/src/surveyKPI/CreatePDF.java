@@ -75,7 +75,7 @@ public class CreatePDF extends Application {
 	public static Font WingDings = null;
 	public static Font defaultFont = null;
 
-	
+	/*
 	@GET
 	@Path("/debug")
 	@Produces("application/json")
@@ -123,9 +123,7 @@ public class CreatePDF extends Application {
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		try {
 			
-			/*
-			 * Get the results
-			 */
+			
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, instanceId, true);
 			// Return data as JSON - Debug only
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -166,6 +164,7 @@ public class CreatePDF extends Application {
 		return response;
 
 	}
+	*/
 	
 	@GET
 	@Produces("application/x-download")

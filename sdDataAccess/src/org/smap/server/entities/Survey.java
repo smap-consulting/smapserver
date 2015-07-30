@@ -28,6 +28,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.utilities.UtilityMethods;
 
 /*
@@ -126,7 +127,7 @@ public class Survey implements Serializable {
 	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
-		return esc(display_name);
+		return GeneralUtilityMethods.esc(display_name);
 	}
 	
 	/*
@@ -165,17 +166,5 @@ public class Survey implements Serializable {
 		manifest = v;
 	}
 	
-	/*
-	 * Other Methods
-	 */
-	// Remove characters reserved for HTML
-	private String esc(String in) {
-		String out = in;
-		if(out != null) {
-			out = out.replace("&", "&amp;");
-			out = out.replace("<", "&lt;");
-			out = out.replace(">", "&gt;");
-		}
-		return out;
-	}
+
 }

@@ -28,6 +28,32 @@ public class GeneralUtilityMethods {
 			 Logger.getLogger(GeneralUtilityMethods.class.getName());
 
 	/*
+	 * Escape characters reserved for HTML
+	 */
+	static public String esc(String in) {
+		String out = in;
+		if(out != null) {
+			out = out.replace("&", "&amp;");
+			out = out.replace("<", "&lt;");
+			out = out.replace(">", "&gt;");
+		}
+		return out;
+	}
+	
+	/*
+	 * Unescape characters reserved for HTML
+	 */
+	static public String unesc(String in) {
+		String out = in;
+		if(out != null) {
+			out = out.replace("&amp;", "&");
+			out = out.replace("&lt;", "<");
+			out = out.replace("&gt;", ">");
+		}
+		return out;
+	}
+	
+	/*
 	 * Get Base Path
 	 */
 	static public String getBasePath(HttpServletRequest request) {

@@ -1,9 +1,12 @@
 package org.smap.server.utilities;
 
 import java.io.InputStream;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.smap.model.SurveyTemplate;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -243,7 +246,8 @@ public class PutXForm {
 				String subValue = vList.item(k).getTextContent();
 				
 				if(subName.equals("#text")) {
-					value += esc(subValue);
+					// XML fragments are stored in the database so store values escaped
+					value += GeneralUtilityMethods.esc(subValue);
 				} else {
 					value += "<" + subName;
 					
@@ -266,16 +270,7 @@ public class PutXForm {
 		
 		return value;
     }
-	// Remove characters reserved for XML
-	private String esc(String in) {
-		String out = in;
-		if(out != null) {
-			out = out.replace("&", "&amp;");
-			out = out.replace("<", "&lt;");
-			out = out.replace(">", "&gt;");
-		}
-		return out;
-	}
+
     
     /*
      * Process the body of the XForm

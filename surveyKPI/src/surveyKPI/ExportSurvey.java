@@ -583,7 +583,7 @@ public class ExportSurvey extends Application {
 					} else {
 						qText.append("</tr>\n");
 					}
-					outWriter.print(qText.toString());
+					outWriter.print(qText.toString().replace("&amp;", "&"));	// unescape ampersand for excel
 				} 
 				outWriter.print(qName.toString());
 				if(!csv) {

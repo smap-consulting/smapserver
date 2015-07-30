@@ -306,7 +306,7 @@ public class PDFManager {
 							
 							Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
 							Label label = option.labels.get(languageIdx);
-							value = label.text;
+							value = GeneralUtilityMethods.unesc(label.text);
 							
 							break;
 						}

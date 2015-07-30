@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+
 /*
  * Survey Class
  * Used for survey editing
@@ -86,18 +88,7 @@ public class Survey {
 	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
-		return esc(displayName);
-	}
-	
-	// Remove characters reserved for HTML
-	private String esc(String in) {
-		String out = in;
-		if(out != null) {
-			out = out.replace("&", "&amp;");
-			out = out.replace("<", "&lt;");
-			out = out.replace(">", "&gt;");
-		}
-		return out;
+		return GeneralUtilityMethods.esc(displayName);
 	}
 	
 	// Get a name for the survey instance
