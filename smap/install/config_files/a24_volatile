@@ -174,6 +174,10 @@
    		Require all granted
     </Location>
     
+    <Location /surveyKPI/log/key>
+   		Require all granted
+    </Location>
+    
     <Location /surveyKPI/myassignments/key>
     	Require all granted
     </Location>

@@ -123,7 +123,7 @@ public class MyAssignments extends Application {
 	}
 	
 	/*
-	 * Get assignments for user authenticated with a key
+	 * Post assignments for user authenticated with a key
 	 */
 	@POST
 	@Produces("application/json")

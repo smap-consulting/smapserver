@@ -297,3 +297,16 @@ alter table dynamic_users add column expiry timestamp;
 alter table organisation add column ft_sync_incomplete boolean;
 alter table tasks add column update_id text;
 alter table project add column description text;
+
+-- Logging errors from user devices
+CREATE SEQUENCE log_report_seq START 1;
+ALTER TABLE log_report_seq OWNER TO ws;
+
+CREATE TABLE public.log_report (
+	id integer DEFAULT nextval('log_report_seq') NOT NULL PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	device_id text,
+	report text,
+	upload_time TIMESTAMP WITH TIME ZONE
+);
+ALTER TABLE public.log_report OWNER TO ws;

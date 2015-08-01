@@ -587,3 +587,17 @@ CREATE TABLE public.user_trail (
 );
 SELECT AddGeometryColumn('user_trail', 'the_geom', 4326, 'POINT', 2);
 ALTER TABLE public.user_trail OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS log_report_seq CASCADE;
+CREATE SEQUENCE log_report_seq START 1;
+ALTER TABLE log_report_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.log_report CASCADE;
+CREATE TABLE public.log_report (
+	id integer DEFAULT nextval('log_report_seq') NOT NULL PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	device_id text,
+	report text,
+	upload_time TIMESTAMP WITH TIME ZONE
+);
+ALTER TABLE public.log_report OWNER TO ws;
