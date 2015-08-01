@@ -120,10 +120,13 @@ public class WebForm extends Application{
 			log.info("Requesting json instance");
 			
 			String user = null;		
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+			Response resp = null;
+			String requester = "surveyMobileAPI-Webform";
+			Connection connectionSD = SDDataSource.getConnection(requester);
 			
 			try {
 				user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+				resp = getInstanceData(connectionSD, request, formIdent, updateid, user);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} finally {
@@ -131,6 +134,7 @@ public class WebForm extends Application{
 					if (connectionSD != null) {
 						connectionSD.close();
 					}
+					log.info("   Release sd connection: " + requester);
 				} catch (SQLException e) {
 					log.log(Level.SEVERE, "Failed to close connection", e);
 				}
@@ -141,7 +145,7 @@ public class WebForm extends Application{
 				throw new JsonAuthorisationException();
 			}
 			
-			return getInstanceData(request, formIdent, updateid, user);
+			return resp;
 		}
 		
 	/*
@@ -163,7 +167,8 @@ public class WebForm extends Application{
 		log.info("Requesting json");
 		
 		String user = null;		
-		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+		String requester = "WebForm - getFormJson";
+		Connection connectionSD = SDDataSource.getConnection(requester);
 		
 		try {
 			user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
@@ -174,6 +179,7 @@ public class WebForm extends Application{
 				if (connectionSD != null) {
 					connectionSD.close();
 				}
+				log.info("   Release sd connection: " + requester);
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
@@ -238,10 +244,11 @@ public class WebForm extends Application{
 		Survey survey = null;
 		int orgId = 0;
 		String accessKey = null;
+		String requester = "surveyMobileAPI-getWebForm";
 		
 		// Authorisation 
 		if(user != null) {
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-WebForm");
+			Connection connectionSD = SDDataSource.getConnection(requester);
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key
@@ -263,9 +270,10 @@ public class WebForm extends Application{
 	            		connectionSD.close();
 	            		connectionSD = null;
 	            	}
+	            	log.info("   Release sd connection: " + requester);
 	            } catch (SQLException e) {
 	            	log.log(Level.SEVERE, "Failed to close connection", e);
-	            }
+	            }	
     		}
         } else {
         	throw new AuthorisationException();
@@ -299,9 +307,9 @@ public class WebForm extends Application{
 			 * Get the media manifest so we can set the url's of media files used the form
 			 */
 			String basePath = GeneralUtilityMethods.getBasePath(request);
-		
+			requester = "surveyMobileAPI-getWebForm2";
 			TranslationManager translationMgr = new TranslationManager();	
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+			Connection connectionSD = SDDataSource.getConnection(requester);
 			List<ManifestValue> manifestList = null;
 			try {
 				manifestList = translationMgr.getManifestBySurvey(
@@ -318,6 +326,7 @@ public class WebForm extends Application{
 	            		connectionSD.close();
 	            		connectionSD = null;
 	            	}
+	            	log.info("   Release sd connection: " + requester);
 	            } catch (SQLException e) {
 	            	log.log(Level.SEVERE, "Failed to close connection", e);
 	            }
@@ -826,7 +835,7 @@ public class WebForm extends Application{
 	/*
 	 * Get instance data as JSON
 	 */
-	private Response getInstanceData(HttpServletRequest request, 
+	private Response getInstanceData(Connection connectionSD, HttpServletRequest request, 
 			String formIdent, 
 			String updateid, 
 			String user) {
@@ -834,19 +843,12 @@ public class WebForm extends Application{
 		Response response = null;
 		
 		log.info("webForm:" + formIdent + " updateid:" + updateid + " user: " + user);
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
 
 		Survey survey = null;
 		StringBuffer outputString = new StringBuffer();
 		
 		// Authorisation 
 		if(user != null) {
-			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-WebForm");
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key

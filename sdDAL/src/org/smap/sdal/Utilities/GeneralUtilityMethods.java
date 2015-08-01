@@ -623,6 +623,7 @@ public class GeneralUtilityMethods {
 				" and d.expiry > now();";
 		PreparedStatement pstmtGetUserDetails = null;
 		
+		
 		log.info("GetDynamicUser");
 		try {
 		
