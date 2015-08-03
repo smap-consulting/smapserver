@@ -455,7 +455,7 @@ define([
 			} else if(change.property.propType === "video") {
 				
 				newMarkup = markup.addMedia("Video", 
-						change.propery.newVal, 
+						change.property.newVal, 
 						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'video', change.property.isSurveyLevel), 
 						_getUrl(survey.o_id, survey.ident, change.property.newVal, true, 'video', change.property.isSurveyLevel)
 						);
@@ -579,7 +579,7 @@ define([
 			url += newVal;
 
 			// Videos and other derived thumbnails will have type jpg
-			if(type !== "image") {			
+			if(thumbs && type !== "image") {			
 				index = url.lastIndexOf('.');
 				filebase = url.substr(0, index);
 				url = filebase + ".jpg";		
