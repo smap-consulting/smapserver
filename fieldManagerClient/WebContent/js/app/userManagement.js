@@ -436,90 +436,7 @@ $(document).ready(function() {
 
 	 });
 	 
-	 // Initialse the move organisation dialog
-	 /*
-	 $('#move_to_organisation_popup').dialog(
-		{
-			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-			show:"drop",
-			title: "Move to Organisation",
-			width:380,
-			height:300,
-			zIndex: 2000,
-			buttons: [
-		        {
-		        	text: "Cancel",
-		        	click: function() {	
-		        		$(this).dialog("close");
-		        	}
-		        }, {
-		        	text: "Save",
-		        	click: function() {
-		        		var users = [],
-		        			projects =[],
-		        		decision = false,
-		        		h = [],
-		        		i = -1,
-		        		idx,
-		        		orgId,
-		        		orgName,
-		        		hasUsers = false,
-		        		hasProjects = false,
-		        		keepProjects = false;
-			        	
-		        		h[++i] = "Are you sure you want to move these ";
-			        	$('#user_table').find('input:checked').each(function(index) {
-			        		if(!hasUsers) {
-			        			h[++i] = "users ("; 
-			        			hasUsers = true;
-			        		} else {
-			        			h[++i] = ",";
-			        		}
-			        		idx = $(this).val();
-			        		users[index] = {id: gUsers[idx].id};
-			        		h[++i] = gUsers[idx].name;
-			        	});
-			        	
-			        	$('#project_table').find('input:checked').each(function(index) {
-			        		if(hasUsers && !hasProjects) {
-			        			h[++i] = ") and these projects (";
-			        			hasProjects = true;
-			        		} else if(!hasProjects){
-			        			h[++i] = "projects (";
-			        			hasProjects = true;
-			        		} else {
-			        			h[++i] = ",";
-			        		}
-			        		idx = $(this).val();
-			        		projects[index] = {id: globals.gProjectList[idx].id};
-			        		
-			        		h[++i] = globals.gProjectList[idx].name;
-			        	});
-			        	
-			        	orgId = $('#target_organisation').val();
-			        	orgName = $('#target_organisation :selected').text();
-			        	
-			        	h[++i] = ") to " + orgName + "?";
-			        	decision = confirm(h.join(''));
-			        	
-			        	if (decision === true) {
-			        		for(i = 0; i < users.length; i++) {
-			        			if(users[i].id === globals.gLoggedInUser.id) {
-			        				users[i].keepProjects = true;
-			        			} else {
-			        				users[i].keepProjects = false;
-			        			}			
-			        		}
-			        		moveToOrganisations(orgId, users, projects);	
-			        	}
-			        	$(this).dialog("close");
-		        	}	
-		        }
-		        	
-			]
-		}
-	 );
-	 */
+
 	 // Initialise the reset password checkbox
 	 $('#reset_password').click(function () {
 		 if($(this).is(':checked')) {
@@ -853,10 +770,17 @@ function updateUserTable(group, projectStr) {
 	h[++idx] = '<col style="width:160px;">';	
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<tr>';
+	h[++idx] = '<th colspan="3"></th>';
+	h[++idx] = '<th colspan="3" style="text-align: center;">Forms Submitted</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '<tr>';
 	h[++idx] = '<th>Select</th>';
 	h[++idx] = '<th>User Id</th>';
 	h[++idx] = '<th>Name</th>';
 	//h[++idx] = '<th>Email</th>';
+	h[++idx] = '<th>This Month</th>';
+	h[++idx] = '<th>Last Month</th>';
+	h[++idx] = '<th>All Time</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
@@ -884,6 +808,15 @@ function updateUserTable(group, projectStr) {
 			//h[++idx] = '<td>';
 			//h[++idx] = user.email;
 			//h[++idx] = '</td>';
+			h[++idx] = '<td>';
+			h[++idx] = user.this_month;
+			h[++idx] = '</td>';
+			h[++idx] = '<td>';
+			h[++idx] = user.last_month;
+			h[++idx] = '</td>';
+			h[++idx] = '<td>';
+			h[++idx] = user.all_time;
+			h[++idx] = '</td>';
 			h[++idx] = '</tr>';
 		}
 	}	
@@ -1127,9 +1060,17 @@ function hasId(itemList, item) {
  */
 function getUsers() {
 	
+	var month,		// Month and year that submissions for each user are to be calculated
+		year,
+		today;
+	
+	today = new Date();
+	month = today.getMonth() + 1;	// Server works from 1 - 12
+	year = today.getFullYear();
+	
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/userList",
+		url: "/surveyKPI/userList?year=" + year + "&month=" + month,
 		dataType: 'json',
 		cache: false,
 		success: function(data) {

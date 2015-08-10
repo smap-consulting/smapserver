@@ -97,7 +97,9 @@ public class EventList extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
 		a.isAuthorised(connectionSD, user);
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		if(projectId != 0) {
+			a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		}
 		// End Authorisation
 		
 		if(rec_limit == 0) {
@@ -599,7 +601,9 @@ public class EventList extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
 		a.isAuthorised(connectionSD, user);
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		if(projectId != 0) {	// 0 is not a valid project but represents all projects
+			a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		}
 		// End Authorisation
 		
 		HashMap<String,StatusTotal> sList = new HashMap<String,StatusTotal> ();
@@ -997,7 +1001,9 @@ public class EventList extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
 		a.isAuthorised(connectionSD, user);
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		if(projectId != 0) {
+			a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		}
 		// End Authorisation
 		
 		

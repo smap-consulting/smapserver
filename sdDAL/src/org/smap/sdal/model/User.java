@@ -42,5 +42,8 @@ public class User {
 	public ArrayList<Project> projects;
 	public boolean keepProjects;
 	public boolean sendEmail;
+	public int this_month;
+	public int last_month;
+	public int all_time;
 	
 }

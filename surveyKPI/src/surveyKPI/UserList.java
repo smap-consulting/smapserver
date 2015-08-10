@@ -98,9 +98,23 @@ public class UserList extends Application {
 	
 	@GET
 	@Produces("application/json")
-	public Response getUsers(@Context HttpServletRequest request) { 
+	public Response getUsers(
+			@Context HttpServletRequest request,
+			@QueryParam("month") int month,			// 1 - 12
+			@QueryParam("year") int year
+			) { 
 
 		Response response = null;
+		int previousMonth;
+		int previousMonthsYear;
+		
+		if(month == 1) {
+			previousMonth = 12;
+			previousMonthsYear = year - 1;
+		} else {
+			previousMonth = month - 1;
+			previousMonthsYear = year;
+		}
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -147,6 +161,7 @@ public class UserList extends Application {
 				 *  each user. This is to reduce the need for potentially a large number of queries if
 				 *  an organisation had a large number of users
 				 */
+				/*
 				sql = "SELECT users.id as id, " +
 						"users.ident as ident, " +
 						"users.name as name, " +
@@ -162,10 +177,49 @@ public class UserList extends Application {
 						" left outer join project on project.id = user_project.p_id " +
 						" where users.o_id = ? " +
 						" order by users.ident, groups.name;";
+				*/
+				sql = "SELECT users.id as id," +
+						"users.ident as ident, " +
+						"users.name as name, " +
+						"users.email as email, " +
+						"groups.name as group_name, " +
+						"project.name as project_name, " +
+						"groups.id as group_id, " +
+						"project.id as project_id, " +
+						"(select count (*) from upload_event ue, subscriber_event se " +
+							"where ue.ue_id = se.ue_id " + 
+							"and se.status = 'success' " +
+							"and se.subscriber = 'results_db' " +
+							"and extract(month from upload_time) = ? " + 	// current month
+							"and extract(year from upload_time) = ? " + 	// current year
+							"and ue.user_name = users.ident) as this_month, " +
+						"(select count (*) from upload_event ue, subscriber_event se " +
+							"where ue.ue_id = se.ue_id " + 
+							"and se.status = 'success' " +
+							"and se.subscriber = 'results_db' " +
+							"and extract(month from upload_time) = ? " +	// last month
+							"and extract(year from upload_time) = ? " + 	// last months year
+							"and ue.user_name = users.ident) as last_month, " +
+						"(select count (*) from upload_event ue, subscriber_event se " +
+							"where ue.ue_id = se.ue_id " +
+							"and se.status = 'success'" +
+							"and se.subscriber = 'results_db'" +
+							"and ue.user_name = users.ident) as all_time " +
+						"from users " +
+						"left outer join user_group on user_group.u_id = users.id " +
+						"left outer join groups on groups.id = user_group.g_id " +
+						"left outer join user_project on user_project.u_id = users.id " +
+						"left outer join project on project.id = user_project.p_id " +
+						"where users.o_id = ? " + 
+						"order by users.ident, groups.name;";
 				
 				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setInt(1, o_id);
+				pstmt.setInt(1, month);
+				pstmt.setInt(2, year);
+				pstmt.setInt(3, previousMonth);
+				pstmt.setInt(4, previousMonthsYear);
+				pstmt.setInt(5, o_id);
 				log.info("Get user list: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				
@@ -191,6 +245,9 @@ public class UserList extends Application {
 						user.email = resultSet.getString("email");
 						user.groups = new ArrayList<UserGroup> ();
 						user.projects = new ArrayList<Project> ();
+						user.this_month = resultSet.getInt("this_month");
+						user.last_month = resultSet.getInt("last_month");
+						user.all_time = resultSet.getInt("all_time");
 						
 						UserGroup group = new UserGroup();
 						group.name = group_name;
