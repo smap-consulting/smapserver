@@ -26,7 +26,7 @@
     ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
     ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
 
-	# Add CORS for zarkman inspector
+	# Add CORS for zarkman mobile
 	Header add Access-Control-Allow-Origin "http://localhost:8100"
 	Header add Access-Control-Allow-Credentials true
 	Header add Access-Control-Allow-Headers "Authorization, Content-Type, form_status"
@@ -43,49 +43,49 @@
     </Directory>
 
 	<Directory /var/www/smap/webforms>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Directory>
 
 	# field manager client module
 	<Location /fieldManager>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
 	
 	# field manager server module
 	<Location /fieldManagerServer>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
 	    	
 	# survey mobile API module. Require enumerator access
      <Location /formList>
-     	AuthType Digest
+     	AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
      </Location>
 
      <Location /webForm>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         <LimitExcept OPTIONS>
         	Require valid-user
@@ -99,20 +99,19 @@
 
 
     <Location /formXML>
-     	AuthType Digest
+     	AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
        	Require valid-user
 	</Location>
 	
 	<Location /submission>
-    	AuthType Digest
+    	AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
-        AuthDigestNonceLifetime -1
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         <LimitExcept OPTIONS>
         	Require valid-user
@@ -125,10 +124,10 @@
     </Location>
     
 	<Location /instanceXML>
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
@@ -137,7 +136,7 @@
 		AuthType Basic
         AuthName "smap"
         AuthBasicUseDigestAlgorithm MD5
-        AuthDigestProvider dbd
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         <LimitExcept OPTIONS>
         	Require valid-user
@@ -149,10 +148,10 @@
 #		Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
 #		Header set Pragma "no-cache"
 #		Header set Expires "Sat, 1 Jan 2000 01:00:00 GMT"
-		AuthType Digest
+		AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Location>
@@ -217,10 +216,10 @@
 	alias /media /smap/media
 	<Directory /smap/media>
 		Options FollowSymLinks
-        AuthType Digest
+        AuthType Basic
         AuthName "smap"
-        AuthDigestDomain /
-        AuthDigestProvider dbd
+        AuthBasicUseDigestAlgorithm MD5
+        AuthBasicProvider dbd
         AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
         Require valid-user
 	</Directory>

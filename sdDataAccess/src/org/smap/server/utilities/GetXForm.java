@@ -1032,10 +1032,13 @@ public class GetXForm {
 		key = key.replace("'", "''");	// Escape apostrophes
 		String type = null;
 		
+		System.out.println("First form: " + firstForm.getTableName());
+		
 		// Get the key type
 		List<Question> questions = firstForm.getQuestions();
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
+			System.out.println("Column name: " + q.getColName());
 			if(q.getColName().equals(key)) {
 				type = q.getType();
 				break;
