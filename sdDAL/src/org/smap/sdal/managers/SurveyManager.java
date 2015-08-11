@@ -42,6 +42,7 @@ import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
+import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.ServerSideCalculate;
@@ -632,22 +633,23 @@ public class SurveyManager {
 						
 						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.source);
 						
-					} else if(cs.changeType.equals("property")) {
+					} else if(cs.changeType.equals("property") && !cs.type.equals("option")) {
 						
 						// Update a property
-						applyProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
+						applyQuestionProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
 						
 					} else if(cs.changeType.equals("question")) {
 						
 						// Add/delete questions
 						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
-					} else if(cs.changeType.equals("option")) {
+					} else if(cs.changeType.equals("option") || (cs.changeType.equals("property") && cs.type.equals("option"))) {
 						
 						// Add/delete options changed by the editor
 						applyOptionFromEditor(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
 					} else {
+						log.info("Error: unknown changeset type: " + cs.changeType);
 						throw new Exception("Error: unknown changeset type: " + cs.changeType);
 					}
 					
@@ -1010,10 +1012,10 @@ public class SurveyManager {
 	}
 		
 	/*
-	 * Apply property changes
+	 * Apply question property changes
 	 * This can be any simple property type such as relevance
 	 */
-	public void applyProperty(Connection connectionSD,
+	public void applyQuestionProperty(Connection connectionSD,
 			PreparedStatement pstmtChangeLog, 
 			ArrayList<ChangeItem> changeItemList, 
 			int sId, 
@@ -1113,6 +1115,8 @@ public class SurveyManager {
 	
 	}
 	
+
+	
 	/*
 	 * The names of question properties in the table don't exactly match the names in the survey model
 	 * translate them here
@@ -1134,7 +1138,6 @@ public class SurveyManager {
 	
 	/*
 	 * Apply add / delete questions
-	 * This can be any simple property type such as relevance
 	 */
 	public void applyQuestion(Connection connectionSD,
 			PreparedStatement pstmtChangeLog, 
@@ -1189,7 +1192,7 @@ public class SurveyManager {
 	
 	/*
 	 * Apply add / delete choices from the editor
-	 * This can be any simple property type such as relevance
+	 * Update properties
 	 */
 	public void applyOptionFromEditor(Connection connectionSD,
 			PreparedStatement pstmtChangeLog, 
@@ -1197,19 +1200,24 @@ public class SurveyManager {
 			int sId, 
 			int userId,
 			int version,
-			String type,
+			String changeType,
 			String action) throws Exception {
 		
 		QuestionManager qm = new QuestionManager();
 		ArrayList<Option> options = new ArrayList<Option> ();
+		ArrayList<PropertyChange> properties = new ArrayList<PropertyChange> ();
 		 
 		try {
 		
 			for(ChangeItem ci : changeItemList) {
-					
-				options.add(ci.option);
 				
-				log.info("userevent: " + userId + (action.equals("add") ? " : add option : " : " : delete option : ") + ci.option.value + " survey: " + sId);
+				if(changeType.equals("property")) {
+					properties.add(ci.property);
+					log.info("userevent: " + userId + " modify option " + ci.property.newVal + " survey: " + sId);
+				} else {
+					options.add(ci.option);		
+					log.info("userevent: " + userId + (action.equals("add") ? " : add option : " : " : delete option : ") + ci.option.value + " survey: " + sId);
+				}
 				
 				// Write the change log
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -1224,8 +1232,10 @@ public class SurveyManager {
 			
 			if(action.equals("add")) {
 				qm.saveOptions(connectionSD, sId, options);
-			} else {
+			} else if(action.equals("delete")) {
 				qm.deleteOptions(connectionSD, sId, options);
+			} else if(action.equals("update")) {
+				qm.updateOptions(connectionSD, sId, properties);
 			}
 			
 		} catch (Exception e) {

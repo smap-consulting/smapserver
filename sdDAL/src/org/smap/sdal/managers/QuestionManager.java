@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
@@ -18,6 +19,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
+import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.ServerSideCalculate;
 import org.smap.sdal.model.Survey;
@@ -397,6 +399,90 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
+	/*
+	 * The names of question properties in the table don't exactly match the names in the survey model
+	 * translate them here
+	 */
+	private String translateOptionProperty(String in) {
+		String out = in;
+		
+		if(in.equals("value")) {
+			out = "ovalue";
+		}
+		return out;
+	}
+	
+	/*
+	 * Update properties for options
+	 */
+	public void updateOptions(Connection sd, int sId, ArrayList<PropertyChange> properties) throws SQLException {
+		
+		PreparedStatement pstmtGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id " +
+				"from question q, form f " +
+				"where q.f_id = f.f_id " + 
+				"and f.s_id = ? " +
+				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
+		
+		PreparedStatement pstmt = null;
+
+
+		try {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+			
+			
+			for(PropertyChange p : properties) {
+				
+				String property = translateOptionProperty(p.prop);		
+				if(GeneralUtilityMethods.hasColumn(sd, "option", property)) {
+				
+					String sql = "update option set  " + property + " = ? " +
+							" where q_id = ? " +
+							" and ovalue = ?;";
+					
+					pstmt = sd.prepareStatement(sql);
+					
+					int optionListAsQId = 0;
+					try {
+						optionListAsQId = Integer.parseInt(p.optionList);
+					} catch (Exception e) {
+						
+					}
+				
+					// Get the questions from the form that use this option list
+					pstmtGetQuestions.setInt(1, sId);
+					pstmtGetQuestions.setString(2,  p.optionList);
+					pstmtGetQuestions.setInt(3, optionListAsQId);
+					log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
+					ResultSet rs = pstmtGetQuestions.executeQuery();
+					
+					while (rs.next()) {
+					
+						int qId = rs.getInt(1);
+						
+						// Update the option
+						pstmt.setString(1, p.newVal );
+						pstmt.setInt(2, qId );
+						pstmt.setString(3, p.oldVal );
+						
+						log.info("Update option: " + pstmt.toString());
+						pstmt.executeUpdate();
+						
+					}
+				}
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
 		}	

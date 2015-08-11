@@ -507,6 +507,52 @@ function respondToEvents($context) {
 
 	});
 	
+	// validate the name on focus as duplicates may have been removed elsewhere
+	$('.qname', $context).focusin(function(){
+
+		var $this = $(this),
+			$parent = $this.parent(),
+			$row = $parent.parent();
+			$label = $row.find(".q_label_col");
+			formIndex = $label.data("fid"),
+			itemIndex = $label.data("id"),
+			newVal = $this.val();
+		
+		validateQuestionName(formIndex, itemIndex, newVal); 
+
+	});
+	
+	// validate the question name
+	$('.qname', $context).keyup(function(){
+
+		var $this = $(this),
+			$parent = $this.parent(),
+			$row = $parent.parent();
+			$label = $row.find(".q_label_col");
+			formIndex = $label.data("fid"),
+			itemIndex = $label.data("id"),
+			newVal = $this.val();
+		
+		validateQuestionName(formIndex, itemIndex, newVal); 
+
+	});
+	
+	// validate the option name
+	$('.oname', $context).keyup(function(){
+
+		var $this = $(this),
+			$parent = $this.parent(),
+			$row = $parent.parent();
+			$label = $row.find(".q_label_col");
+			formIndex = $label.data("fid"),
+			itemIndex = $label.data("id"),
+			listName = $label.data("list_name"),
+			newVal = $this.val();
+		
+		validateOptionName(listName, itemIndex, newVal); 
+
+	});
+	
 	// Update the name
 	$('.qname', $context).change(function(){
 
@@ -518,7 +564,24 @@ function respondToEvents($context) {
 			itemIndex = $label.data("id"),
 			newVal = $this.val();
 		
-		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") 
+		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") ;
+
+	});
+	
+	// Update the name
+	$('.oname', $context).change(function(){
+
+		var $this = $(this),
+			$parent = $this.parent(),
+			$row = $parent.parent();
+			$label = $row.find(".q_label_col"),
+			listName = $label.data("list_name"),
+			formIndex = $label.data("fid"),
+			itemIndex = $label.data("id"),
+			newVal = $this.val();
+		
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, undefined, "value") ;
+		
 
 	});
 	
@@ -809,6 +872,130 @@ function delete_media(url) {
 			}
 		}
 	});	
+	
+}
+
+/*
+ * Validate a question name
+ */
+function validateQuestionName(formIndex, itemIndex, val) {
+	
+	console.log("Validate name");
+		
+	var i, j,
+		form, question,
+		survey = globals.model.survey,
+		isValid = true,
+		hasDuplicate = false;
+
+		
+	// Check for empty name
+	if(!val || val === "") {
+		changeset.addValidationError(
+				formIndex,
+				itemIndex,
+				"This question does not have a name.  Specify a unique name.");
+		isValid = false;	
+	} 
+	
+	/*
+	 * Name change require the entire set of questions to be validated for duplicates
+	 */
+	if(isValid) {
+		
+		for(i = 0; i < survey.forms.length; i++) {
+			form = survey.forms[i];
+			for(j = 0; j < form.questions.length && !hasDuplicate; j++) {		
+				if(!(i === formIndex && j === itemIndex)) {
+					question = form.questions[j];
+					if(question.name === val) {
+						hasDuplicate = true;
+						break;
+					}
+				}
+			}
+		}
+		if(hasDuplicate) {
+			changeset.addValidationError(
+					formIndex,
+					itemIndex,
+					"The question name is the same as the name of another question.  Specify a unique name.");
+			isValid = false;	
+		}
+		
+	}
+
+
+
+	// If the name is valid then the error message can be removed
+	if(isValid) {
+		changeset.removeValidationError(
+				formIndex,
+				itemIndex);
+	}
+		
+	return isValid;
+	
+}
+
+/*
+ * Validate an option name
+ */
+function validateOptionName(listName, itemIndex, val) {
+	
+	console.log("Validate option name: " + listName + " : " + itemIndex + " : " + val);
+		
+	var i, j,
+		option,
+		survey = globals.model.survey,
+		isValid = true,
+		hasDuplicate = false;
+
+		
+	// Check for empty name
+	if(!val || val === "") {
+		changeset.addOptionValidationError(
+				listName,
+				itemIndex,
+				"This choice does not have a name.  Specify a unique name within the list.");
+		isValid = false;	
+	} 
+	
+	/*
+	 * Name change require the entire set of choices to be validated for duplicates
+	 */
+	if(isValid) {
+		
+		for(i = 0; i < survey.optionLists[listName].options.length; i++) {
+			if(i !==  itemIndex) {
+				option = survey.optionLists[listName].options[i];	
+				if(option.value === val) {
+					hasDuplicate = true;
+					break;
+				}
+			}
+		}
+		
+		if(hasDuplicate) {
+			changeset.addOptionValidationError(
+					listName,
+					itemIndex,
+					"The choice name is the same as the name of another choice.  Specify a unique name.");
+			isValid = false;	
+		}
+		
+	}
+
+
+
+	// If the name is valid then the error message can be removed
+	if(isValid) {
+		changeset.removeOptionValidationError(
+				listName,
+				itemIndex);
+	}
+		
+	return isValid;
 	
 }
 

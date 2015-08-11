@@ -349,6 +349,26 @@ textarea {
 	width: 100%;
 }
 
+.panel-success .error-msg, .editor_element .error-msg {
+	display: none;
+}
+
+.panel-danger .error-msg, .editor_element.option_error .error-msg {
+	display: inline;
+}
+
+.selectquestion {
+	background-color: yellow;
+}
+
+.editor_element.option_error {
+	background-color: #ebccd1;
+}
+
+.editor_element.option_error .error-msg {
+	color: #a94442;
+}
+
 /* Tasks */
 .task_group_name {
 	width: 200px;
@@ -406,9 +426,7 @@ td.completed, td.submitted {
 	background-color: lightgrey;
 }
 
-.selectquestion {
-	background-color: yellow;
-}
+
 
 .project_list {
 	margin-bottom: 10px;

@@ -7,6 +7,7 @@ import java.util.ArrayList;
  */
 public class ChangeSet {
 	public String changeType;				// Type of change: label, option_update, Survey, form, language, question, option
+	public String type;						// question | option
 	public String action;					// add | update | delete
 	public String source;					// editor (default) | file
 	public ArrayList<ChangeItem> items;		// Set of changes of the above type

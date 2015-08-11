@@ -44,10 +44,11 @@ define([
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = addPanelStyle(question.type, formIndex, qIndex);
+		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
 		
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addNewQuestionButton(); 
+			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
 					h[++idx] = addQType(question.type);
@@ -93,6 +94,16 @@ define([
 		return h.join("");
 	}
 	
+	function addErrorMsg(msg) {
+		var h = [],
+			idx = -1;
+		
+		h[++idx] = '<p class="error-msg">';
+		h[++idx] = msg;
+		h[++idx] = '</p>';
+		return h.join("");
+	}
+	
 	function addNewQuestionButton(after) {
 		var h = [],
 			idx = -1;
@@ -107,7 +118,7 @@ define([
 		return h.join('');
 	}
 	
-	function addPanelStyle(type, formIndex, qIndex) {
+	function addPanelStyle(type, formIndex, qIndex, error) {
 		
 		var h = [],
 			idx = -1;
@@ -119,7 +130,11 @@ define([
 		if(type === "begin repeat" || type === "begin group") {
 			h[++idx] = ' panel-warning" id="question';
 		} else {
-			h[++idx] = ' panel-success" id="question';	
+			if(error) {
+				h[++idx] = ' panel-danger" id="question';
+			} else {
+				h[++idx] = ' panel-success" id="question';
+			}
 		}
 		h[++idx] = ++globals.gElementIndex;
 		h[++idx] = '">';
@@ -286,10 +301,11 @@ define([
 		
 		h[++idx] = '<div class="editor_element">';
 		h[++idx] = addNewOptionButton();
+		h[++idx] = addErrorMsg(option.errorMsg);
 		h[++idx] = '<table class="table" id="option';
 		h[++idx] = globals.gElementIndex;
 		h[++idx] = '">';
-		h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
+		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
 		h[++idx] = option.value;
 		h[++idx] = '" type="text"></td>';
 		h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);

@@ -12,6 +12,7 @@ public class PropertyChange {
 	// Reference data about the survey or question or option to be updated or properties of a new element
 	public int qId;
 	public String qType;			// question type
+	public String optionList;		// Option list name if an option is being updated
 	public String type;				// question or option (Used when updating labels)
 	public String name;				// Name of question
 	public String propType;			// Type of language element:  text, image, video, audio

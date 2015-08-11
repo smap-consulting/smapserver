@@ -270,7 +270,10 @@ public class Surveys extends Application {
 				// Option changes are not checked as they are explicitly applied to all option lists in the provided survey
 				// Delete questions are auto validated in the delete sql statement
 				if(ci.property != null) {
-					a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
+					if(!ci.property.type.equals("option")) {
+						log.info("Validating question for type: " + ci.property.type);
+						a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
+					}
 				}
 			}
 		}
