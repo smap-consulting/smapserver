@@ -167,9 +167,11 @@ define([
 	 */
 	function addToChangesetArray(change) {
 		
+		var type = change.property ? change.property.type : undefined;
+		
 		var ci = {
 				changeType: change.changeType,
-				type: change.property.type,
+				type: type,
 				action: change.action,
 				items: []
 			},
@@ -437,7 +439,7 @@ define([
 			
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {			
-				length = survey.optionLists[change.option.optionList].options.push(change.option);			// Add the new question to the end of the array of questions
+				length = survey.optionLists[change.option.optionList].options.push(change.option);			// Add the new option to the end of the array of options
 				change.option.itemIndex = length -1;
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	// Update the option sequence array
 			} else if(change.action === "delete") {
@@ -519,7 +521,7 @@ define([
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
-				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.seq, change.option.optionList, change.option.qName);
+				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.itemIndex, change.option.optionList, change.option.qName);
 				if(change.option.locn === "after") {
 					change.option.$relatedElement.after(newMarkup);
 					$changedRow = change.option.$relatedElement.next();
@@ -646,7 +648,7 @@ define([
 		console.log("Validation: " + JSON.stringify(change));
 		
 		
-		if(change.action === "add") {
+		if(change.action === "add" || change.action === "delete") {
 			formIndex = change.question.formIndex;
 			itemIndex = change.question.itemIndex;
 		} else {
@@ -771,7 +773,7 @@ define([
 		console.log("Validate option: " + JSON.stringify(change));
 		
 		
-		if(change.action === "add") {
+		if(change.action === "add" || change.action === "delete") {
 			optionList = change.option.optionList;
 			itemIndex = change.option.itemIndex;
 		} else {
@@ -780,11 +782,11 @@ define([
 		}
 		
 		if(change.action === "add") {
-			// New questions always have a blank name
+			// New options always have a blank value
 			addOptionValidationError(
-					formIndex,
+					optionList,
 					itemIndex,
-					"This question does not have a name. Specify a unique name.");
+					"This choice does not have a name. Specify a unique name from within the list");
 			isValid = false;
 		
 		} else if(change.action === "update") {
@@ -814,7 +816,7 @@ define([
 		// If the question is valid then the error message can be removed
 		if(isValid) {
 			removeOptionValidationError(
-					formIndex,
+					optionList,
 					itemIndex);
 		}
 		
@@ -834,7 +836,7 @@ define([
 		// Push error into validation array
 		errors.push({
 			isQuestion: false,
-			formIndex: formIndex,
+			listName: listName,
 			itemIndex: itemIndex
 		});
 		
@@ -864,7 +866,6 @@ define([
 		for(i = 0; i < errors.length; i++) {
 			if(!errors[i].isQuestion && errors[i].listName === listName && errors[i].itemIndex === itemIndex) {
 				errors.splice(i, 1);
-				break;
 			}
 		}
 		

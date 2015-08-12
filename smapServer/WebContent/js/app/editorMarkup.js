@@ -299,7 +299,11 @@ define([
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = '<div class="editor_element">';
+		if(option.error) {
+			h[++idx] = '<div class="editor_element option_error">';
+		} else {
+			h[++idx] = '<div class="editor_element">';
+		}	
 		h[++idx] = addNewOptionButton();
 		h[++idx] = addErrorMsg(option.errorMsg);
 		h[++idx] = '<table class="table" id="option';
