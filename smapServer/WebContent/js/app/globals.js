@@ -53,6 +53,8 @@ define(function() {
 		
 		// Editor
 		gElementIndex: 0,			// Manage creation of unique identifier for each element (question, option) in editor			
+		gQuestionIndex: 0,			// Manage creation of unique identifier for questions
+		gOptionIndex: 0,			// Manage creation of unique identifier for options
 		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,

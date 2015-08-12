@@ -255,6 +255,8 @@ $(document).ready(function() {
 	window.onbeforeunload = function() {
 		if(changeset.changes.length > 0) {
 			return "You have unsaved changes are you sure you want to leave?";
+		} else {
+			return;
 		}
 	};
 
@@ -553,7 +555,7 @@ function respondToEvents($context) {
 
 	});
 	
-	// Update the name
+	// Update the question name
 	$('.qname', $context).change(function(){
 
 		var $this = $(this),
@@ -568,7 +570,7 @@ function respondToEvents($context) {
 
 	});
 	
-	// Update the name
+	// Update the option name
 	$('.oname', $context).change(function(){
 
 		var $this = $(this),
@@ -578,9 +580,10 @@ function respondToEvents($context) {
 			listName = $label.data("list_name"),
 			formIndex = $label.data("fid"),
 			itemIndex = $label.data("id"),
+			qname = $parent.parent().find('.q_label_col').data("qname"),
 			newVal = $this.val();
 		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, undefined, "value") ;
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
 		
 
 	});

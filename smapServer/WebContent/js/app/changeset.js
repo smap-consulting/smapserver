@@ -197,6 +197,9 @@ define([
 				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
 				item_orig = survey.optionLists_orig[change.property.optionList].options[change.property.itemIndex];	
 				change.property.name = change.property.optionList;
+				if(change.changeType === "property") {
+					setOptionTypeSpecificChanges(change.property.prop, change, survey);
+				}
 			}
 			
 			if(change.changeType === "label") {
@@ -211,9 +214,9 @@ define([
 				} else {
 					// Create reference for this new Label		
 					if(change.property.type === "question") {
-						change.property.key = "/" + form.name + "/" + item.name + ":label";	
+						change.property.key = getFormPath(form) + "/" + item.name + ":label";	
 					} else {
-						change.property.key = "/" + form.name + "/" + change.property.qname + "/" + item.name + ":label";
+						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
 					}
 				}
 			} else {
@@ -275,7 +278,18 @@ define([
 			}
 		} else if(type === "name") {
 			var form = survey.forms[change.property.formIndex];
-			change.property.path = "/" + form.name + "/" + change.property.newVal;				
+			change.property.path = getFormPath(form) + "/" + change.property.newVal;				
+		}
+	}
+	
+	/*
+	 * Annotate an option change item with changes that are dependent on the type of the property
+	 */
+	function setOptionTypeSpecificChanges(type, change, survey) {
+		var i;
+		if(type === "value") {
+			var form = survey.forms[change.property.formIndex];
+			change.property.path = getFormPath(form) + "/" + change.property.qname + "/" + change.property.newVal;			
 		}
 	}
 	
@@ -348,6 +362,9 @@ define([
 						newElement.optionList === element.optionList) {
 					
 					item.option[newElement.prop] = newElement.newVal;
+					if(newElement.prop === "value") {
+						item.option["path"] = newElement.path;
+					}
 					return false;
 					
 				}
@@ -654,8 +671,6 @@ define([
 			formIndex,
 			itemIndex;
 		
-		console.log("Validation: " + JSON.stringify(change));
-		
 		
 		if(change.action === "add" || change.action === "delete") {
 			formIndex = change.question.formIndex;
@@ -779,8 +794,6 @@ define([
 			optionList,
 			itemIndex;
 		
-		console.log("Validate option: " + JSON.stringify(change));
-		
 		
 		if(change.action === "add" || change.action === "delete") {
 			optionList = change.option.optionList;
@@ -890,4 +903,25 @@ define([
 		});
 		$changedRow.closest('.editor_element').removeClass("option_error");
 	}
+	
+	/*
+	 * Get the path for the form from the top level form down
+	 */
+	function getFormPath(form) {
+		var path = form.name,
+			forms = globals.model.forms,
+			i;
+		while(form.parentform !== 0) {
+			for(i = 0; i < forms.length; i++) {
+				if(forms[i].id === form.parentform) {
+					form = forms[i];
+					path = form.name + "/" + path;
+					break;
+				}
+			}
+		}
+		path = "/" + path;
+		return path;
+	}
+	 
 });

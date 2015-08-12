@@ -65,7 +65,7 @@ define([
 					
 					h[++idx] = '<button class="btn btn-default">';
 					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="question';
-					h[++idx] = globals.gElementIndex;
+					h[++idx] = globals.gQuestionIndex;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';
 					
@@ -112,7 +112,7 @@ define([
 		h[++idx] = '" data-locn="';
 		h[++idx] = after ? 'after" ' : 'before" ';
 		h[++idx] = '" data-index="';
-		h[++idx] = globals.gElementIndex;
+		h[++idx] = globals.gQuestionIndex;
 		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
 		
 		return h.join('');
@@ -136,7 +136,8 @@ define([
 				h[++idx] = ' panel-success" id="question';
 			}
 		}
-		h[++idx] = ++globals.gElementIndex;
+		h[++idx] = ++globals.gQuestionIndex;
+		++globals.gElementIndex;
 		h[++idx] = '">';
 		
 		return h.join('');
@@ -256,7 +257,7 @@ define([
 				h[++idx] = ' not required';
 			} else {
 				h[++idx] = ' tabindex="';
-				h[++idx] = globals.gElementIndex;
+				h[++idx] = globals.gQuestionIndex;
 				h[++idx] = '">';
 				if(selProperty === "label") { 
 					h[++idx] = question.labels[globals.gLanguage].text;
@@ -288,6 +289,7 @@ define([
 			for(i = 0; i < oSeq.length; i++) {
 				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name);
 			}
+			h[++idx] = addNewOptionButton(true); 
 		}
 		return h.join("");
 	}
@@ -307,7 +309,8 @@ define([
 		h[++idx] = addNewOptionButton();
 		h[++idx] = addErrorMsg(option.errorMsg);
 		h[++idx] = '<table class="table" id="option';
-		h[++idx] = globals.gElementIndex;
+		h[++idx] = ++globals.gOptionIndex;
+		globals.gElementIndex++;
 		h[++idx] = '">';
 		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
 		h[++idx] = option.value;
@@ -319,7 +322,7 @@ define([
 		h[++idx] = '<div class="btn-group">';
 		h[++idx] = '<button class="btn btn-default">';
 		h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_option" data-id="option';
-		h[++idx] = globals.gElementIndex;
+		h[++idx] = globals.gOptionIndex;
 		h[++idx]='"></span>';
 		h[++idx]='</button>';		
 		h[++idx] = '</td>';
@@ -330,12 +333,17 @@ define([
 		return h.join("");
 	}
 	
-	function addNewOptionButton() {
+	function addNewOptionButton(after) {
 		var h = [],
 			idx = -1;
-		h[++idx] = '<button type="button" class="add_option btn btn-success add_button" data-locn="before" data-index="';
-		h[++idx] = ++globals.gElementIndex;		
+		h[++idx] = '<button type="button" class="add_option btn btn-primary ';
+		h[++idx] = after ? 'add_button_after' : 'add_button';
+		h[++idx] = '" data-locn="';
+		h[++idx] = after ? 'after" ' : 'before" ';
+		h[++idx] = '" data-index="';
+		h[++idx] = globals.gOptionIndex;
 		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
+		
 		
 		return h.join('');
 	}
@@ -503,6 +511,8 @@ define([
 		 * 
 		 */
 		globals.gElementIndex = 0;
+		globals.gQuestionIndex = 0;
+		globals.gOptionIndex = 0;
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {
 				for(i = 0; i < survey.forms.length; i++) {
