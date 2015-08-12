@@ -256,6 +256,8 @@ public class QuestionManager {
 	
 	/*
 	 * Save options
+	 * Called by editor
+	 * Add new options
 	 */
 	public void saveOptions(Connection sd, int sId, ArrayList<Option> options) throws SQLException {
 		
@@ -311,12 +313,15 @@ public class QuestionManager {
 					// Insert the option
 					pstmt.setInt(1, qId );
 					pstmt.setInt(2, o.seq );
-					pstmt.setString(3, o.text_id );
+					pstmt.setString(3, o.path + ":label" );
 					pstmt.setString(4, o.value );
 					pstmt.setString(5, o.cascadeFilters );			
 					
 					log.info("Insert question: " + pstmt.toString());
 					pstmt.executeUpdate();
+					
+					// Set the labels
+					UtilityMethodsEmail.setLabels(sd, sId, o.path, o.labels, "");
 				}
 			}
 			

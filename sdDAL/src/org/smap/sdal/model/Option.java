@@ -14,6 +14,7 @@ public class Option {
 	public boolean externalFile;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	public String text_id;
+	public String path;
 	public String cascadeFilters;
 	
 	// Used in updates
