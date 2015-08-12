@@ -199,7 +199,7 @@ function getChangeDescription(change) {
 	var h =[],
 		idx = -1;
 	
-	if(change.changeType && change.changeType === "option_update") {
+	if(change.changeType && change.changeType === "option_update") {		// Options added from a file
 		h[++idx] = 'Choice <span style="color:blue;">'; 
 		h[++idx] = change.newVal;
 		h[++idx] = '</span>';
@@ -210,6 +210,15 @@ function getChangeDescription(change) {
 		h[++idx] = ' from file: <span style="color:blue;">';
 		h[++idx] = change.fileName;
 		h[++idx] = '</span>';
+	} else if(change.changeType && change.changeType === "option") {		// Options added or deleted from editor
+		h[++idx] = 'Choice <span style="color:blue;">'; 
+		h[++idx] = change.option.value;
+		h[++idx] = '</span>';
+		h[++idx] = ' added to';
+		h[++idx] = ' choice list: <span style="color:blue;">';
+		h[++idx] = change.option.optionList;
+		h[++idx] = '</span>';
+		h[++idx] = ' using the online editor';
 	} else {
 		h[++idx] = change.type;
 		h[++idx] = ' ';
