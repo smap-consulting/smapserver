@@ -342,6 +342,15 @@ define([
 					return false;
 					
 				}
+			} else if(newItem.action === "update" && item.option) {
+				if(newElement.type === "option" && 
+						newElement.itemIndex === element.itemIndex &&
+						newElement.optionList === element.optionList) {
+					
+					item.option[newElement.prop] = newElement.newVal;
+					return false;
+					
+				}
 			} else if(newItem.action === "delete") {
 				/*
 				 * Remove any modifications to this deleted element
