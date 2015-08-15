@@ -910,6 +910,7 @@ function getSurveyDetails(callback) {
 			h[++idx] = '</option>';
 		}
 		$lang.empty().append(h.join(""));
+		$(".language_list option[value='" + globals.gLanguage + "']").attr("selected", "selected");
 		$lang1.val(gLanguage1);
 		$lang2.val(gLanguage2)
 	}

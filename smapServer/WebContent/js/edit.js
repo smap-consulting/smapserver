@@ -724,16 +724,17 @@ function mediaPropSelected($this) {
 
 }
 /*
- * Update the list of languages and other settings data
+ * Update the settings data (excluding languages which is set globally)
  */
 function updateSettingsData() {
 	var i,
-		languages = globals.model.survey.languages,
+		//languages = globals.model.survey.languages,
 		key,
 		h = [],
 		idx = -1,
 		defLangIdx = 0;
 	
+	/*
 	for(i = 0; i < languages.length; i++) {
 		h[++idx] = '<option value="';
 		h[++idx] = i;
@@ -745,11 +746,12 @@ function updateSettingsData() {
 			defLangIdx = i;
 		}
 	}
-	$('.language_list').html(h.join(""));
+	*/
+	//$('.language_list').html(h.join(""));
 	$('.survey_name').val(globals.model.survey.displayName);
 	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
-	$('#set_default_language').val(defLangIdx);
+	//$('#set_default_language').val(defLangIdx);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 }
 
