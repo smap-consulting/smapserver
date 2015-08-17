@@ -125,22 +125,25 @@ then
         a24=`sudo apachectl -version | grep -c "2\.4"`
         a_config_dir="/etc/apache2/sites-available"
         cd ../install
-        sudo mv $a_config_dir/smap-volatile.conf $a_config_dir/smap-volatile.conf.bu
+        sudo mv $a_config_dir/smap-volatile $a_config_dir/smap-volatile.bu
         if [ $a24 -eq 0 ]; then
                 echo "Setting up Apache 2.2"
-                sudo cp config_files/volatile $a_config_dir/smap-volatile.conf
+                sudo cp config_files/volatile $a_config_dir/smap-volatile
         fi
         if [ $a24 -eq 1 ]; then
                 echo "Setting up Apache 2.4"
-                sudo cp config_files/a24_volatile $a_config_dir/smap-volatile.conf
+                sudo cp config_files/a24_volatile $a_config_dir/smap-volatile
         fi
         service apache2 restart
 
-#	sudo a2ensite  $a_config_dir/smap.conf
-#	sudo a2ensite  $a_config_dir/smap-ssl.conf
-#	sudo service apache2 reload
+	sudo a2ensite  $a_config_dir/smap.conf
+	sudo a2ensite  $a_config_dir/smap-ssl.conf
+	sudo service apache2 reload
 
 	cd ../deploy
+
+# Patch pyxform
+sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
 fi
 
