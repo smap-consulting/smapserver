@@ -535,7 +535,7 @@ function respondToEvents($context) {
 			itemIndex = $label.data("id"),
 			newVal = $this.val();
 		
-		validateQuestionName(formIndex, itemIndex, newVal); 
+		validateQuestionName(formIndex, itemIndex, newVal);
 
 	});
 	
@@ -551,7 +551,7 @@ function respondToEvents($context) {
 			listName = $label.data("list_name"),
 			newVal = $this.val();
 		
-		validateOptionName(listName, itemIndex, newVal); 
+		validateOptionName(listName, itemIndex, newVal);
 
 	});
 	
@@ -903,6 +903,19 @@ function validateQuestionName(formIndex, itemIndex, val) {
 		isValid = false;	
 	} 
 	
+	// Check for invalid characters
+	if(isValid) {
+		isValid = isValidSQLName(val)
+	
+		if(!isValid) {
+			changeset.addValidationError(
+				formIndex,
+				itemIndex,
+				"The question name must start with a letter and only contain lower case letters, numbers and underscores");	
+	
+		}
+	}
+	
 	/*
 	 * Name change require the entire set of questions to be validated for duplicates
 	 */
@@ -966,6 +979,19 @@ function validateOptionName(listName, itemIndex, val) {
 		isValid = false;	
 	} 
 	
+	// Check for valid option name
+	if(isValid) {
+		isValid = isValidOptionName(val)
+	
+		if(!isValid) {
+	
+			changeset.addOptionValidationError(
+				listName,
+				itemIndex,
+				"The choice name cannot contain spaces");
+		}
+	} 
+	
 	/*
 	 * Name change require the entire set of choices to be validated for duplicates
 	 */
@@ -1002,6 +1028,30 @@ function validateOptionName(listName, itemIndex, val) {
 		
 	return isValid;
 	
+}
+
+/*
+ * Return true if the passed in value has non trailing spaces
+ */
+function isValidSQLName(val) {
+	
+	var sqlCheck = /^[a-z_][a-z0-9_]*$/
+	return sqlCheck.test(val);	
+}
+
+/*
+ * Return true if the passed in value is a valid option name
+ */
+function isValidOptionName(val) {
+	
+	var vCheck = val.trim(),
+		isValid = true;
+	
+	if(vCheck.indexOf(" ") > 0) {
+		isValid = false;
+	}
+	
+	return isValid;	
 }
 
 /*
