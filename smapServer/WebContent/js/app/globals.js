@@ -299,7 +299,7 @@ define(function() {
 			},
 			{
 				name: "Group",
-				type: "begin repeat",
+				type: "begin group",
 				glyphicon: "folder-open",
 				canSelect: true,
 				visible: true,

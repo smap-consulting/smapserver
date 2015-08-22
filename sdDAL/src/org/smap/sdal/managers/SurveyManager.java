@@ -631,6 +631,7 @@ public class SurveyManager {
 
 					} else if(cs.changeType.equals("option") && cs.source != null && cs.source.equals("file")) {
 						
+						// Apply changes to options loaded from a csv file
 						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.source);
 						
 					} else if(cs.changeType.equals("property") && !cs.type.equals("option")) {
@@ -1165,7 +1166,11 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(ci));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setBoolean(5,false);
+				if(action.equals("add")) {
+					pstmtChangeLog.setBoolean(5,true);	// New question, this change will have to be applied to the results database
+				} else {
+					pstmtChangeLog.setBoolean(5,false);
+				}
 				pstmtChangeLog.setTimestamp(6, getTimeStamp());
 				pstmtChangeLog.execute();
 			} 

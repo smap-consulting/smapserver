@@ -807,13 +807,26 @@ function exportTableURL (table, format) {
 }
 
 /*
+ * Clean the filename so that it can be passed in a URL
+ */
+function cleanFileName(filename) {
+	
+	var n;
+	
+	n = filename.replace(/\//g, '_');	// remove slashes from the filename
+	n = n.replace(/[#?&]/g, '_');		// Remove other characters that are not wanted 
+	
+	return n;
+}
+
+/*
  * Web service handler for exporting an entire survey to CSV
  */
 function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple) {
 
 	var url = "/surveyKPI/exportSurvey/";
 	
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	exp_ro = exp_ro || false;
 	
@@ -842,7 +855,7 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 
 	var url = "/surveyKPI/exportSurveyMedia/";
 	
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	
 	
@@ -867,7 +880,7 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 		form,
 		ways = [];
 		
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	exp_ro = exp_ro || false;
 	
@@ -900,7 +913,7 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	
 	exp_ro = exp_ro || false;
 	
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	// Remove the ":false" from the form id which used by xls exports
 	//form = form.substring(0, form.lastIndexOf(":"));
@@ -924,7 +937,7 @@ function exportSurveyThingsatURL (sId, filename, form, language) {
 	var url = "/surveyKPI/exportSurveyThingsat/";
 	
 	
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	url += sId;
 	url += "/" + filename;
@@ -942,7 +955,7 @@ function exportSurveyLocationURL (sId, filename, form, format, type) {
 	var url = "/surveyKPI/exportSurveyLocation/";
 	
 	
-	filename = filename.replace(/\//g, '_');	// remove slashes from the filename
+	filename = cleanFileName(filename);	
 	
 	url += sId;
 	url += "/" + filename;

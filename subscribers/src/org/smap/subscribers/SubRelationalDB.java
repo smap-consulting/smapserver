@@ -1214,7 +1214,14 @@ public class SubRelationalDB extends Subscriber {
 			while(rs.next()) {
 				int cId = rs.getInt(1);
 				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
-				int qId = ci.property.qId;
+				
+				// Get the id for the question that is being updated
+				int qId = 0;
+				if(ci.property != null) {
+					qId = ci.property.qId;
+				} else if(ci.question != null ) {
+					// TODO
+				}
 				
 				// Get the table and column
 				pstmtGetTable.setInt(1, qId);
