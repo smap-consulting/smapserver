@@ -311,6 +311,22 @@ public class PDFManager {
 							break;
 						}
 					}
+				} else if(r.type.equals("select")) {
+					value = "";		// Going to append multiple selections to value
+					for(Result c : r.choices) {
+						if(c.isSet) {
+							// value = c.name;
+							if(!c.name.equals("other")) {
+							
+								Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
+								Label label = option.labels.get(languageIdx);
+								if(value.length() > 0) {
+									value += ", ";
+								}
+								value += GeneralUtilityMethods.unesc(label.text);
+							}
+						}
+					}
 				} else if(r.type.equals("image")) {
 					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 					if(ad != null) {
