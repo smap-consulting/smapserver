@@ -89,6 +89,7 @@ define([
 				question: {
 					seq: seq,
 					type: type,
+					source: "user",	// For date type
 					labels: [],
 					
 					// Helper values 

@@ -1217,10 +1217,19 @@ public class SubRelationalDB extends Subscriber {
 				
 				// Get the id for the question that is being updated
 				int qId = 0;
+				String column = null;
+				String type = null;
 				if(ci.property != null) {
 					qId = ci.property.qId;
+					column = ci.property.name + "__" + ci.property.key;
+					type = "integer";
 				} else if(ci.question != null ) {
-					// TODO
+					qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
+					column = ci.question.name;
+					type = ci.question.type;
+					if(type.equals("string")) {
+						type = "text";
+					}
 				}
 				
 				// Get the table and column
@@ -1230,11 +1239,9 @@ public class SubRelationalDB extends Subscriber {
 				if(rsTable.next()) {
 					table = rsTable.getString(1);
 				
-					String column = ci.property.name + "__" + ci.property.key;
-				
 					// Alter the table
 					boolean tableAltered = true;
-					String sqlAlterTable = "alter table " + table + " add column " + column + " integer;";
+					String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
 					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
 					System.out.println("SQL: " + pstmtAlterTable.toString());
 					try {

@@ -329,7 +329,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get the user id from the user ident
+	 * Update the project id in the upload_event table
 	 */
 	static public void updateUploadEvent(
 			Connection sd, 
@@ -482,6 +482,44 @@ public class GeneralUtilityMethods {
 		}
 		
 		return p_id;
+	}
+	
+	/*
+	 * Get the question id using the form id and question name
+	 * Used by the editor to get the question id of a newly created question
+	 */
+	static public int getQuestionId(
+			Connection sd, 
+			int formId,
+			String qName) throws SQLException {
+		
+		int qId = 0;
+		
+		String sqlGetQuestionId = "select q_id " +
+				" from question " +
+				" where f_id = ? " +
+				" and qname = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetQuestionId);
+			pstmt.setInt(1, formId);
+			pstmt.setString(2, qName);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				qId = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return qId;
 	}
 	
 	/*
