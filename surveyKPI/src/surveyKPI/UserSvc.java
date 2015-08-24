@@ -424,7 +424,7 @@ public class UserSvc extends Application {
 				// Do not update the signature
 				sql = "update users set " +
 						" name = ?, " + 
-						" settings = ?, " + 
+						" settings = ? " + 
 						" where " +
 						" ident = ?;";
 			} else {
