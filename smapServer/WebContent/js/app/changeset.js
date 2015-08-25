@@ -397,6 +397,7 @@ define([
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 			}
 		}
+		console.log("setHasChanges: " + JSON.stringify(errors));
 	}
 	
 	/*
@@ -725,6 +726,7 @@ define([
 		} else if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 		}
+		console.log("validateQuestion: " + JSON.stringify(errors));
 	}
 	
 	function addValidationError(formIndex, itemIndex, msg) {
@@ -848,6 +850,7 @@ define([
 		} else if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 		}
+		console.log("validateOption: " + JSON.stringify(errors));
 	}
 	
 	function addOptionValidationError(listName, itemIndex, msg) {
