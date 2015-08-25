@@ -173,21 +173,20 @@ public class Upload extends Application {
 			user = request.getRemoteUser();
 		}
 		
-		if(user == null) {
-			log.info("Error: Attempting to upload results: user not found");
-			throw new AuthorisationException();
-		} else {
-			log.info("User: " + user);
-		}
-		
-		a.isAuthorised(connectionSD, user);
-		
 		try {
 			if (connectionSD != null) {
 				connectionSD.close();
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Failed to close connection", e);
+		}
+		
+		if(user == null) {
+			log.info("Error: Attempting to upload results: user not found");
+			throw new AuthorisationException();
+		} else {
+			a.isAuthorised(connectionSD, user);
+			log.info("User: " + user);
 		}
 		// End Authorisation
 
