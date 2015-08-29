@@ -650,39 +650,42 @@ public class UtilityMethodsEmail {
 			for(int i = 0; i < s.languages.size(); i++) {
 	
 				Label l = new Label();
+				ResultSet resultSet;
 				
 				// Get label and media
-				pstmt.setInt(1, s.id);
-				pstmt.setString(2, s.languages.get(i));
-				pstmt.setString(3, text_id);
-				//log.info("Get labels: " + pstmt.toString());
-				
-				ResultSet resultSet = pstmt.executeQuery();		
-				while(resultSet.next()) {
-	
-					String t = resultSet.getString(1).trim();
-					String v = resultSet.getString(2);
+				if(text_id != null) {
+					pstmt.setInt(1, s.id);
+					pstmt.setString(2, s.languages.get(i));
+					pstmt.setString(3, text_id);
+					log.info("Get labels: " + pstmt.toString());
 					
-					if(t.equals("none")) {
-						l.text = v;
-					} else if(basePath != null && oId > 0) {
-						getFileUrl(manifest, s.ident, v, basePath, oId);
-						log.info("Url: " + manifest.url + " : " + v);
-						if(t.equals("image")) {
-							l.image = v;
-							l.imageUrl = manifest.url;
-							l.imageThumb = manifest.thumbsUrl;
-						} else if(t.equals("audio")) {
-							l.audio = v;
-							l.audioUrl = manifest.url;
-							l.audioThumb = null;
-						} else if(t.equals("video")) {
-							l.video = v;
-							l.videoUrl = manifest.url;
-							l.videoThumb = manifest.thumbsUrl;
-						}
-					} 
-	
+					resultSet = pstmt.executeQuery();		
+					while(resultSet.next()) {
+		
+						String t = resultSet.getString(1).trim();
+						String v = resultSet.getString(2);
+						
+						if(t.equals("none")) {
+							l.text = v;
+						} else if(basePath != null && oId > 0) {
+							getFileUrl(manifest, s.ident, v, basePath, oId);
+							log.info("Url: " + manifest.url + " : " + v);
+							if(t.equals("image")) {
+								l.image = v;
+								l.imageUrl = manifest.url;
+								l.imageThumb = manifest.thumbsUrl;
+							} else if(t.equals("audio")) {
+								l.audio = v;
+								l.audioUrl = manifest.url;
+								l.audioThumb = null;
+							} else if(t.equals("video")) {
+								l.video = v;
+								l.videoUrl = manifest.url;
+								l.videoThumb = manifest.thumbsUrl;
+							}
+						} 
+		
+					}
 				}
 				
 				// Get hint
@@ -691,7 +694,7 @@ public class UtilityMethodsEmail {
 					pstmt.setString(2, s.languages.get(i));
 					pstmt.setString(3, hint_id);
 					
-					//log.info("Get hint: " + pstmt.toString());
+					log.info("Get hint: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					
 					if(resultSet.next()) {

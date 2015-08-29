@@ -209,14 +209,16 @@ define([
 				
 				// Add a reference for the label
 				form = survey.forms[change.property.formIndex];
-				if(item.text_id) {
+				if(change.property.propType === "label" && item.text_id) {
 					change.property.key = item.text_id;
+				} else if(change.property.propType === "hint" && item.hint_id) {
+					change.property.key = item.hint_id;
 				} else {
 					// Create reference for this new Label		
 					if(change.property.type === "question") {
-						change.property.key = getFormPath(form) + "/" + item.name + ":label";	
+						change.property.key = getFormPath(form) + "/" + item.name + ":" + change.property.propType;	
 					} else {
-						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
+						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":" + change.property.propType;
 					}
 				}
 			} else {

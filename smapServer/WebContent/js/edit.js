@@ -505,7 +505,8 @@ function respondToEvents($context) {
 			type = "question";
 		}
 
-		updateLabel(type, formIndex, itemIndex, optionList, "text", newVal, qname, prop); // TODO Hint
+		var labelType = prop === "hint" ? "hint" : "text";
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); // TODO Hint
 
 	});
 	
@@ -770,7 +771,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		change,
 		changeType;
 	
-	if(prop === "label" || prop === "media")
+	if(prop === "label" || prop === "media" || prop === "hint")
 		changeType = "label";
 	else {
 		changeType = "property";
@@ -785,7 +786,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 				qType: undefined,			// Question type
 				type: type,					// question or option
 				name: undefined,			// name of the question or the option list
-				propType: element,			// text or image or video or audio or video
+				propType: element,			// text or hint or image or video or audio or video
 				prop: prop,					// Property to be changed, for example: label or appearance
 				languageName: undefined,	// Language Name
 				allLanguages: false,		// Set true if all languages should be updated with a new label

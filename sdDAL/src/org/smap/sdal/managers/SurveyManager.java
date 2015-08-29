@@ -402,6 +402,7 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
+				System.out.println("Get language labels: " + q.text_id + " : " + q.hint_id);
 				UtilityMethodsEmail.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				//q.labels_orig = q.labels;		// Set the original label values
 				
@@ -653,8 +654,7 @@ public class SurveyManager {
 						log.info("Error: unknown changeset type: " + cs.changeType);
 						throw new Exception("Error: unknown changeset type: " + cs.changeType);
 					}
-					
-					
+									
 					// Success
 					cs.updateFailed = false;
 					resp.success++;
@@ -723,6 +723,7 @@ public class SurveyManager {
 		PreparedStatement pstmtLangOldVal = null;
 		PreparedStatement pstmtLangNew = null;
 		PreparedStatement pstmtNewQuestionLabel = null;
+		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
 		PreparedStatement pstmtLanguages = null;
 		
@@ -738,6 +739,9 @@ public class SurveyManager {
 			
 			String sqlNewQLabel = "update question set qtext_id = ? where q_id = ?; ";
 			pstmtNewQuestionLabel = connectionSD.prepareStatement(sqlNewQLabel);
+			
+			String sqlNewQHint = "update question set infotext_id = ? where q_id = ?; ";
+			pstmtNewQuestionHint = connectionSD.prepareStatement(sqlNewQHint);
 			
 			String sqlDeleteLabel = "delete from translation where s_id = ? and text_id = ? and type = ?;";
 			pstmtDeleteLabel = connectionSD.prepareStatement(sqlDeleteLabel);
@@ -777,6 +781,15 @@ public class SurveyManager {
 						log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 						pstmtNewQuestionLabel.executeUpdate();
 						
+					} else if(ci.property.propType.equals("hint")) {
+						addLabel(ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+
+						// Add the new text id to the question
+						pstmtNewQuestionHint.setString(1, ci.property.key);
+						pstmtNewQuestionHint.setInt(2, ci.property.qId);
+						log.info("Update question table with hint_id: " + pstmtNewQuestionHint.toString());
+						pstmtNewQuestionHint.executeUpdate();
+						
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
@@ -808,6 +821,7 @@ public class SurveyManager {
 			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
@@ -824,7 +838,7 @@ public class SurveyManager {
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
 		pstmtLangOldVal.setString(4, ci.property.key);
-		if(ci.property.propType.equals("text")) {
+		if(ci.property.propType.equals("text") || ci.property.propType.equals("hint")) {
 			transType = "none";
 		} else {
 			transType = ci.property.propType;
@@ -851,7 +865,7 @@ public class SurveyManager {
 			pstmtLangNew.setInt(2, sId);
 			pstmtLangNew.setString(3, language);
 			pstmtLangNew.setString(4, ci.property.key);
-			if(ci.property.propType.equals("text")) {
+			if(ci.property.propType.equals("text") || ci.property.propType.equals("hint")) {
 				transType = "none";
 			} else {
 				transType = ci.property.propType;
@@ -869,7 +883,7 @@ public class SurveyManager {
 			log.info("Delete media label: " + pstmtDeleteLabel.toString());
 			pstmtDeleteLabel.executeUpdate();
 			ci.property.key = null;		// Clear the key in the question table
-		}
+		}  
 		
 	}
 	

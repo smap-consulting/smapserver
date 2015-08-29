@@ -261,6 +261,8 @@ define([
 				h[++idx] = '">';
 				if(selProperty === "label") { 
 					h[++idx] = question.labels[globals.gLanguage].text;
+				} else if(selProperty === "hint") { 
+					h[++idx] = question.labels[globals.gLanguage].hint;
 				} else {
 					h[++idx] = question[selProperty];
 				}
