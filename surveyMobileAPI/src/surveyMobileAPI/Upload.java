@@ -173,20 +173,20 @@ public class Upload extends Application {
 			user = request.getRemoteUser();
 		}
 		
-		try {
-			if (connectionSD != null) {
-				connectionSD.close();
-			}
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Failed to close connection", e);
-		}
-		
 		if(user == null) {
 			log.info("Error: Attempting to upload results: user not found");
 			throw new AuthorisationException();
 		} else {
 			a.isAuthorised(connectionSD, user);
 			log.info("User: " + user);
+		}
+		
+		try {
+			if (connectionSD != null) {
+				connectionSD.close();
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "Failed to close connection", e);
 		}
 		// End Authorisation
 
