@@ -108,45 +108,85 @@ public class WebForm extends Application{
 	 * Get instance data
 	 * Respond with JSON
 	 */
-		@GET
-		@Path("/key/instance/{ident}/{updateid}/{key}")
-		@Produces(MediaType.APPLICATION_JSON)
-		public Response getInstanceJson(@Context HttpServletRequest request,
-				@PathParam("ident") String formIdent,
-				@PathParam("updateid") String updateid,	// Unique id of instance data
-				@PathParam("key") String authorisationKey
-				) throws IOException {
-			
-			log.info("Requesting json instance");
-			
-			String user = null;		
-			Response resp = null;
-			String requester = "surveyMobileAPI-Webform";
-			Connection connectionSD = SDDataSource.getConnection(requester);
-			
+	@GET
+	@Path("/key/instance/{ident}/{updateid}/{key}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getInstanceJson(@Context HttpServletRequest request,
+			@PathParam("ident") String formIdent,
+			@PathParam("updateid") String updateid,	// Unique id of instance data
+			@PathParam("key") String authorisationKey
+			) throws IOException {
+		
+		log.info("Requesting json instance");
+		
+		String user = null;		
+		Response resp = null;
+		String requester = "surveyMobileAPI-Webform";
+		Connection connectionSD = SDDataSource.getConnection(requester);
+		
+		try {
+			user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+			resp = getInstanceData(connectionSD, request, formIdent, updateid, user, false);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
 			try {
-				user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
-				resp = getInstanceData(connectionSD, request, formIdent, updateid, user);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-					}
-					log.info("   Release sd connection: " + requester);
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close connection", e);
+				if (connectionSD != null) {
+					connectionSD.close();
 				}
+				log.info("   Release sd connection: " + requester);
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
-			
-			if (user == null) {
-				log.info("User not found for key");
-				throw new JsonAuthorisationException();
-			}
-			
-			return resp;
 		}
+		
+		if (user == null) {
+			log.info("User not found for key");
+			throw new JsonAuthorisationException();
+		}
+		
+		return resp;
+	}
+		
+	/*
+	 * Get instance data
+	 * User is authenticated by the web server
+	 * Respond with JSON
+	 */
+	@GET
+	@Path("/instance/{ident}/{updateid}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getInstanceJsonNoKey(@Context HttpServletRequest request,
+			@PathParam("ident") String formIdent,
+			@PathParam("updateid") String updateid	// Unique id of instance data
+			) throws IOException {
+		
+		log.info("Requesting json instance no key");
+		
+		String user = null;		
+		Response resp = null;
+		String requester = "surveyMobileAPI-Webform";
+		Connection connectionSD = SDDataSource.getConnection(requester);
+		
+		try {
+			user = request.getRemoteUser();
+			log.info("Requesting instance as: " + user);
+			resp = getInstanceData(connectionSD, request, formIdent, updateid, user, true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+				}
+				log.info("   Release sd connection: " + requester);
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+		return resp;
+	}
 		
 	/*
 	 * Get form data
@@ -190,7 +230,7 @@ public class WebForm extends Application{
 			throw new JsonAuthorisationException();
 		}
 		
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user);
+		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false);
 	}
 	
 	// Respond with HTML
@@ -214,7 +254,7 @@ public class WebForm extends Application{
 		log.info("Requesting " + type);
 		
 		System.out.println();
-		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, request.getRemoteUser());
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, request.getRemoteUser(), false);
 	}
 	
 	
@@ -228,7 +268,8 @@ public class WebForm extends Application{
 			String datakeyvalue, 
 			int assignmentId,
 			String callback,
-			String user) {
+			String user,
+			boolean simplifyMedia) {
 		
 		Response response = null;
 		JsonResponse jr = null;
@@ -299,7 +340,7 @@ public class WebForm extends Application{
 			String instanceStrToEditId = null;
 			if(datakey != null && datakeyvalue != null) {
 				xForm = new GetXForm();
-				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0);
+				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0, simplifyMedia);
 				instanceStrToEditId = xForm.getInstanceId();
 			}
 			
@@ -838,7 +879,8 @@ public class WebForm extends Application{
 	private Response getInstanceData(Connection connectionSD, HttpServletRequest request, 
 			String formIdent, 
 			String updateid, 
-			String user) {
+			String user,
+			boolean simplifyMedia) {
 		
 		Response response = null;
 		
@@ -880,7 +922,7 @@ public class WebForm extends Application{
 			
 			System.out.println("Getting instance data");
 			xForm = new GetXForm();
-			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0);
+			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, simplifyMedia);
 			
 			SurveyData sd = new SurveyData();
     		sd.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");

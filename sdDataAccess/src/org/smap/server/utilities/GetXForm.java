@@ -899,7 +899,10 @@ public class GetXForm {
     /*
      * Get the instance data for an XForm as a string
      */
-    public String getInstance(int sId, String templateName, SurveyTemplate template, String key, String keyval, int priKey) throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
+    public String getInstance(int sId, String templateName, SurveyTemplate template, String key, 
+    		String keyval, 
+    		int priKey,
+    		boolean simplifyMedia) throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
     	String instanceXML = null;
     	
     	Connection connection = null; 
@@ -948,7 +951,7 @@ public class GetXForm {
 		if(priKey > 0) {
 			hasData = true;
 			populateForm(outputXML, firstForm, priKey, -1, connection, template, 
-					null, sId, templateName, false);    
+					null, sId, templateName, false, simplifyMedia);    
 		} else if(key != null && keyval != null)  {
 			// Create a blank form containing only the key values
 			hasData = true;
@@ -1200,9 +1203,10 @@ public class GetXForm {
     		Element parentElement,
     		int sId,
     		String survey_ident,
-    		boolean isFirstSubForm) throws SQLException {
+    		boolean isFirstSubForm,
+    		boolean simplifyMedia) throws SQLException {
 	
-		List<List<Results>> results = getResults(form, id, parentId, connection, template);  // Add the child elements
+		List<List<Results>> results = getResults(form, id, parentId, connection, template, simplifyMedia);  // Add the child elements
     	boolean generatedTemplate = false;
 		// For each record returned from the database add a form element
     	for(int i = 0; i < results.size(); i++) {
@@ -1227,7 +1231,8 @@ public class GetXForm {
     				populateForm(outputDoc, item.subForm, -1, 
     						Integer.parseInt(priKey.value), connection, template, 
     						currentParent, sId, survey_ident, 
-    						needTemplate);
+    						needTemplate,
+    						simplifyMedia);
     			} else if (item.begin_group) { 
     				Element childElement = null;
     				childElement = outputDoc.createElement(item.name);
@@ -1291,7 +1296,8 @@ public class GetXForm {
      * @param parentId
      */
     List<List<Results>> getResults(Form form, int id, int parentId, Connection connection,
-    		SurveyTemplate template) throws SQLException{
+    		SurveyTemplate template,
+    		boolean simplifyMedia) throws SQLException{
  
     	List<List<Results>> output = new ArrayList<List<Results>> ();
     	
@@ -1419,6 +1425,9 @@ public class GetXForm {
 	    				if(filename != null && !filename.equals("null")) {
 	    					gFilenames.add(filename);
 	    				}
+	    			}
+	    			if(simplifyMedia) {
+	    				value = filename;
 	    			}
 	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
 	    			index++;
