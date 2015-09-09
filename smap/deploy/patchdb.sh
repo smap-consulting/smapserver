@@ -110,18 +110,27 @@ sudo mkdir /usr/bin/smap/resources
 sudo mkdir /usr/bin/smap/resources/css
 echo "1503" > ~/smap_version
 fi
-
-# version 15.04
-echo "1504" > ~/smap_version
-
-
-# For all versions greater than or equal to 1504
-if [ $version -gt "1503" ]
+# version 15.08
+if [ $version -lt "1508" ]
 then
 
+# Patch the database
+java -jar version1/patch1505.jar apply survey_definitions results
+echo "1508" > ~/smap_version
+
+a_config_dir="/etc/apache2/sites-available"
+cd ../install
+# Set up new apache configuration structure
+cp config_files/smap.conf $a_config_dir
+cp config_files/smap-ssl.conf $a_config_dir
+cd ../deploy
+fi
+
+#####################################################################################
+# All versions
 # Copy the new apache configuration files
 
-	# Set flag if this is apache2.4
+        # Set flag if this is apache2.4
         a24=`sudo apachectl -version | grep -c "2\.4"`
         a_config_dir="/etc/apache2/sites-available"
         cd ../install
@@ -136,22 +145,12 @@ then
         fi
         service apache2 restart
 
-	sudo a2ensite  $a_config_dir/smap.conf
-	sudo a2ensite  $a_config_dir/smap-ssl.conf
-	sudo service apache2 reload
+        sudo a2ensite  $a_config_dir/smap.conf
+        sudo a2ensite  $a_config_dir/smap-ssl.conf
+        sudo service apache2 reload
 
-	cd ../deploy
+        cd ../deploy
 
 # Patch pyxform
 sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
-fi
-
-# version 15.05
-if [ $version -lt "1505" ]
-then
-
-# Patch the database
-java -jar version1/patch1505.jar apply survey_definitions results
-echo "1505" > ~/smap_version
-fi
