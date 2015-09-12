@@ -946,6 +946,7 @@ public class GetXForm {
 			}
 		}
 		
+		log.info("Generate XML");
 		// Generate the XML
 		boolean hasData = false;
 		if(priKey > 0) {

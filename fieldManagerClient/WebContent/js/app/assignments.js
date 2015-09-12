@@ -48,7 +48,7 @@ $(document).ready(function() {
 	 *  it can be different from the current project
 	 */
 	// 
-	$('#project_select').change(function() {
+	$('#project_select,#project_name').change(function() {
 		var sourceProject = $('#project_select option:selected').val();
 		loadSurveys(sourceProject, "#survey", false, false, surveyChanged);			// Get surveys
 		

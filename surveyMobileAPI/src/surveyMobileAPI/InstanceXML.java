@@ -87,6 +87,7 @@ public class InstanceXML extends Application{
 			) throws IOException {
 
 		Response response = null;
+		String connectionString = "surveyMobileAPI-InstanceXML";
 		
 		log.info("instanceXML: Survey=" + templateName + " priKey=" + priKey + " key=" + key + " keyval=" + keyval);
 		
@@ -107,11 +108,8 @@ public class InstanceXML extends Application{
 		}
 		
 		String user = request.getRemoteUser();
-		//if(user == null) {
-		//    user = userId;
-		//} 
 		
-		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-InstanceXML");
+		Connection connectionSD = SDDataSource.getConnection(connectionString);
 		SurveyManager sm = new SurveyManager();
 		Survey survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
 		a.isAuthorised(connectionSD, user);
@@ -121,13 +119,12 @@ public class InstanceXML extends Application{
 			if (connectionSD != null) {
 				connectionSD.close();
 				connectionSD = null;
+				log.info("Closed connection: " + connectionString);
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Failed to close connection", e);
 		}
 		// End Authorisation
-		
-		Connection connection = null; 
 		 
 		// Extract the data
 		try {
@@ -150,16 +147,7 @@ public class InstanceXML extends Application{
 		}  catch (Exception e) {
 			log.log(Level.SEVERE,"Exception", e);
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-		} finally {
-			try {
-				if (connection != null) {
-					connection.close();
-					connection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-		}
+		} 
 				
 		return response;
 	}

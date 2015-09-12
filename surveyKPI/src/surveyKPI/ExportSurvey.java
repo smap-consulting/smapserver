@@ -186,6 +186,11 @@ public class ExportSurvey extends Application {
 		    }
 		}
 		
+		// Set defaults
+		if(format == null) {	// Default to XLS
+			format = "xls";
+		}
+		
 		log.info("New export, format:" + format + " flat:" + flat + " split:" + split_locn + 
 				" forms:" + include_forms + " filename: " + filename + ", merge select: " + merge_select_multiple);
 		

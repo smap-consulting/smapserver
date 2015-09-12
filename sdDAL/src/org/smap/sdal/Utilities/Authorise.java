@@ -190,7 +190,7 @@ public class Authorise {
  			log.info("Survey validation failed for: " + user + " survey was: " + sId);
  			
 			try {
-				if (conn != null) {
+				if (conn != null) {		// Close connection as errors thrown here should not be caught
 					conn.close();
 					conn = null;
 				}
