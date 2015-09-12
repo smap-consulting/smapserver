@@ -937,6 +937,7 @@ public class GetXForm {
 			}
 		}
 		
+		log.info("Generate XML");
 		// Generate the XML
 		boolean hasData = false;
 		if(priKey > 0) {
@@ -1177,6 +1178,7 @@ public class GetXForm {
     		int sId,
     		String survey_ident) throws SQLException {
 	
+    	log.info("Populate Form");
 		List<List<Results>> results = getResults(form, id, parentId, connection, template);  // Add the child elements
     	
 		// For each record returned from the database add a form element
