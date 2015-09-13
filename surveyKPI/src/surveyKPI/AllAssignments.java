@@ -1128,19 +1128,21 @@ public class AllAssignments extends Application {
 					for(int i = 0; i < line.length; i++) {
 						String colName = line[i].replace("'", "''");	// Escape apostrophes
 						
-						// If this column is in the survey then add it to the list of columns to be processed
-						Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName);
-						if(col != null) {
-							col.index = i;
-							if(col.geomCol != null) {
-								// Do not add the geom columns to the list of columns to be parsed
-								if(col.geomCol.equals("lon")) {
-									lonIndex = i;
-								} else if(col.geomCol.equals("lat")) {
-									latIndex = i;
+						if(!colName.equals("the_geom")) { // Cannot directly insert a geometry TODO add this capability
+							// If this column is in the survey then add it to the list of columns to be processed
+							Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName);
+							if(col != null) {
+								col.index = i;
+								if(col.geomCol != null) {
+									// Do not add the geom columns to the list of columns to be parsed
+									if(col.geomCol.equals("lon")) {
+										lonIndex = i;
+									} else if(col.geomCol.equals("lat")) {
+										latIndex = i;
+									}
+								} else {
+									columns.add(col);
 								}
-							} else {
-								columns.add(col);
 							}
 						}
 					}

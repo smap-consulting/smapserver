@@ -179,7 +179,7 @@ public class MyAssignments extends Application {
 		TaskResponse tr = new TaskResponse();
 		tr.message = "OK Task retrieved";	// Overwritten if there is an error
 		tr.status = "200";
-		tr.version = 0;
+		tr.version = 1;
 					
 		try {
 		    Class.forName("org.postgresql.Driver");	 
