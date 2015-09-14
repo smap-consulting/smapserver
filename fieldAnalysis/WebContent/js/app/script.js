@@ -754,7 +754,7 @@ function regionsURL () {
  * Web service handler for retrieving items in a table
  * @param {string} survey
  */
-function formItemsURL (form, getFeatures, mustHaveGeom, start_key, rec_limit, bBad, filter) {
+function formItemsURL (form, getFeatures, mustHaveGeom, start_key, rec_limit, bBad, filter, dateId, startDate, endDate) {
 
 	var url = "/surveyKPI/items/";
 	
@@ -788,6 +788,18 @@ function formItemsURL (form, getFeatures, mustHaveGeom, start_key, rec_limit, bB
 	
 	if(typeof filter !== "undefined") {
 		url+= "&filter=" + filter;
+	}
+	
+	if(dateId != null) {
+		url += "&dateId=" + dateId;
+	}
+	
+	if(typeof startDate !== "undefined" && startDate.length > 0) {
+		url+= "&startDate=" + startDate;
+	}
+	
+	if(typeof endDate !== "undefined" && endDate.length > 0) {
+		url+= "&endDate=" + endDate;
 	}
 
 	return url;

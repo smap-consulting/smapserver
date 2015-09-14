@@ -38,6 +38,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.codehaus.jettison.json.JSONString;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
@@ -276,8 +277,10 @@ public class Results extends Application {
 			String sqlGeom = null;
 			String sqlNoBad = tables.getNoBadClause();
 			String sqlRestrictToRecordId = restrictToRecordId(aQ, rId);
-			String sqlRestrictToDateRange = getDateRange(startDate, endDate, dateId, date);
-		
+			String sqlRestrictToDateRange = "";
+			if(date != null) {
+				sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getName());
+			} 
 			if(externalGeom) {
 				sqlGeom = getGeometryJoin(q);
 			}
@@ -303,6 +306,9 @@ public class Results extends Application {
 			}
 			sql += sqlNoBad;
 			sql += sqlRestrictToRecordId;
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql += " and ";
+			}
 			sql += sqlRestrictToDateRange;
 			sql += sqlFilter;
 			if(dateId != 0) {
@@ -773,23 +779,7 @@ public class Results extends Application {
 		}
 		return geom;
 	}
-	/*
-	 * Returns the SQL fragment that makes up the date range restriction
-	 */
-	private String getDateRange(Date startDate, Date endDate, int dateId, QuestionInfo date) {
-		String sqlFrag = "";
-		
-		if(dateId != 0) {
-			if(startDate != null) {
-				sqlFrag += " and " + date.getTableName() + "." + date.getName() + " >= ? ";
-			}
-			if(endDate != null) {
-				sqlFrag += " and " + date.getTableName() + "." + date.getName() + " < ? ";
-			}
-		}
-
-		return sqlFrag;
-	}
+	
 	
 	/*
 	 * Returns the SQL fragment that makes up the select

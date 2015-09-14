@@ -38,6 +38,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
@@ -96,6 +97,9 @@ public class Items extends Application {
 			@QueryParam("start_key") int start_key,
 			@QueryParam("get_bad") boolean bBad,		// Get bad records
 			@QueryParam("rec_limit") int rec_limit,
+			@QueryParam("dateId") int dateId,		// Id of question containing the date to sort by
+			@QueryParam("startDate") Date startDate,
+			@QueryParam("endDate") Date endDate,
 			@QueryParam("filter") String sFilter) { 
 		
 		JSONObject jo = new JSONObject();
@@ -346,6 +350,17 @@ public class Items extends Application {
 					}
 				}
 				
+				/*
+				 * Get the date question used to set start and end date
+				 */
+				// Get date column information
+				QuestionInfo date = null;
+				if(dateId != 0) {
+					date = new QuestionInfo(sId, dateId, connectionSD, false, "", urlprefix);	// Not interested in label any language will do
+					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
+					log.info("Date name: " + date.getName() + " Date Table: " + date.getTableName());
+				}
+				
 				// Add any tables required to complete the join
 				tables.addIntermediateTables(connectionSD);
 				
@@ -373,6 +388,18 @@ public class Items extends Application {
 					}
 					whereClause += sqlFilter;
 				}
+				if(date != null) {
+					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getName());
+					if(sqlRestrictToDateRange.trim().length() > 0) {
+						if(doneWhere) {
+							whereClause += " AND ";
+						} else {
+							whereClause += " WHERE ";
+							doneWhere = true;
+						}
+						whereClause += sqlRestrictToDateRange;
+					}
+				}
 				sql2 += whereClause;
 				sql2 += " ORDER BY prikey " + sqlLimit +";";
 				
@@ -381,7 +408,17 @@ public class Items extends Application {
 				
 				pstmt = connection.prepareStatement(sql2);
 				
-				log.info("Get Data: " + pstmt.toString());
+				int attribIdx = 1;
+				if(dateId != 0) {
+					if(startDate != null) {
+						pstmt.setDate(attribIdx++, startDate);
+					}
+					if(endDate != null) {
+						pstmt.setDate(attribIdx++, endDate);
+					}
+				}
+				
+				log.info("Get Item Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				rsMetaData = resultSet.getMetaData();
 	
@@ -450,7 +487,18 @@ public class Items extends Application {
 				sql = "SELECT count(*) FROM " + tName + maxRecordWhere + ";";
 				log.info(sql);
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = connection.prepareStatement(sql);	 			
+				pstmt = connection.prepareStatement(sql);	
+				
+				attribIdx = 1;
+				if(dateId != 0) {
+					if(startDate != null) {
+						pstmt.setDate(attribIdx++, startDate);
+					}
+					if(endDate != null) {
+						pstmt.setDate(attribIdx++, endDate);
+					}
+				}
+				
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
 					jTotals.put("more_recs", resultSet.getInt(1));

@@ -6,6 +6,7 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -1070,6 +1071,27 @@ public class GeneralUtilityMethods {
 		
 		return result;
 		
+	}
+	
+	/*
+	 * Returns the SQL fragment that makes up the date range restriction
+	 */
+	public static String getDateRange(Date startDate, Date endDate, String dateTable, String dateName) {
+		String sqlFrag = "";
+		boolean needAnd = false;
+		
+		if(startDate != null) {
+			sqlFrag += dateTable + "." + dateName + " >= ? ";
+			needAnd = true;
+		}
+		if(endDate != null) {
+			if(needAnd) {
+				sqlFrag += "and ";
+			}
+			sqlFrag += dateTable + "." + dateName + " < ? ";
+		}
+
+		return sqlFrag;
 	}
 	
 }

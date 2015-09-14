@@ -58,8 +58,8 @@ $(document).ready(function() {
 	 });
 	 
 	 // Add datepicker functionality TODO Bootstrap
-	 //$('#from_date').datepicker({ dateFormat: "yy-mm-dd" });
-	 //$('#to_date').datepicker({ dateFormat: "yy-mm-dd" });
+	 $('#from_date').datepicker({ dateFormat: "yy-mm-dd" });
+	 $('#to_date').datepicker({ dateFormat: "yy-mm-dd" });
 	 
 	 /*
 	  * Question filter

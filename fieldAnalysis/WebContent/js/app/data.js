@@ -184,7 +184,8 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
 	
 	var survey,
 		i,
-		url = formItemsURL(table, "yes", "no", start_rec, rec_limit, bBad, f_view.filter);	// Get all records with all features
+		url = formItemsURL(table, "yes", "no", start_rec, rec_limit, bBad, f_view.filter,
+				f_view.dateQuestionId, f_view.fromDate, f_view.toDate);	// Get all records with all features
 	
 	addHourglass();
  	$.ajax({

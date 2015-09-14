@@ -168,7 +168,7 @@ public class CreatePDF extends Application {
 	
 	@GET
 	@Produces("application/x-download")
-	public void getPDFService (@Context HttpServletRequest request, 
+	public Response getPDFService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
 			@QueryParam("instance") String instanceId,
@@ -235,6 +235,7 @@ public class CreatePDF extends Application {
 			}
 			
 		}
+		return Response.ok("").build();
 	}
 	
 
