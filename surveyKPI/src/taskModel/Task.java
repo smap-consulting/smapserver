@@ -13,5 +13,6 @@ public class Task {
 	public String initial_data;
 	public String update_id;
 	public Date scheduled_at;
+	public boolean repeat;
 	public String address;			// Key value pairs representing an unstructured address
 }

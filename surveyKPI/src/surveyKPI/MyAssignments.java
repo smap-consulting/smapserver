@@ -217,6 +217,7 @@ public class MyAssignments extends Application {
 					"t.initial_data," +
 					"t.update_id," +
 					"t.schedule_at," +
+					"t.repeat," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
 					"t.address as address, " +
@@ -265,6 +266,7 @@ public class MyAssignments extends Application {
 				ta.task.initial_data = resultSet.getString("initial_data");
 				ta.task.update_id = resultSet.getString("update_id");
 				ta.task.scheduled_at = resultSet.getDate("schedule_at");
+				ta.task.repeat = resultSet.getBoolean("repeat");
 				ta.task.address = resultSet.getString("address");
 				
 				ta.assignment.assignment_id = resultSet.getInt("assignment_id");

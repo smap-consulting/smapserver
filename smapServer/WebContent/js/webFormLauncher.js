@@ -230,7 +230,8 @@ function completeSurveyList(surveyList, filterProjectId) {
 		$formList = $('#form_list'),
 		formList = surveyList.forms,
 		taskList = surveyList.data,
-		params;
+		params,
+		repeat;
 
 	// Add the forms
 	if(formList) {
@@ -249,7 +250,14 @@ function completeSurveyList(surveyList, filterProjectId) {
 	if(taskList) {
 		for(i = 0; i < taskList.length; i++) {
 			if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
-				h[++idx] = '<a role="button" class="task btn btn-warning btn-block btn-lg" target="_blank" href="/webForm/';
+				repeat = taskList[i].task.repeat;	// Can complete the task multiple times
+				h[++idx] = '<a role="button" class="task btn btn-warning btn-block btn-lg" target="_blank" data-repeat="';
+				if(repeat) {
+					h[++idx] = 'true';
+				} else {
+					h[++idx] = 'false';
+				}
+				h[++idx] = '" href="/webForm/';
 				h[++idx] = taskList[i].task.form_id;
 				if(taskList[i].task.initial_data) {
 					// Add the initial data parameters
@@ -275,7 +283,12 @@ function completeSurveyList(surveyList, filterProjectId) {
 	
 	$formList.html(h.join(''));
 	$formList.find('.task').off().click(function(){
-		$(this).removeClass('btn-warning').addClass('btn-success');
+		var $this = $(this),
+			repeat = $this.data("repeat");
+		
+		if(!repeat) {
+			$this.removeClass('btn-warning').addClass('btn-success');		// Mark task as done
+		}
 	});
 }
 

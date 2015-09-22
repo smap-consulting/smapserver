@@ -126,6 +126,33 @@
 <!-- Popup to show features when a user clicks on a geometry item -->
 <div id="features" class="feature-panel-right"></div>
 
+<!-- Modal to show task properties and allow them to be edited -->
+<div id="task_properties" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="taskPropLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="taskPropLabel"></h4>
+   			</div>
+		     <div class="modal-body">
+				<form class="form" role="form" name="taskProperties">
+					<label class="control-label" for="users_select_user">Repeat: </label>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" name="repeat" value="repeat" id="task_properties_repeat">Repeat
+						</label>
+					</div>
+					<input id="task_properties_taskid" type="hidden" name="taskid" value="0" style="display:none;"/>
+				</form>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="taskPropertiesSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
 <!-- Modal to assign a user to a task-->
 <div id="assign_user" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="assignUserLabel" aria-hidden="true">
 	<div class="modal-dialog">

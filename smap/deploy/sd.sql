@@ -276,7 +276,7 @@ alter table organisation add column email_user text;
 alter table organisation add column email_password text;
 alter table organisation add column email_port integer;
 
--- Upgrade to: 15.05 from 15.04
+-- Upgrade to: 15.09 from 15.04
 drop index formid_sequence ;
 alter table question alter column qname set not null;
 alter table question alter column visible set default 'true';
@@ -310,3 +310,6 @@ CREATE TABLE public.log_report (
 	upload_time TIMESTAMP WITH TIME ZONE
 );
 ALTER TABLE public.log_report OWNER TO ws;
+
+-- Repeating instances
+alter table tasks add column repeat boolean;

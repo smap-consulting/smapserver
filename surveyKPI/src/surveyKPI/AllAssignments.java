@@ -149,6 +149,7 @@ public class AllAssignments extends Application {
 					"t.form_id," +
 					"t.initial_data," +
 					"t.schedule_at," +
+					"t.repeat," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
 					"t.address as address, " +
@@ -175,7 +176,7 @@ public class AllAssignments extends Application {
 				sql2 = " and u.id = ? ";		
 			}
 			
-			String sql3 = " order by tg.tg_id, t.form_id;";
+			String sql3 = " order by tg.tg_id, t.form_id, t.id;";
 			
 			pstmt = connectionSD.prepareStatement(sql1 + sql2 + sql3);	
 			pstmt.setInt(1, projectId);
@@ -241,6 +242,7 @@ public class AllAssignments extends Application {
 				}
 				jp.put("user_name", user_name);
 				jp.put("address", resultSet.getString("address"));
+				jp.put("repeat", resultSet.getBoolean("repeat"));
 				
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates
@@ -1364,6 +1366,107 @@ public class AllAssignments extends Application {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"", e);
 			}
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Update the task properties
+	 */
+	@POST
+	@Path("/properties")
+	public Response updateTaskProperties(@Context HttpServletRequest request) { 
+
+		Response response = null;
+		String dbConnectionTitle = "surveyKPI-AllAssignments- Update task properties";
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
+		    e.printStackTrace();
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		log.info("Updating task properties");	
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection(dbConnectionTitle);
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		// End role based authorisation - Check access to the requested survey once the survey id has been extracted
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
+		fileItemFactory.setSizeThreshold(20*1024*1024); // 20 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+
+		PreparedStatement pstmtUpdate = null;
+		
+	
+		int taskId = 0;
+		boolean repeat = false;
+		
+		try {
+			
+			// Get the items from the multi part mime
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+				
+					if(item.getFieldName().equals("taskid")) {
+						taskId = Integer.parseInt(item.getString());	
+					} else if(item.getFieldName().equals("repeat")) {
+						repeat = true;	
+					}
+					
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded file
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+								
+				}
+
+			}
+			
+			String sqlUpdate = "update tasks set repeat = ? where id = ?;";
+			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
+			pstmtUpdate.setBoolean(1, repeat);
+			pstmtUpdate.setInt(2, taskId);
+			log.info("SQL Update properties: " + pstmtUpdate.toString());
+			pstmtUpdate.executeUpdate();
+				
+		} catch (AuthorisationException e) {
+			log.log(Level.SEVERE,"", e);
+			response = Response.status(Status.FORBIDDEN).entity("Cannot update properties for this task").build();
+			
+		} catch (NotFoundException e) {
+			log.log(Level.SEVERE,"", e);
+			throw new NotFoundException();
+			
+		} catch (Exception e) {
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			
+			log.log(Level.SEVERE,"", e);
+			
+		} finally {
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					log.info("closed connection: " + dbConnectionTitle);
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"", e);
+			}
+			
 		}
 		
 		return response;

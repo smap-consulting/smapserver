@@ -136,7 +136,7 @@ $(document).ready(function() {
 		globals.gCurrentUserId = undefined;
 		globals.gCurrentUserName = undefined;
 		globals.gPendingUpdates = [];
-	})
+	});
 	
 	// Load a file containing tasks
 	$('.file-inputs').bootstrapFileInput();
@@ -185,6 +185,35 @@ $(document).ready(function() {
 			  }
 		});
 	});
+	
+	/*
+	 * Update the properties of a task
+	 */
+	$('#taskPropertiesSave').off().click(function() {
+		var url = "/surveyKPI/assignments/properties";
+		var f = document.forms.namedItem("taskProperties");
+    	var formData = new FormData(f);
+		
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  data: formData,
+			  cache: false,
+	          contentType: false,
+	          processData:false,
+			  url: url,
+			  success: function(data, status) {
+				  removeHourglass();
+				  refreshAssignmentData(gUserFilter);
+			  },
+			  error: function(xhr, textStatus, err) {
+				 
+				  removeHourglass(); 
+				  alert("Error properties not updated: " + xhr.responseText);
+				 
+			  }
+		});
+	})
 		
 	// Create new task group
 	$('#addTaskGroup').button().click(function () {
@@ -768,7 +797,6 @@ function refreshTableAssignments(tasks) {
 		$(".tasks").find(".select_row").change(function() {
 			var $this = $(this);
 			
-			console.log("Row selected:" + $this.data("taskid") + " : " + $this.data("assid") );
 			if($this.is(':checked')) {
 				$this.closest('tr').addClass("info");
 				addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
@@ -776,6 +804,15 @@ function refreshTableAssignments(tasks) {
 				$this.closest('tr').removeClass("info");
 				removePendingTask($this.data("taskid"), "table");
 			}
+		});
+		
+		// Respond to clicking on a row
+		$(".tasks").find(".task_edit").click(function() {
+			var $this = $(this);
+			var taskid = $this.closest('tr').find('.select_row').data('taskid');
+			$('#task_properties_taskid').val(taskid);
+			$('#task_properties').modal("show");  // open the properties dialog
+
 		});
 		
 		// Show barcodes
@@ -861,20 +898,6 @@ function refreshTableAssignments(tasks) {
 		 * Function to delete a task group
 		 */
 		$('.delete_task_group').button().click(function () {
-
-			/*
-			var tg_id = $(this).val();
-			
-			$('#tasktable' + tg_id).find('.control_td > input').each(function(){
-				var $this = $(this);
-				
-				if(!$this.is(':checked')) {
-					addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
-				} 
-				$this.prop("checked", true).closest('tr').addClass("info");
-
-			});
-			*/
 			
 			var tg_id = $(this).val();
 			
