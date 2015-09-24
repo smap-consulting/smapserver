@@ -1248,10 +1248,12 @@ public class GetXForm {
     				
     			} else {  // Question
     				
+    				// remove _task_key functionality
     				// Set some default values for task management questions
-    				if(item.name != null && item.name.equals("_task_key")) {
-    					item.value = priKey.value;
-    				} else if(item.name != null && item.name.toLowerCase().equals("instanceid")) {
+    				//if(item.name != null && item.name.equals("_task_key")) {
+    				//	item.value = priKey.value;
+    				// } else 
+    				if(item.name != null && item.name.toLowerCase().equals("instanceid")) {
     					gInstanceId = item.value;
     				}  else if(item.media && item.filename != null && !item.filename.equals("null")) {
     					gFilenames.add(item.filename);
