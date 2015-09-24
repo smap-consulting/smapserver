@@ -410,13 +410,11 @@ public class MyAssignments extends Application {
 			tr.status = "400";
 			log.log(Level.SEVERE,"", e);
 			response = Response.serverError().build();
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} catch (Exception e) {
 			tr.message = "Error: Message=" + e.getMessage();
 			tr.status = "400";
 			log.log(Level.SEVERE,"", e);
 			response = Response.serverError().build();
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
 			try {if (pstmtGetForms != null) {pstmtGetForms.close();} } catch (Exception e) {}
 			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (Exception e) {}
