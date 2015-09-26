@@ -82,14 +82,14 @@ function initializeMap() {
 	map = new OpenLayers.Map("map", mapOptions);  	
 		
 	// OSM Tile from mapquest
-	arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
+	arrayOSM = ["https://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
 	
-	arrayHOT = ["http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-	               "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-	               "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
+	arrayHOT = ["https://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+	               "https://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+	               "https://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
 	 
 	// Add layers
 	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
