@@ -270,12 +270,12 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 	var toValue,
 		toBeBad;
 	
-	if(value == "f") {
+	if(value == "f" || value == "No") {
 		toBeBad = "true";
-		toValue = "t";
+		toValue = "Yes";
 	} else {
 		toBeBad = "false";
-		toValue = "f";
+		toValue = "No";
 	}
 	
 	var reason = prompt(localise.set["msg_reason"],"");
@@ -288,6 +288,7 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 		  url: toggleBadURL(tableName, pKey),
 		  success: function(data, status) {
 			  $elem.text(toValue);
+			  $elem.next().text(reason);
 			  $elem.toggleClass('bad_r').toggleClass('good_r');
 			  if(theView) {
 				  theView.dirty = true;
