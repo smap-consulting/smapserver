@@ -85,7 +85,8 @@ public class XFormData {
 	public void loadMultiPartMime(
 				HttpServletRequest request, 
 				String user, 
-				String updateInstanceId) 
+				String updateInstanceId,
+				String deviceId) 
 			throws SurveyBlockedException, MissingSurveyException, IOException, FileUploadException, 
 			MissingTemplateException, AuthorisationException, Exception {
 
@@ -223,6 +224,18 @@ public class XFormData {
 			}	
 		}
 		
+		/*
+		 * DeviceId should be included in the survey contents, 
+		 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
+		 */
+		String masterDeviceId = si.getImei();
+		if(masterDeviceId == null || masterDeviceId.trim().length() == 0) {
+			masterDeviceId = deviceId;
+			if(masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
+				masterDeviceId = masterDeviceId.substring(11);
+			}
+		}
+		
 		// Write the upload event
 		UploadEvent ue = new UploadEvent();
 		ue.setUserName(user);
@@ -239,7 +252,7 @@ public class XFormData {
 		ue.setAssignmentId(assignmentId);
 		ue.setInstanceId(thisInstanceId);
 		ue.setLocation(si.getSurveyGeopoint());
-		ue.setImei(si.getImei());
+		ue.setImei(masterDeviceId);
 		ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);
 		ue.setStatus("success"); // Not really needed any more as status is really set in the subscriber event
 		ue.setIncomplete(incomplete);

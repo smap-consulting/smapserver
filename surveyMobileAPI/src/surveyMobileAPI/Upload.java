@@ -91,10 +91,11 @@ public class Upload extends Application {
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response postInstance(
+			@QueryParam("deviceID") String deviceId,
 			@Context HttpServletRequest request) throws IOException {
 		
 		log.info("New submssion");
-		return submission(request, null, null);
+		return submission(request, null, null, deviceId);
 	}
 	
 	/*
@@ -106,10 +107,11 @@ public class Upload extends Application {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response postUpdateInstance(
 			@Context HttpServletRequest request,
+			@QueryParam("deviceID") String deviceId,
 	        @PathParam("instanceId") String instanceId) throws IOException {
 		
 		log.info("Update submssion: " + instanceId);
-		return submission(request, instanceId, null);
+		return submission(request, instanceId, null, deviceId);
 	}
 	
 	/*
@@ -121,10 +123,11 @@ public class Upload extends Application {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response postInstanceWithKey(
 			@Context HttpServletRequest request,
+			@QueryParam("deviceID") String deviceId,
 			@PathParam("key") String key) throws IOException {
 		
 		log.info("New submssion with key");
-		return submission(request, null, key);
+		return submission(request, null, key, deviceId);
 	}
 	
 	/*
@@ -136,14 +139,15 @@ public class Upload extends Application {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response postUpdateInstanceWithKey(
 			@Context HttpServletRequest request,
+			@QueryParam("deviceID") String deviceId,
 			@PathParam("key") String key,
 	        @PathParam("instanceId") String instanceId) throws IOException {
 		
 		log.info("Update submssion with key: " + instanceId);
-		return submission(request, instanceId, key);
+		return submission(request, instanceId, key, deviceId);
 	}
 	
-	private Response submission(HttpServletRequest request,  String instanceId, String key) 
+	private Response submission(HttpServletRequest request,  String instanceId, String key, String deviceId) 
 			throws IOException {
 	
 		Response response = null;
@@ -195,7 +199,7 @@ public class Upload extends Application {
 			log.info("Upload Started ================= " + instanceId + " ==============");
 			log.info("Url:" + request.getRequestURI());
 			XFormData xForm = new XFormData();
-			xForm.loadMultiPartMime(request, user, instanceId);
+			xForm.loadMultiPartMime(request, user, instanceId, deviceId);
 			log.info("Server:" + request.getServerName());
 			log.info("userevent: " + user + " : uploaded results : " + instanceId + " : " + key );	
 			log.info("Info: Upload finished ---------------- " + instanceId + " ------------");

@@ -731,11 +731,19 @@ public class SubRelationalDB extends Subscriber {
 		
 		String qType = col.getQType();
 		String value = col.getValue();	// Escape quotes and trim
+		String colName = col.getName();
 		try {
 			new PrintStream(System.out, true, "UTF-8").println("value: " + value);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		// If the deviceId is not in the form results add it from the form meta data
+		if(colName != null && colName.equals("_device")) {
+			if(value == null || value.trim().length() == 0) {
+				value = device;
+			}
 		}
 		
 		if(phoneOnly) {
@@ -746,9 +754,10 @@ public class SubRelationalDB extends Subscriber {
 			}
 		} else {
 		
-			if(value != null) {
-				value = col.getValue().replace("'", "''").trim();	// Escape quotes and trim
+			if(value != null) {				
 	
+				value = value.replace("'", "''").trim();
+						
 				if(qType.equals("string") || qType.equals("select1") || qType.equals("barcode")) {
 					value = "'" + value + "'";
 					
