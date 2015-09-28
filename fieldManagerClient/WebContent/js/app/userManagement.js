@@ -635,6 +635,8 @@ function openOrganisationDialog(existing, organisationIndex) {
 	gCurrentOrganisationIndex = organisationIndex;
 	
 	$('#organisation_create_form')[0].reset();
+	$('#o_banner_logo').attr("src", "/images/smap_logo.png");
+	
 	if(existing) {
 		$('#o_name').val(org.name);
 		$('#o_company_name').val(org.company_name);

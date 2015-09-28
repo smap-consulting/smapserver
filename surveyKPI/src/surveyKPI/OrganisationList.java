@@ -36,7 +36,9 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.Project;
@@ -51,6 +53,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
@@ -492,6 +495,17 @@ public class OrganisationList extends Application {
 				pstmt.setInt(1, o.id);
 				log.info("SQL: " + sql + ":" + o.id);
 				pstmt.executeUpdate();
+				
+				// Delete the organisation folder
+				String basePath = GeneralUtilityMethods.getBasePath(request);
+				String fileFolder = basePath + "/media/organisation/" + o.id;
+			    File folder = new File(fileFolder);
+			    try {
+			    	log.info("Deleting organisation folder: " + fileFolder);
+					FileUtils.deleteDirectory(folder);
+				} catch (IOException e) {
+					log.info("Error deleting organisation folder:" + fileFolder + " : " + e.getMessage());
+				}
 			}
 
 			
