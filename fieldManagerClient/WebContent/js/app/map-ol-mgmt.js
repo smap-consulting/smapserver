@@ -55,7 +55,7 @@ function initializeMap(){
 		map = new OpenLayers.Map("map", mapOptions);  	
 		
 		// Add layers
-		map.addLayer(new OpenLayers.Layer.XYZ("OSM", "https://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
+		map.addLayer(new OpenLayers.Layer.XYZ("OSM", "http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
 		if(typeof google != 'undefined') {
 			map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
 			map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
