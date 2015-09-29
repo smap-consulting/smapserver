@@ -16,9 +16,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
+var gUserLocale = navigator.language;
+if (Modernizr.localstorage) {
+	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
+} 
+
 define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 
-        'bootbox'], 
-		function($, bootstrap, ol_mgmt, common, lang, bootbox) {
+        'bootbox',
+        'moment',
+        'datetimepicker'], 
+		function($, bootstrap, ol_mgmt, common, lang, bootbox, moment, datetimepicker) {
+
 	
 							// The following globals are only in this java script file
 var gTasks,					// Object containing the task data retrieved from the database
@@ -413,8 +421,13 @@ $(document).ready(function() {
 	});
 	$('#endDate').data("DateTimePicker").setDate(moment());
 	
+	$('#task_properties_scheduledDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false
+	});
+	
 	// Add responses to changing parameters
-	$('#startDate,#endDate').change(function(e) {	
+	$('#startDate,#endDate,#task_properties_scheduledDate').change(function(e) {	
 		if(validDates()) {
 			return true;
 		} else {
@@ -429,6 +442,7 @@ $(document).ready(function() {
 		var $selections = $(this).find('input[type=text],textarea,select').filter(':visible:first');
 		$selections.focus();
 	});
+	
 });
 
 /*
@@ -808,10 +822,18 @@ function refreshTableAssignments(tasks) {
 		
 		// Respond to clicking on a row
 		$(".tasks").find(".task_edit").click(function() {
-			var $this = $(this);
-			var taskid = $this.closest('tr').find('.select_row').data('taskid');
-			$('#task_properties_taskid').val(taskid);
-			$('#task_properties').modal("show");  // open the properties dialog
+			var $this = $(this),
+				idx = $this.closest('tr').data("idx"),
+				task = gTasks.features[idx].properties,
+				scheduleDate;
+		            	
+			console.log(task);
+		
+			// open the properties dialog
+			$('#task_properties_taskid').val(task.task_id);
+			$('#task_properties_repeat').prop('checked', task.repeat);
+			$('#task_properties_scheduledDate').data("DateTimePicker").setDate(task.scheduleAt);
+			$('#task_properties').modal("show");  
 
 		});
 		

@@ -66,6 +66,7 @@ import java.lang.reflect.Type;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -243,6 +244,7 @@ public class AllAssignments extends Application {
 				jp.put("user_name", user_name);
 				jp.put("address", resultSet.getString("address"));
 				jp.put("repeat", resultSet.getBoolean("repeat"));
+				jp.put("scheduleAt", resultSet.getDate("schedule_at"));
 				
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates
@@ -1406,6 +1408,9 @@ public class AllAssignments extends Application {
 	
 		int taskId = 0;
 		boolean repeat = false;
+		Date scheduleAt = null;
+		Calendar cal = Calendar.getInstance(); 
+		
 		
 		try {
 			
@@ -1422,24 +1427,25 @@ public class AllAssignments extends Application {
 						taskId = Integer.parseInt(item.getString());	
 					} else if(item.getFieldName().equals("repeat")) {
 						repeat = true;	
+					} else if(item.getFieldName().equals("scheduleAt")) {
+						scheduleAt = Date.valueOf(item.getString());	
 					}
-					
-					
+							
 				} else if(!item.isFormField()) {
 					// Handle Uploaded file
 					log.info("Field Name = "+item.getFieldName()+
 						", File Name = "+item.getName()+
 						", Content type = "+item.getContentType()+
-						", File Size = "+item.getSize());
-								
+						", File Size = "+item.getSize());		
 				}
 
 			}
 			
-			String sqlUpdate = "update tasks set repeat = ? where id = ?;";
+			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ? where id = ?;";
 			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
 			pstmtUpdate.setBoolean(1, repeat);
-			pstmtUpdate.setInt(2, taskId);
+			pstmtUpdate.setDate(2, scheduleAt);
+			pstmtUpdate.setInt(3, taskId);
 			log.info("SQL Update properties: " + pstmtUpdate.toString());
 			pstmtUpdate.executeUpdate();
 				

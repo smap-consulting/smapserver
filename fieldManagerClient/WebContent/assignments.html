@@ -134,16 +134,31 @@
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
      			<h4 class="modal-title" id="taskPropLabel"></h4>
    			</div>
-		     <div class="modal-body">
-				<form class="form" role="form" name="taskProperties">
-					<label class="control-label" for="users_select_user">Repeat: </label>
-					<div class="checkbox">
-						<label>
-							<input type="checkbox" name="repeat" value="repeat" id="task_properties_repeat">Repeat
-						</label>
+		     <div class="modal-body">	
+	   			<form role="form" class="form-horizontal" name="taskProperties">
+					<div class="form-group">
+						<label class="col-sm-2 control-label" for="users_select_user">Repeat</label>
+						<div class="col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" name="repeat" value="repeat" id="task_properties_repeat">Repeat
+								</label>
+							</div>
+						</div>
 					</div>
+					<div class="form-group">
+			            <label class="col-sm-2 control-label" for="startDate">Scheduled</label>
+		            	<div class="col-sm-10">
+			            	<div class='input-group date' id='task_properties_scheduledDate' data-toggle="tooltip"  data-container="body" title="Scheduled date in local time zone">
+			                	<input type='text' class="form-control" data-date-format="YYYY-MM-DD"/ name="scheduleAt">
+			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                </div>
+			             </div>
+			         </div>
+
 					<input id="task_properties_taskid" type="hidden" name="taskid" value="0" style="display:none;"/>
 				</form>
+						
 			</div>
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>

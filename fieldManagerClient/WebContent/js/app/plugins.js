@@ -118,7 +118,9 @@ window.log = function(){
 				// Check if we should show this record
 				showCompleted = item.properties.task_id > 0 && (settings.showCompleted || assignmentStatus !== "submitted");
 				if(showCompleted) {
-					tab[++idx] = '<tr>';
+					tab[++idx] = '<tr data-idx="';
+					tab[++idx] = recCounter - 1;
+					tab[++idx] = '">';
 					
 					// Add select checkbox
 					tab[++idx] = '<td class="control_td"><input class="select_row" type="checkbox" name="controls" data-taskid="';
