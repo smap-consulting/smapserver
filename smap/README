@@ -16,6 +16,20 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
+Version 15.09
+-------------
+Only version 2.4 of Apache web server is supported in version 15.09.
+
+From version 15.09 onwards the location of file storage is assumed to be "/smap".  The install scripts no longer
+allow you to set a different location.  If you store your files in a different location on disk and you don't
+want to use a symbolic link from /smap then you will need to update this location in the following files:
+   *  smap-volatile.conf  (In the apache sites-available directory)
+   *  subscribers.conf (In the /etc/init directory)
+   *  subscribers_fwd.conf (In the /etc/init directory)
+   *  bu.sh (in postgres home directory)
+   *  re.sh (in postgres home directory)
+
+
 Version 15.03
 -------------
 If you are using email you will need to add your email domain to the organisation setings or the server table if you

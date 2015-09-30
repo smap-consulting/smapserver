@@ -46,6 +46,13 @@ case $choice in
 #EOF
 #wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 
+echo '##### 0. check configuration
+# Set flag if this is apache2.4
+a24=`sudo apachectl -version | grep -c "2\.4"`
+if [ $a24 -eq 0 ]; then	
+	echo "%%%%%% Warning: Apache configuration files for Apache 2.4 will be installed. You may need to change these for your version of Apache web server"
+fi
+
 echo '##### 1. Update Ubuntu'
 sudo apt-get update
 sudo apt-get upgrade -y
@@ -68,9 +75,6 @@ sudo a2ensite default-ssl
 sudo mkdir /var/www/smap
 sudo mkdir /var/www/smap/fieldAnalysis
 sudo mkdir /var/www/smap/OpenLayers
-
-# Set flag if this is apache2.4
-a24=`sudo apachectl -version | grep -c "2\.4"`
 
 echo '##### 3. Install Tomcat'
 sudo apt-get install tomcat7 -y
@@ -136,56 +140,31 @@ then
 	sudo cp config_files/logging.properties $tc_logging
 
 	echo '# copy Apache cofiguration file'
-	if [ $a24 -eq 0 ]; then	
-		sudo mv $a_config_conf $a_config_conf.bu
-		sudo cp config_files/apache2.conf $a_config_conf
-	fi
-	if [ $a24 -eq 1 ]; then	
-		sudo mv $a_config_prefork_conf $a_config_prefork_conf.bu
-		sudo cp config_files/mpm_prefork.conf $a_config_prefork_conf
-	fi
+	sudo mv $a_config_prefork_conf $a_config_prefork_conf.bu
+	sudo cp config_files/mpm_prefork.conf $a_config_prefork_conf
 
 	echo '# copy apache default file'
 
-        rm -f config_files/*fix*
-	if [ $a24 -eq 0 ]; then	
-		echo "Setting up Apache 2.2"
-		sudo mv $a_default_xml $a_default_xml.bu
-		cat config_files/default | sed "s#{your_files}#$filelocn#g" > config_files/default.fix2
-		sudo cp config_files/default.fix2 $a_default_xml
 
-		sudo mv $a_default_ssl_xml $a_default_ssl_xml.bu
-		cat config_files/default-ssl | sed "s#{your_files}#$filelocn#g" > config_files/default-ssl.fix2
-		sudo cp config_files/default-ssl.fix2 $a_default_ssl_xml
-	fi
-	if [ $a24 -eq 1 ]; then	
-		echo "Setting up Apache 2.4"
-		cat config_files/a24_default | sed "s#{your_files}#$filelocn#g" > config_files/default.fix2
-		sudo cp $a_config_dir/000-default.conf $a_config_dir/000-default.conf.bu
-		sudo cp config_files/default.fix2 $a_config_dir/000-default.conf
+	echo "Setting up Apache 2.4"
+	sudo cp $a_config_dir/smap.conf $a_config_dir/smap.conf.bu
+	sudo cp config_files/a24-smap.conf $a_config_dir/smap.conf
 
-		cat config_files/a24_default-ssl | sed "s#{your_files}#$filelocn#g" > config_files/default-ssl.fix2
-		sudo cp $a_config_dir/default-ssl.conf $a_config_dir/default-ssl.conf.bu
-		sudo cp config_files/default-ssl.fix2 $a_config_dir/default-ssl.conf
+	sudo cp $a_config_dir/smap-ssl.conf $a_config_dir/smap-ssl.conf.bu
+	sudo cp config_files/a24-smap-ssl.conf $a_config_dir/smap-ssl.conf
 
-		sudo a2ensite 000-default
-		sudo a2ensite default-ssl
-	fi
+	./apacheConfig.sh
 
 	echo '# copy subscriber upstart files'
-	sed -i "s#{your_files}#$filelocn#g" config_files/subscribers.conf
 	sudo cp config_files/subscribers.conf $upstart_dir
-	sed -i "s#{your_files}#$filelocn#g" config_files/subscribers_fwd.conf
 	sudo cp config_files/subscribers_fwd.conf $upstart_dir
 
 	echo '# update bu.sh file'
-	cat bu.sh | sed "s#{your_files}#$filelocn#g" > bu.sh.fix
-	sudo cp bu.sh.fix ~postgres/bu.sh
+	sudo cp bu.sh ~postgres/bu.sh
 	sudo chown postgres ~postgres/bu.sh
 
 	echo '# update re.sh file'
-	cat re.sh | sed "s#{your_files}#$filelocn#g" > re.sh.fix
-	sudo cp re.sh.fix ~postgres/re.sh
+	sudo cp re.sh ~postgres/re.sh
 	sudo chown postgres ~postgres/re.sh
 
 

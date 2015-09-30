@@ -10,7 +10,7 @@ pg_dump survey_definitions -c > backups/survey_definitions.sql
 pg_dump results -c > backups/results.sql
 
 # Get attachments
-cp -r {your_files} backups
+cp -r /smap backups
 
 tar -zcf $file backups/*
 # Encrypt

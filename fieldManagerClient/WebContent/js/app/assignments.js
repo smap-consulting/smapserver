@@ -673,7 +673,7 @@ function getUsers(projectId) {
 	$('#users_filter').append('<option value="-1">Unassigned Users</options>');
 
 	$('#users_select_new_task').append('<option value="-1">Unassigned</options>');
-	$('#users_task_group').append('<option value="-1">Unassigned</options>');
+	$('#users_task_group, #users_select_user').append('<option value="-1">Unassigned</options>');
 	
 	$.ajax({
 		url: "/surveyKPI/userList",

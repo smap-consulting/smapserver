@@ -874,15 +874,18 @@ public class AllAssignments extends Application {
 
 		PreparedStatement pstmtInsert = null;
 		PreparedStatement pstmtUpdate = null;
+		PreparedStatement pstmtDelete = null;
 		String insertSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
 		String updateSQL = "update assignments set " +
 				"assignee = ?," +
 				"status = ? " +
 				"where id = ?;";
+		String deleteSQL = "delete from assignments where id = ?;";
 		
 		try {
 			pstmtInsert = connectionSD.prepareStatement(insertSQL);
 			pstmtUpdate = connectionSD.prepareStatement(updateSQL);
+			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
 			connectionSD.setAutoCommit(false);
 			
 			for(int i = 0; i < aArray.size(); i++) {
@@ -893,12 +896,18 @@ public class AllAssignments extends Application {
 					pstmtInsert.setInt(1,a.user.id);
 					pstmtInsert.setString(2, a.assignment_status);
 					pstmtInsert.setInt(3, a.task_id);
+					log.info("Add new assignment: " + pstmtInsert.toString());
 					pstmtInsert.executeUpdate();
-				} else {	// update existing assignment
+				} else if(a.user.id >= 0) {	// update existing assignment
 					pstmtUpdate.setInt(1,a.user.id);
 					pstmtUpdate.setString(2, a.assignment_status);
 					pstmtUpdate.setInt(3, a.assignment_id);
+					log.info("Update existing assignment: " + pstmtUpdate.toString());
 					pstmtUpdate.executeUpdate();
+				} else {		// delete the assignment
+					pstmtDelete.setInt(1, a.assignment_id);
+					log.info("Delete existing assignment: " + pstmtDelete.toString());
+					pstmtDelete.executeUpdate();
 				}
 		
 			}
@@ -913,6 +922,7 @@ public class AllAssignments extends Application {
 		} finally {
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (SQLException e) {}
+			try {if (pstmtDelete != null) {pstmtDelete.close();}} catch (SQLException e) {}
 			try {
 				if (connectionSD != null) {
 					connectionSD.setAutoCommit(true);	// Set auto commit back to true to ensure the connection has this when returned to the pool

@@ -122,7 +122,10 @@ function setTableSurvey(view) {
 
 function exportTable($this, view) {
 	
-	var tableName = "";
+	var tableName = "",
+		$firstHeader,
+		hideFirstColumn = false;
+	
 	if(view.qId == "-1") {
 		tableName = view.table;
 	} else {
@@ -134,9 +137,26 @@ function exportTable($this, view) {
 
 	$panel = $this.closest('.pContent');
 	
+	// Hide columns that should not be exported
+	$panel.find('thead').find('tr').each(function( index ) {
+		$firstHeader = $(this).find('th').first();
+		if($firstHeader.text().trim().length == 0) {
+			hideFirstColumn = true;
+			$firstHeader.hide();
+		}
+	});
+	if(hideFirstColumn) {
+	 	$panel.find('tbody').find('tr').each(function( index ) {
+			$(this).find('td').first().hide();
+		});
+	}
 	var csvValue = $panel.find('table').table2CSV({delivery:'value'});
 	$this.closest('form').find('.csv_name').val(tableName);
 	$this.closest('form').find('.csv_text').val(csvValue);
+	
+	// Show hidden columns
+	$panel.find('tbody, thead').find('td, th').show();
+	
 	
 }
 

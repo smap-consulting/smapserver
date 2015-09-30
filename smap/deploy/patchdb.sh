@@ -1,5 +1,16 @@
 #!/bin/sh
 
+echo '##### 0. check configuration'
+# Set flag if this is apache2.4
+a24=`sudo apachectl -version | grep -c "2\.4"`
+if [ $a24 -eq 0 ]; then	
+	echo "%%%%%% Warning: Apache configuration files for Apache 2.4 will be installed. "
+	echo "PLease install Apache 2.4 prior to upgrading"
+	exit 1;
+fi
+
+
+
 version=1
 if [ -e ~/smap_version ]
 then
@@ -130,26 +141,9 @@ fi
 # All versions
 # Copy the new apache configuration files
 
-        # Set flag if this is apache2.4
-        a24=`sudo apachectl -version | grep -c "2\.4"`
-        a_config_dir="/etc/apache2/sites-available"
-        cd ../install
-        sudo mv $a_config_dir/smap-volatile $a_config_dir/smap-volatile.bu
-        if [ $a24 -eq 0 ]; then
-                echo "Setting up Apache 2.2"
-                sudo cp config_files/volatile $a_config_dir/smap-volatile
-        fi
-        if [ $a24 -eq 1 ]; then
-                echo "Setting up Apache 2.4"
-                sudo cp config_files/a24_volatile $a_config_dir/smap-volatile
-        fi
-        service apache2 restart
-
-        sudo a2ensite  $a_config_dir/smap.conf
-        sudo a2ensite  $a_config_dir/smap-ssl.conf
-        sudo service apache2 reload
-
-        cd ../deploy
+cd ../install
+./apacheConfig.sh
+cd ../deploy
 
 # Patch pyxform
 sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
