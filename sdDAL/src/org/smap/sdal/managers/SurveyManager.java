@@ -402,7 +402,6 @@ public class SurveyManager {
 				}
 				
 				// Get the language labels
-				System.out.println("Get language labels: " + q.text_id + " : " + q.hint_id);
 				UtilityMethodsEmail.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				//q.labels_orig = q.labels;		// Set the original label values
 				

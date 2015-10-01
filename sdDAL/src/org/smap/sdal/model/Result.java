@@ -14,7 +14,8 @@ public class Result {
 	public String type;	// form || choice || key || || user || a question type
 	public ArrayList<ArrayList<Result>> subForm = null;
 	public ArrayList<Result> choices = null;
-	public Label label;
+	//public Label label;
+	public String appearence;	// Appearence directives including nopdf
 	
 	public Result (String n, String t, String v, boolean set, int f, int q, int c, String ln) {
 		name = n;

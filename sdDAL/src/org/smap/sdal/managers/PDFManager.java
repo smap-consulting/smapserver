@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -123,6 +124,7 @@ public class PDFManager {
 		
 		org.smap.sdal.model.Survey survey = null;
 		User user = null;
+		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options.
 		
 	
 		SurveyManager sm = new SurveyManager();
@@ -202,7 +204,12 @@ public class PDFManager {
 				
 				/*
 				 * Create a PDF without the template
-				 */					
+				 */				
+				
+				// TODO Attempt to get letter head for the survey
+				// TODO get letter head for Page 1.
+				// TODO get letter head for general pages
+					
 				Parser parser = getXMLParser();
 				
 				Document document = new Document();
@@ -212,7 +219,9 @@ public class PDFManager {
 		        
 				int languageIdx = getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					processForm(parser, document, survey.instance.results.get(i), survey, basePath, languageIdx);		
+					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
+							languageIdx,
+							generateBlank);		
 				}
 				document.close();
 			}
@@ -473,7 +482,8 @@ public class PDFManager {
 			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
 			String basePath,
-			int languageIdx) throws DocumentException, IOException {
+			int languageIdx,
+			boolean generateBlank) throws DocumentException, IOException {
 		
 		int groupWidth = 4;
 		
@@ -481,7 +491,7 @@ public class PDFManager {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
 				for(int k = 0; k < r.subForm.size(); k++) {
-					processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx);
+					processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, generateBlank);
 				} 
 			} else if(r.qIdx >= 0) {
 				// Process the question
@@ -490,12 +500,12 @@ public class PDFManager {
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				Label label = question.labels.get(languageIdx);
 			
-				if(includeResult(r, question.inMeta)) {
+				if(includeResult(r, question)) {
 					if(question.type.equals("begin group")) {
 						groupWidth = processGroup(parser, document, question, label);
 					} else {
 						Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
-						document.add(processRow(parser, row, basePath));
+						document.add(processRow(parser, row, basePath, generateBlank));
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
 					}
 				}
@@ -536,23 +546,29 @@ public class PDFManager {
 	/*
 	 * Make a decision as to whether this result should be included in the PDF
 	 */
-	private boolean includeResult(Result r, boolean inMeta) {
-		boolean include = true;
+	private boolean includeResult(Result r, org.smap.sdal.model.Question question) {
 		
-		if(r.name == null) {
+		boolean include = true;
+		boolean inMeta = question.inMeta;
+
+		// Don't include the question if it has been marked as not to be included
+		if(question.appearance != null && question.appearance.contains("pdfno")) {
 			include = false;
-		} else if(r.name.startsWith("meta") && r.type.equals("begin group")){
-			include = false;
-		} else if(inMeta) {
-			include = false;
-		} else if(r.name.startsWith("meta_group")) {
-			include = false;
-		} else if(r.name.equals("_task_key")) {
-			include = false;
-		} else if(r.name.equals("_instanceid")) {
-			include = false;
-		} else if(r.name.equals("_task_replace")) {
-			include = false;
+		}
+		
+		if(include) {
+			if(r.name == null) {
+				include = false;
+			} else if(r.name.startsWith("meta") && r.type.equals("begin group")){
+				include = false;
+			} else if(inMeta) {
+				include = false;
+			} else if(r.name.startsWith("meta_group")) {
+				include = false;
+			} else if(r.name.startsWith("_")) {
+				// Don't include questions that start with "_",  these are only added to the letter head
+				include = false;
+			} 
 		}
 		
 		
@@ -563,11 +579,15 @@ public class PDFManager {
 	/*
 	 * Add the table row to the document
 	 */
-	PdfPTable processRow(Parser parser, Row row, String basePath) throws BadElementException, MalformedURLException, IOException {
+	PdfPTable processRow(Parser parser, Row row, String basePath,
+			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
 		PdfPTable table = new PdfPTable(row.groupWidth);
 		for(DisplayItem di : row.items) {
 			//di.debug();
-			table.addCell(addDisplayItem(parser, di, basePath));
+			ArrayList<PdfPCell> cells = addDisplayItem(parser, di, basePath, generateBlank);
+			for(PdfPCell cell : cells) {
+				table.addCell(cell);
+			}
 		}
 		return table;
 	}
@@ -618,6 +638,7 @@ public class PDFManager {
 						question,
 						r.choices, 
 						languageIdx);
+				setColors(question.appearance, di);
 				row.items.add(di);
 				
 				totalWidth += qWidth;
@@ -632,6 +653,40 @@ public class PDFManager {
 			
 		}
 		return row;
+	}
+	
+	/*
+	 * Set the colors for the question
+	 */
+	void setColors(String appearance, DisplayItem di) {
+	
+		if(appearance != null) {
+			String [] appValues = appearance.split(" ");
+			if(appearance != null) {
+				for(int i = 0; i < appValues.length; i++) {
+					if(appValues[i].startsWith("pdflabelbg")) {
+						di.labelbg = getColor(appValues[i]);
+					}
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Get the color values for a single appearance value
+	 * Format is:  xxxx_0Xrr_0Xgg_0xbb
+	 */
+	BaseColor getColor(String aValue) {
+		
+		BaseColor c = null;
+		String [] parts = aValue.split("_");
+		if(parts.length >= 4) {
+			c = new BaseColor(Integer.decode("0x" + parts[1]), 
+					Integer.decode("0x" + parts[2]),
+					Integer.decode("0x" + parts[3]));
+		}
+		
+		return c;
 	}
 	
 	/*
@@ -663,9 +718,13 @@ public class PDFManager {
 	/*
 	 * Add the question label, hint, and any media
 	 */
-	private PdfPCell addDisplayItem(Parser parser, DisplayItem di, String basePath) throws BadElementException, MalformedURLException, IOException {
-			
-		PdfPCell cell = new PdfPCell();
+	private ArrayList<PdfPCell> addDisplayItem(Parser parser, DisplayItem di, 
+			String basePath,
+			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
+		
+		ArrayList<PdfPCell> cells = new ArrayList <PdfPCell> ();
+		PdfPCell labelCell = new PdfPCell();
+		PdfPCell valueCell = new PdfPCell();
 		 
 		// Add label
 		StringBuffer html = new StringBuffer();
@@ -686,58 +745,96 @@ public class PDFManager {
 		parser.elements.clear();
 		parser.xmlParser.parse(new StringReader(html.toString()));
 		for(Element element : parser.elements) {
-			cell.addElement(element);
+			labelCell.addElement(element);
 		}
 		
 		
 		if(di.type.startsWith("select")) {
-			processSelect(cell, di);
+			processSelect(valueCell, di, generateBlank);
 		} else if (di.type.equals("image")) {
 			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
 				Image img = Image.getInstance(basePath + "/" + di.value);
 				img.scaleToFit(200, 300);
-				cell.addElement(img);
+				valueCell.addElement(img);
 			} else {
 				// TODO add empty image
 			}
 			
 		} else {
 			// Todo process other question types
-			cell.addElement(new Paragraph(di.value));
+			valueCell.addElement(new Paragraph(di.value));
 		}
-		cell.setColspan(di.width);
-		return cell;
+		labelCell.setColspan(di.width / 2);
+		if(di.labelbg != null) {
+			labelCell.setBackgroundColor(di.labelbg);
+		}
+		valueCell.setColspan(di.width / 2);
+		cells.add(labelCell);
+		cells.add(valueCell);
+		return cells;
 	}
 	
-	private void processSelect(PdfPCell cell, DisplayItem di) { 
+	private void processSelect(PdfPCell cell, DisplayItem di,
+			boolean generateBlank) { 
 
+		// If generating blank template
 		List list = new List();
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
 		
+		// If recording selected values
+		StringBuilder sb = new StringBuilder("");
+		
 		boolean isSelect = di.type.equals("select") ? true : false;
+		
 		for(DisplayItem aChoice : di.choices) {
 			ListItem item = new ListItem(aChoice.text);
 			
 			if(isSelect) {
 				if(aChoice.isSet) {
-					item.setListSymbol(new Chunk("\uf046", Symbols)); 
+					if(generateBlank) {
+						item.setListSymbol(new Chunk("\uf046", Symbols)); 
+						list.add(item);
+					} else {
+						if(sb.length() > 0) {
+							sb.append(", ");
+						}
+						sb.append(aChoice.text);
+					}
 				} else {
-					item.setListSymbol(new Chunk("\uf096", Symbols)); 
+					if(generateBlank) {
+						item.setListSymbol(new Chunk("\uf096", Symbols)); 
+						list.add(item);
+					}
 				}
 			} else {
 				if(aChoice.isSet) {
-					item.setListSymbol(new Chunk("\uf111", Symbols)); 
+					if(generateBlank) {
+						item.setListSymbol(new Chunk("\uf111", Symbols)); 
+						list.add(item);
+					} else {
+						if(sb.length() > 0) {
+							sb.append(", ");
+						}
+						sb.append(aChoice.text);
+					}
 				} else {
 					//item.setListSymbol(new Chunk("\241", Symbols)); 
-					item.setListSymbol(new Chunk("\uf10c", Symbols)); 
+					if(generateBlank) {
+						item.setListSymbol(new Chunk("\uf10c", Symbols)); 
+						list.add(item);
+					}
 				}
 			}
-			list.add(item);
+			
 			//aChoice.debug();
 			
 		}
-		cell.addElement(list);
+		if(generateBlank) {
+			cell.addElement(list);
+		} else {
+			cell.addElement(new Paragraph(sb.toString()));
+		}
 
 	}
 }
