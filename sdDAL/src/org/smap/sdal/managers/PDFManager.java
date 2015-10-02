@@ -93,12 +93,14 @@ public class PDFManager {
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
 	private static final String DEFAULT_CSS = "/usr/bin/smap/resources/css/default_pdf.css";
-	private static int GROUP_WIDTH_DEFAULT = 4;
+	//private static int GROUP_WIDTH_DEFAULT = 4;
 
 	private class Parser {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
 	}
+	
+	int [] cols = {10};	// Current Array of columns
 
 	/*
 	 * Call this function to create a PDF
@@ -485,7 +487,7 @@ public class PDFManager {
 			int languageIdx,
 			boolean generateBlank) throws DocumentException, IOException {
 		
-		int groupWidth = 4;
+		//int groupWidth = 4;
 		
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
@@ -502,10 +504,12 @@ public class PDFManager {
 			
 				if(includeResult(r, question)) {
 					if(question.type.equals("begin group")) {
-						groupWidth = processGroup(parser, document, question, label);
+						//groupWidth = processGroup(parser, document, question, label);
 					} else {
-						Row row = prepareRow(groupWidth, record, survey, j, languageIdx);
-						document.add(processRow(parser, row, basePath, generateBlank));
+						Row row = prepareRow(record, survey, j, languageIdx);
+						System.out.println("Process Row: " + cols.length + " ; " + cols[0]);
+						PdfPTable newTable = processRow(parser, row, basePath, generateBlank);
+						document.add(newTable);
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
 					}
 				}
@@ -516,6 +520,7 @@ public class PDFManager {
 		return;
 	}
 	
+	/*
 	private int processGroup(
 			Parser parser,
 			Document document, 
@@ -581,13 +586,12 @@ public class PDFManager {
 	 */
 	PdfPTable processRow(Parser parser, Row row, String basePath,
 			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
-		PdfPTable table = new PdfPTable(row.groupWidth);
+		PdfPTable table = new PdfPTable(row.items.size());	
+		System.out.println("  $$$ Number of items: " + row.items.size());
 		for(DisplayItem di : row.items) {
 			//di.debug();
-			ArrayList<PdfPCell> cells = addDisplayItem(parser, di, basePath, generateBlank);
-			for(PdfPCell cell : cells) {
-				table.addCell(cell);
-			}
+			table.addCell(new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank)));
+			
 		}
 		return table;
 	}
@@ -601,33 +605,42 @@ public class PDFManager {
 	 *  will be extended so that the total is equal to the group width
 	 */
 	private Row prepareRow(
-			int groupWidth, 
 			ArrayList<Result> record, 
 			org.smap.sdal.model.Survey survey, 
-			int offest,
+			int offset,
 			int languageIdx) {
 		
 		Row row = new Row();
-		row.groupWidth = groupWidth;
+		row.groupWidth = cols.length;
 		
 		int totalWidth = 0;
-		for(int i = offest; i < record.size(); i++) {
+		for(int i = offset; i < record.size(); i++) {
 			Result r = record.get(i);
 			
 			Form form = survey.forms.get(r.fIdx);
 			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 			Label label = question.labels.get(languageIdx);
 			
-			// Decide whether or not to add the next question to this row
-			int qWidth  = question.getWidth();
-			if(qWidth == 0) {
-				// Adjust zero width questions to have the width of the rest of the row
-				qWidth = groupWidth - totalWidth;
+			if(i == offset) {
+				// First question of row - update the number of columns
+				int [] updateCols = question.updateCols(cols);
+				if(updateCols != null) {
+					cols = updateCols;
+				}
 			}
-			if(qWidth > 0 && (totalWidth == 0 || (qWidth + totalWidth <= groupWidth))) {
+			
+			// Decide whether or not to add the next question to this row
+			//int qWidth  = question.getWidth();
+			//if(qWidth == 0) {
+				// Adjust zero width questions to have the width of the rest of the row
+			//	qWidth = groupWidth - totalWidth;
+			//}
+			
+			if(i - offset < cols.length) {
+			//if(qWidth > 0 && (totalWidth == 0 || (qWidth + totalWidth <= groupWidth))) {
 				// Include this question
 				DisplayItem di = new DisplayItem();
-				di.width = qWidth;
+				di.width = cols[i-offset];
 				di.text = label.text == null ? "" : label.text;
 				di.hint = label.hint ==  null ? "" : label.hint;
 				di.type = question.type;
@@ -638,15 +651,15 @@ public class PDFManager {
 						question,
 						r.choices, 
 						languageIdx);
-				setColors(question.appearance, di);
+				setQuestionFormats(question.appearance, di);
 				row.items.add(di);
 				
-				totalWidth += qWidth;
+				//totalWidth += qWidth;
 			} else {
 				// Adjust width of last question added so that the total is the full width of the row
-				if(totalWidth < groupWidth) {
-					row.items.get(row.items.size() - 1).width += (groupWidth - totalWidth);
-				}
+				//if(totalWidth < groupWidth) {
+				//	row.items.get(row.items.size() - 1).width += (groupWidth - totalWidth);
+				//}
 				break;
 			}
 			
@@ -656,16 +669,22 @@ public class PDFManager {
 	}
 	
 	/*
-	 * Set the colors for the question
+	 * Set the attributes for this question from keys set in the appearance column
 	 */
-	void setColors(String appearance, DisplayItem di) {
+	void setQuestionFormats(String appearance, DisplayItem di) {
 	
 		if(appearance != null) {
 			String [] appValues = appearance.split(" ");
 			if(appearance != null) {
 				for(int i = 0; i < appValues.length; i++) {
 					if(appValues[i].startsWith("pdflabelbg")) {
-						di.labelbg = getColor(appValues[i]);
+						setColor(appValues[i], di);
+					}
+					if(appValues[i].startsWith("pdflabelw")) {
+						setWidths(appValues[i], di);
+					}
+					if(appValues[i].startsWith("pdfheight")) {
+						setHeight(appValues[i], di);
 					}
 				}
 			}
@@ -676,17 +695,48 @@ public class PDFManager {
 	 * Get the color values for a single appearance value
 	 * Format is:  xxxx_0Xrr_0Xgg_0xbb
 	 */
-	BaseColor getColor(String aValue) {
+	void setColor(String aValue, DisplayItem di) {
 		
-		BaseColor c = null;
+		di.labelbg = null;
+
 		String [] parts = aValue.split("_");
 		if(parts.length >= 4) {
-			c = new BaseColor(Integer.decode("0x" + parts[1]), 
+			di.labelbg = new BaseColor(Integer.decode("0x" + parts[1]), 
 					Integer.decode("0x" + parts[2]),
 					Integer.decode("0x" + parts[3]));
 		}
+
+	}
+	
+	/*
+	 * Set the widths of the label and the value
+	 * Appearance is:  pdflabelw_## where ## is a number from 0 to 10
+	 */
+	void setWidths(String aValue, DisplayItem di) {
 		
-		return c;
+		String [] parts = aValue.split("_");
+		if(parts.length >= 2) {
+			di.widthLabel = Integer.valueOf(parts[1]);   		
+		}
+		
+		// Do bounds checking
+		if(di.widthLabel < 0 || di.widthLabel > 10) {
+			di.widthLabel = 5;		
+		}
+		
+	}
+	
+	/*
+	 * Set the height of the value
+	 * Appearance is:  pdfheight_## where ## is the height
+	 */
+	void setHeight(String aValue, DisplayItem di) {
+		
+		String [] parts = aValue.split("_");
+		if(parts.length >= 2) {
+			di.valueHeight = Double.valueOf(parts[1]);   		
+		}
+		
 	}
 	
 	/*
@@ -718,13 +768,13 @@ public class PDFManager {
 	/*
 	 * Add the question label, hint, and any media
 	 */
-	private ArrayList<PdfPCell> addDisplayItem(Parser parser, DisplayItem di, 
+	private PdfPTable addDisplayItem(Parser parser, DisplayItem di, 
 			String basePath,
 			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
 		
-		ArrayList<PdfPCell> cells = new ArrayList <PdfPCell> ();
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
+		PdfPTable tItem = null;
 		 
 		// Add label
 		StringBuffer html = new StringBuffer();
@@ -762,16 +812,37 @@ public class PDFManager {
 			
 		} else {
 			// Todo process other question types
+			if(di.value == null || di.value.trim().length() == 0) {
+				di.value = " ";	// Need a space to show a blank row
+			}
 			valueCell.addElement(new Paragraph(di.value));
 		}
-		labelCell.setColspan(di.width / 2);
+		
+		int widthValue = 5;
+		if(di.widthLabel == 10) {
+			widthValue = 1;	// Label and value in 1 column
+			di.widthLabel = 1;
+			tItem = new PdfPTable(1); 
+		} else {
+			// Label and value in 2 columns
+			widthValue = 10 - di.widthLabel;
+			tItem = new PdfPTable(10);
+		}
+		// Format label cell
+		labelCell.setColspan(di.widthLabel);
 		if(di.labelbg != null) {
 			labelCell.setBackgroundColor(di.labelbg);
 		}
-		valueCell.setColspan(di.width / 2);
-		cells.add(labelCell);
-		cells.add(valueCell);
-		return cells;
+		
+		// Format value cell
+		valueCell.setColspan(widthValue);
+		if(generateBlank && di.valueHeight > -1.0) {
+			valueCell.setFixedHeight((float) di.valueHeight);
+		}
+		
+		tItem.addCell(labelCell);
+		tItem.addCell(valueCell);
+		return tItem;
 	}
 	
 	private void processSelect(PdfPCell cell, DisplayItem di,
