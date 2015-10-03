@@ -46,7 +46,7 @@ case $choice in
 #EOF
 #wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 
-echo '##### 0. check configuration
+echo '##### 0. check configuration'
 # Set flag if this is apache2.4
 a24=`sudo apachectl -version | grep -c "2\.4"`
 if [ $a24 -eq 0 ]; then	
@@ -143,16 +143,19 @@ then
 	sudo mv $a_config_prefork_conf $a_config_prefork_conf.bu
 	sudo cp config_files/mpm_prefork.conf $a_config_prefork_conf
 
-	echo '# copy apache default file'
-
-
 	echo "Setting up Apache 2.4"
 	sudo cp $a_config_dir/smap.conf $a_config_dir/smap.conf.bu
 	sudo cp config_files/a24-smap.conf $a_config_dir/smap.conf
 
 	sudo cp $a_config_dir/smap-ssl.conf $a_config_dir/smap-ssl.conf.bu
 	sudo cp config_files/a24-smap-ssl.conf $a_config_dir/smap-ssl.conf
-
+	
+	# disable default config - TODO work out how to get Smap to coexist with existing Apache installations	
+	sudo a2dissite 000-default
+	sudo a2dissite default-ssl
+	
+	# Update the volatile configuration setting, only this should change after initial installation
+	chmod +x apacheConfig.sh
 	./apacheConfig.sh
 
 	echo '# copy subscriber upstart files'

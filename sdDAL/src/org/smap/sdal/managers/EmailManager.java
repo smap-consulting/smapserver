@@ -204,12 +204,13 @@ public class EmailManager {
 			    txtMessage.append(".");			
 
 		    } else if(type.equals("notify")) {
-			    txtMessage.append("This is a notification from Smap server http://");
-			    txtMessage.append(serverName);
+			    txtMessage.append("This email is a notification from a smap server.  ");
+			    //txtMessage.append(serverName);
 			    
 			    // TODO make this generic
-			    txtMessage.append(". Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");
+			    txtMessage.append(" The server administrator email is ");
 			    txtMessage.append(adminEmail);
+			    txtMessage.append(" You can send an email to the administrator if you think that you should not be receiving these notifications.");
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
 			    	txtMessage.append("http://");

@@ -29,6 +29,10 @@ want to use a symbolic link from /smap then you will need to update this locatio
    *  bu.sh (in postgres home directory)
    *  re.sh (in postgres home directory)
 
+Version 15.09 is also moving away from supporting http.  https will be required from most access.  However because android phones 
+cannot use https if the certificate has not been signed by a certificate authority, the services used by android are still 
+available from http.  You should enable the redirects to https in /etc/apache2/sites-available/smap.conf.  This will then allow 
+connection without initially specifying https. 
 
 Version 15.03
 -------------
