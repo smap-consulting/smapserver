@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.itextpdf.text.BaseColor;
+
 /*
  * Form Class
  * Used for survey editing
@@ -58,40 +60,52 @@ public class Question {
 	}
 	
 	/*
-	 * Get the width of the question
-	 *  This is obtained primarily from the width attribute, if it is not set their then get it
-	 *   from the appearance attribute
-	 *  Special values:
-	 *    -1:  Width not set
-	 *    0:   No width specified set to remaining width of row
+	 * Update the column settings if the appearance option in this question is set
+	 *  Return null if this question does not change the column settings
 	 */
-	public int getWidth() {
+	public int [] updateCols(int [] currentCols) {
 		
-		/*
-		 * If the width has not been set yet attempt to get it from appearance
-		 */
-		if(width == -1) {
-			width = 0;
+		int [] newCols;
+		int totalWidth = 0;
+		
+		if(appearance != null && appearance.contains("pdfcols")) {
+			
+			String [] appValues = appearance.split(" ");
 			if(appearance != null) {
-				if(appearance.matches("w[0-9]")) {		// TODO proper regex to match any w[0-9]
-					
-					int idx1 = appearance.indexOf('w');	// TODO do this properly
-					int idx2 = appearance.indexOf(' ', idx1);
-					String sWidth = null;
-					if(idx2 > 0) {
-						sWidth = appearance.substring(idx1 + 1, idx2);
-					} else {
-						sWidth = appearance.substring(idx1 + 1);
-					}
-					try {
-						width = Integer.parseInt(sWidth);
-					} catch (Exception e) {
-						log.log(Level.SEVERE, "Could not parse group width: " + width);
+				for(int i = 0; i < appValues.length; i++) {
+					if(appValues[i].startsWith("pdfcols")) {
+						
+						String [] parts = appValues[i].split("_");
+						
+						newCols = new int [parts.length - 1];
+						for(int j = 1; j < parts.length; j++) {
+							newCols[j - 1] = Integer.valueOf(parts[j]);
+							totalWidth += newCols[j - 1];
+						}
+						if(totalWidth != 10) {
+							newCols[newCols.length -1] += 10 - totalWidth;		// Make sure widths all add up to 10
+						}
+						
+						if(newCols.length != currentCols.length) {
+							return newCols;
+						}
+						
+						for(int j = 0; j < newCols.length; j++) {
+							if(newCols[j] != currentCols[j]) {
+								return newCols;
+							}
+						}
+						
+						break;
 					}
 				}
+			
 			}
+			
 		}
-		return width;
+		
+		return null;
+
 	}
 	
 }
