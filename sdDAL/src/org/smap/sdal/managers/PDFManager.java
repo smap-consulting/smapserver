@@ -590,7 +590,9 @@ public class PDFManager {
 		System.out.println("  $$$ Number of items: " + row.items.size());
 		for(DisplayItem di : row.items) {
 			//di.debug();
-			table.addCell(new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank)));
+			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
+			cell.setBorderColor(BaseColor.GRAY);
+			table.addCell(cell);
 			
 		}
 		return table;
@@ -774,6 +776,8 @@ public class PDFManager {
 		
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
+		labelCell.setBorderColor(BaseColor.GRAY);
+		valueCell.setBorderColor(BaseColor.GRAY);
 		PdfPTable tItem = null;
 		 
 		// Add label
