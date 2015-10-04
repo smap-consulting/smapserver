@@ -70,7 +70,6 @@ sudo a2enmod proxy
 sudo a2enmod proxy_ajp
 sudo a2enmod ssl
 sudo a2enmod headers
-sudo a2ensite default-ssl
 
 sudo mkdir /var/www/smap
 sudo mkdir /var/www/smap/fieldAnalysis

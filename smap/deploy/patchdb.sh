@@ -3,6 +3,7 @@
 echo '##### 0. check configuration'
 # Set flag if this is apache2.4
 a24=`sudo apachectl -version | grep -c "2\.4"`
+a_config_dir="/etc/apache2/sites-available"
 if [ $a24 -eq 0 ]; then	
 	echo "%%%%%% Warning: Apache configuration files for Apache 2.4 will be installed. "
 	echo "PLease install Apache 2.4 prior to upgrading"
@@ -63,7 +64,6 @@ then
 	sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform
 	sudo rm -rf /usr/bin/smap/pyxform
 	sudo cp -r src/pyxform/pyxform/ /usr/bin/smap/
-	sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 	sudo a2enmod headers
 fi
 
@@ -122,18 +122,25 @@ sudo mkdir /usr/bin/smap/resources/css
 echo "1503" > ~/smap_version
 fi
 # version 15.08
-if [ $version -lt "1508" ]
+if [ $version -lt "1509" ]
 then
 
 # Patch the database
 java -jar version1/patch1505.jar apply survey_definitions results
-echo "1508" > ~/smap_version
+echo "1509" > ~/smap_version
 
 a_config_dir="/etc/apache2/sites-available"
 cd ../install
 # Set up new apache configuration structure
-cp config_files/smap.conf $a_config_dir
-cp config_files/smap-ssl.conf $a_config_dir
+sudo cp config_files/a24-smap.conf $a_config_dir/smap.conf
+sudo cp config_files/a24-smap-ssl.conf $a_config_dir/smap-ssl.conf
+sudo a2ensite  smap.conf
+sudo a2ensite  smap-ssl.conf
+
+# Disable default sites - TODO find some way of smap coexistign with other sites on the same apache server automatically
+sudo a2dissite 000-default
+sudo a2dissite default-ssl
+
 cd ../deploy
 fi
 
@@ -142,9 +149,10 @@ fi
 # Copy the new apache configuration files
 
 cd ../install
+chmod +x apacheConfig.sh
 ./apacheConfig.sh
 cd ../deploy
 
 # Patch pyxform
-sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
+sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
