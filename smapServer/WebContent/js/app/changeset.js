@@ -209,16 +209,16 @@ define([
 				
 				// Add a reference for the label
 				form = survey.forms[change.property.formIndex];
-				if(change.property.propType === "label" && item.text_id) {
+				if(change.property.prop === "label" && item.text_id) {
 					change.property.key = item.text_id;
-				} else if(change.property.propType === "hint" && item.hint_id) {
+				} else if(change.property.prop === "hint" && item.hint_id) {
 					change.property.key = item.hint_id;
 				} else {
 					// Create reference for this new Label		
 					if(change.property.type === "question") {
-						change.property.key = getFormPath(form) + "/" + item.name + ":" + change.property.propType;	
+						change.property.key = getFormPath(form) + "/" + item.name + ":label";	
 					} else {
-						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":" + change.property.propType;
+						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
 					}
 				}
 			} else {
@@ -914,7 +914,7 @@ define([
 	 */
 	function getFormPath(form) {
 		var path = form.name,
-			forms = globals.model.forms,
+			forms = globals.model.survey.forms,
 			i;
 		while(form.parentform !== 0) {
 			for(i = 0; i < forms.length; i++) {

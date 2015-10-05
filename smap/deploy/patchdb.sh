@@ -129,7 +129,6 @@ then
 java -jar version1/patch1505.jar apply survey_definitions results
 echo "1509" > ~/smap_version
 
-a_config_dir="/etc/apache2/sites-available"
 cd ../install
 # Set up new apache configuration structure
 sudo cp config_files/a24-smap.conf $a_config_dir/smap.conf
