@@ -784,14 +784,14 @@ public class PDFManager {
 		StringBuffer html = new StringBuffer();
 		html.append("<span class='label'>");
 		if(di.text != null && di.text.trim().length() > 0) {
-			html.append(di.text);
+			html.append(GeneralUtilityMethods.unesc(di.text));
 		} else {
 			html.append(di.name);
 		}
 		html.append("</span>");
 		html.append("<span class='hint'>");
 		if(di.hint != null) {
-			html.append(di.hint);
+			html.append(GeneralUtilityMethods.unesc(di.hint));
 		html.append("</span>");
 		}
 		
@@ -819,7 +819,7 @@ public class PDFManager {
 			if(di.value == null || di.value.trim().length() == 0) {
 				di.value = " ";	// Need a space to show a blank row
 			}
-			valueCell.addElement(new Paragraph(di.value));
+			valueCell.addElement(new Paragraph(GeneralUtilityMethods.unesc(di.value)));
 		}
 		
 		int widthValue = 5;
@@ -863,7 +863,7 @@ public class PDFManager {
 		boolean isSelect = di.type.equals("select") ? true : false;
 		
 		for(DisplayItem aChoice : di.choices) {
-			ListItem item = new ListItem(aChoice.text);
+			ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
 			
 			if(isSelect) {
 				if(aChoice.isSet) {
