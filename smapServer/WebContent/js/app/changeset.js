@@ -209,7 +209,7 @@ define([
 				
 				// Add a reference for the label
 				form = survey.forms[change.property.formIndex];
-				if(change.property.prop === "label" && item.text_id) {
+				if(change.property.prop === "label" || change.property.prop === "media" && item.text_id) {
 					change.property.key = item.text_id;
 				} else if(change.property.prop === "hint" && item.hint_id) {
 					change.property.key = item.hint_id;
