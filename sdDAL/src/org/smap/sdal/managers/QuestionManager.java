@@ -215,7 +215,7 @@ public class QuestionManager {
 		
 		PreparedStatement pstmt = null;
 		String sql = "delete from question q where qname = ? and q.q_id in " +
-				" (select q_id from question q, form f where q.q_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
+				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
 
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq - 1 where f_id = ? and seq >= ? and f_id in " +

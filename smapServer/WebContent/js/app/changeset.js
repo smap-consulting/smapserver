@@ -234,7 +234,8 @@ define([
 			change.question.fId = form.id;
 			if(change.action === "delete") {
 				item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
-				change.question.qId = item.id;
+				change.question.id = item.id;
+				change.question.name = item.name;
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "delete") {
