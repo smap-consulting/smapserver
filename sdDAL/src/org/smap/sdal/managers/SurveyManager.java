@@ -1362,11 +1362,11 @@ public class SurveyManager {
 	    		
 		    		String priKey = resultSet.getString(1);
 		    		int newParentKey = resultSet.getInt(1);   		
-		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null));
+		    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null, null));
 		    		
 		    		if(isTopLevel) {
 		    			String user = resultSet.getString(2);
-		    			record.add(new Result("user", "user", user, false, fIdx, -1, 0, null));
+		    			record.add(new Result("user", "user", user, false, fIdx, -1, 0, null, null));
 		    		}
 	    		
 		    		addDataForQuestions(
@@ -1392,10 +1392,10 @@ public class SurveyManager {
 	    		
 	    		String priKey = "";
 	    		int newParentKey = 0;
-	    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null)); 
+	    		record.add(new Result("prikey", "key", priKey, false, fIdx, -1, 0, null, null)); 
 	    		
 	    		if(isTopLevel) {
-	    			record.add(new Result("user", "user", null, false, fIdx, -1, 0, null)); 
+	    			record.add(new Result("user", "user", null, false, fIdx, -1, 0, null, null)); 
 	    		}
     		
 	    		addDataForQuestions(
@@ -1457,12 +1457,13 @@ public class SurveyManager {
 			String qType = q.type; 
 			String qSource = q.source;
 			String listName = q.list_name;
+			String appearance = q.appearance;
 			
 			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
     			Form subForm = s.getSubForm(form, q);
     			
     			if(subForm != null) {	
-    				Result nr = new Result(qName, "form", null, false, fIdx, qIdx, 0, null);
+    				Result nr = new Result(qName, "form", null, false, fIdx, qIdx, 0, null, appearance);
 
     				nr.subForm = getResults(subForm, 
     						s.getFormIdx(subForm.id),
@@ -1482,12 +1483,12 @@ public class SurveyManager {
     			
     		} else if(qType.equals("begin group")) { 
     			
-    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
+    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null, appearance));
     			index--;		// Decrement the index as the begin group was not in the SQL query
     			
     		} else if(qType.equals("end group")) { 
     			
-    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null));
+    			record.add(new Result(qName, qType, null, false, fIdx, qIdx, 0, null, appearance));
     			index--;		// Decrement the index as the end group was not in the SQL query
     			
     		} else if(qType.equals("select")) {		// Get the data from all the option columns
@@ -1513,7 +1514,7 @@ public class SurveyManager {
 			    	resultSetOptions.next();		// There will only be one record
 				}
 	    		
-		    	Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, listName);
+		    	Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, listName, appearance);
 		    	hasColumns = false;
 		    	int oIdx = -1;
 		    	for(Option option : options) {
@@ -1523,7 +1524,7 @@ public class SurveyManager {
 		    		if(resultSetOptions != null) {
 		    			optSet = resultSetOptions.getBoolean(opt);
 		    		}
-			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName)); 
+			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName, appearance)); 
 
 		    		
 				}
@@ -1534,7 +1535,7 @@ public class SurveyManager {
 			} else if(qType.equals("select1")) {		// Get the data from all the option columns
 				
 				ArrayList<Option> options = new ArrayList<Option>(q.getValidChoices(s));
-				Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, null);
+				Result nr = new Result(qName, qType, null, false, fIdx, qIdx, 0, null, appearance);
 				String value = "";
 				if(resultSet != null) {
 					value = resultSet.getString(index);
@@ -1544,7 +1545,7 @@ public class SurveyManager {
 				for(Option option : options) {
 					oIdx++;
 		    		boolean optSet = option.value.equals(value) ? true : false;	
-			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName)); 
+			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName, appearance)); 
 				}
 		    	record.add(nr);	
 
@@ -1572,7 +1573,7 @@ public class SurveyManager {
 					}
 				} 
 
-        		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0, null));
+        		record.add(new Result(qName, qType, value, false, fIdx, qIdx, 0, null, appearance));
 
 			}
 			try {

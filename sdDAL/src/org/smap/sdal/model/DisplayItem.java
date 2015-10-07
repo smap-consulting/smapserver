@@ -9,6 +9,7 @@ public class DisplayItem {
 
 	public int width;			// Width of entire cell item relative to enclosing item
 	public int widthLabel = 5;	// Percentage width of label (If label is full width value appears below)
+	public int space = 0;			// Space to be added before this item
 	public String value;
 	public double valueHeight = -1.0;
 	public String name;

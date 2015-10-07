@@ -9,4 +9,13 @@ public class Row {
 	public ArrayList<DisplayItem> items = new ArrayList<DisplayItem> ();
 	//public int numberQuestions;		// Number of questions in the row
 	public int groupWidth;
+	public int spaceBefore() {
+		int space = 0;
+		for(DisplayItem di : items) {
+			if(di.space > space) {
+				space = di.space;
+			}
+		}
+		return space;
+	}
 }

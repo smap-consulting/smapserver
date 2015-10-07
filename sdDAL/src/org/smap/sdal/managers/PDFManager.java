@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,13 +95,18 @@ public class PDFManager {
 	public static Font defaultFont = null;
 	private static final String DEFAULT_CSS = "/usr/bin/smap/resources/css/default_pdf.css";
 	//private static int GROUP_WIDTH_DEFAULT = 4;
+	private static int NUMBER_TABLE_COLS = 10;
+	private static int NUMBER_QUESTION_COLS = 10;
 
 	private class Parser {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
 	}
 	
-	int [] cols = {10};	// Current Array of columns
+	private class RepeatTracker {																// Level descended in form hierarchy
+		HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
+		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
+	}
 
 	/*
 	 * Call this function to create a PDF
@@ -220,10 +226,14 @@ public class PDFManager {
 				document.open();
 		        
 				int languageIdx = getLanguageIdx(survey, language);
+				RepeatTracker repeat = new RepeatTracker();
+				
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
 							languageIdx,
-							generateBlank);		
+							generateBlank,
+							0,
+							repeat);		
 				}
 				document.close();
 			}
@@ -485,30 +495,69 @@ public class PDFManager {
 			org.smap.sdal.model.Survey survey,
 			String basePath,
 			int languageIdx,
-			boolean generateBlank) throws DocumentException, IOException {
+			boolean generateBlank,
+			int depth,
+			RepeatTracker repeat) throws DocumentException, IOException {
 		
 		//int groupWidth = 4;
+		int length = 0;
 		
+		boolean firstQuestion = true;
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
-				for(int k = 0; k < r.subForm.size(); k++) {
-					processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, generateBlank);
-				} 
+				
+				firstQuestion = true;			// Make sure there is a gap when we return from the sub form
+				// Calculate the index for this repeating record
+				length++;
+				String countMap = length + "_" + depth;
+				Integer repIdx = repeat.count.get(countMap);
+				if(repIdx == null) {
+					repIdx = new Integer(1);
+					repeat.count.put(countMap, repIdx);
+				}
+				
+				// If this is a blank template check to see the number of times we should repeat this sub form
+				if(generateBlank) {
+					int blankRepeats = getBlankRepeats(r.appearance);
+					System.out.println("Generating " + blankRepeats);
+					for(int k = 0; k < blankRepeats; k++) {
+						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
+								generateBlank, 
+								depth + 1,
+								repeat);
+					}
+				} else {
+					for(int k = 0; k < r.subForm.size(); k++) {
+						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
+								generateBlank, 
+								depth++,
+								repeat);
+					} 
+				}
 			} else if(r.qIdx >= 0) {
 				// Process the question
 				
 				Form form = survey.forms.get(r.fIdx);
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-				Label label = question.labels.get(languageIdx);
+				//Label label = question.labels.get(languageIdx);
 			
 				if(includeResult(r, question)) {
 					if(question.type.equals("begin group")) {
 						//groupWidth = processGroup(parser, document, question, label);
+					} else if(question.type.equals("end group")) {
+						//ignore
 					} else {
-						Row row = prepareRow(record, survey, j, languageIdx);
-						System.out.println("Process Row: " + cols.length + " ; " + cols[0]);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank);
+						Row row = prepareRow(record, survey, j, languageIdx, repeat);
+						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth);
+						
+						// Add a gap if this is the first question of the record
+						// or the previous row was ata different depth
+						if(firstQuestion) {
+							newTable.setSpacingBefore(5);
+						}
+						firstQuestion = false;
+						
 						document.add(newTable);
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
 					}
@@ -585,13 +634,29 @@ public class PDFManager {
 	 * Add the table row to the document
 	 */
 	PdfPTable processRow(Parser parser, Row row, String basePath,
-			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
-		PdfPTable table = new PdfPTable(row.items.size());	
+			boolean generateBlank,
+			int depth) throws BadElementException, MalformedURLException, IOException {
+		//PdfPTable table = new PdfPTable(row.items.size());	
+		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
+		
+		// Add the cells to record repeat indexes
+		for(int i = 0; i < depth; i++) {
+			PdfPCell c = new PdfPCell();
+			c.addElement(new Paragraph(String.valueOf(depth)));
+			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
+			table.addCell(c);
+		}
+		
 		System.out.println("  $$$ Number of items: " + row.items.size());
 		for(DisplayItem di : row.items) {
 			//di.debug();
 			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
-			cell.setBorderColor(BaseColor.GRAY);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setColspan(di.width);
+			int spaceBefore = row.spaceBefore();
+			if(spaceBefore > 0) {
+				table.setSpacingBefore(spaceBefore);
+			}
 			table.addCell(cell);
 			
 		}
@@ -610,12 +675,12 @@ public class PDFManager {
 			ArrayList<Result> record, 
 			org.smap.sdal.model.Survey survey, 
 			int offset,
-			int languageIdx) {
+			int languageIdx,
+			RepeatTracker repeat) {
 		
 		Row row = new Row();
-		row.groupWidth = cols.length;
+		row.groupWidth = repeat.cols.length;
 		
-		int totalWidth = 0;
 		for(int i = offset; i < record.size(); i++) {
 			Result r = record.get(i);
 			
@@ -625,43 +690,25 @@ public class PDFManager {
 			
 			if(i == offset) {
 				// First question of row - update the number of columns
-				int [] updateCols = question.updateCols(cols);
+				int [] updateCols = question.updateCols(repeat.cols);
 				if(updateCols != null) {
-					cols = updateCols;
+					repeat.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
-			}
-			
-			// Decide whether or not to add the next question to this row
-			//int qWidth  = question.getWidth();
-			//if(qWidth == 0) {
-				// Adjust zero width questions to have the width of the rest of the row
-			//	qWidth = groupWidth - totalWidth;
-			//}
-			
-			if(i - offset < cols.length) {
-			//if(qWidth > 0 && (totalWidth == 0 || (qWidth + totalWidth <= groupWidth))) {
-				// Include this question
-				DisplayItem di = new DisplayItem();
-				di.width = cols[i-offset];
-				di.text = label.text == null ? "" : label.text;
-				di.hint = label.hint ==  null ? "" : label.hint;
-				di.type = question.type;
-				di.name = question.name;
-				di.value = r.value;
-				di.choices = convertChoiceListToDisplayItems(
-						survey, 
-						question,
-						r.choices, 
-						languageIdx);
-				setQuestionFormats(question.appearance, di);
-				row.items.add(di);
 				
-				//totalWidth += qWidth;
+				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r);
+			} else if(i - offset < repeat.cols.length) {
+				
+				int [] updateCols = question.updateCols(repeat.cols);		// Returns null if the number of columns has not changed
+				
+				if(updateCols == null) {
+					includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r);
+				} else {
+					// If the question updated the number of columns then we will need to start a new row
+					break;
+				}
+		
+			
 			} else {
-				// Adjust width of last question added so that the total is the full width of the row
-				//if(totalWidth < groupWidth) {
-				//	row.items.get(row.items.size() - 1).width += (groupWidth - totalWidth);
-				//}
 				break;
 			}
 			
@@ -670,6 +717,54 @@ public class PDFManager {
 		return row;
 	}
 	
+	/*
+	 * Include question in the row
+	 */
+	private void includeQuestion(ArrayList<DisplayItem> items, int [] cols, int colIdx, Label label, 
+			org.smap.sdal.model.Question question,
+			int offset,
+			org.smap.sdal.model.Survey survey,
+			int languageIdx,
+			Result r) {
+		DisplayItem di = new DisplayItem();
+		di.width = cols[colIdx-offset];
+		di.text = label.text == null ? "" : label.text;
+		di.hint = label.hint ==  null ? "" : label.hint;
+		di.type = question.type;
+		di.name = question.name;
+		di.value = r.value;
+		di.choices = convertChoiceListToDisplayItems(
+				survey, 
+				question,
+				r.choices, 
+				languageIdx);
+		setQuestionFormats(question.appearance, di);
+		items.add(di);
+	}
+	
+	/*
+	 * Get the number of blank repeats to generate
+	 */
+	int getBlankRepeats(String appearance) {
+		int repeats = 1;
+		
+		if(appearance != null) {
+			String [] appValues = appearance.split(" ");
+			if(appearance != null) {
+				for(int i = 0; i < appValues.length; i++) {
+					if(appValues[i].startsWith("pdfrepeat")) {
+						String [] parts = appValues[i].split("_");
+						if(parts.length >= 2) {
+							repeats = Integer.valueOf(parts[1]);
+						}
+						break;
+					}
+				}
+			}
+		}
+					
+		return repeats;
+	}
 	/*
 	 * Set the attributes for this question from keys set in the appearance column
 	 */
@@ -687,6 +782,9 @@ public class PDFManager {
 					}
 					if(appValues[i].startsWith("pdfheight")) {
 						setHeight(appValues[i], di);
+					}
+					if(appValues[i].startsWith("pdfspace")) {
+						setSpace(appValues[i], di);
 					}
 				}
 			}
@@ -742,6 +840,19 @@ public class PDFManager {
 	}
 	
 	/*
+	 * Set space before this item
+	 * Appearance is:  pdfheight_## where ## is the height
+	 */
+	void setSpace(String aValue, DisplayItem di) {
+		
+		String [] parts = aValue.split("_");
+		if(parts.length >= 2) {
+			di.space = Integer.valueOf(parts[1]);   		
+		}
+		
+	}
+	
+	/*
 	 * Convert the results  and survey definition arrays to display items
 	 */
 	ArrayList<DisplayItem> convertChoiceListToDisplayItems(
@@ -776,8 +887,8 @@ public class PDFManager {
 		
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
-		labelCell.setBorderColor(BaseColor.GRAY);
-		valueCell.setBorderColor(BaseColor.GRAY);
+		labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
+		valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
 		PdfPTable tItem = null;
 		 
 		// Add label

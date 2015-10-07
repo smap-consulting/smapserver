@@ -15,9 +15,9 @@ public class Result {
 	public ArrayList<ArrayList<Result>> subForm = null;
 	public ArrayList<Result> choices = null;
 	//public Label label;
-	public String appearence;	// Appearence directives including nopdf
+	public String appearance;	// Appearance directives including nopdf
 	
-	public Result (String n, String t, String v, boolean set, int f, int q, int c, String ln) {
+	public Result (String n, String t, String v, boolean set, int f, int q, int c, String ln, String app) {
 		name = n;
 		type = t;
 		value = v;
@@ -26,6 +26,7 @@ public class Result {
 		qIdx = q;
 		cIdx = c;
 		listName = ln;
+		appearance = app;
 		
 		if(t.startsWith("select")) {
 			choices = new ArrayList<Result> ();
