@@ -131,7 +131,7 @@ define([
 					seq: seq,
 					formIndex: formIndex,
 					itemIndex: itemIndex,
-					$deletedElement: $deletedElement	// Jquery element that is next to the new question
+					$deletedElement: $deletedElement	// JQuery element that is next to the new question
 				}
 		};
 		changeset.add(change);

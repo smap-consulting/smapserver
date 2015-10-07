@@ -657,7 +657,7 @@ public class UtilityMethodsEmail {
 					pstmt.setInt(1, s.id);
 					pstmt.setString(2, s.languages.get(i));
 					pstmt.setString(3, text_id);
-					log.info("Get labels: " + pstmt.toString());
+					//log.info("Get labels: " + pstmt.toString());
 					
 					resultSet = pstmt.executeQuery();		
 					while(resultSet.next()) {
