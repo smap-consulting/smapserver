@@ -104,7 +104,7 @@ public class PDFManager {
 	}
 	
 	private class RepeatTracker {																// Level descended in form hierarchy
-		HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
+		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
 	}
 
@@ -137,6 +137,7 @@ public class PDFManager {
 	
 		SurveyManager sm = new SurveyManager();
 		UserManager um = new UserManager();
+		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
 
 		try {
 			
@@ -233,6 +234,8 @@ public class PDFManager {
 							languageIdx,
 							generateBlank,
 							0,
+							0,
+							repIndexes,
 							repeat);		
 				}
 				document.close();
@@ -497,10 +500,17 @@ public class PDFManager {
 			int languageIdx,
 			boolean generateBlank,
 			int depth,
+			int length,
+			int[] repIndexes,
 			RepeatTracker repeat) throws DocumentException, IOException {
 		
+		System.out.println("Process Form: " + depth + " : " + length);
 		//int groupWidth = 4;
-		int length = 0;
+		
+		// Check that the depth of repeats hasn't exceeded the maximum
+		if(depth > repIndexes.length - 1) {
+			depth = repIndexes.length - 1;	
+		}
 		
 		boolean firstQuestion = true;
 		for(int j = 0; j < record.size(); j++) {
@@ -508,30 +518,27 @@ public class PDFManager {
 			if(r.type.equals("form")) {
 				
 				firstQuestion = true;			// Make sure there is a gap when we return from the sub form
-				// Calculate the index for this repeating record
-				length++;
-				String countMap = length + "_" + depth;
-				Integer repIdx = repeat.count.get(countMap);
-				if(repIdx == null) {
-					repIdx = new Integer(1);
-					repeat.count.put(countMap, repIdx);
-				}
-				
 				// If this is a blank template check to see the number of times we should repeat this sub form
 				if(generateBlank) {
 					int blankRepeats = getBlankRepeats(r.appearance);
 					System.out.println("Generating " + blankRepeats);
 					for(int k = 0; k < blankRepeats; k++) {
+						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
 								generateBlank, 
 								depth + 1,
+								k,
+								repIndexes,
 								repeat);
 					}
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
+						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 
-								depth++,
+								depth + 1,
+								k,
+								repIndexes,
 								repeat);
 					} 
 				}
@@ -549,7 +556,7 @@ public class PDFManager {
 						//ignore
 					} else {
 						Row row = prepareRow(record, survey, j, languageIdx, repeat);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth);
+						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, length, repIndexes, repeat);
 						
 						// Add a gap if this is the first question of the record
 						// or the previous row was ata different depth
@@ -635,19 +642,24 @@ public class PDFManager {
 	 */
 	PdfPTable processRow(Parser parser, Row row, String basePath,
 			boolean generateBlank,
-			int depth) throws BadElementException, MalformedURLException, IOException {
-		//PdfPTable table = new PdfPTable(row.items.size());	
+			int depth,
+			int length,
+			int[] repIndexes,
+			RepeatTracker repeat) throws BadElementException, MalformedURLException, IOException {
+
 		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
 		
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
+			
+			System.out.println("Index: " + i + " : " + repIndexes[i]);
 			PdfPCell c = new PdfPCell();
-			c.addElement(new Paragraph(String.valueOf(depth)));
+			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1)));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 		}
 		
-		System.out.println("  $$$ Number of items: " + row.items.size());
+		System.out.println("  Number of items: " + row.items.size());
 		for(DisplayItem di : row.items) {
 			//di.debug();
 			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
@@ -678,6 +690,7 @@ public class PDFManager {
 			int languageIdx,
 			RepeatTracker repeat) {
 		
+		System.out.println("Prepare row");
 		Row row = new Row();
 		row.groupWidth = repeat.cols.length;
 		
