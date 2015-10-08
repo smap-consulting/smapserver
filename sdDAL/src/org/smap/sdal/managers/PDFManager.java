@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,6 +15,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,9 +44,13 @@ import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
+import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.AcroFields;
+import com.itextpdf.text.pdf.AcroFields.Item;
 import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfImportedPage;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfReader;
@@ -164,9 +170,14 @@ public class PDFManager {
 			 */
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
-			if(survey.instance.user != null) {
-				user = um.getByIdent(connectionSD, survey.instance.user);
+			String userName = survey.instance.user;
+			if(userName == null) {
+				userName = remoteUser;
 			}
+			if(userName != null) {
+				user = um.getByIdent(connectionSD, userName);
+			}
+			
 			
 			// If a filename was not specified then get one from the survey data
 			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
@@ -218,14 +229,42 @@ public class PDFManager {
 				// TODO Attempt to get letter head for the survey
 				// TODO get letter head for Page 1.
 				// TODO get letter head for general pages
-					
+				
+				String letterName = basePath + File.separator + "misc" + File.separator + "x.pdf";
+				int marginLeft = 36;
+				int marginRight = 36;
+				int marginTop = 54;
+				int marginBottom = 36;
+				
+				ByteArrayOutputStream baos = null;
+				ByteArrayOutputStream baos2 = null;
+				PdfWriter writer = null;
+
+				File letterFile = new File(letterName);
+				
+				
+				/*
+				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
+				 * Else just create the document directly in a single pass
+				 */
+				System.out.println("Creating file for letter head: " + letterName);
+				
 				Parser parser = getXMLParser();
 				
-				Document document = new Document();
-				PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+				// Create the underlying document as a byte array
+				Document document = new Document(PageSize.A4, marginLeft, marginRight, marginTop, marginBottom);
+				
+				if(letterFile.exists()) {
+					baos = new ByteArrayOutputStream();
+					baos2 = new ByteArrayOutputStream();
+					writer = PdfWriter.getInstance(document, baos);
+				} else {
+					writer = PdfWriter.getInstance(document, outputStream);
+				}
+				
 				writer.setInitialLeading(12);
 				document.open();
-		        
+				
 				int languageIdx = getLanguageIdx(survey, language);
 				RepeatTracker repeat = new RepeatTracker();
 				
@@ -238,7 +277,40 @@ public class PDFManager {
 							repIndexes,
 							repeat);		
 				}
+				
 				document.close();
+				
+				if(letterFile.exists()) {
+					
+					// Add stationary
+					PdfReader reader = new PdfReader(baos.toByteArray());	// Underlying document
+					PdfReader s_reader = new PdfReader(letterName);			// Stationary
+					
+					PdfStamper stamper = new PdfStamper(reader, baos2);
+					PdfImportedPage letter1 = stamper.getImportedPage(s_reader, 1);
+					int n = reader.getNumberOfPages();
+					PdfContentByte background;
+					for(int i = 0; i < n; i++ ) {
+						background = stamper.getUnderContent(i + 1);
+						background.addTemplate(letter1, 0, 0);
+					}
+					
+					
+					stamper.close();
+					reader.close();
+					
+					// Update AcroFields in Stationary
+					reader = new PdfReader(baos2.toByteArray());		// Document with stationary
+					stamper = new PdfStamper(reader, outputStream);
+					
+					if(user != null) {
+						fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
+					}
+					
+					stamper.setFormFlattening(true);
+					stamper.close();
+				}
+				
 			}
 			
 			
@@ -415,7 +487,10 @@ public class PDFManager {
 					
 			pdfForm.setField("user_name", user.name);
 			pdfForm.setField("user_company", user.company_name);
+			pdfForm.setField("organisation", "Luber jack");
 			
+			Map <String, Item> x = pdfForm.getFields();
+			System.out.println("We have: " + x.size());
 			/*
 			 * User configurable data TODO This should be an array of key value pairs
 			 * As interim use a hard coded class to hold the data
@@ -552,11 +627,14 @@ public class PDFManager {
 				if(includeResult(r, question)) {
 					if(question.type.equals("begin group")) {
 						//groupWidth = processGroup(parser, document, question, label);
+						if(question.isNewPage()) {
+							document.newPage();
+						}
 					} else if(question.type.equals("end group")) {
 						//ignore
 					} else {
 						Row row = prepareRow(record, survey, j, languageIdx, repeat);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, length, repIndexes, repeat);
+						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes);
 						
 						// Add a gap if this is the first question of the record
 						// or the previous row was ata different depth
@@ -565,6 +643,10 @@ public class PDFManager {
 						}
 						firstQuestion = false;
 						
+						// Start a new page if the first question needs to be on a new page
+						if(row.items.get(0).isNewPage) {
+							document.newPage();
+						}
 						document.add(newTable);
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
 					}
@@ -643,9 +725,7 @@ public class PDFManager {
 	PdfPTable processRow(Parser parser, Row row, String basePath,
 			boolean generateBlank,
 			int depth,
-			int length,
-			int[] repIndexes,
-			RepeatTracker repeat) throws BadElementException, MalformedURLException, IOException {
+			int[] repIndexes) throws BadElementException, MalformedURLException, IOException {
 
 		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
 		
@@ -701,6 +781,8 @@ public class PDFManager {
 			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 			Label label = question.labels.get(languageIdx);
 			
+			boolean isNewPage = question.isNewPage();
+			
 			if(i == offset) {
 				// First question of row - update the number of columns
 				int [] updateCols = question.updateCols(repeat.cols);
@@ -708,13 +790,14 @@ public class PDFManager {
 					repeat.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
 				
-				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r);
+				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage);
 			} else if(i - offset < repeat.cols.length) {
-				
+				// 2nd or later questions in the row
 				int [] updateCols = question.updateCols(repeat.cols);		// Returns null if the number of columns has not changed
 				
-				if(updateCols == null) {
-					includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r);
+				
+				if(updateCols == null || isNewPage) {
+					includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage);
 				} else {
 					// If the question updated the number of columns then we will need to start a new row
 					break;
@@ -738,7 +821,9 @@ public class PDFManager {
 			int offset,
 			org.smap.sdal.model.Survey survey,
 			int languageIdx,
-			Result r) {
+			Result r,
+			boolean isNewPage) {
+		
 		DisplayItem di = new DisplayItem();
 		di.width = cols[colIdx-offset];
 		di.text = label.text == null ? "" : label.text;
@@ -746,6 +831,7 @@ public class PDFManager {
 		di.type = question.type;
 		di.name = question.name;
 		di.value = r.value;
+		di.isNewPage = isNewPage;
 		di.choices = convertChoiceListToDisplayItems(
 				survey, 
 				question,
@@ -789,16 +875,13 @@ public class PDFManager {
 				for(int i = 0; i < appValues.length; i++) {
 					if(appValues[i].startsWith("pdflabelbg")) {
 						setColor(appValues[i], di);
-					}
-					if(appValues[i].startsWith("pdflabelw")) {
+					} else if(appValues[i].startsWith("pdflabelw")) {
 						setWidths(appValues[i], di);
-					}
-					if(appValues[i].startsWith("pdfheight")) {
+					} else if(appValues[i].startsWith("pdfheight")) {
 						setHeight(appValues[i], di);
-					}
-					if(appValues[i].startsWith("pdfspace")) {
+					} else if(appValues[i].startsWith("pdfspace")) {
 						setSpace(appValues[i], di);
-					}
+					} 
 				}
 			}
 		}
@@ -913,10 +996,14 @@ public class PDFManager {
 			html.append(di.name);
 		}
 		html.append("</span>");
-		html.append("<span class='hint'>");
-		if(di.hint != null) {
-			html.append(GeneralUtilityMethods.unesc(di.hint));
-		html.append("</span>");
+		
+		// Only include hints if we are generating a blank template
+		if(generateBlank) {
+			html.append("<span class='hint'>");
+			if(di.hint != null) {
+				html.append(GeneralUtilityMethods.unesc(di.hint));
+			html.append("</span>");
+			}
 		}
 		
 		

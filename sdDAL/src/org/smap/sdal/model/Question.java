@@ -60,7 +60,7 @@ public class Question {
 	}
 	
 	/*
-	 * Update the column settings if the appearance option in this question is set
+	 * Update the column settings if the appearance option in this question is set to pdfcols
 	 *  Return null if this question does not change the column settings
 	 */
 	public int [] updateCols(int [] currentCols) {
@@ -106,6 +106,29 @@ public class Question {
 		
 		return null;
 
+	}
+	
+	/*
+	 * Return true if this question needs to be displayed on a new page in pdf reports
+	 */
+	public boolean isNewPage() {
+		boolean newPage = false;
+		
+		if(appearance != null && appearance.contains("pdfnewpage")) {
+			
+			String [] appValues = appearance.split(" ");
+			if(appearance != null) {
+				for(int i = 0; i < appValues.length; i++) {
+					if(appValues[i].equals("pdfnewpage")) {
+						newPage = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		
+		return newPage;
 	}
 	
 }
