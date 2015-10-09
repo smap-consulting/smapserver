@@ -83,7 +83,8 @@ public class UsageReports extends Application {
 			@Context HttpServletResponse response,
 			@PathParam("oId") int oId,
 			@QueryParam("month") int month,			// 1 - 12
-			@QueryParam("year") int year) throws Exception {
+			@QueryParam("year") int year,
+			@QueryParam("period") String period) throws Exception {
 
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());   // Service only available on business servers
 		
@@ -102,6 +103,9 @@ public class UsageReports extends Application {
 		// Get the base path
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
+		// Get the organisation name
+		String org_name = GeneralUtilityMethods.getOrganisationName(connectionSD, oId);
+		
 		try {
 			UsagePDFManager pm = new UsagePDFManager();
 			pm.createPdf(
@@ -111,7 +115,9 @@ public class UsageReports extends Application {
 					response,
 					oId,
 					month,
-					year);
+					year,
+					period,
+					org_name);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);

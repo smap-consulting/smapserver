@@ -303,6 +303,43 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the organisation name for the organisation id
+	 */
+	static public String getOrganisationName(
+			Connection sd, 
+			int o_id) throws SQLException {
+		
+		
+		String sqlGetOrgName = "select o.name, o.company_name " +
+				" from organisation o " +
+				" where o.id = ?;";
+		
+		PreparedStatement pstmt = null;
+		String name = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetOrgName);
+			pstmt.setInt(1, o_id);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				name = rs.getString(2);	
+				if(name == null) {
+					name = rs.getString(1);
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return name;
+	}
+	
+	/*
 	 * Get the user id from the user ident
 	 */
 	static public int getUserId(

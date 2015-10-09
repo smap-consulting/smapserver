@@ -398,11 +398,15 @@ $(document).ready(function() {
     		d = new Date(usageMsec),
     		month = d.getMonth() + 1,
     		year = d.getFullYear(),
-    		oId = gOrganisationList[gCurrentOrganisationIndex].id;
+    		oId = gOrganisationList[gCurrentOrganisationIndex].id,
+    		period,
+    		month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     	
-    	console.log(oId + " Date: " + year + " " + month);
+    	// Calculate the period as text so the web service doesn't have to (can also use language translations here)  	
+    	period = month_names[month -1] + " " + year;
+    	
     	$('#get_usage_popup').modal("hide");
-    	getUsage(oId, month, year);
+    	getUsage(oId, month, year, period);
     });
     
     /*
@@ -1136,10 +1140,10 @@ function getUsers() {
 /*
  * Get a usage report
  */
-function getUsage(oId, month, year) {
+function getUsage(oId, month, year, period) {
 	
 
-	docURL = "/surveyKPI/usage/" + oId + "?month=" + month + "&year=" + year;	
+	docURL = "/surveyKPI/usage/" + oId + "?month=" + month + "&year=" + year + "&period=" + period;	
 	window.location.href = docURL;
 	
 }

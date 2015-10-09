@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,6 +102,7 @@ public class UsagePDFManager {
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
+	public static BaseColor VLG = new BaseColor(0xE8,0xE8,0xE8);
 
 	/*
 	 * Call this function to create a PDF
@@ -113,9 +115,15 @@ public class UsagePDFManager {
 			HttpServletResponse response,
 			int o_id,
 			int month,
-			int year) {
+			int year,
+			String period,
+			String org_name) {
 		
 		PreparedStatement pstmt = null;
+		
+		if(org_name == null) {
+			org_name = "None";
+		}
 		
 		try {
 			
@@ -220,19 +228,23 @@ public class UsagePDFManager {
 			
 			// Add the headings
 			cell = new PdfPCell(new Paragraph("User Id"));
-			cell.setBorderColorBottom(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph("User Name"));
-			cell.setBorderColorBottom(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph("Usage in Period"));
-			cell.setBorderColorBottom(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph("All Time Usage"));
-			cell.setBorderColorBottom(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			// Add the user data
@@ -268,19 +280,23 @@ public class UsagePDFManager {
 			
 			// Add the totals
 			cell = new PdfPCell(new Paragraph("Totals: "));
-			cell.setBorderColorTop(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph(" "));
-			cell.setBorderColorTop(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph(String.valueOf(total)));
-			cell.setBorderColorTop(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			cell = new PdfPCell(new Paragraph(String.valueOf(totalAllTime)));
-			cell.setBorderColorTop(BaseColor.BLACK);
+			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			cell.setBackgroundColor(VLG);
 			table.addCell(cell);
 			
 			document.add(table);
@@ -288,18 +304,22 @@ public class UsagePDFManager {
 				
 			if(stationaryFile.exists()) {
 					
-				// Add stationary
-				
-				
-				PdfReader s_reader = new PdfReader(stationaryName);			// Stationary
+				// Populate the fields in the stationary
+				PdfReader s_reader = new PdfReader(stationaryName);
 				PdfStamper s_stamper = new PdfStamper(s_reader, baos_s);
 				AcroFields pdfForm = s_stamper.getAcroFields();
-				
-				pdfForm.setField("billing_period", "xxxxxxxxxxxxxxxxxxxx");
+				Set<String> fields = pdfForm.getFields().keySet();
+				for(String key: fields) {
+					System.out.println("Field: " + key);
+				}
+					
+				pdfForm.setField("billing_period", period);
+				pdfForm.setField("organisation", org_name);
 				
 				s_stamper.setFormFlattening(true);
 				s_stamper.close();
 				
+				// Apply the stationary to the underlying document
 				PdfReader reader = new PdfReader(baos.toByteArray());		// Underlying document
 				PdfReader f_reader = new PdfReader(baos_s.toByteArray());	// Filled in stationary
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
