@@ -68,6 +68,13 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Throw a 404 exception if this is not a business server
+	 */
+	static public void assertBusinessServer(String host) {
+		System.out.println("Host is: " + host);
+	}
+	
+	/*
 	 * Rename template files
 	 */
 	static public void renameTemplateFiles(String oldName, String newName, String basePath, int oldProjectId, int newProjectId ) throws IOException {

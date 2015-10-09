@@ -161,23 +161,6 @@ public class UserList extends Application {
 				 *  each user. This is to reduce the need for potentially a large number of queries if
 				 *  an organisation had a large number of users
 				 */
-				/*
-				sql = "SELECT users.id as id, " +
-						"users.ident as ident, " +
-						"users.name as name, " +
-						"users.email as email, " +
-						"groups.name as group_name, " +
-						"project.name as project_name, " +
-						"groups.id as group_id, " +
-						"project.id as project_id " +
-						" from users " +
-						" left outer join user_group on user_group.u_id = users.id " + 
-						" left outer join groups on groups.id = user_group.g_id " +
-						" left outer join user_project on user_project.u_id = users.id " + 
-						" left outer join project on project.id = user_project.p_id " +
-						" where users.o_id = ? " +
-						" order by users.ident, groups.name;";
-				*/
 				sql = "SELECT users.id as id," +
 						"users.ident as ident, " +
 						"users.name as name, " +

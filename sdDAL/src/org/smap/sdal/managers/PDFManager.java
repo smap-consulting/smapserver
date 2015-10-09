@@ -487,7 +487,6 @@ public class PDFManager {
 					
 			pdfForm.setField("user_name", user.name);
 			pdfForm.setField("user_company", user.company_name);
-			pdfForm.setField("organisation", "Luber jack");
 			
 			Map <String, Item> x = pdfForm.getFields();
 			System.out.println("We have: " + x.size());

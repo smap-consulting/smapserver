@@ -16,7 +16,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','localise', 'common', 'globals', 'bootbox'], function($, lang, common, globals, bootbox) {
+define(['jquery','localise', 'common', 'globals', 
+        'bootbox', 
+        'moment',
+        'datetimepicker'], function($, lang, common, globals, bootbox) {
 	
 var gUsers,
 	gGroups,
@@ -220,6 +223,18 @@ $(document).ready(function() {
 		$(this).find('input[type=text],textarea,select').filter(':visible:first').focus();
 	});
     
+	/*
+	 * Add date time picker to usage date
+	 */
+	$('#usageDate').datetimepicker({
+		pickTime: false,
+		useCurrent: false,
+		format: "mm/yyyy",
+		startView: "months", 
+		minViewMode: "months"
+	});
+	$('#usageDate').data("DateTimePicker").setDate(moment());
+	
     /*
      * Save a project details
      */
@@ -375,7 +390,25 @@ $(document).ready(function() {
 	
     });
     
-	 $('#organisationMove').click(function(){
+    /*
+     * Get a usage report
+     */
+    $('#usageGet').click(function() {
+    	var usageMsec = $('#usageDate').data("DateTimePicker").getDate(),
+    		d = new Date(usageMsec),
+    		month = d.getMonth() + 1,
+    		year = d.getFullYear(),
+    		oId = gOrganisationList[gCurrentOrganisationIndex].id;
+    	
+    	console.log(oId + " Date: " + year + " " + month);
+    	$('#get_usage_popup').modal("hide");
+    	getUsage(oId, month, year);
+    });
+    
+    /*
+     * Move a user to a new organisation
+     */
+	$('#organisationMove').click(function(){
 		 var users = [],
 			projects =[],
 			decision = false,
@@ -955,6 +988,7 @@ function updateOrganisationTable() {
 	h[++idx] = '<th>Organisation Id</th>';
 	h[++idx] = '<th>Name</th>';
 	h[++idx] = '<th>Changed By</th>';
+	h[++idx] = '<th>Usage Report</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
@@ -978,7 +1012,11 @@ function updateOrganisationTable() {
 		h[++idx] = '<td>';
 		h[++idx] = organisation.changed_by;
 		h[++idx] = '</td>';
-		
+		h[++idx] = '<td class="usage_report_td"><button style="width:100%;" class="btn btn-default btn-warning usage_report" value="';
+		h[++idx] = i;
+		h[++idx] = '">';
+		h[++idx] = '<span class="glyphicon glyphicon-download" aria-hidden="true"></span>';
+		h[++idx] = '</button></td>';
 		h[++idx] = '</tr>';
 	}	
 	
@@ -988,6 +1026,10 @@ function updateOrganisationTable() {
 	$organisationTable.empty().append(h.join(''));
 	$('.organisation_edit').click(function() {
 		openOrganisationDialog(true, $(this).val());
+	});
+	$('.usage_report', '#organisation_table').click(function () {
+		gCurrentOrganisationIndex = $(this).val();
+		$('#get_usage_popup').modal("show");
 	});
 	$('#organisation_table .control_td').find('input').click(function() {
 		if($(this).is(':checked')) {
@@ -1089,6 +1131,17 @@ function getUsers() {
 			}
 		}
 	});	
+}
+
+/*
+ * Get a usage report
+ */
+function getUsage(oId, month, year) {
+	
+
+	docURL = "/surveyKPI/usage/" + oId + "?month=" + month + "&year=" + year;	
+	window.location.href = docURL;
+	
 }
 
 /*

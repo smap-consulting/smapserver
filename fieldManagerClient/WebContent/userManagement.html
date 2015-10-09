@@ -8,6 +8,7 @@
 
 <link rel="stylesheet" href="/css/normalize.css" />
 <link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+<link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
 <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 
 	
@@ -497,6 +498,33 @@
 	</div>
 </div>
 
+<!-- Modal to allow the user to get usage details -->
+<div id="get_usage_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="getUsageLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="getUsageLabel">Get PDF of Usage</h4>
+   			</div>
+		    <div class="modal-body">
+		     
+				<form class="form" role="form" id="project_create_form">	
+					<div class="form-group">
+	                	<div class='date' id='usageDate' data-toggle="tooltip"  data-container="body" title="Month and Year of report">
+	                    	<input type='text' class="form-control" data-date-format="YYYY/MM"/>
+	                    	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
+	                    	</span>
+	                	</div>
+	            	</div>
+				</form>	
+			</div> 
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="usageGet" type="button" class="btn btn-primary">Get Pdf</button>
+        	</div>
+		</div>
+	</div>
+</div>
 
 </body>
 </html>
