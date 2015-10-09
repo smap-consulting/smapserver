@@ -304,7 +304,7 @@ public class UsagePDFManager {
 				
 			if(stationaryFile.exists()) {
 					
-				// Populate the fields in the stationary
+				// Step 2 - Populate the fields in the stationary
 				PdfReader s_reader = new PdfReader(stationaryName);
 				PdfStamper s_stamper = new PdfStamper(s_reader, baos_s);
 				AcroFields pdfForm = s_stamper.getAcroFields();
@@ -319,7 +319,7 @@ public class UsagePDFManager {
 				s_stamper.setFormFlattening(true);
 				s_stamper.close();
 				
-				// Apply the stationary to the underlying document
+				// Step 3 - Apply the stationary to the underlying document
 				PdfReader reader = new PdfReader(baos.toByteArray());		// Underlying document
 				PdfReader f_reader = new PdfReader(baos_s.toByteArray());	// Filled in stationary
 				PdfStamper stamper = new PdfStamper(reader, outputStream);

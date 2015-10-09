@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -223,40 +224,35 @@ public class PDFManager {
 				log.info("++++No template exists creating a pdf file programmatically");
 				
 				/*
-				 * Create a PDF without the template
+				 * Create a PDF without the stationary
 				 */				
-				
-				// TODO Attempt to get letter head for the survey
-				// TODO get letter head for Page 1.
-				// TODO get letter head for general pages
-				
-				String letterName = basePath + File.separator + "misc" + File.separator + "x.pdf";
+				String stationaryName = basePath + File.separator + "misc" + File.separator + "StandardPDFReport.pdf";
 				int marginLeft = 36;
 				int marginRight = 36;
-				int marginTop = 54;
-				int marginBottom = 36;
+				int marginTop = 200;
+				int marginBottom = 80;
 				
 				ByteArrayOutputStream baos = null;
-				ByteArrayOutputStream baos2 = null;
+				ByteArrayOutputStream baos_s = null;
 				PdfWriter writer = null;
 
-				File letterFile = new File(letterName);
+				File letterFile = new File(stationaryName);
 				
 				
 				/*
 				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
 				 * Else just create the document directly in a single pass
 				 */
-				System.out.println("Creating file for letter head: " + letterName);
+				System.out.println("Creating file for letter head: " + stationaryName);
 				
 				Parser parser = getXMLParser();
 				
-				// Create the underlying document as a byte array
+				// Step 1 - Create the underlying document as a byte array
 				Document document = new Document(PageSize.A4, marginLeft, marginRight, marginTop, marginBottom);
 				
 				if(letterFile.exists()) {
 					baos = new ByteArrayOutputStream();
-					baos2 = new ByteArrayOutputStream();
+					baos_s = new ByteArrayOutputStream();
 					writer = PdfWriter.getInstance(document, baos);
 				} else {
 					writer = PdfWriter.getInstance(document, outputStream);
@@ -282,12 +278,33 @@ public class PDFManager {
 				
 				if(letterFile.exists()) {
 					
-					// Add stationary
-					PdfReader reader = new PdfReader(baos.toByteArray());	// Underlying document
-					PdfReader s_reader = new PdfReader(letterName);			// Stationary
+					// Step 2- Populate any form fields in the stationary
 					
-					PdfStamper stamper = new PdfStamper(reader, baos2);
-					PdfImportedPage letter1 = stamper.getImportedPage(s_reader, 1);
+					PdfReader s_reader = new PdfReader(stationaryName);			// Stationary
+					PdfStamper s_stamper = new PdfStamper(s_reader, baos_s);	// Write stationary output to a byte array output stream
+					
+					// debug - write out field names
+					AcroFields pdfForm = s_stamper.getAcroFields();
+					Set<String> fields = pdfForm.getFields().keySet();
+					for(String key: fields) {
+						System.out.println("Field: " + key);
+					}
+					if(user != null) {
+						pdfForm.setField("organisation", user.company_name);
+						pdfForm.setField("form_title", survey.displayName);
+					}
+					
+					s_stamper.setFormFlattening(true);
+					s_stamper.close();
+					s_reader.close();
+					
+					// Step 3 - Apply the stationary to the underlying data
+					
+					PdfReader reader = new PdfReader(baos.toByteArray());	// Underlying document
+					PdfReader f_reader = new PdfReader(baos_s.toByteArray());	// Filled in stationary
+					
+					PdfStamper stamper = new PdfStamper(reader, outputStream);
+					PdfImportedPage letter1 = stamper.getImportedPage(f_reader, 1);
 					int n = reader.getNumberOfPages();
 					PdfContentByte background;
 					for(int i = 0; i < n; i++ ) {
@@ -299,16 +316,6 @@ public class PDFManager {
 					stamper.close();
 					reader.close();
 					
-					// Update AcroFields in Stationary
-					reader = new PdfReader(baos2.toByteArray());		// Document with stationary
-					stamper = new PdfStamper(reader, outputStream);
-					
-					if(user != null) {
-						fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
-					}
-					
-					stamper.setFormFlattening(true);
-					stamper.close();
 				}
 				
 			}
@@ -487,9 +494,7 @@ public class PDFManager {
 					
 			pdfForm.setField("user_name", user.name);
 			pdfForm.setField("user_company", user.company_name);
-			
-			Map <String, Item> x = pdfForm.getFields();
-			System.out.println("We have: " + x.size());
+
 			/*
 			 * User configurable data TODO This should be an array of key value pairs
 			 * As interim use a hard coded class to hold the data
@@ -513,7 +518,6 @@ public class PDFManager {
 						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
 					}
 					pdfForm.replacePushbuttonField("user_signature", ad.getField());
-					log.info("Adding image to: signature");
 				} else {
 					//log.info("Picture field: user_signature not found");
 				}
