@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletResponse;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.managers.PDFManager.PageSizer;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
@@ -56,6 +57,7 @@ import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfImportedPage;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -100,6 +102,35 @@ public class UsagePDFManager {
 	private static Logger log =
 			 Logger.getLogger(UsagePDFManager.class.getName());
 	
+	int marginLeft = 36;
+	int marginRight = 36;
+	int marginTop_1 = 300;
+	int marginBottom_1 = 200;
+	int marginTop_2 = 50;
+	int marginBottom_2 = 50;
+	
+	class PageSizer extends PdfPageEventHelper {
+		int pagenumber = 0;
+		public void onStartPage(PdfWriter writer, Document document) {
+			pagenumber++;
+			System.out.println("Page number: " + pagenumber);
+
+			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
+			
+			//if(pageNumber > 1) {
+			//	writer.setCropBoxSize(new Rectangle(marginLeft, marginRight, marginTop_2, marginBottom_2));
+			//}
+		}
+		public void onEndPage(PdfWriter writer, Document document) {
+			
+			//Rectangle rect = writer.getBoxSize("crop");
+			//System.out.println(rect == null ? "null" : rect.toString());
+			//ColumnText.showTextAligned(writer.getDirectContent(), 
+			//		Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
+			//		(rect.getLeft() +rect.getRight()) / 2, rect.getBottom() - 18, 0);
+			//		//100, 100, 0);
+		}
+	}
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
 	public static BaseColor VLG = new BaseColor(0xE8,0xE8,0xE8);
@@ -191,24 +222,18 @@ public class UsagePDFManager {
 			String stationaryName = basePath + File.separator + "misc" + File.separator + "UsageReportTemplate.pdf";
 			File stationaryFile = new File(stationaryName);
 			
-			// Margins in points 1/72 
-			int marginLeft = 36;
-			int marginRight = 36;
-			int marginTop = 300;
-			int marginBottom = 200;
-				
 			ByteArrayOutputStream baos = null;
 			ByteArrayOutputStream baos_s = null;
-			PdfWriter writer = null;
-				
+			PdfWriter writer = null;			
 				
 			/*
 			 * Create document in two passes, the second pass adds the letter head
 			 */
 				
 			// Create the underlying document as a byte array
-			Document document = new Document(PageSize.A4, marginLeft, marginRight, marginTop, marginBottom);
-				
+			Document document = new Document(PageSize.A4);
+			document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
+			
 			if(stationaryFile.exists()) {
 				baos = new ByteArrayOutputStream();
 				baos_s = new ByteArrayOutputStream();
@@ -218,38 +243,30 @@ public class UsagePDFManager {
 			}
 				
 			writer.setInitialLeading(12);
+			writer.setPageEvent(new PageSizer()); 
 			document.open();
 			
 			// Write the usage data
 			ResultSet resultSet = pstmt.executeQuery();
 			
-			PdfPCell cell = null;
 			PdfPTable table = new PdfPTable(4);
 			
-			// Add the headings
-			cell = new PdfPCell(new Paragraph("User Id"));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
+			// Add the header row
+			table.getDefaultCell().setBorderColor(BaseColor.LIGHT_GRAY);
+			table.getDefaultCell().setBackgroundColor(VLG);
 			
-			cell = new PdfPCell(new Paragraph("User Name"));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
+			table.addCell("User Id");
+			table.addCell("User Name");
+			table.addCell("Usage in Period");
+			table.addCell("All Time Usage");
 			
-			cell = new PdfPCell(new Paragraph("Usage in Period"));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
-			
-			cell = new PdfPCell(new Paragraph("All Time Usage"));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
+			table.setHeaderRows(1);
 			
 			// Add the user data
 			int total = 0;
 			int totalAllTime = 0;
+			
+			table.getDefaultCell().setBackgroundColor(null);
 			while(resultSet.next()) {
 				String ident = resultSet.getString("ident");
 				String name = resultSet.getString("name");
@@ -258,46 +275,23 @@ public class UsagePDFManager {
 				String allTime = resultSet.getString("all_time");
 				int allTimeInt = resultSet.getInt("all_time");
 
-				cell = new PdfPCell(new Paragraph(ident));
-				cell.setBorderColor(BaseColor.LIGHT_GRAY);
-				table.addCell(cell);
+				table.addCell(ident);
+				table.addCell(name);
+				table.addCell(monthUsage);
+				table.addCell(allTime);
 				
-				cell = new PdfPCell(new Paragraph(name));
-				cell.setBorderColor(BaseColor.LIGHT_GRAY);
-				table.addCell(cell);
-				
-				cell = new PdfPCell(new Paragraph(monthUsage));
-				cell.setBorderColor(BaseColor.LIGHT_GRAY);
-				table.addCell(cell);
 				total += monthUsageInt;
-				
-				cell = new PdfPCell(new Paragraph(allTime));
-				cell.setBorderColor(BaseColor.LIGHT_GRAY);
-				table.addCell(cell);
 				totalAllTime += allTimeInt;
 				
 			}
 			
 			// Add the totals
-			cell = new PdfPCell(new Paragraph("Totals: "));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
+			table.getDefaultCell().setBackgroundColor(VLG);
 			
-			cell = new PdfPCell(new Paragraph(" "));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
-			
-			cell = new PdfPCell(new Paragraph(String.valueOf(total)));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
-			
-			cell = new PdfPCell(new Paragraph(String.valueOf(totalAllTime)));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			cell.setBackgroundColor(VLG);
-			table.addCell(cell);
+			table.addCell("Totals: ");
+			table.addCell(" ");
+			table.addCell(String.valueOf(total));
+			table.addCell(String.valueOf(totalAllTime));
 			
 			document.add(table);
 			document.close();
@@ -328,7 +322,9 @@ public class UsagePDFManager {
 				PdfContentByte background;
 				for(int i = 0; i < n; i++ ) {
 					background = stamper.getUnderContent(i + 1);
-					background.addTemplate(letter1, 0, 0);
+					if(i == 0) {
+						background.addTemplate(letter1, 0, 0);
+					}
 				}
 		
 				stamper.close();

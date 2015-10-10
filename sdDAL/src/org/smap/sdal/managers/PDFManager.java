@@ -47,13 +47,17 @@ import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.AcroFields.Item;
 import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfImportedPage;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -108,6 +112,36 @@ public class PDFManager {
 	private class Parser {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
+	}
+	
+	int marginLeft = 36;
+	int marginRight = 36;
+	int marginTop_1 = 200;
+	int marginBottom_1 = 80;
+	int marginTop_2 = 50;
+	int marginBottom_2 = 50;
+	
+	class PageSizer extends PdfPageEventHelper {
+		int pagenumber = 0;
+		public void onStartPage(PdfWriter writer, Document document) {
+			pagenumber++;
+			System.out.println("Page number: " + pagenumber);
+
+			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
+			
+			//if(pageNumber > 1) {
+			//	writer.setCropBoxSize(new Rectangle(marginLeft, marginRight, marginTop_2, marginBottom_2));
+			//}
+		}
+		public void onEndPage(PdfWriter writer, Document document) {
+			
+			//Rectangle rect = writer.getBoxSize("crop");
+			//System.out.println(rect == null ? "null" : rect.toString());
+			//ColumnText.showTextAligned(writer.getDirectContent(), 
+			//		Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
+			//		(rect.getLeft() +rect.getRight()) / 2, rect.getBottom() - 18, 0);
+			//		//100, 100, 0);
+		}
 	}
 	
 	private class RepeatTracker {																// Level descended in form hierarchy
@@ -227,10 +261,6 @@ public class PDFManager {
 				 * Create a PDF without the stationary
 				 */				
 				String stationaryName = basePath + File.separator + "misc" + File.separator + "StandardPDFReport.pdf";
-				int marginLeft = 36;
-				int marginRight = 36;
-				int marginTop = 200;
-				int marginBottom = 80;
 				
 				ByteArrayOutputStream baos = null;
 				ByteArrayOutputStream baos_s = null;
@@ -248,8 +278,8 @@ public class PDFManager {
 				Parser parser = getXMLParser();
 				
 				// Step 1 - Create the underlying document as a byte array
-				Document document = new Document(PageSize.A4, marginLeft, marginRight, marginTop, marginBottom);
-				
+				Document document = new Document(PageSize.A4);
+				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
 				if(letterFile.exists()) {
 					baos = new ByteArrayOutputStream();
 					baos_s = new ByteArrayOutputStream();
@@ -258,7 +288,8 @@ public class PDFManager {
 					writer = PdfWriter.getInstance(document, outputStream);
 				}
 				
-				writer.setInitialLeading(12);
+				writer.setInitialLeading(12);			
+				writer.setPageEvent(new PageSizer()); 
 				document.open();
 				
 				int languageIdx = getLanguageIdx(survey, language);
@@ -304,12 +335,16 @@ public class PDFManager {
 					PdfReader f_reader = new PdfReader(baos_s.toByteArray());	// Filled in stationary
 					
 					PdfStamper stamper = new PdfStamper(reader, outputStream);
-					PdfImportedPage letter1 = stamper.getImportedPage(f_reader, 1);
+					PdfImportedPage stationary_page_1 = stamper.getImportedPage(f_reader, 1);
 					int n = reader.getNumberOfPages();
 					PdfContentByte background;
 					for(int i = 0; i < n; i++ ) {
 						background = stamper.getUnderContent(i + 1);
-						background.addTemplate(letter1, 0, 0);
+						if(i == 0) {
+							background.addTemplate(stationary_page_1, 0, 0);
+						} else {
+							// TODO add other pages
+						}
 					}
 					
 					
