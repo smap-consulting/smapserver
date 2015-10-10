@@ -526,6 +526,10 @@ define([
 					});
 				} else {
 					// changed row for choices
+					$changedRow = $('#formList').find('td.option').filter(function(index){
+						var $this = $(this);
+						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+					});
 				}
 				if($changedRow) {
 					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);

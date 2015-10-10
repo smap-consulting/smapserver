@@ -97,7 +97,7 @@ public class Items extends Application {
 			@QueryParam("start_key") int start_key,
 			@QueryParam("get_bad") boolean bBad,		// Get bad records
 			@QueryParam("rec_limit") int rec_limit,
-			@QueryParam("dateId") int dateId,		// Id of question containing the date to sort by
+			@QueryParam("dateId") int dateId,		// Id of question containing the date to filter by
 			@QueryParam("startDate") Date startDate,
 			@QueryParam("endDate") Date endDate,
 			@QueryParam("filter") String sFilter) { 
@@ -355,7 +355,7 @@ public class Items extends Application {
 				 */
 				// Get date column information
 				QuestionInfo date = null;
-				if(dateId != 0) {
+				if(dateId != 0 && (startDate != null || endDate != null)) {
 					date = new QuestionInfo(sId, dateId, connectionSD, false, "", urlprefix);	// Not interested in label any language will do
 					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
 					log.info("Date name: " + date.getName() + " Date Table: " + date.getTableName());
@@ -479,12 +479,12 @@ public class Items extends Application {
 				
 				String maxRecordWhere = "";
 				if(whereClause.equals("")) {
-					maxRecordWhere = " where prikey > " + maxRec;
+					maxRecordWhere = " where " + tName + ".prikey > " + maxRec;
 				} else {
-					maxRecordWhere = whereClause + " and prikey > " + maxRec;
+					maxRecordWhere = whereClause + " and " + tName + ".prikey > " + maxRec;
 				}
 				// Determine if there are more records to be returned
-				sql = "SELECT count(*) FROM " + tName + maxRecordWhere + ";";
+				sql = "SELECT count(*) FROM " + tables.getTablesSQL() + maxRecordWhere + ";";
 				log.info(sql);
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql);	
