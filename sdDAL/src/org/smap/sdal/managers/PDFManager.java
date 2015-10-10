@@ -320,11 +320,13 @@ public class PDFManager {
 					}
 					if(user != null) {
 						pdfForm.setField("organisation", user.company_name);
+						pdfForm.setField("organisation_address", user.company_address);
+						pdfForm.setField("organisation_phone", user.company_phone);
+						pdfForm.setField("organisation_email", user.company_email);
 						pdfForm.setField("form_title", survey.displayName);
 						
 						// Add logo
 						PushbuttonField ad = pdfForm.getNewPushbuttonFromField("logo");
-						System.out.println("ad: " + (ad == null ? "null" : ad.toString())); 
 						if(ad != null) {
 							ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 							ad.setProportionalIcon(true);

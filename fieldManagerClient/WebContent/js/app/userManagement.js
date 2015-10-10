@@ -304,7 +304,12 @@ $(document).ready(function() {
 		}
 	
 		organisation.name = $('#o_name').val();
+		
 		organisation.company_name = $('#o_company_name').val();
+		organisation.company_address = $('#o_company_address').val();
+		organisation.company_phone = $('#o_company_phone').val();
+		organisation.company_email = $('#o_company_email').val();
+		
 		organisation.admin_email = $('#o_admin_email').val();
 		organisation.smtp_host = $('#o_smtp_host').val();
 		organisation.email_domain = $('#o_email_domain').val();
@@ -677,6 +682,9 @@ function openOrganisationDialog(existing, organisationIndex) {
 	if(existing) {
 		$('#o_name').val(org.name);
 		$('#o_company_name').val(org.company_name);
+		$('#o_company_address').val(org.company_address);
+		$('#o_company_phone').val(org.company_phone);
+		$('#o_company_email').val(org.company_email);
 		$('#o_admin_email').val(org.admin_email);
 		$('#o_smtp_host').val(org.smtp_host);
 		$('#o_email_domain').val(org.email_domain);

@@ -39,6 +39,9 @@ public class User {
 	public int o_id;
 	public String organisation_name;
 	public String company_name;
+	public String company_address;
+	public String company_phone;
+	public String company_email;
 	public ArrayList<UserGroup> groups;
 	public ArrayList<Project> projects;
 	public boolean keepProjects;

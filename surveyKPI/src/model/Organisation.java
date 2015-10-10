@@ -22,6 +22,9 @@ public class Organisation {
 	public int id;
 	public String name;
 	public String company_name;
+	public String company_address;
+	public String company_email;
+	public String company_phone;
 	public boolean allow_email;
 	public boolean allow_facebook;
 	public boolean allow_twitter;

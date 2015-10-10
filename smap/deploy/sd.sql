@@ -313,3 +313,8 @@ ALTER TABLE public.log_report OWNER TO ws;
 
 -- Repeating instances
 alter table tasks add column repeat boolean;
+
+-- Generating reports
+alter table organisation add column company_address text;
+alter table organisation add column company_phone text;
+alter table organisation add column company_email text;

@@ -68,6 +68,9 @@ public class UserManager {
 					"o.id as o_id, " +
 					"o.name as organisation_name, " +
 					"o.company_name as company_name, " +
+					"o.company_address as company_address, " +
+					"o.company_phone as company_phone, " +
+					"o.company_email as company_email, " +
 					"o.allow_email, " +
 					"o.allow_facebook, " +
 					"o.allow_twitter, " +
@@ -96,6 +99,9 @@ public class UserManager {
 				user.o_id = resultSet.getInt("o_id");
 				user.organisation_name = resultSet.getString("organisation_name");
 				user.company_name = resultSet.getString("company_name");
+				user.company_address = resultSet.getString("company_address");
+				user.company_phone = resultSet.getString("company_phone");
+				user.company_email = resultSet.getString("company_email");
 				user.allow_email = resultSet.getBoolean("allow_email");
 				user.allow_facebook = resultSet.getBoolean("allow_facebook");
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
