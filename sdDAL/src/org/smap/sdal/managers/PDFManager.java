@@ -125,7 +125,6 @@ public class PDFManager {
 		int pagenumber = 0;
 		public void onStartPage(PdfWriter writer, Document document) {
 			pagenumber++;
-			System.out.println("Page number: " + pagenumber);
 
 			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
 			
@@ -135,11 +134,10 @@ public class PDFManager {
 		}
 		public void onEndPage(PdfWriter writer, Document document) {
 			
-			//Rectangle rect = writer.getBoxSize("crop");
-			//System.out.println(rect == null ? "null" : rect.toString());
-			//ColumnText.showTextAligned(writer.getDirectContent(), 
-			//		Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
-			//		(rect.getLeft() +rect.getRight()) / 2, rect.getBottom() - 18, 0);
+			Rectangle rect = writer.getPageSize();
+			ColumnText.showTextAligned(writer.getDirectContent(), 
+					Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
+					rect.getRight() - 100, rect.getBottom() + 25, 0);
 			//		//100, 100, 0);
 		}
 	}
@@ -323,6 +321,26 @@ public class PDFManager {
 					if(user != null) {
 						pdfForm.setField("organisation", user.company_name);
 						pdfForm.setField("form_title", survey.displayName);
+						
+						// Add logo
+						PushbuttonField ad = pdfForm.getNewPushbuttonFromField("logo");
+						System.out.println("ad: " + (ad == null ? "null" : ad.toString())); 
+						if(ad != null) {
+							ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
+							ad.setProportionalIcon(true);
+							String fileName = null;
+							try {
+								fileName = basePath + File.separator + "media" + File.separator +
+										"organisation" + File.separator + user.o_id + File.separator +
+										"settings" + File.separator + "bannerLogo";
+								System.out.println("Set file: " + fileName);
+								ad.setImage(Image.getInstance(fileName));
+							} catch (Exception e) {
+								log.info("Error: Failed to add image " + fileName + " to pdf");
+							}
+							pdfForm.replacePushbuttonField("logo", ad.getField());
+						}
+
 					}
 					
 					s_stamper.setFormFlattening(true);
@@ -617,9 +635,6 @@ public class PDFManager {
 			int[] repIndexes,
 			RepeatTracker repeat) throws DocumentException, IOException {
 		
-		System.out.println("Process Form: " + depth + " : " + length);
-		//int groupWidth = 4;
-		
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
 			depth = repIndexes.length - 1;	
@@ -770,14 +785,12 @@ public class PDFManager {
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
 			
-			System.out.println("Index: " + i + " : " + repIndexes[i]);
 			PdfPCell c = new PdfPCell();
 			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1)));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 		}
 		
-		System.out.println("  Number of items: " + row.items.size());
 		for(DisplayItem di : row.items) {
 			//di.debug();
 			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
@@ -808,7 +821,6 @@ public class PDFManager {
 			int languageIdx,
 			RepeatTracker repeat) {
 		
-		System.out.println("Prepare row");
 		Row row = new Row();
 		row.groupWidth = repeat.cols.length;
 		
@@ -1057,7 +1069,6 @@ public class PDFManager {
 		} else if (di.type.equals("image")) {
 			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
 				Image img = Image.getInstance(basePath + "/" + di.value);
-				img.scaleToFit(200, 300);
 				valueCell.addElement(img);
 			} else {
 				// TODO add empty image

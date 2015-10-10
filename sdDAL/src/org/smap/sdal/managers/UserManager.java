@@ -65,6 +65,7 @@ public class UserManager {
 					"u.email as email, " +
 					"u.current_project_id as current_project_id, " +
 					"u.current_survey_id as current_survey_id, " +
+					"o.id as o_id, " +
 					"o.name as organisation_name, " +
 					"o.company_name as company_name, " +
 					"o.allow_email, " +
@@ -92,6 +93,7 @@ public class UserManager {
 				user.email = resultSet.getString("email");
 				user.current_project_id = resultSet.getInt("current_project_id");
 				user.current_survey_id = resultSet.getInt("current_survey_id");
+				user.o_id = resultSet.getInt("o_id");
 				user.organisation_name = resultSet.getString("organisation_name");
 				user.company_name = resultSet.getString("company_name");
 				user.allow_email = resultSet.getBoolean("allow_email");
