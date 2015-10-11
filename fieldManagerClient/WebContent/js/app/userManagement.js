@@ -235,6 +235,8 @@ $(document).ready(function() {
 	});
 	$('#usageDate').data("DateTimePicker").setDate(moment());
 	
+	isBusinessServer();
+	
     /*
      * Save a project details
      */
@@ -991,7 +993,8 @@ function updateOrganisationTable() {
 	var $organisationTable = $('#organisation_table'),
 		i, organisation,
 		h = [],
-		idx = -1;
+		idx = -1,
+		bs = isBusinessServer();
 	
 	h[++idx] = '<table class="table table-striped">';
 	h[++idx] = '<thead>';
@@ -1000,7 +1003,9 @@ function updateOrganisationTable() {
 	h[++idx] = '<th>Organisation Id</th>';
 	h[++idx] = '<th>Name</th>';
 	h[++idx] = '<th>Changed By</th>';
-	h[++idx] = '<th>Usage Report</th>';
+	if(bs) {
+		h[++idx] = '<th>Usage Report</th>';
+	}
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
@@ -1024,11 +1029,13 @@ function updateOrganisationTable() {
 		h[++idx] = '<td>';
 		h[++idx] = organisation.changed_by;
 		h[++idx] = '</td>';
-		h[++idx] = '<td class="usage_report_td"><button style="width:100%;" class="btn btn-default btn-warning usage_report" value="';
-		h[++idx] = i;
-		h[++idx] = '">';
-		h[++idx] = '<span class="glyphicon glyphicon-download" aria-hidden="true"></span>';
-		h[++idx] = '</button></td>';
+		if(bs) {
+			h[++idx] = '<td class="usage_report_td"><button style="width:100%;" class="btn btn-default btn-warning usage_report" value="';
+			h[++idx] = i;
+			h[++idx] = '">';
+			h[++idx] = '<span class="glyphicon glyphicon-download" aria-hidden="true"></span>';
+			h[++idx] = '</button></td>';
+		}
 		h[++idx] = '</tr>';
 	}	
 	

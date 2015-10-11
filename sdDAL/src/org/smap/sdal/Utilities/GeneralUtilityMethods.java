@@ -72,6 +72,13 @@ public class GeneralUtilityMethods {
 	 */
 	static public void assertBusinessServer(String host) {
 		System.out.println("Host is: " + host);
+		
+		if(!host.contains("zarkman.com") &&
+				!host.equals("localhost") &&
+				!host.equals("dev.smap.com.au")) {
+			throw new AuthorisationException();
+		}
+		
 	}
 	
 	/*

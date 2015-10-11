@@ -917,6 +917,21 @@ function getSurveyDetails(callback) {
 }
 
 /*
+ * Return true if thi is a business server
+ */
+function isBusinessServer() {
+	var hostname = location.hostname;
+	var bs = true;
+	
+	if(hostname !== 'localhost' &&
+			hostname !== 'dev.smap.com.au' &&
+			hostname.indexOf('zarkman.com') < 0) {
+		bs = false;
+	}
+	return bs;
+}
+
+/*
  * Validate start and end dates
  */
 function validDates() {
