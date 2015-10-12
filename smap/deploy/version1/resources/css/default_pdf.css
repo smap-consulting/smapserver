@@ -2,6 +2,10 @@
 	
 }
 
+.lbold {
+	font-weight: bold;
+}
+
 .hint {
 	font-style: italic;
 	color: blue;

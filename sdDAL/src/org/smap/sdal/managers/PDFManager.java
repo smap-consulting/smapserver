@@ -108,6 +108,9 @@ public class PDFManager {
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
+	
+	Font font = FontFactory.getFont("Times-Roman");
+    Font fontbold = FontFactory.getFont("Times-Roman", 12, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
@@ -175,7 +178,6 @@ public class PDFManager {
 							Image img = Image.getInstance(fileName);
 							img.scaleToFit(200, 50);
 							float w = img.getScaledWidth();
-							System.out.println("Image width: " + w);
 							img.setAbsolutePosition(
 						            pageRect.getRight() - (25 + w),
 						            pageRect.getTop() - 75);
@@ -341,8 +343,6 @@ public class PDFManager {
 				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
 				 * Else just create the document directly in a single pass
 				 */
-				System.out.println("Creating file for letter head: " + stationaryName);
-				
 				Parser parser = getXMLParser();
 				
 				// Step 1 - Create the underlying document as a byte array
@@ -726,7 +726,6 @@ public class PDFManager {
 				// If this is a blank template check to see the number of times we should repeat this sub form
 				if(generateBlank) {
 					int blankRepeats = getBlankRepeats(r.appearance);
-					System.out.println("Generating " + blankRepeats);
 					for(int k = 0; k < blankRepeats; k++) {
 						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
@@ -767,7 +766,7 @@ public class PDFManager {
 						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes);
 						
 						// Add a gap if this is the first question of the record
-						// or the previous row was ata different depth
+						// or the previous row was at a different depth
 						if(firstQuestion) {
 							newTable.setSpacingBefore(5);
 						}
@@ -868,10 +867,17 @@ public class PDFManager {
 			table.addCell(c);
 		}
 		
+		int spanCount = NUMBER_TABLE_COLS;
+		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 			//di.debug();
 			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
+			
+			// Make sure the last cell extends to the end of the table
+			if(numberItems == 1) {
+				di.width = spanCount;
+			}
 			cell.setColspan(di.width);
 			int spaceBefore = row.spaceBefore();
 			if(spaceBefore > 0) {
@@ -879,6 +885,8 @@ public class PDFManager {
 			}
 			table.addCell(cell);
 			
+			numberItems--;
+			spanCount -= di.width;
 		}
 		return table;
 	}
@@ -1008,7 +1016,11 @@ public class PDFManager {
 						setHeight(appValues[i], di);
 					} else if(appValues[i].startsWith("pdfspace")) {
 						setSpace(appValues[i], di);
-					} 
+					} else if(appValues[i].equals("pdflabelcaps")) {
+						di.labelcaps = true;
+					} else if(appValues[i].equals("pdflabelbold")) {
+						di.labelbold = true;
+					}
 				}
 			}
 		}
@@ -1112,16 +1124,32 @@ public class PDFManager {
 		PdfPCell valueCell = new PdfPCell();
 		labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
 		valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
+		
 		PdfPTable tItem = null;
 		 
 		// Add label
 		StringBuffer html = new StringBuffer();
-		html.append("<span class='label'>");
-		if(di.text != null && di.text.trim().length() > 0) {
-			html.append(GeneralUtilityMethods.unesc(di.text));
-		} else {
-			html.append(di.name);
+		html.append("<span class='label");
+		if(di.labelbold) {
+			html.append(" lbold");
 		}
+		html.append("'>");
+		
+		String textValue = "";
+		if(di.text != null && di.text.trim().length() > 0) {
+			textValue = di.text;
+		} else {
+			textValue = di.name;
+		}
+		textValue = textValue.trim();
+		if(textValue.charAt(textValue.length() - 1) != ':') {
+			textValue += ":";
+		}
+		
+		if(di.labelcaps) {
+			textValue = textValue.toUpperCase();
+		}
+		html.append(GeneralUtilityMethods.unesc(textValue));
 		html.append("</span>");
 		
 		// Only include hints if we are generating a blank template
@@ -1132,7 +1160,6 @@ public class PDFManager {
 			html.append("</span>");
 			}
 		}
-		
 		
 		parser.elements.clear();
 		parser.xmlParser.parse(new StringReader(html.toString()));

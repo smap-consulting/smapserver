@@ -20,6 +20,8 @@ public class DisplayItem {
 	public boolean isNewPage = false;
 	public ArrayList<DisplayItem> choices = null;
 	public BaseColor labelbg;
+	public boolean labelcaps = false;
+	public boolean labelbold = false;
 	
 	public void debug() {
 		System.out.println("======== Display Item:   width: " + width + "   value: " + value + " text: " + text + " : " + type  );
