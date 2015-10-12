@@ -116,13 +116,29 @@ public class PDFManager {
 	
 	int marginLeft = 36;
 	int marginRight = 36;
-	int marginTop_1 = 200;
-	int marginBottom_1 = 80;
+	int marginTop_1 = 130;
+	int marginBottom_1 = 100;
 	int marginTop_2 = 50;
-	int marginBottom_2 = 50;
+	int marginBottom_2 = 100;
 	
+	/*
+	 * Class to write headers and footers on each page
+	 */
 	class PageSizer extends PdfPageEventHelper {
 		int pagenumber = 0;
+		User user = null;
+		String title;
+		String basePath;
+		
+		public PageSizer(String title, User user, String basePath) {
+			super();
+			
+			this.title = title;
+			this.user = user;
+			this.basePath = basePath;
+			
+		}
+		
 		public void onStartPage(PdfWriter writer, Document document) {
 			pagenumber++;
 
@@ -134,11 +150,65 @@ public class PDFManager {
 		}
 		public void onEndPage(PdfWriter writer, Document document) {
 			
-			Rectangle rect = writer.getPageSize();
+			Rectangle pageRect = writer.getPageSize();
+			
+			// Write header on first page only
+			if(pagenumber == 1) {
+				// Add Title
+				Font titleFont = new Font();
+				titleFont.setSize(18);
+				Phrase titlePhrase = new Phrase();
+				titlePhrase.setFont(titleFont);
+				titlePhrase.add(title);
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_CENTER, titlePhrase, 
+						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getTop() - 100, 0);
+				
+				if(user != null) {
+					// Show the logo
+					String fileName = null;
+					try {
+						fileName = basePath + File.separator + "media" + File.separator +
+							"organisation" + File.separator + user.o_id + File.separator +
+							"settings" + File.separator + "bannerLogo";
+	
+							Image img = Image.getInstance(fileName);
+							img.scaleToFit(200, 50);
+							float w = img.getScaledWidth();
+							System.out.println("Image width: " + w);
+							img.setAbsolutePosition(
+						            pageRect.getRight() - (25 + w),
+						            pageRect.getTop() - 75);
+						        document.add(img);
+							
+					} catch (Exception e) {
+						log.info("Error: Failed to add image " + fileName + " to pdf");
+					}
+				}
+			}
+			
+			// Footer is always written
+			if(user != null) {
+				// Add organisation
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_CENTER, new Phrase(user.company_name), 
+						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getBottom() + 80, 0);
+				// Add organisation address
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_CENTER, new Phrase(user.company_address), 
+						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getBottom() + 65, 0);
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_CENTER, new Phrase(user.company_phone), 
+						(pageRect.getLeft() + pageRect.getRight()) /4, pageRect.getBottom() + 50, 0);
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_CENTER, new Phrase(user.company_email), 
+						(pageRect.getLeft() + pageRect.getRight()) * 3 / 4, pageRect.getBottom() + 50, 0);
+			}
+			
+			// Add page number
 			ColumnText.showTextAligned(writer.getDirectContent(), 
 					Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
-					rect.getRight() - 100, rect.getBottom() + 25, 0);
-			//		//100, 100, 0);
+					pageRect.getRight() - 100, pageRect.getBottom() + 25, 0);
 		}
 	}
 	
@@ -287,7 +357,7 @@ public class PDFManager {
 				}
 				
 				writer.setInitialLeading(12);			
-				writer.setPageEvent(new PageSizer()); 
+				writer.setPageEvent(new PageSizer(survey.displayName, user, basePath)); 
 				document.open();
 				
 				int languageIdx = getLanguageIdx(survey, language);
@@ -313,11 +383,14 @@ public class PDFManager {
 					PdfStamper s_stamper = new PdfStamper(s_reader, baos_s);	// Write stationary output to a byte array output stream
 					
 					// debug - write out field names
+					/*
 					AcroFields pdfForm = s_stamper.getAcroFields();
 					Set<String> fields = pdfForm.getFields().keySet();
 					for(String key: fields) {
 						System.out.println("Field: " + key);
 					}
+					*/
+					/*
 					if(user != null) {
 						pdfForm.setField("organisation", user.company_name);
 						pdfForm.setField("organisation_address", user.company_address);
@@ -326,6 +399,7 @@ public class PDFManager {
 						pdfForm.setField("form_title", survey.displayName);
 						
 						// Add logo
+						
 						PushbuttonField ad = pdfForm.getNewPushbuttonFromField("logo");
 						if(ad != null) {
 							ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -344,6 +418,7 @@ public class PDFManager {
 						}
 
 					}
+					*/
 					
 					s_stamper.setFormFlattening(true);
 					s_stamper.close();
