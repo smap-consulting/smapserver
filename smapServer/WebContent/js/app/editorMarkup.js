@@ -251,7 +251,10 @@ define([
 			h[++idx] = '" data-prop="';
 			h[++idx] = selProperty;
 			h[++idx] = '"';
-			if((type === "question" && (question.source != "user" && question.type != "begin group" && question.type != "begin repeat") || question.calculation)) {
+			if(type === "question" && selProperty !== "appearance" && 
+					((question.source != "user" && 
+					question.type != "begin group" && 
+					question.type != "begin repeat") || question.calculation)) {
 				h[++idx] = ' readonly tabindex="-1">';
 				h[++idx] = selLabel;
 				h[++idx] = ' not required';
