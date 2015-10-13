@@ -153,6 +153,8 @@ then
 	# disable default config - TODO work out how to get Smap to coexist with existing Apache installations	
 	sudo a2dissite 000-default
 	sudo a2dissite default-ssl
+	sudo a2ensite smap.conf
+	sudo a2ensite smap-ssl.conf
 	
 	# Update the volatile configuration setting, only this should change after initial installation
 	chmod +x apacheConfig.sh
