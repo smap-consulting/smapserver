@@ -20,6 +20,7 @@ public class DisplayItem {
 	public boolean isNewPage = false;
 	public ArrayList<DisplayItem> choices = null;
 	public BaseColor labelbg;
+	public BaseColor valuebg;
 	public boolean labelcaps = false;
 	public boolean labelbold = false;
 	public int fIdx = 0;

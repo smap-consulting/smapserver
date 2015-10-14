@@ -1083,7 +1083,9 @@ public class PDFManager {
 			if(appearance != null) {
 				for(int i = 0; i < appValues.length; i++) {
 					if(appValues[i].startsWith("pdflabelbg")) {
-						setColor(appValues[i], di);
+						setColor(appValues[i], di, true);
+					} else if(appValues[i].startsWith("pdfvaluebg")) {
+						setColor(appValues[i], di, false);
 					} else if(appValues[i].startsWith("pdflabelw")) {
 						setWidths(appValues[i], di);
 					} else if(appValues[i].startsWith("pdfheight")) {
@@ -1104,21 +1106,28 @@ public class PDFManager {
 	 * Get the color values for a single appearance value
 	 * Format is:  xxxx_0Xrr_0Xgg_0xbb
 	 */
-	void setColor(String aValue, DisplayItem di) {
+	void setColor(String aValue, DisplayItem di, boolean isLabel) {
 		
 		di.labelbg = null;
-
+		BaseColor color = null;
+		
 		String [] parts = aValue.split("_");
 		if(parts.length >= 4) {
 			if(parts[1].startsWith("0x")) {
-				di.labelbg = new BaseColor(Integer.decode(parts[1]), 
+				color = new BaseColor(Integer.decode(parts[1]), 
 						Integer.decode(parts[2]),
 						Integer.decode(parts[3]));
 			} else {
-				di.labelbg = new BaseColor(Integer.decode("0x" + parts[1]), 
+				color = new BaseColor(Integer.decode("0x" + parts[1]), 
 					Integer.decode("0x" + parts[2]),
 					Integer.decode("0x" + parts[3]));
 			}
+		}
+		
+		if(isLabel) {
+			di.labelbg = color;
+		} else {
+			di.valuebg = color;
 		}
 
 	}
@@ -1269,8 +1278,11 @@ public class PDFManager {
 		
 		// Format value cell
 		valueCell.setColspan(widthValue);
-		if(generateBlank && di.valueHeight > -1.0) {
-			valueCell.setFixedHeight((float) di.valueHeight);
+		if(di.valueHeight > -1.0) {
+			valueCell.setMinimumHeight((float)di.valueHeight);
+		}
+		if(di.valuebg != null) {
+			valueCell.setBackgroundColor(di.valuebg);
 		}
 		
 		tItem.addCell(labelCell);
