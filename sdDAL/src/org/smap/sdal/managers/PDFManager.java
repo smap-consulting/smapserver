@@ -109,8 +109,8 @@ public class PDFManager {
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
 	
-	Font font = FontFactory.getFont("Times-Roman");
-    Font fontbold = FontFactory.getFont("Times-Roman", 12, Font.BOLD);
+	Font font = FontFactory.getFont("Times-Roman", 12);
+    //Font fontbold = FontFactory.getFont("Times-Roman", 9, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
@@ -862,7 +862,7 @@ public class PDFManager {
 		for(int i = 0; i < depth; i++) {
 			
 			PdfPCell c = new PdfPCell();
-			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1)));
+			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 		}
@@ -1036,9 +1036,15 @@ public class PDFManager {
 
 		String [] parts = aValue.split("_");
 		if(parts.length >= 4) {
-			di.labelbg = new BaseColor(Integer.decode("0x" + parts[1]), 
+			if(parts[1].startsWith("0x")) {
+				di.labelbg = new BaseColor(Integer.decode(parts[1]), 
+						Integer.decode(parts[2]),
+						Integer.decode(parts[3]));
+			} else {
+				di.labelbg = new BaseColor(Integer.decode("0x" + parts[1]), 
 					Integer.decode("0x" + parts[2]),
 					Integer.decode("0x" + parts[3]));
+			}
 		}
 
 	}
@@ -1183,7 +1189,7 @@ public class PDFManager {
 			if(di.value == null || di.value.trim().length() == 0) {
 				di.value = " ";	// Need a space to show a blank row
 			}
-			valueCell.addElement(new Paragraph(GeneralUtilityMethods.unesc(di.value)));
+			valueCell.addElement(new Paragraph(GeneralUtilityMethods.unesc(di.value), font));
 		}
 		
 		int widthValue = 5;
@@ -1272,7 +1278,7 @@ public class PDFManager {
 		if(generateBlank) {
 			cell.addElement(list);
 		} else {
-			cell.addElement(new Paragraph(sb.toString()));
+			cell.addElement(new Paragraph(sb.toString(), font));
 		}
 
 	}

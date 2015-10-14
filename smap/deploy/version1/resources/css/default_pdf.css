@@ -1,13 +1,15 @@
 .label {
-	
+	font-size: 12px;	
 }
 
 .lbold {
 	font-weight: bold;
+	font-size: 12px;	
 }
 
 .hint {
 	font-style: italic;
+	font-size: 12px;
 	color: blue;
 }
 

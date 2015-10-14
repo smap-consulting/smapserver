@@ -262,7 +262,7 @@ sudo pip install setuptools --no-use-wheel --upgrade
 sudo pip install xlrd 
 sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform 
 sudo cp -r src/pyxform/pyxform/ /usr/bin/smap/
-sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
+sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
 echo '##### 17. Backups'
 sudo mkdir ~postgres/backups

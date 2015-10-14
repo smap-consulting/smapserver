@@ -231,7 +231,7 @@ public class ReviewQuestionsOther extends Application {
 		ResultSet resultSet = null;
 		
 		/*
-		 * Get the options for the suplied question
+		 * Get the options for the supplied question
 		 */
 		sql = "SELECT o.o_id, o.ovalue, t.value " +
 				" FROM option o, translation t " +  
