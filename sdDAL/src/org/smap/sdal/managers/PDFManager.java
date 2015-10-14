@@ -109,7 +109,7 @@ public class PDFManager {
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
 	
-	Font font = FontFactory.getFont("Times-Roman", 12);
+	Font font = FontFactory.getFont("Times-Roman", 10);
     //Font fontbold = FontFactory.getFont("Times-Roman", 9, Font.BOLD);
 
 	private class Parser {
@@ -214,9 +214,12 @@ public class PDFManager {
 		}
 	}
 	
-	private class RepeatTracker {																// Level descended in form hierarchy
+	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
+		
+		// Map of questions that need to have the results of another question appended to their results in a pdf report
+		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
 	}
 
 	/*
@@ -273,7 +276,7 @@ public class PDFManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true);
+			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true, false);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -308,6 +311,18 @@ public class PDFManager {
 			 */
 			File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, survey.displayName, survey.p_id);
 			
+			/*
+			 * Get dependencies between Display Items, for example if a question result should be added to another
+			 *  question's results
+			 */
+			GlobalVariables gv = new GlobalVariables();
+			if(!generateBlank) {
+				for(int i = 0; i < survey.instance.results.size(); i++) {
+					getDependencies(gv, survey.instance.results.get(i), survey, i);	
+				}
+			}
+			
+			
 			if(templateFile.exists()) {
 				
 				log.info("PDF Template Exists");
@@ -338,7 +353,6 @@ public class PDFManager {
 
 				File letterFile = new File(stationaryName);
 				
-				
 				/*
 				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
 				 * Else just create the document directly in a single pass
@@ -361,16 +375,15 @@ public class PDFManager {
 				document.open();
 				
 				int languageIdx = getLanguageIdx(survey, language);
-				RepeatTracker repeat = new RepeatTracker();
 				
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
 							languageIdx,
 							generateBlank,
 							0,
-							0,
+							i,
 							repIndexes,
-							repeat);		
+							gv);		
 				}
 				
 				document.close();
@@ -461,6 +474,58 @@ public class PDFManager {
 		
 		return filename;
 	
+	}
+	
+	/*
+	 * Get dependencies between question
+	 */
+	private void getDependencies(GlobalVariables gv,
+			ArrayList<Result> record,
+			org.smap.sdal.model.Survey survey,
+			int recNumber) {
+		
+		System.out.println("++++ Set dependencies for record: " + record.size() + " : " + recNumber);
+		for(int j = 0; j < record.size(); j++) {
+			Result r = record.get(j);
+			if(r.type.equals("form")) {
+				for(int k = 0; k < r.subForm.size(); k++) {
+					getDependencies(gv, r.subForm.get(k), survey, k);
+				}
+			} else {
+				
+				if(r.appearance != null && r.appearance.contains("pdfaddto")) {
+					String name = getReferencedQuestion(r.appearance);
+					if(name != null) {
+						String refKey = r.fIdx + "_" + recNumber + "_" + name; 
+						ArrayList<String> deps = gv.addToList.get(refKey);
+						
+						System.out.println("GV: add reference " + refKey );
+						if(deps == null) {
+							deps = new ArrayList<String> ();
+							gv.addToList.put(refKey, deps);
+						}
+						deps.add(r.value);
+					}
+				}
+			}
+		}
+	}
+	
+	private String getReferencedQuestion(String app) {
+		String name = null;
+		
+		String [] appValues = app.split(" ");
+		for(int i = 0; i < appValues.length; i++) {
+			if(appValues[i].startsWith("pdfaddto")) {
+				int idx = appValues[i].indexOf('_');
+				if(idx > -1) {
+					name = appValues[i].substring(idx + 1);
+				}
+				break;
+			}
+		}
+		
+		return name;
 	}
 	
 	/*
@@ -710,7 +775,7 @@ public class PDFManager {
 			int depth,
 			int length,
 			int[] repIndexes,
-			RepeatTracker repeat) throws DocumentException, IOException {
+			GlobalVariables gv) throws DocumentException, IOException {
 		
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
@@ -733,7 +798,7 @@ public class PDFManager {
 								depth + 1,
 								k,
 								repIndexes,
-								repeat);
+								gv);
 					}
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
@@ -743,7 +808,7 @@ public class PDFManager {
 								depth + 1,
 								k,
 								repIndexes,
-								repeat);
+								gv);
 					} 
 				}
 			} else if(r.qIdx >= 0) {
@@ -762,8 +827,8 @@ public class PDFManager {
 					} else if(question.type.equals("end group")) {
 						//ignore
 					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, repeat);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes);
+						Row row = prepareRow(record, survey, j, languageIdx, gv, length);
+						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
 						// Add a gap if this is the first question of the record
 						// or the previous row was at a different depth
@@ -854,7 +919,8 @@ public class PDFManager {
 	PdfPTable processRow(Parser parser, Row row, String basePath,
 			boolean generateBlank,
 			int depth,
-			int[] repIndexes) throws BadElementException, MalformedURLException, IOException {
+			int[] repIndexes,
+			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
 
 		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
 		
@@ -865,13 +931,15 @@ public class PDFManager {
 			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
+
+			
 		}
 		
 		int spanCount = NUMBER_TABLE_COLS;
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 			//di.debug();
-			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank));
+			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			// Make sure the last cell extends to the end of the table
@@ -904,7 +972,8 @@ public class PDFManager {
 			org.smap.sdal.model.Survey survey, 
 			int offset,
 			int languageIdx,
-			RepeatTracker repeat) {
+			GlobalVariables repeat,
+			int recNumber) {
 		
 		Row row = new Row();
 		row.groupWidth = repeat.cols.length;
@@ -925,14 +994,16 @@ public class PDFManager {
 					repeat.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
 				
-				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage);
+				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, recNumber);
 			} else if(i - offset < repeat.cols.length) {
 				// 2nd or later questions in the row
 				int [] updateCols = question.updateCols(repeat.cols);		// Returns null if the number of columns has not changed
 				
 				
 				if(updateCols == null || isNewPage) {
-					includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage);
+					if(includeResult(r, question)) {
+						includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, recNumber);
+					}
 				} else {
 					// If the question updated the number of columns then we will need to start a new row
 					break;
@@ -957,7 +1028,8 @@ public class PDFManager {
 			org.smap.sdal.model.Survey survey,
 			int languageIdx,
 			Result r,
-			boolean isNewPage) {
+			boolean isNewPage,
+			int recNumber) {
 		
 		DisplayItem di = new DisplayItem();
 		di.width = cols[colIdx-offset];
@@ -973,6 +1045,8 @@ public class PDFManager {
 				r.choices, 
 				languageIdx);
 		setQuestionFormats(question.appearance, di);
+		di.fIdx = r.fIdx;
+		di.rec_number = recNumber;
 		items.add(di);
 	}
 	
@@ -1124,7 +1198,8 @@ public class PDFManager {
 	 */
 	private PdfPTable addDisplayItem(Parser parser, DisplayItem di, 
 			String basePath,
-			boolean generateBlank) throws BadElementException, MalformedURLException, IOException {
+			boolean generateBlank,
+			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
 		
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
@@ -1173,24 +1248,8 @@ public class PDFManager {
 			labelCell.addElement(element);
 		}
 		
-		
-		if(di.type.startsWith("select")) {
-			processSelect(valueCell, di, generateBlank);
-		} else if (di.type.equals("image")) {
-			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
-				Image img = Image.getInstance(basePath + "/" + di.value);
-				valueCell.addElement(img);
-			} else {
-				// TODO add empty image
-			}
-			
-		} else {
-			// Todo process other question types
-			if(di.value == null || di.value.trim().length() == 0) {
-				di.value = " ";	// Need a space to show a blank row
-			}
-			valueCell.addElement(new Paragraph(GeneralUtilityMethods.unesc(di.value), font));
-		}
+		// Set the content of the value cell
+		updateValueCell(valueCell, di, generateBlank, basePath, gv);
 		
 		int widthValue = 5;
 		if(di.widthLabel == 10) {
@@ -1219,8 +1278,66 @@ public class PDFManager {
 		return tItem;
 	}
 	
+	/*
+	 * Set the contents of the value cell
+	 */
+	private void updateValueCell(PdfPCell valueCell, DisplayItem di, boolean generateBlank, 
+			String basePath,
+			GlobalVariables gv
+			) throws BadElementException, MalformedURLException, IOException {
+		
+		boolean writtenSomething = false;
+		
+		if(di.type.startsWith("select")) {
+			processSelect(valueCell, di, generateBlank, gv);
+		} else if (di.type.equals("image")) {
+			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
+				Image img = Image.getInstance(basePath + "/" + di.value);
+				valueCell.addElement(img);
+			} else {
+				// TODO add empty image
+			}
+			
+		} else {
+			// Todo process other question types
+			if(di.value == null || di.value.trim().length() == 0) {
+				di.value = " ";	// Need a space to show a blank row
+			}
+			
+			valueCell.addElement(getPara(di.value, di, gv));
+
+		}
+		
+
+	}
+	
+	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv) {
+		
+		boolean hasContent = false;
+		Paragraph para = new Paragraph("", font);
+		if(value != null) {
+			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
+			hasContent = true;
+		}
+		
+		// Add dependencies
+		System.out.println("Look for dependencies: " + di.fIdx + "_" + di.rec_number + "_" + di.name);
+		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
+		if(deps != null) {
+			for(String n : deps) {
+				System.out.println("^^^^^^^Dependency: " + n);
+				if(hasContent) {
+					para.add(new Chunk(",", font));
+				}
+				para.add(new Chunk(n, font));
+			}
+		}
+		return para;
+	}
+	
 	private void processSelect(PdfPCell cell, DisplayItem di,
-			boolean generateBlank) { 
+			boolean generateBlank,
+			GlobalVariables gv) { 
 
 		// If generating blank template
 		List list = new List();
@@ -1278,7 +1395,8 @@ public class PDFManager {
 		if(generateBlank) {
 			cell.addElement(list);
 		} else {
-			cell.addElement(new Paragraph(sb.toString(), font));
+			System.out.println("Add cell: " + sb.toString());
+			cell.addElement(getPara(sb.toString(), di, gv));
 		}
 
 	}

@@ -274,7 +274,7 @@ public class OrganisationList extends Application {
 					// New organisation
 						
 					sql = "insert into organisation (name, company_name, " +
-							"comapany_address, " +
+							"company_address, " +
 							"company_phone, " +
 							"company_email, " +
 							"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +

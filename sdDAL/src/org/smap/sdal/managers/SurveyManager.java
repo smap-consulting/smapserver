@@ -157,7 +157,8 @@ public class SurveyManager {
 			boolean full,		// Get the full details of the survey
 			String basePath,
 			String instanceId,	// If set get the results for this instance
-			boolean getResults	// Set to true to get results, if set and instanceId is null then blank data will be added
+			boolean getResults,	// Set to true to get results, if set and instanceId is null then blank data will be added
+			boolean generateDummyValues		// Set to true when getting results to fill a form with dummy values if there are no results
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -207,7 +208,7 @@ public class SurveyManager {
 				populateSurvey(sd, s, basePath, user);
 				if(getResults) {
 					Form ff = s.getFirstForm();
-					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s);
+					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s, generateDummyValues);
 					ArrayList<Result> topForm = s.instance.results.get(0);
 					// Get the user ident that submitted the survey
 					for(Result r : topForm) {
@@ -1282,7 +1283,8 @@ public class SurveyManager {
     		Connection cResults,
     		String instanceId,
     		int parentKey,
-    		Survey s) throws SQLException{
+    		Survey s,
+    		boolean generateDummyValues) throws SQLException{
  
     	ArrayList<ArrayList<Result>> output = new ArrayList<ArrayList<Result>> ();
     	
@@ -1381,12 +1383,14 @@ public class SurveyManager {
 		    				fIdx, 
 		    				id,
 		    				pstmtSelect,
-		    				isTopLevel);
+		    				isTopLevel,
+		    				generateDummyValues);
 
 		    		output.add(record);
 		    	}
-	    	} else {
+	    	} else if(generateDummyValues){
 	    		// Add dummy values for a blank form
+	    		System.out.println("Adding dummy values for a blank form");
 	    		
 	    		ArrayList<Result> record = new ArrayList<Result> ();
 	    		
@@ -1410,7 +1414,8 @@ public class SurveyManager {
 	    				fIdx, 
 	    				id,
 	    				pstmtSelect,
-	    				isTopLevel);
+	    				isTopLevel,
+	    				generateDummyValues);
 
 	    		output.add(record);
 	    	}
@@ -1440,7 +1445,8 @@ public class SurveyManager {
     		int fIdx,
     		int id,
     		PreparedStatement pstmtSelect,
-    		boolean isTopLevel) throws SQLException {
+    		boolean isTopLevel,
+    		boolean generateDummyValues) throws SQLException {
 		/*
 		 * Add data for the remaining questions (prikey and user have already been extracted)
 		 */
@@ -1472,7 +1478,8 @@ public class SurveyManager {
     			    		cResults,
     			    		null,
     			    		newParentKey,
-    			    		s);
+    			    		s,
+    			    		generateDummyValues);
 
             		record.add(nr);
     			}
