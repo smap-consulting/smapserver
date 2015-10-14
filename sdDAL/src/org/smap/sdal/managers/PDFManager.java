@@ -1298,7 +1298,8 @@ public class PDFManager {
 			GlobalVariables gv
 			) throws BadElementException, MalformedURLException, IOException {
 		
-		boolean writtenSomething = false;
+		// Questions that append their values to this question
+		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
 		
 		if(di.type.startsWith("select")) {
 			processSelect(valueCell, di, generateBlank, gv);
@@ -1316,25 +1317,27 @@ public class PDFManager {
 				di.value = " ";	// Need a space to show a blank row
 			}
 			
-			valueCell.addElement(getPara(di.value, di, gv));
+			valueCell.addElement(getPara(di.value, di, gv, deps));
 
 		}
 		
 
 	}
 	
-	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv) {
+	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps) {
 		
 		boolean hasContent = false;
 		Paragraph para = new Paragraph("", font);
-		if(value != null) {
+		
+		System.out.println("Look for dependencies: " + di.fIdx + "_" + di.rec_number + "_" + di.name);
+		
+		if(value != null && value.trim().length() > 0) {
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
 			hasContent = true;
 		}
 		
 		// Add dependencies
-		System.out.println("Look for dependencies: " + di.fIdx + "_" + di.rec_number + "_" + di.name);
-		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
+
 		if(deps != null) {
 			for(String n : deps) {
 				System.out.println("^^^^^^^Dependency: " + n);
@@ -1359,21 +1362,31 @@ public class PDFManager {
 		// If recording selected values
 		StringBuilder sb = new StringBuilder("");
 		
-		boolean isSelect = di.type.equals("select") ? true : false;
+		boolean isSelectMultiple = di.type.equals("select") ? true : false;
 		
+		// Questions that append their values to this question
+		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
+		
+		/*
+		 * Add the value of this question unless
+		 *   The form is not blank and the value is "other" and their are 1 or more dependent questions
+		 *   In this case we assume that its only the values of the dependent questions that are needed
+		 */
 		for(DisplayItem aChoice : di.choices) {
 			ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
 			
-			if(isSelect) {
+			if(isSelectMultiple) {
 				if(aChoice.isSet) {
 					if(generateBlank) {
 						item.setListSymbol(new Chunk("\uf046", Symbols)); 
 						list.add(item);
 					} else {
-						if(sb.length() > 0) {
-							sb.append(", ");
+						if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+							if(sb.length() > 0) {
+								sb.append(", ");
+							}
+							sb.append(aChoice.text);
 						}
-						sb.append(aChoice.text);
 					}
 				} else {
 					if(generateBlank) {
@@ -1387,10 +1400,13 @@ public class PDFManager {
 						item.setListSymbol(new Chunk("\uf111", Symbols)); 
 						list.add(item);
 					} else {
-						if(sb.length() > 0) {
-							sb.append(", ");
+						if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+							if(sb.length() > 0) {
+								sb.append(", ");
+							}
+							sb.append(aChoice.text);
 						}
-						sb.append(aChoice.text);
+
 					}
 				} else {
 					//item.setListSymbol(new Chunk("\241", Symbols)); 
@@ -1408,7 +1424,7 @@ public class PDFManager {
 			cell.addElement(list);
 		} else {
 			System.out.println("Add cell: " + sb.toString());
-			cell.addElement(getPara(sb.toString(), di, gv));
+			cell.addElement(getPara(sb.toString(), di, gv, deps));
 		}
 
 	}
