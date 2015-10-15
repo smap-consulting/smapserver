@@ -246,7 +246,7 @@ public class PDFManager {
 		
 		org.smap.sdal.model.Survey survey = null;
 		User user = null;
-		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options.
+		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
 		
 	
 		SurveyManager sm = new SurveyManager();
@@ -276,7 +276,7 @@ public class PDFManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true, false);
+			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true, generateBlank);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
