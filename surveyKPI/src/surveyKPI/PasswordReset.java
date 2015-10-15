@@ -94,7 +94,15 @@ public class PasswordReset extends Application {
 
 		if(email != null && email.trim().length() > 0) {		
 			
-			try {				
+			try {	
+				
+				/*
+				 * If the "email" does not have an "@" then it may be a user ident
+				 *  This is a hacky attempt to support legacy idents that were not emails
+				 */
+				if(!email.contains("@")) {
+					email = UtilityMethodsEmail.getEmailFromIdent(connectionSD, pstmt, email);
+				}
 				
 				String interval = "1 hour";
 				String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, email, interval);

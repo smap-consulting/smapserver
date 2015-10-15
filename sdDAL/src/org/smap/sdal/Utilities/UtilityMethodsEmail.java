@@ -273,6 +273,33 @@ public class UtilityMethodsEmail {
 	}
 	
 	/*
+	 * Get the email address for an ident
+	 */
+	static public String getEmailFromIdent(
+			Connection connectionSD, 
+			PreparedStatement pstmt, 
+			String ident) throws SQLException {
+		
+		String email = null;;
+		
+		/*
+		 * Get the table name and column name containing the text data
+		 * Do a case insensitive check
+		 */
+		String sql = "select email from users where ident = ?";
+
+		pstmt = connectionSD.prepareStatement(sql);	
+		pstmt.setString(1, ident);
+		log.info(pstmt.toString());
+		ResultSet rs = pstmt.executeQuery();
+		if (rs.next()) {
+			email = rs.getString(1);
+		}
+		
+		return email;
+	}
+	
+	/*
 	 * Get the administrator email for the organisation that the user belongs to
 	 */
 	static public Organisation getOrganisationDefaults(
@@ -476,13 +503,13 @@ public class UtilityMethodsEmail {
 		 */
 		String sql = "update users set" +
 				" one_time_password = ?," +
-				" one_time_password_expiry = timestamp 'now' + interval '" + interval + "' " +		
+				" one_time_password_expiry = timestamp 'now' + interval '" + interval + "' " + 
 				" where email ilike ?";
 
-		log.info(sql + " : " + uuid + " : "  + email);
 		pstmt = connectionSD.prepareStatement(sql);	
 		pstmt.setString(1, uuid);
 		pstmt.setString(2, email);
+		log.info("SQL set oneTimePassword: " + pstmt.toString());
 		int count = pstmt.executeUpdate();
 		
 		if(count > 0) {
