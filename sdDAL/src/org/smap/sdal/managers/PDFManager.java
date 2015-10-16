@@ -110,7 +110,7 @@ public class PDFManager {
 	private static int NUMBER_QUESTION_COLS = 10;
 	
 	Font font = FontFactory.getFont("Times-Roman", 10);
-    //Font fontbold = FontFactory.getFont("Times-Roman", 9, Font.BOLD);
+    Font fontbold = FontFactory.getFont("Times-Roman", 10, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
@@ -345,13 +345,9 @@ public class PDFManager {
 				/*
 				 * Create a PDF without the stationary
 				 */				
-				String stationaryName = basePath + File.separator + "misc" + File.separator + "StandardPDFReport.pdf";
 				
 				ByteArrayOutputStream baos = null;
-				ByteArrayOutputStream baos_s = null;
 				PdfWriter writer = null;
-
-				File letterFile = new File(stationaryName);
 				
 				/*
 				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
@@ -362,13 +358,7 @@ public class PDFManager {
 				// Step 1 - Create the underlying document as a byte array
 				Document document = new Document(PageSize.A4);
 				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
-				if(letterFile.exists()) {
-					baos = new ByteArrayOutputStream();
-					baos_s = new ByteArrayOutputStream();
-					writer = PdfWriter.getInstance(document, baos);
-				} else {
-					writer = PdfWriter.getInstance(document, outputStream);
-				}
+				writer = PdfWriter.getInstance(document, outputStream);
 				
 				writer.setInitialLeading(12);			
 				writer.setPageEvent(new PageSizer(survey.displayName, user, basePath)); 
@@ -383,83 +373,28 @@ public class PDFManager {
 							0,
 							i,
 							repIndexes,
-							gv);		
+							gv,
+							false);		
+				}
+				
+				fillNonTemplateUserDetails(document, user, basePath);
+				
+				// Add appendix
+				document.newPage();
+				document.add(new Paragraph("Appendix", fontbold));
+				
+				for(int i = 0; i < survey.instance.results.size(); i++) {
+					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
+							languageIdx,
+							generateBlank,
+							0,
+							i,
+							repIndexes,
+							gv,
+							true);		
 				}
 				
 				document.close();
-				
-				if(letterFile.exists()) {
-					
-					// Step 2- Populate any form fields in the stationary
-					
-					PdfReader s_reader = new PdfReader(stationaryName);			// Stationary
-					PdfStamper s_stamper = new PdfStamper(s_reader, baos_s);	// Write stationary output to a byte array output stream
-					
-					// debug - write out field names
-					/*
-					AcroFields pdfForm = s_stamper.getAcroFields();
-					Set<String> fields = pdfForm.getFields().keySet();
-					for(String key: fields) {
-						System.out.println("Field: " + key);
-					}
-					*/
-					/*
-					if(user != null) {
-						pdfForm.setField("organisation", user.company_name);
-						pdfForm.setField("organisation_address", user.company_address);
-						pdfForm.setField("organisation_phone", user.company_phone);
-						pdfForm.setField("organisation_email", user.company_email);
-						pdfForm.setField("form_title", survey.displayName);
-						
-						// Add logo
-						
-						PushbuttonField ad = pdfForm.getNewPushbuttonFromField("logo");
-						if(ad != null) {
-							ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
-							ad.setProportionalIcon(true);
-							String fileName = null;
-							try {
-								fileName = basePath + File.separator + "media" + File.separator +
-										"organisation" + File.separator + user.o_id + File.separator +
-										"settings" + File.separator + "bannerLogo";
-								System.out.println("Set file: " + fileName);
-								ad.setImage(Image.getInstance(fileName));
-							} catch (Exception e) {
-								log.info("Error: Failed to add image " + fileName + " to pdf");
-							}
-							pdfForm.replacePushbuttonField("logo", ad.getField());
-						}
-
-					}
-					*/
-					
-					s_stamper.setFormFlattening(true);
-					s_stamper.close();
-					s_reader.close();
-					
-					// Step 3 - Apply the stationary to the underlying data
-					
-					PdfReader reader = new PdfReader(baos.toByteArray());	// Underlying document
-					PdfReader f_reader = new PdfReader(baos_s.toByteArray());	// Filled in stationary
-					
-					PdfStamper stamper = new PdfStamper(reader, outputStream);
-					PdfImportedPage stationary_page_1 = stamper.getImportedPage(f_reader, 1);
-					int n = reader.getNumberOfPages();
-					PdfContentByte background;
-					for(int i = 0; i < n; i++ ) {
-						background = stamper.getUnderContent(i + 1);
-						if(i == 0) {
-							background.addTemplate(stationary_page_1, 0, 0);
-						} else {
-							// TODO add other pages
-						}
-					}
-					
-					
-					stamper.close();
-					reader.close();
-					
-				}
 				
 			}
 			
@@ -723,6 +658,8 @@ public class PDFManager {
 		}
 	}
 	
+
+	
 	/*
 	 * Get an XML Parser
 	 */
@@ -775,7 +712,8 @@ public class PDFManager {
 			int depth,
 			int length,
 			int[] repIndexes,
-			GlobalVariables gv) throws DocumentException, IOException {
+			GlobalVariables gv,
+			boolean appendix) throws DocumentException, IOException {
 		
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
@@ -798,7 +736,8 @@ public class PDFManager {
 								depth + 1,
 								k,
 								repIndexes,
-								gv);
+								gv,
+								appendix);
 					}
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
@@ -808,7 +747,8 @@ public class PDFManager {
 								depth + 1,
 								k,
 								repIndexes,
-								gv);
+								gv,
+								appendix);
 					} 
 				}
 			} else if(r.qIdx >= 0) {
@@ -818,7 +758,7 @@ public class PDFManager {
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				//Label label = question.labels.get(languageIdx);
 			
-				if(includeResult(r, question)) {
+				if(includeResult(r, question, appendix)) {
 					if(question.type.equals("begin group")) {
 						//groupWidth = processGroup(parser, document, question, label);
 						if(question.isNewPage()) {
@@ -827,9 +767,12 @@ public class PDFManager {
 					} else if(question.type.equals("end group")) {
 						//ignore
 					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, gv, length);
+						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix);
 						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
+						newTable.setWidthPercentage(100);
+
+				        
 						// Add a gap if this is the first question of the record
 						// or the previous row was at a different depth
 						if(firstQuestion) {
@@ -883,15 +826,30 @@ public class PDFManager {
 	/*
 	 * Make a decision as to whether this result should be included in the PDF
 	 */
-	private boolean includeResult(Result r, org.smap.sdal.model.Question question) {
+	private boolean includeResult(Result r, org.smap.sdal.model.Question question, boolean appendix) {
 		
 		boolean include = true;
 		boolean inMeta = question.inMeta;
 
 		// Don't include the question if it has been marked as not to be included
-		if(question.appearance != null && question.appearance.contains("pdfno")) {
-			include = false;
+		if(question.appearance != null) {
+			if(question.appearance.contains("pdfno")) {
+				include = false;
+			} else {
+				boolean appendixQuestion = question.appearance.contains("pdfapp");
+				if(appendix && !appendixQuestion || (!appendix && appendixQuestion) ) {
+					include = false;
+				}
+			}
+		} else {
+			// Questions without appearance should not appear in the appendix
+			if(appendix) {
+				include = false;
+			}
 		}
+		
+		// Check appendix status
+		
 		
 		if(include) {
 			if(r.name == null) {
@@ -973,7 +931,8 @@ public class PDFManager {
 			int offset,
 			int languageIdx,
 			GlobalVariables repeat,
-			int recNumber) {
+			int recNumber,
+			boolean appendix) {
 		
 		Row row = new Row();
 		row.groupWidth = repeat.cols.length;
@@ -1001,7 +960,7 @@ public class PDFManager {
 				
 				
 				if(updateCols == null || isNewPage) {
-					if(includeResult(r, question)) {
+					if(includeResult(r, question, appendix)) {
 						includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, recNumber);
 					}
 				} else {
@@ -1352,7 +1311,7 @@ public class PDFManager {
 	
 	private void processSelect(PdfPCell cell, DisplayItem di,
 			boolean generateBlank,
-			GlobalVariables gv) { 
+			GlobalVariables gv) {
 
 		// If generating blank template
 		List list = new List();
@@ -1427,6 +1386,43 @@ public class PDFManager {
 			cell.addElement(getPara(sb.toString(), di, gv, deps));
 		}
 
+	}
+	
+	/*
+	 * Fill in user details for the output when their is no template
+	 */
+	private void fillNonTemplateUserDetails(Document document, User user, String basePath) throws IOException, DocumentException {
+		
+		System.out.println("Fill non template details");
+		document.add(getKeyValuePair("Inspected by: ", user.name));
+		if(user.signature != null && user.signature.trim().length() > 0) {
+			String fileName = null;
+			try {
+				fileName = basePath + File.separator + user.signature;
+
+					Image img = Image.getInstance(fileName);
+					img.scaleToFit(200, 50);
+					float w = img.getScaledWidth();
+					
+				    document.add(img);
+					
+			} catch (Exception e) {
+				log.info("Error: Failed to add image " + fileName + " to pdf");
+			}
+		}
+
+	}
+	
+	/*
+	 * Format a key value pair into a paragraph
+	 */
+	private Paragraph getKeyValuePair(String key, String value) {
+		Paragraph para = new Paragraph("", font);
+		
+		para.add(new Chunk(GeneralUtilityMethods.unesc(key), fontbold));
+		para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
+		
+		return para;
 	}
 }
 
