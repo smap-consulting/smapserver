@@ -1300,10 +1300,13 @@ public class PDFManager {
 		if(deps != null) {
 			for(String n : deps) {
 				System.out.println("^^^^^^^Dependency: " + n);
-				if(hasContent) {
-					para.add(new Chunk(",", font));
+				if(n != null) {
+					if(hasContent) {
+						para.add(new Chunk(",", font));
+					}
+					para.add(new Chunk(n, font));
 				}
-				para.add(new Chunk(n, font));
+				
 			}
 		}
 		return para;

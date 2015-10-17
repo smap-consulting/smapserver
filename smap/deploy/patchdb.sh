@@ -141,6 +141,11 @@ sudo a2dissite 000-default
 sudo a2dissite default-ssl
 
 cd ../deploy
+
+# Create miscelaneous directory
+sudo mkdir /smap/misc
+sudo chown tomcat7 /smap/misc
+
 fi
 
 #####################################################################################
