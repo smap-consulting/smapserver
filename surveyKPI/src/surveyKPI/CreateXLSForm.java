@@ -79,7 +79,7 @@ public class CreateXLSForm extends Application {
 	public Response getXLSFormService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
-			@QueryParam("filename") String filename) throws Exception {
+			@QueryParam("filetype") String filetype) throws Exception {
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -101,16 +101,21 @@ public class CreateXLSForm extends Application {
 		// Get the base path
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
+		// Set file type to "xlsx" unless "xls" has been specified
+		if(filetype == null || !filetype.equals("xls")) {
+			filetype = "xlsx";
+		}
+		
 		try {
 			
 			// Get the survey details
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false);
 			
 			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + ".xlsx", response);
+			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);
 			
 			// Create XLSForm
-			XLSFormManager xf = new XLSFormManager("xlsx");
+			XLSFormManager xf = new XLSFormManager(filetype);
 			xf.createXLSForm(response.getOutputStream(), survey);
 			
 		}  catch (Exception e) {

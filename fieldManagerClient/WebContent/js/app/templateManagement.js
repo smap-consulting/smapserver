@@ -139,6 +139,8 @@ $(document).ready(function() {
 
 		if(type === "pdf") {
 			docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;	
+		} else if(type === "xls_edited") {
+			docURL = "/surveyKPI/xlsForm/" + gSelectedTemplate + "?filetype=" + "xlsx";	
 		} else {
 			docURL = "/surveyKPI/survey/" + gSelectedTemplate + "/download?type=" + type + "&language=" + language;	
 		}
