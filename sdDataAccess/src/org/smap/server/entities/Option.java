@@ -151,7 +151,7 @@ public class Option implements Serializable{
 	public void setLabel(String label) {
 		this.label = label;
 	}
-	
+
 	public void setLabelId(String v) {
 		label_id = v;
 	}
@@ -183,18 +183,6 @@ public class Option implements Serializable{
     	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		cascade_filters = gson.toJson(cascadeKeyValues);
     	
-    	/*
-    	List<String> keyList = new ArrayList<String>(cascadeKeyValues.keySet());
-    	String filter = "";
-    	int count = 0;
-    	for(String k : keyList) {
-    		if(count++ != 0) {
-    			filter += " ";
-    		}
-    		filter += k + " " + cascadeKeyValues.get(k);
-    	}
-    	cascade_filters = filter;
-    	*/
     }
     
     // Set the key value pairs from the filter text string

@@ -318,3 +318,5 @@ alter table tasks add column repeat boolean;
 alter table organisation add column company_address text;
 alter table organisation add column company_phone text;
 alter table organisation add column company_email text;
+
+-- Upgrade to: 15.10 from 15.09
