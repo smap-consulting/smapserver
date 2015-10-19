@@ -302,7 +302,7 @@ public class PDFManager {
 			// If the PDF is to be returned in an http response then set the file name now
 			if(response != null) {
 				log.info("Setting filename to: " + filename);
-				setFilenameInResponse(filename, response);
+				GeneralUtilityMethods.setFilenameInResponse(filename, response);
 			}
 			
 			/*
@@ -463,29 +463,6 @@ public class PDFManager {
 		return name;
 	}
 	
-	/*
-	 * Add the filename to the response
-	 */
-	private void setFilenameInResponse(String filename, HttpServletResponse response) {
-
-		String escapedFileName = null;
-		
-		log.info("Setting filename in response: " + filename);
-		if(filename == null) {
-			filename = "survey";
-		}
-		try {
-			escapedFileName = URLDecoder.decode(filename, "UTF-8");
-			escapedFileName = URLEncoder.encode(escapedFileName, "UTF-8");
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Encoding Filename Error", e);
-		}
-		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
-		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
-		
-		response.setHeader("Content-Disposition", "attachment; filename=\"" + escapedFileName +"\"");	
-		response.setStatus(HttpServletResponse.SC_OK);	
-	}
 	
 	/*
 	 * Get the index in the language array for the provided language

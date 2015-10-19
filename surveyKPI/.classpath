@@ -66,5 +66,8 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/itextpdf-5.5.5.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlworker-5.5.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
+	<classpathentry kind="lib" path="/sdDAL/Libraries/poi-ooxml-3.13-20150929.jar"/>
+	<classpathentry kind="lib" path="/sdDAL/Libraries/poi-ooxml-schemas-3.13-20150929.jar"/>
+	<classpathentry kind="lib" path="/sdDAL/Libraries/xmlworker-5.5.4.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

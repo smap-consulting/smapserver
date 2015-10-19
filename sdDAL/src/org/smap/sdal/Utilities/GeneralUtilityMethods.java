@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -16,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -1143,6 +1146,30 @@ public class GeneralUtilityMethods {
 		}
 
 		return sqlFrag;
+	}
+	
+	/*
+	 * Add the filename to the response
+	 */
+	public static void setFilenameInResponse(String filename, HttpServletResponse response) {
+
+		String escapedFileName = null;
+		
+		log.info("Setting filename in response: " + filename);
+		if(filename == null) {
+			filename = "survey";
+		}
+		try {
+			escapedFileName = URLDecoder.decode(filename, "UTF-8");
+			escapedFileName = URLEncoder.encode(escapedFileName, "UTF-8");
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Encoding Filename Error", e);
+		}
+		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
+		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
+		
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + escapedFileName +"\"");	
+		response.setStatus(HttpServletResponse.SC_OK);	
 	}
 	
 }
