@@ -32,20 +32,24 @@ public class XLSFormManager {
 		public static final int COL_CHOICE_FILTER = 4;
 		public static final int COL_CONSTRAINT = 5;
 		public static final int COL_CONSTRAINT_MSG = 6;
+		public static final int COL_RELEVANT = 7;
+		public static final int COL_REPEAT_COUNT = 8;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
 		public static final int COL_CHOICE_LABEL = 102;
+		
+		public static final int COL_CALCULATION = 107;
 		
 		
 		String name;
 		private int type;
 		private int labelIndex;		// Where there are multiple labels this records the label index
 		private String typeString;
-		private int width;			// Column width in 1/256th of a character width
 		int colNumber;
 		
-		public Column(String name, int type, int labelIndex, String typeString) {
+		public Column(int colNumber, String name, int type, int labelIndex, String typeString) {
+			this.colNumber = colNumber;
 			this.name = name;
 			this.type = type;
 			this.typeString = typeString;
@@ -61,6 +65,7 @@ public class XLSFormManager {
 			return width;
 		}
 		
+			
 		// Return the question value for this column
 		public String getValue(Question q) {
 			String value = "";
@@ -95,7 +100,16 @@ public class XLSFormManager {
 			} else if(type == COL_CONSTRAINT_MSG) {				
 				value = q.constraint_msg;
 				
-			} else {
+			} else if(type == COL_RELEVANT) {				
+				value = q.relevant;
+				
+			} else if(type == COL_REPEAT_COUNT) {				
+				value = "";		// Not a begin repeat hence the repeat count is empty
+				
+			} else if(type == COL_CALCULATION) {				
+				value = q.calculation;		
+				
+			}else {
 				System.out.println("Unknown column type for survey: " + type);
 			}
 			
@@ -155,16 +169,22 @@ public class XLSFormManager {
 		Map<String, CellStyle> styles = createStyles(wb);
 		
 		// Create Columns
-		ArrayList<Column> colsSurvey = getColumnsSurvey(survey);
-		ArrayList<Column> colsChoices = getColumnsChoices(survey);
 		HashMap<String, Integer> filterIndexes = new HashMap<String, Integer> ();
+		HashMap<String, Integer> namedColumnIndexes = new HashMap<String, Integer> ();
+		
+		ArrayList<Column> colsSurvey = getColumnsSurvey(survey, namedColumnIndexes);
+		ArrayList<Column> colsChoices = getColumnsChoices(survey);
+
 		
 		createHeader(colsSurvey, surveySheet, styles);
 		createHeader(colsChoices, choicesSheet, styles);	
 		
 		// Write out questions
 		Form ff = survey.getFirstForm();
-		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, colsChoices, filterIndexes);
+		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, 
+				colsChoices, 
+				filterIndexes,
+				namedColumnIndexes);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -202,10 +222,12 @@ public class XLSFormManager {
 			Map<String, CellStyle> styles,
 			ArrayList<Column> colsSurvey,
 			ArrayList<Column> colsChoices,
-			HashMap<String, Integer> filterIndexes) throws IOException {
+			HashMap<String, Integer> filterIndexes,
+			HashMap<String, Integer> namedColumnIndexes) throws IOException {
 		
 		ArrayList<Question> questions = form.questions;
 		boolean inMeta = false;
+		String savedCalculation = null;		// Contains the repeat count for a sub form
 		
 		for(Question q : questions)  {
 			
@@ -215,40 +237,51 @@ public class XLSFormManager {
 				inMeta = false;
 			}
 			
-			if(!inMeta && !q.name.equals("meta_groupEnd")) {
-				System.out.println(q.name);
-				
-				if(isRow(q)) {
-					Row row = surveySheet.createRow(rowNumberSurvey++);
-					CellStyle typeStyle = styles.get(q.type);
-					for(int i = 0; i < colsSurvey.size(); i++) {
-						Column col = colsSurvey.get(i);
-						
-						CellStyle colStyle = styles.get(col.typeString);
-						
-						Cell cell = row.createCell(i);
-						if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
-						if(colStyle != null) {	cell.setCellStyle(colStyle); }		
-						
-						cell.setCellValue(col.getValue(q));
-			        }
+			if(!q.visible) {
+				// Save this "invisible question" it may contain the calculation for a repeat
+				savedCalculation = q.calculation;
+			} else {
+				if(!inMeta && !q.name.equals("meta_groupEnd")) {
+					System.out.println(q.name);
 					
-					// If this is a sub form then process its questions now
-					Form subForm = survey.getSubForm(form, q);
-					if( subForm != null) {
-						System.out.println("Process sub form: " + subForm.name);
-						processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
-								colsSurvey, 
-								colsChoices,
-								filterIndexes);
-						addEndGroup(surveySheet, "end repeat", q.name, typeStyle);
-					} 
-					
-					// If this question has a list of choices then add these to the choices sheet
-					if(q.list_name != null) {
-						OptionList ol = survey.optionLists.get(q.list_name);
-						if(ol != null) {		// option list is populated for questions that are not select TODO Fix
-							addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
+					if(isRow(q)) {
+						Row row = surveySheet.createRow(rowNumberSurvey++);
+						CellStyle typeStyle = styles.get(q.type);
+						for(int i = 0; i < colsSurvey.size(); i++) {
+							Column col = colsSurvey.get(i);
+							CellStyle colStyle = styles.get(col.typeString);	
+							Cell cell = row.createCell(i);
+							if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
+							if(colStyle != null) {	cell.setCellStyle(colStyle); }					
+							cell.setCellValue(col.getValue(q));
+				        }
+						
+						// If this is a sub form then process its questions now
+						Form subForm = survey.getSubForm(form, q);
+						if( subForm != null) {
+							// Add the repeat count using the saved question
+							Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());
+							CellStyle colStyle = styles.get(col.typeString);	
+							Cell cell = row.createCell(col.getColNumber());
+							if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
+							if(colStyle != null) {	cell.setCellStyle(colStyle); }	
+							cell.setCellValue(savedCalculation);
+							
+							System.out.println("Process sub form: " + subForm.name);
+							processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
+									colsSurvey, 
+									colsChoices,
+									filterIndexes,
+									namedColumnIndexes);
+							addEndGroup(surveySheet, "end repeat", q.name, typeStyle);
+						} 
+						
+						// If this question has a list of choices then add these to the choices sheet
+						if(q.list_name != null) {
+							OptionList ol = survey.optionLists.get(q.list_name);
+							if(ol != null) {		// option list is populated for questions that are not select TODO Fix
+								addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
+							}
 						}
 					}
 				}
@@ -348,26 +381,32 @@ public class XLSFormManager {
 	/*
 	 * Get the columns for the survey sheet
 	 */
-	private ArrayList<Column> getColumnsSurvey(org.smap.sdal.model.Survey survey) {
+	private ArrayList<Column> getColumnsSurvey(org.smap.sdal.model.Survey survey,
+			HashMap<String, Integer> namedColumnIndexes) {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
+		int colNumber = 0;
 		// Add type and name columns
-		cols.add(new Column("type", Column.COL_TYPE, 0, "type"));
-		cols.add(new Column("name", Column.COL_NAME, 0, "name"));
+		cols.add(new Column(colNumber++, "type", Column.COL_TYPE, 0, "type"));
+		cols.add(new Column(colNumber++, "name", Column.COL_NAME, 0, "name"));
 		
 		// Add label columns which vary according to the number of languages
 		int labelIndex = 0;
 		for(String language : survey.languages) {
-			cols.add(new Column("label::" + language, Column.COL_LABEL, labelIndex, "label"));
-			cols.add(new Column("hint::" + language, Column.COL_HINT, labelIndex, "label"));
+			cols.add(new Column(colNumber++,"label::" + language, Column.COL_LABEL, labelIndex, "label"));
+			cols.add(new Column(colNumber++,"hint::" + language, Column.COL_HINT, labelIndex, "label"));
 			labelIndex++;
 		}
 		
 		// Add remaining columns
-		cols.add(new Column("choice_filter", Column.COL_CHOICE_FILTER, 0, "choice_filter"));
-		cols.add(new Column("constraint", Column.COL_CONSTRAINT, 0, "constraint"));
-		cols.add(new Column("constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
+		cols.add(new Column(colNumber++,"choice_filter", Column.COL_CHOICE_FILTER, 0, "choice_filter"));
+		cols.add(new Column(colNumber++,"constraint", Column.COL_CONSTRAINT, 0, "constraint"));
+		cols.add(new Column(colNumber++,"constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
+		cols.add(new Column(colNumber++,"relevant", Column.COL_RELEVANT, 0, "relevant"));
+		cols.add(new Column(colNumber++, "repeat_count", Column.COL_REPEAT_COUNT, 0, "repeat_count"));
+		namedColumnIndexes.put("repeat_count", new Integer(colNumber -1));
+		cols.add(new Column(colNumber++, "calculation", Column.COL_CALCULATION, 0, "calculation"));
 		
 		return cols;
 	}
@@ -379,13 +418,15 @@ public class XLSFormManager {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
-		cols.add(new Column("list name", Column.COL_LIST_NAME, 0, "list name"));
-		cols.add(new Column("name", Column.COL_CHOICE_NAME, 0, "choice_name"));
+		int colNumber = 0;
+		
+		cols.add(new Column(colNumber++, "list name", Column.COL_LIST_NAME, 0, "list name"));
+		cols.add(new Column(colNumber++, "name", Column.COL_CHOICE_NAME, 0, "choice_name"));
 		
 		// Add label columns
 		int labelIndex = 0;
 		for(String language : survey.languages) {
-			cols.add(new Column("label::" + language, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
+			cols.add(new Column(colNumber++, "label::" + language, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
 		}
 		return cols;
 	}

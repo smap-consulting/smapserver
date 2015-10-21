@@ -308,7 +308,13 @@ public class SurveyManager {
 		
 		// Get the forms belonging to this survey
 		ResultSet rsGetForms = null;
-		String sqlGetForms = "select f.f_id, f.name, f.parentform, f.parentquestion, f.table_name from form f where f.s_id = ?;";
+		String sqlGetForms = "select f.f_id, "
+				+ "f.name, "
+				+ "f.parentform, "
+				+ "f.parentquestion, "
+				+ "f.table_name, "
+				+ "f.repeats "
+				+ "from form f where f.s_id = ?;";
 		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
 		
 		// Get the questions belonging to a form
@@ -321,7 +327,9 @@ public class SurveyManager {
 				+ "q.appearance, "
 				+ "q.qconstraint, "
 				+ "q.constraint_msg, "
-				+ "q.nodeset "
+				+ "q.nodeset, "
+				+ "q.relevant, "
+				+ "q.visible "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -375,6 +383,7 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
+			f.repeat_count = GeneralUtilityMethods.convertAllXpathNames(rsGetForms.getString(6), true);
 				
 			/*
 			 * Get the questions for this form
@@ -393,7 +402,7 @@ public class SurveyManager {
 				q.list_name = rsGetQuestions.getString(5);
 				q.hint_id = rsGetQuestions.getString(6);
 				q.source = rsGetQuestions.getString(7);
-				q.calculation = rsGetQuestions.getString(8);
+				q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(8), true);
 				q.seq = rsGetQuestions.getInt(9);
 				q.defaultanswer = rsGetQuestions.getString(10);
 				q.appearance = rsGetQuestions.getString(11);
@@ -402,7 +411,10 @@ public class SurveyManager {
 				q.constraint_msg = rsGetQuestions.getString(13);				
 				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(14), true);
 				
-				// add column name (not currently in the database but it should be)
+				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(15), true);
+				q.visible = rsGetQuestions.getBoolean(16);
+				
+				// add column name (not currently maintained in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);
 				
 				// Track if this question is in the meta group

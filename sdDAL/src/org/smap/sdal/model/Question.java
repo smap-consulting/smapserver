@@ -29,6 +29,7 @@ public class Question {
 	public String calculation;
 	public String constraint;
 	public String constraint_msg;
+	public String relevant;
 	public boolean visible;
 	public boolean inMeta;			// Set true if the question is in the meta group
 	int width = -1;						// Display width, generated from appearance column 
