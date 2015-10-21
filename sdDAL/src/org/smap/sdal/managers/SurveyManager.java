@@ -431,7 +431,7 @@ public class SurveyManager {
 				
 				// If the survey was loaded from xls it will not have a list name
 				if(q.list_name == null || q.list_name.trim().length() == 0) {
-					q.list_name = String.valueOf(q.id);
+					q.list_name = q.name;
 				}
 				
 				// Get the language labels

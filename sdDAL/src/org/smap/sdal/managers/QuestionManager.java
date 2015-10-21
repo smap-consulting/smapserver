@@ -265,13 +265,13 @@ public class QuestionManager {
 		/*
 		 * Get all questions which match the list_name
 		 * Where the survey was loaded from XLS this list name in the table may be null 
-		 * however the list name will be equal to the question id
+		 * however the list name will be equal to the question name
 		 */
 		String sqlGetQuestions = "select q.q_id " +
 				"from question q, form f " +
 				"where q.f_id = f.f_id " + 
 				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
+				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
 		
 		PreparedStatement pstmt = null;
 		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
@@ -287,15 +287,15 @@ public class QuestionManager {
 			
 			for(Option o : options) {
 				
-				int optionListAsQId = 0;
-				try {
-					optionListAsQId = Integer.parseInt(o.optionList);
-				} catch (Exception e) {	
-				}
+				String optionListAsQName = o.optionList;
+				//try {
+				//	optionListAsQId = Integer.parseInt(o.optionList);
+				//} catch (Exception e) {	
+				//}
 				// Get the questions from the form that use this option list
 				pstmtGetQuestions.setInt(1, sId);
 				pstmtGetQuestions.setString(2,  o.optionList);
-				pstmtGetQuestions.setInt(3, optionListAsQId);
+				pstmtGetQuestions.setString(3, o.optionList);
 				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 				ResultSet rs = pstmtGetQuestions.executeQuery();
 				
@@ -349,7 +349,7 @@ public class QuestionManager {
 				"from question q, form f " +
 				"where q.f_id = f.f_id " + 
 				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
+				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
 		
 		PreparedStatement pstmt = null;
 		String sql = "delete from option " +
@@ -366,17 +366,16 @@ public class QuestionManager {
 			
 			for(Option o : options) {
 				
-				int optionListAsQId = 0;
-				try {
-					optionListAsQId = Integer.parseInt(o.optionList);
-				} catch (Exception e) {
-					
-				}
+				//int optionListAsQId = 0;
+				//try {
+				//	optionListAsQId = Integer.parseInt(o.optionList);
+				//} catch (Exception e) {
+				//}
 			
 				// Get the questions from the form that use this option list
 				pstmtGetQuestions.setInt(1, sId);
 				pstmtGetQuestions.setString(2,  o.optionList);
-				pstmtGetQuestions.setInt(3, optionListAsQId);
+				pstmtGetQuestions.setString(3, o.optionList);
 				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 				ResultSet rs = pstmtGetQuestions.executeQuery();
 				
@@ -435,7 +434,7 @@ public class QuestionManager {
 				"from question q, form f " +
 				"where q.f_id = f.f_id " + 
 				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.q_id = ?))";
+				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
 		
 		PreparedStatement pstmt = null;
 
@@ -455,17 +454,17 @@ public class QuestionManager {
 					
 					pstmt = sd.prepareStatement(sql);
 					
-					int optionListAsQId = 0;
-					try {
-						optionListAsQId = Integer.parseInt(p.optionList);
-					} catch (Exception e) {
-						
-					}
+					//int optionListAsQId = 0;
+					//try {
+					//	optionListAsQId = Integer.parseInt(p.optionList);
+					//} catch (Exception e) {
+					//	
+					//}
 				
 					// Get the questions from the form that use this option list
 					pstmtGetQuestions.setInt(1, sId);
 					pstmtGetQuestions.setString(2,  p.optionList);
-					pstmtGetQuestions.setInt(3, optionListAsQId);
+					pstmtGetQuestions.setString(3, p.optionList);
 					log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 					ResultSet rs = pstmtGetQuestions.executeQuery();
 					

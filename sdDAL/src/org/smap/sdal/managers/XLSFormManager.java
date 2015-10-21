@@ -336,7 +336,7 @@ public class XLSFormManager {
 			}
 			
 			// Add any filter columns
-			if(o.cascadeKeyValues.size() > 0) {
+			if(o.cascadeKeyValues != null && o.cascadeKeyValues.size() > 0) {
 				List<String> keyList = new ArrayList<String>(o.cascadeKeyValues.keySet());
 	        	for(String k : keyList) {
 	        		String v = o.cascadeKeyValues.get(k);
