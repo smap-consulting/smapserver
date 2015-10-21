@@ -24,8 +24,11 @@ public class Question {
 	public int seq;
 	public String defaultanswer;
 	public String appearance;
+	public String choice_filter;
 	public String source;
 	public String calculation;
+	public String constraint;
+	public String constraint_msg;
 	public boolean visible;
 	public boolean inMeta;			// Set true if the question is in the meta group
 	int width = -1;						// Display width, generated from appearance column 

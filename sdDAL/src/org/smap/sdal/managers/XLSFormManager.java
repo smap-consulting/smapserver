@@ -9,6 +9,7 @@ import java.io.OutputStream;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.xssf.usermodel.*;
@@ -19,6 +20,7 @@ import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
+import org.w3c.dom.Element;
 
 public class XLSFormManager {
 	
@@ -26,6 +28,10 @@ public class XLSFormManager {
 		public static final int COL_TYPE = 0;
 		public static final int COL_NAME = 1;
 		public static final int COL_LABEL = 2;
+		public static final int COL_HINT = 3;
+		public static final int COL_CHOICE_FILTER = 4;
+		public static final int COL_CONSTRAINT = 5;
+		public static final int COL_CONSTRAINT_MSG = 6;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
@@ -37,6 +43,7 @@ public class XLSFormManager {
 		private int labelIndex;		// Where there are multiple labels this records the label index
 		private String typeString;
 		private int width;			// Column width in 1/256th of a character width
+		int colNumber;
 		
 		public Column(String name, int type, int labelIndex, String typeString) {
 			this.name = name;
@@ -76,27 +83,48 @@ public class XLSFormManager {
 			} else if(type == COL_LABEL) {				
 				value = q.labels.get(labelIndex).text;
 				
+			} else if(type == COL_HINT) {				
+				value = q.labels.get(labelIndex).hint;
+				
+			} else if(type == COL_CHOICE_FILTER) {				
+				value = q.choice_filter;
+				
+			} else if(type == COL_CONSTRAINT) {				
+				value = q.constraint;
+				
+			} else if(type == COL_CONSTRAINT_MSG) {				
+				value = q.constraint_msg;
+				
+			} else {
+				System.out.println("Unknown column type for survey: " + type);
 			}
 			
 			return value;
 		}
 		
-		// Return the question value for this column
-		public String getValue(Option o) {
+		// Return the choice value for this column
+		public String getValue(Option o, String listName) {
 			String value = "";
 			
-			if(type == COL_LIST_NAME) {
-				
-				value = o.optionList;
+			if(type == COL_LIST_NAME) {			
+				value = listName;
 
 			} else if(type == COL_CHOICE_NAME) {				
 				value = o.value;		
 				
 			} else if(type == COL_CHOICE_LABEL) {				
-				value = o.labels.get(labelIndex).text;				
+				value = o.labels.get(labelIndex).text;	
+				
+			} else {
+				System.out.println("Unknown option type: " + type);
 			}
 			
 			return value;
+		}
+		
+		// Get the column number
+		public int getColNumber() {
+			return colNumber;
 		}
 		
 	}
@@ -120,18 +148,23 @@ public class XLSFormManager {
 		Sheet choicesSheet = wb.createSheet("choices");
 		Sheet settingsSheet = wb.createSheet("settings");
 		
+		// Freeze panes by default
+		surveySheet.createFreezePane(2, 1);
+		choicesSheet.createFreezePane(3, 1);
+		
 		Map<String, CellStyle> styles = createStyles(wb);
 		
 		// Create Columns
 		ArrayList<Column> colsSurvey = getColumnsSurvey(survey);
 		ArrayList<Column> colsChoices = getColumnsChoices(survey);
+		HashMap<String, Integer> filterIndexes = new HashMap<String, Integer> ();
 		
 		createHeader(colsSurvey, surveySheet, styles);
 		createHeader(colsChoices, choicesSheet, styles);	
 		
 		// Write out questions
 		Form ff = survey.getFirstForm();
-		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, colsChoices);
+		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, colsChoices, filterIndexes);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -168,42 +201,55 @@ public class XLSFormManager {
 			Sheet choicesSheet,
 			Map<String, CellStyle> styles,
 			ArrayList<Column> colsSurvey,
-			ArrayList<Column> colsChoices) throws IOException {
+			ArrayList<Column> colsChoices,
+			HashMap<String, Integer> filterIndexes) throws IOException {
 		
 		ArrayList<Question> questions = form.questions;
+		boolean inMeta = false;
 		
 		for(Question q : questions)  {
 			
-			System.out.println(q.name);
+			if(q.name.equals("meta")) {
+				inMeta = true;
+			} else if(q.name.equals("meta_groupEnd")) {
+				inMeta = false;
+			}
 			
-			if(isRow(q)) {
-				Row row = surveySheet.createRow(rowNumberSurvey++);
-				CellStyle typeStyle = styles.get(q.type);
-				for(int i = 0; i < colsSurvey.size(); i++) {
-					Column col = colsSurvey.get(i);
-					
-					CellStyle colStyle = styles.get(col.typeString);
-					
-					Cell cell = row.createCell(i);
-					if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
-					if(colStyle != null) {	cell.setCellStyle(colStyle); }		
-					
-					cell.setCellValue(col.getValue(q));
-		        }
+			if(!inMeta && !q.name.equals("meta_groupEnd")) {
+				System.out.println(q.name);
 				
-				// If this is a sub form then process its questions now
-				Form subForm = survey.getSubForm(form, q);
-				if( subForm != null) {
-					System.out.println("Process sub form: " + subForm.name);
-					processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, colsSurvey, colsChoices);
-					addEndGroup(surveySheet, "end repeat", q.name, typeStyle);
-				} 
-				
-				// If this question has a list of choices then add these to the choices sheet
-				if(q.list_name != null) {
-					OptionList ol = survey.optionLists.get(q.list_name);
-					if(ol != null) {		// option list is populated for questions that are not select TODO Fix
-						addChoiceList(survey, choicesSheet, ol, colsChoices, styles);
+				if(isRow(q)) {
+					Row row = surveySheet.createRow(rowNumberSurvey++);
+					CellStyle typeStyle = styles.get(q.type);
+					for(int i = 0; i < colsSurvey.size(); i++) {
+						Column col = colsSurvey.get(i);
+						
+						CellStyle colStyle = styles.get(col.typeString);
+						
+						Cell cell = row.createCell(i);
+						if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
+						if(colStyle != null) {	cell.setCellStyle(colStyle); }		
+						
+						cell.setCellValue(col.getValue(q));
+			        }
+					
+					// If this is a sub form then process its questions now
+					Form subForm = survey.getSubForm(form, q);
+					if( subForm != null) {
+						System.out.println("Process sub form: " + subForm.name);
+						processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
+								colsSurvey, 
+								colsChoices,
+								filterIndexes);
+						addEndGroup(surveySheet, "end repeat", q.name, typeStyle);
+					} 
+					
+					// If this question has a list of choices then add these to the choices sheet
+					if(q.list_name != null) {
+						OptionList ol = survey.optionLists.get(q.list_name);
+						if(ol != null) {		// option list is populated for questions that are not select TODO Fix
+							addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
+						}
 					}
 				}
 			}
@@ -218,15 +264,18 @@ public class XLSFormManager {
 			Sheet sheet, 
 			OptionList ol,
 			ArrayList<Column> cols, 
-			Map<String, CellStyle> styles) {
+			HashMap<String, Integer> filterIndexes,
+			Map<String, CellStyle> styles,
+			String listName) {
 		
 		// TODO check to see if we have already added this list
 		
 		ArrayList<Option> options = ol.options;
 		
+		System.out.println("Add choice list: " + listName);
 		sheet.createRow(rowNumberChoices++);		// blank row
 		for(Option o : options) {
-			Row row = sheet.createRow(rowNumberSurvey++);
+			Row row = sheet.createRow(rowNumberChoices++);
 			for(int i = 0; i < cols.size(); i++) {
 				Column col = cols.get(i);
 				CellStyle colStyle = styles.get(col.typeString);
@@ -234,10 +283,29 @@ public class XLSFormManager {
 				Cell cell = row.createCell(i);
 				if(colStyle != null) {	cell.setCellStyle(colStyle); }		
 				
-				cell.setCellValue(col.getValue(o));
+				cell.setCellValue(col.getValue(o, listName));
 				
 			}
+			
+			// Add any filter columns
+			if(o.cascadeKeyValues.size() > 0) {
+				List<String> keyList = new ArrayList<String>(o.cascadeKeyValues.keySet());
+	        	for(String k : keyList) {
+	        		String v = o.cascadeKeyValues.get(k);
+	        		
+	        		Integer colIndex = filterIndexes.get(k);
+	        		if(colIndex == null) {
+	        			colIndex = new Integer(cols.size() + filterIndexes.size());
+	        			filterIndexes.put(k, colIndex);
+	        			Cell headerCell = sheet.getRow(0).createCell(colIndex.intValue());
+		        		headerCell.setCellValue(k);
+	        		}
+	        		Cell cell = row.createCell(colIndex.intValue());
+	        		cell.setCellValue(v);
+	        	}
+			}
 		}
+		
 	}
 	
 	/*
@@ -284,14 +352,23 @@ public class XLSFormManager {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
+		// Add type and name columns
 		cols.add(new Column("type", Column.COL_TYPE, 0, "type"));
 		cols.add(new Column("name", Column.COL_NAME, 0, "name"));
 		
-		// Add label columns
+		// Add label columns which vary according to the number of languages
 		int labelIndex = 0;
 		for(String language : survey.languages) {
-			cols.add(new Column("label::" + language, Column.COL_LABEL, labelIndex++, "label"));
+			cols.add(new Column("label::" + language, Column.COL_LABEL, labelIndex, "label"));
+			cols.add(new Column("hint::" + language, Column.COL_HINT, labelIndex, "label"));
+			labelIndex++;
 		}
+		
+		// Add remaining columns
+		cols.add(new Column("choice_filter", Column.COL_CHOICE_FILTER, 0, "choice_filter"));
+		cols.add(new Column("constraint", Column.COL_CONSTRAINT, 0, "constraint"));
+		cols.add(new Column("constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
+		
 		return cols;
 	}
 	

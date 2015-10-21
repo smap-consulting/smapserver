@@ -693,7 +693,7 @@ public class UtilityMethodsEmail {
 						String v = resultSet.getString(2);
 						
 						if(t.equals("none")) {
-							l.text = v;
+							l.text = GeneralUtilityMethods.convertAllEmbeddedOutput(v, true);
 						} else if(basePath != null && oId > 0) {
 							getFileUrl(manifest, s.ident, v, basePath, oId);
 							log.info("Url: " + manifest.url + " : " + v);

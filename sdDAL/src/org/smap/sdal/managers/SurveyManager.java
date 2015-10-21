@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.sdal.managers;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,6 +29,7 @@ import java.sql.Savepoint;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,6 +52,7 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 public class SurveyManager {
 	
@@ -311,10 +314,14 @@ public class SurveyManager {
 		// Get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
 		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, "
-				+ "q.source, q.calculate, "
+				+ "q.source, " 
+				+ "q.calculate, "
 				+ "q.seq, " 
 				+ "q.defaultanswer, "
-				+ "q.appearance " 
+				+ "q.appearance, "
+				+ "q.qconstraint, "
+				+ "q.constraint_msg, "
+				+ "q.nodeset "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -323,7 +330,12 @@ public class SurveyManager {
 
 		// Get the options belonging to a question		
 		ResultSet rsGetOptions = null;
-		String sqlGetOptions = "select o.o_id, o.ovalue as value, o.label_id, o.externalfile  from option o where q_id = ? order by seq";
+		String sqlGetOptions = "select o.o_id, "
+				+ "o.ovalue as value, "
+				+ "o.label_id, "
+				+ "o.externalfile, "
+				+ "o.cascade_filters "
+				+ "from option o where q_id = ? order by seq";
 		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
 		
 		// Get the server side calculations
@@ -386,6 +398,10 @@ public class SurveyManager {
 				q.defaultanswer = rsGetQuestions.getString(10);
 				q.appearance = rsGetQuestions.getString(11);
 				
+				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(12), true);
+				q.constraint_msg = rsGetQuestions.getString(13);				
+				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(14), true);
+				
 				// add column name (not currently in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);
 				
@@ -418,12 +434,21 @@ public class SurveyManager {
 						
 						pstmtGetOptions.setInt(1, q.id);
 						rsGetOptions = pstmtGetOptions.executeQuery();
+						
+						Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();
+						Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+						
 						while(rsGetOptions.next()) {
 							Option o = new Option();
 							o.id = rsGetOptions.getInt(1);
 							o.value = rsGetOptions.getString(2);
 							o.text_id = rsGetOptions.getString(3);
 							o.externalFile = rsGetOptions.getBoolean(4);
+							
+							String cascade_filters = rsGetOptions.getString(5);
+							if(cascade_filters != null) {
+								o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+							}
 							
 							// Get the labels for the option
 							UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);

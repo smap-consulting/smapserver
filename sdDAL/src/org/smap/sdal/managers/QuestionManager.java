@@ -299,6 +299,8 @@ public class QuestionManager {
 				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 				ResultSet rs = pstmtGetQuestions.executeQuery();
 				
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+				
 				while (rs.next()) {
 				
 					int qId = rs.getInt(1);
@@ -315,7 +317,7 @@ public class QuestionManager {
 					pstmt.setInt(2, o.seq );
 					pstmt.setString(3, o.path + ":label" );
 					pstmt.setString(4, o.value );
-					pstmt.setString(5, o.cascadeFilters );			
+					pstmt.setString(5, gson.toJson(o.cascadeKeyValues));			
 					
 					log.info("Insert question: " + pstmt.toString());
 					pstmt.executeUpdate();

@@ -1172,4 +1172,115 @@ public class GeneralUtilityMethods {
 		response.setStatus(HttpServletResponse.SC_OK);	
 	}
 	
+	/*
+	 * Get the choice filter from an xform nodeset
+	 */
+	public static String getChoiceFilterFromNodeset(String nodeset, boolean xlsName) {
+		
+		StringBuffer choice_filter = new StringBuffer("");
+		String [] filterParts = null;
+		
+		if(nodeset != null) {
+			int idx = nodeset.indexOf('[');
+			int idx2 = nodeset.indexOf(']');
+			if(idx > -1 && idx2 > idx) {
+				filterParts = nodeset.substring(idx + 1, idx2).trim().split("\\s+");
+				for(int i = 0; i < filterParts.length; i++) {
+					if(filterParts[i].startsWith("/")) {
+						choice_filter.append(xpathNameToName(filterParts[i], xlsName).trim() + " ");
+					} else {
+						choice_filter.append(filterParts[i].trim() + " ");
+					}
+				}
+				
+			}
+		}
+		
+		return choice_filter.toString().trim();
+		
+	}
+
+	/*
+	 * Convert all xml fragments embedded in the supplied string to names
+	 */
+	public static String convertAllEmbeddedOutput(String inputEsc, boolean xlsName) {
+		
+		StringBuffer output = new StringBuffer("");
+		int idx = 0;
+		String input = unesc(inputEsc);
+		
+		if(input != null) {
+			
+			while(idx >= 0) {
+				
+				idx = input.indexOf("<output");
+				
+				if(idx >= 0) {
+					output.append(input.substring(0, idx));
+					input = input.substring(idx + 1);
+					idx = input.indexOf(">");
+					if(idx >= 0) {
+						String outputTxt = input.substring(0, idx + 1);
+						input = input.substring(idx + 1);
+						String [] parts = outputTxt.split("\\s+");
+						for(int i = 0; i < parts.length; i++) {
+							if(parts[i].startsWith("/")) {
+								output.append(xpathNameToName(parts[i], xlsName).trim());
+							} else {
+								// ignore
+							}		
+						}
+					} else {
+						output.append(input);
+					}
+				} else {
+					output.append(input);
+				}
+			}	
+			
+		}
+		
+		System.out.println("Converted text: " + output.toString());
+		return output.toString().trim();
+	}
+	
+	/*
+	 * Convert all xPaths in the supplied string to names
+	 */
+	public static String convertAllXpathNames(String input, boolean xlsName) {
+		StringBuffer output = new StringBuffer("");
+		String [] parts = null;
+		
+		if(input != null) {
+			
+			parts = input.trim().split("\\s+");
+			for(int i = 0; i < parts.length; i++) {
+				if(parts[i].startsWith("/")) {
+					output.append(xpathNameToName(parts[i], xlsName).trim() + " ");
+				} else {
+					output.append(parts[i].trim() + " ");
+				}
+				
+			}
+		}
+		
+		return output.toString().trim();
+	}
+	
+	/*
+	 * Convert an xpath name to just a name
+	 */
+	public static String xpathNameToName(String xpath, boolean xlsName) {
+		String name = null;
+		
+		int idx = xpath.lastIndexOf("/");
+		if(idx >= 0) {
+			name = xpath.substring(idx + 1);
+			if(xlsName) {
+				name = "${" + name + "}";
+			}
+		}
+		return name;
+	}
+	
 }
