@@ -34,12 +34,15 @@ public class XLSFormManager {
 		public static final int COL_CONSTRAINT_MSG = 6;
 		public static final int COL_RELEVANT = 7;
 		public static final int COL_REPEAT_COUNT = 8;
+		public static final int COL_READONLY = 9;
+		public static final int COL_APPEARANCE = 10;
+		public static final int COL_REQUIRED = 11;
+		public static final int COL_CALCULATION = 12;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
 		public static final int COL_CHOICE_LABEL = 102;
-		
-		public static final int COL_CALCULATION = 107;
+		public static final int COL_DEFAULT = 103;
 		
 		
 		String name;
@@ -109,7 +112,19 @@ public class XLSFormManager {
 			} else if(type == COL_CALCULATION) {				
 				value = q.calculation;		
 				
-			}else {
+			} else if(type == COL_DEFAULT) {				
+				value = q.defaultanswer;		
+				
+			} else if(type == COL_READONLY) {				
+				value = q.readonly ? "yes" : "no";		
+				
+			} else if(type == COL_APPEARANCE) {				
+				value = q.appearance;		
+				
+			} else if(type == COL_REQUIRED) {				
+				value = q.required ? "yes" : "no";		
+				
+			} else {
 				System.out.println("Unknown column type for survey: " + type);
 			}
 			
@@ -405,7 +420,13 @@ public class XLSFormManager {
 		cols.add(new Column(colNumber++,"constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
 		cols.add(new Column(colNumber++,"relevant", Column.COL_RELEVANT, 0, "relevant"));
 		cols.add(new Column(colNumber++, "repeat_count", Column.COL_REPEAT_COUNT, 0, "repeat_count"));
+		
 		namedColumnIndexes.put("repeat_count", new Integer(colNumber -1));
+		
+		cols.add(new Column(colNumber++, "default", Column.COL_DEFAULT, 0, "default"));
+		cols.add(new Column(colNumber++, "readonly", Column.COL_READONLY, 0, "readonly"));
+		cols.add(new Column(colNumber++, "appearance", Column.COL_APPEARANCE, 0, "appearance"));
+		cols.add(new Column(colNumber++, "required", Column.COL_REQUIRED, 0, "required"));
 		cols.add(new Column(colNumber++, "calculation", Column.COL_CALCULATION, 0, "calculation"));
 		
 		return cols;
@@ -446,6 +467,14 @@ public class XLSFormManager {
         style = wb.createCellStyle();
         style.setWrapText(true);
         styles.put("label", style);
+        
+        style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+        styles.put("is_required", style);
+        
+        style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+        styles.put("not_required", style);
 
         return styles;
     }

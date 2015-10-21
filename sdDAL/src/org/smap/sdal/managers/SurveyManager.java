@@ -329,7 +329,9 @@ public class SurveyManager {
 				+ "q.constraint_msg, "
 				+ "q.nodeset, "
 				+ "q.relevant, "
-				+ "q.visible "
+				+ "q.visible, "
+				+ "q.readonly, "
+				+ "q.mandatory "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -413,6 +415,8 @@ public class SurveyManager {
 				
 				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(15), true);
 				q.visible = rsGetQuestions.getBoolean(16);
+				q.readonly = rsGetQuestions.getBoolean(17);
+				q.required = rsGetQuestions.getBoolean(18);
 				
 				// add column name (not currently maintained in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);
