@@ -68,6 +68,21 @@ public class XLSFormManager {
 			return width;
 		}
 		
+		// Return the style for the cell
+		public CellStyle getStyle(Map<String, CellStyle> styles, Question q) {
+			CellStyle style = null;
+			
+			System.out.println("   Get Style: " + q.type);
+			
+			if(q.type.equals("begin repeat") || q.type.equals("begin group")) {
+				style = styles.get(q.type);
+				
+				System.out.println("          have style");
+			}
+			
+			return style;
+		}
+		
 			
 		// Return the question value for this column
 		public String getValue(Question q) {
@@ -261,13 +276,12 @@ public class XLSFormManager {
 					
 					if(isRow(q)) {
 						Row row = surveySheet.createRow(rowNumberSurvey++);
-						CellStyle typeStyle = styles.get(q.type);
 						for(int i = 0; i < colsSurvey.size(); i++) {
-							Column col = colsSurvey.get(i);
-							CellStyle colStyle = styles.get(col.typeString);	
+							Column col = colsSurvey.get(i);			
 							Cell cell = row.createCell(i);
-							if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
-							if(colStyle != null) {	cell.setCellStyle(colStyle); }					
+							CellStyle style = col.getStyle(styles, q);
+							if(style != null) {	cell.setCellStyle(style); }
+											
 							cell.setCellValue(col.getValue(q));
 				        }
 						
@@ -275,11 +289,10 @@ public class XLSFormManager {
 						Form subForm = survey.getSubForm(form, q);
 						if( subForm != null) {
 							// Add the repeat count using the saved question
-							Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());
-							CellStyle colStyle = styles.get(col.typeString);	
+							Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());	
 							Cell cell = row.createCell(col.getColNumber());
-							if(typeStyle != null) {	cell.setCellStyle(typeStyle); }
-							if(colStyle != null) {	cell.setCellStyle(colStyle); }	
+							CellStyle style = col.getStyle(styles, q);
+							if(style != null) {	cell.setCellStyle(style); }
 							cell.setCellValue(savedCalculation);
 							
 							System.out.println("Process sub form: " + subForm.name);
@@ -288,7 +301,8 @@ public class XLSFormManager {
 									colsChoices,
 									filterIndexes,
 									namedColumnIndexes);
-							addEndGroup(surveySheet, "end repeat", q.name, typeStyle);
+							
+							addEndGroup(surveySheet, "end repeat", q.name, styles.get("begin repeat"));
 						} 
 						
 						// If this question has a list of choices then add these to the choices sheet
@@ -469,11 +483,23 @@ public class XLSFormManager {
         styles.put("label", style);
         
         style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        styles.put("begin repeat", style);
+        
+        style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.DARK_YELLOW.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        styles.put("begin group", style);
+        
+        style = wb.createCellStyle();
         style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         styles.put("is_required", style);
         
         style = wb.createCellStyle();
         style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         styles.put("not_required", style);
 
         return styles;
