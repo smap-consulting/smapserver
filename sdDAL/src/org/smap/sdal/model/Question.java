@@ -33,6 +33,7 @@ public class Question {
 	public boolean visible;
 	public boolean readonly;
 	public boolean required;
+	public boolean repeatCount;
 	public boolean inMeta;			// Set true if the question is in the meta group
 	int width = -1;						// Display width, generated from appearance column 
 									//  (for the moment - should probably have its own database 

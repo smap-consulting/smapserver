@@ -817,7 +817,6 @@ public class SurveyTemplate {
 		Collection c = null;
 		Iterator itr = null;
 
-		System.out.println("Forms values length: " + forms.values().size());
 		if(forms.values().size() == 0) {
 			System.out.println("No forms in this survey");
 			throw new Exception("No forms in this survey");
@@ -874,7 +873,7 @@ public class SurveyTemplate {
 			}
 
 		}
-		System.out.println("Has instance:" + alreadyHas_instanceid);
+
 		if(!alreadyHas_device) {
 			Question q = new Question();	// Device id
 			q.setName("_device");

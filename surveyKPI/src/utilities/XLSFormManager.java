@@ -1,4 +1,4 @@
-package org.smap.sdal.managers;
+package utilities;
 
 import java.io.IOException;
 import java.io.OutputStream;

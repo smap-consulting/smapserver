@@ -320,3 +320,4 @@ alter table organisation add column company_phone text;
 alter table organisation add column company_email text;
 
 -- Upgrade to: 15.10 from 15.09
+alter table question add column repeatcount boolean default false;

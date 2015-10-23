@@ -187,8 +187,6 @@ public class PutXForm {
     			}
     		}
     	}
-    	
-		System.out.println("Putting survey with language:" + language);
 		
     	// Get all the translations for this language
     	NodeList eList = n.getChildNodes();
@@ -456,6 +454,12 @@ public class PutXForm {
 		    	if(nr != null) {
 		    		String repeats = nr.getNodeValue();
 		    		template.getForm(ref).setRepeats(repeats);
+		    		
+		    		// Set the dummy calculate that this repeat references as being a repeat calculate
+		    		Question qCalc = template.getQuestion(repeats.trim());
+		    		if(qCalc != null) {
+		    			qCalc.setRepeatCount(true);
+		    		}
 		    	}
 			}
     	}
@@ -577,12 +581,9 @@ public class PutXForm {
     			processBody(n, formRef, q);
     			 // Delete the question that marks the end of this repeating group, we don't need it
     			template.removeQuestion(q.getPath() + "_groupEnd");
-    			//Question qEnd = template.getQuestion(q.getPath() + "_groupEnd");
-    			 //qEnd.setType("end repeat");
     		} else {									// Non repeating group
     			q.setType("begin group");
     			processBody(n, formRef, q);	// Continue with all the question in this group
-    			//createGroupEndQuestion(questionRef, formRef, template.getNextQuestionSeq());
     		}
     	} else {
     	
@@ -957,6 +958,7 @@ public class PutXForm {
 	   				q.setConstraintMsg(attribute.getNodeValue());   			
 	    			
 	    		} else if (name.equals("calculate")) {
+	    			System.out.println("Setting calculate: " + questionRef);
 	   				q.setCalculate(attribute.getNodeValue()); 
 	   				
 	   				// Survey level manifests can be set in the appearance attribute

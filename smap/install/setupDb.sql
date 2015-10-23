@@ -338,6 +338,7 @@ CREATE TABLE question (
 	source text,
 	source_param text,
 	readonly BOOLEAN default false,
+	repeatcount BOOLEAN default false,
 	mandatory BOOLEAN default false,
 	relevant text,
 	calculate text,

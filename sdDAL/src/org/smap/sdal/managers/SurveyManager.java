@@ -331,7 +331,8 @@ public class SurveyManager {
 				+ "q.relevant, "
 				+ "q.visible, "
 				+ "q.readonly, "
-				+ "q.mandatory "
+				+ "q.mandatory, "
+				+ "q.repeatcount "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -371,7 +372,11 @@ public class SurveyManager {
 		
 		// Set the default language if it has not previously been set
 		if(s.def_lang == null) {
-			s.def_lang = s.languages.get(0);
+			if(s.languages != null && s.languages.size() > 0) {
+				s.def_lang = s.languages.get(0);
+			} else {
+				s.def_lang = "language";
+			}
 		}
 		
 		// Get the Forms
@@ -417,6 +422,7 @@ public class SurveyManager {
 				q.visible = rsGetQuestions.getBoolean(16);
 				q.readonly = rsGetQuestions.getBoolean(17);
 				q.required = rsGetQuestions.getBoolean(18);
+				q.repeatCount = rsGetQuestions.getBoolean(19);
 				
 				// add column name (not currently maintained in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);
