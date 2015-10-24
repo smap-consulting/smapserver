@@ -91,15 +91,19 @@ public class XLSFormManager {
 			String value = "";
 			
 			if(type == COL_TYPE) {
-				
-				value = q.type;
-				
-				if(value.equals("string")) {
+						
+				if(q.calculation != null && q.calculation.trim().length() > 0) {
+					value = "calculate";
+				} else if(q.readonly && q.type.equals("string")) {
+					value = "note";
+				} else if(q.type.equals("string")) {
 					value = "text";
-				} else if(value.equals("select1")) {
+				} else if(q.type.equals("select1")) {
 					value = "select_one " + q.list_name;
-				} else if(value.equals("select")) {
+				} else if(q.type.equals("select")) {
 					value = "select_multiple " + q.list_name;
+				} else {
+					value = q.type;		// Everything else
 				}
 
 			} else if(type == COL_NAME) {				
@@ -270,7 +274,14 @@ public class XLSFormManager {
 			}
 			
 			System.out.println("Question: " + q.name + " : " + q.repeatCount);
-			if(q.repeatCount) {
+			
+			/*
+			 * Determine if this question is a repeat count
+			 *  For forms loaded after this code only q.repeatCount needs to be checked
+			 *  For backward compatability we record any calcualtion question as well and assume the calculate immediately
+			 *   before a begin repeat count is the correct one
+			 */
+			if(q.repeatCount || (q.calculation != null && q.calculation.trim().length() > 0)) {
 				// Save the calculation as it contain the calculation for a repeat which needs to be placed in the begin repeat row
 				// Otherwise this "dummy" question is ignored
 				savedCalculation = q.calculation;
@@ -292,7 +303,7 @@ public class XLSFormManager {
 						// If this is a sub form then process its questions now
 						Form subForm = survey.getSubForm(form, q);
 						if( subForm != null) {
-							// Add the repeat count using the saved question
+							// Add the repeat count using the saved calculation and the column index of the repeat count column
 							Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());	
 							Cell cell = row.createCell(col.getColNumber());
 							CellStyle style = col.getStyle(styles, q);
@@ -435,7 +446,7 @@ public class XLSFormManager {
 		// Add remaining columns
 		cols.add(new Column(colNumber++,"choice_filter", Column.COL_CHOICE_FILTER, 0, "choice_filter"));
 		cols.add(new Column(colNumber++,"constraint", Column.COL_CONSTRAINT, 0, "constraint"));
-		cols.add(new Column(colNumber++,"constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
+		cols.add(new Column(colNumber++,"constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_message"));
 		cols.add(new Column(colNumber++,"relevant", Column.COL_RELEVANT, 0, "relevant"));
 		cols.add(new Column(colNumber++, "repeat_count", Column.COL_REPEAT_COUNT, 0, "repeat_count"));
 		
