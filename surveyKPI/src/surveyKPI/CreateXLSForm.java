@@ -42,11 +42,11 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.managers.XLSFormManager;
+
+import utilities.XLSFormManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.itextpdf.text.Font;
 import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.parser.XMLParser;
 
@@ -69,8 +69,8 @@ public class CreateXLSForm extends Application {
 		return s;
 	}
 	
-	public static Font WingDings = null;
-	public static Font defaultFont = null;
+	//public static Font WingDings = null;
+	//public static Font defaultFont = null;
 
 
 	

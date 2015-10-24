@@ -38,17 +38,8 @@ import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.PDFManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.UsagePDFManager;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.itextpdf.text.Font;
-import com.itextpdf.tool.xml.ElementList;
-import com.itextpdf.tool.xml.parser.XMLParser;
 
 /*
  * Creates a PDF
@@ -73,8 +64,8 @@ public class UsageReports extends Application {
 		return s;
 	}
 	
-	public static Font WingDings = null;
-	public static Font defaultFont = null;
+	//public static Font WingDings = null;
+	//public static Font defaultFont = null;
 
 	
 	@GET

@@ -1240,7 +1240,6 @@ public class GeneralUtilityMethods {
 			
 		}
 		
-		System.out.println("Converted text: " + output.toString());
 		return output.toString().trim();
 	}
 	
