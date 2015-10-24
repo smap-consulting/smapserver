@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -36,6 +37,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.List;
@@ -66,6 +68,7 @@ import com.itextpdf.tool.xml.pipeline.css.CssResolverPipeline;
 import com.itextpdf.tool.xml.pipeline.end.ElementHandlerPipeline;
 import com.itextpdf.tool.xml.pipeline.html.HtmlPipeline;
 import com.itextpdf.tool.xml.pipeline.html.HtmlPipelineContext;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.Selector.Matcher;
 
 /*****************************************************************************
 
@@ -101,16 +104,16 @@ public class PDFManager {
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
 	
-	Font font = FontFactory.getFont("Times-Roman", 10);
-    Font fontbold = FontFactory.getFont("Times-Roman", 10, Font.BOLD);
+	Font font = new Font(FontFamily.HELVETICA, 10);
+    Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
 	}
 	
-	int marginLeft = 36;
-	int marginRight = 36;
+	int marginLeft = 50;
+	int marginRight = 50;
 	int marginTop_1 = 130;
 	int marginBottom_1 = 100;
 	int marginTop_2 = 50;
@@ -123,12 +126,14 @@ public class PDFManager {
 		int pagenumber = 0;
 		User user = null;
 		String title;
+		String project;
 		String basePath;
 		
-		public PageSizer(String title, User user, String basePath) {
+		public PageSizer(String title, String project, User user, String basePath) {
 			super();
 			
 			this.title = title;
+			this.project = project;
 			this.user = user;
 			this.basePath = basePath;
 			
@@ -149,6 +154,7 @@ public class PDFManager {
 			
 			// Write header on first page only
 			if(pagenumber == 1) {
+				
 				// Add Title
 				Font titleFont = new Font();
 				titleFont.setSize(18);
@@ -158,6 +164,17 @@ public class PDFManager {
 				ColumnText.showTextAligned(writer.getDirectContent(), 
 						Element.ALIGN_CENTER, titlePhrase, 
 						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getTop() - 100, 0);
+				
+				// Add Project
+				Phrase projectPhrase = new Phrase();
+				Font projectFont = new Font();
+				projectFont.setSize(14);
+				projectPhrase.setFont(projectFont);
+				projectPhrase.add("Project: " +  project);
+				ColumnText.showTextAligned(writer.getDirectContent(), 
+						Element.ALIGN_LEFT, projectPhrase, 
+						pageRect.getLeft() + marginLeft, pageRect.getTop() - 120, 0);
+				
 				
 				if(user != null) {
 					// Show the logo
@@ -171,7 +188,7 @@ public class PDFManager {
 							img.scaleToFit(200, 50);
 							float w = img.getScaledWidth();
 							img.setAbsolutePosition(
-						            pageRect.getRight() - (25 + w),
+						            pageRect.getRight() - (marginRight + w),
 						            pageRect.getTop() - 75);
 						        document.add(img);
 							
@@ -352,11 +369,19 @@ public class PDFManager {
 				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
 				writer = PdfWriter.getInstance(document, outputStream);
 				
-				writer.setInitialLeading(12);			
-				writer.setPageEvent(new PageSizer(survey.displayName, user, basePath)); 
+				writer.setInitialLeading(12);	
+				
+				writer.setPageEvent(new PageSizer(survey.displayName, survey.pName, 
+						user, basePath)); 
 				document.open();
 				
 				int languageIdx = getLanguageIdx(survey, language);
+				
+				// If this form has data maintain a list of parent records to lookup ${values}
+				ArrayList<ArrayList<Result>> parentRecords = null;
+				if(!generateBlank) {
+					parentRecords = new ArrayList<ArrayList<Result>> ();
+				}
 				
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
@@ -366,7 +391,8 @@ public class PDFManager {
 							i,
 							repIndexes,
 							gv,
-							false);		
+							false,
+							parentRecords);		
 				}
 				
 				fillNonTemplateUserDetails(document, user, basePath);
@@ -383,7 +409,8 @@ public class PDFManager {
 							i,
 							repIndexes,
 							gv,
-							true);		
+							true, 
+							parentRecords);		
 				}
 				
 				document.close();
@@ -682,7 +709,8 @@ public class PDFManager {
 			int length,
 			int[] repIndexes,
 			GlobalVariables gv,
-			boolean appendix) throws DocumentException, IOException {
+			boolean appendix,
+			ArrayList<ArrayList<Result>> parentRecords) throws DocumentException, IOException {
 		
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
@@ -706,10 +734,13 @@ public class PDFManager {
 								k,
 								repIndexes,
 								gv,
-								appendix);
+								appendix,
+								null);
 					}
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
+						// Maintain array list of parent records in order to look up ${values}
+						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
 						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 
@@ -717,7 +748,8 @@ public class PDFManager {
 								k,
 								repIndexes,
 								gv,
-								appendix);
+								appendix,
+								parentRecords);
 					} 
 				}
 			} else if(r.qIdx >= 0) {
@@ -736,7 +768,7 @@ public class PDFManager {
 					} else if(question.type.equals("end group")) {
 						//ignore
 					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix);
+						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
 						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
 						newTable.setWidthPercentage(100);
@@ -901,7 +933,8 @@ public class PDFManager {
 			int languageIdx,
 			GlobalVariables repeat,
 			int recNumber,
-			boolean appendix) {
+			boolean appendix,
+			ArrayList<ArrayList<Result>> parentRecords) {
 		
 		Row row = new Row();
 		row.groupWidth = repeat.cols.length;
@@ -922,7 +955,10 @@ public class PDFManager {
 					repeat.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
 				
-				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, recNumber);
+				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, 
+						recNumber,
+						record,
+						parentRecords);
 			} else if(i - offset < repeat.cols.length) {
 				// 2nd or later questions in the row
 				int [] updateCols = question.updateCols(repeat.cols);		// Returns null if the number of columns has not changed
@@ -930,7 +966,19 @@ public class PDFManager {
 				
 				if(updateCols == null || isNewPage) {
 					if(includeResult(r, question, appendix)) {
-						includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, recNumber);
+						includeQuestion(row.items, 
+								repeat.cols, 
+								i, 
+								label, 
+								question, 
+								offset, 
+								survey, 
+								languageIdx, 
+								r, 
+								isNewPage, 
+								recNumber,
+								record,
+								parentRecords);
 					}
 				} else {
 					// If the question updated the number of columns then we will need to start a new row
@@ -957,12 +1005,18 @@ public class PDFManager {
 			int languageIdx,
 			Result r,
 			boolean isNewPage,
-			int recNumber) {
+			int recNumber,
+			ArrayList<Result> record,
+			ArrayList<ArrayList<Result>> parentRecords) {
 		
 		DisplayItem di = new DisplayItem();
 		di.width = cols[colIdx-offset];
 		di.text = label.text == null ? "" : label.text;
+		di.text = lookupReferenceValue(di.text, record, parentRecords);
+		
 		di.hint = label.hint ==  null ? "" : label.hint;
+		di.hint = lookupReferenceValue(di.hint, record, parentRecords);
+		
 		di.type = question.type;
 		di.name = question.name;
 		di.value = r.value;
@@ -976,6 +1030,96 @@ public class PDFManager {
 		di.fIdx = r.fIdx;
 		di.rec_number = recNumber;
 		items.add(di);
+	}
+	
+	/*
+	 * Where a label incudes a reference value such as ${name} then these need to be converted to the actual value
+	 */
+	private String lookupReferenceValue(String input, ArrayList<Result> record,ArrayList<ArrayList<Result>> parentRecords) {
+		
+		StringBuffer newValue = new StringBuffer("");
+		String v;
+		
+		// Return if we are generating a blank template
+		if(parentRecords == null) {
+			return input;
+		}
+		
+		System.out.println("lookup on: " + input );
+		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			String qname = matched.substring(2, matched.length() - 1);
+			System.out.println("Matched: " + qname);
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			newValue.append(input.substring(start, startOfGroup));
+			
+			// Add the matched value after lookup
+			// First check in the current record
+			v = lookupInRecord(qname, record);
+			
+			// If not found try each of the parent records starting from the closest
+			if(v == null) {
+				for(ArrayList<Result> p : parentRecords) {
+					v = lookupInRecord(qname, p);
+					if(v != null) {
+						break;
+					}
+				}
+			}
+			
+			// Still null!  well maybe this ${..} pattern was just meant to be
+			if(v == null) {
+				v = matcher.group();
+			}
+			newValue.append(v);
+			
+			// Reset the start
+			start = matcher.end();
+
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			newValue.append(input.substring(start));		
+		}
+		
+		return newValue.toString();
+	}
+	
+	/*
+	 * Lookup the value of a question in a record
+	 */
+	private String lookupInRecord(String name, ArrayList<Result> record) {
+		String value = null;
+		
+		for(Result r : record) {
+			if(r.name.equals(name)) {
+				System.out.println("Found matching question: " + r.value);
+				if(r.type.startsWith("select")) {
+					value = "";
+					for(Result rc : r.choices) {
+						if(rc.isSet) {
+							if(value.length() > 0) {
+								value += ",";
+							}
+							value += rc.name;
+						}
+					}
+				} else {
+					value = r.value;
+				}
+				break;
+			}
+		}
+		
+		return value;
+		
 	}
 	
 	/*
@@ -1256,9 +1400,7 @@ public class PDFManager {
 		
 		boolean hasContent = false;
 		Paragraph para = new Paragraph("", font);
-		
-		System.out.println("Look for dependencies: " + di.fIdx + "_" + di.rec_number + "_" + di.name);
-		
+
 		if(value != null && value.trim().length() > 0) {
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
 			hasContent = true;
@@ -1268,7 +1410,6 @@ public class PDFManager {
 
 		if(deps != null) {
 			for(String n : deps) {
-				System.out.println("^^^^^^^Dependency: " + n);
 				if(n != null) {
 					if(hasContent) {
 						para.add(new Chunk(",", font));
@@ -1290,8 +1431,7 @@ public class PDFManager {
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
 		
-		// If recording selected values
-		StringBuilder sb = new StringBuilder("");
+		String stringValue = null;
 		
 		boolean isSelectMultiple = di.type.equals("select") ? true : false;
 		
@@ -1303,61 +1443,80 @@ public class PDFManager {
 		 *   The form is not blank and the value is "other" and their are 1 or more dependent questions
 		 *   In this case we assume that its only the values of the dependent questions that are needed
 		 */
-		for(DisplayItem aChoice : di.choices) {
-			ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
+		if(generateBlank) {
+			for(DisplayItem aChoice : di.choices) {
+				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
 			
-			if(isSelectMultiple) {
-				if(aChoice.isSet) {
-					if(generateBlank) {
+				if(isSelectMultiple) {
+					if(aChoice.isSet) {
 						item.setListSymbol(new Chunk("\uf046", Symbols)); 
-						list.add(item);
+						list.add(item);	
 					} else {
-						if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
-							if(sb.length() > 0) {
-								sb.append(", ");
-							}
-							sb.append(aChoice.text);
-						}
-					}
-				} else {
-					if(generateBlank) {
+					
 						item.setListSymbol(new Chunk("\uf096", Symbols)); 
 						list.add(item);
 					}
-				}
-			} else {
-				if(aChoice.isSet) {
-					if(generateBlank) {
+				
+				} else {
+					if(aChoice.isSet) {
 						item.setListSymbol(new Chunk("\uf111", Symbols)); 
 						list.add(item);
-					} else {
-						if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
-							if(sb.length() > 0) {
-								sb.append(", ");
-							}
-							sb.append(aChoice.text);
-						}
 
-					}
-				} else {
-					//item.setListSymbol(new Chunk("\241", Symbols)); 
-					if(generateBlank) {
+					} else {
+						//item.setListSymbol(new Chunk("\241", Symbols)); 
 						item.setListSymbol(new Chunk("\uf10c", Symbols)); 
 						list.add(item);
 					}
 				}
 			}
 			
-			//aChoice.debug();
-			
-		}
-		if(generateBlank) {
 			cell.addElement(list);
+			
 		} else {
-			System.out.println("Add cell: " + sb.toString());
-			cell.addElement(getPara(sb.toString(), di, gv, deps));
+			stringValue = getSelectValue(isSelectMultiple, di, deps);
+			cell.addElement(getPara(stringValue, di, gv, deps));
 		}
 
+	}
+	
+	/*
+	 * Get the value of a select question
+	 */
+	String getSelectValue(boolean isSelectMultiple, DisplayItem di, ArrayList<String> deps) {
+		StringBuffer sb = new StringBuffer("");
+		
+		for(DisplayItem aChoice : di.choices) {
+			ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
+			
+			if(isSelectMultiple) {
+				if(aChoice.isSet) {
+				
+					if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+						if(sb.length() > 0) {
+							sb.append(", ");
+						}
+						sb.append(aChoice.text);
+					}
+					
+				} 
+			} else {
+				if(aChoice.isSet) {
+					
+					if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+						if(sb.length() > 0) {
+							sb.append(", ");
+						}
+						sb.append(aChoice.text);
+					}
+
+				}
+			}
+
+			
+		}
+			
+		return sb.toString();
+		
 	}
 	
 	/*
@@ -1365,8 +1524,13 @@ public class PDFManager {
 	 */
 	private void fillNonTemplateUserDetails(Document document, User user, String basePath) throws IOException, DocumentException {
 		
-		System.out.println("Fill non template details");
-		document.add(getKeyValuePair("Inspected by: ", user.name));
+		String settings = user.settings;
+		Type type = new TypeToken<UserSettings>(){}.getType();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		UserSettings us = gson.fromJson(settings, type);
+		
+		float indent = (float) 20.0;
+		addValue(document, "Completed by:", (float) 0.0);
 		if(user.signature != null && user.signature.trim().length() > 0) {
 			String fileName = null;
 			try {
@@ -1374,7 +1538,7 @@ public class PDFManager {
 
 					Image img = Image.getInstance(fileName);
 					img.scaleToFit(200, 50);
-					float w = img.getScaledWidth();
+					img.setIndentationLeft(indent);
 					
 				    document.add(img);
 					
@@ -1382,19 +1546,36 @@ public class PDFManager {
 				log.info("Error: Failed to add image " + fileName + " to pdf");
 			}
 		}
+		addValue(document, user.name, indent);
+		addValue(document, us.title, indent);
+		addValue(document, us.license, indent);
+		addValue(document, user.company_name, indent);
 
 	}
 	
 	/*
 	 * Format a key value pair into a paragraph
 	 */
-	private Paragraph getKeyValuePair(String key, String value) {
+	private void addKeyValuePair(Document document, String key, String value) throws DocumentException {
 		Paragraph para = new Paragraph("", font);
 		
 		para.add(new Chunk(GeneralUtilityMethods.unesc(key), fontbold));
 		para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
 		
-		return para;
+		document.add(para);
+	}
+	
+	/*
+	 * Format a single value into a paragraph
+	 */
+	private void addValue(Document document, String value, float indent) throws DocumentException {
+		
+		if(value != null && value.trim().length() > 0) {
+			Paragraph para = new Paragraph("", font);	
+			para.setIndentationLeft(indent);
+			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
+			document.add(para);
+		}
 	}
 }
 
