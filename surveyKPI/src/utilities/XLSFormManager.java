@@ -38,6 +38,9 @@ public class XLSFormManager {
 		public static final int COL_APPEARANCE = 10;
 		public static final int COL_REQUIRED = 11;
 		public static final int COL_CALCULATION = 12;
+		public static final int COL_IMAGE = 13;
+		public static final int COL_VIDEO = 14;
+		public static final int COL_AUDIO = 15;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
@@ -144,6 +147,9 @@ public class XLSFormManager {
 				
 			} else if(type == COL_REQUIRED) {				
 				value = q.required ? "yes" : "no";		
+				
+			} else if(type == COL_IMAGE) {				
+				value = q.labels.get(labelIndex).image;
 				
 			} else {
 				System.out.println("Unknown column type for survey: " + type);
@@ -458,6 +464,14 @@ public class XLSFormManager {
 		cols.add(new Column(colNumber++, "required", Column.COL_REQUIRED, 0, "required"));
 		cols.add(new Column(colNumber++, "calculation", Column.COL_CALCULATION, 0, "calculation"));
 		
+		// Add media columns (Do this as the last columns since these columns are less used
+		labelIndex = 0;
+		for(String language : survey.languages) {
+			cols.add(new Column(colNumber++, "image::" + language, Column.COL_IMAGE, 0, "image"));
+			cols.add(new Column(colNumber++, "video::" + language, Column.COL_VIDEO, 0, "video"));
+			cols.add(new Column(colNumber++, "audio::" + language, Column.COL_AUDIO, 0, "audio"));
+		labelIndex++;
+	}
 		return cols;
 	}
 	
@@ -478,6 +492,7 @@ public class XLSFormManager {
 		for(String language : survey.languages) {
 			cols.add(new Column(colNumber++, "label::" + language, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
 		}
+		
 		return cols;
 	}
 	
