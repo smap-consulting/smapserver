@@ -16,7 +16,7 @@
 }
 @font-face {
   font-family: 'enketo-icons';
-  src: url("/lib/enketo-core/build/fonts/enketo-icons-v2.woff") format("woff"), url("/lib/enketo-core/build/fonts/enketo-icons-v2.ttf") format("truetype"), url("/lib/enketo-core/build/fonts/enketo-icons-v2.svg#enketo-icons") format("svg");
+  src: url('../fonts/enketo-icons-v2.woff') format('woff'), url('../fonts/enketo-icons-v2.ttf') format('truetype'), url('../fonts/enketo-icons-v2.svg#enketo-icons') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -7809,12 +7809,21 @@ input:not([type="radio"]):not([type="checkbox"]), textarea {
   padding: 0;
   width: 100%;
 }
+
+/*
 .form-footer .main-controls .previous-page, .form-footer .main-controls .next-page {
   display: none;
 }
+*/
+
 .form-footer .main-controls .previous-page {
   position: absolute;
   left: 20px;
+  bottom: 45px;
+}
+.form-footer .main-controls .next-page {
+  position: absolute;
+  right: 20px;
   bottom: 45px;
 }
 .form-footer .first-page, .form-footer .last-page {

@@ -330,6 +330,7 @@ public class WebForm extends Application{
 			// Get the XML of the Form
 			SurveyTemplate template = new SurveyTemplate();
 			template.readDatabase(survey.id);
+			String surveyClass = template.getSurveyClass();
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
@@ -419,7 +420,8 @@ public class WebForm extends Application{
     				jr.surveyData.accessKey = accessKey;
     			}
     			
-    			jr.main = addMain(request, formXML, instanceStrToEditId, orgId, true).toString();
+    			jr.main = addMain(request, formXML, instanceStrToEditId, 
+    					orgId, true, surveyClass).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -472,7 +474,7 @@ public class WebForm extends Application{
 		output.append(">\n");
 				
 		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, accessKey));
-		output.append(addBody(request, formXML, dataToEditId, orgId));
+		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass));
 
 		output.append("</html>\n");			
 		return output;
@@ -614,13 +616,16 @@ public class WebForm extends Application{
 	/*
 	 * Add the body
 	 */
-	private StringBuffer addBody(HttpServletRequest request, String formXML, String dataToEditId, int orgId) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addBody(HttpServletRequest request, String formXML, 
+			String dataToEditId, 
+			int orgId,
+			String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -630,13 +635,17 @@ public class WebForm extends Application{
 	/*
 	 * Get the "Main" element of an enketo form
 	 */
-	private StringBuffer addMain(HttpServletRequest request, String formXML, String dataToEditId, int orgId, boolean minimal) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addMain(HttpServletRequest request, String formXML, 
+			String dataToEditId, 
+			int orgId, 
+			boolean minimal,
+			String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append(openMain(orgId, minimal));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		if(!minimal) {
-			output.append(closeMain(dataToEditId));
+			output.append(closeMain(dataToEditId, surveyClass));
 		}
 		
 		return output;
@@ -844,23 +853,24 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer closeMain(String dataToEditId) {
+	private StringBuffer closeMain(String dataToEditId, String surveyClass) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<section class='form-footer'>\n");
 		output.append("<div class='content'>\n");
 		output.append("<fieldset class='draft question'><div class='option-wrapper'><label class='select'><input class='ignore' type='checkbox' name='draft'/><span class='option-label'>Save as Draft</span></label></div></fieldset>\n");
 		output.append("<div class='main-controls'>\n");
-		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
+		if(surveyClass !=null && surveyClass.contains("pages")) {
+			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
+			output.append("<a class='next-page' href='#'>Next</span></a>\n");
+		}
 		
 		if(dataToEditId == null) {
 			output.append("<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>\n");
 		} else {
 			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
 		}
-		
-		output.append("<a class='btn btn-primary large next-page' href='#'>Next</span></a>\n");
-		
+				
 		output.append("</div>\n");	// main controls
 		output.append("<a class='btn btn-default disabled first-page' href='#'>Return to Beginning</a>\n");
 		output.append("<a class='btn btn-default disabled last-page' href='#'>Go to End</a>\n");
