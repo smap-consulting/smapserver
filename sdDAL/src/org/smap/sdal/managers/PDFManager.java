@@ -226,6 +226,7 @@ public class PDFManager {
 	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
+		boolean hasAppendix = false;
 		
 		// Map of questions that need to have the results of another question appended to their results in a pdf report
 		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
@@ -398,19 +399,21 @@ public class PDFManager {
 				fillNonTemplateUserDetails(document, user, basePath);
 				
 				// Add appendix
-				document.newPage();
-				document.add(new Paragraph("Appendix", fontbold));
-				
-				for(int i = 0; i < survey.instance.results.size(); i++) {
-					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
-							languageIdx,
-							generateBlank,
-							0,
-							i,
-							repIndexes,
-							gv,
-							true, 
-							parentRecords);		
+				if(gv.hasAppendix) {
+					document.newPage();
+					document.add(new Paragraph("Appendix", fontbold));
+					
+					for(int i = 0; i < survey.instance.results.size(); i++) {
+						processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
+								languageIdx,
+								generateBlank,
+								0,
+								i,
+								repIndexes,
+								gv,
+								true, 
+								parentRecords);		
+					}
 				}
 				
 				document.close();
@@ -759,7 +762,7 @@ public class PDFManager {
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				//Label label = question.labels.get(languageIdx);
 			
-				if(includeResult(r, question, appendix)) {
+				if(includeResult(r, question, appendix, gv)) {
 					if(question.type.equals("begin group")) {
 						//groupWidth = processGroup(parser, document, question, label);
 						if(question.isNewPage()) {
@@ -827,7 +830,9 @@ public class PDFManager {
 	/*
 	 * Make a decision as to whether this result should be included in the PDF
 	 */
-	private boolean includeResult(Result r, org.smap.sdal.model.Question question, boolean appendix) {
+	private boolean includeResult(Result r, org.smap.sdal.model.Question question, 
+			boolean appendix,
+			GlobalVariables gv) {
 		
 		boolean include = true;
 		boolean inMeta = question.inMeta;
@@ -838,6 +843,9 @@ public class PDFManager {
 				include = false;
 			} else {
 				boolean appendixQuestion = question.appearance.contains("pdfapp");
+				if(appendixQuestion) {
+					gv.hasAppendix = true;
+				}
 				if(appendix && !appendixQuestion || (!appendix && appendixQuestion) ) {
 					include = false;
 				}
@@ -931,13 +939,13 @@ public class PDFManager {
 			org.smap.sdal.model.Survey survey, 
 			int offset,
 			int languageIdx,
-			GlobalVariables repeat,
+			GlobalVariables gv,
 			int recNumber,
 			boolean appendix,
 			ArrayList<ArrayList<Result>> parentRecords) {
 		
 		Row row = new Row();
-		row.groupWidth = repeat.cols.length;
+		row.groupWidth = gv.cols.length;
 		
 		for(int i = offset; i < record.size(); i++) {
 			Result r = record.get(i);
@@ -950,24 +958,24 @@ public class PDFManager {
 			
 			if(i == offset) {
 				// First question of row - update the number of columns
-				int [] updateCols = question.updateCols(repeat.cols);
+				int [] updateCols = question.updateCols(gv.cols);
 				if(updateCols != null) {
-					repeat.cols = updateCols;			// Can only update the number of columns with the first question of the row
+					gv.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
 				
-				includeQuestion(row.items, repeat.cols, i, label, question, offset, survey, languageIdx, r, isNewPage, 
+				includeQuestion(row.items, gv, i, label, question, offset, survey, languageIdx, r, isNewPage, 
 						recNumber,
 						record,
 						parentRecords);
-			} else if(i - offset < repeat.cols.length) {
+			} else if(i - offset < gv.cols.length) {
 				// 2nd or later questions in the row
-				int [] updateCols = question.updateCols(repeat.cols);		// Returns null if the number of columns has not changed
+				int [] updateCols = question.updateCols(gv.cols);		// Returns null if the number of columns has not changed
 				
 				
 				if(updateCols == null || isNewPage) {
-					if(includeResult(r, question, appendix)) {
+					if(includeResult(r, question, appendix, gv)) {
 						includeQuestion(row.items, 
-								repeat.cols, 
+								gv, 
 								i, 
 								label, 
 								question, 
@@ -998,7 +1006,7 @@ public class PDFManager {
 	/*
 	 * Include question in the row
 	 */
-	private void includeQuestion(ArrayList<DisplayItem> items, int [] cols, int colIdx, Label label, 
+	private void includeQuestion(ArrayList<DisplayItem> items, GlobalVariables gv, int colIdx, Label label, 
 			org.smap.sdal.model.Question question,
 			int offset,
 			org.smap.sdal.model.Survey survey,
@@ -1009,6 +1017,7 @@ public class PDFManager {
 			ArrayList<Result> record,
 			ArrayList<ArrayList<Result>> parentRecords) {
 		
+		int [] cols = gv.cols;
 		DisplayItem di = new DisplayItem();
 		di.width = cols[colIdx-offset];
 		di.text = label.text == null ? "" : label.text;
@@ -1445,7 +1454,7 @@ public class PDFManager {
 		 */
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
-				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
+				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), font);
 			
 				if(isSelectMultiple) {
 					if(aChoice.isSet) {
