@@ -20,6 +20,7 @@ import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
+import org.smap.sdal.model.Survey;
 import org.w3c.dom.Element;
 
 public class XLSFormManager {
@@ -46,6 +47,10 @@ public class XLSFormManager {
 		public static final int COL_CHOICE_NAME = 101;
 		public static final int COL_CHOICE_LABEL = 102;
 		public static final int COL_DEFAULT = 103;
+		
+		public static final int COL_DEFAULT_LANGUAGE = 200;
+		public static final int COL_INSTANCE_NAME = 201;
+		public static final int COL_STYLE = 202;
 		
 		
 		String name;
@@ -178,6 +183,26 @@ public class XLSFormManager {
 			return value;
 		}
 		
+		// Return the settings value for this column
+		public String getValue(Survey s) {
+			String value = "";
+			
+			if(type == COL_DEFAULT_LANGUAGE) {			
+				value = s.def_lang;
+
+			} else if(type == COL_STYLE) {			
+				value = s.surveyClass;
+
+			} else if(type == COL_INSTANCE_NAME) {			
+				value = instanceName;
+
+			}else {
+				System.out.println("Unknown option type: " + type);
+			}
+			
+			return value;
+		}
+		
 		// Get the column number
 		public int getColNumber() {
 			return colNumber;
@@ -189,7 +214,10 @@ public class XLSFormManager {
 	Workbook wb = null;
 	int rowNumberSurvey = 1;		// Heading row is 0
 	int rowNumberChoices = 1;		// Heading row is 0
+	int rowNumberSettings = 1;		// Heading row is 0
 
+	String instanceName = "";			// Found when processing questions, then used in settings
+	
 	public XLSFormManager(String type) {
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook();
@@ -216,10 +244,12 @@ public class XLSFormManager {
 		
 		ArrayList<Column> colsSurvey = getColumnsSurvey(survey, namedColumnIndexes);
 		ArrayList<Column> colsChoices = getColumnsChoices(survey);
+		ArrayList<Column> colsSettings = getColumnsSettings();
 
-		
+		// Write out the column headings
 		createHeader(colsSurvey, surveySheet, styles);
-		createHeader(colsChoices, choicesSheet, styles);	
+		createHeader(colsChoices, choicesSheet, styles);
+		createHeader(colsSettings, settingsSheet, styles);
 		
 		// Write out questions
 		Form ff = survey.getFirstForm();
@@ -227,6 +257,9 @@ public class XLSFormManager {
 				colsChoices, 
 				filterIndexes,
 				namedColumnIndexes);
+		
+		// Write out survey settings
+		processSurveyForXLS(outputStream, survey, settingsSheet, styles, colsSettings);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -277,6 +310,8 @@ public class XLSFormManager {
 				inMeta = true;
 			} else if(q.name.equals("meta_groupEnd")) {
 				inMeta = false;
+			} else if(q.name.equals("instanceName")) {
+				instanceName = q.calculation;
 			}
 			
 			System.out.println("Question: " + q.name + " : " + q.repeatCount);
@@ -496,6 +531,22 @@ public class XLSFormManager {
 		return cols;
 	}
 	
+	/*
+	 * Get the columns for the settings sheet
+	 */
+	private ArrayList<Column> getColumnsSettings() {
+		
+		ArrayList<Column> cols = new ArrayList<Column> ();
+		
+		int colNumber = 0;
+		
+		cols.add(new Column(colNumber++, "default_language", Column.COL_DEFAULT_LANGUAGE, 0, "default_language"));
+		cols.add(new Column(colNumber++, "instance_name", Column.COL_INSTANCE_NAME, 0, "instance_name"));
+		cols.add(new Column(colNumber++, "style", Column.COL_STYLE, 0, "style"));
+		
+		return cols;
+	}
+	
    /**
      * create a library of cell styles
      */
@@ -533,6 +584,25 @@ public class XLSFormManager {
         styles.put("not_required", style);
 
         return styles;
+    }
+    
+    /*
+     * write out the settings values
+     */
+
+    private void processSurveyForXLS(OutputStream outputStream, 
+    		org.smap.sdal.model.Survey survey, Sheet settingsSheet, 
+    		Map<String, CellStyle> styles, 
+    		ArrayList<Column>  colsSettings) {
+    	
+    	Row row = settingsSheet.createRow(rowNumberSettings++);
+    	for(int i = 0; i < colsSettings.size(); i++) {
+			Column col = colsSettings.get(i);			
+			Cell cell = row.createCell(i);
+							
+			cell.setCellValue(col.getValue(survey));
+        }
+    	
     }
 
 }
