@@ -57,6 +57,7 @@ public class GetXForm {
 	private Form firstForm;
 	SurveyTemplate template = null;
 	private String gInstanceId = null;
+	private String gSurveyClass = null;
 	private ArrayList<String> gFilenames;
 
 	private static Logger log =
@@ -396,6 +397,7 @@ public class GetXForm {
     	String surveyClass = template.getSurveyClass();
     	if(surveyClass != null) {
     		bodyElement.setAttribute("class", surveyClass);
+    		gSurveyClass = surveyClass;
     	}
        	if(firstForm != null) {
     		populateForm(outputDoc, bodyElement, BODY, firstForm); 		// Process the top level form
@@ -977,7 +979,7 @@ public class GetXForm {
     }
     
     /*
-     * Getter for the instanceId
+     * Getters
      */
     public String getInstanceId() {
     	return gInstanceId;
@@ -985,6 +987,10 @@ public class GetXForm {
     
     public ArrayList<String> getFilenames() {
     	return gFilenames;
+    }
+    
+    public String getSurveyClass() {
+    	return gSurveyClass;
     }
     
     

@@ -79,7 +79,7 @@ public class QuestionManager {
 		String sql = "select q.q_id, q.qname, q.qtype, q.appearance " +
 				" from question q, form f " +
 				" where f.f_id = q.f_id " +
-				" and q.appearance like 'search(''" + csvRoot + "''%' " +
+				" and q.appearance like '%search(''" + csvRoot + "''%' " +
 				" and q.qtype like 'select%' " + 
 				" and f.s_id = ?";
 	

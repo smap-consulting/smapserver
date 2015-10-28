@@ -95,6 +95,7 @@ public class WebForm extends Application{
 		String instanceStrToEditId;
 		int assignmentId;
 		String accessKey;
+		String surveyClass;
 		ArrayList<String> files; 
 	}
 	class JsonResponse {
@@ -420,6 +421,9 @@ public class WebForm extends Application{
     				jr.surveyData.accessKey = accessKey;
     			}
     			
+    			// Add survey class's - used for paging
+    			jr.surveyData.surveyClass = xForm.getSurveyClass();
+    			
     			jr.main = addMain(request, formXML, instanceStrToEditId, 
     					orgId, true, surveyClass).toString();
     				
@@ -606,7 +610,13 @@ public class WebForm extends Application{
 		String dataDoc=transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
 		
 		// We only want the model
-		dataDoc = dataDoc.substring(dataDoc.indexOf("<model>"), dataDoc.lastIndexOf("</root>"));
+		int modelIdx = dataDoc.indexOf("<model>");
+		int rootIdx = dataDoc.lastIndexOf("</root>");
+		if(modelIdx >=0 && rootIdx >= 0) {
+			dataDoc = dataDoc.substring(modelIdx, rootIdx);
+		} else {
+			log.info("Error: Invalid model: " + dataDoc);
+		}
 		output.append(dataDoc.replace("\n", "").replace("\r", ""));
 		
 		return output;

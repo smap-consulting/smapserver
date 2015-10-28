@@ -98,7 +98,7 @@ public class SurveyManager {
 				int sId = Integer.parseInt(ident);
 				searchQuery2.setParameter("id", sId);
 				survey = (Survey) searchQuery2.getSingleResult();
-			} catch (NoResultException e2) {
+			} catch (Exception e2) {
 				System.out.println("Error: Survey Template not found with ident(" + ident + ") survey results ignored");
 				throw new MissingTemplateException(ident);
 			}
