@@ -250,13 +250,7 @@ public class TemplateUpload extends Application {
 			}
 			File templateFile = new File(resp.fileName);
 			
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			log.info("Files parameter: " + basePath);
-			if(basePath == null) {
-				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-				basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-			}
+			String basePath = GeneralUtilityMethods.getBasePath(request);
 			
 			// Parse the form into an object model
 			PutXForm loader = new PutXForm();

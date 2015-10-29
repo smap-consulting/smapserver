@@ -853,6 +853,7 @@ public class SurveyTemplate {
 		boolean alreadyHas_start = false;
 		boolean alreadyHas_end = false;
 		boolean alreadyHas_instanceid = false;
+		boolean alreadyHas_instancename = false;
 		boolean alreadyHas_task_key = false;
 		for (Question q : questionList) {
 			if(q.getSourceParam() != null) {
@@ -870,6 +871,8 @@ public class SurveyTemplate {
 					alreadyHas_instanceid = true;
 			} else if(q.getName().equals("_task_key")) {
 					alreadyHas_task_key = true;
+			} else if(q.getPath().equals("/meta/instanceName") ) {
+					alreadyHas_instancename = true;
 			}
 
 		}
@@ -913,6 +916,18 @@ public class SurveyTemplate {
 			q.setVisible(false);
 			q.setSource("user");
 			q.setCalculate("concat('uuid:', uuid())");
+			q.setReadOnly(true);
+			q.setType("string");
+			questionList.add(q);
+		}
+		
+		if(!alreadyHas_instancename) {
+			Question q = new Question();	// Instance Name
+			q.setName("instanceName");
+			q.setSeq(-1);
+			q.setVisible(false);
+			q.setSource("user");
+			q.setCalculate("");
 			q.setReadOnly(true);
 			q.setType("string");
 			questionList.add(q);
@@ -1365,6 +1380,20 @@ public class SurveyTemplate {
 				}				
 			}
 		} 
+			
+	}
+	
+	/*
+	 * Add a survey level name from the calculate (if its a instanceName question)
+	 */
+	public void addSurveyInstanceNameFromCalculate(String calculate, String questionRef) {
+		
+		System.out.println("Question ref: " + questionRef);
+		if(questionRef.toLowerCase().trim().equals("/main/meta/instancename")) {
+			survey.setInstanceName(calculate);
+		}
+		//survey.setManifest(gson.toJson(mArray));
+		
 			
 	}
 	

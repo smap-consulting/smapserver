@@ -1054,7 +1054,6 @@ public class PDFManager {
 			return input;
 		}
 		
-		System.out.println("lookup on: " + input );
 		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
 		java.util.regex.Matcher matcher = pattern.matcher(input);
 		int start = 0;
@@ -1062,7 +1061,6 @@ public class PDFManager {
 			
 			String matched = matcher.group();
 			String qname = matched.substring(2, matched.length() - 1);
-			System.out.println("Matched: " + qname);
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();

@@ -958,11 +958,12 @@ public class PutXForm {
 	   				q.setConstraintMsg(attribute.getNodeValue());   			
 	    			
 	    		} else if (name.equals("calculate")) {
-	    			System.out.println("Setting calculate: " + questionRef);
+	    			
 	   				q.setCalculate(attribute.getNodeValue()); 
 	   				
 	   				// Survey level manifests can be set in the appearance attribute
-	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);	
+	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);
+	   				template.addSurveyInstanceNameFromCalculate(attribute.getNodeValue(), questionRef);
 	   				
 	   				if(q.getType() == null || !q.getType().startsWith("begin")) {
 	   					q.setSource("user");	// Set source as it may not have been set in the body

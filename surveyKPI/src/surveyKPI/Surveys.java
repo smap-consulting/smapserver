@@ -413,7 +413,7 @@ public class Surveys extends Application {
 			}
 			
 			// Update the settings
-			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, p_id = ? where s_id = ?;";		
+			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, p_id = ?, instance_name = ? where s_id = ?;";		
 		
 			log.info("Saving survey: " + sql + " : " + survey.displayName);
 			pstmt = connectionSD.prepareStatement(sql);	
@@ -422,7 +422,9 @@ public class Surveys extends Application {
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setBoolean(4, survey.task_file);
 			pstmt.setInt(5, survey.p_id);
-			pstmt.setInt(6, sId);
+			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceName, sId, connectionSD));
+			pstmt.setInt(7, sId);
+			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
 

@@ -261,7 +261,7 @@ alter table survey alter column class set data type text;
 -- User configuration for PDF reports
 alter table users add column settings text;
 alter table users add column signature text;
-alter table users drop constraint users_email_key;
+alter table users drop constraint if exists users_email_key;
 alter table organisation add column company_name text;
 alter table organisation add column default_email_content text;
 
@@ -278,7 +278,7 @@ alter table organisation add column email_password text;
 alter table organisation add column email_port integer;
 
 -- Upgrade to: 15.09 from 15.04
-drop index formid_sequence ;
+drop index if exists formid_sequence ;
 alter table question alter column qname set not null;
 alter table question alter column visible set default 'true';
 alter table question alter column mandatory set default 'false';
@@ -322,3 +322,4 @@ alter table organisation add column company_email text;
 
 -- Upgrade to: 15.10 from 15.09
 alter table question add column repeatcount boolean default false;
+alter table survey add column instance_name text;

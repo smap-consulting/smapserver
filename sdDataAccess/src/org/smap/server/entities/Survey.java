@@ -73,6 +73,9 @@ public class Survey implements Serializable {
 	@Column(name="manifest")
 	private String manifest;
 	
+	@Column(name="instance_name")
+	private String instanceName;
+	
 	@Column(name="class")
 	private String surveyClass;
 	
@@ -125,6 +128,10 @@ public class Survey implements Serializable {
 		return manifest;
 	}
 	
+	public String getInstanceName() {
+		return instanceName;
+	}
+	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
 		return GeneralUtilityMethods.esc(display_name);
@@ -164,6 +171,10 @@ public class Survey implements Serializable {
 	
 	public void setManifest(String v) {
 		manifest = v;
+	}
+	
+	public void setInstanceName(String v) {
+		instanceName = v;
 	}
 	
 

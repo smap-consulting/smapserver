@@ -550,7 +550,8 @@ public class GetXForm {
     /*
      * Populate a repeating group
      */
-    public void createRepeatingGroup(Document outputXML, Element parent, Form subF, int location, String parentXPath, Question parentQuestion) {
+    public void createRepeatingGroup(Document outputXML, Element parent, Form subF, int location, 
+    		String parentXPath, Question parentQuestion) {
 
 		if(location == INSTANCE) {
 			
@@ -638,7 +639,15 @@ public class GetXForm {
 		}
 		
 		// Add calculate
-		String calculate = q.getCalculate();
+		String calculate = null;
+		if(q.getName().equals("instanceName")) {
+			calculate = template.getSurvey().getInstanceName();
+			if(calculate == null) {
+				calculate = q.getCalculate();	// Allow for legacy forms that were loaded before the instance name was set in the survey table
+			}
+		} else  {
+			calculate = q.getCalculate();
+		}
 		if(calculate != null && calculate.trim().length() > 0 ) {
 			questionElement.setAttribute("calculate", calculate);
 		}

@@ -165,7 +165,8 @@ public class SurveyManager {
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
 		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, " +
-				" s.def_lang, s.task_file, u.o_id, s.class" +
+				" s.def_lang, s.task_file, u.o_id, s.class," +
+				" s.instance_name " +
 				" from survey s, users u, user_project up, project p" +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -197,6 +198,7 @@ public class SurveyManager {
 				s.task_file = resultSet.getBoolean(9);
 				s.o_id = resultSet.getInt(10);
 				s.surveyClass = resultSet.getString(11);
+				s.instanceName = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(12), true);
 				
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);

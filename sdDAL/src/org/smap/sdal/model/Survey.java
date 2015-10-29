@@ -18,6 +18,7 @@ public class Survey {
 	public String name;
 	public String ident;
 	public String displayName;
+	public String instanceName;
 	public String def_lang;
 	public boolean task_file;		// Set true if this data from a file can be pre-loaded into this survey
 	public String surveyClass;

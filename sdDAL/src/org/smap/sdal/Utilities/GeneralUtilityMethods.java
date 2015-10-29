@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.PropertyChange;
+import org.smap.sdal.model.Result;
 
 
 public class GeneralUtilityMethods {
@@ -575,6 +577,45 @@ public class GeneralUtilityMethods {
 		}
 		
 		return qId;
+	}
+	
+	/*
+	 * Get the question path from the question name
+	 * This assumes that all names in the survey are unique
+	 */
+	static public String getQuestionPath(
+			Connection sd, 
+			int sId,
+			String qName) throws SQLException {
+		
+		String path = null;
+		
+		String sqlGetQuestionPath = "select q.path " +
+				" from question q, form f" +
+				" where q.f_id = f.f_id " +
+				" and f.s_id = ? " +
+				" and q.qname = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetQuestionPath);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, qName);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				path = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return path;
 	}
 	
 	/*
@@ -1206,6 +1247,7 @@ public class GeneralUtilityMethods {
 
 	/*
 	 * Convert all xml fragments embedded in the supplied string to names
+	 * ODK uses an html fragment <output/> to show values from questions in labels
 	 */
 	public static String convertAllEmbeddedOutput(String inputEsc, boolean xlsName) {
 		
@@ -1286,4 +1328,37 @@ public class GeneralUtilityMethods {
 		return name;
 	}
 	
+	/*
+	 * 
+	 */
+	public static String convertAllxlsNames(String input, int sId, Connection sd) throws SQLException {
+		StringBuffer output = new StringBuffer("");
+		
+		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			String qname = matched.substring(2, matched.length() - 1);
+			System.out.println("Matched: " + qname);
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			output.append(input.substring(start, startOfGroup));
+			
+			output.append(getQuestionPath(sd, sId, qname));
+			
+			// Reset the start
+			start = matcher.end();
+
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			output.append(input.substring(start));		
+		}
+		
+		return output.toString().trim();
+	}
 }

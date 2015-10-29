@@ -850,7 +850,6 @@ function questionMetaURL (sId, lang, qId) {
 function getSurveyDetails(callback) {
 
 	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
-	console.log("Getting survey: " + globals.gCurrentSurvey);
 	
 	addHourglass();
 	$.ajax({
