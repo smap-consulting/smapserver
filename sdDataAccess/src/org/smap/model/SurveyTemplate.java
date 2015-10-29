@@ -1277,7 +1277,7 @@ public class SurveyTemplate {
 	public void addManifestFromAppearance(String appearance, String questionRef) {
 		
 		// Check to see if this appearance references a manifest file
-		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
 			// Yes it references a manifest
 			
 			int idx1 = appearance.indexOf('(');
@@ -1470,7 +1470,7 @@ public class SurveyTemplate {
 					
 					// Check to see if this appearance references a manifest file
 					String appearance = q.getAppearance();
-					if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+					if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
 						// Yes it references a manifest
 						
 						int idx1 = appearance.indexOf('(');

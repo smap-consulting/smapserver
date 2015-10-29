@@ -41,6 +41,12 @@ public class CSVFilter {
 	public CSVFilter(String [] cols, String appearance) {
 		int idx1 = appearance.indexOf('(');
 		int idx2 = appearance.indexOf(')');
+		
+		if(cols == null) {
+			// No columns in csv file
+			return;
+		}
+		
 		if(idx1 > 0 && idx2 > idx1) {
 			String criteriaString = appearance.substring(idx1 + 1, idx2);
 			log.info("#### criteria for csv filter: " + criteriaString);

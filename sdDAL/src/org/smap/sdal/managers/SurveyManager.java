@@ -40,8 +40,6 @@ import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Label;
-import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.PropertyChange;
@@ -258,7 +256,7 @@ public class SurveyManager {
 				" from survey s, users u, user_project up, project p, question q, form f " +
 				" where s.s_id = f.s_id " +
 				" and f.f_id = q.f_id " +
-				" and q.appearance like 'search(''" + csvRoot + "''%' " +
+				" and q.appearance like '%search(''" + csvRoot + "''%' " +
 				" and s.p_id = p.id" +
 				" and s.deleted = 'false'" +
 				" and s.blocked = 'false'" +
@@ -1058,7 +1056,7 @@ public class SurveyManager {
 			
 			if(totalCount == 0) {
 				log.info("Info: No changes applied");
-				throw new Exception("No changes applied");		
+				//throw new Exception("No changes applied");		
 			}
 			
 		} catch (Exception e) {

@@ -744,7 +744,7 @@ public class GeneralUtilityMethods {
 	 * Return true if this questions appearance means that choices come from an external file
 	 */
 	public static boolean isAppearanceExternalFile(String appearance) {
-		if(appearance != null && appearance.toLowerCase().trim().startsWith("search(")) {
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
 			return true;
 		} else {
 			return false;
@@ -815,6 +815,10 @@ public class GeneralUtilityMethods {
 		
 		ValueLabelCols vlc = new ValueLabelCols();
 		
+		if(cols == null) {
+			// No column in this CSV file so there are not going to be any matches
+			return vlc;
+		}
 		/*
 		 * Ignore language in the query, these values are codes and are (currently) independent of language
 		 */

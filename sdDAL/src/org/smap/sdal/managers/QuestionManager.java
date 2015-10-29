@@ -108,7 +108,7 @@ public class QuestionManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			
-			log.info("Get questions: " + pstmt.toString());
+			log.info("Get questions for CSV: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 	
 			while (resultSet.next()) {								
@@ -121,6 +121,7 @@ public class QuestionManager {
 				
 			
 				pstmtOption.setInt(1, q.id);
+				log.info("Get options for CSV: " + pstmtOption.toString());
 				ResultSet rsOptions = pstmtOption.executeQuery();
 				while (rsOptions.next()) {
 					Option o = new Option();
