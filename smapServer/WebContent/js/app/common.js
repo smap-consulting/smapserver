@@ -195,7 +195,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 			
 		$('#modify_me_popup').on('show.bs.modal', function (event) {
 			  var $this = $(this)
-			  $this.find('.modal-title').text(data.name + "@" + data.organisation_name)
+			  $this.find('.modal-title').text(data.ident + "@" + data.organisation_name)
 			  
 			  $('#me_edit_form')[0].reset();
 			  $('#reset_me_password_fields').show();

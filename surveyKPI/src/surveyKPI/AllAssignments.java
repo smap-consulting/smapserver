@@ -1144,7 +1144,7 @@ public class AllAssignments extends Application {
 						
 						if(!colName.equals("the_geom")) { // Cannot directly insert a geometry TODO add this capability
 							// If this column is in the survey then add it to the list of columns to be processed
-							Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName);
+							Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns);
 							if(col != null) {
 								col.index = i;
 								if(col.geomCol != null) {
@@ -1235,7 +1235,7 @@ public class AllAssignments extends Application {
 						/*
 						 * Get the data
 						 */
-						log.info("userevent: " + request.getRemoteUser() + " : loading task file : Previous contents are" + (clear_existing ? " deleted" : " preserved"));
+						log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));
 						results.setAutoCommit(false);
 						if(clear_existing) {
 							pstmtGetTableNames = connectionSD.prepareStatement(sqlGetTableNames);
@@ -1270,6 +1270,9 @@ public class AllAssignments extends Application {
 											srcPathFile, 
 											basePath, 
 											sIdent);
+									}
+									if(value.trim().length() == 0) {
+										value = null;
 									}
 								}
 								
@@ -1308,7 +1311,7 @@ public class AllAssignments extends Application {
 									Timestamp tsVal = new Timestamp(uDate.getTime());
 									
 									pstmtInsert.setTimestamp(index++, tsVal);
-								}else {
+								} else {
 									pstmtInsert.setString(index++, value);
 								}
 								
@@ -1491,11 +1494,15 @@ public class AllAssignments extends Application {
 	/*
 	 * Check to see if a question is in a form
 	 */
-	private Column getColumn(PreparedStatement pstmtGetCol, PreparedStatement pstmtGetChoices, String qName) throws SQLException {
+	private Column getColumn(PreparedStatement pstmtGetCol, 
+			PreparedStatement pstmtGetChoices, 
+			String qName,
+			ArrayList<Column> columns) throws SQLException {
+		
 		Column col = null;
 		String geomCol = null;
 		
-		String colName = UtilityMethodsEmail.cleanName(qName);	// Convert question name to a column name
+		String colName = UtilityMethodsEmail.cleanName(qName);	// Convert column name to equivalent of a clean question name
 		
 		// Cater for lat, lon columns which map to a geopoint
 		if(colName.equals("lat") || colName.equals("lon")) {
@@ -1503,30 +1510,44 @@ public class AllAssignments extends Application {
 			colName = "the_geom";
 		} 
 		
-		pstmtGetCol.setString(2, colName);
-		log.info("Get column: " + pstmtGetCol.toString());
-		ResultSet rs = pstmtGetCol.executeQuery();
-		if(rs.next()) {
-			// This column name is in the survey
-			col = new Column();
-			col.name = colName;
-			col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
-			col.type = rs.getString("qtype");
-			
-			if(col.type.startsWith("select")) {
-				
-				// Get choices for this select question
-				int qId = rs.getInt("q_id");
-				
-				col.choices = new ArrayList<String> ();
-				pstmtGetChoices.setInt(1, qId);
-				log.info("Get choices:" + pstmtGetChoices.toString());
-				ResultSet rsChoices = pstmtGetChoices.executeQuery();
-				while(rsChoices.next()) {
-					col.choices.add(rsChoices.getString("ovalue"));
-				}
+		// Only add this question if it has not previously been added, questions can only be updated once in a single transaction
+		boolean questionExists = false;
+		for(Column haveColumn : columns) {
+			if(haveColumn.name.equals(colName)) {
+				questionExists = true;
+				break;
 			}
 		}
+		
+		if(!questionExists) {
+			pstmtGetCol.setString(2, colName);		// Search for a question
+			log.info("Get column: " + pstmtGetCol.toString());
+			ResultSet rs = pstmtGetCol.executeQuery();
+			if(rs.next()) {
+				// This column name is in the survey
+				col = new Column();
+				col.name = colName;
+				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
+				col.type = rs.getString("qtype");
+				
+				if(col.type.startsWith("select")) {
+					
+					// Get choices for this select question
+					int qId = rs.getInt("q_id");
+					
+					col.choices = new ArrayList<String> ();
+					pstmtGetChoices.setInt(1, qId);
+					log.info("Get choices:" + pstmtGetChoices.toString());
+					ResultSet rsChoices = pstmtGetChoices.executeQuery();
+					while(rsChoices.next()) {
+						col.choices.add(rsChoices.getString("ovalue"));
+					}
+				}
+			}
+		} else {
+			log.info("Already have column " + colName);
+		}
+		
 		return col;
 	}
 	
