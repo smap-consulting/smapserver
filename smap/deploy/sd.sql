@@ -96,6 +96,7 @@ INSERT into regions (o_id, table_name, region_name, geometry_column)
 -- Make deleting of surveys flow through to deleting of tasks
 alter table tasks alter column form_id type integer using (form_id::integer);
 delete from tasks where form_id not in (select s_id from survey);
+alter table tasks drop constraint if exists tasks_form_id_fkey;
 alter table tasks add foreign key (form_id) references survey(s_id) on delete cascade;
 
 -- Changes for survey editor:
