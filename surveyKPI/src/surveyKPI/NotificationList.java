@@ -69,6 +69,7 @@ import org.apache.http.util.EntityUtils;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.ODKForm;
@@ -545,12 +546,7 @@ public class NotificationList extends Application {
 		PreparedStatement pstmtNotificationLog = null;
 		
 		// Get the base path
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		try {
 			NotificationManager fm = new NotificationManager();

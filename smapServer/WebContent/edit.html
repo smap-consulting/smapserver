@@ -227,19 +227,22 @@
 						</div>
 					</div>
 				</form>	
-				<form enctype="multipart/form-data" name="pdftemplate">
+				<form enctype="multipart/form-data" name="pdftemplate" role="form" class="form-horizontal">
 					<fieldset>
 						<legend>Pdf Template:</legend>
 						<input id="pdfSettings" type="hidden" name="settings" >
 						
 						<div class="form-group">
-      						<div class="input-group">
+      						<div class="input-group col-sm-offset-2 col-sm-8" style="float:left;">	<!-- Override float:none set for input group -->
       							<span class="input-group-btn">
         							<input id="addPdfTemplate" name="files" title="Add" class="file-inputs" type="file" accept="application/pdf">
       							</span>
      					 		<input type="text" class="upload_file_msg form-control" placeholder="None selected ...">
     						</div>
-         				</div>           			
+    
+							<button type="button" class="btn btn-danger col-sm-1" id="delPdfTemplate"><i class="glyphicon glyphicon-trash"></i></button>
+							
+						</div>          			
 					</fieldset>
 				</form>	
 			</div>

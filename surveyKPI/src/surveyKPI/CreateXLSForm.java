@@ -98,7 +98,6 @@ public class CreateXLSForm extends Application {
 		org.smap.sdal.model.Survey survey = null;
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		
-		// Get the base path
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		// Set file type to "xlsx" unless "xls" has been specified

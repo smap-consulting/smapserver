@@ -381,7 +381,7 @@ public class Surveys extends Application {
 						pdfItem = item;
 						fileName = item.getName();
 						fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
-					}					
+					}				
 				}
 
 			}
@@ -436,6 +436,9 @@ public class Surveys extends Application {
 			
 			if(fileName != null) {  // Save the file				
 	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
+			} else {
+				// Try to delete the template file if it exists
+				delPdf(request, survey.displayName, survey.p_id);
 			}
 			
 			// If the project id has changed update the project in the upload events so that the monitor will still show all events
@@ -446,11 +449,9 @@ public class Surveys extends Application {
 			// If the display name or project id has changed rename template files
 			if((originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) 
 					|| originalProjectId != survey.p_id) {
-				
-				// Get base path to files
-				String basePath = GeneralUtilityMethods.getBasePath(request); 
-				
+		
 				// Rename files
+				String basePath = GeneralUtilityMethods.getBasePath(request); 	// Get base path to files
 				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, originalProjectId, survey.p_id);
 			}
 			
@@ -490,12 +491,7 @@ public class Surveys extends Application {
 			FileItem pdfItem,
 			int pId) {
 	
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");		
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {
-			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-		}	
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		fileName = GeneralUtilityMethods.getSafeTemplateName(fileName);
 		fileName = fileName + "_template.pdf";
@@ -503,9 +499,37 @@ public class Surveys extends Application {
 		String folderPath = basePath + "/templates/" + pId ;						
 		String filePath = folderPath + "/" + fileName;
 	    File savedFile = new File(filePath);
-	    log.info("Saving file to: " + filePath);
+	    
+	    log.info("userevent: " + request.getRemoteUser() + " : saving pdf template : " + filePath);
+	    
 	    try {
 			pdfItem.write(savedFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	 
+	}
+	
+	/*
+	 * Delete the pdf template
+	 */
+	private void delPdf(HttpServletRequest request, 
+			String fileName, 
+			int pId) {
+	
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
+		fileName = GeneralUtilityMethods.getSafeTemplateName(fileName);
+		fileName = fileName + "_template.pdf";
+		
+		String folderPath = basePath + "/templates/" + pId ;						
+		String filePath = folderPath + "/" + fileName;
+	    File delFile = new File(filePath);
+	    
+	    log.info("userevent: " + request.getRemoteUser() + " : delete pdf template : " + filePath);
+
+	    try {
+			delFile.delete();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -49,6 +49,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -168,14 +169,8 @@ public class ExportSurveyLocation extends Application {
 				} else {
 					System.out.println("Location export error: unknown type: " + type);
 				}
-
-									
-				String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-				if(basePath == null) {
-					basePath = "/smap";
-				} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-					basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-				}
+	
+				String basePath = GeneralUtilityMethods.getBasePath(request);
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
 				
 				System.out.println("Table: " + sqlDesc.target_table);

@@ -192,7 +192,7 @@ $(document).ready(function() {
 	});
 
 
-	$('#save_settings').off().click(function() {	// Save settings to Smap
+	$('#save_settings').off().click(function() {	// Save settings to the database
 		globals.model.save_settings();
 	});
 	
@@ -225,6 +225,10 @@ $(document).ready(function() {
 	});
 	$('#addPdfTemplate').off().click(function() {
 		globals.model.settingsAddPdfClicked();
+	});
+	$('#delPdfTemplate').off().click(function() {
+		globals.model.settingsAddPdfClicked();
+		$('.upload_file_msg').val("");
 	});
 
 	// Check for selection of the label indicating successful updates and the one indicating failed

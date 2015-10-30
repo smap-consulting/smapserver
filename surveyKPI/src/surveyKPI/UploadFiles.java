@@ -31,6 +31,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import model.MediaResponse;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -47,6 +48,7 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import utilities.MediaInfo;
 
 import java.io.File;
@@ -150,12 +152,7 @@ public class UploadFiles extends Application {
 					}
 					// End authorisation
 					
-					String basePath = request.getServletContext().getInitParameter("au.com.smap.files");		
-					if(basePath == null) {
-						basePath = "/smap";
-					} else if(basePath.equals("/ebs1")) {
-						basePath = "/ebs1/servers/" + serverName.toLowerCase();
-					}
+					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
 					MediaInfo mediaInfo = new MediaInfo();
 					if(sId > 0) {
@@ -239,14 +236,9 @@ public class UploadFiles extends Application {
 		// End Authorisation		
 
 		try {
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String serverName = request.getServerName();
 			
-			if(basePath == null) {
-				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {
-				basePath = "/ebs1/servers/" + serverName.toLowerCase();
-			}
 			
 			deleteFile(basePath, serverName, null, oId, filename, request.getRemoteUser());
 			
@@ -288,14 +280,8 @@ public class UploadFiles extends Application {
 
 		try {
 			
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String serverName = request.getServerName(); 
-			
-			if(basePath == null) {
-				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {
-				basePath = "/ebs1/servers/" + serverName.toLowerCase();
-			}
 			
 			deleteFile(basePath, serverName, sIdent, 0, filename, request.getRemoteUser());
 			
@@ -351,13 +337,7 @@ public class UploadFiles extends Application {
 		/*
 		 * Get the path to the files
 		 */
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {
-			basePath = "/ebs1/servers/" + serverName.toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 	
 		MediaInfo mediaInfo = new MediaInfo();
 		mediaInfo.setServer(request.getRequestURL().toString());
