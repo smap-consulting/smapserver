@@ -84,7 +84,7 @@ public class MyAssignments extends Application {
 	 */
 	@GET
 	@Produces("application/json")
-	public Response getTasksCredentials(@Context HttpServletRequest request) {
+	public Response getTasksCredentials(@Context HttpServletRequest request) throws SQLException {
 		return getTasks(request, request.getRemoteUser());
 	}
 	
@@ -96,7 +96,7 @@ public class MyAssignments extends Application {
 	@Path("/key/{key}")
 	public Response getTaskskey(
 			@PathParam("key") String key,
-			@Context HttpServletRequest request) {
+			@Context HttpServletRequest request) throws SQLException {
 		
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
@@ -172,7 +172,7 @@ public class MyAssignments extends Application {
 	/*
 	 * Return the list of tasks allocated to the requesting user
 	 */
-	public Response getTasks(HttpServletRequest request, String userName) {
+	public Response getTasks(HttpServletRequest request, String userName) throws SQLException {
 		
 		Response response = null;
 		
@@ -200,6 +200,9 @@ public class MyAssignments extends Application {
 		PreparedStatement pstmtGeo = null;
 		PreparedStatement pstmt = null;
 		
+		
+		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName);
+		
 		try {
 			String sql = null;
 			
@@ -222,20 +225,23 @@ public class MyAssignments extends Application {
 					"a.id as assignment_id, " +
 					"t.address as address, " +
 					"t.geo_type as geo_type " +
-					"from tasks t, assignments a, users u, survey s, user_project up " +
+					"from tasks t, assignments a, users u, survey s, user_project up, project p " +
 					"where t.id = a.task_id " +
 					"and t.form_id = s.s_id " +
 					"and u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
+					"and s.p_id = p.id " +
 					"and s.deleted = 'false' " +
 					"and s.blocked = 'false' " +
 					"and a.assignee = u.id " +
 					"and (a.status = 'pending' or a.status = 'cancelled' or a.status = 'missed' " +
 						"or a.status = 'accepted') " +
-					"and u.ident = ?;";
+					"and u.ident = ? " +
+					"and p.o_id = ?";
 						
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, userName);
+			pstmt.setInt(2, oId);
 			
 			log.info("Getting assignments: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
@@ -304,7 +310,6 @@ public class MyAssignments extends Application {
 				
 				// Add the new task assignment to the list of task assignments
 				tr.taskAssignments.add(ta);
-				log.info("Created assignment for task:" + ta.task.id);
 			}
 			
 			/*
@@ -323,15 +328,15 @@ public class MyAssignments extends Application {
 					"and p.id = up.p_id " +
 					"and s.deleted = 'false' " +
 					"and s.blocked = 'false'" +
-					"and u.ident = ?;";
+					"and u.ident = ? " +
+					"and p.o_id = ?";
 						
 			pstmtGetForms = connectionSD.prepareStatement(sql);	
 			pstmtGetForms.setString(1, userName);
+			pstmtGetForms.setInt(2, oId);
 			
 			log.info("Getting forms: " + pstmtGetForms.toString());
 			resultSet = pstmtGetForms.executeQuery();
-			
-			String hostname = request.getServerName();
 			
 			TranslationManager translationMgr = new TranslationManager();
 			
@@ -382,10 +387,13 @@ public class MyAssignments extends Application {
 					"where u.id = up.u_id " +
 					"and p.id = up.p_id " +
 					"and u.ident = ? " +
-					" order by name ASC;";	
+					"and p.o_id = ? " +
+					"order by name ASC;";	
 			
 			pstmtGetProjects = connectionSD.prepareStatement(sql);	
 			pstmtGetProjects.setString(1, userName);
+			pstmtGetProjects.setInt(2, oId);
+			
 			log.info("Getting projects: " + pstmtGetProjects.toString());
 			resultSet = pstmtGetProjects.executeQuery();
 			
