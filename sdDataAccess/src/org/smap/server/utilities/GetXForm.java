@@ -934,54 +934,73 @@ public class GetXForm {
 		Form firstForm = template.getForm(firstFormRef);
 		
 		// Get database driver and connection to the results database
-		Class.forName("org.postgresql.Driver");			
-		connection = ResultsDataSource.getConnection("surveyMobileAPI-InstanceXML");
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		}
+		
+		String requester = "GetXForm - getInstance";
+		connection = ResultsDataSource.getConnection(requester);
 	 
 		/*
 		 * Replace the primary key with the primary key of the record that matches the passed in key and key value
 		 */
-		System.out.println("Key: " + key + " : " + keyval);
-		if(key != null && keyval != null) { 
-			if(key.equals("prikey")) {
-				priKey = Integer.parseInt(keyval);
+		try {
+			System.out.println("Key: " + key + " : " + keyval);
+			if(key != null && keyval != null) { 
+				if(key.equals("prikey")) {
+					priKey = Integer.parseInt(keyval);
+					if(!priKeyValid(connection, firstForm, priKey)) {
+						priKey = 0;
+					}
+				} else {
+					priKey = getPrimaryKey(connection, firstForm, key, keyval);
+					System.out.println("Primary key: " + priKey);
+				}
+			} else {
 				if(!priKeyValid(connection, firstForm, priKey)) {
 					priKey = 0;
 				}
+			}
+			
+			log.info("Generate XML");
+			// Generate the XML
+			boolean hasData = false;
+			if(priKey > 0) {
+				hasData = true;
+				populateForm(outputXML, firstForm, priKey, -1, connection, template, 
+						null, sId, templateName, false, simplifyMedia);    
+			} else if(key != null && keyval != null)  {
+				// Create a blank form containing only the key values
+				hasData = true;
+				log.info("Outputting blank form");
+				populateBlankForm(outputXML, firstForm, connection,  template, null, 
+						sId, key, keyval, templateName, false);
+			} 
+			
+	   		// Write the survey to a string and return it to the calling program
+			if(hasData) {
+	        	Transformer transformer = TransformerFactory.newInstance().newTransformer();
+	        	transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	        	DOMSource source = new DOMSource(outputXML);
+	        	transformer.transform(source, outStream);
+			
+	        	instanceXML = outWriter.toString();
 			} else {
-				priKey = getPrimaryKey(connection, firstForm, key, keyval);
-				System.out.println("Primary key: " + priKey);
+				instanceXML = "";
 			}
-		} else {
-			if(!priKeyValid(connection, firstForm, priKey)) {
-				priKey = 0;
-			}
-		}
-		
-		log.info("Generate XML");
-		// Generate the XML
-		boolean hasData = false;
-		if(priKey > 0) {
-			hasData = true;
-			populateForm(outputXML, firstForm, priKey, -1, connection, template, 
-					null, sId, templateName, false, simplifyMedia);    
-		} else if(key != null && keyval != null)  {
-			// Create a blank form containing only the key values
-			hasData = true;
-			log.info("Outputting blank form");
-			populateBlankForm(outputXML, firstForm, connection,  template, null, 
-					sId, key, keyval, templateName, false);
-		} 
-		
-   		// Write the survey to a string and return it to the calling program
-		if(hasData) {
-        	Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        	transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        	DOMSource source = new DOMSource(outputXML);
-        	transformer.transform(source, outStream);
-		
-        	instanceXML = outWriter.toString();
-		} else {
-			instanceXML = "";
+		} finally {
+			try {
+            	if (connection != null) {
+            		connection.close();
+            		connection = null;
+            	}
+            	log.info("   Release results connection: " + requester);
+            } catch (SQLException e) {
+            	log.log(Level.SEVERE, "Failed to close connection", e);
+            }	
 		}
 		
     	return instanceXML;
