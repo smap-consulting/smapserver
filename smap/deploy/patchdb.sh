@@ -121,7 +121,8 @@ sudo mkdir /usr/bin/smap/resources
 sudo mkdir /usr/bin/smap/resources/css
 echo "1503" > ~/smap_version
 fi
-# version 15.08
+
+# version 15.09
 if [ $version -lt "1509" ]
 then
 
@@ -146,6 +147,12 @@ cd ../deploy
 sudo mkdir /smap/misc
 sudo chown tomcat7 /smap/misc
 
+fi
+
+# version 15.10
+if [ $version -lt "1510" ]
+then
+echo "1509" > ~/smap_version
 fi
 
 #####################################################################################
