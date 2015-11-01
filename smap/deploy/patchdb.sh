@@ -132,8 +132,13 @@ echo "1509" > ~/smap_version
 
 cd ../install
 # Set up new apache configuration structure
+
+sudo cp  $a_config_dir/smap.conf $a_config_dir/smap.conf.bu
 sudo cp config_files/a24-smap.conf $a_config_dir/smap.conf
+
+sudo cp $a_config_dir/smap-ssl.conf $a_config_dir/smap-ssl.conf.bu
 sudo cp config_files/a24-smap-ssl.conf $a_config_dir/smap-ssl.conf
+
 sudo a2ensite  smap.conf
 sudo a2ensite  smap-ssl.conf
 
@@ -152,7 +157,7 @@ fi
 # version 15.10
 if [ $version -lt "1510" ]
 then
-echo "1509" > ~/smap_version
+echo "1510" > ~/smap_version
 fi
 
 #####################################################################################
