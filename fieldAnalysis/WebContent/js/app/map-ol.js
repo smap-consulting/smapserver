@@ -97,6 +97,15 @@ function initializeMap(idx){
 		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
 	}
 	
+	// Add additional layers specified at the organisation level
+	//map.addLayer(new OpenLayers.Layer.XYZ("Map Box",
+	//	    ["http://a.tiles.mapbox.com/v4/mapbox.geography-class/${z}/${x}/${y}.png?access_token=pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg"], {
+	//	    sphericalMercator: true,
+	//	    wrapDateLine: true,
+	//	    numZoomLevels: 8
+	//	}));
+	
+	
 	// Map Controls
 	map.addControl(new OpenLayers.Control.Zoom());
 	map.addControl(new OpenLayers.Control.Scale());
