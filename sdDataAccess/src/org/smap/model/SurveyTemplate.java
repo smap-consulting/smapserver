@@ -924,6 +924,7 @@ public class SurveyTemplate {
 		if(!alreadyHas_instancename) {
 			Question q = new Question();	// Instance Name
 			q.setName("instanceName");
+			q.setPath("/main/meta/instanceName");
 			q.setSeq(-1);
 			q.setVisible(false);
 			q.setSource("user");
