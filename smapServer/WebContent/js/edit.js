@@ -125,7 +125,7 @@ $(document).ready(function() {
 		dont_get_current_survey = false;		// The current survey was not passed in the parameters
 	}
 	getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
-	getFilesFromServer();		// Get the organisational level media files
+	getFilesFromServer(gBaseUrl, undefined, refreshMediaView);		// Get the organisational level media files
 
 	/*
 	 * Refresh the view when the selected property changes
@@ -157,7 +157,7 @@ $(document).ready(function() {
 		// Set up media dialog to manage loading and deleting of media
 		$('.mediaManage').show();
 		$('.mediaSelect').hide();
-		$('#mediaModalLabel').html("Manage Media Files");
+		$('#mediaModalLabel').html("Manage Media Files For this Form");
 		$('#mediaModal table').off();
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
@@ -168,15 +168,20 @@ $(document).ready(function() {
 		$('.navbar-collapse').removeClass("in");
 		
 		// Set the default destination 
-		if($('#orgLevelTab').hasClass("active")) {
-			gUrl = gBaseUrl;
-			$('#survey_id').val("");				// clear the survey id in the forms hidden field
-			gIsSurveyLevel = false;
-		} else {
-			gUrl = gBaseUrl + '?sId=' + gSId;
-    		$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
-    		gIsSurveyLevel = true;
-		}
+		//if($('#orgLevelTab').hasClass("active")) {
+		//	gUrl = gBaseUrl;
+		//	$('#survey_id').val("");				// clear the survey id in the forms hidden field
+		//	gIsSurveyLevel = false;
+		//} else {
+		
+		// Only form level media is managed here, organisation level media is managed in the shared resources page
+		$('#orgPanel').hide();
+		$('#surveyPanel').show();
+		gUrl = gBaseUrl + '?sId=' + gSId;
+    	$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    	gIsSurveyLevel = true;
+    	
+		//}
 		$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
 		$('#mediaModal').modal('show');
 
@@ -297,43 +302,7 @@ $(document).ready(function() {
      * Submit the files
      */
     $('#submitFiles').click( function() {
-    	var sId = $('#survey_id').val();
-    	var f = document.forms.namedItem("fileupload");
-    	var formData = new FormData(f);
-    	
-    	addHourglass();
-        $.ajax({
-            url: gUrl,
-            type: 'POST',
-            xhr: function () {
-            	var myXhr = $.ajaxSettings.xhr();
-        		if(myXhr.upload){ 
-        			myXhr.upload.addEventListener('progress', progressFn, false); 
-        		}
-        		return myXhr;
-            },
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData:false,
-            success: function(data) {
-    			removeHourglass();
-            	var surveyId = sId;
-            	refreshMediaView(data, surveyId);
-            	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
-            	document.forms.namedItem("fileupload").reset();
-            	
-            },
-            error: function(xhr, textStatus, err) {
-    			removeHourglass();
-  				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
-
-				}
-            }
-        });
+    	uploadFiles(gUrl, "fileupload", refreshMediaView);
     });
     
     /*
@@ -462,7 +431,7 @@ function surveyDetailsDone() {
 	// Get survey level files
 	if(globals.gCurrentSurvey) {
 		$('#surveyLevelTab').removeClass("disabled");
-		getFilesFromServer(globals.gCurrentSurvey);
+		getFilesFromServer(gBaseUrl, globals.gCurrentSurvey, refreshMediaView);
 	}
 	
 	// Update edit view
@@ -677,7 +646,21 @@ function mediaPropSelected($this) {
 	gOptionList = $parent.data("list_name"); 
 	gQname = $parent.data("qname"); 
 	$gCurrentRow = $parent;
-		
+	
+	if($('#orgLevelTab').hasClass("active")) {
+		$('#orgPanel').show();
+		$('#surveyPanel').hide();
+		gUrl = gBaseUrl;
+    	$('#survey_id').val("");			// Set the survey id in the forms hidden field
+    	gIsSurveyLevel = false;
+	} else {
+		$('#orgPanel').hide();
+		$('#surveyPanel').show();
+		gUrl = gBaseUrl + '?sId=' + gSId;
+    	$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
+    	gIsSurveyLevel = true;
+	}
+	
 	$('.mediaManage').hide();						// MEDIA
 	$('.mediaSelect').show();
 	$('#mediaModalLabel').html("Select Media File");
@@ -797,76 +780,6 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	$context = changeset.add(change);
 	respondToEvents($context);				// Add events on to the altered html
-	
-}
-
-
-function progressFn(e) {
-	if(e.lengthComputable){
-        var w = (100.0 * e.loaded) / e.total;
-        $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
-    }
-}
-
-function getFilesFromServer(sId) {
-	
-	var url = gBaseUrl;
-	if(sId) {
-		gSId = sId;
-		url += '?sId=' + sId;
-	}
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			
-			var surveyId = sId;
-			refreshMediaView(data, surveyId);
-
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
-			}
-		}
-	});	
-}
-
-
-
-function delete_media(url) {
-	addHourglass();
-	$.ajax({
-		url: url,
-		type: 'DELETE',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			
-			var address = url;
-			if(url.indexOf('organisation') > 0) {
-				refreshMediaView(data);
-			} else {
-				refreshMediaView(data, gSId);
-			}
-	
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
-			}
-		}
-	});	
 	
 }
 
@@ -1042,92 +955,6 @@ function isValidOptionName(val) {
 	}
 	
 	return isValid;	
-}
-
-/*
- * Refresh the view of any attached media if the available media items has changed
- */
-function refreshMediaView(data, sId) {
-	
-	var i,
-		survey = globals.model.survey,
-		$element,
-		h = [],
-		idx = -1,
-		files;
-	
-	if(survey && sId) {
-		// Set the display name
-		$('.formName').html(survey.displayName);
-		$('#survey_id').val(sId);
-		gSId = sId;
-	}
-	
-	if(data) {
-		files = data.files;
-		
-		if(sId) {
-			$element = $('#filesSurvey');
-		} else {
-			$element = $('#filesOrg');
-		}
-		
-		for(i = 0; i < files.length; i++){
-			h[++idx] = '<tr class="';
-			h[++idx] = files[i].type;
-			h[++idx] = '">';
-			h[++idx] = '<td class="preview">';
-			h[++idx] = '<a target="_blank" href="';
-			h[++idx] = files[i].url;
-			h[++idx] = '">';
-			if(files[i].type == "audio") {
-				h[++idx] = markup.addQType("audio");
-			} else {
-				h[++idx] = '<img src="';
-				h[++idx] = files[i].thumbnailUrl;
-				h[++idx] = '" alt="';
-				h[++idx] = files[i].name;
-				h[++idx] = '">';
-			}
-			h[++idx] = '</a>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="filename">';
-				h[++idx] = '<p>';
-				h[++idx] = files[i].name;
-				h[++idx] = '</p>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaManage">';
-				h[++idx] = '<p>';
-				h[++idx] = files[i].size;
-				h[++idx] = '</p>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaManage">';
-				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
-				h[++idx] = files[i].deleteUrl;
-				h[++idx] = '">';
-				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
-				h[++idx] = ' Delete';
-				h[++idx] = '</button>';
-			h[++idx] = '</td>';
-			h[++idx] = '<td class="mediaSelect">';
-				h[++idx] = '<button class="mediaAdd btn btn-success">';
-				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
-					h[++idx] = ' Add';
-				h[++idx] = '</button>';
-		h[++idx] = '</td>';
-			
-			
-			h[++idx] = '</tr>';
-		}
-		
-
-		$element.html(h.join(""));
-	
-		$('.media_del', $element).click(function () {
-			delete_media($(this).data('url'));
-		});
-	
-	}	
 }
 
 });

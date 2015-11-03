@@ -29,6 +29,9 @@
             name: '../passwords',
         },
         {
+            name: '../resources',
+        },
+        {
             name: '../userTrail',
 	    exclude: [ 'ol3/js/ol']
         }

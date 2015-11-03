@@ -301,7 +301,7 @@
    			</div>
    			<div class="container">
 		    <div class="modal-body row">
-   				<ul class="nav nav-pills" role="tablist">
+   				<ul class="nav nav-pills mediaSelect" role="tablist">
        				<li id="orgLevelTab" role="presentation" class="active"><a href="#">Organisation</a></li>
        				<li id="surveyLevelTab" role="presentation" class="disabled"><a href="#">Form</a></li>
 
@@ -310,36 +310,36 @@
    				<!-- The file upload form used as target for the file upload widget -->
    				<form enctype="multipart/form-data" name="fileupload">
        
-       			<input id="survey_id" type="hidden" name="survey_id" >
-       			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
-       			<div class="row fileupload-buttonbar mediaManage">
-           			<div class="col-lg-7">
-                		<!-- The fileinput-button span is used to style the file input field as button -->
-
-                		<input name="files" title="Add files..." class="file-inputs" type="file" multiple
-                			accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mpeg, audio/mp3, audio/x-wav, text/csv">
-                
-                		<button type="button" id="submitFiles" class="btn btn-primary">
-                    		<i class="glyphicon glyphicon-upload"></i>
-                    		<span>Start upload</span>
-                		</button>
-                		<button type="reset" class="btn btn-warning cancel">
-                    		<i class="glyphicon glyphicon-ban-circle"></i>
-                    		<span>Cancel upload</span>
-                		</button>
-                		
-                		<!-- The global file processing state -->
-                		<span class="fileupload-process"></span>
-           			</div>
-           			<!-- The global progress state -->
-           			<div class="col-lg-5 fileupload-progress fade">
-                		<!-- The global progress bar -->
-                		<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                    		<div class="progress-bar progress-bar-success" style="width:0%;"></div>
-                		</div>
-         
-            		</div>
-       			</div>
+	       			<input id="survey_id" type="hidden" name="survey_id" >
+	       			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
+	       			<div class="row fileupload-buttonbar mediaManage">
+	           			<div class="col-lg-7">
+	                		<!-- The fileinput-button span is used to style the file input field as button -->
+	
+	                		<input name="files" title="Add files..." class="file-inputs" type="file" multiple
+	                			accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mpeg, audio/mp3, audio/x-wav, text/csv">
+	                
+	                		<button type="button" id="submitFiles" class="btn btn-primary">
+	                    		<i class="glyphicon glyphicon-upload"></i>
+	                    		<span>Start upload</span>
+	                		</button>
+	                		<button type="reset" class="btn btn-warning cancel">
+	                    		<i class="glyphicon glyphicon-ban-circle"></i>
+	                    		<span>Cancel upload</span>
+	                		</button>
+	                		
+	                		<!-- The global file processing state -->
+	                		<span class="fileupload-process"></span>
+	           			</div>
+	           			<!-- The global progress state -->
+	           			<div class="col-lg-5 fileupload-progress fade">
+	                		<!-- The global progress bar -->
+	                		<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+	                    		<div class="progress-bar progress-bar-success" style="width:0%;"></div>
+	                		</div>
+	         
+	            		</div>
+	       			</div>
   				</form>   
 
 				<!-- Status -->
@@ -364,8 +364,6 @@
 			   
 				<!-- The container for the uploaded Survey files -->
 				<div id="orgPanel" class="col-med-10">
-			    	<h4>Organisation</h4>
-							    
 					<div class="table-responsive">
 			   			<table role="presentation" class="table table-striped col-md-10">
 			   				<tbody id="filesOrg">

@@ -569,6 +569,217 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 
 /*
  * ===============================================================
+ * Common functions for managing media (on both the edit page and shared resource page)
+ * ===============================================================
+ */
+
+/*
+ * Upload files to the server
+ * Writes status to   #upload_msg
+ */
+function uploadFiles(url, formName, callback) {
+   	
+	var f = document.forms.namedItem(formName),
+		formData = new FormData(f);
+	
+	addHourglass();
+    $.ajax({
+        url: url,
+        type: 'POST',
+        xhr: function () {
+        	var myXhr = $.ajaxSettings.xhr();
+    		if(myXhr.upload){ 
+    			myXhr.upload.addEventListener('progress', progressFn, false); 
+    		}
+    		return myXhr;
+        },
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData:false,
+        success: function(data) {
+			removeHourglass();
+        	callback(data);
+        	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
+        	document.forms.namedItem(formName).reset();
+        	
+        },
+        error: function(xhr, textStatus, err) {
+			removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
+
+			}
+        }
+    });
+}
+
+/*
+ * Progress function for the uploading of files
+ */
+function progressFn(e) {
+	if(e.lengthComputable){
+        var w = (100.0 * e.loaded) / e.total;
+        $('.progress-bar').css('width', w+'%').attr('aria-valuenow', w); 
+    }
+}
+
+/*
+ * Refresh the view of any attached media if the available media items has changed
+ */
+function refreshMediaView(data) {
+	
+	var i,
+		survey = globals.model.survey,
+		sId = globals.gCurrentSurvey,
+		$element,
+		h = [],
+		idx = -1,
+		files;
+	
+	if(survey && sId) {
+		// Set the display name
+		$('.formName').html(survey.displayName);
+		$('#survey_id').val(sId);
+		gSId = sId;
+	}
+	
+	if(data) {
+		files = data.files;
+		
+		if(sId) {
+			$element = $('#filesSurvey');
+		} else {
+			$element = $('#filesOrg');
+		}
+		
+		for(i = 0; i < files.length; i++){
+			h[++idx] = '<tr class="';
+			h[++idx] = files[i].type;
+			h[++idx] = '">';
+			h[++idx] = '<td class="preview">';
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = files[i].url;
+			h[++idx] = '">';
+			if(files[i].type == "audio") {
+				h[++idx] = addAudioIcon();
+			} else {
+				h[++idx] = '<img src="';
+				h[++idx] = files[i].thumbnailUrl;
+				h[++idx] = '" alt="';
+				h[++idx] = files[i].name;
+				h[++idx] = '">';
+			}
+			h[++idx] = '</a>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="filename">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].name;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<p>';
+				h[++idx] = files[i].size;
+				h[++idx] = '</p>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaManage">';
+				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
+				h[++idx] = files[i].deleteUrl;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
+				h[++idx] = ' Delete';
+				h[++idx] = '</button>';
+			h[++idx] = '</td>';
+			h[++idx] = '<td class="mediaSelect">';
+				h[++idx] = '<button class="mediaAdd btn btn-success">';
+				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
+					h[++idx] = ' Add';
+				h[++idx] = '</button>';
+		h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+		}
+		
+
+		$element.html(h.join(""));
+	
+		$('.media_del', $element).click(function () {
+			delete_media($(this).data('url'));
+		});
+	
+	}	
+}
+
+function addAudioIcon() {
+	var h = [],
+		idx = -1;
+
+	h[++idx] = '<span class="question_type has_tt" title="Audio">';
+	h[++idx] = '<span class="glyphicon glyphicon-volume-up edit_type"></span>';
+	h[++idx] = '</span>';
+	
+	return h.join('');
+}
+
+function getFilesFromServer(url, sId, callback) {
+	
+	if(sId) {
+		gSId = sId;
+		url += '?sId=' + sId;
+	}
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			callback(data);
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
+}
+
+/*
+ * Delete a media file
+ */
+function delete_media(url) {
+	addHourglass();
+	$.ajax({
+		url: url,
+		type: 'DELETE',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			
+			refreshMediaView(data);
+	
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+			}
+		}
+	});	
+	
+}
+/*
+ * ===============================================================
  * Hourglass Functions
  * ===============================================================
  */

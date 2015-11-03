@@ -25,6 +25,7 @@ define({
 	"m_new": "New",
 	"m_import": "Import",
 	"m_calculations": "Calculations",
+	"m_resources": "Shared Resources",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
