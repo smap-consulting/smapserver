@@ -78,6 +78,14 @@ $(document).ready(function() {
     })
     
     $('.file-inputs').bootstrapFileInput();
+    $('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
+    
+    // Respond to file upload
+    $('#submitFiles').click( function() {
+    	uploadFiles(gUrl, "fileupload", refreshMediaView);
+    });
+    
+
     
 	enableUserProfileBS();
 });
