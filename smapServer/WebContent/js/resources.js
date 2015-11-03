@@ -59,7 +59,7 @@ $(document).ready(function() {
 	globals.gIsAdministrator = false;
 	globals.gCurrentSurvey = undefined;
 	
-	getFilesFromServer(undefined, refreshMediaView);		// Get the organisational level media files
+	getFilesFromServer(url, undefined, refreshMediaView);		// Get the organisational level media files
 	
 	// Set up the tabs
     $('#mediaTab a').click(function (e) {
@@ -82,10 +82,8 @@ $(document).ready(function() {
     
     // Respond to file upload
     $('#submitFiles').click( function() {
-    	uploadFiles(gUrl, "fileupload", refreshMediaView);
+    	uploadFiles(url, "fileupload", refreshMediaView);
     });
-    
-
     
 	enableUserProfileBS();
 });

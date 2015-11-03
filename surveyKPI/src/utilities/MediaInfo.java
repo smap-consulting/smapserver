@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 import model.MediaItem;
@@ -92,30 +93,13 @@ public class MediaInfo {
 	public boolean setFolder(String basePath, 
 			String user, 
 			String organisationId, 
-			Connection conn, 
+			Connection sd, 
 			boolean settings) {
 		boolean status = false;
 		
-		// Get the organisation id if it has not been provided
-		String sql = "select o_id from users where ident = ?;";
-		PreparedStatement pstmt = null;
-		
-		
 		try {
-			if(organisationId == null) {
-				pstmt = conn.prepareStatement(sql);	
-				pstmt.setString(1, user);
-				log.info("SQL: " + pstmt.toString() );
 				
-				ResultSet resultSet = pstmt.executeQuery();
-				if(resultSet.next()) {			
-					organisationId = resultSet.getString(1);
-				} else {
-					throw new Exception("Organisation not found for user: " + user);
-				}
-			}
-				
-			folderUrl = "media/organisation/" + organisationId;
+			folderUrl = "media/organisation/" + GeneralUtilityMethods.getOrganisationId(sd, user);
 			if(settings) {
 				folderUrl += "/settings";
 			}
@@ -129,9 +113,7 @@ public class MediaInfo {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}};
-		}		
+		} 	
 		
 		return status;
 	}

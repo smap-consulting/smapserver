@@ -629,11 +629,10 @@ function progressFn(e) {
 /*
  * Refresh the view of any attached media if the available media items has changed
  */
-function refreshMediaView(data) {
+function refreshMediaView(data, sId) {
 	
 	var i,
 		survey = globals.model.survey,
-		sId = globals.gCurrentSurvey,
 		$element,
 		h = [],
 		idx = -1,
@@ -738,7 +737,8 @@ function getFilesFromServer(url, sId, callback) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			callback(data);
+			var surveyId = sId;
+			callback(data, surveyId);
 
 		},
 		error: function(xhr, textStatus, err) {
