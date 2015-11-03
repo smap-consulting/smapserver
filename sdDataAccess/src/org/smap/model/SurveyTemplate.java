@@ -871,7 +871,7 @@ public class SurveyTemplate {
 					alreadyHas_instanceid = true;
 			} else if(q.getName().equals("_task_key")) {
 					alreadyHas_task_key = true;
-			} else if(q.getPath().equals("/meta/instanceName") ) {
+			} else if(q.getPath().toLowerCase().trim().endsWith("/meta/instancename") ) {
 					alreadyHas_instancename = true;
 			}
 
