@@ -871,7 +871,7 @@ public class SurveyTemplate {
 					alreadyHas_instanceid = true;
 			} else if(q.getName().equals("_task_key")) {
 					alreadyHas_task_key = true;
-			} else if(q.getPath().equals("/meta/instanceName") ) {
+			} else if(q.getPath().toLowerCase().trim().endsWith("/meta/instancename") ) {
 					alreadyHas_instancename = true;
 			}
 
@@ -924,6 +924,7 @@ public class SurveyTemplate {
 		if(!alreadyHas_instancename) {
 			Question q = new Question();	// Instance Name
 			q.setName("instanceName");
+			q.setPath("/main/meta/instanceName");
 			q.setSeq(-1);
 			q.setVisible(false);
 			q.setSource("user");

@@ -194,7 +194,7 @@ public class XLSFormManager {
 				value = s.surveyClass;
 
 			} else if(type == COL_INSTANCE_NAME) {			
-				value = instanceName;
+				value = s.instanceNameDefn;
 
 			}else {
 				System.out.println("Unknown option type: " + type);
@@ -216,8 +216,6 @@ public class XLSFormManager {
 	int rowNumberChoices = 1;		// Heading row is 0
 	int rowNumberSettings = 1;		// Heading row is 0
 
-	String instanceName = "";			// Found when processing questions, then used in settings
-	
 	public XLSFormManager(String type) {
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook();
@@ -310,9 +308,7 @@ public class XLSFormManager {
 				inMeta = true;
 			} else if(q.name.equals("meta_groupEnd")) {
 				inMeta = false;
-			} else if(q.name.equals("instanceName")) {
-				instanceName = q.calculation;
-			}
+			} 
 			
 			System.out.println("Question: " + q.name + " : " + q.repeatCount);
 			

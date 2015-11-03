@@ -198,7 +198,7 @@ public class SurveyManager {
 				s.task_file = resultSet.getBoolean(9);
 				s.o_id = resultSet.getInt(10);
 				s.surveyClass = resultSet.getString(11);
-				s.instanceName = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(12), true);
+				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(12), true);
 				
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
