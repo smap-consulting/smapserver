@@ -50,6 +50,10 @@ require([
          'bootstrapfileinput'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
+	var gMaps,
+		gMapVersion,
+		gMapId;
+	
 $(document).ready(function() {
 	
 	var url = '/surveyKPI/upload/media';
@@ -85,10 +89,89 @@ $(document).ready(function() {
     	uploadFiles(url, "fileupload", refreshMediaView);
     });
     
+    /*
+     * Set up maps tab
+     */
+	$('#addMap').click(function(){
+		edit_map();
+		$('#addMapPopup').modal("show");
+	});
+	// Enable the save notifications function
+	$('#saveMap').click(function(){saveMap();});
+	
 	enableUserProfileBS();
 });
 
 
+function edit_map(idx) {
+	
+	var map,
+		title = localise.set["msg_add_map"];
+	
+	document.getElementById("map_edit_form").reset();
+	
+	if(typeof idx !== "undefined") {
+		map = gMaps[idx];
+
+		title = localise.set["msg_edit_map"],
+		
+		$('#map_name').val(map.name);
+		$('#map_type').val(map_name);
+		$('#map_description').val(map.description);
+		
+		gMapVersion = map.version;
+		gMapId = map.id;
+	} else {
+		gMapVersion = 1;
+		gMapId = -1;
+	}
+	
+	$('#addMapLabel').html(title);
+	
+}
+
+/*
+ * Save a map
+ */
+function saveMap() {
+	
+	var map,
+		url = "/surveyKPI/shared/maps",
+		mapString;
+	
+	map = {};
+	map.name = $('#map_name').val();
+	map.type = $('#map_name').val();
+	map.description = $('#map_description').val();
+	map.version = gMapVersion;
+	map.id = gMapId;
+	
+	mapString = JSON.stringify(map);
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  contentType: "application/json",
+		  dataType: "json",
+		  async: false,
+		  url: url,
+		  data: { map: mapString },
+		  success: function(data, status) {
+			  removeHourglass();
+			  //getMaps();
+			  $('#addMapPopup').modal("hide");
+		  },
+		  error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert(localise.set["msg_err_save"] + xhr.responseText);
+				}
+			}
+	});
+			        	    	
+
+}	
 
 });
 

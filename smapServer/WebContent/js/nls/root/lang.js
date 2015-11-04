@@ -167,6 +167,8 @@ define({
 	"msg_val_let": "Name must start with a letter or underscore",
 	"msg_add_notification": "Add Notification",
 	"msg_edit_notification": "Edit Notification",
+	"msg_add_map": "Add Map",
+	"msg_edit_map": "Edit Map",
 	"msg_sel_form": "Select Form:",
 	"msg_sel_media": "Select Media Question:",
 	"msg_err_save": "Error: Save failed: ",

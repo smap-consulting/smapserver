@@ -1,6 +1,7 @@
 package model;
 
-import java.util.Date;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 /*
 This file is part of SMAP.
@@ -21,8 +22,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 public class MapResource {
+	public int id;
 	public String name;
-	public Date read;
-	public String type;		// mapbox ||
-	MapConfig config;
+	public String type;		// mapbox || geojson
+	public String description;
+	public String config;		// Stored as json
+	public int version;
 }

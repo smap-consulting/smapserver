@@ -66,7 +66,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
         	</li>      
         	<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>     
 			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="/fieldManager/notifications.html">Notifications</a></li>	
 			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
 			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
@@ -161,11 +161,58 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	</div>
 		
 	<div id="mapPanel" style="display:none;">
-		<div class="container">	
-		</div>	
+		<div class="container">
+			<div class = "well">	
+				<a id="addMap" type="button" class="btn btn-default" aria-label="Add Map">Add</a>
+				<div class="table-responsive">
+					<div id="map_list"></div>
+				</div>
+			</div>
+			<div class="col-md-12 text-center">
+				<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+			</div>
+		</div>
     </div>
-    <div class="col-md-12 text-center">
-		<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+</div>
+
+<!-- Popup to allow the user to add a map -->
+<div id="addMapPopup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addMapLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+    			<div class="modal-header">
+      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+      				<h4 class="modal-title" id="addMapLabel">Map</h4>
+    			</div>
+    			
+		    <div class="modal-body">
+				<form id="map_edit_form" class="form-horizontal" role="form">
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_name" for="map_name">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="map_name" class="form-control" required>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_type" for="map_type">Type</label>
+						<div class="col-sm-10">
+							<input type="text" id="map_type" class="form-control" required>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_desc" for="map_description">Description</label>
+						<div class="col-sm-10">
+							<input type="text" id="map_description" class="form-control" required>
+						</div>
+					</div>
+			
+					
+				</form>
+				<div class="modal-footer">
+                	<button type="button" class="btn btn-default lang" data-lang="c_close" data-dismiss="modal">Close</button>
+                	<button id="saveMap" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+        		</div>
+			</div>
+		</div>
 	</div>
 </div>
     

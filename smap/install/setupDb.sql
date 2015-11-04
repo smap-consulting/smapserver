@@ -122,6 +122,22 @@ create TABLE regions (
 	);
 ALTER TABLE regions OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS map_seq CASCADE;
+CREATE SEQUENCE map_seq START 1;
+ALTER SEQUENCE map_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS map CASCADE;
+create TABLE map (
+	id INTEGER DEFAULT NEXTVAL('map_seq') CONSTRAINT pk_maps PRIMARY KEY,
+	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	map_type text,			-- mapbox || geojson
+	description text,
+	config text,
+	version integer
+	);
+ALTER TABLE map OWNER TO ws;
+
 DROP SEQUENCE IF EXISTS users_seq CASCADE;
 CREATE SEQUENCE users_seq START 2;
 ALTER SEQUENCE users_seq OWNER TO ws;
