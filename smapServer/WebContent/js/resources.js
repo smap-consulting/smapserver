@@ -109,11 +109,15 @@ $(document).ready(function() {
 			$(".mapbox_only").hide();
 		}
 	});
+	getMaps();
 	
 	enableUserProfileBS();
 });
 
 
+/*
+ * Open a map for editing or create a new map
+ */
 function edit_map(idx) {
 	
 	var map,
@@ -129,6 +133,9 @@ function edit_map(idx) {
 		$('#map_name').val(map.name);
 		$('#map_type').val(map_name);
 		$('#map_description').val(map.description);
+		
+		$('#map_zoom').val(map.config.zoom);
+		$('#mapid').val(map.config.mapid);
 		
 		gMapVersion = map.version;
 		gMapId = map.id;
@@ -172,7 +179,7 @@ function saveMap() {
 		  data: { map: mapString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  //getMaps();
+			  getMaps();
 			  $('#addMapPopup').modal("hide");
 		  },
 		  error: function(xhr, textStatus, err) {
@@ -187,6 +194,147 @@ function saveMap() {
 			        	    	
 
 }	
+
+/*
+ * The the shared maps from the server
+ */
+function getMaps() {
+
+	var url="/surveyKPI/shared/maps/";
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			gMaps = data;
+			updateMapList(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of maps: " + err);
+			}
+		}
+	});	
+
+}
+
+/*
+ * Update the list of maps
+ */
+function updateMapList(data) {
+
+	var $selector=$('#map_list'),
+		i, 
+		h = [],
+		idx = -1;
+	
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_type"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_desc"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_details"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+	
+	for(i = 0; i < data.length; i++) {
+		
+		h[++idx] = '<tr>';
+		
+		// name
+		h[++idx] = '<td>';
+		h[++idx] = data[i].name;
+		h[++idx] = '</td>';
+
+		// type
+		h[++idx] = '<td>';
+		h[++idx] = data[i].type;
+		h[++idx] = '</td>';
+		
+		// description
+		h[++idx] = '<td>';
+		h[++idx] = data[i].desc;
+		h[++idx] = '</td>';
+		
+		// details
+		h[++idx] = '<td>';
+		
+		h[++idx] = data[i].config.zoom +" levels";
+		if(data[i].config.mapid) {
+			h[++idx] = ", Mapbox Id: " + data[i].config.mapid;
+		}
+		h[++idx] = '</td>';
+		
+		// actions
+		h[++idx] = '<td>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm edit_map warning">';
+		h[++idx] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm rm_map danger">';
+		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '</td>';
+		// end actions
+		
+		h[++idx] = '</tr>';
+	}
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+	
+	$selector.empty().append(h.join(''));
+	
+	$(".rm_map", $selector).click(function(){
+		var idx = $(this).data("idx");
+		delete_map(gMaps[idx].id);
+	});
+	
+	$(".edit_map", $selector).click(function(){
+		var idx = $(this).data("idx");
+		edit_map(idx);
+		$('#addMapPopup').modal("show");
+	});
+
+}
+
+/*
+ * Delete a shared map
+ */
+function delete_map(id) {
+	
+	addHourglass();
+	$.ajax({
+		  type: "DELETE",
+		  contentType: "application/json",
+		  dataType: "json",
+		  async: false,
+		  url: "/surveyKPI/shared/maps/" + id,
+		  success: function(data, status) {
+			  removeHourglass();
+			  getMaps();
+		  },
+		  error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert(localise.set["msg_err_del"] + xhr.responseText);
+				}
+			}
+	});
+}
 
 });
 

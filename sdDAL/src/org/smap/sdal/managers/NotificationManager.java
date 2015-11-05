@@ -249,7 +249,7 @@ public class NotificationManager {
 		pstmt = sd.prepareStatement(sql);	 			
 
 		pstmt.setInt(1, id);
-		log.info("Delete: " + sql + " : " + id + " : " + id);
+		log.info("Delete: " + pstmt.toString());
 		pstmt.executeUpdate();
 		
 	}

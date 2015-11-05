@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,15 +52,11 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.auth.DigestScheme;
-import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -69,14 +64,10 @@ import org.apache.http.util.EntityUtils;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.NotificationManager;
-import org.smap.sdal.model.ODKForm;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.XformsJavaRosa;
-
-import utilities.ResultsDataSource;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -470,8 +461,8 @@ public class NotificationList extends Application {
 					" where id = ?";
 			
 			pstmt = connectionSD.prepareStatement(sql);	
-			log.info("Delete forward, validate survey:" + sql);
 			pstmt.setInt(1, id);	
+			log.info("Delete forward, validate survey: " + pstmt.toString());
 
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
@@ -516,7 +507,7 @@ public class NotificationList extends Application {
 	/*
 	 * Apply notifications for the supplied upload event
 	 * THis is only for debuggin.  Should be blocked or removed.
-	 */
+	 *
 	@Path("/apply/{ue_id}")
 	@GET
 	public Response applyNotifications(@Context HttpServletRequest request,
@@ -592,5 +583,6 @@ public class NotificationList extends Application {
 		return response;
 
 	}
+	*/
 }
 

@@ -20,22 +20,27 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import model.MapConfig;
 import model.MapResource;
 
+import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.Project;
 
 import com.google.gson.Gson;
@@ -247,6 +252,71 @@ public class SharedResources extends Application {
 		return response;
 	}
 
+	@Path("/maps/{id}")
+	@DELETE
+	public Response deleteMap(@Context HttpServletRequest request,
+			@PathParam("id") int id) { 
+		
+		ResponseBuilder builder = Response.ok();
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
+		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-DeleteMap");
+		orgLevelAuth.isAuthorised(sd, request.getRemoteUser());	
+		// End Authorisation
+		
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
+			String sql = "delete from map where id = ? and o_id = ?; ";
+			pstmt = sd.prepareStatement(sql);	 			
+
+			pstmt.setInt(1, id);
+			pstmt.setInt(2,o_id);
+			log.info("Delete: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"SQL Exception", e);
+		    response = Response.serverError().entity("SQL Error").build();
+		} catch (AuthorisationException e) {
+			log.info("Authorisation Exception");
+		    response = Response.serverError().entity("Not authorised").build();
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			    response = Response.serverError().entity("Survey: Failed to close connection").build();
+			}
+			
+		}
+
+		return response;
+
+	}
 
 }
 
