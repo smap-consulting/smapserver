@@ -108,6 +108,8 @@ define({
 	"c_action": "Action",
 	"c_mapid": "Map Id",
 	"c_zoom": "Zoom Levels",
+	"c_vector_data": "Vector Data",
+	"c_vector_style": "Vector Style",
 	
 	// File Types
 	"ft": "File Type",

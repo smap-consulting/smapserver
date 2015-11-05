@@ -157,6 +157,10 @@ public class MediaInfo {
 						mi.type = "video";
 					} else if(contentType.startsWith("audio")) {
 						mi.type = "audio";
+					} else if(contentType.equals("application/gml")) {
+						mi.type = "gml";
+					} else if(contentType.equals("application/sld")) {
+						mi.type = "sld";
 					} else {
 						mi.type = "unknown";
 					}

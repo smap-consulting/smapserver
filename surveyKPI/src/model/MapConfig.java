@@ -23,4 +23,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class MapConfig {
 	public String mapid;			// For Mapbox ie mapbox.light
 	public int zoom;				// Number of zoom levels
+	public String vectorData;		// name of vector data file
+	public String styleData;		// name of vector style file
 }

@@ -63,7 +63,7 @@ $(document).ready(function() {
 	globals.gIsAdministrator = false;
 	globals.gCurrentSurvey = undefined;
 	
-	getFilesFromServer(url, undefined, refreshMediaView);		// Get the organisational level media files
+	getFilesFromServer(url, undefined, refreshMediaView);		// Get files available to the entire organisation
 	
 	// Set up the tabs
     $('#mediaTab a').click(function (e) {
@@ -81,12 +81,15 @@ $(document).ready(function() {
 		$('#mediaPanel').hide();
     })
     
+    /*
+     * Set up media tab
+     */
     $('.file-inputs').bootstrapFileInput();
     $('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
     
     // Respond to file upload
     $('#submitFiles').click( function() {
-    	uploadFiles(url, "fileupload", refreshMediaView);
+    	uploadFiles(url, "fileupload", refreshMediaView, undefined);
     });
     
     /*
@@ -101,19 +104,27 @@ $(document).ready(function() {
 	$('#saveMap').click(function(){saveMap();});
 	
 	// Respond to change of map type
+	$(".vector_only").hide();
 	$('#map_type').change(function(){
-		var $this = $(this);
-		if($this.val() === "mapbox") {
-			$(".mapbox_only").show();
-		} else {
-			$(".mapbox_only").hide();
-		}
+		showMapDialogSections($(this));
 	});
 	getMaps();
 	
+    $('.vector-data-inputs').bootstrapFileInput();
+    $('.vector-style-inputs').bootstrapFileInput();
+    
 	enableUserProfileBS();
 });
 
+function showMapDialogSections(type) {
+	if(type === "mapbox") {
+		$(".mapbox_only").show();
+		$(".vector_only").hide();
+	} else {
+		$(".vector_only").show();
+		$(".mapbox_only").hide();
+	}
+}
 
 /*
  * Open a map for editing or create a new map
@@ -136,6 +147,8 @@ function edit_map(idx) {
 		
 		$('#map_zoom').val(map.config.zoom);
 		$('#mapid').val(map.config.mapid);
+		$('#vector_data').val(map.config.vectorData);
+		$('#style_data').val(map.config.styleData);
 		
 		gMapVersion = map.version;
 		gMapId = map.id;
@@ -144,6 +157,7 @@ function edit_map(idx) {
 		gMapId = -1;
 	}
 	
+	showMapDialogSections($('#map_type').val())
 	$('#addMapLabel').html(title);
 	
 }
@@ -164,6 +178,8 @@ function saveMap() {
 	map.config = {};
 	map.config.zoom = $('#map_zoom').val();
 	map.config.mapid = $('#mapid').val();
+	map.config.vectorData = $('#vector_data').val();
+	map.config.styleData = $('#style_data').val();
 	
 	map.version = gMapVersion;
 	map.id = gMapId;
@@ -270,6 +286,12 @@ function updateMapList(data) {
 		h[++idx] = data[i].config.zoom +" levels";
 		if(data[i].config.mapid) {
 			h[++idx] = ", Mapbox Id: " + data[i].config.mapid;
+		}
+		if(data[i].config.vectorData) {
+			h[++idx] = ", Vector file: " + data[i].config.vectorData;
+		}
+		if(data[i].config.styleData) {
+			h[++idx] = ", styled by " + data[i].config.styleData;
 		}
 		h[++idx] = '</td>';
 		

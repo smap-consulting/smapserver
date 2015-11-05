@@ -577,7 +577,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
  * Upload files to the server
  * Writes status to   #upload_msg
  */
-function uploadFiles(url, formName, callback) {
+function uploadFiles(url, formName, callback, sId) {
    	
 	var f = document.forms.namedItem(formName),
 		formData = new FormData(f);
@@ -599,7 +599,8 @@ function uploadFiles(url, formName, callback) {
         processData:false,
         success: function(data) {
 			removeHourglass();
-        	callback(data);
+			var surveyId = sId;
+        	callback(data, surveyId);
         	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
         	document.forms.namedItem(formName).reset();
         	
@@ -664,6 +665,8 @@ function refreshMediaView(data, sId) {
 			h[++idx] = '">';
 			if(files[i].type == "audio") {
 				h[++idx] = addAudioIcon();
+			} else if(files[i].type == "gml" || files[i].type == "geojson") {
+				h[++idx] = addVectorMapIcon();
 			} else {
 				h[++idx] = '<img src="';
 				h[++idx] = files[i].thumbnailUrl;
@@ -696,18 +699,69 @@ function refreshMediaView(data, sId) {
 				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
 					h[++idx] = ' Add';
 				h[++idx] = '</button>';
-		h[++idx] = '</td>';
+			h[++idx] = '</td>';
 			
 			
 			h[++idx] = '</tr>';
+			
 		}
 		
 
 		$element.html(h.join(""));
 	
 		$('.media_del', $element).click(function () {
-			delete_media($(this).data('url'));
+			var surveyId = sId;
+			delete_media($(this).data('url'), surveyId);
 		});
+	
+	}	
+	
+	// If this is the organisational view we can refresh the list of chocies for selecting vector maps
+	if(!sId) {
+		refreshVectorSelects(data);
+	}
+}
+
+/*
+ * Refresh the vector select lists
+ */
+function refreshVectorSelects(data) {
+	
+	var i,
+		$vectorData = $('#vector_data'),
+		$vectorStyle = $('#vector_style'),
+		h_d = [],
+		idx_d = -1,
+		h_s = [],
+		idx_s = -1,
+		files;
+	
+	if(data) {
+		files = data.files;
+		
+		for(i = 0; i < files.length; i++){
+			if(files[i].type === "gml" || files[i].type === "geojson") {
+				h_d[++idx_d] = '<option value="';
+				h_d[++idx_d] = files[i].name;
+				h_d[++idx_d] = '">';
+				h_d[++idx_d] = files[i].name;
+				h_d[++idx_d] = '</option>';
+			}
+			
+			if(files[i].type === "sld") {
+				h_s[++idx_s] = '<option value="';
+				h_s[++idx_s] = files[i].name;
+				h_s[++idx_s] = '">';
+				h_s[++idx_s] = files[i].name;
+				h_s[++idx_s] = '</option>';
+			}	
+			
+		}
+		
+
+		$vectorData.html(h_d.join(""));
+		$vectorStyle.html(h_s.join(""));
+	
 	
 	}	
 }
@@ -718,6 +772,17 @@ function addAudioIcon() {
 
 	h[++idx] = '<span class="question_type has_tt" title="Audio">';
 	h[++idx] = '<span class="glyphicon glyphicon-volume-up edit_type"></span>';
+	h[++idx] = '</span>';
+	
+	return h.join('');
+}
+
+function addVectorMapIcon() {
+	var h = [],
+		idx = -1;
+
+	h[++idx] = '<span class="question_type has_tt" title="Audio">';
+	h[++idx] = '<span class="glyphicon glyphicon glyphicon-map-marker edit_type"></span>';
 	h[++idx] = '</span>';
 	
 	return h.join('');
@@ -755,7 +820,7 @@ function getFilesFromServer(url, sId, callback) {
 /*
  * Delete a media file
  */
-function delete_media(url) {
+function delete_media(url, sId) {
 	addHourglass();
 	$.ajax({
 		url: url,
@@ -763,8 +828,8 @@ function delete_media(url) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			
-			refreshMediaView(data);
+			var surveyId = sId;
+			refreshMediaView(data, surveyId);
 	
 		},
 		error: function(xhr, textStatus, err) {

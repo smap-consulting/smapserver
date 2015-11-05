@@ -162,7 +162,7 @@ $(document).ready(function() {
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
 		// Make sure all types of media are shown
-		$('tr.image, tr.audio, tr.video,tr.unknown').show();
+		$('tr').show();
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
@@ -302,7 +302,7 @@ $(document).ready(function() {
      * Submit the files
      */
     $('#submitFiles').click( function() {
-    	uploadFiles(gUrl, "fileupload", refreshMediaView);
+    	uploadFiles(gUrl, "fileupload", refreshMediaView, globals.gCurrentSurvey);
     });
     
     /*
@@ -669,7 +669,7 @@ function mediaPropSelected($this) {
 	$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 	
 	// Only show relevant media
-	$('tr.image, tr.audio, tr.video,tr.unknown').hide();
+	$('tr').hide();
 	$('tr.' + gElement).show();
 	
 	$('#mediaModal table').on('click', 'tbody tr', function(e) {
