@@ -24,8 +24,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class MapResource {
 	public int id;
 	public String name;
-	public String type;		// mapbox || geojson
+	public String type;				// mapbox || geojson
 	public String description;
-	public String config;		// Stored as json
+	public MapConfig config;		// Stored as json
 	public int version;
 }

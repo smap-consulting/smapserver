@@ -25,6 +25,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 	
 var defaultMapExtent = [-20037508, -20037508, 20037508, 20037508.34];
+var mb_public_access = "pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg";
 
 $(document).ready(function() {
 
@@ -97,13 +98,13 @@ function initializeMap(idx){
 		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
 	}
 	
-	// Add additional layers specified at the organisation level
-	//map.addLayer(new OpenLayers.Layer.XYZ("Map Box",
-	//	    ["http://a.tiles.mapbox.com/v4/mapbox.geography-class/${z}/${x}/${y}.png?access_token=pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg"], {
-	//	    sphericalMercator: true,
-	//	    wrapDateLine: true,
-	//	    numZoomLevels: 8
-	//	}));
+	// Add additional maps specified in the shared resources page
+	var sharedMaps = globals.gSelector.getSharedMaps();
+	if(!sharedMaps) {
+		getSharedMaps(map);
+	} else {
+		addSharedMaps(map, sharedMaps)
+	}
 	
 	
 	// Map Controls
@@ -134,6 +135,58 @@ function initializeMap(idx){
 		$pc.hide();
 	}
 	
+}
+
+/*
+ * Get the shared maps from the server
+ */
+function getSharedMaps(map) {
+	
+	var url = '/surveyKPI/shared/maps';
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			globals.gSelector.setSharedMaps(data);
+			addSharedMaps(map, data);
+		},
+		error: function(xhr, textStatus, err) {
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of shared maps: " + err);
+			}
+		}
+	});		
+
+}
+
+/*
+ * Add shared maps
+ */
+function addSharedMaps(map, sharedMaps) {
+	
+	var i,
+		layerUrl,
+		layer;
+	
+	if(sharedMaps) {
+		for(i = 0; i < sharedMaps.length; i++) {
+			layer = sharedMaps[i];
+			if(layer.type === "mapbox") {
+				console.log("Mapbox: " + i);
+				layerUrl = "http://a.tiles.mapbox.com/v4/" + layer.config.mapid + "/${z}/${x}/${y}.png?access_token=" + mb_public_access;
+				map.addLayer(new OpenLayers.Layer.XYZ(layer.name,
+					    [layerUrl], {
+					    sphericalMercator: true,
+					    wrapDateLine: true,
+					    numZoomLevels: layer.zoom
+					}));
+			}
+	
+		}
+	}
 }
 
 /*

@@ -189,22 +189,45 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					<div class="form-group">
 						<label class="lang col-sm-2 control-label" data-lang="c_name" for="map_name">Name</label>
 						<div class="col-sm-10">
-							<input type="text" id="map_name" class="form-control" required>
+							<input type="text" id="map_name" class="form-control" 
+								placeholder="Enter a name for your map" 
+								required>
 						</div>
 					</div>
 					<div class="form-group">
 						<label class="lang col-sm-2 control-label" data-lang="c_type" for="map_type">Type</label>
 						<div class="col-sm-10">
-							<input type="text" id="map_type" class="form-control" required>
+							<select class="form-control" id="map_type">
+								<option value="mapbox">Mapbox</option>
+								<option value="vector">Vector</option>
+							</select>
 						</div>
 					</div>
 					<div class="form-group">
 						<label class="lang col-sm-2 control-label" data-lang="c_desc" for="map_description">Description</label>
 						<div class="col-sm-10">
-							<input type="text" id="map_description" class="form-control" required>
+							<input type="text" id="map_description" class="form-control"
+								placeholder="Enter a description for this map (optional)">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_zoom" for="map_zoom">Zoom Levels</label>
+						<div class="col-sm-10">
+							<input type="number" id="map_zoom" min="5" max="22" step="1" value="22" class="form-control" 
+								required>
 						</div>
 					</div>
 			
+					<div class="mapbox_only">
+						<div class="form-group">
+							<label class="lang col-sm-2 control-label" data-lang="c_mapid" for="mapid">Map Id</label>
+							<div class="col-sm-10">
+								<input type="text" id="mapid" class="form-control" 
+									placeholder="For Mapbox this identifies the map, for example: mapbox.light" 
+									required>
+							</div>
+						</div>
+					</div>
 					
 				</form>
 				<div class="modal-footer">

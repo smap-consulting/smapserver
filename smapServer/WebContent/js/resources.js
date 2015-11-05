@@ -96,8 +96,19 @@ $(document).ready(function() {
 		edit_map();
 		$('#addMapPopup').modal("show");
 	});
+	
 	// Enable the save notifications function
 	$('#saveMap').click(function(){saveMap();});
+	
+	// Respond to change of map type
+	$('#map_type').change(function(){
+		var $this = $(this);
+		if($this.val() === "mapbox") {
+			$(".mapbox_only").show();
+		} else {
+			$(".mapbox_only").hide();
+		}
+	});
 	
 	enableUserProfileBS();
 });
@@ -141,8 +152,12 @@ function saveMap() {
 	
 	map = {};
 	map.name = $('#map_name').val();
-	map.type = $('#map_name').val();
+	map.type = $('#map_type').val();
 	map.description = $('#map_description').val();
+	map.config = {};
+	map.config.zoom = $('#map_zoom').val();
+	map.config.mapid = $('#mapid').val();
+	
 	map.version = gMapVersion;
 	map.id = gMapId;
 	

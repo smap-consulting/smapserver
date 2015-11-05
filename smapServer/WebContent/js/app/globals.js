@@ -75,6 +75,7 @@ define(function() {
 		this.questions = new Object();
 		this.allSurveys;				// Simple list of surveys
 		this.allRegions;
+		this.sharedMaps;
 		this.views = [];			// Simple list of views
 		this.maps = {};				// map panels indexed by the panel id
 		this.changed = false;
@@ -132,6 +133,10 @@ define(function() {
 		
 		this.getRegionList = function () {
 			return this.allRegions;
+		};
+		
+		this.getSharedMaps = function () {
+			return this.sharedMaps;
 		};
 		
 		// deprecate question meta should be replaced by all question details in the question list
@@ -219,6 +224,10 @@ define(function() {
 		
 		this.setRegionList = function (list) {
 			this.allRegions = list;
+		};	
+		
+		this.setSharedMaps = function (list) {
+			this.sharedMaps = list;
 		};	
 		
 		this.addSurvey = function (key, value) {

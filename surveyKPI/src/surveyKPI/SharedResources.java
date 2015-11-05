@@ -30,6 +30,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import model.MapConfig;
 import model.MapResource;
 
 import org.smap.sdal.Utilities.Authorise;
@@ -103,7 +104,10 @@ public class SharedResources extends Application {
 				m.name = rs.getString(2);
 				m.type = rs.getString(3);
 				m.description = rs.getString(4);
-				m.config = rs.getString(5);
+				
+				String configJson = rs.getString(5);
+				m.config = new Gson().fromJson(configJson, MapConfig.class);
+				
 				m.version = rs.getInt(6);
 				
 				maps.add(m);
@@ -154,8 +158,13 @@ public class SharedResources extends Application {
 		Connection sd = SDDataSource.getConnection("surveyKPI-SharedResources");
 		orgLevelAuth.isAuthorised(sd, request.getRemoteUser());	
 		// End Authorisation	
-				
+		
+		
 		MapResource map = new Gson().fromJson(mapString, MapResource.class);
+		
+		// Store the config object as json
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		String configJson = gson.toJson(map.config);
 		
 		PreparedStatement pstmt = null;
 		String sql = null;
@@ -175,7 +184,7 @@ public class SharedResources extends Application {
 				pstmt.setString(2, map.name);
 				pstmt.setString(3, map.type);
 				pstmt.setString(4, map.description);
-				pstmt.setString(5, map.config);
+				pstmt.setString(5, configJson);
 						
 				log.info("Insert map: " + pstmt.toString());
 				pstmt.executeUpdate();
@@ -197,7 +206,7 @@ public class SharedResources extends Application {
 				pstmt.setString(1, map.name);
 				pstmt.setString(2, map.type);
 				pstmt.setString(3, map.description);
-				pstmt.setString(4, map.config);
+				pstmt.setString(4, configJson);
 				pstmt.setInt(5,  map.id);
 				pstmt.setInt(6,  o_id);
 				pstmt.setInt(7, map.version);
