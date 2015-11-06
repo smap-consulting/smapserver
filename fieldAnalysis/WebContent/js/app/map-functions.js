@@ -344,7 +344,8 @@ function clearFeatures(map, layerName, allLayers) {
 		
 		// Remove layers from the map
 		for(var i = num - 1; i >= 0; i--) {
-			if(!map.layers[i].isBaseLayer) {
+			// Ignore background map vector layers whose name finsihes with a "."
+			if(!map.layers[i].isBaseLayer && (map.layers[i].name.lastIndexOf('.') !== map.layers[i].name.length - 1)) {
 				map.layers[i].removeAllFeatures();
 				map.removeLayer(map.layers[i]);	
 			}
@@ -656,6 +657,47 @@ function stopAnimation(reset, md) {
         md["currentIdx"] = -0.5;
         md["startIdx"] = -0.5;
     }
+}
+
+/*
+ * Add shared maps
+ */
+function addSharedMaps(map, sharedMaps) {
+	
+	var i,
+		layerUrl,
+		layer;
+	
+	if(sharedMaps) {
+		for(i = 0; i < sharedMaps.length; i++) {
+			
+			layer = sharedMaps[i];
+			
+			if(layer.type === "mapbox") {
+				console.log("Mapbox: " + i);
+				layerUrl = "http://a.tiles.mapbox.com/v4/" + layer.config.mapid + "/${z}/${x}/${y}.png?access_token=" + mb_public_access;
+				map.addLayer(new OpenLayers.Layer.XYZ(layer.name,
+					    [layerUrl], {
+					    sphericalMercator: true,
+					    wrapDateLine: true,
+					    numZoomLevels: layer.zoom
+					}));
+			} else if(layer.type === "vector") {
+				console.log("Vector: " + i);
+				layerUrl = "/media/organisation/1/" + layer.config.vectorData;
+				var vectorLayer = new OpenLayers.Layer.Vector(layer.name + ".", {
+					projection: "EPSG:4326",
+		            strategies: [new OpenLayers.Strategy.Fixed()],
+		            protocol: new OpenLayers.Protocol.HTTP({
+		                url: layerUrl,
+		                format: new OpenLayers.Format.GeoJSON()
+		            })
+		        });
+				map.addLayer(vectorLayer);
+			}
+	
+		}
+	}
 }
 
 /*

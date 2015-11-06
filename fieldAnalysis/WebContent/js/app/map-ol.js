@@ -163,33 +163,6 @@ function getSharedMaps(map) {
 }
 
 /*
- * Add shared maps
- */
-function addSharedMaps(map, sharedMaps) {
-	
-	var i,
-		layerUrl,
-		layer;
-	
-	if(sharedMaps) {
-		for(i = 0; i < sharedMaps.length; i++) {
-			layer = sharedMaps[i];
-			if(layer.type === "mapbox") {
-				console.log("Mapbox: " + i);
-				layerUrl = "http://a.tiles.mapbox.com/v4/" + layer.config.mapid + "/${z}/${x}/${y}.png?access_token=" + mb_public_access;
-				map.addLayer(new OpenLayers.Layer.XYZ(layer.name,
-					    [layerUrl], {
-					    sphericalMercator: true,
-					    wrapDateLine: true,
-					    numZoomLevels: layer.zoom
-					}));
-			}
-	
-		}
-	}
-}
-
-/*
  * Update the map size after a resize event
  */
 function updateMapSize(idx) {

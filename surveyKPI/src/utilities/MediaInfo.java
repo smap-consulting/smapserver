@@ -157,10 +157,10 @@ public class MediaInfo {
 						mi.type = "video";
 					} else if(contentType.startsWith("audio")) {
 						mi.type = "audio";
-					} else if(contentType.equals("application/gml")) {
-						mi.type = "gml";
-					} else if(contentType.equals("application/sld")) {
-						mi.type = "sld";
+					} else if(contentType.equals("application/geojson")) {
+						mi.type = "geojson";
+					} else if(contentType.equals("application/todo")) {
+						mi.type = "todo";
 					} else {
 						mi.type = "unknown";
 					}

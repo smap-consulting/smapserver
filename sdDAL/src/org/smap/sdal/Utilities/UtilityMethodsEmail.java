@@ -598,10 +598,8 @@ public class UtilityMethodsEmail {
           	ct = "audio/amr";
           } else if (extension.equals("xls")) {
           	ct = "application/vnd.ms-excel";
-          } else if (extension.equals("gml")) {
-            	ct = "application/gml";
-          } else if (extension.equals("sld")) {
-          	ct = "application/sld";
+          } else if (extension.equals("geojson")) {
+            	ct = "application/geojson";
           } else {
           	ct = "application/octet-stream";
           	log.info("	Info: unrecognised content type for extension " + extension);           

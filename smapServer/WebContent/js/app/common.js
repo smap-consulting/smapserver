@@ -665,7 +665,7 @@ function refreshMediaView(data, sId) {
 			h[++idx] = '">';
 			if(files[i].type == "audio") {
 				h[++idx] = addAudioIcon();
-			} else if(files[i].type == "gml" || files[i].type == "geojson") {
+			} else if(files[i].type == "geojson") {
 				h[++idx] = addVectorMapIcon();
 			} else {
 				h[++idx] = '<img src="';
@@ -740,7 +740,7 @@ function refreshVectorSelects(data) {
 		files = data.files;
 		
 		for(i = 0; i < files.length; i++){
-			if(files[i].type === "gml" || files[i].type === "geojson") {
+			if(files[i].type === "geojson") {
 				h_d[++idx_d] = '<option value="';
 				h_d[++idx_d] = files[i].name;
 				h_d[++idx_d] = '">';
@@ -748,7 +748,7 @@ function refreshVectorSelects(data) {
 				h_d[++idx_d] = '</option>';
 			}
 			
-			if(files[i].type === "sld") {
+			if(files[i].type === "TODO") {
 				h_s[++idx_s] = '<option value="';
 				h_s[++idx_s] = files[i].name;
 				h_s[++idx_s] = '">';
