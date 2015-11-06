@@ -710,8 +710,14 @@ function refreshMediaView(data, sId) {
 		$element.html(h.join(""));
 	
 		$('.media_del', $element).click(function () {
-			var surveyId = sId;
-			delete_media($(this).data('url'), surveyId);
+			var surveyId = sId,
+				url = $(this).data('url'),
+				idx = url.lastIndexOf('/'),
+				filename = url.substring(idx + 1);
+			
+			if(confirm(localise.set["msg_confirm_del"] + filename)) {
+				delete_media(url, surveyId);
+			}
 		});
 	
 	}	

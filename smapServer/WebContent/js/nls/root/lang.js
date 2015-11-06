@@ -183,6 +183,7 @@ define({
 	"msg_err_get_f": "Error: Get forms failed: ",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
+	"msg_confirm_del": "Are you sure you want to delete: ",
 		
 	// template load errors
 	"e_u_err": "Form Upload Error",
