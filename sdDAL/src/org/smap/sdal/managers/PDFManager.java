@@ -1273,6 +1273,7 @@ public class PDFManager {
 				Label label = option.labels.get(languageIdx);
 				DisplayItem di = new DisplayItem();
 				di.text = label.text == null ? "" : label.text;
+				di.name = r.name;
 				di.type = "choice";
 				di.isSet = r.isSet;
 				diList.add(di);
@@ -1417,7 +1418,7 @@ public class PDFManager {
 
 		if(deps != null) {
 			for(String n : deps) {
-				if(n != null) {
+				if(n != null && n.trim().length() > 0) {
 					if(hasContent) {
 						para.add(new Chunk(",", font));
 					}
@@ -1498,7 +1499,7 @@ public class PDFManager {
 			if(isSelectMultiple) {
 				if(aChoice.isSet) {
 				
-					if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
 						if(sb.length() > 0) {
 							sb.append(", ");
 						}
@@ -1509,7 +1510,7 @@ public class PDFManager {
 			} else {
 				if(aChoice.isSet) {
 					
-					if(deps == null || (aChoice.value != null && !aChoice.value.trim().toLowerCase().equals("other"))) {
+					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
 						if(sb.length() > 0) {
 							sb.append(", ");
 						}
