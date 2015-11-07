@@ -316,7 +316,7 @@ public class Surveys extends Application {
 	 */
 	@Path("/save_settings/{sId}")
 	@POST
-	public Response rename(@Context HttpServletRequest request,
+	public Response saveSettings(@Context HttpServletRequest request,
 			@PathParam("sId") int sId) { 
 		
 		Response response = null;
@@ -415,7 +415,7 @@ public class Surveys extends Application {
 			// Update the settings
 			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, p_id = ?, instance_name = ? where s_id = ?;";		
 		
-			log.info("Saving survey: " + sql + " : " + survey.displayName);
+			System.out.println("Survey: " + survey.instanceNameDefn);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
 			pstmt.setString(2, newSurveyName);

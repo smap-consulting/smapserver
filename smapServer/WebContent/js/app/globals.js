@@ -608,7 +608,7 @@ define(function() {
 			
 			// Update the model to reflect the current values
 			this.survey.displayName = current.displayName;
-			this.survey.instanceName = current.instanceName;
+			this.survey.instanceNameDefn = current.instanceNameDefn;
 			this.survey.p_id = current.p_id;
 			this.survey.def_lang = current.def_lang;
 			this.survey.task_file = current.task_file;
@@ -620,7 +620,7 @@ define(function() {
 			this.savedSettings = JSON.stringify(
 					this.createSettingsObject(
 								this.survey.displayName, 
-								this.survey.instanceName,
+								this.survey.instanceNameDefn,
 								this.survey.p_id, 
 								this.survey.def_lang,
 								this.survey.task_file
@@ -629,7 +629,7 @@ define(function() {
 			this.forceSettingsChange = false;
 		} 
 		
-		this.createSettingsObject = function(displayName, instanceName, p_id, def_lang, task_file) {
+		this.createSettingsObject = function(displayName, instanceNameDefn, p_id, def_lang, task_file) {
 			
 			var projId;
 			if(typeof p_id === "string") {
@@ -639,7 +639,7 @@ define(function() {
 			}
 			return {
 				displayName: displayName,
-				instanceName: instanceName,
+				instanceNameDefn: instanceNameDefn,
 				p_id: projId,
 				def_lang: def_lang,
 				task_file: task_file

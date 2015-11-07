@@ -1329,7 +1329,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * 
+	 * Convert names in xls format ${ } to xPath
 	 */
 	public static String convertAllxlsNames(String input, int sId, Connection sd) throws SQLException {
 		StringBuffer output = new StringBuffer("");
@@ -1347,11 +1347,24 @@ public class GeneralUtilityMethods {
 			int startOfGroup = matcher.start();
 			output.append(input.substring(start, startOfGroup));
 			
+			// Make sure there is a space before the match
+			if(output.length() > 0 && output.charAt(output.length() - 1) != ' ') {
+				output.append(' ');
+			}
+			
+			// Add the question path
 			output.append(getQuestionPath(sd, sId, qname));
 			
 			// Reset the start
 			start = matcher.end();
 
+			// Make sure there is a space after the match or its the end of the string
+			if(start < input.length()) {
+				if(input.charAt(start) != ' ') {
+					output.append(' ');
+				}
+			}
+						
 		}
 		
 		// Get the remainder of the string
