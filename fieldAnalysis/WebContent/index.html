@@ -350,10 +350,12 @@
 				<a id="download_edit" class="instance_functions" target="_blank" href="#">Edit instance in WebForm</a><br/>
    				<a id="download_pdf" class="instance_functions" href="#">Download PDF of Instance</a>
    			</fieldset>
-			<div id="download_language_div">
+			<div id="download_options_div">
 				<fieldset>
-					<legend class="lang" data-lang="c_lang">Language</legend>
-					<select id="download_language" class="form-control"></select>
+					<legend class="lang" data-lang="c_options">Options</legend>
+					<select id="download_language" class="form-control"></select><br/>
+					<input type="radio" name="orientation" value="portrait" checked="checked"/> <span data-lang="c_portrait" class="lang">Portrait</span><br/> 
+					<input type="radio" name="orientation" value="landscape"/> <span data-lang="c_landscape" class="lang">Landscape</span><br/>					
 				</fieldset>							
 			</div>
 		</form>

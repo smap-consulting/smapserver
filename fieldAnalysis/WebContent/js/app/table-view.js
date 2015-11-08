@@ -418,11 +418,16 @@ function addRightClickToTable($elem, sId, view) {
 
 $('#download_pdf').click(function () {
 	var docURL,
-	language;
+	language,
+	orientation;
 
 	language = $('#download_language option:selected').val();
+	orientation = $("input[name='orientation']:checked", "#instance_functions_popup").val();
 
 	docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?language=" + language + "&instance=" + gInstanceId;	
+	if(orientation === "landscape") {
+		docURL += "&landscape=true";
+	}
 	
 	window.location.href = docURL;
 	$('#instance_functions_popup').dialog("close");

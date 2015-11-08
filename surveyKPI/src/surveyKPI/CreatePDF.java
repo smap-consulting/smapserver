@@ -76,6 +76,7 @@ public class CreatePDF extends Application {
 			@PathParam("sId") int sId,
 			@QueryParam("instance") String instanceId,
 			@QueryParam("language") String language,
+			@QueryParam("landscape") boolean landscape,
 			@QueryParam("filename") String filename) throws Exception {
 
 		try {
@@ -112,6 +113,7 @@ public class CreatePDF extends Application {
 					sId, 
 					instanceId,
 					filename,
+					landscape,
 					response);
 			
 		}  catch (Exception e) {

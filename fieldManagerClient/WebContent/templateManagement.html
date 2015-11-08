@@ -256,10 +256,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Template</span><br/> 
 					</fieldset>
 					<div id="download_language_div">
-						<fieldset>
-							<legend class="lang" data-lang="c_lang">Language</legend>
-							<select id="download_language" class="form-control"></select>
-						</fieldset>							
+						<label for="download_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<select id="download_language" class="form-control"></select>					
+					</div>
+					<div id="download_orientation_div">
+						<input type="radio" name="orientation" value="portrait" checked="checked"/> <span data-lang="c_portrait" class="lang">Portrait</span><br/> 
+						<input type="radio" name="orientation" value="landscape"/> <span data-lang="c_landscape" class="lang">Landscape</span><br/>					
 					</div>
 
 				</form>

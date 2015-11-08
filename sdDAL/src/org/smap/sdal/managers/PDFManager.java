@@ -246,6 +246,7 @@ public class PDFManager {
 			int sId, 
 			String instanceId,
 			String filename,
+			boolean landscape,					// Set true if landscape
 			HttpServletResponse response) {
 		
 		if(language != null) {
@@ -366,7 +367,12 @@ public class PDFManager {
 				Parser parser = getXMLParser();
 				
 				// Step 1 - Create the underlying document as a byte array
-				Document document = new Document(PageSize.A4);
+				Document document = null;
+				if(landscape) {
+					document = new Document(PageSize.A4.rotate());
+				} else {
+					document = new Document(PageSize.A4);
+				}
 				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
 				writer = PdfWriter.getInstance(document, outputStream);
 				

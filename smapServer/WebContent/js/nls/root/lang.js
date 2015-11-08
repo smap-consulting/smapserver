@@ -46,6 +46,7 @@ define({
 	"c_user": "User",
 	"c_email": "Email",
 	"c_lang": "Language",
+	"c_orientation": "Orientation",
 	"c_password": "Password",
 	"c_c_p": "Confirm Password",
 	"c_r_p": "Reset Password",
@@ -110,6 +111,8 @@ define({
 	"c_zoom": "Zoom Levels",
 	"c_vector_data": "Vector Data",
 	"c_vector_style": "Vector Style",
+	"c_portrait": "Portrait",
+	"c_landscape": "Landscape",
 	
 	// File Types
 	"ft": "File Type",

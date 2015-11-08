@@ -366,7 +366,7 @@ public class NotificationManager {
 				String filename = "instance";
 				if(nd.attach != null) {
 					System.out.println("Attaching link to email: " + nd.attach);
-					if(nd.attach.equals("pdf")) {
+					if(nd.attach.startsWith("pdf")) {
 						docURL = null;
 						
 						// Create temporary PDF and get file name
@@ -378,6 +378,14 @@ public class NotificationManager {
 							log.log(Level.SEVERE, "Error creating temporary PDF file", e);
 						}
 						PDFManager pm = new PDFManager();
+						
+						// Split orientation from nd.attach
+						boolean landscape = false;
+						if(nd.attach != null && nd.attach.startsWith("pdf")) {
+							landscape = nd.attach.equals("pdf_landscape");
+							nd.attach = "pdf";
+						}
+
 						filename = pm.createPdf(
 								sd,
 								cResults,
@@ -388,6 +396,7 @@ public class NotificationManager {
 								s_id, 
 								instanceId,
 								null,
+								landscape,
 								null);
 						
 						System.out.println("Temporary PDF file: " + filePath);

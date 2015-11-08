@@ -132,13 +132,18 @@ $(document).ready(function() {
 	$('#downloadFile').click(function () {
 		var docURL,
 		language,
+		orientation,
 		type;
 
 		type = $("input[name='download_type']:checked", "#download_template").val();
 		language = $('#download_language option:selected').val();
+		orientation = $("input[name='orientation']:checked", "#download_template").val();
 
 		if(type === "pdf") {
-			docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;	
+			docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;
+			if(orientation === "landscape") {
+				docURL += "&landscape=true";
+			}
 		} else if(type === "xls_edited") {
 			docURL = "/surveyKPI/xlsForm/" + gSelectedTemplate + "?filetype=" + "xlsx";	
 		} else {
@@ -182,8 +187,13 @@ $(document).ready(function() {
 		} else {
 			$('#download_language_div').hide();
 		}
+		if(type === "pdf") {
+			$('#download_orientation_div').show();
+		} else {
+			$('#download_orientation_div').hide();
+		}
 	});
-	$('#download_language_div').hide();
+	$('#download_language_div, #download_orientation_div').hide();
 	
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();

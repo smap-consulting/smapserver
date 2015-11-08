@@ -11,5 +11,4 @@ public class NotifyDetails {
 	public String subject = null;
 	public String content = null;
 	public String attach = null;
-	
 }
