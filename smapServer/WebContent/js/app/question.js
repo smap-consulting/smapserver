@@ -116,7 +116,7 @@ define([
 	 */
 	function moveBefore(sourceId, beforeId) {		
 		
-		var $beforeElement = $("#" + beforeId),					// The element that is the new item with be "before"
+		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
 			beforeFormIndex = $beforeElement.data("fid"),
 			beforeItemIndex = $beforeElement.data("id"),
 			
@@ -129,14 +129,17 @@ define([
 			sourceSeq,
 			
 			survey = globals.model.survey,
+			name,
 			change;
 		
 		// Get the new sequence of the question
 		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]) - 1;
 		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
+
 		
 		// Get the old sequence of the question
 		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
+		name = survey.forms[sourceFormIndex].questions[sourceItemIndex].name;
 		
 		// Create changeset to be applied on save		
 		change = {
@@ -145,6 +148,7 @@ define([
 				question: {
 					seq: seq,
 					sourceSeq: sourceSeq,
+					name: name,
 					
 					// Helper values 
 					sourceFormIndex: sourceFormIndex,

@@ -637,14 +637,7 @@ public class SurveyManager {
 			 * This should be saved rather than the ident as a user could be deleted
 			 *  then a new user created with the same ident but its a different user
 			 */
-			String sqlGetUser = "select id from users where ident = ?";
-			pstmt = connectionSD.prepareStatement(sqlGetUser);
-			pstmt.setString(1, ident);
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				userId = rs.getInt(1);
-			}
-			pstmt.close();
+			userId = GeneralUtilityMethods.getUserId(connectionSD, ident);
 			
 			connectionSD.setAutoCommit(false);
 			
@@ -689,7 +682,7 @@ public class SurveyManager {
 						
 					} else if(cs.changeType.equals("question")) {
 						
-						// Add/delete questions
+						// Add/delete/move questions
 						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
 					} else if(cs.changeType.equals("option") || (cs.changeType.equals("property") && cs.type.equals("option"))) {
@@ -1218,8 +1211,8 @@ public class SurveyManager {
 			for(ChangeItem ci : changeItemList) {
 					
 				questions.add(ci.question);
-				
-				log.info("userevent: " + userId + (action.equals("add") ? " : add question : " : " : delete question : ") + ci.question.name + " survey: " + sId);
+
+				log.info("userevent: " + userId + " : " + action + " question : " + ci.question.name + " survey: " + sId);
 				
 				// Write the change log
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -1240,6 +1233,8 @@ public class SurveyManager {
 				qm.save(connectionSD, sId, questions);
 			} else if(action.equals("delete")) {
 				qm.delete(connectionSD, sId, questions);
+			} else if(action.equals("move")) {
+				qm.move(connectionSD, sId, questions);
 			} else {
 				log.info("Unkown action: " + action);
 			}

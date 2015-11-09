@@ -255,7 +255,7 @@ define([
 		if(applyChange) {
 			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
 				changes.push(ci);
-			} else if(change.action === "add" || change.action === "delete") {
+			} else if(change.action === "add" || change.action === "delete" || change.action === "move") {
 				changes.push(ci);
 			}
 		}
@@ -461,7 +461,7 @@ define([
 				var question = survey.forms[change.question.sourceFormIndex].questions[change.question.sourceItemIndex];	// existing question
 				// Add the question in the new location
 				length = survey.forms[change.question.formIndex].questions.push(question);			// Add the new question to the end of the array of questions
-				change.question.itemIndex = length -1;
+				change.question.itemIndex = length - 1;
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
 			
 				// Remove the question from the old location	

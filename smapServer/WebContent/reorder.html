@@ -6,6 +6,7 @@
 <script src="/js/libs/jquery-1.8.3.min.js"></script>
 <script>
 
+	var dragCounters = {};
 	$(document).ready(function() {
 		
 		$('.draggable').attr('draggable', 'true');
@@ -16,7 +17,46 @@
 		});
 		
 		$('.draggable').on('dragenter', function(evt){
-			console.log("drag enter");
+			
+			var ev = evt.originalEvent,
+				$elem = $(ev.target).closest('li'),	
+				sourceId = ev.dataTransfer.getData("text"),
+				targetId = $elem.attr('id');
+			
+			if(sourceId !== targetId) { 
+				if(!dragCounters[$elem.attr("id")]) {
+					dragCounters[$elem.attr("id")] = 1;
+				} else {
+					dragCounters[$elem.attr("id")]++;
+				}
+				
+				console.log("drag enter: " + dragCounters[$elem.attr("id")] + " : " + $elem.attr("id"));
+				if(dragCounters[$elem.attr("id")] === 1) {
+					paddingBottom = $elem.css("padding-bottom");
+					
+					$(ev.target).closest('li').animate({ 'padding-bottom': 50 }, "fast");
+				}
+			}
+			
+		});
+		
+		$('.draggable').on('dragleave', function(evt){
+			
+			var ev = evt.originalEvent,
+				$elem = $(ev.target).closest('li')
+				sourceId = ev.dataTransfer.getData("text"),
+				targetId = $elem.attr('id');
+			
+			if(sourceId !== targetId) {
+				console.log("drag leave: " + dragCounters[$elem.attr("id")] + " : " + $elem.attr("id"));
+				
+				dragCounters[$elem.attr("id")]--;
+				if(!dragCounters[$elem.attr("id")]) {
+					$elem.animate({ 'padding-bottom': 0 }), "fast";
+				}
+			}
+			
+			
 		});
 		
 		$('.draggable').on('dragover', function(evt){
@@ -32,6 +72,8 @@
 				sourceId = ev.dataTransfer.getData("text"),
 				targetId = $targetListItem.attr('id');
 		
+			$targetListItem.animate({ 'padding-bottom': 0 }), "fast";
+			
 			if(sourceId != targetId) {
 				if (ev.ctrlKey || ev.altKey) {
 					console.log("Control was pressed");
@@ -75,6 +117,91 @@
 				<input type ="text">
 			</div>
 		</li>
+		<li id="ex4" class="draggable">
+			<div>
+				<span>Question 4</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex5" class="draggable">
+			<div>
+				<span>Question 5</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex6" class="draggable">
+			<div>
+				<span>Question 6</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex7" class="draggable">
+			<div>
+				<span>Question 7</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex8" class="draggable">
+			<div>
+				<span>Question 8</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex9" class="draggable">
+			<div>
+				<span>Question 9</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex10" class="draggable">
+			<div>
+				<span>Question 10</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex11" class="draggable">
+			<div>
+				<span>Question 11</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex12" class="draggable">
+			<div>
+				<span>Question 12</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex13" class="draggable">
+			<div>
+				<span>Question 13</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex14" class="draggable">
+			<div>
+				<span>Question 14</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex15" class="draggable">
+			<div>
+				<span>Question 15</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex16" class="draggable">
+			<div>
+				<span>Question 16</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex17" class="draggable">
+			<div>
+				<span>Question 17</span>
+				<input type ="text">
+			</div>
+		</li>
 	</ol>
+	<p>The End</p>
 </body>
 </html>

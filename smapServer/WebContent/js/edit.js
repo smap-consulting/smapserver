@@ -75,7 +75,8 @@ require([
 var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
-	gCollapsedPanels = [];
+	gCollapsedPanels = [],
+	dragCounters = {};
 
 // Media globals
 var gUrl,			// url to submit to
@@ -643,13 +644,48 @@ function respondToEvents($context) {
 	});
 	
 	$('.draggable').on('dragenter', function(evt){
-		console.log("drag enter");
+		var ev = evt.originalEvent,
+			$elem = $(ev.target).closest('li'),	
+			sourceId = ev.dataTransfer.getData("text"),
+			targetId = $elem.attr('id');
+		
+		if(sourceId !== targetId) { 
+			if(!dragCounters[$elem.attr("id")]) {
+				dragCounters[$elem.attr("id")] = 1;
+			} else {
+				dragCounters[$elem.attr("id")]++;
+			}
+			
+			console.log("drag enter: " + dragCounters[$elem.attr("id")] + " : " + $elem.attr("id"));
+			if(dragCounters[$elem.attr("id")] === 1) {
+				paddingBottom = $elem.css("padding-top");
+				
+				$(ev.target).closest('li').animate({ 'padding-top': 50 }, "fast");
+			}
+		}
+	});
+	
+	$('.draggable').on('dragleave', function(evt){
+		
+		var ev = evt.originalEvent,
+			$elem = $(ev.target).closest('li')
+			sourceId = ev.dataTransfer.getData("text"),
+			targetId = $elem.attr('id');
+		
+		if(sourceId !== targetId) {
+			
+			dragCounters[$elem.attr("id")]--;
+			if(!dragCounters[$elem.attr("id")]) {
+				$elem.animate({ 'padding-top': 0 }), "fast";
+			}
+		}
+		
+		
 	});
 	
 	$('.draggable').on('dragover', function(evt){
 		var ev = evt.originalEvent;
 		ev.preventDefault();
-		console.log("drag over");
 	});
 	
 	$('.draggable').on('drop', function(evt){
@@ -660,6 +696,7 @@ function respondToEvents($context) {
 			targetId = $targetListItem.attr('id'),
 			$context;
 	
+		$targetListItem.animate({ 'padding-top': 0 }), "fast";
 		if(sourceId != targetId) {
 			if (ev.ctrlKey || ev.altKey) {
 				console.log("Control was pressed");

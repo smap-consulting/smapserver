@@ -210,6 +210,53 @@ public class QuestionManager {
 	}
 	
 	/*
+	 * Save to the database
+	 */
+	public void move(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		String sql = "update question set f_id = ?, seq = ? where qname = ? and q_id in " +
+				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question;";
+
+		PreparedStatement pstmtUpdateSeq = null;
+		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
+		
+		try {
+			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmt = sd.prepareStatement(sql);
+			
+			for(Question q : questions) {
+				
+				// Update sequence numbers of questions after the new location of the question
+				pstmtUpdateSeq.setInt(1, q.fId);
+				pstmtUpdateSeq.setInt(2, q.seq);
+				
+				log.info("Update sequences: " + pstmtUpdateSeq.toString());
+				pstmtUpdateSeq.executeUpdate();
+				
+				// Update the question details
+				pstmt.setInt(1, q.fId );
+				pstmt.setInt(2, q.seq );
+				pstmt.setString(3, q.name );
+				pstmt.setInt(4, sId);
+				
+				log.info("Move question: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+			}
+			
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
+	/*
 	 * Delete
 	 */
 	public void delete(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
