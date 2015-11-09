@@ -632,6 +632,52 @@ function respondToEvents($context) {
 
 	});
 	
+	/*
+	 * Enable drag and drop to move questions and choices
+	 */
+	$('.draggable').attr('draggable', 'true');
+	
+	$('.draggable').on('dragstart', function(evt){
+		var ev = evt.originalEvent;
+		ev.dataTransfer.setData("text", ev.target.id);
+	});
+	
+	$('.draggable').on('dragenter', function(evt){
+		console.log("drag enter");
+	});
+	
+	$('.draggable').on('dragover', function(evt){
+		var ev = evt.originalEvent;
+		ev.preventDefault();
+		console.log("drag over");
+	});
+	
+	$('.draggable').on('drop', function(evt){
+		var ev = evt.originalEvent,
+			$targetListItem = $(ev.target).closest('li'),
+			$sourceElem,
+			sourceId = ev.dataTransfer.getData("text"),
+			targetId = $targetListItem.attr('id'),
+			$context;
+	
+		if(sourceId != targetId) {
+			if (ev.ctrlKey || ev.altKey) {
+				console.log("Control was pressed");
+				$sourceElem = $(document.getElementById(sourceId)).clone(true);
+			} else {
+				console.log("No control");
+				$sourceElem = $(document.getElementById(sourceId));
+			}
+			
+		    ev.preventDefault();
+		    $sourceElem.insertBefore($targetListItem);
+		    
+		    $context = question.moveBefore(sourceId, targetId);
+			respondToEvents($context);						// Add events on to the altered html
+		}
+	});
+
+	
 }
 
 

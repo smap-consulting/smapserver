@@ -123,7 +123,7 @@ define([
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = '<li class="panel editor_element';
+		h[++idx] = '<li class="panel editor_element draggable';
 		if(formIndex === 0 && qIndex === 0) { // First editor element in the form
 			h[++idx] = ' first_element ';
 		}
@@ -138,6 +138,15 @@ define([
 		}
 		h[++idx] = ++globals.gQuestionIndex;
 		++globals.gElementIndex;
+		h[++idx] = '"';
+		
+		// Add the question index and form index
+		h[++idx] = ' data-fid="';
+		h[++idx] = formIndex;
+		h[++idx] = '" data-id="';
+		h[++idx] = qIndex;
+		
+		
 		h[++idx] = '">';
 		
 		return h.join('');
@@ -191,9 +200,9 @@ define([
 		
 		h[++idx] = '<td class="q_label_col ';
 		h[++idx] = type;
-		h[++idx] = '" data-fid="';
+		h[++idx] = '" data-fid="';					// Deprecated (Now set in list element)
 		h[++idx] = fId;
-		h[++idx] = '" data-id="';
+		h[++idx] = '" data-id="';					// Deprecated (Now set in list element)
 		h[++idx] = qIndex;
 		if(qname) {
 			h[++idx] = '" data-qname="';

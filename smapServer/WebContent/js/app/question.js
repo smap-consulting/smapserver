@@ -36,7 +36,8 @@ define([
 		add: add,
 		deleteQuestion: deleteQuestion,
 		addOption: addOption,
-		deleteOption: deleteOption
+		deleteOption: deleteOption,
+		moveBefore: moveBefore
 	};
 	
 	var gEditor;
@@ -103,6 +104,55 @@ define([
 		for(i = 0; i < survey.languages.length; i++) {
 			change.question.labels.push({text:""});
 		}
+		$context = changeset.add(change);
+		return $context;				// Add events on to the altered html
+		
+	}
+	
+	/*
+	 * Move a question
+	 * The dom has already been moved using drag and drop we just need toupdate the model
+	 * The beforeId is the id of the dom element that precedes this element
+	 */
+	function moveBefore(sourceId, beforeId) {		
+		
+		var $beforeElement = $("#" + beforeId),					// The element that is the new item with be "before"
+			beforeFormIndex = $beforeElement.data("fid"),
+			beforeItemIndex = $beforeElement.data("id"),
+			
+			seq,												// The new values
+			formIndex,
+
+			$sourceElement = $('#' + sourceId),					// The old values
+			sourceFormIndex = $sourceElement.data("fid"),
+			sourceItemIndex = $sourceElement.data("id"),
+			sourceSeq,
+			
+			survey = globals.model.survey,
+			change;
+		
+		// Get the new sequence of the question
+		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]) - 1;
+		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
+		
+		// Get the old sequence of the question
+		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
+		
+		// Create changeset to be applied on save		
+		change = {
+				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "move",
+				question: {
+					seq: seq,
+					sourceSeq: sourceSeq,
+					
+					// Helper values 
+					sourceFormIndex: sourceFormIndex,
+					sourceItemIndex: sourceItemIndex,
+					formIndex: beforeFormIndex
+				}
+		};
+		
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
