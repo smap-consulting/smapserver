@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<script src="/js/libs/jquery-1.8.3.min.js"></script>
+<script>
+
+	$(document).ready(function() {
+		
+		$('.draggable').attr('draggable', 'true');
+		
+		$('.draggable').on('dragstart', function(evt){
+			var ev = evt.originalEvent;
+			ev.dataTransfer.setData("text", ev.target.id);
+		});
+		
+		$('.draggable').on('dragenter', function(evt){
+			console.log("drag enter");
+		});
+		
+		$('.draggable').on('dragover', function(evt){
+			var ev = evt.originalEvent;
+			ev.preventDefault();
+			console.log("drag over");
+		});
+		
+		$('.draggable').on('drop', function(evt){
+			var ev = evt.originalEvent,
+				$targetListItem = $(ev.target).closest('li'),
+				$sourceElem,
+				sourceId = ev.dataTransfer.getData("text"),
+				targetId = $targetListItem.attr('id');
+		
+			if(sourceId != targetId) {
+				if (ev.ctrlKey || ev.altKey) {
+					console.log("Control was pressed");
+					$sourceElem = $(document.getElementById(sourceId)).clone(true);
+				} else {
+					console.log("No control");
+					$sourceElem = $(document.getElementById(sourceId));
+				}
+				
+			    ev.preventDefault();
+			    $sourceElem.insertBefore($targetListItem);
+			}
+		});
+	});
+
+
+</script>
+<style>
+	.draggable {
+		cursor:move;
+	}
+</style>
+</head>
+<body>
+	<ol>
+		<li id="ex1" class="draggable">
+			<div>
+				<span>Question 1</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex2" class="draggable">
+			<div>
+				<span>Question 2</span>
+				<input type ="text">
+			</div>
+		</li>
+		<li id="ex3" class="draggable">
+			<div>
+				<span>Question 3</span>
+				<input type ="text">
+			</div>
+		</li>
+	</ol>
+</body>
+</html>
