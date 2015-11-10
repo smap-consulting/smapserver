@@ -71,7 +71,7 @@ $(document).ready(function() {
 
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
-		$('#openFormModal').modal('show');
+		openForm("existing");
 	});
 
 	// Add menu functions

@@ -1142,8 +1142,6 @@ function getSurveyDetails(callback) {
 			removeHourglass();
 			globals.model.survey = data;
 			globals.model.setSettings();
-			console.log("Survey");
-			console.log(data);
 			setLanguages(data.languages);
 			
 			if(typeof callback == "function") {
@@ -1164,37 +1162,93 @@ function getSurveyDetails(callback) {
 			}
 		}
 	});	
+}
 	
-	/*
-	 * Set the languages for the editor
-	 */
-	function setLanguages(languages) {
-		
-		var h = [],
-			idx = -1,
-			$lang = $('.language_list'),
-			$lang1 = $('#language1'),
-			$lang2 = $('#language2'),
-			i;
-		
-		gLanguage1 = 0;	// Language indexes used for translations
-		gLanguage2 = 0;
-		if(languages.length > 1) {
-			gLanguage2 = 1;
-		}
-
-		for (i = 0; i < languages.length; i++) {
-			h[++idx] = '<option value="';
-				h[++idx] = i;
-				h[++idx] = '">';
-				h[++idx] = languages[i];
-			h[++idx] = '</option>';
-		}
-		$lang.empty().append(h.join(""));
-		$(".language_list option[value='" + globals.gLanguage + "']").attr("selected", "selected");
-		$lang1.val(gLanguage1);
-		$lang2.val(gLanguage2)
+/*
+ * Set the languages for the editor
+ */
+function setLanguages(languages) {
+	
+	var h = [],
+		idx = -1,
+		$lang = $('.language_list'),
+		$lang1 = $('#language1'),
+		$lang2 = $('#language2'),
+		i;
+	
+	gLanguage1 = 0;	// Language indexes used for translations
+	gLanguage2 = 0;
+	if(languages.length > 1) {
+		gLanguage2 = 1;
 	}
+
+	for (i = 0; i < languages.length; i++) {
+		h[++idx] = '<option value="';
+			h[++idx] = i;
+			h[++idx] = '">';
+			h[++idx] = languages[i];
+		h[++idx] = '</option>';
+	}
+	$lang.empty().append(h.join(""));
+	$(".language_list option[value='" + globals.gLanguage + "']").attr("selected", "selected");
+	$lang1.val(gLanguage1);
+	$lang2.val(gLanguage2)
+}
+
+/*
+ * Get a survey details - depends on globals being set
+ */
+function createNewSurvey(name, callback) {
+
+	var url="/surveyKPI/surveys/new/" + globals.gCurrentProject + "/" + name;
+	
+	addHourglass();
+	$.ajax({
+		type: "POST",
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.model.survey = data;
+			globals.model.setSettings();
+			console.log("New Survey");
+			console.log(data);
+			setLanguages(data.languages);
+			
+			if(typeof callback == "function") {
+				callback();
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to create survey: " + err);
+			}
+		}
+	});	
+}
+
+/*
+ * Open a form for editing
+ */
+function openForm(type) {
+	if(type === "new") {
+		$('.existing_form').hide();
+		$('.new_form').show();
+		$('#openSurveyLabel').html("New Form");
+		$('#get_form').html("Create");
+		globals.gExistingSurvey = false; 
+	} else {
+		$('.existing_form').show();
+		$('.new_form').hide();
+		$('#openSurveyLabel').html("Open Form");
+		$('#get_form').html("Open");
+		globals.gExistingSurvey = true; 
+	}
+	$('#openFormModal').modal('show');
 }
 
 /*

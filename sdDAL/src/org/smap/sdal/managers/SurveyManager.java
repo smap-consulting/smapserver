@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -147,6 +148,7 @@ public class SurveyManager {
 		return exists;
 	}
 	
+
 	/*
 	 * Get a survey definition
 	 */
@@ -230,6 +232,83 @@ public class SurveyManager {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
 		}
 		return s;
+		
+	}
+	
+	/*
+	 * Create a new survey
+	 */
+	public int createNewSurvey(
+			Connection sd, 
+			String name,
+			int projectId
+			) throws SQLException, Exception {
+		
+		ResultSet resultSet = null;
+		int sId;
+		String ident = null;
+		String tablename = null;
+		
+		String sql1 = "insert into survey ( s_id, display_name, deleted, p_id, version, last_updated_time)" +
+				" values (nextval('s_seq'), ?, 'false', ?, 1, now());";
+		
+		String sql2 = "update survey set name = ?, ident = ? where s_id = ?;";
+	
+		String sql3 = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
+				" values (nextval('f_seq'), ?, 'main', ?, 0, 'false', '/main');";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			sd.setAutoCommit(false);
+			
+			// 1 Create basic survey
+			pstmt = sd.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);	 			
+			pstmt.setString(1, name);
+			pstmt.setInt(2, projectId);
+			
+			log.info("Create new survey: " + pstmt.toString());
+			pstmt.execute();
+			ResultSet rs = pstmt.getGeneratedKeys();
+			rs.next();
+		
+			// 2 Update values dependent on the sId
+			sId = rs.getInt(1);
+			ident = "s" + projectId +"_" + sId;
+			
+			pstmt.close();
+			pstmt = sd.prepareStatement(sql2);
+			pstmt.setString(1, ident);
+			pstmt.setString(2,  ident);
+			pstmt.setInt(3,  sId);
+			
+			log.info("Create new survey part 2: " + pstmt.toString());
+			pstmt.execute();
+			
+			// 3 Create a form
+			tablename = "s" + sId + "_main";
+			
+			pstmt.close();
+			pstmt = sd.prepareStatement(sql3);
+			pstmt.setInt(1,  sId);
+			pstmt.setString(2,  tablename);
+			
+			log.info("Create new survey part 3: " + pstmt.toString());
+			pstmt.execute();
+			
+			sd.commit();
+			sd.setAutoCommit(true);
+
+		} catch (SQLException e) {
+			throw e;
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+		
+		return sId;
 		
 	}
 	

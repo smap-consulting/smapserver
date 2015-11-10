@@ -141,10 +141,20 @@ $(document).ready(function() {
 	$('#m_open').off().click(function() {	// Open an existing form
 		if(changeset.changes.length > 0) {
 			if (confirm("You have unsaved changes are you sure you want to leave?")) {
-				$('#openFormModal').modal('show');
+				openForm("existing");
 			}
 		} else {
-			$('#openFormModal').modal('show');
+			openForm("existing");
+		}
+		
+	});
+	$('#m_new').off().click(function() {	// Open a new form
+		if(changeset.changes.length > 0) {
+			if (confirm("You have unsaved changes are you sure you want to leave?")) {
+				openForm("new");
+			}
+		} else {
+			openForm("new");
 		}
 		
 	});
@@ -309,10 +319,19 @@ $(document).ready(function() {
      * Open a new form
      */
 	$('#get_form').off().click(function() {
-		globals.gCurrentSurvey = $('#form_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id
+		
+		var name;
+		
 		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
-		getSurveyDetails(surveyDetailsDone);
+		
+		if(globals.gExistingSurvey) {
+			globals.gCurrentSurvey = $('#form_name option:selected').val();	
+			saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id as the current survey
+			getSurveyDetails(surveyDetailsDone);
+		} else {
+			name = $('#new_form_name').val();
+			createNewSurvey(name, surveyDetailsDone);
+		}
  	 });
 	
     /*

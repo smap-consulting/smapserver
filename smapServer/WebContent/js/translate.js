@@ -70,7 +70,7 @@ $(document).ready(function() {
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
-		$('#openFormModal').modal('show');
+		openForm("existing");
 	});
 	
 	$('.save_form').off().click(function() {	// Save a survey to Smap

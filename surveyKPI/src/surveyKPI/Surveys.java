@@ -235,6 +235,80 @@ public class Surveys extends Application {
 
 		return response;
 	}
+	
+	/*
+	 * Create a new survey
+	 */
+	@POST
+	@Path("/new/{project}/{name}")
+	@Produces("application/json")
+	public Response createNewSurvey(@Context HttpServletRequest request,
+			@PathParam("project") int projectId,
+			@PathParam("name") String name
+			) { 
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    return Response.serverError().build();
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		// End Authorisation
+		
+		org.smap.sdal.model.Survey survey = null;
+		
+		// Get the base path
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
+		Response response = null;
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
+		SurveyManager sm = new SurveyManager();
+		try {
+			int sId = sm.createNewSurvey(connectionSD, name, projectId);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false);
+			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(survey);
+			response = Response.ok(resp).build();
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+			response = Response.serverError().build();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			response = Response.serverError().build();
+		} finally {
+			
+			try {
+				if (connectionSD != null) {
+					connectionSD.close();
+					connectionSD = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+
+		return response;
+	}
 
 	/*
 	 * Apply updates to the survey

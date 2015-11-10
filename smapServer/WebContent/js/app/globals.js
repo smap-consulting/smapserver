@@ -52,6 +52,7 @@ define(function() {
 		gPendingUpdates: [],
 		
 		// Editor
+		gExistingSurvey: false,		// Set true if modifying an existing survey
 		gElementIndex: 0,			// Manage creation of unique identifier for each element (question, option) in editor			
 		gQuestionIndex: 0,			// Manage creation of unique identifier for questions
 		gNewQuestionButtonIndex: 0,	// Manage creation of unique identifier for buttons that add new questions
