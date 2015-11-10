@@ -181,29 +181,32 @@ tr.deleted td a {
 }
 
 .add_button {
-  width: 30px;
+  width: 100%;
   height: 30px;
   text-align: center;
   padding: 6px 0;
   font-size: 12px;
   line-height: 1.428571429;
-  border-radius: 15px;
-  position: absolute;
+  border-radius: 5px;
+  /*position: absolute;
   left:0px;
   top: -25px;
+  */
 }
 
 .add_button_after {
-  width: 30px;
+  width: 100%;
   height: 30px;
   text-align: center;
   padding: 6px 0;
   font-size: 12px;
   line-height: 1.428571429;
-  border-radius: 15px;
+  border-radius: 5px;
+  /*
   position: relative;
   left:0px;
   top: -25px;
+  */
 }
 
 /*

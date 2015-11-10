@@ -44,10 +44,10 @@ define([
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
+		h[++idx] = addNewQuestionButton(false, false, "question" + (globals.gQuestionIndex + 1));
 		
+		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
 		h[++idx] = '<div class="panel-heading">';
-			h[++idx] = addNewQuestionButton(); 
 			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
@@ -68,7 +68,7 @@ define([
 					h[++idx] = globals.gQuestionIndex;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';
-					
+					 
 				h[++idx] = '</td>';
 				h[++idx] = '</table>';
 		h[++idx] = '<div id="collapse';
@@ -85,7 +85,7 @@ define([
 		} 
 		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
-			h[++idx] = '<ol>';
+			h[++idx] = '<ul class="list-unstyled">';
 		} else { 
 			h[++idx] = '</div>';
 			h[++idx] = '</li>';
@@ -104,16 +104,31 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton(after) {
+	function addNewQuestionButton(after, topLevelForm, questionId) {
 		var h = [],
-			idx = -1;
-		h[++idx] = '<button type="button" class="add_question btn btn-success ';
-		h[++idx] = after ? 'add_button_after' : 'add_button';
+			idx = -1,
+			addButtonClass,
+			locn;
+		
+		if(topLevelForm) {
+			addButtonClass = 'btn-primary add_button_main';
+			locn = 'after';
+		} else {
+			addButtonClass = after ? 'btn-primary add_button_after' : 'btn-success add_button';
+			locn = after ? 'after' : 'before';
+		}
+		
+		h[++idx] = '<li>';
+		h[++idx] = '<button id="';
+		h[++idx] = globals.gNewQuestionButtonIndex++;
+		h[++idx] = '" type="button" class="add_question btn ';
+		h[++idx] = addButtonClass;
 		h[++idx] = '" data-locn="';
-		h[++idx] = after ? 'after" ' : 'before" ';
-		h[++idx] = '" data-index="';
-		h[++idx] = globals.gQuestionIndex;
+		h[++idx] = locn;
+		h[++idx] = '" data-qid="';
+		h[++idx] = questionId;
 		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
+		h[++idx] = '</li>';
 		
 		return h.join('');
 	}
@@ -396,11 +411,13 @@ define([
 	/*
 	 * Add the questions for a form
 	 */
-	function addQuestions(form, fId) {
+	function addQuestions(form, fIndex) {
 		var i,
 			question,
 			h = [],
-			idx = -1;
+			idx = -1,
+			topLevelForm = false,
+			lastRealQuestionId = -1;
 		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
@@ -408,23 +425,29 @@ define([
 				question = form.questions[form.qSeq[i]];
 				// Ignore the following questions
 				if(question.name === '_task_key' || 
-						question.name === 'instanceID' || 
+						question.inMeta ||
 						question.name === 'meta' || 
 						question.name === 'meta_groupEnd') {
 					continue;
 				}
 				if(question.type === "end group") {
-					h[++idx] = '</ol>';
+					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId);
+					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
+					
 					continue;
 				}
 				if(question.type === "end repeat") {
 					continue;
 				}
-				h[++idx] = addOneQuestion(question, fId, form.qSeq[i]);
+				lastRealQuestionId = "question" + (globals.gQuestionIndex + 1);
+				h[++idx] = addOneQuestion(question, fIndex, form.qSeq[i]);
 			}
-			h[++idx] = addNewQuestionButton(true); 
+			if(form.parentform == 0) {
+				topLevelForm = true;
+			}
+			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId); 	// Adds a question at the end of the form
 		}
 		return h.join("");
 	}
@@ -526,6 +549,7 @@ define([
 		 */
 		globals.gElementIndex = 0;
 		globals.gQuestionIndex = 0;
+		globals.gNewQuestionButtonIndex = 0;
 		globals.gOptionIndex = 0;
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {

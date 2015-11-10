@@ -553,12 +553,11 @@ define([
 		} else if(change.changeType === "question") {
 			if(change.action === "add") {
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
-					$changedRow = change.question.$relatedElement.next();
+					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));			
 				} else {
-					change.question.$relatedElement.before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
-					$changedRow = change.question.$relatedElement.prev();
+					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
 				}
+				$changedRow = $("#question" + globals.gQuestionIndex);
 				delete change.question.$relatedElement;		// Delete the "related element", it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
 				change.question.$deletedElement.remove();
@@ -781,11 +780,10 @@ define([
 			$changedRow,
 			survey = globals.model.survey;
 		
-		// Remove error from validation array
-		for(i = 0; i < errors.length; i++) {
+		// Remove errors from validation array
+		for(i = errors.length - 1; i >= 0; i--) {
 			if(errors[i].isQuestion && errors[i].formIndex === formIndex && errors[i].itemIndex === itemIndex) {
 				errors.splice(i, 1);
-				break;
 			}
 		}
 		

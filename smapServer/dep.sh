@@ -15,6 +15,7 @@ rm smapServer.tgz
 cd ..
 
 # deploy to local
+sudo rm -rf /Library/WebServer/Documents/js
 sudo cp -rf smapServer/* /Library/WebServer/Documents
 sudo apachectl restart
 

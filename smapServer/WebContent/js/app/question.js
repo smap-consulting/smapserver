@@ -53,31 +53,29 @@ define([
 	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
-	function add(qItem, locn) {		
+	function add(qId, locn) {		
 		
-		var $relatedElement = $("#question" + qItem),
-			$relatedQuestion,
-			formIndex,
-			qIndexOther,
+		var $relatedQuestion = $("#" + qId),
 			seq = 0,
+			formIndex,
+			qIndex,
 			survey = globals.model.survey,
 			type,
 			i;
 		
-		if($relatedElement.size() > 0) {
-			$relatedQuestion = $relatedElement.find('.question');
+		if($relatedQuestion.size() > 0) {
 			formIndex = $relatedQuestion.data("fid");
-			qIndexOther = $relatedQuestion.data("id");
+			qIndex = $relatedQuestion.data("id");
 		} else {
 			// TODO First question in the form
 			formIndex = 0;
 		}
 		
 		// Choose type
-		type = "dateTime";		// TODO
+		type = "string";		// Default to text question
 		
 		// Get the sequence of the question
-		seq = getSequenceQuestion(qIndexOther, survey.forms[formIndex]);
+		seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
 		if(locn === "after") {
 			++seq;
 		} 
@@ -92,11 +90,12 @@ define([
 					type: type,
 					source: "user",	// For date type
 					labels: [],
+					visible: true,
 					
 					// Helper values 
 					formIndex: formIndex,
 					locn: locn,							// Whether the new question was added before or after the related question
-					$relatedElement: $relatedElement	// Jquery element that is next to the new question
+					$relatedElement: $relatedQuestion	// Jquery element that is next to the new question
 				}
 		};
 		

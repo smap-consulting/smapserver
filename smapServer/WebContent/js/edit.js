@@ -11,7 +11,6 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
@@ -575,11 +574,13 @@ function respondToEvents($context) {
 	$('.add_question', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			item = $(this).data("index"),
-			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
+			buttonId = $this.attr("id"),
+			qId = $this.data("qid"),
+			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.add(item, locn);
+		$context = question.add(qId, locn);
 		respondToEvents($context);				// Add events on to the altered html
+		$('#' + buttonId).data("qid", $context.data("qid"));
 	});
 	
 	// Delete question
@@ -656,7 +657,6 @@ function respondToEvents($context) {
 				dragCounters[$elem.attr("id")]++;
 			}
 			
-			console.log("drag enter: " + dragCounters[$elem.attr("id")] + " : " + $elem.attr("id"));
 			if(dragCounters[$elem.attr("id")] === 1) {
 				paddingBottom = $elem.css("padding-top");
 				
@@ -702,7 +702,6 @@ function respondToEvents($context) {
 				console.log("Control was pressed");
 				$sourceElem = $(document.getElementById(sourceId)).clone(true);
 			} else {
-				console.log("No control");
 				$sourceElem = $(document.getElementById(sourceId));
 			}
 			
