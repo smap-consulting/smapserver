@@ -445,6 +445,9 @@ public class SurveyManager {
 		
 		// Get the available languages
 		s.languages = GeneralUtilityMethods.getLanguagesForSurvey(sd, s.id);
+		if(s.languages.size() == 0) {
+			s.languages.add("language");		// Make sure there is at least one default language
+		}
 		
 		// Get the organisation id
 		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);

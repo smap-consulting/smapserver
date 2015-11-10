@@ -66,9 +66,10 @@ public class FormManager {
 
 	public List<Form> getBySurvey(Survey survey) {
 		EntityManager em = pc.getEntityManager();
+		int s_id = survey.getId();
 		Query query = em.createQuery(
-				"SELECT f FROM FORM f WHERE f.surveyOwner = ?1").setParameter(
-				1, survey);
+				"SELECT f FROM FORM f WHERE f.surveyOwner.id = ?1").setParameter(
+				1, s_id);
 		List<Form> formList = query.getResultList();
 
 		return formList;

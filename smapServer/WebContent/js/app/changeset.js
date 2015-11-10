@@ -476,7 +476,11 @@ define([
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
-			refresh = false;	// Update markup solely for this question
+			if(change.question.firstQuestion) {
+				refresh = true;		// Refresh all the questions, actually there is only one so why not
+			} else {
+				refresh = false;	// Update markup solely for this question
+			}
 			
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {			

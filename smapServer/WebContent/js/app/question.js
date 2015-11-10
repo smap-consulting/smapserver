@@ -61,26 +61,28 @@ define([
 			qIndex,
 			survey = globals.model.survey,
 			type,
-			i;
-		
-		if($relatedQuestion.size() > 0) {
-			formIndex = $relatedQuestion.data("fid");
-			qIndex = $relatedQuestion.data("id");
-		} else {
-			// TODO First question in the form
-			formIndex = 0;
-		}
+			i,
+			firstQuestion;
 		
 		// Choose type
 		type = "string";		// Default to text question
 		
-		// Get the sequence of the question
-		seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
-		if(locn === "after") {
-			++seq;
-		} 
+		if($relatedQuestion.size() > 0) {
+			// Appending or pre=pending to an existing question
+			firstQuestion = false;
+			formIndex = $relatedQuestion.data("fid");
+			qIndex = $relatedQuestion.data("id");
+			seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
+			if(locn === "after") {
+				++seq;
+			} 
+		} else {
+			// First question in the form
+			firstQuestion = true;
+			formIndex = 0;
+			seq = 1;
+		}
 
-		
 		// Create changeset to be applied on save		
 		change = {
 				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
@@ -93,6 +95,7 @@ define([
 					visible: true,
 					
 					// Helper values 
+					firstQuestion: firstQuestion,
 					formIndex: formIndex,
 					locn: locn,							// Whether the new question was added before or after the related question
 					$relatedElement: $relatedQuestion	// Jquery element that is next to the new question
