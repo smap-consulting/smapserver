@@ -55,12 +55,7 @@ public class Question implements Serializable {
 	@SequenceGenerator(name = "q_seq", sequenceName = "q_seq")
 	private int q_id;
 
-	/**
-	 * The seq property is used to keep the order of questions within a form. It
-	 * can only be updated through the appropriate Form Object's questions list
-	 * manipulation.
-	 */
-	@Column(name = "seq", insertable = false, updatable = false, nullable = false)
+	@Column(name = "seq")
 	private int seq = -1;
 
 	@Column(name = "qName")
@@ -137,14 +132,9 @@ public class Question implements Serializable {
 	
 	@Column(name = "cascade_instance")
 	private String cascade_instance;
-	
-	/**
-	 * Used to define the relationship to the form object. This relationship can
-	 * only be updated through the appropriate form object.
-	 */
-	@ManyToOne
-	@JoinColumn(name = "f_id", insertable = false, updatable = false, nullable = false)
-	private Form form;
+
+	@Column(name = "f_id")
+	private int f_id;
 
 	@OneToMany(mappedBy = "question")
 	private Collection<Option> choices = null;
@@ -452,12 +442,12 @@ public class Question implements Serializable {
 		}
 	}
 
-	public void setForm(Form form) {
-		this.form = form;
+	public void setFormId(int value) {
+		this.f_id = value;
 	}
 
-	public Form getForm() {
-		return form;
+	public int getFormId() {
+		return f_id;
 	}
 
 	public void setChoices(Collection<Option> choices) {
@@ -505,10 +495,8 @@ public class Question implements Serializable {
 		StringBuffer returnBuffer = new StringBuffer();
 		returnBuffer.append("q_id=" + this.getId());
 		returnBuffer.append(",");
-		if (form != null) {
-			returnBuffer.append("f_id=" + this.getForm().getId());
-			returnBuffer.append(",");
-		}
+		returnBuffer.append("f_id=" + f_id);
+		returnBuffer.append(",");
 		returnBuffer.append("seq=" + this.getSeq());
 		returnBuffer.append(",");
 		returnBuffer.append("qname=" + this.getName());

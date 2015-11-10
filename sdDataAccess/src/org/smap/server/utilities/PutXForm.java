@@ -329,9 +329,7 @@ public class PutXForm {
 		    	    	}
 		    	    	
 		    	    	// set last group question as the parent of the repeating form
-		    	    	Form f = template.getForm(newFormRef);
-		    	    	f.setParentQuestionId(lastGroupQuestion.getId());
-						
+		    	    	Form f = template.getForm(newFormRef);						
 						processBody(eList.item(i), newFormRef, lastGroupQuestion);
 						
 					} else if(eName.equals("input") || eName.equals("select") || eName.equals("select1")
@@ -449,7 +447,8 @@ public class PutXForm {
 				
 		    	template.createForm(ref, formName);
 		    	Form newRepeatForm = template.getForm(ref);
-		    	newRepeatForm.setParentForm(template.getForm(parentFormRef).getId());	// Set the parent form
+		    	newRepeatForm.setParentFormRef(parentFormRef);	// Set the parent form
+		    	newRepeatForm.setParentQuestionRef(parentQuestion.getPath());	// Set the parent question
 		    	newRepeatForm.setLabel(parentQuestion.getQTextId());
 		    	if(nr != null) {
 		    		String repeats = nr.getNodeValue();

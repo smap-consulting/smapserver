@@ -75,6 +75,12 @@ public class Form implements Serializable {
 	@Transient
 	private List<Question> questions = null;
 	
+	@Transient
+	private String parentFormRef = null;
+	
+	@Transient
+	private String parentQuestionRef = null;
+	
 	/*
 	 * Constructor
 	 */
@@ -132,6 +138,14 @@ public class Form implements Serializable {
 		return parentquestion;
 	}
 	
+	public String getParentFormRef() {
+		return parentFormRef;
+	}
+	
+	public String getParentQuestionRef() {
+		return parentQuestionRef;
+	}
+	
 	public String getRepeats() {
 		return repeats;
 	}
@@ -160,8 +174,16 @@ public class Form implements Serializable {
 		this.parentform = value;
 	}
 
-	public void setParentQuestionId(int id) {
-		parentquestion = id;
+	public void setParentQuestionId(int value) {
+		parentquestion = value;
+	}
+	
+	public void setParentFormRef(String value) {
+		parentFormRef = value;
+	}
+	
+	public void setParentQuestionRef(String value) {
+		parentQuestionRef = value;
 	}
 	
 	public void setRepeats(String val) {

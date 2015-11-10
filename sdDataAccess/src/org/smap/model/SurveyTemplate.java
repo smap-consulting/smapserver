@@ -224,6 +224,19 @@ public class SurveyTemplate {
 	public List <Form> getAllForms() {
 		return new ArrayList<Form>(forms.values());
 	}
+
+	public Form getFormById(int f_id) {
+		Form f = null;
+		ArrayList<Form> formList = new ArrayList<Form>(forms.values());
+		
+		for(Form form : formList) {
+			if(form.getId() == f_id) {
+				f = form;
+				break;
+			}
+		}
+		return f;
+	}
 	
     /*
      * Get a sub-form, if it exists, for the designated form and question else return null
@@ -520,6 +533,7 @@ public class SurveyTemplate {
 			Form f = (Form) itr.next();
 			System.out.println("Form: " + f.getId());
 			System.out.println("	Name: " + f.getName());
+			System.out.println("	Parent Ref: " + f.getParentFormRef());
 			if(f.getParentForm() != 0) {
 				System.out.println("	Parent Form: " + f.getParentForm());
 			} else {
@@ -812,24 +826,23 @@ public class SurveyTemplate {
 			throw new Exception("No forms in this survey");
 		}
 		SurveyManager surveys = new SurveyManager(pc);
+		System.out.println("Persisting survey");
 		surveys.persist(survey);
 
- 		HashMap<Form, Integer> formQuestionRel = new HashMap<Form, Integer>();	// Used to track parent questions 
+		/*
+		 * Forms 1. Create record for each form and get its primary key
+		 */
 		List<Form> formList = new ArrayList<Form>(forms.values());
 		for(Form f : formList) {
 			f.setSurveyId(survey.getId());
-			f.setQuestions(new ArrayList<Question>());
-			
-			// null out the parent question reference as the current JPA solution cannot do a cascade write
-			if (f.getParentQuestionId() != 0)
-				formQuestionRel.put(f, f.getParentQuestionId());
 		}
 		
 		Form [] formArray = formList.toArray(new Form[formList.size()]);
+		System.out.println("Persisting forms");
 		fPersist.persist(formArray);
-
+		
 		/*
-		 * Load questions into database
+		 * Questions.
 		 */
 		List<Question> questionList = new ArrayList<Question>(questions.values());
 		
@@ -954,9 +967,7 @@ public class SurveyTemplate {
 		}
 		
 		/*
-		 * Sort the list
-		 * The question sequence number is determined by the order of
-		 * Questions in the forms question array list
+		 * Sort the list by sequence
 		 */
 		java.util.Collections.sort(questionList, new Comparator<Question>() {
 			@Override
@@ -970,6 +981,7 @@ public class SurveyTemplate {
 			}
 		});
 
+		int newSeq = 1;
 		for (Question q : questionList) {
 			Form f = getForm(q.getFormRef());
 			if(f == null) {
@@ -988,25 +1000,29 @@ public class SurveyTemplate {
 					f = getForm(firstFormRef);
 					q.setPath(f.getPath() + "/" + q.getName()); 
 				}
-				
-				q.setForm(f);
 
 
 			}
 
 			if(f != null) {
-				f.getQuestions().add(q);
+				q.setFormId(f.getId());
+				q.setSeq(newSeq++);
 				qPersist.persist(q);
 			} 			
 		}
 		
-		// Update the forms with the link to parent questions (if any)
-		Form relForm = null;
-		for (Entry<Form, Integer> rel : formQuestionRel.entrySet()) {
-			relForm = rel.getKey();
-			relForm.setParentQuestionId(rel.getValue());
-			fPersist.persist(relForm);
+
+		/*
+		 * Forms 2. Update the form record with parent form and question keys
+		 */
+		for(Form f : formList) {
+			System.out.println("###: " + f.getName() + " : " + f.getId());
+			if (f.getParentFormRef() != null) {
+				f.setParentForm(forms.get(f.getParentFormRef()).getId());
+				f.setParentQuestionId(questions.get(f.getParentQuestionRef()).getId());
+			}
 		}
+		fPersist.persist(formArray);
 
 		c = options.values(); // Write the option objects
 		itr = c.iterator();
@@ -1159,7 +1175,8 @@ public class SurveyTemplate {
 		List <Question> qList = qPersist.getBySurvey(survey);
 		for(int i= 0; i < qList.size(); i++) {
 			Question q = qList.get(i);
-			String formRef = q.getForm().getPath();
+			int f_id = q.getFormId();
+			String formRef = getFormById(f_id).getPath();
 			String qRef = q.getPath();
 			if(qRef != null) {
 				q.setFormRef(formRef);
