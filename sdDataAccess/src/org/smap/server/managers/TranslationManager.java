@@ -48,10 +48,10 @@ public class TranslationManager {
 	public List<Translation> getManifestBySurvey(Survey survey, String language)
 	{
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
-				"WHERE t.surveyOwner = ?1 " +				
+				"WHERE t.s_id = ?1 " +				
 				"AND (t.type = 'image' OR t.type = 'video' OR t.type = 'audio' OR t.type = 'csv') " +
 				"AND t.language = ?2 ");
-		query.setParameter(1, survey);
+		query.setParameter(1, survey.getId());
 		query.setParameter(2, language);
 		
 		List<Translation> translationList = query.getResultList();
@@ -62,9 +62,9 @@ public class TranslationManager {
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurvey(Survey survey) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
-				"WHERE t.surveyOwner = ?1 " +
+				"WHERE t.s_id = ?1 " +
 				"ORDER BY t.language");
-		query.setParameter(1, survey);
+		query.setParameter(1, survey.getId());
 		List<Translation> translationList = query.getResultList();
 		return translationList;
 	}
@@ -72,9 +72,9 @@ public class TranslationManager {
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurveyAndLanguage(Survey survey, String language) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
-				"WHERE t.surveyOwner = ?1 " +
+				"WHERE t.s_id = ?1 " +
 				"AND t.language = ?2 ");
-		query.setParameter(1, survey);
+		query.setParameter(1, survey.getId());
 		query.setParameter(2, language);
 		List<Translation> translationList = query.getResultList();
 		return translationList;
@@ -83,10 +83,10 @@ public class TranslationManager {
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurveyAndLanguageAndType(Survey survey, String language, String form) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
-				"WHERE t.surveyOwner = ?1 " +
+				"WHERE t.s_id = ?1 " +
 				"AND t.language = ?2 " +
 				"AND (t.type = ?3 OR t.type = 'none')");
-		query.setParameter(1, survey);
+		query.setParameter(1, survey.getId());
 		query.setParameter(2, language);
 		query.setParameter(3, form);
 		List<Translation> translationList = query.getResultList();
@@ -129,7 +129,7 @@ public class TranslationManager {
 
 				while(itrT.hasNext()) {
 					Translation trans = (Translation) itrT.next();
-					trans.setSurvey(survey);
+					trans.setSurveyId(survey.getId());
 					em.persist(trans);
 				}
 			}

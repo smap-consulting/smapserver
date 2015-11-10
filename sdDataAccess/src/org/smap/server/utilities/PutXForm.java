@@ -330,7 +330,7 @@ public class PutXForm {
 		    	    	
 		    	    	// set last group question as the parent of the repeating form
 		    	    	Form f = template.getForm(newFormRef);
-		    	    	f.setParentQuestion(lastGroupQuestion);
+		    	    	f.setParentQuestionId(lastGroupQuestion.getId());
 						
 						processBody(eList.item(i), newFormRef, lastGroupQuestion);
 						
@@ -449,7 +449,7 @@ public class PutXForm {
 				
 		    	template.createForm(ref, formName);
 		    	Form newRepeatForm = template.getForm(ref);
-		    	newRepeatForm.setParentForm(template.getForm(parentFormRef));	// Set the parent form
+		    	newRepeatForm.setParentForm(template.getForm(parentFormRef).getId());	// Set the parent form
 		    	newRepeatForm.setLabel(parentQuestion.getQTextId());
 		    	if(nr != null) {
 		    		String repeats = nr.getNodeValue();

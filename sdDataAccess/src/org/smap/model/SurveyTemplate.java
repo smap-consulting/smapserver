@@ -17,7 +17,6 @@ import java.util.Vector;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.server.entities.Form;
-import org.smap.server.entities.Group;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Project;
@@ -25,7 +24,6 @@ import org.smap.server.entities.Question;
 import org.smap.server.entities.Survey;
 import org.smap.server.entities.Translation;
 import org.smap.server.managers.FormManager;
-import org.smap.server.managers.Groups;
 import org.smap.server.managers.OptionManager;
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.ProjectManager;
@@ -50,7 +48,6 @@ public class SurveyTemplate {
 	FormManager fPersist = null;
 	ProjectManager pPersist = null;
 	QuestionManager qPersist = null;
-	Groups groupPersist = null;
 	OptionManager oPersist = null;
 	TranslationManager tPersist = null;
 
@@ -87,7 +84,6 @@ public class SurveyTemplate {
 		pPersist = new ProjectManager(pc);
 		fPersist = new FormManager(pc);
 		qPersist = new QuestionManager(pc);
-		groupPersist = new Groups(pc);
 		oPersist = new OptionManager(pc);
 		tPersist = new TranslationManager(pc);
 	}
@@ -214,12 +210,6 @@ public class SurveyTemplate {
 		forms.put(formRef, f);
 	}
 
-
-	public Group createGroup() {
-		Group g = new Group();
-		return g;
-	}
-
 	/*
 	 * Method to get an existing form
 	 * 
@@ -246,7 +236,7 @@ public class SurveyTemplate {
     	Form subForm = null;
     	List <Form> forms = getAllForms();
     	for(Form f : forms) {
-    		if(f.getParentForm() == parentForm && f.getParentQuestion() == parentQuestion) {
+    		if(f.getParentForm() == parentForm.getId() && f.getParentQuestionId() == parentQuestion.getId()) {
     			subForm = f;
     			break;   			
     		}
@@ -530,12 +520,12 @@ public class SurveyTemplate {
 			Form f = (Form) itr.next();
 			System.out.println("Form: " + f.getId());
 			System.out.println("	Name: " + f.getName());
-			if(f.getParentForm() != null) {
-				System.out.println("	Parent Form: " + f.getParentForm().getName());
+			if(f.getParentForm() != 0) {
+				System.out.println("	Parent Form: " + f.getParentForm());
 			} else {
 				System.out.println("	Parent Form: None");
 			}
-			System.out.println("	Parent Question: " + f.getParentQuestion());
+			System.out.println("	Parent Question: " + f.getParentQuestionId());
 		}
 
 		// Questions
@@ -824,16 +814,15 @@ public class SurveyTemplate {
 		SurveyManager surveys = new SurveyManager(pc);
 		surveys.persist(survey);
 
- 		HashMap<Form, Question> formQuestionRel = new HashMap<Form, Question>();	// Used to track parent questions 
+ 		HashMap<Form, Integer> formQuestionRel = new HashMap<Form, Integer>();	// Used to track parent questions 
 		List<Form> formList = new ArrayList<Form>(forms.values());
 		for(Form f : formList) {
-			f.setSurvey(survey);
+			f.setSurveyId(survey.getId());
 			f.setQuestions(new ArrayList<Question>());
 			
 			// null out the parent question reference as the current JPA solution cannot do a cascade write
-			if (f.getParentQuestion() != null)
-				formQuestionRel.put(f, f.getParentQuestion());
-			f.setParentQuestion(null);	
+			if (f.getParentQuestionId() != 0)
+				formQuestionRel.put(f, f.getParentQuestionId());
 		}
 		
 		Form [] formArray = formList.toArray(new Form[formList.size()]);
@@ -1013,9 +1002,9 @@ public class SurveyTemplate {
 		
 		// Update the forms with the link to parent questions (if any)
 		Form relForm = null;
-		for (Entry<Form, Question> rel : formQuestionRel.entrySet()) {
+		for (Entry<Form, Integer> rel : formQuestionRel.entrySet()) {
 			relForm = rel.getKey();
-			relForm.setParentQuestion(rel.getValue());
+			relForm.setParentQuestionId(rel.getValue());
 			fPersist.persist(relForm);
 		}
 
@@ -1042,7 +1031,7 @@ public class SurveyTemplate {
 				for(int i = 0; i < dummyTranslations.size(); i++) {
 					// Need to copy the translation as there will be one Translation object for every language and we don't want to overwrite
 					Translation trans = new Translation(dummyTranslations.elementAt(i));
-					trans.setSurvey(survey);
+					trans.setSurveyId(survey.getId());
 					trans.setLanguage(languages[langIndex]);
 					trans.setType("none");	// Default dummy translations to a type of "none"
 					tPersist.persist(trans);
@@ -1052,7 +1041,7 @@ public class SurveyTemplate {
 			// No languages specified, just create the dummy elements with a language of "default"
 			for(int i = 0; i < dummyTranslations.size(); i++) {
 				Translation trans = dummyTranslations.elementAt(i);
-				trans.setSurvey(survey);
+				trans.setSurveyId(survey.getId());
 				trans.setLanguage("default");
 				trans.setType("none");	// Default dummy translations to a type of "none"
 				tPersist.persist(trans);
@@ -1159,7 +1148,7 @@ public class SurveyTemplate {
 			if(ref != null) {
 				forms.put(ref, formList.get(i));
 			}
-			if(formList.get(i).getParentForm() == null) {
+			if(formList.get(i).getParentForm() == 0) {
 				firstFormRef = ref;
 			}
 		}

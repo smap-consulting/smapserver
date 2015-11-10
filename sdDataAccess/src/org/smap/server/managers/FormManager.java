@@ -19,14 +19,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.server.managers;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
 import org.smap.server.entities.Form;
-import org.smap.server.entities.Question;
 import org.smap.server.entities.Survey;
 
 public class FormManager {
@@ -58,7 +56,7 @@ public class FormManager {
 		EntityManager em = pc.getEntityManager();
 
 		Query query = em.createQuery(
-				"SELECT f FROM FORM f WHERE f.surveyOwner.id = ?1")
+				"SELECT f FROM FORM f WHERE f.s_id = ?1")
 				.setParameter(1, surveyId);
 		List<Form> formList = query.getResultList();
 		return formList;
@@ -68,7 +66,7 @@ public class FormManager {
 		EntityManager em = pc.getEntityManager();
 		int s_id = survey.getId();
 		Query query = em.createQuery(
-				"SELECT f FROM FORM f WHERE f.surveyOwner.id = ?1").setParameter(
+				"SELECT f FROM FORM f WHERE f.s_id = ?1").setParameter(
 				1, s_id);
 		List<Form> formList = query.getResultList();
 
@@ -81,8 +79,8 @@ public class FormManager {
 
 		EntityManager em = pc.getEntityManager();
 		Query query = em.createQuery(
-				"SELECT form FROM FORM form WHERE form.surveyOwner.id = ?1 "
-						+ "AND form.parentForm = null").setParameter(1,
+				"SELECT form FROM FORM form WHERE form.s_id = ?1 "
+						+ "AND form.parentform = 0").setParameter(1,
 				surveyId);
 		List<Form> formList = query.getResultList();
 
@@ -114,11 +112,6 @@ public class FormManager {
 
 	/*
 	 * If question has a subForm then return the subForm identifier else return
-	 * 0
-	 * 
-	 * @param parentFormId
-	 * 
-	 * @param questionId
 	 */
 	@SuppressWarnings("unchecked")
 	public int getSubFormId(int parentForm, int parentQuestion) {
@@ -126,8 +119,8 @@ public class FormManager {
 		EntityManager em = pc.getEntityManager();
 
 		Query query = em
-				.createQuery("SELECT form FROM FORM form WHERE form.parentForm.id = ?1 AND "
-						+ "form.parentQuestion.id = ?2");
+				.createQuery("SELECT form FROM FORM form WHERE form.parentform = ?1 AND "
+						+ "form.parentQuestion = ?2");
 		query.setParameter(1, parentForm);
 		query.setParameter(2, parentQuestion);
 		List<Form> formList = query.getResultList();
@@ -216,22 +209,5 @@ public class FormManager {
 		return f;
 	}
 
-	/**
-	 * This method returns a new form object.
-	 * 
-	 * @param survey
-	 *            Survey that this form belongs to
-	 * @param parentForm
-	 * 
-	 * @return
-	 */
-	public Form newForm(Survey survey, Form parentForm) {
-		Form newForm = new Form();
 
-		newForm.setQuestions(new ArrayList<Question>());
-		newForm.setSurvey(survey);
-		newForm.setParentForm(parentForm);
-
-		return newForm;
-	}
 }

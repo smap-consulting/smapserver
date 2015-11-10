@@ -44,9 +44,8 @@ public class Translation implements Serializable{
 	@SequenceGenerator(name = "t_seq", sequenceName = "t_seq")
 	private int t_id;
 	
-	@ManyToOne(optional = true, cascade=CascadeType.ALL)
-	@JoinColumn(name = "s_id", referencedColumnName = "s_id")
-	private Survey surveyOwner = null;
+	@Column(name = "s_id")
+	private int s_id;
 	
 	@Column(name="language")
 	private String language = "default";	// Language Identifier
@@ -69,7 +68,7 @@ public class Translation implements Serializable{
 	
 	// Copy constructor
 	public Translation(Translation o) {
-		this.setSurvey(o.getSurvey());
+		this.setSurveyId(o.getSurveyId());
 		this.setEnabled(o.getEnabled());
 		this.setLanguage(o.getLanguage());
 		this.setTextId(o.getTextId());
@@ -84,8 +83,8 @@ public class Translation implements Serializable{
 		return t_id;
 	}
 	
-	public Survey getSurvey() {
-		return surveyOwner;
+	public int getSurveyId() {
+		return s_id;
 	}
 	
 	public String getLanguage() {
@@ -116,8 +115,8 @@ public class Translation implements Serializable{
 	/*
 	 * Setters
 	 */
-	public void setSurvey(Survey survey) {
-		surveyOwner = survey;
+	public void setSurveyId(int value) {
+		s_id = value;
 	}
 
     public void setLanguage(String value) {

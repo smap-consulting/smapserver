@@ -20,24 +20,18 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 
-import org.smap.server.utilities.UtilityMethods;
+import org.smap.server.managers.PersistenceContext;
+import org.smap.server.managers.QuestionManager;
 
 /*
  * Class to store Form objects
@@ -54,10 +48,9 @@ public class Form implements Serializable {
 	@SequenceGenerator(name = "f_seq", sequenceName = "f_seq")
 	private int f_id;
 
-	@ManyToOne(optional = true, cascade=CascadeType.ALL)
-	@JoinColumn(name = "s_id", referencedColumnName = "s_id")
-	private Survey surveyOwner = null;
-
+	@Column(name = "s_id")
+	private int s_id;
+	
 	@Column(name = "name")
 	private String name = null;
 
@@ -67,13 +60,11 @@ public class Form implements Serializable {
 	@Column(name = "table_name")
 	private String table_name = null;
 	
-	@ManyToOne(optional = true, cascade=CascadeType.ALL)
-	@JoinColumn(name = "parentForm", referencedColumnName = "f_id")
-	private Form parentForm = null;
-
-	@ManyToOne(optional = true, cascade=CascadeType.ALL)
-	@JoinColumn(name = "parentQuestion", referencedColumnName = "q_id")
-	private Question parentQuestion = null;
+	@Column(name = "parentform")
+	private int parentform = 0;
+	
+	@Column(name = "parentquestion")
+	private int parentquestion = 0;
 	
 	@Column(name = "repeats")
 	private String repeats = null;
@@ -81,30 +72,8 @@ public class Form implements Serializable {
 	@Column(name = "path")
 	private String path = null;	// Xpath of this form
 	
-	/**
-	 * This relationship is based on section <a href=
-	 * "http://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir"
-	 * > 2.4.6.2.1. Bidirectional association with indexed collections</a> of
-	 * the Hibernate documentation.
-	 * 
-	 * Basically, it ensures that the sequence orders for questions within a
-	 * form are managed through the Form object itself.
-	 */
-	@OneToMany
-	/*
-	 * This refers to the seq property in the Question object that holds the
-	 * list index
-	 */
-	@OrderColumn(name = "seq")
-	/*
-	 * This refers to the foreign_key column on the Question table that links it
-	 * back to the form
-	 */
-	@JoinColumn(name = "f_id", nullable = false)
-	private List<Question> questions = new ArrayList<Question>();
-
-//	@Transient
-//	private String reference; // Unique reference to this form
+	@Transient
+	private List<Question> questions = null;
 	
 	/*
 	 * Constructor
@@ -117,10 +86,6 @@ public class Form implements Serializable {
 	 */
 	public int getId() {
 		return f_id;
-	}
-
-	public Survey getSurvey() {
-		return surveyOwner;
 	}
 	
 	public String getType() {
@@ -150,16 +115,21 @@ public class Form implements Serializable {
 		return table_name;
 	}
 
-	public Form getParentForm() {
-		return parentForm;
+	public int getParentForm() {
+		return parentform;
 	}
 	
 	public List<Question> getQuestions() {
+		if(questions == null) {
+			PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+			QuestionManager qm = new QuestionManager(pc);
+			questions = qm.getByFormId(f_id);
+		}
 		return questions;
 	}
 
-	public Question getParentQuestion() {
-		return parentQuestion;
+	public int getParentQuestionId() {
+		return parentquestion;
 	}
 	
 	public String getRepeats() {
@@ -167,56 +137,17 @@ public class Form implements Serializable {
 	}
 
 	public boolean hasParent() {
-		/*
-		 * Due to database structure, need to catch exception if no parent is
-		 * set.
-		 */
-		try {
-			if (this.getParentForm() == null
-					|| this.getParentForm().getId() == 0)
-				return false;
-			else
-				return true;
-		} catch (EntityNotFoundException e) {
-			return false;
-		}
+		return parentform != 0;
 	}
-	
-	/*
-	public String getReference() {
-		return reference;
-	}
-	*/
 	
 	public String getPath() {
-		String tPath = null;
-		
-		tPath = path;
-		/*
-		if(path.startsWith("/main")) {
-			tPath = path;
-		} else {
-			int idx = path.indexOf('/', 1);
-			if(idx < 0) {
-				tPath = "/main";
-			} else {
-				tPath = "/main" + path.substring(idx);
-			}
-		}
-		*/
-		
-		return tPath;
+		return path;
 	}
 
-	/*
-	 * Setters
-	 */
-	public void setSurvey(Survey survey) {
-		surveyOwner = survey;
-		// Create the table name from a combination of the survey id and the form name
-		table_name = UtilityMethods.cleanName("s" + survey.getId() + "_" + name);
+	public void setSurveyId(int value) {
+		this.s_id = value;
 	}
-
+	
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -225,12 +156,12 @@ public class Form implements Serializable {
 		this.label = label;
 	}
 
-	public void setParentForm(Form parentForm) {
-		this.parentForm = parentForm;
+	public void setParentForm(int value) {
+		this.parentform = value;
 	}
 
-	public void setParentQuestion(Question id) {
-		parentQuestion = id;
+	public void setParentQuestionId(int id) {
+		parentquestion = id;
 	}
 	
 	public void setRepeats(String val) {
@@ -240,12 +171,6 @@ public class Form implements Serializable {
 	public void setQuestions(List<Question> questions) {
 		this.questions = questions;
 	}
-
-	/*
-	public void setReference(String ref) {
-		reference = ref;
-	}
-	*/
 	
 	public void setPath(String v) {
 		path = v;

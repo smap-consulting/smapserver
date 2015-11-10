@@ -7,7 +7,6 @@
         <class>org.smap.server.entities.Form</class>
         <class>org.smap.server.entities.Question</class>
         <class>org.smap.server.entities.Option</class>
-        <class>org.smap.server.entities.Group</class>
         <class>org.smap.server.entities.UploadEvent</class>
         <class>org.smap.server.entities.SubscriberEvent</class>
         <properties>

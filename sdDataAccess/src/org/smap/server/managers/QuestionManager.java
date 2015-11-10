@@ -57,7 +57,7 @@ public class QuestionManager {
 	@SuppressWarnings("unchecked")
 	public List<Question> getBySurveyId(int surveyId) {
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f WHERE "
-				+ "q.form = f.f_id AND f.surveyOwner.id = ?1 "
+				+ "q.form = f.f_id AND f.s_id = ?1 "
 				+ "ORDER BY q.form, q.seq");
 		query.setParameter(1, surveyId);
 		List<Question> questionList = query.getResultList();
@@ -88,7 +88,7 @@ public class QuestionManager {
 	public List<Question> getChoiceTypeBySurveyId(int surveyId) {
 
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f "
-				+ "WHERE q.form.id = f.id AND f.surveyOwner.id = ?1 AND "
+				+ "WHERE q.form.id = f.id AND f.s_id = ?1 AND "
 				+ "(q.qType = 'select' OR q.qType = 'select1') "
 				+ "ORDER BY q.form.id, q.seq");
 		query.setParameter(1, surveyId);
@@ -98,7 +98,7 @@ public class QuestionManager {
 
 	public List<Question> getBySurvey(Survey survey) {
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f WHERE "
-				+ "q.form.id = f.id AND f.surveyOwner.id = ?1 "
+				+ "q.form.id = f.id AND f.s_id = ?1 "
 				+ "ORDER BY q.form.id, q.seq");
 		query.setParameter(1, survey.getId());
 		List<Question> questionList = query.getResultList();

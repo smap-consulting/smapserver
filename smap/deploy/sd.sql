@@ -323,3 +323,7 @@ alter table organisation add column company_email text;
 -- Upgrade to: 15.10 from 15.09
 alter table question add column repeatcount boolean default false;
 alter table survey add column instance_name text;
+
+-- Upgrade to: 15.11 from 15.10
+update form set parentform = 0 where parentform is null;
+update form set parentquestion = 0 where parentquestion is null;
