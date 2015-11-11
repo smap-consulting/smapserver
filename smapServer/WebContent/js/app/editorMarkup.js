@@ -61,11 +61,11 @@ define([
 				h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
 				h[++idx] = '<td class="q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
-					h[++idx] = '<a class="btn btn-default" data-toggle="collapse"  href="#collapse';
+					h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 					h[++idx] = globals.gElementIndex;
 					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon"></span></a>';
 					
-					h[++idx] = '<button class="btn btn-default">';
+					h[++idx] = '<button tabindex="-1" class="btn btn-default">';
 					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="question';
 					h[++idx] = globals.gQuestionIndex;
 					h[++idx]='"></span>';
@@ -115,8 +115,12 @@ define([
 		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
 		locn = after ? 'after' : 'before';
 		
+		if(topLevelForm && locn === "after") {
+			addButtonClass += ' add_final_button';
+		}
+		
 		h[++idx] = '<li>';
-		h[++idx] = '<button id="';
+		h[++idx] = '<button button tabindex="-1" id="addnew_';
 		h[++idx] = globals.gNewQuestionButtonIndex++;
 		h[++idx] = '" type="button" class="add_question btn dropon ';
 		h[++idx] = addButtonClass;
@@ -127,7 +131,7 @@ define([
 		h[++idx] = locn;
 		h[++idx] = '" data-qid="';
 		h[++idx] = questionId;
-		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
+		h[++idx] = '">Add New Question</button>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -281,9 +285,7 @@ define([
 				h[++idx] = selLabel;
 				h[++idx] = ' not required';
 			} else {
-				h[++idx] = ' tabindex="';
-				h[++idx] = globals.gQuestionIndex;
-				h[++idx] = '">';
+				h[++idx] = '>';
 				if(selProperty === "label") { 
 					h[++idx] = question.labels[globals.gLanguage].text;
 				} else if(selProperty === "hint") { 
@@ -574,9 +576,17 @@ define([
 			$('#' + gCollapsedPanels[i]).addClass("in");
 		}
 		
+		
+		if(globals.gQuestionIndex == 0) {
+			// If there were no questions then set focus to the add new question button
+			$('.add_final_button').focus();
+		} else {
+			// Set focus to name of first question
+			var $fe = $('input', '.container').first();
+			$('input', '.container').first().focus();
+		}
 		return $('#formList');		// Return the context of the updated HTML so that events can be applied
 
-		//enableDragablePanels();
 		
 
 	}

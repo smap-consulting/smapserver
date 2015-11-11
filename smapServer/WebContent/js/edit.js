@@ -600,9 +600,10 @@ function respondToEvents($context) {
 		
 		$context = question.add(qId, locn);
 		respondToEvents($context);				// Add events on to the altered html
+		$context.find('input').focus();			// Set focus to the new question
 		
 		/*
-		 * If this question was added be an "add after" button then that button should add future questions
+		 * If this question was added by an "add after" button then that button should add future questions
 		 *  after this newly added question.  Hence update the reference question
 		 */
 		if(locn == "after") {
