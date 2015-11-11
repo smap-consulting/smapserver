@@ -459,28 +459,40 @@ define([
 			if(change.action === "move") {
 				
 				var question = survey.forms[change.question.sourceFormIndex].questions[change.question.sourceItemIndex];	// existing question
+				var oldLocation = change.question.sourceSeq;
+				var newLocation = change.question.seq;
 				// Add the question in the new location
 				length = survey.forms[change.question.formIndex].questions.push(question);			// Add the new question to the end of the array of questions
 				change.question.itemIndex = length - 1;
-				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
+				survey.forms[change.question.formIndex].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
 			
 				// Remove the question from the old location	
-				survey.forms[change.question.sourceFormIndex].qSeq.splice(change.question.sourceSeq, 1);
-			
+				// The old location may have changed if the new location was inserted before it
+				if(newLocation < oldLocation) {
+					oldLocation++;
+				}
+				survey.forms[change.question.sourceFormIndex].qSeq.splice(oldLocation, 1);
+				
+				refresh = true;
+				
 			} else if(change.action === "add") {			
 				length = survey.forms[change.question.formIndex].questions.push(change.question);			// Add the new question to the end of the array of questions
 				change.question.itemIndex = length -1;
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
+			
+				if(change.question.firstQuestion) {
+					refresh = true;		// Refresh all the questions, actually there is only one so why not
+				} else {
+					refresh = false;	// Update markup solely for this question
+				}
+				
 			} else if(change.action === "delete") {
-				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array		
+				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array
+				refresh = false;
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
-			if(change.question.firstQuestion) {
-				refresh = true;		// Refresh all the questions, actually there is only one so why not
-			} else {
-				refresh = false;	// Update markup solely for this question
-			}
+			
 			
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {			
@@ -557,9 +569,9 @@ define([
 		} else if(change.changeType === "question") {
 			if(change.action === "add") {
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));			
+					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));			
 				} else {
-					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex));
+					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));
 				}
 				$changedRow = $("#question" + globals.gQuestionIndex);
 				delete change.question.$relatedElement;		// Delete the "related element", it is no longer needed and contains circular references which cannot be stringified
@@ -598,7 +610,8 @@ define([
 				newMarkup = markup.addOneQuestion(
 						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
 						change.property.formIndex, 
-						change.property.itemIndex);
+						change.property.itemIndex,
+						false);
 				$changedRow = $changedRow.closest('li');
 				if($changedRow) {
 					$changedRow.replaceWith(newMarkup);

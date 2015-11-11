@@ -81,6 +81,8 @@ public class Form implements Serializable {
 	@Transient
 	private String parentQuestionRef = null;
 	
+	@Transient
+	public int qSeq = 0;		// Used to store current sequence while saving a forms questions
 	/*
 	 * Constructor
 	 */

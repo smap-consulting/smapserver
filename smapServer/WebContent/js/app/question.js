@@ -113,7 +113,6 @@ define([
 	
 	/*
 	 * Move a question
-	 * The dom has already been moved using drag and drop we just need toupdate the model
 	 * The beforeId is the id of the dom element that precedes this element
 	 */
 	function moveBefore(sourceId, beforeId) {		
@@ -135,7 +134,7 @@ define([
 			change;
 		
 		// Get the new sequence of the question
-		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]) - 1;
+		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);				// Take the sequence of the item it is moving in front of
 		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
 
 		

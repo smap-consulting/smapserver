@@ -348,7 +348,7 @@ public class TemplateUpload extends Application {
 				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			} 
 			
-			model.printModel();
+			//model.printModel();
 			model.writeDatabase();				// write the survey definitions
 			model.writeExternalChoices();		// Update the survey definitions with choices from csv files
 			log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);

@@ -981,7 +981,6 @@ public class SurveyTemplate {
 			}
 		});
 
-		int newSeq = 1;
 		for (Question q : questionList) {
 			Form f = getForm(q.getFormRef());
 			if(f == null) {
@@ -1006,7 +1005,7 @@ public class SurveyTemplate {
 
 			if(f != null) {
 				q.setFormId(f.getId());
-				q.setSeq(newSeq++);
+				q.setSeq(f.qSeq++);
 				qPersist.persist(q);
 			} 			
 		}

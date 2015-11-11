@@ -668,62 +668,57 @@ function respondToEvents($context) {
 	
 	$('.draggable').on('dragstart', function(evt){
 		var ev = evt.originalEvent;
+		console.log("Dragstart: " + ev.target.id);
 		ev.dataTransfer.setData("text", ev.target.id);
 	});
 	
-	$('.draggable').on('dragenter', function(evt){
+	$('.dropon').on('dragenter', function(evt){
 		var ev = evt.originalEvent,
-			$elem = $(ev.target).closest('li'),	
-			sourceId = ev.dataTransfer.getData("text"),
-			targetId = $elem.attr('id');
+			$elem = $(ev.target),	
+			targetId = $elem.data('qid');
 		
-		if(sourceId !== targetId) { 
-			if(!dragCounters[$elem.attr("id")]) {
-				dragCounters[$elem.attr("id")] = 1;
-			} else {
-				dragCounters[$elem.attr("id")]++;
-			}
-			
-			if(dragCounters[$elem.attr("id")] === 1) {
-				paddingBottom = $elem.css("padding-top");
-				
-				$(ev.target).closest('li').animate({ 'padding-top': 50 }, "fast");
-			}
+		if(!dragCounters[targetId]) {
+			dragCounters[targetId] = 1;
+		} else {
+			dragCounters[targetId]++;
 		}
+		
+		if(dragCounters[targetId] === 1) {
+			$elem.addClass("add_drop_button").removeClass("add_button");
+		}
+	
 	});
 	
-	$('.draggable').on('dragleave', function(evt){
+	$('.dropon').on('dragleave', function(evt){
 		
 		var ev = evt.originalEvent,
-			$elem = $(ev.target).closest('li')
+			$elem = $(ev.target),
 			sourceId = ev.dataTransfer.getData("text"),
-			targetId = $elem.attr('id');
+			targetId = $elem.data('qid');
 		
-		if(sourceId !== targetId) {
-			
-			dragCounters[$elem.attr("id")]--;
-			if(!dragCounters[$elem.attr("id")]) {
-				$elem.animate({ 'padding-top': 0 }), "fast";
-			}
+		dragCounters[targetId]--;
+		if(!dragCounters[targetId]) {
+			$elem.addClass("add_button").removeClass("add_drop_button");
 		}
 		
 		
 	});
 	
-	$('.draggable').on('dragover', function(evt){
-		var ev = evt.originalEvent;
-		ev.preventDefault();
+	$('.dropon').on('dragover', function(evt){
+		evt.originalEvent.preventDefault();
 	});
 	
-	$('.draggable').on('drop', function(evt){
+	$('.dropon').on('drop', function(evt){
 		var ev = evt.originalEvent,
-			$targetListItem = $(ev.target).closest('li'),
+			$targetListItem = $(ev.target),
 			$sourceElem,
 			sourceId = ev.dataTransfer.getData("text"),
-			targetId = $targetListItem.attr('id'),
+			targetId = $targetListItem.data('qid'),
 			$context;
 	
-		$targetListItem.animate({ 'padding-top': 0 }), "fast";
+		console.log("Dropped: " + sourceId + " : " + targetId);
+		
+		$targetListItem.addClass("add_button").removeClass("add_drop_button");
 		if(sourceId != targetId) {
 			if (ev.ctrlKey || ev.altKey) {
 				console.log("Control was pressed");
@@ -733,7 +728,7 @@ function respondToEvents($context) {
 			}
 			
 		    ev.preventDefault();
-		    $sourceElem.insertBefore($targetListItem);
+		    //$sourceElem.insertBefore($targetListItem.closest('li'));
 		    
 		    $context = question.moveBefore(sourceId, targetId);
 			respondToEvents($context);						// Add events on to the altered html

@@ -40,11 +40,13 @@ define([
 		refresh: refresh
 	};
 	
-	function addOneQuestion(question, formIndex, qIndex) {
+	function addOneQuestion(question, formIndex, qIndex, addNewButton) {
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = addNewQuestionButton(false, false, "question" + (globals.gQuestionIndex + 1));
+		if(addNewButton) {
+			h[++idx] = addNewQuestionButton(false, false, "question" + (globals.gQuestionIndex + 1));
+		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
 		h[++idx] = '<div class="panel-heading">';
@@ -110,19 +112,17 @@ define([
 			addButtonClass,
 			locn;
 		
-		if(topLevelForm) {
-			addButtonClass = 'btn-primary add_button_main';
-			locn = 'after';
-		} else {
-			addButtonClass = after ? 'btn-primary add_button_after' : 'btn-success add_button';
-			locn = after ? 'after' : 'before';
-		}
+		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
+		locn = after ? 'after' : 'before';
 		
 		h[++idx] = '<li>';
 		h[++idx] = '<button id="';
 		h[++idx] = globals.gNewQuestionButtonIndex++;
-		h[++idx] = '" type="button" class="add_question btn ';
+		h[++idx] = '" type="button" class="add_question btn dropon ';
 		h[++idx] = addButtonClass;
+		if(globals.gNewQuestionButtonIndex == 1) { // First button in the form
+			h[++idx] = ' first_element ';
+		}
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
 		h[++idx] = '" data-qid="';
@@ -139,9 +139,7 @@ define([
 			idx = -1;
 		
 		h[++idx] = '<li class="panel editor_element draggable';
-		if(formIndex === 0 && qIndex === 0) { // First editor element in the form
-			h[++idx] = ' first_element ';
-		}
+
 		if(type === "begin repeat" || type === "begin group") {
 			h[++idx] = ' panel-warning" id="question';
 		} else {
@@ -366,7 +364,7 @@ define([
 		var h = [],
 			idx = -1;
 		h[++idx] = '<button type="button" class="add_option btn btn-primary ';
-		h[++idx] = after ? 'add_button_after' : 'add_button';
+		h[++idx] = after ? 'add_button_now' : 'add_button';
 		h[++idx] = '" data-locn="';
 		h[++idx] = after ? 'after" ' : 'before" ';
 		h[++idx] = '" data-index="';
@@ -442,7 +440,7 @@ define([
 					continue;
 				}
 				lastRealQuestionId = "question" + (globals.gQuestionIndex + 1);
-				h[++idx] = addOneQuestion(question, fIndex, form.qSeq[i]);
+				h[++idx] = addOneQuestion(question, fIndex, form.qSeq[i], true);
 			}
 			if(form.parentform == 0) {
 				topLevelForm = true;

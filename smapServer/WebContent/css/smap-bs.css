@@ -180,21 +180,20 @@ tr.deleted td a {
 	margin-top: 20px;
 }
 
-.add_button {
+.add_before_button {
   width: 100%;
-  height: 30px;
+  height: 10px;
   text-align: center;
-  padding: 6px 0;
-  font-size: 12px;
-  line-height: 1.428571429;
+  padding-top: 6px;
+  font-size: 6px;
   border-radius: 5px;
-  /*position: absolute;
-  left:0px;
-  top: -25px;
-  */
+}
+.add_before_button:hover {
+	height: 30px;
+	font-size: 12px;
 }
 
-.add_button_after {
+.add_after_button {
   width: 100%;
   height: 30px;
   text-align: center;
@@ -202,11 +201,16 @@ tr.deleted td a {
   font-size: 12px;
   line-height: 1.428571429;
   border-radius: 5px;
-  /*
-  position: relative;
-  left:0px;
-  top: -25px;
-  */
+}
+
+.add_button {
+  background-color: #428bca;
+}
+
+.add_drop_button {
+  background-color: #ddd;
+  border-style: dashed;
+  height: 60px;
 }
 
 /*
