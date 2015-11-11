@@ -137,6 +137,30 @@ define([
 		return h.join('');
 	}
 	
+	function addNewOptionButton(after, optionId) {
+		var h = [],
+			idx = -1,
+			addButtonClass,
+			locn;
+		
+		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
+		locn = after ? 'after' : 'before';
+		
+		h[++idx] = '<li>';
+		h[++idx] = '<button button tabindex="-1" id="addnewoption_';
+		h[++idx] = globals.gNewOptionButtonIndex++;
+		h[++idx] = '" type="button" class="add_option btn dropon ';
+		h[++idx] = addButtonClass;
+		h[++idx] = '" data-locn="';
+		h[++idx] = locn;
+		h[++idx] = '" data-oid="';
+		h[++idx] = optionId;
+		h[++idx] = '">Add New Choice</button>';
+		h[++idx] = '</li>';
+		
+		return h.join('');
+	}
+	
 	function addPanelStyle(type, formIndex, qIndex, error) {
 		
 		var h = [],
@@ -310,33 +334,57 @@ define([
 			oSeq,
 			h = [],
 			idx = -1,
-			i;
+			i,
+			lastOptionId;
 		
 		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 		oSeq = optionList.oSeq;
+		h[++idx] = h[++idx] = '<ul class="list-unstyled">';
 		if(oSeq) {
 			for(i = 0; i < oSeq.length; i++) {
-				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name);
+				lastOptionId = "option" + (globals.gOptionIndex + 1);
+				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name, true);
 			}
-			h[++idx] = addNewOptionButton(true); 
+			h[++idx] = addNewOptionButton(true, lastOptionId); 
 		}
+		h[++idx] = '</ul>';
 		return h.join("");
 	}
 
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(option, fId, id, list_name, qname) {
+	function addOneOption(option, fId, id, list_name, qname, addNewButton) {
 		var h = [],
 			idx = -1;
 		
+		if(addNewButton) {
+			h[++idx] = addNewOptionButton(false, "option" + (globals.gOptionIndex + 1));
+		}
+		
+		h[++idx] = '<li class="editor_element draggable';
 		if(option.error) {
-			h[++idx] = '<div class="editor_element option_error">';
-		} else {
-			h[++idx] = '<div class="editor_element">';
-		}	
-		h[++idx] = addNewOptionButton();
-		h[++idx] = addErrorMsg(option.errorMsg);
+			h[++idx] = ' option_error';
+		}
+		h[++idx] = '" id="option';
+		h[++idx] = ++globals.gOptionIndex;
+		h[++idx] = '"';
+		
+		// Add the option index 
+		h[++idx] = '" data-id="';
+		h[++idx] = id;
+		h[++idx] = '" data-fid="';					
+		h[++idx] = fId;
+		h[++idx] = '" data-qname="';
+		h[++idx] = qname;
+		h[++idx] = '" data-list_name="';
+		h[++idx] = list_name;
+		h[++idx] = '">';
+		
+		if(option.error) {
+			h[++idx] = addErrorMsg(option.errorMsg);
+		}
+		
 		h[++idx] = '<table class="table" id="option';
 		h[++idx] = ++globals.gOptionIndex;
 		globals.gElementIndex++;
@@ -357,12 +405,13 @@ define([
 		h[++idx] = '</td>';
 		
 		h[++idx] = '</table>';
-		h[++idx] = '</div>';
+		h[++idx] = '</li>';
 
 		return h.join("");
 	}
 	
-	function addNewOptionButton(after) {
+	/*
+	function addNewOptionButtonOld(after) {
 		var h = [],
 			idx = -1;
 		h[++idx] = '<button type="button" class="add_option btn btn-primary ';
@@ -376,7 +425,7 @@ define([
 		
 		return h.join('');
 	}
-	
+	*/
 	/*
 	 * Add subform
 	 */
@@ -550,6 +599,7 @@ define([
 		globals.gElementIndex = 0;
 		globals.gQuestionIndex = 0;
 		globals.gNewQuestionButtonIndex = 0;
+		globals.gNewOptionButtonIndex = 0;
 		globals.gOptionIndex = 0;
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {

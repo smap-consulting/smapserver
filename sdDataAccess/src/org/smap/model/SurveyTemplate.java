@@ -1023,12 +1023,29 @@ public class SurveyTemplate {
 		}
 		fPersist.persist(formArray);
 
-		c = options.values(); // Write the option objects
-		itr = c.iterator();
-		while (itr.hasNext()) {
-			Option o = (Option) itr.next();
+		/*
+		 * Persist the options
+		 */
+		
+		// Sort options by sequence number
+		List<Option> optionList = new ArrayList<Option>(options.values());
+		java.util.Collections.sort(optionList, new Comparator<Option>() {
+			@Override
+			public int compare(Option object1, Option object2) {
+				if (object1.getSeq() < object2.getSeq())
+					return -1;
+				else if (object1.getSeq() == object2.getSeq())
+					return 0;
+				else
+					return 1;
+			}
+		});
+		
+		for (Option o : optionList) {
+			System.out.println("Writing option: " + o.getValue() + " : " + o.getSeq());
 			Question q = getQuestion(o.getQuestionRef()); // Get the question id
-			o.setQuestion(q);
+			o.setQuestionId(q.getId());
+			o.setSeq(q.oSeq++);
 			o.setCascadeFilters();	// Set the filter value based on the key value pairs
 			oPersist.persist(o);
 		}

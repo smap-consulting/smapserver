@@ -624,12 +624,35 @@ function respondToEvents($context) {
 	$('.add_option', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
+			$button,
+			oId = $this.data("oid"),
+			locn = $this.data("locn");	// Add before or after the element id referenced by oId
+		
+		$context = question.addOption(oId, locn);
+		respondToEvents($context);				// Add events on to the altered html
+		$context.find('input').focus();			// Set focus to the new option
+		
+		/*
+		 * If this option was added by an "add after" button then that button should add future questions
+		 *  after this newly added option.  Hence update the reference question
+		 */
+		if(locn == "after") {
+			$this.data("oid", $context.data("oid"));
+		}
+	});
+	
+	// Add new option
+	/*
+	$('.add_option', $context).off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
 			item = $(this).data("index"),
 			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
 		
 		$context = question.addOption(item, locn);
 		respondToEvents($context);				// Add events on to the altered html
 	});
+	*/
 	
 	// Delete option
 	$('.delete_option', $context).off().click(function() {
@@ -1001,7 +1024,7 @@ function validateOptionName(listName, itemIndex, val) {
 	} 
 	
 	/*
-	 * Name change require the entire set of choices to be validated for duplicates
+	 * Name change require the entire set of choices in the choice list to be validated for duplicates
 	 */
 	if(isValid) {
 		

@@ -35,6 +35,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 
+import org.smap.server.managers.OptionManager;
+import org.smap.server.managers.PersistenceContext;
+import org.smap.server.managers.QuestionManager;
 import org.smap.server.utilities.UtilityMethods;
 
 /*
@@ -136,9 +139,6 @@ public class Question implements Serializable {
 	@Column(name = "f_id")
 	private int f_id;
 
-	@OneToMany(mappedBy = "question")
-	private Collection<Option> choices = null;
-
 	@Transient
 	public Vector<String> singleChoiceOptions = null;
 
@@ -151,6 +151,11 @@ public class Question implements Serializable {
 	@Transient
 	public String qGroupBeginRef; // Set if this is a dummy question marking the end of a group
 	
+	@Transient
+	Collection<Option> choices = null;
+	
+	@Transient
+	public int oSeq = 0;				// A sequence counter for options	
 	/*
 	 * Constructor Establish Database Connection using JNDI
 	 */
@@ -360,12 +365,6 @@ public class Question implements Serializable {
 	public void setAppearance(String v) {
 		appearance = v;
 	}
-	
-	/*
-	public void setEnabled(boolean v) {
-		enabled = v;
-	}
-	*/
 
 	public void setFormRef(String formRef) {
 		this.formRef = formRef;
@@ -450,15 +449,15 @@ public class Question implements Serializable {
 		return f_id;
 	}
 
-	public void setChoices(Collection<Option> choices) {
-		this.choices = choices;
-	}
-
 	/*
 	 * Only return choices that were not created by an external csv file
 	 */
 	public Collection<Option> getChoices() {
 		Collection<Option> internalChoices = new ArrayList<Option> ();
+		
+		if (choices == null) {
+			loadChoices();
+		}
 		
 		ArrayList<Option> cArray = new ArrayList<Option>(choices);
 		for(int i = 0; i < cArray.size(); i++) {
@@ -526,5 +525,14 @@ public class Question implements Serializable {
 			 }
 		 }
 		 return po;
+	 }
+	 
+	 private Collection<Option> loadChoices() {
+		 if(choices == null) {
+				PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+				OptionManager om = new OptionManager(pc);
+				choices = om.getByQuestionId(q_id);
+			}
+			return choices;
 	 }
 }

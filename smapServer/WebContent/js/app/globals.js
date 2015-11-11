@@ -56,6 +56,7 @@ define(function() {
 		gElementIndex: 0,			// Manage creation of unique identifier for each element (question, option) in editor			
 		gQuestionIndex: 0,			// Manage creation of unique identifier for questions
 		gNewQuestionButtonIndex: 0,	// Manage creation of unique identifier for buttons that add new questions
+		gNewOptionButtonIndex: 0,
 		gOptionIndex: 0,			// Manage creation of unique identifier for options
 		gCurrentFormId: 0,
 		gSId: 0,

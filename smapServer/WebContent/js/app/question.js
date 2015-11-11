@@ -227,10 +227,9 @@ define([
 	 * Add a new option
 	 * oItem: the html element id for the closest option to where we want to add the new option
 	 */
-	function addOption(oItem, locn) {		
+	function addOption(oId, locn) {		
 		
-		var $relatedElement = $("#option" + oItem).parent(),
-			$relatedOption,
+		var $relatedOption = $("#" + oId),
 			formIndex,
 			optionIndex,
 			qName,
@@ -239,8 +238,7 @@ define([
 			seq = 0,
 			survey = globals.model.survey;
 		
-		if($relatedElement.size() > 0) {
-			$relatedOption = $relatedElement.find('.option');
+		if($relatedOption.size() > 0) {
 			qName = $relatedOption.data("qname");
 			formIndex = $relatedOption.data("fid");
 			optionList = $relatedOption.data("list_name");
@@ -270,7 +268,7 @@ define([
 					qName: qName,
 					formIndex: formIndex,
 					locn: locn,							// Whether the new question was added before or after the related question
-					$relatedElement: $relatedElement	// Jquery element that is next to the new question
+					$relatedElement: $relatedOption	   // JQuery element that is next to the new question
 				}
 		};
 		

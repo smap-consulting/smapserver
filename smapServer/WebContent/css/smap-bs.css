@@ -302,10 +302,12 @@ tr.deleted td a {
 	margin-bottom: 15px;
 }
 
-.qname {
+.qname,.oname {
 	width: 100%;
 	height: 60px;
 }
+
+
 textarea {
 	width: 100%;
 	overflow: hidden; 
@@ -373,7 +375,7 @@ textarea {
 }
 
 .selectquestion {
-	background-color: yellow;
+	background-color: #ffffcc;
 }
 
 .editor_element.option_error {

@@ -920,8 +920,8 @@ define([
 			$changedRow,
 			survey = globals.model.survey;
 		
-		// Remove error from validation array
-		for(i = 0; i < errors.length; i++) {
+		// Remove errors from validation array
+		for(i = errors.length - 1; i >= 0; i--) {
 			if(!errors[i].isQuestion && errors[i].listName === listName && errors[i].itemIndex === itemIndex) {
 				errors.splice(i, 1);
 			}

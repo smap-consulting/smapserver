@@ -52,9 +52,8 @@ public class Option implements Serializable{
 	@SequenceGenerator(name="o_seq", sequenceName="o_seq")
 	private int o_id;
 	
-	@ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "q_id", referencedColumnName = "q_id")
-	private Question question;
+	@Column(name="q_id")
+	private int q_id;
 	
 	@Column(name="label")
 	private String label = null;
@@ -87,7 +86,7 @@ public class Option implements Serializable{
 	
 	public Option(Option anOption) {
 		this.o_id = anOption.getId();
-		this.question = anOption.getQuestion();
+		this.q_id = anOption.getQuestionId();
 		this.label = anOption.getLabel();
 		this.label_id = anOption.getLabelId();
 		this.value = anOption.getValue();
@@ -105,8 +104,8 @@ public class Option implements Serializable{
 		return o_id;
 	}
 	
-	public Question getQuestion() {
-		return question;
+	public int getQuestionId() {
+		return q_id;
 	}
 	
 	public String getLabel() {
@@ -144,8 +143,8 @@ public class Option implements Serializable{
 	/*
 	 * Setters
 	 */
-    public void setQuestion(Question id) {
-    	question = id;
+    public void setQuestionId(int value) {
+    	q_id = value;
     }
     
 	public void setLabel(String label) {
