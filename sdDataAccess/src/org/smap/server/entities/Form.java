@@ -158,8 +158,10 @@ public class Form implements Serializable {
 		return path;
 	}
 
+	
 	public void setSurveyId(int value) {
 		this.s_id = value;
+		table_name = "s" + s_id + "_" + name;
 	}
 	
 	public void setName(String name) {

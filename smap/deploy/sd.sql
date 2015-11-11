@@ -326,4 +326,8 @@ alter table survey add column instance_name text;
 
 -- Upgrade to: 15.11 from 15.10
 update form set parentform = 0 where parentform is null;
+alter table form alter column parentform set default 0;
+alter table form alter column parentform set not null;
 update form set parentquestion = 0 where parentquestion is null;
+alter table form alter column parentquestion set default 0;
+alter table form alter column parentquestion set not null;

@@ -46,7 +46,7 @@ function setTableSurvey(view) {
 		topTable = view.table;
 	} else {
 		$.each(sMeta.forms, function(j, item) {
-			if(!item.p_id) {
+			if(item.p_id == 0) {
 				topTable = item.name;
 			}
 		});

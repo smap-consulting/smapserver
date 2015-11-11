@@ -425,7 +425,7 @@ function addFormPickList(sMeta) {
 	
 	// Start with the top level form
 	for(i = 0; i < sMeta.forms.length; i++) {
-		if(typeof sMeta.forms[i].p_id === "undefined") {
+		if(sMeta.forms[i].p_id == 0) {
 			$(".osmforms").html(addFormToList(sMeta.forms[i], sMeta, 0, true, false));
 			$(".selectforms").html(addFormToList(sMeta.forms[i], sMeta, 0, false, false));
 			$(".shapeforms,.taforms").html(addFormToList(sMeta.forms[i], sMeta, 0, true, true));
@@ -549,7 +549,7 @@ function addFormToList(form, sMeta, offset, osm, set_radio) {
 		h[++idx] = '"/>';
 	}
 	h[++idx] = form.form;
-	if(typeof form.p_id !== "undefined" && !osm) {
+	if(form.p_id == 0 && !osm) {
 		h[++idx] = ' <button class="exportpivot">Pivot</button>';
 	}
 	h[++idx] = '<br/>';
@@ -557,7 +557,7 @@ function addFormToList(form, sMeta, offset, osm, set_radio) {
 	
 	// Add the children (recursively)
 	for(i = 0; i < sMeta.forms.length; i++) {
-		if(typeof sMeta.forms[i].p_id !== "undefined" && sMeta.forms[i].p_id == form.f_id) {
+		if(sMeta.forms[i].p_id != 0  && sMeta.forms[i].p_id == form.f_id) {
 			h[++idx] = addFormToList(sMeta.forms[i], sMeta, offset + 20, osm, set_radio);
 		}
 	}

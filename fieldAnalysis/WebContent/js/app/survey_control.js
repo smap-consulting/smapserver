@@ -447,10 +447,10 @@ function getGeometryQuestion(sId, f_id) {
 			}
 		});
 	
-		// Then try to get geometry from the parent form
+		// Then try to get geometry from the top level form
 		if(geomId == null) {
 			$.each(sMeta.forms, function(j, item) {
-				if(!item.p_id && item.geom) {
+				if(item.p_id == 0 && item.geom) {
 					geomId = item.geom_id;
 				}
 			});
