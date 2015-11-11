@@ -594,12 +594,20 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$context,						// Updated Html
 			buttonId = $this.attr("id"),
+			$button,
 			qId = $this.data("qid"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 		
 		$context = question.add(qId, locn);
 		respondToEvents($context);				// Add events on to the altered html
-		$('#' + buttonId).data("qid", $context.data("qid"));
+		
+		/*
+		 * If this question was added be an "add after" button then that button should add future questions
+		 *  after this newly added question.  Hence update the reference question
+		 */
+		if(locn == "after") {
+			$this.data("qid", $context.data("qid"));
+		}
 	});
 	
 	// Delete question
