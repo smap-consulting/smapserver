@@ -238,14 +238,14 @@ define([
 		if($relatedOption.size() > 0) {		
 			oIndexOther = $relatedOption.data("id");
 			seq = getSequenceOption(oIndexOther, survey.optionLists[list_name]);
+			if(locn === "after") {
+				++seq;
+			} 
 		} else {
 			seq = 0;
 		}
 		
-		// Get the sequence of the option
-		
 
-		
 		// Create changeset to be applied on save
 		change = {
 				changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change

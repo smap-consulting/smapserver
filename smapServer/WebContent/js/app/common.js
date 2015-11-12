@@ -1133,35 +1133,40 @@ function getSurveyDetails(callback) {
 
 	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
 	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			globals.model.survey = data;
-			globals.model.setSettings();
-			setLanguages(data.languages);
-			
-			if(typeof callback == "function") {
-				callback();
-			}
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				if(xhr.status == 404) {
-					// The current survey has probably been deleted or the user no longer has access
-					globals.gCurrentSurvey = undefined;
-					return;		
+	if(!globals.gCurrentSurvey) {
+		alert("Error: Can't get survey details, Survey identifier not specified");
+	} else {
+		addHourglass();
+		$.ajax({
+			url: url,
+			dataType: 'json',
+			cache: false,
+			success: function(data) {
+				removeHourglass();
+				globals.model.survey = data;
+				globals.model.setSettings();
+				setLanguages(data.languages);
+				
+				if(typeof callback == "function") {
+					callback();
 				}
-				alert("Error: Failed to get survey: " + err);
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					if(xhr.status == 404) {
+						// The current survey has probably been deleted or the user no longer has access
+						globals.gCurrentSurvey = undefined;
+						return;		
+					}
+					alert("Error: Failed to get survey: " + err);
+				}
 			}
-		}
-	});	
+		});	
+	}
+		
 }
 	
 /*
@@ -1212,6 +1217,7 @@ function createNewSurvey(name, callback) {
 			removeHourglass();
 			globals.model.survey = data;
 			globals.model.setSettings();
+			globals.gCurrentSurvey = data.id;
 			console.log("New Survey");
 			console.log(data);
 			setLanguages(data.languages);

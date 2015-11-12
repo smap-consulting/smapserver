@@ -274,7 +274,7 @@ define([
 		var h = [],
 			idx = -1,
 			selProperty = $('#selProperty').val(),
-			selLabel = $('#selProperty option:selected').text(),
+			selLabel = $('#selProperty').text(),
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
 		 if(selProperty === "media") {
@@ -375,6 +375,7 @@ define([
 		}
 		h[++idx] = '" id="option';
 		h[++idx] = ++globals.gOptionIndex;
+		globals.gElementIndex++;
 		h[++idx] = '"';
 		
 		// Add the option index 
@@ -392,10 +393,10 @@ define([
 			h[++idx] = addErrorMsg(option.errorMsg);
 		}
 		
-		h[++idx] = '<table class="table" id="option';
-		h[++idx] = ++globals.gOptionIndex;
-		globals.gElementIndex++;
-		h[++idx] = '">';
+		//h[++idx] = '<table class="table" id="option';
+		//h[++idx] = ++globals.gOptionIndex;
+		//h[++idx] = '">';
+		h[++idx] = '<table class="table">';
 		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
 		h[++idx] = option.value;
 		h[++idx] = '" type="text"></td>';

@@ -142,7 +142,9 @@ define([
 					h[++idx] = '</ol>';
 					h[++idx] = '</div>';
 				}
+				console.log(h.join(""));
 				bootbox.alert(h.join(""));
+				console.log("bootbox done");
 
 			},
 			error: function(xhr, textStatus, err) {
@@ -628,21 +630,38 @@ define([
 			
 			
 			// 1. Update the question
-			//newMarkup = markup.addQType(change.property.newVal);
-			newMarkup = markup.addOneQuestion(
-					survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
-					change.property.formIndex, 
-					change.property.itemIndex,
-					false);
+			if(change.property.type === "option") {
+				addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name, true);
+				newMarkup = markup.addOneOption(
+						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
+						change.property.formIndex, 
+						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
+						change.property.optionList,
+						change.property.qname,
+						false);
+			} else {
+				newMarkup = markup.addOneQuestion(
+						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
+						change.property.formIndex, 
+						change.property.itemIndex,
+						false);
+			}
 			$changedRow = $changedRow.closest('li');
 			if($changedRow) {
 				$changedRow.replaceWith(newMarkup);
 				
 				// Since we replaced the row we had better get the replaced row so that actions can be reapplied
-				$changedRow = $('#formList').find('td.question').filter(function(index){
-					var $this = $(this);
-					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
-				});
+				if(change.property.type === "option") {
+					$changedRow = $('#formList').find('td.option').filter(function(index){
+						var $this = $(this);
+						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+					});
+				} else {
+					$changedRow = $('#formList').find('td.question').filter(function(index){
+						var $this = $(this);
+						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+					});
+				}
 				$changedRow = $changedRow.closest('li');
 			}
 	

@@ -7,6 +7,7 @@
     optimize: 'none',
     paths: {
     	jquery: 'jquery-1.8.3.min',
+//    	jquery: 'jquery-2.1.4',
     	jquery_ui: 'empty:',
     	app: '../app',
     	lang_location: '..',
