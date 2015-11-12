@@ -227,31 +227,24 @@ define([
 	 * Add a new option
 	 * oItem: the html element id for the closest option to where we want to add the new option
 	 */
-	function addOption(oId, locn) {		
+	function addOption($button, oId, locn, qName, list_name, formIndex) {		
 		
 		var $relatedOption = $("#" + oId),
-			formIndex,
 			optionIndex,
-			qName,
-			optionList,
 			oIndexOther,		
 			seq = 0,
 			survey = globals.model.survey;
 		
-		if($relatedOption.size() > 0) {
-			qName = $relatedOption.data("qname");
-			formIndex = $relatedOption.data("fid");
-			optionList = $relatedOption.data("list_name");
+		if($relatedOption.size() > 0) {		
 			oIndexOther = $relatedOption.data("id");
+			seq = getSequenceOption(oIndexOther, survey.optionLists[list_name]);
 		} else {
-			// TODO First option in the question
+			seq = 0;
 		}
 		
 		// Get the sequence of the option
-		seq = getSequenceOption(oIndexOther, survey.optionLists[optionList]);
-		if(locn === "after") {
-			++seq;
-		} 
+		
+
 		
 		// Create changeset to be applied on save
 		change = {
@@ -260,15 +253,15 @@ define([
 				source: "editor",
 				option: {
 					seq: seq,
-					optionList: optionList,
+					optionList: list_name,
 					sId: survey.id,
 					labels: [],
 					
 					// Helper values 
 					qName: qName,
 					formIndex: formIndex,
-					locn: locn,							// Whether the new question was added before or after the related question
-					$relatedElement: $relatedOption	   // JQuery element that is next to the new question
+					locn: locn,							// Whether the new option was added before or after the related option
+					$button: $button	   				// JQuery element for the button that added this option
 				}
 		};
 		

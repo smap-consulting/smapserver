@@ -83,7 +83,10 @@ define([
 		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
 			h[++idx] = addSubForm(question, globals.model.survey.forms[formIndex].id);
 		} else if(question.type.indexOf("select") === 0) {
-			h[++idx] = addOptions(question, formIndex);
+			if(!question.error) {
+				// Only add the options if the question it self does not have any errors
+				h[++idx] = addOptions(question, formIndex);
+			}
 		} 
 		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
@@ -137,7 +140,7 @@ define([
 		return h.join('');
 	}
 	
-	function addNewOptionButton(after, optionId) {
+	function addNewOptionButton(after, optionId, list_name, formIndex) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -155,6 +158,10 @@ define([
 		h[++idx] = locn;
 		h[++idx] = '" data-oid="';
 		h[++idx] = optionId;
+		h[++idx] = '" data-list_name="';
+		h[++idx] = list_name;
+		h[++idx] = '" data-fid="';
+		h[++idx] = formIndex;
 		h[++idx] = '">Add New Choice</button>';
 		h[++idx] = '</li>';
 		
@@ -267,7 +274,7 @@ define([
 		var h = [],
 			idx = -1,
 			selProperty = $('#selProperty').val(),
-			selLabel = $('#selProperty :selected').text(),
+			selLabel = $('#selProperty option:selected').text(),
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
 		 if(selProperty === "media") {
@@ -335,7 +342,7 @@ define([
 			h = [],
 			idx = -1,
 			i,
-			lastOptionId;
+			lastOptionId = -1;
 		
 		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 		oSeq = optionList.oSeq;
@@ -345,7 +352,7 @@ define([
 				lastOptionId = "option" + (globals.gOptionIndex + 1);
 				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name, true);
 			}
-			h[++idx] = addNewOptionButton(true, lastOptionId); 
+			h[++idx] = addNewOptionButton(true, lastOptionId, question.list_name, formIndex); 
 		}
 		h[++idx] = '</ul>';
 		return h.join("");
@@ -354,12 +361,12 @@ define([
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(option, fId, id, list_name, qname, addNewButton) {
+	function addOneOption(option, formIndex, id, list_name, qname, addNewButton) {
 		var h = [],
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, "option" + (globals.gOptionIndex + 1));
+			h[++idx] = addNewOptionButton(false, "option" + (globals.gOptionIndex + 1), list_name, formIndex);
 		}
 		
 		h[++idx] = '<li class="editor_element draggable';
@@ -374,7 +381,7 @@ define([
 		h[++idx] = '" data-id="';
 		h[++idx] = id;
 		h[++idx] = '" data-fid="';					
-		h[++idx] = fId;
+		h[++idx] = formIndex;
 		h[++idx] = '" data-qname="';
 		h[++idx] = qname;
 		h[++idx] = '" data-list_name="';
@@ -392,7 +399,7 @@ define([
 		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
 		h[++idx] = option.value;
 		h[++idx] = '" type="text"></td>';
-		h[++idx] = addFeaturedProperty(option, fId, id, list_name, qname);
+		h[++idx] = addFeaturedProperty(option, formIndex, id, list_name, qname);
 		
 		// Add button bar
 		h[++idx] = '<td class="q_icons_col">';

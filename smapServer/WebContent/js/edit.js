@@ -604,10 +604,10 @@ function respondToEvents($context) {
 		
 		/*
 		 * If this question was added by an "add after" button then that button should add future questions
-		 *  after this newly added question.  Hence update the reference question
+		 *  after this newly added question.  Hence update the reference to the question preceding the button
 		 */
 		if(locn == "after") {
-			$this.data("qid", $context.data("qid"));
+			$this.data("qid", $context.attr("id"));
 		}
 	});
 	
@@ -624,11 +624,12 @@ function respondToEvents($context) {
 	$('.add_option', $context).off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			$button,
 			oId = $this.data("oid"),
+			fId = $this.data("fid"),
+			list_name = $this.data("list_name"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by oId
 		
-		$context = question.addOption(oId, locn);
+		$context = question.addOption($this, oId, locn, list_name, list_name, fId );
 		respondToEvents($context);				// Add events on to the altered html
 		$context.find('input').focus();			// Set focus to the new option
 		

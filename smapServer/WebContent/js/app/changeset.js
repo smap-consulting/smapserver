@@ -178,6 +178,8 @@ define([
 			survey = globals.model.survey,
 			item,
 			item_orig,
+			forms_orig,
+			optionListOrig,
 			form,
 			applyChange = true;
 
@@ -187,7 +189,10 @@ define([
 		if(change.changeType === "label" || change.changeType === "property") {
 			if(change.property.type === "question") {
 				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
-				item_orig = survey.forms_orig[change.property.formIndex].questions[change.property.itemIndex];
+				forms_orig = survey.forms_orig[change.property.formIndex];
+				if(forms_orig) {
+					item_orig = forms_orig.questions[change.property.itemIndex];
+				}
 				change.property.name = item.name;
 				change.property.qId = item.id;
 				if(change.changeType === "property") {
@@ -195,7 +200,10 @@ define([
 				}
 			} else {
 				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
-				item_orig = survey.optionLists_orig[change.property.optionList].options[change.property.itemIndex];	
+				optionListOrig = survey.optionLists_orig[change.property.optionList];
+				if(optionListOrig) {
+					item_orig = optionListOrig.options[change.property.itemIndex];	
+				}
 				change.property.name = change.property.optionList;
 				if(change.changeType === "property") {
 					setOptionTypeSpecificChanges(change.property.prop, change, survey);
@@ -409,6 +417,7 @@ define([
 	function updateModel(change) {
 		var refresh = false,		// Set to true if the page needs to be refreshed with this change
 			survey = globals.model.survey,
+			question,
 			property,
 			length;
 		
@@ -417,18 +426,36 @@ define([
 			 * Update the property values
 			 */
 			property = change.property;
+			question = survey.forms[property.formIndex].questions[property.itemIndex];
 			
 			if(property.type === "question") {
+				
 				if(property.propType === "text") {
 					if(property.prop === "label") {
-						survey.forms[property.formIndex].questions[property.itemIndex].labels[property.language][property.propType] = property.newVal;
+						question.labels[property.language][property.propType] = property.newVal;
 					} else {
-						survey.forms[property.formIndex].questions[property.itemIndex][property.prop] = property.newVal;		//Other properties
+						question[property.prop] = property.newVal;		//Other properties
 						
 						// Set type dependent properties
 						if(property.setVisible) {
-							survey.forms[property.formIndex].questions[property.itemIndex]["visible"] = property.visibleValue;
-							survey.forms[property.formIndex].questions[property.itemIndex]["source"] = property.sourceValue;
+							question["visible"] = property.visibleValue;
+							question["source"] = property.sourceValue;
+						}
+						
+						// Select question
+						if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {
+							// Ensure there is a list name for this question
+							if(!question.list_name) {
+								question.list_name = question.name;
+							}
+							// Ensure there is a list of choices
+							var optionList = survey.optionLists[question.list_name];
+							if(!optionList) {
+								survey.optionLists[question.list_name] = {
+									oSeq: [],
+									options: []
+								};
+							}
 						}
 						
 					}
@@ -581,50 +608,44 @@ define([
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
-				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.itemIndex, change.option.optionList, change.option.qName);
-				if(change.option.locn === "after") {
-					change.option.$relatedElement.after(newMarkup);
-					$changedRow = change.option.$relatedElement.next();
-				} else {
-					change.option.$relatedElement.before(newMarkup);
-					$changedRow = change.option.$relatedElement.prev();
-				}
-				delete change.option.$relatedElement;		// Delete this, it is no longer needed and contains circular references which cannot be stringified
+				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.itemIndex, change.option.optionList, change.option.qName, true);
+				change.option.$button.before(newMarkup);
+				$changedRow = change.option.$button.prev();
+				delete change.option.$button;		// Delete the jquery element, it is no longer needed and contains circular references which cannot be stringified
+			
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.remove();
 				delete change.option.$deletedElement;
 			}
 		} else if(change.changeType === "property") {
 			// Apply any markup changes that result from a property change
-			if(change.property.prop === "type") {
 				
-				// 1. Get the changed question row
+			// 1. Get the changed question row
+			$changedRow = $('#formList').find('td.question').filter(function(index){
+				var $this = $(this);
+				return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+			});
+			
+			
+			// 1. Update the question
+			//newMarkup = markup.addQType(change.property.newVal);
+			newMarkup = markup.addOneQuestion(
+					survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
+					change.property.formIndex, 
+					change.property.itemIndex,
+					false);
+			$changedRow = $changedRow.closest('li');
+			if($changedRow) {
+				$changedRow.replaceWith(newMarkup);
+				
+				// Since we replaced the row we had better get the replaced row so that actions can be reapplied
 				$changedRow = $('#formList').find('td.question').filter(function(index){
 					var $this = $(this);
 					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 				});
-				
-				
-				// 1. Update the question
-				//newMarkup = markup.addQType(change.property.newVal);
-				newMarkup = markup.addOneQuestion(
-						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
-						change.property.formIndex, 
-						change.property.itemIndex,
-						false);
 				$changedRow = $changedRow.closest('li');
-				if($changedRow) {
-					$changedRow.replaceWith(newMarkup);
-					
-					// Since we replaced the row we had better get the replaced row so that actions can be reapplied
-					$changedRow = $('#formList').find('td.question').filter(function(index){
-						var $this = $(this);
-						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
-					});
-					$changedRow = $changedRow.closest('li');
-				}
-	
 			}
+	
 		}
 		
 
