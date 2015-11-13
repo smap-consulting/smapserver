@@ -142,9 +142,8 @@ define([
 					h[++idx] = '</ol>';
 					h[++idx] = '</div>';
 				}
-				console.log(h.join(""));
+
 				bootbox.alert(h.join(""));
-				console.log("bootbox done");
 
 			},
 			error: function(xhr, textStatus, err) {
@@ -524,16 +523,38 @@ define([
 			
 			
 		} else if(change.changeType === "option") {
-			if(change.action === "add") {			
+			if(change.action === "move") {
+				
+				var option = survey.optionLists[change.option.sourceOptionList].options[change.option.sourceItemIndex];
+				var oldLocation = change.option.sourceSeq;
+				var newLocation = change.option.seq;
+				
+				// Add the option in the new location
+				length = survey.optionLists[change.option.optionList].options.push(option);
+				change.option.itemIndex = length -1;
+				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	
+			
+				// Remove the option from the old location	
+				// The old location may have changed if the new location was inserted before it
+				if(newLocation < oldLocation) {
+					oldLocation++;
+				}
+				survey.optionLists[change.option.sourceOptionList].oSeq.splice(change.option.sourceSeq, 0, length - 1);	
+				
+				refresh = true;
+				
+			} else if(change.action === "add") {			
 				length = survey.optionLists[change.option.optionList].options.push(change.option);			// Add the new option to the end of the array of options
 				change.option.itemIndex = length -1;
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	// Update the option sequence array
+				refresh = false;	// Update markup solely for this option
 			} else if(change.action === "delete") {
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 1);	// Remove item from the sequence array		
+				refresh = false;	// Update markup solely for this option
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
-			refresh = false;	// Update markup solely for this option
+			
 		}
 		
 		return refresh;	
@@ -605,6 +626,7 @@ define([
 				$changedRow = $("#question" + globals.gQuestionIndex);
 				delete change.question.$relatedElement;		// Delete the "related element", it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
+				change.question.$deletedElement.prev().remove();	// Remove the add before button
 				change.question.$deletedElement.remove();
 				delete change.question.$deletedElement;
 			}
@@ -616,22 +638,25 @@ define([
 				delete change.option.$button;		// Delete the jquery element, it is no longer needed and contains circular references which cannot be stringified
 			
 			} else if(change.action === "delete") {
+				change.question.$deletedElement.prev().remove();	// Remove the add before button
 				change.option.$deletedElement.remove();
 				delete change.option.$deletedElement;
 			}
 		} else if(change.changeType === "property") {
 			// Apply any markup changes that result from a property change
 				
-			// 1. Get the changed question row
-			$changedRow = $('#formList').find('td.question').filter(function(index){
-				var $this = $(this);
-				return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
-			});
+
 			
 			
-			// 1. Update the question
+			// 1. Update the question / option
 			if(change.property.type === "option") {
-				addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name, true);
+				
+				// Get the changed option row(s) Multiple rows if several questions share a list name
+				$changedRow = $('#formList').find('li.option').filter(function(index){
+					var $this = $(this);
+					return $this.data("list_name") == change.property.listName && $this.data("id") == change.property.itemIndex;
+				});
+				
 				newMarkup = markup.addOneOption(
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
 						change.property.formIndex, 
@@ -639,14 +664,25 @@ define([
 						change.property.optionList,
 						change.property.qname,
 						false);
+				
 			} else {
+				
+				// Get the changed question row
+				$changedRow = $('#formList').find('td.question').filter(function(index){
+					var $this = $(this);
+					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+				});
+				$changedRow = $changedRow.closest('li');
+				
 				newMarkup = markup.addOneQuestion(
 						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
 						change.property.formIndex, 
 						change.property.itemIndex,
 						false);
+				
 			}
-			$changedRow = $changedRow.closest('li');
+			
+			
 			if($changedRow) {
 				$changedRow.replaceWith(newMarkup);
 				
@@ -870,13 +906,8 @@ define([
 			itemIndex;
 		
 		
-		if(change.action === "add" || change.action === "delete") {
-			optionList = change.option.optionList;
-			itemIndex = change.option.itemIndex;
-		} else {
-			formIndex = change.property.formIndex;
-			itemIndex = change.property.itemIndex;
-		}
+		optionList = change.option.optionList;
+		itemIndex = change.option.itemIndex;
 		
 		if(change.action === "add") {
 			// New options always have a blank value
@@ -895,14 +926,11 @@ define([
 			if(isValid && change.property.prop === "name") {
 				
 				console.log("Need to check for duplicates");
-				for(i = 0; i < survey.forms.length; i++) {
-					form = survey.forms[i];
-					for(j = 0; j < form.questions.length; j++) {		
-						if(!(i === formIndex && j === itemIndex)) {
-							question = form.questions[j];
+				for(i = 0; i < survey.optionLists[optionList].options.length; i++) {	
+					if(!(i === itemIndex)) {
+							option = survey.optionLists[optionList].options[i];
 							
 							// TODO Check for reference errors
-						}
 					}
 				}
 				

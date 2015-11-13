@@ -31,6 +31,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import model.Settings;
 
@@ -278,8 +279,16 @@ public class Surveys extends Application {
 			
 			
 		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
-			response = Response.serverError().build();
+			
+			if(e.getMessage().contains("duplicate key")) {
+				String msg = "There is already a form called " + name + " in this project";
+				response = Response.status(Status.NO_CONTENT).entity(msg).build();
+				log.info(msg);
+			} else {
+				log.log(Level.SEVERE, "SQL Error", e);
+				response = Response.serverError().build();
+			}
+			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 			response = Response.serverError().build();

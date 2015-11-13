@@ -37,7 +37,8 @@ define([
 		deleteQuestion: deleteQuestion,
 		addOption: addOption,
 		deleteOption: deleteOption,
-		moveBefore: moveBefore
+		moveBeforeQuestion: moveBeforeQuestion,
+		moveBeforeOption: moveBeforeOption
 	};
 	
 	var gEditor;
@@ -115,7 +116,7 @@ define([
 	 * Move a question
 	 * The beforeId is the id of the dom element that precedes this element
 	 */
-	function moveBefore(sourceId, beforeId) {		
+	function moveBeforeQuestion(sourceId, beforeId) {		
 		
 		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
 			beforeFormIndex = $beforeElement.data("fid"),
@@ -133,20 +134,21 @@ define([
 			name,
 			change;
 		
+
+		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
+		
 		// Get the new sequence of the question
 		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);				// Take the sequence of the item it is moving in front of
-		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
-
 		
 		// Get the old sequence of the question
 		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
 		name = survey.forms[sourceFormIndex].questions[sourceItemIndex].name;
-		
+
 		// Create changeset to be applied on save		
 		change = {
-				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
-				action: "move",
-				question: {
+			changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
+			action: "move",
+			question: {
 					seq: seq,
 					sourceSeq: sourceSeq,
 					name: name,
@@ -156,6 +158,67 @@ define([
 					sourceItemIndex: sourceItemIndex,
 					formIndex: beforeFormIndex
 				}
+		};
+		
+
+		
+		
+		$context = changeset.add(change);
+		return $context;				// Add events on to the altered html
+		
+	}
+	
+	/*
+	 * Move an option
+	 * The beforeId is the id of the dom element that precedes this element
+	 */
+	function moveBeforeOption(sourceId, beforeId) {		
+		
+		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
+			beforeFormIndex = $beforeElement.data("fid"),
+			beforeItemIndex = $beforeElement.data("id"),
+			beforeItemListName = $beforeElement.data("list_name"),
+			
+			seq,												// The new values
+			formIndex,
+
+			$sourceElement = $('#' + sourceId),					// The old values
+			sourceFormIndex = $sourceElement.data("fid"),
+			sourceItemIndex = $sourceElement.data("id"),
+			sourceItemListName = $sourceElement.data("list_name"),
+			
+			sourceSeq,
+			
+			survey = globals.model.survey,
+			name,
+			change;
+		
+
+		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
+
+		// Get the new sequence of the option
+		seq = getSequenceOption(beforeItemIndex, survey.optionLists[beforeItemListName]);
+		
+		// Get the old sequence of the option
+		sourceSeq = getSequenceOption(sourceItemIndex, survey.optionLists[sourceItemListName]);
+		//name = survey.forms[sourceFormIndex].questions[sourceItemIndex].name;
+		
+		// Create changeset to be applied on save		
+		change = {
+			changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change
+			action: "move",
+			option: {
+					seq: seq,
+					sourceSeq: sourceSeq,
+					optionList: beforeItemListName,
+					name: name,
+					
+					// Helper values 
+					sourceOptionList: sourceItemListName,
+					sourceItemIndex: sourceItemIndex,
+					formIndex: beforeFormIndex
+				}
+				
 		};
 		
 		$context = changeset.add(change);

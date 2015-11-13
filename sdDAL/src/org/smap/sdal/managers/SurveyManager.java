@@ -244,7 +244,6 @@ public class SurveyManager {
 			int projectId
 			) throws SQLException, Exception {
 		
-		ResultSet resultSet = null;
 		int sId;
 		String ident = null;
 		String tablename = null;

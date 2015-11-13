@@ -1231,7 +1231,7 @@ function createNewSurvey(name, callback) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to create survey: " + err);
+				alert("Error: Failed to create survey: " + xhr.responseText);
 			}
 		}
 	});	

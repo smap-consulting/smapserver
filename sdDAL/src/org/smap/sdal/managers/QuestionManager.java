@@ -265,15 +265,46 @@ public class QuestionManager {
 		String sql = "delete from question q where qname = ? and q.q_id in " +
 				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
 
+		PreparedStatement pstmtDelLabels = null;
+		String sqlDelLabels = "delete from translation t where t.s_id = ? and " +
+				"t.text_id in (select qtext_id  from question where qname = ? and q_id in " +
+				" (select q.q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?));";
+		
+		PreparedStatement pstmtDelHints = null;
+		String sqlDelHints = "delete from translation t where t.s_id = ? and " +
+				"t.text_id in (select infotext_id  from question where qname = ? and q_id in " +
+				" (select q.q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?));";
+		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq - 1 where f_id = ? and seq >= ? and f_id in " +
 				"(select f_id from form where s_id = ?)";
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmtDelLabels = sd.prepareStatement(sqlDelLabels);
+			pstmtDelHints = sd.prepareStatement(sqlDelHints);
 			pstmt = sd.prepareStatement(sql);
 			
+			sd.setAutoCommit(false);
+			
 			for(Question q : questions) {
+				
+		
+				// Delete the labels (
+				pstmtDelLabels.setInt(1, sId);
+				pstmtDelLabels.setString(2, q.name );
+				pstmtDelLabels.setInt(3, sId );
+				
+				log.info("Delete question labels: " + pstmtDelLabels.toString());
+				pstmtDelLabels.executeUpdate();
+				
+				// Delete the labels (
+				pstmtDelHints.setInt(1, sId);
+				pstmtDelHints.setString(2, q.name );
+				pstmtDelHints.setInt(3, sId );
+				
+				log.info("Delete question hints: " + pstmtDelHints.toString());
+				pstmtDelHints.executeUpdate();
 				
 				// Delete the question
 				pstmt.setString(1, q.name );
@@ -289,7 +320,11 @@ public class QuestionManager {
 				
 				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
+				
+				sd.commit();
+
 			}
+			sd.setAutoCommit(true);
 			
 			
 		} catch(SQLException e) {
@@ -297,6 +332,8 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
+			try {if (pstmtDelLabels != null) {pstmtDelLabels.close();}} catch (SQLException e) {}
+			try {if (pstmtDelHints != null) {pstmtDelHints.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}	
 		
@@ -399,6 +436,10 @@ public class QuestionManager {
 				"and f.s_id = ? " +
 				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
 		
+		PreparedStatement pstmtDelLabels = null;
+		String sqlDelLabels = "delete from translation t where t.s_id = ? and " +
+				"t.text_id in (select label_id  from option where q_id = ? and ovalue = ?); ";
+		
 		PreparedStatement pstmt = null;
 		String sql = "delete from option " +
 				" where q_id = ? " +
@@ -410,15 +451,11 @@ public class QuestionManager {
 		try {
 			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
+			pstmtDelLabels = sd.prepareStatement(sqlDelLabels);
 			pstmt = sd.prepareStatement(sql);
 			
 			for(Option o : options) {
 				
-				//int optionListAsQId = 0;
-				//try {
-				//	optionListAsQId = Integer.parseInt(o.optionList);
-				//} catch (Exception e) {
-				//}
 			
 				// Get the questions from the form that use this option list
 				pstmtGetQuestions.setInt(1, sId);
@@ -430,6 +467,14 @@ public class QuestionManager {
 				while (rs.next()) {
 				
 					int qId = rs.getInt(1);
+					
+					// Delete the option labels
+					pstmtDelLabels.setInt(1, sId );
+					pstmtDelLabels.setInt(2, qId );
+					pstmtDelLabels.setString(3, o.value );
+					
+					log.info("Delete option: " + pstmtDelLabels.toString());
+					pstmtDelLabels.executeUpdate();
 					
 					// Delete the option
 					pstmt.setInt(1, qId );
@@ -454,6 +499,7 @@ public class QuestionManager {
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtDelLabels != null) {pstmtDelLabels.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
 		}	
 		

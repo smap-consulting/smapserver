@@ -188,9 +188,6 @@ tr.deleted td a {
   font-size: 0px;
   border-radius: 5px;
 }
-.add_before_button:hover {
-	background-color: #528bca;
-}
 
 .add_after_button {
   width: 100%;
@@ -206,16 +203,16 @@ tr.deleted td a {
 	height: 60px;
 }
 
+.add_button:hover {
+  background-color: #1556be;
+}
+
 .add_button {
   background-color: #428bca;
 }
 
-.add_button:hover {
-  background-color: #528bca;
-}
-
 .add_drop_button {
-  background-color: #ddd;
+  background-color: #d6d6d6;
   border-style: dashed;
   height: 60px;
 }

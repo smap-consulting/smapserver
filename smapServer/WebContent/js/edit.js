@@ -415,24 +415,6 @@ function setupQuestionTypeDialog() {
 	
 }
 
-function enableDragablePanels() {
-	var panelList = $('#formList');
-
-    panelList.sortable({
-        // Only make the .panel-heading child elements support dragging.
-        // Omit this to make the entire <li>...</li> draggable.
-        handle: '.panel-heading', 
-        update: function() {
-            $('.panel', panelList).each(function(index, elem) {
-                 var $listItem = $(elem),
-                     newIndex = $listItem.index();
-
-                 // Persist the new indices.
-            });
-        }
-    });
-}
-
 function getSurveyList() {
 	if(globals.gCurrentSurvey > 0) {
 		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
@@ -739,8 +721,16 @@ function respondToEvents($context) {
 			$sourceElem,
 			sourceId = ev.dataTransfer.getData("text"),
 			targetId = $targetListItem.data('qid'),
-			$context;
+			$context,
+			type;
 	
+		if(sourceId.indexOf("option") === 0) {
+			type = "option";
+			targetId = $targetListItem.data('oid');
+		} else {
+			type = "question";
+			targetId = $targetListItem.data('qid');
+		}
 		console.log("Dropped: " + sourceId + " : " + targetId);
 		
 		$targetListItem.addClass("add_button").removeClass("add_drop_button");
@@ -755,7 +745,11 @@ function respondToEvents($context) {
 		    ev.preventDefault();
 		    //$sourceElem.insertBefore($targetListItem.closest('li'));
 		    
-		    $context = question.moveBefore(sourceId, targetId);
+		    if(type === question) {
+		    	$context = question.moveBeforeQuestion(sourceId, targetId);
+		    } else {
+		    	$context = question.moveBeforeOption(sourceId, targetId);
+		    }
 			respondToEvents($context);						// Add events on to the altered html
 		}
 	});

@@ -173,7 +173,7 @@ define([
 		var h = [],
 			idx = -1;
 		
-		h[++idx] = '<li class="panel editor_element draggable';
+		h[++idx] = '<li class="panel editor_element question draggable';
 
 		if(type === "begin repeat" || type === "begin group") {
 			h[++idx] = ' panel-warning" id="question';
@@ -274,7 +274,7 @@ define([
 		var h = [],
 			idx = -1,
 			selProperty = $('#selProperty').val(),
-			selLabel = $('#selProperty').text(),
+			selLabel = $('#selProperty option:selected').text(),
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
 		 if(selProperty === "media") {
@@ -369,7 +369,7 @@ define([
 			h[++idx] = addNewOptionButton(false, "option" + (globals.gOptionIndex + 1), list_name, formIndex);
 		}
 		
-		h[++idx] = '<li class="editor_element draggable';
+		h[++idx] = '<li class="editor_element option draggable';
 		if(option.error) {
 			h[++idx] = ' option_error';
 		}
