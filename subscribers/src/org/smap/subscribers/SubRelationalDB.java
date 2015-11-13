@@ -370,14 +370,18 @@ public class SubRelationalDB extends Subscriber {
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
+				/*
+				 * Bug fix - duplicates
+				 *
 				if((formStatus != null && 
 						(formStatus.equals("draft") || formStatus.equals("incomplete"))) ||
 						getDuplicatePolicy() == DUPLICATE_REPLACE) {
 					System.out.println("Replacing existing record with " + keys.newKey);
 					replaceExistingRecord(cResults, cMeta, topElement, keys.duplicateKeys, keys.newKey);		// Mark the existing record as being replaced
 				} else {
+				*/
 					System.out.println("Dropping duplicate");
-				}
+				//}
 			} else {
 				// Check to see this submission was set to update an existing record with new data
 				System.out.println("Check for existing key");
@@ -492,9 +496,17 @@ public class SubRelationalDB extends Subscriber {
 			if(parent_key == 0) {	// top level survey has a parent key of 0
 				createTable(statement, tableName, sName);
 				keys.duplicateKeys = checkDuplicate(statement, tableName, uuid);
+				/*
+				 * Bug fix duplicates
+				 *
 				if(keys.duplicateKeys.size() > 0 && 
 						getDuplicatePolicy() == DUPLICATE_DROP && 
 						formStatus.equals("complete")) {
+					throw new Exception("Duplicate survey: " + uuid);
+				}
+				*/
+				if(keys.duplicateKeys.size() > 0 && 
+						getDuplicatePolicy() == DUPLICATE_DROP) {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
 				// Apply any updates that have been made to the table structure since the last submission
