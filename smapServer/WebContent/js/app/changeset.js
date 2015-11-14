@@ -623,7 +623,7 @@ define([
 				} else {
 					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));
 				}
-				$changedRow = $("#question" + globals.gQuestionIndex);
+				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
 				delete change.question.$relatedElement;		// Delete the "related element", it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
 				change.question.$deletedElement.prev().remove();	// Remove the add before button

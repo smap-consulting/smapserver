@@ -45,7 +45,7 @@ define([
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, "question" + (globals.gQuestionIndex + 1));
+			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex);
 		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
@@ -67,7 +67,6 @@ define([
 					
 					h[++idx] = '<button tabindex="-1" class="btn btn-default">';
 					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="question';
-					h[++idx] = globals.gQuestionIndex;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';
 					 
@@ -184,7 +183,7 @@ define([
 				h[++idx] = ' panel-success" id="question';
 			}
 		}
-		h[++idx] = ++globals.gQuestionIndex;
+		h[++idx] = formIndex + "_" + qIndex;
 		++globals.gElementIndex;
 		h[++idx] = '"';
 		
@@ -498,7 +497,8 @@ define([
 				if(question.type === "end repeat") {
 					continue;
 				}
-				lastRealQuestionId = "question" + (globals.gQuestionIndex + 1);
+				lastRealQuestionId = "question" + fIndex + "_" + form.qSeq[i];
+				globals.hasQuestions = true;
 				h[++idx] = addOneQuestion(question, fIndex, form.qSeq[i], true);
 			}
 			if(form.parentform == 0) {
@@ -605,7 +605,7 @@ define([
 		 * 
 		 */
 		globals.gElementIndex = 0;
-		globals.gQuestionIndex = 0;
+		globals.gHasQuestions = false;
 		globals.gNewQuestionButtonIndex = 0;
 		globals.gNewOptionButtonIndex = 0;
 		globals.gOptionIndex = 0;
@@ -635,7 +635,7 @@ define([
 		}
 		
 		
-		if(globals.gQuestionIndex == 0) {
+		if(globals.gHasQuestion) {
 			// If there were no questions then set focus to the add new question button
 			$('.add_final_button').focus();
 		} else {

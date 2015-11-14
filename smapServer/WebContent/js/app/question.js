@@ -81,7 +81,7 @@ define([
 			// First question in the form
 			firstQuestion = true;
 			formIndex = 0;
-			seq = 1;
+			seq = 0;
 		}
 
 		// Create changeset to be applied on save		
