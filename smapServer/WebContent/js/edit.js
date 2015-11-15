@@ -100,6 +100,7 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [],
+		openingNew = false,
 		dont_get_current_survey = true;
 	
 	window.bootbox = bootbox;
@@ -109,21 +110,24 @@ $(document).ready(function() {
 	// Get the parameters and start editing a survey if one was passed as a parameter
 	params = location.search.substr(location.search.indexOf("?") + 1)
 	pArray = params.split("&");
+	dont_get_current_survey = false;
 	for (i = 0; i < pArray.length; i++) {
 		param = pArray[i].split("=");
 		if ( param[0] === "id" ) {
+			dont_get_current_survey = true;		// USe the passed in survey id
 			globals.gCurrentSurvey = param[1];
 			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+		} else if ( param[0] === "new" ) {
+			dont_get_current_survey = true;		// Don't get any survey details
+			globals.gCurrentSurvey = -1;
+			openForm("new");
 		}
 	}
 	
+	window.history.pushState('',document.title, document.location.origin + document.location.pathname);	// Strip out the parameters from the href
+	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	if(globals.gCurrentSurvey > 0) {
-		dont_get_current_survey = true;		// The current survey was passed in the parameters
-	} else {
-		dont_get_current_survey = false;		// The current survey was not passed in the parameters
-	}
 	getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
 	getFilesFromServer(gBaseUrl, undefined, refreshMediaView);		// Get the organisational level media files
 
@@ -438,6 +442,10 @@ function surveyDetailsDone() {
 	// Update edit view
 	updateSettingsData();
 	refreshForm();
+	
+	// Set up link to test file
+	$('.m_test_survey').attr("href", "/webForm/s" + globals.gCurrentProject + "_" + globals.gCurrentSurvey);
+	
 }
 
 

@@ -90,7 +90,8 @@
 				<tr>
 				<td><h4>Form: <span class="formName"></span></h4></td>
 				<td><select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></td>
-				<td><a type="button" tabindex="-1"  class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled">Save <span class="badge">0</span></a><td>
+				<td><a type="button" tabindex="-1"  class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled"><span class="lang" data-lang="c_save">Save</span> <span class="badge">0</span></a><td>
+				<td><a type="button" tabindex="-1"  data-lang="c_test" class="btn btn-default btn-primary lang m_test_survey" href="#" target="_blank">Test</a><td>
 				</tr>
 				
 			</table>			
@@ -290,7 +291,7 @@
 
 			<div class="modal-footer">
 	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-	            <button id="get_form" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="m_open">Open</button>
+	            <button id="get_form" type="button" class="btn btn-primary lang" data-lang="m_open">Open</button>
 	        </div>
 		</div>
 	</div>

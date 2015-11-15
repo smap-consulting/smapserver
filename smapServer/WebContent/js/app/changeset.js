@@ -53,9 +53,6 @@ define([
 		var refresh,
 			$context;
 		
-		// Add to changeset array
-		addToChangesetArray(change);
-		
 		// Apply to model
 		refresh = updateModel(change);
 		
@@ -75,6 +72,10 @@ define([
 		} else {
 			$context = updateHtmlElement(change);
 		}
+		
+		// Add to changeset array ready for writing to the database
+		
+		addToChangesetArray(change);
 		
 		return $context;
 		
@@ -184,6 +185,15 @@ define([
 			form,
 			applyChange = true;
 
+		// Delete any items containing jquery elements
+		if(change.question) {
+			delete change.question.$relatedElement;		
+			delete change.question.$deletedElement;
+		}
+		if(change.option) {
+			delete change.option.$button;
+		}
+		
 		/*
 		 * Add additional parameters to change object
 		 */	
@@ -624,23 +634,19 @@ define([
 					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));
 				}
 				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
-				delete change.question.$relatedElement;		// Delete the "related element", it is no longer needed and contains circular references which cannot be stringified
 			} else if(change.action === "delete") {
 				change.question.$deletedElement.prev().remove();	// Remove the add before button
 				change.question.$deletedElement.remove();
-				delete change.question.$deletedElement;
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
 				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.itemIndex, change.option.optionList, change.option.qName, true);
 				change.option.$button.before(newMarkup);
 				$changedRow = change.option.$button.prev();
-				delete change.option.$button;		// Delete the jquery element, it is no longer needed and contains circular references which cannot be stringified
 			
 			} else if(change.action === "delete") {
 				change.question.$deletedElement.prev().remove();	// Remove the add before button
 				change.option.$deletedElement.remove();
-				delete change.option.$deletedElement;
 			}
 		} else if(change.changeType === "property") {
 			// Apply any markup changes that result from a property change

@@ -1215,11 +1215,13 @@ function createNewSurvey(name, callback) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
+			$('#openFormModal').modal("hide");
+
 			globals.model.survey = data;
 			globals.model.setSettings();
 			globals.gCurrentSurvey = data.id;
-			console.log("New Survey");
-			console.log(data);
+			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+			
 			setLanguages(data.languages);
 			
 			if(typeof callback == "function") {
