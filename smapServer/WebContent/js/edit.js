@@ -75,7 +75,8 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
-	dragCounters = {};
+	dragCounters = {},
+	gTempLanguages = [];
 
 // Media globals
 var gUrl,			// url to submit to
@@ -166,6 +167,17 @@ $(document).ready(function() {
 		changeset.save(surveyListDone);
 	});
 
+	$('.m_languages').off().click(function() {
+		console.log("Edit languages");
+		gTempLanguages = globals.model.survey.languages.slice();
+		updateLanguageView();
+		$('#editLanguageModal').modal("show");
+	});
+	$('#addLanguage').off().click(function() {
+		gTempLanguages.push("");
+		updateLanguageView();
+	});
+	
 	// Add menu functions
 	$('#m_media').off().click(function() {	// MEDIA
 		// Set up media dialog to manage loading and deleting of media
@@ -439,8 +451,8 @@ function surveyDetailsDone() {
 		getFilesFromServer(gBaseUrl, globals.gCurrentSurvey, refreshMediaView);
 	}
 	
-	// Update edit view
-	updateSettingsData();
+	updateSettingsData();		// Update edit view
+	
 	refreshForm();
 	
 	// Set up link to test file
@@ -846,17 +858,92 @@ function mediaPropSelected($this) {
  * Update the settings data (excluding languages which is set globally)
  */
 function updateSettingsData() {
-	var i,
-		key,
-		h = [],
-		idx = -1,
-		defLangIdx = 0;
-	
+
 	$('.survey_name').val(globals.model.survey.displayName);
 	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
 	$('#set_instance_name').val(globals.model.survey.instanceNameDefn);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
+}
+
+
+/*
+ * Update the settings data (excluding languages which is set globally)
+ */
+function updateLanguageView() {
+	var i,
+		$selector = $('#language_list'),
+		languages = gTempLanguages,
+		h = [],
+		idx = -1;
+	
+
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_desc"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+
+	for(i = 0; i < languages.length; i++) {
+		
+		h[++idx] = '<tr>';
+		
+		// name
+		h[++idx] = '<td>';
+		h[++idx] = '<input type="text" placeholder="Language Name" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" required class="form-control" value="';
+		h[++idx] = languages[i];
+		h[++idx] = '"';
+		h[++idx] = '</td>';
+		
+		// description
+		h[++idx] = '<td>';
+		h[++idx] = '';
+		h[++idx] = '</td>';
+		
+	
+		// actions
+		h[++idx] = '<td>';
+	
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm edit_language warning">';
+		h[++idx] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
+	
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm rm_language danger">';
+		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+	
+		h[++idx] = '</td>';
+		// end actions
+	
+		h[++idx] = '</tr>';
+	}
+	
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+
+	$selector.empty().append(h.join(''));
+
+	$(".rm_language", $selector).click(function(){
+		var idx = $(this).data("idx");
+		alert("Delete Language: " + idx)
+		//delete_language(gMaps[idx].id);
+	});
+
+	$(".edit_language", $selector).click(function(){
+		var idx = $(this).data("idx");
+		alert("Edit Language: " + idx)
+		edit_language(idx);
+		//$('#addMapPopup').modal("show");
+	});
+	
+	
 }
 
 

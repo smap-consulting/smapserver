@@ -36,6 +36,10 @@ DROP SEQUENCE IF EXISTS t_seq CASCADE;
 CREATE SEQUENCE t_seq START 1;
 ALTER SEQUENCE t_seq OWNER TO ws;	
 
+DROP SEQUENCE IF EXISTS l_seq CASCADE;
+CREATE SEQUENCE l_seq START 1;
+ALTER SEQUENCE l_seq OWNER TO ws;	
+
 DROP SEQUENCE IF EXISTS g_seq CASCADE;
 CREATE SEQUENCE g_seq START 1;
 ALTER SEQUENCE g_seq OWNER TO ws;
@@ -452,6 +456,16 @@ CREATE UNIQUE INDEX translation_index ON translation(s_id, language, text_id, ty
 CREATE INDEX text_id_sequence ON translation(text_id);
 CREATE INDEX language_sequence ON translation(language);
 CREATE INDEX t_s_id_sequence ON translation(s_id);
+
+
+DROP TABLE IF EXISTS language;
+CREATE TABLE language (
+	id INTEGER DEFAULT NEXTVAL('l_seq') CONSTRAINT pk_language PRIMARY KEY,
+	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
+	seq int,
+	language text	
+	);
+ALTER TABLE language OWNER TO ws;
 
 -- Tables to manage dashboard settings
 

@@ -901,9 +901,12 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get languages for a survey
+	 * Get languages that have been used in a survey resulting in a translation entry
+	 *  This is used to get languages for surveys loaded from xlfForm prior to the creation of the editor
+	 *  After the creation of the editor the available languages, some of which may not have any translation entries, are 
+	 *   stored in the languages table
 	 */
-	public static ArrayList<String> getLanguagesForSurvey(Connection connectionSD, int sId) throws SQLException {
+	public static ArrayList<String> getLanguagesUsedInSurvey(Connection connectionSD, int sId) throws SQLException {
 		
 		PreparedStatement pstmtLanguages = null;
 		
@@ -924,6 +927,73 @@ public class GeneralUtilityMethods {
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
 		return languages;
+	}
+	
+	/*
+	 * Get languages from the languages table
+	 */
+	public static ArrayList<String> getLanguages(Connection sd, int sId) throws SQLException {
+		
+		PreparedStatement pstmtLanguages = null;
+		ArrayList<String> languages = new ArrayList<String> ();
+		
+		try {
+			String sqlLanguages = "select language, seq from language where s_id = ? order by seq asc";
+			pstmtLanguages = sd.prepareStatement(sqlLanguages);
+			
+			pstmtLanguages.setInt(1, sId);
+			ResultSet rs = pstmtLanguages.executeQuery();
+			while(rs.next()) {
+				languages.add(rs.getString(1));
+			}
+			
+			if(languages.size() == 0) {
+				// Survey was loaded from an xlsForm and the languages array was not set, get languages from translations
+				languages = GeneralUtilityMethods.getLanguagesUsedInSurvey(sd, sId);
+				GeneralUtilityMethods.setLanguages(sd, sId, languages);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
+		}
+		
+		return languages;
+	}
+	
+	/*
+	 * Set the languages in the language table
+	 */
+	public static void setLanguages(Connection sd, int sId, ArrayList<String> languages) throws SQLException {
+		
+		PreparedStatement pstmtLanguages = null;
+		
+		try {
+			String sqlLanguages = "insert into language(s_id, language, seq) values(?, ?, ?);";
+			pstmtLanguages = sd.prepareStatement(sqlLanguages);
+			
+			for(int i = 0; i < languages.size(); i++) {
+				
+				String language = languages.get(i);
+				
+				pstmtLanguages.setInt(1, sId);
+				pstmtLanguages.setString(2, language);
+				pstmtLanguages.setInt(3, i);
+				
+				pstmtLanguages.executeUpdate();
+			
+			}
+		
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
+		}
+
 	}
 	
 	/*

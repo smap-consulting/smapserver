@@ -331,3 +331,14 @@ alter table form alter column parentform set not null;
 update form set parentquestion = 0 where parentquestion is null;
 alter table form alter column parentquestion set default 0;
 alter table form alter column parentquestion set not null;
+
+CREATE SEQUENCE l_seq START 1;
+ALTER SEQUENCE l_seq OWNER TO ws;	
+
+CREATE TABLE language (
+	id INTEGER DEFAULT NEXTVAL('l_seq') CONSTRAINT pk_language PRIMARY KEY,
+	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
+	seq integer,
+	language text	
+	);
+ALTER TABLE language OWNER TO ws;

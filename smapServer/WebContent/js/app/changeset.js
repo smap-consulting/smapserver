@@ -371,7 +371,19 @@ define([
 						newElement.itemIndex === element.itemIndex &&
 						newElement.formIndex === element.formIndex) {
 					
-					item.question[newElement.prop] = newElement.newVal;
+					
+					if(change.changeType === "label") {
+						if(!item.question.labels) {
+							item.question.labels = [];
+						}
+						if(!item.question.labels[newElement.language]) {
+							item.question.labels[newElement.language] = {};
+						}
+						item.question.labels[newElement.language][newElement.propType] = newElement.newVal;
+					
+					} else {
+						item.question[newElement.prop] = newElement.newVal;
+					}
 					if(newElement.prop === "name") {
 						item.question["path"] = newElement.path;
 					}

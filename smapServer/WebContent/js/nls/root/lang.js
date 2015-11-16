@@ -46,6 +46,7 @@ define({
 	"c_user": "User",
 	"c_email": "Email",
 	"c_lang": "Language",
+	"c_langs": "Languages",
 	"c_orientation": "Orientation",
 	"c_password": "Password",
 	"c_c_p": "Confirm Password",

@@ -766,7 +766,7 @@ public class UtilityMethodsEmail {
 			/*
 			 * Get the languages
 			 */
-			languages = GeneralUtilityMethods.getLanguagesForSurvey(sd, sId);
+			languages = GeneralUtilityMethods.getLanguages(sd, sId);
 			log.info("Adding labels for: " + languages.toString());
 			
 			//String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
@@ -777,26 +777,34 @@ public class UtilityMethodsEmail {
 			
 			for(int i = 0; i < languages.size(); i++) {
 	
+				
 				Label l = labels.get(i);
 				
 				// Set common values
 				pstmt.setInt(1, sId);
 				pstmt.setString(2, languages.get(i));
 				
+				System.out.println("$$$$ language: " + languages.get(i));
+				System.out.println("     text: " + l.text);
+				System.out.println("     hint: " + l.hint);
 				
 				// Update text
-				pstmt.setString(3, path + ":label");
-				pstmt.setString(4, "none");
-				pstmt.setString(5, l.text);
-				log.info("Update text label: " + pstmt.toString());
-				pstmt.executeUpdate();
+				if(l.text != null) {
+					pstmt.setString(3, path + ":label");
+					pstmt.setString(4, "none");
+					pstmt.setString(5, l.text);
+					log.info("Update text label: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
 				
 				// Update hint
-				pstmt.setString(3, path + ":hint");
-				pstmt.setString(4, "none");
-				pstmt.setString(5, l.hint);
-				log.info("Update hint label: " + pstmt.toString());
-				pstmt.executeUpdate();
+				if(l.hint != null) {
+					pstmt.setString(3, path + ":hint");
+					pstmt.setString(4, "none");
+					pstmt.setString(5, l.hint);
+					log.info("Update hint label: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
 				
 				// TODO media types
 				

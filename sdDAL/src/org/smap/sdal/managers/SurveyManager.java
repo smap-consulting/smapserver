@@ -296,6 +296,11 @@ public class SurveyManager {
 			log.info("Create new survey part 3: " + pstmt.toString());
 			pstmt.execute();
 			
+			// 4. Create default language
+			ArrayList<String> languages = new ArrayList<String> ();
+			languages.add("language");
+			GeneralUtilityMethods.setLanguages(sd, sId, languages);
+			
 			sd.commit();
 			sd.setAutoCommit(true);
 
@@ -443,10 +448,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
 		
 		// Get the available languages
-		s.languages = GeneralUtilityMethods.getLanguagesForSurvey(sd, s.id);
-		if(s.languages.size() == 0) {
-			s.languages.add("language");		// Make sure there is at least one default language
-		}
+		s.languages = GeneralUtilityMethods.getLanguages(sd, s.id);
 		
 		// Get the organisation id
 		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
@@ -1047,7 +1049,7 @@ public class SurveyManager {
 			String sqlMaxSeq = "select max(seq) from option where q_id = ?;";
 			pstmtMaxSeq = connectionSD.prepareStatement(sqlMaxSeq);
 		
-			ArrayList<String> languages = GeneralUtilityMethods.getLanguagesForSurvey(connectionSD, sId);
+			ArrayList<String> languages = GeneralUtilityMethods.getLanguagesUsedInSurvey(connectionSD, sId);
 			int currentQId = -1;
 			int maxSeq = -1;
 			ResultSet rs = null;

@@ -91,6 +91,7 @@
 				<td><h4>Form: <span class="formName"></span></h4></td>
 				<td><select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></td>
 				<td><a type="button" tabindex="-1"  class="btn btn-default btn-success lang disabled m_save_survey" disabled="disabled"><span class="lang" data-lang="c_save">Save</span> <span class="badge">0</span></a><td>
+				<td><a type="button" tabindex="-1"  data-lang="c_langs" class="btn btn-default btn-primary lang m_languages">Languages</a><td>
 				<td><a type="button" tabindex="-1"  data-lang="c_test" class="btn btn-default btn-primary lang m_test_survey" href="#" target="_blank">Test</a><td>
 				</tr>
 				
@@ -414,7 +415,36 @@
 </div>
 
 
-
+<!-- Model to edit languages -->
+<div id="editLanguageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="editLanguageLabel">Languages</h4>
+   			</div>
+   			
+   			<div class="modal-body">
+				<div class="container-fluid">
+					<div class = "well">					
+						<div class="table-responsive">
+							<div id="language_list"></div>
+						</div>
+						<a id="addLanguage" type="button" class="btn btn-default" aria-label="Add Language">Add</a>
+					</div>
+					<div class="col-md-12 text-center">
+						<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+					</div>
+				</div>
+			</div>
+			
+			<div class="modal-footer">
+        		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      		</div>
+		</div>
+	</div>
+		
+</div>
 
 
 <!-- Modal to allow the user to edit their own details -->
