@@ -47,6 +47,7 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ServerSideCalculate;
 import org.smap.sdal.model.Survey;
 
@@ -318,7 +319,78 @@ public class Surveys extends Application {
 
 		return response;
 	}
+	
 
+	/*
+	 * Update the survey languages
+	 */
+	@Path("/save_languages/{sId}")
+	@POST
+	public Response saveLnguages(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@FormParam("languages") String languages) { 
+		
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
+		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		// End Authorisation
+				
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGet = null;
+		
+		try {
+			/*
+			 * Parse the request
+			 */
+	
+			
+			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			ArrayList<Language> languageList = gson.fromJson(languages, type);
+			
+			// Update the languages
+			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
+
+			
+			response = Response.ok().build();
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"sql error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Exception loading settings", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			
+			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
+			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
+			
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			    response = Response.serverError().entity("Survey: Failed to close connection").build();
+			}
+			
+		}
+
+		return response;
+	}
+	
 	/*
 	 * Apply updates to the survey
 	 */
