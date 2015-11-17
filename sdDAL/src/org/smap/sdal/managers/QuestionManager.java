@@ -87,23 +87,14 @@ public class QuestionManager {
 				" from option " +
 				" where q_id = ? " +
 				" and externalfile = 'true';";
-		
-		String sqlLanguages = "select distinct t.language from translation t " +
-				"where s_id = ? order by t.language asc";
-		
+
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtOption = null;
-		PreparedStatement pstmtLanguages = null;
 		
 		try {
 			pstmtOption = sd.prepareStatement(sqlOption);
 			
-			pstmtLanguages = sd.prepareStatement(sqlLanguages);
-			pstmtLanguages.setInt(1, sId);
-			ResultSet rsLanguages = pstmtLanguages.executeQuery();
-			while(rsLanguages.next()) {
-				survey.languages.add(rsLanguages.getString(1));
-			}
+			survey.languages = GeneralUtilityMethods.getLanguages(sd, sId);
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
@@ -139,7 +130,6 @@ public class QuestionManager {
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 			if(pstmtOption != null) try{pstmtOption.close();}catch(Exception e){}
-			if(pstmtLanguages != null) try{pstmtLanguages.close();}catch(Exception e){}
 		}
 		
 		return questions;
