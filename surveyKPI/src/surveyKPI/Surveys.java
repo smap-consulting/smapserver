@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -33,8 +32,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import model.Settings;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -42,17 +39,10 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
-import org.smap.sdal.model.Language;
-import org.smap.sdal.model.ServerSideCalculate;
-import org.smap.sdal.model.Survey;
-
-import utilities.MediaInfo;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -355,9 +345,9 @@ public class Surveys extends Application {
 			 */
 	
 			
-			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
+			Type type = new TypeToken<ArrayList<String>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			ArrayList<Language> languageList = gson.fromJson(languages, type);
+			ArrayList<String> languageList = gson.fromJson(languages, type);
 			
 			// Update the languages
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
