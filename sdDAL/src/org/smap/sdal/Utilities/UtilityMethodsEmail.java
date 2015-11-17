@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Label;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Survey;
