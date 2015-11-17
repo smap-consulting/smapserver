@@ -173,6 +173,7 @@ $(document).ready(function() {
 		updateLanguageView();
 		$('#editLanguageModal').modal("show");
 	});
+	
 	$('#addLanguage').off().click(function() {
 		gTempLanguages.push("");
 		updateLanguageView();
@@ -225,6 +226,38 @@ $(document).ready(function() {
 
 	$('#save_settings').off().click(function() {	// Save settings to the database
 		globals.model.save_settings();
+	});
+	
+	/*
+	 * Save changes to the language list
+	 */
+	$('#editLanguageSave').off().click(function() {	// Save languages to the database
+
+		var languagesString = JSON.stringify(gTempLanguages);
+		console.log("Saving languages: " + languagesString);
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  dataType: "json",
+			  url: "/surveyKPI/surveys/save_languages/" + gSId,
+			  data: { languages: languagesString },
+				success: function(data) {
+					removeHourglass();
+					$('#editLanguageModal').modal("hide");
+					globals.model.survey = data;
+					setLanguages(data.languages);
+					refreshForm();
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						alert("Error: Failed to create survey: " + xhr.responseText);
+					}
+				}
+		});
 	});
 	
 	// Add responses to events
@@ -868,7 +901,7 @@ function updateSettingsData() {
 
 
 /*
- * Update the settings data (excluding languages which is set globally)
+ * Update the language modal view
  */
 function updateLanguageView() {
 	var i,
@@ -893,7 +926,7 @@ function updateLanguageView() {
 		
 		// name
 		h[++idx] = '<td>';
-		h[++idx] = '<input type="text" placeholder="Language Name" data-idx="';
+		h[++idx] = '<input type="text" data-idx="';
 		h[++idx] = i;
 		h[++idx] = '" required class="form-control" value="';
 		h[++idx] = languages[i];
@@ -908,11 +941,6 @@ function updateLanguageView() {
 	
 		// actions
 		h[++idx] = '<td>';
-	
-		h[++idx] = '<button type="button" data-idx="';
-		h[++idx] = i;
-		h[++idx] = '" class="btn btn-default btn-sm edit_language warning">';
-		h[++idx] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
 	
 		h[++idx] = '<button type="button" data-idx="';
 		h[++idx] = i;
@@ -932,15 +960,15 @@ function updateLanguageView() {
 
 	$(".rm_language", $selector).click(function(){
 		var idx = $(this).data("idx");
-		alert("Delete Language: " + idx)
-		//delete_language(gMaps[idx].id);
+		gTempLanguages.splice(idx, 1);
+		updateLanguageView();
 	});
 
-	$(".edit_language", $selector).click(function(){
+	$("input", $selector).change(function(){
 		var idx = $(this).data("idx");
-		alert("Edit Language: " + idx)
-		edit_language(idx);
-		//$('#addMapPopup').modal("show");
+		gTempLanguages.splice(idx, 1, $(this).val());
+		updateLanguageView();
+
 	});
 	
 	

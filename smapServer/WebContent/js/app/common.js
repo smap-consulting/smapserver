@@ -1171,6 +1171,7 @@ function getSurveyDetails(callback) {
 	
 /*
  * Set the languages for the editor
+ * Deprecate - when languages were part of settings
  */
 function setLanguages(languages) {
 	

@@ -332,12 +332,14 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
-				
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtGet = null;
+		
+		SurveyManager sm = new SurveyManager();
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
 		
 		try {
 			/*
@@ -351,9 +353,10 @@ public class Surveys extends Application {
 			
 			// Update the languages
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
-
+			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false);
 			
-			response = Response.ok().build();
+			String resp = gson.toJson(survey);
+			response = Response.ok(resp).build();
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"sql error", e);
@@ -362,9 +365,6 @@ public class Surveys extends Application {
 			log.log(Level.SEVERE,"Exception loading settings", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			
-			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
-			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
 			
 			try {
 				if (sd != null) {

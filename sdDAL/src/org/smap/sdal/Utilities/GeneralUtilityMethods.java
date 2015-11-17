@@ -968,12 +968,23 @@ public class GeneralUtilityMethods {
 	 */
 	public static void setLanguages(Connection sd, int sId, ArrayList<String> languages) throws SQLException {
 		
+		PreparedStatement pstmtDelLanguages = null;
 		PreparedStatement pstmtLanguages = null;
 		
 		try {
+			String sqlDelLanguages = "delete from language where s_id = ?;";
+			pstmtDelLanguages = sd.prepareStatement(sqlDelLanguages);
+			
 			String sqlLanguages = "insert into language(s_id, language, seq) values(?, ?, ?);";
 			pstmtLanguages = sd.prepareStatement(sqlLanguages);
 			
+			sd.setAutoCommit(false);
+			
+			// Delete existing
+			pstmtDelLanguages.setInt(1,sId);
+			pstmtDelLanguages.executeUpdate();
+			
+			// Insert the new languages
 			for(int i = 0; i < languages.size(); i++) {
 				
 				String language = languages.get(i);
@@ -982,15 +993,19 @@ public class GeneralUtilityMethods {
 				pstmtLanguages.setString(2, language);
 				pstmtLanguages.setInt(3, i);
 				
-				pstmtLanguages.executeUpdate();
-			
+				pstmtLanguages.executeUpdate();			
 			}
 		
+			sd.commit();
+			sd.setAutoCommit(true);
 			
 		} catch(SQLException e) {
+			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
+			sd.setAutoCommit(true);
+			try {if (pstmtDelLanguages != null) {pstmtDelLanguages.close();}} catch (SQLException e) {}
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
 

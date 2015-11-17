@@ -453,8 +453,7 @@ public class SurveyManager {
 		// Get the organisation id
 		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 		
-		// Set the default language if it has not previously been set
-		/*
+		// Set the default language if it has not previously been set	
 		if(s.def_lang == null) {
 			if(s.languages != null && s.languages.size() > 0) {
 				s.def_lang = s.languages.get(0);
@@ -462,7 +461,7 @@ public class SurveyManager {
 				s.def_lang = "language";
 			}
 		}
-		*/
+		
 		
 		// Get the Forms
 		pstmtGetForms.setInt(1, s.id);
