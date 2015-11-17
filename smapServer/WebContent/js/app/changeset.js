@@ -57,10 +57,10 @@ define([
 		refresh = updateModel(change);
 		
 		// Validate the change
-		if(change.changeType === "question") {
-			validateQuestion(change);
-		} else if(change.changeType === "option") {
+		if(change.changeType === "option") {
 			validateOption(change);
+		} else {
+			validateQuestion(change);
 		}
 		
 		/*
@@ -424,9 +424,10 @@ define([
 		if(numberChanges === 0) {
 			changes = [];
 			$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
-			
+			$('.m_languages').removeClass("disabled").attr("disabled", false);
 		} else {
 			$('.m_save_survey').find('.badge').html(numberChanges);
+			$('.m_languages').addClass("disabled").attr("disabled", true);
 			if(errors.length === 0) {
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 			}
@@ -459,25 +460,41 @@ define([
 					} else {
 						question[property.prop] = property.newVal;		//Other properties
 						
-						// Set type dependent properties
+						
 						if(property.setVisible) {
 							question["visible"] = property.visibleValue;
 							question["source"] = property.sourceValue;
 						}
 						
-						// Select question
-						if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {
-							// Ensure there is a list name for this question
-							if(!question.list_name) {
-								question.list_name = question.name;
-							}
-							// Ensure there is a list of choices
-							var optionList = survey.optionLists[question.list_name];
-							if(!optionList) {
-								survey.optionLists[question.list_name] = {
-									oSeq: [],
-									options: []
-								};
+						// Set type dependent properties
+						if(property.prop === "type") {
+							
+							if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {
+								// Select question
+								
+								// Ensure there is a list name for this question
+								if(!question.list_name) {
+									question.list_name = question.name;
+								}
+								
+								// Ensure there is a list of choices
+								var optionList = survey.optionLists[question.list_name];
+								if(!optionList) {
+									survey.optionLists[question.list_name] = {
+										oSeq: [],
+										options: []
+									};
+								}
+							} else if(property.newVal == "begin repeat") {
+								// New sub form
+								survey.forms.push({
+									id: undefined,
+									name: survey.forms[property.formIndex].questions[property.itemIndex].name,  // name of question
+									parentQuestionIndex: property.itemIndex,								
+									parentFormIndex: property.formIndex,
+									questions: [],
+									qSeq: []
+								});
 							}
 						}
 						
@@ -793,7 +810,8 @@ define([
 	function validateQuestion(change) {
 		
 		var i, j,
-			form, question,
+			form, 
+			question,
 			survey = globals.model.survey,
 			isValid = true,
 			hasDuplicate = false,
@@ -809,15 +827,24 @@ define([
 			itemIndex = change.property.itemIndex;
 		}
 		
-		if(change.action === "add") {
-			// New questions always have a blank name
+		question = survey.forms[formIndex].questions[itemIndex];
+		
+		if(!question.name || question.name.length === 0) {
+			// Blank names are not allowed
 			addValidationError(
 					formIndex,
 					itemIndex,
 					"This question does not have a name. Specify a unique name.");
 			isValid = false;
 		
-		} else if(change.action === "update") {
+		}
+		
+		if(change.action === "update") {
+			
+			// Check for blank name
+			if(isValid) {
+				
+			}
 			
 			/*
 			 * Name change require the entire set of questions to be validated for:
@@ -879,7 +906,7 @@ define([
 			return $this.data("fid") == formIndex && $this.data("id") == itemIndex;
 		});
 		$changedRow = $changedRow.closest('li');
-		$changedRow.removeClass("panel-success").addClass("panel-danger");
+		$changedRow.addClass("error");
 		
 		// Add message
 		$changedRow.find('.error-msg').html(msg);
@@ -907,7 +934,7 @@ define([
 			var $this = $(this);
 			return $this.data("fid") == formIndex && $this.data("id") == itemIndex;
 		});
-		$changedRow.closest('li').removeClass("panel-danger").addClass("panel-success");
+		$changedRow.closest('li').removeClass("error");
 	}
 	
 	/*

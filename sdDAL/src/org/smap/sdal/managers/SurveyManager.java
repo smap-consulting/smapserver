@@ -575,6 +575,29 @@ public class SurveyManager {
 			
 		} 
 		
+		// Add the parentFormIndex and parent question index to sub forms
+		for(Form f : s.forms) {
+			if(f.parentform > 0) {
+				for(int i = 0; i < s.forms.size(); i++) {
+					Form aForm = s.forms.get(i);
+					if(aForm.id == f.parentform) {
+						f.parentFormIndex = i;
+						for(int j = 0; j < aForm.questions.size(); j++) {
+							Question q = aForm.questions.get(j);
+							if(q.id == f.parentQuestion) {
+								f.parentQuestionIndex = j;
+								break;
+							}
+						}
+						break;
+					}
+				}
+			} else {
+				f.parentFormIndex = -1;
+				f.parentQuestionIndex = -1;
+			}
+		}
+		
 		// Add the server side calculations
 		pstmtGetSSC.setInt(1, s.getId());
 		rsGetSSC= pstmtGetSSC.executeQuery();

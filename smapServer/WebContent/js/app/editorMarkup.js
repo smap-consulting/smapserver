@@ -80,7 +80,7 @@ define([
 		}
 		h[++idx] = '">';
 		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
-			h[++idx] = addSubForm(question, globals.model.survey.forms[formIndex].id);
+			h[++idx] = addSubForm(formIndex, qIndex);
 		} else if(question.type.indexOf("select") === 0) {
 			if(!question.error) {
 				// Only add the options if the question it self does not have any errors
@@ -174,14 +174,14 @@ define([
 		
 		h[++idx] = '<li class="panel editor_element question draggable';
 
+		if(error) {
+			h[++idx] = ' error" ';
+		}
+		
 		if(type === "begin repeat" || type === "begin group") {
 			h[++idx] = ' panel-warning" id="question';
 		} else {
-			if(error) {
-				h[++idx] = ' panel-danger" id="question';
-			} else {
-				h[++idx] = ' panel-success" id="question';
-			}
+			h[++idx] = ' panel-success" id="question';
 		}
 		h[++idx] = formIndex + "_" + qIndex;
 		++globals.gElementIndex;
@@ -436,24 +436,23 @@ define([
 	/*
 	 * Add subform
 	 */
-	function addSubForm(question, parentId) {
+	function addSubForm(parentFormIndex, parentQuestionIndex) {
 		
 		var h = [],
 			idx = -1,
-			formName,
+			//formName,
 			survey = globals.model.survey,
-			forms = [],
+			forms = survey.forms,
 			i,
 			form;
 		
 		h[++idx] = '<ol class="list-unstyled">';
 		
-		// Get the form
-		formName = question.name;
-		forms = survey.forms;
+		//formName = question.name;
+		
 		for(i = 0; i < forms.length; i++) {
 			form = forms[i];
-			if(forms[i].parentform === parentId && forms[i].parentQuestion === question.id) {			
+			if(forms[i].parentFormIndex === parentFormIndex && forms[i].parentQuestionIndex === parentQuestionIndex) {			
 				h[++idx] = addQuestions(forms[i], i);
 				break;
 			}
