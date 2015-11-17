@@ -19,7 +19,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -28,14 +30,20 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 
-import model.Language;
+
+import org.smap.sdal.model.Language;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
+
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,9 +103,6 @@ public class Languages extends Application {
 		try {
 			String sql = null;
 
-			/*
-			 * Restrict list to top level form 
-			 */
 			sql = "SELECT DISTINCT language " +
 					"FROM translation " +  
 					"WHERE s_id = " + sId + " " +
@@ -107,12 +112,8 @@ public class Languages extends Application {
 			pstmt = connectionSD.prepareStatement(sql);	 			
 			ResultSet resultSet = pstmt.executeQuery();
 
-			while (resultSet.next()) {
-				
-				Language l = new Language();
-				l.name = resultSet.getString("language");
-				langs.add(l);
-
+			while (resultSet.next()) {				
+				langs.add(new Language(resultSet.getString("language"), false));
 			}
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -147,6 +148,7 @@ public class Languages extends Application {
 
 		return response;
 	}
+	
 
 }
 
