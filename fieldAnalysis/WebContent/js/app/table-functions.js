@@ -201,7 +201,8 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 				if(typeof globals !== "undefined" && globals.gCanEdit) {
 					// Add a button to edit the survey data in web forms
 					gTab[++gIdx] = '<td>';
-					gTab[++gIdx] = '<div class="menu_button btn context_table dropdown-toggle" type="button" data-toggle="dropdown" data-pkey="';
+					if(groups[i].properties.parkey == "0") {
+						gTab[++gIdx] = '<div class="menu_button btn context_table dropdown-toggle" type="button" data-toggle="dropdown" data-pkey="';
 						gTab[++gIdx] = groups[i].properties.prikeys[0];
 						gTab[++gIdx] = '" data-ident="';
 						gTab[++gIdx] = survey_ident;
@@ -214,6 +215,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 							gTab[++gIdx] = groups[i].properties._instanceid;		// Legacy instanceid name
 						}
 						gTab[++gIdx] = '"><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>';
+					}
 					gTab[++gIdx] = '</td>';
 				}
 				gTab[++gIdx] = '<td>';
