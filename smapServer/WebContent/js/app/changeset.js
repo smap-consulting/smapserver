@@ -495,6 +495,7 @@ define([
 									questions: [],
 									qSeq: []
 								});
+								question.childFormIndex = survey.forms.length - 1;
 							}
 						}
 						
@@ -841,30 +842,7 @@ define([
 		
 		if(change.action === "update") {
 			
-			// Check for blank name
-			if(isValid) {
-				
-			}
-			
-			/*
-			 * Name change require the entire set of questions to be validated for:
-			 *   references to the previous question name
-			 */
-			if(isValid && change.property.prop === "name") {
-				
-				console.log("Need to check for duplicates");
-				for(i = 0; i < survey.forms.length; i++) {
-					form = survey.forms[i];
-					for(j = 0; j < form.questions.length; j++) {		
-						if(!(i === formIndex && j === itemIndex)) {
-							question = form.questions[j];
-							
-							// TODO Check for reference errors
-						}
-					}
-				}
-				
-			}
+		
 		}
 		
 		
@@ -1060,9 +1038,9 @@ define([
 		var path = form.name,
 			forms = globals.model.survey.forms,
 			i;
-		while(form.parentform !== 0) {
+		while(form.parentFormIndex !== -1) {
 			for(i = 0; i < forms.length; i++) {
-				if(forms[i].id === form.parentform) {
+				if(i === form.parentFormIndex) {
 					form = forms[i];
 					path = form.name + "/" + path;
 					break;

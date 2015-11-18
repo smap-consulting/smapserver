@@ -45,7 +45,7 @@ define([
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex);
+			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex, formIndex);
 		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
@@ -108,7 +108,7 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton(after, topLevelForm, questionId) {
+	function addNewQuestionButton(after, topLevelForm, questionId, formIndex) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -133,6 +133,8 @@ define([
 		h[++idx] = locn;
 		h[++idx] = '" data-qid="';
 		h[++idx] = questionId;
+		h[++idx] = '" data-findex="';
+		h[++idx] = formIndex;
 		h[++idx] = '">Add New Question</button>';
 		h[++idx] = '</li>';
 		
@@ -175,7 +177,7 @@ define([
 		h[++idx] = '<li class="panel editor_element question draggable';
 
 		if(error) {
-			h[++idx] = ' error" ';
+			h[++idx] = ' error ';
 		}
 		
 		if(type === "begin repeat" || type === "begin group") {
@@ -466,7 +468,7 @@ define([
 	/*
 	 * Add the questions for a form
 	 */
-	function addQuestions(form, fIndex) {
+	function addQuestions(form, formIndex) {
 		var i,
 			question,
 			h = [],
@@ -477,6 +479,7 @@ define([
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
 			for(i = 0; i < form.qSeq.length; i++) {
+				globals.gHasQuestions = true;
 				question = form.questions[form.qSeq[i]];
 				// Ignore the following questions
 				if(question.name === '_task_key' || 
@@ -486,7 +489,7 @@ define([
 					continue;
 				}
 				if(question.type === "end group") {
-					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId);
+					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex);
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
@@ -496,14 +499,14 @@ define([
 				if(question.type === "end repeat") {
 					continue;
 				}
-				lastRealQuestionId = "question" + fIndex + "_" + form.qSeq[i];
+				lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
 				globals.hasQuestions = true;
-				h[++idx] = addOneQuestion(question, fIndex, form.qSeq[i], true);
+				h[++idx] = addOneQuestion(question, formIndex, form.qSeq[i], true);
 			}
-			if(form.parentform == 0) {
+			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
 			}
-			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId); 	// Adds a question at the end of the form
+			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex); 	// Adds a question at the end of the form
 		}
 		return h.join("");
 	}
@@ -611,7 +614,7 @@ define([
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {
 				for(i = 0; i < survey.forms.length; i++) {
-					if(survey.forms[i].parentform == 0) {
+					if(survey.forms[i].parentFormIndex == -1) {
 						h[++idx] = addQuestions(survey.forms[i], i);
 						break;
 					}
@@ -634,14 +637,10 @@ define([
 		}
 		
 		
-		if(globals.gHasQuestion) {
+		if(!globals.gHasQuestion) {
 			// If there were no questions then set focus to the add new question button
 			$('.add_final_button').focus();
-		} else {
-			// Set focus to name of first question
-			var $fe = $('input', '.container').first();
-			$('input', '.container').first().focus();
-		}
+		} 
 		return $('#formList');		// Return the context of the updated HTML so that events can be applied
 
 		

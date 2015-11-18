@@ -342,3 +342,5 @@ CREATE TABLE language (
 	language text	
 	);
 ALTER TABLE language OWNER TO ws;
+
+alter table form add column form_index int default -1;

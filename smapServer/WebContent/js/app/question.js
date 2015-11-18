@@ -54,7 +54,7 @@ define([
 	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
-	function add(qId, locn) {		
+	function add(formIndex, qId, locn) {		
 		
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
@@ -80,7 +80,6 @@ define([
 		} else {
 			// First question in the form
 			firstQuestion = true;
-			formIndex = 0;
 			seq = 0;
 		}
 

@@ -14,6 +14,8 @@ import com.itextpdf.text.BaseColor;
 public class Question {
 	public int id;
 	public int fId;
+	public int formIndex;			// Used by the online editor when the formId is not known (for a question in a new form)
+	public int childFormIndex;		// Set in online editor when creating a new sub form
 	public String name;
 	public String colName;			// The name of the database column for this question
 	public String type;
@@ -30,6 +32,7 @@ public class Question {
 	public String constraint;
 	public String constraint_msg;
 	public String relevant;
+	public String repeats;
 	public boolean visible;
 	public boolean readonly;
 	public boolean required;

@@ -834,6 +834,7 @@ public class SurveyManager {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
+			connectionSD.setAutoCommit(true);
 			try {if (pstmtChangeLog != null) {pstmtChangeLog.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}

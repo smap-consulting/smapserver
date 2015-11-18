@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -152,11 +153,31 @@ public class QuestionManager {
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
 		
+		PreparedStatement pstmtForm = null;
+		String sqlForm = "insert into form(f_id, s_id, name, table_name, parentform, parentquestion, repeats, path, form_index) " +
+				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?);";
+		
+		PreparedStatement pstmtGetFormId = null;
+		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
+		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
-			pstmt = sd.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			
 			for(Question q : questions) {
+				
+				if(q.fId <= 0) {
+					// New Form, the formIndex can be used to retrieve the formId of this new form
+					pstmtGetFormId = sd.prepareStatement(sqlGetFormId);
+					pstmtGetFormId.setInt(1, sId);
+					pstmtGetFormId.setInt(2, q.formIndex);
+					
+					log.info("SQL: Get form id: " + pstmtGetFormId.toString());
+					ResultSet rs = pstmtGetFormId.executeQuery();
+					rs.next();
+					q.fId = rs.getInt(1);
+					
+				}
 				
 				// Update sequence numbers of questions after the question to be inserted
 				pstmtUpdateSeq.setInt(1, q.fId);
@@ -186,6 +207,56 @@ public class QuestionManager {
 				// Set the labels
 				UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
 				
+				// If this is a begin repeat then create a new form
+				if(q.type.equals("begin repeat")) {
+					
+					ResultSet rs = pstmt.getGeneratedKeys();
+					rs.next();
+					int qId = rs.getInt(1);
+					String repeatsPath = null;
+					
+					if(q.repeats != null && q.repeats.trim().length() > 0) {
+						// Create a question to hold the repeat count calculation
+
+						repeatsPath = q.path + "_count";
+						
+						pstmt.setInt(1, q.fId );
+						pstmt.setInt(2, q.seq );
+						pstmt.setString(3, q.name + "_count" );
+						pstmt.setString(4, "calculate" );
+						pstmt.setString(5, null );
+						pstmt.setString(6, null );
+						pstmt.setString(7, null );
+						pstmt.setString(8, "user" );
+						pstmt.setString(9, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd));
+						pstmt.setString(10, null );
+						pstmt.setString(11, null);
+						pstmt.setBoolean(12, false);
+						pstmt.setString(13, q.path + "_count");
+						
+						log.info("Insert repeat count question: " + pstmt.toString());
+						pstmt.executeUpdate();
+					}
+					
+					
+					// Create the sub form
+					String tableName = "s" + sId + "_" + q.name;
+			
+					pstmtForm = sd.prepareStatement(sqlForm);
+					pstmtForm.setInt(1, sId);
+					pstmtForm.setString(2, q.name);
+					pstmtForm.setString(3, tableName);
+					pstmtForm.setInt(4, q.fId);
+					pstmtForm.setInt(5, qId);		// parent question id
+					pstmtForm.setString(6, repeatsPath);
+					pstmtForm.setString(7, q.path);
+					pstmtForm.setInt(8, q.childFormIndex);
+					
+					log.info("SQL: Insert new form: " + pstmtForm.toString());
+					pstmtForm.executeUpdate();
+					
+				}
+				
 			}
 			
 			
@@ -195,6 +266,8 @@ public class QuestionManager {
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
+			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
 		}	
 		
 	}

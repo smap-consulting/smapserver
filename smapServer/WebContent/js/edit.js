@@ -629,11 +629,11 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$context,						// Updated Html
 			buttonId = $this.attr("id"),
-			$button,
 			qId = $this.data("qid"),
+			fId = $this.data("findex"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.add(qId, locn);
+		$context = question.add(fId, qId, locn);
 		respondToEvents($context);				// Add events on to the altered html
 		$context.find('input').focus();			// Set focus to the new question
 		
