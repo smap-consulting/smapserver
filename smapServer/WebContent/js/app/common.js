@@ -776,7 +776,7 @@ function addAudioIcon() {
 	var h = [],
 		idx = -1;
 
-	h[++idx] = '<span class="question_type has_tt" title="Audio">';
+	h[++idx] = '<span class="has_tt" title="Audio">';
 	h[++idx] = '<span class="glyphicon glyphicon-volume-up edit_type"></span>';
 	h[++idx] = '</span>';
 	
@@ -787,7 +787,7 @@ function addVectorMapIcon() {
 	var h = [],
 		idx = -1;
 
-	h[++idx] = '<span class="question_type has_tt" title="Audio">';
+	h[++idx] = '<span class="has_tt" title="Audio">';
 	h[++idx] = '<span class="glyphicon glyphicon glyphicon-map-marker edit_type"></span>';
 	h[++idx] = '</span>';
 	

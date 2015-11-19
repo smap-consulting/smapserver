@@ -724,7 +724,7 @@ function respondToEvents($context) {
 	
 	// Select types
 	$('.question_type', $context).off().click(function() {
-		var $questionElement = $(this).closest('tr').find('.question');
+		var $questionElement = $(this).closest('li');
 		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");
@@ -821,9 +821,9 @@ function respondToEvents($context) {
 		    ev.preventDefault();
 		    //$sourceElem.insertBefore($targetListItem.closest('li'));
 		    
-		    if(type === question) {
+		    if(type === "question") {
 		    	$context = question.moveBeforeQuestion(sourceId, targetId);
-		    } else {
+		    } else if(type === "option") {
 		    	$context = question.moveBeforeOption(sourceId, targetId);
 		    }
 			respondToEvents($context);						// Add events on to the altered html

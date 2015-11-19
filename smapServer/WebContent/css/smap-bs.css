@@ -260,12 +260,23 @@ tr.deleted td a {
 	width: 100%;
 }
 
+.question_type {
+	background-color: #fff;
+	height: 60px;
+}
+
+.question_type:hover {
+	background-color: #1556be;
+}
+
 .edit_type {
 	font-size: 30px;
-	margin-top: 16px;
-	margin-bottom:36px;
+	margin-top: 10px;
+	margin-bottom:2px;
 	margin-right: 0px;
 	margin-left: 0px;
+	padding-left: 10px;
+	padding-right: 10px;
 	color: black;
 	transition: all 0.3s ease 0s;
 	opacity: 1;
@@ -284,10 +295,12 @@ tr.deleted td a {
 
 .edit_image {
 	height: 40px;
-	margin-top: 11px;
-	margin-bottom:31px;
+	margin-top: 8px;
+	margin-bottom:1px;
 	margin-right: 0px;
 	margin-left: 0px;
+	padding-left: 10px;
+	padding-right: 10px;
 	transition: all 0.3s ease 0s;
 	opacity: 1;
 }
@@ -306,6 +319,10 @@ tr.deleted td a {
 	opacity: 0.3;
 }
 
+li.panel {
+	margin-bottom: 0px;
+	
+}
 .margin-bottom {
 	margin-bottom: 15px;
 }

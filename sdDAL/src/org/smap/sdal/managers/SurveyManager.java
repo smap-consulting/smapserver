@@ -873,7 +873,6 @@ public class SurveyManager {
 		PreparedStatement pstmtNewQuestionLabel = null;
 		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
-		PreparedStatement pstmtLanguages = null;
 		
 		try {
 			
@@ -895,17 +894,7 @@ public class SurveyManager {
 			pstmtDeleteLabel = connectionSD.prepareStatement(sqlDeleteLabel);
 			
 			 // Get the languages
-		    String sqlLanguage = "select distinct language from translation where s_id = ?;";
-			List<String> lang = new ArrayList<String>();
-			pstmtLanguages = connectionSD.prepareStatement(sqlLanguage);
-			pstmtLanguages.setInt(1, sId);
-			ResultSet rs = pstmtLanguages.executeQuery();
-			while(rs.next()) {
-				lang.add(rs.getString(1));
-			}
-			if(lang.size() == 0) {
-				lang.add("language");	// Default 
-			}
+			List<String> lang = GeneralUtilityMethods.getLanguages(connectionSD, sId);
 			
 			for(ChangeItem ci : changeItemList) {
 			
@@ -971,7 +960,6 @@ public class SurveyManager {
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
-			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}
 	}
 	

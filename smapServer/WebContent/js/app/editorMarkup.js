@@ -54,7 +54,9 @@ define([
 			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
+					h[++idx] = '<div class="question_type">';
 					h[++idx] = addQType(question.type);
+					h[++idx] = '</div>';
 				h[++idx] = '</td>';
 				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 					h[++idx] = question.name;
@@ -233,7 +235,7 @@ define([
 	
 		for(i = 0; i < types.length; i++) {
 			if(types[i].type === type) {
-				h[++idx] = '<span class="question_type has_tt" title="';
+				h[++idx] = '<span class="has_tt" title="';
 				h[++idx] = types[i].name;
 				h[++idx] = '">';
 				if(types[i].glyphicon) {
