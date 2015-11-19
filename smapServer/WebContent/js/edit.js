@@ -510,6 +510,32 @@ function refreshForm() {
 
 function respondToEvents($context) {
 	
+	// Set option list value
+	$('.option-lists', $context).each(function(index){
+		var $this = $(this),
+			$elem = $this.closest('li'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+		
+		question = survey.forms[formIndex].questions[itemIndex];
+		$this.val(question.list_name);
+		
+	});
+	
+	// Option list change
+	$('.option-lists', $context).change(function(){
+		var $this = $(this),
+			$elem = $this.closest('li'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
+	});
+	
 	// Add tooltips
 	$('.has_tt', $context).tooltip();
 	
@@ -552,6 +578,14 @@ function respondToEvents($context) {
 
 	});
 	
+	// On tab in question name move to the feature input
+	$('.qname', $context).keydown(function(e){
+		if(e.keyCode === 9) {
+			e.preventDefault();
+			$(this).closest('tr').find('.labelProp').focus();
+		}
+	});
+	
 	// validate the question name
 	$('.qname', $context).keyup(function(){
 
@@ -584,6 +618,7 @@ function respondToEvents($context) {
 	});
 	
 	// Update the question name
+	
 	$('.qname', $context).change(function(){
 
 		var $this = $(this),
@@ -677,18 +712,6 @@ function respondToEvents($context) {
 		}
 	});
 	
-	// Add new option
-	/*
-	$('.add_option', $context).off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			item = $(this).data("index"),
-			locn = $(this).data("locn");	// Add before or after the element id referenced by qIdx
-		
-		$context = question.addOption(item, locn);
-		respondToEvents($context);				// Add events on to the altered html
-	});
-	*/
 	
 	// Delete option
 	$('.delete_option', $context).off().click(function() {
@@ -1025,7 +1048,10 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	};
 	
 	$context = changeset.add(change);
-	respondToEvents($context);				// Add events on to the altered html
+	if($context) {
+		$context.find('.labelProp').focus();	// Set focus to label property input
+		respondToEvents($context);				// Add events on to the altered html
+	}
 	
 }
 

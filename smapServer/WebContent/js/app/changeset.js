@@ -59,7 +59,7 @@ define([
 		// Validate the change
 		if(change.changeType === "option") {
 			validateOption(change);
-		} else {
+		} else if(change.changeType === "question") {
 			validateQuestion(change);
 		}
 		
@@ -435,6 +435,7 @@ define([
 		console.log("setHasChanges: " + JSON.stringify(errors));
 	}
 	
+
 	/*
 	 * Update the in memory model
 	 */
@@ -452,13 +453,17 @@ define([
 			property = change.property;
 			question = survey.forms[property.formIndex].questions[property.itemIndex];
 			
-			if(property.type === "question") {
+			if(property.type === "question") {			// Change to a question
 				
-				if(property.propType === "text") {
-					if(property.prop === "label") {
+				if(property.propType === "text") {		// Not a media change
+					
+					if(property.prop === "label") {	   // Changing the label
+						
 						question.labels[property.language][property.propType] = property.newVal;
-					} else {
-						question[property.prop] = property.newVal;		//Other properties
+						
+					} else {						// Other properties, such as constraints, relevance question name
+						
+						question[property.prop] = property.newVal;		
 						
 						
 						if(property.setVisible) {
@@ -466,26 +471,37 @@ define([
 							question["source"] = property.sourceValue;
 						}
 						
-						// Set type dependent properties
-						if(property.prop === "type") {
+						/*
+						 * Set type dependent properties
+						 */
+						if(property.prop === "type" || property.prop === "name") {
 							
-							if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {
-								// Select question
-								
+							if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {	// Select question
+							
 								// Ensure there is a list name for this question
-								if(!question.list_name) {
+								if(!question.list_name && question.name) {
 									question.list_name = question.name;
 								}
-								
+			
 								// Ensure there is a list of choices
-								var optionList = survey.optionLists[question.list_name];
-								if(!optionList) {
-									survey.optionLists[question.list_name] = {
-										oSeq: [],
-										options: []
-									};
+								if(question.list_name) {
+									var optionList = survey.optionLists[question.list_name];
+									if(!optionList) {
+										survey.optionLists[question.list_name] = {
+											oSeq: [],
+											options: []
+										};
+										markup.refreshOptionLists();
+									}
 								}
-							} else if(property.newVal == "begin repeat") {
+		
+							}
+						}
+
+
+						if(property.prop === "type") {
+							
+							 if(property.newVal == "begin repeat") {
 								// New sub form
 								survey.forms.push({
 									id: undefined,
@@ -497,9 +513,11 @@ define([
 								});
 								question.childFormIndex = survey.forms.length - 1;
 							}
-						}
+						} 
+						
 						
 					}
+					
 				} else {
 					// For non text changes update all languages
 					for(i = 0; i < survey.forms[property.formIndex].questions[property.itemIndex].labels.length; i++) {
@@ -508,7 +526,8 @@ define([
 							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType, property.isSurveyLevel);
 					}
 				}
-			} else {
+			} else {	// Change to an option
+				
 				if(property.propType === "text") {
 					survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
 				} else {
@@ -523,7 +542,7 @@ define([
 			
 			refresh = false;	// Update markup solely for this Property
 			
-		} else if(change.changeType === "question") {
+		} else if(change.changeType === "question") {		// Not a change to a property
 			if(change.action === "move") {
 				
 				var question = survey.forms[change.question.sourceFormIndex].questions[change.question.sourceItemIndex];	// existing question
@@ -562,7 +581,7 @@ define([
 			}
 			
 			
-		} else if(change.changeType === "option") {
+		} else if(change.changeType === "option") {				// Change to an option
 			if(change.action === "move") {
 				
 				var option = survey.optionLists[change.option.sourceOptionList].options[change.option.sourceItemIndex];

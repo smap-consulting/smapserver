@@ -567,7 +567,7 @@ public class Surveys extends Application {
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setBoolean(4, survey.task_file);
 			pstmt.setInt(5, survey.p_id);
-			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD, null));
+			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD));
 			pstmt.setInt(7, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());

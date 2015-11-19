@@ -37,7 +37,8 @@ define([
 		addFeaturedProperty: addFeaturedProperty,
 		addQuestions: addQuestions,
 		addMedia: addMedia,
-		refresh: refresh
+		refresh: refresh,
+		refreshOptionLists: refreshOptionLists
 	};
 	
 	function addOneQuestion(question, formIndex, qIndex, addNewButton) {
@@ -82,8 +83,25 @@ define([
 		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
 			h[++idx] = addSubForm(formIndex, qIndex);
 		} else if(question.type.indexOf("select") === 0) {
-			if(!question.error) {
-				// Only add the options if the question it self does not have any errors
+			if(!question.error) {	// Only add the options if the question it self does not have any errors
+				
+				h[++idx] = '<div class="option-controls">';
+					h[++idx] = '<div class="row">';
+						h[++idx] = '<div class="col-md-6"></div>';
+						
+						// A control to set option lists
+						h[++idx] = '<div class="col-md-6">';
+							h[++idx] = '<label>Choice List: </label>';
+							h[++idx] = '<div class="input-group">';
+								h[++idx] = '<select class="form-control option-lists">';
+								h[++idx] = getOptionLists();
+								h[++idx] = '</select>';
+								h[++idx] = '<span class="input-group-addon">Edit</span>';
+							h[++idx] = '</div>';
+						h[++idx] = '</div>';
+					h[++idx] = '</div>';
+				h[++idx] = '</div>';
+				
 				h[++idx] = addOptions(question, formIndex);
 			}
 		} 
@@ -645,6 +663,42 @@ define([
 
 		
 
+	}
+	
+	/*
+	 * Refresh the select controls that show the available option lists
+	 */
+	function refreshOptionLists() {
+		var $selector = $(".option-lists");
+		$selector.html(getOptionLists());
+	}
+	
+	function getOptionLists() {
+		
+		var lists = survey = globals.model.survey.optionLists,
+		name,
+		nameArray = [],
+		h = [],
+		idx = -1;
+
+		// get the names into an array so they can be sorted
+		for (name in lists) {
+			if (lists.hasOwnProperty(name)) {
+			    nameArray.push(name);
+			}
+		}
+		// Sort array of list names
+		nameArray.sort();
+		
+		// Create html
+		for(i = 0; i < nameArray.length; i++) {
+			h[++idx] = '<option value ="';
+			h[++idx] = nameArray[i];
+			h[++idx] = '">';
+			h[++idx] = nameArray[i];
+			h[++idx] = '</option>';
+		}
+		return h.join("");
 	}
 
 });

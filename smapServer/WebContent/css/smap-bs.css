@@ -76,8 +76,10 @@ tr.deleted td a {
 	color: red !important;
 }
 
-#formList > .error >.panel-heading{
-	background-image:-webkit-linear-gradient(top,#f2dede 0,#ebcccc 100%);
+#formList .error > .panel-heading {
+	color:#a94442;
+	background-color:#f2dede;
+	border-color:#ebccd1;
 }
 
 .danger {
@@ -219,6 +221,10 @@ tr.deleted td a {
   background-color: #d6d6d6;
   border-style: dashed;
   height: 60px;
+}
+
+.option-controls {
+	padding: 20px;
 }
 
 /*
