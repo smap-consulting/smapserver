@@ -708,7 +708,7 @@ function respondToEvents($context) {
 		 *  after this newly added option.  Hence update the reference question
 		 */
 		if(locn == "after") {
-			$this.data("oid", $context.data("oid"));
+			$this.data("oid", $context.attr("id"));
 		}
 	});
 	
