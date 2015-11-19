@@ -211,10 +211,12 @@ tr.deleted td a {
 
 .add_button:hover {
   background-color: #1556be;
+  color: #fff;
 }
 
 .add_button {
   background-color: #428bca;
+  color: #eee;
 }
 
 .add_drop_button {

@@ -46,7 +46,7 @@ define([
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex, formIndex);
+			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex, formIndex, undefined);
 		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
@@ -126,7 +126,7 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton(after, topLevelForm, questionId, formIndex) {
+	function addNewQuestionButton(after, topLevelForm, questionId, formIndex, formName) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -153,7 +153,12 @@ define([
 		h[++idx] = questionId;
 		h[++idx] = '" data-findex="';
 		h[++idx] = formIndex;
-		h[++idx] = '">Add New Question</button>';
+		h[++idx] = '">Add New Question'; 
+		if(formName) {
+			h[++idx] = ' to ';
+			h[++idx] = formName;
+		}
+		h[++idx] = '</button>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -492,7 +497,9 @@ define([
 			h = [],
 			idx = -1,
 			topLevelForm = false,
-			lastRealQuestionId = -1;
+			lastRealQuestionId = -1,
+			finalButtonName,
+			groupButtonName;
 		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
@@ -507,7 +514,8 @@ define([
 					continue;
 				}
 				if(question.type === "end group") {
-					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex);
+					groupButtonName = question.name.substring(0, question.name.indexOf('_groupEnd'));
+					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName);
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
@@ -523,8 +531,11 @@ define([
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
+				finalButtonName = "end";
+			} else {
+				finalButtonName = form.name;
 			}
-			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex); 	// Adds a question at the end of the form
+			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex, finalButtonName); 	// Adds a question at the end of the form
 		}
 		return h.join("");
 	}
