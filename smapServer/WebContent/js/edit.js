@@ -75,7 +75,6 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
-	dragCounters = {},
 	gTempLanguages = [];
 
 // Media globals
@@ -508,10 +507,13 @@ function refreshForm() {
 
 }
 
+/*
+ * The passed in context is for a list item containing either a question or an option
+ */
 function respondToEvents($context) {
 	
 	// Set option list value
-	$('.option-lists', $context).each(function(index){
+	$context.find('.option-lists', $context).each(function(index){
 		var $this = $(this),
 			$elem = $this.closest('li'),
 			formIndex = $elem.data("fid"),
@@ -525,7 +527,7 @@ function respondToEvents($context) {
 	});
 	
 	// Option list change
-	$('.option-lists', $context).change(function(){
+	$context.find('.option-lists').change(function(){
 		var $this = $(this),
 			$elem = $this.closest('li'),
 			formIndex = $elem.data("fid"),
@@ -537,10 +539,10 @@ function respondToEvents($context) {
 	});
 	
 	// Add tooltips
-	$('.has_tt', $context).tooltip();
+	$context.find('.has_tt').tooltip();
 	
 	// Respond to changes in the label field - this would change the property that has focus
-	$('.labelProp', $context).change(function(){
+	$context.find('.labelProp').change(function(){
 
 		var $this = $(this),
 			prop = $this.data("prop"),
@@ -564,7 +566,7 @@ function respondToEvents($context) {
 	});
 	
 	// validate the name on focus as duplicates may have been removed elsewhere
-	$('.qname', $context).focusin(function(){
+	$context.find('.qname').focusin(function(){
 
 		var $this = $(this),
 			$parent = $this.parent(),
@@ -579,7 +581,7 @@ function respondToEvents($context) {
 	});
 	
 	// On tab in question name move to the feature input
-	$('.qname', $context).keydown(function(e){
+	$context.find('.qname').keydown(function(e){
 		if(e.keyCode === 9) {
 			e.preventDefault();
 			$(this).closest('tr').find('.labelProp').focus();
@@ -587,7 +589,7 @@ function respondToEvents($context) {
 	});
 	
 	// validate the question name
-	$('.qname', $context).keyup(function(){
+	$context.find('.qname').keyup(function(){
 
 		var $this = $(this),
 			$parent = $this.parent(),
@@ -602,7 +604,7 @@ function respondToEvents($context) {
 	});
 	
 	// validate the option name
-	$('.oname', $context).keyup(function(){
+	$context.find('.oname').keyup(function(){
 
 		var $this = $(this),
 			$parent = $this.parent(),
@@ -619,7 +621,7 @@ function respondToEvents($context) {
 	
 	// Update the question name
 	
-	$('.qname', $context).change(function(){
+	$context.find('.qname').change(function(){
 
 		var $this = $(this),
 			$parent = $this.parent(),
@@ -634,7 +636,7 @@ function respondToEvents($context) {
 	});
 	
 	// Update the option name
-	$('.oname', $context).change(function(){
+	$context.find('.oname').change(function(){
 
 		var $this = $(this),
 			$parent = $this.parent(),
@@ -652,7 +654,7 @@ function respondToEvents($context) {
 	});
 	
 	// Selected a media property
-	$('.mediaProp', $context).off().click(function(){
+	$context.find('.mediaProp').off().click(function(){
 		
 		var $this = $(this);
 		mediaPropSelected($this);
@@ -660,7 +662,7 @@ function respondToEvents($context) {
 	});
 	
 	// Add new question
-	$('.add_question', $context).off().click(function() {
+	$context.find('.add_question').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
 			buttonId = $this.attr("id"),
@@ -682,7 +684,7 @@ function respondToEvents($context) {
 	});
 	
 	// Delete question
-	$('.delete_question', $context).off().click(function() {
+	$context.find('.delete_question').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
 			item = $(this).data("id");
@@ -691,7 +693,7 @@ function respondToEvents($context) {
 	});
 	
 	// Add new option
-	$('.add_option', $context).off().click(function() {
+	$context.find('.add_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
 			oId = $this.data("oid"),
@@ -714,7 +716,7 @@ function respondToEvents($context) {
 	
 	
 	// Delete option
-	$('.delete_option', $context).off().click(function() {
+	$context.find('.delete_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
 			item = $(this).data("id");
@@ -723,7 +725,7 @@ function respondToEvents($context) {
 	});
 	
 	// Select types
-	$('.question_type', $context).off().click(function() {
+	$context.find('.question_type').off().click(function() {
 		var $questionElement = $(this).closest('li');
 		
 		gFormIndex = $questionElement.data("fid");
@@ -746,52 +748,77 @@ function respondToEvents($context) {
 	
 	/*
 	 * Enable drag and drop to move questions and choices
+	 * 
+	 * First add handlers for draggable components
 	 */
-	$('.draggable').attr('draggable', 'true');
+	$('.draggable').attr('draggable', 'true')
 	
-	$('.draggable').on('dragstart', function(evt){
+	.off('dragstart')
+	.on('dragstart', function(evt){
 		var ev = evt.originalEvent;
-		console.log("Dragstart: " + ev.target.id);
+		
+		ev.effectAllowed = "move";		// Only allow move, TODO copy
+		
 		ev.dataTransfer.setData("text", ev.target.id);
+		$('.dropon').addClass("add_drop_button").removeClass("add__button");
+		
+		return true;
+	})
+	
+	// clean up after drag
+	.off('dragend')
+	.on('dragend', function(evt){
+		$('.dropon').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		return false;
+	})
+	
+	// Don't allow a draggable component to be dropped onto a text field in some other question / option
+	.off('drop')
+	.on('drop', function(evt){
+		evt.originalEvent.preventDefault();
 	});
 	
-	$('.dropon').on('dragenter', function(evt){
+	/*
+	 * Handle drop on or dragging over a drop zone
+	 */
+	
+	// Entering a drop zone
+	$('.dropon')
+	
+	.off('dragenter')
+	.on('dragenter', function(evt){
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),	
 			targetId = $elem.data('qid');
 		
-		if(!dragCounters[targetId]) {
-			dragCounters[targetId] = 1;
-		} else {
-			dragCounters[targetId]++;
-		}
-		
-		if(dragCounters[targetId] === 1) {
-			$elem.addClass("add_drop_button").removeClass("add_button");
-		}
+		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_frop_button");
 	
-	});
+	})
 	
-	$('.dropon').on('dragleave', function(evt){
+	// Leaving a drop zone
+	.off('dragleave')
+	.on('dragleave', function(evt){
 		
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),
 			sourceId = ev.dataTransfer.getData("text"),
 			targetId = $elem.data('qid');
 		
-		dragCounters[targetId]--;
-		if(!dragCounters[targetId]) {
-			$elem.addClass("add_button").removeClass("add_drop_button");
-		}
+		$elem.addClass("add_button").removeClass("over_drop_button").addClass("add_drop_button");
 		
 		
-	});
+	})
 	
-	$('.dropon').on('dragover', function(evt){
+	.off('dragover')
+	.on('dragover', function(evt){
+		evt.originalEvent.dataTransfer.dropEffect = "move";
 		evt.originalEvent.preventDefault();
-	});
+		evt.originalEvent.stopPropagation();
+	})
 	
-	$('.dropon').on('drop', function(evt){
+	// Drop the question or option
+	.off('drop')
+	.on('drop', function(evt){
 		var ev = evt.originalEvent,
 			$targetListItem = $(ev.target),
 			$sourceElem,
@@ -800,6 +827,9 @@ function respondToEvents($context) {
 			$context,
 			type;
 	
+		ev.preventDefault();
+		ev.stopPropagation();
+		 
 		if(sourceId.indexOf("option") === 0) {
 			type = "option";
 			targetId = $targetListItem.data('oid');
@@ -809,7 +839,6 @@ function respondToEvents($context) {
 		}
 		console.log("Dropped: " + sourceId + " : " + targetId);
 		
-		$targetListItem.addClass("add_button").removeClass("add_drop_button");
 		if(sourceId != targetId) {
 			if (ev.ctrlKey || ev.altKey) {
 				console.log("Control was pressed");
@@ -818,7 +847,7 @@ function respondToEvents($context) {
 				$sourceElem = $(document.getElementById(sourceId));
 			}
 			
-		    ev.preventDefault();
+		   
 		    //$sourceElem.insertBefore($targetListItem.closest('li'));
 		    
 		    if(type === "question") {
@@ -833,6 +862,9 @@ function respondToEvents($context) {
 	
 }
 
+/*
+ * Add of drag and drop
+ */
 
 function mediaPropSelected($this) {
 	var $parent = $this.closest('td'),

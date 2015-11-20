@@ -25,6 +25,7 @@ public class Question {
 	public String list_name;		// A reference to the list of options
 	public int seq;
 	public int sourceSeq;
+	public int sourceFormId;
 	public String defaultanswer;
 	public String appearance;
 	public String choice_filter;

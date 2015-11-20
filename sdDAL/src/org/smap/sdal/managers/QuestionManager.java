@@ -273,13 +273,22 @@ public class QuestionManager {
 	}
 	
 	/*
-	 * Save to the database
+	 * Move a question
+	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
+	 *  question creation
 	 */
 	public void move(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
 		PreparedStatement pstmt = null;
-		String sql = "update question set f_id = ?, seq = ? where qname = ? and seq = ? and q_id in " +
-				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question;";
+		String sql = "update question set "
+						+ "f_id = ?, "
+						+ "seq = ? "
+					+ "where qname = ? "
+						+ "and seq = ? "	// Ensure question has not been moved by someone else
+						+ "and f_id = ?"	// Ensure question has not been moved by someone else
+						+ "and q_id in " 
+							// Ensure user is authorised to access this question;";
+							+ " (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	
 
 		try {
 	
@@ -293,7 +302,8 @@ public class QuestionManager {
 				pstmt.setInt(2, q.seq );
 				pstmt.setString(3, q.name );
 				pstmt.setInt(4, q.sourceSeq);
-				pstmt.setInt(5, sId);
+				pstmt.setInt(5, q.sourceFormId);
+				pstmt.setInt(6, sId);
 				
 				log.info("Move question: " + pstmt.toString());
 				int count = pstmt.executeUpdate();
@@ -405,7 +415,7 @@ public class QuestionManager {
 	 * Called by editor
 	 * Add new options
 	 */
-	public void saveOptions(Connection sd, int sId, ArrayList<Option> options) throws SQLException {
+	public void saveOptions(Connection sd, int sId, ArrayList<Option> options, boolean updateLabels) throws SQLException {
 		
 		PreparedStatement pstmtGetQuestions = null;
 		/*
@@ -433,11 +443,6 @@ public class QuestionManager {
 			
 			for(Option o : options) {
 				
-				String optionListAsQName = o.optionList;
-				//try {
-				//	optionListAsQId = Integer.parseInt(o.optionList);
-				//} catch (Exception e) {	
-				//}
 				// Get the questions from the form that use this option list
 				pstmtGetQuestions.setInt(1, sId);
 				pstmtGetQuestions.setString(2,  o.optionList);
@@ -447,6 +452,7 @@ public class QuestionManager {
 				
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 				
+				int count = 0;
 				while (rs.next()) {
 				
 					int qId = rs.getInt(1);
@@ -468,8 +474,10 @@ public class QuestionManager {
 					log.info("Insert question: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
-					// Set the labels
-					UtilityMethodsEmail.setLabels(sd, sId, o.path, o.labels, "");
+					// Set the labels (only need to do this once)
+					if (updateLabels && count++ == 0) {
+						UtilityMethodsEmail.setLabels(sd, sId, o.path, o.labels, "");
+					}
 				}
 			}
 			
@@ -488,7 +496,7 @@ public class QuestionManager {
 	/*
 	 * Delete options
 	 */
-	public void deleteOptions(Connection sd, int sId, ArrayList<Option> options) throws SQLException {
+	public void deleteOptions(Connection sd, int sId, ArrayList<Option> options, boolean updateLabels) throws SQLException {
 		
 		PreparedStatement pstmtGetQuestions = null;
 		String sqlGetQuestions = "select q.q_id " +
@@ -525,17 +533,20 @@ public class QuestionManager {
 				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
 				ResultSet rs = pstmtGetQuestions.executeQuery();
 				
+				int count = 0;
 				while (rs.next()) {
 				
 					int qId = rs.getInt(1);
 					
 					// Delete the option labels
-					pstmtDelLabels.setInt(1, sId );
-					pstmtDelLabels.setInt(2, qId );
-					pstmtDelLabels.setString(3, o.value );
-					
-					log.info("Delete option: " + pstmtDelLabels.toString());
-					pstmtDelLabels.executeUpdate();
+					if(count++ == 0 && updateLabels) {
+						pstmtDelLabels.setInt(1, sId );
+						pstmtDelLabels.setInt(2, qId );
+						pstmtDelLabels.setString(3, o.value );
+						
+						log.info("Delete option labels: " + pstmtDelLabels.toString());
+						pstmtDelLabels.executeUpdate();
+					}
 					
 					// Delete the option
 					pstmt.setInt(1, qId );
@@ -562,6 +573,94 @@ public class QuestionManager {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtDelLabels != null) {pstmtDelLabels.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
+	/*
+	 * Move options
+	 */
+	public void moveOptions(Connection sd, int sId, ArrayList<Option> options) throws Exception {
+		
+		PreparedStatement pstmtGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id " +
+				"from question q, form f " +
+				"where q.f_id = f.f_id " + 
+				"and f.s_id = ? " +
+				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
+		
+		PreparedStatement pstmtMoveWithin = null;
+		String sqlMoveWithin = "update option set "
+						+ "seq = ? "
+					+ "where q_id = ? "
+						+ "and seq = ? "	// Ensure option has not been moved by someone else
+						+ "and q_id in " 
+							// Ensure user is authorised to access this question;";
+							+ " (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	
+
+		PreparedStatement pstmtInsertNew = null;
+		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
+				"values (nextval('o_seq'), ?, ?, ?, ?, ?, 'false');";
+		
+		try {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
+			
+			for(Option o : options) {
+				
+				boolean moveWithinList = o.optionList.equals(o.sourceOptionList);
+				
+			
+				// Get the questions from the form that use the target option list
+				pstmtGetQuestions.setInt(1, sId);
+				pstmtGetQuestions.setString(2,  o.optionList);
+				pstmtGetQuestions.setString(3, o.optionList);
+				log.info("Get the questions that use the target option list: " + pstmtGetQuestions.toString());
+				ResultSet rsTargetQuestions = pstmtGetQuestions.executeQuery();
+				
+				while (rsTargetQuestions.next()) {
+				
+					int qId = rsTargetQuestions.getInt(1);
+					
+					if(moveWithinList) {
+						pstmtMoveWithin.setInt(1, o.seq );
+						pstmtMoveWithin.setInt(2, qId );
+						pstmtMoveWithin.setInt(3, o.sourceSeq );
+						pstmtMoveWithin.setInt(4, sId);
+						
+						log.info("Move option within same list: " + pstmtMoveWithin.toString());
+						int count = pstmtMoveWithin.executeUpdate();
+						if(count == 0) {
+							log.info("Error: Question already modified");
+							throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+						}
+					} else {
+						// Insert into the target questions
+						ArrayList<Option> targetOptions = new ArrayList<Option> ();
+						targetOptions.add(o);
+						saveOptions(sd, sId, targetOptions, false);
+						
+						// Remove from the source questions
+						ArrayList<Option> sourceOptions = new ArrayList<Option> ();
+						o.optionList = o.sourceOptionList;
+						sourceOptions.add(o);
+						deleteOptions(sd, sId, options, false);
+					}
+					
+				}
+			}
+			
+			
+		} catch(SQLException e) {
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertNew != null) {pstmtInsertNew.close();}} catch (SQLException e) {}
 		}	
 		
 	}

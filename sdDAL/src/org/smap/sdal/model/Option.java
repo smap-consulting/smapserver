@@ -10,6 +10,7 @@ import java.util.HashMap;
 public class Option {
 	public int id;
 	public int seq;
+	public int sourceSeq;
 	public String value;
 	public String defLabel;
 	public boolean externalFile;
@@ -20,4 +21,5 @@ public class Option {
 	
 	// Used in updates
 	public String optionList;	
+	public String sourceOptionList;	
 }

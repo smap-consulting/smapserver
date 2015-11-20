@@ -43,13 +43,14 @@ define([
 	
 	function addOneQuestion(question, formIndex, qIndex, addNewButton) {
 		var h = [],
-			idx = -1;
+			idx = -1,
+			questionId = "question" + formIndex + "_" + qIndex;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, "question" + formIndex + "_" + qIndex, formIndex, undefined);
+			h[++idx] = addNewQuestionButton(false, false, questionId, formIndex, undefined);
 		}
 		
-		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error);
+		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<table class="table">';
@@ -69,7 +70,8 @@ define([
 					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon"></span></a>';
 					
 					h[++idx] = '<button tabindex="-1" class="btn btn-default">';
-					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="question';
+					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="';
+					h[++idx] = questionId;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';
 					 
@@ -194,7 +196,7 @@ define([
 		return h.join('');
 	}
 	
-	function addPanelStyle(type, formIndex, qIndex, error) {
+	function addPanelStyle(type, formIndex, qIndex, error, questionId) {
 		
 		var h = [],
 			idx = -1;
@@ -208,9 +210,9 @@ define([
 		if(type === "begin repeat" || type === "begin group") {
 			h[++idx] = ' panel-warning" id="question';
 		} else {
-			h[++idx] = ' panel-success" id="question';
+			h[++idx] = ' panel-success" id="';
 		}
-		h[++idx] = formIndex + "_" + qIndex;
+		h[++idx] = questionId;
 		++globals.gElementIndex;
 		h[++idx] = '"';
 		
@@ -368,17 +370,23 @@ define([
 			h = [],
 			idx = -1,
 			i,
-			lastOptionId = -1;
+			optionId = -1;
 		
 		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 		oSeq = optionList.oSeq;
 		h[++idx] = h[++idx] = '<ul class="list-unstyled">';
 		if(oSeq) {
 			for(i = 0; i < oSeq.length; i++) {
-				lastOptionId = "option" + (globals.gOptionIndex + 1);
-				h[++idx] = addOneOption(optionList.options[oSeq[i]], formIndex, oSeq[i], question.list_name, question.name, true);
+				optionId = "option_" + question.name + "_" + oSeq[i];
+				h[++idx] = addOneOption(optionList.options[oSeq[i]], 
+						formIndex, 
+						oSeq[i], 
+						question.list_name, 
+						question.name, 
+						true,
+						optionId);
 			}
-			h[++idx] = addNewOptionButton(true, lastOptionId, question.list_name, formIndex); 
+			h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex); 
 		}
 		h[++idx] = '</ul>';
 		return h.join("");
@@ -387,22 +395,20 @@ define([
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(option, formIndex, id, list_name, qname, addNewButton) {
+	function addOneOption(option, formIndex, id, list_name, qname, addNewButton, optionId) {
 		var h = [],
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, "option" + (globals.gOptionIndex + 1), list_name, formIndex);
+			h[++idx] = addNewOptionButton(false, optionId, list_name, formIndex);
 		}
 		
 		h[++idx] = '<li class="editor_element option draggable';
 		if(option.error) {
 			h[++idx] = ' option_error';
 		}
-		h[++idx] = '" id="option';
-		h[++idx] = ++globals.gOptionIndex;
-		globals.gElementIndex++;
-		h[++idx] = '"';
+		h[++idx] = '" id="';
+		h[++idx] = optionId;
 		
 		// Add the option index 
 		h[++idx] = '" data-id="';
@@ -419,9 +425,6 @@ define([
 			h[++idx] = addErrorMsg(option.errorMsg);
 		}
 		
-		//h[++idx] = '<table class="table" id="option';
-		//h[++idx] = ++globals.gOptionIndex;
-		//h[++idx] = '">';
 		h[++idx] = '<table class="table">';
 		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
 		h[++idx] = option.value;
@@ -431,11 +434,11 @@ define([
 		// Add button bar
 		h[++idx] = '<td class="q_icons_col">';
 		h[++idx] = '<div class="btn-group">';
-		h[++idx] = '<button class="btn btn-default">';
-		h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_option" data-id="option';
-		h[++idx] = globals.gOptionIndex;
-		h[++idx]='"></span>';
-		h[++idx]='</button>';		
+		h[++idx] = '<button class="btn btn-default" tabindex="-1">';
+		h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon delete_option" data-id="';
+		h[++idx] = optionId;
+		h[++idx] = '"></span>';
+		h[++idx] = '</button>';		
 		h[++idx] = '</td>';
 		
 		h[++idx] = '</table>';
@@ -444,22 +447,6 @@ define([
 		return h.join("");
 	}
 	
-	/*
-	function addNewOptionButtonOld(after) {
-		var h = [],
-			idx = -1;
-		h[++idx] = '<button type="button" class="add_option btn btn-primary ';
-		h[++idx] = after ? 'add_button_now' : 'add_button';
-		h[++idx] = '" data-locn="';
-		h[++idx] = after ? 'after" ' : 'before" ';
-		h[++idx] = '" data-index="';
-		h[++idx] = globals.gOptionIndex;
-		h[++idx] = '"><i class="glyphicon glyphicon-plus"></i></button>';
-		
-		
-		return h.join('');
-	}
-	*/
 	/*
 	 * Add subform
 	 */
@@ -641,7 +628,6 @@ define([
 		globals.gHasQuestions = false;
 		globals.gNewQuestionButtonIndex = 0;
 		globals.gNewOptionButtonIndex = 0;
-		globals.gOptionIndex = 0;
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {
 				for(i = 0; i < survey.forms.length; i++) {

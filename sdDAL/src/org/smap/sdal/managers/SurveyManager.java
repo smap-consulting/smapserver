@@ -1388,11 +1388,13 @@ public class SurveyManager {
 			} 
 			
 			if(action.equals("add")) {
-				qm.saveOptions(connectionSD, sId, options);
+				qm.saveOptions(connectionSD, sId, options, true);
 			} else if(action.equals("delete")) {
-				qm.deleteOptions(connectionSD, sId, options);
+				qm.deleteOptions(connectionSD, sId, options, true);
 			} else if(action.equals("update")) {
 				qm.updateOptions(connectionSD, sId, properties);
+			} else if(action.equals("move")) {
+				qm.moveOptions(connectionSD, sId, options);
 			}
 			
 		} catch (Exception e) {

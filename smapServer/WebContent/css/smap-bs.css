@@ -222,7 +222,16 @@ tr.deleted td a {
 .add_drop_button {
   background-color: #d6d6d6;
   border-style: dashed;
+}
+
+.over_drop_button {
+  background-color: #3366ff;
+  border-style: dashed;
   height: 60px;
+}
+
+.draggable {
+	cursor: move;	
 }
 
 .option-controls {

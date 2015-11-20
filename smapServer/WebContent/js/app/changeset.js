@@ -545,20 +545,26 @@ define([
 		} else if(change.changeType === "question") {		// Not a change to a property
 			if(change.action === "move") {
 				
-				var question = survey.forms[change.question.sourceFormIndex].questions[change.question.sourceItemIndex];	// existing question
+				var sourceForm = change.question.sourceFormIndex;
+				var sourceItem = change.question.sourceItemIndex;
+				
+				var targetForm = change.question.formIndex;
+				
+				var question = survey.forms[sourceForm].questions[sourceItem];	// existing question
 				var oldLocation = change.question.sourceSeq;
 				var newLocation = change.question.seq;
+				
 				// Add the question in the new location
-				length = survey.forms[change.question.formIndex].questions.push(question);			// Add the new question to the end of the array of questions
+				length = survey.forms[targetForm].questions.push(question);			// Add the new question to the end of the array of questions
 				change.question.itemIndex = length - 1;
-				survey.forms[change.question.formIndex].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
+				survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
 			
 				// Remove the question from the old location	
 				// The old location may have changed if the new location was inserted before it
-				if(newLocation < oldLocation) {
+				if(newLocation < oldLocation && sourceForm === targetForm) {
 					oldLocation++;
 				}
-				survey.forms[change.question.sourceFormIndex].qSeq.splice(oldLocation, 1);
+				survey.forms[sourceForm].qSeq.splice(oldLocation, 1);
 				
 				refresh = true;
 				
@@ -584,21 +590,24 @@ define([
 		} else if(change.changeType === "option") {				// Change to an option
 			if(change.action === "move") {
 				
-				var option = survey.optionLists[change.option.sourceOptionList].options[change.option.sourceItemIndex];
+				var sourceOptionList = survey.optionLists[change.option.sourceOptionList];
+				var targetOptionList = survey.optionLists[change.option.optionList];
+				
+				var option = sourceOptionList.options[change.option.sourceItemIndex];
 				var oldLocation = change.option.sourceSeq;
 				var newLocation = change.option.seq;
 				
 				// Add the option in the new location
-				length = survey.optionLists[change.option.optionList].options.push(option);
+				length = targetOptionList.options.push(option);
 				change.option.itemIndex = length -1;
-				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	
+				targetOptionList.oSeq.splice(change.option.seq, 0, length - 1);	
 			
 				// Remove the option from the old location	
 				// The old location may have changed if the new location was inserted before it
-				if(newLocation < oldLocation) {
+				if(newLocation < oldLocation && change.option.sourceOptionList == change.option.optionList) {
 					oldLocation++;
 				}
-				survey.optionLists[change.option.sourceOptionList].oSeq.splice(change.option.sourceSeq, 0, length - 1);	
+				sourceOptionList.oSeq.splice(oldLocation, 1);	
 				
 				refresh = true;
 				
