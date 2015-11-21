@@ -331,6 +331,7 @@ alter table form alter column parentform set not null;
 update form set parentquestion = 0 where parentquestion is null;
 alter table form alter column parentquestion set default 0;
 alter table form alter column parentquestion set not null;
+alter table form add column form_index int default -1;
 
 CREATE SEQUENCE l_seq START 1;
 ALTER SEQUENCE l_seq OWNER TO ws;	
@@ -343,4 +344,25 @@ CREATE TABLE language (
 	);
 ALTER TABLE language OWNER TO ws;
 
-alter table form add column form_index int default -1;
+---------------------------------------------------------------------------------------
+-- Add list name table
+CREATE SEQUENCE l_seq START 1;
+ALTER SEQUENCE l_seq OWNER TO ws;
+
+CREATE TABLE listname (
+	l_id integer default nextval('l_seq') constraint pk_listname primary key,
+	s_id integer references survey on delete cascade, 
+	name text
+	);
+ALTER TABLE listname OWNER TO ws;
+CREATE UNIQUE INDEX listname_name ON listname(s_id, name);
+
+drop index if exists q_id_sequence;
+alter table option drop constraint if exists option_q_id_fkey;
+alter table option add column l_id integer references listname on delete cascade;
+alter table question add column l_id integer default 0;
+
+insert into listname (s_id, name) select f.s_id, f.name || '_' || q.qname from question q, form f where q.qtype like 'select%' and q.f_id = f.f_id;
+update option set l_id = sq.l_id from (select l.l_id, q.q_id from listname l, question q, form f where l.name = f.name || '_' || q.qname and f.f_id = q.f_id) as sq where sq.q_id = option.q_id and option.l_id is null;
+update question set l_id = sq.l_id from (select l_id, q_id, o_id from option) as sq where sq.q_id = question.q_id and question.l_id is null;
+update question set l_id = 0 where l_id is null;

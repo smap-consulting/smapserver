@@ -343,7 +343,9 @@ public class ExportSurveyThingsat extends Application {
 	
 	private void addChoices(Connection connectionSD, Thingsat things) {
 		PreparedStatement pstmt = null;
-		String sql = "select ovalue from option where q_id = ?;";
+		String sql = "select o.ovalue from option o, question q "
+				+ "where q.q_id = ? "
+				+ "and q.l_id = o.l_id;";
 		
 		try {
 			pstmt = connectionSD.prepareStatement(sql);

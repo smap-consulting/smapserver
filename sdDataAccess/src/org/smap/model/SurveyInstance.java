@@ -148,7 +148,6 @@ public class SurveyInstance {
 						selected = true;
 					}
 				}
-				//System.out.println("Creating option:" + oName + ":" + oValue);
 				IE ie = new IE(oName, selected ? "1" : "0");		// Set to "1" or "0" rather than boolean as per issue 35
 		   		String oPath = qRef + "/" + oName;
 		   		ie.setPath(oPath);

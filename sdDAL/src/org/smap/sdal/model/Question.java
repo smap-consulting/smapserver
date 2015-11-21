@@ -22,7 +22,8 @@ public class Question {
 	public String text_id;
 	public String hint_id;
 	public String path;
-	public String list_name;		// A reference to the list of options
+	public int l_id;				// Id for listname identifying list of options
+	public String list_name;		// A reference to the list of options (deprecated)
 	public int seq;
 	public int sourceSeq;
 	public int sourceFormId;

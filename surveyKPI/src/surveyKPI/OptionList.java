@@ -84,11 +84,12 @@ public class OptionList extends Application {
 			 * TODO support multiple languages
 			 */
 			sql = "SELECT o.o_id, o.ovalue, t.value " +
-					"FROM option o, translation t " +  		
+					"FROM option o, translation t, question q " +  		
 					"WHERE o.label_id = t.text_id " +
 					"AND t.s_id =  ? " + 
 					"AND t.language = ? " +
-					"AND o.q_id = ? " +
+					"AND q.q_id = ? " +
+					"AND q.l_id = o.l_id " +
 					"ORDER BY o.seq;";			
 			
 			pstmt = connectionSD.prepareStatement(sql);	

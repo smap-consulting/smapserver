@@ -14,7 +14,11 @@ ALTER SEQUENCE f_seq OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS o_seq CASCADE;
 CREATE SEQUENCE o_seq START 1;
-ALTER SEQUENCE o_seq OWNER TO ws;		
+ALTER SEQUENCE o_seq OWNER TO ws;	
+
+DROP SEQUENCE IF EXISTS l_seq CASCADE;
+CREATE SEQUENCE l_seq START 1;
+ALTER SEQUENCE l_seq OWNER TO ws;		
 
 DROP SEQUENCE IF EXISTS q_seq CASCADE;
 CREATE SEQUENCE q_seq START 1;
@@ -347,6 +351,7 @@ DROP TABLE IF EXISTS question CASCADE;
 CREATE TABLE question (
 	q_id INTEGER DEFAULT NEXTVAL('q_seq') CONSTRAINT pk_question PRIMARY KEY,
 	f_id INTEGER REFERENCES form ON DELETE CASCADE,
+	l_id integer default 0,
 	seq INTEGER,
 	qName text NOT NULL,
 	column_name text,		-- Name of column in results table
@@ -382,7 +387,8 @@ CREATE INDEX infotext_id_sequence ON question(infotext_id);
 DROP TABLE IF EXISTS option CASCADE;
 CREATE TABLE option (
 	o_id INTEGER DEFAULT NEXTVAL('o_seq') CONSTRAINT pk_option PRIMARY KEY,
-	q_id INTEGER REFERENCES question ON DELETE CASCADE,
+	q_id integer,
+	l_id integer references listname on delete cascade,
 	seq INTEGER,
 	label text,
 	label_id text,
@@ -393,7 +399,15 @@ CREATE TABLE option (
 	);
 ALTER TABLE option OWNER TO ws;
 CREATE INDEX label_id_sequence ON option(label_id);
-CREATE INDEX q_id_sequence ON option(q_id);
+
+DROP TABLE IF EXISTS listname CASCADE;
+CREATE TABLE listname (
+	l_id INTEGER DEFAULT NEXTVAL('l_seq') CONSTRAINT pk_listname PRIMARY KEY,
+	s_id integer references survey on delete cascade, 
+	name text
+	);
+ALTER TABLE listname OWNER TO ws;
+CREATE UNIQUE INDEX listname_name ON listname(s_id, name);
 
 -- Server side calculates
 DROP TABLE IF EXISTS ssc;

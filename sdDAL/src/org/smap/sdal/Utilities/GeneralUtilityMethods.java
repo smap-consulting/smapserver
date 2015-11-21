@@ -801,6 +801,7 @@ public class GeneralUtilityMethods {
 			File csvFile,
 			String csvFileName,
 			String qName,
+			int l_id,
 			int qId,
 			String qType,
 			String qAppearance) {
@@ -827,6 +828,7 @@ public class GeneralUtilityMethods {
 						ChangeItem c = new ChangeItem();
 						c.property = new PropertyChange();
 						c.property.qId = qId;
+						c.property.l_id = l_id;
 						c.property.name = qName;					// Add for logging
 						c.fileName = csvFileName;		// Add for logging
 						c.property.qType = qType;
@@ -865,9 +867,10 @@ public class GeneralUtilityMethods {
 		 */
 		PreparedStatement pstmt = null;
 		String sql = "SELECT o.ovalue, t.value " +
-				"from option o, translation t " +  		
+				"from option o, translation t, question q " +  		
 				"where o.label_id = t.text_id " +
-				"and o.q_id = ? " +
+				"and o.l_id = q.l_id " +
+				"and q.q_id = ? " +
 				"and externalfile ='false';";	
 		
 		try {
@@ -1059,7 +1062,7 @@ public class GeneralUtilityMethods {
 		PreparedStatement pstmtResults = null;
 		
 		String sqlQuestion = "select qType, qName, f_id from question where q_id = ?";
-		String sqlOption = "select ovalue from option where q_id = ?";
+		String sqlOption = "select o.ovalue from option o, question q where q.q_id = ? and q.l_id = o.l_id";
 		
 		String qType = null;
 		String qName = null;

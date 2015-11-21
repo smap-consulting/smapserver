@@ -52,8 +52,8 @@ public class Option implements Serializable{
 	@SequenceGenerator(name="o_seq", sequenceName="o_seq")
 	private int o_id;
 	
-	@Column(name="q_id")
-	private int q_id;
+	@Column(name="l_id")
+	private int l_id;
 	
 	@Column(name="label")
 	private String label = null;
@@ -86,7 +86,7 @@ public class Option implements Serializable{
 	
 	public Option(Option anOption) {
 		this.o_id = anOption.getId();
-		this.q_id = anOption.getQuestionId();
+		this.l_id = anOption.getListId();
 		this.label = anOption.getLabel();
 		this.label_id = anOption.getLabelId();
 		this.value = anOption.getValue();
@@ -104,8 +104,8 @@ public class Option implements Serializable{
 		return o_id;
 	}
 	
-	public int getQuestionId() {
-		return q_id;
+	public int getListId() {
+		return l_id;
 	}
 	
 	public String getLabel() {
@@ -143,8 +143,8 @@ public class Option implements Serializable{
 	/*
 	 * Setters
 	 */
-    public void setQuestionId(int value) {
-    	q_id = value;
+    public void setListId(int value) {
+    	l_id = value;
     }
     
 	public void setLabel(String label) {

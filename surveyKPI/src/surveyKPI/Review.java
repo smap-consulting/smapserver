@@ -396,14 +396,15 @@ public class Review extends Application {
 			pstmtGetQuestion = connectionSD.prepareStatement(sqlGetQuestion);
 			
 			String sqlGetOption = "SELECT o.o_id, o.ovalue, t.value " +
-					" FROM form f, question q, option o, translation t " +  
+					" FROM form f, question q, option o, translation t, question q " +  
 					" WHERE o.label_id = t.text_id " +
 					" AND t.language = ? " +
 					" AND f.s_id = t.s_id " +
 					" AND q.f_id = f.f_id " +
 					" AND q.q_id = o.q_id " +
 					" AND t.type = 'none' " +		
-					" AND o.q_id = ?" +	
+					" AND q.q_id = ?" +	
+					" AND q.l_id = o.l_id" +
 					" AND f.s_id = ? " +
 			        " ORDER BY o.seq;";
 			pstmtGetOption = connectionSD.prepareStatement(sqlGetOption);

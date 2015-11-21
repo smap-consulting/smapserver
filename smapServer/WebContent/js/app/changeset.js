@@ -600,6 +600,7 @@ define([
 				// Add the option in the new location
 				length = targetOptionList.options.push(option);
 				change.option.itemIndex = length -1;
+				change.option.value = option.value;
 				targetOptionList.oSeq.splice(change.option.seq, 0, length - 1);	
 			
 				// Remove the option from the old location	
@@ -698,7 +699,14 @@ define([
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
-				newMarkup = markup.addOneOption(change.option, change.option.formIndex, change.option.itemIndex, change.option.optionList, change.option.qName, true);
+				var optionId = "option_" + change.option.qname + "_" + change.option.itemIndex;
+				newMarkup = markup.addOneOption(change.option, 
+						change.option.formIndex, 
+						change.option.itemIndex, 
+						change.option.optionList, 
+						change.option.qName, 
+						true,
+						optionId);
 				change.option.$button.before(newMarkup);
 				$changedRow = change.option.$button.prev();
 			
@@ -721,13 +729,15 @@ define([
 					return $this.data("list_name") == change.property.listName && $this.data("id") == change.property.itemIndex;
 				});
 				
+				var optionId = "option_" + change.property.qname + "_" + change.property.itemIndex;
 				newMarkup = markup.addOneOption(
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
 						change.property.formIndex, 
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
 						change.property.qname,
-						false);
+						false,
+						optionId);
 				
 			} else {
 				
@@ -816,13 +826,27 @@ define([
 	function addUpdateMessage(data, forError) {
 		var h = [],
 			idx = -1,
-			j;
+			j,
+			action,
+			result,
+			name;
+		
+		elementType = data.changeType === 'option' ? 'Option' : (data.changeType === 'question' ? 'Question: ' : "Property: ");
+		if(data.action === "add") {
+			result = " created";
+		}
+		
+		if(data.changeType === "question") {
+			name = data.items[0].question.name;
+		}
 		
 		if(data.updateFailed && forError || !data.updateFailed && !forError) {
 			for(j = 0; j < data.items.length; j++) {
 				h[++idx] = '<li>';
-				h[++idx] = 'Question: ';
-				h[++idx] = data.items[j].name;
+				h[++idx] = elementType;
+				h[++idx] = name;
+				h[++idx] = ' ';
+				h[++idx] = result;
 				h[++idx] = ' ';
 				h[++idx] = data.errorMsg;
 				h[++idx] = '</li>'

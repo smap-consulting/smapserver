@@ -129,10 +129,11 @@ public class QuestionInfo {
 							" AND t.language = ? " +
 							" AND t.type != 'image' AND t.type != 'video' AND t.type != 'audio' " +	// Temporarily ignore 
 							" AND t.s_id = ?" +
-							" AND o.q_id = q.q_id" +
+							" AND o.l_id = q.l_id" +
 							" AND o.externalfile = ?" +
 							" ORDER BY o.seq";
 					
+					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 					pstmt = connection.prepareStatement(sql);
 					pstmt.setInt(1,  qId);
 					pstmt.setString(2, lang);
@@ -226,7 +227,7 @@ public class QuestionInfo {
 				sql = "SELECT o.oValue" + 
 						" FROM option o, question q" +
 						" WHERE q.q_id = ?" + 
-						" AND o.q_id = q.q_id" +
+						" AND o.l_id = q.l_id" +
 						" ORDER BY o.seq";
 				
 				pstmt = connection.prepareStatement(sql);
@@ -317,7 +318,7 @@ public class QuestionInfo {
 						" AND t.language = ? " +
 						" AND t.type != 'image' AND t.type != 'video' AND t.type != 'audio' " +	// Temporarily ignore 
 						" AND t.s_id = ?" +
-						" AND o.q_id = q.q_id" +
+						" AND o.l_id = q.l_id" +
 						" ORDER BY o.seq";
 				
 				pstmt = connection.prepareStatement(sql);

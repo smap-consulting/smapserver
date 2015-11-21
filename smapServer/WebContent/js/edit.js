@@ -698,10 +698,11 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			oId = $this.data("oid"),
 			fId = $this.data("fid"),
+			qname = $this.data("qname"),
 			list_name = $this.data("list_name"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by oId
 		
-		$context = question.addOption($this, oId, locn, list_name, list_name, fId );
+		$context = question.addOption($this, oId, locn, list_name, fId, qname);
 		respondToEvents($context);				// Add events on to the altered html
 		$context.find('input').focus();			// Set focus to the new option
 		

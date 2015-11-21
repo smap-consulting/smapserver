@@ -77,16 +77,17 @@ public class QuestionManager {
 		csvRoot = csvRoot.replace("\'", "\'\'");
 		
 		ResultSet resultSet = null;
-		String sql = "select q.q_id, q.qname, q.qtype, q.appearance " +
+		String sql = "select q.q_id, q.qname, q.qtype, q.appearance, q.l_id " +
 				" from question q, form f " +
 				" where f.f_id = q.f_id " +
 				" and q.appearance like '%search(''" + csvRoot + "''%' " +
 				" and q.qtype like 'select%' " + 
 				" and f.s_id = ?";
 	
-		String sqlOption = "select o_id, seq, label_id, ovalue " +
-				" from option " +
-				" where q_id = ? " +
+		String sqlOption = "select o.o_id, o.seq, o.label_id, o.ovalue " +
+				" from option o, question q" +
+				" where q.q_id = ? " +
+				" and o.l_id = 1.l_id" +
 				" and externalfile = 'true';";
 
 		PreparedStatement pstmt = null;
@@ -110,8 +111,11 @@ public class QuestionManager {
 				q.name = resultSet.getString(2);
 				q.type = resultSet.getString(3);
 				q.appearance = resultSet.getString(4);
+				q.l_id = resultSet.getInt(5);
 				
 			
+				// TODO following code looks like it does nothing
+				/*
 				pstmtOption.setInt(1, q.id);
 				log.info("Get options for CSV: " + pstmtOption.toString());
 				ResultSet rsOptions = pstmtOption.executeQuery();
@@ -123,6 +127,7 @@ public class QuestionManager {
 					
 					UtilityMethodsEmail.getLabels( sd, survey, o.text_id, null, o.labels, null, 0);
 				}
+				*/
 				
 				questions.add(q);
 			} 
@@ -137,19 +142,20 @@ public class QuestionManager {
 		
 	}
 	
+
 	/*
 	 * Save a new question
 	 */
 	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
 		PreparedStatement pstmt = null;
-		String sql = "insert into question (q_id, f_id, seq, qname, qtype, qtext_id, "
-				+ "list_name, infotext_id, "
+		String sql = "insert into question (q_id, f_id, l_id, seq, qname, qtype, qtext_id, "
+				+ "infotext_id, "
 				+ "source, calculate, "
 				+ "defaultanswer, "
 				+ "appearance, visible, path) " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?);";
-
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?);";
+		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
 		
@@ -166,8 +172,8 @@ public class QuestionManager {
 			
 			for(Question q : questions) {
 				
-				if(q.fId <= 0) {
-					// New Form, the formIndex can be used to retrieve the formId of this new form
+				if(q.fId <= 0) {	// New Form, the formIndex can be used to retrieve the formId of this new form
+					
 					pstmtGetFormId = sd.prepareStatement(sqlGetFormId);
 					pstmtGetFormId.setInt(1, sId);
 					pstmtGetFormId.setInt(2, q.formIndex);
@@ -179,6 +185,10 @@ public class QuestionManager {
 					
 				}
 				
+				if(q.type.startsWith("select")) {	// Get the list id
+					q.l_id = getListId(sd, sId, q.list_name);
+				}
+				
 				// Update sequence numbers of questions after the question to be inserted
 				pstmtUpdateSeq.setInt(1, q.fId);
 				pstmtUpdateSeq.setInt(2, q.seq);
@@ -188,11 +198,11 @@ public class QuestionManager {
 				
 				// Insert the question
 				pstmt.setInt(1, q.fId );
-				pstmt.setInt(2, q.seq );
-				pstmt.setString(3, q.name );
-				pstmt.setString(4, q.type );
-				pstmt.setString(5, q.path + ":label" );
-				pstmt.setString(6, q.list_name );
+				pstmt.setInt(2, q.l_id);
+				pstmt.setInt(3, q.seq );
+				pstmt.setString(4, q.name );
+				pstmt.setString(5, q.type );
+				pstmt.setString(6, q.path + ":label" );
 				pstmt.setString(7, q.path + ":hint" );
 				pstmt.setString(8, q.source );
 				pstmt.setString(9, q.calculation );
@@ -268,7 +278,7 @@ public class QuestionManager {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
-		}	
+		}
 		
 	}
 	
@@ -356,8 +366,6 @@ public class QuestionManager {
 			pstmtDelHints = sd.prepareStatement(sqlDelHints);
 			pstmt = sd.prepareStatement(sql);
 			
-			sd.setAutoCommit(false);
-			
 			for(Question q : questions) {
 				
 		
@@ -391,11 +399,8 @@ public class QuestionManager {
 				
 				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
-				
-				sd.commit();
 
 			}
-			sd.setAutoCommit(true);
 			
 			
 		} catch(SQLException e) {
@@ -417,67 +422,45 @@ public class QuestionManager {
 	 */
 	public void saveOptions(Connection sd, int sId, ArrayList<Option> options, boolean updateLabels) throws SQLException {
 		
-		PreparedStatement pstmtGetQuestions = null;
-		/*
-		 * Get all questions which match the list_name
-		 * Where the survey was loaded from XLS this list name in the table may be null 
-		 * however the list name will be equal to the question name
-		 */
-		String sqlGetQuestions = "select q.q_id " +
-				"from question q, form f " +
-				"where q.f_id = f.f_id " + 
-				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
-		
 		PreparedStatement pstmt = null;
-		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
+		String sql = "insert into option (o_id, l_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
 				"values (nextval('o_seq'), ?, ?, ?, ?, ?, 'false');";
 
 		PreparedStatement pstmtUpdateSeq = null;
-		String sqlUpdateSeq = "update option set seq = seq + 1 where q_id = ? and seq >= ?;";
+		String sqlUpdateSeq = "update option set seq = seq + 1 where l_id = ? and seq >= ?;";
 		
 		try {
-			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
 			pstmt = sd.prepareStatement(sql);
 			
 			for(Option o : options) {
 				
-				// Get the questions from the form that use this option list
-				pstmtGetQuestions.setInt(1, sId);
-				pstmtGetQuestions.setString(2,  o.optionList);
-				pstmtGetQuestions.setString(3, o.optionList);
-				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
-				ResultSet rs = pstmtGetQuestions.executeQuery();
-				
+				// Get the list id for this option
+				int listId = getListId(sd, sId, o.optionList);
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 				
-				int count = 0;
-				while (rs.next()) {
 				
-					int qId = rs.getInt(1);
-					
-					// Update sequence numbers of options after the option to be inserted
-					pstmtUpdateSeq.setInt(1, qId);
-					pstmtUpdateSeq.setInt(2, o.seq);
-					
-					log.info("Update sequences: " + pstmtUpdateSeq.toString());
-					pstmtUpdateSeq.executeUpdate();
-					
-					// Insert the option
-					pstmt.setInt(1, qId );
-					pstmt.setInt(2, o.seq );
-					pstmt.setString(3, o.path + ":label" );
-					pstmt.setString(4, o.value );
-					pstmt.setString(5, gson.toJson(o.cascadeKeyValues));			
-					
-					log.info("Insert question: " + pstmt.toString());
-					pstmt.executeUpdate();
-					
-					// Set the labels (only need to do this once)
-					if (updateLabels && count++ == 0) {
-						UtilityMethodsEmail.setLabels(sd, sId, o.path, o.labels, "");
-					}
+				// Update sequence numbers of options after the option to be inserted
+				pstmtUpdateSeq.setInt(1, listId);
+				pstmtUpdateSeq.setInt(2, o.seq);
+				
+				log.info("Update sequences: " + pstmtUpdateSeq.toString());
+				pstmtUpdateSeq.executeUpdate();
+				
+				String path = "option_" + listId + "_" + o.value;
+				// Insert the option
+				pstmt.setInt(1, listId );
+				pstmt.setInt(2, o.seq );
+				pstmt.setString(3, path + ":label" );
+				pstmt.setString(4, o.value );
+				pstmt.setString(5, gson.toJson(o.cascadeKeyValues));			
+				
+				log.info("Insert option: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				// Set the labels 
+				if (updateLabels) {
+					UtilityMethodsEmail.setLabels(sd, sId, path, o.labels, "");
 				}
 			}
 			
@@ -488,7 +471,6 @@ public class QuestionManager {
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
 		}	
 		
 	}
@@ -498,70 +480,51 @@ public class QuestionManager {
 	 */
 	public void deleteOptions(Connection sd, int sId, ArrayList<Option> options, boolean updateLabels) throws SQLException {
 		
-		PreparedStatement pstmtGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id " +
-				"from question q, form f " +
-				"where q.f_id = f.f_id " + 
-				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
-		
 		PreparedStatement pstmtDelLabels = null;
 		String sqlDelLabels = "delete from translation t where t.s_id = ? and " +
-				"t.text_id in (select label_id  from option where q_id = ? and ovalue = ?); ";
+				"t.text_id in (select label_id  from option where l_id = ? and ovalue = ?); ";
 		
 		PreparedStatement pstmt = null;
 		String sql = "delete from option " +
-				" where q_id = ? " +
-				" and ovalue = ?;";					// Can't use o_id because of the option list can be in many questions
+				" where l_id = ? " +
+				" and ovalue = ?;";	
 
 		PreparedStatement pstmtUpdateSeq = null;
-		String sqlUpdateSeq = "update option set seq = seq - 1 where q_id = ? and seq >= ?;";
+		String sqlUpdateSeq = "update option set seq = seq - 1 where l_id = ? and seq >= ?;";
 		
 		try {
-			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
 			pstmtDelLabels = sd.prepareStatement(sqlDelLabels);
 			pstmt = sd.prepareStatement(sql);
 			
 			for(Option o : options) {
 				
-			
-				// Get the questions from the form that use this option list
-				pstmtGetQuestions.setInt(1, sId);
-				pstmtGetQuestions.setString(2,  o.optionList);
-				pstmtGetQuestions.setString(3, o.optionList);
-				log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
-				ResultSet rs = pstmtGetQuestions.executeQuery();
-				
-				int count = 0;
-				while (rs.next()) {
-				
-					int qId = rs.getInt(1);
+				// Get the list id for this option
+				int listId = getListId(sd, sId, o.optionList);
 					
-					// Delete the option labels
-					if(count++ == 0 && updateLabels) {
-						pstmtDelLabels.setInt(1, sId );
-						pstmtDelLabels.setInt(2, qId );
-						pstmtDelLabels.setString(3, o.value );
-						
-						log.info("Delete option labels: " + pstmtDelLabels.toString());
-						pstmtDelLabels.executeUpdate();
-					}
+				// Delete the option labels
+				if(updateLabels) {
+					pstmtDelLabels.setInt(1, sId );
+					pstmtDelLabels.setInt(2, listId );
+					pstmtDelLabels.setString(3, o.value );
 					
-					// Delete the option
-					pstmt.setInt(1, qId );
-					pstmt.setString(2, o.value );
-					
-					log.info("Delete option: " + pstmt.toString());
-					pstmt.executeUpdate();
-					
-					// Update sequence numbers of options after the option to be inserted
-					pstmtUpdateSeq.setInt(1, qId);
-					pstmtUpdateSeq.setInt(2, o.seq);
-					
-					log.info("Update sequences: " + pstmtUpdateSeq.toString());
-					pstmtUpdateSeq.executeUpdate();
+					log.info("Delete option labels: " + pstmtDelLabels.toString());
+					pstmtDelLabels.executeUpdate();
 				}
+				
+				// Delete the option
+				pstmt.setInt(1, listId );
+				pstmt.setString(2, o.value );
+				
+				log.info("Delete option: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				// Update sequence numbers of options after the option to be inserted
+				pstmtUpdateSeq.setInt(1, listId);
+				pstmtUpdateSeq.setInt(2, o.seq);
+				
+				log.info("Update sequences: " + pstmtUpdateSeq.toString());
+				pstmtUpdateSeq.executeUpdate();
 			}
 			
 			
@@ -572,7 +535,6 @@ public class QuestionManager {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtDelLabels != null) {pstmtDelLabels.close();}} catch (SQLException e) {}
-			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
 		}	
 		
 	}
@@ -582,72 +544,80 @@ public class QuestionManager {
 	 */
 	public void moveOptions(Connection sd, int sId, ArrayList<Option> options) throws Exception {
 		
-		PreparedStatement pstmtGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id " +
-				"from question q, form f " +
-				"where q.f_id = f.f_id " + 
-				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
-		
 		PreparedStatement pstmtMoveWithin = null;
 		String sqlMoveWithin = "update option set "
 						+ "seq = ? "
-					+ "where q_id = ? "
-						+ "and seq = ? "	// Ensure option has not been moved by someone else
-						+ "and q_id in " 
-							// Ensure user is authorised to access this question;";
-							+ " (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	
-
-		PreparedStatement pstmtInsertNew = null;
-		String sql = "insert into option (o_id, q_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
-				"values (nextval('o_seq'), ?, ?, ?, ?, ?, 'false');";
+					+ "where l_id = ? "
+					+ "and ovalue = ? "
+					+ "and seq = ?;";
+		
+		PreparedStatement pstmtMovedBack = null;
+		String sqlMovedBack = "update option set seq = seq + 1 where l_id = ? and seq >= ? and seq < ?;";
+		
+		PreparedStatement pstmtMovedForward = null;
+		String sqlMovedForward = "update option set seq = seq - 1 where l_id = ? and seq > ? and seq <= ?;";
 		
 		try {
-			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
 			
 			for(Option o : options) {
 				
 				boolean moveWithinList = o.optionList.equals(o.sourceOptionList);
-				
 			
-				// Get the questions from the form that use the target option list
-				pstmtGetQuestions.setInt(1, sId);
-				pstmtGetQuestions.setString(2,  o.optionList);
-				pstmtGetQuestions.setString(3, o.optionList);
-				log.info("Get the questions that use the target option list: " + pstmtGetQuestions.toString());
-				ResultSet rsTargetQuestions = pstmtGetQuestions.executeQuery();
-				
-				while (rsTargetQuestions.next()) {
-				
-					int qId = rsTargetQuestions.getInt(1);
+				// Get the target list id for this option
+				int listId = getListId(sd, sId, o.optionList);
+
 					
-					if(moveWithinList) {
-						pstmtMoveWithin.setInt(1, o.seq );
-						pstmtMoveWithin.setInt(2, qId );
-						pstmtMoveWithin.setInt(3, o.sourceSeq );
-						pstmtMoveWithin.setInt(4, sId);
+				if(moveWithinList) {
+					// Update sequence numbers of other options
+					if(o.seq > o.sourceSeq) { // Moved forward in list
 						
-						log.info("Move option within same list: " + pstmtMoveWithin.toString());
-						int count = pstmtMoveWithin.executeUpdate();
-						if(count == 0) {
-							log.info("Error: Question already modified");
-							throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-						}
-					} else {
-						// Insert into the target questions
-						ArrayList<Option> targetOptions = new ArrayList<Option> ();
-						targetOptions.add(o);
-						saveOptions(sd, sId, targetOptions, false);
+						pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
+						pstmtMovedForward.setInt(1,listId);
+						pstmtMovedForward.setInt(2, o.sourceSeq);
+						pstmtMovedForward.setInt(3, o.seq);
 						
-						// Remove from the source questions
-						ArrayList<Option> sourceOptions = new ArrayList<Option> ();
-						o.optionList = o.sourceOptionList;
-						sourceOptions.add(o);
-						deleteOptions(sd, sId, options, false);
+						log.info("Moving forward: " + pstmtMovedForward.toString());
+						pstmtMovedForward.executeUpdate();
+					} else {	// Moved backward in list
+						
+						pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
+						pstmtMovedBack.setInt(1,listId);
+						pstmtMovedBack.setInt(2, o.seq);
+						pstmtMovedBack.setInt(3, o.sourceSeq);
+						
+						log.info("Moving back: " + pstmtMovedBack.toString());
+						pstmtMovedBack.executeUpdate();
+						
 					}
 					
+					// Move the option
+					pstmtMoveWithin.setInt(1, o.seq );
+					pstmtMoveWithin.setInt(2, listId );
+					pstmtMoveWithin.setString(3, o.value);
+					pstmtMoveWithin.setInt(4, o.sourceSeq );
+					
+					log.info("Move option within same list: " + pstmtMoveWithin.toString());
+					int count = pstmtMoveWithin.executeUpdate();
+					if(count == 0) {
+						log.info("Error: Question already modified");
+						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+					}
+					
+
+				} else {
+					// Insert into the target list
+					ArrayList<Option> targetOptions = new ArrayList<Option> ();
+					targetOptions.add(o);
+					saveOptions(sd, sId, targetOptions, false);
+					
+					// Remove from the source questions
+					ArrayList<Option> sourceOptions = new ArrayList<Option> ();
+					o.optionList = o.sourceOptionList;
+					sourceOptions.add(o);
+					deleteOptions(sd, sId, options, false);
 				}
+					
 			}
 			
 			
@@ -658,24 +628,11 @@ public class QuestionManager {
 			}
 			throw e;
 		} finally {
-			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
 			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
-			try {if (pstmtInsertNew != null) {pstmtInsertNew.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
 		}	
 		
-	}
-	
-	/*
-	 * The names of question properties in the table don't exactly match the names in the survey model
-	 * translate them here
-	 */
-	private String translateOptionProperty(String in) {
-		String out = in;
-		
-		if(in.equals("value")) {
-			out = "ovalue";
-		}
-		return out;
 	}
 	
 	/*
@@ -683,56 +640,62 @@ public class QuestionManager {
 	 */
 	public void updateOptions(Connection sd, int sId, ArrayList<PropertyChange> properties) throws SQLException {
 		
-		PreparedStatement pstmtGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id " +
-				"from question q, form f " +
-				"where q.f_id = f.f_id " + 
-				"and f.s_id = ? " +
-				"and (q.list_name = ? or (q.list_name is null and q.qname = ?))";
+		PreparedStatement pstmtOtherProperties = null;
+
+		PreparedStatement pstmtUpdateValue = null;
+		String sqlUpdateValue = "update option set ovalue = ?, label_id = ? "
+				+ "where l_id = ? "
+				+ "and ovalue = ?";
 		
-		PreparedStatement pstmt = null;
-
-
+		// If the option value changes then its label id needs to be updated
+		PreparedStatement pstmtUpdateLabelId = null;
+		String sqlUpdateLabelId = "update translation t set text_id = ? where text_id = ?; ";
+		
 		try {
-			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
-			
 			
 			for(PropertyChange p : properties) {
 				
-				String property = translateOptionProperty(p.prop);		
-				if(GeneralUtilityMethods.hasColumn(sd, "option", property)) {
+				String property = p.prop;	
+				int listId = getListId(sd, sId, p.optionList);		// Get the list id for this option
 				
-					String sql = "update option set  " + property + " = ? " +
-							" where q_id = ? " +
-							" and ovalue = ?;";
+				if(property.equals("value")) {
+					String newPath = "option_" + listId + "_" + p.newVal + ":label";
+					String oldPath = "option_" + listId + "_" + p.oldVal + ":label";
 					
-					pstmt = sd.prepareStatement(sql);
+					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
+					pstmtUpdateValue.setString(1, p.newVal);
+					pstmtUpdateValue.setString(2, newPath);
+					pstmtUpdateValue.setInt(3, listId);
+					pstmtUpdateValue.setString(4, p.oldVal);
 					
-					//int optionListAsQId = 0;
-					//try {
-					//	optionListAsQId = Integer.parseInt(p.optionList);
-					//} catch (Exception e) {
-					//	
-					//}
-				
-					// Get the questions from the form that use this option list
-					pstmtGetQuestions.setInt(1, sId);
-					pstmtGetQuestions.setString(2,  p.optionList);
-					pstmtGetQuestions.setString(3, p.optionList);
-					log.info("Get questions that use the list: " + pstmtGetQuestions.toString());
-					ResultSet rs = pstmtGetQuestions.executeQuery();
+					log.info("Update option value: " + pstmtUpdateValue.toString());
+					pstmtUpdateValue.executeUpdate();
 					
-					while (rs.next()) {
+					// Update the label id
+					pstmtUpdateLabelId = sd.prepareStatement(sqlUpdateLabelId);
+					pstmtUpdateLabelId.setString(1, newPath);
+					pstmtUpdateLabelId.setString(2, oldPath);
 					
-						int qId = rs.getInt(1);
+					log.info("Update option label id: " + pstmtUpdateLabelId.toString());
+					pstmtUpdateLabelId.executeUpdate();
+					
+				} else {
+					if(GeneralUtilityMethods.hasColumn(sd, "option", property)) {
+					
+						String sql = "update option set  " + property + " = ? "
+								+ " where l_id = ? "
+								+ " and ovalue = ?;";
 						
+						pstmtOtherProperties = sd.prepareStatement(sql);
+							
 						// Update the option
-						pstmt.setString(1, p.newVal );
-						pstmt.setInt(2, qId );
-						pstmt.setString(3, p.oldVal );
+						pstmtOtherProperties.setString(1, p.newVal );
+						pstmtOtherProperties.setInt(2, listId );
+						pstmtOtherProperties.setString(3, p.oldVal );
 						
-						log.info("Update option: " + pstmt.toString());
-						pstmt.executeUpdate();
+						log.info("Update option: " + pstmtOtherProperties.toString());
+						pstmtOtherProperties.executeUpdate();
+							
 						
 					}
 				}
@@ -743,10 +706,59 @@ public class QuestionManager {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+			try {if (pstmtOtherProperties != null) {pstmtOtherProperties.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateValue != null) {pstmtUpdateValue.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateLabelId != null) {pstmtUpdateLabelId.close();}} catch (SQLException e) {}
 		}	
 		
+	}
+	
+	/*
+	 * Get the id from the list name and survey Id
+	 * If the list does not exist then create it
+	 */
+	private int getListId(Connection sd, int sId, String name) throws SQLException {
+		int listId = 0;
+		
+		PreparedStatement pstmtGetListId = null;
+		String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+
+		PreparedStatement pstmtListName = null;
+		String sqlListName = "insert into listname (s_id, name) values (?, ?);";
+		
+		try {
+			pstmtGetListId = sd.prepareStatement(sqlGetListId);
+			pstmtGetListId.setInt(1, sId);
+			pstmtGetListId.setString(2, name);
+			
+			log.info("SQL: Get list id: " + pstmtGetListId.toString());
+			ResultSet rs = pstmtGetListId.executeQuery();
+			if(rs.next()) {
+				listId = rs.getInt(1);
+			} else {	// Create listname
+				pstmtListName = sd.prepareStatement(sqlListName, Statement.RETURN_GENERATED_KEYS);
+				pstmtListName.setInt(1, sId);
+				pstmtListName.setString(2, name);
+				
+				log.info("SQL: Create list name: " + pstmtListName.toString());
+				
+				pstmtListName.executeUpdate();
+				
+				rs = pstmtListName.getGeneratedKeys();
+				rs.next();
+				listId = rs.getInt(1);
+				
+			}
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {			
+			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
+			try {if (pstmtListName != null) {pstmtListName.close();}} catch (SQLException e) {}
+		}	
+			
+		
+		return listId;
 	}
 	
 }

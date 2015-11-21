@@ -989,7 +989,7 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtGetCol = null;
 		
 		// SQL to get choices for a select question
-		String sqlGetChoices = "select ovalue from option where q_id = ?";
+		String sqlGetChoices = "select o.ovalue from option o, question q where q.q_id = ? and o.l_id = q.l_id";
 		PreparedStatement pstmtGetChoices = null;
 		
 		// Prepared Statements used in the clearing and inserting of data

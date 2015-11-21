@@ -36,16 +36,16 @@ public class OptionManager {
 
 	@SuppressWarnings("unchecked")
 	public List<Option> getByQuestionId(int questionId) {
-		Query query = em.createQuery("SELECT o FROM OPTION o "
-				+ "WHERE o.q_id = ?1 " + "ORDER BY o.seq ASC");
+		Query query = em.createQuery("SELECT o FROM OPTION o, QUESTION q "
+				+ "WHERE q.q_id = ?1 and o.l_id = q.l_id ORDER BY o.seq ASC");
 		query.setParameter(1, questionId);
 		List<Option> optionList = query.getResultList();
 		return optionList;
 	}
 
 	public int getCountForQuestion(int questionId) {
-		Query query = em.createQuery("SELECT COUNT(o) FROM OPTION o "
-				+ "WHERE o.q_id = ?1 ");
+		Query query = em.createQuery("SELECT COUNT(o) FROM OPTION o, QUESTION q "
+				+ "WHERE q.q_id = ?1 and q.l_id = o.l_id ");
 		query.setParameter(1, questionId);
 		Long count = (Long) query.getSingleResult();
 		return count.intValue();

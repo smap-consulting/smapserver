@@ -20,6 +20,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
@@ -60,6 +64,9 @@ public class Question implements Serializable {
 
 	@Column(name = "seq")
 	private int seq = -1;
+	
+	@Column(name = "l_id")
+	private int l_id;
 
 	@Column(name = "qName")
 	private String name;
@@ -171,6 +178,10 @@ public class Question implements Serializable {
 
 	public int getSeq() {
 		return seq;
+	}
+	
+	public int getListId() {
+		return l_id;
 	}
 
 	public String getName() {
@@ -287,6 +298,35 @@ public class Question implements Serializable {
 
 	public void setSeq(int seq) {
 		this.seq = seq;
+	}
+	
+	public void setListId(Connection sd, int sId) {
+		
+		if(this.l_id == 0) {		// No list has been set for this question
+		
+			// Create a list name if the question is a select type
+			if(this.qType.startsWith("select")) {
+				String sql = "insert into listname (s_id, name) values(?, ?);";
+				PreparedStatement pstmt = null;
+				try {
+					pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+					pstmt.setInt(1, sId);
+					pstmt.setString(2, this.name);
+					pstmt.executeUpdate();
+					
+					ResultSet rs = pstmt.getGeneratedKeys();
+					rs.next();
+					this.l_id = rs.getInt(1);
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+				}
+			}
+			
+		}
+		
 	}
 
 	public void setName(String name) {

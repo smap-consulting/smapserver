@@ -494,7 +494,7 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			keys.duplicateKeys = new ArrayList<Integer>();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
-				createTable(statement, tableName, sName);
+				boolean tableCreated = createTable(statement, tableName, sName);
 				keys.duplicateKeys = checkDuplicate(statement, tableName, uuid);
 				/*
 				 * Bug fix duplicates
@@ -510,7 +510,11 @@ public class SubRelationalDB extends Subscriber {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
 				// Apply any updates that have been made to the table structure since the last submission
-				applyTableChanges(cMeta, cRel, sId);
+				if(tableCreated) {
+					markAllChangesApplied(cMeta, sId);
+				} else {
+					applyTableChanges(cMeta, cRel, sId);
+				}
 			}
 			
 			boolean isBad = false;
@@ -940,7 +944,8 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Create the table if it does not already exits in the database
 	 */
-	void createTable(Statement statement, String tableName, String sName) {
+	private boolean createTable(Statement statement, String tableName, String sName) {
+		boolean tableCreated = false;
 		String sql = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
 		
 		System.out.println("SQL:" + sql);
@@ -958,10 +963,12 @@ public class SubRelationalDB extends Subscriber {
 				SurveyTemplate template = new SurveyTemplate();   
 				template.readDatabase(sName);	
 				writeAllTableStructures(template);
+				tableCreated = true;
 			}
 		} catch (Exception e) {
 			System.out.println("        Error checking for existence of table:" + e.getMessage());
 		}
+		return tableCreated;
 	}
 	
 	/*
@@ -1210,14 +1217,9 @@ public class SubRelationalDB extends Subscriber {
 				" where q.f_id = f.f_id " +
 				" and q.q_id = ?";
 		
-		String sqlUpdateChange = "update survey_change "
-				+ "set apply_results = 'false' "
-				+ "where c_id = ? ";
-		
 		PreparedStatement pstmtGet = null;
 		PreparedStatement pstmtGetTable = null;
 		PreparedStatement pstmtAlterTable = null;
-		PreparedStatement pstmtUpdateChange = null;
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
@@ -1226,7 +1228,6 @@ public class SubRelationalDB extends Subscriber {
 			
 			pstmtGet = connectionSD.prepareStatement(sqlGet);
 			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
-			pstmtUpdateChange = connectionSD.prepareStatement(sqlUpdateChange);
 			
 			pstmtGet.setInt(1, sId);
 			System.out.println("SQL: " + pstmtGet.toString());
@@ -1234,7 +1235,9 @@ public class SubRelationalDB extends Subscriber {
 			ResultSet rs = pstmtGet.executeQuery();
 			while(rs.next()) {
 				int cId = rs.getInt(1);
-				ChangeItem ci = gson.fromJson(rs.getString(2), ChangeItem.class);
+				String ciJson = rs.getString(2);
+				System.out.println("Apply table change: " + ciJson);
+				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
 				// Get the id for the question that is being updated
 				int qId = 0;
@@ -1248,9 +1251,9 @@ public class SubRelationalDB extends Subscriber {
 					qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
 					column = ci.question.name;
 					type = ci.question.type;
-					if(type.equals("string")) {
+					if(type.equals("string") || type.equals("select1")) {
 						type = "text";
-					}
+					} 
 				}
 				
 				// Get the table and column
@@ -1282,8 +1285,7 @@ public class SubRelationalDB extends Subscriber {
 					
 					// Record the table as having been altered
 					if(tableAltered) {
-						pstmtUpdateChange.setInt(1, cId);
-						pstmtUpdateChange.executeUpdate();
+						markChangeApplied(connectionSD, cId);
 					}
 				} else {
 					System.out.println("Error table not found: " + pstmtGetTable.toString());
@@ -1296,6 +1298,49 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGet != null) {pstmtGet.close();}} catch (Exception e) {}
 			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (Exception e) {}
 			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+		}
+		
+	}
+	
+	private void markChangeApplied(Connection sd, int cId) throws SQLException {
+		
+		String sqlUpdateChange = "update survey_change "
+				+ "set apply_results = 'false' "
+				+ "where c_id = ? ";
+		
+		PreparedStatement pstmtUpdateChange = null;
+		try {
+			pstmtUpdateChange = sd.prepareStatement(sqlUpdateChange);
+			
+			pstmtUpdateChange.setInt(1, cId);
+			pstmtUpdateChange.executeUpdate();
+			
+		}catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
+		}
+		
+	}
+	
+	private void markAllChangesApplied(Connection sd, int sId) throws SQLException {
+		
+		String sqlUpdateChange = "update survey_change "
+				+ "set apply_results = 'false' "
+				+ "where s_id = ? ";
+		
+		PreparedStatement pstmtUpdateChange = null;
+		try {
+			pstmtUpdateChange = sd.prepareStatement(sqlUpdateChange);
+			
+			pstmtUpdateChange.setInt(1, sId);
+			pstmtUpdateChange.executeUpdate();
+			
+		}catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
 			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
 		}
 		

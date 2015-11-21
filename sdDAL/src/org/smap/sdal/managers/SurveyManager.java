@@ -429,7 +429,9 @@ public class SurveyManager {
 				+ "o.label_id, "
 				+ "o.externalfile, "
 				+ "o.cascade_filters "
-				+ "from option o where q_id = ? order by seq";
+				+ "from option o, question q "
+				+ "where o.l_id = q.l_id "
+				+ "and q.q_id = ? order by o.seq";
 		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
 		
 		// Get the server side calculations
@@ -1047,10 +1049,11 @@ public class SurveyManager {
 		
 		try {
 			// Create prepared statements
-			String sqlOptionGet = "select label_id from option where q_id = ? and ovalue = ?;";
+			String sqlOptionGet = "select o.label_id from option o, question q where q.q_id = ? and "
+					+ "q.l_id = o.l_id and o.ovalue = ?;";
 			pstmtOptionGet = connectionSD.prepareStatement(sqlOptionGet);
 			
-			String sqlOptionInsert = "insert into option  (o_id, q_id, seq, label_id, ovalue, externalfile) values(nextval('o_seq'), ?, ?, ?, ?, 'true');"; 			
+			String sqlOptionInsert = "insert into option  (o_id, l_id, seq, label_id, ovalue, externalfile) values(nextval('o_seq'), ?, ?, ?, ?, 'true');"; 			
 			pstmtOptionInsert = connectionSD.prepareStatement(sqlOptionInsert);
 			
 			String sqlLangInsert = "insert into translation  (t_id, s_id, language, text_id, type, value) values(nextval('t_seq'), ?, ?, ?, ?, ?);"; 			
@@ -1104,9 +1107,9 @@ public class SurveyManager {
 					
 					// Set text id
 					maxSeq++;
-					String text_id = "external_" + ci.property.qId + "_" + maxSeq;
+					String text_id = "external_" + ci.property.l_id + "_" + maxSeq;
 					// Insert new option		
-					pstmtOptionInsert.setInt(1, ci.property.qId);
+					pstmtOptionInsert.setInt(1, ci.property.l_id);
 					pstmtOptionInsert.setInt(2, maxSeq);
 					pstmtOptionInsert.setString(3, text_id);
 					pstmtOptionInsert.setString(4, ci.property.key);

@@ -769,7 +769,6 @@ public class UtilityMethodsEmail {
 			languages = GeneralUtilityMethods.getLanguages(sd, sId);
 			log.info("Adding labels for: " + languages.toString());
 			
-			//String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
 			String sql = "insert into translation (s_id, language, text_id, type, value) " +
 					"values (?, ?, ?, ?, ?)";
 			

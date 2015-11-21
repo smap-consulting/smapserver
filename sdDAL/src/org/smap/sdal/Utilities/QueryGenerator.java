@@ -95,10 +95,11 @@ public class QueryGenerator {
 			 * Prepare the statement to get the list labels
 			 */
 			String sqlListLabels = "SELECT o.ovalue, t.value " +
-					"FROM option o, translation t " +  		
+					"FROM option o, translation t, question q " +  		
 					"WHERE o.label_id = t.text_id " +
 					"AND t.s_id =  ? " + 
-					"AND o.q_id = ? " +
+					"AND q.q_id = ? " +
+					"AND q.l_id = o.l_id " +
 					"AND t.language = ? " +
 					"ORDER BY o.seq;";		
 			pstmtListLabels = connectionSD.prepareStatement(sqlListLabels);

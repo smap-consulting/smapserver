@@ -288,7 +288,7 @@ define([
 	 * Add a new option
 	 * oItem: the html element id for the closest option to where we want to add the new option
 	 */
-	function addOption($button, oId, locn, qName, list_name, formIndex) {		
+	function addOption($button, oId, locn, list_name, formIndex, qname) {		
 		
 		var $relatedOption = $("#" + oId),
 			optionIndex,
@@ -319,8 +319,8 @@ define([
 					labels: [],
 					
 					// Helper values 
-					qName: qName,
 					formIndex: formIndex,
+					qname: qname,
 					locn: locn,							// Whether the new option was added before or after the related option
 					$button: $button	   				// JQuery element for the button that added this option
 				}

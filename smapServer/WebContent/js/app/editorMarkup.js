@@ -168,7 +168,7 @@ define([
 		return h.join('');
 	}
 	
-	function addNewOptionButton(after, optionId, list_name, formIndex) {
+	function addNewOptionButton(after, optionId, list_name, formIndex, qname) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -188,6 +188,8 @@ define([
 		h[++idx] = optionId;
 		h[++idx] = '" data-list_name="';
 		h[++idx] = list_name;
+		h[++idx] = '" data-qname="';
+		h[++idx] = qname;
 		h[++idx] = '" data-fid="';
 		h[++idx] = formIndex;
 		h[++idx] = '">Add New Choice</button>';
@@ -386,7 +388,7 @@ define([
 						true,
 						optionId);
 			}
-			h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex); 
+			h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex, question.name); 
 		}
 		h[++idx] = '</ul>';
 		return h.join("");
@@ -400,7 +402,7 @@ define([
 			idx = -1;
 		
 		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, optionId, list_name, formIndex);
+			h[++idx] = addNewOptionButton(false, optionId, list_name, formIndex, qname);
 		}
 		
 		h[++idx] = '<li class="editor_element option draggable';

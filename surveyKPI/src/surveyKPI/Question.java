@@ -149,11 +149,12 @@ public class Question extends Application {
 				 * options for this question
 				 */
 				sql = "SELECT o.o_id, o.ovalue, t.value" +
-						" FROM option o, translation t" +  		
+						" FROM option o, translation t, question q " +  		
 						" WHERE o.label_id = t.text_id" +
 						" AND t.s_id = ? " +
 						" AND t.language = ? " +
-						" AND o.q_id = ? " + 
+						" AND q.q_id = ? " + 
+						" AND q.l_id = o.l_id " +
 						" AND t.type = 'none' " +		// TODO support multiple types as options
 						" ORDER BY o.seq;";			
 				

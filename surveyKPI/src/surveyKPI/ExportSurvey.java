@@ -1202,7 +1202,7 @@ public class ExportSurvey extends Application {
 			if(qType != null && qType.startsWith("select")) {
 				sql = "SELECT t.value AS otext, o.ovalue AS ovalue FROM option o, question q, translation t" +
 						" WHERE q.q_id = ? " +
-						" AND o.q_id = q.q_id " +
+						" AND o.l_id = q.l_id " +
 						" AND o.label_id = t.text_id" +
 						" AND t.language = ? " +
 						" AND t.s_id = ? " +
@@ -1256,8 +1256,9 @@ public class ExportSurvey extends Application {
 		String sql = "SELECT qname, qtype, q_id FROM question q" +
 				" WHERE f_id = ? " +
 				" ORDER BY seq ASC;";
-		String sqlOption = "SELECT ovalue, o_id from option o" +
-				" WHERE q_id = ?;";
+		String sqlOption = "SELECT o.ovalue, o.o_id from option o, question q "
+				+ "WHERE q.q_id = ? "
+				+ "AND q.l_id = o.l_id;";
 
 		pstmt = conn.prepareStatement(sql);
 		pstmtOptions = conn.prepareStatement(sqlOption);

@@ -818,6 +818,10 @@ public class SurveyTemplate {
 	 * Method to write the model to the database
 	 */
 	public void writeDatabase() throws Exception {
+		
+		// Start using plain old JDBC as we are migrating away from hibernate
+		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Write Database");
+		
 		Collection c = null;
 		Iterator itr = null;
 
@@ -1006,6 +1010,7 @@ public class SurveyTemplate {
 			if(f != null) {
 				q.setFormId(f.getId());
 				q.setSeq(f.qSeq++);
+				q.setListId(sd, survey.getId());
 				qPersist.persist(q);
 			} 			
 		}
@@ -1044,7 +1049,7 @@ public class SurveyTemplate {
 		for (Option o : optionList) {
 			System.out.println("Writing option: " + o.getValue() + " : " + o.getSeq());
 			Question q = getQuestion(o.getQuestionRef()); // Get the question id
-			o.setQuestionId(q.getId());
+			o.setListId(q.getListId());
 			o.setSeq(q.oSeq++);
 			o.setCascadeFilters();	// Set the filter value based on the key value pairs
 			oPersist.persist(o);
@@ -1556,6 +1561,7 @@ public class SurveyTemplate {
 										file,
 										filename,
 										q.getName(),
+										q.getListId(),
 										q.getId(),				
 										"select",
 										appearance);
