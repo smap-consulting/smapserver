@@ -350,8 +350,10 @@ define([
 		newItem = change.items[0];
 		if(newItem.question) {
 			newElement = newItem.question;
+			newElement.type = "question";
 		} else if(newItem.option) {
 			newElement = newItem.option;
+			newElement.type = "option";
 		} else if(newItem.property) {
 			newElement = newItem.property;
 		}
@@ -426,11 +428,16 @@ define([
 				/*
 				 * Remove any modifications to this deleted element
 				 */
-				if((newElement.type === "question" || newElement.type === "option") &&
+				if(newElement.type === "question"  &&
 						newElement.itemIndex === element.itemIndex &&
 						newElement.formIndex === element.formIndex) {
 					changes.splice(j,1);	// Remove this item
-					// Continue to remove all matching changes
+					return false;
+				} else if(newElement.type === "option" &&
+							newElement.itemIndex === element.itemIndex &&
+							newElement.optionList === element.optionList) {
+						changes.splice(j,1);	// Remove this item
+						return false;
 				}
 			}
 		}
@@ -532,6 +539,24 @@ define([
 									qSeq: []
 								});
 								question.childFormIndex = survey.forms.length - 1;
+							} else if(property.newVal == "geopoint" || property.newVal == "geopolygon" || property.newVal == "geolinestring") {
+								
+								// Set the question name automatically
+								addToChangesetArray({
+										changeType: "property",	
+										action: "update",			
+										source: "editor",
+										property: {
+											type: "question",
+											prop: "name",		
+											newVal: "the_geom",
+											oldVal: question.name,
+											formIndex: property.formIndex,
+											itemIndex: property.itemIndex
+										
+										}
+								});
+								question.name = "the_geom";	
 							}
 						} 
 						
@@ -601,6 +626,7 @@ define([
 				
 			} else if(change.action === "delete") {
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array
+				survey.forms[change.question.formIndex].questions[change.question.itemIndex].deleted = true;	// Mark deleted
 				refresh = false;
 			} else {
 				console.log("Unknown action: " + change.action);
@@ -889,42 +915,48 @@ define([
 			isValid = true,
 			hasDuplicate = false;
 		
-		/*
-		 * Name validations
-		 */
-		isValid = validateQuestionName(formIndex, itemIndex, question.name);
-		
-		/*
-		 * Question validations
-		 */
-		// Clear the existing question validation errors
-		removeValidationError(
-				formIndex,
-				itemIndex,
-				"question");
-		
-		 // Check for multiple geom types in a single form
-		if(isValid) {
-			if(question.type === "geopoint") {
-				form = survey.forms[formIndex];
-				for(j = 0; j < form.questions.length; j++) {		
-					otherQuestion = form.questions[j];
-					if(j != itemIndex) {
-						if(otherQuestion.type === question.type) {
-							addValidationError(
-									formIndex,
-									itemIndex,
-									"question",
-									"Only one geometry question can be added to a form.");
-							isValid = false;
-							break;
+		if(question.deleted) {
+			// The question has been deleted remove all of its errors
+			removeValidationError(formIndex, itemIndex,	"question");
+			removeValidationError(formIndex, itemIndex,	"name");
+		} else {
+			/*
+			 * Name validations
+			 */
+			isValid = validateQuestionName(formIndex, itemIndex, question.name);
+			
+			/*
+			 * Question validations
+			 */
+			// Clear the existing question validation errors
+			removeValidationError(
+					formIndex,
+					itemIndex,
+					"question");
+			
+			 // Check for multiple geom types in a single form
+			if(isValid) {
+				if(question.type === "geopoint") {
+					form = survey.forms[formIndex];
+					for(j = 0; j < form.questions.length; j++) {		
+						otherQuestion = form.questions[j];
+						if(j != itemIndex) {
+							if(otherQuestion.type === question.type) {
+								addValidationError(
+										formIndex,
+										itemIndex,
+										"question",
+										"Only one geometry question can be added to a form.");
+								isValid = false;
+								break;
+							}
 						}
 					}
 				}
 			}
+				
+			updateModelWithErrorStatus(formIndex, itemIndex);	// Update model and DOM
 		}
-			
-		updateModelWithErrorStatus(formIndex, itemIndex);	// Update model and DOM
 		
 		// Set the control buttons
 		if(errors.length > 0 ) {

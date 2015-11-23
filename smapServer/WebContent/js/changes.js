@@ -162,7 +162,7 @@ function setChangesHtml($element, survey, survey) {
 				h[++idx] = '<th>Change</th>';
 				h[++idx] = '<th>Changed By</th>';
 				h[++idx] = '<th>When changed</th>';
-				h[++idx] = '<th>Status</th>';
+				h[++idx] = '<th>Results Table Updated</th>';
 				h[++idx] = '<th>Error</th>';
 			h[++idx] = '</tr>';
 		h[++idx] = '</thead>';
@@ -211,9 +211,18 @@ function setChangesHtml($element, survey, survey) {
 function getChangeDescription(change) {
 	
 	var h =[],
-		idx = -1;
+		idx = -1,
+		changeData,
+		oldVal,
+		newVal;
 	
-	if(change.changeType && change.changeType === "option_update") {		// Options added from a file
+	if(change.changeType === "property") {
+		changeData = change.property;
+	} else if(change.changeType === "question") {
+		changeData = change.question;
+	}
+
+	if(change.changeType === "option_update") {		// Options added from a file
 		h[++idx] = 'Choice <span style="color:blue;">'; 
 		h[++idx] = change.newVal;
 		h[++idx] = '</span>';
@@ -224,7 +233,7 @@ function getChangeDescription(change) {
 		h[++idx] = ' from file: <span style="color:blue;">';
 		h[++idx] = change.fileName;
 		h[++idx] = '</span>';
-	} else if(change.changeType && change.changeType === "option") {		// Options added or deleted from editor
+	} else if(change.changeType === "option") {		// Options added or deleted from editor
 		h[++idx] = 'Choice <span style="color:blue;">'; 
 		h[++idx] = change.option.value;
 		h[++idx] = '</span>';
@@ -233,6 +242,31 @@ function getChangeDescription(change) {
 		h[++idx] = change.option.optionList;
 		h[++idx] = '</span>';
 		h[++idx] = ' using the online editor';
+	} else if(change.changeType === "property"){
+		if(changeData.prop === "type") {
+			newVal = translateType(changeData.newVal);
+			oldVal = translateType(changeData.oldVal);
+		} else {
+			newVal = changeData.newVal;
+			oldVal = changeData.oldVal;
+		}
+		h[++idx] = changeData.prop;
+		h[++idx] = ' of ';
+		h[++idx] = changeData.type;
+		h[++idx] = ' ';
+		h[++idx] = changeData.name;
+		h[++idx] = ' changed to: <span style="color:blue;">';
+		h[++idx] = newVal;
+		h[++idx] = '</span>';
+		h[++idx] = ' from: <span style="color:red;">';
+		h[++idx] = oldVal;
+		h[++idx] = '</span>';
+	} else if(change.changeType === "question"){
+		h[++idx] = change.action;
+		h[++idx] = ' ';	
+		h[++idx] = change.changeType;
+		h[++idx] = ' ';
+		h[++idx] = changeData.name;
 	} else {
 		h[++idx] = change.type;
 		h[++idx] = ' ';
@@ -246,6 +280,15 @@ function getChangeDescription(change) {
 	}
 
 	return h.join('');
+}
+
+function translateType(input) {
+	if(input === "string") {
+		output = "text";
+	} else {
+		output = input;
+	}
+	return output;
 }
 
 });

@@ -1244,7 +1244,12 @@ public class SubRelationalDB extends Subscriber {
 				int qId = 0;
 				String column = null;
 				String type = null;
-				if(ci.property != null) {
+				if(ci.property != null && ci.property.prop.equals("type")) {
+					
+					// Type changes on existing questions are not allowed
+					System.out.println("Error: Type change on existing question");
+					
+				} else if(ci.property != null) {
 					qId = ci.property.qId;
 					column = ci.property.name + "__" + ci.property.key;
 					type = "integer";
@@ -1331,8 +1336,8 @@ public class SubRelationalDB extends Subscriber {
 	private void markAllChangesApplied(Connection sd, int sId) throws SQLException {
 		
 		String sqlUpdateChange = "update survey_change "
-				+ "set apply_results = 'false' "
-				+ "set success = 'true' "
+				+ "set apply_results = 'false', "
+				+ "success = 'true' "
 				+ "where s_id = ? ";
 		
 		PreparedStatement pstmtUpdateChange = null;

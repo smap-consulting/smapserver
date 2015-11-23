@@ -343,17 +343,17 @@ public class QuestionManager {
 	public void delete(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
 		
 		PreparedStatement pstmt = null;
-		String sql = "delete from question q where qname = ? and q.q_id in " +
+		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
 				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
 
 		PreparedStatement pstmtDelLabels = null;
 		String sqlDelLabels = "delete from translation t where t.s_id = ? and " +
-				"t.text_id in (select qtext_id  from question where qname = ? and q_id in " +
+				"t.text_id in (select qtext_id  from question where qname = ? and f_id = ? and q_id in " +
 				" (select q.q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?));";
 		
 		PreparedStatement pstmtDelHints = null;
 		String sqlDelHints = "delete from translation t where t.s_id = ? and " +
-				"t.text_id in (select infotext_id  from question where qname = ? and q_id in " +
+				"t.text_id in (select infotext_id  from question where qname = ? and f_id = ? and q_id in " +
 				" (select q.q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?));";
 		
 		PreparedStatement pstmtUpdateSeq = null;
@@ -372,7 +372,8 @@ public class QuestionManager {
 				// Delete the labels (
 				pstmtDelLabels.setInt(1, sId);
 				pstmtDelLabels.setString(2, q.name );
-				pstmtDelLabels.setInt(3, sId );
+				pstmtDelLabels.setInt(3, q.fId);
+				pstmtDelLabels.setInt(4, sId );
 				
 				log.info("Delete question labels: " + pstmtDelLabels.toString());
 				pstmtDelLabels.executeUpdate();
@@ -380,14 +381,16 @@ public class QuestionManager {
 				// Delete the labels (
 				pstmtDelHints.setInt(1, sId);
 				pstmtDelHints.setString(2, q.name );
-				pstmtDelHints.setInt(3, sId );
+				pstmtDelHints.setInt(3, q.fId);
+				pstmtDelHints.setInt(4, sId );
 				
 				log.info("Delete question hints: " + pstmtDelHints.toString());
 				pstmtDelHints.executeUpdate();
 				
 				// Delete the question
-				pstmt.setString(1, q.name );
-				pstmt.setInt(2, sId );
+				pstmt.setInt(1, q.fId);
+				pstmt.setString(2, q.name );
+				pstmt.setInt(3, sId );
 				
 				log.info("Delete question: " + pstmt.toString());
 				pstmt.executeUpdate();

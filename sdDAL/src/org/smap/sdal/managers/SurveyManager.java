@@ -461,11 +461,12 @@ public class SurveyManager {
 				+ "c.updated_time, "
 				+ "c.apply_results, "
 				+ "c.success, "
-				+ "c.msg " +
-				"from survey_change c, users u " +
-				"where c.s_id = ? " +
-				"and c.user_id = u.id " +
-				"order by c_id desc; ";
+				+ "c.msg, " 
+				+ "c.action "
+				+ "from survey_change c, users u "
+				+ "where c.s_id = ? "
+				+ "and c.user_id = u.id "
+				+ "order by c_id desc; ";
 		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
 		
 		// Get the available languages
@@ -654,6 +655,7 @@ public class SurveyManager {
 			ci.apply_results = rsGetChanges.getBoolean(6);
 			ci.success = rsGetChanges.getBoolean(7);
 			ci.msg = rsGetChanges.getString(8);
+			ci.action = rsGetChanges.getString(9);
 			s.changes.add(ci);
 		}
 		
@@ -762,8 +764,8 @@ public class SurveyManager {
 		try {
 			
 			String sqlChangeLog = "insert into survey_change " +
-					"(s_id, version, changes, user_id, apply_results, updated_time) " +
-					"values(?, ?, ?, ?, ?, ?)";
+					"(s_id, version, changes, user_id, apply_results, updated_time, action) " +
+					"values(?, ?, ?, ?, 'true', ?, ?)";
 			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
 			
 			/*
@@ -970,8 +972,8 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(ci));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setBoolean(5,false);
-				pstmtChangeLog.setTimestamp(6, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setString(6, "change");
 				pstmtChangeLog.execute();
 			}
 		} catch (Exception e) {
@@ -1161,12 +1163,8 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(ci));
 					pstmtChangeLog.setInt(4,userId);
-					if(ci.property.qType != null && ci.property.qType.equals("select")) {
-						pstmtChangeLog.setBoolean(5, true);
-					} else {
-						pstmtChangeLog.setBoolean(5, false);
-					}
-					pstmtChangeLog.setTimestamp(6, getTimeStamp());
+					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					pstmtChangeLog.setString(6, "external option");
 					pstmtChangeLog.execute();
 
 				}
@@ -1268,9 +1266,9 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(1, sId);
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(ci));
-					pstmtChangeLog.setInt(4,userId);
-					pstmtChangeLog.setBoolean(5,false);
-					pstmtChangeLog.setTimestamp(6, getTimeStamp());
+					pstmtChangeLog.setInt(4,userId);	
+					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					pstmtChangeLog.setString(6,  "update");
 					pstmtChangeLog.execute();
 					
 				} else {
@@ -1344,12 +1342,8 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(ci));
 				pstmtChangeLog.setInt(4,userId);
-				if(action.equals("add")) {
-					pstmtChangeLog.setBoolean(5,true);	// New question, this change will have to be applied to the results database
-				} else {
-					pstmtChangeLog.setBoolean(5,false);
-				}
-				pstmtChangeLog.setTimestamp(6, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setString(6,  action);
 				pstmtChangeLog.execute();
 			} 
 			
@@ -1410,8 +1404,8 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(ci));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setBoolean(5,false);
-				pstmtChangeLog.setTimestamp(6, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setString(6, "change");
 				pstmtChangeLog.execute();
 			} 
 			
