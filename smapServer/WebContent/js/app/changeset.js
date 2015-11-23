@@ -977,7 +977,7 @@ define([
 		for(i = errors.length - 1; i >= 0; i--) {
 			if(errors[i].isQuestion && errors[i].formIndex === formIndex && 
 					errors[i].itemIndex === itemIndex) {
-				if(errors[i].type === "name") {
+				if(errors[i].errorType === "name") {
 					hasError = true;
 					msg = errors[i].msg;
 					break;
