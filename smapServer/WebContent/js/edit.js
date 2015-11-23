@@ -166,6 +166,10 @@ $(document).ready(function() {
 		changeset.save(surveyListDone);
 	});
 
+	$('.m_validate').off().click(function() {
+		changeset.validateAll();
+	});
+	
 	$('.m_languages').off().click(function() {
 		console.log("Edit languages");
 		gTempLanguages = globals.model.survey.languages.slice();

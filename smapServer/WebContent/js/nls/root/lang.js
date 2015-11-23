@@ -63,6 +63,7 @@ define({
 	"c_cancel": "Cancel",
 	"c_save": "Save",
 	"c_test": "Test",
+	"c_validate": "Validate",
 	"c_close": "Close",
 	"c_logout": "Logout",
 	"c_block": "Block",

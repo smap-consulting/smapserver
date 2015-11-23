@@ -46,7 +46,8 @@ define([
 		removeOptionValidationError: removeOptionValidationError,
 		validateQuestion: validateQuestion,
 		validateQuestionName: validateQuestionName,
-		updateModelWithErrorStatus: updateModelWithErrorStatus
+		updateModelWithErrorStatus: updateModelWithErrorStatus,
+		validateAll: validateAll
 	};
 
 	/*
@@ -455,6 +456,7 @@ define([
 		} else {
 			$('.m_save_survey').find('.badge').html(numberChanges);
 			$('.m_languages').addClass("disabled").attr("disabled", true);
+			$('.m_validate').removeClass("disabled").attr("disabled", false);
 			if(errors.length === 0) {
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 			}
@@ -1271,6 +1273,25 @@ define([
 		}
 		path = "/" + path;
 		return path;
+	}
+	
+	/*
+	 * Validate the entire survey
+	 */
+	function validateAll() {
+		var i,
+			j,
+			forms = globals.model.survey.forms;
+		
+		errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
+		for(i = 0; i < forms.length; i++) {
+			for(j = 0; j < forms[i].length; j++) {
+				validateQuestion(i, j);
+			}
+		}
+		if(errors.length > 0) {
+			$('#review_pane').show();
+		}
 	}
 	 
 });
