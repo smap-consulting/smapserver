@@ -573,10 +573,9 @@ function respondToEvents($context) {
 			$row = $parent.parent();
 			$label = $row.find(".q_label_col");
 			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id"),
-			newVal = $this.val();
+			itemIndex = $label.data("id");
 		
-		validateQuestionName(formIndex, itemIndex, newVal); 
+		changeset.validateQuestion(formIndex, itemIndex); 
 
 	});
 	
@@ -588,7 +587,7 @@ function respondToEvents($context) {
 		}
 	});
 	
-	// validate the question name
+	// validate the question name on every character change
 	$context.find('.qname').keyup(function(){
 
 		var $this = $(this),
@@ -599,7 +598,8 @@ function respondToEvents($context) {
 			itemIndex = $label.data("id"),
 			newVal = $this.val();
 		
-		validateQuestionName(formIndex, itemIndex, newVal);
+		changeset.validateQuestionName(formIndex, itemIndex, newVal);
+		changeset.updateModelWithErrorStatus(formIndex, itemIndex);	// Update model and DOM
 
 	});
 	
@@ -1089,82 +1089,6 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 }
 
 /*
- * Validate a question name
- */
-function validateQuestionName(formIndex, itemIndex, val) {
-	
-	console.log("Validate name");
-		
-	var i, j,
-		form, question,
-		survey = globals.model.survey,
-		isValid = true,
-		hasDuplicate = false;
-
-		
-	// Check for empty name
-	if(!val || val === "") {
-		changeset.addValidationError(
-				formIndex,
-				itemIndex,
-				"This question does not have a name.  Specify a unique name.");
-		isValid = false;	
-	} 
-	
-	// Check for invalid characters
-	if(isValid) {
-		isValid = isValidSQLName(val)
-	
-		if(!isValid) {
-			changeset.addValidationError(
-				formIndex,
-				itemIndex,
-				"The question name must start with a letter and only contain lower case letters, numbers and underscores");	
-	
-		}
-	}
-	
-	/*
-	 * Name change require the entire set of questions to be validated for duplicates
-	 */
-	if(isValid) {
-		
-		for(i = 0; i < survey.forms.length; i++) {
-			form = survey.forms[i];
-			for(j = 0; j < form.questions.length && !hasDuplicate; j++) {		
-				if(!(i === formIndex && j === itemIndex)) {
-					question = form.questions[j];
-					if(question.name === val) {
-						hasDuplicate = true;
-						break;
-					}
-				}
-			}
-		}
-		if(hasDuplicate) {
-			changeset.addValidationError(
-					formIndex,
-					itemIndex,
-					"The question name is the same as the name of another question.  Specify a unique name.");
-			isValid = false;	
-		}
-		
-	}
-
-
-
-	// If the name is valid then the error message can be removed
-	if(isValid) {
-		changeset.removeValidationError(
-				formIndex,
-				itemIndex);
-	}
-		
-	return isValid;
-	
-}
-
-/*
  * Validate an option name
  */
 function validateOptionName(listName, itemIndex, val) {
@@ -1236,15 +1160,6 @@ function validateOptionName(listName, itemIndex, val) {
 		
 	return isValid;
 	
-}
-
-/*
- * Return true if the passed in value has non trailing spaces
- */
-function isValidSQLName(val) {
-	
-	var sqlCheck = /^[a-z_][a-z0-9_]*$/
-	return sqlCheck.test(val);	
 }
 
 /*

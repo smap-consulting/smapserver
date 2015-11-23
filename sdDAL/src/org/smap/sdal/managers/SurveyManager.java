@@ -210,8 +210,11 @@ public class SurveyManager {
 			} 
 			
 			if(full && s != null) {
-				populateSurvey(sd, s, basePath, user);
-				if(getResults) {
+				
+				populateSurvey(sd, s, basePath, user);			// Add forms, questions, options
+				
+				if(getResults) {								// Add results
+					
 					Form ff = s.getFirstForm();
 					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s, generateDummyValues);
 					ArrayList<Result> topForm = s.instance.results.get(0);
@@ -222,6 +225,7 @@ public class SurveyManager {
 							break;
 						}
 					}
+					
 				}
 			}
 		} catch (SQLException e) {
@@ -389,7 +393,7 @@ public class SurveyManager {
 		 * Prepared Statements
 		 */
 		
-		// Get the forms belonging to this survey
+		// SQL to get the forms belonging to this survey
 		ResultSet rsGetForms = null;
 		String sqlGetForms = "select f.f_id, "
 				+ "f.name, "
@@ -400,7 +404,7 @@ public class SurveyManager {
 				+ "from form f where f.s_id = ?;";
 		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
 		
-		// Get the questions belonging to a form
+		// SQL to get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
 		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, "
 				+ "q.source, " 
@@ -422,16 +426,24 @@ public class SurveyManager {
 				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
-		// Get the options belonging to a question		
+		// SQL to get the choice lists in this survey
+		ResultSet rsGetLists = null;
+		String sqlGetLists = "select l_id, "
+				+ "name "
+				+ "from listname "
+				+ "where s_id = ?;";
+		PreparedStatement pstmtGetLists = sd.prepareStatement(sqlGetLists);
+		
+		// SQL to get the options belonging to a choice list		
 		ResultSet rsGetOptions = null;
 		String sqlGetOptions = "select o.o_id, "
 				+ "o.ovalue as value, "
 				+ "o.label_id, "
 				+ "o.externalfile, "
 				+ "o.cascade_filters "
-				+ "from option o, question q "
-				+ "where o.l_id = q.l_id "
-				+ "and q.q_id = ? order by o.seq";
+				+ "from option o "
+				+ "where o.l_id = ? "
+				+ "order by o.seq";
 		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
 		
 		// Get the server side calculations
@@ -442,7 +454,14 @@ public class SurveyManager {
 		
 		// Get the changes that have been made to this survey
 		ResultSet rsGetChanges = null;
-		String sqlGetChanges = "SELECT c.changes, c.c_id, c.version, u.name, c.updated_time " +
+		String sqlGetChanges = "SELECT c.changes, "
+				+ "c.c_id, "
+				+ "c.version, "
+				+ "u.name, "
+				+ "c.updated_time, "
+				+ "c.apply_results, "
+				+ "c.success, "
+				+ "c.msg " +
 				"from survey_change c, users u " +
 				"where c.s_id = ? " +
 				"and c.user_id = u.id " +
@@ -529,45 +548,6 @@ public class SurveyManager {
 				// Get the language labels
 				UtilityMethodsEmail.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				//q.labels_orig = q.labels;		// Set the original label values
-				
-				/*
-				 * If this is a select question get the options
-				 */
-				if(q.type.startsWith("select")) {
-					// Only add the options if this option list has not already been added by another question
-					OptionList optionList = s.optionLists.get(q.list_name);
-					if(optionList == null) {
-						optionList = new OptionList ();
-						optionList.options = new ArrayList<Option> ();
-						
-						pstmtGetOptions.setInt(1, q.id);
-						rsGetOptions = pstmtGetOptions.executeQuery();
-						
-						Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();
-						Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-						
-						while(rsGetOptions.next()) {
-							Option o = new Option();
-							o.id = rsGetOptions.getInt(1);
-							o.value = rsGetOptions.getString(2);
-							o.text_id = rsGetOptions.getString(3);
-							o.externalFile = rsGetOptions.getBoolean(4);
-							
-							String cascade_filters = rsGetOptions.getString(5);
-							if(cascade_filters != null) {
-								o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
-							}
-							
-							// Get the labels for the option
-							UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
-							//o.labels_orig = o.labels;
-							optionList.options.add(o);
-						}
-						
-						s.optionLists.put(q.list_name, optionList);
-						s.optionLists_orig.put(q.list_name, optionList);
-					}
-				}
 							
 				f.questions.add(q);
 			}
@@ -600,6 +580,48 @@ public class SurveyManager {
 			}
 		}
 		
+		/*
+		 * Get the option lists
+		 */
+		pstmtGetLists.setInt(1, s.id);
+		rsGetLists = pstmtGetLists.executeQuery();
+		
+		while(rsGetLists.next()) {
+			
+			int listId = rsGetLists.getInt(1);
+			String listName = rsGetLists.getString(2);
+			
+			OptionList optionList = new OptionList ();
+			optionList.options = new ArrayList<Option> ();
+				
+			pstmtGetOptions.setInt(1, listId);
+			rsGetOptions = pstmtGetOptions.executeQuery();
+				
+			Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();		// Used to translate cascade filters json
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				
+			while(rsGetOptions.next()) {
+				Option o = new Option();
+				o.id = rsGetOptions.getInt(1);
+				o.value = rsGetOptions.getString(2);
+				o.text_id = rsGetOptions.getString(3);
+				o.externalFile = rsGetOptions.getBoolean(4);
+					
+				String cascade_filters = rsGetOptions.getString(5);
+				if(cascade_filters != null) {
+					o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+				}
+					
+				// Get the labels for the option
+				UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
+				optionList.options.add(o);
+			}
+				
+			s.optionLists.put(listName, optionList);
+			s.optionLists_orig.put(listName, optionList);
+			
+		}
+		
 		// Add the server side calculations
 		pstmtGetSSC.setInt(1, s.getId());
 		rsGetSSC= pstmtGetSSC.executeQuery();
@@ -629,6 +651,9 @@ public class SurveyManager {
 			ci.version = rsGetChanges.getInt(3);
 			ci.userName = rsGetChanges.getString(4);
 			ci.updatedTime = rsGetChanges.getTimestamp(5);
+			ci.apply_results = rsGetChanges.getBoolean(6);
+			ci.success = rsGetChanges.getBoolean(7);
+			ci.msg = rsGetChanges.getString(8);
 			s.changes.add(ci);
 		}
 		

@@ -366,3 +366,8 @@ insert into listname (s_id, name) select f.s_id, f.name || '_' || q.qname from q
 update option set l_id = sq.l_id from (select l.l_id, q.q_id from listname l, question q, form f where l.name = f.name || '_' || q.qname and f.f_id = q.f_id) as sq where sq.q_id = option.q_id and option.l_id is null;
 update question set l_id = sq.l_id from (select l_id, q_id, o_id from option) as sq where sq.q_id = question.q_id and question.l_id is null;
 update question set l_id = 0 where l_id is null;
+
+-------------
+alter table survey_change add column success boolean default false;
+alter table survey_change add column msg text;
+update survey_change set success = true where success='false' and apply_results = true;

@@ -491,3 +491,12 @@ td.completed, td.submitted {
 	margin-top: 5px;
 	margin-bottom: 5px;
 }
+
+/*************************************/
+/* Changes Page */
+.change_failed {
+	color:#a94442;
+	background-color:#f2dede;
+	border-color:#ebccd1;
+}
+

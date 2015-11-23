@@ -43,7 +43,10 @@ define([
 		addValidationError: addValidationError,
 		removeValidationError: removeValidationError,
 		addOptionValidationError: addOptionValidationError,
-		removeOptionValidationError: removeOptionValidationError
+		removeOptionValidationError: removeOptionValidationError,
+		validateQuestion: validateQuestion,
+		validateQuestionName: validateQuestionName,
+		updateModelWithErrorStatus: updateModelWithErrorStatus
 	};
 
 	/*
@@ -51,17 +54,34 @@ define([
 	 */
 	function add(change) {
 		var refresh,
-			$context;
+			$context,
+			changeType,
+			formIndex,
+			itemIndex;
 		
 		// Apply to model
 		refresh = updateModel(change);
 		
-		// Validate the change
-		if(change.changeType === "option") {
-			validateOption(change);
-		} else if(change.changeType === "question") {
-			validateQuestion(change);
+		// Validate the updated question / model
+		changeType = change.changeType;
+		if(changeType === "property") {
+			changeType = change.property.type;
 		}
+		if(changeType === "option") {
+			validateOption(change);
+		} else if(changeType === "question") {
+			
+			if(change.changeType === "question") {
+				formIndex = change.question.formIndex;
+				itemIndex = change.question.itemIndex;
+			} else {
+				formIndex = change.property.formIndex;
+				itemIndex = change.property.itemIndex;
+			}
+			
+			validateQuestion(formIndex, itemIndex);
+			
+		} 
 		
 		/*
 		 * Apply any HTML changes either directly to the changed element, or by refreshing the whole form using
@@ -860,50 +880,51 @@ define([
 	 * ***************************************************************
 	 * Validate each change to a question
 	 */
-	function validateQuestion(change) {
+	function validateQuestion(formIndex, itemIndex) {
 		
 		var i, j,
 			form, 
-			question,
 			survey = globals.model.survey,
+			question = survey.forms[formIndex].questions[itemIndex],
 			isValid = true,
-			hasDuplicate = false,
-			formIndex,
-			itemIndex;
+			hasDuplicate = false;
 		
+		/*
+		 * Name validations
+		 */
+		isValid = validateQuestionName(formIndex, itemIndex, question.name);
 		
-		if(change.action === "add" || change.action === "delete" || change.action === "move") {
-			formIndex = change.question.formIndex;
-			itemIndex = change.question.itemIndex;
-		} else {
-			formIndex = change.property.formIndex;
-			itemIndex = change.property.itemIndex;
-		}
+		/*
+		 * Question validations
+		 */
+		// Clear the existing question validation errors
+		removeValidationError(
+				formIndex,
+				itemIndex,
+				"question");
 		
-		question = survey.forms[formIndex].questions[itemIndex];
-		
-		if(!question.name || question.name.length === 0) {
-			// Blank names are not allowed
-			addValidationError(
-					formIndex,
-					itemIndex,
-					"This question does not have a name. Specify a unique name.");
-			isValid = false;
-		
-		}
-		
-		if(change.action === "update") {
-			
-		
-		}
-		
-		
-		// If the question is valid then the error message can be removed
+		 // Check for multiple geom types in a single form
 		if(isValid) {
-			removeValidationError(
-					formIndex,
-					itemIndex);
+			if(question.type === "geopoint") {
+				form = survey.forms[formIndex];
+				for(j = 0; j < form.questions.length; j++) {		
+					otherQuestion = form.questions[j];
+					if(j != itemIndex) {
+						if(otherQuestion.type === question.type) {
+							addValidationError(
+									formIndex,
+									itemIndex,
+									"question",
+									"Only one geometry question can be added to a form.");
+							isValid = false;
+							break;
+						}
+					}
+				}
+			}
 		}
+			
+		updateModelWithErrorStatus(formIndex, itemIndex);	// Update model and DOM
 		
 		// Set the control buttons
 		if(errors.length > 0 ) {
@@ -914,58 +935,175 @@ define([
 		console.log("validateQuestion: " + JSON.stringify(errors));
 	}
 	
-	function addValidationError(formIndex, itemIndex, msg) {
+	/*
+	 * Return true if the passed in value has non trailing spaces
+	 */
+	function isValidSQLName(val) {
 		
-		var $changedRow,
-			survey = globals.model.survey;
+		var sqlCheck = /^[a-z_][a-z0-9_]*$/
+		return sqlCheck.test(val);	
+	}
+	
+	/*
+	 * Error types:  name || dupname || noname || dupgeom
+	 */
+	function addValidationError(formIndex, itemIndex, errorType, msg) {
 		
 		// Push error into validation array
 		errors.push({
 			isQuestion: true,
 			formIndex: formIndex,
-			itemIndex: itemIndex
+			itemIndex: itemIndex,
+			errorType: errorType,
+			msg: msg
 		});
 		
-		// Update model
-		survey.forms[formIndex].questions[itemIndex].error = true;
-		survey.forms[formIndex].questions[itemIndex].errorMsg = msg;
+		updateModelWithErrorStatus(formIndex, itemIndex);
+
+	}
+	
+	/*
+	 * Update the model and the DOM to report any erors on the question
+	 */
+	function updateModelWithErrorStatus(formIndex, itemIndex) {
 		
-		// Add error class to item row
+		var $changedRow,
+			survey = globals.model.survey,
+			hasError = false,
+			msg = "",
+			i;
+			
+		
+		for(i = errors.length - 1; i >= 0; i--) {
+			if(errors[i].isQuestion && errors[i].formIndex === formIndex && 
+					errors[i].itemIndex === itemIndex) {
+				if(errors[i].type === "name") {
+					hasError = true;
+					msg = errors[i].msg;
+					break;
+				} else {
+					hasError = true;
+					msg = errors[i].msg;
+					// Don't break continue to possibly override error message with a name level error
+				}
+			}
+		}
+		
 		$changedRow = $('#formList').find('td.question').filter(function(index){
 			var $this = $(this);
 			return $this.data("fid") == formIndex && $this.data("id") == itemIndex;
 		});
 		$changedRow = $changedRow.closest('li');
-		$changedRow.addClass("error");
+		$changedRow.find('.error-msg').html(msg);	// Add message
 		
-		// Add message
-		$changedRow.find('.error-msg').html(msg);
+		survey.forms[formIndex].questions[itemIndex].error = hasError;
+		survey.forms[formIndex].questions[itemIndex].errorMsg = msg;
+		
+		// Update model
+		if(hasError) {
+			$changedRow.addClass("error");
+		} else {
+			$changedRow.removeClass("error");		
+		}
 	}
 	
-	function removeValidationError(formIndex, itemIndex) {
+	/*
+	 * Remove the specified error type (see addValidationError for error types)
+	 */
+	function removeValidationError(formIndex, itemIndex, errorType) {
 		
 		var i,
 			$changedRow,
 			survey = globals.model.survey;
 		
-		// Remove errors from validation array
+		// Remove error from validation array
 		for(i = errors.length - 1; i >= 0; i--) {
-			if(errors[i].isQuestion && errors[i].formIndex === formIndex && errors[i].itemIndex === itemIndex) {
+			if(errors[i].isQuestion && errors[i].formIndex === formIndex && 
+					errors[i].itemIndex === itemIndex && errors[i].errorType === errorType) {
 				errors.splice(i, 1);
 			}
 		}
 		
-		// Update model
-		survey.forms[formIndex].questions[itemIndex].error = false;
-		survey.forms[formIndex].questions[itemIndex].errorMsg = undefined;
+		updateModelWithErrorStatus(formIndex, itemIndex);  // Update model
 		
-		// Remove error class from item row
-		$changedRow = $('#formList').find('td.question').filter(function(index){
-			var $this = $(this);
-			return $this.data("fid") == formIndex && $this.data("id") == itemIndex;
-		});
-		$changedRow.closest('li').removeClass("error");
 	}
+	
+	/*
+	 * Validate a question name
+	 */
+	function validateQuestionName(formIndex, itemIndex, val) {
+		
+		console.log("Validate question name");
+			
+		var i, j,
+			form, 
+			otherQuestion,
+			survey = globals.model.survey,
+			isValid = true,
+			hasDuplicate = false;
+
+		// Clear the existing name validation errors
+		removeValidationError(
+				formIndex,
+				itemIndex,
+				"name");
+		
+		// Check for empty name
+		if(!val || val === "") {
+			addValidationError(
+					formIndex,
+					itemIndex,
+					"name",
+					"This question does not have a name.  Specify a unique name.");
+			isValid = false;	
+		} 
+		
+		// Check for invalid characters
+		if(isValid) {
+			isValid = isValidSQLName(val)
+		
+			if(!isValid) {
+				addValidationError(
+					formIndex,
+					itemIndex,
+					"name",
+					"The question name must start with a letter and only contain lower case letters, numbers and underscores");	
+		
+			}
+		}
+		
+		/*
+		 * Name change require the questions in the same form to be validated for duplicates
+		 */
+		if(isValid) {
+			
+			form = survey.forms[formIndex];
+			for(j = 0; j < form.questions.length; j++) {		
+				if(j !== itemIndex) {
+					otherQuestion = form.questions[j];
+					if(otherQuestion.name === val) {
+						hasDuplicate = true;
+						break;
+					}
+				}
+
+			}
+			if(hasDuplicate) {
+				addValidationError(
+						formIndex,
+						itemIndex,
+						"name",
+						"The question name is the same as the name of another question.  Specify a unique name.");
+				isValid = false;	
+			}
+			
+		}
+			
+		return isValid;
+		
+	}
+	
+	
 	
 	/*
 	 * Validate each change to an option

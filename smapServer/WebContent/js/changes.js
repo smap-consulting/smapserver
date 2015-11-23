@@ -162,6 +162,8 @@ function setChangesHtml($element, survey, survey) {
 				h[++idx] = '<th>Change</th>';
 				h[++idx] = '<th>Changed By</th>';
 				h[++idx] = '<th>When changed</th>';
+				h[++idx] = '<th>Status</th>';
+				h[++idx] = '<th>Error</th>';
 			h[++idx] = '</tr>';
 		h[++idx] = '</thead>';
 		
@@ -169,7 +171,13 @@ function setChangesHtml($element, survey, survey) {
 		h[++idx] = '<body>';
 		for(i = 0; i < changes.length; i++) {
 			
-			h[++idx] = '<tr>';
+			var status = "pending";
+			if(!changes[i].apply_results) {		// Change has been applied to the results tables
+				status = changes[i].success ? "success" : "failed";
+			}
+			h[++idx] = '<tr class="change_';
+					h[++idx] = status;
+					h[++idx] = '">';
 				h[++idx] = '<td>';
 				h[++idx] = changes[i].version;
 				h[++idx] = '</td>';	
@@ -181,6 +189,12 @@ function setChangesHtml($element, survey, survey) {
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
 				h[++idx] = changes[i].updatedTime;
+				h[++idx] = '</td>';
+				h[++idx] = '<td>';
+				h[++idx] = status;
+				h[++idx] = '</td>';
+				h[++idx] = '<td>';
+				h[++idx] = changes[i].msg;
 				h[++idx] = '</td>';
 			h[++idx] = '</tr>';
 		}

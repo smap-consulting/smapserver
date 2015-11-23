@@ -22,4 +22,7 @@ public class ChangeItem {
 	public String changeType;		// Copied from the changeset and added to the log for each change item
 	public String source;			// Copied from the changeset and added to the log for each change item
 	public Timestamp updatedTime;	// The time that this update was made (Only used when reading a change item from the log)
+	public boolean  apply_results;	// Set true once the change has been attempted to be applied to the results database
+	public boolean success;			// Set true if the change item has been successfully applied to the results database
+	public String msg;				// Error messages
 }

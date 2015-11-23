@@ -325,6 +325,8 @@ CREATE TABLE survey_change (
 	version integer,							-- Version of survey with these changes
 	changes text,								-- Changes as json object
 	apply_results boolean default false,		-- Set to true if the results tables need to be updated	
+	success boolean default false,				-- Set true of the update was a success
+	msg text,									-- Error messages
 	user_id integer,							-- Person who made the changes
 	updated_time TIMESTAMP WITH TIME ZONE		-- Time and date of change
 	);

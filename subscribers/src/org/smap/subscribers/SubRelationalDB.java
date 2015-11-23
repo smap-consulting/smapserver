@@ -1211,7 +1211,8 @@ public class SubRelationalDB extends Subscriber {
 		String sqlGet = "select c_id, changes "
 				+ "from survey_change "
 				+ "where apply_results = 'true' "
-				+ "and s_id = ? ";
+				+ "and s_id = ? "
+				+ "order by c_id asc";
 			
 		String sqlGetTable = "select f.table_name from form f, question q " +
 				" where q.f_id = f.f_id " +
@@ -1260,6 +1261,7 @@ public class SubRelationalDB extends Subscriber {
 				pstmtGetTable.setInt(1, qId);
 				ResultSet rsTable = pstmtGetTable.executeQuery();
 				String table = null;
+				String msg = "";
 				if(rsTable.next()) {
 					table = rsTable.getString(1);
 				
@@ -1273,20 +1275,18 @@ public class SubRelationalDB extends Subscriber {
 					} catch (Exception e) {
 						// Report but otherwise ignore any errors
 						// No need to roll back if the survey_change table is not updated, 
-						System.out.println("Error altering table -- continuing");
-						e.printStackTrace();
+						System.out.println("Error altering table -- continuing: " + e.getMessage());
+						System.out.println();
 						
 						// Only record the update as failed if the problem was not due to the column already existing
-						String msg = e.getMessage();
+						msg = e.getMessage();
 						if(msg == null || !msg.contains("already exists")) {
 							tableAltered = false;
 						}
 					}
 					
-					// Record the table as having been altered
-					if(tableAltered) {
-						markChangeApplied(connectionSD, cId);
-					}
+					// Record the application of the change and the status
+					markChangeApplied(connectionSD, cId, tableAltered, msg);
 				} else {
 					System.out.println("Error table not found: " + pstmtGetTable.toString());
 				}
@@ -1302,17 +1302,21 @@ public class SubRelationalDB extends Subscriber {
 		
 	}
 	
-	private void markChangeApplied(Connection sd, int cId) throws SQLException {
+	private void markChangeApplied(Connection sd, int cId, boolean success, String msg) throws SQLException {
 		
 		String sqlUpdateChange = "update survey_change "
-				+ "set apply_results = 'false' "
+				+ "set apply_results = 'false', "
+				+ "success = ?, "
+				+ "msg = ? "
 				+ "where c_id = ? ";
 		
 		PreparedStatement pstmtUpdateChange = null;
 		try {
 			pstmtUpdateChange = sd.prepareStatement(sqlUpdateChange);
 			
-			pstmtUpdateChange.setInt(1, cId);
+			pstmtUpdateChange.setBoolean(1, success);
+			pstmtUpdateChange.setString(2, msg);
+			pstmtUpdateChange.setInt(3, cId);
 			pstmtUpdateChange.executeUpdate();
 			
 		}catch (SQLException e) {
@@ -1328,6 +1332,7 @@ public class SubRelationalDB extends Subscriber {
 		
 		String sqlUpdateChange = "update survey_change "
 				+ "set apply_results = 'false' "
+				+ "set success = 'true' "
 				+ "where s_id = ? ";
 		
 		PreparedStatement pstmtUpdateChange = null;
