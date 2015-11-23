@@ -381,7 +381,10 @@ CREATE TABLE question (
 	nodeset_value text,
 	nodeset_label text,
 	cascade_instance text,
-	list_name text				-- Name of a set of options common across multiple questions
+	list_name text,						-- Name of a set of options common across multiple questions
+	published boolean default false		-- Set true when a survey has been published for data collection
+										--  Once a survey has been published there are constraints on the
+										--  changes that can be applied to question definitions
 	);
 ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);

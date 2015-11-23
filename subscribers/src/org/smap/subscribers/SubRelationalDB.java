@@ -515,6 +515,7 @@ public class SubRelationalDB extends Subscriber {
 				} else {
 					applyTableChanges(cMeta, cRel, sId);
 				}
+				markPublished(cMeta, sId);
 			}
 			
 			boolean isBad = false;
@@ -978,6 +979,7 @@ public class SubRelationalDB extends Subscriber {
 			
 		String response = null;
 		Connection connection = null;
+		
 		try {
 		    Class.forName(dbClass);	 
 			connection = DriverManager.getConnection(database, user, password);
@@ -991,6 +993,7 @@ public class SubRelationalDB extends Subscriber {
 			}	
 			connection.setAutoCommit(true);
 	
+
 
 		} catch (Exception e) {
 			if(connection != null) {
@@ -1271,6 +1274,7 @@ public class SubRelationalDB extends Subscriber {
 					table = rsTable.getString(1);
 				
 					// Alter the table
+					
 					boolean tableAltered = true;
 					String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
 					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
@@ -1296,6 +1300,7 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Error table not found: " + pstmtGetTable.toString());
 				}
 			}
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
@@ -1303,6 +1308,30 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGet != null) {pstmtGet.close();}} catch (Exception e) {}
 			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (Exception e) {}
 			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+		}
+		
+	}
+	
+	/*
+	 * Mark all the questions in the survey as published
+	 */
+	private void markPublished(Connection sd, int sId) throws SQLException {
+		
+		
+		String sqlSetPublished = "update question set published = 'true' where f_id in (select f_id from form where s_id = ?);";
+		
+		PreparedStatement pstmtSetPublished = null;
+		try {
+		
+			pstmtSetPublished = sd.prepareStatement(sqlSetPublished);
+			pstmtSetPublished.setInt(1, sId);
+			pstmtSetPublished.executeUpdate();
+			
+		}catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtSetPublished != null) {pstmtSetPublished.close();}} catch (Exception e) {}
 		}
 		
 	}

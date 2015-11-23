@@ -61,7 +61,11 @@ define([
 				h[++idx] = '</td>';
 				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
 					h[++idx] = question.name;
-				h[++idx] = '" type="text"></td>';
+				h[++idx] = '" ';
+				if(question.published) {				// Mark disabled if the question has been published
+					h[++idx] = 'disabled="true" ';
+				}
+				h[++idx] = 'type="text"></td>';
 				h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
 				h[++idx] = '<td class="q_icons_col">';
 					h[++idx] = '<div class="btn-group">';

@@ -419,7 +419,8 @@ public class SurveyManager {
 				+ "q.visible, "
 				+ "q.readonly, "
 				+ "q.mandatory, "
-				+ "q.repeatcount "
+				+ "q.repeatcount, "
+				+ "q.published "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -529,6 +530,7 @@ public class SurveyManager {
 				q.readonly = rsGetQuestions.getBoolean(17);
 				q.required = rsGetQuestions.getBoolean(18);
 				q.repeatCount = rsGetQuestions.getBoolean(19);
+				q.published = rsGetQuestions.getBoolean(20);
 				
 				// add column name (not currently maintained in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);

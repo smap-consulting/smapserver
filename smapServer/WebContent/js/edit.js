@@ -727,23 +727,31 @@ function respondToEvents($context) {
 	
 	// Select types
 	$context.find('.question_type').off().click(function() {
-		var $questionElement = $(this).closest('li');
+		
+		var $questionElement = $(this).closest('li'),
+			published,
+			survey = globals.model.survey;
 		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");
 		
-		$('.question_type_sel', '#typeModalButtonGrp').off().click(function(){
-			var type = $(this).val();
-			
-			updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
-			$('#typeModal').modal('hide');
-		});
-		
-		$('#typeModal').modal({
-				keyboard: true,
-				backdrop: 'static',
-				show: true
+		published = survey.forms[gFormIndex].questions[gItemIndex].published;
+		if(published) {
+			alert("You cannot change the type or name of a question that has already been published");
+		} else {
+			$('.question_type_sel', '#typeModalButtonGrp').off().click(function(){
+				var type = $(this).val();
+				
+				updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
+				$('#typeModal').modal('hide');
 			});
+			
+			$('#typeModal').modal({
+					keyboard: true,
+					backdrop: 'static',
+					show: true
+				});
+		}
 
 	});
 	

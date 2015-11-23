@@ -372,3 +372,7 @@ alter table survey_change add column success boolean default false;
 alter table survey_change add column msg text;
 alter table survey_change add column action text;
 update survey_change set success = true where success='false' and apply_results = true;
+--------------
+alter table question add column published boolean;
+update question set published = true where published is null;
+alter table question alter column published set default false;
