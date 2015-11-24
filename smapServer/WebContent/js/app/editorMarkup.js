@@ -311,9 +311,9 @@ define([
 			selLabel = $('#selProperty option:selected').text(),
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
-			if(selProperty === "mandatory") {		// Add a boolean type
+			if(selProperty === "required") {		// Add a boolean type
 				
-			    h[++idx] = '<button type="button" data-toggle="button" class="btn btn-default labelButton ';
+			    h[++idx] = '<button type="button" class="btn labelButton ';
 			    if(question[selProperty]) {
 			    	h[++idx] = 'prop_yes" ';
 			    } else {
@@ -324,9 +324,9 @@ define([
 				h[++idx] = '">';
 				h[++idx] = '<span class="glyphicon ';
 				if(question[selProperty]) {
-			    	h[++idx] = 'glyphicon-ok-sign">Yes';
+			    	h[++idx] = 'glyphicon-ok-sign"> Yes';
 			    } else {
-			    	h[++idx] = 'glyphicon-remove-sign">No';
+			    	h[++idx] = 'glyphicon-remove-sign"> No';
 			    }
 			    h[++idx] = '</span></button>';
 			} else if(selProperty === "media") {

@@ -327,7 +327,6 @@ CREATE TABLE survey_change (
 	apply_results boolean default false,		-- Set to true if the results tables need to be updated	
 	success boolean default false,				-- Set true of the update was a success
 	msg text,									-- Error messages
-	action text,								-- Add, delete, change
 	user_id integer,							-- Person who made the changes
 	updated_time TIMESTAMP WITH TIME ZONE		-- Time and date of change
 	);

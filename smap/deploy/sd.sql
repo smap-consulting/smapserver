@@ -370,7 +370,6 @@ update question set l_id = 0 where l_id is null;
 -------------
 alter table survey_change add column success boolean default false;
 alter table survey_change add column msg text;
-alter table survey_change add column action text;
 update survey_change set success = true where success='false' and apply_results = true;
 --------------
 alter table question add column published boolean;

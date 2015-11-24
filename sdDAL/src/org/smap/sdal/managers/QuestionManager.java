@@ -5,24 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.ChangeItem;
-import org.smap.sdal.model.ChangeSet;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Label;
-import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Question;
-import org.smap.sdal.model.ServerSideCalculate;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;

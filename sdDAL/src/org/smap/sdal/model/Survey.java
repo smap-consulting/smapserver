@@ -33,7 +33,7 @@ public class Survey {
 	public ArrayList<Group> groups  = new ArrayList<Group> ();
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
-	public ArrayList<ChangeItem> changes  = new ArrayList<ChangeItem> ();
+	public ArrayList<ChangeLog> changes  = new ArrayList<ChangeLog> ();
 	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
 	public String pdfTemplateName;
 
