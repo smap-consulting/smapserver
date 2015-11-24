@@ -1211,12 +1211,9 @@ public class SurveyManager {
 			for(ChangeItem ci : changeItemList) {
 				
 				String property = translateProperty(ci.property.prop);
+				String propertyType = null;
 				
-				System.out.println("+++++++ Set visible: " + ci.property.setVisible + " : " + 
-						ci.property.visibleValue + " ====== Set source ==== " + 
-						ci.property.sourceValue);
-				
-				if(GeneralUtilityMethods.hasColumn(connectionSD, "question", property)) {
+				if((propertyType = GeneralUtilityMethods.columnType(connectionSD, "question", property)) != null) {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
 					String sqlProperty1 = "update question set " + property + " = ? " +
@@ -1236,14 +1233,28 @@ public class SurveyManager {
 					int count = 0;
 		
 					if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
-						pstmtProperty1.setString(1, ci.property.newVal);
+						
 						pstmtProperty1.setInt(2, ci.property.qId);
-						pstmtProperty1.setString(3, ci.property.oldVal);
+						
+						if(propertyType.equals("boolean")) {
+							pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+							pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
+						} else {
+							pstmtProperty1.setString(1, ci.property.newVal);
+							pstmtProperty1.setString(3, ci.property.oldVal);
+						}
 						log.info("Update question property: " + pstmtProperty1.toString());
 						count = pstmtProperty1.executeUpdate();
 					} else {
-						pstmtProperty2.setString(1, ci.property.newVal);
+						
 						pstmtProperty2.setInt(2, ci.property.qId);
+						
+						if(propertyType.equals("boolean")) {
+							pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+						} else {
+							pstmtProperty2.setString(1, ci.property.newVal);
+						}
+
 						log.info("Update question property: " + pstmtProperty2.toString());
 						count = pstmtProperty2.executeUpdate();
 					}

@@ -683,7 +683,7 @@ public class QuestionManager {
 					pstmtUpdateLabelId.executeUpdate();
 					
 				} else {
-					if(GeneralUtilityMethods.hasColumn(sd, "option", property)) {
+					if(GeneralUtilityMethods.columnType(sd, "option", property) != null) {
 					
 						String sql = "update option set  " + property + " = ? "
 								+ " where l_id = ? "

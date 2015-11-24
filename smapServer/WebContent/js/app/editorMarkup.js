@@ -311,8 +311,26 @@ define([
 			selLabel = $('#selProperty option:selected').text(),
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
-		 if(selProperty === "media") {
-			h[++idx] = '<div class="row">';
+			if(selProperty === "mandatory") {		// Add a boolean type
+				
+			    h[++idx] = '<button type="button" data-toggle="button" class="btn btn-default labelButton ';
+			    if(question[selProperty]) {
+			    	h[++idx] = 'prop_yes" ';
+			    } else {
+			    	h[++idx] = 'prop_no" ';
+			    }
+			    h[++idx] = ' data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon ';
+				if(question[selProperty]) {
+			    	h[++idx] = 'glyphicon-ok-sign">Yes';
+			    } else {
+			    	h[++idx] = 'glyphicon-remove-sign">No';
+			    }
+			    h[++idx] = '</span></button>';
+			} else if(selProperty === "media") {
+				h[++idx] = '<div class="row">';
 				if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
 					h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
 					h[++idx] = naMedia;

@@ -573,26 +573,50 @@ function respondToEvents($context) {
 	$context.find('.has_tt').tooltip();
 	
 	// Respond to changes in the label field - this would change the property that has focus
-	$context.find('.labelProp').change(function(){
+	$context.find('.labelButton').off().click(function() {
 
 		var $this = $(this),
 			prop = $this.data("prop"),
-			$parent = $this.parent(),
-			formIndex = $parent.data("fid"),
-			itemIndex = $parent.data("id"),
-			newVal = $this.val(),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			newVal = $this.hasClass("prop_no"),		// If set false then newVal will be true
 			type,
-			optionList = $parent.data("list_name"),
-			qname = $parent.data("qname");
+			optionList = $li.data("list_name"),
+			qname = $li.data("qname");
 		
-		if($parent.hasClass("option")) {
+		if($li.hasClass("option")) {
 			type = "option";
 		} else {
 			type = "question";
 		}
 
 		var labelType = prop === "hint" ? "hint" : "text";
-		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); // TODO Hint
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+
+	});
+	
+	// Respond to clicks on a label button
+	$context.find('.labelProp').change(function(){
+
+		var $this = $(this),
+			prop = $this.data("prop"),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			newVal = $this.val(),
+			type,
+			optionList = $li.data("list_name"),
+			qname = $li.data("qname");
+		
+		if($li.hasClass("option")) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+
+		var labelType = prop === "hint" ? "hint" : "text";
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});
 	

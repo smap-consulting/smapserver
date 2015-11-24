@@ -1228,11 +1228,11 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return true if the passed in column name is in the table
 	 */
-	public static boolean hasColumn(Connection sd, String tableName, String columnName) throws SQLException {
+	public static String columnType(Connection sd, String tableName, String columnName) throws SQLException {
 		
-		boolean result = false;
+		String type = null;
 		
-		String sql = "select count(*) from information_schema.columns where table_name = ? " +
+		String sql = "select data_type from information_schema.columns where table_name = ? " +
 				"and column_name = ?;";
 		PreparedStatement pstmt = null;
 		
@@ -1244,9 +1244,7 @@ public class GeneralUtilityMethods {
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				if(rs.getInt(1) > 0) {
-					result = true;
-				}
+				type = rs.getString(1);
 			}
 			
 		} catch(SQLException e) {
@@ -1256,7 +1254,7 @@ public class GeneralUtilityMethods {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}	
 		
-		return result;
+		return type;
 		
 	}
 	
