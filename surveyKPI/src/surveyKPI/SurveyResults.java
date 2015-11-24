@@ -83,15 +83,19 @@ public class SurveyResults extends Application {
 				String sql = null;				
 				Connection connectionRel = null; 
 				PreparedStatement pstmt = null;
+				PreparedStatement pstmtUnPublish = null;
+				Statement stmtRel = null;
 				try {
 					connectionRel = ResultsDataSource.getConnection("surveyKPI-SurveyResults");
 
 					// Delete tables associated with this survey
 					
-					sql = "SELECT DISTINCT f.table_name FROM form f " +
-							"WHERE f.s_id = ? " +
-							"ORDER BY f.table_name;";						
-				
+					String sqlUnPublish = "update question set published = 'false' where f_id in (select f_id from form where s_id = ?);";
+					pstmtUnPublish = connectionSD.prepareStatement(sqlUnPublish);
+					
+					sql = "select distinct f.table_name, f.f_id FROM form f " +
+							"where f.s_id = ? " +
+							"order by f.table_name;";						
 					pstmt = connectionSD.prepareStatement(sql);	
 					pstmt.setInt(1, sId);
 					log.info("Get tables for delete: " + pstmt.toString());
@@ -100,18 +104,24 @@ public class SurveyResults extends Application {
 					while (resultSet.next()) {					
 						tables.add(resultSet.getString(1));
 					}
+					
 					resultSet.close();
 					
-					for (int i = 0; i < tables.size(); i++) {		
+					for (int i = 0; i < tables.size(); i++) {	
 						
 						String tableName = tables.get(i);					
 
-						sql = "TRUNCATE TABLE " + tableName + ";";
-						log.info("Delete table contents: " + sql);
-						Statement stmtRel = connectionRel.createStatement();
+						sql = "drop TABLE " + tableName + ";";
+						log.info("Delete table contents and drop table: " + sql);
+						
+						try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
+						stmtRel = connectionRel.createStatement();
 						stmtRel.executeUpdate(sql);
 						log.info("userevent: " + request.getRemoteUser() + " : delete results : " + tableName + " in survey : "+ sId); 
 					}
+					
+					pstmtUnPublish.setInt(1, sId);
+					pstmtUnPublish.executeUpdate();
 					
 					response = Response.ok("").build();
 					
@@ -120,13 +130,9 @@ public class SurveyResults extends Application {
 				    e.printStackTrace();
 				    response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				} finally {
-					try {
-						if (pstmt != null) {
-							pstmt.close();
-						}
-					} catch (SQLException e) {
-					
-					}
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+					try {if (pstmtUnPublish != null) {pstmtUnPublish.close();}} catch (SQLException e) {}
+					try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
 
 					try {
 						if (connectionSD != null) {
