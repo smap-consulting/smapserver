@@ -75,7 +75,8 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
-	gTempLanguages = [];
+	gTempLanguages = [],
+	gErrorPosition = 0;
 
 // Media globals
 var gUrl,			// url to submit to
@@ -143,7 +144,7 @@ $(document).ready(function() {
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
-		if(changeset.changes.length > 0) {
+		if(globals.changes.length > 0) {
 			if (confirm("You have unsaved changes are you sure you want to leave?")) {
 				openForm("existing");
 			}
@@ -153,7 +154,7 @@ $(document).ready(function() {
 		
 	});
 	$('#m_new').off().click(function() {	// Open a new form
-		if(changeset.changes.length > 0) {
+		if(globals.changes.length > 0) {
 			if (confirm("You have unsaved changes are you sure you want to leave?")) {
 				openForm("new");
 			}
@@ -166,8 +167,35 @@ $(document).ready(function() {
 		changeset.save(surveyListDone);
 	});
 
+	$('#next-error').off().click(function(){
+		nextError();
+	});
+	
+	$('#prev-error').off().click(function(){
+		prevError();
+	});
+	
 	$('.m_validate').off().click(function() {
+		
 		changeset.validateAll();
+		
+		$('.error-count').html(globals.errors.length);
+		
+		if(globals.errors.length > 0) {
+			gErrorPosition = 0;
+			showErrorPanel();
+			if(globals.errors.length > 1) {
+				$('#next-error, #prev-error').removeClass("disabled");
+			} else {
+				$('#next-error, #prev-error').addClass("disabled");
+			}
+			focusOnError(gErrorPosition);
+		} else {
+			hideErrorPanel();
+			$('#validate-success').show();
+			setTimeout(function(){$('#validate-success').hide();}, 1000);
+			$('#next-error, #prev-error').addClass("disabled");
+		}
 	});
 	
 	$('.m_languages').off().click(function() {
@@ -324,7 +352,7 @@ $(document).ready(function() {
 	 * Add check prior to the user leaving the screen
 	 */
 	window.onbeforeunload = function() {
-		if(changeset.changes.length > 0) {
+		if(globals.changes.length > 0) {
 			return "You have unsaved changes are you sure you want to leave?";
 		} else {
 			return;
@@ -412,7 +440,6 @@ $(document).ready(function() {
 	});
 	
 	setupQuestionTypeDialog();
-
 	
 });
 
@@ -1187,6 +1214,72 @@ function isValidOptionName(val) {
 	}
 	
 	return isValid;	
+}
+
+/* **********************************************************************************************
+ * Error Panel
+ */
+
+function showErrorPanel() {
+	
+    var $panel = $('#error-panel'),
+    	$content = $('#content');
+    
+    $panel.addClass('shown').animate({'margin-left':'0px'});  
+    $content.css({'margin-left':'200px'});
+
+}
+
+function hideErrorPanel() {
+	
+    var $panel = $('#error-panel'),
+    	$content = $('#content');
+    
+    $panel.removeClass('shown').animate({'margin-left':'-200px'});  
+    $content.css({'margin-left':'0px'});
+
+}
+
+function nextError() {
+	
+	var errors = globals.errors;
+	
+	if(errors.length > 0) {
+		
+		if(gErrorPosition >= errors.length - 1 ) {
+			gErrorPosition = 0;
+		} else {
+			gErrorPosition++;
+		}
+		focusOnError(gErrorPosition);
+		
+	}
+}
+
+function prevError() {
+	
+	var errors = globals.errors;
+	
+	if(errors.length > 0) {
+		
+		if(gErrorPosition > 0 ) {
+			gErrorPosition--;
+		} else {
+			gErrorPosition = errors.length - 1;
+		}
+		focusOnError(gErrorPosition);
+		
+	}
+}
+
+function focusOnError(position) {
+	var survey = globals.model.survey,
+		error = globals.errors[position],
+		questionId;
+	
+	questionId = "question" + error.formIndex + "_" + error.itemIndex;
+	
+	$('#' + questionId).find('input').focus();
 }
 
 });

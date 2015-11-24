@@ -60,6 +60,8 @@ define(function() {
 		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,
+		errors: [],
+		changes: [],
 		
 		model: new Model()
 

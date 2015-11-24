@@ -29,16 +29,11 @@ define([
          'app/globals',
          'app/editorMarkup'], 
 		function($, modernizr, lang, globals, markup) {
-
-	var changes = [],
-		errors = [];
-	
 	
 	return {	
 		add: add,
 		undo: undo,
 		save: save,
-		changes: changes,
 		setHasChanges: setHasChanges,
 		addValidationError: addValidationError,
 		removeValidationError: removeValidationError,
@@ -109,6 +104,7 @@ define([
 	function save(callback) {
 		
 		var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey,
+			changes = globals.changes,
 			changesString = JSON.stringify(changes);		
 		
 		console.log("Saving survey");
@@ -204,7 +200,8 @@ define([
 			forms_orig,
 			optionListOrig,
 			form,
-			applyChange = true;
+			applyChange = true,
+			changes = globals.changes;
 
 		// Delete any items containing jquery elements
 		if(change.question) {
@@ -449,8 +446,10 @@ define([
 	 * Update settings when the number of changes to apply changes 
 	 */ 
 	function setHasChanges(numberChanges) {
+		var errors = globals.errors;
+		
 		if(numberChanges === 0) {
-			changes = [];
+			globals.changes = [];
 			$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
 			$('.m_languages').removeClass("disabled").attr("disabled", false);
 		} else {
@@ -915,7 +914,9 @@ define([
 			survey = globals.model.survey,
 			question = survey.forms[formIndex].questions[itemIndex],
 			isValid = true,
-			hasDuplicate = false;
+			hasDuplicate = false,
+			errors = globals.errors,
+			changes = globals.changes;
 		
 		if(question.deleted) {
 			// The question has been deleted remove all of its errors
@@ -983,6 +984,8 @@ define([
 	 */
 	function addValidationError(formIndex, itemIndex, errorType, msg) {
 		
+		var errors = globals.errors;
+		
 		// Push error into validation array
 		errors.push({
 			isQuestion: true,
@@ -1005,7 +1008,8 @@ define([
 			survey = globals.model.survey,
 			hasError = false,
 			msg = "",
-			i;
+			i,
+			errors = globals.errors;
 			
 		
 		for(i = errors.length - 1; i >= 0; i--) {
@@ -1048,7 +1052,8 @@ define([
 		
 		var i,
 			$changedRow,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			errors = globals.errors;
 		
 		// Remove error from validation array
 		for(i = errors.length - 1; i >= 0; i--) {
@@ -1150,7 +1155,9 @@ define([
 			isValid = true,
 			hasDuplicate = false,
 			optionList,
-			itemIndex;
+			itemIndex,
+			errors = globals.errors,
+			changes = globals.changes;
 		
 		
 		optionList = change.option.optionList;
@@ -1204,7 +1211,8 @@ define([
 	function addOptionValidationError(listName, itemIndex, msg) {
 		
 		var $changedRow,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			errors = globals.errors;
 		
 		// Push error into validation array
 		errors.push({
@@ -1233,7 +1241,8 @@ define([
 		
 		var i,
 			$changedRow,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			errors = globals.errors;
 		
 		// Remove errors from validation array
 		for(i = errors.length - 1; i >= 0; i--) {
@@ -1283,14 +1292,11 @@ define([
 			j,
 			forms = globals.model.survey.forms;
 		
-		errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
+		globals.errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
 		for(i = 0; i < forms.length; i++) {
-			for(j = 0; j < forms[i].length; j++) {
+			for(j = 0; j < forms[i].questions.length; j++) {
 				validateQuestion(i, j);
 			}
-		}
-		if(errors.length > 0) {
-			$('#review_pane').show();
 		}
 	}
 	 
