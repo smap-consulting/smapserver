@@ -144,8 +144,12 @@ public class QuestionManager {
 				+ "infotext_id, "
 				+ "source, calculate, "
 				+ "defaultanswer, "
-				+ "appearance, visible, path) " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?);";
+				+ "appearance, "
+				+ "visible, "
+				+ "path, "
+				+ "readonly"
+				+ ") " 
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -187,12 +191,15 @@ public class QuestionManager {
 				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
 				
+				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
+				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
+			
 				// Insert the question
 				pstmt.setInt(1, q.fId );
 				pstmt.setInt(2, q.l_id);
 				pstmt.setInt(3, q.seq );
 				pstmt.setString(4, q.name );
-				pstmt.setString(5, q.type );
+				pstmt.setString(5, type );
 				pstmt.setString(6, q.path + ":label" );
 				pstmt.setString(7, q.path + ":hint" );
 				pstmt.setString(8, q.source );
@@ -201,6 +208,7 @@ public class QuestionManager {
 				pstmt.setString(11, q.appearance);
 				pstmt.setBoolean(12, q.visible);
 				pstmt.setString(13, q.path);
+				pstmt.setBoolean(14, readonly);
 				
 				log.info("Insert question: " + pstmt.toString());
 				pstmt.executeUpdate();

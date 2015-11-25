@@ -1460,4 +1460,49 @@ public class GeneralUtilityMethods {
 		
 		return output.toString().trim();
 	}
+	
+	/*
+	 * Translate a question type from its representation in the database to the survey model used for editing
+	 */
+	public static String translateTypeFromDB(String in, boolean readonly) {
+		
+		String out = in;
+		
+		if(in.equals("string") && readonly) {
+			out = "note";
+		}
+		
+		return out;
+		
+	}
+	
+	/*
+	 * Translate a question type from its representation in the survey model to the database
+	 */
+	public static String translateTypeToDB(String in) {
+		
+		String out = in;
+		
+		if(in.equals("note")) {
+			out = "string";
+		}
+		
+		return out;
+		
+	}
+	
+	/*
+	 * Get the readonly value for a question as stored in the database
+	 */
+	public static boolean translateReadonlyToDB(String type, boolean in) {
+		
+		boolean out = in;
+		
+		if(type.equals("note")) {
+			out = true;
+		}
+		
+		return out;
+		
+	}
 }

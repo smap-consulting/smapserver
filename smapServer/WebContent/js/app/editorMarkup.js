@@ -214,7 +214,7 @@ define([
 		}
 		
 		if(type === "begin repeat" || type === "begin group") {
-			h[++idx] = ' panel-warning" id="question';
+			h[++idx] = ' panel-warning" id="';
 		} else {
 			h[++idx] = ' panel-success" id="';
 		}

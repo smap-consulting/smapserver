@@ -287,6 +287,14 @@ define(function() {
 				source: "user"
 			},
 			{
+				name: "Note",
+				type: "note",
+				glyphicon: "pencil",
+				canSelect: true,
+				visible: true,
+				source: "user"
+			},
+			{
 				name: "Select One",
 				type: "select1",
 				image: "/images/select1_64.png",
@@ -314,7 +322,7 @@ define(function() {
 				name: "Group",
 				type: "begin group",
 				glyphicon: "folder-open",
-				canSelect: true,
+				canSelect: false,
 				visible: true,
 				source: "user"
 			},

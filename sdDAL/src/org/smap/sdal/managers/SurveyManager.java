@@ -510,6 +510,7 @@ public class SurveyManager {
 			boolean inMeta = false;				// Set true if the question is in the meta group
 			while (rsGetQuestions.next()) {
 				Question q = new Question();
+				
 				q.id = rsGetQuestions.getInt(1);
 				q.name = rsGetQuestions.getString(2);
 				q.type = rsGetQuestions.getString(3);
@@ -532,6 +533,9 @@ public class SurveyManager {
 				q.required = rsGetQuestions.getBoolean(18);
 				q.repeatCount = rsGetQuestions.getBoolean(19);
 				q.published = rsGetQuestions.getBoolean(20);
+				
+				// Translate type name to "note" if it is a readonly string
+				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
 				
 				// add column name (not currently maintained in the database but it should be)
 				q.colName = UtilityMethodsEmail.cleanName(q.name);
@@ -1203,9 +1207,12 @@ public class SurveyManager {
 			int version,
 			String type) throws Exception {
 
+		boolean setReadonly = false;
+		
 		PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
 		PreparedStatement pstmtDependent = null;
+		PreparedStatement pstmtReadonly = null;
 		
 		try {
 		
@@ -1213,6 +1220,13 @@ public class SurveyManager {
 				
 				String property = translateProperty(ci.property.prop);
 				String propertyType = null;
+				
+				if(ci.property.prop.equals("type")) {
+					if(ci.property.newVal.equals("note")) {
+						setReadonly = true;
+						ci.property.newVal = "string";
+					}
+				}
 				
 				if((propertyType = GeneralUtilityMethods.columnType(connectionSD, "question", property)) != null) {
 			
@@ -1230,6 +1244,11 @@ public class SurveyManager {
 					String sqlDependent = "update question set visible = ?, source = ? " +
 							"where q_id = ?;";
 					pstmtDependent = connectionSD.prepareStatement(sqlDependent);
+					
+					// Update for readonly status if this is a type change to note
+					String sqlReadonly = "update question set readonly = 'true' " +
+							"where q_id = ?;";
+					pstmtReadonly = connectionSD.prepareStatement(sqlReadonly);
 					
 					int count = 0;
 		
@@ -1268,6 +1287,12 @@ public class SurveyManager {
 						pstmtDependent.executeUpdate();
 					}
 					
+					if(setReadonly) {
+						pstmtReadonly.setInt(1, ci.property.qId);
+						log.info("Update readonly status for note type: " + pstmtReadonly.toString());
+						pstmtReadonly.executeUpdate();
+					}
+					
 					if(count == 0) {
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
@@ -1300,6 +1325,7 @@ public class SurveyManager {
 			try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
+			try {if (pstmtReadonly != null) {pstmtReadonly.close();}} catch (SQLException e) {}
 		
 		}
 	
