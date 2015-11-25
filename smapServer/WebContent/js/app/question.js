@@ -54,7 +54,7 @@ define([
 	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
-	function add(formIndex, qId, locn) {		
+	function add(formIndex, qId, locn, type, name) {		
 		
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
@@ -66,7 +66,8 @@ define([
 			firstQuestion;
 		
 		// Choose type
-		type = "string";		// Default to text question
+		
+		type = type || "string";		// Default to text question
 		
 		if($relatedQuestion.size() > 0) {
 			// Appending or pre=pending to an existing question
@@ -90,9 +91,10 @@ define([
 				question: {
 					seq: seq,
 					type: type,
+					name: name,
 					source: "user",	// For date type
 					labels: [],
-					visible: true,
+					visible: type === "end group" ? false : true,
 					
 					// Helper values 
 					firstQuestion: firstQuestion,

@@ -41,13 +41,15 @@ define([
 		refreshOptionLists: refreshOptionLists
 	};
 	
-	function addOneQuestion(question, formIndex, qIndex, addNewButton) {
+	function addOneQuestion(question, formIndex, qIndex, addNewButton, selProperty) {
 		var h = [],
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
+		selProperty = selProperty || $('#selProperty').val();
+		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, questionId, formIndex, undefined);
+			h[++idx] = addNewQuestionButton(false, false, questionId, formIndex, undefined, selProperty);
 		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
@@ -134,7 +136,7 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton(after, topLevelForm, questionId, formIndex, formName) {
+	function addNewQuestionButton(after, topLevelForm, questionId, formIndex, formName, selProperty) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -148,13 +150,18 @@ define([
 		}
 		
 		h[++idx] = '<li>';
+		if(selProperty === "group") {
+			h[++idx] = '<span class="has_tt" title="End the group here">';
+		} else {
+			h[++idx] = '<span class="has_tt" title="add question here">';
+		}
 		h[++idx] = '<button button tabindex="-1" id="addnew_';
 		h[++idx] = globals.gNewQuestionButtonIndex++;
 		h[++idx] = '" type="button" class="add_question btn dropon ';
 		h[++idx] = addButtonClass;
 		if(globals.gNewQuestionButtonIndex == 1) { // First button in the form
 			h[++idx] = ' first_element ';
-		}
+		}	
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
 		h[++idx] = '" data-qid="';
@@ -167,6 +174,7 @@ define([
 			h[++idx] = formName;
 		}
 		h[++idx] = '</button>';
+		h[++idx] = '</span>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -512,7 +520,8 @@ define([
 			topLevelForm = false,
 			lastRealQuestionId = -1,
 			finalButtonName,
-			groupButtonName;
+			groupButtonName,
+			selProperty = $('#selProperty').val();
 		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
@@ -528,7 +537,7 @@ define([
 				}
 				if(question.type === "end group") {
 					groupButtonName = question.name.substring(0, question.name.indexOf('_groupEnd'));
-					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName);
+					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
@@ -540,7 +549,7 @@ define([
 				}
 				lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
 				globals.hasQuestions = true;
-				h[++idx] = addOneQuestion(question, formIndex, form.qSeq[i], true);
+				h[++idx] = addOneQuestion(question, formIndex, form.qSeq[i], true, selProperty);
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
@@ -548,7 +557,7 @@ define([
 			} else {
 				finalButtonName = form.name;
 			}
-			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex, finalButtonName); 	// Adds a question at the end of the form
+			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex, finalButtonName, selProperty); 	// Adds a question at the end of the form
 		}
 		return h.join("");
 	}

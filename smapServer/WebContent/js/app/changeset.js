@@ -494,6 +494,7 @@ define([
 						
 					} else {						// Other properties, such as constraints, relevance question name
 						
+						var oldVal = question[property.prop];
 						question[property.prop] = property.newVal;		
 						
 						
@@ -561,8 +562,14 @@ define([
 										}
 								});
 								question.name = "the_geom";	
-							}
-						} 
+							} 
+						} else if(property.prop === "name") {
+							// update the end group name
+							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
+								applyToEndGroup(survey.forms[property.formIndex], 
+										oldVal, 0, "rename", property.newVal);
+							}	
+						}
 						
 						
 					}
@@ -588,8 +595,6 @@ define([
 					}
 				}
 			}
-			
-			refresh = false;	// Update markup solely for this Property
 			
 		} else if(change.changeType === "question") {		// Not a change to a property
 			if(change.action === "move") {
@@ -624,14 +629,18 @@ define([
 			
 				if(change.question.firstQuestion) {
 					refresh = true;		// Refresh all the questions, actually there is only one so why not
-				} else {
-					refresh = false;	// Update markup solely for this question
+				} else if(change.question.type === "end group") {
+					refresh = true;
 				}
 				
 			} else if(change.action === "delete") {
-				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array
-				survey.forms[change.question.formIndex].questions[change.question.itemIndex].deleted = true;	// Mark deleted
-				refresh = false;
+				var form = survey.forms[change.question.formIndex];
+				var question = form.questions[change.question.itemIndex];
+				form.qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array
+				question.deleted = true;	// Mark deleted
+				if(question.type === "begin group") {
+					applyToEndGroup(form, question.name, change.question.seq, "delete");
+				}
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
@@ -677,6 +686,27 @@ define([
 		}
 		
 		return refresh;	
+	}
+	
+	/*
+	 * Apply a change to the "end group" of a group
+	 */
+	function applyToEndGroup(form, name, start_seq, action, new_name) {
+		var i,
+			end_name = name + "_groupEnd";
+		
+		for(i = start_seq; i < form.qSeq.length; i++) {
+			if(form.questions[form.qSeq[i]].name === end_name) {
+				if(action === "delete") {
+					form.qSeq.splice(i, 1);
+					form.questions[form.qSeq[i]].deleted = true;
+				} else if(action === "rename") {
+					form.questions[form.qSeq[i]].name = new_name + "_groupEnd";
+				}
+				break;
+			}
+		}
+		
 	}
 	
 	/*
@@ -738,9 +768,9 @@ define([
 		} else if(change.changeType === "question") {
 			if(change.action === "add") {
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));			
+					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));			
 				} else {
-					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true));
+					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));
 				}
 				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
 			} else if(change.action === "delete") {
@@ -802,7 +832,7 @@ define([
 						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
 						change.property.formIndex, 
 						change.property.itemIndex,
-						false);
+						false, undefined);
 				
 			}
 			
@@ -987,7 +1017,7 @@ define([
 	 */
 	function isValidSQLName(val) {
 		
-		var sqlCheck = /^[a-z_][a-z0-9_]*$/
+		var sqlCheck = /^[A-Za-z_-][A-Za-z0-9_-]*$/
 		return sqlCheck.test(val);	
 	}
 	
@@ -1103,7 +1133,8 @@ define([
 			survey = globals.model.survey,
 			isValid = true,
 			hasDuplicate = false,
-			itemDesc;
+			itemDesc,
+			questionType;
 
 		// Clear the existing name validation errors
 		removeValidationError(
@@ -1133,7 +1164,7 @@ define([
 					container,
 					itemIndex,
 					"name",
-					"The " + itemDesc + " name must start with a letter and only contain lower case letters, numbers and underscores",
+					"The " + itemDesc + " name must start with a letter and only contain letters, numbers, underscores and dashes",
 					itemType);	
 		
 			}
@@ -1146,12 +1177,15 @@ define([
 			
 			if(itemType === "question") {
 				form = survey.forms[container];
-				for(j = 0; j < form.questions.length; j++) {		
-					if(j !== itemIndex) {
-						otherItem = form.questions[j];
-						if(otherItem.name === val) {
-							hasDuplicate = true;
-							break;
+				questionType = form.questions[itemIndex].type;
+				if(questionType !== "end group") {
+					for(j = 0; j < form.questions.length; j++) {		
+						if(j !== itemIndex) {
+							otherItem = form.questions[j];
+							if(!otherItem.deleted && otherItem.name === val) {
+								hasDuplicate = true;
+								break;
+							}
 						}
 					}
 				}
@@ -1160,7 +1194,7 @@ define([
 				for(j = 0; j < optionList.options.length; j++) {		
 					if(j !== itemIndex) {
 						otherItem = optionList.options[j];
-						if(otherItem.value === val) {
+						if(!otherItem.deleted && otherItem.value === val) {
 							hasDuplicate = true;
 							break;
 						}

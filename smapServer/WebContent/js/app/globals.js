@@ -322,7 +322,7 @@ define(function() {
 				name: "Group",
 				type: "begin group",
 				glyphicon: "folder-open",
-				canSelect: false,
+				canSelect: true,
 				visible: true,
 				source: "user"
 			},

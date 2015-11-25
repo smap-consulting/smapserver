@@ -723,10 +723,10 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			buttonId = $this.attr("id"),
 			qId = $this.data("qid"),
-			fId = $this.data("findex"),
+			formIndex = $this.data("findex"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.add(fId, qId, locn);
+		$context = question.add(formIndex, qId, locn);
 		respondToEvents($context);				// Add events on to the altered html
 		$context.find('input').focus();			// Set focus to the new question
 		
@@ -786,7 +786,8 @@ function respondToEvents($context) {
 		
 		var $questionElement = $(this).closest('li'),
 			published,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			name;
 		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");
@@ -800,6 +801,16 @@ function respondToEvents($context) {
 				
 				updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
 				$('#typeModal').modal('hide');
+				
+				// Add an end group question if a new group has been created
+				if(type === "begin group") {
+					name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
+					$context = question.add(gFormIndex, $questionElement.attr("id"), 
+							"after", 
+							"end group",
+							name);
+					respondToEvents($context);	
+				}
 			});
 			
 			$('#typeModal').modal({
