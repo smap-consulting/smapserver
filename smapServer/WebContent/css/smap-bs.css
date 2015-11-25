@@ -76,7 +76,7 @@ tr.deleted td a {
 	color: red !important;
 }
 
-#formList .error > .panel-heading {
+#formList .error > .panel-heading, #formList .error.option {
 	color:#a94442;
 	background-color:#f2dede;
 	border-color:#ebccd1;
@@ -454,13 +454,6 @@ textarea {
 	background-color: #ffffcc;
 }
 
-.editor_element.option_error {
-	background-color: #ebccd1;
-}
-
-.editor_element.option_error .error-msg {
-	color: #a94442;
-}
 
 /* Tasks */
 .task_group_name {

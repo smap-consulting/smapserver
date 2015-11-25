@@ -1416,7 +1416,7 @@ public class SurveyManager {
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 				pstmtChangeLog.setInt(1, sId);
 				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
+				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
 				pstmtChangeLog.setInt(4,userId);
 				pstmtChangeLog.setTimestamp(5, getTimeStamp());
 				pstmtChangeLog.execute();

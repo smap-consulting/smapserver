@@ -273,8 +273,11 @@ function getChangeDescription(change) {
 		
 		if(change.type === "question"){
 			
-			h[++idx] = 'question ';
+			h[++idx] = 'question <span style="color:blue;">';
 			h[++idx] = change.question.name;
+			h[++idx] = '</span> with type <span style="color:red;">';
+			h[++idx] = change.question.type;
+			h[++idx] = '</span>';
 			
 		} else if(change.type === "option") {
 			/*

@@ -429,7 +429,7 @@ define([
 		
 		h[++idx] = '<li class="editor_element option draggable';
 		if(option.error) {
-			h[++idx] = ' option_error';
+			h[++idx] = ' error';
 		}
 		h[++idx] = '" id="';
 		h[++idx] = optionId;

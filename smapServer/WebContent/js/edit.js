@@ -630,7 +630,7 @@ function respondToEvents($context) {
 			formIndex = $label.data("fid"),
 			itemIndex = $label.data("id");
 		
-		changeset.validateQuestion(formIndex, itemIndex); 
+		changeset.validateItem(formIndex, itemIndex, "question"); 
 
 	});
 	
@@ -653,8 +653,8 @@ function respondToEvents($context) {
 			itemIndex = $label.data("id"),
 			newVal = $this.val();
 		
-		changeset.validateQuestionName(formIndex, itemIndex, newVal);
-		changeset.updateModelWithErrorStatus(formIndex, itemIndex);	// Update model and DOM
+		changeset.validateName(formIndex, itemIndex, newVal, "question");
+		changeset.updateModelWithErrorStatus(formIndex, itemIndex, "question");		// Update model and DOM
 
 	});
 	
@@ -670,7 +670,8 @@ function respondToEvents($context) {
 			listName = $label.data("list_name"),
 			newVal = $this.val();
 		
-		validateOptionName(listName, itemIndex, newVal);
+		changeset.validateName(listName, itemIndex, newVal, "option");
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
 
 	});
 	
@@ -1153,7 +1154,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 
 /*
  * Validate an option name
- */
+ *
 function validateOptionName(listName, itemIndex, val) {
 	
 	console.log("Validate option name: " + listName + " : " + itemIndex + " : " + val);
@@ -1187,9 +1188,7 @@ function validateOptionName(listName, itemIndex, val) {
 		}
 	} 
 	
-	/*
-	 * Name change require the entire set of choices in the choice list to be validated for duplicates
-	 */
+	
 	if(isValid) {
 		
 		for(i = 0; i < survey.optionLists[listName].options.length; i++) {
@@ -1224,6 +1223,7 @@ function validateOptionName(listName, itemIndex, val) {
 	return isValid;
 	
 }
+*/
 
 /*
  * Return true if the passed in value is a valid option name
