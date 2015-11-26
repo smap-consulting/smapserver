@@ -39,6 +39,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.managers.OptionManager;
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.QuestionManager;
@@ -188,8 +189,8 @@ public class Question implements Serializable {
 		return name;
 	}
 	
-	public String getColName() {
-		return UtilityMethods.cleanName(name);		// TODO return column_name attribute
+	public String getColumnName() {
+		return column_name;
 	}
 
 	public String getType() {
@@ -331,7 +332,7 @@ public class Question implements Serializable {
 
 	public void setName(String name) {
 		this.name = name;
-		this.column_name = UtilityMethods.cleanName(name);
+		this.column_name = GeneralUtilityMethods.cleanName(name, true);
 	}
 
 	public void setType(String type) {

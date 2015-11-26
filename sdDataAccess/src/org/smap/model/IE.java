@@ -1,19 +1,13 @@
 	package org.smap.model;
 
-/*
- * Instance Element Class
- */
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 public class IE {
 	private String name = null;
 	private String tableName = null;
+	private String columnName = null;
 	private String value = null;
 	private String type = null;	
 	private String qType = null;
@@ -32,6 +26,10 @@ public class IE {
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	public String getColumnName() {
+		return columnName;
 	}
 	
 	public String getTableName() {
@@ -76,28 +74,32 @@ public class IE {
 		this.name = v;
 	}
 	
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
+	public void setTableName(String v) {
+		this.tableName = v;
 	}
 	
-	public void setType(String type) {
-		this.type = type;
+	public void setColumnName(String v) {
+		this.columnName = v;
 	}
 	
-	public void setQType(String qType) {
-		this.qType = qType;
+	public void setType(String v) {
+		this.type = v;
+	}
+	
+	public void setQType(String v) {
+		this.qType = v;
 	}
 	
 	public void setPhoneOnly(boolean v) {
 		this.phoneOnly = v;
 	}
 	
-	public void setSeq(int seq) {
-		this.seq = seq;
+	public void setSeq(int v) {
+		this.seq = v;
 	}
 	
-	public void setPath(String path) {
-		this.path = path;
+	public void setPath(String v) {
+		this.path = v;
 	}
 	
 	/*

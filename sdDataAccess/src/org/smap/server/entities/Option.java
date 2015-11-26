@@ -37,6 +37,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.server.utilities.UtilityMethods;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -63,6 +66,9 @@ public class Option implements Serializable{
 	
 	@Column(name="ovalue")
 	private String value = null;
+	
+	@Column(name="column_name")
+	private String column_name = null;
 
 	@Column(name="cascade_filters")
 	private String cascade_filters = null;
@@ -90,6 +96,7 @@ public class Option implements Serializable{
 		this.label = anOption.getLabel();
 		this.label_id = anOption.getLabelId();
 		this.value = anOption.getValue();
+		this.column_name = anOption.getColumnName();
 		this.seq = anOption.getSeq();
 		this.externalFile = anOption.getExternalFile();
 		this.questionRef = anOption.getQuestionRef();
@@ -118,6 +125,10 @@ public class Option implements Serializable{
 	
 	public String getValue() {
 		return value;
+	}
+	
+	public String getColumnName() {
+		return column_name;
 	}
 
 	public int getSeq() {
@@ -157,6 +168,7 @@ public class Option implements Serializable{
 	
 	public void setValue(String v) {
 		value = v;
+		this.column_name = GeneralUtilityMethods.cleanName(v, false);
 	}
 	
        
