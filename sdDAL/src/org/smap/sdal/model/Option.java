@@ -12,6 +12,7 @@ public class Option {
 	public int seq;
 	public int sourceSeq;
 	public String value;
+	public String columnName;
 	public String defLabel;
 	public boolean externalFile;
 	public ArrayList<Label> labels = new ArrayList<Label> ();

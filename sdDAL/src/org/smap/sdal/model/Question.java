@@ -17,7 +17,7 @@ public class Question {
 	public int formIndex;			// Used by the online editor when the formId is not known (for a question in a new form)
 	public int childFormIndex;		// Set in online editor when creating a new sub form
 	public String name;
-	public String colName;			// The name of the database column for this question
+	public String columnName;			// The name of the database column for this question
 	public String type;
 	public String text_id;
 	public String hint_id;
