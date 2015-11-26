@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
 /*
  * Provides a survey level export of a survey as an XLS file
@@ -62,12 +61,12 @@ public class ExportSurvey extends Application {
 		s.add(Items.class);
 		return s;
 	}
-	
+	/*
 	private class Column {
-		int q_id = 0;
-		int o_id = 0;
-		String q_name;
-		String o_name;
+		//int q_id = 0;
+		//int o_id = 0;
+		//String q_name;
+		//String o_name;
 		String q_type;
 		String col_name;
 		
@@ -75,6 +74,7 @@ public class ExportSurvey extends Application {
 			return ("  " + col_name + " : " + q_type);
 		}
 	}
+	*/
 	
 	private class RecordDesc {
 		String prikey;
@@ -95,6 +95,7 @@ public class ExportSurvey extends Application {
 		ArrayList<RecordDesc> records = null;
 		ArrayList<FormDesc> children = null;
 		
+		@SuppressWarnings("unused")
 		public void debugForm() {
 			System.out.println("Form=============");
 			System.out.println("    f_id:" + f_id);
@@ -127,6 +128,8 @@ public class ExportSurvey extends Application {
 			records.add(rd);
 		}
 		
+		// Used for debugging
+		@SuppressWarnings("unused")
 		public void printRecords(int spacing, boolean long_form) {
 			String padding = "";
 			for(int i = 0; i < spacing; i++) {
@@ -157,7 +160,7 @@ public class ExportSurvey extends Application {
 	
 	@GET
 	@Produces("application/x-download")
-	public void exportFlat (@Context HttpServletRequest request, 
+	public void exportSurvey (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("flat") boolean flat,
@@ -328,7 +331,7 @@ public class ExportSurvey extends Application {
 						fd.flat = setFlat;
 					}
 					forms.put(fd.f_id, fd);
-					if(fd.parent == null) {
+					if(fd.parent == null || fd.parent.equals("0")) {
 						topForm = fd;
 					}
 					// Get max records for flat export
@@ -403,7 +406,6 @@ public class ExportSurvey extends Application {
 				 */
 				for(FormDesc f : formList) {
 
-					
 					// Get the question names and identifiers
 					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
 					
@@ -1158,8 +1160,8 @@ public class ExportSurvey extends Application {
 	
 	private String getQuestion(Connection conn, String colName, int sId, FormDesc form, String language, boolean merge_select_multiple) throws SQLException {
 		String questionText = "";
-		String qName = null;
-		String oName = null;
+		String qColName = null;
+		String optionColName = null;
 		String qType = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
@@ -1170,10 +1172,10 @@ public class ExportSurvey extends Application {
 			// Assume that double underscore is a unique separator
 			int idx = colName.indexOf("__");
 			if(idx == -1) {
-				qName = colName;
+				qColName = colName;
 			} else {
-				qName = colName.substring(0, idx);
-				oName = colName.substring(idx+2);
+				qColName = colName.substring(0, idx);
+				optionColName = colName.substring(idx+2);
 			}
 			
 			String sql = null;
@@ -1183,13 +1185,13 @@ public class ExportSurvey extends Application {
 					" AND q.qtext_id = t.text_id " +
 					" AND t.language = ? " +
 					" AND t.s_id = ? " +
-					" AND lower(q.qname) = ?;";
+					" AND q.column_name = ?;";
 
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, Integer.parseInt(form.f_id));
 			pstmt.setString(2, language);
 			pstmt.setInt(3, sId);
-			pstmt.setString(4, qName);
+			pstmt.setString(4, qColName);
 			resultSet = pstmt.executeQuery();
 		
 			if (resultSet.next()) {
@@ -1200,7 +1202,7 @@ public class ExportSurvey extends Application {
 			
 			// Get any option text
 			if(qType != null && qType.startsWith("select")) {
-				sql = "SELECT t.value AS otext, o.ovalue AS ovalue FROM option o, question q, translation t" +
+				sql = "SELECT t.value AS otext, o.ovalue AS ovalue, o.column_name FROM option o, question q, translation t" +
 						" WHERE q.q_id = ? " +
 						" AND o.l_id = q.l_id " +
 						" AND o.label_id = t.text_id" +
@@ -1216,14 +1218,14 @@ public class ExportSurvey extends Application {
 			
 				while (resultSet.next()) {
 					String name = resultSet.getString("ovalue");
+					String columnName = resultSet.getString("column_name").toLowerCase();
 					String label = resultSet.getString("otext");
 					if(qType.equals("select1") || merge_select_multiple) {
 						// Put all options in the same column
 						questionText += " " + name + "=" + label;
-					} else if(oName != null) {
+					} else if(optionColName != null) {
 						// Only one option in each column
-						String cleanName = UtilityMethodsEmail.cleanName(name);
-						if(cleanName.equals(oName)) {
+						if(columnName.equals(optionColName)) {
 							questionText += " " + label;
 						}
 					}
@@ -1244,7 +1246,7 @@ public class ExportSurvey extends Application {
 
 	/*
 	 * Get column information for this table
-	 */
+	 *
 	private ArrayList<Column> getTableColumns(Connection conn, FormDesc form) throws SQLException {
 		
 		ArrayList<Column> columns = null;
@@ -1253,10 +1255,10 @@ public class ExportSurvey extends Application {
 		ResultSet resultSet = null;
 		ResultSet resultSetOptions = null;
 		
-		String sql = "SELECT qname, qtype, q_id FROM question q" +
+		String sql = "SELECT qname, qtype, q_id, q.column_name FROM question q" +
 				" WHERE f_id = ? " +
 				" ORDER BY seq ASC;";
-		String sqlOption = "SELECT o.ovalue, o.o_id from option o, question q "
+		String sqlOption = "SELECT o.ovalue, o.o_id, o.column_name  from option o, question q "
 				+ "WHERE q.q_id = ? "
 				+ "AND q.l_id = o.l_id;";
 
@@ -1282,6 +1284,7 @@ public class ExportSurvey extends Application {
 			}
 			String q_name = resultSet.getString("qname");
 			String q_type = resultSet.getString("qtype");
+			String q_col_name = resultSet.getString("column_name");
 			int q_id = resultSet.getInt("q_id");
 			if(q_type != null && q_type.equals("select")) {
 				// Get options
@@ -1291,21 +1294,20 @@ public class ExportSurvey extends Application {
 					Column c = new Column();
 					columns.add(c);
 					
-					c.q_name = q_name;
+					//c.q_name = q_name;
 					c.q_type = q_type;
-					c.q_id = q_id;
-					c.col_name = UtilityMethodsEmail.cleanName(q_name);
-					c.o_id = resultSetOptions.getInt("o_id");
-					c.o_name = resultSetOptions.getString("ovalue");
-					c.col_name = UtilityMethodsEmail.cleanName(q_name) + "__" + UtilityMethodsEmail.cleanName(c.o_name);
+					//c.q_id = q_id;
+					//c.o_id = resultSetOptions.getInt("o_id");
+					//c.o_name = resultSetOptions.getString("ovalue");
+					c.col_name = q_col_name + "__" + resultSetOptions.getString("column_name");
 				}
 			} else {
 				Column c = new Column();
 				columns.add(c);
-				c.q_name = q_name;
+				//c.q_name = q_name;
 				c.q_type = q_type;
-				c.q_id = q_id;
-				c.col_name = UtilityMethodsEmail.cleanName(q_name);
+				//c.q_id = q_id;
+				c.col_name = q_col_name;
 			}
 		
 		}
@@ -1323,5 +1325,6 @@ public class ExportSurvey extends Application {
 		
 		return columns;
 	}
+	*/
 
 }
