@@ -1033,14 +1033,18 @@ function getQuestionList(sId, language, qId, groupId, callback, setGroupList, vi
 //Set the language list in the survey view control
 function setSurveyViewLanguages(list, language,elem, addNone) {
 
-	var $languageSelect = $(elem);
+	var $languageSelect = $(elem),
+		i;
+	
 	$languageSelect.empty();
 	if(addNone) {
 		$languageSelect.append('<option value="none">None</option>');
 	}
-	$.each(list, function(j, item) {
-		$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
-	});
+	
+	for(i = 0; i < list.length; i++) {
+		$languageSelect.append('<option value="' + list[i] + '">' + list[i] + '</option>');
+	}
+	
 	if(language) {
 		$languageSelect.val(language);
 	}
