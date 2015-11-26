@@ -118,7 +118,7 @@ public class SurveyInstance {
 		}
 	}
 	
-	public void setQuestion(String ref, String qType, String qname, boolean phoneOnly) {
+	public void setQuestion(String ref, String qType, String qname, boolean phoneOnly, String columnName) {
 		List<IE> matches = topInstanceElement.getMatchingElements(ref);
 		if(matches.size() == 0 && ref.endsWith("meta/instanceID")) {
 			// Also check for _instanceid
@@ -130,6 +130,7 @@ public class SurveyInstance {
 			if(match != null) {
 				match.setType("question");
 				match.setName(qname);
+				match.setColumnName(columnName);
 				match.setQType(qType);
 				match.setPhoneOnly(phoneOnly);
 			}

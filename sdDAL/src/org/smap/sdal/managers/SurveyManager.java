@@ -422,7 +422,8 @@ public class SurveyManager {
 				+ "q.readonly, "
 				+ "q.mandatory, "
 				+ "q.repeatcount, "
-				+ "q.published "
+				+ "q.published, "
+				+ "q.column_name "
 				+ "from question q "
 				+ "where q.f_id = ? "
 				//+ "and q.qname != '_instanceid' "
@@ -443,7 +444,8 @@ public class SurveyManager {
 				+ "o.ovalue as value, "
 				+ "o.label_id, "
 				+ "o.externalfile, "
-				+ "o.cascade_filters "
+				+ "o.cascade_filters, "
+				+ "o.column_name "
 				+ "from option o "
 				+ "where o.l_id = ? "
 				+ "order by o.seq";
@@ -533,12 +535,10 @@ public class SurveyManager {
 				q.required = rsGetQuestions.getBoolean(18);
 				q.repeatCount = rsGetQuestions.getBoolean(19);
 				q.published = rsGetQuestions.getBoolean(20);
+				q.columnName = rsGetQuestions.getString(21);
 				
 				// Translate type name to "note" if it is a readonly string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
-				
-				// add column name (not currently maintained in the database but it should be)
-				q.colName = UtilityMethodsEmail.cleanName(q.name);
 				
 				// Track if this question is in the meta group
 				if(q.name.equals("meta")) {
@@ -614,6 +614,7 @@ public class SurveyManager {
 				o.value = rsGetOptions.getString(2);
 				o.text_id = rsGetOptions.getString(3);
 				o.externalFile = rsGetOptions.getBoolean(4);
+				o.columnName = rsGetOptions.getString(5);
 					
 				String cascade_filters = rsGetOptions.getString(5);
 				if(cascade_filters != null) {
@@ -1523,11 +1524,11 @@ public class SurveyManager {
 		    			if(q.source != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				    		String qType = q.type;
 				    		if(qType.equals("geopoint")) {
-				    			col = "ST_AsText(" + q.colName + ")";
+				    			col = "ST_AsText(" + q.columnName + ")";
 				    		} else if(qType.equals("select")){
 				    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
 				    		} else {
-				    			col = q.colName;
+				    			col = q.columnName;
 				    		}
 				
 				    		// _instanceid is the legacy name for the instanceid column
@@ -1709,7 +1710,7 @@ public class SurveyManager {
 					if(hasColumns) {
 						sqlSelect += ",";
 					}
-					sqlSelect += q.colName + "__" + UtilityMethodsEmail.cleanName(option.value); 
+					sqlSelect += q.columnName + "__" + option.columnName; 
 					hasColumns = true;
 				}
 				sqlSelect += " from " + form.tableName + " where prikey=" + priKey + ";";
@@ -1727,7 +1728,7 @@ public class SurveyManager {
 		    	int oIdx = -1;
 		    	for(Option option : options) {
 		    		oIdx++;
-		    		String opt = q.colName + "__" + UtilityMethodsEmail.cleanName(option.value);
+		    		String opt = q.columnName + "__" + option.columnName;
 		    		boolean optSet = false;
 		    		if(resultSetOptions != null) {
 		    			optSet = resultSetOptions.getBoolean(opt);
