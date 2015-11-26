@@ -41,8 +41,6 @@ public class SurveyTemplate {
 	private static Logger log =
 			 Logger.getLogger(SurveyTemplate.class.getName());
 	
-	private static int LENGTH_COLUMN_NAME = 63;   // 63 max size of postgresql column names
-	
 	//private Connection connection;
 	PersistenceContext pc = null;
 	FormManager fPersist = null;
@@ -689,10 +687,6 @@ public class SurveyTemplate {
 		for (Question q : questionList) {
 			String qName = q.getName();
 			
-			String cleanName = UtilityMethods.cleanName(qName);	
-			if(cleanName.length() > LENGTH_COLUMN_NAME) {
-				cleanName = cleanName.substring(0, LENGTH_COLUMN_NAME);
-			}
 			Form f = getForm(q.getFormRef());
 			String fName = null;
 			if(f != null) {
@@ -706,13 +700,13 @@ public class SurveyTemplate {
 				questionsInForm = new HashMap<String, String> ();
 				forms.put(fName, questionsInForm);
 			}
-			String existingQuestion = questionsInForm.get(cleanName);
+			String existingQuestion = questionsInForm.get(qName);
 			if(existingQuestion != null) {
 				badNames.add(qName);
 				badNames.add(existingQuestion);
 				System.out.println("Duplicate Question:" + qName + " in form:" + fName);
 			} else {
-				questionsInForm.put(cleanName, qName);
+				questionsInForm.put(qName, qName);
 			}
 			
 		}
@@ -732,13 +726,13 @@ public class SurveyTemplate {
 		for (Option o : optionList) {
 			
 			String oName = o.getValue();
-			String cleanOption = UtilityMethods.cleanName(oName);
+			String checkOption = oName;
 			
 			HashMap<String, String> cascacde_key_values = o.getCascadeKeyValues();
 			if(cascacde_key_values != null) {
 				for (String key : cascacde_key_values.keySet()) {
 					// Add the filter to the option name, only needs to be unique for a filter combination
-					cleanOption += "_" + cascacde_key_values.get(key);
+					checkOption += "_" + cascacde_key_values.get(key);
 				}
 			}
 			
@@ -753,19 +747,19 @@ public class SurveyTemplate {
 			String qName = null;
 			if(q != null) {
 				qName = fName + "__" + q.getName();		// Make question unique across forms
-				String cleanQuestion = UtilityMethods.cleanName(qName);
-				HashMap<String, String> optionsInQuestion = questionList.get(cleanQuestion);
+
+				HashMap<String, String> optionsInQuestion = questionList.get(qName);
 				if(optionsInQuestion == null) {
 					optionsInQuestion = new HashMap<String, String> ();
-					questionList.put(cleanQuestion, optionsInQuestion);
+					questionList.put(qName, optionsInQuestion);
 				}
-				String existingOption = optionsInQuestion.get(cleanOption);
+				String existingOption = optionsInQuestion.get(checkOption);
 				if(existingOption != null) {
 					String dupMsg = "Duplicate values:" + oName + " in choices list for question:" + q.getName();
 					badNames.add(dupMsg);
 					System.out.println(dupMsg);
 				} else {
-					optionsInQuestion.put(cleanOption, oName);
+					optionsInQuestion.put(checkOption, oName);
 				}
 			} 
 			
@@ -1047,7 +1041,6 @@ public class SurveyTemplate {
 		});
 		
 		for (Option o : optionList) {
-			System.out.println("Writing option: " + o.getValue() + " : " + o.getSeq());
 			Question q = getQuestion(o.getQuestionRef()); // Get the question id
 			o.setListId(q.getListId());
 			o.setSeq(q.oSeq++);
@@ -1460,14 +1453,14 @@ public class SurveyTemplate {
 			// Set the question type for "begin group" questions
 			if(q.getType() != null && q.getType().equals("begin group")) {
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly(), q.getColumnName());
 				
 			}
 			
 			if(q.getSource() != null) {
 				// Extend any other questions that have a source (ie not meta data)
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly(), q.getColumnName());
 				
 				// Set the overall survey location to the last geopoint type found in the survey				
 				if(q.getType().equals("geopoint") || q.getType().equals("geoshape") || q.getType().equals("geotrace")) {
@@ -1486,28 +1479,14 @@ public class SurveyTemplate {
 
 					for(Option o : optionList) {
 						
-						// Create the option (name limited to 63 characters in postgresql)
-						// Use the value of the option rather than its label to construct a name
 						// This value must be populated for multi select questions
 
-						String qName = q.getName();
-						String optionName = getOptionName(o, qName);
-																			
-						instance.setOption(questionPath, optionName, o.getValue(), o.getSeq());
+						String optionColumn = q.getColumnName() + "__" + o.getColumnName();												
+						instance.setOption(questionPath, o.getValue(), o.getValue(), o.getSeq(), optionColumn);
 					}
 				}
 			}
 		}
-	}
-	
-	public static String getOptionName(Option o, String qName) {
-		String name = null;
-		String value = o.getValue();
-		if(value == null || (qName.length() + value.length() > 63)) {		// Max value length 63 chars
-			value = String.valueOf(o.getSeq() + 1);		// If the value is too long, use the sequence # (starting from 1)
-		}
-		name = qName + "__" + value;	// Use double underscore to minimise chance of user specifying this as a question name
-		return name;
 	}
 	
 	/*

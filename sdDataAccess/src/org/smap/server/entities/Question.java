@@ -515,6 +515,10 @@ public class Question implements Serializable {
 	 */
 	public Collection<Option> getValidChoices() {
 		
+		if (choices == null) {
+			loadChoices();
+		}
+		
 		Collection<Option> externalChoices = new ArrayList<Option> ();
 		ArrayList<Option> cArray = new ArrayList<Option>(choices);
 		boolean external = false;

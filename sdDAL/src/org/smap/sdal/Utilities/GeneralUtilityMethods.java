@@ -33,10 +33,10 @@ public class GeneralUtilityMethods {
 	private static Logger log =
 			 Logger.getLogger(GeneralUtilityMethods.class.getName());
 
-	private static int LENGTH_QUESTION_NAME = 51;   // 63 max size of postgresql column names. Allow 10 chars for options + 2 chars for option separator
-	private static int LENGTH_QUESTION_RAND = 10;
-	private static int LENGTH_OPTION_NAME = 10;  
-	private static int LENGTH_OPTION_RAND = 5;
+	private static int LENGTH_QUESTION_NAME = 45;   // 63 max size of postgresql column names. Allow 10 chars for options + 2 chars for option separator
+	private static int LENGTH_QUESTION_RAND = 3;
+	private static int LENGTH_OPTION_NAME = 16;  
+	private static int LENGTH_OPTION_RAND = 3;
 	
 	private static String [] reservedSQL = new String [] {
 		"all",
