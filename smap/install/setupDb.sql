@@ -398,6 +398,7 @@ CREATE TABLE option (
 	label text,
 	label_id text,
 	oValue text,
+	column_name text,
 	selected BOOLEAN,
 	cascade_filters text,
 	externalfile boolean default false
