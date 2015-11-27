@@ -2,6 +2,7 @@ package org.smap.server.utilities;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import org.smap.model.IE;
 import org.smap.server.entities.Option;
@@ -9,103 +10,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class UtilityMethods {
-	
-	private static String [] reservedSQL = new String [] {
-		"all",
-		"analyse",
-		"analyze",
-		"and",
-		"any",
-		"array",
-		"as",
-		"asc",
-		"assignment",
-		"asymmetric",
-		"authorization",
-		"between",
-		"binary",
-		"both",
-		"case",
-		"cast",
-		"check",
-		"collate",
-		"column",
-		"constraint",
-		"create",
-		"cross",
-		"current_date",
-		"current_role",
-		"current_time",
-		"current_timestamp",
-		"current_user",
-		"default",
-		"deferrable",
-		"desc",
-		"distinct",
-		"do",
-		"else",
-		"end",
-		"except",
-		"false",
-		"for",
-		"foreign",
-		"freeze",
-		"from",
-		"full",
-		"grant",
-		"group",
-		"having",
-		"ilike",
-		"in",
-		"initially",
-		"inner",
-		"intersect",
-		"into",
-		"is",
-		"isnull",
-		"join",
-		"leading",
-		"left",
-		"like",
-		"limit",
-		"localtime",
-		"localtimestamp",
-		"natural",
-		"new",
-		"not",
-		"notnull",
-		"null",
-		"off",
-		"offset",
-		"old",
-		"on",
-		"only",
-		"or",
-		"order",
-		"outer",
-		"overlaps",
-		"placing",
-		"primary",
-		"references",
-		"right",
-		"select",
-		"session_user",
-		"similar",
-		"some",
-		"symmetric",
-		"table",
-		"then",
-		"to",
-		"trailing",
-		"true",
-		"union",
-		"unique",
-		"user",
-		"using",
-		"verbose",
-		"when",
-		"where"
-	};
 
 	public static String getLastFromPath(String path) {
 		if(path != null) {
@@ -179,30 +83,6 @@ public class UtilityMethods {
     	
     	return result;
     }   
-    
-	/*
-	 * Remove any characters from the name that will prevent it being used as a database column name
-	 */
-	static public String cleanName(String in) {
-		String out = in.trim().toLowerCase();
-		//String lowerCaseOut = out.toLowerCase();	// Preserve case as this is important for odkCollect
-
-		out = out.replace(" ", "");	// Remove spaces
-		out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x");	// Remove special characters ;
-	
-		/*
-		 * Rename legacy fields that are the same as postgres / sql reserved words
-		 */
-		for(int i = 0; i < reservedSQL.length; i++) {
-			if(out.equals(reservedSQL[i])) {
-				out = "__" + out;
-				break;
-			}
-		}
-
-		
-		return out;
-	}
 	
 	/*
 	 * TODO replace the next two functions by a single function that sorts any object that
@@ -237,25 +117,5 @@ public class UtilityMethods {
 			}
 		});
 	}
-	
-	/*
-	 * Deprecated - conversion of language codes for j2me will no longer be done
-	static public String getLanguageCode(String code) {
-		String outCode = null;
-		
-		boolean found = false;
-		if(code != null) {
-			for(int i = 0; !found && languageCodes[i][0] != null; i++) {
-				for(int j = 0; !found && languageCodes[i][j] != null; j++) {
-					if(code.toLowerCase().equals(languageCodes[i][j])) {
-						outCode = languageCodes[i][0];
-						found = true;
-					}
-				}
-			} 
-		}
-		return outCode;			
-	}
-	*/
 	
 }
