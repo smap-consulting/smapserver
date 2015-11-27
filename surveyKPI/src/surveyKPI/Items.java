@@ -109,6 +109,8 @@ public class Items extends Application {
 		int maxRec = 0;
 		int recCount = 0;
 
+		ArrayList<String> colNames = new ArrayList<String> ();
+		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";	
 
 		if(geom != null && geom.equals("no")) {
@@ -169,6 +171,11 @@ public class Items extends Application {
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
 			PreparedStatement pstmtFDetails = null;
+			PreparedStatement pstmtQuestions = null;
+			PreparedStatement pstmtSelectMultiple = null;
+			
+			int fId = 0;
+			int parent;
 			 
 			try {
 				// Prepare the statement to get the question type 
@@ -216,66 +223,105 @@ public class Items extends Application {
 				ResultSet rsDetails = pstmtFDetails.executeQuery();
 				if(rsDetails.next()) {
 					
-					int fId = rsDetails.getInt(1);
-					int parent = rsDetails.getInt(2);
+					fId = rsDetails.getInt(1);
+					parent = rsDetails.getInt(2);
 					
 					tables.add(tName, fId, parent);
 				}
 				
+				// Get column names for seelct multiple questions
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? order by o.seq;";
+				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
+				
 				// Get the columns
-				sql = "SELECT * FROM " + tName + " LIMIT 1;";
-				log.info("Get the columns: " + sql);
-				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = connection.prepareStatement(sql);	 			
-				resultSet = pstmt.executeQuery();
-				ResultSetMetaData rsMetaData = resultSet.getMetaData();		
+				String sqlCols = "select qname, qtype, column_name, q_id from question where f_id = ? order by seq";
+				pstmtQuestions = connectionSD.prepareStatement(sqlCols);
+				pstmtQuestions.setInt(1, fId);
+				
+				log.info("Get questions for form: " + pstmtQuestions.toString());
+				resultSet = pstmtQuestions.executeQuery();
+				
+				//sql = "SELECT * FROM " + tName + " LIMIT 1;";
+				//log.info("Get the columns: " + sql);
+				//try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				//pstmt = connection.prepareStatement(sql);	 			
+				//resultSet = pstmt.executeQuery();
+				//ResultSetMetaData rsMetaData = resultSet.getMetaData();		
 				
 				// Construct a new query that retrieves a geometry object as geoJson
-				String cols = "";
-				int newColIdx = 1;
+				StringBuffer cols = new StringBuffer("");
+				int newColIdx = 0;
 				JSONArray columns = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
-				for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+				//for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+				
+				// Add default columns
+				cols.append("prikey, parkey, _bad, _bad_reason, _user");
+				
+				columns.put("prikey");
+				colNames.add("prikey");
+				newColIdx++;
+				
+				columns.put("parkey");
+				colNames.add("parkey");
+				newColIdx++;
+				
+				columns.put("_bad");
+				colNames.add("_bad");
+				newColIdx++;
+				
+				columns.put("_bad_reason");
+				colNames.add("_bad_reason");
+				newColIdx++;
+				
+				columns.put("_user");
+				colNames.add("_user");
+				newColIdx++;
+				
+				while(resultSet.next()) {
+					//String name = rsMetaData.getColumnName(i);
+					//String colname = tName + "." + name;
+					//String type = rsMetaData.getColumnTypeName(i);
 					
-					String name = rsMetaData.getColumnName(i);
-					String colname = tName + "." + name;
-					String type = rsMetaData.getColumnTypeName(i);
+					String name = resultSet.getString(1);
+					String type = resultSet.getString(2);
+					String colname = tName + "." +  resultSet.getString(3);
+					int qId = resultSet.getInt(4);
 					
-					if(bGeom && type.equals("geometry")) {
+					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")) {
 						
-						if(newColIdx != 1 ) {
-							cols += ",";
-						}
 						geomIdx = newColIdx;
-						cols += "ST_AsGeoJSON(" + colname + ") ";
-						newColIdx++;
+						if(newColIdx != 0 ) {cols.append(",");}
+						cols.append("ST_AsGeoJSON(" + colname + ") ");
 						
+						newColIdx++;
+						columns.put(name);
+						colNames.add(name);
+						
+					} else if(bFeats && type.equals("select")) {
+						pstmtSelectMultiple.setInt(1, qId);
+						ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
+						while (rsMultiples.next()) {
+							if(newColIdx != 0 ) {cols.append(",");}
+							String mult_name = name + " - " + rsMultiples.getString(2);
+							cols.append(colname + "__" + rsMultiples.getString(1));
+							columns.put(mult_name);
+							colNames.add(mult_name);
+							newColIdx++;
+						}
 					} else if(bFeats || name.equals("prikey")) {	// Always return the primary key
-						if(newColIdx != 1 ) {
-							cols += ",";
-						}
-						
-						// Get the question type
-						pstmtQType.setString(1, tName);
-						pstmtQType.setString(2, name);
-						ResultSet rsType = pstmtQType.executeQuery();
-						boolean isAttachment = false;
-						if(rsType.next()) {
-							String qType = rsType.getString(1);
-							
-							if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
-								isAttachment = true;
-							}
-						}
-						if(isAttachment) {
-							cols += "'" + urlprefix + "' || " + colname + " as " + name;
+						if(newColIdx != 0 ) {cols.append(",");}		
+						if(type.equals("image") || type.equals("audio") || type.equals("video")) {
+							cols.append("'" + urlprefix + "' || " + colname + " as " + name);
 						} else {
-							cols += colname;
+							cols.append(colname);
 						}
-						
 						newColIdx++;
+						columns.put(name);
+						colNames.add(name);
+						
 					}
-					columns.put(name);
+					
 				} 
 				
 				/*
@@ -295,19 +341,15 @@ public class Items extends Application {
 
 					if(sscFn.equals("area")) {
 						String colName = sscName + " (sqm)";
-						if(newColIdx != 1 ) {
-							cols += ",";
-						}
-						cols += "ST_Area(geography(the_geom), true) as \"" + colName + "\"";
+						if(newColIdx != 0 ) {cols.append(",");}
+						cols.append("ST_Area(geography(the_geom), true) as \"" + colName + "\"");
 						columns.put(colName);
 						newColIdx++;
 						sscList.add(colName);
 					} else if (sscFn.equals("length")) {
 						String colName = sscName + " (m)";
-						if(newColIdx != 1 ) {
-							cols += ",";
-						}
-						cols += "ST_Length(geography(the_geom), true) as \"" + colName +"\"";
+						if(newColIdx != 0 ) {cols.append(",");}
+						cols.append("ST_Length(geography(the_geom), true) as \"" + colName +"\"");
 						columns.put(colName);
 						newColIdx++;
 						sscList.add(colName);
@@ -369,21 +411,24 @@ public class Items extends Application {
 				if(rec_limit > 0) {
 					sqlLimit = "LIMIT " + rec_limit;
 				}
-				String sql2 = "SELECT " + cols + " FROM " + tables.getTablesSQL();
+				StringBuffer sql2 = new StringBuffer("select ");
+				sql2.append(cols);
+				sql2.append(" from ");
+				sql2.append(tables.getTablesSQL());
 				
 				String sqlTableJoin = tables.getTableJoinSQL();
 				boolean doneWhere = false;
 				String whereClause = "";
 				if(sqlTableJoin.trim().length() > 0) {
-					whereClause += " WHERE " + sqlTableJoin;
+					whereClause += " where " + sqlTableJoin;
 					doneWhere = true;
 				} 
 				
 				if(sqlFilter.trim().length() > 0) {
 					if(doneWhere) {
-						whereClause += " AND ";
+						whereClause += " and ";
 					} else {
-						whereClause += " WHERE ";
+						whereClause += " where ";
 						doneWhere = true;
 					}
 					whereClause += sqlFilter;
@@ -392,21 +437,19 @@ public class Items extends Application {
 					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
 					if(sqlRestrictToDateRange.trim().length() > 0) {
 						if(doneWhere) {
-							whereClause += " AND ";
+							whereClause += " and ";
 						} else {
-							whereClause += " WHERE ";
+							whereClause += " where ";
 							doneWhere = true;
 						}
 						whereClause += sqlRestrictToDateRange;
 					}
 				}
-				sql2 += whereClause;
-				sql2 += " ORDER BY prikey " + sqlLimit +";";
+				sql2.append(whereClause);
+				sql2.append(" order by prikey " + sqlLimit +";");
 				
-				// Close the statement and result set
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				
-				pstmt = connection.prepareStatement(sql2);
+				pstmt = connection.prepareStatement(sql2.toString());
 				
 				int attribIdx = 1;
 				if(dateId != 0) {
@@ -420,7 +463,7 @@ public class Items extends Application {
 				
 				log.info("Get Item Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
-				rsMetaData = resultSet.getMetaData();
+				//rsMetaData = resultSet.getMetaData();
 	
 				JSONArray ja = new JSONArray();
 				while (resultSet.next()) {
@@ -430,18 +473,20 @@ public class Items extends Application {
 					
 					jr.put("type", "Feature");
 
-					for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {		
+					for(int i = 0; i < colNames.size(); i++) {		
 						
 						if(i == geomIdx) {							
 							// Add Geometry (assume one geometry type per table)
-							String geomValue = resultSet.getString(i);	
+							String geomValue = resultSet.getString(i + 1);	
 							if(geomValue != null) {	
 								jg = new JSONObject(geomValue);
 							}
 						} else {
 							
-							String name = rsMetaData.getColumnName(i);	
-							String value = resultSet.getString(i);	
+							//String name = rsMetaData.getColumnName(i);	
+							String name = colNames.get(i);
+							String value = resultSet.getString(i + 1);	
+							System.out.println("Got " + name + " : " + value);
 							if(value == null) {
 								value = "";
 							}
@@ -524,6 +569,8 @@ public class Items extends Application {
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 				try {if (pstmtFDetails != null) {pstmtFDetails.close();	}} catch (SQLException e) {	}
+				try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
+				try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
 				
 				try {
 					if (connectionSD != null) {
