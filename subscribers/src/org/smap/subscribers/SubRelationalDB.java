@@ -701,7 +701,7 @@ public class SubRelationalDB extends Subscriber {
 				List<IE> options = col.getChildren();
 				UtilityMethods.sortElements(options);
 				for(IE option : options) {
-					sql += "," + UtilityMethods.cleanName(option.getName());
+					sql += "," + option.getColumnName();
 				}
 			} else if(colType.equals("geopolygon") || colType.equals("geolinestring") || colType.equals("geopoint")
 					|| colType.equals("geoshape") || colType.equals("geotrace")) {
@@ -711,7 +711,7 @@ public class SubRelationalDB extends Subscriber {
 				// Non repeating group, process these child columns at the same level as the parent
 				sql += addSqlColumns(col.getQuestions());
 			} else {
-				String colName = UtilityMethods.cleanName(col.getName());
+				String colName = col.getColumnName();
 				sql += "," + colName;
 			}				
 		}
@@ -1065,14 +1065,14 @@ public class SubRelationalDB extends Subscriber {
 					} else if(colType.equals("geopoint")) {
 						
 						// Add geometry columns after the table is created using AddGeometryColumn()
-						GeometryColumn gc = new GeometryColumn(tableName, UtilityMethods.cleanName(q.getName()), "POINT");
+						GeometryColumn gc = new GeometryColumn(tableName, q.getColumnName(), "POINT");
 						geoms.add(gc);
 						continue;
 					
 					} else if(colType.equals("geopolygon") || colType.equals("geoshape")) {
 					
 						// remove the automatically generated string _parentquestion from the question name
-						String qName = UtilityMethods.cleanName(q.getName());
+						String qName = q.getColumnName();
 						int idx = qName.lastIndexOf("_parentquestion");
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
@@ -1083,7 +1083,7 @@ public class SubRelationalDB extends Subscriber {
 					
 					} else if(colType.equals("geolinestring") || colType.equals("geotrace")) {
 						
-						String qName = UtilityMethods.cleanName(q.getName());
+						String qName = q.getColumnName();
 						int idx = qName.lastIndexOf("_parentquestion");
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
@@ -1111,16 +1111,15 @@ public class SubRelationalDB extends Subscriber {
 								// Create if its an external choice and this question uses external choices
 								//  or its not an external choice and this question does not use external choices
 								if(hasExternalOptions && option.getExternalFile() || !hasExternalOptions && !option.getExternalFile()) {
-									String name = SurveyTemplate.getOptionName(option, q.getName());
-									sql += ", " + UtilityMethods.cleanName(name) + " integer";
+									String name = q.getColumnName() + "__" + option.getColumnName();
+									sql += ", " + name + " integer";
 								}
 							}
 						} else {
 							System.out.println("Warning: No Options for Select:" + q.getName());
 						}
 					} else {
-						String name = UtilityMethods.cleanName(q.getName());
-						sql += ", " + name + " " + colType;
+						sql += ", " + q.getColumnName() + " " + colType;
 					}
 				} else {
 					System.out.println("Info: Ignoring question with no source:" + q.getName());
