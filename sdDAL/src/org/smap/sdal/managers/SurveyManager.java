@@ -614,12 +614,11 @@ public class SurveyManager {
 				o.value = rsGetOptions.getString(2);
 				o.text_id = rsGetOptions.getString(3);
 				o.externalFile = rsGetOptions.getBoolean(4);
-				o.columnName = rsGetOptions.getString(5);
-					
 				String cascade_filters = rsGetOptions.getString(5);
 				if(cascade_filters != null) {
 					o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
 				}
+				o.columnName = rsGetOptions.getString(6);
 					
 				// Get the labels for the option
 				UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);
@@ -1718,7 +1717,9 @@ public class SurveyManager {
 				ResultSet resultSetOptions = null;
 				if(resultSet != null) {
 					if(pstmtSelect != null) try {pstmtSelect.close();} catch(Exception e) {};
-			    	pstmtSelect = cResults.prepareStatement(sqlSelect);	 			
+			    	pstmtSelect = cResults.prepareStatement(sqlSelect);	 
+			    	
+			    	log.info("Get data from option columns: " + pstmtSelect.toString());
 			    	resultSetOptions = pstmtSelect.executeQuery();
 			    	resultSetOptions.next();		// There will only be one record
 				}
