@@ -1069,6 +1069,7 @@ public class GetXForm {
 		String table = firstForm.getTableName().replace("'", "''");	// Escape apostrophes
 		key = key.replace("'", "''");	// Escape apostrophes
 		String type = null;
+		String keyColumnName = null;
 		
 		System.out.println("First form: " + firstForm.getTableName());
 		
@@ -1076,16 +1077,16 @@ public class GetXForm {
 		List<Question> questions = firstForm.getQuestions();
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
-			System.out.println("Column name: " + q.getColName());
-			if(q.getColName().equals(key)) {
+			if(q.getName().equals(key)) {
 				type = q.getType();
+				keyColumnName = q.getColumnName();
 				break;
 			}
 		}
 		if(type == null) {
 			throw new ApplicationException("Key: " + key + " not found");
 		}
-		String sql = "select prikey from " + table + " where " + key + " = ? " +
+		String sql = "select prikey from " + table + " where " + keyColumnName + " = ? " +
 				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
 		
 		PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -1354,11 +1355,11 @@ public class GetXForm {
     			if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 		    		String qType = q.getType();
 		    		if(qType.equals("geopoint")) {
-		    			col = "ST_AsText(" + q.getColName() + ")";
+		    			col = "ST_AsText(" + q.getColumnName() + ")";
 		    		} else if(qType.equals("select")){
 		    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
 		    		} else {
-		    			col = q.getColName();
+		    			col = q.getColumnName();
 		    		}
 		
 		    		sql += "," + col;
@@ -1423,7 +1424,7 @@ public class GetXForm {
 						if(hasColumns) {
 							sqlSelect += ",";
 						}
-						sqlSelect += q.getColName() + "__" + option.getValue();
+						sqlSelect += q.getColumnName() + "__" + option.getColumnName();
 						hasColumns = true;
 					}
 					sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
@@ -1436,7 +1437,7 @@ public class GetXForm {
 			    	String optValue = "";
 			    	hasColumns = false;
 			    	for(Option option : options) {
-			    		String opt = q.getColName() + "__" + option.getValue();
+			    		String opt = q.getColumnName() + "__" + option.getColumnName();
 			    		boolean optSet = resultSetOptions.getBoolean(opt);
 			    		log.fine("Option " + opt + ":" + resultSetOptions.getString(opt));
 			    		if(optSet) {
