@@ -41,5 +41,6 @@ CREATE TABLE change_history (
 	);
 ALTER TABLE change_history OWNER TO ws;
 
--- Upgrade to:  13.12 from 13.11 =======
--- None
+-- Upgrade to:  15.11 from 15.10 =======
+alter table change_history add column question_column_name text;
+alter table change_history add column option_column_name text;

@@ -84,8 +84,10 @@ public class Review extends Application {
 	 */
 	private class ReviewItem {
 		int	q_id;
-		String newValue;	// The new value to be written
-		boolean set;		// Set or unset a select question
+		String newValue;				// The new value to be written
+		String questionColumnName;		// The question column name 
+		String optionColumnName;		// The option column name if the updated question is a select multiple
+		boolean set;					// Set or unset a select question
 		
 		// The following attributes are populated by this service for local use
 		String table;
@@ -115,6 +117,8 @@ public class Review extends Application {
 		String table;
 		String newValue;
 		String oldValue;
+		String questionColumnName;
+		String optionColumnName;
 		boolean set;
 	}
 
@@ -182,7 +186,7 @@ public class Review extends Application {
 			/*
 			 * Get the table name and column name containing the text data
 			 */
-			String sql = "select f.table_name, q.qname, qtype from form f, question q " +
+			String sql = "select f.table_name, q.qname, qtype, q.column_name from form f, question q " +
 					" where f.f_id = q.f_id" +
 					" and q.q_id = ?";
 	
@@ -193,10 +197,10 @@ public class Review extends Application {
 
 			if(resultSet.next()) {
 				table = resultSet.getString(1);
-				name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
 				qtype = resultSet.getString(3);
+				name = resultSet.getString(4);
 				
-				// If data for antarget question is also required then ensure it is in the same table and get the question name
+				// If data for a target question is also required then ensure it is in the same table and get the question name
 				if(targetQId > 0) {
 					String sqlTarget = "select q.qname, qtype from form f, question q " +
 							" where f.f_id = q.f_id" +
@@ -396,12 +400,11 @@ public class Review extends Application {
 			pstmtGetQuestion = connectionSD.prepareStatement(sqlGetQuestion);
 			
 			String sqlGetOption = "SELECT o.o_id, o.ovalue, t.value " +
-					" FROM form f, question q, option o, translation t, question q " +  
+					" FROM form f, question q, option o, translation t " +  
 					" WHERE o.label_id = t.text_id " +
 					" AND t.language = ? " +
 					" AND f.s_id = t.s_id " +
 					" AND q.f_id = f.f_id " +
-					" AND q.q_id = o.q_id " +
 					" AND t.type = 'none' " +		
 					" AND q.q_id = ?" +	
 					" AND q.l_id = o.l_id" +
@@ -453,7 +456,8 @@ public class Review extends Application {
 							pstmtGetOption.setString(1, language);
 							pstmtGetOption.setInt(2, q.qId);
 							pstmtGetOption.setInt(3, sId);
-
+							
+							log.info("SQL: Get Options: " + pstmtGetOption.toString());
 							ResultSet resultSetOptions = pstmtGetOption.executeQuery();
 							while(resultSetOptions.next()) {
 								RelevanceOption o = new RelevanceOption();
@@ -542,6 +546,8 @@ public class Review extends Application {
 
 			pstmt = dConnection.prepareStatement(sql);
 			pstmt.setInt(1, sId);
+			
+			log.info("Get change log: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			ArrayList<AuditItem> auditItems = new ArrayList<AuditItem> ();
@@ -755,6 +761,7 @@ public class Review extends Application {
 		PreparedStatement pstmtData = null;
 		PreparedStatement pstmtInsertChangeHistory = null;
 		PreparedStatement pstmtGetRecords = null;
+		PreparedStatement pstmtGetOptionColumnName = null;
 
 		autoCommit = true;
 		
@@ -796,15 +803,21 @@ public class Review extends Application {
 					" values(?, ?, ?, ?);";
 			pstmtInsertChangeset = dConnection.prepareStatement(sqlInsertChangeset, Statement.RETURN_GENERATED_KEYS);
 			
-			String sqlGetTable = "select f.table_name, q.qname, q.qtype from form f, question q " +
+			String sqlGetTable = "select f.table_name, q.qname, q.qtype, q.column_name from form f, question q " +
 					" where f.f_id = q.f_id" +
 					" and f.s_id = ? " +		// Verify that the question is in the specified survey (authorisation)
 					" and q.q_id = ?";
 			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);	
 			
+			String sqlGetOptionColumnName = "select o.column_name from option o, question q " +
+					" where q.l_id = o.l_id" +
+					" and q.q_id = ? " +
+					" and o.ovalue = ?;";
+			pstmtGetOptionColumnName = connectionSD.prepareStatement(sqlGetOptionColumnName);	
+			
 			String sqlInsertChangeHistory = "insert into change_history(c_id, q_id, r_id, old_value, " +
-					"new_value, qname, qtype, tablename, oname) " +
-					" values(?, ?, ?, ?, ?, ?, ?, ?, ?);";
+					"new_value, qname, qtype, tablename, oname, question_column_name, option_column_name) " +
+					" values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 			pstmtInsertChangeHistory = dConnection.prepareStatement(sqlInsertChangeHistory);
 			
 			// Get the user name
@@ -825,11 +838,26 @@ public class Review extends Application {
 
 				if(resultSet.next()) {
 					ri.table = resultSet.getString(1);
-					ri.qname = UtilityMethodsEmail.cleanName(resultSet.getString(2));
+					ri.qname = resultSet.getString(2);
 					ri.qtype = resultSet.getString(3);
+					ri.questionColumnName = resultSet.getString(4);
 				} else {
 					throw new ApplicationException("Table not found for question: " + ri.q_id);
-				}	
+				}
+				
+				if(ri.qtype.equals("select")) {
+					// Get the column name for the option
+					pstmtGetOptionColumnName.setInt(1, ri.q_id);
+					pstmtGetOptionColumnName.setString(2, ri.newValue);
+					
+					log.info("SQL option column name: " + pstmtGetOptionColumnName.toString());
+					resultSet = pstmtGetOptionColumnName.executeQuery();
+					
+					if(resultSet.next()) {
+						ri.optionColumnName = resultSet.getString(1);
+					}
+					
+				}
 
 			}
 			
@@ -863,7 +891,7 @@ public class Review extends Application {
 
 				if(resultSet.next()) {
 					table = resultSet.getString(1);
-					filter_name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
+					filter_name = resultSet.getString(4);
 				} else {
 					throw new ApplicationException("Table not found for question: " + u.qFilter);
 				}
@@ -873,7 +901,7 @@ public class Review extends Application {
 					resultSet = pstmtGetTable.executeQuery();
 					if(resultSet.next()) {
 						// Table should be the same as for the primary question filter
-						target_filter_name = UtilityMethodsEmail.cleanName(resultSet.getString(2));
+						target_filter_name = resultSet.getString(4);
 					} else {
 						throw new ApplicationException("Table not found for question: " + u.qFilterTarget);
 					}
@@ -970,6 +998,7 @@ public class Review extends Application {
 			try {if (pstmtGetUserName != null) {pstmtGetUserName.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertChangeset != null) {pstmtInsertChangeset.close();}} catch (SQLException e) {}
 			try {if (pstmtGetRecords != null) {pstmtGetRecords.close();}} catch (SQLException e) {}
+			try {if (pstmtGetOptionColumnName != null) {pstmtGetOptionColumnName.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
@@ -1012,15 +1041,16 @@ public class Review extends Application {
 			ui.table = ri.table;
 			ui.rId = rId;
 			ui.newValue = ri.newValue;
+			ui.questionColumnName = ri.questionColumnName;
+			ui.optionColumnName = ri.optionColumnName;
 			ui.set = ri.set;
 			
 			// Get the old value for this question
 			String sqlGetCurrentValue = null;
 			if(ri.qtype.equals("select")) {
-				String cleanOname = UtilityMethodsEmail.cleanName(ri.newValue);
-				sqlGetCurrentValue = "select " + ri.qname + "__" + cleanOname + " from " + ri.table;
+				sqlGetCurrentValue = "select " + ri.questionColumnName + "__" + ri.optionColumnName + " from " + ri.table;
 			} else {
-				sqlGetCurrentValue = "select " + ri.qname + " from " + ri.table;
+				sqlGetCurrentValue = "select " + ri.questionColumnName + " from " + ri.table;
 			}
 			sqlGetCurrentValue += " where prikey = ?" ;
 			
@@ -1066,10 +1096,9 @@ public class Review extends Application {
 			 * Update data
 			 */
 			if(ui.qtype.equals("select")) {
-				String cleanOname = UtilityMethodsEmail.cleanName(ui.newValue);
-				sqlData = "update " + ui.table + " set " + ui.qname + "__" + cleanOname + " = ? where prikey = ?;";
+				sqlData = "update " + ui.table + " set " + ui.questionColumnName + "__" + ui.optionColumnName + " = ? where prikey = ?;";
 			} else {
-				sqlData = "update " + ui.table + " set " + ui.qname + " = ? where prikey = ?;";	
+				sqlData = "update " + ui.table + " set " + ui.questionColumnName + " = ? where prikey = ?;";	
 			}
 
 			try {if (pstmtData != null) {pstmtData.close();}} catch (SQLException e) {}
@@ -1107,9 +1136,12 @@ public class Review extends Application {
 				pstmtInsertChangeHistory.setString(8, ui.table);
 				if(ui.qtype.equals("select")) {				
 					pstmtInsertChangeHistory.setString(9, ui.newValue);
+					pstmtInsertChangeHistory.setString(11, ui.optionColumnName);
 				} else {
 					pstmtInsertChangeHistory.setString(9, "");
+					pstmtInsertChangeHistory.setString(11, "");
 				}
+				pstmtInsertChangeHistory.setString(10, ui.questionColumnName);
 				
 				log.info("Insert change history: " + pstmtInsertChangeHistory.toString());
 				pstmtInsertChangeHistory.executeUpdate();
@@ -1133,7 +1165,6 @@ public class Review extends Application {
 
 		Response response = null;
 		String userName;
-		ArrayList<ReviewItem> riList = new ArrayList<ReviewItem> ();
 		
 		PreparedStatement pstmtGetUserName = null;
 		PreparedStatement pstmtUpdateChangeset = null;
@@ -1183,7 +1214,7 @@ public class Review extends Application {
 					" and q.q_id = ?";
 			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);	
 			
-			String sqlGetChangeHistory = "select q_id, r_id, old_value, new_value, qname, qtype, tablename, oname " +
+			String sqlGetChangeHistory = "select q_id, r_id, old_value, new_value, qname, qtype, tablename, oname, question_column_name, option_column_name  " +
 					" from change_history " +
 					" where c_id = ?;";
 			pstmtGetChangeHistory = dConnection.prepareStatement(sqlGetChangeHistory);
@@ -1234,6 +1265,8 @@ public class Review extends Application {
 				ui.qtype = resultSet.getString(6);
 				ui.table = resultSet.getString(7);
 				oname = resultSet.getString(8);
+				ui.questionColumnName = resultSet.getString(9);
+				ui.optionColumnName = resultSet.getString(10);
 				
 				if(ui.qtype.equals("select")) {
 					ui.newValue = oname;

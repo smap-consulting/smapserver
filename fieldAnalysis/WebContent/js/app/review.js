@@ -454,8 +454,9 @@ function textUpdate() {
 	}
 	$tu_existing_option.empty().html(h.join(''));
 	if(!gHasSelect) {
-		//$tu_existing_option.attr("disabled", "disabled");
 		$('.tu_existing_option').css('color','#ccc').attr("disabled", "disabled");
+	} else {
+		$('.tu_existing_option').css('color','black').removeAttr("disabled");
 	}
 	
 	// Add existing text options
@@ -477,6 +478,8 @@ function textUpdate() {
 	$tu_existing_text.empty().html(h.join(''));
 	if(!gHasText) {
 		$('.tu_existing_text').css('color','#ccc').attr("disabled", "disabled");
+	} else {
+		$('.tu_existing_text').css('color','black').removeAttr("disabled");
 	}
 	
 	$('#text_update_popup').dialog("open");

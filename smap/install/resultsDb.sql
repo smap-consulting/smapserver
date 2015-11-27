@@ -84,6 +84,8 @@ CREATE TABLE change_history (
   	new_value text,
   	qname text,
   	qtype text,
-  	tablename text
+  	tablename text,
+  	question_column_name text,
+  	option_column_name text
 	);
 ALTER TABLE change_history OWNER TO ws;
