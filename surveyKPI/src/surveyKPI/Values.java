@@ -141,7 +141,7 @@ public class Values extends Application {
 						boolean optionSet = resultSet.getBoolean(i + 2);
 						if(optionSet) {
 							OptionInfo o = oList.get(i);
-							results.add(o.getName());
+							results.add(o.getColumnName());
 						}
 					}
 				} else if(aQ.getType().equals("select1")) {

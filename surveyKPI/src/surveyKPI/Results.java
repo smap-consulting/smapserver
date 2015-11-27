@@ -216,7 +216,7 @@ public class Results extends Application {
 				date = new QuestionInfo(sId, dateId, connectionSD, false, lang, urlprefix);
 				q.add(date);
 				tables.add(date.getTableName(), date.getFId(), date.getParentFId());
-				log.info("Date name: " + date.getName() + " Date Table: " + date.getTableName());
+				log.info("Date name: " + date.getColumnName() + " Date Table: " + date.getTableName());
 			}
 			
 			// Get group column information
@@ -279,7 +279,7 @@ public class Results extends Application {
 			String sqlRestrictToRecordId = restrictToRecordId(aQ, rId);
 			String sqlRestrictToDateRange = "";
 			if(date != null) {
-				sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getName());
+				sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
 			} 
 			if(externalGeom) {
 				sqlGeom = getGeometryJoin(q);
@@ -312,7 +312,7 @@ public class Results extends Application {
 			sql += sqlRestrictToDateRange;
 			sql += sqlFilter;
 			if(dateId != 0) {
-				sql += " order by " + date.getTableName() + "." + date.getName() + " asc;";
+				sql += " order by " + date.getTableName() + "." + date.getColumnName() + " asc;";
 			} else {
 				sql += " order by " + aQ.getTableName() + ".prikey asc;";
 			}
@@ -349,7 +349,7 @@ public class Results extends Application {
 				featureCollection.put("filter", sFilter);				
 			}
 			if(qId_is_calc) {
-				featureCollection.put("question", aQ.getName());
+				featureCollection.put("question", aQ.getColumnName());
 			} else {
 				featureCollection.put("question", aQ.getLabel());
 			}
@@ -363,7 +363,7 @@ public class Results extends Application {
 			if(group != null) {
 				String groupLabel = group.getLabel();
 				if(groupLabel == null) {
-					groupLabel = group.getName();
+					groupLabel = group.getColumnName();
 				}
 				if(groupLabel!= null && groupLabel.trim().length() > 0) {
 					featureCollection.put("group", groupLabel);
@@ -400,7 +400,7 @@ public class Results extends Application {
 				String timeValue = "";
 				// Get the time interval to add to the group
 				if(hasTimeGroup) {
-					Timestamp groupDate = resultSet.getTimestamp(date.getName());
+					Timestamp groupDate = resultSet.getTimestamp(date.getColumnName());
 					if(groupDate != null) {
 						long ms = groupDate.getTime();
 						long day = Math.round(ms / MS_IN_DAY);
@@ -454,7 +454,7 @@ public class Results extends Application {
 						ArrayList<OptionInfo> options = group.getOptions();
 						for(int i = 0; i < options.size(); i++) {
 							OptionInfo anOption = options.get(i);
-							groupValue = anOption.getName();
+							groupValue = anOption.getColumnName();
 							if(groupValue != null && groupValue.trim().length() > 0) {
 								String oResult = resultSet.getString(groupValue);
 								if(oResult.equals("1")) {
@@ -463,7 +463,7 @@ public class Results extends Application {
 							}
 						}
 					} else if(group.getType().equals("select1")) {
-						groupValue = resultSet.getString(group.getName());	// TODO add table names to cater for non unique names
+						groupValue = resultSet.getString(group.getColumnName());	// TODO add table names to cater for non unique names
 						if(groupValue != null && groupValue.trim().length() > 0) {
 							matchingGroups.add(timeValue + groupValue);
 						}
@@ -479,7 +479,7 @@ public class Results extends Application {
 							matchingGroups.add(timeValue + groupValue);
 						}					
 					} else if(group.getType().equals("string") || group.getType().equals("int")) {
-						groupValue = resultSet.getString(group.getName());
+						groupValue = resultSet.getString(group.getColumnName());
 						if(groupValue != null  && groupValue.trim().length() > 0) {
 							matchingGroups.add(timeValue + groupValue);
 						}
@@ -583,7 +583,7 @@ public class Results extends Application {
 								OptionInfo oi = options.get(k);
 								String value = null;
 								if(aQ.getType().equals("select")) {
-									value = resultSet.getString(oi.getName());
+									value = resultSet.getString(oi.getColumnName());
 								} else {
 									optionName = resultSet.getString(aQ.getColumnName());
 									if(optionName != null && optionName.equals(oi.getColumnName())) {
@@ -629,24 +629,24 @@ public class Results extends Application {
 							firstTime = false;
 						
 						} else {
-							String value = resultSet.getString(aQ.getName());
+							String value = resultSet.getString(aQ.getColumnName());
 							
 							if(fn.equals("none")) {
 								if(firstTime) {		// Store the column names in an array
-									columns.put(aQ.getName());
+									columns.put(aQ.getColumnName());
 								}
 								if(hasGroup) {
 									// Grouped results without an aggregating function - put in an array
 									try {
-										JSONArray propArray = (JSONArray) groupInfo.featureProps.get(aQ.getName());
+										JSONArray propArray = (JSONArray) groupInfo.featureProps.get(aQ.getColumnName());
 									} catch (JSONException e) {
 										JSONArray propArray = new JSONArray();
-										groupInfo.featureProps.put(aQ.getName(), propArray);
+										groupInfo.featureProps.put(aQ.getColumnName(), propArray);
 									}
-									JSONArray propArray = (JSONArray) groupInfo.featureProps.get(aQ.getName());
+									JSONArray propArray = (JSONArray) groupInfo.featureProps.get(aQ.getColumnName());
 									propArray.put(value);
 								} else {
-									groupInfo.featureProps.put(aQ.getName(), value);
+									groupInfo.featureProps.put(aQ.getColumnName(), value);
 								}
 								
 							} else {	
@@ -656,7 +656,7 @@ public class Results extends Application {
 								} catch (Exception e) {
 									
 								}
-								values.add(new RecordValues(aQ.getName(), aVal ));
+								values.add(new RecordValues(aQ.getColumnName(), aVal ));
 							}
 						}
 						firstTime = false;
@@ -674,9 +674,9 @@ public class Results extends Application {
 				// If this is the first record then set the fromDate
 				if(dateId != 0) {
 					if(totalRecordCount == 1) {
-						fromDate = resultSet.getDate(date.getName());
+						fromDate = resultSet.getDate(date.getColumnName());
 					} else {
-						toDate = resultSet.getDate(date.getName());
+						toDate = resultSet.getDate(date.getColumnName());
 					}
 				}
 
@@ -694,7 +694,7 @@ public class Results extends Application {
 			 * Add from to dates to JSON output
 			 */
 			if(date != null) {
-				featureCollection.put("date_question", date.getName());
+				featureCollection.put("date_question", date.getColumnName());
 			}
 			DateFormat df = DateFormat.getDateInstance();
 			if(fromDate != null) {

@@ -41,6 +41,7 @@ public class QuestionInfo {
 	private int fId;
 	private int parentFId;	// parent form id
 	private String qName;
+	private String columnName;
 	private String qLabel;
 	private String qType;
 	private String qCalculate = null;
@@ -68,7 +69,7 @@ public class QuestionInfo {
 		sId = surveyId;
 		
 		
-		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.qtype, t.value, q.calculate, q.appearance" + 
+		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.column_name, q.qtype, t.value, q.calculate, q.appearance" + 
 				" FROM survey s " +
 				" INNER JOIN form f " +
 				" ON s.s_id = f.s_id" +
@@ -95,11 +96,12 @@ public class QuestionInfo {
 				tableName = resultSet.getString(1);
 				fId = resultSet.getInt(2);
 				parentFId = resultSet.getInt(3);
-				qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
-				qType = resultSet.getString(5);
-				qLabel = resultSet.getString(6);
-				qCalculate = resultSet.getString(7);
-				qAppearance = resultSet.getString(8);		// Used to determine if choices come from external file
+				qName = resultSet.getString(4);
+				columnName = resultSet.getString(5);
+				qType = resultSet.getString(6);
+				qLabel = resultSet.getString(7);
+				qCalculate = resultSet.getString(8);
+				qAppearance = resultSet.getString(9);		// Used to determine if choices come from external file
 				
 				log.info("Table:"  + tableName + ":" + fId + ":" + parentFId + ":" + qName + ":" + qType + " : " + 
 						qLabel + ":" + qCalculate + ":" + qAppearance );
@@ -108,10 +110,11 @@ public class QuestionInfo {
 				 * Polygon and linestring questions have "_parentquestion" removed from their name
 				 */
 				if(qType.equals("geolinestring") || qType.equals("geopolygon")) {
-					int idx = qName.toLowerCase().lastIndexOf("_parentquestion");
+					int idx = columnName.toLowerCase().lastIndexOf("_parentquestion");
 					if(idx > 0) {
-						qName = qName.substring(0, idx);
+						columnName = columnName.substring(0, idx);
 					}
+					
 				}
 				
 				/*
@@ -122,7 +125,7 @@ public class QuestionInfo {
 					
 					qExternalChoices = GeneralUtilityMethods.isAppearanceExternalFile(qAppearance);
 					
-					sql = "SELECT o.oValue, t.value, t.type" + 
+					sql = "SELECT o.oValue, t.value, t.type, o.column_name" + 
 							" FROM option o, question q, translation t" +
 							" WHERE q.q_id = ?" + 
 							" AND o.label_id = t.text_id" +
@@ -149,15 +152,16 @@ public class QuestionInfo {
 					}
 					while(resultSet.next()) {
 						String name;
-						String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
+						String value = resultSet.getString(1);
 						String label = resultSet.getString(2);
 						String type = resultSet.getString(3);
+						String oColumnName = resultSet.getString(4);
 						if(select) {
-							name = qName + "__" + value;
+							name = columnName + "__" + oColumnName;
 						} else {
-							name = value;
+							name = columnName;
 						}
-						o.add(new OptionInfo(name, value, label, type));
+						o.add(new OptionInfo(name, value, label, type, oColumnName));
 					}
 				}
 				
@@ -182,7 +186,7 @@ public class QuestionInfo {
 		sId = surveyId;
 		
 		
-		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.qtype, q.calculate" + 
+		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.qtype, q.calculate, q.column_name" + 
 				" FROM survey s " +
 				" INNER JOIN form f " +
 				" ON s.s_id = f.s_id" +
@@ -202,9 +206,10 @@ public class QuestionInfo {
 			tableName = resultSet.getString(1);
 			fId = resultSet.getInt(2);
 			parentFId = resultSet.getInt(3);
-			qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
+			qName = resultSet.getString(4);
 			qType = resultSet.getString(5);
 			qCalculate = resultSet.getString(6);
+			columnName = resultSet.getString(7);
 			
 			log.info("Table:"  + tableName + ":" + fId + ":" + parentFId + ":" + qName + ":" + qType);
 			
@@ -224,7 +229,7 @@ public class QuestionInfo {
 			if(qType.startsWith("select")) {
 				o = new ArrayList<OptionInfo> ();
 				
-				sql = "SELECT o.oValue" + 
+				sql = "SELECT o.oValue, o.column_name" + 
 						" FROM option o, question q" +
 						" WHERE q.q_id = ?" + 
 						" AND o.l_id = q.l_id" +
@@ -242,13 +247,14 @@ public class QuestionInfo {
 				}
 				while(resultSet.next()) {
 					String name;
-					String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
+					String value = resultSet.getString(1);
+					String oColumnName = resultSet.getString(2);
 					if(select) {
-						name = qName + "__" + value;
+						name = columnName + "__" + oColumnName;
 					} else {
-						name = value;
+						name = oColumnName;
 					}
-					o.add(new OptionInfo(name, value, null, null));
+					o.add(new OptionInfo(name, value, null, null, oColumnName));
 				}
 			}
 			
@@ -269,7 +275,7 @@ public class QuestionInfo {
 		qId = questionId;
 		sId = surveyId;
 		
-		String sql = "SELECT f.table_name, f.f_id, f.parentform, ssc.name, ssc.function, ssc.units" + 
+		String sql = "SELECT f.table_name, f.f_id, f.parentform, ssc.name, ssc.function, ssc.units, ssc.column_name" + 
 				" FROM form f, ssc ssc " +
 				" where ssc.f_id = f.f_id " +
 				" and ssc.s_id = ?" +
@@ -286,10 +292,11 @@ public class QuestionInfo {
 			tableName = resultSet.getString(1);
 			fId = resultSet.getInt(2);
 			parentFId = resultSet.getInt(3);
-			qName = UtilityMethodsEmail.cleanName(resultSet.getString(4));
+			qName = resultSet.getString(4);
 			qType = "ssc";
 			fn = resultSet.getString(5);
 			units = resultSet.getString(6);
+			columnName = resultSet.getString(7);
 			
 			log.info("Table:"  + tableName + ":" + fId + ":" + parentFId + ":" + qName + ":" + qType + " : " + fn + " : " + units);
 			
@@ -311,7 +318,7 @@ public class QuestionInfo {
 			if(qType.startsWith("select")) {
 				o = new ArrayList<OptionInfo> ();
 				
-				sql = "SELECT o.oValue, t.value, t.type" + 
+				sql = "SELECT o.oValue, t.value, t.type, o.column_name" + 
 						" FROM option o, question q, translation t" +
 						" WHERE q.q_id = ?" + 
 						" AND o.label_id = t.text_id" +
@@ -335,15 +342,16 @@ public class QuestionInfo {
 				}
 				while(resultSet.next()) {
 					String name;
-					String value = UtilityMethodsEmail.cleanName(resultSet.getString(1));
+					String value = resultSet.getString(1);
 					String label = resultSet.getString(2);
 					String type = resultSet.getString(3);
+					String oColumnName = resultSet.getString(4);
 					if(select) {
-						name = qName + "__" + value;
+						name = columnName + "__" + oColumnName;
 					} else {
-						name = value;
+						name = oColumnName;
 					}
-					o.add(new OptionInfo(name, value, label, type));
+					o.add(new OptionInfo(name, value, label, type, oColumnName));
 				}
 			}
 			
@@ -383,6 +391,10 @@ public class QuestionInfo {
 		return qName;
 	}
 	
+	public String getColumnName() {
+		return columnName;
+	}
+	
 	public String getLabel() {
 		return qLabel;
 	}
@@ -398,7 +410,7 @@ public class QuestionInfo {
 		if(o != null){
 			for(int i = 0; i < o.size(); i++) {
 				OptionInfo aO = o.get(i);
-				if(aO.getName().equals(name)) {
+				if(aO.getColumnName().equals(name)) {
 					return aO.getLabel();
 				}
 			}
@@ -472,17 +484,17 @@ public class QuestionInfo {
 				for(int i = 0; i < o.size(); i++) {
 					OptionInfo aO = o.get(i);
 					if(aO.getValue().equals(value1)) {
-						String oName = aO.getName();
+						String oName = aO.getColumnName();
 						filter = tableName + "." + oName + " = 1 ";
 						break;
 					}
 				}
 			} else if(qType.equals("select1") || qType.equals("string")) {
-				filter = tableName + "." + qName + " =  '" + value1 + "' ";
+				filter = tableName + "." + columnName + " =  '" + value1 + "' ";
 			} else if(value2 != null && (qType.equals("date") || qType.equals("dateTime"))) {
-				filter = tableName + "." + qName + " between  '" + value1 + "' and  '" + value2 + "' ";
+				filter = tableName + "." + columnName + " between  '" + value1 + "' and  '" + value2 + "' ";
 			} else {
-				filter = tableName + "." + qName + " =  " + value1 + " ";
+				filter = tableName + "." + columnName + " =  " + value1 + " ";
 			}
 		}
 		
@@ -492,23 +504,23 @@ public class QuestionInfo {
 	
 	public String getSelect() {
 		String sqlFrag = "";
-		log.info("get select: " + tableName + ":" + qName + ":" + qType + " : " + qType);
+		log.info("get select: " + tableName + ":" + columnName + ":" + qType + " : " + qType);
 		if(qType != null && qType.equals("select")) {
 			// Add primary key with each question, assume only one question per query
 			sqlFrag = tableName + ".prikey as prikey";
 			for(int i = 0; i < o.size(); i++) {
 				OptionInfo aO = o.get(i);
-				String oName = aO.getName();
+				String oName = aO.getColumnName();
 				sqlFrag += "," + tableName + "." + oName + " as " + oName;
 			}
-		} else if(isGeom && qName.equals("the_geom")) {
+		} else if(isGeom && columnName.equals("the_geom")) {
 			sqlFrag = "ST_AsGeoJSON(" + tableName + ".the_geom) as the_geom"; 
 		} else if (isGeom) {
 			// Include the table name in name of result set item as otherwise geometry col name may clash with q question name
-			sqlFrag = tableName + "." + qName  + " as " + tableName + "_" + qName;
+			sqlFrag = tableName + "." + columnName  + " as " + tableName + "_" + columnName;
 		} else {
 			// Add primary key with each question, assume only one question per query
-			sqlFrag = tableName + ".prikey as prikey," + getSelectExpression()  + " as " + qName;
+			sqlFrag = tableName + ".prikey as prikey," + getSelectExpression()  + " as " + columnName;
 		}
 		return sqlFrag;
 	}

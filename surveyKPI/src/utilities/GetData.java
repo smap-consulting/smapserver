@@ -52,16 +52,16 @@ public class GetData {
 				
 		for(int optionIndex = 0; optionIndex < o.length; optionIndex++) {
 			
-			String sql = "SELECT count(s." + o[optionIndex].getName() + "), s." + o[optionIndex].getName() + ", " + 
+			String sql = "SELECT count(s." + o[optionIndex].getColumnName() + "), s." + o[optionIndex].getColumnName() + ", " + 
 					"dt.day as date_result " + 
 					"from  days dt left join " + date.getTableName() + " s " + 
-					"on s." + date.getName() + "::date = dt.day " +
+					"on s." + date.getColumnName() + "::date = dt.day " +
 					"where dt.day >= '" + start + "' " +
 					"and dt.day <= '" + end + "' " +
-					"group by date_result, " + o[optionIndex].getName() + " " +
+					"group by date_result, " + o[optionIndex].getColumnName() + " " +
 					"order by date_result asc;";
 			
-			log.fine("Getting data for option:" + o[optionIndex].getName() + " Label:" + o[optionIndex].getIdent());
+			log.fine("Getting data for option:" + o[optionIndex].getColumnName() + " Label:" + o[optionIndex].getIdent());
 			log.info(sql);
 			PreparedStatement  pstmt = connection.prepareStatement(sql);	 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -128,9 +128,9 @@ public class GetData {
 		
 		for(int optionIndex = 0; optionIndex < o.length; optionIndex++) {
 			
-			String sql = "SELECT count(" + o[optionIndex].getName() + ") " +
+			String sql = "SELECT count(" + o[optionIndex].getColumnName() + ") " +
 					"from " + value.getTableName() + " " +
-					"where " + o[optionIndex].getName() + " = '" + o[optionIndex].getTargetValue() +"';";
+					"where " + o[optionIndex].getColumnName() + " = '" + o[optionIndex].getTargetValue() +"';";
 		
 			log.info(sql);
 			PreparedStatement  pstmt = connection.prepareStatement(sql);	 			
@@ -163,18 +163,18 @@ public class GetData {
 			// TODO allow for geo table not being the same as the value table
 			String sql = null;
 			if(geoAgg.equals("None")) {
-				sql = "select count(" + o[optionIndex].getName() + "), " +
+				sql = "select count(" + o[optionIndex].getColumnName() + "), " +
 					"ST_AsGeoJSON(the_geom) " +
 					"from " + value.getTableName() + " " +
-					"where " + o[optionIndex].getName() + " = '" + o[optionIndex].getTargetValue() + "' " + 
+					"where " + o[optionIndex].getColumnName() + " = '" + o[optionIndex].getTargetValue() + "' " + 
 					"group by the_geom;";
 			} else {
-				sql = "select count(" + o[optionIndex].getName() + "), " +
+				sql = "select count(" + o[optionIndex].getColumnName() + "), " +
 						"ST_AsGeoJSON(a.the_geom), " +
 						"a.name " +
 						"from " + value.getTableName() + " d, " +
 						geoAgg + " a " +
-						"where d." + o[optionIndex].getName() + " = '" + o[optionIndex].getTargetValue() + "' " + 
+						"where d." + o[optionIndex].getColumnName() + " = '" + o[optionIndex].getTargetValue() + "' " + 
 						"and ST_Within(d.the_geom, a.the_geom) " +
 						"group by a.the_geom, a.name;";
 			}
