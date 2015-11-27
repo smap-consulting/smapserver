@@ -228,8 +228,8 @@ public class Results extends Application {
 			
 			// Get the geo table data
 			if(geoTable != null) {
-				q.add(new QuestionInfo(geoTable, "the_geom", true));
-				q.add(new QuestionInfo(geoTable, "name", true));
+				q.add(new QuestionInfo(geoTable, "the_geom", true, "the_geom"));
+				q.add(new QuestionInfo(geoTable, "name", true, "name"));
 				tables.add(geoTable, -1, -1);
 			}
 	
@@ -579,14 +579,14 @@ public class Results extends Application {
 							
 							ArrayList<OptionInfo> options = aQ.getOptions();
 							for(int k = 0; k < options.size(); k++) {
-								String optionName = null;
+								String optionValue = null;
 								OptionInfo oi = options.get(k);
 								String value = null;
 								if(aQ.getType().equals("select")) {
 									value = resultSet.getString(oi.getColumnName());
 								} else {
-									optionName = resultSet.getString(aQ.getColumnName());
-									if(optionName != null && optionName.equals(oi.getColumnName())) {
+									optionValue = resultSet.getString(aQ.getColumnName());
+									if(optionValue != null && optionValue.equals(oi.getValue())) {
 										value = "1";
 									} else {
 										value = "0";
@@ -621,8 +621,8 @@ public class Results extends Application {
 									values.add(new RecordValues(oi.getLabel(), aVal));
 								}		
 								
-								if(optionName != null) {
-									groupInfo.featureProps.put("oname", optionName);
+								if(optionValue != null) {
+									groupInfo.featureProps.put("oname", optionValue);
 								}
 
 							}

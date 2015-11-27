@@ -21,7 +21,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class OptionInfo {
 	private String oValue;
 	private String targetValue;
-	private String oName;
 	private String oIdent;
 	private String oLabel;
 	private String oType;
@@ -30,9 +29,8 @@ public class OptionInfo {
 	public OptionInfo() {	
 	}
 	
-	public OptionInfo(String oName, String oValue, String oLabel, String oType, String columnName) {
+	public OptionInfo(String oValue, String oLabel, String oType, String columnName) {
 		this.oValue = oValue;
-		this.oName = oName;
 		this.oLabel = oLabel;
 		this.oType = oType;
 		this.columnName = columnName;
@@ -49,9 +47,6 @@ public class OptionInfo {
 		return targetValue;
 	}
 	
-	public String getName() {
-		return oName;
-	}
 	
 	public String getColumnName() {
 		return columnName;
@@ -74,10 +69,6 @@ public class OptionInfo {
 	
 	public void setTargetValue(String v) {
 		targetValue = v;
-	}
-	
-	public void setOName(String v) {
-		oName = v;
 	}
 	
 	public void setOLabel(String v) {

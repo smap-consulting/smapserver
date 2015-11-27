@@ -90,6 +90,7 @@ public class QuestionInfo {
 			pstmt.setInt(2, sId);
 			pstmt.setInt(3, qId);
 	
+			log.info("SQL: Normal Complete Constructor for QuestionInfo: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			if(resultSet.next()) {
@@ -151,17 +152,14 @@ public class QuestionInfo {
 						select = true;
 					}
 					while(resultSet.next()) {
-						String name;
 						String value = resultSet.getString(1);
 						String label = resultSet.getString(2);
 						String type = resultSet.getString(3);
 						String oColumnName = resultSet.getString(4);
 						if(select) {
-							name = columnName + "__" + oColumnName;
-						} else {
-							name = columnName;
-						}
-						o.add(new OptionInfo(name, value, label, type, oColumnName));
+							oColumnName = columnName + "__" + oColumnName;
+						} 
+						o.add(new OptionInfo(value, label, type, oColumnName));
 					}
 				}
 				
@@ -217,9 +215,9 @@ public class QuestionInfo {
 			 * Polygon and linestring questions have "_parentquestion" removed from their name
 			 */
 			if(qType.equals("geolinestring") || qType.equals("geopolygon")) {
-				int idx = qName.toLowerCase().lastIndexOf("_parentquestion");
+				int idx = columnName.toLowerCase().lastIndexOf("_parentquestion");
 				if(idx > 0) {
-					qName = qName.substring(0, idx);
+					columnName = columnName.substring(0, idx);
 				}
 			}
 			
@@ -246,15 +244,12 @@ public class QuestionInfo {
 					select = true;
 				}
 				while(resultSet.next()) {
-					String name;
 					String value = resultSet.getString(1);
 					String oColumnName = resultSet.getString(2);
 					if(select) {
-						name = columnName + "__" + oColumnName;
-					} else {
-						name = oColumnName;
-					}
-					o.add(new OptionInfo(name, value, null, null, oColumnName));
+						oColumnName = columnName + "__" + oColumnName;
+					} 
+					o.add(new OptionInfo(value, null, null, oColumnName));
 				}
 			}
 			
@@ -286,6 +281,7 @@ public class QuestionInfo {
 		pstmt.setInt(1, sId);
 		pstmt.setInt(2, qId);
 
+		log.info("SQL: Question Info Constructor for SSC: " + pstmt.toString());
 		ResultSet resultSet = pstmt.executeQuery();
 		
 		if(resultSet.next()) {
@@ -305,9 +301,9 @@ public class QuestionInfo {
 			 * Polygon and linestring questions have "_parentquestion" removed from their name
 			 */
 			if(qType.equals("geolinestring") || qType.equals("geopolygon")) {
-				int idx = qName.toLowerCase().lastIndexOf("_parentquestion");
+				int idx = columnName.toLowerCase().lastIndexOf("_parentquestion");
 				if(idx > 0) {
-					qName = qName.substring(0, idx);
+					columnName = columnName.substring(0, idx);
 				}
 			}
 			
@@ -341,17 +337,14 @@ public class QuestionInfo {
 					select = true;
 				}
 				while(resultSet.next()) {
-					String name;
 					String value = resultSet.getString(1);
 					String label = resultSet.getString(2);
 					String type = resultSet.getString(3);
 					String oColumnName = resultSet.getString(4);
 					if(select) {
-						name = columnName + "__" + oColumnName;
-					} else {
-						name = oColumnName;
-					}
-					o.add(new OptionInfo(name, value, label, type, oColumnName));
+						oColumnName = columnName + "__" + oColumnName;
+					} 
+					o.add(new OptionInfo(value, label, type, oColumnName));
 				}
 			}
 			
@@ -361,11 +354,12 @@ public class QuestionInfo {
 
 	}
 	
-	public QuestionInfo(String tableName, String qName, boolean isGeom) {
+	public QuestionInfo(String tableName, String qName, boolean isGeom, String columnName) {
 		this.isGeom = isGeom;
 		this.tableName = tableName;
 		this.qName = qName;
 		this.qType = "not_select";
+		this.columnName = columnName;
 	}
 	
 	/*
@@ -463,13 +457,13 @@ public class QuestionInfo {
 				return "ST_Length(geography(" + tableName + ".the_geom), true) / " + divBy;
 			} else {
 				log.info("getSelectExpression: Unknown function: " + fn);
-				return tableName + "." + qName;
+				return tableName + "." + columnName;
 			}
 		} else {
 			if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
-				return "'" + urlprefix + "' || " + tableName + "." + qName;
+				return "'" + urlprefix + "' || " + tableName + "." + columnName;
 			}
-			return tableName + "." + qName;
+			return tableName + "." + columnName;
 		}
 	}
 	

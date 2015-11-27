@@ -358,7 +358,7 @@ public class Items extends Application {
 				if(dateId != 0 && (startDate != null || endDate != null)) {
 					date = new QuestionInfo(sId, dateId, connectionSD, false, "", urlprefix);	// Not interested in label any language will do
 					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
-					log.info("Date name: " + date.getName() + " Date Table: " + date.getTableName());
+					log.info("Date name: " + date.getColumnName() + " Date Table: " + date.getTableName());
 				}
 				
 				// Add any tables required to complete the join
@@ -389,7 +389,7 @@ public class Items extends Application {
 					whereClause += sqlFilter;
 				}
 				if(date != null) {
-					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getName());
+					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
 					if(sqlRestrictToDateRange.trim().length() > 0) {
 						if(doneWhere) {
 							whereClause += " AND ";
