@@ -585,9 +585,8 @@ public class Results extends Application {
 								if(aQ.getType().equals("select")) {
 									value = resultSet.getString(oi.getName());
 								} else {
-									optionName = resultSet.getString(aQ.getName());
-									optionName = UtilityMethodsEmail.cleanName(optionName);
-									if(optionName != null && optionName.equals(oi.getName())) {
+									optionName = resultSet.getString(aQ.getColumnName());
+									if(optionName != null && optionName.equals(oi.getColumnName())) {
 										value = "1";
 									} else {
 										value = "0";
