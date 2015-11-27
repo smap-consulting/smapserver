@@ -84,6 +84,8 @@ public class SurveyResults extends Application {
 				Connection connectionRel = null; 
 				PreparedStatement pstmt = null;
 				PreparedStatement pstmtUnPublish = null;
+				PreparedStatement pstmtRemoveChangeHistory = null;
+				PreparedStatement pstmtRemoveChangeset = null;
 				Statement stmtRel = null;
 				try {
 					connectionRel = ResultsDataSource.getConnection("surveyKPI-SurveyResults");
@@ -92,6 +94,12 @@ public class SurveyResults extends Application {
 					
 					String sqlUnPublish = "update question set published = 'false' where f_id in (select f_id from form where s_id = ?);";
 					pstmtUnPublish = connectionSD.prepareStatement(sqlUnPublish);
+					
+					String sqlRemoveChangeHistory = "delete from change_history where s_id = ?;";
+					pstmtRemoveChangeHistory = connectionRel.prepareStatement(sqlRemoveChangeHistory);
+					
+					String sqlRemoveChangeset = "delete from changeset where s_id = ?;";
+					pstmtRemoveChangeset = connectionRel.prepareStatement(sqlRemoveChangeset);
 					
 					sql = "select distinct f.table_name, f.f_id FROM form f " +
 							"where f.s_id = ? " +
@@ -123,6 +131,12 @@ public class SurveyResults extends Application {
 					pstmtUnPublish.setInt(1, sId);
 					pstmtUnPublish.executeUpdate();
 					
+					pstmtRemoveChangeHistory.setInt(1, sId);
+					pstmtRemoveChangeHistory.executeUpdate();
+					
+					pstmtRemoveChangeset.setInt(1, sId);
+					pstmtRemoveChangeset.executeUpdate();
+					
 					response = Response.ok("").build();
 					
 				} catch (SQLException e) {
@@ -133,6 +147,7 @@ public class SurveyResults extends Application {
 					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					try {if (pstmtUnPublish != null) {pstmtUnPublish.close();}} catch (SQLException e) {}
 					try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
+					try {if (pstmtRemoveChangeHistory != null) {pstmtRemoveChangeHistory.close();}} catch (SQLException e) {}
 
 					try {
 						if (connectionSD != null) {
