@@ -1013,11 +1013,17 @@ define([
 	}
 	
 	/*
-	 * Return true if the passed in value has non trailing spaces
+	 * Return true if the passed in value is accepted by xlsFormConverter
 	 */
-	function isValidODKName(val) {
+	function isValidODKQuestionName(val) {
 		
-		var sqlCheck = /^[A-Za-z_][A-Za-z0-9_\-\.:]*$/
+		var sqlCheck = /^[A-Za-z_][A-Za-z0-9_\-\.]*$/
+		return sqlCheck.test(val);	
+	}
+	
+function isValidODKoptionName(val) {
+		
+		var sqlCheck = /^[A-Za-z_:][A-Za-z0-9_\-\.:]*$/
 		return sqlCheck.test(val);	
 	}
 	
@@ -1157,17 +1163,32 @@ define([
 		
 		// Check for invalid characters
 		if(isValid) {
-			isValid = isValidODKName(val)
-		
-			if(!isValid) {
-				addValidationError(
-					container,
-					itemIndex,
-					"name",
-					"The " + itemDesc + " name must start with a letter and only contain letters, numbers, " +
-							"underscores, colons, dashes and periods.",
-					itemType);	
-		
+			if(itemType === "question") {
+				isValid = isValidODKQuestionName(val)
+			
+				if(!isValid) {
+					addValidationError(
+						container,
+						itemIndex,
+						"name",
+						"The " + itemDesc + " name must start with a letter or underscore and only contain letters, numbers, " +
+								"underscores, dashes and periods.",
+						itemType);	
+			
+				}
+			} else {
+				isValid = isValidODKOptionName(val)
+				
+				if(!isValid) {
+					addValidationError(
+						container,
+						itemIndex,
+						"name",
+						"The " + itemDesc + " name must start with a letter, underscore or colon and only contain letters, numbers, " +
+								"underscores, dashes, periods and colons.",
+						itemType);	
+			
+				}
 			}
 		}
 		

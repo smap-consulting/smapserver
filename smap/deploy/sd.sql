@@ -377,5 +377,3 @@ update question set published = true where published is null;
 alter table question alter column published set default false;
 --------------
 alter table option add column column_name text;
-update option set column_name = ovalue where column_name is null;
-update question set column_name = qname where column_name is null;
