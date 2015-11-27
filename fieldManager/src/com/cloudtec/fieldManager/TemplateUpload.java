@@ -591,7 +591,6 @@ public class TemplateUpload extends Application {
         		} else if(line.startsWith("======") 
         				|| line.startsWith("Traceback") 
         				|| line.startsWith("  ") 
-        				|| line.startsWith("[Fatal Error]") 
         				|| line.startsWith(">>") 
         				|| line.startsWith("processing") 
         				|| line.trim().startsWith("at org")
@@ -603,7 +602,9 @@ public class TemplateUpload extends Application {
         		} else if(line.startsWith("Content is not allowed in prolog")) {
         			response.errMesg.add(line);
         			response.hints.add("Did you select an XLS file?");
-        		} else {
+        		} else if(line.startsWith("[Fatal Error]")) {
+        			response.errMesg.add(line);
+        		}else {
         			response.hints.add(line);
         		}
 	        	
