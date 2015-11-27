@@ -137,7 +137,7 @@ public class SurveyInstance {
 		}
 	}
 	
-	public void setOption(String qRef, String oName, String oValue, int seq) {
+	public void setOption(String qRef, String oName, String oValue, int seq, String columnName) {
 
 		List<IE> matches = topInstanceElement.getMatchingElements(qRef);
 		for(IE match : matches) {		
@@ -154,6 +154,7 @@ public class SurveyInstance {
 		   		ie.setPath(oPath);
 		   		ie.setType("option");
 		   		ie.setSeq(seq);
+		   		ie.setColumnName(columnName);
 				match.addChild(ie);
 			}
 		}
