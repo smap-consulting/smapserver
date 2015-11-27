@@ -1015,9 +1015,9 @@ define([
 	/*
 	 * Return true if the passed in value has non trailing spaces
 	 */
-	function isValidSQLName(val) {
+	function isValidODKName(val) {
 		
-		var sqlCheck = /^[A-Za-z_-][A-Za-z0-9_-]*$/
+		var sqlCheck = /^[A-Za-z_][A-Za-z0-9_\-\.:]*$/
 		return sqlCheck.test(val);	
 	}
 	
@@ -1157,14 +1157,15 @@ define([
 		
 		// Check for invalid characters
 		if(isValid) {
-			isValid = isValidSQLName(val)
+			isValid = isValidODKName(val)
 		
 			if(!isValid) {
 				addValidationError(
 					container,
 					itemIndex,
 					"name",
-					"The " + itemDesc + " name must start with a letter and only contain letters, numbers, underscores and dashes",
+					"The " + itemDesc + " name must start with a letter and only contain letters, numbers, " +
+							"underscores, colons, dashes and periods.",
 					itemType);	
 		
 			}
