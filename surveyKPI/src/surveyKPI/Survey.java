@@ -265,6 +265,7 @@ public class Survey extends Application {
 	private class DateInfo {	// Temporary storage of the array of date questions
 		int qId;
 		String name;
+		String columnName;
 		int fId;
 		Date first;
 		Date last;
@@ -334,7 +335,7 @@ public class Survey extends Application {
 			 * The maximum and minimum value for these dates will be added when 
 			 * the results data for each table is checked
 			 */
-			sql = "SELECT q.q_id, q.qname, f.f_id " +
+			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
 					"FROM form f, question q " + 
 					"where f.f_id = q.f_id " +
 					"AND (q.qtype='date' " +
@@ -352,6 +353,7 @@ public class Survey extends Application {
 				di.qId = resultSet.getInt(1);
 				di.name = resultSet.getString(2);
 				di.fId = resultSet.getInt(3);
+				di.columnName = resultSet.getString(4);
 				dateInfoList.add(di);
 			}			
 			
@@ -429,7 +431,7 @@ public class Survey extends Application {
 					DateInfo di = dateInfoList.get(i);
 					if(fId == di.fId) {
 						try {
-							String name = UtilityMethodsEmail.cleanName(di.name);
+							String name = di.columnName;
 							sql = "select min(" + name + "), max(" + name + ") FROM " + tableName + ";";
 							
 							try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
