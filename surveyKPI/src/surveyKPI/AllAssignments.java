@@ -939,6 +939,7 @@ public class AllAssignments extends Application {
 	private class Column {
 		int index;
 		String name;
+		String columnName;
 		String type;
 		String geomCol;
 		ArrayList<String> choices = null;
@@ -984,12 +985,11 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtGetTableNames = null;
 		
 		// SQL to get a column name from the survey
-		// Note convert question names in the database to lower case as instanceName is not lower case already
-		String sqlGetCol = "select q_id, qname, qtype from question where f_id = ? and lower(qname) = ?";
+		String sqlGetCol = "select q_id, qname, column_name, qtype from question where f_id = ? and lower(qname) = ?";
 		PreparedStatement pstmtGetCol = null;
 		
 		// SQL to get choices for a select question
-		String sqlGetChoices = "select o.ovalue from option o, question q where q.q_id = ? and o.l_id = q.l_id";
+		String sqlGetChoices = "select o.ovalue, o.column_name from option o, question q where q.q_id = ? and o.l_id = q.l_id";
 		PreparedStatement pstmtGetChoices = null;
 		
 		// Prepared Statements used in the clearing and inserting of data
@@ -1183,10 +1183,10 @@ public class AllAssignments extends Application {
 									if(j > 0) {
 										sqlInsert.append(",");
 									}
-									sqlInsert.append(UtilityMethodsEmail.cleanName(col.name + "__" + col.choices.get(j)));
+									sqlInsert.append(col.columnName + "__" + col.choices.get(j));
 								}
 							} else {
-								sqlInsert.append(UtilityMethodsEmail.cleanName(col.name));
+								sqlInsert.append(col.columnName);
 							}
 	
 						}
@@ -1279,10 +1279,10 @@ public class AllAssignments extends Application {
 								if(col.type.equals("select")) {
 									String [] choices = value.split("\\s");
 									for(int k = 0; k < col.choices.size(); k++) {
-										String cVal = UtilityMethodsEmail.cleanName(col.choices.get(k));
+										String cVal = col.choices.get(k);
 										boolean hasChoice = false;
 										for(int l = 0; l < choices.length; l++) {
-											if(cVal.equals(UtilityMethodsEmail.cleanName(choices[l]))) {
+											if(cVal.equals(choices[l])) {
 												hasChoice = true;
 												break;
 											}
@@ -1502,31 +1502,30 @@ public class AllAssignments extends Application {
 		Column col = null;
 		String geomCol = null;
 		
-		String colName = UtilityMethodsEmail.cleanName(qName);	// Convert column name to equivalent of a clean question name
-		
 		// Cater for lat, lon columns which map to a geopoint
-		if(colName.equals("lat") || colName.equals("lon")) {
-			geomCol = colName;
-			colName = "the_geom";
+		if(qName.equals("lat") || qName.equals("lon")) {
+			geomCol = qName;
+			qName = "the_geom";
 		} 
 		
 		// Only add this question if it has not previously been added, questions can only be updated once in a single transaction
 		boolean questionExists = false;
 		for(Column haveColumn : columns) {
-			if(haveColumn.name.equals(colName)) {
+			if(haveColumn.name.equals(qName)) {
 				questionExists = true;
 				break;
 			}
 		}
 		
 		if(!questionExists) {
-			pstmtGetCol.setString(2, colName);		// Search for a question
+			pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
 			log.info("Get column: " + pstmtGetCol.toString());
 			ResultSet rs = pstmtGetCol.executeQuery();
 			if(rs.next()) {
 				// This column name is in the survey
 				col = new Column();
-				col.name = colName;
+				col.name = qName;
+				col.columnName = rs.getString("columnName");
 				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
 				col.type = rs.getString("qtype");
 				
@@ -1540,12 +1539,12 @@ public class AllAssignments extends Application {
 					log.info("Get choices:" + pstmtGetChoices.toString());
 					ResultSet rsChoices = pstmtGetChoices.executeQuery();
 					while(rsChoices.next()) {
-						col.choices.add(rsChoices.getString("ovalue"));
+						col.choices.add(rsChoices.getString("column_name"));
 					}
 				}
 			}
 		} else {
-			log.info("Already have column " + colName);
+			log.info("Already have column " + qName);
 		}
 		
 		return col;
