@@ -156,7 +156,7 @@ public class ExportSurveyMedia extends Application {
 				 * Get the question names
 				 */
 				QuestionInfo mediaQInfo = new QuestionInfo(sId, mediaQuestion, connectionSD, false, language, urlprefix);	
-				String media_name = mediaQInfo.getName();
+				String media_name = mediaQInfo.getColumnName();
 				ArrayList<String> namedQuestions = new ArrayList<String> ();
 				ArrayList<String> requiredColumns = new ArrayList<String> ();
 				requiredColumns.add("_prikey_highest");	// Always get the highest level primary key for media that is the key for the media item itself
@@ -167,9 +167,9 @@ public class ExportSurveyMedia extends Application {
 						for(int i = 0; i < nameQ.length; i++) {
 							int nameQId = Integer.parseInt(nameQ[i]);
 							QuestionInfo qi = new QuestionInfo(sId, nameQId, connectionSD, false, language, urlprefix);
-							if(qi.getName() != null) {
-								namedQuestions.add(qi.getName());
-								requiredColumns.add(qi.getName());
+							if(qi.getColumnName() != null) {
+								namedQuestions.add(qi.getColumnName());
+								requiredColumns.add(qi.getColumnName());
 							}
 						}
 					}
@@ -225,7 +225,7 @@ public class ExportSurveyMedia extends Application {
 							if(mediafilename.trim().length() > 0) {
 								mediafilename += "_";
 							}
-							mediafilename += UtilityMethodsEmail.cleanName(v);
+							mediafilename += v;
 						}
 					}
 					String v = rs.getString("prikey");
@@ -233,7 +233,7 @@ public class ExportSurveyMedia extends Application {
 						if(mediafilename.trim().length() > 0) {
 							mediafilename += "_";
 						}
-						mediafilename += UtilityMethodsEmail.cleanName(v);
+						mediafilename += v;
 					}
 					String source_file = rs.getString(media_name);
 					
