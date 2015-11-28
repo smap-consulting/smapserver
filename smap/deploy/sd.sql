@@ -362,8 +362,8 @@ alter table option drop constraint if exists option_q_id_fkey;
 alter table option add column l_id integer references listname on delete cascade;
 alter table question add column l_id integer default 0;
 
-insert into listname (s_id, name) select f.s_id, f.name || '_' || q.qname from question q, form f where q.qtype like 'select%' and q.f_id = f.f_id;
-update option set l_id = sq.l_id from (select l.l_id, q.q_id from listname l, question q, form f where l.name = f.name || '_' || q.qname and f.f_id = q.f_id) as sq where sq.q_id = option.q_id and option.l_id is null;
+insert into listname (s_id, name) select f.s_id, f.s_id || f.name || '_' || q.qname from question q, form f where q.qtype like 'select%' and q.f_id = f.f_id;
+update option set l_id = sq.l_id from (select l.l_id, q.q_id from listname l, question q, form f where l.name = f.s_id || f.name || '_' || q.qname and f.f_id = q.f_id) as sq where sq.q_id = option.q_id and option.l_id is null;
 update question set l_id = sq.l_id from (select l_id, q_id, o_id from option) as sq where sq.q_id = question.q_id and question.l_id is null;
 update question set l_id = 0 where l_id is null;
 

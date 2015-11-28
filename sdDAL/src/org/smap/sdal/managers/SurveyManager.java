@@ -592,6 +592,7 @@ public class SurveyManager {
 		 * Get the option lists
 		 */
 		pstmtGetLists.setInt(1, s.id);
+		log.info("Get lists for survey: " + pstmtGetLists.toString());
 		rsGetLists = pstmtGetLists.executeQuery();
 		
 		while(rsGetLists.next()) {
@@ -603,6 +604,7 @@ public class SurveyManager {
 			optionList.options = new ArrayList<Option> ();
 				
 			pstmtGetOptions.setInt(1, listId);
+			log.info("SQL Get options: " + pstmtGetOptions.toString());
 			rsGetOptions = pstmtGetOptions.executeQuery();
 				
 			Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();		// Used to translate cascade filters json
