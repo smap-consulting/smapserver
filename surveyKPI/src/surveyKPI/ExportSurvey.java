@@ -27,6 +27,7 @@ import javax.ws.rs.core.Context;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 
@@ -61,20 +62,25 @@ public class ExportSurvey extends Application {
 		s.add(Items.class);
 		return s;
 	}
-	/*
+
 	private class Column {
-		//int q_id = 0;
-		//int o_id = 0;
-		//String q_name;
-		//String o_name;
-		String q_type;
-		String col_name;
+		public int qId;
+		public String question_name;
+		public String option_name;
+		public String name;
+		public String qType;
+		public boolean ro;
+		public String humanName;
 		
-		public String toString() {
-			return ("  " + col_name + " : " + q_type);
+		public boolean isGeometry () {
+			boolean geom = false;
+			if(qType.equals("geopoint") || qType.equals("geopolygon") || qType.equals("geolinestring") || qType.equals("geotrace")) {
+				geom = true;
+			}
+			return geom;
 		}
 	}
-	*/
+	
 	
 	private class RecordDesc {
 		String prikey;
@@ -94,6 +100,7 @@ public class ExportSurvey extends Application {
 		Boolean flat = false;					// Set to true if this forms data should be flattened so it appears on a single line
 		ArrayList<RecordDesc> records = null;
 		ArrayList<FormDesc> children = null;
+		ArrayList<Column> columnList = null;
 		
 		@SuppressWarnings("unused")
 		public void debugForm() {
@@ -269,10 +276,22 @@ public class ExportSurvey extends Application {
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
 			Connection connectionResults = null;
+			PreparedStatement pstmtQuestions = null;
+			PreparedStatement pstmtSelectMultiple = null;
 			
 			
 			
 			try {
+				// Get column names for select multiple questions
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? order by o.seq;";
+				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
+				
+				// Get the columns
+				String sqlQuestions = "select qname, qtype, column_name, q_id, readonly from question where f_id = ? "
+						+ "and source is not null "
+						+ "order by seq";
+				pstmtQuestions = connectionSD.prepareStatement(sqlQuestions);
+				
 				// Prepare statement to get server side includes
 				String sqlSSC = "select ssc.name, ssc.function, ssc.type from ssc ssc, form f " +
 						" where f.f_id = ssc.f_id " +
@@ -300,8 +319,6 @@ public class ExportSurvey extends Application {
 				 * Get the tables / forms in this survey 
 				 */
 				String sql = null;
-				ResultSet resultSet2 = null;
-			
 				sql = "SELECT f_id, table_name, parentform FROM form" +
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
@@ -406,57 +423,137 @@ public class ExportSurvey extends Application {
 				 */
 				for(FormDesc f : formList) {
 
-					// Get the question names and identifiers
-					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
+					// Get the columns for this form
+					f.columnList = new ArrayList<Column> ();
 					
-					if(pstmt2 != null) {pstmt2.close();};
-					pstmt2 = connectionResults.prepareStatement(sql);
-					if(resultSet2 != null) {resultSet2.close();};
-					resultSet2 = pstmt2.executeQuery();
-					ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
+					Column c = new Column();
+					c.name = "prikey";
+					c.humanName = "prikey";
+					c.qType = "";
+					f.columnList.add(c);
+					
+					
+					// For the top level form add default columns that are not in the question list
+					if(f.parent == null || f.parent.equals("0")) {
+		
+						c = new Column();
+						c.name = "_user";
+						c.humanName = "User";
+						c.qType = "";
+						f.columnList.add(c);
+						
+						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_version") != null) {
+							c = new Column();
+							c.name = "_version";
+							c.humanName = "Version";
+							c.qType = "";
+							f.columnList.add(c);
+						}
+						
+						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_complete") != null) {
+							c = new Column();
+							c.name = "_complete";
+							c.humanName = "Complete";
+							c.qType = "";
+							f.columnList.add(c);
+						}
+						
+					}
+					
+					pstmtQuestions.setInt(1, Integer.parseInt(f.f_id));
+					
+					log.info("SQL: Get questions for export:" + pstmtQuestions.toString());
+					ResultSet rsQuestions = pstmtQuestions.executeQuery();
+					
+					while(rsQuestions.next()) {
+						
+						String question_human_name = rsQuestions.getString(1);
+						String qType = rsQuestions.getString(2);
+						String question_column_name = rsQuestions.getString(3);
+						int qId = rsQuestions.getInt(4);
+						boolean ro = rsQuestions.getBoolean(5);
+						
+						String tName = question_column_name.trim().toLowerCase();
+						if(tName.equals("parkey") ||	tName.equals("_bad") ||	tName.equals("_bad_reason")
+								||	tName.equals("_task_key") ||	tName.equals("_task_replace") ||	tName.equals("_modified")
+								||	tName.equals("_instanceid") ||	tName.equals("instanceid")) {
+							continue;
+						}
+						
+						if(qType.equals("select")) {
+							pstmtSelectMultiple.setInt(1, qId);
+							ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
+							while (rsMultiples.next()) {
+								c = new Column();
+								c.name = question_column_name + "__" + rsMultiples.getString(1);
+								c.humanName = question_human_name + " - " + rsMultiples.getString(2);
+								c.question_name = question_column_name;
+								c.option_name = rsMultiples.getString(1);
+								c.qId = qId;
+								c.qType = qType;
+								c.ro = ro;
+								f.columnList.add(c);
+							}
+						} else {
+							c = new Column();
+							c.name = question_column_name;
+							c.question_name = question_column_name;
+							c.humanName = question_human_name;
+							c.qId = qId;
+							c.qType = qType;
+							c.ro = ro;
+							f.columnList.add(c);
+						}
+						
+					}
+					
+					// Get the question names and identifiers
+					//sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
+					
+					//if(pstmt2 != null) {pstmt2.close();};
+					//pstmt2 = connectionResults.prepareStatement(sql);
+					//if(resultSet2 != null) {resultSet2.close();};
+					//resultSet2 = pstmt2.executeQuery();
+					//ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
 					
 					for(int k = 0; k < f.maxRepeats; k++) {
-						for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
-							String name = rsMetaData2.getColumnName(j);
-							String type = rsMetaData2.getColumnTypeName(j);
-							
-							// Ignore the following columns
-							if(name.equals("parkey") ||	name.equals("_bad") ||	name.equals("_bad_reason")
-									||	name.equals("_task_key") ||	name.equals("_task_replace") ||	name.equals("_modified")
-									||	name.equals("_instanceid") ||	name.equals("instanceid")) {
-								continue;
-							}
+						for(int j = 0; j < f.columnList.size(); j++) {
+						//for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
+							//String name = rsMetaData2.getColumnName(j);
+							//String type = rsMetaData2.getColumnTypeName(j);
+							c = f.columnList.get(j);
+							String name = c.name;
+							String qType = c.qType;
+							boolean ro = c.ro;
+							System.out.println("Processing column: " + c.name);
 							
 							// Get the question type
-							pstmtQType.setString(1, f.table_name);
-							pstmtQType.setString(2, name);
-							ResultSet rsType = pstmtQType.executeQuery();
+							//pstmtQType.setString(1, f.table_name);
+							//pstmtQType.setString(2, name);
+							//ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
 							String selectMultipleQuestionName = null;
 							String optionName = null;
-							if(rsType.next()) {
-								String qType = rsType.getString(1);
-								boolean ro = rsType.getBoolean(2);
+							//if(rsType.next()) {
+							//	String qType = rsType.getString(1);
+							//	boolean ro = rsType.getBoolean(2);
 								
-								if(!exp_ro && ro) {
-									log.info("Dropping readonly: " + name);
-									continue;			// Drop read only columns if they are not selected to be exported				
-								}
-								
-								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
-									isAttachment = true;
-								}
-							} else {
-								// Possibly a select multiple
-								if(name.contains("__")) {
-									isSelectMultiple = true;
-									selectMultipleQuestionName = name.substring(0, name.indexOf("__"));
-									optionName = name.substring(name.indexOf("__") + 2);
-								}
+							if(!exp_ro && ro) {
+								log.info("Dropping readonly: " + name);
+								continue;			// Drop read only columns if they are not selected to be exported				
 							}
-							
-							
+								
+							if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
+								isAttachment = true;
+							}
+
+							if(qType.equals("select")) {
+								isSelectMultiple = true;
+								selectMultipleQuestionName = c.question_name;
+								optionName = c.option_name;
+							}
+											
 							String colName = name;
 							if(isSelectMultiple && merge_select_multiple) {
 								colName = selectMultipleQuestionName;
@@ -467,7 +564,7 @@ public class ExportSurvey extends Application {
 							if(f.maxRepeats > 1) {	// Columns need to be repeated horizontally
 								colName += "_" + (k + 1);
 							}
-							if(type.startsWith("timestamp")) {
+							if(qType.equals("dateTime")) {
 								colName += " (GMT)";
 							}
 							
@@ -484,9 +581,9 @@ public class ExportSurvey extends Application {
 							
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
-									qName.append(getContent(colName, true,false, colName, type, split_locn));
+									qName.append(getContent(c.humanName, true,false, colName, qType, split_locn));
 									if(!language.equals("none")) {
-										qText.append(getContent(getQuestion(connectionSD, name, sId, f, language, merge_select_multiple), true, false, name, type, split_locn));
+										qText.append(getContent(getQuestion(connectionSD, name, sId, f, language, merge_select_multiple), true, false, name, qType, split_locn));
 									}
 								}
 							}
@@ -495,9 +592,9 @@ public class ExportSurvey extends Application {
 							if(k == 0) {
 								
 								String selName = null;
-								if(type.equals("geometry")) {
+								if(c.isGeometry()) {
 									selName = "ST_AsTEXT(" + name + ") ";
-								} else if(type.equals("timestamptz")) {	// Return all timestamps at UTC with no time zone
+								} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 									selName = "timezone('UTC', " + name + ") as " + name;	
 								} else {
 									
@@ -620,6 +717,8 @@ public class ExportSurvey extends Application {
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
+				try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
+				try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
 				
 				try {
 					if (connectionSD != null) {
@@ -743,7 +842,7 @@ public class ExportSurvey extends Application {
 			}
 		} else {
 			if(head) {
-				if(split_locn && columnType != null && columnType.equals("geometry")) {
+				if(split_locn && columnType != null && columnType.equals("geopoint")) {
 					// Create two columns for lat and lon
 					out = "<th>Latitude</th><th>Longitude</th>";
 				} else {
@@ -789,7 +888,7 @@ public class ExportSurvey extends Application {
 				} else if(columnName.equals("_complete")) {
 					out = (out.equals("f")) ? "<td>No</td>" : "<td>Yes</td>"; 
 						
-				} else if(columnType == "timestamp") {
+				} else if(columnType.equals("dateTime")) {
 					// Convert the timestamp to the excel format specified in the xl2 mso-format
 					int idx1 = out.indexOf('.');	// Drop the milliseconds
 					if(idx1 > 0) {
@@ -834,7 +933,7 @@ public class ExportSurvey extends Application {
 		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
-		ResultSetMetaData rsMetaData = null;
+		//ResultSetMetaData rsMetaData = null;
 		
 		/*
 		 * Retrieve the data for this table
@@ -842,7 +941,7 @@ public class ExportSurvey extends Application {
 		sql = "SELECT " + f.columns + " FROM " + f.table_name +
 				" WHERE _bad IS FALSE";		
 		
-		if(f.parkey != null) {
+		if(f.parkey != null && !f.parkey.equals("0")) {
 			sql += " AND parkey=?";
 		}
 		sql += " ORDER BY prikey ASC;";	
@@ -854,7 +953,7 @@ public class ExportSurvey extends Application {
 			}
 			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
-			rsMetaData = resultSet.getMetaData();
+			//rsMetaData = resultSet.getMetaData();
 			
 			while (resultSet.next()) {
 
@@ -862,7 +961,7 @@ public class ExportSurvey extends Application {
 				StringBuffer record = new StringBuffer();
 				
 				// If this is the top level form reset the current parents and add the primary key
-				if(f.parkey == null) {
+				if(f.parkey == null || f.parkey.equals("0")) {
 					f.clearRecords();
 					record.append(getContent(prikey, false, true, "prikey", "key", split_locn));
 				}
@@ -871,11 +970,15 @@ public class ExportSurvey extends Application {
 				// Add the other questions to the output record
 				String currentSelectMultipleQuestionName = null;
 				String multipleChoiceValue = null;
-				for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
-											
-					String columnName = rsMetaData.getColumnName(i);
-					String columnType = rsMetaData.getColumnTypeName(i);
-					String value = resultSet.getString(i);
+				for(int i = 1; i < f.columnList.size(); i++) {
+				//for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
+					
+					Column c = f.columnList.get(i);
+					//String columnName = rsMetaData.getColumnName(i);
+					//String columnType = rsMetaData.getColumnTypeName(i);
+					String columnName = c.name;
+					String columnType = c.qType;
+					String value = resultSet.getString(i + 1);
 					
 					if(value == null) {
 						value = "";	
@@ -889,10 +992,12 @@ public class ExportSurvey extends Application {
 							if(currentSelectMultipleQuestionName == null) {
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
-							} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != rsMetaData.getColumnCount())) {
+							//} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != rsMetaData.getColumnCount())) {
+							} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != f.columnList.size() - 1)) {
 								// Continuing on with the same select multiple and its not the end of the record
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
-							} else if (i == rsMetaData.getColumnCount()) {
+							//} else if (i == rsMetaData.getColumnCount()) {
+							} else if (i == f.columnList.size() - 1) {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
@@ -938,7 +1043,7 @@ public class ExportSurvey extends Application {
 				 *  data, Ie there was no data recorded for a form, then the results are padded
 				 *  with empty values.
 				 */
-				if(f.parkey == null) {
+				if(f.parkey == null || f.parkey.equals("0")) {
 					
 					//f.printRecords(4, true);
 					
@@ -1066,7 +1171,7 @@ public class ExportSurvey extends Application {
 					for(int i = 0; i < number_records; i++) {
 						RecordDesc rd = f.records.get(i);
 						
-						if(parent == null || parent.equals(rd.parkey)) {
+						if(parent == null || parent.equals("0") || parent.equals(rd.parkey)) {
 							hasMatchingRecord = true;
 						}
 					}
@@ -1074,7 +1179,7 @@ public class ExportSurvey extends Application {
 					for(int i = 0; i < number_records; i++) {
 						RecordDesc rd = f.records.get(i);
 						
-						if(parent == null || parent.equals(rd.parkey)) {
+						if(parent == null || parent.equals("0") || parent.equals(rd.parkey)) {
 							StringBuffer newRec = new StringBuffer(in);
 							newRec.append(f.records.get(i).record);
 			
@@ -1243,88 +1348,5 @@ public class ExportSurvey extends Application {
 		
 		return questionText;
 	}
-
-	/*
-	 * Get column information for this table
-	 *
-	private ArrayList<Column> getTableColumns(Connection conn, FormDesc form) throws SQLException {
-		
-		ArrayList<Column> columns = null;
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtOptions = null;
-		ResultSet resultSet = null;
-		ResultSet resultSetOptions = null;
-		
-		String sql = "SELECT qname, qtype, q_id, q.column_name FROM question q" +
-				" WHERE f_id = ? " +
-				" ORDER BY seq ASC;";
-		String sqlOption = "SELECT o.ovalue, o.o_id, o.column_name  from option o, question q "
-				+ "WHERE q.q_id = ? "
-				+ "AND q.l_id = o.l_id;";
-
-		pstmt = conn.prepareStatement(sql);
-		pstmtOptions = conn.prepareStatement(sqlOption);
-		
-		// Get Questions
-		pstmt.setInt(1, Integer.parseInt(form.f_id));
-		resultSet = pstmt.executeQuery();
-		
-		while (resultSet.next()) {
-			if(columns == null) {
-				columns = new ArrayList<Column> ();
-				Column c = null;
-				c = new Column();
-				c.col_name = "prikey";	// Add default prikey column
-				c.q_type = "string";
-				columns.add(c);
-				c = new Column();		// Add default user column
-				c.col_name = "_user";
-				c.q_type = "string";
-				columns.add(c);
-			}
-			String q_name = resultSet.getString("qname");
-			String q_type = resultSet.getString("qtype");
-			String q_col_name = resultSet.getString("column_name");
-			int q_id = resultSet.getInt("q_id");
-			if(q_type != null && q_type.equals("select")) {
-				// Get options
-				pstmtOptions.setInt(1, q_id);
-				resultSetOptions = pstmtOptions.executeQuery();
-				while (resultSetOptions.next()) {
-					Column c = new Column();
-					columns.add(c);
-					
-					//c.q_name = q_name;
-					c.q_type = q_type;
-					//c.q_id = q_id;
-					//c.o_id = resultSetOptions.getInt("o_id");
-					//c.o_name = resultSetOptions.getString("ovalue");
-					c.col_name = q_col_name + "__" + resultSetOptions.getString("column_name");
-				}
-			} else {
-				Column c = new Column();
-				columns.add(c);
-				//c.q_name = q_name;
-				c.q_type = q_type;
-				//c.q_id = q_id;
-				c.col_name = q_col_name;
-			}
-		
-		}
-			
-
-			
-
-		
-		try{
-			if(resultSet != null) {resultSet.close();};
-			if(pstmt != null) {pstmt.close();};
-		} catch (Exception ex) {
-			log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
-		}
-		
-		return columns;
-	}
-	*/
 
 }

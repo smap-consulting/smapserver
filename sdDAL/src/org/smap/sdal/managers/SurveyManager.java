@@ -408,7 +408,7 @@ public class SurveyManager {
 		
 		// SQL to get the questions belonging to a form
 		ResultSet rsGetQuestions = null;
-		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, q.list_name, q.infotext_id, "
+		String sqlGetQuestions = "select q.q_id, q.qname, q.qtype, q.qtext_id, l.name, q.infotext_id, "
 				+ "q.source, " 
 				+ "q.calculate, "
 				+ "q.seq, " 
@@ -425,8 +425,8 @@ public class SurveyManager {
 				+ "q.published, "
 				+ "q.column_name "
 				+ "from question q "
+				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
-				//+ "and q.qname != '_instanceid' "
 				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 

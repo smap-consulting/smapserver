@@ -174,7 +174,7 @@ public class Items extends Application {
 			PreparedStatement pstmtSelectMultiple = null;
 			
 			int fId = 0;
-			int parent;
+			int parent = 0;
 			 
 			try {
 				
@@ -227,7 +227,7 @@ public class Items extends Application {
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
 				// Get the columns
-				String sqlCols = "select qname, qtype, column_name, q_id from question where f_id = ? order by seq";
+				String sqlCols = "select qname, qtype, column_name, q_id from question where f_id = ? and source is not null order by seq";
 				pstmtQuestions = connectionSD.prepareStatement(sqlCols);
 				pstmtQuestions.setInt(1, fId);
 				
@@ -241,7 +241,7 @@ public class Items extends Application {
 				ArrayList<String> sscList = new ArrayList<String> ();
 				
 				// Add default columns
-				cols.append("prikey, parkey, _bad, _bad_reason, _user");
+				cols.append("prikey, parkey, _bad, _bad_reason");
 				
 				columns.put("prikey");
 				colNames.add("prikey");
@@ -259,9 +259,26 @@ public class Items extends Application {
 				colNames.add("_bad_reason");
 				newColIdx++;
 				
-				columns.put("_user");
-				colNames.add("_user");
-				newColIdx++;
+				if(parent == 0) {
+					cols.append(",_user");
+					columns.put("_user");
+					colNames.add("_user");
+					newColIdx++;
+					
+					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_version") != null) {
+						cols.append(",_version");
+						columns.put("Version");
+						colNames.add("_version");
+						newColIdx++;
+					}
+					
+					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_ omplete") != null) {
+						cols.append(",_complete");
+						columns.put("Complete");
+						colNames.add("_complete");
+						newColIdx++;
+					}
+				}
 				
 				while(resultSet.next()) {
 					
@@ -270,11 +287,13 @@ public class Items extends Application {
 					String colname = tName + "." +  resultSet.getString(3);
 					int qId = resultSet.getInt(4);
 					
+					if(name.trim().toLowerCase().equals("instanceid")) {
+						continue;
+					}
 					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")) {
 						
 						geomIdx = newColIdx;
-						if(newColIdx != 0 ) {cols.append(",");}
-						cols.append("ST_AsGeoJSON(" + colname + ") ");
+						cols.append(", ST_AsGeoJSON(" + colname + ") ");
 						
 						newColIdx++;
 						columns.put(name);
@@ -284,15 +303,14 @@ public class Items extends Application {
 						pstmtSelectMultiple.setInt(1, qId);
 						ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
 						while (rsMultiples.next()) {
-							if(newColIdx != 0 ) {cols.append(",");}
 							String mult_name = name + " - " + rsMultiples.getString(2);
-							cols.append(colname + "__" + rsMultiples.getString(1));
+							cols.append("," + colname + "__" + rsMultiples.getString(1));
 							columns.put(mult_name);
 							colNames.add(mult_name);
 							newColIdx++;
 						}
 					} else if(bFeats || name.equals("prikey")) {	// Always return the primary key
-						if(newColIdx != 0 ) {cols.append(",");}		
+						cols.append(",");	
 						if(type.equals("image") || type.equals("audio") || type.equals("video")) {
 							cols.append("'" + urlprefix + "' || " + colname + " as " + name);
 						} else {
@@ -468,7 +486,6 @@ public class Items extends Application {
 							//String name = rsMetaData.getColumnName(i);	
 							String name = colNames.get(i);
 							String value = resultSet.getString(i + 1);	
-							System.out.println("Got " + name + " : " + value);
 							if(value == null) {
 								value = "";
 							}

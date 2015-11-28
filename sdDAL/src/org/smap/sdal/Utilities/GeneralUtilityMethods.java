@@ -1368,7 +1368,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Return true if the passed in column name is in the table
+	 * Return column type if the passed in column name is in the table else return null
 	 */
 	public static String columnType(Connection sd, String tableName, String columnName) throws SQLException {
 		
