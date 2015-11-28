@@ -28,7 +28,7 @@ public class ColumnNames {
 			int qId = q1Rs.getInt(1);
 			String qName = q1Rs.getString(2);
 			
-			String column_name = DatabaseNames.cleanName(qName, true);
+			String column_name = DatabaseNames.cleanNameDeprecated(qName);
 			if(testRun) {
 				System.out.println("  ==== Converting question: " + qName + "      ->      " + column_name);
 			} else {
@@ -46,7 +46,7 @@ public class ColumnNames {
 			int oId = optionRs.getInt(1);
 			String oValue = optionRs.getString(2);
 			
-			String column_name = DatabaseNames.cleanName(oValue, false);
+			String column_name = DatabaseNames.cleanNameDeprecated(oValue);
 			if(testRun) {
 				System.out.println("  ==== Converting option: " + oValue + "      ->      " + column_name);
 			} else {
