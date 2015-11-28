@@ -67,7 +67,7 @@ public class patch {
 			//RenameServer rs = new RenameServer();
 			//rs.apply(testRun, connectionSD, connectionResults, old_name, new_name);
 			
-			// Check for duplictes
+			// Check for duplicates
 			//Duplicates dups = new Duplicates();
 			//dups.apply(testRun, connectionSD, connectionResults);
 
@@ -89,9 +89,15 @@ public class patch {
 			//np.apply(testRun, connectionResults);
 
 			// Add _modified, _complete to all surveys
-			System.out.println("Patching complete");
-			AddModifiedComplete mc = new AddModifiedComplete();
-			mc.apply(testRun, connectionSD, connectionResults);
+			//System.out.println("Patching complete");
+			//AddModifiedComplete mc = new AddModifiedComplete();
+			//mc.apply(testRun, connectionSD, connectionResults);
+			
+			// Populate column_name with clean names
+			System.out.println("Patching column names");
+			ColumnNames cn = new ColumnNames();
+			cn.apply(testRun, connectionSD);
+			
 			
 		} catch (Exception e) {
 			response = "Error: Rolling back: " + e.getMessage();

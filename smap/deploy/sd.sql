@@ -377,3 +377,4 @@ update question set published = true where published is null;
 alter table question alter column published set default false;
 --------------
 alter table option add column column_name text;
+alter table question add column column_name_applied boolean default false;	-- Temporary column to ensure column name patches are only applied once
