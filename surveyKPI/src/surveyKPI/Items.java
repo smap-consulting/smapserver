@@ -169,7 +169,6 @@ public class Items extends Application {
 			Connection connection = null;
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtSSC = null;
-			PreparedStatement pstmtQType = null;
 			PreparedStatement pstmtFDetails = null;
 			PreparedStatement pstmtQuestions = null;
 			PreparedStatement pstmtSelectMultiple = null;
@@ -178,12 +177,6 @@ public class Items extends Application {
 			int parent;
 			 
 			try {
-				// Prepare the statement to get the question type 
-				String sqlQType = "select q.qtype from question q, form f " +
-					" where q.f_id = f.f_id " +
-					" and f.table_name = ? " +
-					" and lower(q.qname) = lower(?);";
-				pstmtQType = connectionSD.prepareStatement(sqlQType);
 				
 				// Prepare the statement to get the form details
 				String sqlFDetails = "select f.f_id, f.parentform from question q, form f " +
@@ -229,7 +222,7 @@ public class Items extends Application {
 					tables.add(tName, fId, parent);
 				}
 				
-				// Get column names for seelct multiple questions
+				// Get column names for select multiple questions
 				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? order by o.seq;";
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
@@ -241,19 +234,11 @@ public class Items extends Application {
 				log.info("Get questions for form: " + pstmtQuestions.toString());
 				resultSet = pstmtQuestions.executeQuery();
 				
-				//sql = "SELECT * FROM " + tName + " LIMIT 1;";
-				//log.info("Get the columns: " + sql);
-				//try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				//pstmt = connection.prepareStatement(sql);	 			
-				//resultSet = pstmt.executeQuery();
-				//ResultSetMetaData rsMetaData = resultSet.getMetaData();		
-				
 				// Construct a new query that retrieves a geometry object as geoJson
 				StringBuffer cols = new StringBuffer("");
 				int newColIdx = 0;
 				JSONArray columns = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
-				//for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
 				
 				// Add default columns
 				cols.append("prikey, parkey, _bad, _bad_reason, _user");
@@ -279,9 +264,6 @@ public class Items extends Application {
 				newColIdx++;
 				
 				while(resultSet.next()) {
-					//String name = rsMetaData.getColumnName(i);
-					//String colname = tName + "." + name;
-					//String type = rsMetaData.getColumnTypeName(i);
 					
 					String name = resultSet.getString(1);
 					String type = resultSet.getString(2);
@@ -567,7 +549,6 @@ public class Items extends Application {
 				
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
-				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 				try {if (pstmtFDetails != null) {pstmtFDetails.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
