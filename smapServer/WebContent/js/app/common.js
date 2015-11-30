@@ -1262,6 +1262,7 @@ function openForm(type) {
 		globals.gExistingSurvey = true; 
 	}
 	$('#openFormModal').modal('show');
+
 }
 
 /*

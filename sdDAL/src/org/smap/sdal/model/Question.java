@@ -31,6 +31,7 @@ public class Question {
 	public String appearance;
 	public String choice_filter;
 	public String source;
+	public String source_param;
 	public String calculation;
 	public String constraint;
 	public String constraint_msg;

@@ -441,6 +441,11 @@ $(document).ready(function() {
 	
 	setupQuestionTypeDialog();
 	
+	// Set focus on survey name when create form modal is opened
+	$('#openFormModal').on('shown.bs.modal', function () {
+		$('#new_form_name').focus();
+	});
+	
 });
 
 //Set up question type dialog

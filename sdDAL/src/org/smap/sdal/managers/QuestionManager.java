@@ -139,8 +139,8 @@ public class QuestionManager {
 	 */
 	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
-		PreparedStatement pstmt = null;
-		String sql = "insert into question (q_id, f_id, l_id, seq, qname, qtype, qtext_id, "
+		PreparedStatement pstmtInsertQuestion = null;
+		String sql = "insert into question (q_id, f_id, l_id, seq, qname, column_name, qtype, qtext_id, "
 				+ "infotext_id, "
 				+ "source, calculate, "
 				+ "defaultanswer, "
@@ -149,7 +149,7 @@ public class QuestionManager {
 				+ "path, "
 				+ "readonly"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -163,7 +163,7 @@ public class QuestionManager {
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
-			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmtInsertQuestion = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			
 			for(Question q : questions) {
 				
@@ -195,23 +195,24 @@ public class QuestionManager {
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 			
 				// Insert the question
-				pstmt.setInt(1, q.fId );
-				pstmt.setInt(2, q.l_id);
-				pstmt.setInt(3, q.seq );
-				pstmt.setString(4, q.name );
-				pstmt.setString(5, type );
-				pstmt.setString(6, q.path + ":label" );
-				pstmt.setString(7, q.path + ":hint" );
-				pstmt.setString(8, q.source );
-				pstmt.setString(9, q.calculation );
-				pstmt.setString(10, q.defaultanswer );
-				pstmt.setString(11, q.appearance);
-				pstmt.setBoolean(12, q.visible);
-				pstmt.setString(13, q.path);
-				pstmt.setBoolean(14, readonly);
+				pstmtInsertQuestion.setInt(1, q.fId );
+				pstmtInsertQuestion.setInt(2, q.l_id);
+				pstmtInsertQuestion.setInt(3, q.seq );
+				pstmtInsertQuestion.setString(4, q.name );
+				pstmtInsertQuestion.setString(5, GeneralUtilityMethods.cleanName(q.name, true));
+				pstmtInsertQuestion.setString(6, type );
+				pstmtInsertQuestion.setString(7, q.path + ":label" );
+				pstmtInsertQuestion.setString(8, q.path + ":hint" );
+				pstmtInsertQuestion.setString(9, q.source );
+				pstmtInsertQuestion.setString(10, q.calculation );
+				pstmtInsertQuestion.setString(11, q.defaultanswer );
+				pstmtInsertQuestion.setString(12, q.appearance);
+				pstmtInsertQuestion.setBoolean(13, q.visible);
+				pstmtInsertQuestion.setString(14, q.path);
+				pstmtInsertQuestion.setBoolean(15, readonly);
 				
-				log.info("Insert question: " + pstmt.toString());
-				pstmt.executeUpdate();
+				log.info("Insert question: " + pstmtInsertQuestion.toString());
+				pstmtInsertQuestion.executeUpdate();
 				
 				// Set the labels
 				UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
@@ -219,7 +220,7 @@ public class QuestionManager {
 				// If this is a begin repeat then create a new form
 				if(q.type.equals("begin repeat")) {
 					
-					ResultSet rs = pstmt.getGeneratedKeys();
+					ResultSet rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
 					int qId = rs.getInt(1);
 					String repeatsPath = null;
@@ -229,22 +230,22 @@ public class QuestionManager {
 
 						repeatsPath = q.path + "_count";
 						
-						pstmt.setInt(1, q.fId );
-						pstmt.setInt(2, q.seq );
-						pstmt.setString(3, q.name + "_count" );
-						pstmt.setString(4, "calculate" );
-						pstmt.setString(5, null );
-						pstmt.setString(6, null );
-						pstmt.setString(7, null );
-						pstmt.setString(8, "user" );
-						pstmt.setString(9, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd));
-						pstmt.setString(10, null );
-						pstmt.setString(11, null);
-						pstmt.setBoolean(12, false);
-						pstmt.setString(13, q.path + "_count");
+						pstmtInsertQuestion.setInt(1, q.fId );
+						pstmtInsertQuestion.setInt(2, q.seq );
+						pstmtInsertQuestion.setString(3, q.name + "_count" );
+						pstmtInsertQuestion.setString(4, "calculate" );
+						pstmtInsertQuestion.setString(5, null );
+						pstmtInsertQuestion.setString(6, null );
+						pstmtInsertQuestion.setString(7, null );
+						pstmtInsertQuestion.setString(8, "user" );
+						pstmtInsertQuestion.setString(9, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd));
+						pstmtInsertQuestion.setString(10, null );
+						pstmtInsertQuestion.setString(11, null);
+						pstmtInsertQuestion.setBoolean(12, false);
+						pstmtInsertQuestion.setString(13, q.path + "_count");
 						
-						log.info("Insert repeat count question: " + pstmt.toString());
-						pstmt.executeUpdate();
+						log.info("Insert repeat count question: " + pstmtInsertQuestion.toString());
+						pstmtInsertQuestion.executeUpdate();
 					}
 					
 					
@@ -274,7 +275,7 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertQuestion != null) {pstmtInsertQuestion.close();}} catch (SQLException e) {}
 			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
 		}
@@ -424,16 +425,16 @@ public class QuestionManager {
 	 */
 	public void saveOptions(Connection sd, int sId, ArrayList<Option> options, boolean updateLabels) throws SQLException {
 		
-		PreparedStatement pstmt = null;
-		String sql = "insert into option (o_id, l_id, seq, label_id, ovalue, cascade_filters, externalfile) " +
-				"values (nextval('o_seq'), ?, ?, ?, ?, ?, 'false');";
+		PreparedStatement pstmtInsertOption = null;
+		String sql = "insert into option (o_id, l_id, seq, label_id, ovalue, column_name, cascade_filters, externalfile) " +
+				"values (nextval('o_seq'), ?, ?, ?, ?, ?, ?, 'false');";
 
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update option set seq = seq + 1 where l_id = ? and seq >= ?;";
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
-			pstmt = sd.prepareStatement(sql);
+			pstmtInsertOption = sd.prepareStatement(sql);
 			
 			for(Option o : options) {
 				
@@ -451,14 +452,15 @@ public class QuestionManager {
 				
 				String path = "option_" + listId + "_" + o.value;
 				// Insert the option
-				pstmt.setInt(1, listId );
-				pstmt.setInt(2, o.seq );
-				pstmt.setString(3, path + ":label" );
-				pstmt.setString(4, o.value );
-				pstmt.setString(5, gson.toJson(o.cascadeKeyValues));			
+				pstmtInsertOption.setInt(1, listId );
+				pstmtInsertOption.setInt(2, o.seq );
+				pstmtInsertOption.setString(3, path + ":label" );
+				pstmtInsertOption.setString(4, o.value );
+				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false) );
+				pstmtInsertOption.setString(6, gson.toJson(o.cascadeKeyValues));			
 				
-				log.info("Insert option: " + pstmt.toString());
-				pstmt.executeUpdate();
+				log.info("Insert option: " + pstmtInsertOption.toString());
+				pstmtInsertOption.executeUpdate();
 				
 				// Set the labels 
 				if (updateLabels) {
@@ -472,7 +474,7 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			try {if (pstmtUpdateSeq != null) {pstmtUpdateSeq.close();}} catch (SQLException e) {}
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertOption != null) {pstmtInsertOption.close();}} catch (SQLException e) {}
 		}	
 		
 	}

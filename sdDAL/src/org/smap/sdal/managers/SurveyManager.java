@@ -163,7 +163,8 @@ public class SurveyManager {
 			String basePath,
 			String instanceId,	// If set get the results for this instance
 			boolean getResults,	// Set to true to get results, if set and instanceId is null then blank data will be added
-			boolean generateDummyValues		// Set to true when getting results to fill a form with dummy values if there are no results
+			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
+			boolean getPropertyTypeQuestions	// Set to true to get property questions such as _device
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -213,7 +214,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, s, basePath, user);			// Add forms, questions, options
+				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -251,6 +252,7 @@ public class SurveyManager {
 			) throws SQLException, Exception {
 		
 		int sId;
+		int fId;
 		String ident = null;
 		String tablename = null;
 		
@@ -262,6 +264,9 @@ public class SurveyManager {
 		String sql3 = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
 				" values (nextval('f_seq'), ?, 'main', ?, 0, 'false', '/main');";
 		
+		String sql4 = "insert into question (q_id, f_id, qtype, qname, path, column_name, seq, visible, source, source_param, calculate) "
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, 'false', ?, ?, ?);";
+		
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -269,7 +274,7 @@ public class SurveyManager {
 			sd.setAutoCommit(false);
 			
 			// 1 Create basic survey
-			pstmt = sd.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);	 			
+			pstmt = sd.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);		
 			pstmt.setString(1, name);
 			pstmt.setInt(2, projectId);
 			
@@ -295,17 +300,105 @@ public class SurveyManager {
 			tablename = "s" + sId + "_main";
 			
 			pstmt.close();
-			pstmt = sd.prepareStatement(sql3);
+			pstmt = sd.prepareStatement(sql3, Statement.RETURN_GENERATED_KEYS);
 			pstmt.setInt(1,  sId);
 			pstmt.setString(2,  tablename);
 			
 			log.info("Create new survey part 3: " + pstmt.toString());
 			pstmt.execute();
 			
+			rs = pstmt.getGeneratedKeys();
+			rs.next();
+			fId = rs.getInt(1);
+			
 			// 4. Create default language
 			ArrayList<String> languages = new ArrayList<String> ();
 			languages.add("language");
 			GeneralUtilityMethods.setLanguages(sd, sId, languages);
+			
+			// 5. Add default property questions
+			pstmt.close();
+			pstmt = sd.prepareStatement(sql4);
+			
+			pstmt.setInt(1, fId);			// Form Id		
+			
+			
+			// Device ID
+			pstmt.setString(2,  "string");			// Type
+			pstmt.setString(3, "_device");			// Name
+			pstmt.setString(4,  "/main/_device");	// Path
+			pstmt.setString(5, "_device");			// Column Name
+			pstmt.setInt(6, -10);					// Sequence
+			pstmt.setString(7, "property");			// Source
+			pstmt.setString(8, "deviceid");			// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
+			
+			// start time
+			pstmt.setString(2,  "dateTime");		// Type
+			pstmt.setString(3, "_start");			// Name
+			pstmt.setString(4,  "/main/_start");	// Path
+			pstmt.setString(5, "_start");			// Column Name
+			pstmt.setInt(6, -9);					// Sequence
+			pstmt.setString(7, "timestamp");		// Source
+			pstmt.setString(8, "start");			// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
+			
+			// Device ID
+			pstmt.setString(2,  "dateTime");		// Type
+			pstmt.setString(3, "_end");				// Name
+			pstmt.setString(4,  "/main/_end");		// Path
+			pstmt.setString(5, "_end");				// Column Name
+			pstmt.setInt(6, -8);					// Sequence
+			pstmt.setString(7, "timestamp");		// Source
+			pstmt.setString(8, "end");				// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
+			
+			// Meta Group
+			pstmt.setString(2,  "begin group");		// Type
+			pstmt.setString(3, "meta");				// Name
+			pstmt.setString(4,  "/main/meta");		// Path
+			pstmt.setString(5, "meta");				// Column Name
+			pstmt.setInt(6, -7);					// Sequence
+			pstmt.setString(7, null);				// Source
+			pstmt.setString(8, null);				// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
+			
+			// instance id
+			pstmt.setString(2,  "string");			// Type
+			pstmt.setString(3, "instanceID");		// Name
+			pstmt.setString(4,  "/main/meta/instanceID");		// Path
+			pstmt.setString(5, "instanceid");		// Column Name
+			pstmt.setInt(6, -6);					// Sequence
+			pstmt.setString(7, "user");				// Source
+			pstmt.setString(8, null);				// Source Param
+			pstmt.setString(9, "concat('uuid:', uuid())");	// Calculation
+			pstmt.execute();
+			
+			// instance name
+			pstmt.setString(2,  "string");			// Type
+			pstmt.setString(3, "instanceName");		// Name
+			pstmt.setString(4,  "/main/meta/instanceName");		// Path
+			pstmt.setString(5, "instancename");		// Column Name
+			pstmt.setInt(6, -5);					// Sequence
+			pstmt.setString(7, "user");				// Source
+			pstmt.setString(8, null);				// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
+			
+			// Meta Group End
+			pstmt.setString(2,  "end group");		// Type
+			pstmt.setString(3, "meta_groupEnd");	// Name
+			pstmt.setString(4,  "/main/meta_groupEnd");		// Path
+			pstmt.setString(5, "meta_groupend");	// Column Name
+			pstmt.setInt(6, -4);					// Sequence
+			pstmt.setString(7, null);				// Source
+			pstmt.setString(8, null);				// Source Param
+			pstmt.setString(9, null);				// Calculation
+			pstmt.execute();
 			
 			sd.commit();
 			sd.setAutoCommit(true);
@@ -389,7 +482,7 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s, String basePath, String user) throws Exception {
+	private void populateSurvey(Connection sd, Survey s, String basePath, String user, boolean getPropertyTypeQuestions) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -423,7 +516,8 @@ public class SurveyManager {
 				+ "q.mandatory, "
 				+ "q.repeatcount, "
 				+ "q.published, "
-				+ "q.column_name "
+				+ "q.column_name, "
+				+ "q.source_param "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -536,7 +630,21 @@ public class SurveyManager {
 				q.repeatCount = rsGetQuestions.getBoolean(19);
 				q.published = rsGetQuestions.getBoolean(20);
 				q.columnName = rsGetQuestions.getString(21);
+				q.source_param = rsGetQuestions.getString(22);
 				
+				// If this is a property type question (_device etc) then discard unless these are required
+				if(!getPropertyTypeQuestions) {
+					if(q.source_param != null && 
+							(q.source_param.equals("deviceid") || q.source_param.equals("start") || q.source_param.equals("end"))) {
+						continue;
+					}
+					if(q.name != null & (q.name.equals("_instanceid") || q.name.equals("_task_key"))) {
+						continue;
+					} 
+					if(q.path != null && (q.path.endsWith("/meta/instanceID") || q.path.toLowerCase().trim().endsWith("/meta/instancename"))) {
+						continue;
+					}
+				}
 				// Translate type name to "note" if it is a readonly string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
 				

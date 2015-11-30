@@ -1049,6 +1049,8 @@ public class SubRelationalDB extends Subscriber {
 				
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance());
 				
+				System.out.println("Adding question: " + q.getName() + " : " + q.getType());
+				
 				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				if(q.getSource() != null) {
 					
