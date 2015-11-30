@@ -722,16 +722,27 @@ function respondToEvents($context) {
 
 	});
 	
-	// Add new question
+	/*
+	 * Add a new question 
+	 *  (or if the property type is groups then extend a group to the selected location)
+	 */
 	$context.find('.add_question').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
+			prop = $('#selProperty').val(),
 			buttonId = $this.attr("id"),
 			qId = $this.data("qid"),
 			formIndex = $this.data("findex"),
+			availableGroups,
 			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 		
-		$context = question.add(formIndex, qId, locn);
+		if(prop === "group") {		// Extend a group
+			availableGroups = $this.data("groups").split(":");
+			$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
+		} else {
+			$context = question.add(formIndex, qId, locn);
+		}
+		
 		respondToEvents($context);				// Add events on to the altered html
 		$context.find('input').focus();			// Set focus to the new question
 		
@@ -905,6 +916,7 @@ function respondToEvents($context) {
 			$sourceElem,
 			sourceId = ev.dataTransfer.getData("text"),
 			targetId = $targetListItem.data('qid'),
+			locn = $targetListItem.data("locn"),			// Before or after the target question
 			$context,
 			type;
 	
@@ -927,12 +939,9 @@ function respondToEvents($context) {
 			} else {
 				$sourceElem = $(document.getElementById(sourceId));
 			}
-			
-		   
-		    //$sourceElem.insertBefore($targetListItem.closest('li'));
 		    
 		    if(type === "question") {
-		    	$context = question.moveBeforeQuestion(sourceId, targetId);
+		    	$context = question.moveQuestion(sourceId, targetId, locn);
 		    } else if(type === "option") {
 		    	$context = question.moveBeforeOption(sourceId, targetId);
 		    }

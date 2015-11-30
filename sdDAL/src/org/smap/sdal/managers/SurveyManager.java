@@ -517,7 +517,8 @@ public class SurveyManager {
 				+ "q.repeatcount, "
 				+ "q.published, "
 				+ "q.column_name, "
-				+ "q.source_param "
+				+ "q.source_param, "
+				+ "q.path "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -631,20 +632,25 @@ public class SurveyManager {
 				q.published = rsGetQuestions.getBoolean(20);
 				q.columnName = rsGetQuestions.getString(21);
 				q.source_param = rsGetQuestions.getString(22);
+				q.path = rsGetQuestions.getString(23);
 				
-				// If this is a property type question (_device etc) then discard unless these are required
-				if(!getPropertyTypeQuestions) {
-					if(q.source_param != null && 
-							(q.source_param.equals("deviceid") || q.source_param.equals("start") || q.source_param.equals("end"))) {
-						continue;
-					}
-					if(q.name != null & (q.name.equals("_instanceid") || q.name.equals("_task_key"))) {
-						continue;
-					} 
-					if(q.path != null && (q.path.endsWith("/meta/instanceID") || q.path.toLowerCase().trim().endsWith("/meta/instancename"))) {
-						continue;
-					}
+				// Set an indicator if this is a property type question (_device etc)
+
+				if(q.source_param != null && 
+						(q.source_param.equals("deviceid") || q.source_param.equals("start") || q.source_param.equals("end"))) {
+					q.propertyType = true;
 				}
+				if(q.name != null & (q.name.equals("_instanceid") || q.name.equals("_task_key"))) {
+					q.propertyType = true;
+				} 
+				if(q.path != null && q.path.startsWith("/main/meta")) {
+					q.propertyType = true;
+				}
+				
+				if(q.propertyType && !getPropertyTypeQuestions) {
+					continue;		// discard the question
+				}
+				
 				// Translate type name to "note" if it is a readonly string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
 				

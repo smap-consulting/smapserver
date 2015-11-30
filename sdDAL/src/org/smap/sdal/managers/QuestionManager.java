@@ -282,13 +282,144 @@ public class QuestionManager {
 		
 	}
 	
+	
+	/*
+	 * Move a question
+	 */
+	public void move(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
+		
+		String path = null;
+		boolean accountForGroup = false;
+		
+		PreparedStatement pstmtMoveWithin = null;
+		String sqlMoveWithin = "update question set "
+						+ "seq = ?, "
+						+ "path = ? "
+					+ "where f_id = ? "
+					+ "and qname = ? "
+					+ "and seq = ?;";
+		
+		PreparedStatement pstmtMovedBack = null;
+		String sqlMovedBack = "update question set seq = seq + 1 where f_id = ? and seq >= ? and seq < ?;";
+		
+		PreparedStatement pstmtMovedForward = null;
+		String sqlMovedForward = "update question set seq = seq - 1 where f_id = ? and seq > ? and seq <= ?;";
+		
+		PreparedStatement pstmtGetNewPath = null;
+		String sqlGetNewPath = "select path, qType from question q where f_id = ? and seq = ?;";
+		
+		try {
+			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
+			
+			for(Question q : questions) {
+				
+				// Get the new path
+				if(!q.type.equals("end group")) {
+					int relatedSeq = q.seq;		// Get the path from the question before where this question is being moved
+					if(relatedSeq > 0) {
+						relatedSeq--;			// If the question is being moved to the beginning of the form then use the path of the existing first question
+					} else {
+						accountForGroup = true;
+					}
+					pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
+					pstmtGetNewPath.setInt(1, q.fId);
+					pstmtGetNewPath.setInt(2, relatedSeq);
+					
+					log.info("SQL Get new path: " + pstmtGetNewPath.toString());
+					
+					ResultSet rs = pstmtGetNewPath.executeQuery();
+					if(rs.next()) {
+						path = rs.getString(1);
+						String type = rs.getString(2);
+						if(type.equals("begin group") && accountForGroup) {
+							path += "/" + q.name;
+						} else {
+							String pathBase = path.substring(0, path.lastIndexOf('/'));
+							path = pathBase + "/" + q.name; 
+						}
+						
+						
+					}
+				}
+				boolean moveWithinList = q.fId == q.sourceFormId;
+					
+				if(moveWithinList) {
+					// Update sequence numbers of other options
+					if(q.seq > q.sourceSeq) { // Moved forward in list
+						
+						pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
+						pstmtMovedForward.setInt(1,q.fId);
+						pstmtMovedForward.setInt(2, q.sourceSeq);
+						pstmtMovedForward.setInt(3, q.seq);
+						
+						log.info("Moving forward: " + pstmtMovedForward.toString());
+						pstmtMovedForward.executeUpdate();
+					} else {	// Moved backward in list
+						
+						pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
+						pstmtMovedBack.setInt(1, q.fId);
+						pstmtMovedBack.setInt(2, q.seq);
+						pstmtMovedBack.setInt(3, q.sourceSeq);
+						
+						log.info("Moving back: " + pstmtMovedBack.toString());
+						pstmtMovedBack.executeUpdate();						
+					}
+					
+					// Move the option
+					pstmtMoveWithin.setInt(1, q.seq );
+					pstmtMoveWithin.setString(2, path);
+					pstmtMoveWithin.setInt(3, q.fId );
+					pstmtMoveWithin.setString(4, q.name);
+					pstmtMoveWithin.setInt(5, q.sourceSeq );
+					
+					log.info("Move option within same list: " + pstmtMoveWithin.toString());
+					int count = pstmtMoveWithin.executeUpdate();
+					if(count == 0) {
+						log.info("Error: Question already modified");
+						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+					}
+					
+
+				} else {
+					// Insert into the target form
+					ArrayList<Question> targetQuestions = new ArrayList<Question> ();
+					targetQuestions.add(q);
+					save(sd, sId, targetQuestions);
+					
+					// Remove from the source form
+					ArrayList<Question> sourceQuestions = new ArrayList<Question> ();
+					q.fId = q.sourceFormId;
+					sourceQuestions.add(q);
+					delete(sd, sId, sourceQuestions);
+				}
+					
+			}
+			
+			
+		} catch(SQLException e) {
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
+			try {if (pstmtGetNewPath != null) {pstmtGetNewPath.close();}} catch (SQLException e) {}
+		}	
+		
+	}
+	
 	/*
 	 * Move a question
 	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
 	 *  question creation
 	 */
-	public void move(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
+	public void moveOld(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
+		
+		PreparedStatement pstmtGetPath = null;
 		PreparedStatement pstmt = null;
 		String sql = "update question set "
 						+ "f_id = ?, "
@@ -601,10 +732,10 @@ public class QuestionManager {
 					pstmtMoveWithin.setString(3, o.value);
 					pstmtMoveWithin.setInt(4, o.sourceSeq );
 					
-					log.info("Move option within same list: " + pstmtMoveWithin.toString());
+					log.info("Move choice within same list: " + pstmtMoveWithin.toString());
 					int count = pstmtMoveWithin.executeUpdate();
 					if(count == 0) {
-						log.info("Error: Question already modified");
+						log.info("Error: Choice already modified");
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
 					
@@ -615,11 +746,11 @@ public class QuestionManager {
 					targetOptions.add(o);
 					saveOptions(sd, sId, targetOptions, false);
 					
-					// Remove from the source questions
+					// Remove from the source lists
 					ArrayList<Option> sourceOptions = new ArrayList<Option> ();
 					o.optionList = o.sourceOptionList;
 					sourceOptions.add(o);
-					deleteOptions(sd, sId, options, false);
+					deleteOptions(sd, sId, sourceOptions, false);
 				}
 					
 			}

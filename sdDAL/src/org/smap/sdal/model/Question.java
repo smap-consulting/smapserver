@@ -41,6 +41,7 @@ public class Question {
 	public boolean readonly;
 	public boolean required;
 	public boolean repeatCount;
+	public boolean propertyType = false;	// If set these questions will not be shown in the editor
 	public boolean published;		// Set true if the question has been added to a results table
 	public boolean inMeta;			// Set true if the question is in the meta group
 	int width = -1;						// Display width, generated from appearance column 

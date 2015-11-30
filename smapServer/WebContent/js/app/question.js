@@ -37,8 +37,9 @@ define([
 		deleteQuestion: deleteQuestion,
 		addOption: addOption,
 		deleteOption: deleteOption,
-		moveBeforeQuestion: moveBeforeQuestion,
-		moveBeforeOption: moveBeforeOption
+		moveQuestion: moveQuestion,
+		moveBeforeOption: moveBeforeOption,
+		setGroupEnd: setGroupEnd
 	};
 	
 	var gEditor;
@@ -113,11 +114,65 @@ define([
 		
 	}
 	
+	function setGroupEnd(formIndex, qId, locn, type, name, availableGroups) {		
+		
+		var $beforeElement = $("#" + qId),
+			seq = 0,
+			formIndex,
+			qIndex,
+			survey = globals.model.survey,
+			group,
+			beforeFormIndex = $beforeElement.data("fid"),
+			beforeItemIndex = $beforeElement.data("id"),
+			seq,
+			sourceSeq,
+			sourceFormId,
+			groupEndName,
+			endGroupData;
+		
+		if(availableGroups.length > 1) {
+			alert("Select group: " + availableGroups.join("-"));
+			group = availableGroups[0];
+		} else {
+			group = availableGroups[0];
+			alert("Moving group: " + group);
+		}
+		groupEndName = group + "_groupEnd",
+		
+		// Get the sequence of the question just after the new location of the end group
+		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);
+		
+		// Get the current sequence of the end group
+		endGroupData = getEndGroup(groupEndName, survey.forms[beforeFormIndex]);
+		sourceFormId = survey.forms[beforeFormIndex].id;	
+		
+		// Create changeset to be applied on save		
+		change = {
+				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "move",
+				question: {
+						seq: seq,
+						sourceSeq: endGroupData.seq,
+						sourceFormId: sourceFormId,
+						name: groupEndName,
+						
+						// Helper values 
+						sourceFormIndex: beforeFormIndex,
+						sourceItemIndex: endGroupData.index,
+						formIndex: beforeFormIndex
+					}
+			};
+
+		$context = changeset.add(change);
+		return $context;	
+		
+	}
+	
 	/*
 	 * Move a question
 	 * The beforeId is the id of the dom element that precedes this element
 	 */
-	function moveBeforeQuestion(sourceId, beforeId) {		
+	function moveQuestion(sourceId, beforeId, locn) {		
 		
 		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
 			beforeFormIndex = $beforeElement.data("fid"),
@@ -140,13 +195,17 @@ define([
 		
 		// Get the new sequence of the question
 		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);				// Take the sequence of the item it is moving in front of
+		if(locn === "after") {
+			seq++;
+		}
 		
 		// Get the old sequence of the question
 		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
 		name = survey.forms[sourceFormIndex].questions[sourceItemIndex].name;
 		sourceFormId = survey.forms[sourceFormIndex].id;										// Used to verify that a question has not been moved by another user
 
-		// Create changeset to be applied on save		
+		// Create changeset to be applied on save	
+		
 		change = {
 			changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
 			action: "move",
@@ -349,6 +408,24 @@ define([
 			}
 		}
 		alert("Could not insert question");
+		return 0;
+	}
+	
+	/*
+	 * Get the display sequence of an end group
+	 */
+	function getEndGroup(endName, form) {
+		var i,
+			endGroupData = {};
+		
+		for(i = 0; i < form.qSeq.length; i++) {
+			if(form.questions[form.qSeq[i]].name === endName) {
+				endGroupData.seq = i;
+				endGroupData.index = form.qSeq[i];
+				return endGroupData;
+			}
+		}
+		alert("Could not locate the current end group with name: " + endName);
 		return 0;
 	}
 	

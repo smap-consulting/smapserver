@@ -83,7 +83,9 @@ define([
 			itemType = "question";
 		
 		} 
-		validateItem(container, itemIndex, itemType);
+		if(itemIndex) {		// Note some changes do not have an itemIndex and don't need to be validated
+			validateItem(container, itemIndex, itemType);
+		}
 		
 		/*
 		 * Apply any HTML changes either directly to the changed element, or by refreshing the whole form using
@@ -605,11 +607,12 @@ define([
 				var targetForm = change.question.formIndex;
 				
 				var question = survey.forms[sourceForm].questions[sourceItem];	// existing question
+				var newQuestion = jQuery.extend(true, {}, question);
 				var oldLocation = change.question.sourceSeq;
 				var newLocation = change.question.seq;
 				
 				// Add the question in the new location
-				length = survey.forms[targetForm].questions.push(question);			// Add the new question to the end of the array of questions
+				length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
 				change.question.itemIndex = length - 1;
 				survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
 			
@@ -619,6 +622,7 @@ define([
 					oldLocation++;
 				}
 				survey.forms[sourceForm].qSeq.splice(oldLocation, 1);
+				question.deleted = true;  
 				
 				refresh = true;
 				

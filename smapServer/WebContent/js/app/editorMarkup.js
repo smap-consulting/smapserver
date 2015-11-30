@@ -29,6 +29,8 @@ define([
          'app/globals'], 
 		function($, modernizr, lang, globals) {
 
+	var gGroupStacks = [];
+	
 	return {	
 		addOneQuestion: addOneQuestion,
 		addOneOption: addOneOption,
@@ -50,6 +52,11 @@ define([
 		
 		if(addNewButton) {
 			h[++idx] = addNewQuestionButton(false, false, questionId, formIndex, undefined, selProperty);
+		}
+		
+		// Add the group to the group stack
+		if(question.type === "begin group" && gGroupStacks[formIndex]) {
+			gGroupStacks[formIndex].groupStack.push(question.name);
 		}
 		
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
@@ -142,6 +149,8 @@ define([
 			addButtonClass,
 			locn;
 		
+		//console.log(" Group Stack: " + gGroupStacks[formIndex].groupStack.join(",") + " : Last group: " + gGroupStacks[formIndex].lastGroup);
+		
 		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
 		locn = after ? 'after' : 'before';
 		
@@ -168,10 +177,32 @@ define([
 		h[++idx] = questionId;
 		h[++idx] = '" data-findex="';
 		h[++idx] = formIndex;
-		h[++idx] = '">Add New Question'; 
-		if(formName) {
-			h[++idx] = ' to ';
-			h[++idx] = formName;
+		if(selProperty === "group") {
+			h[++idx] = '" data-groups="';
+			if(gGroupStacks[formIndex].groupStack.length > 0) {
+				h[++idx] = gGroupStacks[formIndex].groupStack[0];
+			}
+			if(gGroupStacks[formIndex].groupStack.length > 0 && gGroupStacks[formIndex].lastGroup) {
+				h[++idx] = ':';
+			}
+			if(gGroupStacks[formIndex].lastGroup) {
+				h[++idx] = gGroupStacks[formIndex].lastGroup;
+			} 
+			
+			if(topLevelForm) {
+				h[++idx] = '">End group here'; 
+			} else if(formName) {	
+				h[++idx] = '" disabled="true">';
+			} else {
+				h[++idx] = '">';
+			}
+			
+		} else {
+			h[++idx] = '">Add New Question'; 
+			if(formName) {
+				h[++idx] = ' to ';
+				h[++idx] = formName;
+			}
 		}
 		h[++idx] = '</button>';
 		h[++idx] = '</span>';
@@ -523,20 +554,30 @@ define([
 			groupButtonName,
 			selProperty = $('#selProperty').val();
 		
+		// Set the group counter for this form
+		gGroupStacks[formIndex] = {
+				groupStack: [],
+				lastGroup: undefined
+		}
+		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
 			for(i = 0; i < form.qSeq.length; i++) {
 				globals.gHasQuestions = true;
 				question = form.questions[form.qSeq[i]];
-				// Ignore the following questions
-				if(question.name === '_task_key' || 
-						question.inMeta ||
-						question.name === 'meta' || 
-						question.name === 'meta_groupEnd') {
+				
+				if(question.propertyType) {	// Ignore property type questions
 					continue;
 				}
+				
 				if(question.type === "end group") {
 					groupButtonName = question.name.substring(0, question.name.indexOf('_groupEnd'));
+					
+					// Remove the group from the group stack and set the "last group" value
+					gGroupStacks[formIndex].groupStack.pop();
+					gGroupStacks[formIndex].lastGroup = groupButtonName;
+					
+					
 					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
@@ -661,6 +702,7 @@ define([
 		globals.gHasQuestions = false;
 		globals.gNewQuestionButtonIndex = 0;
 		globals.gNewOptionButtonIndex = 0;
+
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {
 				for(i = 0; i < survey.forms.length; i++) {
@@ -671,6 +713,8 @@ define([
 				}
 			}
 		}
+		
+		gGroupStacks = [];		// save some memory
 		
 		// Get the current list of collapsed panels
 		gCollapsedPanels = [];
