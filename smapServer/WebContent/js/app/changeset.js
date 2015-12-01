@@ -348,15 +348,16 @@ define([
 			item,
 			element,
 			newItem,
-			newElement;
+			newElement,
+			newElementType;
 		
 		newItem = change.items[0];
 		if(newItem.question) {
 			newElement = newItem.question;
-			newElement.type = "question";
+			newElementType = "question";
 		} else if(newItem.option) {
 			newElement = newItem.option;
-			newElement.type = "option";
+			newElementType = "option";
 		} else if(newItem.property) {
 			newElement = newItem.property;
 		}
@@ -378,10 +379,10 @@ define([
 				if(item.language === newItem.language 
 						&& item.type === newItem.type) {		// Question or option
 					if(
-							(newElement.type === "question" && 
+							(newElementType === "question" && 
 									newElement.itemIndex === element.itemIndex &&
 									newElement.formIndex === element.formIndex) ||
-							(newElement.type === "option" && 
+							(newElementType === "option" && 
 									newElement.itemIndex === element.itemIndex &&
 									newElement.optionList === element.optionList) ) {
 						
@@ -392,7 +393,7 @@ define([
 					}
 				}
 			} else if(newItem.action === "update" && item.question) {
-				if(newElement.type === "question" && 
+				if(newElementType === "question" && 
 						newElement.itemIndex === element.itemIndex &&
 						newElement.formIndex === element.formIndex) {
 					
@@ -416,7 +417,7 @@ define([
 					
 				}
 			} else if(newItem.action === "update" && item.option) {
-				if(newElement.type === "option" && 
+				if(newElementType === "option" && 
 						newElement.itemIndex === element.itemIndex &&
 						newElement.optionList === element.optionList) {
 					
@@ -431,12 +432,12 @@ define([
 				/*
 				 * Remove any modifications to this deleted element
 				 */
-				if(newElement.type === "question"  &&
+				if(newElementType === "question"  &&
 						newElement.itemIndex === element.itemIndex &&
 						newElement.formIndex === element.formIndex) {
 					changes.splice(j,1);	// Remove this item
 					return false;
-				} else if(newElement.type === "option" &&
+				} else if(newElementType === "option" &&
 							newElement.itemIndex === element.itemIndex &&
 							newElement.optionList === element.optionList) {
 						changes.splice(j,1);	// Remove this item
@@ -603,27 +604,40 @@ define([
 				
 				var sourceForm = change.question.sourceFormIndex;
 				var sourceItem = change.question.sourceItemIndex;
-				
 				var targetForm = change.question.formIndex;
-				
-				var question = survey.forms[sourceForm].questions[sourceItem];	// existing question
-				var newQuestion = jQuery.extend(true, {}, question);
 				var oldLocation = change.question.sourceSeq;
 				var newLocation = change.question.seq;
+				var question = survey.forms[sourceForm].questions[sourceItem];
+				var name;
+				var endName;
+				var form;
 				
-				// Add the question in the new location
-				length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
-				change.question.itemIndex = length - 1;
-				survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
+				change.question.itemIndex = moveQuestion(survey, question, 
+						targetForm,
+						newLocation,
+						sourceForm,
+						oldLocation);	
 			
-				// Remove the question from the old location	
-				// The old location may have changed if the new location was inserted before it
-				if(newLocation < oldLocation && sourceForm === targetForm) {
-					oldLocation++;
+				if(question.type === "begin group") {	// Move all the group members
+					name = question.name;
+					endName = name + "_groupEnd";
+					form = survey.forms[sourceForm];
+					
+					
+					for(i = oldLocation + 1; i < form.qSeq.length; i++) {
+						
+						moveQuestion(survey, form.questions[form.qSeq[i]],
+								targetForm,
+								++newLocation,
+								sourceForm,
+								++oldLocation);
+						
+						if(form.questions[form.qSeq[i]].name === endName) {
+							break;
+						}
+					}
+					
 				}
-				survey.forms[sourceForm].qSeq.splice(oldLocation, 1);
-				question.deleted = true;  
-				
 				refresh = true;
 				
 			} else if(change.action === "add") {			
@@ -692,6 +706,29 @@ define([
 		return refresh;	
 	}
 	
+	/*
+	 * Move a question
+	 */
+	function moveQuestion(survey, question, targetForm, newLocation, sourceForm, oldLocation) {
+		
+		var newQuestion = jQuery.extend(true, {}, question),
+			itemIndex;
+		
+		// Add the question in the new location
+		length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
+		itemIndex = length - 1;
+		survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
+	
+		// Remove the question from the old location	
+		// The old location may have changed if the new location was inserted before it
+		if(newLocation < oldLocation && sourceForm === targetForm) {
+			oldLocation++;
+		}
+		survey.forms[sourceForm].qSeq.splice(oldLocation, 1);
+		question.deleted = true;  
+	
+		return itemIndex;
+	}
 	/*
 	 * Apply a change to the "end group" of a group
 	 */

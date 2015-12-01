@@ -187,7 +187,7 @@ define([
 			sourceSeq,
 			
 			survey = globals.model.survey,
-			name,
+			question,
 			change;
 		
 
@@ -201,7 +201,7 @@ define([
 		
 		// Get the old sequence of the question
 		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
-		name = survey.forms[sourceFormIndex].questions[sourceItemIndex].name;
+		question = survey.forms[sourceFormIndex].questions[sourceItemIndex];
 		sourceFormId = survey.forms[sourceFormIndex].id;										// Used to verify that a question has not been moved by another user
 
 		// Create changeset to be applied on save	
@@ -213,7 +213,9 @@ define([
 					seq: seq,
 					sourceSeq: sourceSeq,
 					sourceFormId: sourceFormId,
-					name: name,
+					name: question.name,
+					type: question.type,
+					path: question.path,
 					
 					// Helper values 
 					sourceFormIndex: sourceFormIndex,

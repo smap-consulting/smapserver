@@ -1508,7 +1508,7 @@ public class SurveyManager {
 			} else if(action.equals("delete")) {
 				qm.delete(connectionSD, sId, questions);
 			} else if(action.equals("move")) {
-				qm.move(connectionSD, sId, questions);
+				qm.moveQuestions(connectionSD, sId, questions);
 			} else {
 				log.info("Unkown action: " + action);
 			}

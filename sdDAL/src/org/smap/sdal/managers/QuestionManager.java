@@ -282,14 +282,165 @@ public class QuestionManager {
 		
 	}
 	
+	/*
+	 * Move Questions
+	 * If the question type is a begin group or end group then all the questions within the group will also be moved
+	 */
+	public void moveQuestions(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
+		
+		String newGroupPath;
+		String oldGroupPath;
+		String newPath;
+		ArrayList<Question> questionsInGroup = null;
+		
+		
+		for(Question q : questions) {
+		
+			System.out.println("Move a question: " + q.name + " : " + q.type);
+			newPath = getNewPath(sd, q);
+
+			if(q.type.equals("begin group")) {
+				oldGroupPath = q.path;
+				newGroupPath = newPath;
+				
+				// Move every question in this group
+				questionsInGroup = getQuestionsInGroup(sd, q);
+				for(Question groupQuestion : questionsInGroup) {
+					newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
+					System.out.println("----- New path: " + newPath);
+					moveAQuestion(sd, sId, groupQuestion, newPath);
+				}
+			} else if(q.type.equals("end group")) {
+				
+			} else {
+				
+				moveAQuestion(sd, sId, q, newPath);
+			}
+		}
+	}
+	
+	/*
+	 * Get all the questions in a group
+	 */
+	private ArrayList<Question> getQuestionsInGroup(Connection sd, Question q) throws SQLException {
+		
+		ArrayList<Question> questions = new ArrayList<Question> ();
+		int seq;
+		
+		PreparedStatement pstmt = null;
+		String sql = "select qname, path, qType, seq from question q where f_id = ? and path like ? order by seq;";
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, q.sourceFormId);
+			pstmt.setString(2, q.path + '%');
+			
+			log.info("SQL Get questions in group: " + pstmt.toString());
+			
+			ResultSet rs = pstmt.executeQuery();
+			seq = q.seq;											// The target sequence
+			System.out.println("Getting questions from group");
+			while(rs.next()) {
+				
+				Question groupQuestion = new Question();
+				groupQuestion.sourceFormId = q.sourceFormId;
+				groupQuestion.fId = q.fId;
+				groupQuestion.seq = seq++;
+				
+				groupQuestion.name = rs.getString(1);
+				groupQuestion.path =  rs.getString(2);
+				groupQuestion.type = rs.getString(3);
+				groupQuestion.sourceSeq = rs.getInt(4);
+				
+				questions.add(groupQuestion);
+				System.out.println(" =====> " + rs.getString(1) + " : " + rs.getString(2) + " : " + rs.getString(3));
+				
+				
+			}
+		} catch(SQLException e) {
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} 
+		finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return questions;
+		
+	}
+	
+	/*
+	 * Get the new path of a question being moved
+	 */
+	private String getNewPath(Connection sd, Question q) throws SQLException {
+		
+		String path = null;
+		boolean isInFrontOfRelatedQuestion = false;
+		
+		PreparedStatement pstmtGetNewPath = null;
+		String sqlGetNewPath = "select path, qType from question q where f_id = ? and seq = ?;";
+		
+		/*
+		 * Get the new path from the question before where this question is being moved which is in q.seq
+		 * However if the question is being moved to the beginning of the form it will be the question after this
+		 * These two cases result in different calculations for the path when this related queston is a group
+		 *  When the related question is before the new question and it is a group then the new path extends the path of the group
+		 *  When the related question is after the new question and it is a group then the path of the new question is the same as that of the group
+		 *  When the related question is not a group then the new question gets the path of the related question
+		 */
+		try {
+			int relatedSeq = q.seq;	
+			if(relatedSeq > 0) {
+				relatedSeq--;						// Sequence of question in front of the new location
+			} else {
+				isInFrontOfRelatedQuestion = true;
+			}
+			pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
+			pstmtGetNewPath.setInt(1, q.fId);
+			pstmtGetNewPath.setInt(2, relatedSeq);
+			
+			log.info("SQL Get new path: " + pstmtGetNewPath.toString());
+			
+			ResultSet rs = pstmtGetNewPath.executeQuery();
+			if(rs.next()) {
+				path = rs.getString(1);
+				String type = rs.getString(2);
+				if(type.equals("begin group") && !isInFrontOfRelatedQuestion) {
+					// Add question to the group
+					path += "/" + q.name;		
+				} else {
+					// Set the path as per the related question
+					String pathBase = path.substring(0, path.lastIndexOf('/'));
+					path = pathBase + "/" + q.name; 
+				}
+				
+				
+			}
+		} catch(SQLException e) {
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} 
+		finally {
+			try {if (pstmtGetNewPath != null) {pstmtGetNewPath.close();}} catch (SQLException e) {}
+		}
+		
+		return path;
+		
+	}
 	
 	/*
 	 * Move a question
+	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
+	 *  question creation
 	 */
-	public void move(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
-		
-		String path = null;
-		boolean accountForGroup = false;
+	public void moveAQuestion(Connection sd, int sId, Question q, String path ) throws Exception {
 		
 		PreparedStatement pstmtMoveWithin = null;
 		String sqlMoveWithin = "update question set "
@@ -305,95 +456,65 @@ public class QuestionManager {
 		PreparedStatement pstmtMovedForward = null;
 		String sqlMovedForward = "update question set seq = seq - 1 where f_id = ? and seq > ? and seq <= ?;";
 		
-		PreparedStatement pstmtGetNewPath = null;
-		String sqlGetNewPath = "select path, qType from question q where f_id = ? and seq = ?;";
 		
 		try {
 			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
 			
-			for(Question q : questions) {
 				
-				// Get the new path
-				if(!q.type.equals("end group")) {
-					int relatedSeq = q.seq;		// Get the path from the question before where this question is being moved
-					if(relatedSeq > 0) {
-						relatedSeq--;			// If the question is being moved to the beginning of the form then use the path of the existing first question
-					} else {
-						accountForGroup = true;
-					}
-					pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
-					pstmtGetNewPath.setInt(1, q.fId);
-					pstmtGetNewPath.setInt(2, relatedSeq);
-					
-					log.info("SQL Get new path: " + pstmtGetNewPath.toString());
-					
-					ResultSet rs = pstmtGetNewPath.executeQuery();
-					if(rs.next()) {
-						path = rs.getString(1);
-						String type = rs.getString(2);
-						if(type.equals("begin group") && accountForGroup) {
-							path += "/" + q.name;
-						} else {
-							String pathBase = path.substring(0, path.lastIndexOf('/'));
-							path = pathBase + "/" + q.name; 
-						}
-						
-						
-					}
-				}
-				boolean moveWithinList = q.fId == q.sourceFormId;
-					
-				if(moveWithinList) {
-					// Update sequence numbers of other options
-					if(q.seq > q.sourceSeq) { // Moved forward in list
-						
-						pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
-						pstmtMovedForward.setInt(1,q.fId);
-						pstmtMovedForward.setInt(2, q.sourceSeq);
-						pstmtMovedForward.setInt(3, q.seq);
-						
-						log.info("Moving forward: " + pstmtMovedForward.toString());
-						pstmtMovedForward.executeUpdate();
-					} else {	// Moved backward in list
-						
-						pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
-						pstmtMovedBack.setInt(1, q.fId);
-						pstmtMovedBack.setInt(2, q.seq);
-						pstmtMovedBack.setInt(3, q.sourceSeq);
-						
-						log.info("Moving back: " + pstmtMovedBack.toString());
-						pstmtMovedBack.executeUpdate();						
-					}
-					
-					// Move the option
-					pstmtMoveWithin.setInt(1, q.seq );
-					pstmtMoveWithin.setString(2, path);
-					pstmtMoveWithin.setInt(3, q.fId );
-					pstmtMoveWithin.setString(4, q.name);
-					pstmtMoveWithin.setInt(5, q.sourceSeq );
-					
-					log.info("Move option within same list: " + pstmtMoveWithin.toString());
-					int count = pstmtMoveWithin.executeUpdate();
-					if(count == 0) {
-						log.info("Error: Question already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-					}
-					
 
-				} else {
-					// Insert into the target form
-					ArrayList<Question> targetQuestions = new ArrayList<Question> ();
-					targetQuestions.add(q);
-					save(sd, sId, targetQuestions);
+			boolean moveWithinList = q.fId == q.sourceFormId;
 					
-					// Remove from the source form
-					ArrayList<Question> sourceQuestions = new ArrayList<Question> ();
-					q.fId = q.sourceFormId;
-					sourceQuestions.add(q);
-					delete(sd, sId, sourceQuestions);
+			if(moveWithinList) {
+				// Update sequence numbers of other options
+				if(q.seq > q.sourceSeq) { // Moved forward in list
+					
+					pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
+					pstmtMovedForward.setInt(1,q.fId);
+					pstmtMovedForward.setInt(2, q.sourceSeq);
+					pstmtMovedForward.setInt(3, q.seq);
+					
+					log.info("Moving forward: " + pstmtMovedForward.toString());
+					pstmtMovedForward.executeUpdate();
+				} else {	// Moved backward in list
+					
+					pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
+					pstmtMovedBack.setInt(1, q.fId);
+					pstmtMovedBack.setInt(2, q.seq);
+					pstmtMovedBack.setInt(3, q.sourceSeq);
+					
+					log.info("Moving back: " + pstmtMovedBack.toString());
+					pstmtMovedBack.executeUpdate();						
 				}
-					
+				
+				// Move the option
+				pstmtMoveWithin.setInt(1, q.seq );
+				pstmtMoveWithin.setString(2, path);
+				pstmtMoveWithin.setInt(3, q.fId );
+				pstmtMoveWithin.setString(4, q.name);
+				pstmtMoveWithin.setInt(5, q.sourceSeq );
+				
+				log.info("Move option within same list: " + pstmtMoveWithin.toString());
+				int count = pstmtMoveWithin.executeUpdate();
+				if(count == 0) {
+					log.info("Error: Question already modified");
+					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+				}
+				
+
+			} else {
+				// Insert into the target form
+				ArrayList<Question> targetQuestions = new ArrayList<Question> ();
+				targetQuestions.add(q);
+				save(sd, sId, targetQuestions);
+				
+				// Remove from the source form
+				ArrayList<Question> sourceQuestions = new ArrayList<Question> ();
+				q.fId = q.sourceFormId;
+				sourceQuestions.add(q);
+				delete(sd, sId, sourceQuestions);
 			}
+				
+		
 			
 			
 		} catch(SQLException e) {
@@ -406,64 +527,6 @@ public class QuestionManager {
 			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
-			try {if (pstmtGetNewPath != null) {pstmtGetNewPath.close();}} catch (SQLException e) {}
-		}	
-		
-	}
-	
-	/*
-	 * Move a question
-	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
-	 *  question creation
-	 */
-	public void moveOld(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
-		
-		
-		PreparedStatement pstmtGetPath = null;
-		PreparedStatement pstmt = null;
-		String sql = "update question set "
-						+ "f_id = ?, "
-						+ "seq = ? "
-					+ "where qname = ? "
-						+ "and seq = ? "	// Ensure question has not been moved by someone else
-						+ "and f_id = ?"	// Ensure question has not been moved by someone else
-						+ "and q_id in " 
-							// Ensure user is authorised to access this question;";
-							+ " (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	
-
-		try {
-	
-			pstmt = sd.prepareStatement(sql);
-			
-			for(Question q : questions) {
-				
-				
-				// Update the question details
-				pstmt.setInt(1, q.fId );
-				pstmt.setInt(2, q.seq );
-				pstmt.setString(3, q.name );
-				pstmt.setInt(4, q.sourceSeq);
-				pstmt.setInt(5, q.sourceFormId);
-				pstmt.setInt(6, sId);
-				
-				log.info("Move question: " + pstmt.toString());
-				int count = pstmt.executeUpdate();
-				if(count == 0) {
-					log.info("Error: Question already modified");
-					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-				}
-				
-			}
-			
-			
-		} catch(SQLException e) {
-			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
-				log.log(Level.SEVERE,"Error", e);
-			}
-			throw e;
-		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}	
 		
 	}
