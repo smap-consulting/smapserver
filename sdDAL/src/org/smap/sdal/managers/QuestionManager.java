@@ -311,9 +311,12 @@ public class QuestionManager {
 					moveAQuestion(sd, sId, groupQuestion, newPath);
 				}
 			} else if(q.type.equals("end group")) {
+
+				newPath = newPath.substring(0, newPath.indexOf("_groupEnd"));		// Remove the "groupEnd" to get the path of the group
+				updatePathOfQuestionsBetween(sd, q, newPath);
 				
-			} else {
-				
+				moveAQuestion(sd, sId, q, newPath);
+			} else {	
 				moveAQuestion(sd, sId, q, newPath);
 			}
 		}
@@ -370,6 +373,83 @@ public class QuestionManager {
 		}
 		
 		return questions;
+		
+	}
+	
+	/*
+	 * Get all the questions in a group
+	 */
+	private void updatePathOfQuestionsBetween(Connection sd, Question q, String newBasePath) throws SQLException {
+		
+		int startSeq;
+		int endSeq;
+		boolean addToGroup;
+		String rootPath = newBasePath.substring(0, newBasePath.lastIndexOf('/'));
+		String groupName = newBasePath.substring(newBasePath.lastIndexOf('/') + 1);
+		int rootPathLength = rootPath.length();
+		
+		PreparedStatement pstmt = null;
+		String sql = "select q_id, path from question q where f_id = ?  and seq > ? and seq < ?  order by seq asc;";
+		
+		
+		String sqlUpdatePath = "update question set path = ? where q_id = ?;";
+		PreparedStatement pstmtUpdatePath = sd.prepareStatement(sqlUpdatePath);
+		
+		try {
+			
+			if(q.seq > q.sourceSeq) {
+				startSeq = q.sourceSeq;
+				endSeq = q.seq;
+				addToGroup = true;
+			} else {
+				startSeq = q.seq - 1;
+				endSeq = q.sourceSeq;
+				addToGroup = false;			// That is remove from the group
+			}
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, q.sourceFormId);
+			pstmt.setInt(2, startSeq);
+			pstmt.setInt(3, endSeq);
+			
+			log.info("SQL Get questions Between: " + pstmt.toString());
+			
+			ResultSet rs = pstmt.executeQuery();
+			
+			System.out.println("Getting questions from group");
+			while(rs.next()) {
+				
+				int qId = rs.getInt(1);
+				String oldPath = rs.getString(2);
+				
+				String newPath = null;
+				if(addToGroup) {
+					newPath = newBasePath + oldPath.substring(rootPathLength);
+				} else {
+					System.out.println("Remove group from the path: " + groupName);
+					newPath = oldPath.replace("/" + groupName + "/" , "/");		// Remove the group from the path
+				}
+				System.out.println(" =====> " + oldPath + " => " + newPath);
+				
+				pstmtUpdatePath.setString(1, newPath);
+				pstmtUpdatePath.setInt(2, qId);
+				log.info("SQL: Update path when changing end location of question: " + pstmtUpdatePath.toString());
+				pstmtUpdatePath.executeUpdate();
+				
+			}
+		} catch(SQLException e) {
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} 
+		finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+		}
+		
+		return;
 		
 	}
 	
@@ -493,7 +573,7 @@ public class QuestionManager {
 				pstmtMoveWithin.setString(4, q.name);
 				pstmtMoveWithin.setInt(5, q.sourceSeq );
 				
-				log.info("Move option within same list: " + pstmtMoveWithin.toString());
+				log.info("Move question within same list: " + pstmtMoveWithin.toString());
 				int count = pstmtMoveWithin.executeUpdate();
 				if(count == 0) {
 					log.info("Error: Question already modified");

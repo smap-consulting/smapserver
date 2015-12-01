@@ -608,7 +608,7 @@ define([
 				var oldLocation = change.question.sourceSeq;
 				var newLocation = change.question.seq;
 				var question = survey.forms[sourceForm].questions[sourceItem];
-				var name;
+				var name = question.name;
 				var endName;
 				var form;
 				

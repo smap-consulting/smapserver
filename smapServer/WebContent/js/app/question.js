@@ -128,7 +128,8 @@ define([
 			sourceSeq,
 			sourceFormId,
 			groupEndName,
-			endGroupData;
+			endGroupData,
+			question;
 		
 		if(availableGroups.length > 1) {
 			alert("Select group: " + availableGroups.join("-"));
@@ -137,14 +138,19 @@ define([
 			group = availableGroups[0];
 			alert("Moving group: " + group);
 		}
-		groupEndName = group + "_groupEnd",
+		groupEndName = group + "_groupEnd";
 		
 		// Get the sequence of the question just after the new location of the end group
 		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);
+		if(locn === "after") {
+			++seq;
+		} 
 		
 		// Get the current sequence of the end group
 		endGroupData = getEndGroup(groupEndName, survey.forms[beforeFormIndex]);
 		sourceFormId = survey.forms[beforeFormIndex].id;	
+		
+		question = survey.forms[beforeFormIndex].questions[endGroupData.index];
 		
 		// Create changeset to be applied on save		
 		change = {
@@ -155,6 +161,8 @@ define([
 						sourceSeq: endGroupData.seq,
 						sourceFormId: sourceFormId,
 						name: groupEndName,
+						type: question.type,
+						path: question.path,
 						
 						// Helper values 
 						sourceFormIndex: beforeFormIndex,
