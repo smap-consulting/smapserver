@@ -566,9 +566,7 @@ define([
 										}
 								});
 								question.name = "the_geom";	
-							} else if (property.newVal == "begin group") {
-								refresh = true;
-							}
+							} 
 						} else if(property.prop === "name") {
 							// update the end group name
 							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {

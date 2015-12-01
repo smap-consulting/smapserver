@@ -572,17 +572,18 @@ define([
 				
 				if(question.type === "end group") {
 					groupButtonName = question.name.substring(0, question.name.indexOf('_groupEnd'));
-					
+
 					// Remove the group from the group stack and set the "last group" value
 					gGroupStacks[formIndex].groupStack.pop();
 					gGroupStacks[formIndex].lastGroup = groupButtonName;
-					
 					
 					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
 					
+					// The next "Add after" button should point to the group that just finished
+					lastRealQuestionId = "question" + formIndex + "_" + getSequenceQuestionByName(groupButtonName, form);
 					continue;
 				}
 				if(question.type === "end repeat") {
@@ -603,6 +604,21 @@ define([
 		return h.join("");
 	}
 
+	/*
+	 * Get the display sequence of the question by name
+	 */
+	function getSequenceQuestionByName(name, form) {
+		var i;
+		
+		for(i = 0; i < form.qSeq.length; i++) {
+			if(form.questions[form.qSeq[i]].name === name) {
+				return i;
+			}
+		}
+		alert("Could not find question with name: " + name);
+		return 0;
+	}
+	
 	/*
 	 * Add the array containing the question sequence
 	 * This will initially be the same as the order of questions but as new questions are added in the editor
