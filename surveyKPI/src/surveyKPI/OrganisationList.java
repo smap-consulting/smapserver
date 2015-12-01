@@ -619,21 +619,26 @@ public class OrganisationList extends Application {
 			pstmt3 = connectionSD.prepareStatement(sql3);	
 			pstmt4 = connectionSD.prepareStatement(sql4);	
 
-			log.info("Move Users");
 			// Move Users
 			for(int i = 0; i < uArray.size(); i++) {
 				pstmt.setInt(1, orgId);
 				pstmt.setInt(2, uArray.get(i).id);
-				log.info("Move User: " + sql + ":" + orgId + " : " + uArray.get(i).id);
+
+				log.info("Move User: " + pstmt.toString());
 				pstmt.executeUpdate();
+				
+				log.info("userevent: " + request.getRemoteUser() + " : move user : " + uArray.get(i).id + " to: " + orgId);
 			}
 			
 			// Move Projects
 			for(int i = 0; i < pArray.size(); i++) {
 				pstmt3.setInt(1, orgId);
 				pstmt3.setInt(2, pArray.get(i).id);
-				log.info("Move User: " + sql3 + ":" + orgId + " : " + pArray.get(i).id);
+				
+				log.info("Move Project: " + pstmt3.toString());
 				pstmt3.executeUpdate();
+				
+				log.info("userevent: " + request.getRemoteUser() + " : move project : " + pArray.get(i).id + " to: " + orgId);
 			}
 			
 			// Remove projects from users if they are in a different organisation
@@ -643,7 +648,7 @@ public class OrganisationList extends Application {
 				
 					pstmt2.setInt(1, uArray.get(i).id);
 					pstmt2.setInt(2, orgId);
-					log.info("Delete Links to projects: " + sql2 + " : " + uArray.get(i).id);
+					log.info("Delete Links to projects: " + pstmt2.toString());
 					pstmt2.executeUpdate();
 				}
 			}
@@ -653,11 +658,11 @@ public class OrganisationList extends Application {
 				
 				pstmt4.setInt(1, pArray.get(i).id);
 				pstmt4.setInt(2, orgId);
-				log.info("Delete Links to users: " + sql4 + " : " + pArray.get(i).id);
+				log.info("Delete Links to users: " + pstmt4.toString());
 				pstmt4.executeUpdate();
 
 			}
-	
+			
 			response = Response.ok().build();
 			connectionSD.commit();
 				

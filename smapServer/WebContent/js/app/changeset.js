@@ -360,6 +360,7 @@ define([
 			newElementType = "option";
 		} else if(newItem.property) {
 			newElement = newItem.property;
+			newElementType = newElement.type;
 		}
 			
 		for(j = 0; j < changes.length; j++) {
@@ -565,7 +566,9 @@ define([
 										}
 								});
 								question.name = "the_geom";	
-							} 
+							} else if (property.newVal == "begin group") {
+								refresh = true;
+							}
 						} else if(property.prop === "name") {
 							// update the end group name
 							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
@@ -638,7 +641,7 @@ define([
 					}
 					
 				}
-				refresh = true;
+				refresh = true;		// Do a complete refresh after moving questions
 				
 			} else if(change.action === "add") {			
 				length = survey.forms[change.question.formIndex].questions.push(change.question);			// Add the new question to the end of the array of questions
@@ -646,7 +649,7 @@ define([
 				survey.forms[change.question.formIndex].qSeq.splice(change.question.seq, 0, length - 1);	// Update the question sequence array
 			
 				if(change.question.firstQuestion) {
-					refresh = true;		// Refresh all the questions, actually there is only one so why not
+					refresh = true;		// Refresh all the questions when adding the first question to a form
 				} else if(change.question.type === "end group") {
 					refresh = true;
 				}

@@ -718,8 +718,8 @@ define([
 		
 		// Get the current list of collapsed panels
 		gCollapsedPanels = [];
-		$('.in').each(function(){
-			gCollapsedPanels.push($(this).attr("id"));
+		$('.collapse.in', '#formList').each(function(){
+			gCollapsedPanels.push($(this).closest('li').attr("id"));
 		});
 		
 		// Update the form view
@@ -727,7 +727,7 @@ define([
 		
 		// Restore collapsed panels
 		for(i = 0; i < gCollapsedPanels.length; i++) {
-			$('#' + gCollapsedPanels[i]).addClass("in");
+			$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
 		}
 		
 		
