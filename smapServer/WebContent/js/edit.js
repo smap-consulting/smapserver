@@ -457,19 +457,19 @@ function setupQuestionTypeDialog() {
 		idx = -1,
 		count;
 	
-	count = 0;
+	h[++idx] = '<div class="row margin-bottom">';
 	for(i = 0; i < types.length; i++) {
 		
 		if(types[i].canSelect) {
-			if((count % 4) === 0) {
-				if(count > 0) {
-					h[++idx] = '</div>';			// End of a row
-				}
-				h[++idx] = '<div class="row margin-bottom">';		// Start of a row
-			}
+			//if((count % 4) === 0) {
+			//	if(count > 0) {
+			//		h[++idx] = '</div>';			// End of a row
+			//	}
+			//	h[++idx] = '<div class="row margin-bottom">';		// Start of a row
+			//}
 			
-			h[++idx] = '<div class="col-md-3 col-xs-2">';	// Start col
-			h[++idx] = '<button type="button" class="btn btn-large question_type_sel full_width_btn" value="';
+			h[++idx] = '<div class="col-md-6 col-xs-12" style="height:65px;">';	
+			h[++idx] = '<button type="button" class="btn btn-large btn-default question_type_sel full_width_btn" value="';
 			h[++idx] = types[i].type;
 			h[++idx] = '">';
 			if(types[i].glyphicon) {
@@ -488,12 +488,13 @@ function setupQuestionTypeDialog() {
 			h[++idx] = types[i].name;
 			h[++idx] = '</button>';
 			h[++idx] = '</div>';		// End col
+
 			
-			count++;
+			//count++;
 		}
 	}	
-	
 	h[++idx] = '</div>';	// End of a row
+	//h[++idx] = '</div>';	// End of a row
 	
 	$elem.html(h.join(''));
 	

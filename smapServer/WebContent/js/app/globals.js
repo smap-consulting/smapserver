@@ -351,9 +351,9 @@ define(function() {
 				source: "user"
 			},
 			{
-				name: "GPS Point",
-				type: "geopoint",
-				glyphicon: "map-marker",
+				name: "Barcode",
+				type: "barcode",
+				glyphicon: "barcode",
 				canSelect: true,
 				visible: true,
 				source: "user"
@@ -383,14 +383,6 @@ define(function() {
 				source: "user"
 			},
 			{
-				name: "Barcode",
-				type: "barcode",
-				glyphicon: "barcode",
-				canSelect: true,
-				visible: true,
-				source: "user"
-			},
-			{
 				name: "Integer",
 				type: "int",
 				text: "#",
@@ -402,6 +394,14 @@ define(function() {
 				name: "Decimal",
 				type: "decimal",
 				text: "#.#",
+				canSelect: true,
+				visible: true,
+				source: "user"
+			},
+			{
+				name: "GPS Point",
+				type: "geopoint",
+				glyphicon: "map-marker",
 				canSelect: true,
 				visible: true,
 				source: "user"

@@ -1062,7 +1062,7 @@ define([
 		return sqlCheck.test(val);	
 	}
 	
-function isValidODKoptionName(val) {
+	function isValidODKOptionName(val) {
 		
 		var sqlCheck = /^[A-Za-z_:][A-Za-z0-9_\-\.:]*$/
 		return sqlCheck.test(val);	
@@ -1205,7 +1205,7 @@ function isValidODKoptionName(val) {
 		// Check for invalid characters
 		if(isValid) {
 			if(itemType === "question") {
-				isValid = isValidODKQuestionName(val)
+				isValid = isValidODKQuestionName(val);
 			
 				if(!isValid) {
 					addValidationError(
@@ -1218,7 +1218,7 @@ function isValidODKoptionName(val) {
 			
 				}
 			} else {
-				isValid = isValidODKOptionName(val)
+				isValid = isValidODKOptionName(val);
 				
 				if(!isValid) {
 					addValidationError(

@@ -394,8 +394,8 @@ define([
 			h[++idx] = '</div>';		// End of row
 
 		} else {
-			h[++idx] = '<textarea class="labelProp" placeholder="';
-			h[++idx] = selLabel;
+			h[++idx] = '<textarea class="labelProp has_tt" title="';
+			h[++idx] = type === "option" ? "Choice Label" : selLabel;
 			h[++idx] = '" data-prop="';
 			h[++idx] = selProperty;
 			h[++idx] = '"';
@@ -489,9 +489,9 @@ define([
 		}
 		
 		h[++idx] = '<table class="table">';
-		h[++idx] = '<td class="q_name_col"><input class="oname form-control" value="';
+		h[++idx] = '<td class="q_name_col"><input class="oname form-control has_tt" value="';
 		h[++idx] = option.value;
-		h[++idx] = '" type="text"></td>';
+		h[++idx] = '" type="text" title="Choice Value"></td>';
 		h[++idx] = addFeaturedProperty(option, formIndex, id, list_name, qname);
 		
 		// Add button bar

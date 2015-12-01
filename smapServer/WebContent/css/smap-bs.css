@@ -271,7 +271,11 @@ tr.deleted td a {
 }
 
 .option-controls {
-	padding: 20px;
+	padding: 2px;
+}
+
+li .panel-body {
+	padding: 5px;
 }
 
 /*
