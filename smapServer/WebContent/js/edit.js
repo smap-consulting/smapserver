@@ -291,7 +291,6 @@ $(document).ready(function() {
 		});
 	});
 	
-	// Add responses to events
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
@@ -745,6 +744,9 @@ function respondToEvents($context) {
 		}
 		
 		respondToEvents($context);				// Add events on to the altered html
+		if($context.attr("id") !== "formList") {
+			respondToEvents($context.prev());		// Add events on the "insert before" button
+		}
 		$context.find('input').focus();			// Set focus to the new question
 		
 		/*
@@ -777,6 +779,9 @@ function respondToEvents($context) {
 		
 		$context = question.addOption($this, oId, locn, list_name, fId, qname);
 		respondToEvents($context);				// Add events on to the altered html
+		if($context.attr("id") !== "formList") {
+			respondToEvents($context.prev());		// Add events on the "insert before" button
+		}
 		$context.find('input').focus();			// Set focus to the new option
 		
 		/*
@@ -801,7 +806,8 @@ function respondToEvents($context) {
 	// Select types
 	$context.find('.question_type').off().click(function() {
 		
-		var $questionElement = $(this).closest('li'),
+		var $this = $(this),
+			$questionElement = $this.closest('li'),
 			published,
 			survey = globals.model.survey,
 			name;
@@ -812,6 +818,8 @@ function respondToEvents($context) {
 		published = survey.forms[gFormIndex].questions[gItemIndex].published;
 		if(published) {
 			alert("You cannot change the type or name of a question that has already been published");
+		} else if($this.hasClass("disabled")) {
+			alert("You cannot change the type of a question that has an invalid name");
 		} else {
 			$('.question_type_sel', '#typeModalButtonGrp').off().click(function(){
 				var type = $(this).val();

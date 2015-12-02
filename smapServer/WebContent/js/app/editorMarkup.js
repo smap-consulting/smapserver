@@ -48,6 +48,7 @@ define([
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
+		console.log("-- Add question: " + questionId);
 		selProperty = selProperty || $('#selProperty').val();
 		
 		if(addNewButton) {
@@ -148,6 +149,8 @@ define([
 			idx = -1,
 			addButtonClass,
 			locn;
+		
+		console.log("Add new question button: " + questionId);
 		
 		//console.log(" Group Stack: " + gGroupStacks[formIndex].groupStack.join(",") + " : Last group: " + gGroupStacks[formIndex].lastGroup);
 		
@@ -578,12 +581,27 @@ define([
 					gGroupStacks[formIndex].lastGroup = groupButtonName;
 					
 					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
+					
+					// Add a dummy dom entry for this end group
+
+					h[++idx] = '<li style="display:none;" id="';
+					h[++idx] = "question" + formIndex + "_" + form.qSeq[i];
+					h[++idx] = '"';
+					h[++idx] = ' data-fid="';
+					h[++idx] = formIndex;
+					h[++idx] = '" data-id="';
+					h[++idx] = form.qSeq[i];
+					h[++idx] = '"></li>';
+					
+					// End the form
 					h[++idx] = '</ul>';
 					h[++idx] = '</div>';
 					h[++idx] = '</li>';
 					
 					// The next "Add after" button should point to the group that just finished
-					lastRealQuestionId = "question" + formIndex + "_" + getSequenceQuestionByName(groupButtonName, form);
+					//lastRealQuestionId = "question" + formIndex + "_" + getIndexQuestionByName(groupButtonName, form);
+					lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
+					//console.log("Add: " + question.type + " : " + lastRealQuestionId);
 					continue;
 				}
 				if(question.type === "end repeat") {
@@ -592,6 +610,7 @@ define([
 				lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
 				globals.hasQuestions = true;
 				h[++idx] = addOneQuestion(question, formIndex, form.qSeq[i], true, selProperty);
+				//console.log("Add: " + question.type + " : " + lastRealQuestionId);
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
@@ -607,12 +626,12 @@ define([
 	/*
 	 * Get the display sequence of the question by name
 	 */
-	function getSequenceQuestionByName(name, form) {
+	function getIndexQuestionByName(name, form) {
 		var i;
 		
 		for(i = 0; i < form.qSeq.length; i++) {
 			if(form.questions[form.qSeq[i]].name === name) {
-				return i;
+				return form.qSeq[i];
 			}
 		}
 		alert("Could not find question with name: " + name);

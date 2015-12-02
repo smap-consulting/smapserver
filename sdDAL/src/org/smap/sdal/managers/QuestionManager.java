@@ -215,7 +215,9 @@ public class QuestionManager {
 				pstmtInsertQuestion.executeUpdate();
 				
 				// Set the labels
-				UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
+				if(q.path != null && q.path.trim().length() > 0) {
+					UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
+				}
 				
 				// If this is a begin repeat then create a new form
 				if(q.type.equals("begin repeat")) {
@@ -737,7 +739,7 @@ public class QuestionManager {
 				pstmtInsertOption.executeUpdate();
 				
 				// Set the labels 
-				if (updateLabels) {
+				if (updateLabels && path != null && path.trim().length() > 0) {
 					UtilityMethodsEmail.setLabels(sd, sId, path, o.labels, "");
 				}
 			}

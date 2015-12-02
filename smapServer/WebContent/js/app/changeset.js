@@ -652,6 +652,8 @@ define([
 					refresh = true;
 				}
 				
+				refresh = true;			// DEBUG - remove after fixing update of html
+				
 			} else if(change.action === "delete") {
 				var form = survey.forms[change.question.formIndex];
 				var question = form.questions[change.question.itemIndex];
@@ -808,13 +810,18 @@ define([
 				}
 			}
 		} else if(change.changeType === "question") {
+			
+			var form = survey.forms[change.question.formIndex];
+			
 			if(change.action === "add") {
+				var preceedingQuestion = form.questions[form.qSeq[change.question.seq-1]];
 				if(change.question.locn === "after") {
 					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));			
 				} else {
 					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));
 				}
 				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
+				
 			} else if(change.action === "delete") {
 				change.question.$deletedElement.prev().remove();	// Remove the add before button
 				change.question.$deletedElement.remove();
@@ -1138,10 +1145,13 @@ define([
 	
 		$changedRow.find('.error-msg').html(msg);	// Add message
 		
+		
 		if(hasError) {
 			$changedRow.addClass("error");
+			$changedRow.find('.question_type').addClass("disabled");
 		} else {
-			$changedRow.removeClass("error");		
+			$changedRow.removeClass("error");	
+			$changedRow.find('.question_type').removeClass("disabled");
 		}
 	}
 	

@@ -313,6 +313,9 @@ li .panel-body {
 	background-color: #fff;
 	height: 60px;
 }
+.question_type.disabled {
+	opacity: 0.4;
+}
 
 .question_type:hover {
 	background-color: #1556be;

@@ -659,7 +659,7 @@ public class UtilityMethodsEmail {
 				System.out.println("     hint: " + l.hint);
 				
 				// Update text
-				if(l.text != null) {
+				if(l.text != null ) {
 					pstmt.setString(3, path + ":label");
 					pstmt.setString(4, "none");
 					pstmt.setString(5, l.text);
