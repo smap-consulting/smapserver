@@ -661,6 +661,7 @@ define([
 				question.deleted = true;	// Mark deleted
 				if(question.type === "begin group") {
 					applyToEndGroup(form, question.name, change.question.seq, "delete");
+					refresh = true;
 				}
 			} else {
 				console.log("Unknown action: " + change.action);
@@ -1148,10 +1149,14 @@ define([
 		
 		if(hasError) {
 			$changedRow.addClass("error");
-			$changedRow.find('.question_type').addClass("disabled");
+			if(itemType === "question") {
+				$changedRow.find('.question_type').addClass("disabled");
+			}
 		} else {
 			$changedRow.removeClass("error");	
-			$changedRow.find('.question_type').removeClass("disabled");
+			if(itemType === "question" && !item.published) {
+				$changedRow.find('.question_type').removeClass("disabled");
+			}
 		}
 	}
 	

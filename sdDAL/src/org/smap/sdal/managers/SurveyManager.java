@@ -1348,7 +1348,8 @@ public class SurveyManager {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
 					String sqlProperty1 = "update question set " + property + " = ? " +
-							"where q_id = ? and " + property + " = ?;";
+							"where q_id = ? and " + property + " = ? " +
+							"and published = 'false';";
 					pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
 					
 					// One for the case where the property has not been set before

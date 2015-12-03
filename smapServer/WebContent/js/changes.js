@@ -51,9 +51,7 @@ require([
 
 
 var	gMode = "survey",
-	gTempQuestions = [],
-	gLanguage1 = 0,
-	gLanguage2 = 0;
+	gTempQuestions = [];
 
 $(document).ready(function() {
 	
@@ -92,8 +90,8 @@ $(document).ready(function() {
 	
 	
 	$('.language_list').off().change(function() {
-		gLanguage1 = $('#language1').val();
-		gLanguage2 = $('#language2').val();
+		globals.gLanguage1 = $('#language1').val();
+		globals.gLanguage2 = $('#language2').val();
 		refreshView(gMode);
 		//$('#set_language').foundation('reveal', 'close');
  	 });

@@ -60,6 +60,8 @@ define(function() {
 		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,
+		gLanguage1: 0,
+		gLanguage2: 0,
 		errors: [],
 		changes: [],
 		
@@ -273,8 +275,8 @@ define(function() {
 	function Model() {
 		
 		this.survey = undefined;
-		//this.changes = [];
-		//this.currentChange = 0;
+		this.translateChanges = [];
+		this.currentTranslateChange = 0;
 		this.savedSettings = undefined;
 		this.forcceSettingsChange = false;	
 
@@ -534,52 +536,73 @@ define(function() {
 			this.setHasChanges(this.changes.length);
 		}
 		
-		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
+		*/
+		/*
+		 * Change state depending on the number of translation changes in the queue
+		 */
+		this.setHasTranslateChanges = function(numberChanges) {
+			console.log("There are " + numberChanges + " changes ready to go");
+		}
 		
+		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
 		this.modLabel = function(language, changedQ, newVal, element, prop) {
 			
 			var labelMod = {
-					type: prop,
+					changeType: prop,
+					action: "update",
 					items: []
 			}
 			
 			var i,
 				label = {},
 				item,
-				qname;
+				item_orig,
+				qname,
+				translation;
 				
 			
 			for(i = 0; i < changedQ.length; i++) {
-				label = {};
+				translation = {
+					changeType: prop,
+					action: "update",
+					source: "editor",
+					
+				};
 
 				// For questions
 				if(typeof changedQ[i].form !== "undefined") {
-					label.formIdx = changedQ[i].form;													// done
-					label.questionIdx = changedQ[i].question;											// done
-					label.type = "question";															// done
-					item = this.survey.forms[label.formIdx].questions[label.questionIdx];				// done
-					item_orig = this.survey.forms_orig[label.formIdx].questions[label.questionIdx];		// done
-					label.name = item.name;																// done
-					label.qId = item.id;																// done
+					
+					label.formIndex = changedQ[i].form;												
+					label.itemIndex = changedQ[i].question;
+					item = this.survey.forms[label.formIndex].questions[label.itemIndex];			
+					item_orig = this.survey.forms_orig[label.formIndex].questions[label.itemIndex];	
+									
+					label.type = "question";
+					label.name = item.name;	
+					label.propType = "text";
+					label.prop = "label";
+					label.qId = item.id;
+	
+				// For options	
 				} else {
-					// For options
+					
+					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];				// done
+					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];		// done
+					
 					label.optionListIdx = changedQ[i].optionList;										// done
 					qname = changedQ[i].qname;															// done
 					label.optionIdx = changedQ[i].option;												// done
-					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];				// done
-					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];		// done
+
 					label.type = "option";																// done
 					label.name = label.optionListIdx;		// The option list name						// done
 				}
 					
-				label.newVal = newVal;																	// done
-				if(prop === "label" || prop === "media") {												// done
-					label.oldVal = item_orig.labels[language][element]; 								// done
-				} else {
-					label.oldVal = item_orig[prop];														// done
-				}
+				label.newVal = newVal;
+				label.oldVal = item_orig.labels[language][element]; 								// done
+
 				label.element = element;																// done
-				label.language = language;																// done
+				label.languageName = language;
+				label.allLanguages = false;
 				
 				label.languageName = this.survey.languages[language];			// For logging the event // done
 				var form = this.survey.forms[label.formIdx];											// done
@@ -595,17 +618,26 @@ define(function() {
 					}
 				}
 
-				labelMod.items.push(label);
+				translation.property = label;
+				
+				labelMod.items.push(translation);
 			}
 			
-			removeDuplicateChange(this.changes, labelMod);
-			if(labelMod.items[0].newVal !== labelMod.items[0].oldVal) {		// Add if the value has changed
-				this.currentChange = this.changes.push(labelMod) - 1;
-				this.doChange();				// Apply the current change
+			this.removeDuplicateTranslateChange(this.translateChanges, labelMod);
+			if(labelMod.items[0].property.newVal !== labelMod.items[0].property.oldVal) {		// Add if the value has changed
+				this.currentTranslateChange = this.translateChanges.push(labelMod) - 1;
+				//this.doChange();				// Apply the current change
 			}
-			this.setHasChanges(this.changes.length);
+			this.setHasTranslateChanges(this.translateChanges.length);
 		};
-		*/
+		
+		/*
+		 * If the label has been modified before then remove it from the change list
+		 */
+		this.removeDuplicateTranslateChange = function() {
+			// TODO
+		}
+		
 		/*
 		 * Functions for managing settings
 		 */

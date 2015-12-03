@@ -636,11 +636,15 @@ public class QuestionManager {
 		String sqlUpdateSeq = "update question set seq = seq - 1 where f_id = ? and seq >= ? and f_id in " +
 				"(select f_id from form where s_id = ?)";
 		
+		PreparedStatement pstmtGetSeq = null;
+		String sqlGetSeq = "select seq, qtype from question where f_id = ? and qname = ?";
+		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
 			pstmtDelLabels = sd.prepareStatement(sqlDelLabels);
 			pstmtDelHints = sd.prepareStatement(sqlDelHints);
 			pstmt = sd.prepareStatement(sql);
+			pstmtGetSeq = sd.prepareStatement(sqlGetSeq);
 			
 			for(Question q : questions) {
 				
@@ -663,21 +667,61 @@ public class QuestionManager {
 				log.info("Delete question hints: " + pstmtDelHints.toString());
 				pstmtDelHints.executeUpdate();
 				
-				// Delete the question
-				pstmt.setInt(1, q.fId);
-				pstmt.setString(2, q.name );
-				pstmt.setInt(3, sId );
+				/*
+				 * Delete the question
+				 * First get the sequence
+				 */
+				pstmtGetSeq.setInt(1, q.fId);
+				pstmtGetSeq.setString(2, q.name );
+				ResultSet rs = pstmtGetSeq.executeQuery();
+				if(rs.next()) {
 				
-				log.info("Delete question: " + pstmt.toString());
-				pstmt.executeUpdate();
+					int seq = rs.getInt(1);
+					String qType = rs.getString(2);
+					
+					// Delete the question
+					pstmt.setInt(1, q.fId);
+					pstmt.setString(2, q.name );
+					pstmt.setInt(3, sId );
+					
+					log.info("Delete question: " + pstmt.toString());
+					pstmt.executeUpdate();
+					
+					// Update the sequences of questions after the deleted question
+					pstmtUpdateSeq.setInt(1, q.fId);
+					pstmtUpdateSeq.setInt(2, seq);
+					pstmtUpdateSeq.setInt(3, sId);
+					
+					log.info("Update sequences: " + pstmtUpdateSeq.toString());
+					pstmtUpdateSeq.executeUpdate();
+					
+					// If the question is a group question then also delete the end group
+					if(qType.equals("begin group")) {
+						
+						String endGroupName = q.name + "_groupEnd";
+						
+						pstmtGetSeq.setString(2, endGroupName );
+						rs = pstmtGetSeq.executeQuery();
+						if(rs.next()) {
+							seq = rs.getInt(1);
+							
+							// Delete the end group
+							pstmt.setString(2, endGroupName);
+							
+							log.info("Delete End group of question: " + pstmt.toString());
+							pstmt.executeUpdate();
+							
+							// Update the sequences of questions after the deleted end group
+							pstmtUpdateSeq.setInt(2, seq);
+							
+							log.info("Update sequences: " + pstmtUpdateSeq.toString());
+							pstmtUpdateSeq.executeUpdate();
+						}
+						
+						
+					}
+				}
 				
-				// Update sequence numbers of questions after the question that has been deleted
-				pstmtUpdateSeq.setInt(1, q.fId);
-				pstmtUpdateSeq.setInt(2, q.seq);
-				pstmtUpdateSeq.setInt(3, sId);
-				
-				log.info("Update sequences: " + pstmtUpdateSeq.toString());
-				pstmtUpdateSeq.executeUpdate();
 
 			}
 			
@@ -690,6 +734,7 @@ public class QuestionManager {
 			try {if (pstmtDelLabels != null) {pstmtDelLabels.close();}} catch (SQLException e) {}
 			try {if (pstmtDelHints != null) {pstmtDelHints.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetSeq != null) {pstmtGetSeq.close();}} catch (SQLException e) {}
 		}	
 		
 	}

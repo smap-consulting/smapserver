@@ -1,0 +1,153 @@
+/*
+ * Settings for the editor from app.css
+ */
+@media only screen and (min-width: 64.063em)
+.column, .columns {
+    position: relative;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    float: left;
+}
+
+@media only screen and (min-width: 40.063em)
+.medium-6 {
+    width: 50%;
+}
+
+@media only screen and (min-width: 40.063em)
+.column, .columns {
+    position: relative;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    float: left;
+}
+
+@media only screen
+.small-12 {
+    width: 100%;
+}
+
+@media only screen
+.column, .columns {
+    position: relative;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    float: left;
+}
+
+.center {
+    text-align: center;
+}
+
+body {
+    background: #ffffff;
+    color: #222222;
+    padding: 0;
+    margin: 0;
+    font-family: "Helvetica Neue","Helvetica",Helvetica,Arial,sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    position: relative;
+    cursor: default;
+}
+
+html, body {
+    font-size: 100%;
+}
+
+.translate textarea {
+    margin-bottom: 4rem;
+}
+
+textarea {
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: rgba(0, 0, 0, 0);
+    color: white;
+    border: 3px solid white;
+    text-align: center;
+    transition: height 0.2s;
+    -webkit-transition: height 0.2s;
+    -moz-transition: height 0.2s;
+    text-transform: none;
+}
+
+p, textarea, li {
+    font-size: 0.8em;
+    font-family: 'Open Sans',sans-serif;
+    text-transform: uppercase;
+}
+
+p, textarea {
+    font-family: inherit;
+    font-weight: normal;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    text-rendering: optimizeLegibility;
+}
+
+input[type="text"], input[type="password"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="month"], input[type="week"], input[type="email"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], textarea {
+    -webkit-appearance: none;
+    background-color: #ffffff;
+    font-family: inherit;
+    border: 1px solid #cccccc;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.75);
+    display: block;
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+    padding: 0.5rem;
+    height: 2.3125rem;
+    width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    transition: box-shadow 0.45s,border-color 0.45s ease-in-out;
+}
+
+input[type="file"], input[type="checkbox"], input[type="radio"], select {
+    margin: 0 0 1rem 0;
+}
+
+select {
+    -webkit-appearance: none !important;
+    background-color: #fafafa;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9z…iPjxwb2x5Z29uIHBvaW50cz0iNS45OTIsMCAyLjk5MiwzIC0wLjAwOCwwICIvPjwvc3ZnPg==');
+    background-repeat: no-repeat;
+    background-position: 97% center;
+    border: 1px solid #cccccc;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.75);
+    line-height: normal;
+    border-radius: 0;
+    height: 2.3125rem;
+}
+
+select {
+    width: 100%;
+}
+
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.uno {
+    background-color: #638463;
+}
+
+div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, form, p, textarea, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}

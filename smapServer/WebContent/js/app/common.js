@@ -1186,10 +1186,10 @@ function setLanguages(languages) {
 		$lang2 = $('#language2'),
 		i;
 	
-	gLanguage1 = 0;	// Language indexes used for translations
-	gLanguage2 = 0;
+	globals.gLanguage1 = 0;	// Language indexes used for translations
+	globals.gLanguage2 = 0;
 	if(languages.length > 1) {
-		gLanguage2 = 1;
+		globals.gLanguage2 = 1;
 	}
 
 	for (i = 0; i < languages.length; i++) {
@@ -1201,8 +1201,8 @@ function setLanguages(languages) {
 	}
 	$lang.empty().append(h.join(""));
 	$(".language_list option[value='" + globals.gLanguage + "']").attr("selected", "selected");
-	$lang1.val(gLanguage1);
-	$lang2.val(gLanguage2)
+	$lang1.val(globals.gLanguage1);
+	$lang2.val(globals.gLanguage2)
 }
 
 /*

@@ -65,7 +65,11 @@ define([
 			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<table class="table">';
 				h[++idx] = '<td class="q_type_col">';
-					h[++idx] = '<div class="question_type">';
+					h[++idx] = '<div class="question_type';
+					if(question.published) {
+						h[++idx] = ' disabled';
+					}
+					h[++idx] = '">';
 					h[++idx] = addQType(question.type);
 					h[++idx] = '</div>';
 				h[++idx] = '</td>';

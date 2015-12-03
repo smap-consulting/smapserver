@@ -51,9 +51,7 @@ require([
 
 
 var	gMode = "survey",
-	gTempQuestions = [],
-	gLanguage1 = 0,
-	gLanguage2 = 0;
+	gTempQuestions = [];
 
 $(document).ready(function() {
 	
@@ -74,8 +72,7 @@ $(document).ready(function() {
 	});
 	
 	$('.save_form').off().click(function() {	// Save a survey to Smap
-		globals.model.save();
-		getSurveyDetails();
+		saveTranslations(getSurveyDetails());
 	});
 	
 	$('#m_settings').off().click(function() {	// Get a survey from Smap
@@ -104,8 +101,8 @@ $(document).ready(function() {
  	 });
 	
 	$('.language_list').off().change(function() {
-		gLanguage1 = $('#language1').val();
-		gLanguage2 = $('#language2').val();
+		globals.gLanguage1 = $('#language1').val();
+		globals.gLanguage2 = $('#language2').val();
 		refreshView(gMode);
 		//$('#set_language').foundation('reveal', 'close');
  	 });
@@ -146,6 +143,84 @@ function surveyListDone() {
 }
 
 
+// Save the survey
+function saveTranslations(callback) {
+	
+	var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey,
+		changes = globals.model.translateChanges,
+		changesString = JSON.stringify(changes);		
+	
+	globals.model.setHasTranslateChanges(0);
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		type: 'PUT',
+		dataType: 'json',
+		cache: false,
+		data: { changes: changesString },
+		success: function(data) {
+			var responseFn = callback,
+				h = [],
+				idx = -1,
+				i;
+			
+			removeHourglass();			
+			
+			if(typeof responseFn === "function") { 
+				responseFn();
+			}
+			
+			// Report success and failure
+			globals.model.lastChanges = data.changeSet;
+			//$('#successLabel .counter').html(data.success);
+			//$('#failedLabel .counter').html(data.failed);	
+			
+			if(data.success > 0) {
+				h[++idx] = '<div class="alert alert-success" role="alert">';
+				h[++idx] = '<p>';
+				h[++idx] = data.success;
+				h[++idx] = " changes successfully applied";
+				h[++idx] = '</p>'
+				h[++idx] = '<ol>';
+				for(i = 0; i < data.changeSet.length; i++) {
+					h[++idx] = addUpdateMessage(data.changeSet[i], false);
+				}
+				h[++idx] = '</ol>';
+				h[++idx] = '</div>';
+			}
+			if(data.failed > 0) {
+				h[++idx] = '<div class="alert alert-danger" role="alert">';
+				h[++idx] = data.failed;
+				h[++idx] = " changes failed";
+				h[++idx] = '<ol>';
+				for(i = 0; i < data.changeSet.length; i++) {
+					h[++idx] = addUpdateMessage(data.changeSet[i], true);
+				}
+				h[++idx] = '</ol>';
+				h[++idx] = '</div>';
+			}
+
+			bootbox.alert(h.join(""));
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to save translations: " + err);
+			}
+					
+			if(typeof responseFn === "function") { 
+				responseFn();
+			}
+		}
+	});	
+	
+};
+
 function refreshView() {
 	
 	var i,
@@ -163,6 +238,13 @@ function refreshView() {
 		numberLanguages = survey.languages.length;
 	}
 	
+	if(globals.gLanguage1 >= numberLanguages) {
+		globals.gLanguage1 = 0;
+	}
+	if(globals.gLanguage2 >= numberLanguages) {
+		globals.gLanguage1 = 0;
+	}
+	
 	// Set the display name
 	$('.formName').html(survey.displayName);
 			
@@ -172,19 +254,19 @@ function refreshView() {
 		var formQuestions = survey.forms[i].questions; 
 		for(j = 0; j < formQuestions.length; j++) {
 			
-			if(formQuestions[j].labels[gLanguage1].text) {
-				if((index = $.inArray(formQuestions[j].labels[gLanguage1].text, qList)) > -1) {
-					console.log(formQuestions[j].labels[gLanguage1].text);
+			if(formQuestions[j].labels[globals.gLanguage1].text) {
+				if((index = $.inArray(formQuestions[j].labels[globals.gLanguage1].text, qList)) > -1) {
+					console.log(formQuestions[j].labels[globals.gLanguage1].text);
 					gTempQuestions[index].indexes.push({
 						form: i,
 						question: j
 					});
 					console.log(gTempQuestions[index]);
 				} else {
-					qList.push(formQuestions[j].labels[gLanguage1].text);
+					qList.push(formQuestions[j].labels[globals.gLanguage1].text);
 					gTempQuestions.push({
-						label_a: formQuestions[j].labels[gLanguage1].text,
-						label_b: formQuestions[j].labels[gLanguage2].text,
+						label_a: formQuestions[j].labels[globals.gLanguage1].text,
+						label_b: formQuestions[j].labels[globals.gLanguage2].text,
 						indexes: [{
 							form: i,
 							question: j
@@ -203,18 +285,18 @@ function refreshView() {
 			console.log("Option:" + options[j]);
 
 			if(options[j].labels[gLanguage1].text) {
-				if((index = $.inArray(options[j].labels[gLanguage1].text, qList)) > -1) {
-					console.log(options[j].labels[gLanguage1].text);
+				if((index = $.inArray(options[j].labels[globals.gLanguage1].text, qList)) > -1) {
+					console.log(options[j].labels[globals.gLanguage1].text);
 					gTempQuestions[index].indexes.push({
 						optionList: key,
 						option: j
 					});
 					console.log(gTempQuestions[index]);
 				} else {
-					qList.push(options[j].labels[gLanguage1].text);
+					qList.push(options[j].labels[globals.gLanguage1].text);
 					gTempQuestions.push({
-						label_a: options[j].labels[gLanguage1].text,
-						label_b: options[j].labels[gLanguage2].text,
+						label_a: options[j].labels[globals.gLanguage1].text,
+						label_b: options[j].labels[globals.gLanguage2].text,
 						indexes: [{
 							optionList: key,
 							option: j
@@ -236,7 +318,7 @@ function refreshView() {
 		var newVal = $this.val();
 		console.log(gTempQuestions[index]);
 		console.log("New val:" + newVal);
-		globals.model.modLabel(gLanguage2, gTempQuestions[index].indexes, newVal, "text", "label");
+		globals.model.modLabel(globals.gLanguage2, gTempQuestions[index].indexes, newVal, "text", "label");
 		$('.qcount').empty().append('Translations made: ' + (++questionsedited))
 	});
 
