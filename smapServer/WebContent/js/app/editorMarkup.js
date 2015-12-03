@@ -180,8 +180,8 @@ define([
 		}	
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
-		h[++idx] = '" data-qid="';
-		h[++idx] = questionId;
+		//h[++idx] = '" data-qid="';
+		//h[++idx] = questionId;
 		h[++idx] = '" data-findex="';
 		h[++idx] = formIndex;
 		if(selProperty === "group") {
@@ -586,8 +586,12 @@ define([
 					
 					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
 					
+					// End the group
+					h[++idx] = '</ul>';
+					h[++idx] = '</div>';
+					h[++idx] = '</li>';
+					
 					// Add a dummy dom entry for this end group
-
 					h[++idx] = '<li style="display:none;" id="';
 					h[++idx] = "question" + formIndex + "_" + form.qSeq[i];
 					h[++idx] = '"';
@@ -597,15 +601,9 @@ define([
 					h[++idx] = form.qSeq[i];
 					h[++idx] = '"></li>';
 					
-					// End the form
-					h[++idx] = '</ul>';
-					h[++idx] = '</div>';
-					h[++idx] = '</li>';
-					
 					// The next "Add after" button should point to the group that just finished
-					//lastRealQuestionId = "question" + formIndex + "_" + getIndexQuestionByName(groupButtonName, form);
-					lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
-					//console.log("Add: " + question.type + " : " + lastRealQuestionId);
+					//lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
+					
 					continue;
 				}
 				if(question.type === "end repeat") {

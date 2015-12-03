@@ -730,11 +730,26 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$context,						// Updated Html
 			prop = $('#selProperty').val(),
-			buttonId = $this.attr("id"),
-			qId = $this.data("qid"),
+			//buttonId = $this.attr("id"),
+			//qId = $this.data("qid"),
+			qId,
+			$related,
+			$li,
 			formIndex = $this.data("findex"),
 			availableGroups,
 			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
+		
+		$li = $this.closest('li');
+		if(locn === "after") {
+			$related = $li.prev();
+		} else {
+			$related = $li.next();
+		} 
+		if($related.length === 0) {   // Empty group, location is "after"
+			qId = $li.parent().closest('li').attr("id");
+		} else {
+			qId = $related.attr("id");
+		}
 		
 		if(prop === "group") {		// Extend a group
 			availableGroups = $this.data("groups").split(":");
@@ -753,9 +768,9 @@ function respondToEvents($context) {
 		 * If this question was added by an "add after" button then that button should add future questions
 		 *  after this newly added question.  Hence update the reference to the question preceding the button
 		 */
-		if(locn == "after") {
-			$this.data("qid", $context.attr("id"));
-		}
+		//if(locn == "after") {
+		//	$this.data("qid", $context.attr("id"));
+		//}
 	});
 	
 	// Delete question
@@ -765,6 +780,11 @@ function respondToEvents($context) {
 			item = $(this).data("id");
 		
 		$context = question.deleteQuestion(item);
+		
+		/*
+		 * If this question is referenced by an "add after" button then that button should add future questions
+		 *  after this newly added question.  Hence update the reference to the question preceding the button
+		 */
 	});
 	
 	// Add new option
