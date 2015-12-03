@@ -947,6 +947,8 @@ function respondToEvents($context) {
 			targetId = $targetListItem.data('qid'),
 			locn = $targetListItem.data("locn"),			// Before or after the target question
 			$context,
+			$related,
+			$li,
 			type;
 	
 		ev.preventDefault();
@@ -957,7 +959,20 @@ function respondToEvents($context) {
 			targetId = $targetListItem.data('oid');
 		} else {
 			type = "question";
-			targetId = $targetListItem.data('qid');
+			
+			$li = $targetListItem.closest('li');
+			if(locn === "after") {
+				$related = $li.prev();
+			} else {
+				$related = $li.next();
+			} 
+			if($related.length === 0) {   // Empty group, location is "after"
+				targetId = $li.parent().closest('li').attr("id");
+			} else {
+				targetId = $related.attr("id");
+			}
+			//targetId = $targetListItem.data('qid');
+			
 		}
 		console.log("Dropped: " + sourceId + " : " + targetId);
 		
@@ -982,7 +997,7 @@ function respondToEvents($context) {
 }
 
 /*
- * Add of drag and drop
+ * End of drag and drop
  */
 
 function mediaPropSelected($this) {

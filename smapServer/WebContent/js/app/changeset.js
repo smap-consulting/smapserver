@@ -675,11 +675,12 @@ define([
 				var targetOptionList = survey.optionLists[change.option.optionList];
 				
 				var option = sourceOptionList.options[change.option.sourceItemIndex];
+				var newOption = jQuery.extend(true, {}, option);
 				var oldLocation = change.option.sourceSeq;
 				var newLocation = change.option.seq;
 				
 				// Add the option in the new location
-				length = targetOptionList.options.push(option);
+				length = targetOptionList.options.push(newOption);
 				change.option.itemIndex = length -1;
 				change.option.value = option.value;
 				targetOptionList.oSeq.splice(change.option.seq, 0, length - 1);	
@@ -690,6 +691,7 @@ define([
 					oldLocation++;
 				}
 				sourceOptionList.oSeq.splice(oldLocation, 1);	
+				option.deleted = true;
 				
 				refresh = true;
 				
@@ -996,6 +998,7 @@ define([
 			form, 
 			survey = globals.model.survey,
 			item,
+			name,
 			isDeleted,
 			isValid = true,
 			hasDuplicate = false,
@@ -1014,7 +1017,8 @@ define([
 		} else {
 			
 			// Validate the name
-			isValid = validateName(container, itemIndex, item.name, itemType);
+			name = itemType === "question" ? item.name : item.value;
+			isValid = validateName(container, itemIndex, name, itemType);
 			
 			/*
 			 * Question validations
