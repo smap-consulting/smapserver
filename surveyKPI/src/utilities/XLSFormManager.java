@@ -98,7 +98,6 @@ public class XLSFormManager {
 		public String getValue(Question q) {
 			String value = "";
 			
-			System.out.println("Get question value: " + q.name + " : " + q.calculation);
 			if(type == COL_TYPE) {
 						
 				if(q.calculation != null && q.calculation.trim().length() > 0) {
@@ -330,7 +329,6 @@ public class XLSFormManager {
 			} else {
 				
 				if(!inMeta && !q.name.equals("meta_groupEnd")) {
-					System.out.println(q.name);
 					
 					if(isRow(q)) {
 						Row row = surveySheet.createRow(rowNumberSurvey++);
@@ -353,7 +351,6 @@ public class XLSFormManager {
 							if(style != null) {	cell.setCellStyle(style); }
 							cell.setCellValue(savedCalculation);
 							
-							System.out.println("Process sub form: " + subForm.name);
 							processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
 									colsSurvey, 
 									colsChoices,
@@ -392,7 +389,6 @@ public class XLSFormManager {
 		
 		ArrayList<Option> options = ol.options;
 		
-		System.out.println("Add choice list: " + listName);
 		sheet.createRow(rowNumberChoices++);		// blank row
 		for(Option o : options) {
 			Row row = sheet.createRow(rowNumberChoices++);
@@ -456,7 +452,6 @@ public class XLSFormManager {
 	private boolean isRow(Question q) {
 		boolean row = true;
 		
-		System.out.println("checking " + q.name + " : " + q.type );
 		if(q.name.equals("prikey")) {
 			row = false;
 		} else if(q.name.startsWith("_")) {

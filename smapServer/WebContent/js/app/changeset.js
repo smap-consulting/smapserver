@@ -1050,9 +1050,21 @@ define([
 						}
 					}
 				}
-				// Check relevant
-				if(isValid) {
-					isValid = checkCalculation(item.relevant, "relevant");
+				
+				if(isValid) {	// Check references
+					isValid = checkReferences(container, itemIndex, itemType, item);
+				}
+				
+				if(isValid) {	// Check parenthesis on relevant
+					isValid = checkParentheisis(container, itemIndex, itemType, item.relevant);
+				}
+				
+				if(isValid) {	// Check parenthesis on constraint
+					isValid = checkParentheisis(container, itemIndex, itemType, item.constraint);
+				}
+				
+				if(isValid) {	// Check parenthesis on calculation
+					isValid = checkParentheisis(container, itemIndex, itemType, item.calculation);
 				}
 				
 			}
@@ -1070,10 +1082,128 @@ define([
 	}
 	
 	/*
+	 * Check for mismatched parenthesis
+	 */
+	function checkParentheisis(container, itemIndex, itemType, elem) {
+		var i,
+			c,
+			depth = 0,
+			lastOpen,
+			errorText;
+		
+		for(i = 0; i < elem.length; i++) {
+			c = elem.charAt(i);
+			if( c === '(') {
+				depth++;
+				locn = i;
+			} else if( c === ')') {
+				depth--;
+				locn = i;
+			}
+			if(depth < 0) {
+				break;
+			}
+		}
+		
+		if(depth != 0) {
+			errorText = "Mis-matched parenthesis: " + elem.slice(0, locn) + '<b><span style="color:red;">' +
+				elem.slice(locn, locn + 1) +
+				'</span></b>' +
+				elem.slice(locn + 1);
+			
+			addValidationError(
+					container,
+					itemIndex,
+					"item",
+					"Mis-matched parenthesis: " + errorText,
+					itemType);
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	/*
 	 * Return false if the calculation is not valid
 	 */
-	function checkCalculation(calc, type) {
+	function checkReferences(container, itemIndex, itemType, item) {
 		
+		var refQuestions = {},
+			survey = globals.model.survey,
+			form,
+			i, j;
+		
+		console.log("check refrences");
+		
+		// Get a list of references to other questions
+		getReferenceNames(item.relevant, refQuestions);
+		getReferenceNames(item.constraint, refQuestions);
+		getReferenceNames(item.calculation, refQuestions);
+		for(i = 0; i < item.labels.length; i++) {
+			getReferenceNames(item.labels[i].text, refQuestions);
+		}
+
+		
+		for(i = 0; i < survey.forms.length; i++) {
+			form = survey.forms[i];
+			for(j = 0; j < form.questions.length; j++) {	
+				questionType = form.questions[j].type;
+				if(questionType !== "end group") {
+					if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
+						otherItem = form.questions[j];
+						
+						for (name in refQuestions) {
+							if (refQuestions.hasOwnProperty(name)) {
+							    if(name === otherItem.name) {
+							    	refQuestions[name].exists = true;
+							    }
+							}
+						}
+						
+					}
+				}
+			}
+		}
+		
+		for (name in refQuestions) {
+			if (refQuestions.hasOwnProperty(name)) {
+			    if(!refQuestions[name].exists) {
+			    	addValidationError(
+							container,
+							itemIndex,
+							"item",
+							"The question referenced in ${" + name + "} cannot be found",
+							itemType);
+			    	return false;
+			    }
+			}
+		}
+		console.log("done");
+		return true;
+
+	}
+	
+	/*
+	 * Get the names of referenced questions in the passed in string
+	 */
+	function getReferenceNames(elem, refQuestions) {
+		var names = [],
+			reg = /\$\{[A-Za-z_][A-Za-z0-9_\-\.]*\}/g,
+			i,
+			name;
+		
+		names = elem.match(reg);
+		if(names) {
+			for(i = 0; i < names.length; i++) {
+				if(names[i].length > 3) {
+					name = names[i].substring(2, names[i].length - 1);		// Remove the curly brackets
+					refQuestions[name] = {
+							name: name,
+							exists: false
+					};
+				}
+			}
+		}
 	}
 	
 	/*
@@ -1284,20 +1414,23 @@ define([
 		}
 		
 		/*
-		 * Name change require the questions in the same form to be validated for duplicates
+		 * Questio name change require the questions in all the forms to be validated for duplicates
+		 * Note this is a stronger test than applied by xlsForm
 		 */
 		if(isValid) {
 			
 			if(itemType === "question") {
-				form = survey.forms[container];
-				questionType = form.questions[itemIndex].type;
-				if(questionType !== "end group") {
-					for(j = 0; j < form.questions.length; j++) {		
-						if(j !== itemIndex) {
-							otherItem = form.questions[j];
-							if(!otherItem.deleted && otherItem.name === val) {
-								hasDuplicate = true;
-								break;
+				for(i = 0; i < survey.forms.length; i++) {
+					form = survey.forms[i];	
+					for(j = 0; j < form.questions.length; j++) {	
+						questionType = form.questions[j].type;
+						if(questionType !== "end group") {
+							if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
+								otherItem = form.questions[j];
+								if(!otherItem.deleted && otherItem.name === val) {
+									hasDuplicate = true;
+									break;
+								}
 							}
 						}
 					}
