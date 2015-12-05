@@ -98,6 +98,7 @@ public class XLSFormManager {
 		public String getValue(Question q) {
 			String value = "";
 			
+			System.out.println("Get question value: " + q.name + " : " + q.calculation);
 			if(type == COL_TYPE) {
 						
 				if(q.calculation != null && q.calculation.trim().length() > 0) {
@@ -155,6 +156,12 @@ public class XLSFormManager {
 				
 			} else if(type == COL_IMAGE) {				
 				value = q.labels.get(labelIndex).image;
+				
+			} else if(type == COL_VIDEO) {				
+				value = q.labels.get(labelIndex).video;
+				
+			} else if(type == COL_AUDIO) {				
+				value = q.labels.get(labelIndex).audio;
 				
 			} else {
 				System.out.println("Unknown column type for survey: " + type);
@@ -310,19 +317,18 @@ public class XLSFormManager {
 				inMeta = false;
 			} 
 			
-			System.out.println("Question: " + q.name + " : " + q.repeatCount);
-			
 			/*
 			 * Determine if this question is a repeat count
 			 *  For forms loaded after this code only q.repeatCount needs to be checked
 			 *  For backward compatability we record any calcualtion question as well and assume the calculate immediately
 			 *   before a begin repeat count is the correct one
 			 */
-			if(q.repeatCount || (q.calculation != null && q.calculation.trim().length() > 0)) {
+			if(q.repeatCount) {
 				// Save the calculation as it contain the calculation for a repeat which needs to be placed in the begin repeat row
 				// Otherwise this "dummy" question is ignored
 				savedCalculation = q.calculation;
 			} else {
+				
 				if(!inMeta && !q.name.equals("meta_groupEnd")) {
 					System.out.println(q.name);
 					
@@ -450,10 +456,13 @@ public class XLSFormManager {
 	private boolean isRow(Question q) {
 		boolean row = true;
 		
+		System.out.println("checking " + q.name + " : " + q.type );
 		if(q.name.equals("prikey")) {
 			row = false;
 		} else if(q.name.startsWith("_")) {
 			row = false;
+		} else if(q.type.equals("note") && !q.visible && (q.calculation == null || q.calculation.trim().length() == 0)) {
+			row = false;		// Loading a survey from an xml file may result in an instanceName not in a meta group which should not be included in the XLS
 		}
 		
 		return row;

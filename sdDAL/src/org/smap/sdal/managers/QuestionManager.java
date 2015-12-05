@@ -140,16 +140,26 @@ public class QuestionManager {
 	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
 		PreparedStatement pstmtInsertQuestion = null;
-		String sql = "insert into question (q_id, f_id, l_id, seq, qname, column_name, qtype, qtext_id, "
+		String sql = "insert into question (q_id, "
+				+ "f_id, "
+				+ "l_id, "
+				+ "seq, "
+				+ "qname, "
+				+ "column_name, "
+				+ "qtype, "
+				+ "qtext_id, "
 				+ "infotext_id, "
 				+ "source, calculate, "
 				+ "defaultanswer, "
 				+ "appearance, "
 				+ "visible, "
 				+ "path, "
-				+ "readonly"
+				+ "readonly, "
+				+ "relevant, "
+				+ "qconstraint, "
+				+ "constraint_msg"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -210,6 +220,15 @@ public class QuestionManager {
 				pstmtInsertQuestion.setBoolean(13, q.visible);
 				pstmtInsertQuestion.setString(14, q.path);
 				pstmtInsertQuestion.setBoolean(15, readonly);
+				
+				String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd);
+				System.out.println("Relevant: " + relevant);
+				pstmtInsertQuestion.setString(16, relevant);
+				
+				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd);
+				System.out.println("Constraint: " + constraint);
+				pstmtInsertQuestion.setString(17, constraint);
+				pstmtInsertQuestion.setString(18, q.constraint_msg);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();

@@ -48,7 +48,6 @@ define([
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
-		console.log("-- Add question: " + questionId);
 		selProperty = selProperty || $('#selProperty').val();
 		
 		if(addNewButton) {
@@ -153,8 +152,6 @@ define([
 			idx = -1,
 			addButtonClass,
 			locn;
-		
-		console.log("Add new question button: " + questionId);
 		
 		//console.log(" Group Stack: " + gGroupStacks[formIndex].groupStack.join(",") + " : Last group: " + gGroupStacks[formIndex].lastGroup);
 		

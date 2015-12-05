@@ -1560,6 +1560,12 @@ public class GeneralUtilityMethods {
 	 * Convert names in xls format ${ } to xPath
 	 */
 	public static String convertAllxlsNames(String input, int sId, Connection sd) throws SQLException {
+		
+		if(input == null) {
+			return input;
+		}
+		
+		
 		StringBuffer output = new StringBuffer("");
 		
 		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");

@@ -1297,7 +1297,7 @@ function focusOnError(position) {
 		error = globals.errors[position],
 		questionId;
 	
-	questionId = "question" + error.formIndex + "_" + error.itemIndex;
+	questionId = "question" + error.container + "_" + error.itemIndex;
 	
 	$('#' + questionId).find('input').focus();
 }

@@ -108,7 +108,8 @@
 								<option value="media">Media</option>
 								<option value="appearance">Appearance</option>
 								<option value="layout">Layout</option>
-								<option value="qconstraint">Constraint</option>
+								<option value="constraint">Constraint</option>
+								<option value="constraint_msg">Constraint Message</option>
 								<option value="relevant">Relevant</option>
 								<option value="required">Required</option>
 								<option value="group">Set the end of a group</option>
@@ -132,8 +133,12 @@
 
 <div id="error-panel">
 	<h4>Error count: <span class="error-count"></span></h4>
-	<button type="button" id="next-error" class="btn btn-default">Next >>></button><br/>
-	<button type="button" id="prev-error" class="btn btn-default"><<< Prev</button>
+	<button type="button" id="next-error" class="btn btn-danger">Next >>></button><br/>
+	<button type="button" id="prev-error" class="btn btn-danger"><<< Prev</button>
+	<br/>
+	<h4>Warnings: <span class="warning-count"></span></h4>
+	<button type="button" id="next-error" class="btn btn-warning">Next >>></button><br/>
+	<button type="button" id="prev-error" class="btn btn-warning"><<< Prev</button>
 </div>	
 
 <div id="validate-success" style="display:none;">

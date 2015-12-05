@@ -1244,61 +1244,63 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Apply table change: " + ciJson);
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
-				// Get the id for the question that is being updated
-				int qId = 0;
-				String column = null;
-				String type = null;
-				if(ci.property != null && ci.property.prop.equals("type")) {
-					
-					// Type changes on existing questions are not allowed
-					System.out.println("Error: Type change on existing question");
-					
-				} else if(ci.property != null) {
-					qId = ci.property.qId;
-					column = ci.property.name + "__" + ci.property.key;
-					type = "integer";
-				} else if(ci.question != null ) {
-					qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
-					column = ci.question.name;
-					type = ci.question.type;
-					if(type.equals("string") || type.equals("select1")) {
-						type = "text";
-					} 
-				}
-				
-				// Get the table and column
-				pstmtGetTable.setInt(1, qId);
-				ResultSet rsTable = pstmtGetTable.executeQuery();
-				String table = null;
-				String msg = "";
-				if(rsTable.next()) {
-					table = rsTable.getString(1);
-				
-					// Alter the table
-					
-					boolean tableAltered = true;
-					String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
-					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-					System.out.println("SQL: " + pstmtAlterTable.toString());
-					try {
-						pstmtAlterTable.executeUpdate();
-					} catch (Exception e) {
-						// Report but otherwise ignore any errors
-						// No need to roll back if the survey_change table is not updated, 
-						System.out.println("Error altering table -- continuing: " + e.getMessage());
-						System.out.println();
+				if(!ci.action.equals("add")) {		// Table is only altered for new question or new select multiple options
+					// Get the id for the question that is being updated
+					int qId = 0;
+					String column = null;
+					String type = null;
+					if(ci.property != null && ci.property.prop.equals("type")) {
 						
-						// Only record the update as failed if the problem was not due to the column already existing
-						msg = e.getMessage();
-						if(msg == null || !msg.contains("already exists")) {
-							tableAltered = false;
-						}
+						// Type changes on existing questions are not allowed
+						System.out.println("Error: Type change on existing question");
+						
+					} else if(ci.property != null) {
+						qId = ci.property.qId;
+						column = ci.property.name + "__" + ci.property.key;
+						type = "integer";
+					} else if(ci.question != null ) {
+						qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
+						column = ci.question.name;
+						type = ci.question.type;
+						if(type.equals("string") || type.equals("select1")) {
+							type = "text";
+						} 
 					}
 					
-					// Record the application of the change and the status
-					markChangeApplied(connectionSD, cId, tableAltered, msg);
-				} else {
-					System.out.println("Error table not found: " + pstmtGetTable.toString());
+					// Get the table and column
+					pstmtGetTable.setInt(1, qId);
+					ResultSet rsTable = pstmtGetTable.executeQuery();
+					String table = null;
+					String msg = "";
+					if(rsTable.next()) {
+						table = rsTable.getString(1);
+					
+						// Alter the table
+						
+						boolean tableAltered = true;
+						String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
+						pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+						System.out.println("SQL: " + pstmtAlterTable.toString());
+						try {
+							pstmtAlterTable.executeUpdate();
+						} catch (Exception e) {
+							// Report but otherwise ignore any errors
+							// No need to roll back if the survey_change table is not updated, 
+							System.out.println("Error altering table -- continuing: " + e.getMessage());
+							System.out.println();
+							
+							// Only record the update as failed if the problem was not due to the column already existing
+							msg = e.getMessage();
+							if(msg == null || !msg.contains("already exists")) {
+								tableAltered = false;
+							}
+						}
+						
+						// Record the application of the change and the status
+						markChangeApplied(connectionSD, cId, tableAltered, msg);
+					} else {
+						System.out.println("Error table not found: " + pstmtGetTable.toString());
+					}
 				}
 			}
 			

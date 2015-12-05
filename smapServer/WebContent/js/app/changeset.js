@@ -453,7 +453,6 @@ define([
 	 * Update settings when the number of changes to apply changes 
 	 */ 
 	function setHasChanges(numberChanges) {
-		var errors = globals.errors;
 		
 		if(numberChanges === 0) {
 			globals.changes = [];
@@ -463,7 +462,7 @@ define([
 			$('.m_save_survey').find('.badge').html(numberChanges);
 			$('.m_languages').addClass("disabled").attr("disabled", true);
 			$('.m_validate').removeClass("disabled").attr("disabled", false);
-			if(errors.length === 0) {
+			if(globals.errors.length === 0) {
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 			}
 		}
@@ -1002,7 +1001,6 @@ define([
 			isDeleted,
 			isValid = true,
 			hasDuplicate = false,
-			errors = globals.errors,
 			changes = globals.changes;
 		
 		if(itemType === "question") {
@@ -1052,18 +1050,30 @@ define([
 						}
 					}
 				}
+				// Check relevant
+				if(isValid) {
+					isValid = checkCalculation(item.relevant, "relevant");
+				}
+				
 			}
 				
 			updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
 		}
 		
 		// Set the control buttons
-		if(errors.length > 0 ) {
+		if(globals.errors.length > 0 ) {
 			$('.m_save_survey').addClass("disabled").attr("disabled", true);			
 		} else if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 		}
 
+	}
+	
+	/*
+	 * Return false if the calculation is not valid
+	 */
+	function checkCalculation(calc, type) {
+		
 	}
 	
 	/*
@@ -1086,10 +1096,8 @@ define([
 	 */
 	function addValidationError(container, itemIndex, errorType, msg, itemType) {
 		
-		var errors = globals.errors;
-		
 		// Push error into validation array
-		errors.push({
+		globals.errors.push({
 			container: container,
 			itemIndex: itemIndex,
 			errorType: errorType,
@@ -1171,16 +1179,38 @@ define([
 		
 		var i,
 			$changedRow,
-			survey = globals.model.survey,
-			errors = globals.errors;
+			survey = globals.model.survey;
 		
 		// Remove error
-		for(i = errors.length - 1; i >= 0; i--) {
-			if(errors[i].itemType === itemType && 
-					errors[i].container === container && 
-					errors[i].itemIndex === itemIndex && 
-					errors[i].errorType === errorType) {
-				errors.splice(i, 1);
+		for(i = globals.errors.length - 1; i >= 0; i--) {
+			if(globals.errors[i].itemType === itemType && 
+					globals.errors[i].container === container && 
+					globals.errors[i].itemIndex === itemIndex && 
+					globals.errors[i].errorType === errorType) {
+				globals.errors.splice(i, 1);
+			}
+		}	
+		
+		updateModelWithErrorStatus(container, itemIndex, itemType);  // Update model
+		
+	}
+	
+	/*
+	 * Remove specified warnings (see addValidationWarning for warning types)
+	 */
+	function removeValidationWarning(container, itemIndex, warningType, itemType) {
+		
+		var i,
+			$changedRow,
+			survey = globals.model.survey;
+		
+		// Remove error
+		for(i = globals.errors.length - 1; i >= 0; i--) {
+			if(globals.errors[i].itemType === itemType && 
+					globals.errors[i].container === container && 
+					globals.errors[i].itemIndex === itemIndex && 
+					globals.errors[i].errorType === errorType) {
+				globals.errors.splice(i, 1);
 			}
 		}	
 		
@@ -1329,6 +1359,7 @@ define([
 			forms = globals.model.survey.forms;
 		
 		globals.errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
+		globals.warnings = [];
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
 				validateItem(i, j, "question");		// Validate the question

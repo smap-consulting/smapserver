@@ -1315,7 +1315,7 @@ public class SurveyManager {
 	 * Apply question property changes
 	 * This can be any simple property type such as relevance
 	 */
-	public void applyQuestionProperty(Connection connectionSD,
+	public void applyQuestionProperty(Connection sd,
 			PreparedStatement pstmtChangeLog, 
 			ArrayList<ChangeItem> changeItemList, 
 			int sId, 
@@ -1324,6 +1324,7 @@ public class SurveyManager {
 			String type) throws Exception {
 
 		boolean setReadonly = false;
+		boolean onlyIfNotPublished = false;
 		
 		PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
@@ -1337,35 +1338,56 @@ public class SurveyManager {
 				String property = translateProperty(ci.property.prop);
 				String propertyType = null;
 				
+				// Convert "note" type to a read only string
+				// Add constraint that name and type properties can only be updated if the form has not been published
 				if(ci.property.prop.equals("type")) {
 					if(ci.property.newVal.equals("note")) {
 						setReadonly = true;
 						ci.property.newVal = "string";
 					}
+					onlyIfNotPublished = true;
+				} else if(ci.property.prop.equals("name")) {
+					onlyIfNotPublished = true;
 				}
 				
-				if((propertyType = GeneralUtilityMethods.columnType(connectionSD, "question", property)) != null) {
+				// Convert from $ syntax to paths
+				if(ci.property.prop.equals("relevant") || ci.property.type.equals("constraint")) {
+					ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd);
+				}
+				
+				if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
 					String sqlProperty1 = "update question set " + property + " = ? " +
-							"where q_id = ? and " + property + " = ? " +
-							"and published = 'false';";
-					pstmtProperty1 = connectionSD.prepareStatement(sqlProperty1);
+							"where q_id = ? and (" + property + " = ? " +
+							"or " + property + " is null) ";
+					
+					if(onlyIfNotPublished) {
+						sqlProperty1 += " and published = 'false';";
+					} else {
+						sqlProperty1 += ";";
+					}
+					pstmtProperty1 = sd.prepareStatement(sqlProperty1);
 					
 					// One for the case where the property has not been set before
 					String sqlProperty2 = "update question set " + property + " = ? " +
-							"where q_id = ? and " + property + " is null;";
-					pstmtProperty2 = connectionSD.prepareStatement(sqlProperty2);
+							"where q_id = ? and " + property + " is null ";
+					if(onlyIfNotPublished) {
+						sqlProperty2 += " and published = 'false';";
+					} else {
+						sqlProperty2 += ";";
+					}
+					pstmtProperty2 = sd.prepareStatement(sqlProperty2);
 					
 					// Update for dependent properties
 					String sqlDependent = "update question set visible = ?, source = ? " +
 							"where q_id = ?;";
-					pstmtDependent = connectionSD.prepareStatement(sqlDependent);
+					pstmtDependent = sd.prepareStatement(sqlDependent);
 					
 					// Update for readonly status if this is a type change to note
 					String sqlReadonly = "update question set readonly = 'true' " +
 							"where q_id = ?;";
-					pstmtReadonly = connectionSD.prepareStatement(sqlReadonly);
+					pstmtReadonly = sd.prepareStatement(sqlReadonly);
 					
 					int count = 0;
 		
@@ -1411,6 +1433,7 @@ public class SurveyManager {
 					}
 					
 					if(count == 0) {
+						log.info("Already modified");
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
 						
