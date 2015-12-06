@@ -443,6 +443,18 @@ $(document).ready(function() {
 		$('#new_form_name').focus();
 	});
 	
+	/*
+	 * Toolbar
+	 */
+	$('.question_type_sel', '#toolbar_types').off().click(function(){
+		var type = $(this).val(),
+			$finalButton = $('.add_final_button', '#formList');
+		
+		addQuestion($finalButton, type);
+		
+
+	});
+	
 });
 
 //Set up question type dialog
@@ -720,50 +732,11 @@ function respondToEvents($context) {
 	 *  (or if the property type is groups then extend a group to the selected location)
 	 */
 	$context.find('.add_question').off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			prop = $('#selProperty').val(),
-			//buttonId = $this.attr("id"),
-			//qId = $this.data("qid"),
-			qId,
-			$related,
-			$li,
-			formIndex = $this.data("findex"),
-			availableGroups,
-			locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
+		var $this = $(this);
 		
-		$li = $this.closest('li');
-		if(locn === "after") {
-			$related = $li.prev();
-		} else {
-			$related = $li.next();
-		} 
-		if($related.length === 0) {   // Empty group, location is "after"
-			qId = $li.parent().closest('li').attr("id");
-		} else {
-			qId = $related.attr("id");
-		}
-		
-		if(prop === "group") {		// Extend a group
-			availableGroups = $this.data("groups").split(":");
-			$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
-		} else {
-			$context = question.add(formIndex, qId, locn);
-		}
-		
-		respondToEvents($context);				// Add events on to the altered html
-		if($context.attr("id") !== "formList") {
-			respondToEvents($context.prev());		// Add events on the "insert before" button
-		}
-		$context.find('input').focus();			// Set focus to the new question
-		
-		/*
-		 * If this question was added by an "add after" button then that button should add future questions
-		 *  after this newly added question.  Hence update the reference to the question preceding the button
-		 */
-		//if(locn == "after") {
-		//	$this.data("qid", $context.attr("id"));
-		//}
+		addQuestion($this, "string");
+
+
 	});
 	
 	// Delete question
@@ -834,7 +807,7 @@ function respondToEvents($context) {
 		} else if($this.hasClass("disabled")) {
 			alert("You cannot change the type of a question that has an invalid name");
 		} else {
-			$('.question_type_sel', '#typeModalButtonGrp').off().click(function(){
+			$('.question_type_sel', '#dialog_types').off().click(function(){
 				var type = $(this).val();
 				
 				updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
@@ -1069,6 +1042,56 @@ function mediaPropSelected($this) {
 	$('#mediaModal').modal('show');
 
 }
+
+/*
+ * Add a new question after an add new question button identified by $this is seelected
+ */
+function addQuestion($this, type) {
+	var $context,						// Updated Html
+		prop = $('#selProperty').val(),
+		qId,
+		$related,
+		$li,
+		formIndex = $this.data("findex"),
+		availableGroups,
+		locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
+	
+	$li = $this.closest('li');
+	if(locn === "after") {
+		$related = $li.prev();
+	} else {
+		$related = $li.next();
+	} 
+	if($related.length === 0) {   // Empty group, location is "after"
+		qId = $li.parent().closest('li').attr("id");
+	} else {
+		qId = $related.attr("id");
+	}
+	
+	if(prop === "group") {		// Extend a group
+		availableGroups = $this.data("groups").split(":");
+		$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
+	} else {
+		$context = question.add(formIndex, qId, locn, type);
+	}
+	
+	respondToEvents($context);				// Add events on to the altered html
+	if($context.attr("id") !== "formList") {
+		respondToEvents($context.prev());		// Add events on the "insert before" button
+	}
+	$context.find('input').focus();			// Set focus to the new question
+	
+	// Add an end group question if a new group has been created
+	if(type === "begin group") {
+		name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
+		$context = question.add(gFormIndex, $questionElement.attr("id"), 
+				"after", 
+				"end group",
+				name);
+		respondToEvents($context);	
+	}
+}
+
 /*
  * Update the settings data (excluding languages which is set globally)
  */
