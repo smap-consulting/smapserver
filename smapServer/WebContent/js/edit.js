@@ -36,7 +36,6 @@ require.config({
     	'app/common': ['jquery'],
         'bootstrap.min': ['jquery'],
         'jquery.autosize.min': ['jquery'],
-        'jquery-drag-ui.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
     	'bootbox': ['bootstrap.min']
         
@@ -49,7 +48,6 @@ require([
          'bootstrap.min', 
          'app/localise',
          'app/globals',
-         'jquery-drag-ui.min',
          'jquery.autosize.min',
          'bootstrap.file-input',
          'bootbox',
@@ -62,7 +60,6 @@ require([
 				bootstrap, 
 				lang, 
 				globals, 
-				jquery_ui, 
 				jqas, 
 				bsfi, 
 				bootbox,
