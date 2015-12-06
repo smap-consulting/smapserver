@@ -180,7 +180,8 @@ $(document).ready(function() {
 		
 		if(globals.errors.length > 0) {
 			gErrorPosition = 0;
-			showErrorPanel();
+			$('.error-count').html(globals.errors.length);
+			$('#error-nav-btns').show();
 			if(globals.errors.length > 1) {
 				$('#next-error, #prev-error').removeClass("disabled");
 			} else {
@@ -188,10 +189,9 @@ $(document).ready(function() {
 			}
 			focusOnError(gErrorPosition);
 		} else {
-			hideErrorPanel();
+			$('#error-nav-btns').hide();
 			$('#validate-success').show();
 			setTimeout(function(){$('#validate-success').hide();}, 1000);
-			$('#next-error, #prev-error').addClass("disabled");
 		}
 	});
 	
@@ -435,7 +435,8 @@ $(document).ready(function() {
 		
 	});
 	
-	setupQuestionTypeDialog();
+	setupQuestionTypes($('#dialog_types'), 2);
+	setupQuestionTypes($('#toolbar_types'), 1);
 	
 	// Set focus on survey name when create form modal is opened
 	$('#openFormModal').on('shown.bs.modal', function () {
@@ -445,10 +446,9 @@ $(document).ready(function() {
 });
 
 //Set up question type dialog
-function setupQuestionTypeDialog() {
+function setupQuestionTypes($elem, columns) {
 	var i,
 		types = globals.model.qTypes,
-		$elem = $('#typeModalButtonGrp'),
 		h = [],
 		idx = -1,
 		count;
@@ -457,14 +457,10 @@ function setupQuestionTypeDialog() {
 	for(i = 0; i < types.length; i++) {
 		
 		if(types[i].canSelect) {
-			//if((count % 4) === 0) {
-			//	if(count > 0) {
-			//		h[++idx] = '</div>';			// End of a row
-			//	}
-			//	h[++idx] = '<div class="row margin-bottom">';		// Start of a row
-			//}
 			
-			h[++idx] = '<div class="col-md-6 col-xs-12" style="height:65px;">';	
+			h[++idx] = '<div class="col-xs-12 ';
+			h[++idx] = columns === 1 ? 'col-md-12" ' : 'col-md-6" ';
+			h[++idx] = ' style="height:65px;">';	
 			h[++idx] = '<button type="button" class="btn btn-large btn-default question_type_sel full_width_btn" value="';
 			h[++idx] = types[i].type;
 			h[++idx] = '">';
@@ -1237,26 +1233,27 @@ function isValidOptionName(val) {
  * Error Panel
  */
 
+/*
 function showErrorPanel() {
 	
-    var $panel = $('#error-panel'),
-    	$content = $('#content');
+    var $panel = $('#toolbar'),
+    	$container = $('#content > .container');
     
     $panel.addClass('shown').animate({'margin-left':'0px'});  
-    $content.css({'margin-left':'200px'});
+    $container.css({'padding-left':'200px'});
 
 }
 
 function hideErrorPanel() {
 	
-    var $panel = $('#error-panel'),
-    	$content = $('#content');
+    var $panel = $('#toolbar'),
+    $container = $('#content > .container');
     
-    $panel.removeClass('shown').animate({'margin-left':'-200px'});  
-    $content.css({'margin-left':'0px'});
+    $panel.removeClass('shown').animate({'margin-left':'-250px'});  
+    $container.css({'padding-left':'15px'});
 
 }
-
+*/
 function nextError() {
 	
 	var errors = globals.errors;

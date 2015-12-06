@@ -155,17 +155,27 @@ tr.deleted td a {
      vertical-align: middle;
      color: #fff;
  }
- 
- #error-panel {
-    width:200px;
-    height:400px;
+
+
+ #toolbar {
+    width:250px; 
+    height:80%;
     padding:10px;
     background:#eee;
-    margin-left:-200px;
-    max-width: 200px;
+   /* margin-left:-250px; */
     position: fixed;
-    top: 200px;
+    overflow-y: auto;
+    top: 150px;
+    z-index: 1000;
+    transition: all 0.4s ease 0s;
+   	border-style: solid;
+	border-width: 2px;
+	border-color: #ccc;
 }
+ 
+ #content > .container {
+ 	padding-left: 200px;
+ }
  
  #edit_statusbar {
 	position:fixed;
