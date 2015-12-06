@@ -82,6 +82,12 @@ tr.deleted td a {
 	border-color:#ebccd1;
 }
 
+#formList .warning > .panel-heading, #formList .warning.option {
+	color:#a94442;
+	background-color:yellow;
+	border-color:#ebccd1;
+}
+
 .danger {
 	background-color:red;
 	border-color:red;

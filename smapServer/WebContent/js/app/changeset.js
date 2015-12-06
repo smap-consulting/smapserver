@@ -61,12 +61,12 @@ define([
 		 */
 		if(change.changeType === "property" || change.changeType === "label") {
 			
-			if (typeof change.property.formIndex !== "undefined") {
-				container = change.property.formIndex;
-				itemType = "question";
-			} else {
+			if (change.property.type === "option") {
 				container = change.property.optionList;
 				itemType = "option";
+			} else {
+				container = change.property.formIndex;
+				itemType = "question";
 			}
 			itemIndex = change.property.itemIndex;
 			
@@ -83,7 +83,7 @@ define([
 			itemType = "question";
 		
 		} 
-		if(itemIndex) {		// Note some changes do not have an itemIndex and don't need to be validated
+		if(typeof itemIndex !== "undefined") {		// Note some changes do not have an itemIndex and don't need to be validated
 			validateItem(container, itemIndex, itemType);
 		}
 		
@@ -477,6 +477,7 @@ define([
 		var refresh = false,		// Set to true if the page needs to be refreshed with this change
 			survey = globals.model.survey,
 			question,
+			option,
 			property,
 			length;
 		
@@ -586,6 +587,9 @@ define([
 					}
 				}
 			} else {	// Change to an option
+				
+				option = survey.optionLists[property.optionList].options[property.itemIndex];
+				option[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
 					survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
@@ -701,7 +705,7 @@ define([
 				refresh = false;	// Update markup solely for this option
 			} else if(change.action === "delete") {
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 1);	// Remove item from the sequence array		
-				refresh = false;	// Update markup solely for this option
+				survey.optionLists[change.option.optionList].options[change.option.itemIndex].deleted = true;
 			} else {
 				console.log("Unknown action: " + change.action);
 			}
@@ -842,7 +846,7 @@ define([
 				$changedRow = change.option.$button.prev();
 			
 			} else if(change.action === "delete") {
-				change.question.$deletedElement.prev().remove();	// Remove the add before button
+				change.option.$deletedElement.prev().remove();	// Remove the add before button
 				change.option.$deletedElement.remove();
 			}
 		} else if(change.changeType === "property") {
@@ -1008,21 +1012,20 @@ define([
 		} else {
 			item = survey.optionLists[container].options[itemIndex];
 		}
-		if(item.deleted) {
-			// The item has been deleted remove all of its errors
-			removeValidationError(container, itemIndex,	"item", itemType);
-			removeValidationError(container, itemIndex,	"name", itemType);
-		} else {
+		
+		removeValidationError(container, itemIndex,	"item", itemType);
+		removeValidationError(container, itemIndex,	"name", itemType);
+		
+		if(!item.deleted) {
 			
 			// Validate the name
 			name = itemType === "question" ? item.name : item.value;
 			isValid = validateName(container, itemIndex, name, itemType);
 			
-			/*
-			 * Question validations
-			 */
-			// Clear the existing item validation errors
-			removeValidationError(container,itemIndex,"item", itemType);
+			// Check references to other questions
+			if(isValid) {	
+				isValid = checkReferences(container, itemIndex, itemType, item);
+			}
 			
 			/*
 			 * Question specific validations
@@ -1042,7 +1045,8 @@ define([
 											itemIndex,
 											"item",
 											"Only one geometry question can be added to a form.",
-											itemType);
+											itemType,
+											"error");
 									isValid = false;
 									break;
 								}
@@ -1051,9 +1055,6 @@ define([
 					}
 				}
 				
-				if(isValid) {	// Check references
-					isValid = checkReferences(container, itemIndex, itemType, item);
-				}
 				
 				if(isValid) {	// Check parenthesis on relevant
 					isValid = checkParentheisis(container, itemIndex, itemType, item.relevant);
@@ -1067,6 +1068,8 @@ define([
 					isValid = checkParentheisis(container, itemIndex, itemType, item.calculation);
 				}
 				
+			} else {
+				
 			}
 				
 			updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
@@ -1078,7 +1081,34 @@ define([
 		} else if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 		}
+		
+		/*
+		 * If there were no errors check for warnings
+		 */
+		if(isValid) {	
+			isValid = checkBlankLabels(container, itemIndex, itemType, item);
+		}
 
+	}
+	
+	/*
+	 * Check for blank labels
+	 */
+	function checkBlankLabels(container, itemIndex, itemType, item) {
+		var i;
+		console.log("Checking for blank labels");
+		
+		for(i = 0; i < item.labels.length; i++) {
+			if(typeof item.labels[i].text === "undefined" || item.labels[i].text.trim().length === 0) {
+				addValidationError(
+						container,
+						itemIndex,
+						"item",
+						"Blank Label",
+						itemType,
+						"warning");
+			}
+		}
 	}
 	
 	/*
@@ -1089,38 +1119,42 @@ define([
 			c,
 			depth = 0,
 			lastOpen,
-			errorText;
+			errorText,
+			isValid = true;
 		
-		for(i = 0; i < elem.length; i++) {
-			c = elem.charAt(i);
-			if( c === '(') {
-				depth++;
-				locn = i;
-			} else if( c === ')') {
-				depth--;
-				locn = i;
+		if(elem) {
+			for(i = 0; i < elem.length; i++) {
+				c = elem.charAt(i);
+				if( c === '(') {
+					depth++;
+					locn = i;
+				} else if( c === ')') {
+					depth--;
+					locn = i;
+				}
+				if(depth < 0) {
+					break;
+				}
 			}
-			if(depth < 0) {
-				break;
-			}
-		}
-		
-		if(depth != 0) {
-			errorText = "Mis-matched parenthesis: " + elem.slice(0, locn) + '<b><span style="color:red;">' +
-				elem.slice(locn, locn + 1) +
-				'</span></b>' +
-				elem.slice(locn + 1);
 			
-			addValidationError(
-					container,
-					itemIndex,
-					"item",
-					"Mis-matched parenthesis: " + errorText,
-					itemType);
-			return false;
-		} else {
-			return true;
+			if(depth != 0) {
+				errorText = "Mis-matched parenthesis: " + elem.slice(0, locn) + '<b><span style="color:red;">' +
+					elem.slice(locn, locn + 1) +
+					'</span></b>' +
+					elem.slice(locn + 1);
+				
+				addValidationError(
+						container,
+						itemIndex,
+						"item",
+						"Mis-matched parenthesis: " + errorText,
+						itemType,
+						"error");
+				isValid = false;
+			} 
 		}
+		
+		return isValid;
 	}
 	
 	/*
@@ -1136,9 +1170,11 @@ define([
 		console.log("check refrences");
 		
 		// Get a list of references to other questions
-		getReferenceNames(item.relevant, refQuestions);
-		getReferenceNames(item.constraint, refQuestions);
-		getReferenceNames(item.calculation, refQuestions);
+		if(itemType  === "question") {
+			getReferenceNames(item.relevant, refQuestions);
+			getReferenceNames(item.constraint, refQuestions);
+			getReferenceNames(item.calculation, refQuestions);
+		}
 		for(i = 0; i < item.labels.length; i++) {
 			getReferenceNames(item.labels[i].text, refQuestions);
 		}
@@ -1173,7 +1209,8 @@ define([
 							itemIndex,
 							"item",
 							"The question referenced in ${" + name + "} cannot be found",
-							itemType);
+							itemType,
+							"error");
 			    	return false;
 			    }
 			}
@@ -1192,15 +1229,17 @@ define([
 			i,
 			name;
 		
-		names = elem.match(reg);
-		if(names) {
-			for(i = 0; i < names.length; i++) {
-				if(names[i].length > 3) {
-					name = names[i].substring(2, names[i].length - 1);		// Remove the curly brackets
-					refQuestions[name] = {
-							name: name,
-							exists: false
-					};
+		if (elem) {
+			names = elem.match(reg);
+			if(names) {
+				for(i = 0; i < names.length; i++) {
+					if(names[i].length > 3) {
+						name = names[i].substring(2, names[i].length - 1);		// Remove the curly brackets
+						refQuestions[name] = {
+								name: name,
+								exists: false
+						};
+					}
 				}
 			}
 		}
@@ -1224,7 +1263,7 @@ define([
 	/*
 	 * Error types:  name || dupname || noname || dupgeom
 	 */
-	function addValidationError(container, itemIndex, errorType, msg, itemType) {
+	function addValidationError(container, itemIndex, errorType, msg, itemType, severity) {
 		
 		// Push error into validation array
 		globals.errors.push({
@@ -1232,7 +1271,8 @@ define([
 			itemIndex: itemIndex,
 			errorType: errorType,
 			itemType: itemType,
-			msg: msg
+			msg: msg,
+			severity: severity
 		});
 		
 		updateModelWithErrorStatus(container, itemIndex, itemType);
@@ -1242,11 +1282,12 @@ define([
 	/*
 	 * Update the model and the DOM to report any erors on the question
 	 */
-	function updateModelWithErrorStatus(container, itemIndex, itemType) {
+	function updateModelWithErrorStatus(container, itemIndex, itemType, severity) {
 		
 		var $changedRow,
 			survey = globals.model.survey,
 			hasError = false,
+			hasWarning = false,
 			msg = "",
 			i,
 			errors = globals.errors,
@@ -1264,20 +1305,27 @@ define([
 		for(i = errors.length - 1; i >= 0; i--) {
 			if(errors[i].itemType === itemType && errors[i].container === container && 
 					errors[i].itemIndex === itemIndex) {
-				if(errors[i].errorType === "name") {
+				
+				if(errors[i].severity === "error") {
 					hasError = true;
 					msg = errors[i].msg;
-					break;
 				} else {
-					hasError = true;
-					msg = errors[i].msg;
-					// Don't break continue to possibly override error message with a name level error
+					hasWarning = true;
+					if(!hasError) {
+						msg = errors[i].msg;
+					}
 				}
+				
+				if(errors[i].errorType === "name") {	// Break on name errors as this is the highest level error to show
+					break;
+				} 
+		
 			}
 		}
 	
 		// Update Model
 		item.error = hasError;
+		item.warning - hasWarning;
 		item.errorMsg = msg;
 		
 		// Update DOM
@@ -1288,17 +1336,22 @@ define([
 	
 		$changedRow.find('.error-msg').html(msg);	// Add message
 		
-		
+		$changedRow.removeClass("error warning");
 		if(hasError) {
 			$changedRow.addClass("error");
 			if(itemType === "question") {
 				$changedRow.find('.question_type').addClass("disabled");
 			}
 		} else {
-			$changedRow.removeClass("error");	
+				
 			if(itemType === "question" && !item.published) {
 				$changedRow.find('.question_type').removeClass("disabled");
 			}
+			
+			if(hasWarning) {
+				$changedRow.addClass("warning");
+			} 
+			
 		}
 	}
 	
@@ -1306,29 +1359,6 @@ define([
 	 * Remove the specified error type (see addValidationError for error types)
 	 */
 	function removeValidationError(container, itemIndex, errorType, itemType) {
-		
-		var i,
-			$changedRow,
-			survey = globals.model.survey;
-		
-		// Remove error
-		for(i = globals.errors.length - 1; i >= 0; i--) {
-			if(globals.errors[i].itemType === itemType && 
-					globals.errors[i].container === container && 
-					globals.errors[i].itemIndex === itemIndex && 
-					globals.errors[i].errorType === errorType) {
-				globals.errors.splice(i, 1);
-			}
-		}	
-		
-		updateModelWithErrorStatus(container, itemIndex, itemType);  // Update model
-		
-	}
-	
-	/*
-	 * Remove specified warnings (see addValidationWarning for warning types)
-	 */
-	function removeValidationWarning(container, itemIndex, warningType, itemType) {
 		
 		var i,
 			$changedRow,
@@ -1378,7 +1408,8 @@ define([
 					itemIndex,
 					"name",
 					"This " + itemDesc + " does not have a name.  Specify a unique name.",
-					itemType);
+					itemType,
+					"error");
 			isValid = false;	
 		} 
 		
@@ -1394,7 +1425,8 @@ define([
 						"name",
 						"The " + itemDesc + " name must start with a letter or underscore and only contain letters, numbers, " +
 								"underscores, dashes and periods.",
-						itemType);	
+						itemType,
+						"error");	
 			
 				}
 			} else {
@@ -1407,7 +1439,8 @@ define([
 						"name",
 						"The " + itemDesc + " name must start with a letter, underscore or colon and only contain letters, numbers, " +
 								"underscores, dashes, periods and colons.",
-						itemType);	
+						itemType,
+						"error");	
 			
 				}
 			}
@@ -1453,7 +1486,8 @@ define([
 						itemIndex,
 						"name",
 						"The " + itemDesc + " name is the same as the name of another question.  Specify a unique name.",
-						itemType);
+						itemType,
+						"error");
 				isValid = false;	
 			}
 			

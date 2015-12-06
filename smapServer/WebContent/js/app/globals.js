@@ -63,7 +63,6 @@ define(function() {
 		gLanguage1: 0,
 		gLanguage2: 0,
 		errors: [],
-		warnings: [],
 		changes: [],
 		
 		model: new Model()
