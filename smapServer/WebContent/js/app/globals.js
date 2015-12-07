@@ -337,6 +337,22 @@ define(function() {
 				source: "user"
 			},
 			{
+				name: "Integer",
+				type: "int",
+				text: "#",
+				canSelect: true,
+				visible: true,
+				source: "user"
+			},
+			{
+				name: "GPS Point",
+				type: "geopoint",
+				glyphicon: "map-marker",
+				canSelect: true,
+				visible: true,
+				source: "user"
+			},
+			{
 				name: "Audio",
 				type: "audio",
 				glyphicon: "volume-up",
@@ -385,25 +401,9 @@ define(function() {
 				source: "user"
 			},
 			{
-				name: "Integer",
-				type: "int",
-				text: "#",
-				canSelect: true,
-				visible: true,
-				source: "user"
-			},
-			{
 				name: "Decimal",
 				type: "decimal",
 				text: "#.#",
-				canSelect: true,
-				visible: true,
-				source: "user"
-			},
-			{
-				name: "GPS Point",
-				type: "geopoint",
-				glyphicon: "map-marker",
 				canSelect: true,
 				visible: true,
 				source: "user"

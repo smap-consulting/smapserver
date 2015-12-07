@@ -768,7 +768,9 @@ function respondToEvents($context) {
 		if($context.attr("id") !== "formList") {
 			respondToEvents($context.prev());		// Add events on the "insert before" button
 		}
-		$context.find('input').focus();			// Set focus to the new option
+		
+		// Set focus to the new option
+		$context.find('textarea').focus();			// Set focus to the new option
 		
 		/*
 		 * If this option was added by an "add after" button then that button should add future questions
@@ -1053,7 +1055,11 @@ function addQuestion($this, type) {
 		$related,
 		$li,
 		formIndex = $this.data("findex"),
+		forms = globals.model.survey.forms,
+		justAddedQuestionId,
 		availableGroups,
+		$textArea,
+		textAreaVal,
 		locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 	
 	$li = $this.closest('li');
@@ -1079,7 +1085,12 @@ function addQuestion($this, type) {
 	if($context.attr("id") !== "formList") {
 		respondToEvents($context.prev());		// Add events on the "insert before" button
 	}
-	$context.find('input').focus();			// Set focus to the new question
+	
+	// Set focus to the new question
+	justAddedQuestionID = '#question' + formIndex +  '_' + (forms[formIndex].questions.length - 1);
+	$textArea = $('textarea', justAddedQuestionID);
+	textAreaVal = $textArea.val();
+	$textArea.val("").focus().val(textAreaVal);		// Should set text entry to end of text field	
 	
 	// Add an end group question if a new group has been created
 	if(type === "begin group") {

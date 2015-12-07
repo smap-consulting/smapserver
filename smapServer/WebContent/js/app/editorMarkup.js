@@ -43,15 +43,18 @@ define([
 		refreshOptionLists: refreshOptionLists
 	};
 	
-	function addOneQuestion(question, formIndex, qIndex, addNewButton, selProperty) {
+	function addOneQuestion(form, question, formIndex, qIndex, addNewButton, selProperty) {
 		var h = [],
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
+		globals.hasQuestions = true;
+		form.maxQuestion++;
+		
 		selProperty = selProperty || $('#selProperty').val();
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, questionId, formIndex, undefined, selProperty);
+			h[++idx] = addNewQuestionButton(false, false, formIndex, undefined, selProperty);
 		}
 		
 		// Add the group to the group stack
@@ -147,7 +150,7 @@ define([
 		return h.join("");
 	}
 	
-	function addNewQuestionButton(after, topLevelForm, questionId, formIndex, formName, selProperty) {
+	function addNewQuestionButton(after, topLevelForm, formIndex, formName, selProperty) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -566,6 +569,8 @@ define([
 		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
+			form.maxQuestion = 0;			// Add a number to use for the default next question in a form
+			
 			for(i = 0; i < form.qSeq.length; i++) {
 				globals.gHasQuestions = true;
 				question = form.questions[form.qSeq[i]];
@@ -581,7 +586,7 @@ define([
 					gGroupStacks[formIndex].groupStack.pop();
 					gGroupStacks[formIndex].lastGroup = groupButtonName;
 					
-					h[++idx] = addNewQuestionButton(true, false, lastRealQuestionId, formIndex, groupButtonName, selProperty);
+					h[++idx] = addNewQuestionButton(true, false, formIndex, groupButtonName, selProperty);
 					
 					// End the group
 					h[++idx] = '</ul>';
@@ -598,18 +603,14 @@ define([
 					h[++idx] = form.qSeq[i];
 					h[++idx] = '"></li>';
 					
-					// The next "Add after" button should point to the group that just finished
-					//lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
-					
+				
 					continue;
 				}
 				if(question.type === "end repeat") {
 					continue;
 				}
-				lastRealQuestionId = "question" + formIndex + "_" + form.qSeq[i];
-				globals.hasQuestions = true;
-				h[++idx] = addOneQuestion(question, formIndex, form.qSeq[i], true, selProperty);
-				//console.log("Add: " + question.type + " : " + lastRealQuestionId);
+
+				h[++idx] = addOneQuestion(form, question, formIndex, form.qSeq[i], true, selProperty);
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
@@ -617,7 +618,7 @@ define([
 			} else {
 				finalButtonName = form.name;
 			}
-			h[++idx] = addNewQuestionButton(true, topLevelForm, lastRealQuestionId, formIndex, finalButtonName, selProperty); 	// Adds a question at the end of the form
+			h[++idx] = addNewQuestionButton(true, topLevelForm, formIndex, finalButtonName, selProperty); 	// Adds a question at the end of the form
 		}
 		return h.join("");
 	}

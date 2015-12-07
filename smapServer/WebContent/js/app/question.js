@@ -55,7 +55,7 @@ define([
 	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
-	function add(formIndex, qId, locn, type, name) {		
+	function add(formIndex, qId, locn, type) {		
 		
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
@@ -63,6 +63,7 @@ define([
 			qIndex,
 			survey = globals.model.survey,
 			type,
+			name,
 			i,
 			firstQuestion;
 		
@@ -82,8 +83,11 @@ define([
 		} else {
 			// First question in the form
 			firstQuestion = true;
+			qIndex = 0;
 			seq = 0;
 		}
+		
+		name = getDefaultQuestionName(formIndex, qIndex);
 
 		// Create changeset to be applied on save		
 		change = {
@@ -93,6 +97,7 @@ define([
 					seq: seq,
 					type: type,
 					name: name,
+					list_name: name,
 					source: "user",	// For date type
 					labels: [],
 					visible: type === "end group" ? false : true,
@@ -105,13 +110,59 @@ define([
 				}
 		};
 		
+		// Add list of choices if this is a select question
+		if(type.indexOf("select") == 0) {
+			var optionList = survey.optionLists[name];
+			if(!optionList) {
+				survey.optionLists[name] = {
+					oSeq: [],
+					options: []
+				};
+				markup.refreshOptionLists();
+			}
+		}
+		
 		// Add default empty languages
 		for(i = 0; i < survey.languages.length; i++) {
-			change.question.labels.push({text:""});
+			change.question.labels.push({text: name + ") "});
 		}
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
+	}
+	
+	function getDefaultQuestionName(formIndex, qIndex) {
+		
+		var forms = globals.model.survey.forms,
+			form = forms[formIndex],
+			name = undefined;
+		
+		// Keep incrementing the maxQuestion until we get a unque name for this question
+		while(!nameIsUniqueInForm(form, name)) {
+			name = ++form.maxQuestion;
+			if(form.parentIndex >= 0) {
+				name = form.questions[parentQuestionIndex].name + "." + name;
+			} else {	
+				name = "q" + name;
+			}
+		}
+		
+		return name;
+	}
+	
+	function nameIsUniqueInForm(form, name) {
+		var unique = false,
+			i;
+		if(typeof name !== "undefined") {
+			unique = true;
+			for(i = 0; i < form.questions.length; i++) {
+				if(form.questions[i].name === name) {
+					unique = false;
+					break;
+				}
+			}
+		}
+		return unique;
 	}
 	
 	function setGroupEnd(formIndex, qId, locn, type, name, availableGroups) {		
@@ -362,10 +413,10 @@ define([
 	function addOption($button, oId, locn, list_name, formIndex, qname) {		
 		
 		var $relatedOption = $("#" + oId),
-			optionIndex,
 			oIndexOther,		
 			seq = 0,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			value;
 		
 		if($relatedOption.size() > 0) {		
 			oIndexOther = $relatedOption.data("id");
@@ -377,6 +428,7 @@ define([
 			seq = 0;
 		}
 		
+		value = getDefaultOptionValue(seq);
 
 		// Create changeset to be applied on save
 		change = {
@@ -388,6 +440,7 @@ define([
 					optionList: list_name,
 					sId: survey.id,
 					labels: [],
+					value: value,
 					
 					// Helper values 
 					formIndex: formIndex,
@@ -406,6 +459,12 @@ define([
 		
 	}
 	
+	/*
+	 * Get default option value
+	 */
+	function getDefaultOptionValue(optionIndex) {
+		return optionIndex;
+	}
 	/*
 	 * Get the display sequence of the question
 	 */

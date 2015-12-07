@@ -274,6 +274,7 @@ define([
 		} else if(change.changeType === "question") {
 			form = survey.forms[change.question.formIndex];
 			change.question.fId = form.id;
+			change.question.path = getFormPath(form) + "/" + change.question.name;
 			if(change.action === "delete") {
 				item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
 				change.question.id = item.id;
@@ -822,9 +823,9 @@ define([
 			if(change.action === "add") {
 				var preceedingQuestion = form.questions[form.qSeq[change.question.seq-1]];
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));			
+					change.question.$relatedElement.after(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined));			
 				} else {
-					change.question.$relatedElement.prev().before(markup.addOneQuestion(change.question, change.question.formIndex, change.question.itemIndex, true, undefined));
+					change.question.$relatedElement.prev().before(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined));
 				}
 				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
 				
@@ -884,6 +885,7 @@ define([
 				$changedRow = $changedRow.closest('li');
 				
 				newMarkup = markup.addOneQuestion(
+						survey.forms[change.property.formIndex],
 						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
 						change.property.formIndex, 
 						change.property.itemIndex,
@@ -1256,7 +1258,7 @@ define([
 	
 	function isValidODKOptionName(val) {
 		
-		var sqlCheck = /^[A-Za-z_:][A-Za-z0-9_\-\.:]*$/
+		var sqlCheck = /^[A-Za-z0-9_\-\.:]*$/
 		return sqlCheck.test(val);	
 	}
 	
@@ -1402,7 +1404,7 @@ define([
 		
 		itemType === "question" ? itemDesc = "question" : itemDesc = "choice";
 		// Check for empty name
-		if(!val || val === "") {
+		if(typeof val === "undefined" || val === "") {
 			addValidationError(
 					container,
 					itemIndex,
@@ -1423,7 +1425,7 @@ define([
 						container,
 						itemIndex,
 						"name",
-						"The " + itemDesc + " name must start with a letter or underscore and only contain letters, numbers, " +
+						"The " + itemDesc + " name must only contain letters, numbers, " +
 								"underscores, dashes and periods.",
 						itemType,
 						"error");	
