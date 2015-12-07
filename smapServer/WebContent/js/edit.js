@@ -435,8 +435,8 @@ $(document).ready(function() {
 		
 	});
 	
-	setupQuestionTypes($('#dialog_types'), 2);
-	setupQuestionTypes($('#toolbar_types'), 1);
+	setupQuestionTypes($('#dialog_types'), 2, false);		// Double column, not draggable for change type dialog
+	setupQuestionTypes($('#toolbar_types'), 1, true);		// Single column, draggable for toolbar
 	
 	// Set focus on survey name when create form modal is opened
 	$('#openFormModal').on('shown.bs.modal', function () {
@@ -458,7 +458,7 @@ $(document).ready(function() {
 });
 
 //Set up question type dialog
-function setupQuestionTypes($elem, columns) {
+function setupQuestionTypes($elem, columns, draggable) {
 	var i,
 		types = globals.model.qTypes,
 		h = [],
@@ -473,7 +473,11 @@ function setupQuestionTypes($elem, columns) {
 			h[++idx] = '<div class="col-xs-12 ';
 			h[++idx] = columns === 1 ? 'col-md-12" ' : 'col-md-6" ';
 			h[++idx] = ' style="height:65px;">';	
-			h[++idx] = '<button type="button" class="btn btn-large btn-default question_type_sel full_width_btn" value="';
+			h[++idx] = '<button type="button" class="btn btn-large btn-default question_type_sel full_width_btn';
+			if(draggable) {
+				h[++idx] = ' draggable';
+			}
+			h[++idx] = '" value="';
 			h[++idx] = types[i].type;
 			h[++idx] = '">';
 			if(types[i].glyphicon) {
@@ -848,7 +852,11 @@ function respondToEvents($context) {
 		
 		ev.effectAllowed = "move";		// Only allow move, TODO copy
 		
-		ev.dataTransfer.setData("text", ev.target.id);
+		if(typeof ev.target.value !== "undefined" && ev.target.value.length > 0) {
+			ev.dataTransfer.setData("type", ev.target.value);
+		} else {	// Moving a question / option
+			ev.dataTransfer.setData("text/plain", ev.target.id);
+		}
 		$('.dropon').addClass("add_drop_button").removeClass("add__button");
 		
 		return true;
@@ -890,7 +898,7 @@ function respondToEvents($context) {
 		
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),
-			sourceId = ev.dataTransfer.getData("text"),
+			sourceId = ev.dataTransfer.getData("text/plain"),
 			targetId = $elem.data('qid');
 		
 		$elem.addClass("add_button").removeClass("over_drop_button").addClass("add_drop_button");
@@ -905,59 +913,68 @@ function respondToEvents($context) {
 		evt.originalEvent.stopPropagation();
 	})
 	
-	// Drop the question or option
+	// Drop the question, option or type
 	.off('drop')
 	.on('drop', function(evt){
 		var ev = evt.originalEvent,
 			$targetListItem = $(ev.target),
 			$sourceElem,
-			sourceId = ev.dataTransfer.getData("text"),
+			sourceId = ev.dataTransfer.getData("text/plain"),
+			sourceValue = ev.dataTransfer.getData("type"),		// The type of a new question that is being dropped
 			targetId = $targetListItem.data('qid'),
 			locn = $targetListItem.data("locn"),			// Before or after the target question
 			$context,
 			$related,
 			$li,
-			type;
+			type,											// Question or option									
+			dropType = false;								// Set true if a question type is being dropped
 	
 		ev.preventDefault();
 		ev.stopPropagation();
 		 
-		if(sourceId.indexOf("option") === 0) {
-			type = "option";
-			targetId = $targetListItem.data('oid');
-		} else {
+		if(typeof sourceValue !== "undefined" && sourceValue.length > 0) {		// Dropped a new type - Question only
 			type = "question";
-			
-			$li = $targetListItem.closest('li');
-			if(locn === "after") {
-				$related = $li.prev();
+			dropType = true;
+		} else {
+			if(sourceId.indexOf("option") === 0) {						// Dropped a question or option
+				type = "option";
+				targetId = $targetListItem.data('oid');
 			} else {
-				$related = $li.next();
-			} 
-			if($related.length === 0) {   // Empty group, location is "after"
-				targetId = $li.parent().closest('li').attr("id");
-			} else {
-				targetId = $related.attr("id");
+				type = "question";
+				$li = $targetListItem.closest('li');
+				if(locn === "after") {
+					$related = $li.prev();
+				} else {
+					$related = $li.next();
+				} 
+				if($related.length === 0) {   // Empty group, location is "after"
+					targetId = $li.parent().closest('li').attr("id");
+				} else {
+					targetId = $related.attr("id");
+				}
 			}
-			//targetId = $targetListItem.data('qid');
-			
 		}
-		console.log("Dropped: " + sourceId + " : " + targetId);
 		
-		if(sourceId != targetId) {
-			if (ev.ctrlKey || ev.altKey) {
-				console.log("Control was pressed");
-				$sourceElem = $(document.getElementById(sourceId)).clone(true);
-			} else {
-				$sourceElem = $(document.getElementById(sourceId));
+		console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
+			
+		if(dropType) {
+			addQuestion($targetListItem, sourceValue);
+		} else {
+			if(sourceId != targetId) {
+				if (ev.ctrlKey || ev.altKey) {
+					console.log("Control was pressed");
+					$sourceElem = $(document.getElementById(sourceId)).clone(true);
+				} else {
+					$sourceElem = $(document.getElementById(sourceId));
+				}
+			    
+			    if(type === "question") {
+			    	$context = question.moveQuestion(sourceId, targetId, locn);
+			    } else if(type === "option") {
+			    	$context = question.moveBeforeOption(sourceId, targetId);
+			    }
+				respondToEvents($context);						// Add events on to the altered html
 			}
-		    
-		    if(type === "question") {
-		    	$context = question.moveQuestion(sourceId, targetId, locn);
-		    } else if(type === "option") {
-		    	$context = question.moveBeforeOption(sourceId, targetId);
-		    }
-			respondToEvents($context);						// Add events on to the altered html
 		}
 	});
 
