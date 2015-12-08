@@ -228,6 +228,10 @@ function getChangeDescription(change) {
 		h[++idx] = change.fileName;
 		h[++idx] = '</span>';
 		
+	}  else if(change.action === "settings_update") {
+		h[++idx] = 'Settings changed <span style="color:blue;">';
+		h[++idx] = change.msg;
+		h[++idx] = '</span>';
 	}  else if(change.action === "update") {
 		
 		/*

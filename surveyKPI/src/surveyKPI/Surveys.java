@@ -40,9 +40,11 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.ChangeElement;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -488,9 +490,11 @@ public class Surveys extends Application {
 		String fileName = null;
 		String newSurveyName = null;
 		String settings = null;
+		int version = 0;
 				
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtGet = null;
+		PreparedStatement pstmtChangeLog = null;
 		
 		try {
 			/*
@@ -535,8 +539,11 @@ public class Surveys extends Application {
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
 			
+			// Start transaction
+			connectionSD.setAutoCommit(false);
+			
 			// Get the existing survey display name, plain old name and project id
-			String sqlGet = "select name, display_name, p_id from survey where s_id = ?";
+			String sqlGet = "select name, display_name, p_id, version from survey where s_id = ?";
 			pstmtGet = connectionSD.prepareStatement(sqlGet);	
 			pstmtGet.setInt(1, sId);
 			
@@ -548,6 +555,7 @@ public class Surveys extends Application {
 				originalName = rs.getString(1);
 				originalDisplayName = rs.getString(2);
 				originalProjectId = rs.getInt(3);
+				version = rs.getInt(4) + 1;
 			}
 			
 			if(originalName != null) {
@@ -557,10 +565,17 @@ public class Surveys extends Application {
 				}
 			}
 			
+			String sqlChangeLog = "insert into survey_change " +
+					"(s_id, version, changes, user_id, apply_results, updated_time) " +
+					"values(?, ?, ?, ?, 'true', ?)";
+			
 			// Update the settings
-			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, p_id = ?, instance_name = ? where s_id = ?;";		
+			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, "
+					+ "p_id = ?, "
+					+ "instance_name = ?, "
+					+ "version = ? "
+					+ "where s_id = ?;";		
 		
-			System.out.println("Survey: " + survey.instanceNameDefn);
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
 			pstmt.setString(2, newSurveyName);
@@ -568,7 +583,8 @@ public class Surveys extends Application {
 			pstmt.setBoolean(4, survey.task_file);
 			pstmt.setInt(5, survey.p_id);
 			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD));
-			pstmt.setInt(7, sId);
+			pstmt.setInt(7, version);
+			pstmt.setInt(8, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
@@ -577,7 +593,26 @@ public class Surveys extends Application {
 				log.info("Error: Failed to update survey");
 			} else {
 				log.info("Info: Survey updated");
+				
+				int userId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
+				
+				ChangeElement change = new ChangeElement();
+				change.action = "settings_update";
+				change.msg = "Name: " + survey.displayName + ", Default Language: " + survey.def_lang + ", Instance Name: "+ survey.instanceNameDefn; 
+				
+				// Write to the change log
+				pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
+				// Write the change log
+				pstmtChangeLog.setInt(1, sId);
+				pstmtChangeLog.setInt(2, version);
+				pstmtChangeLog.setString(3, gson.toJson(change));
+				pstmtChangeLog.setInt(4, userId);
+				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+				pstmtChangeLog.execute();
 			}
+			
+			connectionSD.commit();
+			connectionSD.setAutoCommit(true);
 			
 			if(fileName != null) {  // Save the file				
 	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
@@ -605,13 +640,16 @@ public class Surveys extends Application {
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"sql error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
+		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception loading settings", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
+		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
 		} finally {
 			
 			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
+			if (pstmtChangeLog != null) try {pstmtChangeLog.close();} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {

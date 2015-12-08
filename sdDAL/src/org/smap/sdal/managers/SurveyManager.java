@@ -999,16 +999,6 @@ public class SurveyManager {
 		return resp;
 	}
 	
-
-	
-	// Get the timestamp
-	public static Timestamp getTimeStamp() {
-		 
-		Date today = new Date();
-		return new Timestamp(today.getTime());
-	 
-	}
-	
 	/*
 	 * ========================= Type specific update functions
 	 */
@@ -1100,7 +1090,7 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
 				pstmtChangeLog.execute();
 			}
 		} catch (Exception e) {
@@ -1290,7 +1280,7 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "external option")));
 					pstmtChangeLog.setInt(4,userId);
-					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
 					pstmtChangeLog.execute();
 
 				}
@@ -1449,7 +1439,7 @@ public class SurveyManager {
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
 					pstmtChangeLog.setInt(4,userId);	
-					pstmtChangeLog.setTimestamp(5, getTimeStamp());
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
 					pstmtChangeLog.execute();
 					
 				} else {
@@ -1526,7 +1516,7 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
 				pstmtChangeLog.execute();
 			} 
 			
@@ -1587,7 +1577,7 @@ public class SurveyManager {
 				pstmtChangeLog.setInt(2, version);
 				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
 				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, getTimeStamp());
+				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
 				pstmtChangeLog.execute();
 			} 
 			

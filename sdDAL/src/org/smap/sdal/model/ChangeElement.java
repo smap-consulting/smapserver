@@ -41,6 +41,10 @@ public class ChangeElement {
 		
 	}
 	
+	public ChangeElement() {
+		
+	}
+	
 	public String action;			// move | add | delete | update | external option
 	public String type;				// question | option
 	public String source;			// editor | file
@@ -52,6 +56,7 @@ public class ChangeElement {
 	
 	// Miscelaneous data
 	public String fileName;			// External file name used to load changes to choices
+	public String msg;
 	
 	// Properties for logging
 	//public int cId;					// The database key for this change (only used when reading a change item from the log)

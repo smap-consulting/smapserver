@@ -12,6 +12,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -1647,5 +1648,13 @@ public class GeneralUtilityMethods {
 		
 		return out;
 		
+	}
+	
+	// Get the timestamp
+	public static Timestamp getTimeStamp() {
+		 
+		java.util.Date today = new java.util.Date();
+		return new Timestamp(today.getTime());
+	 
 	}
 }
