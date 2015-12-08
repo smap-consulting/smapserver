@@ -442,13 +442,16 @@ define([
 			i,
 			optionId = -1;
 		
+		optionList.maxOption = -1;
+		
 		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 		oSeq = optionList.oSeq;
 		h[++idx] = h[++idx] = '<ul class="list-unstyled">';
 		if(oSeq) {
 			for(i = 0; i < oSeq.length; i++) {
 				optionId = "option_" + question.name + "_" + oSeq[i];
-				h[++idx] = addOneOption(optionList.options[oSeq[i]], 
+				h[++idx] = addOneOption(optionList,
+						optionList.options[oSeq[i]], 
 						formIndex, 
 						oSeq[i], 
 						question.list_name, 
@@ -465,9 +468,11 @@ define([
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(option, formIndex, id, list_name, qname, addNewButton, optionId) {
+	function addOneOption(optionList, option, formIndex, id, list_name, qname, addNewButton, optionId) {
 		var h = [],
 			idx = -1;
+		
+		optionList.maxOption++;
 		
 		if(addNewButton) {
 			h[++idx] = addNewOptionButton(false, optionId, list_name, formIndex, qname);

@@ -875,6 +875,7 @@ function respondToEvents($context) {
 		evt.originalEvent.preventDefault();
 	});
 	
+	
 	/*
 	 * Handle drop on or dragging over a drop zone
 	 */

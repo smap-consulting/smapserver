@@ -135,9 +135,15 @@ define([
 		
 		var forms = globals.model.survey.forms,
 			form = forms[formIndex],
-			name = undefined;
+			name = form.maxQuestion;
 		
-		// Keep incrementing the maxQuestion until we get a unque name for this question
+		if(form.parentIndex >= 0) {
+			name = form.questions[parentQuestionIndex].name + "." + name;
+		} else {	
+			name = "q" + name;
+		}
+		
+		// Keep incrementing the maxQuestion until we get a unique name for this question
 		while(!nameIsUniqueInForm(form, name)) {
 			name = ++form.maxQuestion;
 			if(form.parentIndex >= 0) {
@@ -156,7 +162,22 @@ define([
 		if(typeof name !== "undefined") {
 			unique = true;
 			for(i = 0; i < form.questions.length; i++) {
-				if(form.questions[i].name === name) {
+				if(!form.questions[i].deleted && form.questions[i].name === name) {
+					unique = false;
+					break;
+				}
+			}
+		}
+		return unique;
+	}
+	
+	function nameIsUniqueInOptionList(list, name) {
+		var unique = false,
+			i;
+		if(typeof name !== "undefined") {
+			unique = true;
+			for(i = 0; i < list.options.length; i++) {
+				if(!list.options[i].deleted && list.options[i].name === name) {
 					unique = false;
 					break;
 				}
@@ -428,7 +449,7 @@ define([
 			seq = 0;
 		}
 		
-		value = getDefaultOptionValue(seq);
+		value = getDefaultOptionValue(list_name, seq);
 
 		// Create changeset to be applied on save
 		change = {
@@ -462,8 +483,19 @@ define([
 	/*
 	 * Get default option value
 	 */
-	function getDefaultOptionValue(optionIndex) {
-		return optionIndex;
+	function getDefaultOptionValue(listName, optionIndex) {
+		
+		var optionLists = globals.model.survey.optionLists,
+			list = optionLists[listName],
+			name = list.maxOption;
+		
+		// Keep incrementing the maxOptionValue until we get a unque name for this optionList
+		while(!nameIsUniqueInOptionList(list, name)) {
+			name = ++list.maxOption;
+		}
+		
+		return String(name);
+
 	}
 	/*
 	 * Get the display sequence of the question

@@ -836,7 +836,9 @@ define([
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
 				var optionId = "option_" + change.option.qname + "_" + change.option.itemIndex;
-				newMarkup = markup.addOneOption(change.option, 
+				var optionList = survey.optionLists[change.option.optionList];
+				newMarkup = markup.addOneOption(optionList,
+						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
 						change.option.optionList, 
@@ -867,6 +869,7 @@ define([
 				
 				var optionId = "option_" + change.property.qname + "_" + change.property.itemIndex;
 				newMarkup = markup.addOneOption(
+						survey.optionLists[change.property.optionList],
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
 						change.property.formIndex, 
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
