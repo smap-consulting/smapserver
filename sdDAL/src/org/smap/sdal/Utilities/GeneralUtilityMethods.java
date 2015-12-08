@@ -1123,8 +1123,6 @@ public class GeneralUtilityMethods {
 			String sqlLanguages = "insert into language(s_id, language, seq) values(?, ?, ?);";
 			pstmtLanguages = sd.prepareStatement(sqlLanguages);
 			
-			sd.setAutoCommit(false);
-			
 			// Delete existing
 			pstmtDelLanguages.setInt(1,sId);
 			pstmtDelLanguages.executeUpdate();
@@ -1141,15 +1139,12 @@ public class GeneralUtilityMethods {
 				pstmtLanguages.executeUpdate();			
 			}
 		
-			sd.commit();
-			sd.setAutoCommit(true);
 			
 		} catch(SQLException e) {
 			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
-			sd.setAutoCommit(true);
 			try {if (pstmtDelLanguages != null) {pstmtDelLanguages.close();}} catch (SQLException e) {}
 			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
 		}

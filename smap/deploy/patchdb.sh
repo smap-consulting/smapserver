@@ -160,6 +160,13 @@ then
 echo "1510" > ~/smap_version
 fi
 
+# version 15.11
+if [ $version -lt "1511" ]
+then
+java -jar version1/patch.jar apply survey_definitions results
+echo "1510" > ~/smap_version
+fi
+
 #####################################################################################
 # All versions
 # Copy the new apache configuration files

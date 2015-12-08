@@ -1011,7 +1011,7 @@ function mediaPropSelected($this) {
     	gIsSurveyLevel = true;
 	}
 	
-	$('.mediaManage').hide();						// MEDIA
+	$('.mediaManage').hide();						
 	$('.mediaSelect').show();
 	$('#mediaModalLabel').html("Select Media File");
 	
@@ -1019,8 +1019,8 @@ function mediaPropSelected($this) {
 	$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 	
 	// Only show relevant media
-	$('tr').hide();
-	$('tr.' + gElement).show();
+	$('tr','#surveyPanel, #orgPanel').hide();
+	$('tr.' + gElement, '#surveyPanel, #orgPanel').show();
 	
 	$('#mediaModal table').on('click', 'tbody tr', function(e) {
 		var $sel = $(this);

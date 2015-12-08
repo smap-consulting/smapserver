@@ -65,7 +65,7 @@ define([
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addErrorMsg(question.errorMsg);
-			h[++idx] = '<table class="table">';
+			h[++idx] = '<table class="table"><tbody><tr>';
 				h[++idx] = '<td class="q_type_col">';
 					h[++idx] = '<div class="question_type';
 					if(question.published) {
@@ -96,7 +96,7 @@ define([
 					h[++idx]='</button>';
 					 
 				h[++idx] = '</td>';
-				h[++idx] = '</table>';
+				h[++idx] = '</tr></tbody></table>';
 		h[++idx] = '<div id="collapse';
 		h[++idx] = globals.gElementIndex;
 		h[++idx] = '" class="panel-body collapse';

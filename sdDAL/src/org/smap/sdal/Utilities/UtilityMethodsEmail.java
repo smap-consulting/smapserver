@@ -545,7 +545,6 @@ public class UtilityMethodsEmail {
 			
 			String sql = "select t.type, t.value from translation t where t.s_id = ? and t.language = ? and t.text_id = ?";
 			pstmt = connectionSD.prepareStatement(sql);
-			ManifestValue manifest = new ManifestValue();
 			
 			for(int i = 0; i < s.languages.size(); i++) {
 	
@@ -568,6 +567,7 @@ public class UtilityMethodsEmail {
 						if(t.equals("none")) {
 							l.text = GeneralUtilityMethods.convertAllEmbeddedOutput(v, true);
 						} else if(basePath != null && oId > 0) {
+							ManifestValue manifest = new ManifestValue();
 							getFileUrl(manifest, s.ident, v, basePath, oId);
 							log.info("Url: " + manifest.url + " : " + v);
 							if(t.equals("image")) {
@@ -657,13 +657,16 @@ public class UtilityMethodsEmail {
 				System.out.println("$$$$ language: " + languages.get(i));
 				System.out.println("     text: " + l.text);
 				System.out.println("     hint: " + l.hint);
+				System.out.println("     image: " + l.image);
+				System.out.println("     video: " + l.video);
+				System.out.println("     audio: " + l.audio);
 				
 				// Update text
 				if(l.text != null ) {
 					pstmt.setString(3, path + ":label");
 					pstmt.setString(4, "none");
 					pstmt.setString(5, l.text);
-					log.info("Update text label: " + pstmt.toString());
+					log.info("Set text label: " + pstmt.toString());
 					pstmt.executeUpdate();
 				}
 				
@@ -672,11 +675,36 @@ public class UtilityMethodsEmail {
 					pstmt.setString(3, path + ":hint");
 					pstmt.setString(4, "none");
 					pstmt.setString(5, l.hint);
-					log.info("Update hint label: " + pstmt.toString());
+					log.info("Set hint label: " + pstmt.toString());
 					pstmt.executeUpdate();
 				}
 				
-				// TODO media types
+				// Update image
+				if(l.image != null) {
+					pstmt.setString(3, path + ":label");
+					pstmt.setString(4, "image");
+					pstmt.setString(5, l.image);
+					log.info("Set image label: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
+				
+				// Update video
+				if(l.video != null) {
+					pstmt.setString(3, path + ":label");
+					pstmt.setString(4, "video");
+					pstmt.setString(5, l.video);
+					log.info("Set video label: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
+				
+				// Update audio
+				if(l.audio != null) {
+					pstmt.setString(3, path + ":label");
+					pstmt.setString(4, "audio");
+					pstmt.setString(5, l.audio);
+					log.info("Set audio label: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
 				
 	
 			}

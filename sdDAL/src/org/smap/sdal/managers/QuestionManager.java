@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Question;
@@ -204,6 +205,13 @@ public class QuestionManager {
 				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 			
+				// Assume that every question has a label, however hints are optional (to reduce size of form)
+				String infotextId = null;
+				for(Label l : q.labels) {
+					if(l.hint != null && l.hint.trim().length() > 0) {
+						infotextId = q.path + ":hint";
+					}
+				}
 				// Insert the question
 				pstmtInsertQuestion.setInt(1, q.fId );
 				pstmtInsertQuestion.setInt(2, q.l_id);
@@ -212,7 +220,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(5, GeneralUtilityMethods.cleanName(q.name, true));
 				pstmtInsertQuestion.setString(6, type );
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
-				pstmtInsertQuestion.setString(8, q.path + ":hint" );
+				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, q.source );
 				pstmtInsertQuestion.setString(10, q.calculation );
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
