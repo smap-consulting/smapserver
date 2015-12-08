@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.QuestionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -86,6 +87,7 @@ public class SurveyResults extends Application {
 				PreparedStatement pstmtUnPublish = null;
 				PreparedStatement pstmtRemoveChangeHistory = null;
 				PreparedStatement pstmtRemoveChangeset = null;
+				PreparedStatement pstmtGetSoftDeletedQuestions = null;
 				Statement stmtRel = null;
 				try {
 					connectionRel = ResultsDataSource.getConnection("surveyKPI-SurveyResults");
@@ -100,6 +102,10 @@ public class SurveyResults extends Application {
 					
 					String sqlRemoveChangeset = "delete from changeset where s_id = ?;";
 					pstmtRemoveChangeset = connectionRel.prepareStatement(sqlRemoveChangeset);
+					
+					String sqlGetSoftDeletedQuestions = "select q.f_id, q.name from question q where soft_deleted = 'true' "
+							+ "and q.f_id in (select f_id from form where s_id = ?);";
+					pstmtGetSoftDeletedQuestions = connectionSD.prepareStatement(sqlGetSoftDeletedQuestions);
 					
 					sql = "select distinct f.table_name, f.f_id FROM form f " +
 							"where f.s_id = ? " +
@@ -128,7 +134,7 @@ public class SurveyResults extends Application {
 						log.info("userevent: " + request.getRemoteUser() + " : delete results : " + tableName + " in survey : "+ sId); 
 					}
 					
-					pstmtUnPublish.setInt(1, sId);
+					pstmtUnPublish.setInt(1, sId);			// Mark questions as un-published
 					pstmtUnPublish.executeUpdate();
 					
 					pstmtRemoveChangeHistory.setInt(1, sId);
@@ -137,6 +143,20 @@ public class SurveyResults extends Application {
 					pstmtRemoveChangeset.setInt(1, sId);
 					pstmtRemoveChangeset.executeUpdate();
 					
+					// Delete any soft deleted questions from the survey definitions
+					QuestionManager qm = new QuestionManager();
+					ArrayList<org.smap.sdal.model.Question> questions = new ArrayList<org.smap.sdal.model.Question> ();
+					pstmtGetSoftDeletedQuestions.setInt(1, sId);
+					ResultSet rs = pstmtGetSoftDeletedQuestions.executeQuery();
+					while(rs.next()) {
+						org.smap.sdal.model.Question q = new org.smap.sdal.model.Question();
+						q.fId = rs.getInt(1);
+						q.name = rs.getString(2);
+						questions.add(q);
+					}
+					if(questions.size() > 0) {
+						qm.delete(connectionSD, sId, questions);
+					}
 					response = Response.ok("").build();
 					
 				} catch (SQLException e) {
@@ -148,6 +168,7 @@ public class SurveyResults extends Application {
 					try {if (pstmtUnPublish != null) {pstmtUnPublish.close();}} catch (SQLException e) {}
 					try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
 					try {if (pstmtRemoveChangeHistory != null) {pstmtRemoveChangeHistory.close();}} catch (SQLException e) {}
+					try {if (pstmtGetSoftDeletedQuestions != null) {pstmtGetSoftDeletedQuestions.close();}} catch (SQLException e) {}
 
 					try {
 						if (connectionSD != null) {

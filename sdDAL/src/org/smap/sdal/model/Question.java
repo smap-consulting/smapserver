@@ -42,11 +42,12 @@ public class Question {
 	public boolean required;
 	public boolean repeatCount;
 	public boolean propertyType = false;	// If set these questions will not be shown in the editor
-	public boolean published;		// Set true if the question has been added to a results table
-	public boolean inMeta;			// Set true if the question is in the meta group
-	int width = -1;						// Display width, generated from appearance column 
-									//  (for the moment - should probably have its own database 
-									//  entry but I want to maintain compatibility with xlsform)
+	public boolean published;				// Set true if the question has been added to a results table
+	public boolean soft_deleted = false;	// Set true if the question has been deleted but exists in results tables
+	public boolean inMeta;					// Set true if the question is in the meta group
+	int width = -1;							// Display width, generated from appearance column 
+												//  (for the moment - should probably have its own column 
+												//  entry but I want to maintain compatibility with xlsform)
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	
 	private static Logger log =

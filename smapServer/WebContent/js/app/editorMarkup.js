@@ -442,26 +442,28 @@ define([
 			i,
 			optionId = -1;
 		
-		optionList.maxOption = -1;
-		
-		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
-		oSeq = optionList.oSeq;
-		h[++idx] = h[++idx] = '<ul class="list-unstyled">';
-		if(oSeq) {
-			for(i = 0; i < oSeq.length; i++) {
-				optionId = "option_" + question.name + "_" + oSeq[i];
-				h[++idx] = addOneOption(optionList,
-						optionList.options[oSeq[i]], 
-						formIndex, 
-						oSeq[i], 
-						question.list_name, 
-						question.name, 
-						true,
-						optionId);
+		if(typeof optionList !== "undefined") {
+			optionList.maxOption = -1;
+			
+			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
+			oSeq = optionList.oSeq;
+			h[++idx] = h[++idx] = '<ul class="list-unstyled">';
+			if(oSeq) {
+				for(i = 0; i < oSeq.length; i++) {
+					optionId = "option_" + question.name + "_" + oSeq[i];
+					h[++idx] = addOneOption(optionList,
+							optionList.options[oSeq[i]], 
+							formIndex, 
+							oSeq[i], 
+							question.list_name, 
+							question.name, 
+							true,
+							optionId);
+				}
+				h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex, question.name); 
 			}
-			h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex, question.name); 
+			h[++idx] = '</ul>';
 		}
-		h[++idx] = '</ul>';
 		return h.join("");
 	}
 

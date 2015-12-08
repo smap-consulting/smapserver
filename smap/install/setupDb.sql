@@ -384,10 +384,13 @@ CREATE TABLE question (
 	published boolean default false		-- Set true when a survey has been published for data collection
 										--  Once a survey has been published there are constraints on the
 										--  changes that can be applied to question definitions
+	soft_deleted boolean default false;	-- Set true if a question has been deleted and has also been published
+										-- If the question hasn't been published then it can be removed from the survey
 	);
 ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
 CREATE INDEX infotext_id_sequence ON question(infotext_id);
+CREATE UNIQUE INDEX qname_index ON question(f_id,qname);
 	
 DROP TABLE IF EXISTS option CASCADE;
 CREATE TABLE option (

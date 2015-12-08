@@ -707,6 +707,7 @@ public class GeneralUtilityMethods {
 			pstmt = sd.prepareStatement(sqlGetQuestionId);
 			pstmt.setInt(1, formId);
 			pstmt.setString(2, qName);
+			System.out.println("SQL get question id: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				qId = rs.getInt(1);	

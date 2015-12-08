@@ -749,12 +749,17 @@ public class SubRelationalDB extends Subscriber {
 		String qType = col.getQType();
 		String value = col.getValue();	// Escape quotes and trim
 		String colName = col.getName();
+		
+		/*
+		 * Debug utf-8 print
+		 *
 		try {
 			new PrintStream(System.out, true, "UTF-8").println("value: " + value);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		*/
 		
 		// If the deviceId is not in the form results add it from the form meta data
 		if(colName != null && colName.equals("_device")) {
@@ -1244,7 +1249,7 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Apply table change: " + ciJson);
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
-				if(!ci.action.equals("add")) {		// Table is only altered for new question or new select multiple options
+				if(ci.action.equals("add")) {		// Table is only altered for new question or new select multiple options
 					// Get the id for the question that is being updated
 					int qId = 0;
 					String column = null;
@@ -1264,11 +1269,18 @@ public class SubRelationalDB extends Subscriber {
 						type = ci.question.type;
 						if(type.equals("string") || type.equals("select1")) {
 							type = "text";
-						} 
+						} else if(type.equals("dateTime")) {
+							type = "timestamp with time zone";					
+						} else if(type.equals("audio") || type.equals("image") || 
+								type.equals("video")) {
+							type = "text";					
+						} 	
 					}
 					
 					// Get the table and column
 					pstmtGetTable.setInt(1, qId);
+					System.out.println("SQL get table name: " + pstmtGetTable);
+					
 					ResultSet rsTable = pstmtGetTable.executeQuery();
 					String table = null;
 					String msg = "";

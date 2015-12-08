@@ -1465,7 +1465,7 @@ define([
 						if(questionType !== "end group") {
 							if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
 								otherItem = form.questions[j];
-								if(!otherItem.deleted && otherItem.name === val) {
+								if((!otherItem.deleted || otherItem.published) && otherItem.name === val) {
 									hasDuplicate = true;
 									break;
 								}

@@ -569,8 +569,6 @@ public class QuestionManager {
 		try {
 			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
 			
-				
-
 			boolean moveWithinList = q.fId == q.sourceFormId;
 					
 			if(moveWithinList) {
@@ -595,7 +593,7 @@ public class QuestionManager {
 					pstmtMovedBack.executeUpdate();						
 				}
 				
-				// Move the option
+				// Move the question
 				pstmtMoveWithin.setInt(1, q.seq );
 				pstmtMoveWithin.setString(2, path);
 				pstmtMoveWithin.setInt(3, q.fId );
@@ -649,6 +647,10 @@ public class QuestionManager {
 		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
 				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
 
+		PreparedStatement pstmtSoftDelete = null;
+		String sqlSoftDelete = "update question set soft_deleted = 'true' where f_id = ? and qname = ? and q_id in " +
+				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	
+		
 		PreparedStatement pstmtDelLabels = null;
 		String sqlDelLabels = "delete from translation t where t.s_id = ? and " +
 				"t.text_id in (select qtext_id  from question where qname = ? and f_id = ? and q_id in " +
@@ -664,7 +666,7 @@ public class QuestionManager {
 				"(select f_id from form where s_id = ?)";
 		
 		PreparedStatement pstmtGetSeq = null;
-		String sqlGetSeq = "select seq, qtype from question where f_id = ? and qname = ?";
+		String sqlGetSeq = "select seq, qtype, published from question where f_id = ? and qname = ?";
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
@@ -672,41 +674,63 @@ public class QuestionManager {
 			pstmtDelHints = sd.prepareStatement(sqlDelHints);
 			pstmt = sd.prepareStatement(sql);
 			pstmtGetSeq = sd.prepareStatement(sqlGetSeq);
+			pstmtSoftDelete = sd.prepareStatement(sqlSoftDelete);
 			
 			for(Question q : questions) {
 				
-		
-				// Delete the labels (
-				pstmtDelLabels.setInt(1, sId);
-				pstmtDelLabels.setString(2, q.name );
-				pstmtDelLabels.setInt(3, q.fId);
-				pstmtDelLabels.setInt(4, sId );
-				
-				log.info("Delete question labels: " + pstmtDelLabels.toString());
-				pstmtDelLabels.executeUpdate();
-				
-				// Delete the labels (
-				pstmtDelHints.setInt(1, sId);
-				pstmtDelHints.setString(2, q.name );
-				pstmtDelHints.setInt(3, q.fId);
-				pstmtDelHints.setInt(4, sId );
-				
-				log.info("Delete question hints: " + pstmtDelHints.toString());
-				pstmtDelHints.executeUpdate();
+				int seq = 0;
+				String qType = null;
+				boolean published = false;
 				
 				/*
-				 * Delete the question
-				 * First get the sequence
+				 * Check to see if the question has been published, and get its sequence
 				 */
 				pstmtGetSeq.setInt(1, q.fId);
 				pstmtGetSeq.setString(2, q.name );
 				ResultSet rs = pstmtGetSeq.executeQuery();
 				if(rs.next()) {
+					seq = rs.getInt(1);
+					qType = rs.getString(2);
+					published = rs.getBoolean(3);
+				}
 				
-					int seq = rs.getInt(1);
-					String qType = rs.getString(2);
+				if(published) {
+					/*
+					 * The question has got some data associated with it in a results table
+					 * It should only be soft deleted so that:
+					 *   The editor can prevent another question from being added with the same name
+					 *   The results data can be accessed if needed
+					 */
+					pstmtSoftDelete.setInt(1, q.fId);
+					pstmtSoftDelete.setString(2, q.name );
+					pstmtSoftDelete.setInt(3, sId );
 					
-					// Delete the question
+					log.info("Soft Delete question: " + pstmtSoftDelete.toString());
+					pstmtSoftDelete.executeUpdate();
+				} else {
+					// Properly delete the question
+					
+					// Delete the labels
+					pstmtDelLabels.setInt(1, sId);
+					pstmtDelLabels.setString(2, q.name );
+					pstmtDelLabels.setInt(3, q.fId);
+					pstmtDelLabels.setInt(4, sId );
+					
+					log.info("Delete question labels: " + pstmtDelLabels.toString());
+					pstmtDelLabels.executeUpdate();
+					
+					// Delete the hints
+					pstmtDelHints.setInt(1, sId);
+					pstmtDelHints.setString(2, q.name );
+					pstmtDelHints.setInt(3, q.fId);
+					pstmtDelHints.setInt(4, sId );
+					
+					log.info("Delete question hints: " + pstmtDelHints.toString());
+					pstmtDelHints.executeUpdate();
+					
+					/*
+					 * Delete the question
+					 */
 					pstmt.setInt(1, q.fId);
 					pstmt.setString(2, q.name );
 					pstmt.setInt(3, sId );
@@ -762,6 +786,7 @@ public class QuestionManager {
 			try {if (pstmtDelHints != null) {pstmtDelHints.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtGetSeq != null) {pstmtGetSeq.close();}} catch (SQLException e) {}
+			try {if (pstmtSoftDelete != null) {pstmtSoftDelete.close();}} catch (SQLException e) {}
 		}	
 		
 	}
