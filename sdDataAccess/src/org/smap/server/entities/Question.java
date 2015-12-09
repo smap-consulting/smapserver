@@ -144,6 +144,9 @@ public class Question implements Serializable {
 	@Column(name = "cascade_instance")
 	private String cascade_instance;
 
+	@Column(name = "soft_deleted")
+	private boolean soft_deleted;
+	
 	@Column(name = "f_id")
 	private int f_id;
 

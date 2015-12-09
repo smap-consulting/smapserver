@@ -443,7 +443,7 @@ define([
 			optionId = -1;
 		
 		if(typeof optionList !== "undefined") {
-			optionList.maxOption = -1;
+			optionList.maxOption = 0;
 			
 			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 			oSeq = optionList.oSeq;
@@ -576,7 +576,7 @@ define([
 		
 		if(form) {
 			addQuestionSequence(form);		// Add an array holding the question sequence if it does not already exist
-			form.maxQuestion = 0;			// Add a number to use for the default next question in a form
+			form.maxQuestion = 1;			// Add a number to use for the default next question in a form
 			
 			for(i = 0; i < form.qSeq.length; i++) {
 				globals.gHasQuestions = true;

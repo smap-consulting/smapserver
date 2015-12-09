@@ -655,6 +655,9 @@ define([
 				} else if(change.question.type === "end group") {
 					refresh = true;
 				}
+				if(change.question.type === "geopoint") {
+					change.question.name = "the_geom";
+				}
 				
 				refresh = true;			// DEBUG - remove after fixing update of html
 				
@@ -1044,7 +1047,7 @@ define([
 						for(j = 0; j < form.questions.length; j++) {		
 							otherQuestion = form.questions[j];
 							if(j != itemIndex) {
-								if(otherQuestion.type === item.type) {
+								if(otherQuestion.type === item.type && !otherQuestion.soft_deleted && !otherQuestion.deleted) {
 									addValidationError(
 											container,
 											itemIndex,
@@ -1465,9 +1468,12 @@ define([
 						if(questionType !== "end group") {
 							if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
 								otherItem = form.questions[j];
-								if((!otherItem.deleted || otherItem.published) && otherItem.name === val) {
-									hasDuplicate = true;
-									break;
+								if(otherItem.name === val) {
+									if((!otherItem.deleted && !otherItem.soft_deleted) 
+											|| (otherItem.soft_deleted && otherItem.type !== questionType)) {
+										hasDuplicate = true;
+										break;
+									}
 								}
 							}
 						}

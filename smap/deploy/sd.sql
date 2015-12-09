@@ -376,7 +376,7 @@ alter table question add column published boolean;
 update question set published = true where published is null;
 alter table question alter column published set default false;
 alter table question add column soft_deleted boolean default false;	 --set true if a question is deleted but not removed as there is a column in the results for this question
-create unique index qname_index ON question(f_id,qname);
+create unique index qname_index ON question(f_id,qname) where soft_deleted = 'false';
 --------------
 alter table option add column column_name text;
 alter table question add column column_name_applied boolean default false;	-- Temporary column to ensure column name patches are only applied once

@@ -35,7 +35,7 @@ public class QuestionManager {
 	public QuestionManager(PersistenceContext pc) {
 		em = pc.getEntityManager();
 	}
-
+/*
 	@SuppressWarnings("unchecked")
 	public List<Question> getAll() {
 		Query query = em.createQuery("SELECT q FROM QUESTION q "
@@ -43,17 +43,18 @@ public class QuestionManager {
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
-
+*/
 	@SuppressWarnings("unchecked")
 	public List<Question> getByFormId(int formId) {
 		Query query = em
 				.createQuery("SELECT q FROM QUESTION q WHERE q.f_id = ?1 "
+						+ "and q.soft_deleted = 'false' "
 						+ "ORDER BY q.seq");
 		query.setParameter(1, formId);
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
-
+/*
 	@SuppressWarnings("unchecked")
 	public List<Question> getBySurveyId(int surveyId) {
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f WHERE "
@@ -63,7 +64,9 @@ public class QuestionManager {
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
-
+*/
+	
+/*
 	@SuppressWarnings("unchecked")
 	public Question getByFormIdQuestionName(int formId, String questionName) {
 
@@ -83,7 +86,9 @@ public class QuestionManager {
 
 		return q;
 	}
-
+*/
+	
+/*
 	@SuppressWarnings("unchecked")
 	public List<Question> getChoiceTypeBySurveyId(int surveyId) {
 
@@ -95,20 +100,24 @@ public class QuestionManager {
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
-
+*/
 	public List<Question> getBySurvey(Survey survey) {
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f WHERE "
 				+ "q.f_id = f.id AND f.s_id = ?1 "
-				+ "ORDER BY q.f_id, q.seq");
+				+ "and q.soft_deleted = 'false' "
+				+ "order by q.f_id, q.seq");
 		query.setParameter(1, survey.getId());
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
 
+	/*
 	public Question getById(int questionId) {
 		return em.find(Question.class, questionId);
 	}
+*/
 
+	/*
 	public void remove(Question q) {
 		try {
 			em.getTransaction().begin();
@@ -118,7 +127,8 @@ public class QuestionManager {
 			// TODO handle exceptions, specifically constraint violations
 		}
 	}
-
+*/
+	
 	public void persist(Question q) {
 		try {
 			em.getTransaction().begin();

@@ -390,7 +390,7 @@ CREATE TABLE question (
 ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
 CREATE INDEX infotext_id_sequence ON question(infotext_id);
-CREATE UNIQUE INDEX qname_index ON question(f_id,qname);
+CREATE UNIQUE INDEX qname_index ON question(f_id,qname) where soft_deleted = 'false';
 	
 DROP TABLE IF EXISTS option CASCADE;
 CREATE TABLE option (

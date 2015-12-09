@@ -155,7 +155,7 @@ public class SurveyResults extends Application {
 						questions.add(q);
 					}
 					if(questions.size() > 0) {
-						qm.delete(connectionSD, sId, questions);
+						qm.delete(connectionSD, sId, questions, false);	// Soft delete any published questions
 					}
 					response = Response.ok("").build();
 					

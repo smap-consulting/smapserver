@@ -140,6 +140,8 @@ public class QuestionManager {
 	 */
 	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
+		String columnName = null;
+		
 		PreparedStatement pstmtInsertQuestion = null;
 		String sql = "insert into question (q_id, "
 				+ "f_id, "
@@ -172,9 +174,13 @@ public class QuestionManager {
 		PreparedStatement pstmtGetFormId = null;
 		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
 		
+		PreparedStatement pstmtGetOldQuestions = null;
+		String sqlGetOldQuestions = "select column_name from question q where q.f_id = ? and q.qname = ? and q.soft_deleted = 'true';";
+		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
 			pstmtInsertQuestion = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmtGetOldQuestions = sd.prepareStatement(sqlGetOldQuestions);
 			
 			for(Question q : questions) {
 				
@@ -202,6 +208,22 @@ public class QuestionManager {
 				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
 				
+				// If there is a soft deleted question with the same name and question type in the form then delete it
+				pstmtGetOldQuestions.setInt(1, q.fId);
+				pstmtGetOldQuestions.setString(2,  q.name);
+				ResultSet rs = pstmtGetOldQuestions.executeQuery();
+				if(rs.next()) {
+					
+					columnName = rs.getString(1);	// Reuse column name as we won't be recreating column in results table
+					
+					ArrayList<Question> oldQuestions = new ArrayList<Question> ();
+					Question oldQ = new Question();
+					oldQ.fId = q.fId;
+					oldQ.name = q.name;
+					oldQuestions.add(oldQ);
+					delete(sd, sId, oldQuestions, true);	// Force the delete as we are replacing the question
+				}
+				
 				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 			
@@ -213,11 +235,14 @@ public class QuestionManager {
 					}
 				}
 				// Insert the question
+				if(columnName == null) {
+					columnName = GeneralUtilityMethods.cleanName(q.name, true);
+				}
 				pstmtInsertQuestion.setInt(1, q.fId );
 				pstmtInsertQuestion.setInt(2, q.l_id);
 				pstmtInsertQuestion.setInt(3, q.seq );
 				pstmtInsertQuestion.setString(4, q.name );
-				pstmtInsertQuestion.setString(5, GeneralUtilityMethods.cleanName(q.name, true));
+				pstmtInsertQuestion.setString(5, columnName);
 				pstmtInsertQuestion.setString(6, type );
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
@@ -249,7 +274,7 @@ public class QuestionManager {
 				// If this is a begin repeat then create a new form
 				if(q.type.equals("begin repeat")) {
 					
-					ResultSet rs = pstmtInsertQuestion.getGeneratedKeys();
+					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
 					int qId = rs.getInt(1);
 					String repeatsPath = null;
@@ -307,6 +332,7 @@ public class QuestionManager {
 			try {if (pstmtInsertQuestion != null) {pstmtInsertQuestion.close();}} catch (SQLException e) {}
 			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetOldQuestions != null) {pstmtGetOldQuestions.close();}} catch (SQLException e) {}
 		}
 		
 	}
@@ -618,7 +644,7 @@ public class QuestionManager {
 				ArrayList<Question> sourceQuestions = new ArrayList<Question> ();
 				q.fId = q.sourceFormId;
 				sourceQuestions.add(q);
-				delete(sd, sId, sourceQuestions);
+				delete(sd, sId, sourceQuestions, false);
 			}
 				
 		
@@ -641,7 +667,7 @@ public class QuestionManager {
 	/*
 	 * Delete
 	 */
-	public void delete(Connection sd, int sId, ArrayList<Question> questions) throws SQLException {
+	public void delete(Connection sd, int sId, ArrayList<Question> questions, boolean force) throws SQLException {
 		
 		PreparedStatement pstmt = null;
 		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
@@ -694,7 +720,7 @@ public class QuestionManager {
 					published = rs.getBoolean(3);
 				}
 				
-				if(published) {
+				if(published && !force) {
 					/*
 					 * The question has got some data associated with it in a results table
 					 * It should only be soft deleted so that:
