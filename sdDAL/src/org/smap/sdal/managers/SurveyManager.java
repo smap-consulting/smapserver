@@ -164,7 +164,8 @@ public class SurveyManager {
 			String instanceId,	// If set get the results for this instance
 			boolean getResults,	// Set to true to get results, if set and instanceId is null then blank data will be added
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
-			boolean getPropertyTypeQuestions	// Set to true to get property questions such as _device
+			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
+			boolean getSoftDeleted				// Set to true to get soft deleted questions
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -521,7 +522,8 @@ public class SurveyManager {
 				+ "q.published, "
 				+ "q.column_name, "
 				+ "q.source_param, "
-				+ "q.path "
+				+ "q.path, "
+				+ "q.soft_deleted "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -636,6 +638,7 @@ public class SurveyManager {
 				q.columnName = rsGetQuestions.getString(21);
 				q.source_param = rsGetQuestions.getString(22);
 				q.path = rsGetQuestions.getString(23);
+				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				
 				// Set an indicator if this is a property type question (_device etc)
 

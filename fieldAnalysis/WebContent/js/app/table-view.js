@@ -176,14 +176,14 @@ function deleteAllTables(sId) {
 					refreshAnalysisData();
 				}, 
 				error: function(xhr, textStatus, err) {
-						if(xhr.readyState == 0 || xhr.status == 0) {
-				              return;  // Not an error
-						} else {
-							console.log(xhr);
-							alert(localise.set["msg_err_del"] + " " + err);
-							//alert("Error: Failed to delete results: " + err);		
-						}
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						console.log(xhr);
+						alert(localise.set["msg_err_del"] + " " + err);
 					}
+				}
 			});
 		}
 	}

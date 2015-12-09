@@ -582,7 +582,7 @@ define([
 				globals.gHasQuestions = true;
 				question = form.questions[form.qSeq[i]];
 				
-				if(question.propertyType) {	// Ignore property type questions
+				if(question.propertyType || question.soft_deleted) {	// Ignore property type questions, and questions that have been deleted
 					continue;
 				}
 				

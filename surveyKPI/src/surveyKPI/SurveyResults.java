@@ -103,7 +103,7 @@ public class SurveyResults extends Application {
 					String sqlRemoveChangeset = "delete from changeset where s_id = ?;";
 					pstmtRemoveChangeset = connectionRel.prepareStatement(sqlRemoveChangeset);
 					
-					String sqlGetSoftDeletedQuestions = "select q.f_id, q.name from question q where soft_deleted = 'true' "
+					String sqlGetSoftDeletedQuestions = "select q.f_id, q.qname from question q where soft_deleted = 'true' "
 							+ "and q.f_id in (select f_id from form where s_id = ?);";
 					pstmtGetSoftDeletedQuestions = connectionSD.prepareStatement(sqlGetSoftDeletedQuestions);
 					
@@ -160,9 +160,14 @@ public class SurveyResults extends Application {
 					response = Response.ok("").build();
 					
 				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Survey: Connection Failed! Check output console");
-				    e.printStackTrace();
-				    response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+					String msg = e.getMessage();
+					if(msg != null && msg.contains("does not exist")) {
+						response = Response.ok("").build();
+					} else {
+						log.log(Level.SEVERE, "Survey: Delete REsults");
+						e.printStackTrace();
+						response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+					}
 				} finally {
 					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					try {if (pstmtUnPublish != null) {pstmtUnPublish.close();}} catch (SQLException e) {}
