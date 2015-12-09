@@ -104,7 +104,7 @@ define([
 			h[++idx] = ' selectquestion';
 		}
 		h[++idx] = '">';
-		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
+		if(question.type === "begin repeat") {
 			h[++idx] = addSubForm(formIndex, qIndex);
 		} else if(question.type.indexOf("select") === 0) {
 			if(!question.error) {	// Only add the options if the question it self does not have any errors

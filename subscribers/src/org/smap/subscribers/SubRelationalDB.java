@@ -858,7 +858,7 @@ public class SubRelationalDB extends Subscriber {
 					 */
 					int min_points = 3;
 					StringBuffer ptString = null;
-					if(qType.equals("geoshape")) {
+					if(qType.equals("geotrace")) {
 						min_points = 2;
 					}
 					
@@ -1342,15 +1342,23 @@ public class SubRelationalDB extends Subscriber {
 						// Alter the table
 						boolean tableAltered = true;
 						try {
-							if(type.equals("geopoint")) {
+							if(type.equals("geopoint") || type.equals("geotrace") || type.equals("geoshape")) {
 								
+								String geoType = null;
+								
+								if(type.equals("geopoint")) {
+									geoType = "POINT";
+								} else if (type.equals("geotrace")) {
+									geoType = "LINESTRING";
+								} else if (type.equals("geoshape")) {
+									geoType = "POLYGON";
+								}
 								String gSql = "SELECT AddGeometryColumn('" + table + 
-										"', '" + column + "', " + 
-										"4326, 'POINT', 2);";
+										"', 'the_geom', 4326, '" + geoType + "', 2);";
 									System.out.println("Sql statement: " + gSql);
 									
 									try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
-									pstmtApplyGeometryChange = connectionSD.prepareStatement(gSql);
+									pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
 									pstmtApplyGeometryChange.executeQuery();
 									
 							} else {

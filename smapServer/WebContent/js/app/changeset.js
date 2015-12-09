@@ -549,7 +549,7 @@ define([
 									qSeq: []
 								});
 								question.childFormIndex = survey.forms.length - 1;
-							} else if(property.newVal == "geopoint" || property.newVal == "geopolygon" || property.newVal == "geolinestring") {
+							} else if(property.newVal == "geopoint" || property.newVal == "geoshape" || property.newVal == "geotrace") {
 								
 								// Set the question name automatically
 								addToChangesetArray({
@@ -655,7 +655,7 @@ define([
 				} else if(change.question.type === "end group") {
 					refresh = true;
 				}
-				if(change.question.type === "geopoint") {
+				if(change.question.type === "geopoint" || change.question.type === "geotrace" || change.question.type === "geoshape") {
 					change.question.name = "the_geom";
 				}
 				

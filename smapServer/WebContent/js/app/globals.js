@@ -410,7 +410,7 @@ define(function() {
 			},
 			{
 				name: "GPS Line",
-				type: "geolinestring",
+				type: "geotrace",
 				image: "/images/linestring_64.png",
 				canSelect: true,
 				visible: true,
@@ -418,7 +418,7 @@ define(function() {
 			},
 			{
 				name: "GPS Area",
-				type: "geopolygon",
+				type: "geoshape",
 				image: "/images/polygon_64.png",
 				canSelect: true,
 				visible:true,
