@@ -42,8 +42,7 @@ define([
 		updateModelWithErrorStatus: updateModelWithErrorStatus,
 		validateAll: validateAll,
 		numberIssues: numberIssues,
-		nextIssue: nextIssue,
-		prevIssue: prevIssue
+		nextIssue: nextIssue
 	};
 
 	/*
@@ -1541,6 +1540,8 @@ define([
 		var i,
 			j,
 			forms = globals.model.survey.forms,
+			optionLists = globals.model.survey.optionLists,
+			list,
 			numberErrors = 0,
 			numberWarnings = 0;
 		
@@ -1550,6 +1551,13 @@ define([
 				validateItem(i, j, "question");		// Validate the question
 			}
 		}
+		for(list in optionLists) {
+			if(optionLists.hasOwnProperty(list)) {
+				for(j = 0; j < optionLists[list].options.length; j++) {
+					validateItem(list, j, "option");		// Validate the option
+				}
+			}
+		}
 		
 		numberErrors = numberIssues("error");
 		numberWarnings = numberIssues("warning");
@@ -1557,74 +1565,64 @@ define([
 		$('.error-count').html(numberErrors);
 		$('.warning-count').html(numberWarnings);
 		
-		if(numberErrors > 0) {
+		if(numberErrors > 0 || numberWarnings > 0) {
 			gErrorPosition = 0;
 			$('#error-nav-btns').show();
-			if(numberErrors > 1) {
-				$('#next-error, #prev-error').removeClass("disabled");
+			if(numberErrors > 0) {
+				$('#next-error').removeClass("disabled");
 			} else {
-				$('#next-error, #prev-error').addClass("disabled");
+				$('#next-error').addClass("disabled");
+			}
+			if(numberWarnings > 0) {
+				$('#next-warning').removeClass("disabled");
+			} else {
+				$('#next-warning').addClass("disabled");
 			}
 			focusOnError(gErrorPosition);
-		} else {
-			if(numberWarnings > 0) {
-				gErrorPosition = 0;
-				$('#warning-nav-btns').show();
-				if(numberWarnings > 1) {
-					$('#next-warning, #prev-warning').removeClass("disabled");
-				} else {
-					$('#next-warning, #prev-warning').addClass("disabled");
-				}
-				focusOnError(gErrorPosition);
-			} else {
-				$('#warning-nav-btns').hide();
-			}
-			
+		}  else {
 			$('#error-nav-btns').hide();
-			
 		}
 	}
 	
 	function nextIssue(severity) {
 		
-		var i;
+		var i, pos;
 		
 		for(i = gErrorPosition + 1; i < gErrorPosition + globals.errors.length + 1; i++) {
 				
 			if(i > globals.errors.length - 1 ) {
-				i = i - globals.errors.length;
-			} 
+				pos = i - globals.errors.length;
+			} else {
+				pos = i;
+			}
 			
-			if(globals.errors[i]. severity === severity) {
-				gErrorPosition = i;
+			if(globals.errors[pos]. severity === severity) {
+				gErrorPosition = pos;
 				break
 			}
 		}
 		focusOnError(gErrorPosition);
 	}
 
-	function prevIssue(severity) {
-		
-		if(globals.errors.length > 0) {
-			
-			if(gErrorPosition > 0 ) {
-				gErrorPosition--;
-			} else {
-				gErrorPosition = errors.length - 1;
-			}
-			focusOnError(gErrorPosition);
-			
-		}
-	}
 
 	function focusOnError(position) {
 		var survey = globals.model.survey,
 			error = globals.errors[position],
-			questionId;
+			itemId,
+			$textarea;
 		
-		questionId = "question" + error.container + "_" + error.itemIndex;
+		if(error.itemType === "question") {
+			itemId = "question" + error.container + "_" + error.itemIndex;
+		} else {
+			itemId = "option_" + error.container + "_" + error.itemIndex;
+		}
 		
-		$('#' + questionId).find('input').focus();
+		$textarea = $('#' + itemId).find('textarea');
+		if($textarea.length > 0) {
+			$textarea.focus();
+		} else {
+			$('#' + questionId).find('button').focus();
+		}
 	}
 	
 	function numberIssues(severity) {

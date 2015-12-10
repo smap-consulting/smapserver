@@ -173,16 +173,8 @@ $(document).ready(function() {
 		changeset.nextIssue("error");
 	});
 	
-	$('#prev-error').off().click(function(){
-		changeset.prevIssue("error");
-	});
-	
 	$('#next-warning').off().click(function(){
 		changeset.nextIssue("warning");
-	});
-	
-	$('#prev-warning').off().click(function(){
-		changeset.prevIssue("warning");
 	});
 	
 	$('.m_validate').off().click(function() {
