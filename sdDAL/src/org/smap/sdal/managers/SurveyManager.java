@@ -969,7 +969,6 @@ public class SurveyManager {
 					
 					// Failure
 					connectionSD.rollback(sp);
-					String msg = e.getMessage();
 					log.info("Error: " + e.getMessage());
 					cs.updateFailed = true;
 					cs.errorMsg = e.getMessage();
@@ -1129,7 +1128,7 @@ public class SurveyManager {
 			transType = ci.property.propType;
 		}
 		pstmtLangOldVal.setString(5,  transType);
-		pstmtLangOldVal.setString(6, ci.property.oldVal);
+		pstmtLangOldVal.setString(6, GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, true));
 
 		log.info("Update question translation: " + pstmtLangOldVal.toString());
 		

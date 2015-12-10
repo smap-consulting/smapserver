@@ -161,38 +161,32 @@ $(document).ready(function() {
 		
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
-		changeset.save(surveyListDone);
+		changeset.validateAll();
+		if(changeset.numberIssues("error") === 0) {
+			changeset.save(surveyListDone);
+		} else {
+			bootbox.alert("Cannot save until errors are fixed");
+		}
 	});
 
 	$('#next-error').off().click(function(){
-		nextError();
+		changeset.nextIssue("error");
 	});
 	
 	$('#prev-error').off().click(function(){
-		prevError();
+		changeset.prevIssue("error");
+	});
+	
+	$('#next-warning').off().click(function(){
+		changeset.nextIssue("warning");
+	});
+	
+	$('#prev-warning').off().click(function(){
+		changeset.prevIssue("warning");
 	});
 	
 	$('.m_validate').off().click(function() {
-		
 		changeset.validateAll();
-		
-		$('.error-count').html(globals.errors.length);
-		
-		if(globals.errors.length > 0) {
-			gErrorPosition = 0;
-			$('.error-count').html(globals.errors.length);
-			$('#error-nav-btns').show();
-			if(globals.errors.length > 1) {
-				$('#next-error, #prev-error').removeClass("disabled");
-			} else {
-				$('#next-error, #prev-error').addClass("disabled");
-			}
-			focusOnError(gErrorPosition);
-		} else {
-			$('#error-nav-btns').hide();
-			$('#validate-success').show();
-			setTimeout(function(){$('#validate-success').hide();}, 1000);
-		}
 	});
 	
 	$('.m_languages').off().click(function() {
@@ -1317,46 +1311,6 @@ function hideErrorPanel() {
 
 }
 */
-function nextError() {
-	
-	var errors = globals.errors;
-	
-	if(errors.length > 0) {
-		
-		if(gErrorPosition >= errors.length - 1 ) {
-			gErrorPosition = 0;
-		} else {
-			gErrorPosition++;
-		}
-		focusOnError(gErrorPosition);
-		
-	}
-}
 
-function prevError() {
-	
-	var errors = globals.errors;
-	
-	if(errors.length > 0) {
-		
-		if(gErrorPosition > 0 ) {
-			gErrorPosition--;
-		} else {
-			gErrorPosition = errors.length - 1;
-		}
-		focusOnError(gErrorPosition);
-		
-	}
-}
-
-function focusOnError(position) {
-	var survey = globals.model.survey,
-		error = globals.errors[position],
-		questionId;
-	
-	questionId = "question" + error.container + "_" + error.itemIndex;
-	
-	$('#' + questionId).find('input').focus();
-}
 
 });

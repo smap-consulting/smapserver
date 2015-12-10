@@ -40,7 +40,10 @@ define([
 		validateItem: validateItem,
 		validateName: validateName,
 		updateModelWithErrorStatus: updateModelWithErrorStatus,
-		validateAll: validateAll
+		validateAll: validateAll,
+		numberIssues: numberIssues,
+		nextIssue: nextIssue,
+		prevIssue: prevIssue
 	};
 
 	/*
@@ -463,7 +466,7 @@ define([
 			$('.m_save_survey').find('.badge').html(numberChanges);
 			$('.m_languages').addClass("disabled").attr("disabled", true);
 			$('.m_validate').removeClass("disabled").attr("disabled", false);
-			if(globals.errors.length === 0) {
+			if(numberIssues("error") === 0) {
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);
 			}
 		}
@@ -1084,7 +1087,7 @@ define([
 		}
 		
 		// Set the control buttons
-		if(globals.errors.length > 0 ) {
+		if(numberIssues("error") > 0 ) {
 			$('.m_save_survey').addClass("disabled").attr("disabled", true);			
 		} else if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
@@ -1094,7 +1097,9 @@ define([
 		 * If there were no errors check for warnings
 		 */
 		if(isValid) {	
-			isValid = checkBlankLabels(container, itemIndex, itemType, item);
+			if(item.visible) {
+				isValid = checkBlankLabels(container, itemIndex, itemType, item);
+			}
 		}
 
 	}
@@ -1191,8 +1196,9 @@ define([
 		for(i = 0; i < survey.forms.length; i++) {
 			form = survey.forms[i];
 			for(j = 0; j < form.questions.length; j++) {	
-				questionType = form.questions[j].type;
-				if(questionType !== "end group") {
+				otherItem = form.questions[j];
+				questionType = otherItem.type;
+				if(!otherItem.deleted && !otherItem.soft_deleted && questionType !== "end group") {
 					if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
 						otherItem = form.questions[j];
 						
@@ -1534,15 +1540,103 @@ define([
 	function validateAll() {
 		var i,
 			j,
-			forms = globals.model.survey.forms;
+			forms = globals.model.survey.forms,
+			numberErrors = 0,
+			numberWarnings = 0;
 		
 		globals.errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
-		globals.warnings = [];
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
 				validateItem(i, j, "question");		// Validate the question
 			}
 		}
+		
+		numberErrors = numberIssues("error");
+		numberWarnings = numberIssues("warning");
+		
+		$('.error-count').html(numberErrors);
+		$('.warning-count').html(numberWarnings);
+		
+		if(numberErrors > 0) {
+			gErrorPosition = 0;
+			$('#error-nav-btns').show();
+			if(numberErrors > 1) {
+				$('#next-error, #prev-error').removeClass("disabled");
+			} else {
+				$('#next-error, #prev-error').addClass("disabled");
+			}
+			focusOnError(gErrorPosition);
+		} else {
+			if(numberWarnings > 0) {
+				gErrorPosition = 0;
+				$('#warning-nav-btns').show();
+				if(numberWarnings > 1) {
+					$('#next-warning, #prev-warning').removeClass("disabled");
+				} else {
+					$('#next-warning, #prev-warning').addClass("disabled");
+				}
+				focusOnError(gErrorPosition);
+			} else {
+				$('#warning-nav-btns').hide();
+			}
+			
+			$('#error-nav-btns').hide();
+			
+		}
+	}
+	
+	function nextIssue(severity) {
+		
+		var i;
+		
+		for(i = gErrorPosition + 1; i < gErrorPosition + globals.errors.length + 1; i++) {
+				
+			if(i > globals.errors.length - 1 ) {
+				i = i - globals.errors.length;
+			} 
+			
+			if(globals.errors[i]. severity === severity) {
+				gErrorPosition = i;
+				break
+			}
+		}
+		focusOnError(gErrorPosition);
+	}
+
+	function prevIssue(severity) {
+		
+		if(globals.errors.length > 0) {
+			
+			if(gErrorPosition > 0 ) {
+				gErrorPosition--;
+			} else {
+				gErrorPosition = errors.length - 1;
+			}
+			focusOnError(gErrorPosition);
+			
+		}
+	}
+
+	function focusOnError(position) {
+		var survey = globals.model.survey,
+			error = globals.errors[position],
+			questionId;
+		
+		questionId = "question" + error.container + "_" + error.itemIndex;
+		
+		$('#' + questionId).find('input').focus();
+	}
+	
+	function numberIssues(severity) {
+		var i,
+			count = 0;
+		
+		for(i = 0; i < globals.errors.length; i++) {
+			if(globals.errors[i].severity === severity) {
+				count++;
+			}
+		}
+		return count;
 	}
 	 
 });
