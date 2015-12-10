@@ -343,9 +343,9 @@ public class SubRelationalDB extends Subscriber {
 		    Class.forName(dbClass);	 
 			cResults = DriverManager.getConnection(database, user, password);
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
-			statement = cResults.createStatement();
 			
 			cResults.setAutoCommit(false);
+			statement = cResults.createStatement();
 			IE topElement = instance.getTopElement();
 			
 			// Make sure the top element matched a form in the template
@@ -513,7 +513,9 @@ public class SubRelationalDB extends Subscriber {
 				if(tableCreated) {
 					markAllChangesApplied(cMeta, sId);
 				} else {
+					System.out.println("Pre-applyTableChanges: Auto commit for sd is: " + cMeta.getAutoCommit());
 					applyTableChanges(cMeta, cRel, sId);
+					System.out.println("Post-applyTableChanges: Auto commit for sd is: " + cMeta.getAutoCommit());
 				}
 				markPublished(cMeta, sId);
 			}
@@ -1376,6 +1378,7 @@ public class SubRelationalDB extends Subscriber {
 							// No need to roll back if the survey_change table is not updated, 
 							System.out.println("Error altering table -- continuing: " + e.getMessage());
 							System.out.println();
+							System.out.println("Exception: Auto commit for sd is: " + connectionSD.getAutoCommit());
 							
 							// Only record the update as failed if the problem was not due to the column already existing
 							msg = e.getMessage();

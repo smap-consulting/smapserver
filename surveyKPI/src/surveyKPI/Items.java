@@ -290,7 +290,8 @@ public class Items extends Application {
 					if(name.trim().toLowerCase().equals("instanceid")) {
 						continue;
 					}
-					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")) {
+					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")
+							|| type.equals("geoshape")) {
 						
 						geomIdx = newColIdx;
 						cols.append(", ST_AsGeoJSON(" + colname + ") ");
