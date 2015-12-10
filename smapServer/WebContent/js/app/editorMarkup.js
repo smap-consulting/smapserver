@@ -402,25 +402,33 @@ define([
 
 		} else {
 			h[++idx] = '<textarea class="labelProp has_tt" title="';
-			h[++idx] = type === "option" ? "Choice Label" : selLabel;
+			if(question.type === 'calculate') {
+				h[++idx] = 'Add calculation here';
+			} else {
+				h[++idx] = type === "option" ? "Choice Label" : selLabel;
+			}
 			h[++idx] = '" data-prop="';
 			h[++idx] = selProperty;
 			h[++idx] = '"';
 			if(type === "question" && selProperty !== "appearance" && 
 					((question.source != "user" && 
 					question.type != "begin group" && 
-					question.type != "begin repeat") || question.calculation)) {
+					question.type != "begin repeat"))) {
 				h[++idx] = ' readonly tabindex="-1">';
 				h[++idx] = selLabel;
 				h[++idx] = ' not required';
 			} else {
 				h[++idx] = '>';
-				if(selProperty === "label") { 
-					h[++idx] = question.labels[globals.gLanguage].text;
-				} else if(selProperty === "hint") { 
-					h[++idx] = question.labels[globals.gLanguage].hint;
+				if(question.type === 'calculate') {
+					h[++idx] = question.calculation;
 				} else {
-					h[++idx] = question[selProperty];
+					if(selProperty === "label") { 
+						h[++idx] = question.labels[globals.gLanguage].text;
+					} else if(selProperty === "hint") { 
+						h[++idx] = question.labels[globals.gLanguage].hint;
+					} else {
+						h[++idx] = question[selProperty];
+					}
 				}
 			}
 			h[++idx] = '</textarea>';

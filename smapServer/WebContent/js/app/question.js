@@ -122,7 +122,7 @@ define([
 			}
 		}
 		
-		// Add default empty languages
+		// Add default labels
 		for(i = 0; i < survey.languages.length; i++) {
 			change.question.labels.push({text: name + ") "});
 		}

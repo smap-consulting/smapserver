@@ -1557,7 +1557,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Convert names in xls format ${ } to xPath
 	 */
-	public static String convertAllxlsNames(String input, int sId, Connection sd) throws SQLException {
+	public static String convertAllxlsNames(String input, int sId, Connection sd, boolean forLabel) throws SQLException {
 		
 		if(input == null) {
 			return input;
@@ -1579,6 +1579,11 @@ public class GeneralUtilityMethods {
 			int startOfGroup = matcher.start();
 			output.append(input.substring(start, startOfGroup));
 			
+			// If for a label, add the wrapping html
+			if(forLabel) {
+				output.append("<output value=\"");
+			}
+			
 			// Make sure there is a space before the match
 			if(output.length() > 0 && output.charAt(output.length() - 1) != ' ') {
 				output.append(' ');
@@ -1586,6 +1591,12 @@ public class GeneralUtilityMethods {
 			
 			// Add the question path
 			output.append(getQuestionPath(sd, sId, qname));
+
+			
+			// If for a label close the wrapping html
+			if(forLabel) {
+				output.append(" \"/>");
+			}
 			
 			// Reset the start
 			start = matcher.end();

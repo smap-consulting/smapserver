@@ -152,7 +152,8 @@ public class QuestionManager {
 				+ "qtype, "
 				+ "qtext_id, "
 				+ "infotext_id, "
-				+ "source, calculate, "
+				+ "source, "
+				+ "calculate, "
 				+ "defaultanswer, "
 				+ "appearance, "
 				+ "visible, "
@@ -201,6 +202,11 @@ public class QuestionManager {
 					q.l_id = getListId(sd, sId, q.list_name);
 				}
 				
+				if(q.type.equals("calculate")) {
+					q.type = "string";
+					q.visible = false;
+				}
+				
 				// Update sequence numbers of questions after the question to be inserted
 				pstmtUpdateSeq.setInt(1, q.fId);
 				pstmtUpdateSeq.setInt(2, q.seq);
@@ -247,18 +253,18 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, q.source );
-				pstmtInsertQuestion.setString(10, q.calculation );
+				pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false) );
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
 				pstmtInsertQuestion.setString(14, q.path);
 				pstmtInsertQuestion.setBoolean(15, readonly);
 				
-				String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd);
+				String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd, false);
 				System.out.println("Relevant: " + relevant);
 				pstmtInsertQuestion.setString(16, relevant);
 				
-				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd);
+				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
 				System.out.println("Constraint: " + constraint);
 				pstmtInsertQuestion.setString(17, constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
@@ -285,18 +291,23 @@ public class QuestionManager {
 						repeatsPath = q.path + "_count";
 						
 						pstmtInsertQuestion.setInt(1, q.fId );
-						pstmtInsertQuestion.setInt(2, q.seq );
-						pstmtInsertQuestion.setString(3, q.name + "_count" );
-						pstmtInsertQuestion.setString(4, "calculate" );
-						pstmtInsertQuestion.setString(5, null );
-						pstmtInsertQuestion.setString(6, null );
+						pstmtInsertQuestion.setInt(2, 0);			// List id
+						pstmtInsertQuestion.setInt(3, q.seq );
+						pstmtInsertQuestion.setString(4, q.name + "_count" );		// Question name
+						pstmtInsertQuestion.setString(5, q.name + "_count" );		// Column name
+						pstmtInsertQuestion.setString(6, "string" );				// Type
 						pstmtInsertQuestion.setString(7, null );
-						pstmtInsertQuestion.setString(8, "user" );
-						pstmtInsertQuestion.setString(9, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd));
-						pstmtInsertQuestion.setString(10, null );
-						pstmtInsertQuestion.setString(11, null);
-						pstmtInsertQuestion.setBoolean(12, false);
-						pstmtInsertQuestion.setString(13, q.path + "_count");
+						pstmtInsertQuestion.setString(8, null );
+						pstmtInsertQuestion.setString(9, "user" );
+						pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd, false));
+						pstmtInsertQuestion.setString(11, null );
+						pstmtInsertQuestion.setString(12, null);
+						pstmtInsertQuestion.setBoolean(13, false);	// visible
+						pstmtInsertQuestion.setString(14, q.path + "_count");
+						pstmtInsertQuestion.setBoolean(15, false); 	// read only
+						pstmtInsertQuestion.setString(15, null);	// Relevant
+						pstmtInsertQuestion.setString(16, null);	// Constraint
+						pstmtInsertQuestion.setString(17, null);	// Constraint message
 						
 						log.info("Insert repeat count question: " + pstmtInsertQuestion.toString());
 						pstmtInsertQuestion.executeUpdate();

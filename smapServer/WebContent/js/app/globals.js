@@ -353,6 +353,15 @@ define(function() {
 				source: "user"
 			},
 			{
+				name: "Calculation",
+				type: "calculate",
+				calculation: true,
+				image: "/images/calc_64.png",
+				canSelect: true,
+				visible:true,
+				source: "user"
+			},
+			{
 				name: "Audio",
 				type: "audio",
 				glyphicon: "volume-up",
@@ -420,15 +429,6 @@ define(function() {
 				name: "GPS Area",
 				type: "geoshape",
 				image: "/images/polygon_64.png",
-				canSelect: true,
-				visible:true,
-				source: "user"
-			},
-			{
-				name: "Calculation",
-				type: "string",
-				calculation: true,
-				image: "/images/calc_64.png",
 				canSelect: true,
 				visible:true,
 				source: "user"

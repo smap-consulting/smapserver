@@ -657,7 +657,7 @@ public class SurveyManager {
 					continue;		// discard the question
 				}
 				
-				// Translate type name to "note" if it is a readonly string
+				// Translate type name to "note" if it is a read only string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
 				
 				// Track if this question is in the meta group
@@ -1050,17 +1050,17 @@ public class SurveyManager {
 			
 				if(ci.property.oldVal != null && ci.property.newVal != null) {
 					if(ci.property.propType.equals("text")) {
-						updateLabel(ci, ci.property.languageName, pstmtLangOldVal, sId);
+						updateLabel(connectionSD, ci, ci.property.languageName, pstmtLangOldVal, sId);
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							updateLabel(ci, lang.get(i), pstmtLangOldVal, sId);
+							updateLabel(connectionSD, ci, lang.get(i), pstmtLangOldVal, sId);
 						}
 					}
 					
 				} else {
 					if(ci.property.propType.equals("text")) {
-						addLabel(ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
 
 						// Add the new text id to the question
 						pstmtNewQuestionLabel.setString(1, ci.property.key);
@@ -1069,7 +1069,7 @@ public class SurveyManager {
 						pstmtNewQuestionLabel.executeUpdate();
 						
 					} else if(ci.property.propType.equals("hint")) {
-						addLabel(ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
 
 						// Add the new text id to the question
 						pstmtNewQuestionHint.setString(1, ci.property.key);
@@ -1080,7 +1080,7 @@ public class SurveyManager {
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							addLabel(ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel);
+							addLabel(connectionSD, ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel);
 						}
 					}
 				}
@@ -1115,11 +1115,11 @@ public class SurveyManager {
 	/*
 	 * Update a label
 	 */
-	public void updateLabel(ChangeItem ci, String language, PreparedStatement pstmtLangOldVal, int sId) throws SQLException, Exception {
+	public void updateLabel(Connection sd, ChangeItem ci, String language, PreparedStatement pstmtLangOldVal, int sId) throws SQLException, Exception {
 		
 		String transType = null;
 		
-		pstmtLangOldVal.setString(1, ci.property.newVal);
+		pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
 		pstmtLangOldVal.setString(4, ci.property.key);
@@ -1140,13 +1140,18 @@ public class SurveyManager {
 		}
 	}
 	
-	public void addLabel(ChangeItem ci, String language, PreparedStatement pstmtLangNew, int sId, PreparedStatement pstmtDeleteLabel) throws SQLException, Exception {
+	public void addLabel(Connection sd, 
+			ChangeItem ci, 
+			String language, 
+			PreparedStatement pstmtLangNew, 
+			int sId, 
+			PreparedStatement pstmtDeleteLabel) throws SQLException, Exception {
 		
 		String transType = null;
 		
 		if(ci.property.newVal != null) {
 			
-			pstmtLangNew.setString(1, ci.property.newVal);
+			pstmtLangNew.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 			pstmtLangNew.setInt(2, sId);
 			pstmtLangNew.setString(3, language);
 			pstmtLangNew.setString(4, ci.property.key);
@@ -1340,15 +1345,20 @@ public class SurveyManager {
 					if(ci.property.newVal.equals("note")) {
 						setReadonly = true;
 						ci.property.newVal = "string";
+					} else if(ci.property.newVal.equals("calculate")) {
+						ci.property.newVal = "string";
+						ci.property.setVisible = true;
+						ci.property.visibleValue = false;
 					}
 					onlyIfNotPublished = true;
 				} else if(ci.property.prop.equals("name")) {
 					onlyIfNotPublished = true;
-				}
+				} 
 				
 				// Convert from $ syntax to paths
-				if(ci.property.prop.equals("relevant") || ci.property.type.equals("constraint")) {
-					ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd);
+				if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
+						|| ci.property.prop.equals("calculation")) {
+					ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
 				}
 				
 				if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
@@ -1486,6 +1496,8 @@ public class SurveyManager {
 			out = "infotext_id";
 		} else if(in.equals("required")) {
 			out = "mandatory";
+		} else if(in.equals("calculation")) {
+			out = "calculate";
 		}
 		return out;
 	}

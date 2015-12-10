@@ -1221,12 +1221,23 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	var $context,
 		change,
-		changeType;
+		changeType,
+		survey = globals.model.survey,
+		questionType;
 	
-	if(prop === "label" || prop === "media" || prop === "hint")
-		changeType = "label";
-	else {
+	if(type === "question") {
+		questionType = survey.forms[formIndex].questions[itemIndex].type;
+	}
+	
+	if(typeof questionType !== "undefined" && questionType === "calculate"  && prop === "label") {
 		changeType = "property";
+		prop = "calculation";
+	} else {
+		if(prop === "label" || prop === "media" || prop === "hint")
+			changeType = "label";
+		else {
+			changeType = "property";
+		}
 	}
 	
 	change = {
