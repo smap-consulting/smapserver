@@ -161,9 +161,10 @@ public class QuestionManager {
 				+ "readonly, "
 				+ "relevant, "
 				+ "qconstraint, "
-				+ "constraint_msg"
+				+ "constraint_msg, "
+				+ "repeatcount"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -261,13 +262,12 @@ public class QuestionManager {
 				pstmtInsertQuestion.setBoolean(15, readonly);
 				
 				String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd, false);
-				System.out.println("Relevant: " + relevant);
 				pstmtInsertQuestion.setString(16, relevant);
 				
 				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
-				System.out.println("Constraint: " + constraint);
 				pstmtInsertQuestion.setString(17, constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
+				pstmtInsertQuestion.setBoolean(19, false);	// repeat count
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
@@ -299,15 +299,16 @@ public class QuestionManager {
 						pstmtInsertQuestion.setString(7, null );
 						pstmtInsertQuestion.setString(8, null );
 						pstmtInsertQuestion.setString(9, "user" );
-						pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.repeats, sId, sd, false));
+						pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false));
 						pstmtInsertQuestion.setString(11, null );
 						pstmtInsertQuestion.setString(12, null);
 						pstmtInsertQuestion.setBoolean(13, false);	// visible
-						pstmtInsertQuestion.setString(14, q.path + "_count");
+						pstmtInsertQuestion.setString(14, repeatsPath);
 						pstmtInsertQuestion.setBoolean(15, false); 	// read only
-						pstmtInsertQuestion.setString(15, null);	// Relevant
-						pstmtInsertQuestion.setString(16, null);	// Constraint
-						pstmtInsertQuestion.setString(17, null);	// Constraint message
+						pstmtInsertQuestion.setString(16, null);	// Relevant
+						pstmtInsertQuestion.setString(17, null);	// Constraint
+						pstmtInsertQuestion.setString(18, null);	// Constraint message
+						pstmtInsertQuestion.setBoolean(19, true);	// repeat count
 						
 						log.info("Insert repeat count question: " + pstmtInsertQuestion.toString());
 						pstmtInsertQuestion.executeUpdate();

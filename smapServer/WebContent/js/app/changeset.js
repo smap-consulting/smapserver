@@ -1108,10 +1108,12 @@ define([
 	 */
 	function checkBlankLabels(container, itemIndex, itemType, item) {
 		var i;
-		console.log("Checking for blank labels");
 		
 		for(i = 0; i < item.labels.length; i++) {
 			if(typeof item.labels[i].text === "undefined" || item.labels[i].text.trim().length === 0) {
+				if(itemType === "question" && (item.type === "begin repeat" || item.type === "begin group")) {
+					continue;		// Don't report warnings on blank labels for these question types
+				}
 				addValidationError(
 						container,
 						itemIndex,
@@ -1179,8 +1181,6 @@ define([
 			form,
 			i, j;
 		
-		console.log("check refrences");
-		
 		// Get a list of references to other questions
 		if(itemType  === "question") {
 			getReferenceNames(item.relevant, refQuestions);
@@ -1228,7 +1228,7 @@ define([
 			    }
 			}
 		}
-		console.log("done");
+
 		return true;
 
 	}

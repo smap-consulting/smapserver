@@ -350,6 +350,7 @@ public class XLSFormManager {
 							CellStyle style = col.getStyle(styles, q);
 							if(style != null) {	cell.setCellStyle(style); }
 							cell.setCellValue(savedCalculation);
+							savedCalculation = null;
 							
 							processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
 									colsSurvey, 

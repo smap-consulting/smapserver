@@ -569,6 +569,18 @@ function respondToEvents($context) {
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
 	});
 	
+	// Repeat count change
+	$context.find('.repeat-counts').change(function(){
+		var $this = $(this),
+			$elem = $this.closest('li'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "calculation") ;
+	});
+	
 	// Add tooltips
 	$context.find('.has_tt').tooltip();
 	
@@ -1209,10 +1221,14 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		change,
 		changeType,
 		survey = globals.model.survey,
-		questionType;
+		forms = survey.forms,
+		question = forms[formIndex].questions[itemIndex],
+		questionType,
+		repeat_path,
+		i;
 	
 	if(type === "question") {
-		questionType = survey.forms[formIndex].questions[itemIndex].type;
+		questionType = question.type;
 	}
 	
 	if(typeof questionType !== "undefined" && questionType === "calculate"  && prop === "label") {
@@ -1226,19 +1242,28 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		}
 	}
 	
+	if(typeof questionType !== "undefined" && questionType === "begin repeat") {
+		for(i = 0; i < forms.length; i++) {
+			if(forms[i].parentFormIndex === formIndex && forms[i].parentQuestionIndex === itemIndex) {
+				repeat_path = forms[i].repeat_path;
+			}
+		}
+	}
+	
 	change = {
 			changeType: changeType,		// survey | form | language | question | option | (property | label) last two are types of property change
 			action: "update",			// add | delete | update
 			source: "editor",				// editor | file
 			property: {
 				qId: undefined,				// qId must be set to apply the change
-				qType: undefined,			// Question type
+				qType: questionType,		// Question type
 				type: type,					// question or option
 				name: undefined,			// name of the question or the option list
 				propType: element,			// text or hint or image or video or audio or video
 				prop: prop,					// Property to be changed, for example: label or appearance
 				languageName: undefined,	// Language Name
 				allLanguages: false,		// Set true if all languages should be updated with a new label
+				repeat_path: repeat_path,	// Path to repeat count question if this is a begin repeat
 				
 				newVal: newVal,				// New value to be applied
 				oldVal: undefined,			// Old value for this property

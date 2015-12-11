@@ -105,11 +105,28 @@ define([
 		}
 		h[++idx] = '">';
 		if(question.type === "begin repeat") {
+			
+			h[++idx] = '<div class="question-controls">';
+			h[++idx] = '<div class="row">';
+				h[++idx] = '<div class="col-md-6"></div>';		
+				// A control to set repeat count
+					h[++idx] = '<div class="col-md-6">';
+						h[++idx] = '<label>Repeat Count: </label>';
+						h[++idx] = '<div class="input-group">';
+							h[++idx] = '<input class="form-control repeat-counts" value="';
+							h[++idx] = question.calculation;
+							h[++idx] = '">';
+						h[++idx] = '</div>';
+					h[++idx] = '</div>';
+				h[++idx] = '</div>';
+			h[++idx] = '</div>';
+		
 			h[++idx] = addSubForm(formIndex, qIndex);
+			
 		} else if(question.type.indexOf("select") === 0) {
 			if(!question.error) {	// Only add the options if the question it self does not have any errors
 				
-				h[++idx] = '<div class="option-controls">';
+				h[++idx] = '<div class="question-controls">';
 					h[++idx] = '<div class="row">';
 						h[++idx] = '<div class="col-md-6"></div>';
 						
@@ -590,7 +607,8 @@ define([
 				globals.gHasQuestions = true;
 				question = form.questions[form.qSeq[i]];
 				
-				if(question.propertyType || question.soft_deleted) {	// Ignore property type questions, and questions that have been deleted
+				// Ignore property type questions, questions that have been deleted and meta questions like end repeat
+				if(question.propertyType || question.soft_deleted || question.type === "end repeat") {	
 					continue;
 				}
 				
@@ -619,9 +637,6 @@ define([
 					h[++idx] = '"></li>';
 					
 				
-					continue;
-				}
-				if(question.type === "end repeat") {
 					continue;
 				}
 

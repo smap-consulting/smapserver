@@ -600,7 +600,7 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
-			f.repeat_count = GeneralUtilityMethods.convertAllXpathNames(rsGetForms.getString(6), true);
+			f.repeat_path = rsGetForms.getString(6);		// Don't translate the repeat path
 				
 			/*
 			 * Get the questions for this form
@@ -610,6 +610,7 @@ public class SurveyManager {
 			rsGetQuestions = pstmtGetQuestions.executeQuery();
 			
 			boolean inMeta = false;				// Set true if the question is in the meta group
+			String savedCalculation = null;		// Contains the repeat count for a sub form
 			while (rsGetQuestions.next()) {
 				Question q = new Question();
 				
@@ -641,7 +642,6 @@ public class SurveyManager {
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				
 				// Set an indicator if this is a property type question (_device etc)
-
 				if(q.source_param != null && 
 						(q.source_param.equals("deviceid") || q.source_param.equals("start") || q.source_param.equals("end"))) {
 					q.propertyType = true;
@@ -653,8 +653,21 @@ public class SurveyManager {
 					q.propertyType = true;
 				}
 				
+				// Discard property type questions if they have not been asked for
 				if(q.propertyType && !getPropertyTypeQuestions) {
-					continue;		// discard the question
+					continue;
+				}
+				
+				// If this question holds the repeat count calculation for the following begin repeat then save the calculation and discard it
+				if(q.repeatCount) {
+					savedCalculation = q.calculation;
+					continue;
+				}
+				
+				// If this is a begin repeat set the calculation from the preceeding repeat count question
+				if(q.type.equals("begin repeat")) {
+					q.calculation = savedCalculation;
+					savedCalculation = null;
 				}
 				
 				// Translate type name to "note" if it is a read only string
@@ -1330,10 +1343,33 @@ public class SurveyManager {
 		PreparedStatement pstmtProperty2 = null;
 		PreparedStatement pstmtDependent = null;
 		PreparedStatement pstmtReadonly = null;
+		PreparedStatement pstmtGetQuestionId = null;
 		
 		try {
 		
 			for(ChangeItem ci : changeItemList) {
+				
+				/*
+				 * If the question type is a begin repeat and the property is "calculate" then 
+				 *  the repeat count question needs to be updated
+				 *  This repeat count question will be in the same form as the begin repeat question
+				 */
+				if(ci.property.qType != null && ci.property.qType.equals("begin repeat") && 
+						ci.property.prop.equals("calculation")) {
+					
+					String sqlGetQuestionId = "select q_id from question where trim(path) = ? and f_id in "
+							+ "(select f_id from question where q_id = ?);";
+					pstmtGetQuestionId = sd.prepareStatement(sqlGetQuestionId);
+					pstmtGetQuestionId.setString(1, ci.property.repeat_path.trim());
+					pstmtGetQuestionId.setInt(2, ci.property.qId);
+					
+					log.info("SQL: Getting question id: " + pstmtGetQuestionId.toString());
+					
+					ResultSet rs = pstmtGetQuestionId.executeQuery();
+					if(rs.next()) {
+						ci.property.qId = rs.getInt(1);
+					}
+				}
 				
 				String property = translateProperty(ci.property.prop);
 				String propertyType = null;
@@ -1358,13 +1394,14 @@ public class SurveyManager {
 				if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 						|| ci.property.prop.equals("calculation")) {
 					ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
+					ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
 				}
 				
 				if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
 					String sqlProperty1 = "update question set " + property + " = ? " +
-							"where q_id = ? and (" + property + " = ? " +
+							"where q_id = ? and (trim(" + property + ") = ? " +
 							"or " + property + " is null) ";
 					
 					if(onlyIfNotPublished) {
@@ -1471,6 +1508,7 @@ public class SurveyManager {
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
 			try {if (pstmtReadonly != null) {pstmtReadonly.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}
 		
 		}
 	
@@ -1497,6 +1535,8 @@ public class SurveyManager {
 			out = "mandatory";
 		} else if(in.equals("calculation")) {
 			out = "calculate";
+		} else if(in.equals("constraint")) {
+			out = "qconstraint";
 		}
 		return out;
 	}
