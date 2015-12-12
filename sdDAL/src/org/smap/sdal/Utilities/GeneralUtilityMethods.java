@@ -979,6 +979,7 @@ public class GeneralUtilityMethods {
 						c.property.qType = qType;
 						c.property.newVal = optionCols[vlc.label];
 						c.property.key = optionCols[vlc.value];
+						c.property.type = "option";
 		    		  
 						ciList.add(c);
 		    		   
@@ -1669,5 +1670,34 @@ public class GeneralUtilityMethods {
 		java.util.Date today = new java.util.Date();
 		return new Timestamp(today.getTime());
 	 
+	}
+	
+	/*
+	 * Check to see if there are any choices from an external file for a question
+	 */
+	public static boolean hasExternalChoices(Connection sd, int qId) throws SQLException {
+		
+		boolean external = false;
+		String sql = "select count(*) from option o, question q where o.l_id = q.l_id and q.q_id = ? and o.externalfile = 'true';";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				if(rs.getInt(1) > 0) {
+					external = true;
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return external;
 	}
 }

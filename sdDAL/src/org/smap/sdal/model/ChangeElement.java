@@ -21,10 +21,10 @@ public class ChangeElement {
 		} else if(ci.option != null) {
 			this.type = "option";
 		} else if(ci.property != null) {
-			if(ci.property.type.equals("question")) {
-				this.type = "question";
-			} else if(ci.property.type.equals("option")) {
+			if(ci.property.type.equals("option")) {
 				this.type = "option";
+			} else if(ci.property.type.equals("question")) {
+				this.type = "question";
 			} else {
 				this.type = "unknown";
 				System.out.println("Error: unknown change type");

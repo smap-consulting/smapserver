@@ -223,7 +223,7 @@ public class Items extends Application {
 				}
 				
 				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? order by o.seq;";
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? and o.externalfile = ? order by o.seq;";
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
 				// Get the columns
@@ -272,7 +272,7 @@ public class Items extends Application {
 						newColIdx++;
 					}
 					
-					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_ omplete") != null) {
+					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_complete") != null) {
 						cols.append(",_complete");
 						columns.put("Complete");
 						colNames.add("_complete");
@@ -301,7 +301,12 @@ public class Items extends Application {
 						colNames.add(name);
 						
 					} else if(bFeats && type.equals("select")) {
+						
+						boolean external = GeneralUtilityMethods.hasExternalChoices(connectionSD, qId);
+						
 						pstmtSelectMultiple.setInt(1, qId);
+						pstmtSelectMultiple.setBoolean(2, external);
+						
 						ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
 						while (rsMultiples.next()) {
 							String mult_name = name + " - " + rsMultiples.getString(2);

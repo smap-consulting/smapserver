@@ -279,11 +279,11 @@ public class ExportSurvey extends Application {
 			PreparedStatement pstmtQuestions = null;
 			PreparedStatement pstmtSelectMultiple = null;
 			
-			
-			
 			try {
+				
 				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? order by o.seq;";
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id "
+						+ "and q.q_id = ? and o.externalfile = ? order by o.seq;";
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
 				// Get the columns
@@ -431,6 +431,7 @@ public class ExportSurvey extends Application {
 					c.humanName = "prikey";
 					c.qType = "";
 					f.columnList.add(c);
+					System.out.println(" xxxx   Add column " + c.name);
 					
 					
 					// For the top level form add default columns that are not in the question list
@@ -441,6 +442,7 @@ public class ExportSurvey extends Application {
 						c.humanName = "User";
 						c.qType = "";
 						f.columnList.add(c);
+						System.out.println(" xxxx   Add column " + c.name);
 						
 						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_version") != null) {
 							c = new Column();
@@ -448,6 +450,7 @@ public class ExportSurvey extends Application {
 							c.humanName = "Version";
 							c.qType = "";
 							f.columnList.add(c);
+							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_complete") != null) {
@@ -456,6 +459,7 @@ public class ExportSurvey extends Application {
 							c.humanName = "Complete";
 							c.qType = "";
 							f.columnList.add(c);
+							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 					}
@@ -480,8 +484,19 @@ public class ExportSurvey extends Application {
 							continue;
 						}
 						
+						if(!exp_ro && ro) {
+							log.info("Dropping readonly: " + tName);
+							continue;			// Drop read only columns if they are not selected to be exported				
+						}
+						
 						if(qType.equals("select")) {
+							
+							// Check if there are any choices from an external csv file in this select multiple
+							boolean external = GeneralUtilityMethods.hasExternalChoices(connectionSD, qId);
+							
+							// Get the choices, either all from an external file or all from an internal file but not both
 							pstmtSelectMultiple.setInt(1, qId);
+							pstmtSelectMultiple.setBoolean(2, external);
 							ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
 							while (rsMultiples.next()) {
 								c = new Column();
@@ -493,6 +508,7 @@ public class ExportSurvey extends Application {
 								c.qType = qType;
 								c.ro = ro;
 								f.columnList.add(c);
+								System.out.println(" xxxx   Add column " + c.name);
 							}
 						} else {
 							c = new Column();
@@ -503,6 +519,7 @@ public class ExportSurvey extends Application {
 							c.qType = qType;
 							c.ro = ro;
 							f.columnList.add(c);
+							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 					}
@@ -978,6 +995,7 @@ public class ExportSurvey extends Application {
 					//String columnType = rsMetaData.getColumnTypeName(i);
 					String columnName = c.name;
 					String columnType = c.qType;
+					System.out.println("      Get data for column " + i + " : " + columnName);
 					String value = resultSet.getString(i + 1);
 					
 					if(value == null) {

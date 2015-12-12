@@ -1111,7 +1111,7 @@ public class SubRelationalDB extends Subscriber {
 					if(colType.equals("select")) {
 						// Create a column for each option
 						// Values in this column can only be '0' or '1', not using boolean as it may be easier for analysis with an integer
-						Collection<Option> options = q.getChoices();
+						Collection<Option> options = q.getValidChoices();
 						if(options != null) {
 							List<Option> optionList = new ArrayList <Option> (options);
 							UtilityMethods.sortOptions(optionList);	
@@ -1260,7 +1260,7 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Apply table change: " + ciJson);
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
-				if(ci.action.equals("add")) {		// Table is only altered for new question or new select multiple options
+				if(ci.action.equals("add") || ci.action.equals("external option")) {		// Table is only altered for new question or new select multiple options
 					// Get the id for the question that is being updated
 					int qId = 0;
 					ArrayList<String> columns = new ArrayList<String> ();
@@ -1270,7 +1270,7 @@ public class SubRelationalDB extends Subscriber {
 					String type = null;
 					boolean hasExternalOptions = false;
 					
-					if(ci.property != null && ci.property.prop.equals("type")) {
+					if(ci.property != null && ci.property.prop != null && ci.property.prop.equals("type")) {
 						
 						// Type changes on existing questions are not allowed
 						System.out.println("Error: Type change on existing question");

@@ -1217,7 +1217,8 @@ public class SurveyManager {
 					+ "q.l_id = o.l_id and o.ovalue = ?;";
 			pstmtOptionGet = connectionSD.prepareStatement(sqlOptionGet);
 			
-			String sqlOptionInsert = "insert into option  (o_id, l_id, seq, label_id, ovalue, externalfile) values(nextval('o_seq'), ?, ?, ?, ?, 'true');"; 			
+			String sqlOptionInsert = "insert into option  (o_id, l_id, seq, label_id, ovalue, externalfile, column_name) "
+					+ "values(nextval('o_seq'), ?, ?, ?, ?, 'true', ?);"; 			
 			pstmtOptionInsert = connectionSD.prepareStatement(sqlOptionInsert);
 			
 			String sqlLangInsert = "insert into translation  (t_id, s_id, language, text_id, type, value) values(nextval('t_seq'), ?, ?, ?, ?, ?);"; 			
@@ -1226,7 +1227,7 @@ public class SurveyManager {
 			String sqlLangUpdate = "update translation  set value = ? where s_id = ? and text_id = ? and value != ?;"; 			
 			pstmtLangUpdate = connectionSD.prepareStatement(sqlLangUpdate);		// Assumes all languages and types TODO
 			
-			String sqlMaxSeq = "select max(seq) from option where q_id = ?;";
+			String sqlMaxSeq = "select max(seq) from option where l_id = ?;";
 			pstmtMaxSeq = connectionSD.prepareStatement(sqlMaxSeq);
 		
 			ArrayList<String> languages = GeneralUtilityMethods.getLanguagesUsedInSurvey(connectionSD, sId);
@@ -1242,7 +1243,7 @@ public class SurveyManager {
 				// Get the max sequence number
 				if(currentQId != ci.property.qId) {
 					// Get current maximum sequence
-					pstmtMaxSeq.setInt(1, ci.property.qId);
+					pstmtMaxSeq.setInt(1, ci.property.l_id);
 					rs = pstmtMaxSeq.executeQuery();
 					if(rs.next()) {
 						maxSeq = rs.getInt(1);
@@ -1277,6 +1278,9 @@ public class SurveyManager {
 					pstmtOptionInsert.setInt(2, maxSeq);
 					pstmtOptionInsert.setString(3, text_id);
 					pstmtOptionInsert.setString(4, ci.property.key);
+					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.property.key, false) );
+					
+					log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
 					count = pstmtOptionInsert.executeUpdate();
 					
 					// Set label
@@ -1286,6 +1290,7 @@ public class SurveyManager {
 					pstmtLangInsert.setString(5, ci.property.newVal);
 					for(String language : languages) {
 						pstmtLangInsert.setString(2, language);
+						log.info("----------------------------- Insert new translation for option from file: " + pstmtLangInsert.toString());
 						count += pstmtLangInsert.executeUpdate();
 					}	
 					

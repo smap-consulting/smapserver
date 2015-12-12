@@ -394,6 +394,7 @@ $(document).ready(function() {
 			name = $('#new_form_name').val();
 			createNewSurvey(name, surveyDetailsDone);
 		}
+		$('#openFormModal').modal('hide');
  	 });
 	
     /*
