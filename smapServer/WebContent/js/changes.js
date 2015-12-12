@@ -213,16 +213,16 @@ function getChangeDescription(change) {
 		oldVal,
 		newVal;
 	
-	if(change.action === "option_update") {		
+	if(change.action === "external option") {		
 		/*
 		 * Options added from a file
 		 */
 		h[++idx] = 'Choice <span style="color:blue;">'; 
-		h[++idx] = change.newVal;
+		h[++idx] = change.property.newVal;
 		h[++idx] = '</span>';
 		h[++idx] = ' added to';
 		h[++idx] = ' question: <span style="color:blue;">';
-		h[++idx] = change.name;
+		h[++idx] = change.property.name;
 		h[++idx] = '</span>';
 		h[++idx] = ' from file: <span style="color:blue;">';
 		h[++idx] = change.fileName;
