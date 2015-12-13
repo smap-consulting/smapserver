@@ -405,9 +405,11 @@ public class SurveyManager {
 			sd.setAutoCommit(true);
 
 		} catch (SQLException e) {
+			try{sd.rollback();} catch(Exception ex) {};
 			try{sd.setAutoCommit(true);} catch(Exception ex) {};
 			throw e;
 		} catch (Exception e) {
+			try{sd.rollback();} catch(Exception ex) {};
 			try{sd.setAutoCommit(true);} catch(Exception ex) {};
 			throw e;
 		} finally {

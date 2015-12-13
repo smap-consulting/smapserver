@@ -902,7 +902,7 @@ public class QuestionManager {
 		PreparedStatement pstmt = null;
 		String sql = "delete from option " +
 				" where l_id = ? " +
-				" and ovalue = ?;";	
+				" and ovalue = ? or ovalue is null;";	// Also delete any null values, these should not exist	
 
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update option set seq = seq - 1 where l_id = ? and seq >= ?;";
@@ -1053,7 +1053,7 @@ public class QuestionManager {
 	/*
 	 * Update properties for options
 	 */
-	public void updateOptions(Connection sd, int sId, ArrayList<PropertyChange> properties) throws SQLException {
+	public void updateOptions(Connection sd, int sId, ArrayList<PropertyChange> properties) throws Exception {
 		
 		PreparedStatement pstmtOtherProperties = null;
 
@@ -1062,9 +1062,13 @@ public class QuestionManager {
 				+ "where l_id = ? "
 				+ "and ovalue = ?";
 		
-		// If the option value changes then its label id needs to be updated
+		// If the option value changes then its label id needs to be updated as this is derived from the option value
+		PreparedStatement pstmtGetOldPath = null;
+		String sqlGetOldPath = "select label_id from option where l_id = ? and ovalue = ?; ";
+		
+		// If the option value changes then its label id needs to be updated as this is derived from the option value
 		PreparedStatement pstmtUpdateLabelId = null;
-		String sqlUpdateLabelId = "update translation t set text_id = ? where text_id = ?; ";
+		String sqlUpdateLabelId = "update translation t set text_id = ? where s_id = ? and text_id = ?; ";
 		
 		try {
 			
@@ -1075,7 +1079,22 @@ public class QuestionManager {
 				
 				if(property.equals("value")) {
 					String newPath = "option_" + listId + "_" + p.newVal + ":label";
-					String oldPath = "option_" + listId + "_" + p.oldVal + ":label";
+					String oldPath = null;
+					
+					sd.setAutoCommit(false);
+					
+					// Get the old path
+					pstmtGetOldPath = sd.prepareStatement(sqlGetOldPath);
+					pstmtGetOldPath.setInt(1, listId);
+					pstmtGetOldPath.setString(2, p.oldVal);
+					
+					log.info("Get old path: " + pstmtGetOldPath.toString());
+					ResultSet rs = pstmtGetOldPath.executeQuery();
+					if(rs.next()) {
+						oldPath = rs.getString(1);
+					} else {
+						throw new Exception("Error: could not get old path");
+					}
 					
 					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
 					pstmtUpdateValue.setString(1, p.newVal);
@@ -1086,14 +1105,18 @@ public class QuestionManager {
 					log.info("Update option value: " + pstmtUpdateValue.toString());
 					pstmtUpdateValue.executeUpdate();
 					
+
 					// Update the label id
 					pstmtUpdateLabelId = sd.prepareStatement(sqlUpdateLabelId);
 					pstmtUpdateLabelId.setString(1, newPath);
-					pstmtUpdateLabelId.setString(2, oldPath);
+					pstmtUpdateLabelId.setInt(2, sId);
+					pstmtUpdateLabelId.setString(3, oldPath);
 					
 					log.info("Update option label id: " + pstmtUpdateLabelId.toString());
 					pstmtUpdateLabelId.executeUpdate();
 					
+					sd.commit();
+					sd.setAutoCommit(true);
 				} else {
 					if(GeneralUtilityMethods.columnType(sd, "option", property) != null) {
 					
@@ -1117,13 +1140,16 @@ public class QuestionManager {
 			}
 			
 			
-		} catch(SQLException e) {
+		} catch(Exception e) {
+			try{sd.rollback();} catch(Exception ex) {};
+			try{sd.setAutoCommit(true);} catch(Exception ex) {};
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
 			try {if (pstmtOtherProperties != null) {pstmtOtherProperties.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateValue != null) {pstmtUpdateValue.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateLabelId != null) {pstmtUpdateLabelId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetOldPath != null) {pstmtGetOldPath.close();}} catch (SQLException e) {}
 		}	
 		
 	}

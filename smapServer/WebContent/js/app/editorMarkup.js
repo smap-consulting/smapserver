@@ -475,7 +475,7 @@ define([
 			h[++idx] = h[++idx] = '<ul class="list-unstyled">';
 			if(oSeq) {
 				for(i = 0; i < oSeq.length; i++) {
-					optionId = "option_" + question.name + "_" + oSeq[i];
+					optionId = "option_" + question.list_name + "_" + oSeq[i];
 					h[++idx] = addOneOption(optionList,
 							optionList.options[oSeq[i]], 
 							formIndex, 
@@ -796,7 +796,7 @@ define([
 		}
 		
 		
-		if(!globals.gHasQuestion) {
+		if(!globals.gHasQuestions) {
 			// If there were no questions then set focus to the add new question button
 			$('.add_final_button').focus();
 		} 

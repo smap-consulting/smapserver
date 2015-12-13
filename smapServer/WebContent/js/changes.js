@@ -232,6 +232,7 @@ function getChangeDescription(change) {
 		h[++idx] = 'Settings changed <span style="color:blue;">';
 		h[++idx] = change.msg;
 		h[++idx] = '</span>';
+		
 	}  else if(change.action === "update") {
 		
 		/*
@@ -271,7 +272,7 @@ function getChangeDescription(change) {
 		/*
 		 * New questions or options
 		 */
-		h[++idx] = 'added ';
+		h[++idx] = 'Added ';
 		
 		if(change.type === "question"){
 			
@@ -285,11 +286,15 @@ function getChangeDescription(change) {
 			/*
 			 * Options added or deleted from the editor
 			 */
-			h[++idx] = 'Choice <span style="color:blue;">'; 
+			h[++idx] = 'choice <span style="color:blue;">'; 
 			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
 			h[++idx] = '</span>';
-			h[++idx] = ' added to';
-			h[++idx] = ' choice list: <span style="color:blue;">';
+			h[++idx] = ' to choice list: <span style="color:blue;">';
 			h[++idx] = change.option.optionList;
 			h[++idx] = '</span>';
 			h[++idx] = ' using the online editor';

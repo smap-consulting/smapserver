@@ -42,7 +42,8 @@ define([
 		updateModelWithErrorStatus: updateModelWithErrorStatus,
 		validateAll: validateAll,
 		numberIssues: numberIssues,
-		nextIssue: nextIssue
+		nextIssue: nextIssue,
+		addUpdateMessage: addUpdateMessage
 	};
 
 	/*
@@ -1269,7 +1270,7 @@ define([
 	
 	function isValidODKOptionName(val) {
 		
-		var sqlCheck = /^[A-Za-z0-9_\-\.:]*$/
+		var sqlCheck = /^[A-Za-z0-9_\-\.:/]*$/
 		return sqlCheck.test(val);	
 	}
 	
@@ -1548,7 +1549,9 @@ define([
 		globals.errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
-				validateItem(i, j, "question");		// Validate the question
+				if(!forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
+					validateItem(i, j, "question");		// Validate the question
+				}
 			}
 		}
 		for(list in optionLists) {
@@ -1601,6 +1604,7 @@ define([
 				break
 			}
 		}
+		
 		focusOnError(gErrorPosition);
 	}
 
@@ -1609,7 +1613,9 @@ define([
 		var survey = globals.model.survey,
 			error = globals.errors[position],
 			itemId,
-			$textarea;
+			$textarea,
+			$item,
+			$parent;
 		
 		if(error.itemType === "question") {
 			itemId = "question" + error.container + "_" + error.itemIndex;
@@ -1617,11 +1623,25 @@ define([
 			itemId = "option_" + error.container + "_" + error.itemIndex;
 		}
 		
-		$textarea = $('#' + itemId).find('textarea');
+		$item = $('#' + itemId);
+		
+		// Expand all parent panes
+		$parent = $item.parent().closest('li.panel');
+		while($parent.length > 0) {
+			$parent.find('.collapse').show();
+			$parent = $parent.parent().closest('li.panel');
+		}
+		
+		if(error.itemType === "question") {
+			$textarea = $item.find('.question').find('textarea');
+		} else {
+			$textarea = $item.find('textarea');
+		}
+		
 		if($textarea.length > 0) {
 			$textarea.focus();
 		} else {
-			$('#' + questionId).find('button').focus();
+			$item.find('button').focus();
 		}
 	}
 	

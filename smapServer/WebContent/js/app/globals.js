@@ -537,12 +537,6 @@ define(function() {
 		}
 		
 		*/
-		/*
-		 * Change state depending on the number of translation changes in the queue
-		 */
-		this.setHasTranslateChanges = function(numberChanges) {
-			console.log("There are " + numberChanges + " changes ready to go");
-		}
 		
 		// Modify a label for a question or an option called from translate where multiple questions can be modified at once if the text is the same
 		this.modLabel = function(language, changedQ, newVal, element, prop) {
@@ -579,26 +573,26 @@ define(function() {
 									
 					label.type = "question";
 					label.name = item.name;	
-					label.propType = "text";
 					label.prop = "label";
 					label.qId = item.id;
 	
 				// For options	
 				} else {
 					
-					item = this.survey.optionLists[label.optionListIdx][label.optionIdx];				// done
-					item_orig = this.survey.optionLists_orig[label.optionListIdx][label.optionIdx];		// done
-					
 					label.optionListIdx = changedQ[i].optionList;										// done
-					qname = changedQ[i].qname;															// done
 					label.optionIdx = changedQ[i].option;												// done
 
+					item = this.survey.optionLists[label.optionListIdx].options[label.optionIdx];				// done
+					item_orig = this.survey.optionLists_orig[label.optionListIdx].options[label.optionIdx];		// done
+					
 					label.type = "option";																// done
 					label.name = label.optionListIdx;		// The option list name						// done
 				}
 					
 				label.newVal = newVal;
-				label.oldVal = item_orig.labels[language][element]; 								// done
+				label.oldVal = item_orig.labels[language][element]; 									// done
+				
+				label.propType = "text";
 
 				label.element = element;																// done
 				label.languageName = language;
@@ -628,8 +622,25 @@ define(function() {
 				this.currentTranslateChange = this.translateChanges.push(labelMod) - 1;
 				//this.doChange();				// Apply the current change
 			}
-			this.setHasTranslateChanges(this.translateChanges.length);
-		};
+			
+			$('.m_save_survey').find('.badge').html(this.translateChanges.length);
+			if(this.translateChanges.length > 0) {
+				$('.m_save_survey').removeClass('disabled').attr('disabled', false);
+			} else {
+				$('.m_save_survey').addClass('disabled').attr('disabled', true);;
+			}
+		}
+		
+		// Clear the change list
+		this.clearChanges = function() {
+			this.translateChanges = [];
+			$('.m_save_survey').find('.badge').html(this.translateChanges.length);
+			if(this.translateChanges.length > 0) {
+				$('.m_save_survey').removeClass('disabled').attr('disabled', false);
+			} else {
+				$('.m_save_survey').addClass('disabled').attr('disabled', true);;
+			}
+		}
 		
 		/*
 		 * If the label has been modified before then remove it from the change list

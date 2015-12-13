@@ -29,12 +29,14 @@ require.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
+    	bootbox: 'bootbox.min',
     	lang_location: '..'
     },
     shim: {
     	'app/common': ['jquery'],
         'bootstrap.min': ['jquery'],
-        'jquery.autosize.min': ['jquery']
+        'jquery.autosize.min': ['jquery'],
+    	'bootbox': ['bootstrap.min']
     }
 });
 
@@ -46,8 +48,10 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
+         'app/changeset',
+         'bootbox',
          'jquery.autosize.min'], 
-		function($, common, bootstrap, modernizr, lang, ssc, globals) {
+		function($, common, bootstrap, modernizr, lang, ssc, globals, changeset, bootbox) {
 
 
 var	gMode = "survey",
@@ -150,8 +154,6 @@ function saveTranslations(callback) {
 		changes = globals.model.translateChanges,
 		changesString = JSON.stringify(changes);		
 	
-	globals.model.setHasTranslateChanges(0);
-	
 	addHourglass();
 	$.ajax({
 		url: url,
@@ -166,6 +168,8 @@ function saveTranslations(callback) {
 				i;
 			
 			removeHourglass();			
+			
+			globals.model.clearChanges();
 			
 			if(typeof responseFn === "function") { 
 				responseFn();
@@ -184,7 +188,7 @@ function saveTranslations(callback) {
 				h[++idx] = '</p>'
 				h[++idx] = '<ol>';
 				for(i = 0; i < data.changeSet.length; i++) {
-					h[++idx] = addUpdateMessage(data.changeSet[i], false);
+					h[++idx] = changeset.addUpdateMessage(data.changeSet[i], false);
 				}
 				h[++idx] = '</ol>';
 				h[++idx] = '</div>';
@@ -195,7 +199,7 @@ function saveTranslations(callback) {
 				h[++idx] = " changes failed";
 				h[++idx] = '<ol>';
 				for(i = 0; i < data.changeSet.length; i++) {
-					h[++idx] = addUpdateMessage(data.changeSet[i], true);
+					h[++idx] = changeset.addUpdateMessage(data.changeSet[i], true);
 				}
 				h[++idx] = '</ol>';
 				h[++idx] = '</div>';
@@ -278,20 +282,18 @@ function refreshView() {
 	}
 	// Add all unique options from all option lists
 	for(key in survey.optionLists) {
-		console.log("Option list: " + key);
+
 		var options = survey.optionLists[key].options; 
 		for(j = 0; j < options.length; j++) {
-			
-			console.log("Option:" + options[j]);
 
-			if(options[j].labels[gLanguage1].text) {
+			if(options[j].labels[globals.gLanguage1].text) {
 				if((index = $.inArray(options[j].labels[globals.gLanguage1].text, qList)) > -1) {
 					console.log(options[j].labels[globals.gLanguage1].text);
 					gTempQuestions[index].indexes.push({
 						optionList: key,
 						option: j
 					});
-					console.log(gTempQuestions[index]);
+					
 				} else {
 					qList.push(options[j].labels[globals.gLanguage1].text);
 					gTempQuestions.push({
