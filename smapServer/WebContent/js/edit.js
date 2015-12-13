@@ -654,23 +654,7 @@ function respondToEvents($context) {
 			$(this).closest('tr').find('.labelProp').focus();
 		}
 	});
-	
-	// On tab in feature property move to the next feature property
-	/*
-	$context.find('.labelProp').keydown(function(e){
-		if(e.keyCode === 9) {
-			var $li;
-			e.preventDefault();
-			$li = $(this).closest('li').next('.question');
-			if($li.length === 0) {
-				$li = $li.parent().closest('li').next('.question')
-			}
-			if($li.length > 0) {
-				$(this).closest('tr').find('.labelProp').focus();
-			}
-		}
-	});
-	*/
+
 	
 	// validate the question name on every character change
 	$context.find('.qname').keyup(function(){
