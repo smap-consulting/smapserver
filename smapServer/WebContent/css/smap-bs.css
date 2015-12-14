@@ -159,24 +159,33 @@ tr.deleted td a {
 
 /* Layout */
 #toolbar {
-	width:100px;	
+	width:0px;	
+	display: none;
+	transition: all 0.3s ease 0s;
 }
 #toolbar .btn {
 	font-size: 0px;
 }
- #content > .container {
- 	padding-left: 200px;
+
+#content > .container-fluid {
+ 	padding-left: 0px;
+ 	transition: all 0.3s ease 0s;
  }
 
 
 @media only screen and (min-width: 768px) {
 	 #toolbar {
 	    width:150px;
+	    display: block;
+	    transition: all 0.3s ease 0s;
 	 }
 	 #toolbar .btn {
-		font-size: 8px;
+		font-size: 10px;
 	 }
-}
+	 #content > .container-fluid {
+ 		padding-left: 160px;
+ 		transition: all 0.3s ease 0s;
+ 	}
 }
 
 @media only screen and (min-width: 999px) {
@@ -186,6 +195,9 @@ tr.deleted td a {
 	  #toolbar .btn {
 		font-size: 10px;
 	 }
+	 #content > .container-fluid {
+ 		padding-left: 220px;
+ 	}
 }
  #toolbar {
    
@@ -232,27 +244,7 @@ tr.deleted td a {
 }
 
 
-.q_type_col {
-	width: 5%;
-
-}
-
-.q_icons_col {
-	width: 10%;	
-
-}
-
-.q_name_col {
-	width: 25%;
-	min-width: 90px;
-
-}
-
-.q_label_col {
-	width: 60%;
-	min-width: 260px;	
-}
-
+*/
 #formList .panel-heading {
 	cursor: move;
 }

@@ -65,38 +65,53 @@ define([
 		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addErrorMsg(question.errorMsg);
-			h[++idx] = '<table class="table"><tbody><tr>';
-				h[++idx] = '<td class="q_type_col">';
+			h[++idx] = '<div class="row">';
+				
+			// Add question type
+				h[++idx] = '<div class="col-xs-2 ">';
 					h[++idx] = '<div class="question_type';
-					if(question.published) {
-						h[++idx] = ' disabled';
-					}
-					h[++idx] = '">';
-					h[++idx] = addQType(question.type);
+						if(question.published) {
+							h[++idx] = ' disabled';
+						}
+						h[++idx] = '">';
+						h[++idx] = addQType(question.type);
 					h[++idx] = '</div>';
-				h[++idx] = '</td>';
-				h[++idx] = '<td class="q_name_col"><input class="qname form-control" value="';
-					h[++idx] = question.name;
-				h[++idx] = '" ';
-				if(question.published) {				// Mark disabled if the question has been published
-					h[++idx] = 'disabled="true" ';
-				}
-				h[++idx] = 'type="text"></td>';
-				h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
-				h[++idx] = '<td class="q_icons_col">';
-					h[++idx] = '<div class="btn-group">';
-					h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
-					h[++idx] = globals.gElementIndex;
-					h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
+				h[++idx] = '</div>';	// End of question type cell
+				
+				// Add name and featured property cell
+				h[++idx] = '<div class="col-xs-8"><div class="row">';
 					
-					h[++idx] = '<button tabindex="-1" class="btn btn-default">';
-					h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
-					h[++idx] = questionId;
-					h[++idx]='"></span>';
-					h[++idx]='</button>';
+					// Add question name cell
+					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control" value="';
+						h[++idx] = question.name;
+						h[++idx] = '" ';
+						if(question.published) {				// Mark disabled if the question has been published
+							h[++idx] = 'disabled="true" ';
+						}
+					h[++idx] = 'type="text"></div>';
+
+					// Add feature property cell
+					h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
+				h[++idx] = '</div></div>';		// End of name and featured property cell
+				
+				// Add buttons
+				h[++idx] = '<div class="col-xs-2 q_icons_col">';
+					h[++idx] = '<div class="btn-group">';
+						if(question.type === "begin repeat" || question.type === "begin group" || question.type.indexOf("select") === 0) {
+							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+							h[++idx] = globals.gElementIndex;
+							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
+						}
+						
+						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
+						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
+						h[++idx] = questionId;
+						h[++idx]='"></span>';
+						h[++idx]='</button>';
 					 
-				h[++idx] = '</td>';
-				h[++idx] = '</tr></tbody></table>';
+					h[++idx] = '</div>';
+				h[++idx] = '</div>';		// End of button cell
+				h[++idx] = '</div>';		// End of row
 		h[++idx] = '<div id="collapse';
 		h[++idx] = globals.gElementIndex;
 		h[++idx] = '" class="panel-body collapse';
@@ -345,24 +360,17 @@ define([
 			type = "option";
 		}
 		
-		h[++idx] = '<td class="q_label_col ';
+		h[++idx] = '<div class="col-xs-12 col-md-9 ';
 		h[++idx] = type;
-		h[++idx] = '" data-fid="';					// Deprecated (Now set in list element)
-		h[++idx] = fId;
-		h[++idx] = '" data-id="';					// Deprecated (Now set in list element)
-		h[++idx] = qIndex;
-		if(qname) {
-			h[++idx] = '" data-qname="';
-			h[++idx] = qname;
-		}
+	
+		h[++idx] = '">';
+		
 		if(list_name) {
-			h[++idx] = '" data-list_name="';
-			h[++idx] = list_name;
 			type = "option";
 		}
-		h[++idx] = '">';
 		h[++idx] = getFeaturedMarkup(question, type);
-		h[++idx] = '</td>';
+		
+		h[++idx] = '</div>';
 		return h.join("");
 	}
 
@@ -529,23 +537,35 @@ define([
 			h[++idx] = addErrorMsg(option.errorMsg);
 		}
 		
-		h[++idx] = '<table class="table">';
-		h[++idx] = '<td class="q_name_col"><input class="oname form-control has_tt" value="';
-		h[++idx] = option.value;
-		h[++idx] = '" type="text" title="Choice Value"></td>';
-		h[++idx] = addFeaturedProperty(option, formIndex, id, list_name, qname);
+		h[++idx] = '<div class="row">';
+			
+			// Add option name and value cell
+			h[++idx] = '<div class="col-xs-10">';
+				h[++idx] = '<div class="row">';
+				
+					// Add option name cell
+					h[++idx] = '<div class="col-xs-12 col-md-3">';
+						h[++idx] = '<input class="oname form-control has_tt" value="';
+						h[++idx] = option.value;
+						h[++idx] = '" type="text" title="Choice Value">';
+					h[++idx] = '</div>';
+						
+					// Add featured property
+					h[++idx] = addFeaturedProperty(option, formIndex, id, list_name, qname);
+				h[++idx] = '</div>';	// End of row
+			h[++idx] = '</div>';	// End of option name and label cell
 		
-		// Add button bar
-		h[++idx] = '<td class="q_icons_col">';
-		h[++idx] = '<div class="btn-group">';
-		h[++idx] = '<button class="btn btn-default" tabindex="-1">';
-		h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
-		h[++idx] = optionId;
-		h[++idx] = '"></span>';
-		h[++idx] = '</button>';		
-		h[++idx] = '</td>';
+			// Add button bar
+		h[++idx] = '<div class="col-xs-2">';
+			h[++idx] = '<div class="btn-group">';
+			h[++idx] = '<button class="btn btn-default" tabindex="-1">';
+			h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
+			h[++idx] = optionId;
+			h[++idx] = '"></span>';
+			h[++idx] = '</button>';		
+		h[++idx] = '</div>';
 		
-		h[++idx] = '</table>';
+		h[++idx] = '</div>';	// end of option row
 		h[++idx] = '</li>';
 
 		return h.join("");

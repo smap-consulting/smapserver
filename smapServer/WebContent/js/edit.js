@@ -638,11 +638,9 @@ function respondToEvents($context) {
 	$context.find('.qname').focusin(function(){
 
 		var $this = $(this),
-			$parent = $this.parent(),
-			$row = $parent.parent();
-			$label = $row.find(".q_label_col");
-			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id");
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id");
 		
 		changeset.validateItem(formIndex, itemIndex, "question"); 
 
@@ -671,11 +669,9 @@ function respondToEvents($context) {
 	$context.find('.qname').keyup(function(){
 
 		var $this = $(this),
-			$parent = $this.parent(),
-			$row = $parent.parent();
-			$label = $row.find(".q_label_col");
-			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id"),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
 			newVal = $this.val();
 		
 		changeset.validateName(formIndex, itemIndex, newVal, "question");
@@ -687,12 +683,10 @@ function respondToEvents($context) {
 	$context.find('.oname').keyup(function(){
 
 		var $this = $(this),
-			$parent = $this.parent(),
-			$row = $parent.parent();
-			$label = $row.find(".q_label_col");
-			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id"),
-			listName = $label.data("list_name"),
+			$li = $this.closest('li');
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			listName = $li.data("list_name"),
 			newVal = $this.val();
 		
 		changeset.validateName(listName, itemIndex, newVal, "option");
@@ -705,11 +699,9 @@ function respondToEvents($context) {
 	$context.find('.qname').change(function(){
 
 		var $this = $(this),
-			$parent = $this.parent(),
-			$row = $parent.parent();
-			$label = $row.find(".q_label_col");
-			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id"),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
 			newVal = $this.val();
 		
 		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") ;
@@ -720,13 +712,11 @@ function respondToEvents($context) {
 	$context.find('.oname').change(function(){
 
 		var $this = $(this),
-			$parent = $this.parent(),
-			$row = $parent.parent();
-			$label = $row.find(".q_label_col"),
-			listName = $label.data("list_name"),
-			formIndex = $label.data("fid"),
-			itemIndex = $label.data("id"),
-			qname = $parent.parent().find('.q_label_col').data("qname"),
+			$li = $this.closest('li'),
+			listName = $li.data("list_name"),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			qname = $li.data("qname"),
 			newVal = $this.val();
 		
 		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
