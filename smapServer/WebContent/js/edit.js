@@ -457,7 +457,7 @@ function setupQuestionTypes($elem, columns, draggable) {
 		if(types[i].canSelect) {
 			
 			h[++idx] = '<div class="col-xs-12 ';
-			h[++idx] = columns === 1 ? 'col-md-12" ' : 'col-md-6" ';
+			h[++idx] = columns === 1 ? '" ' : 'col-md-6" ';
 			h[++idx] = ' style="height:65px;">';	
 			h[++idx] = '<button type="button" class="btn btn-large btn-default question_type_sel full_width_btn';
 			if(draggable) {
