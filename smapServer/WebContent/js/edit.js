@@ -648,6 +648,16 @@ function respondToEvents($context) {
 
 	});
 	
+	// Fix issues with dragging and selecting text in text area or input when draggable is set
+	// Mainly a problem with Firefox however in Chrome selecting text by dragging does not work
+	// Refer: http://stackoverflow.com/questions/21680363/prevent-drag-event-to-interfere-with-input-elements-in-firefox-using-html5-drag
+	$context.find('input, textarea').focusin(function() {
+		$(this).closest('.draggable').attr("draggable", false);
+	}).blur(function() {
+        $(this).closest('.draggable').attr("draggable", true);
+        console.log("blur");
+    });
+	
 	// On tab in question name move to the feature input
 	$context.find('.qname').keydown(function(e){
 		if(e.keyCode === 9) {
@@ -750,12 +760,12 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			item = $(this).data("id");
 		
-		$context = question.deleteQuestion(item);
+		bootbox.confirm("Are you sure you want to delete this question?", function(result) {
+			if(result) {
+				$context = question.deleteQuestion(item);
+			}
+		}); 
 		
-		/*
-		 * If this question is referenced by an "add after" button then that button should add future questions
-		 *  after this newly added question.  Hence update the reference to the question preceding the button
-		 */
 	});
 	
 	// Add new option
@@ -793,7 +803,13 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			item = $(this).data("id");
 		
-		$context = question.deleteOption(item);
+		bootbox.confirm("Are you sure you want to delete this choice?", function(result) {
+			if(result) {
+				$context = question.deleteOption(item);
+			}
+		}); 
+		
+		
 	});
 	
 	// Select types
