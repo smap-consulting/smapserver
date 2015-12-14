@@ -300,6 +300,35 @@ function getChangeDescription(change) {
 			h[++idx] = ' using the online editor';
 		}
 		
+	}  else if(change.action === "delete")  {
+		
+		h[++idx] = 'Deleted ';
+		
+		if(change.type === "question"){
+			
+			h[++idx] = 'question <span style="color:blue;">';
+			h[++idx] = change.question.name;
+			h[++idx] = '</span> with type <span style="color:red;">';
+			h[++idx] = change.question.type;
+			h[++idx] = '</span>';
+			
+		} else if(change.type === "option") {
+			/*
+			 * Options added or deleted from the editor
+			 */
+			h[++idx] = 'choice <span style="color:blue;">'; 
+			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
+			h[++idx] = '</span>';
+			h[++idx] = ' from choice list: <span style="color:blue;">';
+			h[++idx] = change.option.optionList;
+			h[++idx] = '</span>';
+			h[++idx] = ' using the online editor';
+		}
 	} else {
 		h[++idx] = change.type;
 		h[++idx] = ' ';
