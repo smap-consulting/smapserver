@@ -126,6 +126,8 @@ define([
 		} else if(question.type.indexOf("select") === 0) {
 			if(!question.error) {	// Only add the options if the question it self does not have any errors
 				
+				/*
+				 * TODO
 				h[++idx] = '<div class="question-controls">';
 					h[++idx] = '<div class="row">';
 						h[++idx] = '<div class="col-md-6"></div>';
@@ -142,7 +144,7 @@ define([
 						h[++idx] = '</div>';
 					h[++idx] = '</div>';
 				h[++idx] = '</div>';
-				
+				*/
 				h[++idx] = addOptions(question, formIndex);
 			}
 		} 
