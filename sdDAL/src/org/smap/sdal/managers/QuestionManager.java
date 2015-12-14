@@ -963,8 +963,7 @@ public class QuestionManager {
 		String sqlMoveWithin = "update option set "
 						+ "seq = ? "
 					+ "where l_id = ? "
-					+ "and ovalue = ? "
-					+ "and seq = ?;";
+					+ "and ovalue = ?;";
 		
 		PreparedStatement pstmtMovedBack = null;
 		String sqlMovedBack = "update option set seq = seq + 1 where l_id = ? and seq >= ? and seq < ?;";
@@ -984,6 +983,9 @@ public class QuestionManager {
 
 					
 				if(moveWithinList) {
+					// First ensure the sequences start from 0 and increment by 1 each time which is how the editor expected them to be
+					GeneralUtilityMethods.cleanOptionSequences(sd, listId);
+					
 					// Update sequence numbers of other options
 					if(o.seq > o.sourceSeq) { // Moved forward in list
 						
@@ -1010,7 +1012,6 @@ public class QuestionManager {
 					pstmtMoveWithin.setInt(1, o.seq );
 					pstmtMoveWithin.setInt(2, listId );
 					pstmtMoveWithin.setString(3, o.value);
-					pstmtMoveWithin.setInt(4, o.sourceSeq );
 					
 					log.info("Move choice within same list: " + pstmtMoveWithin.toString());
 					int count = pstmtMoveWithin.executeUpdate();

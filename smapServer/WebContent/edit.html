@@ -56,6 +56,8 @@
             <li><a id="m_new" href="#">New</a></li>
             <li class="disabled"><a id="m_import" href="#">Import</a>
             <li role="presentation" class="divider"></li>
+            <li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href="#">Validate</a></li>
+            <li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href="#">Languages</a></li>
             <li><a id="m_media" href="#">Media</a></li>
             <li><a id="m_settings" href="#">Settings</a></li>
           </ul>
@@ -88,12 +90,11 @@
 		<div class="panel panel-info header_style">
 			<div class="row">
 				<div class="col-xs-4"><h4>Form: <span class="formName"></span></h4></div>
-				<div class="col-xs-2"><select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></div>
-				<div class="col-xs-2"></div>
-				<div class="col-xs-1"><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled"><span class="lang" data-lang="c_save">Save</span> <span class="badge">0</span></a></div>
-				<div class="col-xs-1"><a type="button" tabindex="-1"  class="btn btn-primary lang m_validate"><span class="lang" data-lang="c_validate">Validate</span></a></div>
-				<div class="col-xs-1"><a type="button" tabindex="-1"  data-lang="c_langs" class="btn btn-primary lang m_languages">Languages</a></div>
-				<div class="col-xs-1"><a type="button" tabindex="-1"  data-lang="c_test" class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a></div>
+				<div class="col-xs-4">Language: <select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></div>
+				<div class="col-xs-4">
+					<a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled"><span class="lang" data-lang="c_save">Save</span> <span class="badge">0</span></a>
+					<a type="button" tabindex="-1"  data-lang="c_test" class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a>
+				</div>
 				
 			</div>			
 			<div id="formListHeader" >

@@ -1700,4 +1700,48 @@ public class GeneralUtilityMethods {
 		
 		return external;
 	}
+	
+	/*
+	 * Re-sequence options starting from 0
+	 */
+	public static boolean cleanOptionSequences(Connection sd, int listId) throws SQLException {
+		
+		boolean external = false;
+		String sql = "select o_id, seq from option where l_id = ? order by seq asc;";
+		PreparedStatement pstmt = null;
+		
+		String sqlUpdate = "update option set seq = ? where o_id = ?;";
+		PreparedStatement pstmtUpdate = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, listId);
+			
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
+			
+			ResultSet rs = pstmt.executeQuery();
+			int newSeq = 0;
+			while(rs.next()) {
+				int oId = rs.getInt(1);
+				int seq = rs.getInt(2);
+				if(seq != newSeq) {
+					pstmtUpdate.setInt(1,oId);
+					pstmtUpdate.setInt(2, newSeq);
+					
+					log.info("Updating sequence for list id: " + listId + " : " + pstmtUpdate.toString());
+					pstmtUpdate.execute();
+				}
+				newSeq++;
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+		}	
+		
+		return external;
+	}
 }

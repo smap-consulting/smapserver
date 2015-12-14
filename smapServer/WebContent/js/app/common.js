@@ -1220,7 +1220,6 @@ function createNewSurvey(name, callback) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			$('#openFormModal').modal("hide");
 
 			globals.model.survey = data;
 			globals.model.setSettings();

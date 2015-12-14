@@ -394,7 +394,6 @@ $(document).ready(function() {
 			name = $('#new_form_name').val();
 			createNewSurvey(name, surveyDetailsDone);
 		}
-		$('#openFormModal').modal('hide');
  	 });
 	
     /*
@@ -514,6 +513,8 @@ function surveyDetailsDone() {
 		$('#surveyLevelTab').removeClass("disabled");
 		getFilesFromServer(gBaseUrl, globals.gCurrentSurvey, refreshMediaView);
 	}
+	
+	$('#openFormModal').modal("hide");		// Hide the open form modal if its open
 	
 	updateSettingsData();		// Update edit view
 	
