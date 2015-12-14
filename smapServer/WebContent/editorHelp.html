@@ -12,7 +12,7 @@
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 	<link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
-	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+	<link rel="stylesheet" href="/css/smap-docs.css" type="text/css">
     
    	<!--[if lt IE 9]>
 		<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -46,37 +46,119 @@
   </div>
 </header>
   
-<div class="container">
+<div class="container help">
 	<div class="row">
 	   	<div class="col-md-9" role="main">
 	   		<div class="bs-docs-section">
-	   			<h1 id="errors" class="page-header">
-	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; padding-right: 0.5em;">Errors</a>
+	   			<h1 id="adding_question" class="page-header">
+	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: adding_question" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Adding a question</a>
 	   			</h1>
-	   			<p>Checks are automatically made for errors on:</p>
+	   			<h2>Clicking on a question type in the toolbar</h2>
+	   			<p>This will add that type of question to the very end of the survey.</p>
+	   			<h2>Dragging a question type from the tool bar over a blue <b>add question </b>bar</h2>
+	   			<p>This will place the new question where you drop it.</p>
+	   			<h2>Click on one of the blue <b>add question</b> bars</h2>
+	   			<p>This will create a <b>text</b> type question at the location you clicked.  You can then 
+	   			change the type of the question by clicking on the question type icon next to the question name</p>
+	   			
+	   			<h1 id="errors" class="page-header">
+	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Validation</a>
+	   			</h1>
+	   			<p>Checks are made for the following errors and warnings:</p>
 	   			<ul>
-	   				<li>Question name change</li>
-	   				<li>Choice value change</li>
-	   				
+	   				<li>Errors
+		   				<ul>
+		   					<li>An empty name </li>
+		   					<li>Invalid characters, such as spaces, in the name </li>
+		   					<li>A <b>question</b> name that is not unique across the entire survey </li>
+		   					<li>A <b>choice</b> name that is not unique within its choice list </li>
+		   					<li>A reference to another question that does not exist, 
+		   						for example including the answer to another question in the label</li>
+		   					<li>A mismatched number of parenthesis in a relevance, constraint or calculation</li>
+		   				</ul>
+		   			</li>
+		   			<li>Warnings
+		   				<ul>
+		   					<li>A blank label (except for groups or sub forms) </li>
+		   				</ul>
+		   			</li>
 	   			</ul>
+	   			<h2>Validating on save</h2>
+	   			<p>The editor tries to spot errors as you make them and then give immediate feedback. Hence as soon as you
+	   			type an invalid character into a question name then the error message will be shown.  However for performance
+	   			reasons sometimes error checking has to wait until you save the survey.  For example you might delete a question
+	   			without any errors being shown.  However somewhere else in your survey another question refers to the deleted
+	   			question. This error will only show up when you press the <b>Save</b> button or select the "Validate" option from the
+	   			file menu</p>
+	   			
+	   			<h2>Reviewing errors and warnings</h2>
+	   			<p>If an error is detected while you are changing a question (or a choice) then the question is highlighted and an 
+	   			error message is shown</p>
+	   			<p>If there are errors detected when you click the save button or validate the survey then the number of errors and 
+	   			warnings are shown in the <b>toolbar</b> along with a button that will take you to the next error.
+	   		
+	   			<h1 id="testing" class="page-header">
+	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: errors" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Trying out your survey</a>
+	   			</h1>
+	   			<p>Once you save a survey it is ready to be used.  Any person who has an "enumerator" access to the project,
+	   			where you created your new survey, will be able to download the survey to fieldTask and start collecting data</p>
+	   			<p>There is also a <b>test</b> button that will open the survey in webforms and allow you to try it out without having to 
+	   			leave the editor.</p>
+	   			
+	   			<h1 id="publishing" class="page-header">
+	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: errors" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Publishing and un-publishing your survey</a>
+	   			</h1>
+	   			<h2>Publishing</h2>
+	   			<p>When you start creating a new survey form it is <b>not</b> published.  However as soon as you submit the
+	   			first completed survey from fieldTask or webForms is is considered to be published.  This means data has
+	   			been collected for the survey and some additional restrictions will be placed on the editor.
+	   			<ul>
+	   			<li>You will not be able to change the name of a question as this name identifies the column in the results
+	   			table that holds the answers for that question.</li>
+	   			<li>You will not be able to change the type of a question as Smap server can't store two different types of
+	   			data in a single results column</li>
+	   			<li>You can delete a question but its not really gone as the results gathered for that question are not deleted.
+	   			Hence you won't be able to create another question with the same name as the deleted question unless it is also the
+	   			same type, (text integer etc).
+	   			</ul>
+	   			<p>If you have modified a survey part way through collecting real data then you will just have to put up with the
+	   			above restrictions.  However you will usually want to submit data while testing a survey so that you can see how the
+	   			results will look during analysis.After you have done this you can <b>un</b>-publish the survey.</p>
+	   			<h2>Un-Publish</h2> 
+	   			<p>To un-publish you just need to delete all the data that has been submitted. (Careful here).</p><p>This is done in the 
+	   			analysis dashboard where you can create a table panel for the survey, review the data that is there, then select the 
+	   			<b>aside</b> using the <b><</b> button and press delete</p>
+	   			<p>Once the survey has been unpublished the editing restrictions will be lifted</p>
 	   		</div>
+	   		
 	   	</div>
 	   	<div class="col-md-3" role="complementary">
-	   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
-            <ul class="nav bs-docs-sidenav">
-
-                <li class="">
-  					<a href="#errors">Error Checking</a>
-					<ul class="nav">
-						<li class=""><a href="#errors_names">Names and Values</a></li>
-						<li class=""><a href="#errors_questions">Questions</a></li>
-						<li class=""><a href="#errors_survey">Whole Survey</a></li>
-					</ul>
-				</li>
-			</ul>
-		</nav>
-	</div>
-	   	
+		   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
+	            <ul class="nav bs-docs-sidenav">
+	
+	                <li class="">
+	  					<a href="#adding_question">Adding a question</a>
+	  					<a href="#errors">Validation</a>
+	  					<a href="#testing">Trying out your survey</a>
+	  					<a href="#publishing">Publishing and un-publishing your survey</a>
+						
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>	   	
 
 </div>
 
