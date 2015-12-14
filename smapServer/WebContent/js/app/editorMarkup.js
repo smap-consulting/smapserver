@@ -87,10 +87,10 @@ define([
 					h[++idx] = '<div class="btn-group">';
 					h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 					h[++idx] = globals.gElementIndex;
-					h[++idx]='"><span class="glyphicon glyphicon-collapse-down edit_icon"></span></a>';
+					h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
 					
 					h[++idx] = '<button tabindex="-1" class="btn btn-default">';
-					h[++idx]='<span class="glyphicon glyphicon-trash edit_icon delete_question" data-id="';
+					h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
 					h[++idx] = questionId;
 					h[++idx]='"></span>';
 					h[++idx]='</button>';
@@ -539,7 +539,7 @@ define([
 		h[++idx] = '<td class="q_icons_col">';
 		h[++idx] = '<div class="btn-group">';
 		h[++idx] = '<button class="btn btn-default" tabindex="-1">';
-		h[++idx] = '<span class="glyphicon glyphicon-trash edit_icon delete_option" data-id="';
+		h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
 		h[++idx] = optionId;
 		h[++idx] = '"></span>';
 		h[++idx] = '</button>';		

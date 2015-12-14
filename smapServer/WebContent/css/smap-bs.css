@@ -324,27 +324,27 @@ li .panel-body {
 /*
 /* Icons */
 
-.q_icons_col .glyphicon-trash {
+.q_icons_col .glyphicon-remove-circle {
 	color: red;
 }
 
 .q_icons_col .btn {
-	padding: 3px 4px;
+	padding: 3px 1px;
 }
 .edit_icon1 {
 	font-size: 20px;
 	margin-top: 7px;
 	margin-bottom:3px;
-	margin-right: 5px;
-	margin-left: 0px;
+	margin-right: 2px;
+	margin-left: 2px;
 	color: black;
 }
 .edit_icon {
 	font-size: 30px;
 	margin-top: 3px;
 	margin-bottom:7px;
-	margin-right: 5px;
-	margin-left: 0px;
+	margin-right: 2px;
+	margin-left: 2px;
 	color: black;
 }
 
