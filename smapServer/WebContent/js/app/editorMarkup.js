@@ -40,7 +40,8 @@ define([
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
-		refreshOptionLists: refreshOptionLists
+		refreshOptionLists: refreshOptionLists,
+		includeQuestion: includeQuestion
 	};
 	
 	function addOneQuestion(form, question, formIndex, qIndex, addNewButton, selProperty) {
@@ -630,7 +631,7 @@ define([
 				question = form.questions[form.qSeq[i]];
 				
 				// Ignore property type questions, questions that have been deleted and meta questions like end repeat
-				if(question.propertyType || question.soft_deleted || question.type === "end repeat") {	
+				if(!includeQuestion(question)) {
 					continue;
 				}
 				
@@ -862,6 +863,17 @@ define([
 			h[++idx] = '</option>';
 		}
 		return h.join("");
+	}
+	
+	/*
+	 * Return true for those questions that are of interest to the editor
+	 */
+	function includeQuestion(question) {
+		if(question.propertyType || question.soft_deleted || question.type === "end repeat") {	
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 });

@@ -84,7 +84,7 @@ tr.deleted td a {
 
 #formList .warning > .panel-heading, #formList .warning.option {
 	color:#a94442;
-	background-color:yellow;
+	background-color:#ff8533;
 	border-color:#ebccd1;
 }
 
@@ -496,7 +496,7 @@ textarea {
 	display: none;
 }
 
-.error .error-msg, .editor_element.option_error .error-msg {
+.warning .error-msg, .error .error-msg, .editor_element.option_error .error-msg {
 	display: inline;
 }
 

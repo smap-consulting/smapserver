@@ -1027,7 +1027,8 @@ define([
 		removeValidationError(container, itemIndex,	"item", itemType);
 		removeValidationError(container, itemIndex,	"name", itemType);
 		
-		if(!item.deleted) {
+		if(!item.deleted && 
+				((itemType === "question" && markup.includeQuestion(item)) || (itemType === "option"))) {
 			
 			// Validate the name
 			name = itemType === "question" ? item.name : item.value;
@@ -1108,7 +1109,8 @@ define([
 	 * Check for blank labels
 	 */
 	function checkBlankLabels(container, itemIndex, itemType, item) {
-		var i;
+		var i,
+			valid = true;
 		
 		for(i = 0; i < item.labels.length; i++) {
 			if(typeof item.labels[i].text === "undefined" || item.labels[i].text.trim().length === 0) {
@@ -1119,11 +1121,15 @@ define([
 						container,
 						itemIndex,
 						"item",
-						"Blank Label",
+						"Blank Label for language: " + globals.model.survey.languages[i],
 						itemType,
 						"warning");
+				valid = false;
+				break;
 			}
 		}
+		
+		return valid;
 	}
 	
 	/*
