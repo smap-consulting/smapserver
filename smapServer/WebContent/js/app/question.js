@@ -316,7 +316,7 @@ define([
 	 * Move an option
 	 * The beforeId is the id of the dom element that precedes this element
 	 */
-	function moveBeforeOption(sourceId, beforeId) {		
+	function moveBeforeOption(sourceId, beforeId, locn) {		
 		
 		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
 			beforeFormIndex = $beforeElement.data("fid"),
@@ -341,6 +341,9 @@ define([
 
 		// Get the new sequence of the option
 		seq = getSequenceOption(beforeItemIndex, survey.optionLists[beforeItemListName]);
+		if(locn === "after") {
+			seq++;
+		}
 		
 		// Get the old sequence of the option
 		sourceSeq = getSequenceOption(sourceItemIndex, survey.optionLists[sourceItemListName]);

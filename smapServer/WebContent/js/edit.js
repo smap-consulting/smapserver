@@ -944,22 +944,23 @@ function respondToEvents($context) {
 			type = "question";
 			dropType = true;
 		} else {
+			
+			$li = $targetListItem.closest('li');
+			if(locn === "after") {
+				$related = $li.prev();
+			} else {
+				$related = $li.next();
+			} 
+			if($related.length === 0) {   // Empty group, location is "after"
+				targetId = $li.parent().closest('li').attr("id");
+			} else {
+				targetId = $related.attr("id");
+			}
+			
 			if(sourceId.indexOf("option") === 0) {						// Dropped a question or option
 				type = "option";
-				targetId = $targetListItem.data('oid');
 			} else {
 				type = "question";
-				$li = $targetListItem.closest('li');
-				if(locn === "after") {
-					$related = $li.prev();
-				} else {
-					$related = $li.next();
-				} 
-				if($related.length === 0) {   // Empty group, location is "after"
-					targetId = $li.parent().closest('li').attr("id");
-				} else {
-					targetId = $related.attr("id");
-				}
 			}
 		}
 		
@@ -979,7 +980,7 @@ function respondToEvents($context) {
 			    if(type === "question") {
 			    	$context = question.moveQuestion(sourceId, targetId, locn);
 			    } else if(type === "option") {
-			    	$context = question.moveBeforeOption(sourceId, targetId);
+			    	$context = question.moveBeforeOption(sourceId, targetId, locn);
 			    }
 				respondToEvents($context);						// Add events on to the altered html
 			}

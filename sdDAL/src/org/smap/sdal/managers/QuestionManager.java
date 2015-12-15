@@ -672,9 +672,6 @@ public class QuestionManager {
 				log.info("Error: Question already modified");
 				//throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 			}
-				
-			sd.commit();
-			sd.setAutoCommit(true);		
 			
 		} catch(SQLException e) {
 			
@@ -1104,8 +1101,6 @@ public class QuestionManager {
 					String newPath = "option_" + listId + "_" + p.newVal + ":label";
 					String oldPath = null;
 					
-					sd.setAutoCommit(false);
-					
 					// Get the old path
 					pstmtGetOldPath = sd.prepareStatement(sqlGetOldPath);
 					pstmtGetOldPath.setInt(1, listId);
@@ -1138,8 +1133,6 @@ public class QuestionManager {
 					log.info("Update option label id: " + pstmtUpdateLabelId.toString());
 					pstmtUpdateLabelId.executeUpdate();
 					
-					sd.commit();
-					sd.setAutoCommit(true);
 				} else {
 					if(GeneralUtilityMethods.columnType(sd, "option", property) != null) {
 					
@@ -1164,8 +1157,6 @@ public class QuestionManager {
 			
 			
 		} catch(Exception e) {
-			try{sd.rollback();} catch(Exception ex) {};
-			try{sd.setAutoCommit(true);} catch(Exception ex) {};
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
