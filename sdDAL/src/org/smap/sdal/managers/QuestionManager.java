@@ -200,7 +200,7 @@ public class QuestionManager {
 				}
 				
 				if(q.type.startsWith("select")) {	// Get the list id
-					q.l_id = getListId(sd, sId, q.list_name);
+					q.l_id = GeneralUtilityMethods.getListId(sd, sId, q.list_name);
 				}
 				
 				if(q.type.equals("calculate")) {
@@ -863,7 +863,7 @@ public class QuestionManager {
 			for(Option o : options) {
 				
 				// Get the list id for this option
-				int listId = getListId(sd, sId, o.optionList);
+				int listId = GeneralUtilityMethods.getListId(sd, sId, o.optionList);
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 				
 				
@@ -928,7 +928,7 @@ public class QuestionManager {
 			for(Option o : options) {
 				
 				// Get the list id for this option
-				int listId = getListId(sd, sId, o.optionList);
+				int listId = GeneralUtilityMethods.getListId(sd, sId, o.optionList);
 					
 				// Delete the option labels
 				if(updateLabels) {
@@ -995,8 +995,8 @@ public class QuestionManager {
 				boolean moveWithinList = o.optionList.equals(o.sourceOptionList);
 			
 				// Get the target list id for this option
-				int listId = getListId(sd, sId, o.optionList);
-				int sourceListId = getListId(sd, sId, o.sourceOptionList);
+				int listId = GeneralUtilityMethods.getListId(sd, sId, o.optionList);
+				int sourceListId = GeneralUtilityMethods.getListId(sd, sId, o.sourceOptionList);
 
 				if(!moveWithinList) {
 					// 1. Change the list id and set the sequence to -100
@@ -1086,7 +1086,6 @@ public class QuestionManager {
 		PreparedStatement pstmtGetOldPath = null;
 		String sqlGetOldPath = "select label_id from option where l_id = ? and ovalue = ?; ";
 		
-		// If the option value changes then its label id needs to be updated as this is derived from the option value
 		PreparedStatement pstmtUpdateLabelId = null;
 		String sqlUpdateLabelId = "update translation t set text_id = ? where s_id = ? and text_id = ?; ";
 		
@@ -1095,7 +1094,7 @@ public class QuestionManager {
 			for(PropertyChange p : properties) {
 				
 				String property = p.prop;	
-				int listId = getListId(sd, sId, p.optionList);		// Get the list id for this option
+				int listId = GeneralUtilityMethods.getListId(sd, sId, p.optionList);		// Get the list id for this option
 				
 				if(property.equals("value")) {
 					String newPath = "option_" + listId + "_" + p.newVal + ":label";
@@ -1166,54 +1165,6 @@ public class QuestionManager {
 			try {if (pstmtGetOldPath != null) {pstmtGetOldPath.close();}} catch (SQLException e) {}
 		}	
 		
-	}
-	
-	/*
-	 * Get the id from the list name and survey Id
-	 * If the list does not exist then create it
-	 */
-	private int getListId(Connection sd, int sId, String name) throws SQLException {
-		int listId = 0;
-		
-		PreparedStatement pstmtGetListId = null;
-		String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
-
-		PreparedStatement pstmtListName = null;
-		String sqlListName = "insert into listname (s_id, name) values (?, ?);";
-		
-		try {
-			pstmtGetListId = sd.prepareStatement(sqlGetListId);
-			pstmtGetListId.setInt(1, sId);
-			pstmtGetListId.setString(2, name);
-			
-			log.info("SQL: Get list id: " + pstmtGetListId.toString());
-			ResultSet rs = pstmtGetListId.executeQuery();
-			if(rs.next()) {
-				listId = rs.getInt(1);
-			} else {	// Create listname
-				pstmtListName = sd.prepareStatement(sqlListName, Statement.RETURN_GENERATED_KEYS);
-				pstmtListName.setInt(1, sId);
-				pstmtListName.setString(2, name);
-				
-				log.info("SQL: Create list name: " + pstmtListName.toString());
-				
-				pstmtListName.executeUpdate();
-				
-				rs = pstmtListName.getGeneratedKeys();
-				rs.next();
-				listId = rs.getInt(1);
-				
-			}
-		} catch(SQLException e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {			
-			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
-			try {if (pstmtListName != null) {pstmtListName.close();}} catch (SQLException e) {}
-		}	
-			
-		
-		return listId;
 	}
 	
 }

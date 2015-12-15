@@ -1037,8 +1037,13 @@ public class SurveyManager {
 		PreparedStatement pstmtNewQuestionLabel = null;
 		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
+		PreparedStatement pstmtGetOptionTextId = null;
 		
 		try {
+			
+			// Get the text id for an option update
+			String sqlGetOptionTextId = "select label_id from option where l_id = ? and ovalue = ?; ";
+			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
 			
 			// Create prepared statements, one for the case where an existing value is being updated
 			String sqlLangOldVal = "update translation set value = ? " +
@@ -1062,39 +1067,62 @@ public class SurveyManager {
 			
 			for(ChangeItem ci : changeItemList) {
 			
+				boolean isQuestion = ci.property.type.equals("question");
+				String text_id = null;
+				if(!isQuestion) {
+					// Get the text id for an option
+					// Don't rely on the key as the text id may have been changed by a name change
+					int listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.property.optionList);
+					pstmtGetOptionTextId.setInt(1, listId);
+					pstmtGetOptionTextId.setString(2, ci.property.name);
+					
+					log.info("Getting text id for option: " + pstmtGetOptionTextId.toString());
+					ResultSet rs = pstmtGetOptionTextId.executeQuery();
+					if(rs.next()) {
+						text_id = rs.getString(1);
+					}
+					
+				} else {
+					text_id = ci.property.key;		// For question we can rely on the key?
+				}
+				
 				if(ci.property.oldVal != null && ci.property.newVal != null) {
 					if(ci.property.propType.equals("text")) {
-						updateLabel(connectionSD, ci, ci.property.languageName, pstmtLangOldVal, sId);
+						updateLabel(connectionSD, ci, ci.property.languageName, pstmtLangOldVal, sId, text_id);
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							updateLabel(connectionSD, ci, lang.get(i), pstmtLangOldVal, sId);
+							updateLabel(connectionSD, ci, lang.get(i), pstmtLangOldVal, sId, text_id);
 						}
 					}
 					
 				} else {
 					if(ci.property.propType.equals("text")) {
-						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel, text_id);
 
-						// Add the new text id to the question
-						pstmtNewQuestionLabel.setString(1, ci.property.key);
-						pstmtNewQuestionLabel.setInt(2, ci.property.qId);
-						log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
-						pstmtNewQuestionLabel.executeUpdate();
+						// Add the new text id to the question - Is this needed ?????
+						if(isQuestion) {
+							pstmtNewQuestionLabel.setString(1, ci.property.key);
+							pstmtNewQuestionLabel.setInt(2, ci.property.qId);
+							log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
+							pstmtNewQuestionLabel.executeUpdate();
+						}
 						
 					} else if(ci.property.propType.equals("hint")) {
-						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel);
+						addLabel(connectionSD, ci, ci.property.languageName, pstmtLangNew, sId, pstmtDeleteLabel, text_id);
 
 						// Add the new text id to the question
-						pstmtNewQuestionHint.setString(1, ci.property.key);
-						pstmtNewQuestionHint.setInt(2, ci.property.qId);
-						log.info("Update question table with hint_id: " + pstmtNewQuestionHint.toString());
-						pstmtNewQuestionHint.executeUpdate();
-						
+						if(isQuestion) {
+							pstmtNewQuestionHint.setString(1, ci.property.key);
+							pstmtNewQuestionHint.setInt(2, ci.property.qId);
+							log.info("Update question table with hint_id: " + pstmtNewQuestionHint.toString());
+							pstmtNewQuestionHint.executeUpdate();
+						}
+							
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							addLabel(connectionSD, ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel);
+							addLabel(connectionSD, ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel, text_id);
 						}
 					}
 				}
@@ -1123,20 +1151,24 @@ public class SurveyManager {
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtGetOptionTextId != null) {pstmtGetOptionTextId.close();}} catch (SQLException e) {}
 		}
 	}
 	
 	/*
 	 * Update a label
 	 */
-	public void updateLabel(Connection sd, ChangeItem ci, String language, PreparedStatement pstmtLangOldVal, int sId) throws SQLException, Exception {
+	public void updateLabel(Connection sd, ChangeItem ci, String language, 
+			PreparedStatement pstmtLangOldVal, 
+			int sId,
+			String text_id) throws SQLException, Exception {
 		
 		String transType = null;
 		
 		pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
-		pstmtLangOldVal.setString(4, ci.property.key);
+		pstmtLangOldVal.setString(4, text_id);
 		if(ci.property.propType.equals("text") || ci.property.propType.equals("hint")) {
 			transType = "none";
 		} else {
@@ -1159,7 +1191,8 @@ public class SurveyManager {
 			String language, 
 			PreparedStatement pstmtLangNew, 
 			int sId, 
-			PreparedStatement pstmtDeleteLabel) throws SQLException, Exception {
+			PreparedStatement pstmtDeleteLabel,
+			String text_id) throws SQLException, Exception {
 		
 		String transType = null;
 		
@@ -1168,7 +1201,7 @@ public class SurveyManager {
 			pstmtLangNew.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 			pstmtLangNew.setInt(2, sId);
 			pstmtLangNew.setString(3, language);
-			pstmtLangNew.setString(4, ci.property.key);
+			pstmtLangNew.setString(4, text_id);
 			if(ci.property.propType.equals("text") || ci.property.propType.equals("hint")) {
 				transType = "none";
 			} else {
@@ -1192,7 +1225,7 @@ public class SurveyManager {
 	}
 	
 	/*
-	 * Apply changes to an option
+	 * Apply changes to an option from an external file
 	 *  1) Get the maximum sequence number for each question
 	 *  2) Attempt to get the text_id for the passed in option
 	 *     3a) If the text_id can't be found create a new option
@@ -1214,6 +1247,7 @@ public class SurveyManager {
 		PreparedStatement pstmtMaxSeq = null;
 		
 		try {
+			
 			// Create prepared statements
 			String sqlOptionGet = "select o.label_id from option o, question q where q.q_id = ? and "
 					+ "q.l_id = o.l_id and o.ovalue = ?;";

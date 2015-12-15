@@ -12,6 +12,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -1783,5 +1784,53 @@ public class GeneralUtilityMethods {
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 		}	
 		
+	}
+	
+	/*
+	 * Get the id from the list name and survey Id
+	 * If the list does not exist then create it
+	 */
+	public static int getListId(Connection sd, int sId, String name) throws SQLException {
+		int listId = 0;
+		
+		PreparedStatement pstmtGetListId = null;
+		String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+
+		PreparedStatement pstmtListName = null;
+		String sqlListName = "insert into listname (s_id, name) values (?, ?);";
+		
+		try {
+			pstmtGetListId = sd.prepareStatement(sqlGetListId);
+			pstmtGetListId.setInt(1, sId);
+			pstmtGetListId.setString(2, name);
+			
+			log.info("SQL: Get list id: " + pstmtGetListId.toString());
+			ResultSet rs = pstmtGetListId.executeQuery();
+			if(rs.next()) {
+				listId = rs.getInt(1);
+			} else {	// Create listname
+				pstmtListName = sd.prepareStatement(sqlListName, Statement.RETURN_GENERATED_KEYS);
+				pstmtListName.setInt(1, sId);
+				pstmtListName.setString(2, name);
+				
+				log.info("SQL: Create list name: " + pstmtListName.toString());
+				
+				pstmtListName.executeUpdate();
+				
+				rs = pstmtListName.getGeneratedKeys();
+				rs.next();
+				listId = rs.getInt(1);
+				
+			}
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {			
+			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
+			try {if (pstmtListName != null) {pstmtListName.close();}} catch (SQLException e) {}
+		}	
+			
+		
+		return listId;
 	}
 }

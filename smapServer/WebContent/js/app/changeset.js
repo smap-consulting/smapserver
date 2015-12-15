@@ -241,7 +241,7 @@ define([
 				if(optionListOrig) {
 					item_orig = optionListOrig.options[change.property.itemIndex];	
 				}
-				change.property.name = change.property.optionList;
+				change.property.name = item.value;
 				if(change.changeType === "property") {
 					setOptionTypeSpecificChanges(change.property.prop, change, survey);
 				}
@@ -343,8 +343,8 @@ define([
 	}
 	
 	/*
-	 * If this is the second time an element has been modified then remove the original modification
-	 * If this is a property change on a new element then update the element here
+	 * Remove duplicate updates.  This simplifies the analysis of changes to a survey
+	 * For example if the user sets the label to "x", then changes it to "y" the change recorded should only be "y"
 	 */
 	function removeDuplicateChange(changes, change) {
 		
@@ -353,7 +353,8 @@ define([
 			element,
 			newItem,
 			newElement,
-			newElementType;
+			newElementType,
+			elementType;
 		
 		newItem = change.items[0];
 		if(newItem.question) {
@@ -372,84 +373,117 @@ define([
 			item = changes[j].items[0];
 			if(item.question) {
 				element = item.question;
+				elementType = "question";
 			} else if(item.option) {
 				element = item.option;
+				elementType = "option";
 			} else if(item.property) {
 				element = item.property;
+				elementType = element.type;
 			}
 			
+			/*
+			 * Only remove duplicates if
+			 * 		- The new and existing element types are the same, ie both question or both option
+			 * 		- They refer to the same item
+			 */
+			if(elementType === newElementType && newElement.itemIndex === element.itemIndex) {
+				if((newElementType === "question" && newElement.formIndex === element.formIndex) ||
+					(newElementType === "option" && newElement.optionList === element.optionList) ) {
+				
+					console.log("Update to an item that is already in the update queue");
+	
 			
-			if(newItem.action === "update" && item.property) {
-
-				if(item.language === newItem.language 
-						&& item.type === newItem.type) {		// Question or option
-					if(
-							(newElementType === "question" && 
-									newElement.itemIndex === element.itemIndex &&
-									newElement.formIndex === element.formIndex) ||
-							(newElementType === "option" && 
-									newElement.itemIndex === element.itemIndex &&
-									newElement.optionList === element.optionList) ) {
+					/*
+					 * 1. If this is a property update and there is already another update to 
+					 * 		- the same property
+					 *    then remove the first update
+					 */
+					if(newItem.action === "update" 	&& newItem.changeType === "property"
+							&& item.changeType === "property") {
 						
-						// This property change already exists - remove the old one
-						changes.splice(j,1);	// Remove this item and apply the new one
-						return true;							
+						if(newElement.prop === element.prop) {		
+							changes.splice(j,1);	// Remove the old item and apply the new one
+							return true;							
+						}
+					
+					/*
+					 * 2. If this is a label update and there is already another update to 
+					 * 		- the same language
+					 * 		- the same label type (in the propType attribute)
+					 *    then remove the first update
+					 */	
+					} else if(newItem.action === "update" 	&& newItem.changeType === "label"
+							&& item.changeType === "label") {
 						
-					}
-				}
-			} else if(newItem.action === "update" && item.question) {
-				if(newElementType === "question" && 
-						newElement.itemIndex === element.itemIndex &&
-						newElement.formIndex === element.formIndex) {
-					
-					
-					if(change.changeType === "label") {
-						if(!item.question.labels) {
-							item.question.labels = [];
+						if(newElement.languageName === element.languageName &&
+								newElement.propType === element.propType) {		
+							changes.splice(j,1);	// Remove the old item and apply the new one
+							return true;							
+						}					
+						
+					/*
+					 * 3. If this is a label update and there is already another update to 
+					 * 		- change the name
+					 *    then set the path to the remove the first update
+					 */	
+					} else if(newItem.action === "update" 	&& newItem.changeType === "label"
+							&& item.changeType === "label") {
+						
+						if(newElement.languageName === element.languageName &&
+								newElement.propType === element.propType) {		
+							changes.splice(j,1);	// Remove the old item and apply the new one
+							return true;							
+						}			
+							
+					/*
+					 * 3. If this is an update to a property or label and 
+					 *      - the existing item is newly added then
+					 * 		- merge the update into the added item
+					 */						
+					} else if(newItem.action === "update" && item.action === "add"
+							&& (newItem.changeType === "label" || newItem.changeType === "property")) {
+								
+						if(newItem.changeType === "label") {
+							
+							if(!element.labels) {
+								element.labels = [];
+							}
+							if(!element.labels[newElement.language]) {
+								element.labels[newElement.language] = {};
+							}
+							element.labels[newElement.language][newElement.propType] = newElement.newVal;
+						
+						} else {
+							
+							element[newElement.prop] = newElement.newVal;
+							
 						}
-						if(!item.question.labels[newElement.language]) {
-							item.question.labels[newElement.language] = {};
+						
+						if(elementType === "question") {
+							if(newElement.prop === "name") {
+								element["path"] = newElement.path;
+							}
+						} else {
+							if(newElement.prop === "value") {
+								element["path"] = newElement.path;
+							}
 						}
-						item.question.labels[newElement.language][newElement.propType] = newElement.newVal;
-					
-					} else {
-						item.question[newElement.prop] = newElement.newVal;
-					}
-					if(newElement.prop === "name") {
-						item.question["path"] = newElement.path;
-					}
-					return false;
-					
-				}
-			} else if(newItem.action === "update" && item.option) {
-				if(newElementType === "option" && 
-						newElement.itemIndex === element.itemIndex &&
-						newElement.optionList === element.optionList) {
-					
-					item.option[newElement.prop] = newElement.newVal;
-					if(newElement.prop === "value") {
-						item.option["path"] = newElement.path;
-					}
-					return false;
-					
-				}
-			} else if(newItem.action === "delete") {
-				/*
-				 * Remove any modifications to this deleted element
-				 */
-				if(newElementType === "question"  &&
-						newElement.itemIndex === element.itemIndex &&
-						newElement.formIndex === element.formIndex) {
-					changes.splice(j,1);	// Remove this item
-					return false;
-				} else if(newElementType === "option" &&
-							newElement.itemIndex === element.itemIndex &&
-							newElement.optionList === element.optionList) {
+						
+						return false;		// Don't apply the change it has been merged
+							
+					} else if(newItem.action === "delete") {
+						/*
+						 * Remove any modifications to this deleted element
+						 */
 						changes.splice(j,1);	// Remove this item
 						return false;
+					
+					}
 				}
 			}
 		}
+		
 		return true;
 	}
 	

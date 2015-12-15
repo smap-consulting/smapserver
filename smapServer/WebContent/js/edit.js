@@ -1268,7 +1268,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 				qId: undefined,				// qId must be set to apply the change
 				qType: questionType,		// Question type
 				type: type,					// question or option
-				name: undefined,			// name of the question or the option list
+				name: undefined,			// name of the question or the option value
 				propType: element,			// text or hint or image or video or audio or video
 				prop: prop,					// Property to be changed, for example: label or appearance
 				languageName: undefined,	// Language Name
