@@ -1288,7 +1288,6 @@ public class SubRelationalDB extends Subscriber {
 						ResultSet rsDetails = pstmtGetQuestionDetails.executeQuery();
 						if(rsDetails.next()) {
 							question_column_name = rsDetails.getString(1);
-							columns.add(column);
 							l_id = rsDetails.getInt(2);
 							hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rsDetails.getString(3));
 							type = rsDetails.getString(4);
@@ -1297,6 +1296,8 @@ public class SubRelationalDB extends Subscriber {
 						}
 						
 						column = question_column_name;		// Usually this is the case unless the question is a select multiple
+						columns.add(column);
+						
 						if(type.equals("string")) {
 							type = "text";
 						} else if(type.equals("dateTime")) {
