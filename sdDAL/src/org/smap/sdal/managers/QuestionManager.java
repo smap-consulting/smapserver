@@ -592,7 +592,7 @@ public class QuestionManager {
 		PreparedStatement pstmtMoveWithin = null;
 		String sqlMoveWithin = "update question set "
 						+ "seq = ?, "
-						+ "path = ? "
+						+ "path= ? "
 					+ "where f_id = ? "
 					+ "and qname = ? "
 					+ "and seq = ?;";
@@ -603,66 +603,81 @@ public class QuestionManager {
 		PreparedStatement pstmtMovedForward = null;
 		String sqlMovedForward = "update question set seq = seq - 1 where f_id = ? and seq > ? and seq <= ?;";
 		
+		PreparedStatement pstmtMovedToAnotherForm = null;
+		String sqlMovedToAnotherForm = "update question set seq = -100, f_id = ? where f_id = ? and qname = ? and f_id in "
+				+ "(select f_id from form where s_id = ?);";
 		
-		try {
-			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
+		try {	
+			
+			// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time as the editor expects
+			GeneralUtilityMethods.cleanQuestionSequences(sd, q.fId);
 			
 			boolean moveWithinList = q.fId == q.sourceFormId;
-					
-			if(moveWithinList) {
-				// Update sequence numbers of other options
-				if(q.seq > q.sourceSeq) { // Moved forward in list
-					
-					pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
-					pstmtMovedForward.setInt(1,q.fId);
-					pstmtMovedForward.setInt(2, q.sourceSeq);
-					pstmtMovedForward.setInt(3, q.seq);
-					
-					log.info("Moving forward: " + pstmtMovedForward.toString());
-					pstmtMovedForward.executeUpdate();
-				} else {	// Moved backward in list
-					
-					pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
-					pstmtMovedBack.setInt(1, q.fId);
-					pstmtMovedBack.setInt(2, q.seq);
-					pstmtMovedBack.setInt(3, q.sourceSeq);
-					
-					log.info("Moving back: " + pstmtMovedBack.toString());
-					pstmtMovedBack.executeUpdate();						
-				}
+			
+			if(!moveWithinList) {
+				// 1. Change the form id and set the sequence to -100
 				
-				// Move the question
-				pstmtMoveWithin.setInt(1, q.seq );
-				pstmtMoveWithin.setString(2, path);
-				pstmtMoveWithin.setInt(3, q.fId );
-				pstmtMoveWithin.setString(4, q.name);
-				pstmtMoveWithin.setInt(5, q.sourceSeq );
+				q.sourceSeq = -100;
 				
-				log.info("Move question within same list: " + pstmtMoveWithin.toString());
-				int count = pstmtMoveWithin.executeUpdate();
-				if(count == 0) {
-					log.info("Error: Question already modified");
-					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-				}
+				pstmtMovedToAnotherForm = sd.prepareStatement(sqlMovedToAnotherForm);
+				pstmtMovedToAnotherForm.setInt(1, q.fId);
+				pstmtMovedToAnotherForm.setInt(2, q.sourceFormId);
+				pstmtMovedToAnotherForm.setString(3, q.name);
+				pstmtMovedToAnotherForm.setInt(4, sId);
 				
-
-			} else {
-				// Insert into the target form
-				ArrayList<Question> targetQuestions = new ArrayList<Question> ();
-				targetQuestions.add(q);
-				save(sd, sId, targetQuestions);
+				log.info("Move to another form: " + pstmtMovedToAnotherForm.toString());
+				pstmtMovedToAnotherForm.executeUpdate();
 				
-				// Remove from the source form
-				ArrayList<Question> sourceQuestions = new ArrayList<Question> ();
-				q.fId = q.sourceFormId;
-				sourceQuestions.add(q);
-				delete(sd, sId, sourceQuestions, false);
+				// 2. Reorder the questions in the old form
+				GeneralUtilityMethods.cleanQuestionSequences(sd, q.sourceFormId);
+			}
+			
+			/*
+			 * Now move the question within its new form
+			 */
+			
+			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
+			
+			// Update sequence numbers of other question
+			if(q.seq > q.sourceSeq) { // Moved forward in list
+				
+				pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
+				pstmtMovedForward.setInt(1,q.fId);
+				pstmtMovedForward.setInt(2, q.sourceSeq);
+				pstmtMovedForward.setInt(3, q.seq);
+				
+				log.info("Moving forward: " + pstmtMovedForward.toString());
+				pstmtMovedForward.executeUpdate();
+			} else {	// Moved backward in list
+				
+				pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
+				pstmtMovedBack.setInt(1, q.fId);
+				pstmtMovedBack.setInt(2, q.seq);
+				pstmtMovedBack.setInt(3, q.sourceSeq);
+				
+				log.info("Moving back: " + pstmtMovedBack.toString());
+				pstmtMovedBack.executeUpdate();						
+			}
+			
+			// Move the question
+			pstmtMoveWithin.setInt(1, q.seq );
+			pstmtMoveWithin.setString(2, path );
+			pstmtMoveWithin.setInt(3, q.fId );
+			pstmtMoveWithin.setString(4, q.name);
+			pstmtMoveWithin.setInt(5, q.sourceSeq );
+			
+			log.info("Move question within same list: " + pstmtMoveWithin.toString());
+			int count = pstmtMoveWithin.executeUpdate();
+			if(count == 0) {
+				log.info("Error: Question already modified");
+				//throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 			}
 				
-		
-			
+			sd.commit();
+			sd.setAutoCommit(true);		
 			
 		} catch(SQLException e) {
+			
 			String msg = e.getMessage();
 			if(msg == null || !msg.startsWith("Already modified")) {
 				log.log(Level.SEVERE,"Error", e);
@@ -672,6 +687,7 @@ public class QuestionManager {
 			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedToAnotherForm != null) {pstmtMovedToAnotherForm.close();}} catch (SQLException e) {}
 		}	
 		
 	}
@@ -971,6 +987,9 @@ public class QuestionManager {
 		PreparedStatement pstmtMovedForward = null;
 		String sqlMovedForward = "update option set seq = seq - 1 where l_id = ? and seq > ? and seq <= ?;";
 		
+		PreparedStatement pstmtMovedToAnotherList = null;
+		String sqlMovedToAnotherList = "update option set seq = -100, l_id = ? where l_id = ? and ovalue = ?;";
+		
 		try {
 			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
 			
@@ -980,58 +999,60 @@ public class QuestionManager {
 			
 				// Get the target list id for this option
 				int listId = getListId(sd, sId, o.optionList);
+				int sourceListId = getListId(sd, sId, o.sourceOptionList);
 
+				if(!moveWithinList) {
+					// 1. Change the list id and set the sequence to -100
 					
-				if(moveWithinList) {
-					// First ensure the sequences start from 0 and increment by 1 each time which is how the editor expected them to be
-					GeneralUtilityMethods.cleanOptionSequences(sd, listId);
+					o.sourceSeq = -100;
 					
-					// Update sequence numbers of other options
-					if(o.seq > o.sourceSeq) { // Moved forward in list
-						
-						pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
-						pstmtMovedForward.setInt(1,listId);
-						pstmtMovedForward.setInt(2, o.sourceSeq);
-						pstmtMovedForward.setInt(3, o.seq);
-						
-						log.info("Moving forward: " + pstmtMovedForward.toString());
-						pstmtMovedForward.executeUpdate();
-					} else {	// Moved backward in list
-						
-						pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
-						pstmtMovedBack.setInt(1,listId);
-						pstmtMovedBack.setInt(2, o.seq);
-						pstmtMovedBack.setInt(3, o.sourceSeq);
-						
-						log.info("Moving back: " + pstmtMovedBack.toString());
-						pstmtMovedBack.executeUpdate();
-						
-					}
+					pstmtMovedToAnotherList = sd.prepareStatement(sqlMovedToAnotherList);
+					pstmtMovedToAnotherList.setInt(1, listId);
+					pstmtMovedToAnotherList.setInt(2, sourceListId);
+					pstmtMovedToAnotherList.setString(3, o.value);
 					
-					// Move the option
-					pstmtMoveWithin.setInt(1, o.seq );
-					pstmtMoveWithin.setInt(2, listId );
-					pstmtMoveWithin.setString(3, o.value);
+					log.info("Move to another list: " + pstmtMovedToAnotherList.toString());
+					pstmtMovedToAnotherList.executeUpdate();
 					
-					log.info("Move choice within same list: " + pstmtMoveWithin.toString());
-					int count = pstmtMoveWithin.executeUpdate();
-					if(count == 0) {
-						log.info("Error: Choice already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
-					}
+					// 2. Reorder the questions in the old form
+					GeneralUtilityMethods.cleanOptionSequences(sd, sourceListId);
+				}
 					
-
-				} else {
-					// Insert into the target list
-					ArrayList<Option> targetOptions = new ArrayList<Option> ();
-					targetOptions.add(o);
-					saveOptions(sd, sId, targetOptions, false);
+				// First ensure the sequences start from 0 and increment by 1 each time which is how the editor expected them to be
+				GeneralUtilityMethods.cleanOptionSequences(sd, listId);
+				
+				// Update sequence numbers of other options
+				if(o.seq > o.sourceSeq) { // Moved forward in list
 					
-					// Remove from the source lists
-					ArrayList<Option> sourceOptions = new ArrayList<Option> ();
-					o.optionList = o.sourceOptionList;
-					sourceOptions.add(o);
-					deleteOptions(sd, sId, sourceOptions, false);
+					pstmtMovedForward = sd.prepareStatement(sqlMovedForward);
+					pstmtMovedForward.setInt(1,listId);
+					pstmtMovedForward.setInt(2, o.sourceSeq);
+					pstmtMovedForward.setInt(3, o.seq);
+					
+					log.info("Moving forward: " + pstmtMovedForward.toString());
+					pstmtMovedForward.executeUpdate();
+				} else {	// Moved backward in list
+					
+					pstmtMovedBack = sd.prepareStatement(sqlMovedBack);
+					pstmtMovedBack.setInt(1,listId);
+					pstmtMovedBack.setInt(2, o.seq);
+					pstmtMovedBack.setInt(3, o.sourceSeq);
+					
+					log.info("Moving back: " + pstmtMovedBack.toString());
+					pstmtMovedBack.executeUpdate();
+					
+				}
+				
+				// Move the option
+				pstmtMoveWithin.setInt(1, o.seq );
+				pstmtMoveWithin.setInt(2, listId );
+				pstmtMoveWithin.setString(3, o.value);
+				
+				log.info("Move choice within same list: " + pstmtMoveWithin.toString());
+				int count = pstmtMoveWithin.executeUpdate();
+				if(count == 0) {
+					log.info("Error: Choice already modified");
+					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 				}
 					
 			}
@@ -1047,6 +1068,7 @@ public class QuestionManager {
 			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
+			try {if (pstmtMovedToAnotherList != null) {pstmtMovedToAnotherList.close();}} catch (SQLException e) {}
 		}	
 		
 	}
