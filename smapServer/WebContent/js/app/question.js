@@ -375,9 +375,8 @@ define([
 	 */
 	function deleteQuestion(item) {
 		var $deletedElement = $('#' + item),
-			$deletedQuestion = $deletedElement.find('.question'),
-			formIndex = $deletedQuestion.data("fid"),
-			itemIndex = $deletedQuestion.data("id"),
+			formIndex = $deletedElement.data("fid"),
+			itemIndex = $deletedElement.data("id"),
 			change,
 			survey = globals.model.survey,
 			seq;
@@ -404,10 +403,9 @@ define([
 	 */
 	function deleteOption(item) {
 		var $deletedElement = $('#' + item),
-			$deletedOption = $deletedElement.find('.option'),
-			formIndex = $deletedOption.data("fid"),
-			itemIndex = $deletedOption.data("id"),
-			optionList = $deletedOption.data("list_name"),
+			formIndex = $deletedElement.data("fid"),
+			itemIndex = $deletedElement.data("id"),
+			optionList = $deletedElement.data("list_name"),
 			change,
 			survey = globals.model.survey,
 			seq;

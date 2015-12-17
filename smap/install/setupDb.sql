@@ -384,7 +384,7 @@ CREATE TABLE question (
 	published boolean default false		-- Set true when a survey has been published for data collection
 										--  Once a survey has been published there are constraints on the
 										--  changes that can be applied to question definitions
-	soft_deleted boolean default false;	-- Set true if a question has been deleted and has also been published
+	soft_deleted boolean default false	-- Set true if a question has been deleted and has also been published
 										-- If the question hasn't been published then it can be removed from the survey
 	);
 ALTER TABLE question OWNER TO ws;
@@ -404,6 +404,7 @@ CREATE TABLE option (
 	column_name text,
 	selected BOOLEAN,
 	cascade_filters text,
+	published boolean default false,
 	externalfile boolean default false
 	);
 ALTER TABLE option OWNER TO ws;

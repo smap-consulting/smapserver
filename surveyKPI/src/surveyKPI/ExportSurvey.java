@@ -282,13 +282,19 @@ public class ExportSurvey extends Application {
 			try {
 				
 				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id "
-						+ "and q.q_id = ? and o.externalfile = ? order by o.seq;";
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq "
+						+ "from option o, question q "
+						+ "where o.l_id = q.l_id "
+						+ "and q.q_id = ? "
+						+ "and o.externalfile = ? "
+						+ "and o.published = 'true' "
+						+ "order by o.seq;";
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
 				// Get the columns
 				String sqlQuestions = "select qname, qtype, column_name, q_id, readonly from question where f_id = ? "
 						+ "and source is not null "
+						+ "and published = 'true' "
 						+ "order by seq";
 				pstmtQuestions = connectionSD.prepareStatement(sqlQuestions);
 				
@@ -431,7 +437,6 @@ public class ExportSurvey extends Application {
 					c.humanName = "prikey";
 					c.qType = "";
 					f.columnList.add(c);
-					System.out.println(" xxxx   Add column " + c.name);
 					
 					
 					// For the top level form add default columns that are not in the question list
@@ -442,7 +447,6 @@ public class ExportSurvey extends Application {
 						c.humanName = "User";
 						c.qType = "";
 						f.columnList.add(c);
-						System.out.println(" xxxx   Add column " + c.name);
 						
 						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_version") != null) {
 							c = new Column();
@@ -450,7 +454,6 @@ public class ExportSurvey extends Application {
 							c.humanName = "Version";
 							c.qType = "";
 							f.columnList.add(c);
-							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_complete") != null) {
@@ -459,7 +462,6 @@ public class ExportSurvey extends Application {
 							c.humanName = "Complete";
 							c.qType = "";
 							f.columnList.add(c);
-							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 					}
@@ -508,7 +510,6 @@ public class ExportSurvey extends Application {
 								c.qType = qType;
 								c.ro = ro;
 								f.columnList.add(c);
-								System.out.println(" xxxx   Add column " + c.name);
 							}
 						} else {
 							c = new Column();
@@ -519,7 +520,6 @@ public class ExportSurvey extends Application {
 							c.qType = qType;
 							c.ro = ro;
 							f.columnList.add(c);
-							System.out.println(" xxxx   Add column " + c.name);
 						}
 						
 					}

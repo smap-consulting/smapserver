@@ -223,11 +223,20 @@ public class Items extends Application {
 				}
 				
 				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q where o.l_id = q.l_id and q.q_id = ? and o.externalfile = ? order by o.seq;";
+				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q "
+						+ "where o.l_id = q.l_id "
+						+ "and q.q_id = ? "
+						+ "and o.externalfile = ? "
+						+ "and o.published = 'true' "
+						+ "order by o.seq;";
 				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
 				
 				// Get the columns
-				String sqlCols = "select qname, qtype, column_name, q_id from question where f_id = ? and source is not null order by seq";
+				String sqlCols = "select qname, qtype, column_name, q_id from question "
+						+ "where f_id = ? "
+						+ "and source is not null "
+						+ "and published = 'true' "
+						+ "order by seq";
 				pstmtQuestions = connectionSD.prepareStatement(sqlCols);
 				pstmtQuestions.setInt(1, fId);
 				

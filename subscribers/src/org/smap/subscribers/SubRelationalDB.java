@@ -1493,18 +1493,29 @@ public class SubRelationalDB extends Subscriber {
 		return qd;
 	}
 	/*
-	 * Mark all the questions in the survey as published
+	 * Mark all the questions and options in the survey as published
 	 */
 	private void markPublished(Connection sd, int sId) throws SQLException {
 		
 		
 		String sqlSetPublished = "update question set published = 'true' where f_id in (select f_id from form where s_id = ?);";
-		
+		String sqlSetOptionsPublished = "update option set published = 'true' "
+				+ "where l_id in (select l_id from question q, form f where f.s_id = ? and q.f_id = f.f_id);";
+
 		PreparedStatement pstmtSetPublished = null;
 		try {
 		
 			pstmtSetPublished = sd.prepareStatement(sqlSetPublished);
 			pstmtSetPublished.setInt(1, sId);
+			
+			System.out.println("Mark published: " + pstmtSetPublished.toString());
+			pstmtSetPublished.executeUpdate();
+			
+			pstmtSetPublished.close();
+			pstmtSetPublished = sd.prepareStatement(sqlSetOptionsPublished);
+			pstmtSetPublished.setInt(1, sId);
+			
+			System.out.println("Mark published: " + pstmtSetPublished.toString());
 			pstmtSetPublished.executeUpdate();
 			
 		} catch (SQLException e) {
