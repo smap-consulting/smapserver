@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ $# -lt 1 ]; then
-	echo "usage $0 file_name"
+if [ $# -lt 2 ]; then
+	echo "usage $0 file_name language"
 	exit
 fi
 

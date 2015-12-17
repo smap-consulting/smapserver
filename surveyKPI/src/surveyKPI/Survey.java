@@ -38,6 +38,7 @@ import model.Settings;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
@@ -45,10 +46,13 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ServerSideCalculate;
+import org.smap.server.utilities.GetXForm;
 
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
@@ -178,10 +182,41 @@ public class Survey extends Application {
 				} else if(type.equals("xls")) {
 					sourceExt = ".xls";
 				} else if(type.equals("codebook")) {
-					sourceExt = ".xml";		// input name is xml for a pdf file
+					sourceExt = ".gen_xml";		// input name is xml for a pdf file
 				}
 				sourceName = fileBasePath + sourceExt;
 
+				/*
+				 * The XML file for a code book needs to be generated so that it contains the latest changes
+				 */
+				if(type.equals("codebook")) {
+					
+					try {
+						SurveyTemplate template = new SurveyTemplate();
+						template.readDatabase(sId);
+						GetXForm xForm = new GetXForm();
+						
+						String xmlForm = xForm.get(template);
+						
+						File f = new File(sourceName);
+						
+						if(f.exists()) {
+							f.delete();
+						} 
+						f.createNewFile();
+						FileWriter fw = new FileWriter(f.getAbsoluteFile());
+						BufferedWriter bw = new BufferedWriter(fw);
+						bw.write(xmlForm);
+						bw.close();
+						
+						System.out.println("Written xml file to: " + f.getAbsoluteFile());
+					} catch (Exception e) {
+						log.log(Level.SEVERE, "", e);
+					}
+					
+
+				}
+						 
 				// Check for the existence of the source file, if it isn't at the standard location try obsolete locations
 				File sourceFile = new File(sourceName);
 				if(!sourceFile.exists()) {
