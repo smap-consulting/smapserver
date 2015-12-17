@@ -209,7 +209,7 @@ public class Survey extends Application {
 						bw.write(xmlForm);
 						bw.close();
 						
-						System.out.println("Written xml file to: " + f.getAbsoluteFile());
+						log.info("Written xml file to: " + f.getAbsoluteFile());
 					} catch (Exception e) {
 						log.log(Level.SEVERE, "", e);
 					}

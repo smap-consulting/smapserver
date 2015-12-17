@@ -245,6 +245,7 @@ public class XLSFormManager {
 		// Create Columns
 		HashMap<String, Integer> filterIndexes = new HashMap<String, Integer> ();
 		HashMap<String, Integer> namedColumnIndexes = new HashMap<String, Integer> ();
+		HashMap<String, String> addedOptionLists = new HashMap<String, String> ();
 		
 		ArrayList<Column> colsSurvey = getColumnsSurvey(survey, namedColumnIndexes);
 		ArrayList<Column> colsChoices = getColumnsChoices(survey);
@@ -260,6 +261,7 @@ public class XLSFormManager {
 		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, 
 				colsChoices, 
 				filterIndexes,
+				addedOptionLists,
 				namedColumnIndexes);
 		
 		// Write out survey settings
@@ -302,6 +304,7 @@ public class XLSFormManager {
 			ArrayList<Column> colsSurvey,
 			ArrayList<Column> colsChoices,
 			HashMap<String, Integer> filterIndexes,
+			HashMap<String, String> addedOptionLists,
 			HashMap<String, Integer> namedColumnIndexes) throws IOException {
 		
 		ArrayList<Question> questions = form.questions;
@@ -356,16 +359,20 @@ public class XLSFormManager {
 									colsSurvey, 
 									colsChoices,
 									filterIndexes,
+									addedOptionLists,
 									namedColumnIndexes);
 							
 							addEndGroup(surveySheet, "end repeat", q.name, styles.get("begin repeat"));
 						} 
 						
-						// If this question has a list of choices then add these to the choices sheet
+						// If this question has a list of choices then add these to the choices sheet but only if they have not already been added
 						if(q.list_name != null) {
-							OptionList ol = survey.optionLists.get(q.list_name);
-							if(ol != null) {		// option list is populated for questions that are not select TODO Fix
-								addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
+							if(addedOptionLists.get(q.list_name) == null) {
+								OptionList ol = survey.optionLists.get(q.list_name);
+								if(ol != null) {		// option list is populated for questions that are not select TODO Fix
+									addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
+								}
+								addedOptionLists.put(q.list_name, q.list_name);	// Remember lists that have been added
 							}
 						}
 					}
@@ -385,8 +392,6 @@ public class XLSFormManager {
 			HashMap<String, Integer> filterIndexes,
 			Map<String, CellStyle> styles,
 			String listName) {
-		
-		// TODO check to see if we have already added this list
 		
 		ArrayList<Option> options = ol.options;
 		
