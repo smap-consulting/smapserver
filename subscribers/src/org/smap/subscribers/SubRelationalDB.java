@@ -1376,7 +1376,9 @@ public class SubRelationalDB extends Subscriber {
 					}
 					
 					// Record the application of the change and the status
-					markChangeApplied(connectionSD, cId, status.tableAltered, status.msg);
+					String msg = status != null ? status.msg : "";
+					boolean tableAltered = status != null ? status.tableAltered : false;
+					markChangeApplied(connectionSD, cId, tableAltered, msg);
 
 						
 	
