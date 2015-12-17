@@ -26,4 +26,5 @@ public class ChangeItem {
 	public boolean success;			// Set true if the change item has been successfully applied to the results database
 	public String msg;				// Error messages
 	public String action;			// Add / delete / change
+	public String type;				// question or option
 }

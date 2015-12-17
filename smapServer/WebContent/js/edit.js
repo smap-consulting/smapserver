@@ -995,16 +995,17 @@ function respondToEvents($context) {
  */
 
 function mediaPropSelected($this) {
-	var $parent = $this.closest('td'),
+	
+	var $li = $this.closest('li'),
 		$immedParent = $this.closest('div');
 	
 	// Set up media view
 	gElement = $this.data("element");
-	gSelFormId = $parent.data("fid");
-	gSelId = $parent.data("id");
-	gOptionList = $parent.data("list_name"); 
-	gQname = $parent.data("qname"); 
-	$gCurrentRow = $parent;
+	gSelFormId = $li.data("fid");
+	gSelId = $li.data("id");
+	gOptionList = $li.data("list_name"); 
+	gQname = $li.data("qname"); 
+	$gCurrentRow = $li;
 	
 	if($('#orgLevelTab').hasClass("active")) {
 		$('#orgPanel').show();

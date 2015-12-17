@@ -380,4 +380,17 @@ create unique index qname_index ON question(f_id,qname) where soft_deleted = 'fa
 --------------
 alter table option add column column_name text;
 alter table question add column column_name_applied boolean default false;	-- Temporary column to ensure column name patches are only applied once
- 
+--------------- 
+CREATE SEQUENCE map_seq START 1;
+ALTER SEQUENCE map_seq OWNER TO ws;
+
+create TABLE map (
+	id INTEGER DEFAULT NEXTVAL('map_seq') CONSTRAINT pk_maps PRIMARY KEY,
+	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	map_type text,			-- mapbox || geojson
+	description text,
+	config text,
+	version integer
+	);
+ALTER TABLE map OWNER TO ws;

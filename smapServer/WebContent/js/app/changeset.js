@@ -837,13 +837,13 @@ define([
 			
 			if(newMarkup) {
 				if(change.property.type === "question") {
-					$changedRow = $('#formList').find('td.question').filter(function(index){
+					$changedRow = $('#formList').find('li.question').filter(function(index){
 						var $this = $(this);
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 				} else {
 					// changed row for choices
-					$changedRow = $('#formList').find('td.option').filter(function(index){
+					$changedRow = $('#formList').find('li.option').filter(function(index){
 						var $this = $(this);
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
@@ -921,11 +921,10 @@ define([
 			} else {
 				
 				// Get the changed question row
-				$changedRow = $('#formList').find('td.question').filter(function(index){
+				$changedRow = $('#formList').find('li.question').filter(function(index){
 					var $this = $(this);
 					return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 				});
-				$changedRow = $changedRow.closest('li');
 				
 				newMarkup = markup.addOneQuestion(
 						survey.forms[change.property.formIndex],
@@ -942,17 +941,16 @@ define([
 				
 				// Since we replaced the row we had better get the replaced row so that actions can be reapplied
 				if(change.property.type === "option") {
-					$changedRow = $('#formList').find('td.option').filter(function(index){
+					$changedRow = $('#formList').find('li.option').filter(function(index){
 						var $this = $(this);
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 				} else {
-					$changedRow = $('#formList').find('td.question').filter(function(index){
+					$changedRow = $('#formList').find('li.question').filter(function(index){
 						var $this = $(this);
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 				}
-				$changedRow = $changedRow.closest('li');
 			}
 	
 		}

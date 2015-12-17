@@ -1215,8 +1215,26 @@ public class SubRelationalDB extends Subscriber {
 	
 	
 	/*
-	 * Apply any table changes for this version
+	 * Apply changes to results table due to changes in the form
+	 * Results tables will have to be updated if:
+	 *   1.  A new question is added, then either
+	 *       - a) Add the new question column to the table that the question is in (that is one form maps to 1 table)
+	 *       - b) For a "select" question, add all of the choice columns to the form's table
+	 *   2. A new choice is added to a choice list for a select multiple question
+	 *   	- Add the new column to all the questions that reference the choice list
+	 *       
 	 */
+	private class QuestionDetails {
+		String columnName;
+		boolean hasExternalOptions;
+		String type;
+		String table;
+	}
+	private class TableUpdateStatus {
+		String msg;
+		boolean tableAltered;
+	}
+	
 	private void applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws Exception {
 		
 		String sqlGet = "select c_id, changes "
@@ -1224,21 +1242,20 @@ public class SubRelationalDB extends Subscriber {
 				+ "where apply_results = 'true' "
 				+ "and s_id = ? "
 				+ "order by c_id asc";
-			
-		String sqlGetTable = "select f.table_name from form f, question q " +
-				" where q.f_id = f.f_id " +
-				" and q.q_id = ?";
 		
-		String sqlGetQuestionDetails = "select column_name, l_id, appearance, qtype from question where q_id = ?;";
+		String sqlGetListQuestions = "select q.q_id from question q, listname l " +
+				" where q.l_id = l.l_id " +
+				" and l.s_id = ? " +
+				" and l.l_id = ? " +
+				" and q.qtype = 'select'";
 		
 		String sqlGetOptions = "select column_name, externalfile from option where l_id = ? order by seq asc;";
+		String sqlGetAnOption = "select column_name, externalfile from option where l_id = ? and ovalue = ?;";
 		
 		PreparedStatement pstmtGet = null;
-		PreparedStatement pstmtGetTable = null;
-		PreparedStatement pstmtAlterTable = null;
-		PreparedStatement pstmtApplyGeometryChange = null;
-		PreparedStatement pstmtGetQuestionDetails = null;
+		PreparedStatement pstmtGetListQuestions = null;
 		PreparedStatement pstmtGetOptions = null;
+		PreparedStatement pstmtGetAnOption = null;
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
@@ -1246,9 +1263,9 @@ public class SubRelationalDB extends Subscriber {
 		try {
 			
 			pstmtGet = connectionSD.prepareStatement(sqlGet);
-			pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
-			pstmtGetQuestionDetails = connectionSD.prepareStatement(sqlGetQuestionDetails);
+			pstmtGetListQuestions = connectionSD.prepareStatement(sqlGetListQuestions);
 			pstmtGetOptions = connectionSD.prepareStatement(sqlGetOptions);
+			pstmtGetAnOption = connectionSD.prepareStatement(sqlGetAnOption);
 			
 			pstmtGet.setInt(1, sId);
 			System.out.println("SQL: " + pstmtGet.toString());
@@ -1261,142 +1278,113 @@ public class SubRelationalDB extends Subscriber {
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
 				if(ci.action.equals("add") || ci.action.equals("external option")) {		// Table is only altered for new question or new select multiple options
-					// Get the id for the question that is being updated
-					int qId = 0;
-					ArrayList<String> columns = new ArrayList<String> ();
-					String question_column_name;	// The column name for a question
-					String column = null;			// Column name in results table
-					int l_id = 0;					// List ID
-					String type = null;
-					boolean hasExternalOptions = false;
+														
+					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
+					int l_id = 0;											// List ID
+					TableUpdateStatus status = null;
 					
-					if(ci.property != null && ci.property.prop != null && ci.property.prop.equals("type")) {
+					if(ci.option != null) {
 						
-						// Type changes on existing questions are not allowed
-						System.out.println("Error: Type change on existing question");
+						/*
+						 * Apply this option to every question that references the option list
+						 */
 						
-					} else if(ci.property != null) {
-						qId = ci.property.qId;
-						column = ci.property.name + "__" + ci.property.key;
-						columns.add(column);
-						type = "integer";
-					} else if(ci.question != null ) {
-						// Don't rely on any parameters in the change item, they may have been changed again after the question was added
-						qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
+						int listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.option.optionList);
+						String optionColumnName = null;
+						boolean externalFile = false;
 						
-						pstmtGetQuestionDetails.setInt(1, qId);
-						ResultSet rsDetails = pstmtGetQuestionDetails.executeQuery();
-						if(rsDetails.next()) {
-							question_column_name = rsDetails.getString(1);
-							l_id = rsDetails.getInt(2);
-							hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rsDetails.getString(3));
-							type = rsDetails.getString(4);
-						} else {
-							throw new Exception("Can't find question details: " + qId);
+						// Get the option details
+						pstmtGetAnOption.setInt(1, listId);
+						pstmtGetAnOption.setString(2, ci.option.value);
+						
+						System.out.println("Get option details: " + pstmtGetAnOption);
+						ResultSet rsOption = pstmtGetAnOption.executeQuery();
+						if(rsOption.next()) {
+							optionColumnName = rsOption.getString(1);
+							externalFile = rsOption.getBoolean(2);
 						}
 						
-						column = question_column_name;		// Usually this is the case unless the question is a select multiple
-						columns.add(column);
+						// Get the questions that use this option list
+						pstmtGetListQuestions.setInt(1, sId);
+						pstmtGetListQuestions.setInt(2, listId);
 						
-						if(type.equals("string")) {
-							type = "text";
-						} else if(type.equals("dateTime")) {
-							type = "timestamp with time zone";					
-						} else if(type.equals("audio") || type.equals("image") || type.equals("video")) {
-							type = "text";					
-						} else if(type.equals("decimal")) {
-							type = "real";
-						} else if(type.equals("barcode")) {
-							type = "text";
-						} else if(type.equals("note")) {
-							type = "text";
-						} else if(type.equals("select1")) {
-							type = "text";
-						} else if (type.equals("select")) {
-							type = "text";
+						System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
+						ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
+						
+						while(rsQuestions.next()) {
+							// Get the question details
+							int qId = rsQuestions.getInt(1);
+							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+							
+							if(qd != null) {
+								if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+									status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+								}
+							}
+
+						}
+						
+					
+					} else if(ci.question != null ) {
+						// Don't rely on any parameters in the change item, they may have been changed again after the question was added
+						int qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
+						
+						QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+
+						columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
+						
+						if(qd.type.equals("string")) {
+							qd.type = "text";
+						} else if(qd.type.equals("dateTime")) {
+							qd.type = "timestamp with time zone";					
+						} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
+							qd.type = "text";					
+						} else if(qd.type.equals("decimal")) {
+							qd.type = "real";
+						} else if(qd.type.equals("barcode")) {
+							qd.type = "text";
+						} else if(qd.type.equals("note")) {
+							qd.type = "text";
+						} else if(qd.type.equals("select1")) {
+							qd.type = "text";
+						} else if (qd.type.equals("select")) {
+							qd.type = "integer";
 							
 							columns.clear();
 							pstmtGetOptions.setInt(1, l_id);
-							rsDetails = pstmtGetOptions.executeQuery();
-							while(rsDetails.next()) {			
+							
+							System.out.println("Get options to add: "+ pstmtGetOptions.toString());
+							ResultSet rsOptions = pstmtGetOptions.executeQuery();
+							while(rsOptions.next()) {			
 								// Create if its an external choice and this question uses external choices
 								//  or its not an external choice and this question does not use external choices
-								String o_col_name = rsDetails.getString(1);
-								boolean externalFile = rsDetails.getBoolean(2);
+								String o_col_name = rsOptions.getString(1);
+								boolean externalFile = rsOptions.getBoolean(2);
 
-								if(hasExternalOptions && externalFile || !hasExternalOptions && !externalFile) {
-									column =  question_column_name + "__" + o_col_name;
+								if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+									String column =  qd.columnName + "__" + o_col_name;
 									columns.add(column);
 								}
 							} 
 						}
-					}
-					
-					// Get the table name
-					pstmtGetTable.setInt(1, qId);
-					System.out.println("SQL get table name: " + pstmtGetTable);
-					
-					ResultSet rsTable = pstmtGetTable.executeQuery();
-					String table = null;
-					String msg = "";
-					if(rsTable.next()) {
-						table = rsTable.getString(1);
-					
-						// Alter the table
-						boolean tableAltered = true;
-						try {
-							if(type.equals("geopoint") || type.equals("geotrace") || type.equals("geoshape")) {
-								
-								String geoType = null;
-								
-								if(type.equals("geopoint")) {
-									geoType = "POINT";
-								} else if (type.equals("geotrace")) {
-									geoType = "LINESTRING";
-								} else if (type.equals("geoshape")) {
-									geoType = "POLYGON";
-								}
-								String gSql = "SELECT AddGeometryColumn('" + table + 
-										"', 'the_geom', 4326, '" + geoType + "', 2);";
-									System.out.println("Sql statement: " + gSql);
-									
-									try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
-									pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
-									pstmtApplyGeometryChange.executeQuery();
-									
-							} else {
-								
-								for(String col : columns) {
-									String sqlAlterTable = "alter table " + table + " add column " + col + " " + type + ";";
-									pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-									System.out.println("SQL: " + pstmtAlterTable.toString());
-								
-									pstmtAlterTable.executeUpdate();
-								}
-							} 
-						} catch (Exception e) {
-							// Report but otherwise ignore any errors
-							// No need to roll back if the survey_change table is not updated, 
-							System.out.println("Error altering table -- continuing: " + e.getMessage());
-							System.out.println();
-							System.out.println("Exception: Auto commit for sd is: " + connectionSD.getAutoCommit());
-							
-							// Only record the update as failed if the problem was not due to the column already existing
-							msg = e.getMessage();
-							if(msg == null || !msg.contains("already exists")) {
-								tableAltered = false;
-							}
+						
+						// Apply each column
+						for(String col : columns) {
+							status = alterColumn(cResults, qd.table, qd.type, col);
 						}
 						
-						// Record the application of the change and the status
-						markChangeApplied(connectionSD, cId, tableAltered, msg);
-					} else {
-						System.out.println("Error table not found: " + pstmtGetTable.toString());
 					}
+					
+					// Record the application of the change and the status
+					markChangeApplied(connectionSD, cId, status.tableAltered, status.msg);
+
+						
+	
 				} else {
 					// Record that this change has been processed
 					markChangeApplied(connectionSD, cId, false, "");
 				}
+
 			}
 			
 		} catch (Exception e) {
@@ -1404,15 +1392,104 @@ public class SubRelationalDB extends Subscriber {
 			throw e;
 		} finally {
 			try {if (pstmtGet != null) {pstmtGet.close();}} catch (Exception e) {}
-			try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (Exception e) {}
-			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
-			try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
-			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (Exception e) {}
 			try {if (pstmtGetOptions != null) {pstmtGetOptions.close();}} catch (Exception e) {}
+			try {if (pstmtGetAnOption != null) {pstmtGetAnOption.close();}} catch (Exception e) {}
+			try {if (pstmtGetListQuestions != null) {pstmtGetListQuestions.close();}} catch (Exception e) {}
 		}
 		
 	}
 	
+	/*
+	 * Alter the table
+	 */
+	private TableUpdateStatus alterColumn(Connection cResults, String table, String type, String column) {
+		
+		PreparedStatement pstmtAlterTable = null;
+		PreparedStatement pstmtApplyGeometryChange = null;
+		
+		TableUpdateStatus status = new TableUpdateStatus();
+		status.tableAltered = true;
+		status.msg = "";
+		
+		try {
+			if(type.equals("geopoint") || type.equals("geotrace") || type.equals("geoshape")) {
+				
+				String geoType = null;
+				
+				if(type.equals("geopoint")) {
+					geoType = "POINT";
+				} else if (type.equals("geotrace")) {
+					geoType = "LINESTRING";
+				} else if (type.equals("geoshape")) {
+					geoType = "POLYGON";
+				}
+				String gSql = "SELECT AddGeometryColumn('" + table + 
+						"', 'the_geom', 4326, '" + geoType + "', 2);";
+					System.out.println("Sql statement: " + gSql);
+					
+					pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
+					pstmtApplyGeometryChange.executeQuery();
+					
+			} else {
+				
+				String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
+				pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+				System.out.println("SQL: " + pstmtAlterTable.toString());
+			
+				pstmtAlterTable.executeUpdate();
+				
+			} 
+		} catch (Exception e) {
+			// Report but otherwise ignore any errors
+			// No need to roll back if the survey_change table is not updated, 
+			System.out.println("Error altering table -- continuing: " + e.getMessage());
+			
+			// Only record the update as failed if the problem was not due to the column already existing
+			status.msg = e.getMessage();
+			if(status.msg == null || !status.msg.contains("already exists")) {
+				status.tableAltered = false;
+			}
+		} finally {
+			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+			try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
+		}
+		return status;
+	}
+	
+	private QuestionDetails getQuestionDetails(Connection sd, int qId) throws Exception {
+		
+		QuestionDetails qd = new QuestionDetails();
+		PreparedStatement pstmt = null;;
+		
+		String sqlGetQuestionDetails = "select q.column_name, q.appearance, q.qtype, f.table_name "
+				+ "from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and q_id = ?;";
+		
+		try {
+			pstmt = sd.prepareStatement(sqlGetQuestionDetails);
+			
+			pstmt.setInt(1, qId);
+			
+			System.out.println("Get question details: " + pstmt.toString());
+			ResultSet rsDetails = pstmt.executeQuery();
+			if(rsDetails.next()) {
+				qd.columnName = rsDetails.getString(1);
+				qd.hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rsDetails.getString(2));
+				qd.type = rsDetails.getString(3);
+				qd.table = rsDetails.getString(4);
+			} else {
+				throw new Exception("Can't find question details: " + qId);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+		
+		return qd;
+	}
 	/*
 	 * Mark all the questions in the survey as published
 	 */
@@ -1428,7 +1505,7 @@ public class SubRelationalDB extends Subscriber {
 			pstmtSetPublished.setInt(1, sId);
 			pstmtSetPublished.executeUpdate();
 			
-		}catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
 		} finally {
