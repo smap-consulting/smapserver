@@ -1288,8 +1288,10 @@ public class SubRelationalDB extends Subscriber {
 						/*
 						 * Apply this option to every question that references the option list
 						 */
-						
-						int listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.option.optionList);
+						int listId = ci.option.l_id;
+						if(listId == 0) {
+							listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.option.optionList);
+						}
 						String optionColumnName = null;
 						boolean externalFile = false;
 						

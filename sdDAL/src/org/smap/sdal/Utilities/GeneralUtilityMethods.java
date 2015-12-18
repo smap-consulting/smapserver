@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Result;
 
@@ -977,15 +978,14 @@ public class GeneralUtilityMethods {
 					if(filter.isIncluded(optionCols)) {
 		    		   
 						ChangeItem c = new ChangeItem();
-						c.property = new PropertyChange();
-						c.property.qId = qId;
-						c.property.l_id = l_id;
-						c.property.name = qName;					// Add for logging
-						c.fileName = csvFileName;		// Add for logging
-						c.property.qType = qType;
-						c.property.newVal = optionCols[vlc.label];
-						c.property.key = optionCols[vlc.value];
-						c.property.type = "option";
+						c.option = new Option();
+						c.option.l_id = l_id;
+						c.qName = qName;							// Add for logging
+						c.fileName = csvFileName;				    // Add for logging
+						c.qType = qType;
+						c.option.externalLabel = optionCols[vlc.label];
+						c.option.value = optionCols[vlc.value];
+						//c.property.type = "option";
 		    		  
 						ciList.add(c);
 		    		   
