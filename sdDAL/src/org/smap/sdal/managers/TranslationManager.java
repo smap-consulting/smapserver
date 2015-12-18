@@ -48,7 +48,7 @@ public class TranslationManager {
 					" and p.id = up.p_id " +
 					" and s.p_id = up.p_id " +
 					" and s.s_id = t.s_id " +
-					" and (t.type = 'image' or t.type = 'video' or t.type = 'audio' or t.type = 'csv') " +
+					" and (t.type = 'image' or t.type = 'video' or t.type = 'audio') " +
 					" and u.ident = ? " +
 					" and t.s_id = ?; ";
 	

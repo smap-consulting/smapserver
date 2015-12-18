@@ -1520,6 +1520,12 @@ public class SurveyManager {
 						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
 					}
 						
+					// Update the survey manifest if this question references CSV files
+					if(ci.property.prop.equals("calculation")) {
+						GeneralUtilityMethods.updateSurveyManifest(sd, sId, null, ci.property.newVal);
+					} else if(ci.property.prop.equals("appearance")) {
+						GeneralUtilityMethods.updateSurveyManifest(sd, sId, ci.property.newVal, null);
+					}
 						
 					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
 					

@@ -277,6 +277,9 @@ public class QuestionManager {
 					UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
 				}
 				
+				// Update the survey manifest if this question references CSV files
+				GeneralUtilityMethods.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
+				
 				// If this is a begin repeat then create a new form
 				if(q.type.equals("begin repeat")) {
 					
@@ -1167,4 +1170,5 @@ public class QuestionManager {
 		
 	}
 	
+
 }

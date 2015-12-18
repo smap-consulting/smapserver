@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import java.util.Set;
 import java.util.Vector;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.server.entities.Form;
@@ -1310,8 +1311,11 @@ public class SurveyTemplate {
 	/*
 	 * Add a survey level manifest such as a csv file from an appearance attribute
 	 */
-	public void addManifestFromAppearance(String appearance, String questionRef) {
+	public void addManifestFromAppearance(String appearance) {
 		
+		survey.setManifest(GeneralUtilityMethods.addManifestFromAppearance(appearance, survey.getManifest()));
+		
+		/*
 		// Check to see if this appearance references a manifest file
 		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
 			// Yes it references a manifest
@@ -1348,8 +1352,9 @@ public class SurveyTemplate {
 					}
 				}
 			}
-		} 
 			
+		} 
+			*/
 	}
 	
 	/*
@@ -1357,6 +1362,9 @@ public class SurveyTemplate {
 	 */
 	public void addManifestFromCalculate(String calculate, String questionRef) {
 		
+		survey.setManifest(GeneralUtilityMethods.addManifestFromAppearance(calculate, survey.getManifest()));
+		
+		/*
 		// Check to see if this appearance references a manifest file
 		if(calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
 			
@@ -1401,6 +1409,7 @@ public class SurveyTemplate {
 				}				
 			}
 		} 
+		*/
 			
 	}
 	

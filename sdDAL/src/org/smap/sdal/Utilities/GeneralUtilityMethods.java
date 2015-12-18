@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -28,6 +29,10 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Result;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 
 public class GeneralUtilityMethods {
@@ -1833,4 +1838,155 @@ public class GeneralUtilityMethods {
 		
 		return listId;
 	}
+	
+	/*
+	 * Add to a survey level manifest String, a manifest from an appearance attribute
+	 */
+	public static String addManifestFromAppearance(String appearance, String inputManifest) {
+		
+		String outputManifest = inputManifest;
+		
+		// Check to see if this appearance references a manifest file
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+			// Yes it references a manifest
+			
+			int idx1 = appearance.indexOf('(');
+			int idx2 = appearance.indexOf(')');
+			if(idx1 > 0 && idx2 > idx1) {
+				String criteriaString = appearance.substring(idx1 + 1, idx2);
+				
+				String criteria [] = criteriaString.split(",");
+				if(criteria.length > 0) {
+					
+					if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+						String filename = criteria[0].trim();
+						filename = filename.substring(1, filename.length() -1);
+						filename += ".csv";
+						log.info("We have found a manifest link to " + filename);
+						
+						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+						
+						ArrayList<String> mArray = null;
+						if(inputManifest == null) {
+							mArray = new ArrayList<String>();
+						} else {
+							Type type = new TypeToken<ArrayList<String>>(){}.getType();
+							mArray = gson.fromJson(inputManifest, type);	
+						}
+						if(!mArray.contains(filename)) {
+							mArray.add(filename);
+						}
+	
+						outputManifest = gson.toJson(mArray);
+					}
+				}
+			}
+		} 
+		return outputManifest;
+			
+	}
+	
+	/*
+	 * Add a survey level manifest such as a csv file from an calculate attribute
+	 */
+	public static String addManifestFromCalculate(String calculate, String inputManifest) {
+		
+		String outputManifest = inputManifest;
+		
+		// Check to see if this appearance references a manifest file
+		if(calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
+			
+			// Yes it references a manifest
+			// Get all the pulldata functions from this calculate
+			
+			int idx1 = calculate.indexOf("pulldata");
+			while(idx1 >= 0) {
+				idx1 = calculate.indexOf('(', idx1);
+				int idx2 = calculate.indexOf(')', idx1);
+				if(idx1 >= 0 && idx2 > idx1) {
+					String criteriaString = calculate.substring(idx1 + 1, idx2);
+					
+					String criteria [] = criteriaString.split(",");
+					
+					if(criteria.length > 0) {
+						
+						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+							String filename = criteria[0].trim();
+							filename = filename.substring(1, filename.length() -1);
+							filename += ".csv";
+							log.info("We have found a manifest link to " + filename);
+							
+							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+							
+							ArrayList<String> mArray = null;
+							if(inputManifest == null) {
+								mArray = new ArrayList<String>();
+							} else {
+								Type type = new TypeToken<ArrayList<String>>(){}.getType();
+								mArray = gson.fromJson(inputManifest, type);	
+							}
+							if(!mArray.contains(filename)) {
+								mArray.add(filename);
+							}
+		
+							outputManifest = gson.toJson(mArray);
+						}
+					}
+					idx1 = calculate.indexOf("pulldata(", idx2);
+				}				
+			}
+		} 
+		
+		return outputManifest;
+			
+	}
+	
+	/*
+	 * Update survey manifest
+	 */
+	public static void updateSurveyManifest(Connection sd, int sId, String appearance, String calculation) throws Exception {
+		
+		String manifest = null;;
+		
+		PreparedStatement pstmtGet = null;
+		String sqlGet = "select manifest from survey "
+				+ "where s_id = ?; ";
+		
+		PreparedStatement pstmtUpdate = null;
+		String sqlUpdate = "update survey set manifest = ? "
+				+ "where s_id = ?;";	
+		
+		try {
+			
+			pstmtGet = sd.prepareStatement(sqlGet);
+			pstmtGet.setInt(1, sId);
+			ResultSet rs = pstmtGet.executeQuery();
+			if(rs.next()) {
+				manifest = rs.getString(1);
+			}
+			
+			if(appearance != null) {
+				manifest = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest);
+			}
+			
+			if(calculation != null) {
+				manifest = GeneralUtilityMethods.addManifestFromAppearance(calculation, manifest);
+			}
+			
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
+			pstmtUpdate.setString(1, manifest);
+			pstmtUpdate.setInt(2,sId);
+			pstmtUpdate.executeUpdate();
+			
+		} catch(Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+		
+		}	
+		
+	}
+	
 }
