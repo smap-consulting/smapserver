@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +12,8 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
@@ -141,6 +144,7 @@ public class QuestionManager {
 	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
 		String columnName = null;
+		SurveyManager sm = new SurveyManager();		// To apply survey level updates resulting from this question change
 		
 		PreparedStatement pstmtInsertQuestion = null;
 		String sql = "insert into question (q_id, "
@@ -278,7 +282,7 @@ public class QuestionManager {
 				}
 				
 				// Update the survey manifest if this question references CSV files
-				GeneralUtilityMethods.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
+				sm.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
 				
 				// If this is a begin repeat then create a new form
 				if(q.type.equals("begin repeat")) {
@@ -1170,5 +1174,32 @@ public class QuestionManager {
 		
 	}
 	
+	/*
+	 * Get a changeset with option updates for a question from a CSV file
+	 */
+	public ChangeSet getCSVChangeSetForQuestion(Connection sd, 
+			File csvFile,
+			String csvFileName,
+			org.smap.sdal.model.Question q) {
+		
+		ChangeSet cs = new ChangeSet();
+		
+		cs.changeType = "option";
+		cs.source = "file";
+		cs.items = new ArrayList<ChangeItem> ();
+		
+		GeneralUtilityMethods.getOptionsFromFile(
+				sd,
+				cs.items,
+				csvFile,
+				csvFileName,
+				q.name,
+				q.l_id,
+				q.id,
+				q.type,
+				q.appearance);
+		
+		return cs;
+	}
 
 }

@@ -442,22 +442,10 @@ public class UploadFiles extends Application {
 			/*
 			 * Create a changeset
 			 */
-			ChangeSet cs = new ChangeSet();
-			cs.changeType = "option";
-			cs.source = "file";
-			cs.items = new ArrayList<ChangeItem> ();
-			changes.add(cs);
-			
-			GeneralUtilityMethods.getOptionsFromFile(
-					connectionSD,
-					cs.items,
-					csvFile,
-					csvFileName,
-					q.name,
-					q.l_id,
-					q.id,
-					q.type,
-					q.appearance);
+			ChangeSet cs = qm.getCSVChangeSetForQuestion(connectionSD, csvFile, csvFileName, q);
+			if(cs.items.size() > 0) {
+				changes.add(cs);
+			}
 			
 		}
 		 

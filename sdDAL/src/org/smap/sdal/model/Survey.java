@@ -30,7 +30,6 @@ public class Survey {
 	public HashMap<String, OptionList> optionLists = new HashMap<String, OptionList> ();
 	public HashMap<String, OptionList> optionLists_orig = new HashMap<String, OptionList> ();
 	public ArrayList<String> languages = new ArrayList<String> (); 
-	public ArrayList<Group> groups  = new ArrayList<Group> ();
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
 	public ArrayList<ChangeLog> changes  = new ArrayList<ChangeLog> ();

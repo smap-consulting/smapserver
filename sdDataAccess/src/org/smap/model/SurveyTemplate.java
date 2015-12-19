@@ -17,6 +17,7 @@ import java.util.Vector;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.ManifestInfo;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.Option;
@@ -1313,103 +1314,17 @@ public class SurveyTemplate {
 	 */
 	public void addManifestFromAppearance(String appearance) {
 		
-		survey.setManifest(GeneralUtilityMethods.addManifestFromAppearance(appearance, survey.getManifest()));
-		
-		/*
-		// Check to see if this appearance references a manifest file
-		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
-			// Yes it references a manifest
-			
-			int idx1 = appearance.indexOf('(');
-			int idx2 = appearance.indexOf(')');
-			if(idx1 > 0 && idx2 > idx1) {
-				String criteriaString = appearance.substring(idx1 + 1, idx2);
-				
-				String criteria [] = criteriaString.split(",");
-				if(criteria.length > 0) {
-					
-					if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
-						String filename = criteria[0].trim();
-						filename = filename.substring(1, filename.length() -1);
-						filename += ".csv";
-						log.info("We have found a manifest link to " + filename);
-						
-						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-						
-						String manifestString = survey.getManifest();
-						ArrayList<String> mArray = null;
-						if(manifestString == null) {
-							mArray = new ArrayList<String>();
-						} else {
-							Type type = new TypeToken<ArrayList<String>>(){}.getType();
-							mArray = gson.fromJson(manifestString, type);	
-						}
-						if(!mArray.contains(filename)) {
-							mArray.add(filename);
-						}
-	
-						survey.setManifest(gson.toJson(mArray));
-					}
-				}
-			}
-			
-		} 
-			*/
+		ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, survey.getManifest());
+		survey.setManifest(mi.manifest);
 	}
 	
 	/*
-	 * Add a survey level manifest such as a csv file from an calculate attribute
+	 * Add a survey level manifest such as a csv file from a calculate attribute
 	 */
-	public void addManifestFromCalculate(String calculate, String questionRef) {
+	public void addManifestFromCalculate(String calculate) {
 		
-		survey.setManifest(GeneralUtilityMethods.addManifestFromAppearance(calculate, survey.getManifest()));
-		
-		/*
-		// Check to see if this appearance references a manifest file
-		if(calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
-			
-			// Yes it references a manifest
-			// Get all the pulldata functions from this calculate
-			
-			int idx1 = calculate.indexOf("pulldata");
-			while(idx1 >= 0) {
-				idx1 = calculate.indexOf('(', idx1);
-				int idx2 = calculate.indexOf(')', idx1);
-				if(idx1 >= 0 && idx2 > idx1) {
-					String criteriaString = calculate.substring(idx1 + 1, idx2);
-					
-					String criteria [] = criteriaString.split(",");
-					
-					if(criteria.length > 0) {
-						
-						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
-							String filename = criteria[0].trim();
-							filename = filename.substring(1, filename.length() -1);
-							filename += ".csv";
-							log.info("We have found a manifest link to " + filename);
-							
-							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-							
-							String manifestString = survey.getManifest();
-							ArrayList<String> mArray = null;
-							if(manifestString == null) {
-								mArray = new ArrayList<String>();
-							} else {
-								Type type = new TypeToken<ArrayList<String>>(){}.getType();
-								mArray = gson.fromJson(manifestString, type);	
-							}
-							if(!mArray.contains(filename)) {
-								mArray.add(filename);
-							}
-		
-							survey.setManifest(gson.toJson(mArray));
-						}
-					}
-					idx1 = calculate.indexOf("pulldata(", idx2);
-				}				
-			}
-		} 
-		*/
+		ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculate, survey.getManifest());
+		survey.setManifest(mi.manifest);
 			
 	}
 	

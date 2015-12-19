@@ -961,7 +961,7 @@ public class PutXForm {
 	   				q.setCalculate(attribute.getNodeValue()); 
 	   				
 	   				// Survey level manifests can be set in the appearance attribute
-	   				template.addManifestFromCalculate(attribute.getNodeValue(), questionRef);
+	   				template.addManifestFromCalculate(attribute.getNodeValue());
 	   				template.addSurveyInstanceNameFromCalculate(attribute.getNodeValue(), questionRef);
 	   				
 	   				if(q.getType() == null || !q.getType().startsWith("begin")) {

@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.PropertyChange;
@@ -1520,9 +1521,9 @@ public class SurveyManager {
 						
 					// Update the survey manifest if this question references CSV files
 					if(ci.property.prop.equals("calculation")) {
-						GeneralUtilityMethods.updateSurveyManifest(sd, sId, null, ci.property.newVal);
+						updateSurveyManifest(sd, sId, null, ci.property.newVal);
 					} else if(ci.property.prop.equals("appearance")) {
-						GeneralUtilityMethods.updateSurveyManifest(sd, sId, ci.property.newVal, null);
+						updateSurveyManifest(sd, sId, ci.property.newVal, null);
 					}
 						
 					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
@@ -2027,5 +2028,67 @@ public class SurveyManager {
 			
 		}
     }
+    
+	/*
+	 * Update survey manifest
+	 */
+	public void updateSurveyManifest(Connection sd, int sId, String appearance, String calculation) throws Exception {
+		
+		String manifest = null;
+		boolean changed = false;
+		QuestionManager qm = new QuestionManager();
+		
+		PreparedStatement pstmtGet = null;
+		String sqlGet = "select manifest from survey "
+				+ "where s_id = ?; ";
+		
+		PreparedStatement pstmtUpdate = null;
+		String sqlUpdate = "update survey set manifest = ? "
+				+ "where s_id = ?;";	
+		
+		try {
+			
+			pstmtGet = sd.prepareStatement(sqlGet);
+			pstmtGet.setInt(1, sId);
+			ResultSet rs = pstmtGet.executeQuery();
+			if(rs.next()) {
+				manifest = rs.getString(1);
+			}
+			
+			if(appearance != null) {
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest);
+				manifest = mi.manifest;
+				if(mi.changed) {
+					changed = true;
+				}
+			}
+			
+			if(calculation != null) {
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculation, manifest);
+				manifest = mi.manifest;
+				if(mi.changed) {
+					changed = true;
+				}
+			}
+			
+			// Update the manifest
+			if(changed) {
+				pstmtUpdate = sd.prepareStatement(sqlUpdate);
+				pstmtUpdate.setString(1, manifest);
+				pstmtUpdate.setInt(2,sId);
+				pstmtUpdate.executeUpdate();
+			}
+			
+			
+		} catch(Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+		
+		}	
+		
+	}
 	
 }
