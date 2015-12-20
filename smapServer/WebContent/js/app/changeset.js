@@ -1443,8 +1443,13 @@ define([
 			isValid = true,
 			hasDuplicate = false,
 			itemDesc,
-			questionType;
+			questionType,
+			question;
 
+		if(itemType === "question") {
+			question = survey.forms[container].questions[itemIndex];
+		}
+		
 		// Clear the existing name validation errors
 		removeValidationError(
 				container,
@@ -1453,6 +1458,7 @@ define([
 				itemType);
 		
 		itemType === "question" ? itemDesc = "question" : itemDesc = "choice";
+
 		// Check for empty name
 		if(typeof val === "undefined" || val === "") {
 			addValidationError(
@@ -1481,6 +1487,21 @@ define([
 						"error");	
 			
 				}
+				
+				if(isValid) {
+					if(question.type == "geopoint" || question.type == "geoshape" || question.type == "geotrace") {
+						if(val !== 'the_geom') {
+							addValidationError(
+									container,
+									itemIndex,
+									"name",
+									"For a location question the mane must be 'the_geom'.",
+									itemType,
+									"error");
+						}
+					}
+				}
+				
 			} else {
 				isValid = isValidODKOptionName(val);
 				
