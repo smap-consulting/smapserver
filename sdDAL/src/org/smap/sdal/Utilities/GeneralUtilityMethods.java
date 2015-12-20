@@ -1629,12 +1629,14 @@ public class GeneralUtilityMethods {
 	/*
 	 * Translate a question type from its representation in the database to the survey model used for editing
 	 */
-	public static String translateTypeFromDB(String in, boolean readonly) {
+	public static String translateTypeFromDB(String in, boolean readonly, boolean visible) {
 		
 		String out = in;
 		
 		if(in.equals("string") && readonly) {
 			out = "note";
+		} else if(in.equals("string") && !visible) {
+			out = "calculate";
 		}
 		
 		return out;

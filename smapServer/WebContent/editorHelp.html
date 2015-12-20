@@ -65,6 +65,7 @@
 	   			<p>This will create a <b>text</b> type question at the location you clicked.  You can then 
 	   			change the type of the question by clicking on the question type icon next to the question name</p>
 	   		</div>
+	   		
 	   		<div class="bs-docs-section">
 	   			<h1 id="errors" class="page-header">
 	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
@@ -104,7 +105,24 @@
 	   			error message is shown</p>
 	   			<p>If there are errors detected when you click the save button or validate the survey then the number of errors and 
 	   			warnings are shown in the <b>toolbar</b> along with a button that will take you to the next error.
+	   			
+	   			<h2>Differences with validation using the xlsForm editor</h2>
+	   			<ol>
+	   				<li>In the online editor, question names must be unique in the entire survey.</li>
+	   				<ol>
+						<li>In xlsForm the name only needs to be unique within a form For example a begin 
+						repeat can have a question with the same name as is in the main form.</li>
+						<li>However if you attempt to refer to the question using the ${…} syntax then xlsForm will 
+						report an error if it is not unique in the entire survey.</li>  
+						<li>It is also probably better that names are forced to be unique across all forms as this will 
+						reduce confusion during analysis.  Hence the tighter restriction adopted by the Smap online editor.</li>
+						<li>However this means that if you have an existing form with two questions that have the same 
+						name then you will not be able to edit it online unless you delete one of the questions.</li>
+					</ol>
+				</ol>
+	   			
 	   		</div>
+	   		
 	   		<div class="bs-docs-section">
 	   			<h1 id="testing" class="page-header">
 	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: errors" 
@@ -117,6 +135,7 @@
 	   			<p>There is also a <b>test</b> button that will open the survey in webforms and allow you to try it out without having to 
 	   			leave the editor.</p>
 	   		</div>
+	   		
 	   		<div class="bs-docs-section">	
 	   			<h1 id="publishing" class="page-header">
 	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: publishing" 
@@ -145,7 +164,9 @@
 	   			analysis dashboard where you can create a table panel for the survey, review the data that is there, then select the 
 	   			<b>aside</b> using the <b><</b> button and press delete</p>
 	   			<p>Once the survey has been unpublished the editing restrictions will be lifted</p>
+	   		</div>
 	   		
+	   		<div class="bs-docs-section">	
 	   			<h1 id="smallscreen" class="page-header">
 	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: smallscreen" 
 	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
@@ -165,6 +186,140 @@
 	   			accessible from the menu.</li>
 	   		</div>
 	   		
+	   		<div class="bs-docs-section">		   			
+	   			<h1 id="features" class="page-header">
+	   				<a class="anchorjs-link " href="#features" aria-label="Anchor link for: features" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Summary of Features</a>
+	   			</h1>
+	   			
+	   			<h2>Question Types</h2>
+	   			<table>
+	   				<thead>
+	   					<tr>
+		   				<th class="col-md-3">Type</th>
+		   				<th class="col-md-1">xlsForm</th>
+		   				<th class="col-md-1">Version 15.11</th>
+		   				<th class="col-md-7">Notes</th>
+	   					</tr>
+	   				</thead>
+	   				<tbody>
+	   					<tr>
+		   				<td class="col-md-3">text</td>
+		   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   				<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">note</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">select_one</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">select_multiple</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">begin repeat</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">A sub form<br/>
+								If you are editing a form loaded before version 15.10 the repeat count 
+								will need to be re-entered</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">begin group</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">image</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">audio</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">video</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">integer</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">decimal</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">barcode</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">date</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">datetime</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">geopoint</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">A GPS point</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">geoshape</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">An area recorded with the GPS - Web Form only<br/>
+		   						Use a <b>begin repeat</b> containing a <b>geopoint</b> in order to record an area in fieldTask or 
+		   						odkCollect.  The name of the <b>begin repeat</b> must start with "geopolygon_"
+		   					</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">geotrace</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">An line recorded with the GPS - Web Form only.<br/>
+		   						Use a <b>begin repeat</b> containing a <b>geopoint</b> in order to record a line in fieldTask or 
+		   						odkCollect.  The name of the <b>begin repeat</b> must start with "geolinestring_"
+		   					</td>
+		   				</tr>
+		   			</tbody>
+		   		</table>
+
+	   		</div>
+	   		
 	   	</div>
 	   	<div class="col-md-3" role="complementary">
 		   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
@@ -176,6 +331,7 @@
 	  					<a href="#testing">Trying out your survey</a>
 	  					<a href="#publishing">Publishing and un-publishing your survey</a>
 	  					<a href="#smallscreen">Editing surveys on your phone</a>
+	  					<a href="#features">Summary of Features</a>
 						
 					</li>
 				</ul>

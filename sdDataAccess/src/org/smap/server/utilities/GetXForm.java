@@ -948,7 +948,6 @@ public class GetXForm {
 		 * Replace the primary key with the primary key of the record that matches the passed in key and key value
 		 */
 		try {
-			System.out.println("Key: " + key + " : " + keyval);
 			if(key != null && keyval != null) { 
 				if(key.equals("prikey")) {
 					priKey = Integer.parseInt(keyval);
@@ -957,7 +956,6 @@ public class GetXForm {
 					}
 				} else {
 					priKey = getPrimaryKey(connection, firstForm, key, keyval);
-					System.out.println("Primary key: " + priKey);
 				}
 			} else {
 				if(!priKeyValid(connection, firstForm, priKey)) {
@@ -1070,8 +1068,6 @@ public class GetXForm {
 		key = key.replace("'", "''");	// Escape apostrophes
 		String type = null;
 		String keyColumnName = null;
-		
-		System.out.println("First form: " + firstForm.getTableName());
 		
 		// Get the key type
 		List<Question> questions = firstForm.getQuestions();
@@ -1263,7 +1259,6 @@ public class GetXForm {
 
     			if(item.subForm != null) {
     				boolean needTemplate = (!generatedTemplate && (parentElement == null));
-    				System.out.println("xxx need template: " + needTemplate);
     				populateForm(outputDoc, item.subForm, -1, 
     						Integer.parseInt(priKey.value), connection, template, 
     						currentParent, sId, survey_ident, 

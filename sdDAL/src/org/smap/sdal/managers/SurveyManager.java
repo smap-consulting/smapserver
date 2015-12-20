@@ -674,7 +674,7 @@ public class SurveyManager {
 				}
 				
 				// Translate type name to "note" if it is a read only string
-				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly);
+				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly, q.visible);
 				
 				// Track if this question is in the meta group
 				if(q.name.equals("meta")) {

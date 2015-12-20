@@ -10,3 +10,22 @@ h3 {
 	font-size: 16px;
 	margin-bottom: 1rem;
 }
+
+.glyphicon-ok {
+	color: green;
+}
+
+table {
+	border-collapse: collapse;
+}
+table,th,td {
+	border: 1px solid rgba(86,61,124,.2);
+}
+
+th {
+    background-color: #2C3D29;
+    color: white;
+}
+
+tr:nth-child(even) {background-color: #f2f2f2}
+
