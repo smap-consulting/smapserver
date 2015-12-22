@@ -863,9 +863,9 @@ define([
 			if(change.action === "add") {
 				var preceedingQuestion = form.questions[form.qSeq[change.question.seq-1]];
 				if(change.question.locn === "after") {
-					change.question.$relatedElement.after(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined));			
+					change.question.$relatedElement.after(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined, false));			
 				} else {
-					change.question.$relatedElement.prev().before(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined));
+					change.question.$relatedElement.prev().before(markup.addOneQuestion(form, change.question, change.question.formIndex, change.question.itemIndex, true, undefined, false));
 				}
 				$changedRow = $("#question" + change.question.formIndex + "_" + change.question.itemIndex);
 				
@@ -931,7 +931,7 @@ define([
 						survey.forms[change.property.formIndex].questions[change.property.itemIndex], 
 						change.property.formIndex, 
 						change.property.itemIndex,
-						false, undefined);
+						false, undefined, true);
 				
 			}
 			

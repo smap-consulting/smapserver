@@ -44,13 +44,16 @@ define([
 		includeQuestion: includeQuestion
 	};
 	
-	function addOneQuestion(form, question, formIndex, qIndex, addNewButton, selProperty) {
+	function addOneQuestion(form, question, formIndex, qIndex, addNewButton, selProperty, update) {
 		var h = [],
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
 		globals.hasQuestions = true;
-		form.maxQuestion++;
+		if(!update) {					// Only increment maxQuestion if a new question is being added
+			form.maxQuestion++;
+		}
+		console.log("AddoneQuestion maxQuestion: " + form.maxQuestion);
 		
 		selProperty = selProperty || $('#selProperty').val();
 		
@@ -663,7 +666,7 @@ define([
 					continue;
 				}
 
-				h[++idx] = addOneQuestion(form, question, formIndex, form.qSeq[i], true, selProperty);
+				h[++idx] = addOneQuestion(form, question, formIndex, form.qSeq[i], true, selProperty, false);
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;

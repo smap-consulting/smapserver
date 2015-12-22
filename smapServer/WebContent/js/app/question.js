@@ -146,6 +146,7 @@ define([
 		// Keep incrementing the maxQuestion until we get a unique name for this question
 		while(!nameIsUniqueInForm(form, name)) {
 			name = ++form.maxQuestion;
+			console.log("Get default qname maxQuestion: " + form.maxQuestion);
 			if(form.parentIndex >= 0) {
 				name = form.questions[parentQuestionIndex].name + "." + name;
 			} else {	
