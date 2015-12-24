@@ -186,6 +186,26 @@
 	   			accessible from the menu.</li>
 	   		</div>
 	   		
+	   		<div class="bs-docs-section">	
+	   			<h1 id="tools" class="page-header">
+	   				<a class="anchorjs-link " href="#tools" aria-label="Anchor link for: tools" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Productivity Tools</a>
+	   			</h1>
+	   			
+	   			<p>One of the advantages of an online editor is that you can add some short cuts for common tasks
+	   			These will be added to as the editor evolves. These short cuts are available from the "Tools" menu.  Note
+	   			that some may be disabled if there are unsvaed changes in the form.</p>
+	   			
+	   			<h2>Making questions mandatory</h2>
+	   			<p>Select <b>Make Required</b> from the tools menu.  </p><p>Read only
+	   			questions will not be set to required, however if you have made a specific read only question required 
+	   			so that it can be used as a constraint then it will be left unchanged</p>
+	   			<h2>Not Required</h2>
+	   			<p>Select the <b>Not Required</b> option under the tools menu.</p>
+	   		</div>
+	   		
 	   		<div class="bs-docs-section">		   			
 	   			<h1 id="features" class="page-header">
 	   				<a class="anchorjs-link " href="#features" aria-label="Anchor link for: features" 
@@ -195,6 +215,7 @@
 	   			</h1>
 	   			
 	   			<h2>Question Types</h2>
+	   			<p>Addition, deletion and renaming of the following question types:</p>
 	   			<table>
 	   				<thead>
 	   					<tr>
@@ -274,6 +295,12 @@
 		   					<td class="col-md-7"></td>
 		   				</tr>
 		   				<tr>
+		   					<td class="col-md-3">calculate</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
 		   					<td class="col-md-3">barcode</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
@@ -292,6 +319,12 @@
 		   					<td class="col-md-7"></td>
 		   				</tr>
 		   				<tr>
+		   					<td class="col-md-3">time</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
 		   					<td class="col-md-3">geopoint</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
@@ -301,18 +334,18 @@
 		   					<td class="col-md-3">geoshape</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">An area recorded with the GPS - Web Form only<br/>
-		   						Use a <b>begin repeat</b> containing a <b>geopoint</b> in order to record an area in fieldTask or 
-		   						odkCollect.  The name of the <b>begin repeat</b> must start with "geopolygon_"
+		   					<td class="col-md-7">An area recorded with the GPS - <b>Web Form only</b><br/>
+		   						For <b>fieldTask</b> or <b>odkCollect</b>,  use a <b>begin repeat</b> containing a <b>geopoint</b> 
+		   						in order to record an area.  The name of the <b>begin repeat</b> must start with "geopolygon_"
 		   					</td>
 		   				</tr>
 		   				<tr>
 		   					<td class="col-md-3">geotrace</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">An line recorded with the GPS - Web Form only.<br/>
-		   						Use a <b>begin repeat</b> containing a <b>geopoint</b> in order to record a line in fieldTask or 
-		   						odkCollect.  The name of the <b>begin repeat</b> must start with "geolinestring_"
+		   					<td class="col-md-7">An line recorded with the GPS - <b>Web Form only</b>.<br/>
+		   						For <b>fieldTask</b> or <b>odkCollect</b> use a <b>begin repeat</b> containing a <b>geopoint</b> in 
+		   						order to record a line.  The name of the <b>begin repeat</b> must start with "geolinestring_"
 		   					</td>
 		   				</tr>
 		   			</tbody>

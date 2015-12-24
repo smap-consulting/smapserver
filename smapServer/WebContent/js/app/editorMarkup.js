@@ -53,7 +53,6 @@ define([
 		if(!update) {					// Only increment maxQuestion if a new question is being added
 			form.maxQuestion++;
 		}
-		console.log("AddoneQuestion maxQuestion: " + form.maxQuestion);
 		
 		selProperty = selProperty || $('#selProperty').val();
 		

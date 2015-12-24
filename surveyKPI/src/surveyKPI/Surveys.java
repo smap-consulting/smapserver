@@ -669,14 +669,15 @@ public class Surveys extends Application {
 	/*
 	 * Set questions to required
 	 */
-	@Path("/set_required/{sId}")
+	@Path("/set_required/{sId}/{required}")
 	@POST
 	public Response setRequired(@Context HttpServletRequest request,
-			@PathParam("sId") int sId) { 
+			@PathParam("sId") int sId,
+			@PathParam("required") boolean required) { 
 		
 		Response response = null;
+		int version;
 		
-		/*
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
@@ -691,167 +692,101 @@ public class Surveys extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
-		FileItem pdfItem = null;
-		String fileName = null;
-		String newSurveyName = null;
-		String settings = null;
-		int version = 0;
 				
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtGet = null;
+		PreparedStatement pstmtNotRequired = null;
+		PreparedStatement pstmtRequired = null;
 		PreparedStatement pstmtChangeLog = null;
+		PreparedStatement pstmt = null;
 		
 		try {
-			List<?> items = uploadHandler.parseRequest(request);
-			Iterator<?> itr = items.iterator();
-
-			while(itr.hasNext()) {
-				FileItem item = (FileItem) itr.next();
-				
-				if(item.isFormField()) {
-					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
-				
-					
-					if(item.getFieldName().equals("settings")) {
-						try {
-							settings = item.getString();
-						} catch (Exception e) {
-							
-						}
-					}
-					
-					
-				} else if(!item.isFormField()) {
-					// Handle Uploaded files.
-					log.info("Field Name = "+item.getFieldName()+
-						", File Name = "+item.getName()+
-						", Content type = "+item.getContentType()+
-						", File Size = "+item.getSize());
-					
-					if(item.getSize() > 0) {
-						pdfItem = item;
-						fileName = item.getName();
-						fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
-					}				
-				}
-
-			}
 			
-			Type type = new TypeToken<org.smap.sdal.model.Survey>(){}.getType();
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			org.smap.sdal.model.Survey survey = gson.fromJson(settings, type);
-			
-			// Start transaction
+			/*
+			 * Lock the survey
+			 * update version number of survey and get the new version
+			 */
 			connectionSD.setAutoCommit(false);
 			
-			// Get the existing survey display name, plain old name and project id
-			String sqlGet = "select name, display_name, p_id, version from survey where s_id = ?";
-			pstmtGet = connectionSD.prepareStatement(sqlGet);	
-			pstmtGet.setInt(1, sId);
+			String sqlUpdateVersion = "update survey set version = version + 1 where s_id = ?";
+			String sqlGetVersion = "select version from survey where s_id = ?";
+			pstmt = connectionSD.prepareStatement(sqlUpdateVersion);
+			pstmt.setInt(1, sId);
+			pstmt.execute();
+			pstmt.close();
 			
-			String originalDisplayName = null;
-			String originalName = null;
-			int originalProjectId = 0;
-			ResultSet rs = pstmtGet.executeQuery();
-			if(rs.next()) {
-				originalName = rs.getString(1);
-				originalDisplayName = rs.getString(2);
-				originalProjectId = rs.getInt(3);
-				version = rs.getInt(4) + 1;
+			pstmt = connectionSD.prepareStatement(sqlGetVersion);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			rs.next();
+			version = rs.getInt(1);
+			pstmt.close();
+			
+			if(!required) {
+				// Set all questions to not required
+				String sqlNotRequired = "update question set mandatory = 'false' "
+						+ "where f_id in (select f_id from form where s_id = ?);";
+				pstmtNotRequired = connectionSD.prepareStatement(sqlNotRequired);	
+				pstmtNotRequired.setInt(1, sId);
+				
+				log.info("SQL: Setting questions not required: " + pstmtNotRequired.toString());
+				pstmtNotRequired.executeUpdate();
+			
+			} else {
+				// Set all questions to required
+				String sqlRequired = "update question set mandatory = 'true' "
+						+ "where readonly = 'false' "
+						+ "and visible = 'true' "
+						+ "and qtype != 'begin repeat' "
+						+ "and qtype != 'begin group' "
+						+ "and f_id in (select f_id from form where s_id = ?);"; 
+			
+				pstmtRequired = connectionSD.prepareStatement(sqlRequired);	
+				pstmtRequired.setInt(1, sId);
+				
+				log.info("SQL: Setting questions required: " + pstmtRequired.toString());
+				pstmtRequired.executeUpdate();
 			}
-			
-			if(originalName != null) {
-				int idx = originalName.lastIndexOf('/');
-				if(idx > 0) {
-					newSurveyName = originalName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(survey.displayName) + ".xml";
-				}
-			}
-			
+				
+			// Write the change log
+			int userId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
+				
+			ChangeElement change = new ChangeElement();
+			change.action = "set_required";
+			change.msg = required ? "Questions set required" : "Questions set not required"; 
+				
+			// Write to the change log
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String sqlChangeLog = "insert into survey_change " +
 					"(s_id, version, changes, user_id, apply_results, updated_time) " +
 					"values(?, ?, ?, ?, 'true', ?)";
-			
-			// Update the settings
-			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, "
-					+ "p_id = ?, "
-					+ "instance_name = ?, "
-					+ "version = ? "
-					+ "where s_id = ?;";		
-		
-			pstmt = connectionSD.prepareStatement(sql);	
-			pstmt.setString(1, survey.displayName);
-			pstmt.setString(2, newSurveyName);
-			pstmt.setString(3, survey.def_lang);
-			pstmt.setBoolean(4, survey.task_file);
-			pstmt.setInt(5, survey.p_id);
-			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD, false));
-			pstmt.setInt(7, version);
-			pstmt.setInt(8, sId);
-			
-			log.info("Saving survey: " + pstmt.toString());
-			int count = pstmt.executeUpdate();
+			pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
+				
+			// Write the change log
+			pstmtChangeLog.setInt(1, sId);
+			pstmtChangeLog.setInt(2, version);
+			pstmtChangeLog.setString(3, gson.toJson(change));
+			pstmtChangeLog.setInt(4, userId);
+			pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+			pstmtChangeLog.execute();
 
-			if(count == 0) {
-				log.info("Error: Failed to update survey");
-			} else {
-				log.info("Info: Survey updated");
-				
-				int userId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
-				
-				ChangeElement change = new ChangeElement();
-				change.action = "settings_update";
-				change.msg = "Name: " + survey.displayName + ", Default Language: " + survey.def_lang + ", Instance Name: "+ survey.instanceNameDefn; 
-				
-				// Write to the change log
-				pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);
-				// Write the change log
-				pstmtChangeLog.setInt(1, sId);
-				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(change));
-				pstmtChangeLog.setInt(4, userId);
-				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-				pstmtChangeLog.execute();
-			}
-			
 			connectionSD.commit();
 			connectionSD.setAutoCommit(true);
-			
-			if(fileName != null) {  // Save the file				
-	            writePdf(request, survey.displayName, pdfItem, survey.p_id);				
-			} else {
-				// Try to delete the template file if it exists
-				delPdf(request, survey.displayName, survey.p_id);
-			}
-			
-			// If the project id has changed update the project in the upload events so that the monitor will still show all events
-			if(originalProjectId != survey.p_id) {
-				GeneralUtilityMethods.updateUploadEvent(connectionSD, survey.p_id, sId);
-			}
-			
-			// If the display name or project id has changed rename template files
-			if((originalDisplayName != null && survey.displayName != null && !originalDisplayName.equals(survey.displayName)) 
-					|| originalProjectId != survey.p_id) {
-		
-				// Rename files
-				String basePath = GeneralUtilityMethods.getBasePath(request); 	// Get base path to files
-				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, originalProjectId, survey.p_id);
-			}
 			
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"sql error", e);
-		    response = Response.serverError().entity(e.getMessage()).build();
 		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception loading settings", e);
-		    response = Response.serverError().entity(e.getMessage()).build();
 		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
-			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
-			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
+			if (pstmtNotRequired != null) try {pstmtNotRequired.close();} catch (SQLException e) {}
+			if (pstmtRequired != null) try {pstmtRequired.close();} catch (SQLException e) {}
 			if (pstmtChangeLog != null) try {pstmtChangeLog.close();} catch (SQLException e) {}
+			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
@@ -864,7 +799,6 @@ public class Surveys extends Application {
 			}
 			
 		}
-*/
 
 		return response;
 	}

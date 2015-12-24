@@ -116,6 +116,9 @@ define({
 	"c_vector_style": "Vector Style",
 	"c_portrait": "Portrait",
 	"c_landscape": "Landscape",
+	"c_tools": "Tools",
+	"c_required": "Mark Required",
+	"c_not_required": "Mark Not Required",
 	
 	// File Types
 	"ft": "File Type",

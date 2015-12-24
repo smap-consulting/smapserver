@@ -1384,6 +1384,7 @@ public class SurveyManager {
 		PreparedStatement pstmtDependent = null;
 		PreparedStatement pstmtReadonly = null;
 		PreparedStatement pstmtGetQuestionId = null;
+		PreparedStatement pstmtGetQuestionDetails = null;
 		
 		try {
 		
@@ -1397,17 +1398,44 @@ public class SurveyManager {
 				if(ci.property.qType != null && ci.property.qType.equals("begin repeat") && 
 						ci.property.prop.equals("calculation")) {
 					
-					String sqlGetQuestionId = "select q_id from question where trim(path) = ? and f_id in "
-							+ "(select f_id from question where q_id = ?);";
-					pstmtGetQuestionId = sd.prepareStatement(sqlGetQuestionId);
-					pstmtGetQuestionId.setString(1, ci.property.repeat_path.trim());
-					pstmtGetQuestionId.setInt(2, ci.property.qId);
-					
-					log.info("SQL: Getting question id: " + pstmtGetQuestionId.toString());
-					
-					ResultSet rs = pstmtGetQuestionId.executeQuery();
-					if(rs.next()) {
-						ci.property.qId = rs.getInt(1);
+					if(ci.property.repeat_path != null) {
+						// Existing repeat count question
+						String sqlGetQuestionId = "select q_id from question where trim(path) = ? and f_id in "
+								+ "(select f_id from question where q_id = ?);";
+						pstmtGetQuestionId = sd.prepareStatement(sqlGetQuestionId);
+						pstmtGetQuestionId.setString(1, ci.property.repeat_path.trim());
+						pstmtGetQuestionId.setInt(2, ci.property.qId);
+						
+						log.info("SQL: Getting question id: " + pstmtGetQuestionId.toString());
+						
+						ResultSet rs = pstmtGetQuestionId.executeQuery();
+						if(rs.next()) {
+							ci.property.qId = rs.getInt(1);
+						}
+					} else {
+						// Create a new repeat count question
+						
+						// Get details from the begin repeat question
+						String sqlGetQuestionDetails = "select f_id, qname, path, seq from question where q_id = ?;";
+						pstmtGetQuestionDetails = sd.prepareStatement(sqlGetQuestionDetails);
+						pstmtGetQuestionDetails.setInt(1, ci.property.qId);
+						
+						log.info("SQL: Getting question details: " + pstmtGetQuestionDetails.toString());
+						
+						ResultSet rs = pstmtGetQuestionDetails.executeQuery();
+						if(rs.next()) {
+							int fId = rs.getInt(1);
+							String repeatName = rs.getString(2) + "_count";
+							String repeatsPath = rs.getString(3) + "_count";
+							int seq = rs.getInt(4);		
+							
+							// Create the calculation question - leave calculation empty to be updated later
+							QuestionManager qm = new QuestionManager();
+							int newQId = qm.createRepeatCountQuestion(sd, fId, seq, repeatName, null, repeatsPath );
+							
+							ci.property.qId = newQId;
+						}
+						
 					}
 				}
 				
@@ -1441,7 +1469,7 @@ public class SurveyManager {
 			
 					// Create prepared statements, one for the case where an existing value is being updated
 					String sqlProperty1 = "update question set " + property + " = ? " +
-							"where q_id = ? and (trim(" + property + ") = ? " +
+							"where q_id = ? and (" + property + " = ? " +
 							"or " + property + " is null) ";
 					
 					if(onlyIfNotPublished) {
@@ -1555,6 +1583,7 @@ public class SurveyManager {
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
 			try {if (pstmtReadonly != null) {pstmtReadonly.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (SQLException e) {}
 		
 		}
 	

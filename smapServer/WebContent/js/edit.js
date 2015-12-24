@@ -188,6 +188,14 @@ $(document).ready(function() {
 		$('#editLanguageModal').modal("show");
 	});
 	
+	$('#m_required').off().click(function() {
+		setAllRequired(true);
+	});
+	
+	$('#m_not_required').off().click(function() {
+		setAllRequired(false);
+	});
+	
 	$('#addLanguage').off().click(function() {
 		gTempLanguages.push("");
 		updateLanguageView();
@@ -442,6 +450,35 @@ $(document).ready(function() {
 	});
 	
 });
+
+/*
+ * Set all the questions to either required or not required
+ */
+function setAllRequired(required) {
+	
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  contentType: "application/json",
+		  dataType: "json",
+		  url: "/surveyKPI/surveys/set_required/" + gSId + "/" + (required ? "true" : "false"),
+			success: function(data) {
+				removeHourglass();
+				getSurveyDetails(surveyDetailsDone);
+				var msg = "Questions set as " + (required ? "required" : "not required");
+				bootbox.alert(msg);
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					var msg = "Error: Failed to set questions as " + (required ? "required" : "not required") + " " + xhr.responseText;
+					alert(msg);
+				}
+			}
+	});
+}
 
 //Set up question type dialog
 function setupQuestionTypes($elem, columns, draggable) {
@@ -1257,6 +1294,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		for(i = 0; i < forms.length; i++) {
 			if(forms[i].parentFormIndex === formIndex && forms[i].parentQuestionIndex === itemIndex) {
 				repeat_path = forms[i].repeat_path;
+				break;
 			}
 		}
 	}

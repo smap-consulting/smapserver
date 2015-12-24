@@ -495,10 +495,10 @@ define([
 		if(numberChanges === 0) {
 			globals.changes = [];
 			$('.m_save_survey').addClass("disabled").attr("disabled", true).find('.badge').html(numberChanges);
-			$('.m_languages').removeClass("disabled").attr("disabled", false);
+			$('.m_languages,#m_required,#m_not_required').closest('li').removeClass("disabled").attr("disabled", false);
 		} else {
 			$('.m_save_survey').find('.badge').html(numberChanges);
-			$('.m_languages').addClass("disabled").attr("disabled", true);
+			$('.m_languages,#m_required,#m_not_required').closest('li').addClass("disabled").attr("disabled", true);
 			$('.m_validate').removeClass("disabled").attr("disabled", false);
 			if(numberIssues("error") === 0) {
 				$('.m_save_survey').removeClass("disabled").attr("disabled", false);

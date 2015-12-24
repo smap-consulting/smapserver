@@ -212,6 +212,10 @@ public class QuestionManager {
 					q.visible = false;
 				}
 				
+				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
+				// as the editor expects
+				GeneralUtilityMethods.cleanQuestionSequences(sd, q.fId);
+				
 				// Update sequence numbers of questions after the question to be inserted
 				pstmtUpdateSeq.setInt(1, q.fId);
 				pstmtUpdateSeq.setInt(2, q.seq);
@@ -291,36 +295,18 @@ public class QuestionManager {
 					rs.next();
 					int qId = rs.getInt(1);
 					String repeatsPath = null;
+					String repeatName = null;
+					String convertedCalculation = null;
 					
 					if(q.repeats != null && q.repeats.trim().length() > 0) {
 						// Create a question to hold the repeat count calculation
 
 						repeatsPath = q.path + "_count";
-						
-						pstmtInsertQuestion.setInt(1, q.fId );
-						pstmtInsertQuestion.setInt(2, 0);			// List id
-						pstmtInsertQuestion.setInt(3, q.seq );
-						pstmtInsertQuestion.setString(4, q.name + "_count" );		// Question name
-						pstmtInsertQuestion.setString(5, q.name + "_count" );		// Column name
-						pstmtInsertQuestion.setString(6, "string" );				// Type
-						pstmtInsertQuestion.setString(7, null );
-						pstmtInsertQuestion.setString(8, null );
-						pstmtInsertQuestion.setString(9, "user" );
-						pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false));
-						pstmtInsertQuestion.setString(11, null );
-						pstmtInsertQuestion.setString(12, null);
-						pstmtInsertQuestion.setBoolean(13, false);	// visible
-						pstmtInsertQuestion.setString(14, repeatsPath);
-						pstmtInsertQuestion.setBoolean(15, false); 	// read only
-						pstmtInsertQuestion.setString(16, null);	// Relevant
-						pstmtInsertQuestion.setString(17, null);	// Constraint
-						pstmtInsertQuestion.setString(18, null);	// Constraint message
-						pstmtInsertQuestion.setBoolean(19, true);	// repeat count
-						
-						log.info("Insert repeat count question: " + pstmtInsertQuestion.toString());
-						pstmtInsertQuestion.executeUpdate();
-					}
-					
+						repeatName = q.name + "_count";
+						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
+						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
+			
+					}				
 					
 					// Create the sub form
 					String tableName = "s" + sId + "_" + q.name;
@@ -354,6 +340,64 @@ public class QuestionManager {
 			try {if (pstmtGetOldQuestions != null) {pstmtGetOldQuestions.close();}} catch (SQLException e) {}
 		}
 		
+	}
+	
+	/*
+	 * Create a repeat cont question
+	 */
+	public int createRepeatCountQuestion(
+			Connection sd,
+			int fId, 
+			int seq, 
+			String repeatName, 
+			String convertedCalculation, 
+			String repeatsPath) throws SQLException {
+		
+		int qId = 0;
+		
+		String sql = "insert into question ("
+				+ "q_id, "
+				+ "f_id, "
+				+ "seq, "
+				+ "qname, "
+				+ "column_name, "
+				+ "qtype, "
+				+ "source, "
+				+ "calculate, "
+				+ "visible, "
+				+ "path, "
+				+ "readonly, "
+				+ "repeatcount"
+				+ ") " 
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, 'string', 'user', ? , 'false', ?, 'false', 'true');";
+		
+		PreparedStatement pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+		
+		try {
+			pstmt.setInt(1, fId );
+			pstmt.setInt(2, seq );
+			pstmt.setString(3, repeatName );		// Question name
+			pstmt.setString(4, repeatName );		// Column name
+			pstmt.setString(5, convertedCalculation);
+			pstmt.setString(6, repeatsPath);
+			
+			log.info("Insert repeat count question: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+			// Get the questionId of the new question
+			ResultSet rs = pstmt.getGeneratedKeys();
+			rs.next();
+			qId = rs.getInt(1);
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+	
+		}
+		
+		return qId;
 	}
 	
 	/*
@@ -616,7 +660,8 @@ public class QuestionManager {
 		
 		try {	
 			
-			// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time as the editor expects
+			// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
+			// as the editor expects
 			GeneralUtilityMethods.cleanQuestionSequences(sd, q.fId);
 			
 			boolean moveWithinList = q.fId == q.sourceFormId;
