@@ -2,6 +2,8 @@ package model;
 
 import java.util.ArrayList;
 
+import org.smap.sdal.model.MediaItem;
+
 /*
 This file is part of SMAP.
 

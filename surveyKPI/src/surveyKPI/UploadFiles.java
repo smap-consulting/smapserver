@@ -38,6 +38,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.QuestionManager;
@@ -48,8 +49,6 @@ import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import utilities.MediaInfo;
 
 import java.io.File;
 import java.io.IOException;

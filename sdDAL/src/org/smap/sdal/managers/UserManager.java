@@ -1,14 +1,23 @@
 package org.smap.sdal.managers;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.commons.fileupload.FileItem;
+import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
@@ -32,6 +41,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
  ******************************************************************************/
 
+/*
+ * This class supports access to User and Organsiation information in the database
+ */
 public class UserManager {
 	
 	private static Logger log =

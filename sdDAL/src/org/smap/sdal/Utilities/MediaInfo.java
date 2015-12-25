@@ -1,4 +1,4 @@
-package utilities;
+package org.smap.sdal.Utilities;
 
 /*
 This file is part of SMAP.
@@ -38,9 +38,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.MediaItem;
 
-import model.MediaItem;
-import surveyKPI.Dashboard;
 
 public class MediaInfo {
 	
@@ -98,8 +97,10 @@ public class MediaInfo {
 		boolean status = false;
 		
 		try {
-				
-			folderUrl = "media/organisation/" + GeneralUtilityMethods.getOrganisationId(sd, user);
+			if(organisationId == null) {
+				organisationId = String.valueOf(GeneralUtilityMethods.getOrganisationId(sd, user));
+			}
+			folderUrl = "media/organisation/" + organisationId;
 			if(settings) {
 				folderUrl += "/settings";
 			}
