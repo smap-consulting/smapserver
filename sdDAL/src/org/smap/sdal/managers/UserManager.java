@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.fileupload.FileItem;
 import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.User;
@@ -194,7 +195,218 @@ public class UserManager {
 		return user;
 		
 	}
+	
+	/*
+	 * Create a new user Parameters:
+	 *   u: Details of the new user
+	 *   isOrgUser:  Set to true if this user should be an organisational administrator
+	 *   userIdent:  The ident of the user creating this user
+	 *   serverName: The name of the server they are being created on
+	 *   adminName:  The full name of the user creating this user
+	 */
+	public void createUser(Connection sd, 
+			User u, 
+			int o_id, 
+			boolean isOrgUser, 
+			String userIdent,
+			String serverName,
+			String adminName) throws Exception {
+		
+		String sql = "insert into users (ident, realm, name, email, o_id, password) " +
+				" values (?, ?, ?, ?, ?, md5(?));";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			String pwdString = u.ident + ":smap:" + u.password;
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setString(1, u.ident);
+			pstmt.setString(2, "smap");
+			pstmt.setString(3, u.name);
+			pstmt.setString(4, u.email);
+			pstmt.setInt(5, o_id);
+			pstmt.setString(6, pwdString);
+			log.info("SQL: " + sql + ":" + u.ident + ":" + "smap" + ":" + u.name + ":" + u.email + ":" + o_id);
+			pstmt.executeUpdate();
+			
+			int u_id = -1;
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if (rs.next()){
+			    u_id = rs.getInt(1);
+			    insertUserGroupsProjects(sd, u, u_id, isOrgUser);
+			}
+			
+			// Send a notification email to the user
+			if(u.sendEmail) {
+				log.info("Checking to see if email enabled: " + u.sendEmail);
+				EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, userIdent);
+				if(emailServer.smtpHost != null) {
+	
+					log.info("Send email");
+					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, userIdent);
+					
+					String interval = "48 hours";
+					String uuid = UtilityMethodsEmail.setOnetimePassword(sd, pstmt, u.email, interval);
+					ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(sd, pstmt, u.email);
+					String sender = "newuser";
+					EmailManager em = new EmailManager();
+					em.sendEmail(
+							u.email, 
+							uuid, 
+							"newuser", 
+							"Account created on Smap", 
+							null, 
+							sender, 
+							adminName, 
+							interval, 
+							idents, 
+							null, 
+							null,
+							null,
+							organisation.admin_email, 
+							emailServer,
+							serverName);
+				} else {
+					throw new Exception("Email not enabled - set passwords directly");
+				}
+			}
+		}  finally {		
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			
+		}
+	}
+	
+	/*
+	 * Update a users details
+	 */
+	public void updateUser(Connection sd, 
+			User u, 
+			int o_id, 
+			boolean isOrgUser, 
+			String userIdent,
+			String serverName,
+			String adminName) throws Exception {
+		
+	
+		// Check the user is in the same organisation as the administrator doing the editing
+		String sql = "SELECT u.id " +
+				" FROM users u " +  
+				" WHERE u.id = ? " +
+				" AND u.o_id = ?;";				
+		
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, u.id);
+			pstmt.setInt(2, o_id);
+			log.info("SQL: " + sql + ":" + u.id + ":" + o_id);
+			ResultSet resultSet = pstmt.executeQuery();
+		
+			if(resultSet.next()) {
+				
+				// Delete existing user groups
+				if(isOrgUser) {
+					sql = "delete from user_group where u_id = ?;";
+				} else {
+					sql = "delete from user_group where u_id = ? and g_id != 4;";		// Cannot change super user group
+				}
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL: " + sql + ":" + u.id);
+				pstmt.executeUpdate();
+				
+				// Delete existing user projects
+				sql = "delete from user_project where u_id = ?;";
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL: " + sql + ":" + u.id);
+				pstmt.executeUpdate();
+				
+				// update existing user
+				System.out.println("password:" + u.password);
+				String pwdString = null;
+				if(u.password == null) {
+					// Do not update the password
+					sql = "update users set " +
+							" ident = ?, " +
+							" realm = ?, " +
+							" name = ?, " + 
+							" email = ? " +
+							" where " +
+							" id = ?;";
+				} else {
+					// Update the password
+					sql = "update users set " +
+							" ident = ?, " +
+							" realm = ?, " +
+							" name = ?, " + 
+							" email = ?, " +
+							" password = md5(?) " +
+							" where " +
+							" id = ?;";
+					
+					pwdString = u.ident + ":smap:" + u.password;
+				}
+			
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setString(1, u.ident);
+				pstmt.setString(2, "smap");
+				pstmt.setString(3, u.name);
+				pstmt.setString(4, u.email);
+				if(u.password == null) {
+					pstmt.setInt(5, u.id);
+				} else {
+					pstmt.setString(5, pwdString);
+					pstmt.setInt(6, u.id);
+				}
+				
+				log.info("SQL: " + sql + ":" + u.ident + ":" + "smap");
+				pstmt.executeUpdate();
+			
+				// Update the groups and projects
+				insertUserGroupsProjects(sd, u, u.id, isOrgUser);
+	
+			}
+		} finally {		
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			
+		}
+	}
 
 
+	private void insertUserGroupsProjects(Connection conn, User u, int u_id, boolean isOrgUser) throws SQLException {
+
+		String sql;
+		PreparedStatement pstmt = null;
+		
+		log.info("Update groups and projects user id:" + u_id);
+		
+		for(int j = 0; j < u.groups.size(); j++) {
+			UserGroup g = u.groups.get(j);
+			if(g.id != 4 || isOrgUser) {
+				sql = "insert into user_group (u_id, g_id) values (?, ?);";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.setInt(1, u_id);
+				pstmt.setInt(2, g.id);
+				log.info("SQL: " + sql + ":" + u_id + ":" + g.id);
+				pstmt.executeUpdate();
+			}
+		}
+			
+		for(int j = 0; j < u.projects.size(); j++) {
+			Project p = u.projects.get(j);
+			sql = "insert into user_project (u_id, p_id) values (?, ?);";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, u_id);
+			pstmt.setInt(2, p.id);
+			log.info("SQL: " + sql + ":" + u_id + ":" + p.id);
+			pstmt.executeUpdate();
+		}
+	}
 	
 }

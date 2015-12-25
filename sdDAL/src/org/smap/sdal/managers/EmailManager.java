@@ -84,7 +84,7 @@ public class EmailManager {
 			String serverName) throws Exception  {
 		
 		if(emailServer.smtpHost == null) {
-			throw new Exception("smtp_host not available");
+			throw new Exception("Cannot send email, smtp_host not available");
 		}
 		
 		RecipientType rt = null;
@@ -243,7 +243,7 @@ public class EmailManager {
 		    
 		} catch(MessagingException me) {
 			log.log(Level.SEVERE, "Messaging Exception");
-			throw new Exception(me.getMessage());
+			throw new Exception("Cannot send email, " + me.getMessage());
 		}
 		
 		

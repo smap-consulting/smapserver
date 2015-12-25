@@ -43,6 +43,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
+import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
@@ -455,7 +456,7 @@ public class UserList extends Application {
 			connectionSD.setAutoCommit(false);
 			
 			/*
-			 * Get the organisation and user name
+			 * Get the organisation and name of the user making the request
 			 */
 			sql = "SELECT u.o_id, u.name " +
 					" FROM users u " +  
@@ -477,148 +478,24 @@ public class UserList extends Application {
 						u.email = null;
 					}
 					
+					UserManager um = new UserManager();
 					if(u.id == -1) {
 						// New user
-						
-						sql = "insert into users (ident, realm, name, email, o_id, password) " +
-								" values (?, ?, ?, ?, ?, md5(?));";
-						
-						String pwdString = u.ident + ":smap:" + u.password;
-						pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-						pstmt.setString(1, u.ident);
-						pstmt.setString(2, "smap");
-						pstmt.setString(3, u.name);
-						pstmt.setString(4, u.email);
-						pstmt.setInt(5, o_id);
-						pstmt.setString(6, pwdString);
-						log.info("SQL: " + sql + ":" + u.ident + ":" + "smap" + ":" + u.name + ":" + u.email + ":" + o_id);
-						pstmt.executeUpdate();
-						
-						int u_id = -1;
-						ResultSet rs = pstmt.getGeneratedKeys();
-						if (rs.next()){
-						    u_id = rs.getInt(1);
-						    insertUserGroupsProjects(connectionSD, u, u_id, isOrgUser);
-						}
-						
-						// Send a notification email to the user
-						if(u.sendEmail) {
-							log.info("Checking to see if email enabled: " + u.sendEmail);
-							EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, null, request.getRemoteUser());
-							if(emailServer.smtpHost != null) {
+						String serverName = request.getServerName();
+						um.createUser(connectionSD, u, o_id,
+								isOrgUser,
+								request.getRemoteUser(),
+								request.getServerName(),
+								adminName);
 
-								log.info("Send email");
-								Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
-								
-								String interval = "48 hours";
-								String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, u.email, interval);
-								ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, u.email);
-								String sender = "newuser";
-								EmailManager em = new EmailManager();
-								em.sendEmail(
-										u.email, 
-										uuid, 
-										"newuser", 
-										"Account created on Smap", 
-										null, 
-										sender, 
-										adminName, 
-										interval, 
-										idents, 
-										null, 
-										null,
-										null,
-										organisation.admin_email, 
-										emailServer,
-										request.getServerName());
-							} else {
-								throw new Exception("Email not enabled - set passwords directly");
-							}
-						}
 								
 					} else {
 						// Existing user
-						
-						// Check the user is in the same organisation as the administrator doing the editing
-						sql = "SELECT u.id " +
-								" FROM users u " +  
-								" WHERE u.id = ? " +
-								" AND u.o_id = ?;";				
-									
-						pstmt = connectionSD.prepareStatement(sql);
-						pstmt.setInt(1, u.id);
-						pstmt.setInt(2, o_id);
-						log.info("SQL: " + sql + ":" + u.id + ":" + o_id);
-						resultSet = pstmt.executeQuery();
-						
-						if(resultSet.next()) {
-							
-							// Delete existing user groups
-							if(isOrgUser) {
-								sql = "delete from user_group where u_id = ?;";
-							} else {
-								sql = "delete from user_group where u_id = ? and g_id != 4;";		// Cannot change super user group
-							}
-							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setInt(1, u.id);
-							log.info("SQL: " + sql + ":" + u.id);
-							pstmt.executeUpdate();
-							
-							// Delete existing user projects
-							sql = "delete from user_project where u_id = ?;";
-							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setInt(1, u.id);
-							log.info("SQL: " + sql + ":" + u.id);
-							pstmt.executeUpdate();
-							
-							// update existing user
-							System.out.println("password:" + u.password);
-							String pwdString = null;
-							if(u.password == null) {
-								// Do not update the password
-								sql = "update users set " +
-										" ident = ?, " +
-										" realm = ?, " +
-										" name = ?, " + 
-										" email = ? " +
-										" where " +
-										" id = ?;";
-							} else {
-								// Update the password
-								sql = "update users set " +
-										" ident = ?, " +
-										" realm = ?, " +
-										" name = ?, " + 
-										" email = ?, " +
-										" password = md5(?) " +
-										" where " +
-										" id = ?;";
-								
-								pwdString = u.ident + ":smap:" + u.password;
-							}
-						
-							try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setString(1, u.ident);
-							pstmt.setString(2, "smap");
-							pstmt.setString(3, u.name);
-							pstmt.setString(4, u.email);
-							if(u.password == null) {
-								pstmt.setInt(5, u.id);
-							} else {
-								pstmt.setString(5, pwdString);
-								pstmt.setInt(6, u.id);
-							}
-							
-							log.info("SQL: " + sql + ":" + u.ident + ":" + "smap");
-							pstmt.executeUpdate();
-						
-							// Update the groups and projects
-							insertUserGroupsProjects(connectionSD, u, u.id, isOrgUser);
-			
-						}
+						um.updateUser(connectionSD, u, o_id,
+								isOrgUser,
+								request.getRemoteUser(),
+								request.getServerName(),
+								adminName);
 					}
 				}
 		
@@ -693,35 +570,7 @@ public class UserList extends Application {
 		
 	}
 	
-	private void insertUserGroupsProjects(Connection conn, User u, int u_id, boolean isOrgUser) throws SQLException {
 
-		String sql;
-		PreparedStatement pstmt = null;
-		
-		log.info("Update groups and projects user id:" + u_id);
-		
-		for(int j = 0; j < u.groups.size(); j++) {
-			UserGroup g = u.groups.get(j);
-			if(g.id != 4 || isOrgUser) {
-				sql = "insert into user_group (u_id, g_id) values (?, ?);";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setInt(1, u_id);
-				pstmt.setInt(2, g.id);
-				log.info("SQL: " + sql + ":" + u_id + ":" + g.id);
-				pstmt.executeUpdate();
-			}
-		}
-			
-		for(int j = 0; j < u.projects.size(); j++) {
-			Project p = u.projects.get(j);
-			sql = "insert into user_project (u_id, p_id) values (?, ?);";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, u_id);
-			pstmt.setInt(2, p.id);
-			log.info("SQL: " + sql + ":" + u_id + ":" + p.id);
-			pstmt.executeUpdate();
-		}
-	}
 	
 	/*
 	 * Delete users
