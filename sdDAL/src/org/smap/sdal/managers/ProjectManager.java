@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -99,6 +100,51 @@ public class ProjectManager {
 		
 	}
 
-
+	/*
+	 * Create a new project
+	 */
+	public void createProject(
+			Connection sd, 
+			Project p, 
+			int o_id, 
+			int u_id, 
+			String userIdent) throws SQLException {
+		
+		String sql = "insert into project (name, description, o_id, changed_by, changed_ts) " +
+				" values (?, ?, ?, ?, now());";
+		int p_id = 0;
+		
+		PreparedStatement pstmt = null;
+		try {
+		
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setString(1, p.name);
+			pstmt.setString(2, p.desc);
+			pstmt.setInt(3, o_id);
+			pstmt.setString(4, userIdent);
+			log.info("Insert project: " + pstmt.toString());
+			pstmt.executeUpdate();
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if(rs.next()) {
+				p_id = rs.getInt(1);
+			}
+			pstmt.close();
+		
+		if(p_id > 0) {
+			// Add the user to the new project by default
+			sql = "insert into user_project (u_id, p_id) " +
+					" values (?, ?);";
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, u_id);
+			pstmt.setInt(2, p_id);
+			log.info("Add the user to the project " + pstmt.toString());
+			pstmt.executeUpdate();
+			pstmt.close();
+		}
+		} finally {		
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			
+		}
+	}
 	
 }

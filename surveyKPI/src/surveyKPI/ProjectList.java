@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ProjectManager;
 import org.smap.sdal.model.Project;
 
 import com.google.gson.Gson;
@@ -211,43 +212,19 @@ public class ProjectList extends Application {
 				o_id = resultSet.getInt(1);
 				u_id = resultSet.getInt(2);
 				
+				ProjectManager pm = new ProjectManager();
+				
 				for(int i = 0; i < pArray.size(); i++) {
 					Project p = pArray.get(i);
+					
 					if(p.id == -1) {
 						
 						// New project
-						connectionSD.setAutoCommit(false);
-						
-						sql = "insert into project (name, description, o_id, changed_by, changed_ts) " +
-								" values (?, ?, ?, ?, now());";
-						
-						try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
-						pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-						pstmt.setString(1, p.name);
-						pstmt.setString(2, p.desc);
-						pstmt.setInt(3, o_id);
-						pstmt.setString(4, request.getRemoteUser());
-						log.info("Insert project: " + pstmt.toString());
-						pstmt.executeUpdate();
-						ResultSet rs = pstmt.getGeneratedKeys();
-						if(rs.next()) {
-							p_id = rs.getInt(1);
-						}
-						pstmt.close();
-						
-						if(p_id > 0) {
-							// Add the user to the new project by default
-							sql = "insert into user_project (u_id, p_id) " +
-									" values (?, ?);";
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setInt(1, u_id);
-							pstmt.setInt(2, p_id);
-							log.info("Add the user to the project " + pstmt.toString());
-							pstmt.executeUpdate();
-							pstmt.close();
-						}
-						
+						connectionSD.setAutoCommit(false);	
+						pm.createProject(connectionSD, p, o_id, u_id, request.getRemoteUser());
 						connectionSD.commit();
+						connectionSD.setAutoCommit(true);
+						
 					} else {
 						// Existing project
 						
@@ -293,6 +270,7 @@ public class ProjectList extends Application {
 			}
 				
 		} catch (SQLException e) {
+			try {connectionSD.rollback();} catch (Exception ex) {}
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			if(state.startsWith("23")) {
@@ -303,16 +281,11 @@ public class ProjectList extends Application {
 			}
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {connectionSD.setAutoCommit(true);} catch (SQLException e1) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
 					connectionSD.close();
 					connectionSD = null;
 				}

@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Registration</title>
+
+	<link rel="shortcut icon" href="favicon.ico" />
+	<link rel="stylesheet" href="css/normalize.css" />
+	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/bootstrapValidator.min.css" />
+	
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+	
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+	<script src="js/libs/modernizr.js"></script>
+	<script data-main="js/register" src="js/libs/require.js"></script>
+	
+</head>
+<body>
+
+<header class="navbar navbar-default navbar-static-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a href="#" class="navbar-brand">
+      	<img src="/images/logo.png">
+     	 <span class="thick">SMAP</span> Server
+      </a>
+    </div>
+		
+  </div>
+</header>
+
+
+<div class="page-header text-center">
+    <h1>Registration form</h1>
+</div>
+
+<div class="container">
+	<div class="row">
+		<form role="form" method="POST" action="" class="form-horizontal" id="registerForm">
+       	
+                	<div class="form-group">
+                    	<label class="col-lg-3 control-label" for="org_name">Organisation Name</label>
+	                    <div class="col-lg-5">
+	                        <input type="text" class="form-control" name="org_name" id="org_name" required>
+	                   
+	                    </div>
+                	</div>
+
+            
+                <div class="form-group">
+                    <label class="col-lg-3 control-label" for="admin_name">Your Name</label>
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" name="admin_name" id="admin_name" required>
+                    </div>
+                </div>
+                
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Your email:</label>
+	        		<div class="col-lg-5">
+	            		<input id="admin_email" class="form-control" name="email" type="email"
+	                		data-bv-emailaddress-message="The value is not a valid email address" />
+	        		</div>
+	       		</div>
+                
+                <div class="form-group">
+                    	<label for="website" class="col-lg-3 control-label">Organisation Website</label>
+	                    <div class="col-lg-5">
+	                        <input type="url" class="form-control" name="website" id="website">
+	                    </div>
+                </div>
+                
+                <!--  
+                <div class="form-group">
+                    <label for="InputMessage">Description class="col-lg-3 control-label"</label>
+                    <div class="col-lg-5">
+                        <textarea name="InputMessage" id="description" class="form-control" rows="5"></textarea>
+                    </div>
+                </div>
+                -->
+                
+                <div class="form-group">
+                	<label for="tandc" class="col-lg-3 control-label">Terms</label>
+                	<div id="tandc" class="col-lg-5" >
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+    text text text text text text text text text
+      text text text text text text text text text
+        text text text text text text text text text
+          text text text text text text text text text
+            text text text text text text text text text
+              text text text text text text text text text
+                text text text text text text text text text
+                 text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+    text text text text text text text text text
+      text text text text text text text text text
+        text text text text text text text text text
+          text text text text text text text text text
+            text text text text text text text text text
+              text text text text text text text text text
+                text text text text text text text text text
+                 text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+    text text text text text text text text text
+      text text text text text text text text text
+        text text text text text text text text text
+          text text text text text text text text text
+            text text text text text text text text text
+              text text text text text text text text text
+                text text text text text text text text text
+                 text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+  text text text text text text text text text
+    text text text text text text text text text
+      text text text text text text text text text
+        text text text text text text text text text
+          text text text text text text text text text
+            text text text text text text text text text
+              text text text text text text text text text
+                text text text text text text text text text
+                </div>
+</div>
+
+               <div class="form-group">
+                   	<label for="accept_tc" class="col-lg-3 control-label">I agree to the terms and conditions stated above</label>
+                    <div class="col-lg-5">
+                       <input type="checkbox" id="accept_tc"/>
+                    </div>
+                </div>
+                
+               	<div class="form-group has-error">
+			    	<div class="col-sm-12 text-center">
+			   			<button id="registerSubmit" type="submit" class="btn btn-default btn-primary" disabled="disabled">Submit</button>
+			   		</div>
+	   			</div>
+            
+		
+	</form>
+
+	</div>
+	</div>
+ 
+        
+	<div class="col-sm-12 text-center">
+		<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+	</div>
+	
+</body>
+</html>

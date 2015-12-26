@@ -15,6 +15,7 @@ define({
 	"m_assign": "Tasks",
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
+	"m_register": "Register",
 	"m_locations": "Locations",
 	"m_section": "Section",
 	"m_notify": "Notifications",

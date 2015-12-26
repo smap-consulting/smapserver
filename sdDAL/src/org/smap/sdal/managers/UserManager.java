@@ -204,7 +204,7 @@ public class UserManager {
 	 *   serverName: The name of the server they are being created on
 	 *   adminName:  The full name of the user creating this user
 	 */
-	public void createUser(Connection sd, 
+	public int createUser(Connection sd, 
 			User u, 
 			int o_id, 
 			boolean isOrgUser, 
@@ -212,6 +212,7 @@ public class UserManager {
 			String serverName,
 			String adminName) throws Exception {
 		
+		int u_id = -1;
 		String sql = "insert into users (ident, realm, name, email, o_id, password) " +
 				" values (?, ?, ?, ?, ?, md5(?));";
 		
@@ -229,7 +230,6 @@ public class UserManager {
 			log.info("SQL: " + sql + ":" + u.ident + ":" + "smap" + ":" + u.name + ":" + u.email + ":" + o_id);
 			pstmt.executeUpdate();
 			
-			int u_id = -1;
 			ResultSet rs = pstmt.getGeneratedKeys();
 			if (rs.next()){
 			    u_id = rs.getInt(1);
@@ -274,6 +274,7 @@ public class UserManager {
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
 			
 		}
+		return u_id;
 	}
 	
 	/*

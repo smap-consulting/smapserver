@@ -134,7 +134,8 @@ public class OrganisationList extends Application {
 					" email_user, " +
 					" email_password, " +
 					" email_port, " +
-					" default_email_content " +
+					" default_email_content, " +
+					" website " +
 					" from organisation " + 
 					" order by name ASC;";			
 						
@@ -166,6 +167,7 @@ public class OrganisationList extends Application {
 				org.email_password = resultSet.getString("email_password");
 				org.email_port = resultSet.getInt("email_port");
 				org.default_email_content = resultSet.getString("default_email_content");
+				org.website = resultSet.getString("website");
 				organisations.add(org);
 			}
 	
@@ -306,11 +308,11 @@ public class OrganisationList extends Application {
 				
 		} catch (SQLException e) {
 			String state = e.getSQLState();
-			log.info("sql state:" + state);
+			log.info("Update Organisation: sql state:" + state);
 			if(state.startsWith("23")) {
-				response = Response.status(Status.CONFLICT).build();
+				response = Response.status(Status.CONFLICT).entity(e.getMessage()).build();
 			} else {
-				response = Response.serverError().build();
+				response = Response.serverError().entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"Error", e);
 			}
 		} catch (FileUploadException ex) {
@@ -423,7 +425,7 @@ public class OrganisationList extends Application {
 				
 		} catch (SQLException e) {
 			String state = e.getSQLState();
-			log.info("sql state:" + state);
+			log.info("Delete organisation: sql state:" + state);
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
@@ -559,7 +561,7 @@ public class OrganisationList extends Application {
 				
 		} catch (SQLException e) {
 			String state = e.getSQLState();
-			log.info("sql state:" + state);
+			log.info("Change organisation. sql state:" + state);
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}

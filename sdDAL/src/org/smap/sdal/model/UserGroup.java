@@ -21,4 +21,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 public class UserGroup {
 	public int id;
 	public String name;
+	
+	public UserGroup() {
+		
+	}
+	
+	public UserGroup(int id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 }

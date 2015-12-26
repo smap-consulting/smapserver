@@ -585,4 +585,11 @@ td.completed, td.submitted {
 	border-color:#ebccd1;
 }
 
+/************************************/
+/* Registration */
+#tandc {
+	height: 100px;
+	border: 1px solid #ccc;
+	overflow: auto;
+}
 

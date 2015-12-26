@@ -82,6 +82,7 @@ public class OrganisationManager {
 				" email_password = ?, " +
 				" email_port = ?, " +
 				" default_email_content = ?, " +
+				" website = ?, " +
 				" changed_by = ?, " + 
 				" changed_ts = now() " + 
 				" where " +
@@ -110,8 +111,9 @@ public class OrganisationManager {
 			pstmt.setString(17, o.email_password);
 			pstmt.setInt(18, o.email_port);
 			pstmt.setString(19, o.default_email_content);
-			pstmt.setString(20, userIdent);
-			pstmt.setInt(21, o.id);
+			pstmt.setString(20, o.website);
+			pstmt.setString(21, userIdent);
+			pstmt.setInt(22, o.id);
 					
 			log.info("Update organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -133,7 +135,7 @@ public class OrganisationManager {
 	/*
 	 * Create a new organisation
 	 */
-	public void createOrganisation(
+	public int createOrganisation(
 			Connection connectionSD,
 			Organisation o,
 			String userIdent,
@@ -143,14 +145,16 @@ public class OrganisationManager {
 			FileItem logoItem
 			) throws SQLException {
 		
+		int o_id = 0;
+		
 		String sql = "insert into organisation (name, company_name, " +
 				"company_address, " +
 				"company_phone, " +
 				"company_email, " +
 				"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
 				"ft_sync_incomplete, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
-				"email_port, default_email_content, changed_ts) " +
-				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+				"email_port, default_email_content, website, changed_ts) " +
+				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 		
 		PreparedStatement pstmt = null;
 		
@@ -176,18 +180,21 @@ public class OrganisationManager {
 			pstmt.setString(18, o.email_password);
 			pstmt.setInt(19, o.email_port);
 			pstmt.setString(20, o.default_email_content);
+			pstmt.setString(21, o.website);
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
+			ResultSet rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+            	o_id = rs.getInt(1);
+            }
+            rs.close();
+            
 			// Save the logo, if it has been passed
-			if(fileName != null) {
-				ResultSet rs = pstmt.getGeneratedKeys();
-	            if (rs.next()) {
-	            	writeLogo(connectionSD, fileName, logoItem, rs.getString(1), basePath, userIdent, requestUrl);
-	            } 
-	            rs.close();
-				
-			}
+			if(fileName != null) {			
+				writeLogo(connectionSD, fileName, logoItem, String.valueOf(o_id), basePath, userIdent, requestUrl);
+	        } 
+	            
 		} catch (SQLException e) {
 			throw e;
 		} finally {
@@ -195,6 +202,8 @@ public class OrganisationManager {
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
 			
 		}
+		
+		return o_id;
 		
 	}
 	

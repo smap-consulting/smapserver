@@ -41,4 +41,5 @@ public class Organisation {
 	public String email_password;
 	public int email_port;
 	public String default_email_content;
+	public String website;
 }

@@ -52,9 +52,7 @@ import java.util.logging.Logger;
 
 @Path("/onetimelogon")
 public class PasswordReset extends Application {
-	
-	Authorise a = new Authorise(null, Authorise.ADMIN);
-	
+		
 	private static Logger log =
 			 Logger.getLogger(PasswordReset.class.getName());
 	
