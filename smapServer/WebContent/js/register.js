@@ -56,6 +56,24 @@ $(document).ready(function() {
         }
     });
     
+    $('#registerForm').bootstrapValidator({
+        feedbackIcons: {
+            valid: 'glyphicon glyphicon-ok',
+            invalid: 'glyphicon glyphicon-remove',
+            validating: 'glyphicon glyphicon-refresh'
+        },
+        fields: {
+            'accept_tc': {
+                validators: {
+                    choice: {
+                        min: 1,
+                        message: 'You must accept the terms and conditions to register'
+                    }
+                }
+            }
+        }
+    });
+    
     
     $('#registerSubmit').click(function(e){
     	e.preventDefault();
