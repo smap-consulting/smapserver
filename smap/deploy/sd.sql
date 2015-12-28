@@ -402,3 +402,4 @@ ALTER TABLE map OWNER TO ws;
 
 -- Upgrade to: 15.12 from 15.11
 alter table organisation add column website text;
+alter table users add column password_reset boolean default false;

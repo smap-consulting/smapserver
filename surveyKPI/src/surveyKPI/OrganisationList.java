@@ -287,7 +287,8 @@ public class OrganisationList extends Application {
 							fileName,
 							requestUrl,
 							basePath,
-							logoItem);
+							logoItem,
+							null);
 					
 						 
 				} else {
@@ -378,15 +379,17 @@ public class OrganisationList extends Application {
 				Organisation o = oArray.get(i);
 				
 				/*
-				 * Ensure that there are no undeleted projects in this organisation
+				 * Ensure that there are no undeleted projects with surveys in this organisation
 				 */
 				sql = "SELECT count(*) " +
-						" FROM project p " +  
-						" WHERE p.o_id = ?;";
+						" from project p, survey s " +  
+						" where p.id = s.p_id " +
+						" and p.o_id = ? " +
+						" and s.deleted = 'false';";
 					
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o.id);
-				log.info("SQL: " + sql + ":" + o.id);
+				log.info("SQL check for projects in an organisation: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
 					int count = resultSet.getInt(1);

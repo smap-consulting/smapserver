@@ -22,7 +22,7 @@ echo "Current Smap Version is $version"
 
 # Apply database patches
 echo "applying patches to survey_definitions"
-sudo -u postgres psql -f ./sd.sql -q -d survey_definitions 2>&1 | grep -v "already exists" | grep -v "duplicate key" | grep -vi "addgeometrycolumn" | grep -v "implicit index" | grep -v "skipping" | grep -v "create unique index" | grep -v CONTEXT
+sudo -u postgres psql -f ./sd.sql -q -d survey_definitions 2>&1 | grep -v "already exists" | grep -v "duplicate key" | grep -vi "addgeometrycolumn" | grep -v "implicit index" | grep -v "skipping" | grep -v "is duplicated" | grep -v "create unique index" | grep -v CONTEXT
 echo "applying patches to results"
 sudo -u postgres psql -f ./results.sql -q -d results 2>&1 | grep -v "already exists"
 
@@ -167,6 +167,11 @@ java -jar version1/patch.jar apply survey_definitions results
 echo "1511" > ~/smap_version
 fi
 
+# version 15.12
+if [ $version -lt "1512" ]
+then
+echo "1512" > ~/smap_version
+fi
 #####################################################################################
 # All versions
 # Copy the new apache configuration files

@@ -144,7 +144,8 @@ public class Register extends Application {
 					null,
 					requestUrl,
 					basePath,
-					null);
+					null,
+					rd.email);
 			
 			/*
 			 * 2. Create the user
@@ -152,6 +153,7 @@ public class Register extends Application {
 			UserManager um = new UserManager();
 			
 			User u = new User();
+			u.name = rd.admin_name;
 			u.company_name = rd.org_name;
 			u.email = rd.email;
 			u.ident = rd.email;

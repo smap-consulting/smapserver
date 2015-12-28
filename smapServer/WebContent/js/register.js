@@ -28,12 +28,14 @@ requirejs.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
+    	bootbox: 'bootbox.min',
        	lang_location: '../'
     },
     shim: {
     	'bootstrap.min': ['jquery'],
     	'bootstrapValidator.min': ['bootstrap.min'],
-    	'app/common': ['jquery']
+    	'app/common': ['jquery'],
+    	'bootbox': ['bootstrap.min']
     }
 });
 
@@ -42,11 +44,13 @@ require([
          'bootstrap.min',
          'bootstrapValidator.min',
          'app/localise',
-         'app/common'
-         ], function($, bootstrap, bv, localise) {
+         'app/common',
+         'bootbox'
+         ], function($, bootstrap, bv, localise, common, bootbox) {
 	
 $(document).ready(function() {
 	
+	window.bootbox = bootbox;
 	
     $('#registerForm').bootstrapValidator({
         feedbackIcons: {
@@ -89,12 +93,12 @@ $(document).ready(function() {
 			  data: { registrationDetails: regString },
 			  success: function(data, status) {
 				  removeHourglass();
-				  alert("Registration accepted.  An email has been sent to " + email + " with a " +
+				  bootbox.alert("Registration accepted.  An email has been sent to " + email + " with a " +
 				  		"link that you can use to set your password.");
-
+				  $('#registerForm')[0].reset();
 			  }, error: function(data, status) {
 				  removeHourglass();
-				  alert("Error: " + data.responseText); 
+				  bootbox.alert("Error: " + data.responseText);
 			  }
 		});
     });

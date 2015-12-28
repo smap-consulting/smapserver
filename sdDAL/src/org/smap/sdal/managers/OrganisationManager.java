@@ -142,10 +142,21 @@ public class OrganisationManager {
 			String fileName,
 			String requestUrl,
 			String basePath,
-			FileItem logoItem
+			FileItem logoItem,
+			String email
 			) throws SQLException {
 		
 		int o_id = 0;
+		
+		String sqlDeleteOrganisation = "delete from organisation where id = ?;";
+		PreparedStatement pstmtDeleteOrganisation = null;
+		
+		String sqlCheckInactive = "select id from organisation "
+				+ "where name = ? "
+				+ "and id not in (select o_id from users where password_reset = 'true' "
+				+ "or email = ?)";		// Make sure user does not have same email to discourage sending of multiple 
+										//  emails to the smame possibly wrong address		
+		PreparedStatement pstmtCheckInactive = null;
 		
 		String sql = "insert into organisation (name, company_name, " +
 				"company_address, " +
@@ -154,11 +165,29 @@ public class OrganisationManager {
 				"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
 				"ft_sync_incomplete, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
 				"email_port, default_email_content, website, changed_ts) " +
-				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
-		
+				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";	
 		PreparedStatement pstmt = null;
 		
 		try {
+			/*
+			 * If there is an existing organisation with the same name then it can be overridden if
+			 * there are no users that have logged in to the organisation.  In that case it is assumed
+			 * to be inactive.
+			 */
+			pstmtCheckInactive = connectionSD.prepareStatement(sqlCheckInactive);
+			pstmtCheckInactive.setString(1,  o.name);
+			pstmtCheckInactive.setString(2,  email);
+			log.info("Check for inactive organisations: " + pstmtCheckInactive.toString());
+			ResultSet rs = pstmtCheckInactive.executeQuery();
+			
+			if(rs.next()) {
+				pstmtDeleteOrganisation = connectionSD.prepareStatement(sqlDeleteOrganisation);
+				pstmtDeleteOrganisation.setInt(1, rs.getInt(1));
+				
+				log.info("SQL delete inactive organisation: " + pstmtDeleteOrganisation.toString());
+				pstmtDeleteOrganisation.executeUpdate();
+			}
+			
 			pstmt = connectionSD.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			pstmt.setString(1, o.name);
 			pstmt.setString(2, o.company_name);
@@ -184,7 +213,7 @@ public class OrganisationManager {
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
-			ResultSet rs = pstmt.getGeneratedKeys();
+			rs = pstmt.getGeneratedKeys();
             if (rs.next()) {
             	o_id = rs.getInt(1);
             }
@@ -200,6 +229,8 @@ public class OrganisationManager {
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			try {if (pstmtCheckInactive != null) {pstmtCheckInactive.close();} } catch (SQLException e) {	}
+			try {if (pstmtDeleteOrganisation != null) {pstmtDeleteOrganisation.close();} } catch (SQLException e) {	}
 			
 		}
 		

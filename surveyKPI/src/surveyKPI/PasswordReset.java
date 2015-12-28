@@ -206,7 +206,7 @@ public class PasswordReset extends Application {
 			String sql = "select ident, name from users where one_time_password = ? and one_time_password_expiry > timestamp 'now'"; 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, pd.onetime);
-			System.out.println("SQL: " + sql + " : " + pd.onetime);
+			System.out.println("SQL set passowrd: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			int count = 0;
@@ -216,7 +216,7 @@ public class PasswordReset extends Application {
 				
 				System.out.println("Updating password for user " + name + " with ident " + ident);
 				
-				sql = "update users set password = md5(?) where one_time_password = ? and ident = ?;";
+				sql = "update users set password = md5(?), password_reset = 'true' where one_time_password = ? and ident = ?;";
 				pstmtUpdate = connectionSD.prepareStatement(sql);
 				String pwdString = ident + ":smap:" + pd.password;
 				pstmtUpdate.setString(1, pwdString);
