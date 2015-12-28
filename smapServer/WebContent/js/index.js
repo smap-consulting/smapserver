@@ -22,6 +22,13 @@ require.config({
     }
 });
 
-require(['jquery', 'bootstrap.min', 'app/localise'], function($, bootstrap, localise) {
+require(['jquery', 'bootstrap.min', 'app/localise', 'app/common'], function($, bootstrap, localise, common) {
 	localise.setlang();
+	
+	/*
+	 * Enable self registration 
+	 */
+	if(isSelfRegistrationServer()) {
+		$('#signup').show();
+	}
  });

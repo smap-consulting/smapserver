@@ -239,6 +239,20 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Throw a 404 exception if this is not a self registration server
+	 */
+	static public void assertSelfRegistrationServer(String host) {
+		System.out.println("Host is: " + host);
+		
+		if(!host.equals("sg.smap.com.au") &&
+				!host.equals("localhost") &&
+				!host.equals("dev.smap.com.au")) {
+			throw new AuthorisationException();
+		}
+		
+	}
+	
+	/*
 	 * Rename template files
 	 */
 	static public void renameTemplateFiles(String oldName, String newName, String basePath, int oldProjectId, int newProjectId ) throws IOException {

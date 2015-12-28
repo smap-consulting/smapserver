@@ -1274,7 +1274,7 @@ function openForm(type) {
 }
 
 /*
- * Return true if thi is a business server
+ * Return true if this is a business server
  */
 function isBusinessServer() {
 	var hostname = location.hostname;
@@ -1286,6 +1286,21 @@ function isBusinessServer() {
 		bs = false;
 	}
 	return bs;
+}
+
+/*
+ * Return true if this is a self registration server
+ */
+function isSelfRegistrationServer() {
+	var hostname = location.hostname;
+	var sr = true;
+	
+	if(hostname !== 'localhost' &&
+			hostname !== 'dev.smap.com.au' &&
+			hostname !== 'sg.smap.com.au') {
+		sr = false;
+	}
+	return sr;
 }
 
 /*

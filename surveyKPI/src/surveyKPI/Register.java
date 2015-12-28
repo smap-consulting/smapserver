@@ -101,6 +101,8 @@ public class Register extends Application {
 		
 		Response response = null;
 		
+		GeneralUtilityMethods.assertSelfRegistrationServer(request.getServerName());
+		
 		RegistrationDetails rd = new Gson().fromJson(registrationDetails, RegistrationDetails.class);
 		
 		System.out.println("Registering a new user: " + rd.email);
