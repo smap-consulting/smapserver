@@ -54,7 +54,7 @@ define([
 			form.maxQuestion++;
 		}
 		
-		selProperty = selProperty || $('#selProperty').val();
+		selProperty = selProperty || globals.gSelProperty;
 		
 		if(addNewButton) {
 			h[++idx] = addNewQuestionButton(false, false, formIndex, undefined, selProperty);
@@ -383,8 +383,8 @@ define([
 	function getFeaturedMarkup(question, type) {
 		var h = [],
 			idx = -1,
-			selProperty = $('#selProperty').val(),
-			selLabel = $('#selProperty option:selected').text(),
+			selProperty = globals.gSelProperty,
+			selLabel = globals.gSelLabel,
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
 			if(selProperty === "required") {		// Add a boolean type
@@ -616,7 +616,7 @@ define([
 			lastRealQuestionId = -1,
 			finalButtonName,
 			groupButtonName,
-			selProperty = $('#selProperty').val();
+			selProperty = globals.gSelProperty;
 		
 		// Set the group counter for this form
 		gGroupStacks[formIndex] = {

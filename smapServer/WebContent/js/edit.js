@@ -131,13 +131,26 @@ $(document).ready(function() {
 
 	/*
 	 * Refresh the view when the selected property changes
-	 */
+	 *
 	$('#selProperty').change(function() {
 		var i;
 	
 		refreshForm();
 		
 	});
+	*/
+	
+	/*
+	 * Refresh the view when the selected property changes
+	 */
+	$('#propSelected').html(globals.gSelLabel);
+	$('#selProperty a').click(function() {
+		$('#propSelected').html($(this).html());
+		globals.gSelLabel = $(this).html();
+		globals.gSelProperty = $(this).data("prop")
+		refreshForm();
+		
+ 	 });
 	
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form

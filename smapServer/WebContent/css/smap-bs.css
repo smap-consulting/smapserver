@@ -207,7 +207,7 @@ tr.deleted td a {
    /* margin-left:-250px; */
     position: fixed;
     overflow-y: auto;
-    top: 150px;
+    top: 55px;
     z-index: 1000;
     transition: all 0.4s ease 0s;
    	border-style: solid;
@@ -225,7 +225,7 @@ tr.deleted td a {
 
 #formList {
 	position: relative;
-	top: 160px;
+	top: 55px;
 }
  #formListHeader {
  	padding-bottom: 0px;

@@ -64,6 +64,8 @@ define(function() {
 		gLanguage2: 0,
 		errors: [],
 		changes: [],
+		gSelProperty: 'label',
+		gSelLabel: 'Question Text',
 		
 		model: new Model()
 

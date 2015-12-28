@@ -25,119 +25,102 @@
 </head>
 <body>
 
-<header class="navbar navbar-default navbar-fixed-top" role="banner">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a href="#" class="navbar-brand">
-      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-     	 Form: <span class="formName"></span>
-      </a>
-    </div>
-	<nav class="collapse navbar-collapse" role="navigation">
-      <ul class="nav navbar-nav navbar-right">
-      	<li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
-            
-            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-            <li class="disabled restrict_role admin_role analyst_role"><a href="#"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
-            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
-            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
-            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
-          
-          </ul>
-        </li> 
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li><a id="c_save" class="m_save_survey" href="#">Save</a></li>
-            <li><a id="m_open" href="#">Open</a></li>
-            <li><a id="m_new" href="#">New</a></li>
-            <li class="disabled"><a id="m_import" href="#">Import</a>
-            <li role="presentation" class="divider"></li>
-            <li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href="#">Validate</a></li>
-            <li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href="#">Languages</a></li>
-            <li><a id="m_media" href="#">Media</a></li>
-            <li><a id="m_settings" href="#">Settings</a></li>
-          </ul>
-        </li> 
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_tools">Tools</span> <span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li><a id="m_required" class="lang" data-lang="c_required" href="#">Req</a></li>
-            <li><a id="m_not_required" class="lang" data-lang="c_not_required" href="#">NR</a></li>
-            <li role="presentation" class="divider"></li>
-            <li><a id="m_translate" href="translate.html">Translate</a>
-			<li><a id="m_changes" href="/changes.html">Changes</a>
-			<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
-          </ul>
-        </li> 
-      <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="langSelected"></span> <span class="caret"></span></a>
-          <ul id="language" class="dropdown-menu language_list" role="menu">
-          </ul>
-        </li> 
-        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
-        		<span class="lang" data-lang="c_save">Save</span> 
-        		<span class="badge">0</span></a></li>
- 		<li><a type="button" tabindex="-1"  data-lang="c_test" 
- 				class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a></li>
-		
-           
-                      
-	    <!-- 
-	   	<li><a id="m_undo" href="#">Undo</a></li>
-	    <li><a id="m_redo" href="#">Redo</a></li>
-	    -->
-		<li><a class="lang" data-lang="m_help" href="/editorHelp.html" target="_blank">Help</a></li>
-        <li>
-         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-			</a>
-		</li>
-      </ul>
-      	
-	</nav>
-
-  </div>
-</header>
-
-<div id="edit_statusbar">
-	<div class="container-fluid">
-		<div class="panel panel-info header_style">
-					
-			<div id="formListHeader" >
-				<table class="table">
-					<tr>
-						<td class="q_type_col">Type</td>
-						<td class="q_name_col">Name</td>
-						<td class="q_label_col">
-							<select class="form-control" id="selProperty" data-toggle="tooltip"  data-container="body" title="Select the attribute of the questions and choices that you want to edit">
-								<option value="label">Question Text</option>
-								<option value="hint">Question Hint</option>
-								<option value="media">Media</option>
-								<option value="appearance">Appearance</option>
-								<option value="layout">Layout</option>
-								<option value="constraint">Constraint</option>
-								<option value="constraint_msg">Constraint Message</option>
-								<option value="relevant">Relevant</option>
-								<option value="required">Required</option>
-								<!--  <option value="group">Set the end of a group</option> -->
-							</select>
-						</td>
-						<td class="q_icons_col"></td>
-					</tr>
-				</table>	
-			</div>
-		</div>
-	</div>
-</div>
+	<header class="navbar navbar-default navbar-fixed-top" role="banner">
+	  <div class="container-fluid">
+	    <div class="navbar-header">
+	      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+	        <span class="sr-only">Toggle navigation</span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>
+	      <a href="#" class="navbar-brand">
+	      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+	     	 Form: <span class="formName"></span>
+	      </a>
+	    </div>
+		<nav class="collapse navbar-collapse" role="navigation">
+	      <ul class="nav navbar-nav navbar-right">
+	      	<li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
+	          <ul class="dropdown-menu" role="menu">
+	            
+	            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+	            <li class="disabled restrict_role admin_role analyst_role"><a href="#"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
+	            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
+	            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
+	            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
+	          
+	          </ul>
+	        </li> 
+	        <li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
+	          <ul class="dropdown-menu" role="menu">
+	            <li><a id="c_save" class="m_save_survey" href="#">Save</a></li>
+	            <li><a id="m_open" href="#">Open</a></li>
+	            <li><a id="m_new" href="#">New</a></li>
+	            <li class="disabled"><a id="m_import" href="#">Import</a>
+	            <li role="presentation" class="divider"></li>
+	            <li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href="#">Validate</a></li>
+	            <li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href="#">Languages</a></li>
+	            <li><a id="m_media" href="#">Media</a></li>
+	            <li><a id="m_settings" href="#">Settings</a></li>
+	          </ul>
+	        </li> 
+	        <li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_tools">Tools</span> <span class="caret"></span></a>
+	          <ul class="dropdown-menu" role="menu">
+	            <li><a id="m_required" class="lang" data-lang="c_required" href="#">Req</a></li>
+	            <li><a id="m_not_required" class="lang" data-lang="c_not_required" href="#">NR</a></li>
+	            <li role="presentation" class="divider"></li>
+	            <li><a id="m_translate" href="translate.html">Translate</a>
+				<li><a id="m_changes" href="/changes.html">Changes</a>
+				<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
+	          </ul>
+	        </li> 
+	      	<li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="langSelected"></span> <span class="caret"></span></a>
+	          <ul id="language" class="dropdown-menu language_list" role="menu">
+	          </ul>
+	        </li> 
+	        <li class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="propSelected"></span> <span class="caret"></span></a>
+	          <ul id="selProperty" class="dropdown-menu" role="menu">
+	          	<li><a data-prop="label" href="#">Question Text</a></li>
+	          	<li><a data-prop="hint" href="#">Question Hint</a></li>
+	          	<li><a data-prop="appearance" href="#">Appearance</a></li>
+	          	<!--  <li><a data-prop="layout" href="#">Layout</a></li> -->
+	          	<li><a data-prop="constraint" href="#">Constraint</a></li>
+	          	<li><a data-prop="constraint_msg" href="#">Constraint Message</a></li>
+	          	<li><a data-prop="relevant" href="#">Relevant</a></li>
+	          	<li><a data-prop="required" href="#">Required</a></li>
+	          	<!--  <li><a data-value="group" href="#">Set the end of a group</a></li> -->
+	          </ul>
+	        </li> 
+	        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
+	        		<span class="lang" data-lang="c_save">Save</span> 
+	        		<span class="badge">0</span></a></li>
+	 		<li><a type="button" tabindex="-1"  data-lang="c_test" 
+	 				class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a></li>
+			
+	           
+	                      
+		    <!-- 
+		   	<li><a id="m_undo" href="#">Undo</a></li>
+		    <li><a id="m_redo" href="#">Redo</a></li>
+		    -->
+			<li><a class="lang" data-lang="m_help" href="/editorHelp.html" target="_blank">Help</a></li>
+	        <li>
+	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+				</a>
+			</li>
+	      </ul>
+	      	
+		</nav>
+	
+	  </div>
+	</header>
 
 
 	<div id="content">
