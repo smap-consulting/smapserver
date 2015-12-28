@@ -36,7 +36,7 @@
       </button>
       <a href="#" class="navbar-brand">
       	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-     	 Form Builder
+     	 Form: <span class="formName"></span>
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
@@ -72,12 +72,23 @@
           <ul class="dropdown-menu" role="menu">
             <li><a id="m_required" class="lang" data-lang="c_required" href="#">Req</a></li>
             <li><a id="m_not_required" class="lang" data-lang="c_not_required" href="#">NR</a></li>
+            <li role="presentation" class="divider"></li>
+            <li><a id="m_translate" href="translate.html">Translate</a>
+			<li><a id="m_changes" href="/changes.html">Changes</a>
+			<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
           </ul>
         </li> 
- 
-		<li><a id="m_translate" href="translate.html">Translate</a>
-		<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
-		<li><a id="m_changes" href="/changes.html">Changes</a>
+      <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="langSelected"></span> <span class="caret"></span></a>
+          <ul id="language" class="dropdown-menu language_list" role="menu">
+          </ul>
+        </li> 
+        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
+        		<span class="lang" data-lang="c_save">Save</span> 
+        		<span class="badge">0</span></a></li>
+ 		<li><a type="button" tabindex="-1"  data-lang="c_test" 
+ 				class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a></li>
+		
            
                       
 	    <!-- 
@@ -100,15 +111,7 @@
 <div id="edit_statusbar">
 	<div class="container-fluid">
 		<div class="panel panel-info header_style">
-			<div class="row">
-				<div class="col-xs-4"><h4>Form: <span class="formName"></span></h4></div>
-				<div class="col-xs-4">Language: <select class="form-control language_list" id="language" tabindex="-1" data-toggle="tooltip"  data-container="body" title="Select the language to edit"></select></div>
-				<div class="col-xs-4">
-					<a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled"><span class="lang" data-lang="c_save">Save</span> <span class="badge">0</span></a>
-					<a type="button" tabindex="-1"  data-lang="c_test" class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a>
-				</div>
-				
-			</div>			
+					
 			<div id="formListHeader" >
 				<table class="table">
 					<tr>
@@ -464,7 +467,7 @@
 				<div class="container-fluid">
 					<div class = "well">					
 						<div class="table-responsive">
-							<div id="language_list"></div>
+							<div id="language_edit_list"></div>
 						</div>
 						<a id="addLanguage" type="button" class="btn btn-default" aria-label="Add Language">Add</a>
 					</div>

@@ -272,7 +272,7 @@ define([
 				}
 			}
 				
-			change.property.languageName = survey.languages[change.property.language];			// For logging the event
+			change.property.languageName = survey.languages[change.property.language].name;			// For logging the event
 		
 		} else if(change.changeType === "question") {
 			form = survey.forms[change.question.formIndex];
@@ -1153,7 +1153,7 @@ define([
 						container,
 						itemIndex,
 						"item",
-						"Blank Label for language: " + globals.model.survey.languages[i],
+						"Blank Label for language: " + globals.model.survey.languages[i].name,
 						itemType,
 						"warning");
 				valid = false;

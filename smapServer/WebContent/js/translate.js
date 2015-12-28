@@ -143,7 +143,7 @@ function getSurveyList() {
 }
 
 function surveyListDone() {
-	getSurveyDetails(refreshView);
+	getSurveyDetails(refreshView, refreshView);
 }
 
 

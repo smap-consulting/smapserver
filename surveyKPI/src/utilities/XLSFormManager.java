@@ -16,6 +16,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
@@ -484,9 +485,9 @@ public class XLSFormManager {
 		
 		// Add label columns which vary according to the number of languages
 		int labelIndex = 0;
-		for(String language : survey.languages) {
-			cols.add(new Column(colNumber++,"label::" + language, Column.COL_LABEL, labelIndex, "label"));
-			cols.add(new Column(colNumber++,"hint::" + language, Column.COL_HINT, labelIndex, "label"));
+		for(Language language : survey.languages) {
+			cols.add(new Column(colNumber++,"label::" + language.name, Column.COL_LABEL, labelIndex, "label"));
+			cols.add(new Column(colNumber++,"hint::" + language.name, Column.COL_HINT, labelIndex, "label"));
 			labelIndex++;
 		}
 		
@@ -507,10 +508,10 @@ public class XLSFormManager {
 		
 		// Add media columns (Do this as the last columns since these columns are less used
 		labelIndex = 0;
-		for(String language : survey.languages) {
-			cols.add(new Column(colNumber++, "image::" + language, Column.COL_IMAGE, 0, "image"));
-			cols.add(new Column(colNumber++, "video::" + language, Column.COL_VIDEO, 0, "video"));
-			cols.add(new Column(colNumber++, "audio::" + language, Column.COL_AUDIO, 0, "audio"));
+		for(Language language : survey.languages) {
+			cols.add(new Column(colNumber++, "image::" + language.name, Column.COL_IMAGE, 0, "image"));
+			cols.add(new Column(colNumber++, "video::" + language.name, Column.COL_VIDEO, 0, "video"));
+			cols.add(new Column(colNumber++, "audio::" + language.name, Column.COL_AUDIO, 0, "audio"));
 		labelIndex++;
 	}
 		return cols;
@@ -530,8 +531,8 @@ public class XLSFormManager {
 		
 		// Add label columns
 		int labelIndex = 0;
-		for(String language : survey.languages) {
-			cols.add(new Column(colNumber++, "label::" + language, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
+		for(Language language : survey.languages) {
+			cols.add(new Column(colNumber++, "label::" + language.name, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
 		}
 		
 		return cols;

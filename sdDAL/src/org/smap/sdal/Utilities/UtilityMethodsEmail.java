@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Label;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Survey;
@@ -554,7 +555,7 @@ public class UtilityMethodsEmail {
 				// Get label and media
 				if(text_id != null) {
 					pstmt.setInt(1, s.id);
-					pstmt.setString(2, s.languages.get(i));
+					pstmt.setString(2, s.languages.get(i).name);
 					pstmt.setString(3, text_id);
 					//log.info("Get labels: " + pstmt.toString());
 					
@@ -591,7 +592,7 @@ public class UtilityMethodsEmail {
 				// Get hint
 				if(hint_id != null) {
 					pstmt.setInt(1, s.id);
-					pstmt.setString(2, s.languages.get(i));
+					pstmt.setString(2, s.languages.get(i).name);
 					pstmt.setString(3, hint_id);
 					
 					log.info("Get hint: " + pstmt.toString());
@@ -628,7 +629,7 @@ public class UtilityMethodsEmail {
 			ArrayList<Label> labels,
 			String basePath) throws SQLException {
 		
-		ArrayList<String> languages = new ArrayList<String>();
+		ArrayList<Language> languages = new ArrayList<Language>();
 		
 		PreparedStatement pstmt = null;
 		
@@ -652,7 +653,7 @@ public class UtilityMethodsEmail {
 				
 				// Set common values
 				pstmt.setInt(1, sId);
-				pstmt.setString(2, languages.get(i));
+				pstmt.setString(2, languages.get(i).name);
 				
 				System.out.println("$$$$ language: " + languages.get(i));
 				System.out.println("     text: " + l.text);

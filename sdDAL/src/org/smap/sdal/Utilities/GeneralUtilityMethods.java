@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
@@ -1088,24 +1089,27 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get languages from the languages table
 	 */
-	public static ArrayList<String> getLanguages(Connection sd, int sId) throws SQLException {
+	public static ArrayList<Language> getLanguages(Connection sd, int sId) throws SQLException {
 		
 		PreparedStatement pstmtLanguages = null;
-		ArrayList<String> languages = new ArrayList<String> ();
+		ArrayList<Language> languages = new ArrayList<Language> ();
 		
 		try {
-			String sqlLanguages = "select language, seq from language where s_id = ? order by seq asc";
+			String sqlLanguages = "select id, language, seq from language where s_id = ? order by seq asc";
 			pstmtLanguages = sd.prepareStatement(sqlLanguages);
 			
 			pstmtLanguages.setInt(1, sId);
 			ResultSet rs = pstmtLanguages.executeQuery();
 			while(rs.next()) {
-				languages.add(rs.getString(1));
+				languages.add(new Language(rs.getInt(1), rs.getString(2)));
 			}
 			
 			if(languages.size() == 0) {
 				// Survey was loaded from an xlsForm and the languages array was not set, get languages from translations
-				languages = GeneralUtilityMethods.getLanguagesUsedInSurvey(sd, sId);
+				ArrayList<String> languageNames = GeneralUtilityMethods.getLanguagesUsedInSurvey(sd, sId);
+				for(int i = 0; i < languageNames.size(); i++) {
+					languages.add(new Language(-1, languageNames.get(i)));
+				}
 				GeneralUtilityMethods.setLanguages(sd, sId, languages);
 			}
 			
@@ -1122,32 +1126,79 @@ public class GeneralUtilityMethods {
 	/*
 	 * Set the languages in the language table
 	 */
-	public static void setLanguages(Connection sd, int sId, ArrayList<String> languages) throws SQLException {
+	public static void setLanguages(Connection sd, int sId, ArrayList<Language> languages) throws SQLException {
 		
-		PreparedStatement pstmtDelLanguages = null;
-		PreparedStatement pstmtLanguages = null;
+		PreparedStatement pstmtDelete = null;
+		PreparedStatement pstmtInsert = null;
+		PreparedStatement pstmtUpdate = null;
+		PreparedStatement pstmtUpdateTranslations = null;
 		
 		try {
-			String sqlDelLanguages = "delete from language where s_id = ?;";
-			pstmtDelLanguages = sd.prepareStatement(sqlDelLanguages);
+			String sqlDelete = "delete from language where id = ? and s_id = ?;";
+			pstmtDelete = sd.prepareStatement(sqlDelete);
 			
-			String sqlLanguages = "insert into language(s_id, language, seq) values(?, ?, ?);";
-			pstmtLanguages = sd.prepareStatement(sqlLanguages);
+			String sqlInsert = "insert into language(s_id, language, seq) values(?, ?, ?);";
+			pstmtInsert = sd.prepareStatement(sqlInsert);
 			
-			// Delete existing
-			pstmtDelLanguages.setInt(1,sId);
-			pstmtDelLanguages.executeUpdate();
+			String sqlUpdate = "update language "
+					+ "set language = ?, "
+					+ "seq = ? "
+					+ "where id = ? "
+					+ "and s_id = ?";		// Security
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
 			
-			// Insert the new languages
+			String sqlUpdateTranslations = "update translation "
+					+ "set language = ? "
+					+ "where s_id = ? "
+					+ "and language = (select language from language where id = ?);";
+			pstmtUpdateTranslations = sd.prepareStatement(sqlUpdateTranslations);
+			
+			// Process each language in the list
+			int seq = 0;
 			for(int i = 0; i < languages.size(); i++) {
 				
-				String language = languages.get(i);
+				Language language = languages.get(i);
 				
-				pstmtLanguages.setInt(1, sId);
-				pstmtLanguages.setString(2, language);
-				pstmtLanguages.setInt(3, i);
-				
-				pstmtLanguages.executeUpdate();			
+				if(language.deleted) {
+					// Delete language
+					pstmtDelete.setInt(1,language.id);
+					pstmtDelete.setInt(2,sId);
+					
+					log.info("Delete language: " + pstmtDelete.toString());
+					pstmtDelete.executeUpdate();
+					
+				} else if (language.id > 0) {
+					
+					// Update the translations using this language 
+					// (note: for historical reasons the language name is repeated in each translation rather than the language id)
+					pstmtUpdateTranslations.setString(1, language.name);
+					pstmtUpdateTranslations.setInt(2, sId);
+					pstmtUpdateTranslations.setInt(3, language.id);
+					
+					log.info("Update Translations: " + pstmtUpdateTranslations.toString());
+					pstmtUpdateTranslations.executeUpdate();
+					
+					// Update language name
+					pstmtUpdate.setString(1, language.name);
+					pstmtUpdate.setInt(2, seq);
+					pstmtUpdate.setInt(3, language.id);
+					pstmtUpdate.setInt(4, sId);
+					
+					log.info("Update Language: " + pstmtUpdate.toString());
+					pstmtUpdate.executeUpdate();		
+					
+					seq++;
+				} else if (language.id <= 0) {
+					// insert language
+					pstmtInsert.setInt(1, sId);
+					pstmtInsert.setString(2, language.name);
+					pstmtInsert.setInt(3, seq);
+					
+					log.info("Insert Language: " + pstmtInsert.toString());
+					pstmtInsert.executeUpdate();	
+					seq++;
+				}
+					
 			}
 		
 			
@@ -1156,8 +1207,10 @@ public class GeneralUtilityMethods {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
-			try {if (pstmtDelLanguages != null) {pstmtDelLanguages.close();}} catch (SQLException e) {}
-			try {if (pstmtLanguages != null) {pstmtLanguages.close();}} catch (SQLException e) {}
+			try {if (pstmtDelete != null) {pstmtDelete.close();}} catch (SQLException e) {}
+			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
 		}
 
 	}

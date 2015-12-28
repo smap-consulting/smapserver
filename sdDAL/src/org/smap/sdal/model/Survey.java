@@ -29,7 +29,7 @@ public class Survey {
 	public ArrayList<Form> forms_orig = new ArrayList<Form> ();		// Original values so that the client can track changes while editing
 	public HashMap<String, OptionList> optionLists = new HashMap<String, OptionList> ();
 	public HashMap<String, OptionList> optionLists_orig = new HashMap<String, OptionList> ();
-	public ArrayList<String> languages = new ArrayList<String> (); 
+	public ArrayList<Language> languages = new ArrayList<Language> (); 
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
 	public ArrayList<ChangeLog> changes  = new ArrayList<ChangeLog> ();

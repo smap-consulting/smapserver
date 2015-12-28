@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
@@ -314,8 +315,8 @@ public class SurveyManager {
 			fId = rs.getInt(1);
 			
 			// 4. Create default language
-			ArrayList<String> languages = new ArrayList<String> ();
-			languages.add("language");
+			ArrayList<Language> languages = new ArrayList<Language> ();
+			languages.add(new Language(-1, "language"));
 			GeneralUtilityMethods.setLanguages(sd, sId, languages);
 			
 			// 5. Add default property questions
@@ -585,7 +586,7 @@ public class SurveyManager {
 		// Set the default language if it has not previously been set	
 		if(s.def_lang == null) {
 			if(s.languages != null && s.languages.size() > 0) {
-				s.def_lang = s.languages.get(0);
+				s.def_lang = s.languages.get(0).name;
 			} else {
 				s.def_lang = "language";
 			}
@@ -1064,7 +1065,7 @@ public class SurveyManager {
 			pstmtDeleteLabel = connectionSD.prepareStatement(sqlDeleteLabel);
 			
 			 // Get the languages
-			List<String> lang = GeneralUtilityMethods.getLanguages(connectionSD, sId);
+			List<Language> lang = GeneralUtilityMethods.getLanguages(connectionSD, sId);
 			
 			for(ChangeItem ci : changeItemList) {
 			
@@ -1093,7 +1094,7 @@ public class SurveyManager {
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							updateLabel(connectionSD, ci, lang.get(i), pstmtLangOldVal, sId, text_id);
+							updateLabel(connectionSD, ci, lang.get(i).name, pstmtLangOldVal, sId, text_id);
 						}
 					}
 					
@@ -1123,7 +1124,7 @@ public class SurveyManager {
 					} else {
 						// For media update all the languages
 						for(int i = 0; i < lang.size(); i++) {
-							addLabel(connectionSD, ci, lang.get(i), pstmtLangNew, sId, pstmtDeleteLabel, text_id);
+							addLabel(connectionSD, ci, lang.get(i).name, pstmtLangNew, sId, pstmtDeleteLabel, text_id);
 						}
 					}
 				}

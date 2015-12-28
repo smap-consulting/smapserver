@@ -594,12 +594,12 @@ define(function() {
 				
 				label.propType = "text";
 
-				label.element = element;																// done
+				label.element = element;									
 				label.languageName = language;
 				label.allLanguages = false;
 				
-				label.languageName = this.survey.languages[language];			// For logging the event // done
-				var form = this.survey.forms[label.formIdx];											// done
+				label.languageName = this.survey.languages[language].name;			// For logging the event 
+				var form = this.survey.forms[label.formIdx];					
 
 				if(item.text_id) {
 					label.key = item.text_id;

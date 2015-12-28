@@ -1149,7 +1149,7 @@ function getSurveyDetails(callback) {
 				removeHourglass();
 				globals.model.survey = data;
 				globals.model.setSettings();
-				setLanguages(data.languages);
+				setLanguages(data.languages, callback);
 				
 				if(typeof callback == "function") {
 					callback();
@@ -1175,9 +1175,8 @@ function getSurveyDetails(callback) {
 	
 /*
  * Set the languages for the editor
- * Deprecate - when languages were part of settings
  */
-function setLanguages(languages) {
+function setLanguages(languages, languageCallback) {
 	
 	var h = [],
 		idx = -1,
@@ -1193,14 +1192,24 @@ function setLanguages(languages) {
 	}
 
 	for (i = 0; i < languages.length; i++) {
-		h[++idx] = '<option value="';
-			h[++idx] = i;
-			h[++idx] = '">';
-			h[++idx] = languages[i];
-		h[++idx] = '</option>';
+		h[++idx] = '<li>';
+		h[++idx] = '<a data-lang="';
+		h[++idx] = i;
+		h[++idx] = '" href="#">';
+		h[++idx] = languages[i].name;
+		h[++idx] = '</a>';
+		h[++idx] = '</li>';
 	}
+	
+	
 	$lang.empty().append(h.join(""));
-	$(".language_list option[value='" + globals.gLanguage + "']").attr("selected", "selected");
+	$('#langSelected').html(languages[ globals.gLanguage].name);
+	$('.language_list a').click(function() {
+		globals.gLanguage = $(this).data("lang");
+		$('#langSelected').html(languages[ globals.gLanguage].name);
+		languageCallback();
+ 	 });
+	
 	$lang1.val(globals.gLanguage1);
 	$lang2.val(globals.gLanguage2)
 }
@@ -1226,7 +1235,7 @@ function createNewSurvey(name, callback) {
 			globals.gCurrentSurvey = data.id;
 			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
 			
-			setLanguages(data.languages);
+			setLanguages(data.languages, callback);
 			
 			if(typeof callback == "function") {
 				callback();

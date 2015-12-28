@@ -44,6 +44,7 @@ import org.smap.sdal.model.ChangeElement;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.Language;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -318,7 +319,7 @@ public class Surveys extends Application {
 	 */
 	@Path("/save_languages/{sId}")
 	@POST
-	public Response saveLnguages(@Context HttpServletRequest request,
+	public Response saveLanguages(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@FormParam("languages") String languages) { 
 		
@@ -347,11 +348,10 @@ public class Surveys extends Application {
 			/*
 			 * Parse the request
 			 */
-	
-			
-			Type type = new TypeToken<ArrayList<String>>(){}.getType();
+			System.out.println("Lnaguage String: " + languages);
+			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			ArrayList<String> languageList = gson.fromJson(languages, type);
+			ArrayList<Language> languageList = gson.fromJson(languages, type);
 			
 			// Update the languages
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);

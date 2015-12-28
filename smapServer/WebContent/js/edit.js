@@ -197,7 +197,11 @@ $(document).ready(function() {
 	});
 	
 	$('#addLanguage').off().click(function() {
-		gTempLanguages.push("");
+		gTempLanguages.push({
+			id: -1,
+			name: "",
+			deleted: false
+		});
 		updateLanguageView();
 	});
 	
@@ -268,7 +272,7 @@ $(document).ready(function() {
 					removeHourglass();
 					$('#editLanguageModal').modal("hide");
 					globals.model.survey = data;
-					setLanguages(data.languages);
+					setLanguages(data.languages, refreshForm);
 					refreshForm();
 				},
 				error: function(xhr, textStatus, err) {
@@ -287,11 +291,6 @@ $(document).ready(function() {
 		globals.gCurrentSurvey = -1;
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 		getSurveyList();
- 	 });
-	
-	$('.language_list').off().change(function() {
-		globals.gLanguage = $(this).val();
-		refreshForm();
  	 });
 	
 	// Check for changes in settings
@@ -1185,7 +1184,7 @@ function updateSettingsData() {
  */
 function updateLanguageView() {
 	var i,
-		$selector = $('#language_list'),
+		$selector = $('#language_edit_list'),
 		languages = gTempLanguages,
 		h = [],
 		idx = -1;
@@ -1202,35 +1201,37 @@ function updateLanguageView() {
 
 	for(i = 0; i < languages.length; i++) {
 		
-		h[++idx] = '<tr>';
+		if(!languages[i].deleted) {
+			h[++idx] = '<tr>';
+			
+			// name
+			h[++idx] = '<td>';
+			h[++idx] = '<input type="text" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" required class="form-control" value="';
+			h[++idx] = languages[i].name;
+			h[++idx] = '"';
+			h[++idx] = '</td>';
+			
+			// description
+			h[++idx] = '<td>';
+			h[++idx] = '';
+			h[++idx] = '</td>';
+			
 		
-		// name
-		h[++idx] = '<td>';
-		h[++idx] = '<input type="text" data-idx="';
-		h[++idx] = i;
-		h[++idx] = '" required class="form-control" value="';
-		h[++idx] = languages[i];
-		h[++idx] = '"';
-		h[++idx] = '</td>';
+			// actions
+			h[++idx] = '<td>';
 		
-		// description
-		h[++idx] = '<td>';
-		h[++idx] = '';
-		h[++idx] = '</td>';
+			h[++idx] = '<button type="button" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" class="btn btn-default btn-sm rm_language danger">';
+			h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
 		
-	
-		// actions
-		h[++idx] = '<td>';
-	
-		h[++idx] = '<button type="button" data-idx="';
-		h[++idx] = i;
-		h[++idx] = '" class="btn btn-default btn-sm rm_language danger">';
-		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
-	
-		h[++idx] = '</td>';
-		// end actions
-	
-		h[++idx] = '</tr>';
+			h[++idx] = '</td>';
+			// end actions
+		
+			h[++idx] = '</tr>';
+		}
 	}
 	
 	h[++idx] = '</tbody>';
@@ -1240,13 +1241,13 @@ function updateLanguageView() {
 
 	$(".rm_language", $selector).click(function(){
 		var idx = $(this).data("idx");
-		gTempLanguages.splice(idx, 1);
+		gTempLanguages[idx].deleted = true;
 		updateLanguageView();
 	});
 
 	$("input", $selector).change(function(){
 		var idx = $(this).data("idx");
-		gTempLanguages.splice(idx, 1, $(this).val());
+		gTempLanguages[idx].name = $(this).val();
 		updateLanguageView();
 
 	});
