@@ -85,9 +85,10 @@ define([
 				h[++idx] = '<div class="col-xs-8"><div class="row">';
 					
 					// Add question name cell
-					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control" value="';
+					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control has_tt" title="Question Name" value="';
 						h[++idx] = question.name;
 						h[++idx] = '" ';
+						
 						if(question.published) {				// Mark disabled if the question has been published
 							h[++idx] = 'disabled="true" ';
 						}
@@ -145,7 +146,7 @@ define([
 			if(!question.error) {	// Only add the options if the question it self does not have any errors
 				
 				/*
-				 * TODO
+				 * TODO Manage option lists
 				h[++idx] = '<div class="question-controls">';
 					h[++idx] = '<div class="row">';
 						h[++idx] = '<div class="col-md-6"></div>';
@@ -326,7 +327,7 @@ define([
 	
 		for(i = 0; i < types.length; i++) {
 			if(types[i].type === type) {
-				h[++idx] = '<span class="has_tt" title="';
+				h[++idx] = '<span class="has_tt" title="Question type: ';
 				h[++idx] = types[i].name;
 				h[++idx] = '">';
 				if(types[i].glyphicon) {
@@ -536,9 +537,7 @@ define([
 		h[++idx] = list_name;
 		h[++idx] = '">';
 		
-		if(option.error) {
-			h[++idx] = addErrorMsg(option.errorMsg);
-		}
+		h[++idx] = addErrorMsg(option.errorMsg);
 		
 		h[++idx] = '<div class="row">';
 			

@@ -1130,7 +1130,7 @@ define([
 		 * If there were no errors check for warnings
 		 */
 		if(isValid) {	
-			if(item.visible) {
+			if(item.visible || itemType === "option") {
 				isValid = checkBlankLabels(container, itemIndex, itemType, item);
 			}
 		}
@@ -1343,15 +1343,14 @@ define([
 			msg = "",
 			i,
 			errors = globals.errors,
-			item,
-			containerKey;
+			item;
 		
 		if(itemType === "question") {
 			item = survey.forms[container].questions[itemIndex];
-			containerKey = "fid";
+			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else {
 			item = survey.optionLists[container].options[itemIndex];
-			containerKey = "list_name";
+			$changedRow = $('#option_' + container + '_' + itemIndex);
 		}
 
 		for(i = errors.length - 1; i >= 0; i--) {
@@ -1377,15 +1376,16 @@ define([
 	
 		// Update Model
 		item.error = hasError;
-		item.warning - hasWarning;
+		item.warning = hasWarning;
 		item.errorMsg = msg;
 		
 		// Update DOM
+		/*
 		$changedRow = $('#formList').find('li').filter(function(index){
 			var $this = $(this);
 			return $this.data(containerKey) == container && $this.data("id") == itemIndex;
 		});		
-	
+		*/
 		$changedRow.find('.error-msg').html(msg);	// Add message
 		
 		$changedRow.removeClass("error warning");
