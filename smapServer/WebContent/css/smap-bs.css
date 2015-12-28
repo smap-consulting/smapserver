@@ -587,9 +587,9 @@ td.completed, td.submitted {
 
 /************************************/
 /* Registration */
-#tandc {
-	height: 100px;
-	border: 1px solid #ccc;
-	overflow: auto;
+
+#tandc h1 {
+	font-size: 1.5em;
+	font-weight: bold;
 }
 
