@@ -56,8 +56,12 @@ $(document).ready(function() {
         }
     });
     
-    $('#registerForm input').change(function(){
-    	alert("change");
+    $('#registerForm input').keyup(function() {
+    	validateForm();
+    });
+    
+    $('#accept_tc').change(function() {
+    	validateForm();
     });
     
     $('#registerSubmit').click(function(e){
@@ -98,7 +102,33 @@ $(document).ready(function() {
   
 });
 
+/*
+ * Enable or disable the submit button based on the validity of the form
+ */
+function validateForm() {
+	var status = true,
+		hasAccepted = $('#accept_tc').attr("checked"),
+		org_name = $('#org_name').val(),
+		admin_name = $('#admin_name').val(),
+		admin_email = $('#admin_email').val();
+	
+	if(!hasAccepted) {
+		status = false;
+	} else if(!org_name || org_name.trim().length === 0) {
+		status = false;
+	} else if(!admin_name || admin_name.trim().length === 0) {
+		status = false;
+	} else if(!admin_email || admin_email.trim().length === 0) {
+		status = false;
+	}
+	
+	if(status) {
+		$('#registerSubmit').prop("disabled", false);
+	} else {
+		$('#registerSubmit').prop("disabled", true);
+	}
 
+}
 
 
 });
