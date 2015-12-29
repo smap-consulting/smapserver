@@ -344,13 +344,9 @@ define([
 		h[++idx] = '<li>';
 	
 		h[++idx] = '<button button tabindex="-1" id="addnew_optionlist" ';
-		h[++idx] = 'type="button" class="add_choice_list add_final_button btn"';
-
-
-		h[++idx] = '">Add New Choice List'; 
-			
+		h[++idx] = 'type="button" class="add_choice_list add_button add_after_button add_final_button btn">';
+		h[++idx] = 'Add New Choice List'; 	
 		h[++idx] = '</button>';
-		h[++idx] = '</span>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
