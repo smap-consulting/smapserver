@@ -853,10 +853,6 @@ define([
 				}
 				if($changedRow) {
 					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);
-					//$('.mediaProp', $changedRow).off().click(function(){
-					//	var $this = $(this);
-					//	mediaPropSelected($this);
-					//});
 				}
 			}
 		} else if(change.changeType === "question") {
