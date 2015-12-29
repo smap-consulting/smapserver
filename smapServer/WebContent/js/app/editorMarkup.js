@@ -40,7 +40,7 @@ define([
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
-		refreshOptionLists: refreshOptionLists,
+		refreshOptionListControls: refreshOptionListControls,
 		includeQuestion: includeQuestion
 	};
 	
@@ -49,7 +49,7 @@ define([
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
-		globals.hasQuestions = true;
+		globals.gHasItems = true;
 		if(!update) {					// Only increment maxQuestion if a new question is being added
 			form.maxQuestion++;
 		}
@@ -164,7 +164,7 @@ define([
 					h[++idx] = '</div>';
 				h[++idx] = '</div>';
 				*/
-				h[++idx] = addOptions(question, formIndex);
+				h[++idx] = addOptions(question, formIndex, undefined);
 			}
 		} 
 		
@@ -174,6 +174,86 @@ define([
 			h[++idx] = '</div>';
 			h[++idx] = '</li>';
 		}
+		
+		return h.join("");
+	}
+	
+	function addOneOptionList(list_name, addNewButton, selProperty) {
+		
+		var h = [],
+			idx = -1,
+			itemId = "choice_" + list_name;
+		
+		globals.gHasItems = true;
+		
+		selProperty = selProperty || globals.gSelProperty;
+		
+		if(addNewButton) {
+			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		// TODO
+		}
+		
+		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId);
+		h[++idx] = '<div class="panel-heading">';
+			h[++idx] = '<div class="row">';
+				
+				// Add name
+				h[++idx] = '<div class="col-xs-8"><div class="row">';
+					
+					// Add choice name cell
+					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control has_tt" title="List Name" value="';
+						h[++idx] = list_name;
+						h[++idx] = '" ';
+					h[++idx] = 'type="text"></div>';
+
+				h[++idx] = '</div></div>';		// End of name 
+				
+				// Add buttons
+				h[++idx] = '<div class="col-xs-2 q_icons_col">';
+					h[++idx] = '<div class="btn-group">';
+						h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+						h[++idx] = globals.gElementIndex;
+						h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
+						
+						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
+						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
+						h[++idx] = itemId;
+						h[++idx]='"></span>';
+						h[++idx]='</button>';
+					 
+					h[++idx] = '</div>';
+				h[++idx] = '</div>';		// End of button cell
+				h[++idx] = '</div>';		// End of row
+		h[++idx] = '<div id="collapse';
+		h[++idx] = globals.gElementIndex;
+		h[++idx] = '" class="panel-body collapse';
+		h[++idx] = ' selectquestion';
+
+		h[++idx] = '">';
+
+		/*
+		 * TODO Manage option lists
+		h[++idx] = '<div class="question-controls">';
+			h[++idx] = '<div class="row">';
+				h[++idx] = '<div class="col-md-6"></div>';
+				
+				// A control to set option lists
+				h[++idx] = '<div class="col-md-6">';
+					h[++idx] = '<label>Choice List: </label>';
+					h[++idx] = '<div class="input-group">';
+						h[++idx] = '<select class="form-control option-lists">';
+						h[++idx] = getOptionLists();
+						h[++idx] = '</select>';
+						h[++idx] = '<span class="input-group-addon">Edit</span>';
+					h[++idx] = '</div>';
+				h[++idx] = '</div>';
+			h[++idx] = '</div>';
+		h[++idx] = '</div>';
+		*/
+		h[++idx] = addOptions(undefined, undefined, list_name);
+		
+		h[++idx] = '</div>';
+		h[++idx] = '</li>';
+		
 		
 		return h.join("");
 	}
@@ -249,6 +329,26 @@ define([
 				h[++idx] = formName;
 			}
 		}
+		h[++idx] = '</button>';
+		h[++idx] = '</span>';
+		h[++idx] = '</li>';
+		
+		return h.join('');
+	}
+	
+	function addNewOptionListButton() {
+		var h = [],
+			idx = -1,
+			locn;
+		
+		h[++idx] = '<li>';
+	
+		h[++idx] = '<button button tabindex="-1" id="addnew_optionlist" ';
+		h[++idx] = 'type="button" class="add_choice_list add_final_button btn"';
+
+
+		h[++idx] = '">Add New Choice List'; 
+			
 		h[++idx] = '</button>';
 		h[++idx] = '</span>';
 		h[++idx] = '</li>';
@@ -472,14 +572,22 @@ define([
 	/*
 	 * Show the options
 	 */
-	function addOptions(question, formIndex) {
+	function addOptions(question, formIndex, list_name) {
 		var survey = globals.model.survey,
-			optionList = survey.optionLists[question.list_name],
+			optionList,
+			questionName,
 			oSeq,
 			h = [],
 			idx = -1,
 			i,
+			optionIsBase,
 			optionId = -1;
+		
+		if(!list_name) {		// Options attached to a question
+			list_name = question.list_name;
+			questionName = question.name;
+		} 
+		optionList = survey.optionLists[list_name];
 		
 		if(typeof optionList !== "undefined") {
 			optionList.maxOption = 0;
@@ -489,17 +597,17 @@ define([
 			h[++idx] = h[++idx] = '<ul class="list-unstyled">';
 			if(oSeq) {
 				for(i = 0; i < oSeq.length; i++) {
-					optionId = "option_" + question.list_name + "_" + oSeq[i];
+					optionId = "option_" + list_name + "_" + oSeq[i];
 					h[++idx] = addOneOption(optionList,
 							optionList.options[oSeq[i]], 
 							formIndex, 
 							oSeq[i], 
-							question.list_name, 
-							question.name, 
+							list_name, 
+							questionName, 
 							true,
 							optionId);
 				}
-				h[++idx] = addNewOptionButton(true, optionId, question.list_name, formIndex, question.name); 
+				h[++idx] = addNewOptionButton(true, optionId, list_name, formIndex, questionName); 
 			}
 			h[++idx] = '</ul>';
 		}
@@ -628,7 +736,7 @@ define([
 			form.maxQuestion = 1;			// Add a number to use for the default next question in a form
 			
 			for(i = 0; i < form.qSeq.length; i++) {
-				globals.gHasQuestions = true;
+				globals.gHasItems = true;
 				question = form.questions[form.qSeq[i]];
 				
 				// Ignore property type questions, questions that have been deleted and meta questions like end repeat
@@ -775,22 +883,75 @@ define([
 	 * Refresh the content
 	 */
 	function refresh() {
+		
+		var content;
+		
+		globals.gElementIndex = 0;
+		globals.gHasItems = false;
+		globals.gNewQuestionButtonIndex = 0;
+		globals.gNewOptionButtonIndex = 0;
+		
 		if(globals.gIsQuestionView) {
-			return refreshQuestions();
+			content = refreshQuestions();
 		} else {
-			return refreshChoices();
+			content = refreshOptions();
 		}
+		
+		// Get the current list of collapsed panels
+		gCollapsedPanels = [];
+		$('.collapse.in', '#formList').each(function(){
+			gCollapsedPanels.push($(this).closest('li').attr("id"));
+		});
+		
+		// Update the content view
+		$('#formList').html(content);
+		
+		// Restore collapsed panels
+		for(i = 0; i < gCollapsedPanels.length; i++) {
+			$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
+		}
+		
+		
+		if(!globals.gHasItems) {
+			// If there were no items then set focus to the add new item button
+			$('.add_final_button').focus();
+		} 
+		
+		return $('#formList');		// Return the context of the updated HTML so that events can be applied
 	}
 	
 	/*
 	 * Show the choices on the screen
 	 */
-	function refreshChoices() {
+	function refreshOptions() {
 		var h = [],
-			idx = -1;
+			survey = globals.model.survey,
+			optionLists = survey.optionLists,
+			idx = -1,
+			name,
+			nameArray = [];
 		
-		$('#formList').html(h.join(""));
-		return $('#formList');
+		/*
+		 * Process the choice lists in sequential order
+		 */
+		if(survey) {
+			if(optionLists) {
+				
+				for (name in optionLists) {
+					if (optionLists.hasOwnProperty(name)) {
+					    nameArray.push(name);
+					}
+				}
+				// Sort array of list names
+				nameArray.sort();
+				for(i = 0; i < nameArray.length; i++) {
+					h[++idx] = addOneOptionList(nameArray[i], false, undefined);
+				}
+				h[++idx] = addNewOptionListButton(); 
+			}
+		}
+		
+		return h.join("");
 	}
 	
 	/*
@@ -800,7 +961,6 @@ define([
 		
 		var i,
 			survey = globals.model.survey,
-			key,
 			h = [],
 			idx = -1;
 		
@@ -809,11 +969,6 @@ define([
 		 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
 		 * 
 		 */
-		globals.gElementIndex = 0;
-		globals.gHasQuestions = false;
-		globals.gNewQuestionButtonIndex = 0;
-		globals.gNewOptionButtonIndex = 0;
-
 		if(survey) {
 			if(survey.forms && survey.forms.length > 0) {
 				for(i = 0; i < survey.forms.length; i++) {
@@ -827,39 +982,21 @@ define([
 		
 		gGroupStacks = [];		// save some memory
 		
-		// Get the current list of collapsed panels
-		gCollapsedPanels = [];
-		$('.collapse.in', '#formList').each(function(){
-			gCollapsedPanels.push($(this).closest('li').attr("id"));
-		});
-		
-		// Update the form view
-		$('#formList').html(h.join(""));
-		
-		// Restore collapsed panels
-		for(i = 0; i < gCollapsedPanels.length; i++) {
-			$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
-		}
-		
-		
-		if(!globals.gHasQuestions) {
-			// If there were no questions then set focus to the add new question button
-			$('.add_final_button').focus();
-		} 
-		return $('#formList');		// Return the context of the updated HTML so that events can be applied
-
-		
+		return h.join("");
 
 	}
 	
 	/*
 	 * Refresh the select controls that show the available option lists
 	 */
-	function refreshOptionLists() {
+	function refreshOptionListControls() {
 		var $selector = $(".option-lists");
 		$selector.html(getOptionLists());
 	}
 	
+	/*
+	 * Get an array of option list names sorted alphabetically
+	 */
 	function getOptionLists() {
 		
 		var lists = survey = globals.model.survey.optionLists,

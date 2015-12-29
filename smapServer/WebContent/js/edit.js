@@ -1285,7 +1285,6 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		changeType,
 		survey = globals.model.survey,
 		forms = survey.forms,
-		question = forms[formIndex].questions[itemIndex],
 		questionType,
 		repeat_path,
 		i;

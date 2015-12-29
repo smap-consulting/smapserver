@@ -118,7 +118,7 @@ define([
 					oSeq: [],
 					options: []
 				};
-				markup.refreshOptionLists();
+				markup.refreshOptionListControls();
 			}
 		}
 		
@@ -485,10 +485,10 @@ define([
 	/*
 	 * Get default option value
 	 */
-	function getDefaultOptionValue(listName, optionIndex) {
+	function getDefaultOptionValue(list_name, optionIndex) {
 		
 		var optionLists = globals.model.survey.optionLists,
-			list = optionLists[listName],
+			list = optionLists[list_name],
 			name = list.maxOption;
 		
 		// Keep incrementing the maxOptionValue until we get a unque name for this optionList

@@ -524,10 +524,9 @@ define([
 			 * Update the property values
 			 */
 			property = change.property;
-			question = survey.forms[property.formIndex].questions[property.itemIndex];
 			
 			if(property.type === "question") {			// Change to a question
-				
+				question = survey.forms[property.formIndex].questions[property.itemIndex];
 				if(property.propType === "text") {		// Not a media change
 					
 					if(property.prop === "label") {	   // Changing the label
@@ -565,7 +564,7 @@ define([
 											oSeq: [],
 											options: []
 										};
-										markup.refreshOptionLists();
+										markup.refreshOptionListControls();
 									}
 								}
 		
