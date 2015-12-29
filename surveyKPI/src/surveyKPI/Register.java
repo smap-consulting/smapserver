@@ -37,6 +37,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
+import org.smap.notifications.interfaces.EmitNotifications;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -125,6 +126,9 @@ public class Register extends Application {
 			String requestUrl = request.getRequestURL().toString();
 			String userIdent = request.getRemoteUser();
 			String basePath = GeneralUtilityMethods.getBasePath(request);
+			
+			EmitNotifications en = new EmitNotifications();
+			en.send();
 			
 			/*
 			 * 1. Create organisation

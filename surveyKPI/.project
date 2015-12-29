@@ -5,6 +5,7 @@
 	<projects>
 		<project>sdDAL</project>
 		<project>sdDataAccess</project>
+		<project>aws</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

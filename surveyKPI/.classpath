@@ -70,5 +70,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-ooxml-schemas-3.13-20150929.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlbeans-2.6.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDataAccess"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/aws"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
