@@ -772,9 +772,31 @@ define([
 	}
 	
 	/*
-	 * Show the form on the screen
+	 * Refresh the content
 	 */
 	function refresh() {
+		if(globals.gIsQuestionView) {
+			return refreshQuestions();
+		} else {
+			return refreshChoices();
+		}
+	}
+	
+	/*
+	 * Show the choices on the screen
+	 */
+	function refreshChoices() {
+		var h = [],
+			idx = -1;
+		
+		$('#formList').html(h.join(""));
+		return $('#formList');
+	}
+	
+	/*
+	 * Show the form on the screen
+	 */
+	function refreshQuestions() {
 		
 		var i,
 			survey = globals.model.survey,

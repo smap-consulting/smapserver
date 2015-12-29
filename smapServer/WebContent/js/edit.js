@@ -29,6 +29,7 @@ require.config({
     	app: '../app',
     	jquery: 'jquery-1.8.3.min',
     	bootbox: 'bootbox.min',
+    	toggle: 'bootstrap-toggle.min',
     	lang_location: '..'
 
     },
@@ -37,7 +38,8 @@ require.config({
         'bootstrap.min': ['jquery'],
         'jquery.autosize.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
-    	'bootbox': ['bootstrap.min']
+    	'bootbox': ['bootstrap.min'],
+       	'toggle': ['bootstrap.min']
         
     }
 });
@@ -51,6 +53,7 @@ require([
          'jquery.autosize.min',
          'bootstrap.file-input',
          'bootbox',
+         'toggle',
          'app/question',
          'app/editorMarkup',
          'app/changeset'], 
@@ -63,6 +66,7 @@ require([
 				jqas, 
 				bsfi, 
 				bootbox,
+				toggle,
 				question,
 				markup,
 				changeset) {
@@ -130,15 +134,12 @@ $(document).ready(function() {
 	getFilesFromServer(gBaseUrl, undefined, refreshMediaView);		// Get the organisational level media files
 
 	/*
-	 * Refresh the view when the selected property changes
-	 *
-	$('#selProperty').change(function() {
-		var i;
-	
+	 * Switch between choices view and question view
+	 */
+	$('#viewType').change(function(){
+		globals.gIsQuestionView = $(this).prop('checked');
 		refreshForm();
-		
 	});
-	*/
 	
 	/*
 	 * Refresh the view when the selected property changes

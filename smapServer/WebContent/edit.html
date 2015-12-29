@@ -16,6 +16,7 @@
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+	<link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
 	<!-- <link rel="stylesheet" href="/css/app.css" /> -->
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
@@ -26,7 +27,7 @@
 <body>
 
 	<header class="navbar navbar-default navbar-fixed-top" role="banner">
-	  <div class="container-fluid">
+	  <div class="container">
 	    <div class="navbar-header">
 	      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
 	        <span class="sr-only">Toggle navigation</span>
@@ -97,6 +98,9 @@
 	          	<!--  <li><a data-value="group" href="#">Set the end of a group</a></li> -->
 	          </ul>
 	        </li> 
+	        <li><input id="viewType" type="checkbox" checked data-toggle="toggle" 
+	        		data-on="Questions" data-off="Choices"
+	        		data-onstyle="warning" data-offstyle="info"></li>
 	        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
 	        		<span class="lang" data-lang="c_save">Save</span> 
 	        		<span class="badge">0</span></a></li>
@@ -146,44 +150,6 @@
 		<div id="toolbar_types"></div>
 		
 	</div>	
-
-<!--  
-<div style="display:none;">
-	<div class="panel panel-info">
-		<div class="panel-heading">
-        		<a data-toggle="collapse"  href="#collapseOne">
-					Collapse <span class="glyphicon glyphicon-collapse-down pull-right"></span>
-        		</a>	
-		</div>
-		<div id="collapseOne" class="panel-body collapse">
-			<div class="panel panel-level-1">
-				<div class="panel-heading">
-					Heading
-				</div>
-				<div class="panel-body">
-					Body
-				</div>"
-			</div>
-
-			<div class="panel panel-info">
-				<div class="panel-heading">
-					Heading
-				</div>
-				<div class="panel-body">
-					<div class="panel panel-level-1">
-						<div class="panel-heading">
-							Heading
-						</div>
-						<div class="panel-body">
-							Body
-						</div>
-					</div>
-				</div>"
-			</div>
-		</div>
-	</div>
-</div>      
--->
 	
 <div class="col-md-12 text-center">
 	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;position: fixed; top: 200px; left:300px;" alt="hourglass" height="60" width="60">
