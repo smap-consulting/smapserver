@@ -35,24 +35,47 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 public class EmitNotifications {
 	
+	/*
+	 * Events
+	 */
+	public static int AWS_REGISTER_ORGANISATION = 0;
+	
 	private static Logger log =
 			 Logger.getLogger(EmitNotifications.class.getName());
 	
-	public void send() {
+	/*
+	 * Publish to an SNS topic
+	 */
+	public void publish(int event, String msg, String subject) {
 		
 		//create a new SNS client and set endpoint
 		AmazonSNSClient snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider());		                           
-		snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2));
+		snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_1));	// Singapore
+		//snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2));	// Sydney
 		
-		String topicArn = "arn:aws:sns:ap-southeast-2:439804189189:register";
-
-		//publish to an SNS topic
-		String msg = "My text published to SNS topic with email endpoint";
-		PublishRequest publishRequest = new PublishRequest(topicArn, msg);
-		PublishResult publishResult = snsClient.publish(publishRequest);
-		//print MessageId of message published to SNS topic
-		System.out.println("MessageId - " + publishResult.getMessageId());
+		String topic = getTopic(event);
 		
+		if(topic != null) {
+			PublishRequest publishRequest = new PublishRequest(topic, msg, subject);
+			PublishResult publishResult = snsClient.publish(publishRequest);
+			log.info("Publish: " + subject + " MessageId - " + publishResult.getMessageId());
+		} 
+		
+	}
+	
+	private String getTopic(int event) {
+		
+		String topic = null;
+		
+		if (event == AWS_REGISTER_ORGANISATION) {
+			//topic = "arn:aws:sns:ap-southeast-2:439804189189:register";		// Sydney
+			topic = "arn:aws:sns:ap-southeast-1:439804189189:register";			// Singapore
+			log.info("Publish: register");
+		} else {
+			log.info("Error: Publish: invalid event: " + event);
+		}
+		
+		return topic;
 	}
 
 }

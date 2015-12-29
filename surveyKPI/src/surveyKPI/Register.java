@@ -127,9 +127,6 @@ public class Register extends Application {
 			String userIdent = request.getRemoteUser();
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			
-			EmitNotifications en = new EmitNotifications();
-			en.send();
-			
 			/*
 			 * 1. Create organisation
 			 */
@@ -185,6 +182,18 @@ public class Register extends Application {
 			p.desc = "Default Project - Created on registration";
 			pm.createProject(sd, p, o_id, u_id, request.getRemoteUser());
 			
+			/*
+			 * 4. Create a notification recording this event
+			 */
+			try {
+				EmitNotifications en = new EmitNotifications();
+				en.publish(EmitNotifications.AWS_REGISTER_ORGANISATION,
+						getRegistrationMsg(rd, request.getServerName()),
+						"Register new organisation");
+			} catch (Exception e) {
+				// Don't fail on this step
+			}
+			
 			sd.commit();
 			sd.setAutoCommit(true);
 			response = Response.ok().build();
@@ -229,7 +238,23 @@ public class Register extends Application {
 		return response;
 	}
 	
+	/*
+	 * COnvert registation details into a text string suitable for email
+	 */
+	private String getRegistrationMsg(RegistrationDetails rd, String server) {
+		
+		StringBuffer msg = new StringBuffer();
+		
+		msg.append("Name: " + rd.admin_name + "\n");
+		msg.append("Email: " + rd.email + "\n");
+		msg.append("Organisation: " + rd.org_name + "\n");
+		if(rd.website != null) {
+			msg.append("Website: " + rd.website + "\n");
+		}
+		msg.append("Server: " + server);
 
+		return msg.toString();
+	}
 	
 
 
