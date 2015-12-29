@@ -837,10 +837,13 @@ define([
 			
 			if(newMarkup) {
 				if(change.property.type === "question") {
+					$changedRow = $('#question' + change.property.formIndex + '_' + change.property.itemIndex);
+					/*
 					$changedRow = $('#formList').find('li.question').filter(function(index){
 						var $this = $(this);
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
+					*/
 				} else {
 					// changed row for choices
 					$changedRow = $('#formList').find('li.option').filter(function(index){
