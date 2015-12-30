@@ -17,7 +17,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Functions for manipulating a question in the editor
+ * Functions for manipulating an option list in the editor
  */
 
 "use strict";
@@ -51,6 +51,7 @@ define([
 				action: "add",
 				name: name
 		};
+		globals.gLatestOptionList = name;		// Remember name so focus can be set to new list
 		
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html

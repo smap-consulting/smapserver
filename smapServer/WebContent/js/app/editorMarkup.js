@@ -179,11 +179,14 @@ define([
 		return h.join("");
 	}
 	
+	/*
+	 * Add a single option list element to the choices view
+	 */
 	function addOneOptionList(list_name, addNewButton, selProperty) {
 		
 		var h = [],
 			idx = -1,
-			itemId = "choice_" + list_name;
+			itemId = "ol_" + list_name;
 		
 		globals.gHasItems = true;
 		
@@ -201,7 +204,7 @@ define([
 				h[++idx] = '<div class="col-xs-8"><div class="row">';
 					
 					// Add choice name cell
-					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control has_tt" title="List Name" value="';
+					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="olname form-control has_tt" title="List Name" value="';
 						h[++idx] = list_name;
 						h[++idx] = '" ';
 					h[++idx] = 'type="text"></div>';
@@ -384,7 +387,10 @@ define([
 		return h.join('');
 	}
 	
-	function addPanelStyle(type, formIndex, qIndex, error, questionId) {
+	/*
+	 * Add the container for an editable element including its styling
+	 */
+	function addPanelStyle(type, formIndex, qIndex, error, elementId) {
 		
 		var h = [],
 			idx = -1;
@@ -400,7 +406,7 @@ define([
 		} else {
 			h[++idx] = ' panel-success" id="';
 		}
-		h[++idx] = questionId;
+		h[++idx] = elementId;
 		++globals.gElementIndex;
 		h[++idx] = '"';
 		

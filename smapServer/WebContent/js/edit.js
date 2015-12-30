@@ -801,11 +801,19 @@ function respondToEvents($context) {
 	 */
 	$context.find('.add_option_list').off().click(function() {
 		var $this = $(this),
-			$context;
+			$context,
+			justAddedId,
+			val;
 		
 		console.log("adding choices list");
 		$context = optionlist.add();
 		respondToEvents($context);
+		
+		// Set focus to the new option list
+		justAddedID = '#ol_' + globals.gLatestOptionList;
+		$input = $('input', justAddedID);
+		val = $input.val();
+		$input.val("").focus().val(val);		// Set text entry to end of text field	
 
 	});
 	
