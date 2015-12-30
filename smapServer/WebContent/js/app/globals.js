@@ -67,6 +67,7 @@ define(function() {
 		gSelProperty: 'label',
 		gSelLabel: 'Question Text',
 		gIsQuestionView: true,
+		gMaxOptionList: 0,
 		
 		model: new Model()
 

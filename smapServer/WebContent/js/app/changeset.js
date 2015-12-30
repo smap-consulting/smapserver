@@ -216,9 +216,6 @@ define([
 			delete change.question.$relatedElement;		
 			delete change.question.$deletedElement;
 		}
-		if(change.option) {
-			delete change.option.$button;
-		}
 		
 		/*
 		 * Add additional parameters to change object
@@ -742,7 +739,7 @@ define([
 				length = survey.optionLists[change.option.optionList].options.push(change.option);			// Add the new option to the end of the array of options
 				change.option.itemIndex = length -1;
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 0, length - 1);	// Update the option sequence array
-				refresh = false;	// Update markup solely for this option
+				
 			} else if(change.action === "delete") {
 				survey.optionLists[change.option.optionList].oSeq.splice(change.option.seq, 1);	// Remove item from the sequence array		
 				survey.optionLists[change.option.optionList].options[change.option.itemIndex].deleted = true;
@@ -805,7 +802,8 @@ define([
 	function updateHtmlElement(change) {
 		var newMarkup,
 			survey = globals.model.survey,
-			$changedRow;
+			$changedRow,
+			i;
 		
 		if(change.changeType === "label") {
 			if(change.property.propType === "image") {	
@@ -873,18 +871,36 @@ define([
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
-				var optionId = "option_" + change.option.qname + "_" + change.option.itemIndex;
-				var optionList = survey.optionLists[change.option.optionList];
+					var optionList,
+						$button;
+				
+				
+				optionList = survey.optionLists[change.option.optionList];
+				
+				// Add the new option to all lists that its in
 				newMarkup = markup.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
 						change.option.optionList, 
 						change.option.qName, 
-						true,
-						optionId);
-				change.option.$button.before(newMarkup);
-				$changedRow = change.option.$button.prev();
+						true);
+					
+				$button = $('#formList').find('button.l_' + change.option.optionList).
+						filter(function(index) {
+					var $this = $(this);
+					return $this.data("index") == change.option.buttonIndex;
+				});
+				$button.before(newMarkup);		
+				$changedRow = $button.prev();
+				
+				/*
+				 * If this option was added by an "add after" button then that button should add future questions
+				 *  after this newly added option.  Hence update the button index.
+				 */
+				if(change.option.locn == "after") {
+					$button.data("index", change.option.itemIndex + 1);
+				}
 			
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.prev().remove();	// Remove the add before button
@@ -905,7 +921,6 @@ define([
 					return $this.data("list_name") == change.property.listName && $this.data("id") == change.property.itemIndex;
 				});
 				
-				var optionId = "option_" + change.property.qname + "_" + change.property.itemIndex;
 				newMarkup = markup.addOneOption(
 						survey.optionLists[change.property.optionList],
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
@@ -913,8 +928,7 @@ define([
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
 						change.property.qname,
-						false,
-						optionId);
+						false);
 				
 			} else {
 				
@@ -955,6 +969,27 @@ define([
 		
 
 		return $changedRow;
+	}
+	
+	function getQuestionsUsingOptionList(list) {
+		var i, j,
+			survey = globals.model.survey,
+			forms = survey.forms,
+			question,
+			nameArray = [];
+		
+		for(i = 0; i < forms.length; i++) {
+			for(j = 0; j < forms[i].questions.length; j++) {
+				question = forms[i].questions[j];
+				if(!question.deleted &&  !question.soft_deleted &&
+						question.type.indexOf("select") === 0 &&
+						question.list_name === list) {
+					
+					nameArray.push(question.name);
+				}
+			}
+		}
+		return nameArray;
 	}
 	
 	/*
@@ -1658,7 +1693,7 @@ define([
 			
 			if(globals.errors[pos]. severity === severity) {
 				gErrorPosition = pos;
-				break
+				break;
 			}
 		}
 		

@@ -55,6 +55,7 @@ require([
          'bootbox',
          'toggle',
          'app/question',
+         'app/optionlist',
          'app/editorMarkup',
          'app/changeset'], 
 		function(
@@ -68,6 +69,7 @@ require([
 				bootbox,
 				toggle,
 				question,
+				optionlist,
 				markup,
 				changeset) {
 
@@ -794,6 +796,16 @@ function respondToEvents($context) {
 
 	});
 	
+	/*
+	 * Add a new choice list 
+	 */
+	$context.find('.add_option_list').off().click(function() {
+		var $this = $(this);
+		
+		optionlist.add();
+
+	});
+	
 	// Delete question
 	$context.find('.delete_question').off().click(function() {
 		var $this = $(this),
@@ -826,14 +838,7 @@ function respondToEvents($context) {
 		
 		// Set focus to the new option
 		$context.find('textarea').focus();			// Set focus to the new option
-		
-		/*
-		 * If this option was added by an "add after" button then that button should add future questions
-		 *  after this newly added option.  Hence update the reference question
-		 */
-		if(locn == "after") {
-			$this.data("oid", $context.attr("id"));
-		}
+	
 	});
 	
 	
@@ -841,11 +846,12 @@ function respondToEvents($context) {
 	$context.find('.delete_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			item = $(this).data("id");
+			index = $this.data("id"),
+			list_name = $this.data("list_name");
 		
 		bootbox.confirm("Are you sure you want to delete this choice?", function(result) {
 			if(result) {
-				$context = question.deleteOption(item);
+				$context = question.deleteOption(index, list_name);
 			}
 		}); 
 		

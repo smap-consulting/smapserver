@@ -344,7 +344,7 @@ define([
 		h[++idx] = '<li>';
 	
 		h[++idx] = '<button button tabindex="-1" id="addnew_optionlist" ';
-		h[++idx] = 'type="button" class="add_choice_list add_button add_after_button add_final_button btn">';
+		h[++idx] = 'type="button" class="add_option_list add_button add_after_button add_final_button btn">';
 		h[++idx] = 'Add New Choice List'; 	
 		h[++idx] = '</button>';
 		h[++idx] = '</li>';
@@ -352,7 +352,7 @@ define([
 		return h.join('');
 	}
 	
-	function addNewOptionButton(after, optionId, list_name, formIndex, qname) {
+	function addNewOptionButton(after, list_name, formIndex, qname, index) {
 		var h = [],
 			idx = -1,
 			addButtonClass,
@@ -366,10 +366,11 @@ define([
 		h[++idx] = globals.gNewOptionButtonIndex++;
 		h[++idx] = '" type="button" class="add_option btn dropon ';
 		h[++idx] = addButtonClass;
+		h[++idx] = ' l_' + list_name; 
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
-		h[++idx] = '" data-oid="';
-		h[++idx] = optionId;
+		h[++idx] = '" data-index="';
+		h[++idx] = index;
 		h[++idx] = '" data-list_name="';
 		h[++idx] = list_name;
 		h[++idx] = '" data-qname="';
@@ -573,11 +574,10 @@ define([
 			optionList,
 			questionName,
 			oSeq,
+			maxIndex,
 			h = [],
 			idx = -1,
-			i,
-			optionIsBase,
-			optionId = -1;
+			i;
 		
 		if(!list_name) {		// Options attached to a question
 			list_name = question.list_name;
@@ -590,20 +590,22 @@ define([
 			
 			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 			oSeq = optionList.oSeq;
-			h[++idx] = h[++idx] = '<ul class="list-unstyled">';
+			h[++idx] = '<ul class="list-unstyled">';
 			if(oSeq) {
+				maxIndex = 0;
 				for(i = 0; i < oSeq.length; i++) {
-					optionId = "option_" + list_name + "_" + oSeq[i];
 					h[++idx] = addOneOption(optionList,
 							optionList.options[oSeq[i]], 
 							formIndex, 
 							oSeq[i], 
 							list_name, 
 							questionName, 
-							true,
-							optionId);
+							true);
+					if(oSeq[i] >= maxIndex) {
+						maxIndex = oSeq[i] + 1;
+					}
 				}
-				h[++idx] = addNewOptionButton(true, optionId, list_name, formIndex, questionName); 
+				h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, maxIndex); 
 			}
 			h[++idx] = '</ul>';
 		}
@@ -613,26 +615,25 @@ define([
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(optionList, option, formIndex, id, list_name, qname, addNewButton, optionId) {
+	function addOneOption(optionList, option, formIndex, index, list_name, qname, addNewButton) {
 		var h = [],
 			idx = -1;
 		
 		optionList.maxOption++;
 		
 		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, optionId, list_name, formIndex, qname);
+			h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
 		}
 		
-		h[++idx] = '<li class="editor_element option draggable';
+		h[++idx] = '<li class="editor_element option draggable l_';
+		h[++idx] = list_name;				// Add list name as a class
 		if(option.error) {
 			h[++idx] = ' error';
 		}
-		h[++idx] = '" id="';
-		h[++idx] = optionId;
 		
 		// Add the option index 
 		h[++idx] = '" data-id="';
-		h[++idx] = id;
+		h[++idx] = index;
 		h[++idx] = '" data-fid="';					
 		h[++idx] = formIndex;
 		h[++idx] = '" data-qname="';
@@ -657,7 +658,7 @@ define([
 					h[++idx] = '</div>';
 						
 					// Add featured property
-					h[++idx] = addFeaturedProperty(option, formIndex, id, list_name, qname);
+					h[++idx] = addFeaturedProperty(option, formIndex, index, list_name, qname);
 				h[++idx] = '</div>';	// End of row
 			h[++idx] = '</div>';	// End of option name and label cell
 		
@@ -666,7 +667,9 @@ define([
 			h[++idx] = '<div class="btn-group">';
 			h[++idx] = '<button class="btn btn-default" tabindex="-1">';
 			h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
-			h[++idx] = optionId;
+			h[++idx] = index;
+			h[++idx] = '" data-list_name="';
+			h[++idx] = list_name;
 			h[++idx] = '"></span>';
 			h[++idx] = '</button>';		
 		h[++idx] = '</div>';

@@ -402,16 +402,18 @@ define([
 	/*
 	 * Delete an option
 	 */
-	function deleteOption(item) {
-		var $deletedElement = $('#' + item),
-			formIndex = $deletedElement.data("fid"),
-			itemIndex = $deletedElement.data("id"),
-			optionList = $deletedElement.data("list_name"),
+	function deleteOption(index, list_name) {
+		var $deletedElement, 
 			change,
 			survey = globals.model.survey,
 			seq;
 		
-		seq = getSequenceOption(itemIndex, survey.optionLists[optionList]);
+		seq = getSequenceOption(index, survey.optionLists[list_name]);
+		$deletedElement = $('#formList').find('li.option.l_' + list_name).
+				filter(function() {
+			var $this = $(this);
+			return $this.data("id") == index;
+		});
 		
 		change = {
 				changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change
@@ -420,9 +422,8 @@ define([
 					
 					// Helper values 
 					seq: seq,
-					optionList: optionList,
-					formIndex: formIndex,
-					itemIndex: itemIndex,
+					optionList: list_name,
+					itemIndex: index,
 					$deletedElement: $deletedElement	// Jquery element that is next to the new question
 				}
 		};
@@ -436,11 +437,11 @@ define([
 	function addOption($button, oId, locn, list_name, formIndex, qname) {		
 		
 		var $relatedOption = $("#" + oId),
-			oIndexOther,		
+			buttonIndex = $button.data("index"),		
 			seq = 0,
 			survey = globals.model.survey,
 			value;
-		
+		/*
 		if($relatedOption.size() > 0) {		
 			oIndexOther = $relatedOption.data("id");
 			seq = getSequenceOption(oIndexOther, survey.optionLists[list_name]);
@@ -450,6 +451,8 @@ define([
 		} else {
 			seq = 0;
 		}
+		*/
+		seq = getSequenceOption(buttonIndex, survey.optionLists[list_name]); 
 		
 		value = getDefaultOptionValue(list_name, seq);
 
@@ -467,9 +470,9 @@ define([
 					
 					// Helper values 
 					formIndex: formIndex,
+					buttonIndex: buttonIndex,
 					qname: qname,
 					locn: locn,							// Whether the new option was added before or after the related option
-					$button: $button	   				// JQuery element for the button that added this option
 				}
 		};
 		
@@ -543,8 +546,7 @@ define([
 				return i;
 			}
 		}
-		alert("Could not insert question");
-		return 0;
+		return optionList.oSeq.length;		// Add to end
 	}
 	
 
