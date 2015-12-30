@@ -1386,6 +1386,7 @@ public class SurveyManager {
 		PreparedStatement pstmtReadonly = null;
 		PreparedStatement pstmtGetQuestionId = null;
 		PreparedStatement pstmtGetQuestionDetails = null;
+		PreparedStatement pstmtGetListId = null;
 		
 		try {
 		
@@ -1457,7 +1458,32 @@ public class SurveyManager {
 					onlyIfNotPublished = true;
 				} else if(ci.property.prop.equals("name")) {
 					onlyIfNotPublished = true;
-				} 
+				} else if(ci.property.prop.equals("list_name")) {
+					// Convert the passed in list name to the list id that needs to be updated
+					String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+					pstmtGetListId = sd.prepareStatement(sqlGetListId);
+					pstmtGetListId.setInt(1, sId);
+					
+					// Get the new list id
+					pstmtGetListId.setString(2, ci.property.newVal);
+					ResultSet rs = pstmtGetListId.executeQuery();
+					if(rs.next()) {
+						ci.property.newVal = rs.getString(1);
+					} else {
+						ci.property.newVal = "0";
+					}
+					
+					// Get the old list id (To verify that no one else has changed the list name while this user has been editing)
+					if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+						pstmtGetListId.setString(2, ci.property.oldVal);
+						rs = pstmtGetListId.executeQuery();
+						if(rs.next()) {
+							ci.property.oldVal = rs.getString(1);
+						} else {
+							ci.property.oldVal = null;
+						}
+					}
+				}
 				
 				// Convert from $ syntax to paths
 				if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
@@ -1509,11 +1535,14 @@ public class SurveyManager {
 						if(propertyType.equals("boolean")) {
 							pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
 							pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
+						} else if(propertyType.equals("integer")) {
+							pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
+							pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
 						} else {
 							pstmtProperty1.setString(1, ci.property.newVal);
 							pstmtProperty1.setString(3, ci.property.oldVal);
 						}
-						log.info("Update question property: " + pstmtProperty1.toString());
+						log.info("Update existing question property: " + pstmtProperty1.toString());
 						count = pstmtProperty1.executeUpdate();
 					} else {
 						
@@ -1521,6 +1550,8 @@ public class SurveyManager {
 						
 						if(propertyType.equals("boolean")) {
 							pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+						} else if(propertyType.equals("integer")) {
+							pstmtProperty2.setInt(1, Integer.parseInt(ci.property.newVal));
 						} else {
 							pstmtProperty2.setString(1, ci.property.newVal);
 						}
@@ -1585,6 +1616,7 @@ public class SurveyManager {
 			try {if (pstmtReadonly != null) {pstmtReadonly.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (SQLException e) {}
+			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
 		
 		}
 	
@@ -1613,6 +1645,8 @@ public class SurveyManager {
 			out = "calculate";
 		} else if(in.equals("constraint")) {
 			out = "qconstraint";
+		} else if(in.equals("list_name")) {
+			out = "l_id";
 		}
 		return out;
 	}
