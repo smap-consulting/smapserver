@@ -805,6 +805,9 @@ define([
 	 *  then these new questions will be at the end of the question array
 	 */
 	function addQuestionSequence(form) {
+		
+		var i;
+		
 		if(!form.qSeq) {
 			form.qSeq = [];
 			for(i = 0; i < form.questions.length; i++) {
@@ -817,6 +820,8 @@ define([
 	 * Add the array containing the option sequence
 	 */
 	function addOptionSequence(optionList) {
+		var i;
+		
 		if(!optionList.oSeq) {
 			optionList.oSeq = [];
 			for(i = 0; i < optionList.options.length; i++) {
@@ -883,7 +888,8 @@ define([
 	 */
 	function refresh() {
 		
-		var content;
+		var content,
+			i;
 		
 		globals.gElementIndex = 0;
 		globals.gHasItems = false;
@@ -928,7 +934,8 @@ define([
 			optionLists = survey.optionLists,
 			idx = -1,
 			name,
-			nameArray = [];
+			nameArray = [],
+			i;
 		
 		/*
 		 * Process the choice lists in sequential order
@@ -999,10 +1006,11 @@ define([
 	function getOptionLists() {
 		
 		var lists = survey = globals.model.survey.optionLists,
-		name,
-		nameArray = [],
-		h = [],
-		idx = -1;
+			name,
+			nameArray = [],
+			h = [],
+			idx = -1,
+			i;
 
 		// get the names into an array so they can be sorted
 		for (name in lists) {
