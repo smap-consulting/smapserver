@@ -13,6 +13,7 @@ public class ChangeItem {
 	public PropertyChange property;	// Details of a change to a question or option property
 	public Question question;		// Details of a new question
 	public Option option;			// Details of a new option
+	public String name;				// Name used for option lists
 	
 	// Properties for logging
 	public int cId;					// The database key for this change (only used when reading a change item from the log)

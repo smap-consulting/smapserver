@@ -800,9 +800,12 @@ function respondToEvents($context) {
 	 * Add a new choice list 
 	 */
 	$context.find('.add_option_list').off().click(function() {
-		var $this = $(this);
+		var $this = $(this),
+			$context;
+		
 		console.log("adding choices list");
-		optionlist.add();
+		$context = optionlist.add();
+		respondToEvents($context);
 
 	});
 	
@@ -830,6 +833,7 @@ function respondToEvents($context) {
 			list_name = $this.data("list_name"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by oId
 		
+		console.log("Add an option");
 		$context = question.addOption($this, oId, locn, list_name, fId, qname);
 		respondToEvents($context);				// Add events on to the altered html
 		if($context.attr("id") !== "formList") {

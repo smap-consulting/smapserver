@@ -974,6 +974,11 @@ public class SurveyManager {
 						// Add/delete options changed by the editor
 						applyOptionFromEditor(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
+					} else if(cs.changeType.equals("optionlist")) {
+						
+						// Add/delete/move questions
+						applyOptionList(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						
 					} else {
 						log.info("Error: unknown changeset type: " + cs.changeType);
 						throw new Exception("Error: unknown changeset type: " + cs.changeType);
@@ -1692,6 +1697,57 @@ public class SurveyManager {
 				qm.moveQuestions(connectionSD, sId, questions);
 			} else {
 				log.info("Unkown action: " + action);
+			}
+			
+		} catch (Exception e) {
+				
+			String msg = e.getMessage();
+			if(msg == null || !msg.startsWith("Already modified")) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			throw e;
+		} finally {
+			
+		}
+	}
+	
+	/*
+	 * Apply add / delete option lists
+	 */
+	public void applyOptionList(Connection connectionSD,
+			PreparedStatement pstmtChangeLog, 
+			ArrayList<ChangeItem> changeItemList, 
+			int sId, 
+			int userId,
+			int version,
+			String type,
+			String action) throws Exception {
+		
+		OptionListManager olm = new OptionListManager();
+		 
+		try {
+		
+			for(ChangeItem ci : changeItemList) {
+
+				log.info("userevent: " + userId + " : " + action + " optionlist : " + ci.name + " survey: " + sId);
+				
+				// Write the change log
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				pstmtChangeLog.setInt(1, sId);
+				pstmtChangeLog.setInt(2, version);
+				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
+				pstmtChangeLog.setInt(4,userId);
+				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+				pstmtChangeLog.execute();
+			
+			
+				if(action.equals("add")) {
+					olm.add(connectionSD, sId, ci.name);
+				} else if(action.equals("delete")) {
+					olm.delete(connectionSD, sId, ci.name);
+				} else {
+					log.info("Unkown action: " + action);
+				}
 			}
 			
 		} catch (Exception e) {
