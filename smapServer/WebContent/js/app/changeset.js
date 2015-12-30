@@ -747,8 +747,19 @@ define([
 				console.log("Unknown action: " + change.action);
 			}
 			
+		} else if(change.changeType === "optionlist") {				// Change to an option list
+			if(change.action === "add") {			
+				survey.optionLists[change.name] = {
+					oSeq: [],
+					options: []
+				};
+				refresh = true;
+			} else if(change.action === "delete") {
+				// TODO
+			} else {
+				console.log("Unknown action: " + change.action);
+			}
 		}
-		
 		return refresh;	
 	}
 	
@@ -947,9 +958,24 @@ define([
 				
 			}
 			
-			
+			/*
+			 * Apply the update
+			 */
 			if($changedRow) {
+				
+				// Get the current list of collapsed panels
+				gCollapsedPanels = [];
+				$('.collapse.in', $changedRow).each(function(){
+					gCollapsedPanels.push($(this).closest('li').attr("id"));
+				});
+				
+				// Update the content view
 				$changedRow.replaceWith(newMarkup);
+				
+				// Restore collapsed panels
+				for(i = 0; i < gCollapsedPanels.length; i++) {
+					$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
+				}
 				
 				// Since we replaced the row we had better get the replaced row so that actions can be reapplied
 				if(change.property.type === "option") {

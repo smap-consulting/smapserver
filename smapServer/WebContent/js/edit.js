@@ -801,7 +801,7 @@ function respondToEvents($context) {
 	 */
 	$context.find('.add_option_list').off().click(function() {
 		var $this = $(this);
-		
+		console.log("adding choices list");
 		optionlist.add();
 
 	});
@@ -1351,7 +1351,11 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	$context = changeset.add(change);
 	if($context) {
-		$context.find('.labelProp').focus();	// Set focus to label property input
+		if(prop === "list_name") {
+			// Leave focus unchanged
+		} else {
+			$context.find('.labelProp').focus();	// Set focus to label property input
+		}
 		respondToEvents($context);				// Add events on to the altered html
 	}
 	

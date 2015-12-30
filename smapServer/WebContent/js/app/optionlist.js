@@ -43,24 +43,14 @@ define([
 	 */
 	function add() {		
 		
-		var name = getDefaultListName(),
-			survey = globals.model.survey;
+		var name = getDefaultListName();
 		
 		// Create changeset to be applied on save		
 		change = {
 				changeType: "optionlist",		// survey | form | language | question | option | optionlist (property | label) last two are types of property change
 				action: "add",
-				question: {
-					source: "user",	// For date type
-					labels: [],
-				}
+				name: name
 		};
-		
-		survey.optionLists[name] = {
-				oSeq: [],
-				options: []
-			};
-		markup.refreshOptionListControls();
 		
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html
