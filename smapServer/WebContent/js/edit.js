@@ -758,7 +758,6 @@ function respondToEvents($context) {
 	});
 	
 	// Update the question name
-	
 	$context.find('.qname').change(function(){
 
 		var $this = $(this),
@@ -784,6 +783,20 @@ function respondToEvents($context) {
 		
 		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
 		
+	});
+	
+	// Update the option list name
+	$context.find('.olname').change(function(){
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			oldVal = $li.data("list_name"),
+			newVal = $this.val();
+		
+		$li.data("list_name", newVal);	// First update the html
+		updateLabel("optionlist", formIndex, itemIndex, undefined, "text", newVal, oldVal, "name") ;
 
 	});
 	
@@ -1331,10 +1344,15 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		forms = survey.forms,
 		questionType,
 		repeat_path,
+		oldVal,
 		i;
 	
 	if(type === "question") {
 		questionType = question.type;
+	}
+	
+	if(type === "optionlist") {
+		oldVal = qname;
 	}
 	
 	if(typeof questionType !== "undefined" && questionType === "calculate"  && prop === "label") {
@@ -1364,7 +1382,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 			property: {
 				qId: undefined,				// qId must be set to apply the change
 				qType: questionType,		// Question type
-				type: type,					// question or option
+				type: type,					// question or option or optionlist
 				name: undefined,			// name of the question or the option value
 				propType: element,			// text or hint or image or video or audio or video
 				prop: prop,					// Property to be changed, for example: label or appearance
@@ -1373,7 +1391,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 				repeat_path: repeat_path,	// Path to repeat count question if this is a begin repeat
 				
 				newVal: newVal,				// New value to be applied
-				oldVal: undefined,			// Old value for this property
+				oldVal: oldVal,			// Old value for this property
 				key: undefined,				// or Translation the "text_id", For option updates the option "value"
 				
 				// Helper values temporary indexes to access the model which has values for the question or option to be updated

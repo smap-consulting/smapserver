@@ -414,8 +414,7 @@ public class Surveys extends Application {
 		
 		for(ChangeSet cs : changes) {
 			for (ChangeItem ci : cs.items) {
-				// Option changes are not checked as they are explicitly applied to all option lists in the provided survey
-				// Delete questions are auto validated in the delete sql statement
+				// Check that property changes are being applied to questions in the specified survey
 				if(ci.property != null) {
 					if(!ci.property.type.equals("option")) {
 						log.info("Validating question for type: " + ci.property.type);

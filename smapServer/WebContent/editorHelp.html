@@ -11,6 +11,7 @@
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
+		<link rel="stylesheet" href="css/smap-bs.css">	
 	<link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
 	<link rel="stylesheet" href="/css/smap-docs.css" type="text/css">
     
@@ -27,6 +28,13 @@
 </head>
 <body>
 
+
+
+<!--#if expr="true" -->
+<!-- Get the navigation menu -->
+<!--#include FILE="navInc2.inc"-->
+<!--#else -->
+<!-- Default Header without SSI -->
 <header class="navbar navbar-default navbar-static-top" role="banner">
   <div class="container">
     <div class="navbar-header">
@@ -45,7 +53,8 @@
 
   </div>
 </header>
-  
+<!--#endif -->
+
 <div class="container help">
 	<div class="row">
 	   	<div class="col-md-9" role="main">

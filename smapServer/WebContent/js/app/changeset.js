@@ -232,7 +232,7 @@ define([
 				if(change.changeType === "property") {
 					setTypeSpecificChanges(change.property.prop, change, survey);
 				}
-			} else {
+			} else if(change.property.type === "option") {
 				item = survey.optionLists[change.property.optionList].options[change.property.itemIndex];
 				optionListOrig = survey.optionLists_orig[change.property.optionList];
 				if(optionListOrig) {
@@ -259,7 +259,7 @@ define([
 					// Create reference for this new Label		
 					if(change.property.type === "question") {
 						change.property.key = getFormPath(form) + "/" + item.name + ":label";	
-					} else {
+					} else if(change.property.type === "option") {
 						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
 					}
 				}
@@ -297,7 +297,13 @@ define([
 		}
 		if(applyChange) {
 			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
-				changes.push(ci);
+				if(change.property.type === "optionlist" && !change.property.qId) {
+					// Don't add if this is a change to an optionlist that has not been created in the database
+					// The duplicate checking may not have removed this as option lists can be implicitely created when 
+					//   a select question is created
+				} else {
+					changes.push(ci);
+				}
 			} else if(change.action === "add" || change.action === "delete" || change.action === "move") {
 				changes.push(ci);
 			}
@@ -524,7 +530,8 @@ define([
 			question,
 			option,
 			property,
-			length;
+			length,
+			i, j;
 		
 		if(change.property) {
 			/*
@@ -630,7 +637,7 @@ define([
 							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType, property.isSurveyLevel);
 					}
 				}
-			} else {	// Change to an option
+			} else if(property.type === "option") {	// Change to an option
 				
 				option = survey.optionLists[property.optionList].options[property.itemIndex];
 				option[property.prop] = property.newVal;	
@@ -645,6 +652,26 @@ define([
 							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType);
 					}
 				}
+			} else if(property.type === "optionlist") {	// Change to an optionlist
+				// 1. Rename the option list
+				survey.optionLists[property.newVal] = survey.optionLists[property.oldVal];
+				delete survey.optionLists[property.oldVal];
+				
+				// 2. Update all questions that refer to this option list so they reference the new one
+				for(i = 0; i < survey.forms.length; i++) {
+					for(j = 0; j < survey.forms[i].questions.length; j++) {
+						if(survey.forms[i].questions[j].list_name === property.oldVal) {
+							survey.forms[i].questions[j].list_name = property.newVal
+						}
+					}
+				}
+				
+				//3.  Update the optionList property for all options in the changed optionList
+				for(i = 0; i < survey.optionLists[property.newVal].options.length; i++) {
+					survey.optionLists[property.newVal].options[i].optionList = property.newVal;
+				}
+			} else {
+				console.log("Error: unknown property type: " + property.type);
 			}
 			
 		} else if(change.changeType === "question") {		// Not a change to a property
@@ -952,7 +979,7 @@ define([
 						change.property.qname,
 						false);
 				
-			} else {
+			} else if(change.property.type === "question") {
 				
 				// Get the changed question row
 				$changedRow = $('#formList').find('li.question').filter(function(index){
@@ -967,7 +994,7 @@ define([
 						change.property.itemIndex,
 						false, undefined, true);
 				
-			}
+			} 
 			
 			/*
 			 * Apply the update
