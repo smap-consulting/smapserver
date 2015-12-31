@@ -32,7 +32,8 @@ define([
 		function($, modernizr, lang, globals, markup, changeset) {
 
 	return {	
-		add: add
+		add: add,
+		deleteList: deleteList
 	};
 	
 	var gEditor;
@@ -58,6 +59,29 @@ define([
 		
 	}
 	
+	/*
+	 * Delete an option list
+	 */
+	function deleteList(item) {		
+		
+		var $deletedElement = $('#' + item),
+			change,
+			name = $deletedElement.data("list_name"),
+			$context;
+	
+		console.log("Deleting list: " + name);
+		change = {
+				changeType: "optionlist",		// survey | form | language | question | option | (property | label) last two are types of property change
+				action: "delete",
+				name: name
+		};
+		$context = changeset.add(change);
+		return $context;
+	}
+	
+	/*
+	 * Utility function to get an initial list name, this name can then be changed by the user
+	 */
 	function getDefaultListName() {
 		
 		var name = "choices_" + globals.gMaxOptionList;

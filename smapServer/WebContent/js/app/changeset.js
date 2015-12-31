@@ -363,6 +363,11 @@ define([
 		} else if(newItem.property) {
 			newElement = newItem.property;
 			newElementType = newElement.type;
+		} else if(newItem.changeType === "optionlist") {
+			newElement = {
+					itemIndex: newItem.name
+			};
+			newElementType = newItem.changeType;
 		}
 			
 		for(j = 0; j < changes.length; j++) {
@@ -377,6 +382,11 @@ define([
 			} else if(item.property) {
 				element = item.property;
 				elementType = element.type;
+			} else if(item.changeType === "optionlist") {
+				element = {
+					itemIndex: item.name
+				};
+				elementType = newItem.changeType;
 			}
 			
 			/*
@@ -755,7 +765,8 @@ define([
 				};
 				refresh = true;
 			} else if(change.action === "delete") {
-				// TODO
+				delete survey.optionLists[change.name];
+				refresh = true;
 			} else {
 				console.log("Unknown action: " + change.action);
 			}

@@ -68,7 +68,7 @@ define([
 			gGroupStacks[formIndex].groupStack.push(question.name);
 		}
 		
-		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId);
+		h[++idx] = addPanelStyle(question.type, formIndex, qIndex, question.error, questionId, undefined);
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = addErrorMsg(question.errorMsg);
 			h[++idx] = '<div class="row">';
@@ -196,7 +196,7 @@ define([
 			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		// TODO
 		}
 		
-		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId);
+		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId, list_name);
 		h[++idx] = '<div class="panel-heading">';
 			h[++idx] = '<div class="row">';
 				
@@ -219,7 +219,7 @@ define([
 						h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
 						
 						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
-						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
+						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_ol" data-id="';
 						h[++idx] = itemId;
 						h[++idx]='"></span>';
 						h[++idx]='</button>';
@@ -390,7 +390,7 @@ define([
 	/*
 	 * Add the container for an editable element including its styling
 	 */
-	function addPanelStyle(type, formIndex, qIndex, error, elementId) {
+	function addPanelStyle(type, formIndex, qIndex, error, elementId, list_name) {
 		
 		var h = [],
 			idx = -1;
@@ -411,10 +411,21 @@ define([
 		h[++idx] = '"';
 		
 		// Add the question index and form index
-		h[++idx] = ' data-fid="';
-		h[++idx] = formIndex;
-		h[++idx] = '" data-id="';
-		h[++idx] = qIndex;
+		if(typeof formIndex !== "undefined") {
+			h[++idx] = ' data-fid="';
+			h[++idx] = formIndex;
+			h[++idx] = '"';
+		}
+		if(typeof qIndex !== "undefined") {
+			h[++idx] = ' data-id="';
+			h[++idx] = qIndex;
+			h[++idx] = '"';
+		}
+		if(typeof list_name !== "undefined") {
+			h[++idx] = ' data-list_name="';
+			h[++idx] = list_name;
+			h[++idx] = '"';
+		}
 		
 		
 		h[++idx] = '">';

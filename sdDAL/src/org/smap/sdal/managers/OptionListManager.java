@@ -52,7 +52,25 @@ public class OptionListManager {
 	}
 	
 	public void delete(Connection sd, int sId, String name) {
+		String sql = "delete from listname where s_id = ? and name = ?";
 		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, name);
+			
+			log.info("Delete list name: " + pstmt.toString());
+			pstmt.executeUpdate();
+	
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
+		}
 	}
 
 }

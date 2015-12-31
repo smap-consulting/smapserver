@@ -831,6 +831,21 @@ function respondToEvents($context) {
 		
 	});
 	
+	// Delete option list
+	$context.find('.delete_ol').off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			item = $(this).data("id");
+		
+		bootbox.confirm("Are you sure you want to delete this choice list?", function(result) {
+			if(result) {
+				$context = optionlist.deleteList(item);
+				respondToEvents($context);		// The entire view is refreshed after deleting an option list
+			}
+		}); 
+		
+	});
+	
 	// Add new option
 	$context.find('.add_option').off().click(function() {
 		var $this = $(this),
