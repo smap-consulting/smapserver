@@ -58,21 +58,83 @@
 <div class="container help">
 	<div class="row">
 	   	<div class="col-md-9" role="main">
+	   		
+	   		<div class="bs-docs-section">
+	   			<h1 id="layout" class="page-header">
+	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: layout" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em; margin-bottom: 2em;">Layout</a>
+	   			</h1>
+	   			<h2>Content</h2>
+	   			<img src="images/help/content_area.jpg" class="img-responsive">
+	   			<p>Questions are shown in the <b>Content</b> area.  If you click on the <b>Questions</b> toggle
+	   			button in the menu bar then the choice lists will be shown</p>
+	   			
+	   			<h2>Menu Bar</h2>
+	   			<img src="images/help/menubar.jpg" class="img-responsive">
+	   			<p>The menu bar has:</p>
+	   			<ul>
+	   				<li><b>Modules. </b> This menu item appears on all Smap Server web pages and allows you to navigate
+	   					between the modules on the server including the editor, administration and analysis</li>
+	   				<li><b>File. </b></li>
+	   				<ul>
+	   					<li>Save.  Save the changes you have made to the form</li>
+	   					<li>Open.  Open an existing survey for editing. You can also open a form for editing by
+	   						clicking on its name in the form management page</li>
+	   					<li>New.  Create a new form</li>
+	   					<li>Validate.  Check for errors and warnings in the form</li>
+	   					<li>Languages. Create, Rename and Delete languages used in the form</li>
+	   					<li>Media.  Upload and delete media files attached to this form</li>
+	   					<li>Settings.  Change the form name, move it to a different project, set the default language,
+	   						set the name of instance files, add a PDF template to use when saving the a survey instance</li>
+	   					<li>Changes.  The changes that have been applied to this form. </li>
+	   					<li>Changes.  The changes that have been applied to this form </li>
+	   					<li>Calculations.  Server side calculations. </li>
+	   				</ul>
+	   				<li><b>Tools. </b> Productivity tools to make quick changes to the form</li>
+	   				<ul>
+	   					<li>Mark required. Set all questions to be required except for read only note questions</li>
+	   					<li>Mark not required. Set all questions to be optional</li>
+	   					<li>Translate. Quickly translate question and choice labels to another language. These translations
+	   						can also be done in the questions view, however the translate page will be quicker and easier</li>
+	   				</ul>
+	   				<li><b>The name of the current language </b> Select this to change the current language</li>
+	   				<li><b>The name of the current property </b> Select this to change the current property</li>
+	   				<li><b>Question / choice list toggle </b> Switch between viewing the questions and the choice lists</li>
+	   				<li><b>Save </b> Green button to save the form. Shows the number of changes that are ready to be saved.
+	   					This button will be disabled if there are errors or no changes have been made. </li>
+	   				<li><b>Test </b> Blue button to test your form in web forms </li>
+	   				<li><b>Help </b> shows this web page that you are currently reading </li>
+	   			</ul>
+	   		</div>
+	   		
 	   		<div class="bs-docs-section">
 	   			<h1 id="adding_question" class="page-header">
 	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: adding_question" 
 	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
 	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
-	   				padding-right: 0.5em; margin-bottom: 2em;">Adding a question</a>
+	   				padding-right: 0.5em; margin-bottom: 2em;">Adding questions and choices</a>
 	   			</h1>
+	   			<h2>Questions</h2>
 	   			<p>There are several ways to add a question</p>
-	   			<h2>Clicking on a question type in the toolbar</h2>
-	   			<p>This will add that type of question to the very end of the survey.</p>
-	   			<h2>Dragging a question type from the tool bar over a blue <b>add question </b>bar</h2>
-	   			<p>This will place the new question where you drop it.</p>
-	   			<h2>Click on one of the blue <b>add question</b> bars</h2>
-	   			<p>This will create a <b>text</b> type question at the location you clicked.  You can then 
-	   			change the type of the question by clicking on the question type icon next to the question name</p>
+	   			<ol>
+	   			<li>Clicking on a question type in the toolbar. This will add that type of 
+	   				question to the very end of the survey.</li>
+	   			<li>Dragging a question type from the tool bar over a blue <b>add question </b>bar. 
+	   				This will place the new question where you drop it.</li>
+	   			<li>Click on one of the blue <b>add question</b> bars.
+	   				This will create a <b>text</b> type question at the location you clicked.  You can then 
+	   				change the type of the question by clicking on the question type icon next to the question name</li>
+	   			</ol>
+	   			
+	   			<h2>Choices</h2>
+	   			<p>Choices can be added:</p>
+	   			<ol>
+	   			<li>In the questions view under each select question.</li>
+	   			<li>In the choice list view under each choice list.</li>
+	   			</ol>
+	   			
 	   		</div>
 	   		
 	   		<div class="bs-docs-section">
@@ -230,16 +292,16 @@
 	   					<tr>
 		   				<th class="col-md-3">Type</th>
 		   				<th class="col-md-1">xlsForm</th>
-		   				<th class="col-md-1">Version 15.11</th>
+		   				<th class="col-md-1">Version 15.12</th>
 		   				<th class="col-md-7">Notes</th>
 	   					</tr>
 	   				</thead>
 	   				<tbody>
 	   					<tr>
-		   				<td class="col-md-3">text</td>
-		   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   				<td class="col-md-7"></td>
+			   				<td class="col-md-3">text</td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-7"></td>
 		   				</tr>
 		   				<tr>
 		   					<td class="col-md-3">note</td>
@@ -360,15 +422,83 @@
 		   			</tbody>
 		   		</table>
 
+	   			<h2>Organising your survey</h2>
+	   			<p>Addition, deletion and renaming of the following question types:</p>
+	   			<table>
+	   				<thead>
+	   					<tr>
+		   				<th class="col-md-3">Feature</th>
+		   				<th class="col-md-1">xlsForm</th>
+		   				<th class="col-md-1">Version 15.12</th>
+		   				<th class="col-md-7">Notes</th>
+	   					</tr>
+	   				</thead>
+	   				<tbody>
+	   					<tr>
+			   				<td class="col-md-3">Sub Forms</td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-7">Additional forms can be added to the default "main" form. Questions in these
+			   					sub-forms are asked multiple times. </td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Groups</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Choice Lists</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Many select questions can reference the same list of choices.</td>
+		   				</tr>
+		   			</tbody>
+		   		</table>
 	   		</div>
 	   		
-	   	</div>
+	   		 <h2>Productivity tools</h2>
+	   			<p>These tools make specific tasks when editing your forms quicker and easier:</p>
+	   			<table>
+	   				<thead>
+	   					<tr>
+		   				<th class="col-md-3">Tool</th>
+		   				<th class="col-md-1">xlsForm</th>
+		   				<th class="col-md-1">Version 15.12</th>
+		   				<th class="col-md-7">Notes</th>
+	   					</tr>
+	   				</thead>
+	   				<tbody>
+	   					<tr>
+			   				<td class="col-md-3">Make required</td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-7">Make all questions required except for read only note questions </td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Make not required</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Make all questions optional</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Translate</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Quickly apply translations for labels and choices. </td>
+		   				</tr>
+		   			</tbody>
+		   		</table>
+	   		</div>
+	   		
+	   	
 	   	<div class="col-md-3" role="complementary">
 		   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
 	            <ul class="nav bs-docs-sidenav">
 	
 	                <li class="">
-	  					<a href="#adding_question">Adding a question</a>
+	  					<a href="#layout">Layout</a>
+	  					<a href="#adding_question">Adding questions and choices</a>
 	  					<a href="#errors">Validation</a>
 	  					<a href="#testing">Trying out your survey</a>
 	  					<a href="#publishing">Publishing and un-publishing your survey</a>
