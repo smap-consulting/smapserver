@@ -159,7 +159,7 @@ define([
 								h[++idx] = '<select class="form-control option-lists">';
 								h[++idx] = getOptionLists();
 								h[++idx] = '</select>';
-								h[++idx] = '<span class="input-group-addon">Edit</span>';
+								h[++idx] = '<span class="input-group-addon"></span>';
 							h[++idx] = '</div>';
 						h[++idx] = '</div>';
 					h[++idx] = '</div>';
@@ -234,25 +234,6 @@ define([
 
 		h[++idx] = '">';
 
-		/*
-		 * TODO Manage option lists
-		h[++idx] = '<div class="question-controls">';
-			h[++idx] = '<div class="row">';
-				h[++idx] = '<div class="col-md-6"></div>';
-				
-				// A control to set option lists
-				h[++idx] = '<div class="col-md-6">';
-					h[++idx] = '<label>Choice List: </label>';
-					h[++idx] = '<div class="input-group">';
-						h[++idx] = '<select class="form-control option-lists">';
-						h[++idx] = getOptionLists();
-						h[++idx] = '</select>';
-						h[++idx] = '<span class="input-group-addon">Edit</span>';
-					h[++idx] = '</div>';
-				h[++idx] = '</div>';
-			h[++idx] = '</div>';
-		h[++idx] = '</div>';
-		*/
 		h[++idx] = addOptions(undefined, undefined, list_name);
 		
 		h[++idx] = '</div>';

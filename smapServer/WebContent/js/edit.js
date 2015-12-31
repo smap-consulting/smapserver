@@ -607,7 +607,18 @@ function respondToEvents($context) {
 			question;
 		
 		question = survey.forms[formIndex].questions[itemIndex];
-		$this.val(question.list_name);
+		if(!optionListExists(question.list_name)) {
+			if(!optionListExists(question.name)) {
+				survey.optionLists[question.name] = {
+						oSeq: [],
+						options: []
+					};
+					markup.refreshOptionListControls();
+			}
+			$this.val(question.name);
+		} else {
+			$this.val(question.list_name);
+		}
 		
 	});
 	
@@ -1401,6 +1412,19 @@ function isValidOptionName(val) {
 	}
 	
 	return isValid;	
+}
+
+/*
+ * Return true if the option list exists
+ */
+function optionListExists(list) {
+	var optionLists = globals.model.survey.optionLists;
+	
+	if(typeof optionLists[list] === "undefined") {
+		return false;
+	} else {
+		return true;
+	}
 }
 
 /* **********************************************************************************************
