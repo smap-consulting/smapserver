@@ -605,7 +605,7 @@ public class GetXForm {
 				type = "binary";
 			}
 			// Following commented out check for select and select1 seems to be obsolete 27/3/2015 as odk sets type of select questions in bind
-			if(/*!type.equals("select") && !type.equals("select1") &&*/ !type.equals("begin group") && !type.equals("repeat group")) {
+			if(/*!type.equals("select") && !type.equals("select1") &&*/ !type.equals("begin group") && !type.equals("begin repeat")) {
 				questionElement.setAttribute("type", type);
 			}
 		}

@@ -147,11 +147,6 @@ public class Survey extends Application {
 			String filepath = null;
 			String sourceExt = null;
 			int projectId = 0;
-			
-			String ext = type;		
-			if(type.equals("codebook")) {
-				ext = "pdf";		// Codebooks are written as PDF files 
-			}
 					
 			String sql = null;
 			ResultSet resultSet = null;
@@ -177,19 +172,26 @@ public class Survey extends Application {
 				
 				fileBasePath = basePath + "/templates/" + projectId + "/" + target_name; 			
 
-				if(type.equals("xml")) {
-					sourceExt = ".xml";
+				String ext;		
+				if(type.equals("codebook")) {
+					ext = "_gen.pdf";		// Codebooks are written as PDF files 
+					sourceExt = "_gen.xml";		// input name is xml for a codebook file
 				} else if(type.equals("xls")) {
+					ext = ".xls";
 					sourceExt = ".xls";
-				} else if(type.equals("codebook")) {
-					sourceExt = ".gen_xml";		// input name is xml for a pdf file
+				} else if(type.equals("xml")) {	
+					ext = "_gen.xml";		// Generate xml
+					sourceExt = "_gen.xml";
+				} else {
+					ext = "." + type;
+					sourceExt = "." + type;
 				}
 				sourceName = fileBasePath + sourceExt;
 
 				/*
-				 * The XML file for a code book needs to be generated so that it contains the latest changes
+				 * The XML file for a code book or an XML download needs to be generated so that it contains the latest changes
 				 */
-				if(type.equals("codebook")) {
+				if(type.equals("codebook") || type.equals("xml")) {
 					
 					try {
 						SurveyTemplate template = new SurveyTemplate();
@@ -231,8 +233,8 @@ public class Survey extends Application {
 					sourceName =  fileBasePath + sourceExt;	
 				}
 
-				filepath = fileBasePath + "." + ext;
-				filename = target_name + "." + ext;
+				filepath = fileBasePath + ext;
+				filename = target_name + ext;
 				
 				try {  		
 	        		int code = 0;
