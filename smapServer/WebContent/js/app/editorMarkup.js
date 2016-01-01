@@ -186,7 +186,8 @@ define([
 		
 		var h = [],
 			idx = -1,
-			itemId = "ol_" + list_name;
+			itemId = "ol_" + list_name,
+			optionList = globals.model.survey.optionLists[list_name];
 		
 		globals.gHasItems = true;
 		
@@ -198,6 +199,7 @@ define([
 		
 		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId, list_name);
 		h[++idx] = '<div class="panel-heading">';
+		h[++idx] = addErrorMsg(optionList.errorMsg);
 			h[++idx] = '<div class="row">';
 				
 				// Add name

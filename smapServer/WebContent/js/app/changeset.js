@@ -1149,29 +1149,38 @@ define([
 		
 		if(itemType === "question") {
 			item = survey.forms[container].questions[itemIndex];
-		} else {
+			name = item.name;
+		} else if(itemType === "option") { 
 			item = survey.optionLists[container].options[itemIndex];
+			name = item.value;
+		} else if(itemType === "optionlist") {
+			item = survey.optionLists[container];
+			name = container;
 		}
 		
 		removeValidationError(container, itemIndex,	"item", itemType);
 		removeValidationError(container, itemIndex,	"name", itemType);
 		
 		if(!item.deleted && 
-				((itemType === "question" && markup.includeQuestion(item)) || (itemType === "option"))) {
+				((itemType === "question" && markup.includeQuestion(item)) || 
+						(itemType === "optionlist") ||
+						(itemType === "option"))) {
 			
 			// Validate the name
-			name = itemType === "question" ? item.name : item.value;
 			isValid = validateName(container, itemIndex, name, itemType);
 			
-			// Check references to other questions
+			
 			if(isValid) {	
-				isValid = checkReferences(container, itemIndex, itemType, item);
+				
 			}
 			
 			/*
 			 * Question specific validations
 			 */
 			if(itemType === "question") {
+				
+				// Check references to other questions
+				isValid = checkReferences(container, itemIndex, itemType, item);
 				
 				// Check for multiple geom types in a single form
 				if(isValid) {
@@ -1209,8 +1218,9 @@ define([
 					isValid = checkParentheisis(container, itemIndex, itemType, item.calculation);
 				}
 				
-			} else {
-				
+			} else if(itemType === "option") {
+				// Check references to other questions
+				isValid = checkReferences(container, itemIndex, itemType, item);
 			}
 				
 			updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
@@ -1445,9 +1455,12 @@ define([
 		if(itemType === "question") {
 			item = survey.forms[container].questions[itemIndex];
 			$changedRow = $('#question' + container + '_' + itemIndex);
-		} else {
+		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
 			$changedRow = $('#option_' + container + '_' + itemIndex);
+		} else if(itemType === "optionlist") {
+			item = survey.optionLists[container];
+			$changedRow = $('#ol_' + container);
 		}
 
 		for(i = errors.length - 1; i >= 0; i--) {
@@ -1472,17 +1485,13 @@ define([
 		}
 	
 		// Update Model
-		item.error = hasError;
-		item.warning = hasWarning;
-		item.errorMsg = msg;
+		if(typeof item !== "undefined") {
+			item.error = hasError;
+			item.warning = hasWarning;
+			item.errorMsg = msg;
+		}
 		
 		// Update DOM
-		/*
-		$changedRow = $('#formList').find('li').filter(function(index){
-			var $this = $(this);
-			return $this.data(containerKey) == container && $this.data("id") == itemIndex;
-		});		
-		*/
 		$changedRow.find('.error-msg').html(msg);	// Add message
 		
 		$changedRow.removeClass("error warning");
@@ -1554,7 +1563,15 @@ define([
 				"name",
 				itemType);
 		
-		itemType === "question" ? itemDesc = "question" : itemDesc = "choice";
+		if(itemType === "question" ) {
+			itemDesc = "question";
+		} else if(itemType === "option" ) {
+			itemDesc = "choice";
+		} else if(itemType === "optionlist" ) {
+			itemDesc = "choice list";
+		} else {
+			itemDesc = "unknown";
+		}
 
 		// Check for empty name
 		if(typeof val === "undefined" || val === "") {
@@ -1617,7 +1634,7 @@ define([
 		}
 		
 		/*
-		 * Questio name change require the questions in all the forms to be validated for duplicates
+		 * Question name change require the questions in all the forms to be validated for duplicates
 		 * Note this is a stronger test than applied by xlsForm
 		 */
 		if(isValid) {
@@ -1641,7 +1658,7 @@ define([
 						}
 					}
 				}
-			} else {
+			} else if(itemType === "option") {
 				optionList = survey.optionLists[container];
 				for(j = 0; j < optionList.options.length; j++) {		
 					if(j !== itemIndex) {
@@ -1652,13 +1669,22 @@ define([
 						}
 					}
 				}
+			} else if(itemType === "optionlist") {
+				if(container === val) {
+					// no change its valid
+				} else {
+					optionList = survey.optionLists[val];
+					if(typeof optionList !== "undefined") {
+						hasDuplicate = true;
+					}
+				}
 			}
 			if(hasDuplicate) {
 				addValidationError(
 						container,
 						itemIndex,
 						"name",
-						"The " + itemDesc + " name is the same as the name of another question.  Specify a unique name.",
+						"The " + itemDesc + " name is the same as the name of another " + itemDesc +".  Specify a unique name.",
 						itemType,
 						"error");
 				isValid = false;	
@@ -1702,7 +1728,9 @@ define([
 			numberErrors = 0,
 			numberWarnings = 0;
 		
-		globals.errors = [];		// Clear the existing errors - not strictly necessary but guarantees clean up
+		globals.errors = [];		// Clear the existing errors 
+		$('li.panel.error', '#formList').removeClass("error");
+		
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
 				if(!forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
@@ -1716,6 +1744,9 @@ define([
 					validateItem(list, j, "option");		// Validate the option
 				}
 			}
+			
+			// Validate the option list itself
+			validateItem(list, "ol_" + list, "optionlist");
 		}
 		
 		numberErrors = numberIssues("error");

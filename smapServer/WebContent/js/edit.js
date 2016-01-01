@@ -757,6 +757,20 @@ function respondToEvents($context) {
 
 	});
 	
+	// validate the optionlist name
+	$context.find('.olname').keyup(function(){
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			itemIndex = $li.prop("id"),
+			listName = $li.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "optionlist");
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
+
+	});
+	
 	// Update the question name
 	$context.find('.qname').change(function(){
 
@@ -790,13 +804,14 @@ function respondToEvents($context) {
 
 		var $this = $(this),
 			$li = $this.closest('li'),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
 			oldVal = $li.data("list_name"),
 			newVal = $this.val();
 		
-		$li.data("list_name", newVal);	// First update the html
-		updateLabel("optionlist", formIndex, itemIndex, undefined, "text", newVal, oldVal, "name") ;
+		// Only apply the update if there is no error on this option list
+		if(!$li.hasClass("error")) {
+			$li.data("list_name", newVal);	// First update the html
+			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
+		}
 
 	});
 	
