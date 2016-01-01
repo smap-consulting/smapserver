@@ -810,6 +810,8 @@ function respondToEvents($context) {
 		// Only apply the update if there is no error on this option list
 		if(!$li.hasClass("error")) {
 			$li.data("list_name", newVal);	// First update the html
+			$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
+				.addClass('l_' + newVal);
 			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
 		}
 

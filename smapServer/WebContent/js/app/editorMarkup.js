@@ -276,7 +276,7 @@ define([
 		} else {
 			h[++idx] = '<span class="has_tt" title="add question here">';
 		}
-		h[++idx] = '<button button tabindex="-1" id="addnew_';
+		h[++idx] = '<button tabindex="-1" id="addnew_';
 		h[++idx] = globals.gNewQuestionButtonIndex++;
 		h[++idx] = '" type="button" class="add_question btn dropon ';
 		h[++idx] = addButtonClass;
@@ -330,7 +330,7 @@ define([
 		
 		h[++idx] = '<li>';
 	
-		h[++idx] = '<button button tabindex="-1" id="addnew_optionlist" ';
+		h[++idx] = '<button tabindex="-1" id="addnew_optionlist" ';
 		h[++idx] = 'type="button" class="add_option_list add_button add_after_button add_final_button btn">';
 		h[++idx] = 'Add New Choice List'; 	
 		h[++idx] = '</button>';
@@ -349,22 +349,35 @@ define([
 		locn = after ? 'after' : 'before';
 		
 		h[++idx] = '<li>';
-		h[++idx] = '<button button tabindex="-1" id="addnewoption_';
+		h[++idx] = '<button tabindex="-1" id="addnewoption_';
 		h[++idx] = globals.gNewOptionButtonIndex++;
 		h[++idx] = '" type="button" class="add_option btn dropon ';
 		h[++idx] = addButtonClass;
 		h[++idx] = ' l_' + list_name; 
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
-		h[++idx] = '" data-index="';
-		h[++idx] = index;
-		h[++idx] = '" data-list_name="';
-		h[++idx] = list_name;
-		h[++idx] = '" data-qname="';
-		h[++idx] = qname;
-		h[++idx] = '" data-fid="';
-		h[++idx] = formIndex;
-		h[++idx] = '">Add New Choice</button>';
+		h[++idx] = '"';
+		if(typeof index !== "undefined") {
+			h[++idx] = ' data-index="';
+			h[++idx] = index;
+			h[++idx] = '"';
+		}
+		if(typeof list_name !== "undefined") {
+			h[++idx] = ' data-list_name="';
+			h[++idx] = list_name;
+			h[++idx] = '"';
+		}
+		if(typeof qname !== "undefined") {
+			h[++idx] = ' data-qname="';
+			h[++idx] = qname;
+			h[++idx] = '"';
+		}
+		if(typeof formIndex !== "undefined") {
+			h[++idx] = ' data-fid="';
+			h[++idx] = formIndex;
+			h[++idx] = '"';
+		}
+		h[++idx] = '>Add New Choice</button>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -411,7 +424,7 @@ define([
 		}
 		
 		
-		h[++idx] = '">';
+		h[++idx] = '>';
 		
 		return h.join('');
 	}

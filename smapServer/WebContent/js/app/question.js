@@ -436,22 +436,11 @@ define([
 	 */
 	function addOption($button, oId, locn, list_name, formIndex, qname) {		
 		
-		var $relatedOption = $("#" + oId),
-			buttonIndex = $button.data("index"),		
+		var buttonIndex = $button.data("index"),		
 			seq = 0,
 			survey = globals.model.survey,
 			value;
-		/*
-		if($relatedOption.size() > 0) {		
-			oIndexOther = $relatedOption.data("id");
-			seq = getSequenceOption(oIndexOther, survey.optionLists[list_name]);
-			if(locn === "after") {
-				++seq;
-			} 
-		} else {
-			seq = 0;
-		}
-		*/
+
 		seq = getSequenceOption(buttonIndex, survey.optionLists[list_name]); 
 		
 		value = getDefaultOptionValue(list_name, seq);
