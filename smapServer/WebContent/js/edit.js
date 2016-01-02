@@ -472,7 +472,9 @@ $(document).ready(function() {
  */
 function updateViewControls() {
 	
-	globals.gSelProperty = "label";
+	if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
+		globals.gSelProperty = "label";
+	}
 	if(globals.gIsQuestionView) {
 		$('.q_only').show();
 		$('.o_only').hide();
