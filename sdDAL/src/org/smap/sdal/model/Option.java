@@ -15,6 +15,7 @@ public class Option {
 	public String columnName;
 	public String defLabel;
 	public boolean externalFile;
+	public boolean published;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	public String externalLabel;								// Only one label used for external files (TODO)
 	public String text_id;

@@ -549,7 +549,8 @@ public class SurveyManager {
 				+ "o.label_id, "
 				+ "o.externalfile, "
 				+ "o.cascade_filters, "
-				+ "o.column_name "
+				+ "o.column_name, "
+				+ "o.published "
 				+ "from option o "
 				+ "where o.l_id = ? "
 				+ "order by o.seq";
@@ -758,6 +759,7 @@ public class SurveyManager {
 					o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
 				}
 				o.columnName = rsGetOptions.getString(6);
+				o.published = rsGetOptions.getBoolean(7);
 					
 				// Get the labels for the option
 				UtilityMethodsEmail.getLabels(sd, s, o.text_id, null, o.labels, basePath, oId);

@@ -138,15 +138,16 @@ $(document).ready(function() {
 	/*
 	 * Switch between choices view and question view
 	 */
+	updateViewControls();
 	$('#viewType').change(function(){
 		globals.gIsQuestionView = $(this).prop('checked');
+		updateViewControls();
 		refreshForm();
 	});
 	
 	/*
 	 * Refresh the view when the selected property changes
 	 */
-	$('#propSelected').html(globals.gSelLabel);
 	$('#selProperty a').click(function() {
 		$('#propSelected').html($(this).html());
 		globals.gSelLabel = $(this).html();
@@ -465,6 +466,24 @@ $(document).ready(function() {
 	});
 	
 });
+
+/*
+ * Modify controls that are dependent on the view being either for questions or choices
+ */
+function updateViewControls() {
+	
+	globals.gSelProperty = "label";
+	if(globals.gIsQuestionView) {
+		$('.q_only').show();
+		$('.o_only').hide();
+		globals.gSelLabel = $('#selProperty > li.q_only.default').text();
+	} else {
+		$('.q_only').hide();
+		$('.o_only').show();
+		globals.gSelLabel = $('#selProperty > li.o_only.default').text();
+	}
+	$('#propSelected').text(globals.gSelLabel);
+}
 
 /*
  * Set all the questions to either required or not required

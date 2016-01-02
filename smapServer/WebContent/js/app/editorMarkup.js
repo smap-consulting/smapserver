@@ -668,7 +668,12 @@ define([
 					h[++idx] = '<div class="col-xs-12 col-md-3">';
 						h[++idx] = '<input class="oname form-control has_tt" value="';
 						h[++idx] = option.value;
-						h[++idx] = '" type="text" title="Choice Value">';
+						h[++idx] = '" ';
+						
+						if(option.published) {				// Mark disabled if the option has been published
+							h[++idx] = 'disabled="true"';
+						}
+						h[++idx] = ' type="text" title="Choice Value">';
 					h[++idx] = '</div>';
 						
 					// Add featured property
