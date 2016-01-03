@@ -1162,7 +1162,8 @@ public class QuestionManager {
 					if(rs.next()) {
 						oldPath = rs.getString(1);
 					} else {
-						throw new Exception("Error: could not get old path");
+						// Try to set the path from the passed in property, this will exist if this option has previously been saved to the database
+						oldPath = p.path;		// Probably the option has been dragged into a new list
 					}
 					
 					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
