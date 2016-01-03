@@ -87,7 +87,7 @@ define([
 		
 		} 
 		if(typeof itemIndex !== "undefined") {		// Note some changes do not have an itemIndex and don't need to be validated
-			validateItem(container, itemIndex, itemType);
+			validateItem(container, itemIndex, itemType, true);
 		}
 		
 		/*
@@ -892,10 +892,11 @@ define([
 					*/
 				} else {
 					// changed row for choices
-					$changedRow = $('#formList').find('li.option').filter(function(index){
+					$changedRow = $('#formList').find('li.option.l_' + change.property.listName).filter(function(index){
 						var $this = $(this);
-						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
+						return $this.data("id") == change.property.itemIndex;
 					});
+					
 				}
 				if($changedRow) {
 					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);
@@ -1135,7 +1136,7 @@ define([
 	 * ***************************************************************
 	 * Validate each change to a question or option
 	 */
-	function validateItem(container, itemIndex, itemType) {
+	function validateItem(container, itemIndex, itemType, removeExisting) {
 		
 		var i, j,
 			form, 
@@ -1158,8 +1159,14 @@ define([
 			name = container;
 		}
 		
-		removeValidationError(container, itemIndex,	"item", itemType);
-		removeValidationError(container, itemIndex,	"name", itemType);
+		/*
+		 * Remove the existing error
+		 * If this validation has been called bu validateAll() then this removal would already have been done
+		 */
+		if(removeExisting) {
+			removeValidationError(container, itemIndex,	"item", itemType);
+			//removeValidationError(container, itemIndex,	"name", itemType);	// validation errors for name removed in validateName
+		}
 		
 		if(!item.deleted && 
 				((itemType === "question" && markup.includeQuestion(item)) || 
@@ -1167,12 +1174,7 @@ define([
 						(itemType === "option"))) {
 			
 			// Validate the name
-			isValid = validateName(container, itemIndex, name, itemType);
-			
-			
-			if(isValid) {	
-				
-			}
+			isValid = validateName(container, itemIndex, name, itemType, removeExisting);
 			
 			/*
 			 * Question specific validations
@@ -1222,8 +1224,10 @@ define([
 				// Check references to other questions
 				isValid = checkReferences(container, itemIndex, itemType, item);
 			}
-				
-			updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
+			
+			if(!isValid) {
+				updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
+			}
 		}
 		
 		// Set the control buttons
@@ -1238,7 +1242,7 @@ define([
 		 */
 		if(isValid) {	
 			if(item.visible || itemType === "option") {
-				isValid = checkBlankLabels(container, itemIndex, itemType, item);
+				isValid = checkBlankLabels(container, itemIndex, itemType, item, "warning");
 			}
 		}
 
@@ -1441,7 +1445,7 @@ define([
 	/*
 	 * Update the model and the DOM to report any erors on the question
 	 */
-	function updateModelWithErrorStatus(container, itemIndex, itemType, severity) {
+	function updateModelWithErrorStatus(container, itemIndex, itemType) {
 		
 		var $changedRow,
 			survey = globals.model.survey,
@@ -1457,7 +1461,10 @@ define([
 			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
-			$changedRow = $('#option_' + container + '_' + itemIndex);
+			$changedRow = $('#formList').find('li.option.l_' + container).filter(function(index){
+				var $this = $(this);
+				return $this.data("id") == itemIndex;
+			});
 		} else if(itemType === "optionlist") {
 			item = survey.optionLists[container];
 			$changedRow = $('#ol_' + container);
@@ -1539,7 +1546,7 @@ define([
 	/*
 	 * Validate a question or option name
 	 */
-	function validateName(container, itemIndex, val, itemType) {
+	function validateName(container, itemIndex, val, itemType, removeExisting) {
 			
 		var i, j,
 			form, 
@@ -1557,11 +1564,13 @@ define([
 		}
 		
 		// Clear the existing name validation errors
-		removeValidationError(
-				container,
-				itemIndex,
-				"name",
-				itemType);
+		if(removeExisting) {
+			removeValidationError(
+					container,
+					itemIndex,
+					"name",
+					itemType);
+		}
 		
 		if(itemType === "question" ) {
 			itemDesc = "question";
@@ -1733,20 +1742,20 @@ define([
 		
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
-				if(!forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
-					validateItem(i, j, "question");		// Validate the question
+				if(!forms[i].questions[j].visible && !forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
+					validateItem(i, j, "question", false);		// Validate the question
 				}
 			}
 		}
 		for(list in optionLists) {
 			if(optionLists.hasOwnProperty(list)) {
 				for(j = 0; j < optionLists[list].options.length; j++) {
-					validateItem(list, j, "option");		// Validate the option
+					validateItem(list, j, "option", false);		// Validate the option
 				}
 			}
 			
 			// Validate the option list itself
-			validateItem(list, "ol_" + list, "optionlist");
+			validateItem(list, "ol_" + list, "optionlist", false);
 		}
 		
 		numberErrors = numberIssues("error");
@@ -1806,11 +1815,13 @@ define([
 		
 		if(error.itemType === "question") {
 			itemId = "question" + error.container + "_" + error.itemIndex;
+			$item = $('#' + itemId);
 		} else {
-			itemId = "option_" + error.container + "_" + error.itemIndex;
+			$item = $('#formList').find('li.option.l_' + error.container).filter(function(index){
+				var $this = $(this);
+				return $this.data("id") == error.itemIndex;
+			});
 		}
-		
-		$item = $('#' + itemId);
 		
 		// Expand all parent panes
 		$parent = $item.parent().closest('li.panel');

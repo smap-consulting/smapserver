@@ -726,7 +726,7 @@ function respondToEvents($context) {
 			formIndex = $li.data("fid"),
 			itemIndex = $li.data("id");
 		
-		changeset.validateItem(formIndex, itemIndex, "question"); 
+		changeset.validateItem(formIndex, itemIndex, "question", true); 
 
 	});
 	
@@ -758,7 +758,7 @@ function respondToEvents($context) {
 			itemIndex = $li.data("id"),
 			newVal = $this.val();
 		
-		changeset.validateName(formIndex, itemIndex, newVal, "question");
+		changeset.validateName(formIndex, itemIndex, newVal, "question", true);
 		changeset.updateModelWithErrorStatus(formIndex, itemIndex, "question");		// Update model and DOM
 
 	});
@@ -773,7 +773,7 @@ function respondToEvents($context) {
 			listName = $li.data("list_name"),
 			newVal = $this.val();
 		
-		changeset.validateName(listName, itemIndex, newVal, "option");
+		changeset.validateName(listName, itemIndex, newVal, "option", true);
 		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
 
 	});
@@ -787,7 +787,7 @@ function respondToEvents($context) {
 			listName = $li.data("list_name"),
 			newVal = $this.val();
 		
-		changeset.validateName(listName, itemIndex, newVal, "optionlist");
+		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
 		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
 
 	});

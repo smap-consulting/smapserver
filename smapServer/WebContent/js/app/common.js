@@ -1179,7 +1179,10 @@ function getSurveyDetails(callback) {
 function setLanguages(languages, languageCallback) {
 	
 	var h = [],
+		h2 = [],
 		idx = -1,
+		idx2 = -1,
+		$lang_menu = $('.language_menu_list'),
 		$lang = $('.language_list'),
 		$lang1 = $('#language1'),
 		$lang2 = $('#language2'),
@@ -1199,12 +1202,19 @@ function setLanguages(languages, languageCallback) {
 		h[++idx] = languages[i].name;
 		h[++idx] = '</a>';
 		h[++idx] = '</li>';
+		
+		h2[++idx2] = '<option value="';
+		h2[++idx2] = i;
+		h2[++idx2] = '">';
+		h2[++idx2] = languages[i].name;
+		h2[++idx2] = '</option>';
 	}
 	
+	$lang_menu.empty().append(h.join(""));
+	$lang.empty().append(h2.join(""));
 	
-	$lang.empty().append(h.join(""));
 	$('#langSelected').html(languages[ globals.gLanguage].name);
-	$('.language_list a').click(function() {
+	$('.language_menu_list a').click(function() {
 		globals.gLanguage = $(this).data("lang");
 		$('#langSelected').html(languages[ globals.gLanguage].name);
 		languageCallback();

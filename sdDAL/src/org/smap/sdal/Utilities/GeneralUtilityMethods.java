@@ -1210,6 +1210,7 @@ public class GeneralUtilityMethods {
 					
 					log.info("Insert Language: " + pstmtInsert.toString());
 					pstmtInsert.executeUpdate();	
+					
 					seq++;
 				}
 					
@@ -1225,6 +1226,134 @@ public class GeneralUtilityMethods {
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
+		}
+
+	}
+	
+	/*
+	 * Make sure media is consistent across all languages
+	 * A future change may have media per language enabled
+	 */
+	public static void setMediaForLanguages(Connection sd, int sId, ArrayList<Language> languages) throws SQLException {
+		
+		//ArrayList<String> languages = new ArrayList<String> ();
+		
+		PreparedStatement pstmtGetLanguages = null;
+		PreparedStatement pstmtGetMedia = null;
+		PreparedStatement pstmtHasMedia = null;
+		PreparedStatement pstmtDeleteMedia = null;
+		PreparedStatement pstmtInsertMedia = null;
+		
+		String sqlHasMedia = "select count(*) from translation t "
+					+ "where t.s_id = ? "
+					+ "and t.type = ? "
+					+ "and t.value = ? "
+					+ "and t.text_id = ? "
+					+ "and t.language = ?";
+		
+		String sqlDeleteMedia = "delete from translation where s_id = ? "
+				+ "and type = ? "
+				+ "and text_id = ? "
+				+ "and language = ?";
+		
+		String sqlInsertMedia = "insert into translation (s_id, type, text_id, value, language) values (?, ?, ?, ?, ?); ";
+		
+		try {
+			
+			// 1. Get the media from the translation table ignoring language
+			String sqlGetMedia = "select distinct t.type, t.value, t.text_id from translation t "
+					+ "where t.s_id = ? "
+					+ "and (t.type = 'image' or t.type = 'audio' or t.type = 'video'); ";
+				
+			pstmtGetMedia = sd.prepareStatement(sqlGetMedia);
+			pstmtGetMedia.setInt(1, sId);
+			
+			log.info("Get distinct media: " + pstmtGetMedia.toString());
+			ResultSet rs = pstmtGetMedia.executeQuery();
+			
+			/*
+			 * Prepare statments used within the loop
+			 */
+			pstmtHasMedia = sd.prepareStatement(sqlHasMedia);
+			pstmtHasMedia.setInt(1, sId);
+			
+			pstmtDeleteMedia = sd.prepareStatement(sqlDeleteMedia);
+			pstmtDeleteMedia.setInt(1, sId);
+			
+			pstmtInsertMedia = sd.prepareStatement(sqlInsertMedia);
+			pstmtInsertMedia.setInt(1, sId);
+			
+			while (rs.next()) {
+				String type = rs.getString(1);
+				String value = rs.getString(2);
+				String text_id = rs.getString(3);
+				
+				System.out.println("-------------");
+				System.out.println("    " + rs.getString(1));
+				System.out.println("    " + rs.getString(2));
+				System.out.println("    " + rs.getString(3));
+				
+				// 2. Check that each language has this media
+				for(Language language : languages) {
+					String languageName = language.name;
+					boolean hasMedia = false;
+					
+					pstmtHasMedia.setString(2, type);
+					pstmtHasMedia.setString(3, value);
+					pstmtHasMedia.setString(4, text_id);
+					pstmtHasMedia.setString(5, languageName);
+					
+					log.info("Has Media: " + pstmtHasMedia.toString());
+					ResultSet rsHasMedia = pstmtHasMedia.executeQuery();
+					if(rsHasMedia.next()) {
+						if(rsHasMedia.getInt(1) > 0) {
+							hasMedia = true;
+						}
+					}
+					
+					System.out.println("        Language: " + languageName + " : " + hasMedia);
+					if(!hasMedia) {
+						
+						// 3.  Delete any translation entries for the media that have the wrong value
+						pstmtDeleteMedia.setString(2, type);
+						pstmtDeleteMedia.setString(3, text_id);
+						pstmtDeleteMedia.setString(4, languageName);
+						
+						log.info("SQL delete media: " + pstmtDeleteMedia.toString());
+						pstmtDeleteMedia.executeUpdate();
+						
+						// 4. Insert this translation value
+						pstmtInsertMedia.setString(2, type);
+						pstmtInsertMedia.setString(3, text_id);
+						pstmtInsertMedia.setString(4, value);
+						pstmtInsertMedia.setString(5, languageName);
+						
+						log.info("SQL insert media: " + pstmtInsertMedia.toString());
+						pstmtInsertMedia.executeUpdate();
+					}
+					
+				}
+				
+				
+			}
+			
+			
+		
+					
+			
+		
+			
+		} catch(SQLException e) {
+			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtGetLanguages != null) {pstmtGetLanguages.close();}} catch (SQLException e) {}
+			try {if (pstmtGetMedia != null) {pstmtGetMedia.close();}} catch (SQLException e) {}
+			try {if (pstmtHasMedia != null) {pstmtHasMedia.close();}} catch (SQLException e) {}
+			try {if (pstmtDeleteMedia != null) {pstmtDeleteMedia.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertMedia != null) {pstmtInsertMedia.close();}} catch (SQLException e) {}
+		
 		}
 
 	}

@@ -584,18 +584,18 @@ define(function() {
 				// For options	
 				} else {
 					
-					label.optionListIdx = changedQ[i].optionList;										// done
-					label.optionIdx = changedQ[i].option;												// done
+					label.optionList = changedQ[i].optionList;									
+					label.optionIdx = changedQ[i].option;											
 
-					item = this.survey.optionLists[label.optionListIdx].options[label.optionIdx];				// done
-					item_orig = this.survey.optionLists_orig[label.optionListIdx].options[label.optionIdx];		// done
+					item = this.survey.optionLists[label.optionList].options[label.optionIdx];				
+					item_orig = this.survey.optionLists_orig[label.optionList].options[label.optionIdx];		
 					
-					label.type = "option";																// done
-					label.name = label.optionListIdx;		// The option list name						// done
+					label.type = "option";															
+					label.name = item.value;						
 				}
 					
 				label.newVal = newVal;
-				label.oldVal = item_orig.labels[language][element]; 									// done
+				label.oldVal = item_orig.labels[language][element]; 								
 				
 				label.propType = "text";
 

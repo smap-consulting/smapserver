@@ -355,6 +355,7 @@ public class Surveys extends Application {
 			
 			// Update the languages
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
+			GeneralUtilityMethods.setMediaForLanguages(sd, sId, languageList);	// Cope with media being duplicated across all languages
 			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
 			
 			String resp = gson.toJson(survey);
