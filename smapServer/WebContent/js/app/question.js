@@ -315,39 +315,24 @@ define([
 	
 	/*
 	 * Move an option
-	 * The beforeId is the id of the dom element that precedes this element
 	 */
-	function moveBeforeOption(sourceId, beforeId, locn) {		
+	function moveBeforeOption(sourceListName, sourceItemIndex, 
+				targetListName, targetItemIndex, locn) {		
 		
-		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
-			beforeFormIndex = $beforeElement.data("fid"),
-			beforeItemIndex = $beforeElement.data("id"),
-			beforeItemListName = $beforeElement.data("list_name"),
-			
-			seq,												// The new values
-			formIndex,
-
-			$sourceElement = $('#' + sourceId),					// The old values
-			sourceFormIndex = $sourceElement.data("fid"),
-			sourceItemIndex = $sourceElement.data("id"),
-			sourceItemListName = $sourceElement.data("list_name"),
-			
+		var 	
+			seq,	
 			sourceSeq,
-			
 			survey = globals.model.survey,
 			change;
-		
-
-		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
 
 		// Get the new sequence of the option
-		seq = getSequenceOption(beforeItemIndex, survey.optionLists[beforeItemListName]);
+		seq = getSequenceOption(targetItemIndex, survey.optionLists[targetListName]);
 		if(locn === "after") {
 			seq++;
 		}
 		
 		// Get the old sequence of the option
-		sourceSeq = getSequenceOption(sourceItemIndex, survey.optionLists[sourceItemListName]);
+		sourceSeq = getSequenceOption(sourceItemIndex, survey.optionLists[sourceListName]);
 		
 		// Create changeset to be applied on save		
 		change = {
@@ -356,12 +341,12 @@ define([
 			option: {
 					seq: seq,
 					sourceSeq: sourceSeq,
-					optionList: beforeItemListName,
-					sourceOptionList: sourceItemListName,
+					optionList: targetListName,
+					sourceOptionList: sourceListName,
 					
 					// Helper values 
 					sourceItemIndex: sourceItemIndex,
-					formIndex: beforeFormIndex
+					targetItemIndex: targetItemIndex
 				}
 				
 		};
@@ -531,7 +516,7 @@ define([
 		var i;
 		
 		for(i = 0; i < optionList.oSeq.length; i++) {
-			if(optionList.oSeq[i] === indexOther) {
+			if(optionList.oSeq[i] == indexOther) {
 				return i;
 			}
 		}

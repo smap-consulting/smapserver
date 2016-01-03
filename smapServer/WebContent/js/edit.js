@@ -1006,8 +1006,13 @@ function respondToEvents($context) {
 		
 		if(typeof ev.target.value !== "undefined" && ev.target.value.length > 0) {
 			ev.dataTransfer.setData("type", ev.target.value);
-		} else {	// Moving a question / option
-			ev.dataTransfer.setData("text/plain", ev.target.id);
+		} else {	
+			if(ev.target.id === "") {	// Moving an option
+				ev.dataTransfer.setData("list_name", ev.target.dataset.list_name);
+				ev.dataTransfer.setData("index", ev.target.dataset.id);
+			} else {	// Moving a question
+				ev.dataTransfer.setData("text/plain", ev.target.id);
+			}
 		}
 		$('.dropon').addClass("add_drop_button").removeClass("add__button");
 		
@@ -1074,8 +1079,14 @@ function respondToEvents($context) {
 			$sourceElem,
 			sourceId = ev.dataTransfer.getData("text/plain"),
 			sourceValue = ev.dataTransfer.getData("type"),		// The type of a new question that is being dropped
+			sourceListName = ev.dataTransfer.getData("list_name"),
+			sourceItemIndex = ev.dataTransfer.getData("index"),
 			targetId = $targetListItem.data('qid'),
 			locn = $targetListItem.data("locn"),			// Before or after the target question
+			targetListName,									// For option
+			targetItemIndex,								// For option
+			sourceListName,									// For option
+			sourceItemIndex,								// For option
 			$context,
 			$related,
 			$li,
@@ -1088,48 +1099,54 @@ function respondToEvents($context) {
 		if(typeof sourceValue !== "undefined" && sourceValue.length > 0) {		// Dropped a new type - Question only
 			type = "question";
 			dropType = true;
-		} else {
-			
-			$li = $targetListItem.closest('li');
-			if(locn === "after") {
-				$related = $li.prev();
-			} else {
-				$related = $li.next();
-			} 
-			if($related.length === 0) {   // Empty group, location is "after"
-				targetId = $li.parent().closest('li').attr("id");
-			} else {
-				targetId = $related.attr("id");
-			}
-			
-			if(sourceId.indexOf("option") === 0) {						// Dropped a question or option
-				type = "option";
-			} else {
-				type = "question";
-			}
-		}
-		
-		console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
-			
-		if(dropType) {
 			addQuestion($targetListItem, sourceValue);
 		} else {
-			if(sourceId != targetId) {
-				if (ev.ctrlKey || ev.altKey) {
-					console.log("Control was pressed");
-					$sourceElem = $(document.getElementById(sourceId)).clone(true);
+			
+			if($targetListItem.hasClass('add_question')) {
+				type = "question";
+				
+				$li = $targetListItem.closest('li');
+				if(locn === "after") {
+					$related = $li.prev();
 				} else {
-					$sourceElem = $(document.getElementById(sourceId));
+					$related = $li.next();
+				} 
+				if($related.length === 0) {   // Empty group, location is "after"
+					targetId = $li.parent().closest('li').attr("id");
+				} else {
+					targetId = $related.attr("id");
 				}
-			    
-			    if(type === "question") {
-			    	$context = question.moveQuestion(sourceId, targetId, locn);
-			    } else if(type === "option") {
-			    	$context = question.moveBeforeOption(sourceId, targetId, locn);
-			    }
-				respondToEvents($context);						// Add events on to the altered html
+				
+				if(sourceId != targetId) {
+					
+					console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
+					
+					$context = question.moveQuestion(sourceId, targetId, locn);
+					respondToEvents($context);						// Add events on to the altered html
+				}
+			} else {
+				type = "option";
+				
+				targetListName = $targetListItem.data("list_name");
+				targetItemIndex = $targetListItem.data("index");
+				
+				if(sourceListName === targetListName && sourceItemIndex === targetItemIndex) {
+					// Dropped on itself do not move
+				} else {
+					
+					console.log("Dropped option: " + sourceListName + " : " + sourceItemIndex + 
+							" : " + targetListName + " : " + targetItemIndex);
+					
+					$context = question.moveBeforeOption(sourceListName, sourceItemIndex, 
+							targetListName, targetItemIndex, locn);
+					respondToEvents($context);						// Add events on to the altered html
+				}
 			}
+
+			
 		}
+			
+	
 	});
 
 	

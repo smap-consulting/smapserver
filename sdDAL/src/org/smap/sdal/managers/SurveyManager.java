@@ -1389,6 +1389,7 @@ public class SurveyManager {
 		
 		PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
+		PreparedStatement pstmtProperty3 = null;
 		PreparedStatement pstmtDependent = null;
 		PreparedStatement pstmtReadonly = null;
 		PreparedStatement pstmtGetQuestionId = null;
@@ -1480,16 +1481,6 @@ public class SurveyManager {
 						ci.property.newVal = "0";
 					}
 					
-					// Get the old list id (To verify that no one else has changed the list name while this user has been editing)
-					if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
-						pstmtGetListId.setString(2, ci.property.oldVal);
-						rs = pstmtGetListId.executeQuery();
-						if(rs.next()) {
-							ci.property.oldVal = rs.getString(1);
-						} else {
-							ci.property.oldVal = null;
-						}
-					}
 				}
 				
 				// Convert from $ syntax to paths
@@ -1523,6 +1514,11 @@ public class SurveyManager {
 					}
 					pstmtProperty2 = sd.prepareStatement(sqlProperty2);
 					
+					// Special case for list name (no integrity checking)
+					String sqlProperty3 = "update question set l_id = ? " +
+							"where q_id = ?";
+					pstmtProperty3 = sd.prepareStatement(sqlProperty3);
+					
 					// Update for dependent properties
 					String sqlDependent = "update question set visible = ?, source = ? " +
 							"where q_id = ?;";
@@ -1535,7 +1531,15 @@ public class SurveyManager {
 					
 					int count = 0;
 		
-					if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+					// Special case for list name updates - don't try to check the integrity of the update
+					if(ci.property.prop.equals("list_name")) {
+						pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
+						pstmtProperty3.setInt(2, ci.property.qId);
+						
+						log.info("Update list name property: " + pstmtProperty3.toString());
+						count = pstmtProperty3.executeUpdate();
+						
+					} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
 						
 						pstmtProperty1.setInt(2, ci.property.qId);
 						
@@ -1619,6 +1623,7 @@ public class SurveyManager {
 		} finally {
 			try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
+			try {if (pstmtProperty3 != null) {pstmtProperty3.close();}} catch (SQLException e) {}
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
 			try {if (pstmtReadonly != null) {pstmtReadonly.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}

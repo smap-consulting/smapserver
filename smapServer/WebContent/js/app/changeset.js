@@ -297,13 +297,7 @@ define([
 		}
 		if(applyChange) {
 			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
-				if(change.property.type === "optionlist" && !change.property.qId) {
-					// Don't add if this is a change to an optionlist that has not been created in the database
-					// The duplicate checking may not have removed this as option lists can be implicitely created when 
-					//   a select question is created
-				} else {
 					changes.push(ci);
-				}
 			} else if(change.action === "add" || change.action === "delete" || change.action === "move") {
 				changes.push(ci);
 			}

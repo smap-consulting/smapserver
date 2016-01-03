@@ -417,7 +417,8 @@ public class Surveys extends Application {
 			for (ChangeItem ci : cs.items) {
 				// Check that property changes are being applied to questions in the specified survey
 				if(ci.property != null) {
-					if(!ci.property.type.equals("option")) {
+					if(!ci.property.type.equals("option") 
+							&& !ci.property.type.equals("optionlist")) {
 						log.info("Validating question for type: " + ci.property.type);
 						a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
 					}
