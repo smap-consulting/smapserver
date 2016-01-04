@@ -639,8 +639,8 @@ define([
 			h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
 		}
 		
-		h[++idx] = '<li class="editor_element option draggable l_';
-		h[++idx] = list_name;				// Add list name as a class
+		h[++idx] = '<li class="editor_element option draggable ';
+		h[++idx] = 'l_' + list_name;				// Add list name as a class
 		if(option.error) {
 			h[++idx] = ' error';
 		}

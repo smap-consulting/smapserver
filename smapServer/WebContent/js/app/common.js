@@ -18,6 +18,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 var gWait = 0;		// This javascript file only
 
+/*
+ * Convert a choice list name into a valid jquery class name
+ */
+function jq(choiceList) {
+	
+	var c;
+	
+	c = choiceList.replace( /(:|\.|\[|\]|,)/g, "\\$1" );
+	return c;
+}
+
 /* 
  * ==============================================================
  * Task Functions

@@ -886,7 +886,8 @@ define([
 					*/
 				} else {
 					// changed row for choices
-					$changedRow = $('#formList').find('li.option.l_' + change.property.listName).filter(function(index){
+					$changedRow = $('#formList').find('li.option.l_' + 
+							jq(change.property.listName)).filter(function(index){
 						var $this = $(this);
 						return $this.data("id") == change.property.itemIndex;
 					});
@@ -930,7 +931,7 @@ define([
 						change.option.qName, 
 						true);
 					
-				$button = $('#formList').find('button.l_' + change.option.optionList).
+				$button = $('#formList').find('button.l_' + jq(change.option.optionList)).
 						filter(function(index) {
 					var $this = $(this);
 					return $this.data("index") == change.option.buttonIndex;
@@ -1455,7 +1456,7 @@ define([
 			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
-			$changedRow = $('#formList').find('li.option.l_' + container).filter(function(index){
+			$changedRow = $('li.option.l_' + jq(container), '#formList').filter(function(index){
 				var $this = $(this);
 				return $this.data("id") == itemIndex;
 			});
@@ -1811,18 +1812,15 @@ define([
 			itemId = "question" + error.container + "_" + error.itemIndex;
 			$item = $('#' + itemId);
 		} else {
-			$item = $('#formList').find('li.option.l_' + error.container).filter(function(index){
+			$item = $('#formList').find('li.option.l_' + jq(error.container)).filter(function(index){
 				var $this = $(this);
 				return $this.data("id") == error.itemIndex;
 			});
 		}
 		
 		// Expand all parent panes
-		$parent = $item.parent().closest('li.panel');
-		while($parent.length > 0) {
-			$parent.find('.collapse').show();
-			$parent = $parent.parent().closest('li.panel');
-		}
+		$parents = $item.parents('div.collapse');
+		$parents.show();
 		
 		if(error.itemType === "question") {
 			$textarea = $item.find('.question').find('textarea');
