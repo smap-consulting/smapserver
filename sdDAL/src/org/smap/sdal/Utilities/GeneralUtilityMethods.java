@@ -268,22 +268,24 @@ public class GeneralUtilityMethods {
 		FileFilter fileFilter = new WildcardFileFilter(oldFileName + ".*");
 		File[] files = dir.listFiles(fileFilter);
 		
-		if(files.length > 0) {
-			moveFiles(files, toDirectory, newFileName);  
-		} else {
-			
-			// Try the old /templates/xls location for files
-			fromDirectory = basePath + "/templates/XLS";
-			dir = new File(fromDirectory);
-			files = dir.listFiles(fileFilter);
-			moveFiles(files, toDirectory, newFileName); 
-			
-			// try the /templates location
-			fromDirectory = basePath + "/templates";
-			dir = new File(fromDirectory);
-			files = dir.listFiles(fileFilter);
-			moveFiles(files, toDirectory, newFileName); 
-			
+		if(files != null) {
+			if(files.length > 0) {
+				moveFiles(files, toDirectory, newFileName);  
+			} else {
+				
+				// Try the old /templates/xls location for files
+				fromDirectory = basePath + "/templates/XLS";
+				dir = new File(fromDirectory);
+				files = dir.listFiles(fileFilter);
+				moveFiles(files, toDirectory, newFileName); 
+				
+				// try the /templates location
+				fromDirectory = basePath + "/templates";
+				dir = new File(fromDirectory);
+				files = dir.listFiles(fileFilter);
+				moveFiles(files, toDirectory, newFileName); 
+				
+			}
 		}
 		 
 	}

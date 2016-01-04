@@ -258,7 +258,8 @@ define([
 				} else {
 					// Create reference for this new Label		
 					if(change.property.type === "question") {
-						change.property.key = getFormPath(form) + "/" + item.name + ":label";	
+						change.property.key = getFormPath(form) + "/" + item.name + 
+						(change.property.prop === "hint" ? ":hint" : ":label");	
 					} else if(change.property.type === "option") {
 						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
 					}
@@ -535,9 +536,9 @@ define([
 			
 			if(property.type === "question") {			// Change to a question
 				question = survey.forms[property.formIndex].questions[property.itemIndex];
-				if(property.propType === "text") {		// Not a media change
+				if(property.propType === "text" || property.propType === "hint") {		// Not a media change
 					
-					if(property.prop === "label") {	   // Changing the label
+					if(property.prop === "label" || property.prop === "hint") {	   // Changing the label or hint
 						
 						question.labels[property.language][property.propType] = property.newVal;
 						

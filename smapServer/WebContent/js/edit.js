@@ -199,18 +199,30 @@ $(document).ready(function() {
 	});
 	
 	$('.m_languages').off().click(function() {
-		console.log("Edit languages");
-		gTempLanguages = globals.model.survey.languages.slice();
-		updateLanguageView();
-		$('#editLanguageModal').modal("show");
+		
+		if($(this).closest('li').hasClass('disabled')) {
+			bootbox.alert("Cannot modify languages while there are unsaved changes");
+		} else {
+			gTempLanguages = globals.model.survey.languages.slice();
+			updateLanguageView();
+			$('#editLanguageModal').modal("show");
+		}
 	});
 	
 	$('#m_required').off().click(function() {
-		setAllRequired(true);
+		if($(this).closest('li').hasClass('disabled')) {
+			bootbox.alert("Cannot set questions required while there are unsaved changes");
+		} else {
+			setAllRequired(true);
+		}
 	});
 	
 	$('#m_not_required').off().click(function() {
-		setAllRequired(false);
+		if($(this).closest('li').hasClass('disabled')) {
+			bootbox.alert("Cannot set questions not required while there are unsaved changes");
+		} else {
+			setAllRequired(false);
+		}
 	});
 	
 	$('#addLanguage').off().click(function() {
