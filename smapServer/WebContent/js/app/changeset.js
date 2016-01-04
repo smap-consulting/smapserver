@@ -722,6 +722,17 @@ define([
 				}
 				if(change.question.type === "geopoint" || change.question.type === "geotrace" || change.question.type === "geoshape") {
 					change.question.name = "the_geom";
+				}  else if(change.question.type === "begin repeat") {
+					// New sub form
+					survey.forms.push({
+						id: undefined,
+						name: change.question.name,  
+						parentQuestionIndex: change.question.itemIndex,								
+						parentFormIndex: change.question.formIndex,
+						questions: [],
+						qSeq: []
+					});
+					change.question.childFormIndex = survey.forms.length - 1;
 				}
 				
 				refresh = true;			// DEBUG - remove after fixing update of html

@@ -60,6 +60,7 @@ define([
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
 			formIndex,
+			relatedFormIndex,
 			qIndex,
 			survey = globals.model.survey,
 			type,
@@ -71,21 +72,22 @@ define([
 		
 		type = type || "string";		// Default to text question
 		
+		firstQuestion = true;
+		qIndex = 0;
+		seq = 0;
 		if($relatedQuestion.size() > 0) {
-			// Appending or pre=pending to an existing question
-			firstQuestion = false;
-			formIndex = $relatedQuestion.data("fid");
-			qIndex = $relatedQuestion.data("id");
-			seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
-			if(locn === "after") {
-				++seq;
-			} 
-		} else {
-			// First question in the form
-			firstQuestion = true;
-			qIndex = 0;
-			seq = 0;
-		}
+			relatedFormIndex = $relatedQuestion.data("fid");
+			if(relatedFormIndex == formIndex) {
+				// Appending or pre=pending to an existing question
+				firstQuestion = false;
+	
+				qIndex = $relatedQuestion.data("id");
+				seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
+				if(locn === "after") {
+					++seq;
+				} 
+			}
+		} 
 		
 		name = getDefaultQuestionName(formIndex, qIndex);
 
@@ -137,8 +139,8 @@ define([
 			form = forms[formIndex],
 			name = form.maxQuestion;
 		
-		if(form.parentIndex >= 0) {
-			name = form.questions[parentQuestionIndex].name + "." + name;
+		if(form.parentQuestionIndex >= 0) {
+			name = forms[form.parentFormIndex].questions[form.parentQuestionIndex].name + "." + name;
 		} else {	
 			name = "q" + name;
 		}
@@ -147,8 +149,8 @@ define([
 		while(!nameIsUniqueInForm(form, name)) {
 			name = ++form.maxQuestion;
 			console.log("Get default qname maxQuestion: " + form.maxQuestion);
-			if(form.parentIndex >= 0) {
-				name = form.questions[parentQuestionIndex].name + "." + name;
+			if(form.parentQuestionIndex >= 0) {
+				name = forms[form.parentFormIndex].questions[form.parentQuestionIndex].name + "." + name;
 			} else {	
 				name = "q" + name;
 			}

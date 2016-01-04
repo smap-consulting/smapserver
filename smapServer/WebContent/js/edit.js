@@ -1251,12 +1251,14 @@ function mediaPropSelected($this) {
  */
 function addQuestion($this, type) {
 	var $context,						// Updated Html
+		survey = globals.model.survey,
 		prop = $('#selProperty').val(),
 		qId,
 		$related,
 		$li,
 		formIndex = $this.data("findex"),
-		forms = globals.model.survey.forms,
+		itemIndex,
+		forms = survey.forms,
 		justAddedQuestionId,
 		availableGroups,
 		$textArea,
@@ -1295,8 +1297,9 @@ function addQuestion($this, type) {
 	
 	// Add an end group question if a new group has been created
 	if(type === "begin group") {
-		name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
-		$context = question.add(gFormIndex, $questionElement.attr("id"), 
+		itemIndex = forms[formIndex].questions.length - 1;
+		name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
+		$context = question.add(formIndex, "question" + formIndex + "_" + itemIndex, 
 				"after", 
 				"end group",
 				name);
