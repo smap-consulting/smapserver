@@ -176,9 +176,9 @@ define([
 				removeHourglass();
 				
 				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
+		              // Not an error
 				} else {
-					alert("Error: Failed to save survey: " + err);
+					bootbox.alert("Error: Failed to save survey: " + err);
 				}
 						
 				if(typeof responseFn === "function") { 
@@ -428,28 +428,14 @@ define([
 								newElement.propType === element.propType) {		
 							changes.splice(j,1);	// Remove the old item and apply the new one
 							return true;							
-						}					
-						
-					/*
-					 * 3. If this is a label update and there is already another update to 
-					 * 		- change the name
-					 *    then set the path to the remove the first update
-					 */	
-					} else if(newItem.action === "update" 	&& newItem.changeType === "label"
-							&& item.changeType === "label") {
-						
-						if(newElement.languageName === element.languageName &&
-								newElement.propType === element.propType) {		
-							changes.splice(j,1);	// Remove the old item and apply the new one
-							return true;							
-						}			
+						}							
 							
 					/*
 					 * 3. If this is an update to a property or label and 
 					 *      - the existing item is newly added then
 					 * 		- merge the update into the added item
 					 */						
-					} else if(newItem.action === "update" && item.action === "add"
+					} else if(newItem.action === "update" && (typeof element.fId === "undefined") 
 							&& (newItem.changeType === "label" || newItem.changeType === "property")) {
 								
 						if(newItem.changeType === "label") {
@@ -479,7 +465,21 @@ define([
 						}
 						
 						return false;		// Don't apply the change it has been merged
-							
+					
+					/*
+					 * 4. If this is a move of an item
+					 */	
+					} else if(newItem.action === "move") {
+						/*
+						 * Remove any modifications to this deleted element
+						 */
+						element.seq = newElement.seq;
+						return false;
+					
+						
+					/*
+					 * 5. If this is a delete of an item
+					 */	
 					} else if(newItem.action === "delete") {
 						/*
 						 * Remove any modifications to this deleted element
@@ -813,14 +813,17 @@ define([
 	function moveQuestion(survey, question, targetForm, newLocation, sourceForm, oldLocation) {
 		
 		var newQuestion = jQuery.extend(true, {}, question),
-			itemIndex;
+			itemIndex,
+			i,j,
+			change,
+			item;
 		
-		// Add the question in the new location
+		// 1. Add the question in the new location
 		length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
 		itemIndex = length - 1;
 		survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
 	
-		// Remove the question from the old location	
+		// 2. Remove the question from the old location	
 		// The old location may have changed if the new location was inserted before it
 		if(newLocation < oldLocation && sourceForm === targetForm) {
 			oldLocation++;
@@ -828,6 +831,23 @@ define([
 		survey.forms[sourceForm].qSeq.splice(oldLocation, 1);
 		question.deleted = true;  
 	
+		// 3. Update any items in the change list to put to the new location
+		if(globals.changes) {
+			for(i = 0; i < globals.changes.length; i++) {
+				change = globals.changes[i];
+				if(change.changeType === "question") {
+					for(j = 0; j < change.items.length; j++) {
+						item = change.items[j];
+						if(item.question.formIndex === question.formIndex && 
+								item.question.itemIndex === question.itemIndex) {
+							// We moved a question thats in the change queue
+							item.question.formIndex = targetForm;
+							item.question.itemIndex = itemIndex;
+						}
+					}
+				}
+			}
+		}
 		return itemIndex;
 	}
 	/*
