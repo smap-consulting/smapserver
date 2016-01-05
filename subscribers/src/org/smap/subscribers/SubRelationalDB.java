@@ -513,9 +513,9 @@ public class SubRelationalDB extends Subscriber {
 				if(tableCreated) {
 					markAllChangesApplied(cMeta, sId);
 				} else {
-					System.out.println("Pre-applyTableChanges: Auto commit for sd is: " + cMeta.getAutoCommit());
+					System.out.println("Pre-applyTableChanges: Auto commit for results is: " + cRel.getAutoCommit());
 					applyTableChanges(cMeta, cRel, sId);
-					System.out.println("Post-applyTableChanges: Auto commit for sd is: " + cMeta.getAutoCommit());
+					System.out.println("Post-applyTableChanges: Auto commit for results is: " + cRel.getAutoCommit());
 				}
 				markPublished(cMeta, sId);
 			}
@@ -1440,13 +1440,26 @@ public class SubRelationalDB extends Subscriber {
 				pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
 				System.out.println("SQL: " + pstmtAlterTable.toString());
 			
+				System.out.println("Pre-alter table: Auto commit for results is: " + cResults.getAutoCommit());
 				pstmtAlterTable.executeUpdate();
 				
+				// Commit this change to the database
+				try {
+					cResults.commit();
+				} catch(Exception ex) {
+					
+				}
 			} 
 		} catch (Exception e) {
 			// Report but otherwise ignore any errors
-			// No need to roll back if the survey_change table is not updated, 
 			System.out.println("Error altering table -- continuing: " + e.getMessage());
+			
+			// Rollback this change
+			try {
+				cResults.rollback();
+			} catch(Exception ex) {
+				
+			}
 			
 			// Only record the update as failed if the problem was not due to the column already existing
 			status.msg = e.getMessage();
