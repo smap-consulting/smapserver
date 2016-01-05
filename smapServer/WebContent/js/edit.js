@@ -435,7 +435,10 @@ $(document).ready(function() {
      */
 	$('#get_form').off().click(function() {
 		
-		var name;
+		var name,
+			existing,
+			existing_survey,
+			existing_form;
 		
 		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
 		
@@ -445,7 +448,10 @@ $(document).ready(function() {
 			getSurveyDetails(surveyDetailsDone);
 		} else {
 			name = $('#new_form_name').val();
-			createNewSurvey(name, surveyDetailsDone);
+			existing = $('#base_on_existing').prop('checked');
+			existing_survey = $('#survey_name').val();
+			existing_form = $('#form_name').val();
+			createNewSurvey(name, existing, existing_survey, existing_form, surveyDetailsDone);
 		}
  	 });
 	

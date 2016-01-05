@@ -1238,8 +1238,10 @@ function setLanguages(languages, languageCallback) {
 /*
  * Get a survey details - depends on globals being set
  */
-function createNewSurvey(name, callback) {
+function createNewSurvey(name, existing, existing_survey, existing_form, callback) {
 
+	console.log("create new: " + existing + " : " + existing_survey + " : " + existing_form);
+	
 	var url="/surveyKPI/surveys/new/" + globals.gCurrentProject + "/" + name;
 	
 	addHourglass();
