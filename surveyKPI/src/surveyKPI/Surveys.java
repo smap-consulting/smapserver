@@ -239,7 +239,10 @@ public class Surveys extends Application {
 	@Produces("application/json")
 	public Response createNewSurvey(@Context HttpServletRequest request,
 			@PathParam("project") int projectId,
-			@PathParam("name") String name
+			@PathParam("name") String name,
+			@FormParam("existing") boolean existing,
+			@FormParam("existing_survey") int existingSurveyId,
+			@FormParam("existing_form") String existingFormName
 			) { 
 		
 		try {
@@ -264,7 +267,7 @@ public class Surveys extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			int sId = sm.createNewSurvey(connectionSD, name, projectId);
+			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormName);
 			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();

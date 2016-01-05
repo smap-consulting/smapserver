@@ -251,7 +251,10 @@ public class SurveyManager {
 	public int createNewSurvey(
 			Connection sd, 
 			String name,
-			int projectId
+			int projectId,
+			boolean existing,
+			int existingSurveyId,
+			String existingFormName
 			) throws SQLException, Exception {
 		
 		int sId;

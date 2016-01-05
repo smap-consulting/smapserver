@@ -1249,6 +1249,11 @@ function createNewSurvey(name, existing, existing_survey, existing_form, callbac
 		type: "POST",
 		url: url,
 		dataType: 'json',
+		data: { 
+			existing: existing,
+			existing_survey: existing_survey,
+			existing_form: existing_form
+		},
 		cache: false,
 		success: function(data) {
 			removeHourglass();
