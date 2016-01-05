@@ -1283,10 +1283,19 @@ define([
 		
 		/*
 		 * If there were no errors check for warnings
+		 * Only do this on validateAll as otherwise it is just annoying to get the warnings
 		 */
-		if(isValid) {	
-			if(item.visible || itemType === "option") {
-				isValid = checkBlankLabels(container, itemIndex, itemType, item, "warning");
+		if(!removeExisting) {
+			if(isValid) {	
+				if(item.visible || itemType === "option") {
+					isValid = checkBlankLabels(container, itemIndex, itemType, item, "warning");
+				}
+			}
+			
+			if(isValid) {
+				if(item.visible && itemType === "question") {
+					isValid = checkMissingChoices(container, itemIndex, itemType, item, "warning");
+				}
 			}
 		}
 
@@ -1315,6 +1324,46 @@ define([
 				break;
 			}
 		}
+		
+		return valid;
+	}
+	
+	/*
+	 * Check for Missing choices in a select questions
+	 */
+	function checkMissingChoices(container, itemIndex, itemType, item) {
+		var i,
+			valid = true,
+			survey;
+		
+		if(item.type.indexOf('select') === 0) {
+			if(typeof globals.model.survey.optionLists[item.list_name] === "undefined") {
+				valid = false;
+			}
+			if(valid) {
+				list = globals.model.survey.optionLists[item.list_name].options;
+				valid = false;
+				for(i = 0; i < list.length; i++) {
+					if(!list[i].deleted) {
+						valid = true;
+						break;
+					}
+				}
+			}
+			
+			if(!valid) {
+				addValidationError(
+						container,
+						itemIndex,
+						"item",
+						"No choices in the choice list ",
+						itemType,
+						"warning");
+				valid = false;
+			}
+			
+		}
+		
 		
 		return valid;
 	}
@@ -1783,10 +1832,11 @@ define([
 		
 		globals.errors = [];		// Clear the existing errors 
 		$('li.panel.error', '#formList').removeClass("error");
+		$('li.panel.warning', '#formList').removeClass("warning");
 		
 		for(i = 0; i < forms.length; i++) {
 			for(j = 0; j < forms[i].questions.length; j++) {
-				if(!forms[i].questions[j].visible && !forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
+				if(forms[i].questions[j].visible && !forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
 					validateItem(i, j, "question", false);		// Validate the question
 				}
 			}
