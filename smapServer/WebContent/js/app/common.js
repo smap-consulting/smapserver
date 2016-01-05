@@ -1277,6 +1277,9 @@ function createNewSurvey(name, callback) {
  * Open a form for editing
  */
 function openForm(type) {
+	
+	$('.reusing_form').hide();
+	$('#base_on_existing').prop('checked', false)
 	if(type === "new") {
 		$('.existing_form').hide();
 		$('.new_form').show();

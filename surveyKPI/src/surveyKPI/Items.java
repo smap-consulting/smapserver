@@ -478,7 +478,6 @@ public class Items extends Application {
 				
 				log.info("Get Item Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
-				//rsMetaData = resultSet.getMetaData();
 	
 				JSONArray ja = new JSONArray();
 				while (resultSet.next()) {

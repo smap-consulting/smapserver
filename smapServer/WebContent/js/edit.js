@@ -128,6 +128,23 @@ $(document).ready(function() {
 		}
 	}
 	
+	/*
+	 * Initialise controls in the open form dialog
+	 */
+	 $('#base_on_existing').click(function () {
+		 if($(this).is(':checked')) {
+			 $('.reusing_form').show();
+				getSurveyForms($('#survey_name').val(), addForms);
+		 } else {
+			 $('.reusing_form').hide();
+		 }
+	 });
+	 
+	 $('#survey_name').change(function(){
+		var $this = $(this);
+		getSurveyForms($this.val(), addForms);
+	 });
+	 
 	window.history.pushState('',document.title, document.location.origin + document.location.pathname);	// Strip out the parameters from the href
 	
 	// Get the user details
@@ -423,7 +440,7 @@ $(document).ready(function() {
 		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
 		
 		if(globals.gExistingSurvey) {
-			globals.gCurrentSurvey = $('#form_name option:selected').val();	
+			globals.gCurrentSurvey = $('#survey_name option:selected').val();	
 			saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id as the current survey
 			getSurveyDetails(surveyDetailsDone);
 		} else {
@@ -1513,6 +1530,60 @@ function optionListExists(list) {
 	} else {
 		return true;
 	}
+}
+
+/*
+ * Get the forms in a survey
+ */
+/*
+ * Get forms for a survey
+ */
+function getSurveyForms(sId, callback) {
+
+	if(sId != -1) {
+		var url = '/surveyKPI/survey/' + sId + '/getMeta';
+	
+		addHourglass();
+	 	$.ajax({
+			url: url,
+			dataType: 'json',
+			success: function(data) {
+				removeHourglass();
+				if(typeof callback === "function") {
+					callback(data);
+				}
+				
+
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+  				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					bootbox.alert("Error failed to get forms for survey:" + sId);
+				}
+			}
+		});
+	
+	}
+}
+
+function addForms(data) {
+	var h = [],
+		idx = -1,
+		i,
+		forms;
+	
+	forms = data.forms;
+	for(i = 0; i < forms.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = forms[i].form;
+		h[++idx] = '">';
+		h[++idx] = forms[i].form;
+		h[++idx] = '</option>';	
+	}
+	$('#form_name').html(h.join(""));
+
 }
 
 /* **********************************************************************************************

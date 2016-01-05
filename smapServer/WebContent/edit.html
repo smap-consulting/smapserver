@@ -268,16 +268,33 @@
 							<select id="project_name" class="project_list form-control"></select>
 						</div>
 					</div>
-					<div class="form-group existing_form">
-						<label for="form_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
-						<div class="col-sm-10">
-							<select id="form_name" class="survey_select form-control"></select>
-						</div>
-					</div>
 					<div class="form-group new_form" style="display:none;">
 						<label for="new_form_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
 						<div class="col-sm-10">
 							<input placeholder="Form Name" type="text" id="new_form_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group new_form" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="base_on_existing" ><span data-lang="c_b_e" class="lang">BE</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="form-group existing_form reusing_form">
+						<label for="survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">survey</label>
+						<div class="col-sm-10">
+							<select id="survey_name" class="survey_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group reusing_form">
+						<label for="form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
+						<div class="col-sm-10">
+							<select id="form_name" class="form_select form-control"></select>
 						</div>
 					</div>
 				</form>

@@ -120,6 +120,7 @@ define({
 	"c_tools": "Tools",
 	"c_required": "Make Required",
 	"c_not_required": "Make Not Required",
+	"c_b_e": "Base on existing form",
 	
 	// File Types
 	"ft": "File Type",

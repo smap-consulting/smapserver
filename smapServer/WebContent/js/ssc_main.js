@@ -70,7 +70,7 @@ $(document).ready(function() {
      * Open a new form
      */
 	$('#get_form').off().click(function() {
-		globals.gCurrentSurvey = $('#form_name option:selected').val();
+		globals.gCurrentSurvey = $('#survey_name option:selected').val();
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
 		getSurveyDetails(surveyDetailsDone);
  	 });
