@@ -435,7 +435,7 @@ define([
 					 *      - the existing item is newly added then
 					 * 		- merge the update into the added item
 					 */						
-					} else if(newItem.action === "update" && (typeof element.fId === "undefined") 
+					} else if(newItem.action === "update" && (typeof element.qId === "undefined") 
 							&& (newItem.changeType === "label" || newItem.changeType === "property")) {
 								
 						if(newItem.changeType === "label") {
