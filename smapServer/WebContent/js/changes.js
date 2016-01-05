@@ -279,7 +279,15 @@ function getChangeDescription(change) {
 			h[++idx] = 'question <span style="color:blue;">';
 			h[++idx] = change.question.name;
 			h[++idx] = '</span> with type <span style="color:red;">';
-			h[++idx] = change.question.type;
+			if(change.question.type === "string") {
+				h[++idx] = 'text';
+			} else if(change.question.type === "select"){
+				h[++idx] = 'select_multiple';
+			} else if(change.question.type === "select1"){
+				h[++idx] = 'select_one';
+			} else {
+				h[++idx] = change.question.type;
+			}
 			h[++idx] = '</span>';
 			
 		} else if(change.type === "option") {
@@ -300,7 +308,44 @@ function getChangeDescription(change) {
 			h[++idx] = ' using the online editor';
 		}
 		
-	}  else if(change.action === "delete")  {
+	}  else if(change.action === "move")  {
+		
+		/*
+		 * New questions or options
+		 */
+		h[++idx] = 'Moved ';
+		
+		if(change.type === "question"){
+			
+			h[++idx] = 'question <span style="color:blue;">';
+			h[++idx] = change.question.name;
+			h[++idx] = '</span> from position <span style="color:red;">';
+			h[++idx] = change.question.sourceSeq;
+			h[++idx] = '</span>';
+			h[++idx] = '</span> to position <span style="color:red;">';
+			h[++idx] = change.question.seq;
+			h[++idx] = '</span>';
+			
+			
+		} else if(change.type === "option") {
+			
+			h[++idx] = 'choice <span style="color:blue;">'; 
+			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
+			h[++idx] = '</span>';
+			h[++idx] = ' from choice list: <span style="color:blue;">';
+			h[++idx] = change.option.sourceOptionList;
+			h[++idx] = '</span>';
+			h[++idx] = ' to choice list: <span style="color:blue;">';
+			h[++idx] = change.option.optionList;
+			h[++idx] = '</span>';
+		}
+		
+	} else if(change.action === "delete")  {
 		
 		h[++idx] = 'Deleted ';
 		

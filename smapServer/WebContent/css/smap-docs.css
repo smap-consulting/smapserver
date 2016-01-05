@@ -15,6 +15,10 @@ h3 {
 	color: green;
 }
 
+.glyphicon-ok.warn {
+	color: orange;
+}
+
 .glyphicon-remove {
 	color: red;
 }
