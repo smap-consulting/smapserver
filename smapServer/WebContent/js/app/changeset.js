@@ -175,14 +175,14 @@ define([
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
 				
+				if(typeof responseFn === "function") { 
+					responseFn();
+				}
+				
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              // Not an error
 				} else {
 					bootbox.alert("Error: Failed to save survey: " + err);
-				}
-						
-				if(typeof responseFn === "function") { 
-					responseFn();
 				}
 			}
 		});	
@@ -762,13 +762,13 @@ define([
 				var oldLocation = change.option.sourceSeq;
 				var newLocation = change.option.seq;
 				
-				// Add the option in the new location
+				// 1. Add the option in the new location
 				length = targetOptionList.options.push(newOption);
 				change.option.itemIndex = length -1;
 				change.option.value = option.value;
 				targetOptionList.oSeq.splice(change.option.seq, 0, length - 1);	
 			
-				// Remove the option from the old location	
+				// 2. Remove the option from the old location	
 				// The old location may have changed if the new location was inserted before it
 				if(newLocation < oldLocation && change.option.sourceOptionList == change.option.optionList) {
 					oldLocation++;
@@ -776,6 +776,23 @@ define([
 				sourceOptionList.oSeq.splice(oldLocation, 1);	
 				option.deleted = true;
 				
+				// 3. Update any items in the change list to the new location
+				if(globals.changes) {
+					for(i = 0; i < globals.changes.length; i++) {
+						var existingChange = globals.changes[i];
+						if(existingChange.changeType === "option") {
+							for(j = 0; j < existingChange.items.length; j++) {
+								existingItem = existingChange.items[j];
+								if(existingItem.option.optionList === option.optionList && 
+										existingItem.option.itemIndex === option.itemIndex) {
+									// We moved an option thats in the change queue
+									existingItem.option.optionList = change.option.optionList;
+									existingItem.option.itemIndex = change.option.itemIndex;
+								}
+							}
+						}
+					}
+				}
 				refresh = true;
 				
 			} else if(change.action === "add") {			
