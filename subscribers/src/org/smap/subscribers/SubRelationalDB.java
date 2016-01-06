@@ -1333,7 +1333,9 @@ public class SubRelationalDB extends Subscriber {
 						
 						QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 
-						if(qd.type.equals("begin repeat")) {
+						if(qd.type.equals("begin group") || qd.type.equals("end group")) {
+							// Ignore group changes
+						} else if(qd.type.equals("begin repeat")) {
 							// Get the table name
 							String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
 							pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);

@@ -208,7 +208,9 @@ public class QuestionManager {
 				} else if(q.type.equals("calculate")) {
 					q.type = "string";
 					q.visible = false;
-				} else if(q.type.equals("begin repeat")) {
+				} else if(q.type.equals("begin repeat") 
+						|| q.type.equals("begin group")
+						|| q.type.equals("end group")) {
 					q.source = null;
 				}
 				
