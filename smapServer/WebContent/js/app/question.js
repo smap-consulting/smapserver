@@ -55,7 +55,7 @@ define([
 	 * formIndex: The index of the form in the array of forms that are part of the survey model
 	 * qIndex: The index of the question in the array of questions that make up a form 
 	 */
-	function add(formIndex, qId, locn, type) {		
+	function add(formIndex, qId, locn, type, name) {		
 		
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
@@ -88,7 +88,9 @@ define([
 			}
 		} 
 		
-		name = getDefaultQuestionName(formIndex, qIndex);
+		if(typeof name === "undefined") {
+			name = getDefaultQuestionName(formIndex, qIndex);
+		}
 
 		// Create changeset to be applied on save		
 		change = {

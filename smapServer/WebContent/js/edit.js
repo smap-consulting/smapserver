@@ -986,7 +986,8 @@ function respondToEvents($context) {
 				// Add an end group question if a new group has been created
 				if(type === "begin group") {
 					name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
-					$context = question.add(gFormIndex, $questionElement.attr("id"), 
+					$context = question.add(gFormIndex, 
+							$questionElement.attr("id"), 
 							"after", 
 							"end group",
 							name);
@@ -1283,7 +1284,7 @@ function addQuestion($this, type) {
 		availableGroups = $this.data("groups").split(":");
 		$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
 	} else {
-		$context = question.add(formIndex, qId, locn, type);
+		$context = question.add(formIndex, qId, locn, type, undefined);
 	}
 	
 	respondToEvents($context);				// Add events on to the altered html
