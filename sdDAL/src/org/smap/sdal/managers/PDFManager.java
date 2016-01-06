@@ -1561,9 +1561,11 @@ public class PDFManager {
 			}
 		}
 		addValue(document, user.name, indent);
-		addValue(document, us.title, indent);
-		addValue(document, us.license, indent);
 		addValue(document, user.company_name, indent);
+		if(us != null) {
+			addValue(document, us.title, indent);
+			addValue(document, us.license, indent);
+		}
 
 	}
 	
