@@ -212,6 +212,11 @@ public class QuestionManager {
 					q.source = null;
 				}
 				
+				/*
+				 * Get the path of thies question based on its position in the form
+				 */
+				q.path = getNewPath(sd, q);
+				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 				// as the editor expects
 				GeneralUtilityMethods.cleanQuestionSequences(sd, q.fId);
@@ -425,7 +430,6 @@ public class QuestionManager {
 				questionsInGroup = getQuestionsInGroup(sd, q);
 				for(Question groupQuestion : questionsInGroup) {
 					newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
-					System.out.println("----- New path: " + newPath);
 					moveAQuestion(sd, sId, groupQuestion, newPath);
 				}
 			} else if(q.type.equals("end group")) {
@@ -597,17 +601,22 @@ public class QuestionManager {
 			} else {
 				isInFrontOfRelatedQuestion = true;
 			}
+			System.out.println("Get path: name: " + q.name);
+			System.out.println("     Get path: Sequence: " + relatedSeq);
+			
 			pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
 			pstmtGetNewPath.setInt(1, q.fId);
 			pstmtGetNewPath.setInt(2, relatedSeq);
 			
-			log.info("SQL Get new path: " + pstmtGetNewPath.toString());
+			log.info("		SQL Get new path: " + pstmtGetNewPath.toString());
 			
 			ResultSet rs = pstmtGetNewPath.executeQuery();
 			if(rs.next()) {
 				path = rs.getString(1);
 				String type = rs.getString(2);
-				if(type.equals("begin group") && !isInFrontOfRelatedQuestion) {
+				
+				System.out.println("    path: " + path + " : " + type);
+				if(type.equals("begin group") && !isInFrontOfRelatedQuestion && !q.type.equals("end group")) {
 					// Add question to the group
 					path += "/" + q.name;		
 				} else {
@@ -617,6 +626,7 @@ public class QuestionManager {
 				}	
 			} else {
 				// There are no other questions in this form, use the path provided by the client
+				System.out.println("    No other questions in this form");
 				path = q.path;
 			}
 		} catch(SQLException e) {
