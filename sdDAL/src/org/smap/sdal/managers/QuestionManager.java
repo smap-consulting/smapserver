@@ -603,8 +603,6 @@ public class QuestionManager {
 			} else {
 				isInFrontOfRelatedQuestion = true;
 			}
-			System.out.println("Get path: name: " + q.name);
-			System.out.println("     Get path: Sequence: " + relatedSeq);
 			
 			pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
 			pstmtGetNewPath.setInt(1, q.fId);
@@ -617,7 +615,6 @@ public class QuestionManager {
 				path = rs.getString(1);
 				String type = rs.getString(2);
 				
-				System.out.println("    path: " + path + " : " + type);
 				if(type.equals("begin group") && !isInFrontOfRelatedQuestion && !q.type.equals("end group")) {
 					// Add question to the group
 					path += "/" + q.name;		
@@ -628,7 +625,7 @@ public class QuestionManager {
 				}	
 			} else {
 				// There are no other questions in this form, use the path provided by the client
-				System.out.println("    No other questions in this form");
+				log.info("No other questions in this form, setting the path to: " + q.path);
 				path = q.path;
 			}
 		} catch(SQLException e) {

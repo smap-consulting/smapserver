@@ -81,7 +81,7 @@ define([
 				firstQuestion = false;
 	
 				qIndex = $relatedQuestion.data("id");
-				seq = getSequenceQuestion(qIndex, survey.forms[formIndex]);
+				seq = getSequenceQuestion(qIndex, survey.forms[formIndex], false, undefined);
 				if(locn === "after") {
 					++seq;
 				} 
@@ -216,16 +216,17 @@ define([
 		}
 		groupEndName = group + "_groupEnd";
 		
+		
+		endGroupData = getEndGroup(groupEndName, survey.forms[beforeFormIndex]);
+		sourceFormId = survey.forms[beforeFormIndex].id;	
+		
 		// Get the sequence of the question just after the new location of the end group
-		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);
+		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex], true, endGroupData.index);
 		if(locn === "after") {
 			++seq;
 		} 
 		
-		// Get the current sequence of the end group
-		endGroupData = getEndGroup(groupEndName, survey.forms[beforeFormIndex]);
-		sourceFormId = survey.forms[beforeFormIndex].id;	
-		
+		// Get information about the current question
 		question = survey.forms[beforeFormIndex].questions[endGroupData.index];
 		
 		// Create changeset to be applied on save		
@@ -281,7 +282,7 @@ define([
 			beforeFormIndex = $beforeElement.data("fid");
 			if(beforeFormIndex == formIndex) {
 				beforeItemIndex = $beforeElement.data("id");
-				seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);	
+				seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex], true, sourceItemIndex);	
 				if(locn === "after") {
 					seq++;
 				}
@@ -289,7 +290,7 @@ define([
 		}
 
 		// Get the old sequence of the question
-		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
+		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex], false, undefined);
 		question = survey.forms[sourceFormIndex].questions[sourceItemIndex];
 		sourceFormId = survey.forms[sourceFormIndex].id;										// Used to verify that a question has not been moved by another user
 
@@ -375,7 +376,7 @@ define([
 			survey = globals.model.survey,
 			seq;
 		
-		seq = getSequenceQuestion(itemIndex, survey.forms[formIndex]);
+		seq = getSequenceQuestion(itemIndex, survey.forms[formIndex], false, undefined);
 		
 		change = {
 				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
@@ -486,16 +487,22 @@ define([
 	}
 	/*
 	 * Get the display sequence of the question
+	 * If exclude is set to true then don't count the question with index "excludeIndex"
+	 *  This should be used when you are getting the new seq of a question that is being moved
+	 *  The old location of that question will be removed and should not be counted
 	 */
-	function getSequenceQuestion(qIndex, form) {
-		var i;
+	function getSequenceQuestion(qIndex, form, exclude, excludeIndex) {
+		var i,
+			seq = 0;
 		
 		for(i = 0; i < form.qSeq.length; i++) {
 			if(form.qSeq[i] === qIndex) {
-				return i;
+				return seq;
+			}
+			if(!exclude || (form.qSeq[i] !== excludeIndex)) {
+				seq++;
 			}
 		}
-		alert("Could not insert question");
 		return 0;
 	}
 	
