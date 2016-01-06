@@ -712,11 +712,15 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get the question id using the form id and question name
 	 * Used by the editor to get the question id of a newly created question
+	 * 
+	 * 
 	 */
 	static public int getQuestionId(
 			Connection sd, 
 			int formId,
-			String qName) throws SQLException {
+			int sId,
+			int changeQId,
+			String qName) throws Exception {
 		
 		int qId = 0;
 		
@@ -724,6 +728,11 @@ public class GeneralUtilityMethods {
 				" from question " +
 				" where f_id = ? " +
 				" and qname = ?;";
+		
+		String sqlGetQuestionIdFromSurvey = "select q_id " +
+				" from question " +
+				" where qname = ? "
+				+ "and f_id in (select f_id from form where s_id = ?); ";
 		
 		PreparedStatement pstmt = null;
 		
@@ -736,9 +745,27 @@ public class GeneralUtilityMethods {
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				qId = rs.getInt(1);	
+			} else {
+				// Try without the form id, the question may have been moved to a different form
+				pstmt.close();
+				pstmt = sd.prepareStatement(sqlGetQuestionIdFromSurvey);
+				pstmt.setString(1, qName);
+				pstmt.setInt(2, sId);
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					qId = rs.getInt(1);
+				} else {
+					throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
+				}
+				
+				// If there is more than one question with the same name then use the qId in the change item
+				// This will work for existing questions and this question was presumably added from xlsForm
+				if(rs.next()) {
+					qId = changeQId;
+				}
 			}
 			
-		} catch(SQLException e) {
+		} catch(Exception e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {

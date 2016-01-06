@@ -205,11 +205,11 @@ public class QuestionManager {
 				
 				if(q.type.startsWith("select")) {	// Get the list id
 					q.l_id = GeneralUtilityMethods.getListId(sd, sId, q.list_name);
-				}
-				
-				if(q.type.equals("calculate")) {
+				} else if(q.type.equals("calculate")) {
 					q.type = "string";
 					q.visible = false;
+				} else if(q.type.equals("begin repeat")) {
+					q.source = null;
 				}
 				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
@@ -614,9 +614,10 @@ public class QuestionManager {
 					// Set the path as per the related question
 					String pathBase = path.substring(0, path.lastIndexOf('/'));
 					path = pathBase + "/" + q.name; 
-				}
-				
-				
+				}	
+			} else {
+				// There are no other questions in this form, use the path provided by the client
+				path = q.path;
 			}
 		} catch(SQLException e) {
 			String msg = e.getMessage();
@@ -658,7 +659,34 @@ public class QuestionManager {
 		String sqlMovedToAnotherForm = "update question set seq = -100, f_id = ? where f_id = ? and qname = ? and f_id in "
 				+ "(select f_id from form where s_id = ?);";
 		
+		PreparedStatement pstmtGetFormId = null;
+		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
+		
 		try {	
+			
+			// Get the formId of the target form
+			pstmtGetFormId = sd.prepareStatement(sqlGetFormId);
+			pstmtGetFormId.setInt(1, sId);
+			if(q.fId <= 0) {	// New Form, the formIndex can be used to retrieve the formId of this new form
+				
+				pstmtGetFormId.setInt(2, q.formIndex);
+				
+				log.info("SQL: Get form id: " + pstmtGetFormId.toString());
+				ResultSet rs = pstmtGetFormId.executeQuery();
+				rs.next();
+				q.fId = rs.getInt(1);	
+			}
+			
+			// Get the formId of the source form
+			if(q.sourceFormId <= 0) {	// New Form, the formIndex can be used to retrieve the formId of this new form
+				
+				pstmtGetFormId.setInt(2, q.sourceFormIndex);
+				
+				log.info("SQL: Get source form id: " + pstmtGetFormId.toString());
+				ResultSet rs = pstmtGetFormId.executeQuery();
+				rs.next();
+				q.sourceFormId = rs.getInt(1);		
+			}
 			
 			// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 			// as the editor expects
@@ -737,6 +765,7 @@ public class QuestionManager {
 			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedToAnotherForm != null) {pstmtMovedToAnotherForm.close();}} catch (SQLException e) {}
+			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
 		}	
 		
 	}

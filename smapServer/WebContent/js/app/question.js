@@ -59,7 +59,6 @@ define([
 		
 		var $relatedQuestion = $("#" + qId),
 			seq = 0,
-			formIndex,
 			relatedFormIndex,
 			qIndex,
 			survey = globals.model.survey,
@@ -255,11 +254,11 @@ define([
 	 * Move a question
 	 * The beforeId is the id of the dom element that precedes this element
 	 */
-	function moveQuestion(sourceId, beforeId, locn) {		
+	function moveQuestion(formIndex, sourceId, beforeId, locn) {		
 		
-		var $beforeElement = $("#" + beforeId),					// The element that the new item with be "before"
-			beforeFormIndex = $beforeElement.data("fid"),
-			beforeItemIndex = $beforeElement.data("id"),
+		var $beforeElement,									// The element that the new item with be "before"
+			beforeFormIndex,
+			beforeItemIndex,
 			
 			seq,												// The new values
 			formIndex,
@@ -273,15 +272,20 @@ define([
 			question,
 			change;
 		
-
-		formIndex = beforeFormIndex;		// Moved to the same form as the element before it
-		
-		// Get the new sequence of the question
-		seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);				// Take the sequence of the item it is moving in front of
-		if(locn === "after") {
-			seq++;
+		$beforeElement = $("#" + beforeId);
+		seq = 0;
+		beforeItemIndex = 0;
+		if($beforeElement.size() > 0) {
+			beforeFormIndex = $beforeElement.data("fid");
+			if(beforeFormIndex == formIndex) {
+				beforeItemIndex = $beforeElement.data("id");
+				seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex]);	
+				if(locn === "after") {
+					seq++;
+				}
+			}
 		}
-		
+
 		// Get the old sequence of the question
 		sourceSeq = getSequenceQuestion(sourceItemIndex, survey.forms[sourceFormIndex]);
 		question = survey.forms[sourceFormIndex].questions[sourceItemIndex];
@@ -303,7 +307,7 @@ define([
 					// Helper values 
 					sourceFormIndex: sourceFormIndex,
 					sourceItemIndex: sourceItemIndex,
-					formIndex: beforeFormIndex
+					formIndex: formIndex
 				}
 		};
 		

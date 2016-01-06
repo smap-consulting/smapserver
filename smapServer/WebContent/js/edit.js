@@ -1094,6 +1094,7 @@ function respondToEvents($context) {
 			sourceListName = ev.dataTransfer.getData("list_name"),
 			sourceItemIndex = ev.dataTransfer.getData("index"),
 			targetId = $targetListItem.data('qid'),
+			formIndex,
 			locn = $targetListItem.data("locn"),			// Before or after the target question
 			targetListName,									// For option
 			targetItemIndex,								// For option
@@ -1117,6 +1118,7 @@ function respondToEvents($context) {
 			if($targetListItem.hasClass('add_question')) {
 				type = "question";
 				
+				formIndex = $targetListItem.data("findex");
 				$li = $targetListItem.closest('li');
 				if(locn === "after") {
 					$related = $li.prev();
@@ -1133,7 +1135,7 @@ function respondToEvents($context) {
 					
 					console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
 					
-					$context = question.moveQuestion(sourceId, targetId, locn);
+					$context = question.moveQuestion(formIndex, sourceId, targetId, locn);
 					respondToEvents($context);						// Add events on to the altered html
 				}
 			} else {
