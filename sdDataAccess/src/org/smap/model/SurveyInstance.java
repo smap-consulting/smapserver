@@ -128,11 +128,18 @@ public class SurveyInstance {
 		}
 		for(IE match : matches) {
 			if(match != null) {
-				match.setType("question");
-				match.setName(qname);
-				match.setColumnName(columnName);
-				match.setQType(qType);
-				match.setPhoneOnly(phoneOnly);
+				// If an element has been identified as a form then it is the parent question for a form and should be ignored
+				boolean isForm = false;
+				if(match.getType() != null && match.getType().equals("form")) {  
+					isForm = true;
+				}
+				if(!isForm) {  
+					match.setType("question");
+					match.setName(qname);
+					match.setColumnName(columnName);
+					match.setQType(qType);
+					match.setPhoneOnly(phoneOnly);
+				}
 			}
 		}
 	}

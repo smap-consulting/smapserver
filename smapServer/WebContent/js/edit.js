@@ -1009,7 +1009,8 @@ function respondToEvents($context) {
 				// Add an end group question if a new group has been created
 				if(type === "begin group") {
 					name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
-					$context = question.add(gFormIndex, $questionElement.attr("id"), 
+					$context = question.add(gFormIndex, 
+							$questionElement.attr("id"), 
 							"after", 
 							"end group",
 							name);
@@ -1117,6 +1118,7 @@ function respondToEvents($context) {
 			sourceListName = ev.dataTransfer.getData("list_name"),
 			sourceItemIndex = ev.dataTransfer.getData("index"),
 			targetId = $targetListItem.data('qid'),
+			formIndex,
 			locn = $targetListItem.data("locn"),			// Before or after the target question
 			targetListName,									// For option
 			targetItemIndex,								// For option
@@ -1140,6 +1142,7 @@ function respondToEvents($context) {
 			if($targetListItem.hasClass('add_question')) {
 				type = "question";
 				
+				formIndex = $targetListItem.data("findex");
 				$li = $targetListItem.closest('li');
 				if(locn === "after") {
 					$related = $li.prev();
@@ -1156,7 +1159,7 @@ function respondToEvents($context) {
 					
 					console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
 					
-					$context = question.moveQuestion(sourceId, targetId, locn);
+					$context = question.moveQuestion(formIndex, sourceId, targetId, locn);
 					respondToEvents($context);						// Add events on to the altered html
 				}
 			} else {
@@ -1304,7 +1307,7 @@ function addQuestion($this, type) {
 		availableGroups = $this.data("groups").split(":");
 		$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
 	} else {
-		$context = question.add(formIndex, qId, locn, type);
+		$context = question.add(formIndex, qId, locn, type, undefined);
 	}
 	
 	respondToEvents($context);				// Add events on to the altered html

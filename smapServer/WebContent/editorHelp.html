@@ -135,6 +135,12 @@
 	   			<li>In the choice list view under each choice list.</li>
 	   			</ol>
 	   			
+	   			<h2>Tool Bar</h2>
+	   			<img src="images/help/toolbar.jpg" class="img-responsive">
+	   			<p>The toolbar shows the question types that can be added to your survey. Drag and drop an icon onto one of the 
+	   			blue buttons in the content area to add that question type to your form. If you click on an icon then it will be 
+	   			added to the end of the form.</p>
+	   			
 	   		</div>
 	   		
 	   		<div class="bs-docs-section">
@@ -160,36 +166,42 @@
 		   			<li>Warnings
 		   				<ul>
 		   					<li>A blank label (except for groups or sub forms) </li>
+		   					<li>Select questions without choices </li>
 		   				</ul>
 		   			</li>
 	   			</ul>
+	   			<p>Warnings are only checked when you press the <b>validate</b> menu.<p>
+	   			
 	   			<h2>Validating on save</h2>
 	   			<p>The editor tries to spot errors as you make them and then give immediate feedback. Hence as soon as you
 	   			type an invalid character into a question name then the error message will be shown.  However for performance
 	   			reasons sometimes error checking has to wait until you save the survey.  For example you might delete a question
-	   			without any errors being shown.  However somewhere else in your survey another question refers to the deleted
-	   			question. This error will only show up when you press the <b>Save</b> button or select the "Validate" option from the
-	   			file menu</p>
+	   			without any errors being shown but somewhere else in your survey another question refers to the deleted
+	   			question. This error will only show up when you press the <b>Save</b> button or select the <b>Validate</b> option from 
+	   			the	file menu</p>
 	   			
 	   			<h2>Reviewing errors and warnings</h2>
+	   			<img src="images/help/review.jpg" class="img-responsive">
 	   			<p>If an error is detected while you are changing a question (or a choice) then the question is highlighted and an 
 	   			error message is shown</p>
-	   			<p>If there are errors detected when you click the save button or validate the survey then the number of errors and 
-	   			warnings are shown in the <b>toolbar</b> along with a button that will take you to the next error.
+	   			<p>If errors are found when you click the save button or validate the survey then the number of errors and 
+	   			warnings are shown in the <b>toolbar</b> along with a two buttons.  If you click on the red button it will take you
+	   			to the next error.  Clicking on the yellow button takes you to the next warning.
 	   			
 	   			<h2>Differences with validation using the xlsForm editor</h2>
 	   			<ol>
-	   				<li>In the online editor, question names must be unique in the entire survey.</li>
-	   				<ol>
-						<li>In xlsForm the name only needs to be unique within a form For example a begin 
-						repeat can have a question with the same name as is in the main form.</li>
-						<li>However if you attempt to refer to the question using the ${…} syntax then xlsForm will 
-						report an error if it is not unique in the entire survey.</li>  
-						<li>It is also probably better that names are forced to be unique across all forms as this will 
-						reduce confusion during analysis.  Hence the tighter restriction adopted by the Smap online editor.</li>
-						<li>However this means that if you have an existing form with two questions that have the same 
-						name then you will not be able to edit it online unless you delete one of the questions.</li>
-					</ol>
+	   				<li>In the online editor, question names must be unique in the entire survey.
+		   				<ol>
+							<li>In xlsForm the name only needs to be unique within a form For example a begin 
+							repeat can have a question with the same name as is in the main form.</li>
+							<li>However if you attempt to refer to the question using the ${…} syntax then xlsForm will 
+							report an error if it is not unique in the entire survey.</li>  
+							<li>It is also probably better that names are forced to be unique across all forms as this will 
+							reduce confusion during analysis.  Hence the tighter restriction adopted by the Smap online editor.</li>
+							<li>However this means that if you have an existing form with two questions that have the same 
+							name then you will not be able to edit it online unless you delete one of the questions.</li>
+						</ol>
+					</li>
 				</ol>
 	   			
 	   		</div>
@@ -453,6 +465,47 @@
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-7">Labels can be added for each language included in the survey</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Image Label</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Select the media property to add images to questions and choices</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Video Label</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Select the media property to add video to questions and choices</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Audio Label</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Select the media property to add audio to questions and choices</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Relevant</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok warn" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Relevance is used to conditionally show a question. Currently the online
+		   						editor uses the same syntax as xlsForm.  For example <b>${gender} = 'male'</b>. 
+		   						The checking of relevance and constraints is much better when loading a form from the xlsForm
+		   						editor.  If you are having problems with validation of contraints and relevance then 
+		   						you may want to export the form as an XLS file and then upload it. Otherwise you may
+		   						only find the problem when testing the survey on a phone.</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Constraint</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok warn" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Constraint Message</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7"></td>
 		   				</tr>
 		   			</tbody>
 		   		</table>

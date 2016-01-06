@@ -513,9 +513,7 @@ public class SubRelationalDB extends Subscriber {
 				if(tableCreated) {
 					markAllChangesApplied(cMeta, sId);
 				} else {
-					System.out.println("Pre-applyTableChanges: Auto commit for results is: " + cRel.getAutoCommit());
 					applyTableChanges(cMeta, cRel, sId);
-					System.out.println("Post-applyTableChanges: Auto commit for results is: " + cRel.getAutoCommit());
 				}
 				markPublished(cMeta, sId);
 			}
@@ -1256,6 +1254,8 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtGetListQuestions = null;
 		PreparedStatement pstmtGetOptions = null;
 		PreparedStatement pstmtGetAnOption = null;
+		PreparedStatement pstmtGetTableName = null;
+		PreparedStatement pstmtCreateTable = null;
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
@@ -1329,50 +1329,72 @@ public class SubRelationalDB extends Subscriber {
 					
 					} else if(ci.question != null ) {
 						// Don't rely on any parameters in the change item, they may have been changed again after the question was added
-						int qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, ci.question.name);
+						int qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, sId, ci.question.id, ci.question.name);
 						
 						QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 
-						columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
-						
-						if(qd.type.equals("string")) {
-							qd.type = "text";
-						} else if(qd.type.equals("dateTime")) {
-							qd.type = "timestamp with time zone";					
-						} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
-							qd.type = "text";					
-						} else if(qd.type.equals("decimal")) {
-							qd.type = "real";
-						} else if(qd.type.equals("barcode")) {
-							qd.type = "text";
-						} else if(qd.type.equals("note")) {
-							qd.type = "text";
-						} else if(qd.type.equals("select1")) {
-							qd.type = "text";
-						} else if (qd.type.equals("select")) {
-							qd.type = "integer";
+						if(qd.type.equals("begin group") || qd.type.equals("end group")) {
+							// Ignore group changes
+						} else if(qd.type.equals("begin repeat")) {
+							// Get the table name
+							String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
+							pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);
+							pstmtGetTableName.setInt(1, sId);
+							pstmtGetTableName.setInt(2, qId);
+							ResultSet rsTableName = pstmtGetTableName.executeQuery();
+							if(rsTableName.next()) {
+								String tableName = rsTableName.getString(1);
+								
+								String sqlCreateTable = "create table " + tableName + " ("
+										+ "prikey SERIAL PRIMARY KEY, "
+										+ "parkey int,"
+										+ "_bad boolean DEFAULT FALSE, _bad_reason text)";
+								pstmtCreateTable = cResults.prepareStatement(sqlCreateTable);
+								pstmtCreateTable.executeUpdate();
+							}
 							
-							columns.clear();
-							pstmtGetOptions.setInt(1, l_id);
+						} else {
+							columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
 							
-							System.out.println("Get options to add: "+ pstmtGetOptions.toString());
-							ResultSet rsOptions = pstmtGetOptions.executeQuery();
-							while(rsOptions.next()) {			
-								// Create if its an external choice and this question uses external choices
-								//  or its not an external choice and this question does not use external choices
-								String o_col_name = rsOptions.getString(1);
-								boolean externalFile = rsOptions.getBoolean(2);
-
-								if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-									String column =  qd.columnName + "__" + o_col_name;
-									columns.add(column);
-								}
-							} 
-						}
-						
-						// Apply each column
-						for(String col : columns) {
-							status = alterColumn(cResults, qd.table, qd.type, col);
+							if(qd.type.equals("string")) {
+								qd.type = "text";
+							} else if(qd.type.equals("dateTime")) {
+								qd.type = "timestamp with time zone";					
+							} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
+								qd.type = "text";					
+							} else if(qd.type.equals("decimal")) {
+								qd.type = "real";
+							} else if(qd.type.equals("barcode")) {
+								qd.type = "text";
+							} else if(qd.type.equals("note")) {
+								qd.type = "text";
+							} else if(qd.type.equals("select1")) {
+								qd.type = "text";
+							} else if (qd.type.equals("select")) {
+								qd.type = "integer";
+								
+								columns.clear();
+								pstmtGetOptions.setInt(1, l_id);
+								
+								System.out.println("Get options to add: "+ pstmtGetOptions.toString());
+								ResultSet rsOptions = pstmtGetOptions.executeQuery();
+								while(rsOptions.next()) {			
+									// Create if its an external choice and this question uses external choices
+									//  or its not an external choice and this question does not use external choices
+									String o_col_name = rsOptions.getString(1);
+									boolean externalFile = rsOptions.getBoolean(2);
+	
+									if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+										String column =  qd.columnName + "__" + o_col_name;
+										columns.add(column);
+									}
+								} 
+							}
+							
+							// Apply each column
+							for(String col : columns) {
+								status = alterColumn(cResults, qd.table, qd.type, col);
+							}
 						}
 						
 					}
@@ -1399,6 +1421,7 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGetOptions != null) {pstmtGetOptions.close();}} catch (Exception e) {}
 			try {if (pstmtGetAnOption != null) {pstmtGetAnOption.close();}} catch (Exception e) {}
 			try {if (pstmtGetListQuestions != null) {pstmtGetListQuestions.close();}} catch (Exception e) {}
+			try {if (pstmtGetTableName != null) {pstmtGetTableName.close();}} catch (Exception e) {}
 		}
 		
 	}
