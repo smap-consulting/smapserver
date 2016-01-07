@@ -89,7 +89,9 @@ $(document).ready(function() {
     
     // Respond to file upload
     $('#submitFiles').click( function() {
-    	uploadFiles(url, "fileupload", refreshMediaView, undefined);
+    	if(!$('#submitFiles').hasClass('disabled')) {
+    		uploadFiles(url, "fileupload", refreshMediaView, undefined);
+    	}
     });
     
     /*

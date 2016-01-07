@@ -594,6 +594,7 @@ function uploadFiles(url, formName, callback, sId) {
 		formData = new FormData(f);
 	
 	addHourglass();
+	$('#submitFiles').addClass('disabled');
     $.ajax({
         url: url,
         type: 'POST',
@@ -610,6 +611,7 @@ function uploadFiles(url, formName, callback, sId) {
         processData:false,
         success: function(data) {
 			removeHourglass();
+			$('#submitFiles').removeClass('disabled');
 			var surveyId = sId;
         	callback(data, surveyId);
         	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
@@ -618,7 +620,8 @@ function uploadFiles(url, formName, callback, sId) {
         },
         error: function(xhr, textStatus, err) {
 			removeHourglass();
-				if(xhr.readyState == 0 || xhr.status == 0) {
+			$('#submitFiles').removeClass('disabled');
+			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
 				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
