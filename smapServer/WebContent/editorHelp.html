@@ -458,31 +458,28 @@
 			   				<td class="col-md-3">Question Text</td>
 			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-			   				<td class="col-md-7">Labels can be added for each language included in the survey</td>
+			   				<td class="col-md-7">Text can be added for each language included in the survey</td>
 		   				</tr>
 		   				<tr>
 		   					<td class="col-md-3">Hint</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">Labels can be added for each language included in the survey</td>
+		   					<td class="col-md-7">A hint can be added for each language included in the survey</td>
 		   				</tr>
 		   				<tr>
-		   					<td class="col-md-3">Image Label</td>
+		   					<td class="col-md-3">Media</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">Select the media property to add images to questions and choices</td>
+		   					<td class="col-md-7">Select an image, video and/or audio to add to a question</td>
 		   				</tr>
 		   				<tr>
-		   					<td class="col-md-3">Video Label</td>
+		   					<td class="col-md-3">Choice Filter</td>
 		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">Select the media property to add video to questions and choices</td>
-		   				</tr>
-		   				<tr>
-		   					<td class="col-md-3">Audio Label</td>
-		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
-		   					<td class="col-md-7">Select the media property to add audio to questions and choices</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">The choice filter is used to alter the choices that are shown for a 
+		   					select question based on the answer to previously asked questions. FOr example it is 
+		   					often used for cascading selects where a list of say villages might depend on the selected
+		   					region</td>
 		   				</tr>
 		   				<tr>
 		   					<td class="col-md-3">Relevant</td>
@@ -510,6 +507,48 @@
 		   			</tbody>
 		   		</table>
 		   		
+		   		<h2>Choice Properties</h2>
+	   			<table>
+	   				<thead>
+	   					<tr>
+		   				<th class="col-md-3">Property</th>
+		   				<th class="col-md-1">xlsForm</th>
+		   				<th class="col-md-1">Version 15.12</th>
+		   				<th class="col-md-7">Notes</th>
+	   					</tr>
+	   				</thead>
+	   				<tbody>
+	   					<tr>
+			   				<td class="col-md-3">Name</td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-7">Question names are shown as column headings in exported results. Hence
+			   					you may want to assign meaningful names to questions.  However you can also export a
+			   					"codebook" that shows the question text for each question name.  When data is exported
+			   					to XLS you can also include the question text in the column headings.</td>
+		   				</tr>
+		   				<tr>
+			   				<td class="col-md-3">Choice Text</td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+			   				<td class="col-md-7">Text can be added for each language included in the survey</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Media</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">Select the images, video and audio to add to a choice</td>
+		   				</tr>
+		   				<tr>
+		   					<td class="col-md-3">Filters</td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td>
+		   					<td class="col-md-1"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></td>
+		   					<td class="col-md-7">These are used to filter the choices that are shown with a select
+		   						question based on a previous response </td>
+		   				</tr>
+		   				
+		   			</tbody>
+		   		</table>
 	   			<h2>Organising your survey</h2>
 	   			<p>Addition, deletion and renaming of the following question types:</p>
 	   			<table>
@@ -614,9 +653,30 @@
 		   			</tbody>
 		   		</table>
 	   		</div>
+   		
+	   		<div class="bs-docs-section">	
+	   			<h1 id="goeswrong" class="page-header">
+	   				<a class="anchorjs-link " href="#testing" aria-label="Anchor link for: publishing" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">What to do if something goes wrong</a>
+	   			</h1>
+
+	   			<p>The online editor is beta software and will stay that way for some months while the bugs are found and 
+	   			fixed.  An editor allows for many different ways of doing a task hence its impossible to test everything.
+	   			If something does go wrong you can try the following</p>
+	   			
+	   			<ul>
+	   			<li>Check the <b>changes</b> page by selecting the file menu and then ""changes".  This should show all the
+	   			saved changes that you have made and which version of the survey they apply to.</li>
+	   			<li>If you are not editing a form that already has submitted data then you can export as an "edited xlsForm".
+	   			  Then continue the editing in the xlsForm editor and upload when the problem is fixed</li>
+	   			<li>Contact Smap for support.  We will be very interested in the problem if it was caused by a bug in the editor and
+	   			will fix it free of charge.	If you just made a mistake and want it to be reversed thenwe can probably help with that if you
+	   			have a support contract or for a one off fee</li>
+	   			</ul>
+	   		</div>
 	   	</div>
-	   		
-	   		
 	   	
 	   	<div class="col-md-3" role="complementary">
 		   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
@@ -630,6 +690,7 @@
 	  					<a href="#publishing">Publishing and un-publishing your survey</a>
 	  					<a href="#smallscreen">Editing surveys on your phone</a>
 	  					<a href="#features">Summary of Features</a>
+	  					<a href="#goeswrong">What to do if something goes wrong</a>
 						
 					</li>
 				</ul>
