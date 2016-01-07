@@ -1190,8 +1190,11 @@ public class SurveyManager {
 		
 		int count = pstmtLangOldVal.executeUpdate();
 		if(count == 0) {
-			log.info("Error: Element already modified");
-			throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+			String msg = "Warning: label not updated to " + ci.property.newVal
+					+ " for language " + language 
+					+ ". It may have already been updated by someone else.";
+			log.info(msg);
+			throw new Exception(msg);		// No matching value assume it has already been modified
 		}
 	}
 	
@@ -1451,6 +1454,7 @@ public class SurveyManager {
 				
 				String property = translateProperty(ci.property.prop);
 				String propertyType = null;
+				String originalNewValue = ci.property.newVal;		// Save for logging
 				
 				// Convert "note" type to a read only string
 				// Add constraint that name and type properties can only be updated if the form has not been published
@@ -1586,8 +1590,14 @@ public class SurveyManager {
 					}
 					
 					if(count == 0) {
-						log.info("Already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+						String msg = "Warning: property \"" + ci.property.prop 
+								+ "\" for question "
+								+ ci.property.name
+								+ " was not updated to "
+								+ originalNewValue
+								+ ". It may have already been updated by someone else";
+						log.info(msg);
+						throw new Exception(msg);		// No matching value assume it has already been modified
 					}
 						
 					// Update the survey manifest if this question references CSV files
@@ -1616,7 +1626,7 @@ public class SurveyManager {
 		} catch (Exception e) {
 			
 			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
+			if(msg == null || !msg.startsWith("Warning")) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			throw e;

@@ -1150,26 +1150,16 @@ define([
 			action,
 			result,
 			name;
-		
-		elementType = data.changeType === 'option' ? 'Option' : (data.changeType === 'question' ? 'Question: ' : "Property: ");
-		if(data.action === "add") {
-			result = " created";
-		}
-		
-		if(data.changeType === "question") {
-			name = data.items[0].question.name;
-		}
-		
-		if(data.updateFailed && forError || !data.updateFailed && !forError) {
+			
+		if(data.updateFailed && forError) {
+			h[++idx] = '<li>';
+			h[++idx] = data.errorMsg;
+			h[++idx] = '</li>';
+		} else if(!data.updateFailed && !forError) {
 			for(j = 0; j < data.items.length; j++) {
 				h[++idx] = '<li>';
-				h[++idx] = elementType;
-				h[++idx] = name;
-				h[++idx] = ' ';
-				h[++idx] = result;
-				h[++idx] = ' ';
-				h[++idx] = data.errorMsg;
-				h[++idx] = '</li>'
+				h[++idx] = getChangeDescription(data.items[j]);
+				h[++idx] = '</li>';
 			}
 		}
 		
@@ -1190,7 +1180,9 @@ define([
 			isDeleted,
 			isValid = true,
 			hasDuplicate = false,
-			changes = globals.changes;
+			changes = globals.changes,
+			numberErrors,
+			numberWarnings;
 		
 		if(itemType === "question") {
 			item = survey.forms[container].questions[itemIndex];
@@ -1274,12 +1266,6 @@ define([
 			}
 		}
 		
-		// Set the control buttons
-		if(numberIssues("error") > 0 ) {
-			$('.m_save_survey').addClass("disabled").attr("disabled", true);			
-		} else if(changes.length > 0) {
-			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
-		}
 		
 		/*
 		 * If there were no errors check for warnings
@@ -1297,6 +1283,38 @@ define([
 					isValid = checkMissingChoices(container, itemIndex, itemType, item, "warning");
 				}
 			}
+		}
+		
+		// Set the control buttons
+		numberErrors = numberIssues("error");
+		numberWarnings = numberIssues("warning");
+		
+		$('.error-count').html(numberErrors);
+		$('.warning-count').html(numberWarnings);
+		
+		if(numberErrors > 0) {
+			$('.m_save_survey').addClass("disabled").attr("disabled", true);
+		} else if(changes.length > 0) {
+			$('.m_save_survey').removeClass("disabled").attr("disabled", false);
+		}
+		
+		if(numberErrors > 0 || numberWarnings > 0) {
+			gErrorPosition = 0;
+		
+			$('#error-nav-btns').show();
+			if(numberErrors > 0) {
+				$('#next-error').removeClass("disabled");
+			} else {
+				$('#next-error').addClass("disabled");
+			}
+			if(numberWarnings > 0) {
+				$('#next-warning').removeClass("disabled");
+			} else {
+				$('#next-warning').addClass("disabled");
+			}
+			focusOnError(gErrorPosition);
+		}  else {
+			$('#error-nav-btns').hide();
 		}
 
 	}
@@ -1852,29 +1870,6 @@ define([
 			validateItem(list, "ol_" + list, "optionlist", false);
 		}
 		
-		numberErrors = numberIssues("error");
-		numberWarnings = numberIssues("warning");
-		
-		$('.error-count').html(numberErrors);
-		$('.warning-count').html(numberWarnings);
-		
-		if(numberErrors > 0 || numberWarnings > 0) {
-			gErrorPosition = 0;
-			$('#error-nav-btns').show();
-			if(numberErrors > 0) {
-				$('#next-error').removeClass("disabled");
-			} else {
-				$('#next-error').addClass("disabled");
-			}
-			if(numberWarnings > 0) {
-				$('#next-warning').removeClass("disabled");
-			} else {
-				$('#next-warning').addClass("disabled");
-			}
-			focusOnError(gErrorPosition);
-		}  else {
-			$('#error-nav-btns').hide();
-		}
 	}
 	
 	function nextIssue(severity) {

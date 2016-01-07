@@ -1480,11 +1480,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	$context = changeset.add(change);
 	if($context) {
-		if(prop === "list_name") {
-			// Leave focus unchanged
-		} else {
-			$context.find('.labelProp').focus();	// Set focus to label property input
-		}
+		// Do not set focus on change of label, the user has just clicked out of this label text area
 		respondToEvents($context);				// Add events on to the altered html
 	}
 	
