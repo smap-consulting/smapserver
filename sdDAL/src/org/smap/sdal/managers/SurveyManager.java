@@ -1193,8 +1193,11 @@ public class SurveyManager {
 		
 		int count = pstmtLangOldVal.executeUpdate();
 		if(count == 0) {
-			log.info("Error: Element already modified");
-			throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+			String msg = "Warning: label not updated to " + ci.property.newVal
+					+ " for language " + language 
+					+ ". It may have already been updated by someone else.";
+			log.info(msg);
+			throw new Exception(msg);		// No matching value assume it has already been modified
 		}
 	}
 	
@@ -1398,6 +1401,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetQuestionId = null;
 		PreparedStatement pstmtGetQuestionDetails = null;
 		PreparedStatement pstmtGetListId = null;
+		PreparedStatement pstmtListname = null;
 		
 		try {
 		
@@ -1454,6 +1458,7 @@ public class SurveyManager {
 				
 				String property = translateProperty(ci.property.prop);
 				String propertyType = null;
+				String originalNewValue = ci.property.newVal;		// Save for logging
 				
 				// Convert "note" type to a read only string
 				// Add constraint that name and type properties can only be updated if the form has not been published
@@ -1467,7 +1472,7 @@ public class SurveyManager {
 						ci.property.visibleValue = false;
 					}
 					onlyIfNotPublished = true;
-				} else if(ci.property.prop.equals("name")) {
+				} else if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
 					onlyIfNotPublished = true;
 				} else if(ci.property.prop.equals("list_name")) {
 					// Convert the passed in list name to the list id that needs to be updated
@@ -1480,6 +1485,20 @@ public class SurveyManager {
 					ResultSet rs = pstmtGetListId.executeQuery();
 					if(rs.next()) {
 						ci.property.newVal = rs.getString(1);
+					} else {
+						ci.property.newVal = "0";
+					}
+					
+				} else if(ci.property.type.equals("optionlist")) {
+					// Get the list id for this option list
+					String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+					pstmtGetListId = sd.prepareStatement(sqlGetListId);
+					pstmtGetListId.setInt(1, sId);
+					
+					pstmtGetListId.setString(2, ci.property.oldVal);
+					ResultSet rs = pstmtGetListId.executeQuery();
+					if(rs.next()) {
+						ci.property.l_id = rs.getInt(1);
 					} else {
 						ci.property.newVal = "0";
 					}
@@ -1522,6 +1541,10 @@ public class SurveyManager {
 							"where q_id = ?";
 					pstmtProperty3 = sd.prepareStatement(sqlProperty3);
 					
+					// Update listname
+					String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?;";
+					pstmtListname = sd.prepareStatement(sqlListname);
+					
 					// Update for dependent properties
 					String sqlDependent = "update question set visible = ?, source = ? " +
 							"where q_id = ?;";
@@ -1534,13 +1557,21 @@ public class SurveyManager {
 					
 					int count = 0;
 		
-					// Special case for list name updates - don't try to check the integrity of the update
+					// Special case for change of list name in a question - don't try to check the integrity of the update
 					if(ci.property.prop.equals("list_name")) {
 						pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
 						pstmtProperty3.setInt(2, ci.property.qId);
 						
 						log.info("Update list name property: " + pstmtProperty3.toString());
 						count = pstmtProperty3.executeUpdate();
+						
+					} else if (ci.property.type.equals("optionlist")) {
+						pstmtListname.setString(1, ci.property.newVal);
+						pstmtListname.setInt(2, ci.property.l_id);
+						pstmtListname.setInt(3, sId);
+						
+						log.info("Update name of list : " + pstmtListname.toString());
+						count = pstmtListname.executeUpdate();
 						
 					} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
 						
@@ -1589,8 +1620,14 @@ public class SurveyManager {
 					}
 					
 					if(count == 0) {
-						log.info("Already modified");
-						throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+						String msg = "Warning: property \"" + ci.property.prop 
+								+ "\" for question "
+								+ ci.property.name
+								+ " was not updated to "
+								+ originalNewValue
+								+ ". It may have already been updated by someone else";
+						log.info(msg);
+						throw new Exception(msg);		// No matching value assume it has already been modified
 					}
 						
 					// Update the survey manifest if this question references CSV files
@@ -1619,7 +1656,7 @@ public class SurveyManager {
 		} catch (Exception e) {
 			
 			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
+			if(msg == null || !msg.startsWith("Warning")) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			throw e;
@@ -1632,6 +1669,7 @@ public class SurveyManager {
 			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}
 			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (SQLException e) {}
 			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
+			try {if (pstmtListname != null) {pstmtListname.close();}} catch (SQLException e) {}
 		
 		}
 	

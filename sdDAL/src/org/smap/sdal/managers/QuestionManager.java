@@ -758,14 +758,15 @@ public class QuestionManager {
 			log.info("Move question within same list: " + pstmtMoveWithin.toString());
 			int count = pstmtMoveWithin.executeUpdate();
 			if(count == 0) {
-				log.info("Error: Question already modified");
-				//throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+				String msg = "Warning: question " + q.name + " was not moved. It may already have been moved by someone else";
+				log.info(msg);
+				throw new Exception(msg);		// No matching value assume it has already been modified
 			}
 			
 		} catch(SQLException e) {
 			
 			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
+			if(msg == null || !msg.startsWith("Warning")) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			throw e;
@@ -1138,8 +1139,10 @@ public class QuestionManager {
 				log.info("Move choice within same list: " + pstmtMoveWithin.toString());
 				int count = pstmtMoveWithin.executeUpdate();
 				if(count == 0) {
-					log.info("Error: Choice already modified");
-					throw new Exception("Already modified, refresh your view");		// No matching value assume it has already been modified
+					String msg = "Warning: choice " + o.value + " in list " + o.optionList + 
+							" was not moved. It may have already been moved by someone else";
+					log.info(msg);
+					throw new Exception(msg);		// No matching value assume it has already been modified
 				}
 					
 			}
@@ -1147,7 +1150,7 @@ public class QuestionManager {
 			
 		} catch(SQLException e) {
 			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
+			if(msg == null || !msg.startsWith("Warning")) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			throw e;

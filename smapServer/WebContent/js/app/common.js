@@ -594,6 +594,7 @@ function uploadFiles(url, formName, callback, sId) {
 		formData = new FormData(f);
 	
 	addHourglass();
+	$('#submitFiles').addClass('disabled');
     $.ajax({
         url: url,
         type: 'POST',
@@ -610,6 +611,7 @@ function uploadFiles(url, formName, callback, sId) {
         processData:false,
         success: function(data) {
 			removeHourglass();
+			$('#submitFiles').removeClass('disabled');
 			var surveyId = sId;
         	callback(data, surveyId);
         	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
@@ -618,7 +620,8 @@ function uploadFiles(url, formName, callback, sId) {
         },
         error: function(xhr, textStatus, err) {
 			removeHourglass();
-				if(xhr.readyState == 0 || xhr.status == 0) {
+			$('#submitFiles').removeClass('disabled');
+			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
 				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
@@ -870,7 +873,7 @@ function addHourglass() {
 
 	if(gWait === 0) {
 
-		$("#hour_glass").show();
+		$("#hour_glass,.hour_glass").show();
 	}
 	++gWait;
 }
@@ -880,7 +883,7 @@ function removeHourglass() {
 	--gWait;
 	if(gWait === 0) {
 
-		$("#hour_glass").hide();
+		$("#hour_glass,.hour_glass").hide();
 	}
 
 }
@@ -1394,4 +1397,206 @@ function getUtcDate($element, start, end) {
 	
 	return utcDate.valueOf();
 
+}
+
+/*
+ * Get a description from a change made in the editor
+ */
+function getChangeDescription(change) {
+	
+	var h =[],
+		idx = -1,
+		oldVal,
+		newVal,
+		forms = globals.model.survey.forms;
+	
+	if(change.action === "external option") {		
+		/*
+		 * Options added from a file
+		 */
+		h[++idx] = 'Choice <span style="color:blue;">'; 
+		h[++idx] = change.property.newVal;
+		h[++idx] = '</span>';
+		h[++idx] = ' added to';
+		h[++idx] = ' question: <span style="color:blue;">';
+		h[++idx] = change.property.name;
+		h[++idx] = '</span>';
+		h[++idx] = ' from file: <span style="color:blue;">';
+		h[++idx] = change.fileName;
+		h[++idx] = '</span>';
+		
+	}  else if(change.action === "settings_update") {
+		h[++idx] = 'Settings changed <span style="color:blue;">';
+		h[++idx] = change.msg;
+		h[++idx] = '</span>';
+		
+	}  else if(change.action === "update") {
+		
+		/*
+		 * Updates to questions and options and list names
+		 */
+		if(change.property.prop === "type") {
+			newVal = translateType(change.property.newVal);
+			oldVal = translateType(change.property.oldVal);
+		} else {
+			newVal = change.property.newVal;
+			oldVal = change.property.oldVal;
+		}
+		
+		
+		if(change.property.prop === "name") {
+			
+			// Deprecate the following when the structure of these log objects is made consistent
+			if(typeof change.type === "undefined" || change.type === "unknown") {
+				change.type = "choice list ";
+			}
+			
+			h[++idx] = change.type;
+			h[++idx] = ' renamed to: <span style="color:blue;">';
+			h[++idx] = newVal;
+			h[++idx] = '</span>';
+			h[++idx] = ' from: <span style="color:red;">';
+			h[++idx] = oldVal;
+			h[++idx] = '</span>';
+		} else {
+			h[++idx] = '"';
+			h[++idx] = change.property.prop;
+			h[++idx] = '" property of question ';
+			h[++idx] = change.property.name;
+			h[++idx] = ' changed to: <span style="color:blue;">';
+			h[++idx] = newVal;
+			h[++idx] = '</span>';
+			h[++idx] = ' from: <span style="color:red;">';
+			h[++idx] = oldVal;
+			h[++idx] = '</span>';
+		}
+		
+	} else if(change.action === "add")  {
+		
+		/*
+		 * New questions or options
+		 */
+		h[++idx] = 'Added ';
+		
+		if(change.type === "question" || change.changeType === "question"){  // deprecate checking of changeType
+			
+			h[++idx] = 'question <span style="color:blue;">';
+			h[++idx] = change.question.name;
+			h[++idx] = '</span> with type <span style="color:red;">';
+			if(change.question.type === "string") {
+				h[++idx] = 'text';
+			} else if(change.question.type === "select"){
+				h[++idx] = 'select_multiple';
+			} else if(change.question.type === "select1"){
+				h[++idx] = 'select_one';
+			} else {
+				h[++idx] = change.question.type;
+			}
+			h[++idx] = '</span>';
+			
+		} else if(change.type === "option" || change.changeType === "option") {	// deprecate checking of changeType
+			/*
+			 * Options added or deleted from the editor
+			 */
+			h[++idx] = 'choice <span style="color:blue;">'; 
+			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
+			h[++idx] = '</span>';
+			h[++idx] = ' to choice list: <span style="color:blue;">';
+			h[++idx] = change.option.optionList;
+			h[++idx] = '</span>';
+			h[++idx] = ' using the online editor';
+		}
+		
+	}  else if(change.action === "move")  {
+		
+		/*
+		 * New questions or options
+		 */
+		h[++idx] = 'Moved ';
+		
+		if(change.type === "question" || change.changeType === "question") {  // deprecate checking of changeType){
+			
+			h[++idx] = 'question <span style="color:blue;">';
+			h[++idx] = change.question.name;
+			if(change.question.sourceSeq >= 0) {
+				h[++idx] = '</span> from position <span style="color:red;">';
+				h[++idx] = change.question.sourceSeq;
+				h[++idx] = '</span> in form ';
+				h[++idx] = forms[change.question.sourceFormIndex].name;
+			} else {
+				h[++idx] = '</span> from form ';
+				h[++idx] = forms[change.question.sourceFormIndex].name;
+			}
+			h[++idx] = '</span> to position <span style="color:red;">';
+			h[++idx] = change.question.seq;
+			h[++idx] = '</span>';
+			h[++idx] = ' in form ';
+			h[++idx] = forms[change.question.formIndex].name;
+			
+			
+		} else if(change.type === "option") {
+			
+			h[++idx] = 'choice <span style="color:blue;">'; 
+			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
+			h[++idx] = '</span>';
+			h[++idx] = ' from choice list: <span style="color:blue;">';
+			h[++idx] = change.option.sourceOptionList;
+			h[++idx] = '</span>';
+			h[++idx] = ' to choice list: <span style="color:blue;">';
+			h[++idx] = change.option.optionList;
+			h[++idx] = '</span>';
+		}
+		
+	} else if(change.action === "delete")  {
+		
+		h[++idx] = 'Deleted ';
+		
+		if(change.type === "question"){
+			
+			h[++idx] = 'question <span style="color:blue;">';
+			h[++idx] = change.question.name;
+			h[++idx] = '</span> with type <span style="color:red;">';
+			h[++idx] = change.question.type;
+			h[++idx] = '</span>';
+			
+		} else if(change.type === "option") {
+			/*
+			 * Options added or deleted from the editor
+			 */
+			h[++idx] = 'choice <span style="color:blue;">'; 
+			h[++idx] = change.option.value;
+			if(change.option.labels && change.option.labels.length >= 1) {
+				h[++idx] = ' (';
+				h[++idx] = change.option.labels[0].text;
+				h[++idx] = ')';
+			}
+			h[++idx] = '</span>';
+			h[++idx] = ' from choice list: <span style="color:blue;">';
+			h[++idx] = change.option.optionList;
+			h[++idx] = '</span>';
+			h[++idx] = ' using the online editor';
+		}
+	} else {
+		h[++idx] = change.type;
+		h[++idx] = ' ';
+		h[++idx] = change.name;
+		h[++idx] = ' changed to: <span style="color:blue;">';
+		h[++idx] = change.newVal;
+		h[++idx] = '</span>';
+		h[++idx] = ' from: <span style="color:red;">';
+		h[++idx] = change.oldVal;
+		h[++idx] = '</span>';
+	}
+
+	return h.join('');
 }

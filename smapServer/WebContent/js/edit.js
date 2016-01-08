@@ -256,7 +256,8 @@ $(document).ready(function() {
 		// Set up media dialog to manage loading and deleting of media
 		$('.mediaManage').show();
 		$('.mediaSelect').hide();
-		$('#mediaModalLabel').html("Manage Media Files For this Form");
+		$('#mediaModalLabel').html("Manage Media Files For this Form. " +
+				"Note organisation level media files now found under <b>Shared Resources</b> in admin module.");
 		$('#mediaModal table').off();
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
@@ -427,7 +428,9 @@ $(document).ready(function() {
      * Submit the files
      */
     $('#submitFiles').click( function() {
-    	uploadFiles(gUrl, "fileupload", refreshMediaView, globals.gCurrentSurvey);
+       	if(!$('#submitFiles').hasClass('disabled')) {
+       		uploadFiles(gUrl, "fileupload", refreshMediaView, globals.gCurrentSurvey);
+       	}
     });
     
     /*
@@ -1503,11 +1506,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	$context = changeset.add(change);
 	if($context) {
-		if(prop === "list_name") {
-			// Leave focus unchanged
-		} else {
-			$context.find('.labelProp').focus();	// Set focus to label property input
-		}
+		// Do not set focus on change of label, the user has just clicked out of this label text area
 		respondToEvents($context);				// Add events on to the altered html
 	}
 	
