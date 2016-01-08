@@ -1397,7 +1397,8 @@ function getChangeDescription(change) {
 	var h =[],
 		idx = -1,
 		oldVal,
-		newVal;
+		newVal,
+		forms = globals.model.survey.forms;
 	
 	if(change.action === "external option") {		
 		/*
@@ -1422,7 +1423,7 @@ function getChangeDescription(change) {
 	}  else if(change.action === "update") {
 		
 		/*
-		 * Updates to questions and options
+		 * Updates to questions and options and list names
 		 */
 		if(change.property.prop === "type") {
 			newVal = translateType(change.property.newVal);
@@ -1432,7 +1433,14 @@ function getChangeDescription(change) {
 			oldVal = change.property.oldVal;
 		}
 		
+		
 		if(change.property.prop === "name") {
+			
+			// Deprecate the following when the structure of these log objects is made consistent
+			if(typeof change.type === "undefined" || change.type === "unknown") {
+				change.type = "choice list ";
+			}
+			
 			h[++idx] = change.type;
 			h[++idx] = ' renamed to: <span style="color:blue;">';
 			h[++idx] = newVal;
@@ -1460,7 +1468,7 @@ function getChangeDescription(change) {
 		 */
 		h[++idx] = 'Added ';
 		
-		if(change.type === "question"){
+		if(change.type === "question" || change.changeType === "question"){  // deprecate checking of changeType
 			
 			h[++idx] = 'question <span style="color:blue;">';
 			h[++idx] = change.question.name;
@@ -1476,7 +1484,7 @@ function getChangeDescription(change) {
 			}
 			h[++idx] = '</span>';
 			
-		} else if(change.type === "option") {
+		} else if(change.type === "option" || change.changeType === "option") {	// deprecate checking of changeType
 			/*
 			 * Options added or deleted from the editor
 			 */
@@ -1501,16 +1509,24 @@ function getChangeDescription(change) {
 		 */
 		h[++idx] = 'Moved ';
 		
-		if(change.type === "question"){
+		if(change.type === "question" || change.changeType === "question") {  // deprecate checking of changeType){
 			
 			h[++idx] = 'question <span style="color:blue;">';
 			h[++idx] = change.question.name;
-			h[++idx] = '</span> from position <span style="color:red;">';
-			h[++idx] = change.question.sourceSeq;
-			h[++idx] = '</span>';
+			if(change.question.sourceSeq >= 0) {
+				h[++idx] = '</span> from position <span style="color:red;">';
+				h[++idx] = change.question.sourceSeq;
+				h[++idx] = '</span> in form ';
+				h[++idx] = forms[change.question.sourceFormIndex].name;
+			} else {
+				h[++idx] = '</span> from form ';
+				h[++idx] = forms[change.question.sourceFormIndex].name;
+			}
 			h[++idx] = '</span> to position <span style="color:red;">';
 			h[++idx] = change.question.seq;
 			h[++idx] = '</span>';
+			h[++idx] = ' in form ';
+			h[++idx] = forms[change.question.formIndex].name;
 			
 			
 		} else if(change.type === "option") {

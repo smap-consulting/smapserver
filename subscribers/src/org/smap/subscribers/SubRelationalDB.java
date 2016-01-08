@@ -1277,7 +1277,16 @@ public class SubRelationalDB extends Subscriber {
 				System.out.println("Apply table change: " + ciJson);
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
-				if(ci.action.equals("add") || ci.action.equals("external option")) {		// Table is only altered for new question or new select multiple options
+				/*
+				 * Table is altered for 
+				 * 		new questions
+				 * 		new select multiple options 
+				 * 		questions that have been moved to a new table
+				 */
+				if(ci.action.equals("add") || ci.action.equals("external option")
+						|| (ci.action.equals("move") && 
+								ci.question != null && 
+								ci.question.formIndex != ci.question.sourceFormIndex)) {		
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID

@@ -1299,7 +1299,6 @@ define([
 		}
 		
 		if(numberErrors > 0 || numberWarnings > 0) {
-			gErrorPosition = 0;
 		
 			$('#error-nav-btns').show();
 			if(numberErrors > 0) {
@@ -1312,7 +1311,6 @@ define([
 			} else {
 				$('#next-warning').addClass("disabled");
 			}
-			focusOnError(gErrorPosition);
 		}  else {
 			$('#error-nav-btns').hide();
 		}
