@@ -873,7 +873,7 @@ function addHourglass() {
 
 	if(gWait === 0) {
 
-		$("#hour_glass").show();
+		$("#hour_glass,.hour_glass").show();
 	}
 	++gWait;
 }
@@ -883,7 +883,7 @@ function removeHourglass() {
 	--gWait;
 	if(gWait === 0) {
 
-		$("#hour_glass").hide();
+		$("#hour_glass,.hour_glass").hide();
 	}
 
 }
