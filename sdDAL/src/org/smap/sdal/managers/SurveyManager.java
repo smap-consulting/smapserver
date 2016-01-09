@@ -1737,7 +1737,7 @@ public class SurveyManager {
 			if(action.equals("add")) {
 				qm.save(connectionSD, sId, questions);
 			} else if(action.equals("delete")) {
-				qm.delete(connectionSD, sId, questions, false);
+				qm.delete(connectionSD, sId, questions, false, true);
 			} else if(action.equals("move")) {
 				qm.moveQuestions(connectionSD, sId, questions);
 			} else {

@@ -243,7 +243,7 @@ public class QuestionManager {
 					oldQ.fId = q.fId;
 					oldQ.name = q.name;
 					oldQuestions.add(oldQ);
-					delete(sd, sId, oldQuestions, true);	// Force the delete as we are replacing the question
+					delete(sd, sId, oldQuestions, true, true);	// Force the delete as we are replacing the question
 				}
 				
 				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
@@ -792,7 +792,8 @@ public class QuestionManager {
 	/*
 	 * Delete
 	 */
-	public void delete(Connection sd, int sId, ArrayList<Question> questions, boolean force) throws SQLException {
+	public void delete(Connection sd, int sId, ArrayList<Question> questions, boolean force, 
+			boolean getGroupContents) throws SQLException {
 		
 		ArrayList<Question> groupContents = null;
 		
@@ -851,7 +852,7 @@ public class QuestionManager {
 				/*
 				 * If the question is a group question then get its members
 				 */
-				if(qType.equals("begin group")) {
+				if(qType.equals("begin group") && getGroupContents) {
 					groupContents = getQuestionsInGroup(sd, q);
 				}
 				
@@ -948,7 +949,7 @@ public class QuestionManager {
 					 * Delete the contents of the group
 					 */
 					if(groupContents != null) {
-						delete(sd, sId, groupContents, force);
+						delete(sd, sId, groupContents, force, false);
 					}
 				}
 				
