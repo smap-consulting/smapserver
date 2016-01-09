@@ -155,11 +155,11 @@ public class SurveyResults extends Application {
 						questions.add(q);
 					}
 					if(questions.size() > 0) {
-						qm.delete(connectionSD, sId, questions, false);	// Soft delete any published questions
+						qm.delete(connectionSD, connectionRel, sId, questions, false, false);
 					}
 					response = Response.ok("").build();
 					
-				} catch (SQLException e) {
+				} catch (Exception e) {
 					String msg = e.getMessage();
 					if(msg != null && msg.contains("does not exist")) {
 						response = Response.ok("").build();

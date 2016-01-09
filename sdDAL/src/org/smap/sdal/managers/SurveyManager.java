@@ -899,7 +899,9 @@ public class SurveyManager {
 	/*
 	 * Apply an array of change sets to a survey
 	 */
-	public ChangeResponse applyChangeSetArray(Connection connectionSD, int sId, String ident, ArrayList<ChangeSet> changes) throws Exception {
+	public ChangeResponse applyChangeSetArray(Connection connectionSD, 
+			Connection cResults,
+			int sId, String ident, ArrayList<ChangeSet> changes) throws Exception {
 		
 		ChangeResponse resp = new ChangeResponse();	// Response object
 		resp.changeSet = changes;
@@ -969,7 +971,7 @@ public class SurveyManager {
 					} else if(cs.changeType.equals("question")) {
 						
 						// Add/delete/move questions
-						applyQuestion(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						applyQuestion(connectionSD, cResults, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
 						
 					} else if(cs.changeType.equals("option") || (cs.changeType.equals("property") && cs.type.equals("option"))) {
 						
@@ -1705,6 +1707,7 @@ public class SurveyManager {
 	 * Apply add / delete questions
 	 */
 	public void applyQuestion(Connection connectionSD,
+			Connection cResults,
 			PreparedStatement pstmtChangeLog, 
 			ArrayList<ChangeItem> changeItemList, 
 			int sId, 
@@ -1735,9 +1738,9 @@ public class SurveyManager {
 			} 
 			
 			if(action.equals("add")) {
-				qm.save(connectionSD, sId, questions);
+				qm.save(connectionSD, cResults, sId, questions);
 			} else if(action.equals("delete")) {
-				qm.delete(connectionSD, sId, questions, false, true);
+				qm.delete(connectionSD, cResults, sId, questions, false, true);
 			} else if(action.equals("move")) {
 				qm.moveQuestions(connectionSD, sId, questions);
 			} else {
