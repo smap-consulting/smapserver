@@ -1551,13 +1551,11 @@ function getChangeDescription(change) {
 		
 		h[++idx] = 'Deleted ';
 		
-		if(change.type === "question"){
+		if(change.type === "question" || change.changeType === "question"){
 			
 			h[++idx] = 'question <span style="color:blue;">';
 			h[++idx] = change.question.name;
-			h[++idx] = '</span> with type <span style="color:red;">';
-			h[++idx] = change.question.type;
-			h[++idx] = '</span>';
+			h[++idx] = '</span>'; 
 			
 		} else if(change.type === "option") {
 			/*

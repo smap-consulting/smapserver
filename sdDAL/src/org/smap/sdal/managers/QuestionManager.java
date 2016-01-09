@@ -459,8 +459,17 @@ public class QuestionManager {
 		
 		try {
 			
+			/*
+			 * If source form id is 0 then this request is for a group being deleted rather than moved
+			 */
+			int formId = 0;
+			if(q.sourceFormId == 0) {
+				formId = q.fId;
+			} else {
+				formId = q.sourceFormId;
+			}
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, q.sourceFormId);
+			pstmt.setInt(1, formId);
 			pstmt.setString(2, q.path + '%');
 			
 			log.info("SQL Get questions in group: " + pstmt.toString());
@@ -501,7 +510,7 @@ public class QuestionManager {
 	}
 	
 	/*
-	 * Get all the questions in a group
+	 * Update the path of questions in a group
 	 */
 	private void updatePathOfQuestionsBetween(Connection sd, Question q, String newBasePath) throws SQLException {
 		
@@ -785,6 +794,8 @@ public class QuestionManager {
 	 */
 	public void delete(Connection sd, int sId, ArrayList<Question> questions, boolean force) throws SQLException {
 		
+		ArrayList<Question> groupContents = null;
+		
 		PreparedStatement pstmt = null;
 		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
 				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
@@ -821,7 +832,7 @@ public class QuestionManager {
 			for(Question q : questions) {
 				
 				int seq = 0;
-				String qType = null;
+				String qType = q.type;
 				boolean published = false;
 				
 				/*
@@ -829,11 +840,19 @@ public class QuestionManager {
 				 */
 				pstmtGetSeq.setInt(1, q.fId);
 				pstmtGetSeq.setString(2, q.name );
+				log.info("SQL get sequence: " + pstmtGetSeq.toString());
 				ResultSet rs = pstmtGetSeq.executeQuery();
 				if(rs.next()) {
 					seq = rs.getInt(1);
 					qType = rs.getString(2);
 					published = rs.getBoolean(3);
+				}
+				
+				/*
+				 * If the question is a group question then get its members
+				 */
+				if(qType.equals("begin group")) {
+					groupContents = getQuestionsInGroup(sd, q);
 				}
 				
 				if(published && !force) {
@@ -887,35 +906,52 @@ public class QuestionManager {
 					
 					log.info("Update sequences: " + pstmtUpdateSeq.toString());
 					pstmtUpdateSeq.executeUpdate();
+				}
+				
+				/*
+				 * If the question is a group question then either:
+				 *   delete all the contents of the group, or
+				 *   Just remove the group so that the contents of the group are empty - TODO
+				 */
+				// If the question is a group question then also delete the end group
+				if(qType.equals("begin group")) {
+					String endGroupName = q.name + "_groupEnd";
 					
-					// If the question is a group question then also delete the end group
-					if(qType.equals("begin group")) {
+					pstmtGetSeq.setString(2, endGroupName );
+					rs = pstmtGetSeq.executeQuery();
+					if(rs.next()) {
+						seq = rs.getInt(1);
 						
-						String endGroupName = q.name + "_groupEnd";
+						// Delete the labels
+						pstmtDelLabels.setInt(1, sId);
+						pstmtDelLabels.setString(2, endGroupName );
+						pstmtDelLabels.setInt(3, q.fId);
+						pstmtDelLabels.setInt(4, sId );
 						
-						pstmtGetSeq.setString(2, endGroupName );
-						rs = pstmtGetSeq.executeQuery();
-						if(rs.next()) {
-							seq = rs.getInt(1);
-							
-							// Delete the end group
-							pstmt.setString(2, endGroupName);
-							
-							log.info("Delete End group of question: " + pstmt.toString());
-							pstmt.executeUpdate();
-							
-							// Update the sequences of questions after the deleted end group
-							pstmtUpdateSeq.setInt(2, seq);
-							
-							log.info("Update sequences: " + pstmtUpdateSeq.toString());
-							pstmtUpdateSeq.executeUpdate();
-						}
+						log.info("Delete end group labels: " + pstmtDelLabels.toString());
+						pstmtDelLabels.executeUpdate();
 						
+						// Delete the end group
+						pstmt.setString(2, endGroupName);
 						
+						log.info("Delete End group of question: " + pstmt.toString());
+						pstmt.executeUpdate();
+						
+						// Update the sequences of questions after the deleted end group
+						pstmtUpdateSeq.setInt(2, seq);
+						
+						log.info("Update sequences: " + pstmtUpdateSeq.toString());
+						pstmtUpdateSeq.executeUpdate();
+					}
+					
+					/*
+					 * Delete the contents of the group
+					 */
+					if(groupContents != null) {
+						delete(sd, sId, groupContents, force);
 					}
 				}
 				
-
 			}
 			
 			

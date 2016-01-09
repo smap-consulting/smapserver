@@ -902,7 +902,7 @@ function respondToEvents($context) {
 		
 		bootbox.confirm("Are you sure you want to delete this question?", function(result) {
 			if(result) {
-				$context = question.deleteQuestion(item);
+				question.deleteQuestion(item);
 			}
 		}); 
 		

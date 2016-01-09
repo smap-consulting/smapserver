@@ -94,10 +94,16 @@ define([
 		 * Apply any HTML changes either directly to the changed element, or by refreshing the whole form using
 		 * the updated model
 		 */
-		if(refresh) {
-			$context = markup.refresh();
+		if(change.action === "delete" && typeof change.question !== "undefined") {
+			$context = undefined;
+			change.question.$deletedElement.prev().remove();		// remove the add new button
+			change.question.$deletedElement.remove();
 		} else {
-			$context = updateHtmlElement(change);
+			if(refresh) {
+				$context = markup.refresh();
+			} else {
+				$context = updateHtmlElement(change);
+			}
 		}
 		
 		// Add to changeset array ready for writing to the database
@@ -275,11 +281,13 @@ define([
 		} else if(change.changeType === "question") {
 			form = survey.forms[change.question.formIndex];
 			change.question.fId = form.id;
-			change.question.path = getFormPath(form) + "/" + change.question.name;
 			if(change.action === "delete") {
 				item = survey.forms[change.question.formIndex].questions[change.question.itemIndex];
 				change.question.id = item.id;
 				change.question.name = item.name;
+				change.question.path = item.path;
+			} else {
+				change.question.path = getFormPath(form) + "/" + change.question.name;
 			}
 		} else if(change.changeType === "option") {
 			if(change.action === "delete") {
