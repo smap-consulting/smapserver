@@ -39,6 +39,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.MediaInfo;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.QuestionManager;
@@ -103,6 +104,7 @@ public class UploadFiles extends Application {
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
 		Connection connectionSD = null; 
+		Connection cResults = null;
 
 		try {
 			/*
@@ -151,6 +153,8 @@ public class UploadFiles extends Application {
 					}
 					// End authorisation
 					
+					cResults = ResultsDataSource.getConnection("fieldManager-MediaUpload");
+					
 					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
 					MediaInfo mediaInfo = new MediaInfo();
@@ -177,7 +181,7 @@ public class UploadFiles extends Application {
 					    // Apply changes from CSV files to survey definition
 					    String contentType = UtilityMethodsEmail.getContentType(fileName);
 					    if(contentType.equals("text/csv")) {
-					    	applyCSVChanges(connectionSD, user, sId, fileName, savedFile, basePath, mediaInfo);
+					    	applyCSVChanges(connectionSD, cResults, user, sId, fileName, savedFile, basePath, mediaInfo);
 					    }
 					    
 					    MediaResponse mResponse = new MediaResponse ();
@@ -208,6 +212,14 @@ public class UploadFiles extends Application {
 			try {
 				if (connectionSD != null) {
 					connectionSD.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
 				}
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"Failed to close connection", e);
@@ -382,6 +394,7 @@ public class UploadFiles extends Application {
 	 * Update the survey with any changes resulting from the uploaded CSV file
 	 */
 	private void applyCSVChanges(Connection connectionSD, 
+			Connection cResults,
 			String user, 
 			int sId, 
 			String csvFileName, 
@@ -393,7 +406,7 @@ public class UploadFiles extends Application {
 		 */
 		if(sId > 0) {  // TODO A specific survey has been requested
 			
-			applyCSVChangesToSurvey(connectionSD, user, sId, csvFileName, csvFile);
+			applyCSVChangesToSurvey(connectionSD, cResults, user, sId, csvFileName, csvFile);
 			
 		} else {		// Organisational level
 			
@@ -414,7 +427,7 @@ public class UploadFiles extends Application {
 					}
 				}
 					
-				applyCSVChangesToSurvey(connectionSD, user, s.id, csvFileName, csvFile);
+				applyCSVChangesToSurvey(connectionSD, cResults, user, s.id, csvFileName, csvFile);
 			}
 		}
 	}
@@ -422,6 +435,7 @@ public class UploadFiles extends Application {
 	
 	
 	private void applyCSVChangesToSurvey(Connection connectionSD, 
+			Connection cResults,
 			String user, 
 			int sId, 
 			String csvFileName,
@@ -449,7 +463,7 @@ public class UploadFiles extends Application {
 		}
 		 
 		// Apply the changes 
-		sm.applyChangeSetArray(connectionSD, sId, user, changes);
+		sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes);
 		      
 	}
 	

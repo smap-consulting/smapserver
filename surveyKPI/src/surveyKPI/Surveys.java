@@ -416,6 +416,8 @@ public class Surveys extends Application {
 		a.isAuthorised(connectionSD, request.getRemoteUser());	
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
+		
 		for(ChangeSet cs : changes) {
 			for (ChangeItem ci : cs.items) {
 				// Check that property changes are being applied to questions in the specified survey
@@ -435,7 +437,7 @@ public class Surveys extends Application {
 		try {
 	
 			SurveyManager sm = new SurveyManager();
-			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, sId, request.getRemoteUser(), changes);
+			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes);
 					
 			String respString = gson.toJson(resp);	// Create the response	
 			response = Response.ok(respString).build();
@@ -451,6 +453,16 @@ public class Surveys extends Application {
 				if (connectionSD != null) {
 					connectionSD.close();
 					connectionSD = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
 				}
 				
 			} catch (SQLException e) {

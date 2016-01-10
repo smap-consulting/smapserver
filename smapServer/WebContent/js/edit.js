@@ -925,7 +925,7 @@ function respondToEvents($context) {
 		
 		bootbox.confirm("Are you sure you want to delete this question?", function(result) {
 			if(result) {
-				$context = question.deleteQuestion(item);
+				question.deleteQuestion(item);
 			}
 		}); 
 		
@@ -1444,7 +1444,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		questionType,
 		repeat_path,
 		oldVal,
-		i;
+		i,
+		question = survey.forms[formIndex].questions[itemIndex];
 	
 	if(type === "question") {
 		questionType = question.type;

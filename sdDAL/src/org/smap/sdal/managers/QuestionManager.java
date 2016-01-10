@@ -141,7 +141,7 @@ public class QuestionManager {
 	/*
 	 * Save a new question
 	 */
-	public void save(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
+	public void save(Connection sd, Connection cResults, int sId, ArrayList<Question> questions) throws Exception {
 		
 		String columnName = null;
 		SurveyManager sm = new SurveyManager();		// To apply survey level updates resulting from this question change
@@ -243,7 +243,7 @@ public class QuestionManager {
 					oldQ.fId = q.fId;
 					oldQ.name = q.name;
 					oldQuestions.add(oldQ);
-					delete(sd, sId, oldQuestions, true);	// Force the delete as we are replacing the question
+					delete(sd, cResults, sId, oldQuestions, true, true);	// Force the delete as we are replacing the question
 				}
 				
 				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
@@ -311,7 +311,7 @@ public class QuestionManager {
 						repeatsPath = q.path + "_count";
 						repeatName = q.name + "_count";
 						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
+						createRepeatCountQuestion(sd, q.fId, q.seq - 1, repeatName, convertedCalculation, repeatsPath );
 			
 					}				
 					
@@ -459,8 +459,17 @@ public class QuestionManager {
 		
 		try {
 			
+			/*
+			 * If source form id is 0 then this request is for a group being deleted rather than moved
+			 */
+			int formId = 0;
+			if(q.sourceFormId == 0) {
+				formId = q.fId;
+			} else {
+				formId = q.sourceFormId;
+			}
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, q.sourceFormId);
+			pstmt.setInt(1, formId);
 			pstmt.setString(2, q.path + '%');
 			
 			log.info("SQL Get questions in group: " + pstmt.toString());
@@ -501,7 +510,7 @@ public class QuestionManager {
 	}
 	
 	/*
-	 * Get all the questions in a group
+	 * Update the path of questions in a group
 	 */
 	private void updatePathOfQuestionsBetween(Connection sd, Question q, String newBasePath) throws SQLException {
 		
@@ -783,7 +792,11 @@ public class QuestionManager {
 	/*
 	 * Delete
 	 */
-	public void delete(Connection sd, int sId, ArrayList<Question> questions, boolean force) throws SQLException {
+	public void delete(Connection sd, Connection cResults,
+			int sId, ArrayList<Question> questions, boolean force, 
+			boolean getGroupContents) throws Exception {
+		
+		ArrayList<Question> groupContents = null;
 		
 		PreparedStatement pstmt = null;
 		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
@@ -810,6 +823,10 @@ public class QuestionManager {
 		PreparedStatement pstmtGetSeq = null;
 		String sqlGetSeq = "select seq, qtype, published from question where f_id = ? and qname = ?";
 		
+		PreparedStatement pstmtGetTableName = null;
+		PreparedStatement pstmtTableExists = null;
+		PreparedStatement pstmtDeleteForm = null;
+		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
 			pstmtDelLabels = sd.prepareStatement(sqlDelLabels);
@@ -821,7 +838,7 @@ public class QuestionManager {
 			for(Question q : questions) {
 				
 				int seq = 0;
-				String qType = null;
+				String qType = q.type;
 				boolean published = false;
 				
 				/*
@@ -829,11 +846,19 @@ public class QuestionManager {
 				 */
 				pstmtGetSeq.setInt(1, q.fId);
 				pstmtGetSeq.setString(2, q.name );
+				log.info("SQL get sequence: " + pstmtGetSeq.toString());
 				ResultSet rs = pstmtGetSeq.executeQuery();
 				if(rs.next()) {
 					seq = rs.getInt(1);
 					qType = rs.getString(2);
 					published = rs.getBoolean(3);
+				}
+				
+				/*
+				 * If the question is a group question then get its members
+				 */
+				if(qType.equals("begin group") && getGroupContents) {
+					groupContents = getQuestionsInGroup(sd, q);
 				}
 				
 				if(published && !force) {
@@ -887,39 +912,105 @@ public class QuestionManager {
 					
 					log.info("Update sequences: " + pstmtUpdateSeq.toString());
 					pstmtUpdateSeq.executeUpdate();
+				}
+				
+				/*
+				 * If the question is a group question then either:
+				 *   delete all the contents of the group, or
+				 *   Just remove the group so that the contents of the group are empty - TODO
+				 */
+				
+				// If the question is a group question then also delete the end group
+				if(qType.equals("begin group")) {
+					String endGroupName = q.name + "_groupEnd";
 					
-					// If the question is a group question then also delete the end group
-					if(qType.equals("begin group")) {
+					pstmtGetSeq.setString(2, endGroupName );
+					rs = pstmtGetSeq.executeQuery();
+					if(rs.next()) {
+						seq = rs.getInt(1);
 						
-						String endGroupName = q.name + "_groupEnd";
+						// Delete the labels
+						pstmtDelLabels.setInt(1, sId);
+						pstmtDelLabels.setString(2, endGroupName );
+						pstmtDelLabels.setInt(3, q.fId);
+						pstmtDelLabels.setInt(4, sId );
 						
-						pstmtGetSeq.setString(2, endGroupName );
-						rs = pstmtGetSeq.executeQuery();
-						if(rs.next()) {
-							seq = rs.getInt(1);
-							
-							// Delete the end group
-							pstmt.setString(2, endGroupName);
-							
-							log.info("Delete End group of question: " + pstmt.toString());
-							pstmt.executeUpdate();
-							
-							// Update the sequences of questions after the deleted end group
-							pstmtUpdateSeq.setInt(2, seq);
-							
-							log.info("Update sequences: " + pstmtUpdateSeq.toString());
-							pstmtUpdateSeq.executeUpdate();
-						}
+						log.info("Delete end group labels: " + pstmtDelLabels.toString());
+						pstmtDelLabels.executeUpdate();
 						
+						// Delete the end group
+						pstmt.setString(2, endGroupName);
 						
+						log.info("Delete End group of question: " + pstmt.toString());
+						pstmt.executeUpdate();
+						
+						// Update the sequences of questions after the deleted end group
+						pstmtUpdateSeq.setInt(2, seq);
+						
+						log.info("Update sequences: " + pstmtUpdateSeq.toString());
+						pstmtUpdateSeq.executeUpdate();
+					}
+					
+					/*
+					 * Delete the contents of the group
+					 */
+					if(groupContents != null) {
+						delete(sd, cResults, sId, groupContents, force, false);
 					}
 				}
 				
-
+				/*
+				 * If the question is a repeat question then either:
+				 *   delete the form, or
+				 *   move the questions into the parent form - TODO
+				 */
+				if(qType.equals("begin repeat")) {
+				
+					String tableName = null;
+					
+					// 1. Get the table name for this form
+					String sqlGetTableName = "select table_name from form where parentquestion = ? and s_id = ?;";
+					pstmtGetTableName = sd.prepareStatement(sqlGetTableName);
+					pstmtGetTableName.setInt(1, q.id);
+					pstmtGetTableName.setInt(2, sId);
+					ResultSet rsRepeat = pstmtGetTableName.executeQuery();
+					if(rsRepeat.next()) {
+						tableName = rs.getString(1);
+					}
+					
+					System.out.println("Deleting form for table: " + tableName);
+					
+					// 2. If the results table exists for this form then throw an exception
+					if(tableName != null) {
+						String sqlTableExists = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
+						pstmtTableExists = cResults.prepareStatement(sqlTableExists);
+						
+						int count = 0;
+						rsRepeat = pstmtTableExists.executeQuery();
+						if(rsRepeat.next()) {
+							count = rsRepeat.getInt(1);
+						}
+						
+						if(count > 0) {
+							throw new Exception("Cannot delete this form as it contains published data");
+						} else {
+							// 3. Delete the form
+							String sqlDeleteForm = "delete from form where parentquestion = ? and s_id = ?;";
+							pstmtDeleteForm = sd.prepareStatement(sqlDeleteForm);
+							pstmtDeleteForm.setInt(1, q.id);
+							pstmtDeleteForm.setInt(2, sId);
+							
+							log.info("Deleting form: " + pstmtDeleteForm.toString());
+							pstmtDeleteForm.executeUpdate();
+						}
+					}
+					
+				}
+				
 			}
 			
 			
-		} catch(SQLException e) {
+		} catch(Exception e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
@@ -929,6 +1020,9 @@ public class QuestionManager {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtGetSeq != null) {pstmtGetSeq.close();}} catch (SQLException e) {}
 			try {if (pstmtSoftDelete != null) {pstmtSoftDelete.close();}} catch (SQLException e) {}
+			try {if (pstmtGetTableName != null) {pstmtGetTableName.close();}} catch (SQLException e) {}
+			try {if (pstmtTableExists != null) {pstmtTableExists.close();}} catch (SQLException e) {}
+			try {if (pstmtDeleteForm != null) {pstmtDeleteForm.close();}} catch (SQLException e) {}
 		}	
 		
 	}

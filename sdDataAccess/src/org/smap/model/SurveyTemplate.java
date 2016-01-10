@@ -1421,6 +1421,7 @@ public class SurveyTemplate {
 		org.smap.sdal.managers.SurveyManager sm = new org.smap.sdal.managers.SurveyManager();
 		List<Question> questionList = new ArrayList<Question>(questions.values());
 		Connection connectionSD = org.smap.sdal.Utilities.SDDataSource.getConnection("fieldManager-SurveyTemplate");
+		Connection cResults = org.smap.sdal.Utilities.ResultsDataSource.getConnection("fieldManager-SurveyTemplate");
 		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
 
 		try {
@@ -1476,13 +1477,14 @@ public class SurveyTemplate {
 				}
 			}
 			
-			sm.applyChangeSetArray(connectionSD, survey.getId(), user, changes);
+			sm.applyChangeSetArray(connectionSD, cResults, survey.getId(), user, changes);
 			
 		} catch(Exception e) {
 			// Record exception but otherwise ignore
 			e.printStackTrace();
 		} finally {
 			if(connectionSD != null) try{connectionSD.close();} catch(Exception e){};
+			if(cResults != null) try{cResults.close();} catch(Exception e){};
 		}
 			
 	}
