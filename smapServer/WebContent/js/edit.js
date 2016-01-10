@@ -1421,7 +1421,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		questionType,
 		repeat_path,
 		oldVal,
-		i;
+		i,
+		question = survey.forms[formIndex].questions[itemIndex];
 	
 	if(type === "question") {
 		questionType = question.type;

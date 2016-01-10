@@ -311,7 +311,7 @@ public class QuestionManager {
 						repeatsPath = q.path + "_count";
 						repeatName = q.name + "_count";
 						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
+						createRepeatCountQuestion(sd, q.fId, q.seq - 1, repeatName, convertedCalculation, repeatsPath );
 			
 					}				
 					
