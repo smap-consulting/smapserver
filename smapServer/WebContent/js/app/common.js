@@ -1290,6 +1290,7 @@ function openForm(type) {
 	
 	$('.reusing_form').hide();
 	$('#base_on_existing').prop('checked', false)
+	$('#new_form_name').val("");
 	if(type === "new") {
 		$('.existing_form').hide();
 		$('.new_form').show();

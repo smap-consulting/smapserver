@@ -1434,6 +1434,7 @@ public class QuestionManager {
 	public void duplicateQuestions(Connection sd, int existingFormId, int newFormId) throws Exception {
 		
 		String sql = "insert into question("
+				 + "q_id,"
 				 + "f_id,"
 				 + "seq,"
 				 + "qname,"
@@ -1465,10 +1466,11 @@ public class QuestionManager {
 				 + "repeatcount, "
 				 + "published,"
 				 + "column_name_applied,"
-				 + "l_id,"						// List ids will need to be updated
+				 + "l_id)"						// List ids will need to be updated
 				 
 				 // Get the existing data
 				 + " select "
+				 + "nextval('q_seq'), "
 				 + newFormId + ","				// Set the new form id
 				 + "seq,"
 				 + "qname,"
@@ -1498,7 +1500,9 @@ public class QuestionManager {
 				 + "list_name, "
 				 + "column_name," 
 				 + "repeatcount, "
-				 + "'false' "				// Set published to false
+				 + "'false', "				// Set published to false
+				 + "column_name_applied, "
+				 + "l_id "
 				 
 				 + "from question where f_id = ? "		// Existing form id
 				 + "and soft_deleted = 'false';";	
@@ -1506,6 +1510,7 @@ public class QuestionManager {
 		
 		try {
 			
+			System.out.println(sql);
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, existingFormId);
 			
