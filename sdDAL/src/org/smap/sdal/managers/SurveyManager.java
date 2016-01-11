@@ -254,7 +254,7 @@ public class SurveyManager {
 			int projectId,
 			boolean existing,
 			int existingSurveyId,
-			String existingFormName
+			int existingFormId
 			) throws SQLException, Exception {
 		
 		int sId;
@@ -302,109 +302,118 @@ public class SurveyManager {
 			log.info("Create new survey part 2: " + pstmt.toString());
 			pstmt.execute();
 			
-			// 3 Create a form
-			tablename = "s" + sId + "_main";
-			
-			pstmt.close();
-			pstmt = sd.prepareStatement(sql3, Statement.RETURN_GENERATED_KEYS);
-			pstmt.setInt(1,  sId);
-			pstmt.setString(2,  tablename);
-			
-			log.info("Create new survey part 3: " + pstmt.toString());
-			pstmt.execute();
-			
-			rs = pstmt.getGeneratedKeys();
-			rs.next();
-			fId = rs.getInt(1);
-			
-			// 4. Create default language
+			// 3. Create default language
 			ArrayList<Language> languages = new ArrayList<Language> ();
 			languages.add(new Language(-1, "language"));
 			GeneralUtilityMethods.setLanguages(sd, sId, languages);
 			
-			// 5. Add default property questions
-			pstmt.close();
-			pstmt = sd.prepareStatement(sql4);
+			/*
+			 * 4. Create forms
+			 */
+			if(existing) {
+				System.out.println("Copying existing form");
+				QuestionManager qm = new QuestionManager();
+				qm.duplicateForm(sd, sId, "main", existingFormId, "/", 0, false);
 			
-			pstmt.setInt(1, fId);			// Form Id		
-			
-			
-			// Device ID
-			pstmt.setString(2,  "string");			// Type
-			pstmt.setString(3, "_device");			// Name
-			pstmt.setString(4,  "/main/_device");	// Path
-			pstmt.setString(5, "_device");			// Column Name
-			pstmt.setInt(6, -10);					// Sequence
-			pstmt.setString(7, "property");			// Source
-			pstmt.setString(8, "deviceid");			// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
-			
-			// start time
-			pstmt.setString(2,  "dateTime");		// Type
-			pstmt.setString(3, "_start");			// Name
-			pstmt.setString(4,  "/main/_start");	// Path
-			pstmt.setString(5, "_start");			// Column Name
-			pstmt.setInt(6, -9);					// Sequence
-			pstmt.setString(7, "timestamp");		// Source
-			pstmt.setString(8, "start");			// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
-			
-			// Device ID
-			pstmt.setString(2,  "dateTime");		// Type
-			pstmt.setString(3, "_end");				// Name
-			pstmt.setString(4,  "/main/_end");		// Path
-			pstmt.setString(5, "_end");				// Column Name
-			pstmt.setInt(6, -8);					// Sequence
-			pstmt.setString(7, "timestamp");		// Source
-			pstmt.setString(8, "end");				// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
-			
-			// Meta Group
-			pstmt.setString(2,  "begin group");		// Type
-			pstmt.setString(3, "meta");				// Name
-			pstmt.setString(4,  "/main/meta");		// Path
-			pstmt.setString(5, "meta");				// Column Name
-			pstmt.setInt(6, -7);					// Sequence
-			pstmt.setString(7, null);				// Source
-			pstmt.setString(8, null);				// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
-			
-			// instance id
-			pstmt.setString(2,  "string");			// Type
-			pstmt.setString(3, "instanceID");		// Name
-			pstmt.setString(4,  "/main/meta/instanceID");		// Path
-			pstmt.setString(5, "instanceid");		// Column Name
-			pstmt.setInt(6, -6);					// Sequence
-			pstmt.setString(7, "user");				// Source
-			pstmt.setString(8, null);				// Source Param
-			pstmt.setString(9, "concat('uuid:', uuid())");	// Calculation
-			pstmt.execute();
-			
-			// instance name
-			pstmt.setString(2,  "string");			// Type
-			pstmt.setString(3, "instanceName");		// Name
-			pstmt.setString(4,  "/main/meta/instanceName");		// Path
-			pstmt.setString(5, "instancename");		// Column Name
-			pstmt.setInt(6, -5);					// Sequence
-			pstmt.setString(7, "user");				// Source
-			pstmt.setString(8, null);				// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
-			
-			// Meta Group End
-			pstmt.setString(2,  "end group");		// Type
-			pstmt.setString(3, "meta_groupEnd");	// Name
-			pstmt.setString(4,  "/main/meta_groupEnd");		// Path
-			pstmt.setString(5, "meta_groupend");	// Column Name
-			pstmt.setInt(6, -4);					// Sequence
-			pstmt.setString(7, null);				// Source
-			pstmt.setString(8, null);				// Source Param
-			pstmt.setString(9, null);				// Calculation
-			pstmt.execute();
+			} else {
+				// 4 Create a new empty form (except for default questions)
+				tablename = "s" + sId + "_main";
+				
+				pstmt.close();
+				pstmt = sd.prepareStatement(sql3, Statement.RETURN_GENERATED_KEYS);
+				pstmt.setInt(1,  sId);
+				pstmt.setString(2,  tablename);
+				
+				log.info("Create new form: " + pstmt.toString());
+				pstmt.execute();
+				
+				rs = pstmt.getGeneratedKeys();
+				rs.next();
+				fId = rs.getInt(1);
+				
+				// 5. Add questions
+				pstmt.close();
+				pstmt = sd.prepareStatement(sql4);
+				
+				pstmt.setInt(1, fId);			// Form Id		
+				
+				// Device ID
+				pstmt.setString(2,  "string");			// Type
+				pstmt.setString(3, "_device");			// Name
+				pstmt.setString(4,  "/main/_device");	// Path
+				pstmt.setString(5, "_device");			// Column Name
+				pstmt.setInt(6, -10);					// Sequence
+				pstmt.setString(7, "property");			// Source
+				pstmt.setString(8, "deviceid");			// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+				
+				// start time
+				pstmt.setString(2,  "dateTime");		// Type
+				pstmt.setString(3, "_start");			// Name
+				pstmt.setString(4,  "/main/_start");	// Path
+				pstmt.setString(5, "_start");			// Column Name
+				pstmt.setInt(6, -9);					// Sequence
+				pstmt.setString(7, "timestamp");		// Source
+				pstmt.setString(8, "start");			// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+				
+				// Device ID
+				pstmt.setString(2,  "dateTime");		// Type
+				pstmt.setString(3, "_end");				// Name
+				pstmt.setString(4,  "/main/_end");		// Path
+				pstmt.setString(5, "_end");				// Column Name
+				pstmt.setInt(6, -8);					// Sequence
+				pstmt.setString(7, "timestamp");		// Source
+				pstmt.setString(8, "end");				// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+				
+				// Meta Group
+				pstmt.setString(2,  "begin group");		// Type
+				pstmt.setString(3, "meta");				// Name
+				pstmt.setString(4,  "/main/meta");		// Path
+				pstmt.setString(5, "meta");				// Column Name
+				pstmt.setInt(6, -7);					// Sequence
+				pstmt.setString(7, null);				// Source
+				pstmt.setString(8, null);				// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+				
+				// instance id
+				pstmt.setString(2,  "string");			// Type
+				pstmt.setString(3, "instanceID");		// Name
+				pstmt.setString(4,  "/main/meta/instanceID");		// Path
+				pstmt.setString(5, "instanceid");		// Column Name
+				pstmt.setInt(6, -6);					// Sequence
+				pstmt.setString(7, "user");				// Source
+				pstmt.setString(8, null);				// Source Param
+				pstmt.setString(9, "concat('uuid:', uuid())");	// Calculation
+				pstmt.execute();
+				
+				// instance name
+				pstmt.setString(2,  "string");			// Type
+				pstmt.setString(3, "instanceName");		// Name
+				pstmt.setString(4,  "/main/meta/instanceName");		// Path
+				pstmt.setString(5, "instancename");		// Column Name
+				pstmt.setInt(6, -5);					// Sequence
+				pstmt.setString(7, "user");				// Source
+				pstmt.setString(8, null);				// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+				
+				// Meta Group End
+				pstmt.setString(2,  "end group");		// Type
+				pstmt.setString(3, "meta_groupEnd");	// Name
+				pstmt.setString(4,  "/main/meta_groupEnd");		// Path
+				pstmt.setString(5, "meta_groupend");	// Column Name
+				pstmt.setInt(6, -4);					// Sequence
+				pstmt.setString(7, null);				// Source
+				pstmt.setString(8, null);				// Source Param
+				pstmt.setString(9, null);				// Calculation
+				pstmt.execute();
+			}
 			
 			sd.commit();
 			sd.setAutoCommit(true);

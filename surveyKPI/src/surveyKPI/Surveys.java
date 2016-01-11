@@ -242,7 +242,7 @@ public class Surveys extends Application {
 			@PathParam("name") String name,
 			@FormParam("existing") boolean existing,
 			@FormParam("existing_survey") int existingSurveyId,
-			@FormParam("existing_form") String existingFormName
+			@FormParam("existing_form") int existingFormId
 			) { 
 		
 		try {
@@ -263,11 +263,14 @@ public class Surveys extends Application {
 		// Get the base path
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
+		log.info("userevent: " + request.getRemoteUser() + " create new survey " + name + " (" + existing + "," + 
+				existingSurveyId + "," + existingFormId + ")");
+		
 		Response response = null;
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormName);
+			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId);
 			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();

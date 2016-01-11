@@ -451,6 +451,10 @@ $(document).ready(function() {
 			getSurveyDetails(surveyDetailsDone);
 		} else {
 			name = $('#new_form_name').val();
+			if(typeof name === "undefined" || name.trim() == "") {
+				bootbox.alert("Please specify a name for the new survey");
+				return false;
+			}
 			existing = $('#base_on_existing').prop('checked');
 			existing_survey = $('#survey_name').val();
 			existing_form = $('#form_name').val();
@@ -1586,7 +1590,7 @@ function addForms(data) {
 	forms = data.forms;
 	for(i = 0; i < forms.length; i++) {
 		h[++idx] = '<option value="';
-		h[++idx] = forms[i].form;
+		h[++idx] = forms[i].f_id;
 		h[++idx] = '">';
 		h[++idx] = forms[i].form;
 		h[++idx] = '</option>';	

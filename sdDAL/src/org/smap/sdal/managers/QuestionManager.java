@@ -1382,5 +1382,142 @@ public class QuestionManager {
 		
 		return cs;
 	}
+	
+	/*
+	 * Duplicate a form
+	 */
+	public void duplicateForm(Connection sd, 
+			int sId, 
+			String formName, 
+			int originalFormId, 
+			String parentPath,
+			int parentFormId,
+			boolean repeats) throws Exception {
+		
+		// Create the new form entry
+		String tablename = "s" + sId + "_" + formName;
+		int fId;		// Id of the newly created form
+		String path = parentPath + "/" + formName;
+		
+		String sqlCreateForm = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
+				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?);";
+		PreparedStatement pstmtCreateForm = null;
+		
+		try{
+			pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
+			pstmtCreateForm.setInt(1,  sId);
+			pstmtCreateForm.setString(2, formName);
+			pstmtCreateForm.setString(3,  tablename);
+			pstmtCreateForm.setInt(4,  parentFormId);
+			pstmtCreateForm.setBoolean(5,  repeats);
+			pstmtCreateForm.setString(6,  path);
+		
+			log.info("Create new form: " + pstmtCreateForm.toString());
+			pstmtCreateForm.execute();
+		
+			ResultSet rs = pstmtCreateForm.getGeneratedKeys();
+			rs.next();
+			fId = rs.getInt(1);
+			
+			duplicateQuestions(sd, originalFormId, fId);
+			
+		} catch(Exception e) {
+			throw e;
+		} finally {
+			if(pstmtCreateForm != null) try {pstmtCreateForm.close();} catch(Exception e){};
+		}
+	}
+	
+	/*
+	 * Copy questions in a form to a new form
+	 */
+	public void duplicateQuestions(Connection sd, int existingFormId, int newFormId) throws Exception {
+		
+		String sql = "insert into question("
+				 + "f_id,"
+				 + "seq,"
+				 + "qname,"
+				 + "qtype," 
+				 + "question,"
+				 + "qtext_id,"			// May need to replicate translations
+				 + "defaultanswer,"
+				 + "info,"
+				 + "infotext_id, "		// May need to replicate translations 
+				 + "visible, " 
+				 + "source, "
+				 + "source_param, "
+				 + "readonly, "
+				 + "mandatory, "
+				 + "groupstartorend, "
+				 + "relevant, "
+				 + "calculate, "
+				 + "qconstraint, "
+				 + "constraint_msg,"
+				 + "appearance,"
+				 + "enabled,"
+				 + "path,"
+				 + "nodeset,"
+				 + "nodeset_value,"
+				 + "nodeset_label,"
+				 + "cascade_instance,"
+				 + "list_name,"
+				 + "column_name," 
+				 + "repeatcount, "
+				 + "published,"
+				 + "column_name_applied,"
+				 + "l_id,"						// List ids will need to be updated
+				 
+				 // Get the existing data
+				 + " select "
+				 + newFormId + ","				// Set the new form id
+				 + "seq,"
+				 + "qname,"
+				 + "qtype," 
+				 + "question,"
+				 + "qtext_id,"			
+				 + "defaultanswer,"
+				 + "info,"
+				 + "infotext_id, "		
+				 + "visible, " 
+				 + "source, "
+				 + "source_param, "
+				 + "readonly, "
+				 + "mandatory, "
+				 + "groupstartorend, "
+				 + "relevant, "
+				 + "calculate, "
+				 + "qconstraint, "
+				 + "constraint_msg, "
+				 + "appearance, "
+				 + "enabled, "
+				 + "path, "
+				 + "nodeset, "
+				 + "nodeset_value, "
+				 + "nodeset_label, "
+				 + "cascade_instance, "
+				 + "list_name, "
+				 + "column_name," 
+				 + "repeatcount, "
+				 + "'false' "				// Set published to false
+				 
+				 + "from question where f_id = ? "		// Existing form id
+				 + "and soft_deleted = 'false';";	
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, existingFormId);
+			
+			log.info("Duplicating questions: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+
+	}
 
 }
