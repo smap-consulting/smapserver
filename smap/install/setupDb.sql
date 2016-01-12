@@ -393,6 +393,7 @@ ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
 CREATE INDEX infotext_id_sequence ON question(infotext_id);
 CREATE UNIQUE INDEX qname_index ON question(f_id,qname) where soft_deleted = 'false';
+CREATE INDEX q_f_id ON question(f_id);
 	
 DROP TABLE IF EXISTS option CASCADE;
 CREATE TABLE option (
@@ -411,6 +412,7 @@ CREATE TABLE option (
 	);
 ALTER TABLE option OWNER TO ws;
 CREATE INDEX label_id_sequence ON option(label_id);
+CREATE index o_l_id ON option(l_id);
 
 DROP TABLE IF EXISTS listname CASCADE;
 CREATE TABLE listname (

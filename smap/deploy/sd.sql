@@ -403,3 +403,7 @@ ALTER TABLE map OWNER TO ws;
 -- Upgrade to: 15.12 from 15.11
 alter table organisation add column website text;
 alter table users add column password_reset boolean default false;
+
+------ Performance Patches (For subscriber)
+CREATE index o_l_id ON option(l_id);
+CREATE index q_f_id ON question(f_id);
