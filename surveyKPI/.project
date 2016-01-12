@@ -6,6 +6,7 @@
 		<project>sdDAL</project>
 		<project>sdDataAccess</project>
 		<project>aws</project>
+		<project>notifications</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
