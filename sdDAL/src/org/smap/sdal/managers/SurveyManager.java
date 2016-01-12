@@ -313,7 +313,7 @@ public class SurveyManager {
 			if(existing) {
 				System.out.println("Copying existing form");
 				QuestionManager qm = new QuestionManager();
-				qm.duplicateForm(sd, sId, "main", existingFormId, "", 0, false);
+				qm.duplicateForm(sd, sId, existingSurveyId, "main", existingFormId, "", 0, false);
 			
 			} else {
 				// 4 Create a new empty form (except for default questions)

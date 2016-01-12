@@ -252,10 +252,16 @@ public class Surveys extends Application {
 		    return Response.serverError().build();
 		}
 		
+		log.info("userevent: " + request.getRemoteUser() + " create new survey " + name + " (" + existing + "," + 
+				existingSurveyId + "," + existingFormId + ")");
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		if(existing) {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), existingSurveyId, false);	// Validate that the user can access the existing survey
+		}
 		// End Authorisation
 		
 		org.smap.sdal.model.Survey survey = null;

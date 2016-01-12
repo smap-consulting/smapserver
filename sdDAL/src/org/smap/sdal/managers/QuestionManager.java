@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -1388,6 +1390,7 @@ public class QuestionManager {
 	 */
 	public void duplicateForm(Connection sd, 
 			int sId, 
+			int existingSurveyId,
 			String formName, 
 			int originalFormId, 
 			String parentPath,
@@ -1420,12 +1423,59 @@ public class QuestionManager {
 			fId = rs.getInt(1);
 			
 			duplicateQuestions(sd, originalFormId, fId);
+			duplicateQuestionLabels(sd, sId, existingSurveyId, originalFormId);
+			duplicateOptions(sd, sId);
 			
 		} catch(Exception e) {
 			throw e;
 		} finally {
 			if(pstmtCreateForm != null) try {pstmtCreateForm.close();} catch(Exception e){};
 		}
+	}
+	
+	/*
+	 * Copy translations in a form to a new form
+	 */
+	public void duplicateQuestionLabels(Connection sd, 
+			int sId,					// The new survey
+			int existingSurveyId,       // The existing survey
+			int existingFormId) throws Exception {
+		
+		String sql = "insert into translation("
+				+ "s_id,"
+				+ "language,"
+				+ "text_id,"
+				+ "type,"
+				+ "value) "
+				+ "select "
+				+ sId + ","
+				+ "language,"
+				+ "text_id,"
+				+ "type,"
+				+ "value "
+				+ "from translation "
+				+ "where s_id = ? "
+				+ "and "
+				+ "(text_id in (select qtext_id from question where f_id = ?) "
+				+ "or text_id in (select infotext_id from question where f_id = ?));";
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, existingSurveyId);
+			pstmt.setInt(2, existingFormId);
+			pstmt.setInt(3, existingFormId);
+			
+			log.info("Duplicating question labels: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+
 	}
 	
 	/*
@@ -1510,7 +1560,6 @@ public class QuestionManager {
 		
 		try {
 			
-			System.out.println(sql);
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, existingFormId);
 			
@@ -1521,6 +1570,75 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+
+	}
+	
+	/*
+	 * Copy options from one form to a new form
+	 */
+	public void duplicateOptions(Connection sd, 
+			int sId					// The new surveyId
+			) throws Exception {
+		
+		HashMap<Integer, Integer> listIdHash = new HashMap<Integer, Integer> ();
+		int newListId;
+		
+		String sqlGetLists = "select q.l_id from question q, form f "
+				+ "where f.f_id = q.f_id "
+				+ "and q.l_id > 0 "
+				+ "and q.qtype like 'select%' "
+				+ "and f.s_id = ?;";
+		PreparedStatement pstmtGetLists = null;
+		
+		try {
+			
+			// Get the lists that need to be duplicated
+			pstmtGetLists = sd.prepareStatement(sqlGetLists);
+			pstmtGetLists.setInt(1, sId);		// These should already be in the new survey
+		
+			log.info("Getting option lists that need to be replicated: " + pstmtGetLists.toString());
+			ResultSet rs = pstmtGetLists.executeQuery();
+			while(rs.next()) {
+				int l_id = rs.getInt(1);
+				listIdHash.put(new Integer(l_id), new Integer(l_id));
+			}
+			
+			List<Integer> listIds = new ArrayList<Integer>(listIdHash.keySet());
+        	for(Integer listId : listIds) {
+        		System.out.println("List id to replicate: " + listId.toString());
+        		
+        		// 1. Create a new list  		
+        		String sqlCreateList = "insert into listname ( s_id, name) " +
+        				" select "
+        				+ sId + "," 
+        				+ "name "
+        				+ "from listname where l_id = ?";
+        		PreparedStatement pstmtCreateList = null;
+        		
+        	
+    			pstmtCreateList = sd.prepareStatement(sqlCreateList, Statement.RETURN_GENERATED_KEYS);
+    			pstmtCreateList.setInt(1,  listId);
+    		
+    			log.info("Create new list: " + pstmtCreateList.toString());
+    			pstmtCreateList.execute();
+    		
+    			rs = pstmtCreateList.getGeneratedKeys();
+    			rs.next();
+    			newListId = rs.getInt(1);
+    			
+    			System.out.println("    New id: " + newListId);
+    			
+        		// 2. Create the list entries
+        		
+        		// 3. Copy the list labels
+        	}
+
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmtGetLists != null) try {pstmtGetLists.close();} catch(Exception e){};
 		}
 
 	}
