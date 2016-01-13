@@ -986,7 +986,7 @@ function getLanguageList(sId, callback, addNone, selector, setGroupList) {
 				}
 				
 				if(data[0]) {
-					getQuestionList(sId, data[0].name, "-1", "-1", theCallback, setGroupList, undefined);	// Default language to the first in the list
+					getQuestionList(sId, data[0], "-1", "-1", theCallback, setGroupList, undefined);	// Default language to the first in the list
 				} else {
 					if(typeof theCallback === "function") {
 						theCallback();

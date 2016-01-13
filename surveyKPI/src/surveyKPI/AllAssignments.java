@@ -474,14 +474,14 @@ public class AllAssignments extends Application {
 					pstmt = connectionSD.prepareStatement(sql);	 
 					pstmt.setInt(1, sId);
 					
-					log.info("Get forms and row counts" + pstmt.toString());
+					log.info("Get forms: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 		
 					while (resultSet.next()) {
 						String tableName2 = null;
 						String tableName = resultSet.getString(1);
 						String p_id = resultSet.getString(2);
-						if(p_id == null) {	// The top level form
+						if(p_id == null || p_id.equals("0")) {	// The top level form
 		
 							QuestionInfo filterQuestion = null;
 							String filterSql = null;
@@ -592,6 +592,8 @@ public class AllAssignments extends Application {
 								 */
 								pstmtGetSurveyIdent.setInt(1, as.source_survey_id);
 								if(resultSet != null) try {resultSet.close();} catch(Exception e) {};
+								
+								log.info("SQL get survey ident: " + pstmt.toString());
 								resultSet = pstmtGetSurveyIdent.executeQuery();
 								String source_survey_ident = null;
 								if(resultSet.next()) {
