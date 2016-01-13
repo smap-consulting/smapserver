@@ -1277,7 +1277,7 @@ function createNewSurvey(name, existing, existing_survey, existing_form, callbac
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to create survey: " + xhr.responseText);
+				bootbox.alert("Error: Failed to create survey: " + xhr.responseText);
 			}
 		}
 	});	

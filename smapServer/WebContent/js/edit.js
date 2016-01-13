@@ -307,7 +307,6 @@ $(document).ready(function() {
 	$('#editLanguageSave').off().click(function() {	// Save languages to the database
 
 		var languagesString = JSON.stringify(gTempLanguages);
-		console.log("Saving languages: " + languagesString);
 		addHourglass();
 		$.ajax({
 			  type: "POST",
@@ -327,7 +326,7 @@ $(document).ready(function() {
 					if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 					} else {
-						alert("Error: Failed to create survey: " + xhr.responseText);
+						alert("Error: Failed to save languages: " + xhr.responseText);
 					}
 				}
 		});

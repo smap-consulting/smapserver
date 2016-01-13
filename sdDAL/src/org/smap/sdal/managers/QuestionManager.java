@@ -1389,7 +1389,7 @@ public class QuestionManager {
 	 * Duplicate a form
 	 */
 	public void duplicateForm(Connection sd, 
-			int sId, 
+			int sId, 					// New survey id
 			int existingSurveyId,
 			String formName, 
 			int originalFormId, 
@@ -1405,6 +1405,10 @@ public class QuestionManager {
 		String sqlCreateForm = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
 				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?);";
 		PreparedStatement pstmtCreateForm = null;
+		
+		String sqlGetSubForms = "select f.f_id, f.name from form f "
+				+ "where f.parentform = ?;";
+		PreparedStatement pstmtGetSubForms = null;
 		
 		try{
 			pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
@@ -1422,15 +1426,28 @@ public class QuestionManager {
 			rs.next();
 			fId = rs.getInt(1);
 			
-			duplicateLanguages(sd, sId, existingSurveyId);
 			duplicateQuestions(sd, originalFormId, fId);
 			duplicateQuestionLabels(sd, sId, existingSurveyId, originalFormId);
-			duplicateOptions(sd, sId, existingSurveyId);
+			duplicateOptionsInForm(sd, sId, fId, existingSurveyId);
+			
+			// Duplicate sub forms
+			pstmtGetSubForms = null;
+			pstmtGetSubForms.setInt(1,originalFormId);
+			
+			log.info("Create new form: " + pstmtCreateForm.toString());
+			rs = pstmtGetSubForms.executeQuery();
+			String subFormParentPath = parentPath + "/" + formName;
+			while(rs.next()) {
+				int subFormId = rs.getInt(1);
+				String subFormName = rs.getString(2);
+				duplicateForm(sd, sId, existingSurveyId, subFormName, subFormId, subFormParentPath, fId, false);
+			}
 			
 		} catch(Exception e) {
 			throw e;
 		} finally {
 			if(pstmtCreateForm != null) try {pstmtCreateForm.close();} catch(Exception e){};
+			if(pstmtGetSubForms != null) try {pstmtGetSubForms.close();} catch(Exception e){};
 		}
 	}
 	
@@ -1657,8 +1674,9 @@ public class QuestionManager {
 	/*
 	 * Copy options from one form to a new form
 	 */
-	public void duplicateOptions(Connection sd, 
+	public void duplicateOptionsInForm(Connection sd, 
 			int sId,					// The new surveyId
+			int fId,					// The form id
 			int existingSurveyId
 			) throws Exception {
 		
@@ -1669,7 +1687,8 @@ public class QuestionManager {
 				+ "where f.f_id = q.f_id "
 				+ "and q.l_id > 0 "
 				+ "and q.qtype like 'select%' "
-				+ "and f.s_id = ?;";
+				+ "and f.f_id = ? "
+				+ "and l.name not in (select name from listname where s_id = ?)";	// A list may have been duplicated for another form, hence exclude these
 		PreparedStatement pstmtGetLists = null;
 		
 		PreparedStatement pstmtCreateList = null;
@@ -1677,9 +1696,10 @@ public class QuestionManager {
 		
 		try {
 			
-			// Get the lists that need to be duplicated
+			// Get the lists that need to be duplicated for this form
 			pstmtGetLists = sd.prepareStatement(sqlGetLists);
-			pstmtGetLists.setInt(1, sId);		// These should already be in the new survey
+			pstmtGetLists.setInt(1, fId);	
+			pstmtGetLists.setInt(2, sId);	
 		
 			log.info("Getting option lists that need to be replicated: " + pstmtGetLists.toString());
 			ResultSet rs = pstmtGetLists.executeQuery();

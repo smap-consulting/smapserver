@@ -292,12 +292,12 @@ public class Surveys extends Application {
 				log.info(msg);
 			} else {
 				log.log(Level.SEVERE, "SQL Error", e);
-				response = Response.serverError().build();
+				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 			}
 			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			response = Response.serverError().build();
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
 			try {
