@@ -1422,15 +1422,51 @@ public class QuestionManager {
 			rs.next();
 			fId = rs.getInt(1);
 			
+			duplicateLanguages(sd, sId, existingSurveyId);
 			duplicateQuestions(sd, originalFormId, fId);
 			duplicateQuestionLabels(sd, sId, existingSurveyId, originalFormId);
-			duplicateOptions(sd, sId);
+			duplicateOptions(sd, sId, existingSurveyId);
 			
 		} catch(Exception e) {
 			throw e;
 		} finally {
 			if(pstmtCreateForm != null) try {pstmtCreateForm.close();} catch(Exception e){};
 		}
+	}
+	
+	/*
+	 * Duplicate the languages in the survey
+	 */
+	public void duplicateLanguages(Connection sd, 
+			int sId,					// The new survey
+			int existingSurveyId) throws Exception {
+		
+		String sql = "insert into language ("
+				+ "s_id,"
+				+ "seq,"
+				+ "language) "
+				+ "select "
+				+ sId + ","
+				+ "seq,"
+				+ "language "
+				+ "from language where s_id = ?;";
+		
+	PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, existingSurveyId);
+			
+			log.info("Duplicating languages: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+
 	}
 	
 	/*
@@ -1468,6 +1504,50 @@ public class QuestionManager {
 			pstmt.setInt(3, existingFormId);
 			
 			log.info("Duplicating question labels: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+		}
+
+	}
+	
+	/*
+	 * Copy translations in an option list to a new list
+	 */
+	public void duplicateOptionLabels(Connection sd, 
+			int sId,
+			int existingSurveyId,       // The existing survey
+			int listId				  // The new list
+			) throws Exception {
+		
+		String sql = "insert into translation ("
+				+ "s_id,"
+				+ "language,"
+				+ "text_id,"
+				+ "type,"
+				+ "value) "
+				+ "select "
+				+ sId + ","
+				+ "language,"
+				+ "text_id,"
+				+ "type,"
+				+ "value "
+				+ "from translation "
+				+ "where s_id = ? "
+				+ "and "
+				+ "text_id in (select label_id from option where l_id = ?); ";
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, existingSurveyId);
+			pstmt.setInt(2, listId);
+			
+			log.info("Duplicating option labels: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 		} catch (Exception e) {
@@ -1578,7 +1658,8 @@ public class QuestionManager {
 	 * Copy options from one form to a new form
 	 */
 	public void duplicateOptions(Connection sd, 
-			int sId					// The new surveyId
+			int sId,					// The new surveyId
+			int existingSurveyId
 			) throws Exception {
 		
 		HashMap<Integer, Integer> listIdHash = new HashMap<Integer, Integer> ();
@@ -1590,6 +1671,9 @@ public class QuestionManager {
 				+ "and q.qtype like 'select%' "
 				+ "and f.s_id = ?;";
 		PreparedStatement pstmtGetLists = null;
+		
+		PreparedStatement pstmtCreateList = null;
+		PreparedStatement pstmtInsertOptions = null;
 		
 		try {
 			
@@ -1613,10 +1697,9 @@ public class QuestionManager {
         				" select "
         				+ sId + "," 
         				+ "name "
-        				+ "from listname where l_id = ?";
-        		PreparedStatement pstmtCreateList = null;
-        		
+        				+ "from listname where l_id = ?";	
         	
+    			if(pstmtCreateList != null) try {pstmtCreateList.close();} catch(Exception e){};
     			pstmtCreateList = sd.prepareStatement(sqlCreateList, Statement.RETURN_GENERATED_KEYS);
     			pstmtCreateList.setInt(1,  listId);
     		
@@ -1630,8 +1713,42 @@ public class QuestionManager {
     			System.out.println("    New id: " + newListId);
     			
         		// 2. Create the list entries
+    			String sqlInsertOptions = "insert into option ("
+    					 + "o_id,"
+    					 + "l_id,"
+    					 + "seq,"
+    					 + "label," 
+    					 + "label_id,"
+    					 + "ovalue,"
+    					 + "cascade_filters," 
+    					 + "externalfile,"
+    					 + "list_name,"
+    					 + "column_name,"
+    					 + "published) "
+    					 
+    					 + "select "
+    					 + "nextval('o_seq'), "
+    					 + newListId + ","
+       					 + "seq,"
+    					 + "label," 
+    					 + "label_id,"
+    					 + "ovalue,"
+    					 + "cascade_filters," 
+    					 + "externalfile,"
+    					 + "list_name,"
+    					 + "column_name,"
+    					 + "'false'"
+    					 + "from option where l_id = ?;";
+    			
+    			if(pstmtInsertOptions != null) try {pstmtInsertOptions.close();} catch(Exception e){};
+    			pstmtInsertOptions = sd.prepareStatement(sqlInsertOptions);
+    			pstmtInsertOptions.setInt(1, listId);
+    			
+    			log.info("Adding options to survey: " + pstmtInsertOptions.toString());
+    			pstmtInsertOptions.executeUpdate();
         		
         		// 3. Copy the list labels
+    			duplicateOptionLabels(sd, sId, existingSurveyId, newListId);
         	}
 
 			
@@ -1639,6 +1756,8 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			if(pstmtGetLists != null) try {pstmtGetLists.close();} catch(Exception e){};
+			if(pstmtCreateList != null) try {pstmtCreateList.close();} catch(Exception e){};
+			if(pstmtInsertOptions != null) try {pstmtInsertOptions.close();} catch(Exception e){};
 		}
 
 	}

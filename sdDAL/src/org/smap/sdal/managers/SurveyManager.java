@@ -302,13 +302,8 @@ public class SurveyManager {
 			log.info("Create new survey part 2: " + pstmt.toString());
 			pstmt.execute();
 			
-			// 3. Create default language
-			ArrayList<Language> languages = new ArrayList<Language> ();
-			languages.add(new Language(-1, "language"));
-			GeneralUtilityMethods.setLanguages(sd, sId, languages);
-			
 			/*
-			 * 4. Create forms
+			 * 3. Create forms
 			 */
 			if(existing) {
 				System.out.println("Copying existing form");
@@ -316,7 +311,13 @@ public class SurveyManager {
 				qm.duplicateForm(sd, sId, existingSurveyId, "main", existingFormId, "", 0, false);
 			
 			} else {
-				// 4 Create a new empty form (except for default questions)
+				
+				// 4. Create default language
+				ArrayList<Language> languages = new ArrayList<Language> ();
+				languages.add(new Language(-1, "language"));
+				GeneralUtilityMethods.setLanguages(sd, sId, languages);
+				
+				// 5 Create a new empty form (except for default questions)
 				tablename = "s" + sId + "_main";
 				
 				pstmt.close();
@@ -331,7 +332,7 @@ public class SurveyManager {
 				rs.next();
 				fId = rs.getInt(1);
 				
-				// 5. Add questions
+				// 6. Add questions
 				pstmt.close();
 				pstmt = sd.prepareStatement(sql4);
 				
