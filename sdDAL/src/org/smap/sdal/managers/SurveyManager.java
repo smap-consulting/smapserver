@@ -1570,7 +1570,13 @@ public class SurveyManager {
 					
 					int count = 0;
 		
-					// Special case for change of list name in a question - don't try to check the integrity of the update
+					/*
+					 * Special case for change of list name in a question - don't try to check the integrity of the update
+					 * In fact any change to the list name is difficult to manage for integrity as it can be updated
+					 *  both in a question property change and as a list name change
+					 *  hence the integrity checking is relaxed at the moment 
+					 */
+					
 					if(ci.property.prop.equals("list_name")) {
 						pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
 						pstmtProperty3.setInt(2, ci.property.qId);
@@ -1579,12 +1585,17 @@ public class SurveyManager {
 						count = pstmtProperty3.executeUpdate();
 						
 					} else if (ci.property.type.equals("optionlist")) {
-						pstmtListname.setString(1, ci.property.newVal);
-						pstmtListname.setInt(2, ci.property.l_id);
-						pstmtListname.setInt(3, sId);
-						
-						log.info("Update name of list : " + pstmtListname.toString());
-						count = pstmtListname.executeUpdate();
+						if( ci.property.l_id > 0) {
+							pstmtListname.setString(1, ci.property.newVal);
+							pstmtListname.setInt(2, ci.property.l_id);
+							pstmtListname.setInt(3, sId);
+							
+							log.info("Update name of list : " + pstmtListname.toString());
+							count = pstmtListname.executeUpdate();
+						} else {
+							count = 1;		// Report as success
+							ci.property.newVal = originalNewValue;	// Restore the original new value for logging
+						}
 						
 					} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
 						

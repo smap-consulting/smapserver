@@ -405,7 +405,8 @@ define([
 			 */
 			if(elementType === newElementType && newElement.itemIndex === element.itemIndex) {
 				if((newElementType === "question" && newElement.formIndex === element.formIndex) ||
-					(newElementType === "option" && newElement.optionList === element.optionList) ) {
+					(newElementType === "option" && newElement.optionList === element.optionList) ||
+					(newElementType === "optionlist")) {
 				
 					console.log("Update to an item that is already in the update queue");
 	

@@ -1246,6 +1246,10 @@ function createNewSurvey(name, existing, existing_survey, existing_form, callbac
 	console.log("create new: " + existing + " : " + existing_survey + " : " + existing_form);
 	
 	var url="/surveyKPI/surveys/new/" + globals.gCurrentProject + "/" + name;
+	if(!existing) {
+		existing_survey = 0;
+		existing_form = 0;
+	} 
 	
 	addHourglass();
 	$.ajax({
