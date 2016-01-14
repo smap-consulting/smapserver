@@ -1395,6 +1395,7 @@ public class QuestionManager {
 			int originalFormId, 
 			String parentPath,
 			int parentFormId,
+			int parentQuestionId,
 			boolean repeats) throws Exception {
 		
 		// Create the new form entry
@@ -1402,22 +1403,28 @@ public class QuestionManager {
 		int fId;		// Id of the newly created form
 		String path = parentPath + "/" + formName;
 		
-		String sqlCreateForm = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
-				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?);";
-		PreparedStatement pstmtCreateForm = null;
+		String sqlCreateForm = "insert into form ( f_id, s_id, name, table_name, parentform, "
+				+ "parentquestion, repeats, path) " +
+				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?);";
+		PreparedStatement pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
 		
-		String sqlGetSubForms = "select f.f_id, f.name from form f "
+		String sqlGetSubForms = "select f.f_id, f.name, f.parentquestion from form f "
 				+ "where f.parentform = ?;";
-		PreparedStatement pstmtGetSubForms = null;
+		PreparedStatement pstmtGetSubForms = sd.prepareStatement(sqlGetSubForms);
+		
+		String sqlGetParentQuestionId = "select q_id from question where f_id = ? "
+				+ "and qname = (select qname from question where q_id = ?);";
+		PreparedStatement pstmtGetParentQuestionId = sd.prepareStatement(sqlGetParentQuestionId);
 		
 		try{
-			pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
+			
 			pstmtCreateForm.setInt(1,  sId);
 			pstmtCreateForm.setString(2, formName);
 			pstmtCreateForm.setString(3,  tablename);
 			pstmtCreateForm.setInt(4,  parentFormId);
-			pstmtCreateForm.setBoolean(5,  repeats);
-			pstmtCreateForm.setString(6,  path);
+			pstmtCreateForm.setInt(5,  parentQuestionId);
+			pstmtCreateForm.setBoolean(6,  repeats);
+			pstmtCreateForm.setString(7,  path);
 		
 			log.info("Create new form: " + pstmtCreateForm.toString());
 			pstmtCreateForm.execute();
@@ -1431,16 +1438,30 @@ public class QuestionManager {
 			duplicateOptionsInForm(sd, sId, fId, existingSurveyId);
 			
 			// Duplicate sub forms
-			pstmtGetSubForms = null;
 			pstmtGetSubForms.setInt(1,originalFormId);
 			
-			log.info("Create new form: " + pstmtCreateForm.toString());
+			log.info("Get sub forms: " + pstmtGetSubForms.toString());
 			rs = pstmtGetSubForms.executeQuery();
 			String subFormParentPath = parentPath + "/" + formName;
 			while(rs.next()) {
 				int subFormId = rs.getInt(1);
 				String subFormName = rs.getString(2);
-				duplicateForm(sd, sId, existingSurveyId, subFormName, subFormId, subFormParentPath, fId, false);
+				int existingParentQuestionId = rs.getInt(3);
+				
+				// Get the parent question id
+				pstmtGetParentQuestionId.setInt(1, fId);
+				pstmtGetParentQuestionId.setInt(2, existingParentQuestionId);
+				
+				log.info("Get existing parent question id: " + pstmtGetParentQuestionId.toString());
+				ResultSet rsParent = pstmtGetParentQuestionId.executeQuery();
+				int newParentQuestionId = 0;
+				if(rsParent.next()) {
+					newParentQuestionId = rsParent.getInt(1);
+					duplicateForm(sd, sId, existingSurveyId, subFormName, subFormId, subFormParentPath, fId, 
+							newParentQuestionId, false);
+				}
+				
+				
 			}
 			
 		} catch(Exception e) {
@@ -1448,6 +1469,7 @@ public class QuestionManager {
 		} finally {
 			if(pstmtCreateForm != null) try {pstmtCreateForm.close();} catch(Exception e){};
 			if(pstmtGetSubForms != null) try {pstmtGetSubForms.close();} catch(Exception e){};
+			if(pstmtGetParentQuestionId != null) try {pstmtGetParentQuestionId.close();} catch(Exception e){};
 		}
 	}
 	
@@ -1687,19 +1709,29 @@ public class QuestionManager {
 				+ "where f.f_id = q.f_id "
 				+ "and q.l_id > 0 "
 				+ "and q.qtype like 'select%' "
-				+ "and f.f_id = ? "
-				+ "and l.name not in (select name from listname where s_id = ?)";	// A list may have been duplicated for another form, hence exclude these
+				+ "and f.f_id = ? ;";
 		PreparedStatement pstmtGetLists = null;
 		
-		PreparedStatement pstmtCreateList = null;
+		String sqlGetListName = "select name from listname where l_id = ?;";
+		PreparedStatement pstmtGetListName = sd.prepareStatement(sqlGetListName);
+		
+		String sqlCheckListName = "select count(*) from listname where s_id = ? and name = ?;";
+		PreparedStatement pstmtCheckListName = sd.prepareStatement(sqlCheckListName);
+		
+		String sqlCreateList = "insert into listname ( s_id, name) " +
+				" values (?, ?); ";
+		PreparedStatement pstmtCreateList = sd.prepareStatement(sqlCreateList, Statement.RETURN_GENERATED_KEYS);;
+		
 		PreparedStatement pstmtInsertOptions = null;
+		
+		String sqlUpdateListId = "update question set l_id = ? where f_id = ? and l_id = ?;";
+		PreparedStatement pstmtUpdateListId = sd.prepareStatement(sqlUpdateListId);
 		
 		try {
 			
 			// Get the lists that need to be duplicated for this form
 			pstmtGetLists = sd.prepareStatement(sqlGetLists);
 			pstmtGetLists.setInt(1, fId);	
-			pstmtGetLists.setInt(2, sId);	
 		
 			log.info("Getting option lists that need to be replicated: " + pstmtGetLists.toString());
 			ResultSet rs = pstmtGetLists.executeQuery();
@@ -1712,17 +1744,30 @@ public class QuestionManager {
         	for(Integer listId : listIds) {
         		System.out.println("List id to replicate: " + listId.toString());
         		
-        		// 1. Create a new list  		
-        		String sqlCreateList = "insert into listname ( s_id, name) " +
-        				" select "
-        				+ sId + "," 
-        				+ "name "
-        				+ "from listname where l_id = ?";	
-        	
-    			if(pstmtCreateList != null) try {pstmtCreateList.close();} catch(Exception e){};
-    			pstmtCreateList = sd.prepareStatement(sqlCreateList, Statement.RETURN_GENERATED_KEYS);
-    			pstmtCreateList.setInt(1,  listId);
-    		
+        		// 1. Get the list name
+        		pstmtGetListName.setInt(1, listId);
+        		
+        		log.info("Getting list name: " + pstmtGetListName.toString());
+        		rs = pstmtGetListName.executeQuery();
+        		rs.next();
+        		String listName = rs.getString(1);
+        		
+        		// 2. Ignore if this list has already been added
+        		pstmtCheckListName.setInt(1, existingSurveyId);
+        		pstmtCheckListName.setString(2, listName);
+        		
+        		log.info("Checking list name: " + pstmtCheckListName.toString());
+        		rs = pstmtCheckListName.executeQuery();
+        		rs.next();
+        		if(rs.getInt(1) > 0) {
+        			log.info("List name " + listName + " has already been added");
+        			continue;
+        		}
+        		
+        		// 3. Create a new list  		
+    			pstmtCreateList.setInt(1,  sId);
+    			pstmtCreateList.setString(2,  listName);
+   
     			log.info("Create new list: " + pstmtCreateList.toString());
     			pstmtCreateList.execute();
     		
@@ -1732,7 +1777,7 @@ public class QuestionManager {
     			
     			System.out.println("    New id: " + newListId);
     			
-        		// 2. Create the list entries
+        		// 4. Create the list entries
     			String sqlInsertOptions = "insert into option ("
     					 + "o_id,"
     					 + "l_id,"
@@ -1767,7 +1812,15 @@ public class QuestionManager {
     			log.info("Adding options to survey: " + pstmtInsertOptions.toString());
     			pstmtInsertOptions.executeUpdate();
         		
-        		// 3. Copy the list labels
+    			// 5. Update the list id in the form to point to the newly created list
+    			pstmtUpdateListId.setInt(1, newListId);
+    			pstmtUpdateListId.setInt(2, fId);
+    			pstmtUpdateListId.setInt(3, listId);
+    			
+    			log.info("Update list id in new form: " + pstmtUpdateListId.toString());
+    			pstmtUpdateListId.executeUpdate();
+    			
+        		// 6. Copy the list labels
     			duplicateOptionLabels(sd, sId, existingSurveyId, newListId);
         	}
 
@@ -1778,6 +1831,9 @@ public class QuestionManager {
 			if(pstmtGetLists != null) try {pstmtGetLists.close();} catch(Exception e){};
 			if(pstmtCreateList != null) try {pstmtCreateList.close();} catch(Exception e){};
 			if(pstmtInsertOptions != null) try {pstmtInsertOptions.close();} catch(Exception e){};
+			if(pstmtGetListName != null) try {pstmtGetListName.close();} catch(Exception e){};
+			if(pstmtCheckListName != null) try {pstmtCheckListName.close();} catch(Exception e){};
+			if(pstmtUpdateListId != null) try {pstmtUpdateListId.close();} catch(Exception e){};
 		}
 
 	}
