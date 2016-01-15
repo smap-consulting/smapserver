@@ -132,7 +132,6 @@ public class QuestionList extends Application {
 			
 			
 			sql = sql1 + sqlro  + sqlst + sqlEnd;	
-			log.info("SQL: " + sql);
 			
 			pstmt = connectionSD.prepareStatement(sql);	 
 			pstmt.setString(1,  language);
@@ -141,6 +140,7 @@ public class QuestionList extends Application {
 				pstmt.setString(3,  single_type);
 			}
 
+			log.info("Get questions: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			while(resultSet.next()) {
 				JSONObject joQuestion = new JSONObject();
@@ -253,8 +253,7 @@ public class QuestionList extends Application {
 					" AND q.source is not null" +
 					" AND q.readonly = 'false' " +
 					" ORDER BY q.seq;";		
-	
-			log.info("SQL: " + sql + " : " + sId + " : " + fId + " : " + language);		
+		
 			pstmt = connectionSD.prepareStatement(sql);	
 			
 			// Prepared Statement to get parent form id
@@ -270,11 +269,8 @@ public class QuestionList extends Application {
 			joQuestion.put("name", "_user");
 			jaQuestions.put(joQuestion);	
 			
-			// Get the otherquestions
+			// Get the other questions
 			getQuestionsForm(pstmt, pstmtGetParent, language, sId, fId, jaQuestions);
-
-			
-
 				
 		} catch (SQLException e) {
 		    System.out.println("Connection Failed! Check output console");
@@ -311,6 +307,8 @@ public class QuestionList extends Application {
 		
 		// Get the parents questions first
 		pstmtGetParent.setInt(1, fId);
+		
+		log.info("SQL: getting parent id: " + pstmtGetParent.toString());
 		ResultSet resultSet = pstmtGetParent.executeQuery();
 		if(resultSet.next()) {
 			int pId = resultSet.getInt(1);
@@ -323,8 +321,9 @@ public class QuestionList extends Application {
 		pstmt.setInt(2,  sId);
 		pstmt.setInt(3,  fId);
 		
-
+		log.info("Getting question forms: " + pstmt.toString());
 		resultSet = pstmt.executeQuery();
+		
 		while(resultSet.next()) {
 			JSONObject joQuestion = new JSONObject();
 			
