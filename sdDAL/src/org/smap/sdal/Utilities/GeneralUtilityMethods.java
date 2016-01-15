@@ -178,8 +178,6 @@ public class GeneralUtilityMethods {
 			out += rand;
 		}
 		
-		System.out.println("Cleaned name: " + out + " from: " + in);
-		
 		return out;
 	}
 	
