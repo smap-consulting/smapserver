@@ -37,7 +37,7 @@ public class Question {
 	public String constraint;
 	public String constraint_msg;
 	public String relevant;
-	public String repeats;
+	//public String repeats;
 	public boolean visible;
 	public boolean readonly;
 	public boolean required;

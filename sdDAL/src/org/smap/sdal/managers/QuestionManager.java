@@ -176,8 +176,8 @@ public class QuestionManager {
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
 		
 		PreparedStatement pstmtForm = null;
-		String sqlForm = "insert into form(f_id, s_id, name, table_name, parentform, parentquestion, repeats, path, form_index) " +
-				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?);";
+		String sqlForm = "insert into form(f_id, s_id, name, label, table_name, parentform, parentquestion, repeats, path, form_index) " +
+				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtGetFormId = null;
 		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
@@ -217,7 +217,7 @@ public class QuestionManager {
 				}
 				
 				/*
-				 * Get the path of thies question based on its position in the form
+				 * Get the path of this question based on its position in the form
 				 */
 				q.path = getNewPath(sd, q);
 				
@@ -250,6 +250,10 @@ public class QuestionManager {
 				
 				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
+				String calculation = null;
+				if(!q.type.equals("begin repeat")) {
+					calculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
+				}
 			
 				// Assume that every question has a label, however hints are optional (to reduce size of form)
 				String infotextId = null;
@@ -271,7 +275,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, q.source );
-				pstmtInsertQuestion.setString(10, GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false) );
+				pstmtInsertQuestion.setString(10,  calculation);
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
@@ -307,7 +311,7 @@ public class QuestionManager {
 					String repeatName = null;
 					String convertedCalculation = null;
 					
-					if(q.repeats != null && q.repeats.trim().length() > 0) {
+					if(q.calculation != null && q.calculation.trim().length() > 0) {
 						// Create a question to hold the repeat count calculation
 
 						repeatsPath = q.path + "_count";
@@ -323,12 +327,13 @@ public class QuestionManager {
 					pstmtForm = sd.prepareStatement(sqlForm);
 					pstmtForm.setInt(1, sId);
 					pstmtForm.setString(2, q.name);
-					pstmtForm.setString(3, tableName);
-					pstmtForm.setInt(4, q.fId);
-					pstmtForm.setInt(5, qId);		// parent question id
-					pstmtForm.setString(6, repeatsPath);
-					pstmtForm.setString(7, q.path);
-					pstmtForm.setInt(8, q.childFormIndex);
+					pstmtForm.setString(3, q.path + ":label");
+					pstmtForm.setString(4, tableName);
+					pstmtForm.setInt(5, q.fId);
+					pstmtForm.setInt(6, qId);		// parent question id
+					pstmtForm.setString(7, repeatsPath);
+					pstmtForm.setString(8, q.path);
+					pstmtForm.setInt(9, q.childFormIndex);
 					
 					log.info("SQL: Insert new form: " + pstmtForm.toString());
 					pstmtForm.executeUpdate();
@@ -828,6 +833,7 @@ public class QuestionManager {
 		PreparedStatement pstmtGetTableName = null;
 		PreparedStatement pstmtTableExists = null;
 		PreparedStatement pstmtDeleteForm = null;
+		PreparedStatement pstmtDeleteRepeatCount = null;
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
@@ -969,15 +975,19 @@ public class QuestionManager {
 				if(qType.equals("begin repeat")) {
 				
 					String tableName = null;
+					String repeatCountPath = null;
+					int parentFormId = 0;
 					
 					// 1. Get the table name for this form
-					String sqlGetTableName = "select table_name from form where parentquestion = ? and s_id = ?;";
+					String sqlGetTableName = "select table_name, parentform, repeats from form where parentquestion = ? and s_id = ?;";
 					pstmtGetTableName = sd.prepareStatement(sqlGetTableName);
 					pstmtGetTableName.setInt(1, q.id);
 					pstmtGetTableName.setInt(2, sId);
 					ResultSet rsRepeat = pstmtGetTableName.executeQuery();
 					if(rsRepeat.next()) {
-						tableName = rs.getString(1);
+						tableName = rsRepeat.getString(1);
+						parentFormId = rsRepeat.getInt(2);
+						repeatCountPath = rsRepeat.getString(3);
 					}
 					
 					System.out.println("Deleting form for table: " + tableName);
@@ -996,7 +1006,17 @@ public class QuestionManager {
 						if(count > 0) {
 							throw new Exception("Cannot delete this form as it contains published data");
 						} else {
-							// 3. Delete the form
+							
+							// 3. Delete the repeat count question
+							String sqlDeleteRepeatCount = "delete from question where f_id = ? and path = ?;";
+							pstmtDeleteRepeatCount = sd.prepareStatement(sqlDeleteRepeatCount);
+							pstmtDeleteRepeatCount.setInt(1, parentFormId);
+							pstmtDeleteRepeatCount.setString(2, repeatCountPath);
+							
+							log.info("Delete repeat count: " + pstmtDeleteRepeatCount.toString());
+							pstmtDeleteRepeatCount.executeUpdate();
+							
+							// 4. Delete the form
 							String sqlDeleteForm = "delete from form where parentquestion = ? and s_id = ?;";
 							pstmtDeleteForm = sd.prepareStatement(sqlDeleteForm);
 							pstmtDeleteForm.setInt(1, q.id);
@@ -1004,6 +1024,7 @@ public class QuestionManager {
 							
 							log.info("Deleting form: " + pstmtDeleteForm.toString());
 							pstmtDeleteForm.executeUpdate();
+							
 						}
 					}
 					

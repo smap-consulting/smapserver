@@ -101,7 +101,7 @@ public class XLSFormManager {
 			
 			if(type == COL_TYPE) {
 						
-				if(q.calculation != null && q.calculation.trim().length() > 0) {
+				if(q.type.equals("string") && q.calculation != null && q.calculation.trim().length() > 0) {
 					value = "calculate";
 				} else if(q.readonly && q.type.equals("string")) {
 					value = "note";
@@ -136,10 +136,10 @@ public class XLSFormManager {
 			} else if(type == COL_RELEVANT) {				
 				value = q.relevant;
 				
-			} else if(type == COL_REPEAT_COUNT) {				
-				value = "";		// Not a begin repeat hence the repeat count is empty
+			} else if(type == COL_REPEAT_COUNT && q.type.equals("begin repeat")) {				
+				value = q.calculation;		
 				
-			} else if(type == COL_CALCULATION) {				
+			} else if(type == COL_CALCULATION && !q.type.equals("begin repeat")) {				
 				value = q.calculation;		
 				
 			} else if(type == COL_DEFAULT) {				
@@ -329,7 +329,7 @@ public class XLSFormManager {
 			if(q.repeatCount) {
 				// Save the calculation as it contain the calculation for a repeat which needs to be placed in the begin repeat row
 				// Otherwise this "dummy" question is ignored
-				savedCalculation = q.calculation;
+				//savedCalculation = q.calculation;
 			} else {
 				
 				if(!inMeta && !q.name.equals("meta_groupEnd")) {
@@ -349,12 +349,12 @@ public class XLSFormManager {
 						Form subForm = survey.getSubForm(form, q);
 						if( subForm != null) {
 							// Add the repeat count using the saved calculation and the column index of the repeat count column
-							Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());	
-							Cell cell = row.createCell(col.getColNumber());
-							CellStyle style = col.getStyle(styles, q);
-							if(style != null) {	cell.setCellStyle(style); }
-							cell.setCellValue(savedCalculation);
-							savedCalculation = null;
+							//Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());	
+							//Cell cell = row.createCell(col.getColNumber());
+							//CellStyle style = col.getStyle(styles, q);
+							//if(style != null) {	cell.setCellStyle(style); }
+							//cell.setCellValue(savedCalculation);
+							//savedCalculation = null;
 							
 							processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
 									colsSurvey, 
