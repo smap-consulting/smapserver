@@ -312,12 +312,19 @@ public class QuestionManager {
 					String convertedCalculation = null;
 					
 					if(q.calculation != null && q.calculation.trim().length() > 0) {
+						
+						// Update sequence numbers of questions after the repeat count question to be inserted
+						pstmtUpdateSeq.setInt(1, q.fId);
+						pstmtUpdateSeq.setInt(2, q.seq);
+						
+						log.info("Update sequences: " + pstmtUpdateSeq.toString());
+						pstmtUpdateSeq.executeUpdate();
+						
 						// Create a question to hold the repeat count calculation
-
 						repeatsPath = q.path + "_count";
 						repeatName = q.name + "_count";
 						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-						createRepeatCountQuestion(sd, q.fId, q.seq - 1, repeatName, convertedCalculation, repeatsPath );
+						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
 			
 					}				
 					
