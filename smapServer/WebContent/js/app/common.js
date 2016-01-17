@@ -1241,9 +1241,9 @@ function setLanguages(languages, languageCallback) {
 /*
  * Get a survey details - depends on globals being set
  */
-function createNewSurvey(name, existing, existing_survey, existing_form, callback) {
+function createNewSurvey(name, existing, existing_survey, existing_form, shared_results, callback) {
 
-	console.log("create new: " + existing + " : " + existing_survey + " : " + existing_form);
+	console.log("create new: " + existing + " : " + existing_survey + " : " + existing_form + " : " + shared_results);
 	
 	var url="/surveyKPI/surveys/new/" + globals.gCurrentProject + "/" + name;
 	if(!existing) {
@@ -1259,7 +1259,8 @@ function createNewSurvey(name, existing, existing_survey, existing_form, callbac
 		data: { 
 			existing: existing,
 			existing_survey: existing_survey,
-			existing_form: existing_form
+			existing_form: existing_form,
+			shared_results: shared_results
 		},
 		cache: false,
 		success: function(data) {
@@ -1293,7 +1294,8 @@ function createNewSurvey(name, existing, existing_survey, existing_form, callbac
 function openForm(type) {
 	
 	$('.reusing_form').hide();
-	$('#base_on_existing').prop('checked', false)
+	$('#base_on_existing').prop('checked', false);
+	$('#shared_results').prop('checked', false);
 	$('#new_form_name').val("");
 	if(type === "new") {
 		$('.existing_form').hide();

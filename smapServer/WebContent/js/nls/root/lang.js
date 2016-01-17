@@ -120,7 +120,6 @@ define({
 	"c_tools": "Tools",
 	"c_required": "Make Required",
 	"c_not_required": "Make Not Required",
-	"c_b_e": "Base on existing form",
 	
 	// File Types
 	"ft": "File Type",
@@ -197,7 +196,11 @@ define({
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
 	"msg_confirm_del": "Are you sure you want to delete: ",
-		
+	
+	// Editor
+	"e_b_e": "Base on existing form",
+	"e_s_r": "Store results in shared table",
+	
 	// template load errors
 	"e_u_err": "Form Upload Error",
 	"e_u_exists": "exists in project",

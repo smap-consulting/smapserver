@@ -1424,16 +1424,18 @@ public class QuestionManager {
 			String parentPath,
 			int parentFormId,
 			int parentQuestionId,
-			boolean repeats) throws Exception {
+			boolean sharedResults) throws Exception {
 		
-		// Create the new form entry
-		String tablename = "s" + sId + "_" + formName;
-		int fId;		// Id of the newly created form
+		String tablename = null;
+		int fId;									// Id of the newly created form
 		String path = parentPath + "/" + formName;
 		
+		String sqlGetTableName = "select table_name from form where f_id = ?;";
+		PreparedStatement pstmtGetTableName = sd.prepareStatement(sqlGetTableName);
+		
 		String sqlCreateForm = "insert into form ( f_id, s_id, name, table_name, parentform, "
-				+ "parentquestion, repeats, path) " +
-				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?);";
+				+ "parentquestion, path) " +
+				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?);";
 		PreparedStatement pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
 		
 		String sqlGetSubForms = "select f.f_id, f.name, f.parentquestion from form f "
@@ -1446,13 +1448,26 @@ public class QuestionManager {
 		
 		try{
 			
+			if(sharedResults) {
+				pstmtGetTableName.setInt(1, originalFormId);
+				
+				log.info("Get table name: " + pstmtGetTableName.toString());
+				ResultSet rsTableName = pstmtGetTableName.executeQuery();
+				if(rsTableName.next()) {
+					tablename = rsTableName.getString(1);
+				} else {
+					throw new Exception("Could not get table name of existing form");
+				}
+			} else {
+				tablename = "s" + sId + "_" + formName;
+			}
+			
 			pstmtCreateForm.setInt(1,  sId);
 			pstmtCreateForm.setString(2, formName);
 			pstmtCreateForm.setString(3,  tablename);
 			pstmtCreateForm.setInt(4,  parentFormId);
 			pstmtCreateForm.setInt(5,  parentQuestionId);
-			pstmtCreateForm.setBoolean(6,  repeats);
-			pstmtCreateForm.setString(7,  path);
+			pstmtCreateForm.setString(6,  path);
 		
 			log.info("Create new form: " + pstmtCreateForm.toString());
 			pstmtCreateForm.execute();

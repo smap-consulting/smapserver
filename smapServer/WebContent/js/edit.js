@@ -440,7 +440,8 @@ $(document).ready(function() {
 		var name,
 			existing,
 			existing_survey,
-			existing_form;
+			existing_form,
+			shared_results;
 		
 		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
 		
@@ -457,7 +458,8 @@ $(document).ready(function() {
 			existing = $('#base_on_existing').prop('checked');
 			existing_survey = $('#survey_name').val();
 			existing_form = $('#form_name').val();
-			createNewSurvey(name, existing, existing_survey, existing_form, surveyDetailsDone);
+			shared_results = $('#shared_results').prop('checked');
+			createNewSurvey(name, existing, existing_survey, existing_form, shared_results, surveyDetailsDone);
 		}
  	 });
 	
