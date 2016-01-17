@@ -238,7 +238,7 @@ chmod +x ../deploy/deploy.sh
 echo '##### 14. Add imagemagick,ffmpeg to generate thumbnails'
 if [ $(cat /etc/*-release | grep "DISTRIB_CODENAME=" | cut -d "=" -f2) = "trusty" ];
 then  
-sudo add-apt-repository 'deb  http://ppa.launchpad.net/jon-severinsson/ffmpeg/ubuntu trusty main'  && sudo add-apt-repository 'deb  http://ppa.launchpad.net/jon-severinsson/ffmpeg/ubuntu saucy main'  && sudo apt-get update -y
+sudo add-apt-repository ppa:mc3man/trusty-media  && sudo apt-get update -y
 fi
 
 sudo apt-get install imagemagick -y
