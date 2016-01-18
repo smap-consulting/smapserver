@@ -321,7 +321,6 @@ alter table organisation add column company_phone text;
 alter table organisation add column company_email text;
 
 -- Upgrade to: 15.10 from 15.09
-alter table question add column repeatcount boolean default false;
 alter table survey add column instance_name text;
 
 -- Upgrade to: 15.11 from 15.10
@@ -407,3 +406,9 @@ alter table users add column password_reset boolean default false;
 ------ Performance Patches (For subscriber)
 CREATE index o_l_id ON option(l_id);
 CREATE index q_f_id ON question(f_id);
+
+-- Upgrade to: 16.01 from 15.12
+update form set repeats = subquery.calculate from (select f_id, calculate, path from question) as subquery
+	where subquery.f_id = form.parentform and subquery.path = form.path || '_count';
+delete from question q where q.calculate is not null and q.path in 
+	(select f.path || '_count' from form f where  q.f_id = f.parentform);

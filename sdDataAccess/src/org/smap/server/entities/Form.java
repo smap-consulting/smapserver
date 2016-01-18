@@ -79,6 +79,9 @@ public class Form implements Serializable {
 	private String parentFormRef = null;
 	
 	@Transient
+	private String repeatsRef = null;
+	
+	@Transient
 	private String parentQuestionRef = null;
 	
 	@Transient
@@ -148,6 +151,10 @@ public class Form implements Serializable {
 		return parentQuestionRef;
 	}
 	
+	public String getRepeatsRef() {
+		return repeatsRef;
+	}
+	
 	public String getRepeats() {
 		return repeats;
 	}
@@ -190,8 +197,12 @@ public class Form implements Serializable {
 		parentQuestionRef = value;
 	}
 	
+	public void setRepeatsRef(String val) {
+		repeatsRef = val;
+	}
+	
 	public void setRepeats(String val) {
-		repeats = val;
+		repeatsRef = val;
 	}
 
 	public void setQuestions(List<Question> questions) {

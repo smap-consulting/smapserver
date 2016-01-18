@@ -452,7 +452,7 @@ public class PutXForm {
 		    	newRepeatForm.setLabel(parentQuestion.getQTextId());
 		    	if(nr != null) {
 		    		String repeats = nr.getNodeValue();
-		    		template.getForm(ref).setRepeats(repeats);
+		    		template.getForm(ref).setRepeatsRef(repeats);
 		    		
 		    		// Set the dummy calculate that this repeat references as being a repeat calculate
 		    		Question qCalc = template.getQuestion(repeats.trim());

@@ -176,7 +176,8 @@ public class QuestionManager {
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
 		
 		PreparedStatement pstmtForm = null;
-		String sqlForm = "insert into form(f_id, s_id, name, label, table_name, parentform, parentquestion, repeats, path, form_index) " +
+		String sqlForm = "insert into form(f_id, s_id, name, label, table_name, "
+				+ "parentform, parentquestion, repeats, path, form_index) " +
 				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtGetFormId = null;
@@ -307,10 +308,11 @@ public class QuestionManager {
 					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
 					int qId = rs.getInt(1);
-					String repeatsPath = null;
-					String repeatName = null;
-					String convertedCalculation = null;
+					//String repeatsPath = null;
+					//String repeatName = null;
+					//String convertedCalculation = null;
 					
+					/*
 					if(q.calculation != null && q.calculation.trim().length() > 0) {
 						
 						// Update sequence numbers of questions after the repeat count question to be inserted
@@ -326,7 +328,8 @@ public class QuestionManager {
 						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
 						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
 			
-					}				
+					}	
+					*/			
 					
 					// Create the sub form
 					String tableName = "s" + sId + "_" + q.name;
@@ -338,7 +341,7 @@ public class QuestionManager {
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
-					pstmtForm.setString(7, repeatsPath);
+					pstmtForm.setString(7, q.calculation);
 					pstmtForm.setString(8, q.path);
 					pstmtForm.setInt(9, q.childFormIndex);
 					
@@ -840,7 +843,7 @@ public class QuestionManager {
 		PreparedStatement pstmtGetTableName = null;
 		PreparedStatement pstmtTableExists = null;
 		PreparedStatement pstmtDeleteForm = null;
-		PreparedStatement pstmtDeleteRepeatCount = null;
+		//PreparedStatement pstmtDeleteRepeatCount = null;
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
@@ -982,8 +985,8 @@ public class QuestionManager {
 				if(qType.equals("begin repeat")) {
 				
 					String tableName = null;
-					String repeatCountPath = null;
-					int parentFormId = 0;
+					//String repeatCountPath = null;
+					//int parentFormId = 0;
 					
 					// 1. Get the table name for this form
 					String sqlGetTableName = "select table_name, parentform, repeats from form where parentquestion = ? and s_id = ?;";
@@ -993,8 +996,8 @@ public class QuestionManager {
 					ResultSet rsRepeat = pstmtGetTableName.executeQuery();
 					if(rsRepeat.next()) {
 						tableName = rsRepeat.getString(1);
-						parentFormId = rsRepeat.getInt(2);
-						repeatCountPath = rsRepeat.getString(3);
+						//parentFormId = rsRepeat.getInt(2);
+						//repeatCountPath = rsRepeat.getString(3);
 					}
 					
 					System.out.println("Deleting form for table: " + tableName);
@@ -1015,13 +1018,13 @@ public class QuestionManager {
 						} else {
 							
 							// 3. Delete the repeat count question
-							String sqlDeleteRepeatCount = "delete from question where f_id = ? and path = ?;";
-							pstmtDeleteRepeatCount = sd.prepareStatement(sqlDeleteRepeatCount);
-							pstmtDeleteRepeatCount.setInt(1, parentFormId);
-							pstmtDeleteRepeatCount.setString(2, repeatCountPath);
+							//String sqlDeleteRepeatCount = "delete from question where f_id = ? and path = ?;";
+							//pstmtDeleteRepeatCount = sd.prepareStatement(sqlDeleteRepeatCount);
+							//pstmtDeleteRepeatCount.setInt(1, parentFormId);
+							//pstmtDeleteRepeatCount.setString(2, repeatCountPath);
 							
-							log.info("Delete repeat count: " + pstmtDeleteRepeatCount.toString());
-							pstmtDeleteRepeatCount.executeUpdate();
+							//log.info("Delete repeat count: " + pstmtDeleteRepeatCount.toString());
+							//pstmtDeleteRepeatCount.executeUpdate();
 							
 							// 4. Delete the form
 							String sqlDeleteForm = "delete from form where parentquestion = ? and s_id = ?;";

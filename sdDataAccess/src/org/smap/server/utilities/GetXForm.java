@@ -472,7 +472,10 @@ public class GetXForm {
        			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
     				Form subForm = template.getSubForm(f,q);
     				populateForm(outputDoc, currentParent, BIND, subForm);
-    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());
+    				if(subForm.getRepeats() != null) {
+    					// Add the calculation for repeat count
+    					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());
+    				}
     				currentParent.appendChild(questionElement);
     				
     			} else if (q.getType().equals("begin group")) {
@@ -508,8 +511,9 @@ public class GetXForm {
     				Element repeatElement = outputDoc.createElement("repeat");
     				repeatElement.setAttribute("nodeset", subForm.getPath());
     				String repeats = subForm.getRepeats();
-    				if(repeats != null) {		// Add the repeat count if it exists
-    					repeatElement.setAttribute("jr:count", repeats);
+    				if(repeats != null) {		// Add the path to the repeat count question
+    					String repeatCountPath = q.getPath() + "_count";
+    					repeatElement.setAttribute("jr:count", repeatCountPath);
     					repeatElement.setAttribute("jr:noAddRemove", "true()");
     				}
     				groupElement.appendChild(repeatElement);
@@ -593,22 +597,23 @@ public class GetXForm {
 
 		Element questionElement = outputXML.createElement("bind");
 		
-		// Add reference
-		// String reference = parentXPath + "/" + q.getName();
-		String reference = q.getPath();
-		questionElement.setAttribute("nodeset", reference);
-		
 		// Add type
 		String type = q.getType();
-		if(type != null) {
-			if(type.equals("audio") || type.equals("video") || type.equals("image")) {
-				type = "binary";
-			}
-			// Following commented out check for select and select1 seems to be obsolete 27/3/2015 as odk sets type of select questions in bind
-			if(/*!type.equals("select") && !type.equals("select1") &&*/ !type.equals("begin group") && !type.equals("begin repeat")) {
-				questionElement.setAttribute("type", type);
-			}
+		if(type.equals("audio") || type.equals("video") || type.equals("image")) {
+			type = "binary";
+		} else if(type.equals("begin repeat")) {
+			type = "string";		// For a calculate
 		}
+		if(!type.equals("begin group")) {
+			questionElement.setAttribute("type", type);
+		}
+		
+		// Add reference
+		String reference = q.getPath();	
+		if(q.getType().equals("begin repeat")) {
+			reference += "_count";					// Reference is to the calculate question for this form
+		}
+		questionElement.setAttribute("nodeset", reference);
 		
 		// Add read only
 		if(q.isReadOnly()) {
@@ -644,6 +649,12 @@ public class GetXForm {
 			calculate = template.getSurvey().getInstanceName();
 			if(calculate == null) {
 				calculate = q.getCalculate();	// Allow for legacy forms that were loaded before the instance name was set in the survey table
+			}
+		} else if(q.getType().equals("begin repeat")) {
+			Form subForm = template.getSubForm(f,q);
+			String repeats = subForm.getRepeats();
+			if(repeats != null) {		// Add the path to the repeat count question
+				calculate = repeats;
 			}
 		} else  {
 			calculate = q.getCalculate();

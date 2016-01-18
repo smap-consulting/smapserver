@@ -1021,6 +1021,11 @@ public class SurveyTemplate {
 				f.setParentForm(forms.get(f.getParentFormRef()).getId());
 				f.setParentQuestionId(questions.get(f.getParentQuestionRef()).getId());
 			}
+			if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
+				String rRef = f.getRepeatsRef().trim();
+				Question qRef = questions.get(rRef);
+				f.setRepeats(qRef.getCalculate());
+			}
 		}
 		fPersist.persist(formArray);
 
