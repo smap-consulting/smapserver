@@ -390,7 +390,7 @@ function addRightClickToTable($elem, sId, view) {
 				$languageSelect.empty();
 				
 				$.each(data, function(j, item) {
-					$languageSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
+					$languageSelect.append('<option value="' + item + '">' + item + '</option>');
 				});
 			});
 			
