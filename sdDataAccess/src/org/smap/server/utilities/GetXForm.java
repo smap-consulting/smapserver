@@ -475,8 +475,8 @@ public class GetXForm {
     				if(subForm.getRepeats() != null) {
     					// Add the calculation for repeat count
     					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());
+    					currentParent.appendChild(questionElement);
     				}
-    				currentParent.appendChild(questionElement);
     				
     			} else if (q.getType().equals("begin group")) {
     				

@@ -310,7 +310,8 @@ public class SurveyManager {
 				System.out.println("Copying existing form");
 				QuestionManager qm = new QuestionManager();
 				qm.duplicateLanguages(sd, sId, existingSurveyId);
-				qm.duplicateForm(sd, sId, existingSurveyId, "main", existingFormId, "", 0, 0, sharedResults);
+				qm.duplicateForm(sd, sId, existingSurveyId, 
+						"main", existingFormId, "", 0, 0, sharedResults, null);
 			
 			} else {
 				
