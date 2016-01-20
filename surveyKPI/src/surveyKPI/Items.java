@@ -297,7 +297,7 @@ public class Items extends Application {
 					int qId = resultSet.getInt(4);
 					
 					if(name.trim().toLowerCase().equals("instanceid")) {
-						continue;
+						name = "instanceid";
 					}
 					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")
 							|| type.equals("geoshape")) {
