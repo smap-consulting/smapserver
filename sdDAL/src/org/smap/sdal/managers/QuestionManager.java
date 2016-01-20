@@ -329,7 +329,7 @@ public class QuestionManager {
 					}				
 					
 					// Create the sub form
-					String tableName = "s" + sId + "_" + q.name;
+					String tableName = "s" + sId + "_" + columnName;
 			
 					pstmtForm = sd.prepareStatement(sqlForm);
 					pstmtForm.setInt(1, sId);
