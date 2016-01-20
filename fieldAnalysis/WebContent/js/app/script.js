@@ -348,39 +348,42 @@ function addMediaPickList() {
 	/*
 	 * Add the media question select list
 	 */
-	for(i = 0; i < questions.length; i++) {
-		if(questions[i].type === "image" || questions[i].type === "video" || questions[i].type === "audio") {
-			h[++idx] = '<option value="';
-			h[++idx] = questions[i].id;
-			h[++idx] = '">';
-			h[++idx] = questions[i].name;
-			h[++idx] = '</option>';
-		} else if(questions[i].name !== "_task_key") {
-			
-			if(questions[i].type === "string" ||
-				questions[i].type === "select1" ||
-				questions[i].type === "date" ||
-				questions[i].type === "dateTime" ||
-				questions[i].type === "int" ||
-				questions[i].type === "decimal" ||
-				questions[i].type === "barcode" ||
-				questions[i].type === "geopoint"
-				) {
+	if(typeof questions !== "undefined") {
+		for(i = 0; i < questions.length; i++) {
+			if(questions[i].type === "image" || questions[i].type === "video" || questions[i].type === "audio") {
+				h[++idx] = '<option value="';
+				h[++idx] = questions[i].id;
+				h[++idx] = '">';
+				h[++idx] = questions[i].name;
+				h[++idx] = '</option>';
+			} else if(questions[i].name !== "_task_key") {
 				
-				h2[++idx2] = '<div class="checkbox"><label><input type="checkbox" name="mediaselect" value="';
-				h2[++idx2] = questions[i].id;
-				h2[++idx2] = '" class="mediaselectoption"/>';
-				h2[++idx2] = questions[i].name;
-				h2[++idx2] = '</label></div>';
+				if(questions[i].type === "string" ||
+					questions[i].type === "select1" ||
+					questions[i].type === "date" ||
+					questions[i].type === "dateTime" ||
+					questions[i].type === "int" ||
+					questions[i].type === "decimal" ||
+					questions[i].type === "barcode" ||
+					questions[i].type === "geopoint"
+					) {
+					
+					h2[++idx2] = '<div class="checkbox"><label><input type="checkbox" name="mediaselect" value="';
+					h2[++idx2] = questions[i].id;
+					h2[++idx2] = '" class="mediaselectoption"/>';
+					h2[++idx2] = questions[i].name;
+					h2[++idx2] = '</label></div>';
+				}
+				
 			}
-			
 		}
+		
+		if(idx === -1 && format === "media") {
+			alert("No images, video, audio found");
+		}
+		$('#export_media_question').html(h.join(''));
+		$('.mediaselect').html(h2.join(''));
 	}
-	if(idx === -1 && format === "media") {
-		alert("No images, video, audio found");
-	}
-	$('#export_media_question').html(h.join(''));
-	$('.mediaselect').html(h2.join(''));
 
 }
 
@@ -549,7 +552,7 @@ function addFormToList(form, sMeta, offset, osm, set_radio) {
 		h[++idx] = '"/>';
 	}
 	h[++idx] = form.form;
-	if(form.p_id == 0 && !osm) {
+	if(form.p_id != 0 && !osm) {
 		h[++idx] = ' <button class="exportpivot">Pivot</button>';
 	}
 	h[++idx] = '<br/>';
@@ -827,6 +830,7 @@ function cleanFileName(filename) {
 	
 	n = filename.replace(/\//g, '_');	// remove slashes from the filename
 	n = n.replace(/[#?&]/g, '_');		// Remove other characters that are not wanted 
+	n = n.replace("'", "", 'g');		// Remove apostrophes
 	
 	return n;
 }
