@@ -1507,7 +1507,7 @@ public class QuestionManager {
 				if(rsParent.next()) {
 					newParentQuestionId = rsParent.getInt(1);
 					duplicateForm(sd, sId, existingSurveyId, subFormName, subFormId, subFormParentPath, fId, 
-							newParentQuestionId, false, existingFormLabel);
+							newParentQuestionId, sharedResults, existingFormLabel);
 				}
 				
 				
