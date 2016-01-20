@@ -570,7 +570,7 @@ CREATE TABLE public.tasks (
 	url text,
 	form_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
 	initial_data text,
-	schedule_at date,
+	schedule_at timestamp with time zone,
     from_date date,
     address text,
 	geo_type text,

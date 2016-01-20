@@ -271,7 +271,7 @@ public class MyAssignments extends Application {
 				ta.task.form_version = resultSet.getString("form_version");
 				ta.task.initial_data = resultSet.getString("initial_data");
 				ta.task.update_id = resultSet.getString("update_id");
-				ta.task.scheduled_at = resultSet.getDate("schedule_at");
+				ta.task.scheduled_at = resultSet.getTimestamp("schedule_at");
 				ta.task.repeat = resultSet.getBoolean("repeat");
 				ta.task.address = resultSet.getString("address");
 				
@@ -409,7 +409,7 @@ public class MyAssignments extends Application {
 			/*
 			 * Return the response
 			 */
-			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd hh:mm").create();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
 			String resp = gson.toJson(tr);
 			response = Response.ok(resp).build();
 				

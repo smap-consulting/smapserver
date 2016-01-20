@@ -412,3 +412,9 @@ update form set repeats = subquery.calculate from (select f_id, calculate, path 
 	where subquery.f_id = form.parentform and subquery.path = form.path || '_count';
 delete from question q where q.calculate is not null and q.path in 
 	(select f.path || '_count' from form f where  q.f_id = f.parentform);
+	
+-- Convert schedule_at to timestamp
+alter table tasks add column schedule_atx timestamp with time zone;
+update tasks set schedule_atx = schedule_at;
+alter table tasks drop column schedule_at;
+alter table tasks rename column schedule_atx to schedule_at;

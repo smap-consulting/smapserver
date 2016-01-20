@@ -161,6 +161,9 @@ window.log = function(){
 										j++;
 									} 
 								}
+							} else if(key === 'scheduleAt') {
+								value = formatTimestamp(value);
+								tab[++idx] = '<td>' + value + '</td>';
 							} else {
 								value = addAnchors(value).join(',');							
 								tab[++idx] = '<td>' + value + '</td>';
@@ -181,7 +184,16 @@ window.log = function(){
 		
 })(jQuery);
 
-
+function formatTimestamp(value) {
+	var aValue = [];
+	
+	aValue = value.split(":");
+	if(aValue.length === 3) {
+		value = aValue[0] + ":" + aValue[1];
+	}
+	return value;
+	
+}
 function formatCoords(coords) {
 	
 	var cList = [],

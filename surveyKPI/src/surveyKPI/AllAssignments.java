@@ -43,7 +43,6 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.Assignment;
 
 import com.google.gson.Gson;
@@ -244,7 +243,7 @@ public class AllAssignments extends Application {
 				jp.put("user_name", user_name);
 				jp.put("address", resultSet.getString("address"));
 				jp.put("repeat", resultSet.getBoolean("repeat"));
-				jp.put("scheduleAt", resultSet.getDate("schedule_at"));
+				jp.put("scheduleAt", resultSet.getTimestamp("schedule_at"));
 				
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates
@@ -1423,7 +1422,7 @@ public class AllAssignments extends Application {
 	
 		int taskId = 0;
 		boolean repeat = false;
-		Date scheduleAt = null;
+		Timestamp scheduleAt = null;
 		Calendar cal = Calendar.getInstance(); 
 		
 		
@@ -1443,7 +1442,7 @@ public class AllAssignments extends Application {
 					} else if(item.getFieldName().equals("repeat")) {
 						repeat = true;	
 					} else if(item.getFieldName().equals("scheduleAt")) {
-						scheduleAt = Date.valueOf(item.getString());	
+						scheduleAt = Timestamp.valueOf(item.getString());	
 					}
 							
 				} else if(!item.isFormField()) {
@@ -1459,7 +1458,7 @@ public class AllAssignments extends Application {
 			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ? where id = ?;";
 			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
 			pstmtUpdate.setBoolean(1, repeat);
-			pstmtUpdate.setDate(2, scheduleAt);
+			pstmtUpdate.setTimestamp(2, scheduleAt);
 			pstmtUpdate.setInt(3, taskId);
 			log.info("SQL Update properties: " + pstmtUpdate.toString());
 			pstmtUpdate.executeUpdate();
