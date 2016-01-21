@@ -69,7 +69,7 @@ public class Items extends Application {
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
-			 Logger.getLogger(Dashboard.class.getName());
+			 Logger.getLogger(Items.class.getName());
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {

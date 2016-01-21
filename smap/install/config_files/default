@@ -33,6 +33,9 @@ ExpiresActive On
     
     ProxyPass         /surveyKPI ajp://localhost:8009/surveyKPI/rest
     ProxyPassReverse  /surveyKPI ajp://localhost:8009/surveyKPI/rest
+    
+    ProxyPass         /api ajp://localhost:8009/koboToolboxApi
+    ProxyPassReverse  /api ajp://localhost:8009/koboToolboxApi
 
 # To force all connections, other than from a mobile phone to be https, uncomment the following lines  
 #  and substitute the hostname of the server for the hostname in curly braces 
@@ -170,6 +173,17 @@ ExpiresActive On
 	
 	# surveyKPI module
 	<Location /surveyKPI>
+		AuthType Digest
+		AuthName "smap"
+		AuthDigestDomain /
+		AuthDigestProvider dbd
+		AuthDBDUserRealmQuery "select password from users where ident = %s and realm = %s"
+		Require valid-user
+		allow from all
+	</Location>
+	
+	# koboToolboxApi module
+	<Location /api>
 		AuthType Digest
 		AuthName "smap"
 		AuthDigestDomain /
