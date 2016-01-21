@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Column;
 
 import utilities.QuestionInfo;
 import utilities.Tables;
@@ -240,55 +241,98 @@ public class Items extends Application {
 				pstmtQuestions = connectionSD.prepareStatement(sqlCols);
 				pstmtQuestions.setInt(1, fId);
 				
+				ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+						connectionSD,
+						connection,
+						parent,
+						fId,
+						tName,
+						false,	// Don't include Read only
+						true,	// Include parent key
+						true,	// Include "bad"
+						true	// Include instanceId
+						);		
+				
+				/*
 				log.info("Get questions for form: " + pstmtQuestions.toString());
 				resultSet = pstmtQuestions.executeQuery();
-				
+				*/
 				// Construct a new query that retrieves a geometry object as geoJson
 				StringBuffer cols = new StringBuffer("");
 				int newColIdx = 0;
 				JSONArray columns = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
 				
+				for(Column c : columnList) {
+					if(newColIdx > 0) {
+						cols.append(",");
+					}
+					if(bGeom && c.qType.equals("geopoint") || c.qType.equals("geopolygon") 
+							|| c.qType.equals("geolinestring") || c.qType.equals("geotrace")
+							|| c.qType.equals("geoshape")) {
+						
+						geomIdx = newColIdx;
+						cols.append("ST_AsGeoJSON(" + c.name + ") ");
+						
+						newColIdx++;
+					
+					} else if(c.qType.equals("image") || c.qType.equals("audio") || c.qType.equals("video")) {
+							cols.append("'" + urlprefix + "' || " + c.name + " as " + c.name);
+				
+					} else {
+						cols.append(c.name);
+					}
+					
+					
+					colNames.add(c.humanName);
+					columns.put(c.humanName);
+					newColIdx++;
+				}
+				
 				// Add default columns
+				/*
 				cols.append("prikey, parkey, _bad, _bad_reason");
 				
 				columns.put("prikey");
 				colNames.add("prikey");
 				newColIdx++;
 				
-				columns.put("parkey");
+				columns.put("Parent Key");
 				colNames.add("parkey");
 				newColIdx++;
 				
-				columns.put("_bad");
+				columns.put("Bad");
 				colNames.add("_bad");
 				newColIdx++;
 				
-				columns.put("_bad_reason");
+				columns.put("Bad Reason");
 				colNames.add("_bad_reason");
 				newColIdx++;
+				*/
 				
+				/*
 				if(parent == 0) {
 					cols.append(",_user");
-					columns.put("_user");
+					columns.put("User");
 					colNames.add("_user");
 					newColIdx++;
 					
-					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_version") != null) {
+					if(GeneralUtilityMethods.columnType(connection, tName, "_version") != null) {
 						cols.append(",_version");
 						columns.put("Version");
 						colNames.add("_version");
 						newColIdx++;
 					}
 					
-					if(GeneralUtilityMethods.columnType(connectionSD, tName, "_complete") != null) {
+					if(GeneralUtilityMethods.columnType(connection, tName, "_complete") != null) {
 						cols.append(",_complete");
 						columns.put("Complete");
 						colNames.add("_complete");
 						newColIdx++;
 					}
 				}
-				
+				*/
+				/*
 				while(resultSet.next()) {
 					
 					String name = resultSet.getString(1);
@@ -338,6 +382,7 @@ public class Items extends Application {
 					}
 					
 				} 
+				*/
 				
 				/*
 				 * Add the server side calculations

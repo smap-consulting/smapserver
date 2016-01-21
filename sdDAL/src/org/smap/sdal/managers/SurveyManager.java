@@ -663,16 +663,7 @@ public class SurveyManager {
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				
 				// Set an indicator if this is a property type question (_device etc)
-				if(q.source_param != null && 
-						(q.source_param.equals("deviceid") || q.source_param.equals("start") || q.source_param.equals("end"))) {
-					q.propertyType = true;
-				}
-				if(q.name != null & (q.name.equals("_instanceid") || q.name.equals("_task_key"))) {
-					q.propertyType = true;
-				} 
-				if(q.path != null && q.path.startsWith("/main/meta")) {
-					q.propertyType = true;
-				}
+				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name, q.path);
 				
 				// Discard property type questions if they have not been asked for
 				if(q.propertyType && !getPropertyTypeQuestions) {

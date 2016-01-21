@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
@@ -1599,7 +1600,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return column type if the passed in column name is in the table else return null
 	 */
-	public static String columnType(Connection sd, String tableName, String columnName) throws SQLException {
+	public static String columnType(Connection connection, String tableName, String columnName) throws SQLException {
 		
 		String type = null;
 		
@@ -1609,7 +1610,7 @@ public class GeneralUtilityMethods {
 		
 		
 		try {
-			pstmt = sd.prepareStatement(sql);
+			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1,  tableName);
 			pstmt.setString(2,  columnName);
 			
@@ -1627,6 +1628,208 @@ public class GeneralUtilityMethods {
 		
 		return type;
 		
+	}
+	
+	/*
+	 * Return a list of results columns for a form
+	 */
+	public static ArrayList<Column> getColumnsInForm(Connection sd, 
+			Connection cResults, 
+			int formParent,
+			int f_id,
+			String table_name,
+			boolean includeRO,
+			boolean includeParentKey,
+			boolean includeBad,
+			boolean includeInstanceId) throws SQLException {
+		
+		ArrayList<Column> columnList = new ArrayList<Column>();
+		ArrayList<Column> realQuestions = new ArrayList<Column> ();	// Temporary array so that all property questions can be added first
+		
+		// SQL to get the questions
+		String sqlQuestions = "select qname, qtype, column_name, q_id, readonly, source_param, path "
+				+ "from question where f_id = ? "
+				+ "and source is not null "
+				+ "and published = 'true' "
+				+ "order by seq";
+		PreparedStatement pstmtQuestions = sd.prepareStatement(sqlQuestions);
+		
+		// Get column names for select multiple questions
+		String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq "
+				+ "from option o, question q "
+				+ "where o.l_id = q.l_id "
+				+ "and q.q_id = ? "
+				+ "and o.externalfile = ? "
+				+ "and o.published = 'true' "
+				+ "order by o.seq;";
+		PreparedStatement pstmtSelectMultiple = sd.prepareStatement(sqlSelectMultiple);
+		
+		Column c = new Column();
+		c.name = "prikey";
+		c.humanName = "prikey";
+		c.qType = "";
+		columnList.add(c);
+		
+		if(includeParentKey) {
+			c = new Column();
+			c.name = "parkey";
+			c.humanName = "parkey";
+			c.qType = "";
+			columnList.add(c);
+		}
+		
+		if(includeBad) {
+			c = new Column();
+			c.name = "_bad";
+			c.humanName = "_bad";
+			c.qType = "";
+			columnList.add(c);
+			
+			c = new Column();
+			c.name = "_bad_reason";
+			c.humanName = "_bad_reason";
+			c.qType = "";
+			columnList.add(c);
+		}
+		
+		// For the top level form add default columns that are not in the question list
+		if(formParent == 0) {
+
+			c = new Column();
+			c.name = "_user";
+			c.humanName = "User";
+			c.qType = "";
+			columnList.add(c);
+			
+			if(GeneralUtilityMethods.columnType(cResults, table_name, "_version") != null) {
+				c = new Column();
+				c.name = "_version";
+				c.humanName = "Version";
+				c.qType = "";
+				columnList.add(c);
+			}
+			
+			if(GeneralUtilityMethods.columnType(cResults, table_name, "_complete") != null) {
+				c = new Column();
+				c.name = "_complete";
+				c.humanName = "Complete";
+				c.qType = "";
+				columnList.add(c);
+			}
+			
+			if(includeInstanceId && GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null) {
+				c = new Column();
+				c.name = "instanceid";
+				c.humanName = "Unique Id";
+				c.qType = "";
+				columnList.add(c);
+			}
+			
+			
+		}
+		
+		try {
+			pstmtQuestions.setInt(1, f_id);
+			
+			log.info("SQL: Get columns:" + pstmtQuestions.toString());
+			ResultSet rsQuestions = pstmtQuestions.executeQuery();
+			
+			/*
+			 * Get columns
+			 */
+			while(rsQuestions.next()) {
+				
+				String question_human_name = rsQuestions.getString(1);
+				String qType = rsQuestions.getString(2);
+				String question_column_name = rsQuestions.getString(3);
+				int qId = rsQuestions.getInt(4);
+				boolean ro = rsQuestions.getBoolean(5);
+				String source_param = rsQuestions.getString(6);
+				String path = rsQuestions.getString(7);
+				
+				String cName = question_column_name.trim().toLowerCase();
+				if(cName.equals("parkey") ||	cName.equals("_bad") ||	cName.equals("_bad_reason")
+						||	cName.equals("_task_key") ||	cName.equals("_task_replace") ||	cName.equals("_modified")
+						||	cName.equals("_instanceid") ||	cName.equals("instanceid")) {
+					continue;
+				}
+				
+				if(!includeRO && ro) {
+					log.info("Dropping readonly: " + cName);
+					continue;			// Drop read only columns if they are not selected to be exported				
+				}
+				
+				if(qType.equals("select")) {
+					
+					// Check if there are any choices from an external csv file in this select multiple
+					boolean external = GeneralUtilityMethods.hasExternalChoices(sd, qId);
+					
+					// Get the choices, either all from an external file or all from an internal file but not both
+					pstmtSelectMultiple.setInt(1, qId);
+					pstmtSelectMultiple.setBoolean(2, external);
+					ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
+					while (rsMultiples.next()) {
+						c = new Column();
+						c.name = question_column_name + "__" + rsMultiples.getString(1);
+						c.humanName = question_human_name + " - " + rsMultiples.getString(2);
+						c.question_name = question_column_name;
+						c.option_name = rsMultiples.getString(1);
+						c.qId = qId;
+						c.qType = qType;
+						c.ro = ro;
+						realQuestions.add(c);
+					}
+				} else {
+					c = new Column();
+					c.name = question_column_name;
+					c.question_name = question_column_name;
+					c.humanName = question_human_name;
+					c.qId = qId;
+					c.qType = qType;
+					c.ro = ro;
+					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name, path)) {
+						columnList.add(c);
+					} else {
+						realQuestions.add(c);
+					}
+				}
+				
+			}
+		} finally {
+			try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
+			try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
+		}
+		
+		columnList.addAll(realQuestions);		// Add the real questions after the property questions
+		
+		
+		return columnList;
+	}
+	
+	/*
+	 * Return true if this question is a property type question like deviceid
+	 */
+	public static boolean isPropertyType(String source_param, String name, String path) {
+		
+		boolean isProperty;
+		
+		if(source_param != null && 
+				(source_param.equals("deviceid") || source_param.equals("start") || source_param.equals("end"))) {
+			
+			isProperty = true;
+			
+		} else if(name != null & (name.equals("_instanceid") || name.equals("_task_key"))) {
+			
+			isProperty = true;
+			
+		} else if(path != null && path.startsWith("/main/meta")) {
+			
+			isProperty = true;
+		} else {
+			isProperty = false;
+		}
+		
+		return isProperty;
 	}
 	
 	/*

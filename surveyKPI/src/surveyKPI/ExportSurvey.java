@@ -30,6 +30,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.Column;
 
 /*
  * Provides a survey level export of a survey as an XLS file
@@ -63,23 +64,7 @@ public class ExportSurvey extends Application {
 		return s;
 	}
 
-	private class Column {
-		public int qId;
-		public String question_name;
-		public String option_name;
-		public String name;
-		public String qType;
-		public boolean ro;
-		public String humanName;
-		
-		public boolean isGeometry () {
-			boolean geom = false;
-			if(qType.equals("geopoint") || qType.equals("geopolygon") || qType.equals("geolinestring") || qType.equals("geotrace")) {
-				geom = true;
-			}
-			return geom;
-		}
-	}
+
 	
 	
 	private class RecordDesc {
@@ -276,27 +261,9 @@ public class ExportSurvey extends Application {
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
 			Connection connectionResults = null;
-			PreparedStatement pstmtQuestions = null;
-			PreparedStatement pstmtSelectMultiple = null;
+
 			
 			try {
-				
-				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq "
-						+ "from option o, question q "
-						+ "where o.l_id = q.l_id "
-						+ "and q.q_id = ? "
-						+ "and o.externalfile = ? "
-						+ "and o.published = 'true' "
-						+ "order by o.seq;";
-				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
-				
-				// Get the columns
-				String sqlQuestions = "select qname, qtype, column_name, q_id, readonly from question where f_id = ? "
-						+ "and source is not null "
-						+ "and published = 'true' "
-						+ "order by seq";
-				pstmtQuestions = connectionSD.prepareStatement(sqlQuestions);
 				
 				// Prepare statement to get server side includes
 				String sqlSSC = "select ssc.name, ssc.function, ssc.type from ssc ssc, form f " +
@@ -428,133 +395,37 @@ public class ExportSurvey extends Application {
 				 *  2) The columns that contain the data to be shown
 				 */
 				for(FormDesc f : formList) {
-
-					// Get the columns for this form
-					f.columnList = new ArrayList<Column> ();
-					
-					Column c = new Column();
-					c.name = "prikey";
-					c.humanName = "prikey";
-					c.qType = "";
-					f.columnList.add(c);
-					
-					
-					// For the top level form add default columns that are not in the question list
-					if(f.parent == null || f.parent.equals("0")) {
-		
-						c = new Column();
-						c.name = "_user";
-						c.humanName = "User";
-						c.qType = "";
-						f.columnList.add(c);
-						
-						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_version") != null) {
-							c = new Column();
-							c.name = "_version";
-							c.humanName = "Version";
-							c.qType = "";
-							f.columnList.add(c);
-						}
-						
-						if(GeneralUtilityMethods.columnType(connectionSD, f.table_name, "_complete") != null) {
-							c = new Column();
-							c.name = "_complete";
-							c.humanName = "Complete";
-							c.qType = "";
-							f.columnList.add(c);
-						}
-						
+					Column c;
+					int parentId = 0;
+					if(f.parent != null) {
+						parentId = Integer.parseInt(f.parent);
 					}
-					
-					pstmtQuestions.setInt(1, Integer.parseInt(f.f_id));
-					
-					log.info("SQL: Get questions for export:" + pstmtQuestions.toString());
-					ResultSet rsQuestions = pstmtQuestions.executeQuery();
-					
-					while(rsQuestions.next()) {
+					f.columnList = GeneralUtilityMethods.getColumnsInForm(
+							connectionSD,
+							connectionResults,
+							parentId,
+							Integer.parseInt(f.f_id),
+							f.table_name,
+							exp_ro,
+							false,		// Don't include parent key
+							false,		// Don't include "bad" columns
+							false		// Don't include instance id
+							);
 						
-						String question_human_name = rsQuestions.getString(1);
-						String qType = rsQuestions.getString(2);
-						String question_column_name = rsQuestions.getString(3);
-						int qId = rsQuestions.getInt(4);
-						boolean ro = rsQuestions.getBoolean(5);
-						
-						String tName = question_column_name.trim().toLowerCase();
-						if(tName.equals("parkey") ||	tName.equals("_bad") ||	tName.equals("_bad_reason")
-								||	tName.equals("_task_key") ||	tName.equals("_task_replace") ||	tName.equals("_modified")
-								||	tName.equals("_instanceid") ||	tName.equals("instanceid")) {
-							continue;
-						}
-						
-						if(!exp_ro && ro) {
-							log.info("Dropping readonly: " + tName);
-							continue;			// Drop read only columns if they are not selected to be exported				
-						}
-						
-						if(qType.equals("select")) {
 							
-							// Check if there are any choices from an external csv file in this select multiple
-							boolean external = GeneralUtilityMethods.hasExternalChoices(connectionSD, qId);
-							
-							// Get the choices, either all from an external file or all from an internal file but not both
-							pstmtSelectMultiple.setInt(1, qId);
-							pstmtSelectMultiple.setBoolean(2, external);
-							ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
-							while (rsMultiples.next()) {
-								c = new Column();
-								c.name = question_column_name + "__" + rsMultiples.getString(1);
-								c.humanName = question_human_name + " - " + rsMultiples.getString(2);
-								c.question_name = question_column_name;
-								c.option_name = rsMultiples.getString(1);
-								c.qId = qId;
-								c.qType = qType;
-								c.ro = ro;
-								f.columnList.add(c);
-							}
-						} else {
-							c = new Column();
-							c.name = question_column_name;
-							c.question_name = question_column_name;
-							c.humanName = question_human_name;
-							c.qId = qId;
-							c.qType = qType;
-							c.ro = ro;
-							f.columnList.add(c);
-						}
-						
-					}
-					
-					// Get the question names and identifiers
-					//sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
-					
-					//if(pstmt2 != null) {pstmt2.close();};
-					//pstmt2 = connectionResults.prepareStatement(sql);
-					//if(resultSet2 != null) {resultSet2.close();};
-					//resultSet2 = pstmt2.executeQuery();
-					//ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
-					
 					for(int k = 0; k < f.maxRepeats; k++) {
 						for(int j = 0; j < f.columnList.size(); j++) {
-						//for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
-							//String name = rsMetaData2.getColumnName(j);
-							//String type = rsMetaData2.getColumnTypeName(j);
+
 							c = f.columnList.get(j);
 							String name = c.name;
 							String qType = c.qType;
 							boolean ro = c.ro;
 							System.out.println("Processing column: " + c.name);
 							
-							// Get the question type
-							//pstmtQType.setString(1, f.table_name);
-							//pstmtQType.setString(2, name);
-							//ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
 							String selectMultipleQuestionName = null;
 							String optionName = null;
-							//if(rsType.next()) {
-							//	String qType = rsType.getString(1);
-							//	boolean ro = rsType.getBoolean(2);
 								
 							if(!exp_ro && ro) {
 								log.info("Dropping readonly: " + name);
@@ -734,8 +605,6 @@ public class ExportSurvey extends Application {
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
-				try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
-				try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
 				
 				try {
 					if (connectionSD != null) {
