@@ -224,6 +224,13 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the URL prefix for media
+	 */
+	static public String getUrlPrefix(HttpServletRequest request) {
+		return request.getScheme() + "://" + request.getServerName() + "/";
+	}
+	
+	/*
 	 * Throw a 404 exception if this is not a business server
 	 */
 	static public void assertBusinessServer(String host) {

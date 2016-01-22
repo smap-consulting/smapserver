@@ -109,7 +109,6 @@ public class Data_CSV extends Application {
 			ArrayList<DataEndPoint> data = dm.getDataEndPoints(sd, request, true);
 			
 			outWriter = response.getWriter();
-			String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 			if(data.size() > 0) {
 				for(int i = 0; i < data.size(); i++) {
@@ -165,7 +164,7 @@ public class Data_CSV extends Application {
 
 		try {
 			outWriter = response.getWriter();
-			String basePath = GeneralUtilityMethods.getBasePath(request);
+			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
 			
 			pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
 			pstmtGetMainForm.setInt(1,sId);
@@ -193,7 +192,7 @@ public class Data_CSV extends Application {
 					if(i > 0) {
 						columnSelect.append(",");
 					}
-					columnSelect.append(c.name);
+					columnSelect.append(c.getSqlSelect(urlprefix));
 				}
 				
 				if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
@@ -219,7 +218,11 @@ public class Data_CSV extends Application {
 							if(i > 0) {
 								record.append(",");
 							}
-							record.append("\"" + rs.getString(i + 1).replaceAll("\"", "\"\"") + "\"");
+							
+							String val = rs.getString(i + 1);
+							if(val != null) {	
+								record.append("\"" + val.replaceAll("\"", "\"\"") + "\"");
+							}
 						}
 						
 						record.append("\n");
