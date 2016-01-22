@@ -48,11 +48,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/gson-2.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v7.0">
-		<attributes>
-			<attribute name="owner.project.facets" value="jst.web;#system#"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-codec-1.7.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.1.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.0.1.jar"/>
@@ -63,7 +58,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDAL"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javax.mail.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/core-renderer.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
 	<classpathentry kind="lib" path="/sdDAL/Libraries/xmlworker-5.5.4.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-3.13-20150929.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-ooxml-3.13-20150929.jar"/>
@@ -71,5 +65,11 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlbeans-2.6.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDataAccess"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aws"/>
+	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v7.0">
+		<attributes>
+			<attribute name="owner.project.facets" value="jst.web;#system#"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

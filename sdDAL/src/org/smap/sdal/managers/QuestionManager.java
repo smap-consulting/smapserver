@@ -841,7 +841,7 @@ public class QuestionManager {
 		String sqlGetSeq = "select seq, qtype, published from question where f_id = ? and qname = ?";
 		
 		PreparedStatement pstmtGetTableName = null;
-		PreparedStatement pstmtTableExists = null;
+		//PreparedStatement pstmtTableExists = null;
 		PreparedStatement pstmtDeleteForm = null;
 		//PreparedStatement pstmtDeleteRepeatCount = null;
 		
@@ -1004,6 +1004,7 @@ public class QuestionManager {
 					
 					// 2. If the results table exists for this form then throw an exception
 					if(tableName != null) {
+						/*
 						String sqlTableExists = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
 						pstmtTableExists = cResults.prepareStatement(sqlTableExists);
 						
@@ -1012,8 +1013,8 @@ public class QuestionManager {
 						if(rsRepeat.next()) {
 							count = rsRepeat.getInt(1);
 						}
-						
-						if(count > 0) {
+						*/
+						if(GeneralUtilityMethods.tableExists(cResults, tableName)) {
 							throw new Exception("Cannot delete this form as it contains published data");
 						} else {
 							
@@ -1054,7 +1055,7 @@ public class QuestionManager {
 			try {if (pstmtGetSeq != null) {pstmtGetSeq.close();}} catch (SQLException e) {}
 			try {if (pstmtSoftDelete != null) {pstmtSoftDelete.close();}} catch (SQLException e) {}
 			try {if (pstmtGetTableName != null) {pstmtGetTableName.close();}} catch (SQLException e) {}
-			try {if (pstmtTableExists != null) {pstmtTableExists.close();}} catch (SQLException e) {}
+			//try {if (pstmtTableExists != null) {pstmtTableExists.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteForm != null) {pstmtDeleteForm.close();}} catch (SQLException e) {}
 		}	
 		

@@ -136,11 +136,19 @@ public class XLSFormManager {
 			} else if(type == COL_RELEVANT) {				
 				value = q.relevant;
 				
-			} else if(type == COL_REPEAT_COUNT && q.type.equals("begin repeat")) {				
-				value = q.calculation;		
+			} else if(type == COL_REPEAT_COUNT) {
+				if(q.type.equals("begin repeat")) {
+					value = q.calculation;	
+				} else {
+					value = "";
+				}
 				
-			} else if(type == COL_CALCULATION && !q.type.equals("begin repeat")) {				
-				value = q.calculation;		
+			} else if(type == COL_CALCULATION) {
+				if(!q.type.equals("begin repeat")) {
+					value = q.calculation;	
+				} else {
+					value = "";
+				}
 				
 			} else if(type == COL_DEFAULT) {				
 				value = q.defaultanswer;		

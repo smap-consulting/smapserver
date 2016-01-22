@@ -1,5 +1,4 @@
-
-
+package koboToolboxApi;
 /*
 This file is part of SMAP.
 
@@ -20,14 +19,21 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 
+import managers.DataManager;
 import model.DataEndPoint;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -35,22 +41,35 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.Survey;
+
 /*
  * Returns data for the passed in table name
  */
 @Path("/v1/data")
 public class Data extends Application {
 	
-	//Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
-	//private static Logger log =
-	//		 Logger.getLogger(Data.class.getName());
+	private static Logger log =
+			 Logger.getLogger(Data.class.getName());
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Data.class);
 		return s;
+	}
+	
+	public Data() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.ENUM);
+		a = new Authorise(authorisations, null);
 	}
 	
 	/*
@@ -60,21 +79,36 @@ public class Data extends Application {
 	@Produces("application/json")
 	public Response getData(@Context HttpServletRequest request) { 
 		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		a.isAuthorised(sd, request.getRemoteUser());
+		
 		Response response = null;
-		ArrayList<DataEndPoint> data = new ArrayList<DataEndPoint> ();
 		
-		DataEndPoint x = new DataEndPoint();
-		x.description =" Yay";
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    return Response.serverError().build();
+		}
 		
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-		String resp = gson.toJson(data);
-		response = Response.ok(resp).build();
-		
+		DataManager dm = new DataManager();
+		try {
+			ArrayList<DataEndPoint> data = dm.getDataEndPoints(sd, request, false);
+			
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+			String resp = gson.toJson(data);
+			response = Response.ok(resp).build();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			response = Response.serverError().build();
+		}
+
+
 		return response;
 	}
 	
 
-
-
+	
 }
 
