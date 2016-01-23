@@ -379,10 +379,11 @@ CREATE TABLE question (
 	path text,
 	nodeset text,
 	nodeset_value text,
+	repeatcount boolean,				-- deprecated
 	nodeset_label text,
 	cascade_instance text,
 	list_name text,						-- Name of a set of options common across multiple questions
-	published boolean default false		-- Set true when a survey has been published for data collection
+	published boolean default false,		-- Set true when a survey has been published for data collection
 										--  Once a survey has been published there are constraints on the
 										--  changes that can be applied to question definitions
 	soft_deleted boolean default false	-- Set true if a question has been deleted and has also been published

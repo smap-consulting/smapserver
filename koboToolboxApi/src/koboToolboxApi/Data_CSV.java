@@ -159,6 +159,7 @@ public class Data_CSV extends Application {
 		PreparedStatement pstmtGetData = null;
 		
 		StringBuffer columnSelect = new StringBuffer();
+		StringBuffer columnHeadings = new StringBuffer();
 		StringBuffer record = null;
 		PrintWriter outWriter = null;
 
@@ -191,13 +192,15 @@ public class Data_CSV extends Application {
 					Column c = columns.get(i);
 					if(i > 0) {
 						columnSelect.append(",");
+						columnHeadings.append(",");
 					}
 					columnSelect.append(c.getSqlSelect(urlprefix));
+					columnHeadings.append(c.humanName);
 				}
 				
 				if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
 					
-					outWriter.print(columnSelect.toString() + "\n");
+					outWriter.print(columnHeadings.toString() + "\n");
 					
 					String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
 							+ " where prikey >= ?"
@@ -211,6 +214,12 @@ public class Data_CSV extends Application {
 					
 					int index = 0;
 					while (rs.next()) {
+						
+						if(limit > 0 && index >= limit) {
+							break;
+						}
+						index++;
+						
 						record = new StringBuffer();
 						
 						for(int i = 0; i < columns.size(); i++) {
@@ -227,10 +236,7 @@ public class Data_CSV extends Application {
 						
 						record.append("\n");
 						outWriter.print(record.toString());
-						
-						if(limit > 0 && index >= index) {
-							break;
-						}
+					
 					}
 				} else {
 					outWriter.print("No data\n");
