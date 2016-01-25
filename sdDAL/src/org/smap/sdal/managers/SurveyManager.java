@@ -1926,6 +1926,16 @@ public class SurveyManager {
     	PreparedStatement pstmtSelect = null;
     	ResultSet resultSet = null;
     	
+    	/*
+    	 * Hack: Remove questions that have not been published.
+    	 * This code should be modified to reuse the function to get columns used by results export
+    	 */
+    	for(int i = questions.size() - 1; i >= 0; i--) {
+    		if(!questions.get(i).published) {
+    			questions.remove(i);
+    		}
+    	}
+    	
     	try {
     		
     		/*

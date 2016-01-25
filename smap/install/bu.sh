@@ -6,8 +6,8 @@ rm $file
 rm $file.gpg
 
 # Dump databases
-pg_dump -c -Fc survey_definitions > sd.dmp
-pg_dump -c -Fc results > results.dmp
+pg_dump -c -Fc survey_definitions > backups/sd.dmp
+pg_dump -c -Fc results > backups/results.dmp
 pg_dump survey_definitions -c > backups/survey_definitions.sql
 pg_dump results -c > backups/results.sql
 

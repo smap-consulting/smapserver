@@ -1727,7 +1727,7 @@ public class GeneralUtilityMethods {
 			if(includeInstanceId && GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null) {
 				c = new Column();
 				c.name = "instanceid";
-				c.humanName = "Unique Id";
+				c.humanName = "instanceid";
 				c.qType = "";
 				columnList.add(c);
 			}
