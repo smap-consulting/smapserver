@@ -148,7 +148,7 @@ public class ExportSurvey extends Application {
 	}
 
 	ArrayList<StringBuffer> parentRows = null;
-	private boolean csv = false;
+	HashMap<String, String> surveyNames = null;
 	
 	@GET
 	@Produces("application/x-download")
@@ -168,6 +168,7 @@ public class ExportSurvey extends Application {
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 		HashMap<String, String> selectMultipleColumnNames = new HashMap<String, String> ();
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
+		surveyNames = new HashMap<String, String> ();
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -182,23 +183,16 @@ public class ExportSurvey extends Application {
 		}
 		
 		// Set defaults
-		if(format == null) {	// Default to XLS
-			format = "xls";
-		}
+		format = "xls";	// Default to XLS
+
 		
 		log.info("New export, format:" + format + " flat:" + flat + " split:" + split_locn + 
 				" forms:" + include_forms + " filename: " + filename + ", merge select: " + merge_select_multiple);
 		
-		if(format.equals("csv")) {		// Only 2 formats currently supported:  CSV or XLS = not CSV
-			csv = true;
-		} else {
-			csv = false;
-		}
-		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		String escapedFileName = null;
@@ -211,12 +205,9 @@ public class ExportSurvey extends Application {
 		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
 		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
 
-		if(csv) {
-			escapedFileName = escapedFileName + ".csv";
-		} else {
-			escapedFileName = escapedFileName + ".xls";
-			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
-		}	
+		escapedFileName = escapedFileName + ".xls";
+		response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
+	
 		response.setHeader("Content-Disposition", "attachment; filename=\"" + escapedFileName +"\"");	
 		response.setStatus(HttpServletResponse.SC_OK);
 		
@@ -270,14 +261,14 @@ public class ExportSurvey extends Application {
 						" where f.f_id = ssc.f_id " +
 						" and f.table_name = ? " +
 						" order by ssc.id;";
-				pstmtSSC = connectionSD.prepareStatement(sqlSSC);
+				pstmtSSC = sd.prepareStatement(sqlSSC);
 				
 				// Prepare the statement to get the question type and read only attribute
 				String sqlQType = "select q.qtype, q.readonly from question q, form f " +
 						" where q.f_id = f.f_id " +
 						" and f.table_name = ? " +
 						" and q.qname = ?;";
-				pstmtQType = connectionSD.prepareStatement(sqlQType);
+				pstmtQType = sd.prepareStatement(sqlQType);
 					
 				// Create an output writer to incrementally download the spreadsheet
 				outWriter = response.getWriter();
@@ -296,7 +287,7 @@ public class ExportSurvey extends Application {
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
 
-				PreparedStatement  pstmt = connectionSD.prepareStatement(sql);	
+				PreparedStatement  pstmt = sd.prepareStatement(sql);	
 				pstmt.setInt(1, sId);
 				ResultSet resultSet = pstmt.executeQuery();
 				
@@ -327,7 +318,7 @@ public class ExportSurvey extends Application {
 					// Get max records for flat export
 					fd.maxRepeats = 1;	// Default
 					if(fd.flat && fd.parent != null) {
-						fd.maxRepeats = getMaxRepeats(connectionSD, connectionResults, sId, Integer.parseInt(fd.f_id));
+						fd.maxRepeats = getMaxRepeats(sd, connectionResults, sId, Integer.parseInt(fd.f_id));
 					}
 				}
 				
@@ -340,53 +331,46 @@ public class ExportSurvey extends Application {
 				/*
 				 * Add headers to output buffer 
 				 */
-				if(csv) {
-					if(topForm.visible) {
-						qName.append("prikey");
-						qText.append("");
-					}
-				} else {
-					outWriter.print("<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">");
-					outWriter.print("<head>");
-					outWriter.print("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
-					outWriter.print("<meta name=ProgId content=Excel.Sheet>");					// Gridlines
-					outWriter.print("<meta name=Generator content=\"Microsoft Excel 11\">");		// Gridlines
-					outWriter.print("<title>");
-					outWriter.print(filename);
-					outWriter.print("</title>");
-					
-					outWriter.print("<style <!--table @page{} -->>");
-					outWriter.print("h1 {text-align:center; font-size: 2em; } ");
-					outWriter.print("h2 {font-size: 1.6em; } ");
-					outWriter.print("h3 {font-size: 1.2em; } ");
-					outWriter.print("table,th,td {border:0.5 } ");
-					outWriter.print("table {border-collapse:collapse;} ");
-					outWriter.print("td {padding: 5px; } ");
-					outWriter.print(".xl1 {mso-number-format:0;} ");										// _device style
-					outWriter.print(".xl2 {mso-number-format:\"yyyy\\\\-mm\\\\-dd\\\\ h\\:mm\\:ss\";}");	// Date style
+				outWriter.print("<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">");
+				outWriter.print("<head>");
+				outWriter.print("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
+				outWriter.print("<meta name=ProgId content=Excel.Sheet>");					// Gridlines
+				outWriter.print("<meta name=Generator content=\"Microsoft Excel 11\">");		// Gridlines
+				outWriter.print("<title>");
+				outWriter.print(filename);
+				outWriter.print("</title>");
+				
+				outWriter.print("<style <!--table @page{} -->>");
+				outWriter.print("h1 {text-align:center; font-size: 2em; } ");
+				outWriter.print("h2 {font-size: 1.6em; } ");
+				outWriter.print("h3 {font-size: 1.2em; } ");
+				outWriter.print("table,th,td {border:0.5 } ");
+				outWriter.print("table {border-collapse:collapse;} ");
+				outWriter.print("td {padding: 5px; } ");
+				outWriter.print(".xl1 {mso-number-format:0;} ");										// _device style
+				outWriter.print(".xl2 {mso-number-format:\"yyyy\\\\-mm\\\\-dd\\\\ h\\:mm\\:ss\";}");	// Date style
 
-					outWriter.print("</style>");
-					outWriter.print("<xml>");							// Gridlines
-					outWriter.print("<x:ExcelWorkbook>");
-					outWriter.print("<x:ExcelWorksheets>");
-					outWriter.print("<x:ExcelWorksheet>");
-					outWriter.print("<x:Name>Results Export</x:Name>");
-					outWriter.print("<x:WorksheetOptions>");
-					outWriter.print("<x:Panes>");
-					outWriter.print("</x:Panes>");
-					outWriter.print("</x:WorksheetOptions>");
-					outWriter.print("</x:ExcelWorksheet>");
-					outWriter.print("</x:ExcelWorksheets>");
-					outWriter.print("</x:ExcelWorkbook>");
-					outWriter.print("</xml>");
-					outWriter.print("</head>");
-					
-					outWriter.print("<body>");
-					outWriter.print("<table><thead>");
-					if(topForm.visible) {
-						qName.append("<tr><th>prikey</th>");
-						qText.append("<tr><th></th>");
-					}
+				outWriter.print("</style>");
+				outWriter.print("<xml>");							// Gridlines
+				outWriter.print("<x:ExcelWorkbook>");
+				outWriter.print("<x:ExcelWorksheets>");
+				outWriter.print("<x:ExcelWorksheet>");
+				outWriter.print("<x:Name>Results Export</x:Name>");
+				outWriter.print("<x:WorksheetOptions>");
+				outWriter.print("<x:Panes>");
+				outWriter.print("</x:Panes>");
+				outWriter.print("</x:WorksheetOptions>");
+				outWriter.print("</x:ExcelWorksheet>");
+				outWriter.print("</x:ExcelWorksheets>");
+				outWriter.print("</x:ExcelWorkbook>");
+				outWriter.print("</xml>");
+				outWriter.print("</head>");
+				
+				outWriter.print("<body>");
+				outWriter.print("<table><thead>");
+				if(topForm.visible) {
+					qName.append("<tr><th>prikey</th>");
+					qText.append("<tr><th></th>");
 				}
 				
 				/*
@@ -401,7 +385,7 @@ public class ExportSurvey extends Application {
 						parentId = Integer.parseInt(f.parent);
 					}
 					f.columnList = GeneralUtilityMethods.getColumnsInForm(
-							connectionSD,
+							sd,
 							connectionResults,
 							parentId,
 							Integer.parseInt(f.f_id),
@@ -469,9 +453,9 @@ public class ExportSurvey extends Application {
 							
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
-									qName.append(getContent(c.humanName, true,false, colName, qType, split_locn));
+									qName.append(getContent(sd, c.humanName, true,false, colName, qType, split_locn));
 									if(!language.equals("none")) {
-										qText.append(getContent(getQuestion(connectionSD, name, sId, f, language, merge_select_multiple), true, false, name, qType, split_locn));
+										qText.append(getContent(sd, getQuestion(sd, name, sId, f, language, merge_select_multiple), true, false, name, qType, split_locn));
 									}
 								}
 							}
@@ -531,9 +515,9 @@ public class ExportSurvey extends Application {
 							}
 
 							if(f.visible) {	// Add column headings if the form is visible
-								qName.append(getContent(colName, true,false, colName, sscType, split_locn));
+								qName.append(getContent(sd, colName, true,false, colName, sscType, split_locn));
 								if(!language.equals("none")) {
-									qText.append(getContent(getQuestion(connectionSD, sscName, sId, f, language, merge_select_multiple), true, false, sscName, sscType, split_locn));
+									qText.append(getContent(sd, getQuestion(sd, sscName, sId, f, language, merge_select_multiple), true, false, sscName, sscType, split_locn));
 								}
 							}
 							
@@ -563,32 +547,20 @@ public class ExportSurvey extends Application {
 					}
 
 				}
-				if(csv) {
-					qName.append("\n");	// Add new line
-				} else {
-					qName.append("</tr>\n");
-				}
+				qName.append("</tr>\n");
 				
 				if(!language.equals("none")) {	// Add the questions / option labels if requested
-					if(csv) {
-						qText.append("\n");
-					} else {
-						qText.append("</tr>\n");
-					}
+					qText.append("</tr>\n");
 					outWriter.print(qText.toString().replace("&amp;", "&"));	// unescape ampersand for excel
 				} 
 				outWriter.print(qName.toString());
-				if(!csv) {
-					outWriter.print("</thead><tbody>");
-				}
+				outWriter.print("</thead><tbody>");
 				
 				/*
 				 * Add the data
 				 */
-				getData(connectionResults, outWriter, formList, topForm, flat, split_locn, merge_select_multiple, selMultChoiceNames);
-				if(!csv) {
-					outWriter.print("</tbody><table></body></html>");
-				}
+				getData(sd, connectionResults, outWriter, formList, topForm, flat, split_locn, merge_select_multiple, selMultChoiceNames);
+				outWriter.print("</tbody><table></body></html>");
 				
 				log.info("Content Type:" + response.getContentType());
 				log.info("Buffer Size:" + response.getBufferSize());
@@ -607,9 +579,9 @@ public class ExportSurvey extends Application {
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 				
 				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
+					if (sd != null) {
+						sd.close();
+						sd = null;
 					}
 				} catch (SQLException e) {
 					log.log(Level.SEVERE, "Failed to close sd connection", e);
@@ -709,82 +681,79 @@ public class ExportSurvey extends Application {
 	/*
 	 * Return the text formatted for html or csv
 	 */
-	private String getContent(String in, boolean head, boolean firstCol, String columnName,
-			String columnType, boolean split_locn) {
+	private String getContent(Connection con, String in, boolean head, boolean firstCol, String columnName,
+			String columnType, boolean split_locn) throws NumberFormatException, SQLException {
 
 		String out = in;
 		if(out == null) {
 			out = "";
 		}
 		
-		if(csv) {
-			if(out.startsWith("//")) {
-				out = "https:" + out;
-			}
-			if(firstCol) {
-				out = "\"" + out.replaceAll("\"", "\"\"") + "\"";
+
+		if(head) {
+			if(split_locn && columnType != null && columnType.equals("geopoint")) {
+				// Create two columns for lat and lon
+				out = "<th>Latitude</th><th>Longitude</th>";
 			} else {
-				out = ",\"" + out.replaceAll("\"", "\"\"") + "\"";
+				out = "<th>" + StringEscapeUtils.escapeHtml3(out) + "</th>";
 			}
 		} else {
-			if(head) {
-				if(split_locn && columnType != null && columnType.equals("geopoint")) {
-					// Create two columns for lat and lon
-					out = "<th>Latitude</th><th>Longitude</th>";
-				} else {
-					out = "<th>" + StringEscapeUtils.escapeHtml3(out) + "</th>";
-				}
-			} else {
-				if(split_locn && out.startsWith("POINT")) {
+			if(split_locn && out.startsWith("POINT")) {
 
-					String coords [] = getLonLat(out);
+				String coords [] = getLonLat(out);
 
-					if(coords.length > 1) {
-							out = "<td>" + coords[1] + "</td><td>" + coords[0] + "</td>"; 
-						} else {
-							out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td><td>" + 
-									StringEscapeUtils.escapeHtml3(out) + "</td>";
-						}
-						
-					
-				} else if(split_locn && (out.startsWith("POLYGON") || out.startsWith("LINESTRING"))) {
-					
-					// Can't split linestrings and polygons, leave latitude and longitude as blank
-					out= "<td></td><td></td>";
-					
-				} else if(out.startsWith("POINT")) {
-					String coords [] = getLonLat(out);
-					if(coords.length > 1) {
-					out = "<td>" + "<a href=\"http://www.openstreetmap.org/?mlat=" +
-							coords[1] +
-							"&mlon=" +
-							coords[0] +
-							"&zoom=14\">" +
-							out + "</a>" + "</td>";
+				if(coords.length > 1) {
+						out = "<td>" + coords[1] + "</td><td>" + coords[0] + "</td>"; 
 					} else {
-						out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td>"; 
+						out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td><td>" + 
+								StringEscapeUtils.escapeHtml3(out) + "</td>";
 					}
-				} else if(out.startsWith("http")) {
-					out = "<td>" + "<a href=\"" + out + "\">" + out + "</a></td>";
-				} else if(out.startsWith("//")) {
-					out = "<td>" + "<a href=\"https:" + out + "\">https:" + out + "</a></td>";
-				} else if(columnName.equals("_device")) {
-					out = "<td class='xl1'>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
-						
-				} else if(columnName.equals("_complete")) {
-					out = (out.equals("f")) ? "<td>No</td>" : "<td>Yes</td>"; 
-						
-				} else if(columnType.equals("dateTime")) {
-					// Convert the timestamp to the excel format specified in the xl2 mso-format
-					int idx1 = out.indexOf('.');	// Drop the milliseconds
-					if(idx1 > 0) {
-						out = out.substring(0, idx1);
-					} 
-					out = "<td class='xl2'>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
+					
+				
+			} else if(split_locn && (out.startsWith("POLYGON") || out.startsWith("LINESTRING"))) {
+				
+				// Can't split linestrings and polygons, leave latitude and longitude as blank
+				out= "<td></td><td></td>";
+				
+			} else if(out.startsWith("POINT")) {
+				String coords [] = getLonLat(out);
+				if(coords.length > 1) {
+				out = "<td>" + "<a href=\"http://www.openstreetmap.org/?mlat=" +
+						coords[1] +
+						"&mlon=" +
+						coords[0] +
+						"&zoom=14\">" +
+						out + "</a>" + "</td>";
 				} else {
-					out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
+					out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td>"; 
 				}
-
+			} else if(out.startsWith("http")) {
+				out = "<td>" + "<a href=\"" + out + "\">" + out + "</a></td>";
+			} else if(out.startsWith("//")) {
+				out = "<td>" + "<a href=\"https:" + out + "\">https:" + out + "</a></td>";
+			} else if(columnName.equals("_device")) {
+				out = "<td class='xl1'>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
+					
+			} else if(columnName.equals("_complete")) {
+				out = (out.equals("f")) ? "<td>No</td>" : "<td>Yes</td>"; 
+					
+			} else if(columnName.equals("_s_id")) {
+				String displayName = surveyNames.get(out);
+				if(displayName == null) {
+					displayName = GeneralUtilityMethods.getSurveyName(con, Integer.parseInt(out));
+					surveyNames.put(out, displayName);
+				}
+				out = "<td>" + displayName + "</td>"; 
+					
+			} else if(columnType.equals("dateTime")) {
+				// Convert the timestamp to the excel format specified in the xl2 mso-format
+				int idx1 = out.indexOf('.');	// Drop the milliseconds
+				if(idx1 > 0) {
+					out = out.substring(0, idx1);
+				} 
+				out = "<td class='xl2'>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
+			} else {
+				out = "<td>" + StringEscapeUtils.escapeHtml3(out) + "</td>";
 			}
 			
 		}
@@ -813,7 +782,7 @@ public class ExportSurvey extends Application {
 	 * 
 	 * The function is called recursively until the last table
 	 */
-	private void getData(Connection connectionResults, PrintWriter outWriter, 
+	private void getData(Connection con, Connection connectionResults, PrintWriter outWriter, 
 			ArrayList<FormDesc> formList, FormDesc f, boolean flat, boolean split_locn, boolean merge_select_multiple, HashMap<String, String> choiceNames) {
 		
 		String sql = null;
@@ -849,7 +818,7 @@ public class ExportSurvey extends Application {
 				// If this is the top level form reset the current parents and add the primary key
 				if(f.parkey == null || f.parkey.equals("0")) {
 					f.clearRecords();
-					record.append(getContent(prikey, false, true, "prikey", "key", split_locn));
+					record.append(getContent(con, prikey, false, true, "prikey", "key", split_locn));
 				}
 				
 				
@@ -857,14 +826,11 @@ public class ExportSurvey extends Application {
 				String currentSelectMultipleQuestionName = null;
 				String multipleChoiceValue = null;
 				for(int i = 1; i < f.columnList.size(); i++) {
-				//for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
 					
 					Column c = f.columnList.get(i);
-					//String columnName = rsMetaData.getColumnName(i);
-					//String columnType = rsMetaData.getColumnTypeName(i);
+
 					String columnName = c.name;
 					String columnType = c.qType;
-					System.out.println("      Get data for column " + i + " : " + columnName);
 					String value = resultSet.getString(i + 1);
 					
 					if(value == null) {
@@ -879,19 +845,17 @@ public class ExportSurvey extends Application {
 							if(currentSelectMultipleQuestionName == null) {
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
-							//} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != rsMetaData.getColumnCount())) {
 							} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != f.columnList.size() - 1)) {
 								// Continuing on with the same select multiple and its not the end of the record
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
-							//} else if (i == rsMetaData.getColumnCount()) {
 							} else if (i == f.columnList.size() - 1) {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
-								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -901,16 +865,16 @@ public class ExportSurvey extends Application {
 						} else {
 							if(multipleChoiceValue != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.append(getContent(multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;
 								currentSelectMultipleQuestionName = null;
 							}
-							record.append(getContent(value, false, false, columnName, columnType, split_locn));
+							record.append(getContent(con, value, false, false, columnName, columnType, split_locn));
 						}
 					} else {
-						record.append(getContent(value, false, false, columnName, columnType, split_locn));
+						record.append(getContent(con, value, false, false, columnName, columnType, split_locn));
 					}
 				}
 				f.addRecord(prikey, f.parkey, record);
@@ -920,7 +884,7 @@ public class ExportSurvey extends Application {
 					for(int j = 0; j < f.children.size(); j++) {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
-						getData(connectionResults, outWriter, formList, nextForm, flat, split_locn, merge_select_multiple, choiceNames);
+						getData(con, connectionResults, outWriter, formList, nextForm, flat, split_locn, merge_select_multiple, choiceNames);
 					}
 				}
 				
@@ -934,7 +898,7 @@ public class ExportSurvey extends Application {
 					
 					//f.printRecords(4, true);
 					
-					appendToOutput(outWriter, new StringBuffer(""), formList.get(0), formList, 0, null);
+					appendToOutput(con, outWriter, new StringBuffer(""), formList.get(0), formList, 0, null);
 					
 				}
 			}
@@ -997,8 +961,8 @@ public class ExportSurvey extends Application {
 	/*
 	 * Construct the output
 	 */
-	private void appendToOutput(PrintWriter outWriter, StringBuffer in, 
-			FormDesc f, ArrayList<FormDesc> formList, int index, String parent) {
+	private void appendToOutput(Connection sd, PrintWriter outWriter, StringBuffer in, 
+			FormDesc f, ArrayList<FormDesc> formList, int index, String parent) throws NumberFormatException, SQLException {
 
 		int number_records = 0;
 		if(f.records != null) {
@@ -1018,16 +982,16 @@ public class ExportSurvey extends Application {
 				for(int i = number_records; i < f.maxRepeats; i++) {
 					StringBuffer record = new StringBuffer();
 					for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
-						record.append(getContent("", false, false, "", "empty", false));
+						record.append(getContent(sd, "", false, false, "", "empty", false));
 					}
 					newRec.append(record);
 				}
 
 				if(index < formList.size() - 1) {
-					appendToOutput(outWriter, newRec , formList.get(index + 1), 
+					appendToOutput(sd, outWriter, newRec , formList.get(index + 1), 
 							formList, index + 1, null);
 				} else {
-					closeRecord(outWriter, newRec, csv);
+					closeRecord(outWriter, newRec);
 				}
 				
 			} else {
@@ -1041,15 +1005,15 @@ public class ExportSurvey extends Application {
 						 */
 						StringBuffer newRec = new StringBuffer(in);
 						for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
-							newRec.append(getContent("", false, false, "", "empty", false));
+							newRec.append(getContent(sd, "", false, false, "", "empty", false));
 						}
 						
 						FormDesc nextForm = formList.get(index + 1);
 						String filter = null;
 						
-						appendToOutput(outWriter, newRec , nextForm, formList, index + 1, filter);
+						appendToOutput(sd, outWriter, newRec , nextForm, formList, index + 1, filter);
 					} else {
-						closeRecord(outWriter, in, csv);
+						closeRecord(outWriter, in);
 					}
 				} else {
 					/*
@@ -1080,9 +1044,9 @@ public class ExportSurvey extends Application {
 								if(nextForm.parent.equals(f.f_id)) {
 									filter = rd.prikey;
 								}
-								appendToOutput(outWriter, newRec , nextForm, formList, index + 1, filter);
+								appendToOutput(sd, outWriter, newRec , nextForm, formList, index + 1, filter);
 							} else {
-								closeRecord(outWriter, newRec, csv);
+								closeRecord(outWriter, newRec);
 							} 
 						} else {
 							/*
@@ -1101,20 +1065,20 @@ public class ExportSurvey extends Application {
 									 */
 									StringBuffer newRec = new StringBuffer(in);
 									for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
-										newRec.append(getContent("", false, false, "", "empty", false));
+										newRec.append(getContent(sd, "", false, false, "", "empty", false));
 									}
 									
 									FormDesc nextForm = formList.get(index + 1);
 									String filter = null;
 									
-									appendToOutput(outWriter, newRec , nextForm, formList, index + 1, filter);
+									appendToOutput(sd, outWriter, newRec , nextForm, formList, index + 1, filter);
 								} else {
 									/*
 									 * Add the record if there are no matching records for this form
 									 * This means that if a child form was not completed the main form will still be shown (outer join)
 									 */
 									if(!hasMatchingRecord) {
-										closeRecord(outWriter, in, csv);
+										closeRecord(outWriter, in);
 									}
 								}
 							}
@@ -1126,10 +1090,10 @@ public class ExportSurvey extends Application {
 			log.info("Ignoring invisible form: " + f.table_name);
 			// Proceed with any lower level forms
 			if(index < formList.size() - 1) {
-				appendToOutput(outWriter, in , formList.get(index + 1), 
+				appendToOutput(sd, outWriter, in , formList.get(index + 1), 
 						formList, index + 1, null);
 			} else {
-				closeRecord(outWriter, in, csv);
+				closeRecord(outWriter, in);
 			}
 		}
 		
@@ -1138,16 +1102,11 @@ public class ExportSurvey extends Application {
 	/*
 	 * Close the record
 	 */
-	private void closeRecord(PrintWriter outWriter, StringBuffer in, boolean csv) {
-		if(!csv) {
-			outWriter.print("<tr>");
-		}
+	private void closeRecord(PrintWriter outWriter, StringBuffer in) {
+
+		outWriter.print("<tr>");
 		outWriter.print(in.toString());
-		if(csv) {
-			outWriter.print("\n");
-		} else {
-			outWriter.print("</tr>");
-		}
+		outWriter.print("</tr>");
 	}
 	
 	private String getQuestion(Connection conn, String colName, int sId, FormDesc form, String language, boolean merge_select_multiple) throws SQLException {
