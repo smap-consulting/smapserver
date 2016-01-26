@@ -62,7 +62,6 @@ import org.smap.sdal.model.Survey;
 public class Data_CSV extends Application {
 	
 	Authorise a = null;
-	Authorise aRecords = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Data_CSV.class.getName());
@@ -78,7 +77,6 @@ public class Data_CSV extends Application {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
-		authorisations.add(Authorise.ENUM);
 		a = new Authorise(authorisations, null);
 	}
 	
@@ -87,6 +85,7 @@ public class Data_CSV extends Application {
 	 * CSV version
 	 */
 	@GET
+	@Produces("text/csv")
 	public void getDataCsv(@Context HttpServletRequest request,
 			@Context HttpServletResponse response) { 
 		
@@ -129,6 +128,15 @@ public class Data_CSV extends Application {
 		} catch (Exception e) {
 			e.printStackTrace();
 			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
 		}
 
 
@@ -138,7 +146,7 @@ public class Data_CSV extends Application {
 	 * KoboToolBox API version 1 /data
 	 */
 	@GET
-	@Produces("application/json")
+	@Produces("text/csv")
 	@Path("/{sId}")
 	public void getDataRecords(@Context HttpServletRequest request,
 			@Context HttpServletResponse response,
@@ -148,8 +156,8 @@ public class Data_CSV extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records csv");
-		aRecords.isAuthorised(sd, request.getRemoteUser());
-		aRecords.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records csv");

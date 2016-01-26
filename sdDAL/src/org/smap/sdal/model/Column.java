@@ -36,7 +36,7 @@ public class Column {
 		if(isAttachment()) {
 			selName = "'" + urlprefix + "' || " + name + " as " + name;
 		} else if(isGeometry()) {
-			selName = "ST_AsTEXT(" + name + ") ";
+			selName = "ST_AsGeoJson(" + name + ") ";
 		} else {
 			selName = name;
 		}

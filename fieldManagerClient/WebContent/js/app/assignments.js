@@ -422,7 +422,7 @@ $(document).ready(function() {
 	$('#endDate').data("DateTimePicker").setDate(moment());
 	
 	$('#task_properties_scheduledDate').datetimepicker({
-		pickTime: false,
+		pickTime: true,
 		useCurrent: false
 	});
 	
