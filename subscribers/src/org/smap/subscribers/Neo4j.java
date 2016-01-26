@@ -26,6 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Date;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -111,7 +113,7 @@ public class Neo4j extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId, int ue_id)  {
+			String basePath, String filePath, String updateId, int ue_id, Date uploadTime)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;

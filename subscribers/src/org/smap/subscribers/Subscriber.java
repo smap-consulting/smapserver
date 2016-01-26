@@ -21,6 +21,7 @@ package org.smap.subscribers;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.Date;
 
 import org.smap.model.SurveyInstance;
 import org.smap.server.entities.HostUnreachableException;
@@ -62,7 +63,7 @@ public abstract class Subscriber {
 	 */
 	public abstract void upload(SurveyInstance event, InputStream id, String user, String server, String device, 
 			SubscriberEvent se, String confFilePath, String formStatus, String basePath, String filePath,
-			String updateId, int ue_id) throws HostUnreachableException;
+			String updateId, int ue_id, Date uploadTime) throws HostUnreachableException;
 
 	/*
 	 * Getters

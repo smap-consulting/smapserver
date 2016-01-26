@@ -637,6 +637,40 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the survey name from the id
+	 */
+	static public String getSurveyName(
+			Connection sd, 
+			int surveyId) throws SQLException {
+		
+		 String surveyName = null;
+		
+		String sqlGetSurveyName = "select display_name " +
+				" from survey " +
+				" where s_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetSurveyName);
+			pstmt.setInt(1, surveyId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				surveyName = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return surveyName;
+	}
+	
+	/*
 	 * Return true if the upload error has already been reported
 	 * This function is used to prevent large numbers of duplicate errors beign recorded when 
 	 *  submission of bad results is automatically retried
@@ -1652,6 +1686,7 @@ public class GeneralUtilityMethods {
 		
 		ArrayList<Column> columnList = new ArrayList<Column>();
 		ArrayList<Column> realQuestions = new ArrayList<Column> ();	// Temporary array so that all property questions can be added first
+		boolean uptodateTable = false;	// Set true if the results table has the latest meta data columns
 		
 		// SQL to get the questions
 		String sqlQuestions = "select qname, qtype, column_name, q_id, readonly, source_param, path "
@@ -1708,7 +1743,23 @@ public class GeneralUtilityMethods {
 			c.qType = "";
 			columnList.add(c);
 			
-			if(GeneralUtilityMethods.columnType(cResults, table_name, "_version") != null) {
+			if(GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
+				uptodateTable = true;		// This is the latest meta column that was added
+				
+				c = new Column();
+				c.name = "_upload_time";
+				c.humanName = "Upload Time";
+				c.qType = "";
+				columnList.add(c);
+				
+				c = new Column();
+				c.name = "_s_id";
+				c.humanName = "Survey Name";
+				c.qType = "";
+				columnList.add(c);
+			}
+			
+			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_version") != null) {
 				c = new Column();
 				c.name = "_version";
 				c.humanName = "Version";
@@ -1716,7 +1767,7 @@ public class GeneralUtilityMethods {
 				columnList.add(c);
 			}
 			
-			if(GeneralUtilityMethods.columnType(cResults, table_name, "_complete") != null) {
+			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_complete") != null) {
 				c = new Column();
 				c.name = "_complete";
 				c.humanName = "Complete";
@@ -1724,7 +1775,8 @@ public class GeneralUtilityMethods {
 				columnList.add(c);
 			}
 			
-			if(includeInstanceId && GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null) {
+			if(includeInstanceId && 
+					(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null)) {
 				c = new Column();
 				c.name = "instanceid";
 				c.humanName = "instanceid";

@@ -203,7 +203,8 @@ public class SubscriberBatch {
 												ue.getServerName(), ue.getImei(), se,
 												confFilePath, ue.getFormStatus(),
 												basePath, uploadFile, ue.getUpdateId(),
-												ue.getId());	// Call the subscriber	
+												ue.getId(),
+												ue.getUploadTime());	// Call the subscriber	
 									
 									} else {
 										

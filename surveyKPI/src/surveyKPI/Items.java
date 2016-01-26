@@ -92,8 +92,7 @@ public class Items extends Application {
 	@Produces("application/json")
 	public String getTable(@Context HttpServletRequest request,
 			@PathParam("table") String tName, 
-			@QueryParam("geom") String geom,		
-			@QueryParam("feats") String feats,		
+			@QueryParam("geom") String geom,			
 			@QueryParam("mustHaveGeom") String mustHaveGeom,
 			@QueryParam("start_key") int start_key,
 			@QueryParam("get_bad") boolean bBad,		// Get bad records
@@ -105,21 +104,19 @@ public class Items extends Application {
 		
 		JSONObject jo = new JSONObject();
 		boolean bGeom = true;
-		boolean bFeats = true;
 		boolean bMustHaveGeom = true;
 		int maxRec = 0;
 		int recCount = 0;
 
 		ArrayList<String> colNames = new ArrayList<String> ();
+		HashMap<String, String> surveyNames = new HashMap<String, String> ();
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";	
 
 		if(geom != null && geom.equals("no")) {
 			bGeom = false;
 		}
-		if(feats != null && feats.equals("no")) {
-			bFeats = false;
-		}
+
 		if(mustHaveGeom != null && mustHaveGeom.equals("no")) {
 			bMustHaveGeom = false;
 		}
@@ -137,8 +134,8 @@ public class Items extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Items");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-Items");
+		a.isAuthorised(sd, request.getRemoteUser());
 		// Get the survey id
 		String sql = "select s.s_id, s.ident FROM form f, survey s " + 
 				" where s.s_id = f.s_id " +
@@ -146,7 +143,7 @@ public class Items extends Application {
 		int sId = 0;
 
 		try {
-			PreparedStatement pstmtAuth = connectionSD.prepareStatement(sql);
+			PreparedStatement pstmtAuth = sd.prepareStatement(sql);
 			pstmtAuth.setString(1, tName);
 			log.info("Authorisation: " + pstmtAuth.toString());
 			
@@ -158,7 +155,7 @@ public class Items extends Application {
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error in Authorisation", e);
 		}
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		log.info("Filter: " + sFilter);
@@ -171,8 +168,6 @@ public class Items extends Application {
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtFDetails = null;
-			PreparedStatement pstmtQuestions = null;
-			PreparedStatement pstmtSelectMultiple = null;
 			
 			int fId = 0;
 			int parent = 0;
@@ -182,7 +177,7 @@ public class Items extends Application {
 				// Prepare the statement to get the form details
 				String sqlFDetails = "select f.f_id, f.parentform from question q, form f " +
 					" where f.table_name = ?; ";
-				pstmtFDetails = connectionSD.prepareStatement(sqlFDetails);
+				pstmtFDetails = sd.prepareStatement(sqlFDetails);
 				
 				// Connect to the results database
 				connection = ResultsDataSource.getConnection("surveyKPI-Items");		
@@ -222,27 +217,10 @@ public class Items extends Application {
 					
 					tables.add(tName, fId, parent);
 				}
-				
-				// Get column names for select multiple questions
-				String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq from option o, question q "
-						+ "where o.l_id = q.l_id "
-						+ "and q.q_id = ? "
-						+ "and o.externalfile = ? "
-						+ "and o.published = 'true' "
-						+ "order by o.seq;";
-				pstmtSelectMultiple = connectionSD.prepareStatement(sqlSelectMultiple);
-				
-				// Get the columns
-				String sqlCols = "select qname, qtype, column_name, q_id from question "
-						+ "where f_id = ? "
-						+ "and source is not null "
-						+ "and published = 'true' "
-						+ "order by seq";
-				pstmtQuestions = connectionSD.prepareStatement(sqlCols);
-				pstmtQuestions.setInt(1, fId);
+	
 				
 				ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
-						connectionSD,
+						sd,
 						connection,
 						parent,
 						fId,
@@ -253,10 +231,6 @@ public class Items extends Application {
 						true	// Include instanceId
 						);		
 				
-				/*
-				log.info("Get questions for form: " + pstmtQuestions.toString());
-				resultSet = pstmtQuestions.executeQuery();
-				*/
 				// Construct a new query that retrieves a geometry object as geoJson
 				StringBuffer cols = new StringBuffer("");
 				int newColIdx = 0;
@@ -289,101 +263,6 @@ public class Items extends Application {
 					newColIdx++;
 				}
 				
-				// Add default columns
-				/*
-				cols.append("prikey, parkey, _bad, _bad_reason");
-				
-				columns.put("prikey");
-				colNames.add("prikey");
-				newColIdx++;
-				
-				columns.put("Parent Key");
-				colNames.add("parkey");
-				newColIdx++;
-				
-				columns.put("Bad");
-				colNames.add("_bad");
-				newColIdx++;
-				
-				columns.put("Bad Reason");
-				colNames.add("_bad_reason");
-				newColIdx++;
-				*/
-				
-				/*
-				if(parent == 0) {
-					cols.append(",_user");
-					columns.put("User");
-					colNames.add("_user");
-					newColIdx++;
-					
-					if(GeneralUtilityMethods.columnType(connection, tName, "_version") != null) {
-						cols.append(",_version");
-						columns.put("Version");
-						colNames.add("_version");
-						newColIdx++;
-					}
-					
-					if(GeneralUtilityMethods.columnType(connection, tName, "_complete") != null) {
-						cols.append(",_complete");
-						columns.put("Complete");
-						colNames.add("_complete");
-						newColIdx++;
-					}
-				}
-				*/
-				/*
-				while(resultSet.next()) {
-					
-					String name = resultSet.getString(1);
-					String type = resultSet.getString(2);
-					String colname = tName + "." +  resultSet.getString(3);
-					int qId = resultSet.getInt(4);
-					
-					if(name.trim().toLowerCase().equals("instanceid")) {
-						name = "instanceid";
-					}
-					if(bGeom && type.equals("geopoint") || type.equals("geopolygon") || type.equals("geolinestring") || type.equals("geotrace")
-							|| type.equals("geoshape")) {
-						
-						geomIdx = newColIdx;
-						cols.append(", ST_AsGeoJSON(" + colname + ") ");
-						
-						newColIdx++;
-						columns.put(name);
-						colNames.add(name);
-						
-					} else if(bFeats && type.equals("select")) {
-						
-						boolean external = GeneralUtilityMethods.hasExternalChoices(connectionSD, qId);
-						
-						pstmtSelectMultiple.setInt(1, qId);
-						pstmtSelectMultiple.setBoolean(2, external);
-						
-						ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
-						while (rsMultiples.next()) {
-							String mult_name = name + " - " + rsMultiples.getString(2);
-							cols.append("," + colname + "__" + rsMultiples.getString(1));
-							columns.put(mult_name);
-							colNames.add(mult_name);
-							newColIdx++;
-						}
-					} else if(bFeats || name.equals("prikey")) {	// Always return the primary key
-						cols.append(",");	
-						if(type.equals("image") || type.equals("audio") || type.equals("video")) {
-							cols.append("'" + urlprefix + "' || " + colname + " as " + name);
-						} else {
-							cols.append(colname);
-						}
-						newColIdx++;
-						columns.put(name);
-						colNames.add(name);
-						
-					}
-					
-				} 
-				*/
-				
 				/*
 				 * Add the server side calculations
 				 */
@@ -391,7 +270,7 @@ public class Items extends Application {
 						" where f.f_id = ssc.f_id " +
 						" and f.table_name = ? " +
 						" order by ssc.id;";
-				pstmtSSC = connectionSD.prepareStatement(sqlSSC);	 
+				pstmtSSC = sd.prepareStatement(sqlSSC);	 
 				pstmtSSC.setString(1, tName);
 				log.info("SQL Get SSC: " + pstmtSSC.toString());
 				resultSet = pstmtSSC.executeQuery();
@@ -441,7 +320,7 @@ public class Items extends Application {
 					Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 					filter = gson.fromJson(sFilter, type);
 					
-					QuestionInfo fQ = new QuestionInfo(sId, filter.qId, connectionSD);	
+					QuestionInfo fQ = new QuestionInfo(sId, filter.qId, sd);	
 					tables.add(fQ.getTableName(), fQ.getFId(), fQ.getParentFId());
 					log.info("Filter expression: " + fQ.getFilterExpression(filter.value, null));
 					
@@ -458,13 +337,13 @@ public class Items extends Application {
 				// Get date column information
 				QuestionInfo date = null;
 				if(dateId != 0 && (startDate != null || endDate != null)) {
-					date = new QuestionInfo(sId, dateId, connectionSD, false, "", urlprefix);	// Not interested in label any language will do
+					date = new QuestionInfo(sId, dateId, sd, false, "", urlprefix);	// Not interested in label any language will do
 					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
 					log.info("Date name: " + date.getColumnName() + " Date Table: " + date.getTableName());
 				}
 				
 				// Add any tables required to complete the join
-				tables.addIntermediateTables(connectionSD);
+				tables.addIntermediateTables(sd);
 				
 				jTotals.put("rec_limit", rec_limit);
 				String sqlLimit = "";
@@ -554,6 +433,14 @@ public class Items extends Application {
 								jp.put("prikeys", prikeys);
 								prikeys.put(resultSet.getString("prikey"));
 								maxRec = resultSet.getInt("prikey");
+							} else if(name.equals("Survey Name")) {
+								// Get the display name
+								String displayName = surveyNames.get(value);
+								if(displayName == null) {
+									displayName = GeneralUtilityMethods.getSurveyName(sd, Integer.parseInt(value));
+									surveyNames.put(value, displayName);
+								}
+								jp.put(name, displayName);
 							} else {
 								jp.put(name, value);
 							}
@@ -626,13 +513,13 @@ public class Items extends Application {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtFDetails != null) {pstmtFDetails.close();	}} catch (SQLException e) {	}
-				try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
-				try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
+				//try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
+				//try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
 				
 				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
+					if (sd != null) {
+						sd.close();
+						sd = null;
 					}
 				} catch (SQLException e) {
 					log.log(Level.SEVERE,"Error: Failed to close connection", e);

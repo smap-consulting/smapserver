@@ -30,8 +30,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -119,7 +121,7 @@ public class SubRelationalDB extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId, int ue_id)  {
+			String basePath, String filePath, String updateId, int ue_id, Date uploadTime)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;
@@ -187,7 +189,7 @@ public class SubRelationalDB extends Subscriber {
 
 		try {
 			
-			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id);
+			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id, uploadTime);
 			applyNotifications(ue_id, remoteUser, server);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
@@ -332,20 +334,21 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private void writeAllTableContent(SurveyInstance instance, String remoteUser, 
 			String server, String device, String formStatus, String updateId,
-			int sId) throws SQLInsertException {
+			int sId, Date uploadTime) throws SQLInsertException {
 			
 		String response = null;
 		Connection cResults = null;
 		Connection cMeta = null;
-		Statement statement = null;
+		//Statement statement = null;
 		
+		System.out.println("UploadTime: " + uploadTime.toGMTString());
 		try {
 		    Class.forName(dbClass);	 
 			cResults = DriverManager.getConnection(database, user, password);
 			cMeta = DriverManager.getConnection(databaseMeta, user, password);
 			
 			cResults.setAutoCommit(false);
-			statement = cResults.createStatement();
+			//statement = cResults.createStatement();
 			IE topElement = instance.getTopElement();
 			
 			// Make sure the top element matched a form in the template
@@ -355,7 +358,7 @@ public class SubRelationalDB extends Subscriber {
 			}
 			Keys keys = writeTableContent(
 					topElement, 
-					statement, 
+					cResults, 
 					0, 
 					instance.getTemplateName(), 
 					remoteUser, 
@@ -366,7 +369,8 @@ public class SubRelationalDB extends Subscriber {
 					instance.getVersion(), 
 					cResults,
 					cMeta,
-					sId);
+					sId,
+					uploadTime);
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
@@ -432,7 +436,6 @@ public class SubRelationalDB extends Subscriber {
 			}
 			
 		} finally {
-			try { if (statement != null) { statement.close(); } } catch (Exception e) {}
 			try {
 				if (cResults != null) {
 					cResults.close();
@@ -457,7 +460,7 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private  Keys writeTableContent(
 			IE element, 
-			Statement statement, 
+			Connection cResults, 
 			int parent_key, 
 			String sName, 
 			String remoteUser, 
@@ -468,9 +471,11 @@ public class SubRelationalDB extends Subscriber {
 			int version,
 			Connection cRel,
 			Connection cMeta,
-			int sId) throws SQLException, Exception {
+			int sId,
+			Date uploadTime) throws SQLException, Exception {
 
 		Keys keys = new Keys();
+		PreparedStatement pstmt = null;
 		
 		/*
 		 * Write the Instance element to a table if it is a form type
@@ -494,8 +499,8 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			keys.duplicateKeys = new ArrayList<Integer>();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
-				boolean tableCreated = createTable(statement, tableName, sName);
-				keys.duplicateKeys = checkDuplicate(statement, tableName, uuid);
+				boolean tableCreated = createTable(cResults, tableName, sName);
+				keys.duplicateKeys = checkDuplicate(cResults, tableName, uuid);
 				/*
 				 * Bug fix duplicates
 				 *
@@ -519,12 +524,12 @@ public class SubRelationalDB extends Subscriber {
 			}
 			
 			boolean isBad = false;
-			String complete = "true";
+			boolean complete = true;
 			String bad_reason = null;
 			if(formStatus != null && (formStatus.equals("incomplete") || formStatus.equals("draft"))) {
 				isBad = true;
 				bad_reason = "incomplete";
-				complete = "false";
+				complete = false;
 			}
 			
 			/*
@@ -532,10 +537,14 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			if(columns.size() > 0) {
 				
-				boolean hasVersion = hasVersion(cRel, tableName);
+				boolean hasUploadTime = hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
+				boolean hasVersion = hasUploadTime || hasColumn(cRel, tableName, "_version");
 				sql = "INSERT INTO " + tableName + " (parkey";
 				if(parent_key == 0) {
 					sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
+					if(hasUploadTime) {
+						sql += ",_upload_time,_s_id";
+					}
 					if(hasVersion) {
 						sql += ",_version";
 					}
@@ -546,9 +555,13 @@ public class SubRelationalDB extends Subscriber {
 
 				sql += addSqlColumns(columns);
 				
+				/*
 				sql += ") VALUES (" + parent_key;
 				if(parent_key == 0) {
 					sql += ",'" + remoteUser + "', '" + complete + "'";	
+					if(hasUploadTime) {
+						sql += ",'" + uploadTime + "'," + sId;
+					}
 					if(hasVersion) {
 						sql += "," + version;
 					}
@@ -556,13 +569,47 @@ public class SubRelationalDB extends Subscriber {
 						sql += ",'true','" + bad_reason + "'";
 					}
 				}
+				*/
+				sql += ") VALUES (?";		// parent key
+				if(parent_key == 0) {
+					sql += ", ?, ?";		// remote user, complete	
+					if(hasUploadTime) {
+						sql += ", ?, ?";	// upload time, survey id
+					}
+					if(hasVersion) {
+						sql += ", ?";		// Version
+					}
+					if(isBad) {
+						sql += ", ?, ?";	// _bad, _bad_reason
+					}
+				}
+				
 				sql += addSqlValues(columns, sName, device, server, false);
 				sql += ");";
 				
-				System.out.println("        SQL statement: " + sql);
+				pstmt = cResults.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+				int stmtIndex = 1;
+				pstmt.setInt(stmtIndex++, parent_key);
+				if(parent_key == 0) {
+					pstmt.setString(stmtIndex++, remoteUser);
+					pstmt.setBoolean(stmtIndex++, complete);
+					if(hasUploadTime) {
+						pstmt.setTimestamp(stmtIndex++, new Timestamp(uploadTime.getTime()));
+						pstmt.setInt(stmtIndex++, sId);
+					}
+					if(hasVersion) {
+						pstmt.setInt(stmtIndex++, version);
+					}
+					if(isBad) {
+						pstmt.setBoolean(stmtIndex++, true);
+						pstmt.setString(stmtIndex++, bad_reason);
+					}
+				}
 				
-				statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
-				ResultSet rs = statement.getGeneratedKeys();
+				System.out.println("        SQL statement: " + pstmt.toString());	
+				pstmt.executeUpdate();
+				
+				ResultSet rs = pstmt.getGeneratedKeys();
 				if( rs.next()) {
 					parent_key = rs.getInt(1);
 					keys.newKey = parent_key;
@@ -574,8 +621,8 @@ public class SubRelationalDB extends Subscriber {
 		//Write any child forms
 		List<IE> childElements = element.getChildren();
 		for(IE child : childElements) {
-			writeTableContent(child, statement, parent_key, sName, remoteUser, server, device, 
-					uuid, formStatus, version, cRel, cMeta, sId);
+			writeTableContent(child, cResults, parent_key, sName, remoteUser, server, device, 
+					uuid, formStatus, version, cRel, cMeta, sId, uploadTime);
 		}
 		
 		return keys;
@@ -585,23 +632,25 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Method to check for presence of a version column
 	 */
-	boolean hasVersion(Connection cRel, String tablename)  {
+	boolean hasColumn(Connection cRel, String tablename, String columnName)  {
 		
-		boolean hasVersion = false;
+		boolean hasColumn = false;
 		
 		String sql = "select column_name " +
 					"from information_schema.columns " +
-					"where table_name = ? and column_name = '_version';";
+					"where table_name = ? and column_name = ?;";
 		
 		PreparedStatement pstmt = null;
+
 		try {
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
+			pstmt.setString(2, columnName);
 			System.out.println("SQL: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				hasVersion = true;
+				hasColumn = true;
 			}
 
 		} catch (Exception e) {
@@ -610,8 +659,9 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 		
-		return hasVersion;
+		return hasColumn;
 	}
+	
 	/*
 	 * Method to replace an existing record
 	 */
@@ -948,15 +998,18 @@ public class SubRelationalDB extends Subscriber {
 	
 	
 	/*
-	 * Create the table if it does not already exits in the database
+	 * Create the table if it does not already exit in the database
 	 */
-	private boolean createTable(Statement statement, String tableName, String sName) {
+	private boolean createTable(Connection cResults, String tableName, String sName) {
 		boolean tableCreated = false;
-		String sql = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
+		String sql = "select count(*) from information_schema.tables where table_name =?;";
 		
-		System.out.println("SQL:" + sql);
+		PreparedStatement pstmt = null;
 		try {
-			ResultSet res = statement.executeQuery(sql);
+			pstmt = cResults.prepareStatement(sql);
+			pstmt.setString(1, tableName);
+			System.out.println("SQL: " + pstmt.toString());
+			ResultSet res = pstmt.executeQuery();
 			int count = 0;
 			
 			if(res.next()) {
@@ -973,6 +1026,8 @@ public class SubRelationalDB extends Subscriber {
 			}
 		} catch (Exception e) {
 			System.out.println("        Error checking for existence of table:" + e.getMessage());
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		return tableCreated;
 	}
@@ -1047,7 +1102,8 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text";
 			if(!form.hasParent()) {
-				sql += ", _user text, _version text, _complete boolean default true, _modified boolean default false";
+				sql += ", _user text, _version text, _complete boolean default true, _modified boolean default false"
+						+ ", _upload_time timestamp with time zone, _s_id integer ";
 			}
 							
 			for(Question q : columns) {
@@ -1157,10 +1213,10 @@ public class SubRelationalDB extends Subscriber {
 	 * Check for duplicates specified using a column named instanceid or _instanceid
 	 * Return true if this instance has already been uploaded
 	 */
-	private ArrayList<Integer> checkDuplicate(Statement statement, String tableName, String uuid) {
+	private ArrayList<Integer> checkDuplicate(Connection cResults, String tableName, String uuid) {
 		
 		ArrayList<Integer> duplicateKeys = new ArrayList<Integer> ();
-		
+		PreparedStatement pstmt = null;
 		uuid = uuid.replace("'", "''");	// Escape apostrophes
 		System.out.println("checkDuplicates: " + tableName + " : " + uuid);
 		
@@ -1171,12 +1227,15 @@ public class SubRelationalDB extends Subscriber {
 			String sql1 = "select prikey from " + tableName + " where _instanceid = '" + uuid + "' " +
 					"order by prikey asc;";
 			
+			pstmt = cResults.prepareStatement(colTest1);
 			// Check for duplicates with the old _instanceid
-			ResultSet res = statement.executeQuery(colTest1);
+			ResultSet res = pstmt.executeQuery();
 			if(res.next()) {
 				// Has _instanceid
 				System.out.println("Has _instanceid");
-				res = statement.executeQuery(sql1);
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+				pstmt = cResults.prepareStatement(sql1);
+				res = pstmt.executeQuery();
 				while(res.next()) {
 					duplicateKeys.add(res.getInt(1));
 				}
@@ -1189,11 +1248,15 @@ public class SubRelationalDB extends Subscriber {
 					"order by prikey asc;";
 			
 			// Check for duplicates with the new instanceid
-			res = statement.executeQuery(colTest2);
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			pstmt = cResults.prepareStatement(colTest2);
+			res = pstmt.executeQuery();
 			if(res.next()) {
 				// Has instanceid
 				System.out.println("Has instanceid");
-				res = statement.executeQuery(sql2);
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+				pstmt = cResults.prepareStatement(sql2);
+				res = pstmt.executeQuery();
 				while(res.next()) {
 					duplicateKeys.add(res.getInt(1));
 				}
@@ -1206,6 +1269,8 @@ public class SubRelationalDB extends Subscriber {
 			
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		
 		return duplicateKeys;

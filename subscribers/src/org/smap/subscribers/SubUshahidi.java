@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -81,7 +82,7 @@ public class SubUshahidi extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId, int ue_id)  {
+			String basePath, String filePath, String updateId, int ue_id, Date uploadTime)  {
 		
 		String url = null;	// Address of Ushahidi API
 
