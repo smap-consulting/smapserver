@@ -222,11 +222,16 @@ public class Data extends Application {
 							if(c.isGeometry()) {							
 								// Add Geometry (assume one geometry type per table)
 								String geomValue = rs.getString(i + 1);	
-								JSONObject jg = new JSONObject(geomValue);
-								
 								name = "_geolocation";
-								JSONArray coords = jg.getJSONArray("coordinates");
+								JSONArray coords = null;
+								if(geomValue != null) {
+									JSONObject jg = new JSONObject(geomValue);									
+									coords = jg.getJSONArray("coordinates");
+								} else {
+									coords = new JSONArray();
+								}
 								jr.put(name, coords);
+					
 							} else {
 								
 								//String name = rsMetaData.getColumnName(i);	
