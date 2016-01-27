@@ -26,6 +26,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.Vector;
 
 import javax.persistence.Column;
@@ -307,18 +308,40 @@ public class Question implements Serializable {
 	public void setListId(Connection sd, int sId) {
 		
 		if(this.l_id == 0) {		// No list has been set for this question
-		
+			
 			// Create a list name if the question is a select type
 			if(this.qType.startsWith("select")) {
+				
+				String sqlCheck = "select count(*) from listname where s_id = ? and name = ?;";
+				
 				String sql = "insert into listname (s_id, name) values(?, ?);";
 				PreparedStatement pstmt = null;
+				
 				try {
+					String listname = this.name;
+					
+					// Cater for the situation where the select question name is not unique
+					pstmt = sd.prepareStatement(sqlCheck);
+					pstmt.setInt(1, sId);
+					pstmt.setString(2, listname);
+					ResultSet rs = pstmt.executeQuery();
+					if(rs.next()) {
+						int count = rs.getInt(1);
+						if(count > 0) {
+							String rand  = String.valueOf(UUID.randomUUID());
+							rand = rand.substring(0, 3);
+							listname += "_" + rand;
+						}
+					}
+					
+					// Add the new list
+					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 					pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 					pstmt.setInt(1, sId);
-					pstmt.setString(2, this.name);
+					pstmt.setString(2, listname);
 					pstmt.executeUpdate();
 					
-					ResultSet rs = pstmt.getGeneratedKeys();
+					rs = pstmt.getGeneratedKeys();
 					rs.next();
 					this.l_id = rs.getInt(1);
 					
