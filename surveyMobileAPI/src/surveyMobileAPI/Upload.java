@@ -201,7 +201,6 @@ public class Upload extends Application {
 			XFormData xForm = new XFormData();
 			xForm.loadMultiPartMime(request, user, instanceId, deviceId);
 			log.info("Server:" + request.getServerName());
-			log.info("userevent: " + user + " : uploaded results : " + instanceId + " : " + key );	
 			log.info("Info: Upload finished ---------------- " + instanceId + " ------------");
 			
 			response = Response.created(uriInfo.getBaseUri()).status(HttpServletResponse.SC_CREATED)
