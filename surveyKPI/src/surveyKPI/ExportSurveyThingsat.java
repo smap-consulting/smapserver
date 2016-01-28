@@ -80,7 +80,7 @@ public class ExportSurveyThingsat extends Application {
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
 		
-		log.info("uservent: " + request.getRemoteUser() + " Export " + sId + " as a thingsat file to " + filename + " starting from form " + fId);
+		log.info("userevent: " + request.getRemoteUser() + " Export " + sId + " as a thingsat file to " + filename + " starting from form " + fId);
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 		
