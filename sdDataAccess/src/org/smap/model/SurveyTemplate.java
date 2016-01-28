@@ -1007,7 +1007,9 @@ public class SurveyTemplate {
 				q.setFormId(f.getId());
 				q.setSeq(f.qSeq++);
 				q.setListId(sd, survey.getId());
-				qPersist.persist(q);
+				if(!q.isRepeatCount()) {
+					qPersist.persist(q);
+				}
 			} 			
 		}
 		

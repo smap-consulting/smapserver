@@ -202,7 +202,7 @@ public class Form implements Serializable {
 	}
 	
 	public void setRepeats(String val) {
-		repeatsRef = val;
+		repeats = val;
 	}
 
 	public void setQuestions(List<Question> questions) {

@@ -438,6 +438,13 @@ public class GetXForm {
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
     				
     				Form subForm = template.getSubForm(f,q);
+    				
+    				if(subForm.getRepeats() != null) {
+    					// Add the calculation for repeat count
+    					questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
+    					currentParent.appendChild(questionElement);
+    				}
+    				
     				Element formElement_template = outputDoc.createElement(subForm.getName());
     				formElement_template.setAttribute("jr:template", "");
     				populateForm(outputDoc, formElement_template, INSTANCE, subForm);	
@@ -759,8 +766,10 @@ public class GetXForm {
 				hint = "jr:itext('" + hint + "')";
 				hintElement.setAttribute("ref", hint);
 			}			
-				
-			questionElement.appendChild(hintElement);
+			
+			if(hint != null && hint.trim().length() > 0) {
+				questionElement.appendChild(hintElement);
+			}
 		}
 		
 		boolean cascade = true;
