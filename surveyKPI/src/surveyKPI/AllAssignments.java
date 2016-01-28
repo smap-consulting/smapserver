@@ -730,7 +730,7 @@ public class AllAssignments extends Application {
 				 * Set the tasks from the passed in task list
 				 */
 				if(as.new_tasks != null) {
-					log.info("Crating " + as.new_tasks.features.length + " Ad-Hoc tasks");
+					log.info("Creating " + as.new_tasks.features.length + " Ad-Hoc tasks");
 					
 					// Assume POINT location, TODO POLYGON, LINESTRING
 					if(pstmtInsert != null) {pstmtInsert.close();};
