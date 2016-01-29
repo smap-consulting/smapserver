@@ -101,7 +101,7 @@ public class ExportSurveyMedia extends Application {
 		System.out.println("Export media: " + mediaQuestion + " : " + nameQuestionIdList);
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
-		log.info("uservent: " + request.getRemoteUser() + " Export media " + sId + " file to " + filename );
+		log.info("userevent: " + request.getRemoteUser() + " Export media " + sId + " file to " + filename );
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 		

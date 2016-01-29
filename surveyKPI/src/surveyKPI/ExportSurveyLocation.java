@@ -97,9 +97,7 @@ public class ExportSurveyLocation extends Application {
 		
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
-		log.info("uservent: " + request.getRemoteUser() + " Location Export " + sId + " as a "+ format + " file to " + filename + " starting from form " + fId);
-		
-		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
+		log.info("userevent: " + request.getRemoteUser() + " Location Export " + sId + " as a "+ format + " file to " + filename + " starting from form " + fId);	
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 

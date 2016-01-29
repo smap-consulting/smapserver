@@ -75,9 +75,9 @@ function initializeMap(idx){
                  "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
                  "http://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
 	
-	arrayHOT = ["https://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-               "https://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-               "https://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
+	arrayHOT = ["http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+               "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+               "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
 	
 	  loadEnd = false;
 	  function layerLoadStart(event) {

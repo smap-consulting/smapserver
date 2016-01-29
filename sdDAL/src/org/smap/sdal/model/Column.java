@@ -32,7 +32,6 @@ public class Column {
 	public String getSqlSelect(String urlprefix) {
 		String selName = null;
 		
-		System.out.println("Type: " + qType);
 		if(isAttachment()) {
 			selName = "'" + urlprefix + "' || " + name + " as " + name;
 		} else if(isGeometry()) {

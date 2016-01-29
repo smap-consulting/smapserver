@@ -1340,13 +1340,9 @@ public class SurveyTemplate {
 	 */
 	public void addSurveyInstanceNameFromCalculate(String calculate, String questionRef) {
 		
-		System.out.println("Question ref: " + questionRef);
 		if(questionRef.toLowerCase().trim().equals("/main/meta/instancename")) {
 			survey.setInstanceName(calculate);
 		}
-		//survey.setManifest(gson.toJson(mArray));
-		
-			
 	}
 	
 	/*
