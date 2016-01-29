@@ -460,7 +460,7 @@ public class QuestionInfo {
 				return tableName + "." + columnName;
 			}
 		} else {
-			if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
+			if(qType != null && (qType.equals("image") || qType.equals("audio") || qType.equals("video"))) {
 				return "'" + urlprefix + "' || " + tableName + "." + columnName;
 			}
 			return tableName + "." + columnName;
