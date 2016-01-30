@@ -1482,7 +1482,7 @@ public class QuestionManager {
 			rs.next();
 			fId = rs.getInt(1);
 			
-			duplicateQuestions(sd, originalFormId, fId);
+			duplicateQuestions(sd, originalFormId, fId, sharedResults);
 			duplicateQuestionLabels(sd, sId, existingSurveyId, originalFormId);
 			duplicateOptionsInForm(sd, sId, fId, existingSurveyId);
 			
@@ -1650,7 +1650,7 @@ public class QuestionManager {
 	/*
 	 * Copy questions in a form to a new form
 	 */
-	public void duplicateQuestions(Connection sd, int existingFormId, int newFormId) throws Exception {
+	public void duplicateQuestions(Connection sd, int existingFormId, int newFormId, boolean sharedResults) throws Exception {
 		
 		String sql = "insert into question("
 				 + "q_id,"
@@ -1668,7 +1668,6 @@ public class QuestionManager {
 				 + "source_param, "
 				 + "readonly, "
 				 + "mandatory, "
-				 + "groupstartorend, "
 				 + "relevant, "
 				 + "calculate, "
 				 + "qconstraint, "
@@ -1704,7 +1703,6 @@ public class QuestionManager {
 				 + "source_param, "
 				 + "readonly, "
 				 + "mandatory, "
-				 + "groupstartorend, "
 				 + "relevant, "
 				 + "calculate, "
 				 + "qconstraint, "
@@ -1719,7 +1717,7 @@ public class QuestionManager {
 				 + "list_name, "
 				 + "column_name," 
 				 + "repeatcount, "
-				 + "'false', "				// Set published to false
+				 + (sharedResults ? "published, " : "'false'")	// Set to false if this question is for a new table	
 				 + "column_name_applied, "
 				 + "l_id "
 				 
@@ -1803,7 +1801,7 @@ public class QuestionManager {
         		String listName = rs.getString(1);
         		
         		// 2. Ignore if this list has already been added
-        		pstmtCheckListName.setInt(1, existingSurveyId);
+        		pstmtCheckListName.setInt(1, sId);
         		pstmtCheckListName.setString(2, listName);
         		
         		log.info("Checking list name: " + pstmtCheckListName.toString());

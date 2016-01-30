@@ -1052,26 +1052,32 @@ public class GetXForm {
 		// This was added in version 15.05, at some point it may be safe to remove the check for the "Replaced by " string and _bad
 		String sql = "select count(*) from " + table + " where prikey = ? " +
 				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
-		log.info("Checking primary key: " + sql + " : " + priKey);
 		PreparedStatement pstmt = connection.prepareStatement(sql);
-		pstmt.setInt(1, priKey);
-		
+
 		ResultSet rs = null;
 		try {
+			
+			pstmt.setInt(1, priKey);
+			log.info("Checking primary key: " + pstmt.toString());
+			
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				if(rs.getInt(1) > 0) {
 					isValid = true;
+					log.info("Is a valid primary key");
 				}
 			}
 
 		} catch (Exception e) {
 			String msg = e.getMessage();
 			if(msg.contains("does not exist")) {
+				log.info("Excetion checking primary key: " + msg);
 				// Presumably no data has been uploaded yet - therefore no key but not an error
 			} else {			
 				e.printStackTrace();
 			}
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
 		}
 	
 
@@ -1364,21 +1370,23 @@ public class GetXForm {
     	List<Question> questions = form.getQuestions();
     	for(Question q : questions) {
     		String col = null;
-    				
-    		if(template.getSubForm(form, q) == null) {
-    			// This question is not a place holder for a subform
-    			if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
-		    		String qType = q.getType();
-		    		if(qType.equals("geopoint")) {
-		    			col = "ST_AsText(" + q.getColumnName() + ")";
-		    		} else if(qType.equals("select")){
-		    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
-		    		} else {
-		    			col = q.getColumnName();
-		    		}
-		
-		    		sql += "," + col;
-    			}
+    		
+    		if(q.isPublished()) {
+	    		if(template.getSubForm(form, q) == null) {
+	    			// This question is not a place holder for a subform
+	    			if(q.getSource() != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+			    		String qType = q.getType();
+			    		if(qType.equals("geopoint")) {
+			    			col = "ST_AsText(" + q.getColumnName() + ")";
+			    		} else if(qType.equals("select")){
+			    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
+			    		} else {
+			    			col = q.getColumnName();
+			    		}
+			
+			    		sql += "," + col;
+	    			}
+	    		}
     		}
 
     	}
@@ -1412,6 +1420,10 @@ public class GetXForm {
 				String qType = q.getType(); 
 				String qPath = q.getPath();
 				String qSource = q.getSource();
+				
+				if(!q.isPublished()) {		// Ignore questions that have not been published
+					continue;
+				}
 				
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
 	    			Form subForm = template.getSubForm(form, q);

@@ -70,6 +70,9 @@ public class Question implements Serializable {
 	@Column(name = "l_id")
 	private int l_id;
 
+	@Column(name = "published")
+	private boolean published;
+
 	@Column(name = "qName")
 	private String name;
 	
@@ -187,6 +190,10 @@ public class Question implements Serializable {
 	
 	public int getListId() {
 		return l_id;
+	}
+	
+	public boolean isPublished() {
+		return published;
 	}
 
 	public String getName() {
