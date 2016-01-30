@@ -227,7 +227,6 @@ define({
 	"t_st": "Set Text Value",
 	"t_ue": "Update Existing Results",
 	"t_ap": "Address Parameters",
-	"t_nm": "New Message",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
