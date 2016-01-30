@@ -172,6 +172,12 @@ if [ $version -lt "1512" ]
 then
 echo "1512" > ~/smap_version
 fi
+
+# version 16.01
+if [ $version -lt "1601" ]
+then
+echo "1601" > ~/smap_version
+fi
 #####################################################################################
 # All versions
 # Copy the new apache configuration files
