@@ -374,6 +374,7 @@ $(document).ready(function() {
 	enableUserProfileBS();
 	
 	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
+	/*
 	function autocollapse() {
 	    var $navbar = $('.navbar');
 	    $navbar.removeClass('collapsed'); 
@@ -382,7 +383,7 @@ $(document).ready(function() {
 	}
 	$(document).on('ready', autocollapse);
 	$(window).on('resize', autocollapse);
-	
+	*/
 	/*
 	 * Add check prior to the user leaving the screen
 	 */

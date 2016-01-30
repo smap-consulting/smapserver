@@ -70,6 +70,7 @@ define({
 	"c_block": "Block",
 	"c_graph": "Graph",
 	"c_map": "Map",
+	"c_map_layers": "Map Layers",	
 	"c_table": "Table",
 	"c_tables": "Tables",
 	"c_images": "Images",
@@ -113,6 +114,7 @@ define({
 	"c_action": "Action",
 	"c_mapid": "Map Id",
 	"c_zoom": "Zoom Levels",
+	"c_zoom_data": "Zoom to Data",
 	"c_vector_data": "Vector Data",
 	"c_vector_style": "Vector Style",
 	"c_portrait": "Portrait",
@@ -120,6 +122,10 @@ define({
 	"c_tools": "Tools",
 	"c_required": "Make Required",
 	"c_not_required": "Make Not Required",
+	"c_del_sel": "Delete Selected",
+	"c_print": "Print",
+	"c_repeat": "Repeat",
+	"c_scheduled": "Scheduled",
 	
 	// File Types
 	"ft": "File Type",
@@ -200,6 +206,28 @@ define({
 	// Editor
 	"e_b_e": "Base on existing form",
 	"e_s_r": "Store results in shared table",
+	
+	// Tasks
+	"t_complete": "Show Completed Tasks",
+	"t_show": "Show tasks for:",
+	"t_assign": "Assign User",
+	"t_add_group": "Add Task Group",
+	"t_lt_file": "Load Tasks From File",
+	"t_choose_user": "Choose the user to assign to the selected tasks",
+	"t_ce": "Clear Existing Tasks",
+	"t_ce_warn": "This will clear all the existing data in the survey. Are you sure you want to do this?",
+	"t_ceg": "Create Empty Task Group",
+	"t_ep": "Existing Project",
+	"t_es": "Existing Survey",
+	"t_ns": "New Survey",
+	"t_ft": "Filter Tasks",
+	"t_fq": "Filter by Question",
+	"t_so": "Selected Option",
+	"t_sn": "Set Numeric Value",
+	"t_st": "Set Text Value",
+	"t_ue": "Update Existing Results",
+	"t_ap": "Address Parameters",
+	"t_nm": "New Message",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
