@@ -56,21 +56,25 @@ require([
 	
 $(document).ready(function() {
 	
-	var url = '/surveyKPI/upload/media';
+	var bs = isBusinessServer();
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
 	globals.gCurrentSurvey = undefined;
 	
-	getFilesFromServer(url, undefined, refreshMediaView);		// Get files available to the entire organisation
+	getFilesFromServer('/surveyKPI/upload/media', undefined, refreshMediaView);		// Get files available to the entire organisation
 	
 	// Set up the tabs
+	if(bs) {
+		$('#nfcTab').show();
+	}
     $('#mediaTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
     		
 		$('#mapPanel').hide();
+	   	$('#nfcPanel').hide();
 		$('#mediaPanel').show();
     })
     $('#mapTab a').click(function (e) {
@@ -78,6 +82,15 @@ $(document).ready(function() {
     	$(this).tab('show');
     		  	  
 		$('#mapPanel').show();
+	   	$('#nfcPanel').hide();
+		$('#mediaPanel').hide();
+    })
+    $('#nfcTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    	
+    	$('#nfcPanel').show();
+		$('#mapPanel').hide();
 		$('#mediaPanel').hide();
     })
     
@@ -90,7 +103,14 @@ $(document).ready(function() {
     // Respond to file upload
     $('#submitFiles').click( function() {
     	if(!$('#submitFiles').hasClass('disabled')) {
-    		uploadFiles(url, "fileupload", refreshMediaView, undefined);
+    		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaView, undefined);
+    	}
+    });
+    
+    // Respond to nfc upload
+    $('#submitNfcFiles').click( function() {
+    	if(!$('#submitNfcFiles').hasClass('disabled')) {
+    		uploadFiles('/surveyKPI/tasks/upload/nfc', "nfcupload", refreshNfcView, undefined);
     	}
     });
     
@@ -111,6 +131,13 @@ $(document).ready(function() {
 		showMapDialogSections($(this));
 	});
 	getMaps();
+	
+	/*
+	 * Set up nfc tabs
+	 */
+	$('#addNfc').click(function(){
+		$('#addMapPopup').modal("show");
+	});
 	
     $('.vector-data-inputs').bootstrapFileInput();
     $('.vector-style-inputs').bootstrapFileInput();
@@ -286,13 +313,13 @@ function updateMapList(data) {
 		h[++idx] = '<td>';
 		
 		h[++idx] = data[i].config.zoom +" levels";
-		if(data[i].config.mapid) {
+		if(data[i].type === "mapbox" && data[i].config.mapid) {
 			h[++idx] = ", Mapbox Id: " + data[i].config.mapid;
 		}
-		if(data[i].config.vectorData) {
+		if(data[i].type === "vector" && data[i].config.vectorData) {
 			h[++idx] = ", Vector file: " + data[i].config.vectorData;
 		}
-		if(data[i].config.styleData) {
+		if(data[i].type === "vector" && data[i].config.styleData) {
 			h[++idx] = ", styled by " + data[i].config.styleData;
 		}
 		h[++idx] = '</td>';
@@ -358,6 +385,52 @@ function delete_map(id) {
 				}
 			}
 	});
+}
+
+/*
+ * Show the NFC tags
+ */
+function refreshNfcView(tags) {
+	
+	var i,
+		survey = globals.model.survey,
+		$element,
+		h = [],
+		idx = -1;
+
+	if(tags) {
+
+		$element = $('#nfcList');
+		
+		h[++idx] = '<tr>';
+		
+		for(i = 0; i < tags.length; i++){
+			h[++idx] = '<tr>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].type;
+			h[++idx] = '</td>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].group;
+			h[++idx] = '</td>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].uid;
+			h[++idx] = '</td>';
+		
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].name;
+			h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+			
+		}
+		
+	
+		$element.html(h.join(""));
+	}
 }
 
 });

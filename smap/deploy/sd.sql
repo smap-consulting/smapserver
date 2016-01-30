@@ -418,3 +418,20 @@ alter table tasks add column schedule_atx timestamp with time zone;
 update tasks set schedule_atx = schedule_at;
 alter table tasks drop column schedule_at;
 alter table tasks rename column schedule_atx to schedule_at;
+
+CREATE SEQUENCE location_seq START 1;
+ALTER SEQUENCE location_seq OWNER TO ws;	
+
+-- uploading of locations
+CREATE SEQUENCE location_seq START 1;
+ALTER SEQUENCE location_seq OWNER TO ws;	
+
+CREATE TABLE public.locations (
+	id integer DEFAULT nextval('location_seq') NOT NULL PRIMARY KEY,
+	o_id integer REFERENCES organisation ON DELETE CASCADE,
+	locn_group text,
+	locn_type text,
+	name text,
+	uid text
+);
+ALTER TABLE public.locations OWNER TO ws;

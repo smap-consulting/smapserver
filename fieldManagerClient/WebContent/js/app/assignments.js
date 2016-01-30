@@ -249,7 +249,9 @@ $(document).ready(function() {
 	});
 	
 	/*
-	 * Create a new group, optionally populated with tasks generated from existing survey results
+	 * Create a new group, 
+	 *  optionally populated with tasks generated from existing survey results
+	 *  or from an XLS file
 	 */
 	$('#addNewGroupSave').click(function () {
 		var assignObj = {},

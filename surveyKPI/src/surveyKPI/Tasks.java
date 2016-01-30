@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -55,8 +56,11 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TaskManager;
+import org.smap.sdal.model.Tag;
 
 import utilities.XLSFormManager;
+import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,7 +74,7 @@ import com.itextpdf.tool.xml.parser.XMLParser;
 @Path("/tasks")
 public class Tasks extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Tasks.class.getName());
@@ -82,10 +86,124 @@ public class Tasks extends Application {
 		return s;
 	}
 
+	public Tasks() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		a = new Authorise(authorisations, null);
+	}
+	
+	/*
+	 * Upload NFC tags used in task assignment
+	 */
 	@POST
 	@Produces("application/json")
-	@Path("/upload")
+	@Path("/upload/nfc")
+	public Response uploadNfcTags(
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		Response response = null;
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
+		String serverName = request.getServerName();
+		String user = request.getRemoteUser();
+
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+	
+		log.info("upload nfc tags -----------------------");
+		
+		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+	
+		Connection sd = null; 
+
+		try {
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				// Get form parameters
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					String fileName = item.getName();
+					String filetype = null;
+					if(fileName.endsWith("xlsx")) {
+						filetype = "xlsx";
+					} else if(fileName.endsWith("xls")) {
+						filetype = "xls";
+					} else {
+						log.info("unknown file type for item: " + fileName);
+						continue;
+						
+					}
+	
+					// Authorisation - Access
+					sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+					a.isAuthorised(sd, request.getRemoteUser());
+					// End authorisation
+
+					// Process xls file
+					XLSTaskManager xf = new XLSTaskManager();
+					ArrayList<Tag> tags = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
+					
+					// Save tags to disk
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					TaskManager tm = new TaskManager();
+					tm.saveTags(sd, tags, oId);
+					
+					// Return tags to calling program
+					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					String resp = gson.toJson(tags);
+						
+					response = Response.ok(resp).build();	
+					
+
+						
+				}
+			}
+			
+		} catch(FileUploadException ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+	
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+		
+	}
+	
+	@POST
+	@Produces("application/json")
+	@Path("/upload/{projectId}")
 	public Response uploadTasksFromFile(
+			@PathParam("projectId") int projectId, 
 			@Context HttpServletRequest request
 			) throws IOException {
 		
@@ -132,53 +250,23 @@ public class Tasks extends Application {
 					// Authorisation - Access
 					connectionSD = SDDataSource.getConnection("fieldManager-MediaUpload");
 					
-					orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
-
+					a.isAuthorised(connectionSD, request.getRemoteUser());
+					a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 					// End authorisation
-					
-					cResults = ResultsDataSource.getConnection("fieldManager-MediaUpload");
-					
-					String basePath = GeneralUtilityMethods.getBasePath(request);
-					
-					MediaInfo mediaInfo = new MediaInfo();
-					if(sId > 0) {
-						mediaInfo.setFolder(basePath, sId, null, connectionSD);
-					} else {	
-						// Upload to organisations folder
-						mediaInfo.setFolder(basePath, user, null, connectionSD, false);				 
-					}
-					mediaInfo.setServer(request.getRequestURL().toString());
-					
-					String folderPath = mediaInfo.getPath();
-					fileName = mediaInfo.getFileName(fileName);
 
-					if(folderPath != null) {						
-						String filePath = folderPath + "/" + fileName;
-					    File savedFile = new File(filePath);
-					    log.info("Saving file to: " + filePath);
-					    item.write(savedFile);
+					// Apply changes from Task files to survey definition
+					String contentType = UtilityMethodsEmail.getContentType(fileName);
+					System.out.println("content type: " + contentType);
+					if(contentType.equals("text/csv")) {
+					    	
+					 }
 					    
-					    // Create thumbnails
-					    UtilityMethodsEmail.createThumbnail(fileName, folderPath, savedFile);
-					    
-					    // Apply changes from CSV files to survey definition
-					    String contentType = UtilityMethodsEmail.getContentType(fileName);
-					    if(contentType.equals("text/csv")) {
-					    	applyCSVChanges(connectionSD, cResults, user, sId, fileName, savedFile, basePath, mediaInfo);
-					    }
-					    
-					    MediaResponse mResponse = new MediaResponse ();
-					    mResponse.files = mediaInfo.get();			
-						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-						String resp = gson.toJson(mResponse);
-						log.info("Responding with " + mResponse.files.size() + " files");
+		
+					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					String resp = gson.toJson("");
 						
-						response = Response.ok(resp).build();	
-						
-					} else {
-						log.log(Level.SEVERE, "Media folder not found");
-						response = Response.serverError().entity("Media folder not found").build();
-					}
+					response = Response.ok(resp).build();	
+					
 
 						
 				}

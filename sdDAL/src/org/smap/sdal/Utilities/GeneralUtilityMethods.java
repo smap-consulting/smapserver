@@ -238,6 +238,7 @@ public class GeneralUtilityMethods {
 		
 		if(!host.contains("zarkman.com") &&
 				!host.equals("localhost") &&
+				!host.equals("kontrolid.smap.com.au") &&
 				!host.equals("dev.smap.com.au")) {
 			throw new AuthorisationException();
 		}

@@ -40,6 +40,10 @@ DROP SEQUENCE IF EXISTS t_seq CASCADE;
 CREATE SEQUENCE t_seq START 1;
 ALTER SEQUENCE t_seq OWNER TO ws;	
 
+DROP SEQUENCE IF EXISTS location_seq CASCADE;
+CREATE SEQUENCE location_seq START 1;
+ALTER SEQUENCE location_seq OWNER TO ws;	
+
 DROP SEQUENCE IF EXISTS l_seq CASCADE;
 CREATE SEQUENCE l_seq START 1;
 ALTER SEQUENCE l_seq OWNER TO ws;	
@@ -583,6 +587,16 @@ SELECT AddGeometryColumn('tasks', 'geo_linestring', 4326, 'LINESTRING', 2);
 SELECT AddGeometryColumn('tasks', 'geo_polygon', 4326, 'POLYGON', 2);
 SELECT AddGeometryColumn('tasks', 'geo_point', 4326, 'POINT', 2);
 ALTER TABLE public.tasks OWNER TO ws;
+
+CREATE TABLE public.locations (
+	id integer DEFAULT nextval('location_seq') NOT NULL PRIMARY KEY,
+	o_id integer REFERENCES organisation ON DELETE CASCADE,
+	locn_group text,
+	locn_type text,
+	name text,
+	uid text
+);
+ALTER TABLE public.locations OWNER TO ws;
 
 CREATE TABLE public.assignments (
 	id integer NOT NULL DEFAULT nextval('assignment_id_seq'),
