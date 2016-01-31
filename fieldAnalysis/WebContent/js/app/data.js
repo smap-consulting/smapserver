@@ -159,7 +159,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 	survey = globals.gSelector.getSurvey(sId);
 	view.tableCount = survey.forms.length;
 	for(i = 0; i < survey.forms.length; i++) {
-		processSurveyData(survey.forms[i].name, sId, view, survey.name, false, 0 );		// Get table data
+		processSurveyData(survey.forms[i].f_id, sId, view, survey.name, false, 0 );		// Get table data
 	}
 
  }
@@ -167,7 +167,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
  /*
   * Get the survey level data for a specific table
   */
-function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
+function processSurveyData(fId, f_sId, f_view, survey, replace, start_rec) {
 	
 	// For table all of survey views. page the results and include "bad records"
 	if(f_view.type === "table") {
@@ -184,7 +184,7 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
 	
 	var survey,
 		i,
-		url = formItemsURL(table, "yes", "no", start_rec, rec_limit, bBad, f_view.filter,
+		url = formItemsURL(fId, "yes", "no", start_rec, rec_limit, bBad, f_view.filter,
 				f_view.dateQuestionId, f_view.fromDate, f_view.toDate);	// Get all records with all features
 	
 	addHourglass();
@@ -198,24 +198,24 @@ function processSurveyData(table, f_sId, f_view, survey, replace, start_rec) {
 			data.source = "survey";
 			data.sId = f_sId;
 			data.table = true;
-			data.tableName = table;
+			data.fId = fId;
 			data.survey = survey;
 			
 			// Record starting records for each table so that "less" will work
 			if(typeof f_view.start_recs === "undefined") {
 				f_view.start_recs = {};
 			}
-			if(typeof f_view.start_recs[table] === "undefined") {
-				f_view.start_recs[table] = [];
+			if(typeof f_view.start_recs[fId] === "undefined") {
+				f_view.start_recs[fId] = [];
 			}
-			f_view.start_recs[table].push(start_rec);
+			f_view.start_recs[fId].push(start_rec);
 			
 	 		globals.gSelector.addDataItem(url, data);
 	 		f_view.tableCount--;
 	 		
 	 		if(replace) {
 	 			for(i = 0; i < f_view.results.length; i++) {
-	 				if(f_view.results[i].tableName === table) {
+	 				if(f_view.results[i].fId === fId) {
 	 					f_view.results[i] = data;
 	 					break;
 	 				}

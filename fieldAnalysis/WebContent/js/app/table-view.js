@@ -29,11 +29,11 @@ function setTableSurvey(view) {
 		$selFoot = $('#p' + view.pId).find('.pfoot'),
 		$tabSelect,
 		sMeta = globals.gSelector.getSurvey(view.sId),
-		topTable = undefined,
-		currentTable = undefined,
+		topForm = undefined,
+		currentForm = undefined,
 		idx,
 		i,
-		tableIdx,
+		formIdx,
 		data = view.results;
 
 	$selHead.empty();
@@ -42,12 +42,12 @@ function setTableSurvey(view) {
 	/*
 	 * Get the top table so it can be automatically selected
 	 */
-	if(view.table) {
-		topTable = view.table;
+	if(view.fId) {
+		topForm = view.fId;
 	} else {
 		$.each(sMeta.forms, function(j, item) {
 			if(item.p_id == 0) {
-				topTable = item.name;
+				topForm = item.f_id;
 			}
 		});
 	}
@@ -59,17 +59,17 @@ function setTableSurvey(view) {
 	$selHead.append('<form><div id="table_select' + view.pId + '"></div></form>');
 	$tabSelect = $('#table_select' + view.pId);
 	i = -1;
-	currentTable = undefined;
+	currentForm = undefined;
 	var btns = [];
 	for(idx = 0; idx < data.length; idx++) {
 		btns[++i] = '<input type="radio" id="radio' + view.pId + '_' + idx + 
 				'" name="radio" value="' + idx + '"'; 
-		if(data[idx].tableName === topTable) {
+		if(data[idx].fId === topForm) {
 			btns[++i] = ' checked="checked"';
-			currentTable = idx;
+			currentForm = idx;
 		}
 		btns[++i] = '/><label for="radio'+ view.pId + '_' + idx + '">' +
-				data[idx].tableName + '</label>';
+				data[idx].formName + '</label>';
 		
 	}
 	$tabSelect.append(btns.join(''));
@@ -77,16 +77,16 @@ function setTableSurvey(view) {
 	
 	function addChangeFunction (ident) {
 		$tabSelect.find('input').change(function() {
-			tableIdx = $tabSelect.find('input:checked').val();
-			showTable(tableIdx, view, data[tableIdx], data[tableIdx].tableName, ident);
+			formIdx = $tabSelect.find('input:checked').val();
+			showTable(formIdx, view, data[formIdx], data[formIdx].fId, ident);
 		});
 	}
 	addChangeFunction(sMeta.survey_ident);
 
-	if(typeof currentTable != "undefined") {
+	if(typeof currentForm != "undefined") {
 		// note: the current table may not have been loaded yet if the panels were re-loaded while data
 		// was still being retrieved
-		showTable(currentTable, view, data[currentTable], data[currentTable].tableName, sMeta.survey_ident);
+		showTable(currentForm, view, data[currentForm], data[currentForm].fId, sMeta.survey_ident);
 	}
 
 	/*
@@ -190,17 +190,17 @@ function deleteAllTables(sId) {
 
 }
 
-function showTable(tableIdx, view, tableItems, tableName, survey_ident) {
+function showTable(tableIdx, view, tableItems, fId, survey_ident) {
 
 	var elemMain = 'table_panel' + view.pId,
 		$selMain = $('#'+ elemMain);
 	
 	$selMain.empty();
-	view.table = tableName;		// Save current table name for the export function
+	view.fId = fId;		// Save current form id for the export function
 
 	if(view.dirty) {
 		view.dirty = false;
-		view.currentTableName = tableName;
+		view.currentFormId = fId;
 		refreshAnalysisData();
 		return;
 	}
@@ -209,22 +209,22 @@ function showTable(tableIdx, view, tableItems, tableName, survey_ident) {
 		generateTable(elemMain, tableItems, "", survey_ident, view.sId);
 		addRightClickToTable($selMain, view.sId, view);
 		$selMain.find('table').tablesorter();
-		addMoreLessButtons($selMain, view, tableName, tableItems);
+		addMoreLessButtons($selMain, view, fId, tableItems);
 	} else {
 		$selMain.html("No data available");
 	}
 }
 
-function addMoreLessButtons($elem, tView, tName, tItems) {
+function addMoreLessButtons($elem, tView, fId, tItems) {
 	$elem.find('.get_less').button().click(function() {
 		tView.tableCount = 1;
-		var currentStart = tView.start_recs[tName].pop();
-		var newStart = tView.start_recs[tName].pop();
-		processSurveyData(tName, tView.sId, tView, tItems.survey, true, newStart);
+		var currentStart = tView.start_recs[fId].pop();
+		var newStart = tView.start_recs[fId].pop();
+		processSurveyData(fId, tView.sId, tView, tItems.survey, true, newStart);
 	});
 	$elem.find('.get_more').button().click(function() {
 		tView.tableCount = 1;
-		processSurveyData(tName, tView.sId, tView, tItems.survey, true, parseInt($(this).val()));
+		processSurveyData(fId, tView.sId, tView, tItems.survey, true, parseInt($(this).val()));
 	});
 	$elem.find('.get_less_dis, .get_more_dis').button({ disabled: true });
 }
@@ -284,7 +284,7 @@ function getTablePanel() {
 /*
  * Toggle the setting of the _bad attribute for the passed in data record
  */
-function toggleBad($elem, tableName, pKey, value, sId, theView) {
+function toggleBad($elem, fId, pKey, value, sId, theView) {
 	
 	var toValue,
 		toBeBad;
@@ -304,7 +304,7 @@ function toggleBad($elem, tableName, pKey, value, sId, theView) {
 		  contentType: "application/json",
 		  dataType: "json",
 		  data: { value: toBeBad, sId: sId, reason: reason},
-		  url: toggleBadURL(tableName, pKey),
+		  url: toggleBadURL(fId, pKey),
 		  success: function(data, status) {
 			  $elem.text(toValue);
 			  $elem.next().text(reason);
@@ -366,9 +366,9 @@ function addRightClickToTable($elem, sId, view) {
 		$elem.find('.bad_r, .good_r').off().bind("contextmenu", function(e) {
 			var $this = $(this);
 			var pkey = $this.attr("pkey");
-			var tableName = $this.closest('table').attr("name");
+			var fId = $this.closest('table').attr("form");
 			var value = $this.text();
-			toggleBad($this, tableName, pkey, value, survey, theView);
+			toggleBad($this, fId, pkey, value, survey, theView);
 			return false;
 		});
 	}

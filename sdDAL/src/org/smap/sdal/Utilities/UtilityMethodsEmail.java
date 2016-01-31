@@ -67,7 +67,7 @@ public class UtilityMethodsEmail {
 				pstmt.setInt(4, key);
 			}
 			
-			log.info("Mark record" + pstmt.toString());
+			log.info("Mark record: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
 			
 			if(count != 1) {

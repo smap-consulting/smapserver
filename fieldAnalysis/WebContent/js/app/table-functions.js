@@ -44,8 +44,8 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 	if(typeof fn === "undefined") {
 		fn = "none";
 	}
-	if(data.table) {
-		title = data.tableName;
+	if(data.formName) {
+		title = data.formName;
 	} else {
 		title = data.question;
 	}
@@ -103,7 +103,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 		isPeriod = true;
 	}
 	gTab[++gIdx] = '<div id="scroll_zone">';
-	gTab[++gIdx] = '<table name="' + data.tableName + '" border="1" class="tablesorter">';
+	gTab[++gIdx] = '<table form="' + data.fId + '" border="1" class="tablesorter">';
 
 	// Write headers
 	gTab[++gIdx] = '<thead>';

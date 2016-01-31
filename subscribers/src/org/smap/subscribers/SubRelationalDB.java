@@ -500,6 +500,8 @@ public class SubRelationalDB extends Subscriber {
 			keys.duplicateKeys = new ArrayList<Integer>();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
 				boolean tableCreated = createTable(cResults, tableName, sName);
+				boolean tableChanged = false;
+				boolean tablePublished = false;
 				keys.duplicateKeys = checkDuplicate(cResults, tableName, uuid);
 				/*
 				 * Bug fix duplicates
@@ -518,9 +520,14 @@ public class SubRelationalDB extends Subscriber {
 				if(tableCreated) {
 					markAllChangesApplied(cMeta, sId);
 				} else {
-					applyTableChanges(cMeta, cRel, sId);
+					tableChanged = applyTableChanges(cMeta, cRel, sId);
+					
+					// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+					tablePublished = addUnpublishedColumns(cMeta, cRel, sId);
 				}
-				markPublished(cMeta, sId);
+				if(tableCreated || tableChanged || tablePublished) {
+					markPublished(cMeta, sId);		// TODO only mark published if there have been changes made
+				}
 			}
 			
 			boolean isBad = false;
@@ -1298,7 +1305,9 @@ public class SubRelationalDB extends Subscriber {
 		boolean tableAltered;
 	}
 	
-	private void applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws Exception {
+	private boolean applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws Exception {
+		
+		boolean tableChanged = false;
 		
 		String sqlGet = "select c_id, changes "
 				+ "from survey_change "
@@ -1468,6 +1477,7 @@ public class SubRelationalDB extends Subscriber {
 							// Apply each column
 							for(String col : columns) {
 								status = alterColumn(cResults, qd.table, qd.type, col);
+								tableChanged = true;
 							}
 						}
 						
@@ -1497,6 +1507,114 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtGetListQuestions != null) {pstmtGetListQuestions.close();}} catch (Exception e) {}
 			try {if (pstmtGetTableName != null) {pstmtGetTableName.close();}} catch (Exception e) {}
 		}
+		
+		return tableChanged;
+		
+	}
+	
+	private boolean addUnpublishedColumns(Connection connectionSD, Connection cResults, int sId) throws Exception {
+		
+		boolean tablePublished = false;
+		
+		String sqlGetUnpublishedQuestions = "select q.q_id, q.qtype, q.column_name, q.l_id, q.appearance, f.table_name "
+				+ "from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and q.published = 'false' "
+				+ "and f.s_id = ?";
+		
+		String sqlGetUnpublishedOptions = "select o_id, column_name, externalfile "
+				+ "from option "
+				+ "where published = 'false' "
+				+ "and l_id = ?";
+		
+		PreparedStatement pstmtGetUnpublishedQuestions = null;
+		PreparedStatement pstmtGetUnpublishedOptions = null;
+		
+		
+		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		
+		System.out.println("######## Apply unpublished questions");
+		try {
+			
+			pstmtGetUnpublishedQuestions = connectionSD.prepareStatement(sqlGetUnpublishedQuestions);
+			pstmtGetUnpublishedOptions = connectionSD.prepareStatement(sqlGetUnpublishedOptions);
+			
+			pstmtGetUnpublishedQuestions.setInt(1, sId);
+			System.out.println("Get unpublished questions: " + pstmtGetUnpublishedQuestions.toString());
+			
+			ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
+			TableUpdateStatus status = null;
+			
+			ResultSet rs = pstmtGetUnpublishedQuestions.executeQuery();
+			while(rs.next()) {
+				int qId = rs.getInt(1);
+				String qType = rs.getString(2);
+				String columnName = rs.getString(3);
+				int l_id = rs.getInt(4);				// List Id
+				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rs.getString(5));
+				String table_name = rs.getString(6);
+				
+				if(qType.equals("begin group") || qType.equals("end group")) {
+						// Ignore group changes
+				} else if(qType.equals("begin repeat")) {
+					// TODO
+						
+				} else {
+					columns.add(columnName);		// Usually this is the case unless the question is a select multiple
+						
+					if(qType.equals("string")) {
+						qType = "text";
+					} else if(qType.equals("dateTime")) {
+						qType = "timestamp with time zone";					
+					} else if(qType.equals("audio") || qType.equals("image") || qType.equals("video")) {
+						qType = "text";					
+					} else if(qType.equals("decimal")) {
+						qType = "real";
+					} else if(qType.equals("barcode")) {
+						qType = "text";
+					} else if(qType.equals("note")) {
+							qType = "text";
+					} else if(qType.equals("select1")) {
+						qType = "text";
+					} else if (qType.equals("select")) {
+						qType = "integer";
+								
+						columns.clear();
+						pstmtGetUnpublishedOptions.setInt(1, l_id);
+								
+						System.out.println("Get unpublished options to add: "+ pstmtGetUnpublishedOptions.toString());
+						ResultSet rsOptions = pstmtGetUnpublishedOptions.executeQuery();
+							while(rsOptions.next()) {			
+							// Create if its an external choice and this question uses external choices
+							//  or its not an external choice and this question does not use external choices
+							String o_col_name = rsOptions.getString(2);
+							boolean externalFile = rsOptions.getBoolean(3);
+		
+							if(hasExternalOptions && externalFile || !hasExternalOptions && !externalFile) {
+								String column =  columnName + "__" + o_col_name;
+								columns.add(column);
+							}
+						}
+							
+						// Apply each column
+						for(String col : columns) {
+							status = alterColumn(cResults, table_name, qType, col);
+							tablePublished = true;
+						}					
+					}
+				} 
+
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtGetUnpublishedQuestions != null) {pstmtGetUnpublishedQuestions.close();}} catch (Exception e) {}
+			try {if (pstmtGetUnpublishedOptions != null) {pstmtGetUnpublishedOptions.close();}} catch (Exception e) {}
+		}
+		
+		return tablePublished;
 		
 	}
 	
@@ -1619,7 +1737,10 @@ public class SubRelationalDB extends Subscriber {
 		ArrayList<FormDetail> forms = new ArrayList<FormDetail> ();
 		
 
-		String sqlGetSharingForms = "select s_id, f_id, table_name from form where table_name in (select table_name from form where s_id = ?);";
+		String sqlGetSharingForms = "select f.s_id, f.f_id, f.table_name from form f, survey s "
+				+ "where s.s_id = f.s_id "
+				+ "and s.deleted = 'false' "
+				+ "and f.table_name in (select table_name from form where s_id = ?);";
 		
 		String sqlSetPublishedThisForm = "update question set published = 'true' where f_id = ?;";
 		

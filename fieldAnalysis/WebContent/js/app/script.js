@@ -611,10 +611,10 @@ function downloadFileURL() {
 	return url;
 }
 
-function toggleBadURL(tableName, pKey) {
+function toggleBadURL(form, pKey) {
 
 	var url = "/surveyKPI/items/";	
-	url += tableName;
+	url += form;
 	url += "/bad/";
 	url += pKey;
 	return url;

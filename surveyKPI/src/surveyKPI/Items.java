@@ -63,7 +63,7 @@ import java.util.logging.Logger;
 /*
  * Returns data for the passed in table name
  */
-@Path("/items/{table}")
+@Path("/items/{form}")
 public class Items extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -80,7 +80,7 @@ public class Items extends Application {
 	
 	/*
 	 * JSON
-	 * Usage /surveyKPI/items/{table}?geom=yes|no&feats=yes|no&mustHaveGeom=yes|no
+	 * Usage /surveyKPI/items/{formId}?geom=yes|no&feats=yes|no&mustHaveGeom=yes|no
 	 *   geom=yes  then location information will be returned
 	 *   feats=yes then features associated with geometries will be returned
 	 *   mustHaveGeom=yes then only items that have a location will be returned
@@ -91,7 +91,7 @@ public class Items extends Application {
 	@GET
 	@Produces("application/json")
 	public String getTable(@Context HttpServletRequest request,
-			@PathParam("table") String tName, 
+			@PathParam("form") int fId, 
 			@QueryParam("geom") String geom,			
 			@QueryParam("mustHaveGeom") String mustHaveGeom,
 			@QueryParam("start_key") int start_key,
@@ -120,11 +120,6 @@ public class Items extends Application {
 		if(mustHaveGeom != null && mustHaveGeom.equals("no")) {
 			bMustHaveGeom = false;
 		}
-		
-		// Escape any quotes
-		if(tName != null) {
-			tName = tName.replace("'", "''"); 
-		}
 			
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -139,12 +134,12 @@ public class Items extends Application {
 		// Get the survey id
 		String sql = "select s.s_id, s.ident FROM form f, survey s " + 
 				" where s.s_id = f.s_id " +
-				" and f.table_name = ?;";
+				" and f.f_id = ?;";
 		int sId = 0;
 
 		try {
 			PreparedStatement pstmtAuth = sd.prepareStatement(sql);
-			pstmtAuth.setString(1, tName);
+			pstmtAuth.setInt(1, fId);
 			log.info("Authorisation: " + pstmtAuth.toString());
 			
 			ResultSet tableSet = pstmtAuth.executeQuery();
@@ -162,25 +157,40 @@ public class Items extends Application {
 		
 		Tables tables = new Tables(sId);
 		
-		if(tName != null) {
+		if(fId > 0) {
 			
 			Connection connection = null;
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtFDetails = null;
 			
-			int fId = 0;
 			int parent = 0;
+			String tName = null;
+			String formName = null;
 			 
 			try {
 				
+				// Connect to the results database
+				connection = ResultsDataSource.getConnection("surveyKPI-Items");	
+				
 				// Prepare the statement to get the form details
-				String sqlFDetails = "select f.f_id, f.parentform from question q, form f " +
-					" where f.table_name = ?; ";
+				String sqlFDetails = "select f.table_name, f.parentform, name from question q, form f " +
+					" where f.f_id = ?; ";
 				pstmtFDetails = sd.prepareStatement(sqlFDetails);
 				
-				// Connect to the results database
-				connection = ResultsDataSource.getConnection("surveyKPI-Items");		
+				// Get the table details
+				// Get the question type
+				pstmtFDetails.setInt(1, fId);
+				ResultSet rsDetails = pstmtFDetails.executeQuery();
+				if(rsDetails.next()) {
+					
+					tName = rsDetails.getString(1);
+					parent = rsDetails.getInt(2);
+					formName = rsDetails.getString(3);
+					
+					tables.add(tName, fId, parent);
+				}
+				
 				int geomIdx = -1;
 				
 				JSONObject jTotals = new JSONObject();
@@ -204,18 +214,6 @@ public class Items extends Application {
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
 					jTotals.put("bad_count", resultSet.getInt(1));
-				}
-				
-				// Get the table details
-				// Get the question type
-				pstmtFDetails.setString(1, tName);
-				ResultSet rsDetails = pstmtFDetails.executeQuery();
-				if(rsDetails.next()) {
-					
-					fId = rsDetails.getInt(1);
-					parent = rsDetails.getInt(2);
-					
-					tables.add(tName, fId, parent);
 				}
 	
 				
@@ -475,7 +473,6 @@ public class Items extends Application {
 				}
 				// Determine if there are more records to be returned
 				sql = "SELECT count(*) FROM " + tables.getTablesSQL() + maxRecordWhere + ";";
-				log.info(sql);
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql);	
 				
@@ -489,6 +486,7 @@ public class Items extends Application {
 					}
 				}
 				
+				log.info("Check for more records: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
 					jTotals.put("more_recs", resultSet.getInt(1));
@@ -499,6 +497,7 @@ public class Items extends Application {
 				 jo.put("type", "FeatureCollection");
 				 jo.put("features", ja);
 				 jo.put("cols", columns);
+				 jo.put("formName", formName);
 				
 			} catch (SQLException e) {
 			    log.info("Did not get items for table - " + tName + ", Message=" + e.getMessage());
@@ -546,7 +545,7 @@ public class Items extends Application {
 	@Path("/bad/{key}")
 	@Consumes("application/json")
 	public Response toggleBad(@Context HttpServletRequest request,
-			@PathParam("table") String tName,
+			@PathParam("form") int fId,
 			@PathParam("key") int key,
 			@FormParam("value") boolean value,
 			@FormParam("sId") int sId,
@@ -554,11 +553,6 @@ public class Items extends Application {
 			) { 
 		
 		Response response = null;
-		
-		// Escape any quotes
-		if(tName != null) {
-			tName = tName.replace("'", "''"); 
-		} 
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -580,18 +574,18 @@ public class Items extends Application {
 			log.info("New toggle bad");
 			cRel = ResultsDataSource.getConnection("surveyKPI-Items");
 			
-			// Get the form id
-			String sql = "SELECT DISTINCT f_id, parentform FROM form f " +
+			// Get the table name
+			String sql = "SELECT DISTINCT table_name, parentform FROM form f " +
 					" where f.s_id = ?" + 
-					" and f.table_name = ?;";
+					" and f.f_id = ?;";
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
-			pstmt.setString(2, tName);
-			log.info(sql + " : " + sId + " : " + tName);
+			pstmt.setInt(2, fId);
+			log.info("Get table name: " + pstmt.toString());
 			
 			ResultSet tableSet = pstmt.executeQuery();
 			if(tableSet.next()) {
-				int fId = tableSet.getInt(1);
+				String tName = tableSet.getString(1);
 				int pId = tableSet.getInt(2);
 				boolean isChild = pId > 0;
 				UtilityMethodsEmail.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId, false, isChild);
