@@ -65,9 +65,11 @@ public class XLSTaskManager {
                 for(int j = 0; j <= lastRowNum; j++) {
                     
                 	row = sheet.getRow(j);
-                    int lastCellNum = row.getLastCellNum();
                     
                     if(row != null) {
+                    	
+                        int lastCellNum = row.getLastCellNum();
+                        
                     	if(needHeader) {
                     		header = getHeader(row, lastCellNum);
                     		needHeader = false;
