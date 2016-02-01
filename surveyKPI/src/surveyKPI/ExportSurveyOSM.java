@@ -87,8 +87,8 @@ public class ExportSurveyOSM extends Application {
 	}
 	
 	private class FormDesc {
-		String f_id;
-		String parent;
+		int f_id;
+		int parent;
 		String table_name;
 		String columns = null;
 		String parkey = null;
@@ -195,7 +195,7 @@ public class ExportSurveyOSM extends Application {
 						" and q.qname = ?;";
 				pstmtQType = connectionSD.prepareStatement(sqlQType);
 				
-				HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
+				HashMap<Integer, FormDesc> forms = new HashMap<Integer, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;
 				HashMap<String, Way> ways = new HashMap<String, Way> ();
@@ -219,13 +219,13 @@ public class ExportSurveyOSM extends Application {
 				while (resultSet.next()) {
 
 					FormDesc fd = new FormDesc();
-					fd.f_id = resultSet.getString("f_id");
-					fd.parent = resultSet.getString("parentform");
+					fd.f_id = resultSet.getInt("f_id");
+					fd.parent = resultSet.getInt("parentform");
 					fd.table_name = resultSet.getString("table_name");
 					fd.form_name = resultSet.getString("name");
 					if(wayArray != null) {
 						for(int i = 0; i < wayArray.length; i++) {
-							if(wayArray[i].trim().equals(fd.f_id.trim())) {
+							if(Integer.parseInt(wayArray[i].trim()) == fd.f_id) {
 								fd.isWay = true;
 								if(fd.form_name != null && fd.form_name.startsWith("geopolygon")) {
 									fd.isPolygon = true;
@@ -235,7 +235,7 @@ public class ExportSurveyOSM extends Application {
 						}
 					}
 					forms.put(fd.f_id, fd);
-					if(fd.parent == null) {
+					if(fd.parent == 0) {
 						topForm = fd;
 					} 
 				}
@@ -501,7 +501,7 @@ public class ExportSurveyOSM extends Application {
 	
 						String wayId;							// Get the way identifier
 						if(f.parkey == null) {	
-							wayId = f.f_id;
+							wayId = String.valueOf(f.f_id);
 						} else {
 							wayId = f.f_id + "_" + f.parkey;
 						}
@@ -587,10 +587,10 @@ public class ExportSurveyOSM extends Application {
 	/*
 	 * Add the list of children to parent forms
 	 */
-	private void addChildren(FormDesc parentForm, HashMap<String, FormDesc> forms, ArrayList<FormDesc> formList) {
+	private void addChildren(FormDesc parentForm, HashMap<Integer, FormDesc> forms, ArrayList<FormDesc> formList) {
 		
 		for(FormDesc fd : forms.values()) {
-			if(fd.parent != null && fd.parent.equals(parentForm.f_id)) {
+			if(fd.parent != 0 && fd.parent == parentForm.f_id) {
 				if(parentForm.children == null) {
 					parentForm.children = new ArrayList<FormDesc> ();
 				}

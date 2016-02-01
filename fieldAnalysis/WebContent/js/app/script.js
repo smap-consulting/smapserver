@@ -338,7 +338,7 @@ function addMediaPickList() {
 	var sId = $('#export_survey option:selected').val(),
 		format = $('#exportformat').val(),
 		languages = globals.gSelector.getSurveyLanguages(sId),
-		questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name),
+		questions = globals.gSelector.getSurveyQuestions(sId, languages[0]),
 		i,
 		h = [],
 		idx = -1,
