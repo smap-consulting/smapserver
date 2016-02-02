@@ -435,3 +435,6 @@ CREATE TABLE public.locations (
 	uid text
 );
 ALTER TABLE public.locations OWNER TO ws;
+
+-- The following is deprecated but some code still refers to the column
+alter table question add column repeatcount boolean default false;
