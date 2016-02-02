@@ -2463,4 +2463,43 @@ public class GeneralUtilityMethods {
 		return (count > 0);
 	}
 	
+	/*
+	 * Get the table that contains a question name
+	 *   If there is a duplicate question in a survey then throw an error
+	 */
+	public static String getTableForQuestion(Connection sd, int sId, String column_name) throws Exception {
+		
+		String sql = "select table_name from form f, question q "
+				+ "where f.s_id = ? "
+				+ "and f.f_id = q.f_id "
+				+ "and q.column_name = ?;";
+		
+		PreparedStatement pstmt = null;
+		int count = 0;
+		String table = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId );
+			pstmt.setString(2, column_name );
+		
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				table = rs.getString(1);
+				count++;
+			}
+			
+			if(count == 0) {
+				throw new Exception("Table containing data for " + column_name + " in survey " + sId + " not found");
+			} else if (count > 1) {
+				throw new Exception("Duplicate " + column_name + " found in survey " + sId);
+			}
+			
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return table;
+	}
+	
 }

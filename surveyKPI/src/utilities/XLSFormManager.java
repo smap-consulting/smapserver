@@ -267,14 +267,14 @@ public class XLSFormManager {
 		
 		// Write out questions
 		Form ff = survey.getFirstForm();
-		processFormForXLS(outputStream, ff, survey, surveySheet, choicesSheet, styles, colsSurvey, 
+		processFormForXLS(ff, survey, surveySheet, choicesSheet, styles, colsSurvey, 
 				colsChoices, 
 				filterIndexes,
 				addedOptionLists,
 				namedColumnIndexes);
 		
 		// Write out survey settings
-		processSurveyForXLS(outputStream, survey, settingsSheet, styles, colsSettings);
+		processSurveyForXLS(survey, settingsSheet, styles, colsSettings);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -304,7 +304,7 @@ public class XLSFormManager {
 	/*
 	 * Convert a single form to XLS
 	 */
-	private void processFormForXLS(OutputStream outputStream,
+	private void processFormForXLS(
 			Form form, 
 			org.smap.sdal.model.Survey survey,
 			Sheet surveySheet,
@@ -318,7 +318,6 @@ public class XLSFormManager {
 		
 		ArrayList<Question> questions = form.questions;
 		boolean inMeta = false;
-		String savedCalculation = null;		// Contains the repeat count for a sub form
 		
 		for(Question q : questions)  {
 			
@@ -364,7 +363,7 @@ public class XLSFormManager {
 							//cell.setCellValue(savedCalculation);
 							//savedCalculation = null;
 							
-							processFormForXLS(outputStream, subForm, survey, surveySheet, choicesSheet, styles, 
+							processFormForXLS(subForm, survey, surveySheet, choicesSheet, styles, 
 									colsSurvey, 
 									colsChoices,
 									filterIndexes,
@@ -605,7 +604,7 @@ public class XLSFormManager {
      * write out the settings values
      */
 
-    private void processSurveyForXLS(OutputStream outputStream, 
+    private void processSurveyForXLS(
     		org.smap.sdal.model.Survey survey, Sheet settingsSheet, 
     		Map<String, CellStyle> styles, 
     		ArrayList<Column>  colsSettings) {
