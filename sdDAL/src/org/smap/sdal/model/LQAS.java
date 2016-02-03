@@ -7,6 +7,9 @@ import java.util.ArrayList;
  */
 public class LQAS {
 	public String lot;				// Name of question that identified the "lot" to sample, create worksheet for each lot
+	public ArrayList<LQASGroup> groups = new ArrayList<LQASGroup> ();
 
-
+	public LQAS(String n) {
+		lot = n;
+	}
 }

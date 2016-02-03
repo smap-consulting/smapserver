@@ -43,6 +43,8 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.LQAS;
+import org.smap.sdal.model.LQASGroup;
+import org.smap.sdal.model.LQASItem;
 
 import utilities.XLSFormManager;
 import utilities.XLS_LQAS_Manager;
@@ -72,8 +74,6 @@ public class ExportLQAS extends Application {
 		return s;
 	}
 	*/
-	//public static Font WingDings = null;
-	//public static Font defaultFont = null;
 
 	/*
 	 * Assume:
@@ -96,9 +96,9 @@ public class ExportLQAS extends Application {
 		}
 				
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("createLQAS");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		Connection sd = SDDataSource.getConnection("createLQAS");	
+		a.isAuthorised(sd, request.getRemoteUser());		
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation 
 		
 		SurveyManager sm = new SurveyManager();
@@ -115,18 +115,29 @@ public class ExportLQAS extends Application {
 		try {
 			
 			// Get the survey details
-			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, false, false);
+			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, false, false);
 			
-			// Get the LQAS definition to apply to this survey
-			LQAS lqas = new LQAS();
-			lqas.lot = "sa";
+			/*
+			 * Get the LQAS definition to apply to this survey
+			 * Presumably this will be obtained from the database having been set up by the user
+			 */
+			LQAS lqas = new LQAS("sa");
+			
+			// Basic information group
+			LQASGroup g1 = new LQASGroup("Basic Information");
+			g1.items.add(new LQASItem("1.a1", "head_gender"));
+			lqas.groups.add(g1);
+			
+			/*
+			 * End of setting up of test definition
+			 */
 			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);
 			
 			// Create XLSForm
 			XLS_LQAS_Manager xf = new XLS_LQAS_Manager(filetype);
-			xf.createLQASForm(cResults, response.getOutputStream(), survey, lqas);
+			xf.createLQASForm(sd, cResults, response.getOutputStream(), survey, lqas);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
@@ -134,9 +145,9 @@ public class ExportLQAS extends Application {
 		} finally {
 			
 			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
+				if (sd != null) {
+					sd.close();
+					sd = null;
 				}
 				
 			} catch (SQLException e) {
