@@ -68,6 +68,7 @@ $(document).ready(function() {
 	// Set up the tabs
 	if(bs) {
 		$('#nfcTab').show();
+		getLocations();
 	}
     $('#mediaTab a').click(function (e) {
     	e.preventDefault();
@@ -110,7 +111,7 @@ $(document).ready(function() {
     // Respond to nfc upload
     $('#submitNfcFiles').click( function() {
     	if(!$('#submitNfcFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/tasks/upload/nfc', "nfcupload", refreshNfcView, undefined);
+    		uploadFiles('/surveyKPI/tasks/locations/upload', "nfcupload", refreshLocationView, undefined);
     	}
     });
     
@@ -270,6 +271,34 @@ function getMaps() {
 }
 
 /*
+ * The the shared locations from the server
+ */
+function getLocations() {
+
+	var url="/surveyKPI/tasks/locations";
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			refreshLocationView(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of locations: " + err);
+			}
+		}
+	});	
+
+}
+
+/*
  * Update the list of maps
  */
 function updateMapList(data) {
@@ -390,7 +419,7 @@ function delete_map(id) {
 /*
  * Show the NFC tags
  */
-function refreshNfcView(tags) {
+function refreshLocationView(tags) {
 	
 	var i,
 		survey = globals.model.survey,
