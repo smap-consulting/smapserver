@@ -1,6 +1,6 @@
 package org.smap.sdal.model;
 
-public class Tag {
+public class Location {
 	public int	id;
 	public String group;
 	public String type;

@@ -50,6 +50,9 @@ $(document).ready(function() {
 		projectChanged();
  	 });
 	
+	// Get locations
+	getLocations(setLocationList);
+	
 	/*
 	 * Change function on source project when tasks are being copied from an existing survey
 	 * The source project is the project that data is being copied from, 
@@ -1034,6 +1037,32 @@ function updateTaskParams() {
 		refreshAssignmentData(gUserFilter);
 		//refreshTableAssignments(gTasks);	// Refresh the table view
 	}
+}
+
+/*
+ * Add the locations (NFC tags or geofence) to any drop down lists that use them
+ */
+function setLocationList(locns) {
+	
+	var h = [],
+	idx = -1,
+	i;
+	
+	if(locns && locns.length) {
+		h[++idx] = '<option value = "-1">';
+		h[++idx] = localise.set["c_none"];
+		h[++idx] = '</option>';
+		for(i = 0; i < locns.length; i++) {
+			h[++idx] = '<option value = "';
+			h[++idx] = locns[i].id;
+			h[++idx] = '">';
+			h[++idx] = locns[i].name;
+			h[++idx] = '</option>';
+		}
+	}
+	
+	$('.nfc_select').append(h.join(""));
+
 }
 
 });

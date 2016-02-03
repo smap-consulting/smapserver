@@ -57,7 +57,7 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
-import org.smap.sdal.model.Tag;
+import org.smap.sdal.model.Location;
 
 import utilities.XLSFormManager;
 import utilities.XLSTaskManager;
@@ -94,25 +94,75 @@ public class Tasks extends Application {
 	}
 	
 	/*
-	 * Upload NFC tags used in task assignment
+	 * Get the locations
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/locations")
+	public Response getLocations(
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		
+		Response response = null;
+		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End authorisation
+	
+		try {
+			
+			// Get locations
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			TaskManager tm = new TaskManager();
+			ArrayList<Location> locations = tm.getLocations(sd, oId);
+			
+			
+			// Return tags to calling program
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(locations);	
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Upload locations used in task assignment
+	 * A location can be:
+	 *   An NFC tag
+	 *   A geofence
 	 */
 	@POST
 	@Produces("application/json")
-	@Path("/upload/nfc")
-	public Response uploadNfcTags(
+	@Path("/locations/upload")
+	public Response uploadLocations(
 			@Context HttpServletRequest request
 			) throws IOException {
 		
 		Response response = null;
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
-		String serverName = request.getServerName();
-		String user = request.getRemoteUser();
 
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
-	
-		log.info("upload nfc tags -----------------------");
+		log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: ");
 		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+
 		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
@@ -148,8 +198,7 @@ public class Tasks extends Application {
 						filetype = "xls";
 					} else {
 						log.info("unknown file type for item: " + fileName);
-						continue;
-						
+						continue;	
 					}
 	
 					// Authorisation - Access
@@ -159,20 +208,20 @@ public class Tasks extends Application {
 
 					// Process xls file
 					XLSTaskManager xf = new XLSTaskManager();
-					ArrayList<Tag> tags = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
+					ArrayList<Location> locations = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
 					
-					// Save tags to disk
+					// Save locations to disk
 					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					TaskManager tm = new TaskManager();
-					tm.saveTags(sd, tags, oId);
+					tm.saveLocations(sd, locations, oId);
 					
 					// Return tags to calling program
 					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-					String resp = gson.toJson(tags);
+					String resp = gson.toJson(locations);
 						
 					response = Response.ok(resp).build();	
 					
-
+					break;
 						
 				}
 			}
@@ -199,179 +248,7 @@ public class Tasks extends Application {
 		
 	}
 	
-	@POST
-	@Produces("application/json")
-	@Path("/upload/{projectId}")
-	public Response uploadTasksFromFile(
-			@PathParam("projectId") int projectId, 
-			@Context HttpServletRequest request
-			) throws IOException {
-		
-		Response response = null;
-		
-		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
-		String serverName = request.getServerName();
-		String user = request.getRemoteUser();
 
-	
-		log.info("upload tasks -----------------------");
-		
-		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
-		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
-	
-		Connection connectionSD = null; 
-		Connection cResults = null;
-
-		try {
-			/*
-			 * Parse the request
-			 */
-			List<?> items = uploadHandler.parseRequest(request);
-			Iterator<?> itr = items.iterator();
-
-			while(itr.hasNext()) {
-				FileItem item = (FileItem) itr.next();
-				
-				// Get form parameters
-				
-				if(item.isFormField()) {
-					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
-					
-				} else if(!item.isFormField()) {
-					// Handle Uploaded files.
-					log.info("Field Name = "+item.getFieldName()+
-						", File Name = "+item.getName()+
-						", Content type = "+item.getContentType()+
-						", File Size = "+item.getSize());
-					
-					String fileName = item.getName();
-					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
-	
-					// Authorisation - Access
-					connectionSD = SDDataSource.getConnection("fieldManager-MediaUpload");
-					
-					a.isAuthorised(connectionSD, request.getRemoteUser());
-					a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
-					// End authorisation
-
-					// Apply changes from Task files to survey definition
-					String contentType = UtilityMethodsEmail.getContentType(fileName);
-					System.out.println("content type: " + contentType);
-					if(contentType.equals("text/csv")) {
-					    	
-					 }
-					    
-		
-					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-					String resp = gson.toJson("");
-						
-					response = Response.ok(resp).build();	
-					
-
-						
-				}
-			}
-			
-		} catch(FileUploadException ex) {
-			log.log(Level.SEVERE,ex.getMessage(), ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
-		} catch(Exception ex) {
-			log.log(Level.SEVERE,ex.getMessage(), ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
-		} finally {
-	
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
-			try {
-				if (cResults != null) {
-					cResults.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-		}
-		
-		return response;
-		
-	}
-	
-	@GET
-	@Produces("application/x-download")
-	public Response getXLSFormService (@Context HttpServletRequest request, 
-			@Context HttpServletResponse response,
-			@PathParam("sId") int sId,
-			@QueryParam("filetype") String filetype) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
-				
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("createPDF");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
-		// End Authorisation 
-		
-		SurveyManager sm = new SurveyManager();
-		org.smap.sdal.model.Survey survey = null;
-		Connection cResults = ResultsDataSource.getConnection("createPDF");
-		
-		String basePath = GeneralUtilityMethods.getBasePath(request);
-		
-		// Set file type to "xlsx" unless "xls" has been specified
-		if(filetype == null || !filetype.equals("xls")) {
-			filetype = "xlsx";
-		}
-		
-		try {
-			
-			// Get the survey details
-			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false, false, false);
-			
-			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);
-			
-			// Create XLSForm
-			XLSFormManager xf = new XLSFormManager(filetype);
-			xf.createXLSForm(response.getOutputStream(), survey);
-			
-		}  catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
-			throw new Exception("Exception: " + e.getMessage());
-		} finally {
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-			
-		}
-		return Response.ok("").build();
-	}
 	
 
 }

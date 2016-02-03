@@ -68,6 +68,7 @@ $(document).ready(function() {
 	// Set up the tabs
 	if(bs) {
 		$('#nfcTab').show();
+		getLocations(refreshLocationView);
 	}
     $('#mediaTab a').click(function (e) {
     	e.preventDefault();
@@ -110,7 +111,7 @@ $(document).ready(function() {
     // Respond to nfc upload
     $('#submitNfcFiles').click( function() {
     	if(!$('#submitNfcFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/tasks/upload/nfc', "nfcupload", refreshNfcView, undefined);
+    		uploadFiles('/surveyKPI/tasks/locations/upload', "nfcupload", refreshLocationView, undefined);
     	}
     });
     
@@ -269,6 +270,7 @@ function getMaps() {
 
 }
 
+
 /*
  * Update the list of maps
  */
@@ -390,7 +392,7 @@ function delete_map(id) {
 /*
  * Show the NFC tags
  */
-function refreshNfcView(tags) {
+function refreshLocationView(tags) {
 	
 	var i,
 		survey = globals.model.survey,

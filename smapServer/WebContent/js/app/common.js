@@ -1608,6 +1608,36 @@ function getChangeDescription(change) {
 }
 
 /*
+ * Getthe shared locations from the server
+ */
+function getLocations(callback) {
+
+	var url="/surveyKPI/tasks/locations";
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			if(typeof callback === "function") {
+				callback(data);
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of locations: " + err);
+			}
+		}
+	});	
+
+}
+
+/*
  * Prevent the menu bar from extending over two lines
  */
 // From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse

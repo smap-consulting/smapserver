@@ -23,7 +23,7 @@ import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Survey;
-import org.smap.sdal.model.Tag;
+import org.smap.sdal.model.Location;
 import org.w3c.dom.Element;
 
 public class XLSTaskManager {
@@ -37,13 +37,13 @@ public class XLSTaskManager {
 
 	}
 	
-	public ArrayList<Tag> convertWorksheetToTagArray(InputStream inputStream, String type) throws IOException {
+	public ArrayList<Location> convertWorksheetToTagArray(InputStream inputStream, String type) throws IOException {
 		
 		Sheet sheet = null;
         Row row = null;
         int lastRowNum = 0;
         String group = null;
-        ArrayList<Tag> tags = new ArrayList<Tag> ();
+        ArrayList<Location> tags = new ArrayList<Location> ();
         HashMap<String, Integer> header = null;
         
 		if(type != null && type.equals("xls")) {
@@ -74,7 +74,7 @@ public class XLSTaskManager {
                     		header = getHeader(row, lastCellNum);
                     		needHeader = false;
                     	} else {
-                    		Tag t = new Tag();
+                    		Location t = new Location();
                     		t.group = group;
                     		t.type = "nfc";
                     		t.uid = getColumn(row, "uid", header, lastCellNum);
