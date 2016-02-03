@@ -68,7 +68,7 @@ $(document).ready(function() {
 	// Set up the tabs
 	if(bs) {
 		$('#nfcTab').show();
-		getLocations();
+		getLocations(refreshLocationView);
 	}
     $('#mediaTab a').click(function (e) {
     	e.preventDefault();
@@ -270,33 +270,6 @@ function getMaps() {
 
 }
 
-/*
- * The the shared locations from the server
- */
-function getLocations() {
-
-	var url="/surveyKPI/tasks/locations";
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			refreshLocationView(data);
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				console.log("Error: Failed to get list of locations: " + err);
-			}
-		}
-	});	
-
-}
 
 /*
  * Update the list of maps
