@@ -7,9 +7,9 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 
 public class Lot {
-	String name = null;
+	public String name = null;
 	Sheet sheet = null;
-	ArrayList<LotRow> rows = new ArrayList<LotRow> ();
+	public ArrayList<LotRow> rows = new ArrayList<LotRow> ();
 	
 	public Lot(String n, Workbook wb) {
 		name = n;

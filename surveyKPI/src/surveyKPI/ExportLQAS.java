@@ -125,7 +125,7 @@ public class ExportLQAS extends Application {
 			
 			// Basic information group
 			LQASGroup g1 = new LQASGroup("Basic Information");
-			g1.items.add(new LQASItem("1.a1", "head_gender"));
+			g1.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender"));
 			lqas.groups.add(g1);
 			
 			/*
