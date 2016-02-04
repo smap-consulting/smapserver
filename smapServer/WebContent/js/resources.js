@@ -67,7 +67,6 @@ $(document).ready(function() {
 	
 	// Set up the tabs
 	if(bs) {
-		$('#nfcTab').show();
 		getLocations(refreshLocationView);
 	}
     $('#mediaTab a').click(function (e) {

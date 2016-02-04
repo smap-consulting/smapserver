@@ -1319,13 +1319,16 @@ function openForm(type) {
  */
 function isBusinessServer() {
 	var hostname = location.hostname;
-	var bs = true;
+	var bs;
 	
 	if(hostname !== 'localhost' &&
 			hostname !== 'dev.smap.com.au' &&
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0) {
 		bs = false;
+	} else {
+		bs = true
+		$('.bus_only').show();
 	}
 	return bs;
 }
@@ -1634,6 +1637,32 @@ function getLocations(callback) {
 			}
 		}
 	});	
+	
+}
+
+/*
+ * Add the locations (NFC tags or geofence) to any drop down lists that use them
+ */
+function setLocationList(locns) {
+	
+	var h = [],
+	idx = -1,
+	i;
+	
+	if(locns && locns.length) {
+		h[++idx] = '<option value = "-1">';
+		h[++idx] = localise.set["c_none"];
+		h[++idx] = '</option>';
+		for(i = 0; i < locns.length; i++) {
+			h[++idx] = '<option value = "';
+			h[++idx] = locns[i].id;
+			h[++idx] = '">';
+			h[++idx] = locns[i].name;
+			h[++idx] = '</option>';
+		}
+	}
+	
+	$('.nfc_select').append(h.join(""));
 
 }
 

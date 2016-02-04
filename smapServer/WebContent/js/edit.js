@@ -105,7 +105,8 @@ $(document).ready(function() {
 		pArray = [],
 		param = [],
 		openingNew = false,
-		dont_get_current_survey = true;
+		dont_get_current_survey = true,
+		bs = isBusinessServer();
 	
 	window.bootbox = bootbox;
 	
@@ -127,6 +128,12 @@ $(document).ready(function() {
 			openForm("new");
 		}
 	}
+	
+	/*
+	 * Get location list
+	 */
+	// Get locations
+	getLocations(setLocationList);
 	
 	/*
 	 * Initialise controls in the open form dialog
