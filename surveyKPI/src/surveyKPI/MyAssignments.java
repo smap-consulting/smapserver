@@ -321,7 +321,8 @@ public class MyAssignments extends Application {
 					"s.version, " +
 					"s.display_name, " +
 					"p.name, " +
-					"p.id as pid " +
+					"p.id as pid, " +
+					"s.location" +
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +

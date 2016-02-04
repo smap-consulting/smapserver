@@ -316,6 +316,7 @@ CREATE TABLE survey (
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey
 	instance_name text,								-- The rule for naming a survey instance form its data
+	location text,									-- Trigger for the form
 	last_updated_time DATE
 	);
 ALTER TABLE survey OWNER TO ws;
