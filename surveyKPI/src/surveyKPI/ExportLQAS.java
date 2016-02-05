@@ -124,9 +124,20 @@ public class ExportLQAS extends Application {
 			LQAS lqas = new LQAS("sa");
 			
 			// Basic information group
-			LQASGroup g1 = new LQASGroup("Basic Information");
-			g1.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender"));
-			lqas.groups.add(g1);
+			LQASGroup g = new LQASGroup("Basic Information");
+			g.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender"));
+			g.items.add(new LQASItem("1.a2", "Age of Head of Household", null, "#","head_age"));
+			g.items.add(new LQASItem("1.b1", "Gender of person answering questions", "F", "Female","caregiver_gender"));
+			g.items.add(new LQASItem("1.b2", "Age of person answering questions", null, "#","caregiver_age"));
+			g.items.add(new LQASItem("2", "Is the child a boy or a girl", "F", "Female","child_gender"));
+			lqas.groups.add(g);
+			
+			// Feeding group
+			g = new LQASGroup("Infant and young child feeding");
+			g.items.add(new LQASItem("4", "Has child ever been breastfed", "1", "Yes","breastfeed"));
+			g.items.add(new LQASItem("5", "Are you still breast feeding", "1", "Yes","still_bf"));
+			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "1", "Yes","still_bf"));
+			lqas.groups.add(g);
 			
 			/*
 			 * End of setting up of test definition

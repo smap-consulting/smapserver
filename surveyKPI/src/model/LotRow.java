@@ -41,9 +41,12 @@ public class LotRow {
 		Row row = sheet.createRow(rowNum);
 		for (LotCell cell : cells) {
 			cell.writeToWorkSheet(row);
-			if(cell.colWidth > 1) {
+			if(cell.colMerge > 1) {
 				sheet.addMergedRegion(
-						new CellRangeAddress(rowNum, rowNum, cell.colNum, cell.colNum + cell.colWidth - 1));
+						new CellRangeAddress(rowNum, rowNum, cell.colNum, cell.colNum + cell.colMerge - 1));
+			}
+			if(cell.colWidth > 0) {
+				sheet.setColumnWidth(cell.colNum, cell.colWidth);
 			}
 		}
 	}
@@ -55,7 +58,23 @@ public class LotRow {
 			CellReference cEnd = new CellReference(rowNum, formulaEnd);
 			formula = "SUM(" + cStart.formatAsString() + ":" + cEnd.formatAsString() + ")";
 		}
+		return formula;		
+	}
+	
+	public String getSampleSizeFormula() {
+		String formula = null;
+		if(formulaEnd > formulaStart) {
+			CellReference cStart = new CellReference(rowNum, formulaStart);
+			CellReference cEnd = new CellReference(rowNum, formulaEnd);
+			formula = "COUNTIF(" + cStart.formatAsString() + ":" + cEnd.formatAsString() + ",1)+" +
+					"COUNTIF(" + cStart.formatAsString() + ":" + cEnd.formatAsString() + ",0)";
+		}
 		return formula;
 			
+	}
+	
+	public void setCellMerge(int index, int merge) {
+		LotCell cell = cells.get(index);
+		cell.colMerge = merge;
 	}
 }

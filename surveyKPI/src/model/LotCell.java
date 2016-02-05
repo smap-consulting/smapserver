@@ -8,14 +8,19 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class LotCell extends XLSCell {
 
-	public LotCell(String value, int colNum, int colWidth, boolean isFormula) {
-		super(value, colNum, colWidth, isFormula);
+	CellStyle style;
+	
+	public LotCell(String value, int colNum, int colMerge, boolean isFormula, CellStyle style, int colWidth) {
+		super(value, colNum, colMerge, isFormula, colWidth); 
+		this.style = style;
 	}
 	
 	public void writeToWorkSheet(Row row) {
 		Cell cell = row.createCell(colNum);
-		//CellStyle style = col.getStyle(styles, q);
-		//if(style != null) {	cell.setCellStyle(style); }
+		
+		if(style != null) {
+			cell.setCellStyle(style);
+		}
 		
 		if(isFormula) {
 			cell.setCellFormula(value);
