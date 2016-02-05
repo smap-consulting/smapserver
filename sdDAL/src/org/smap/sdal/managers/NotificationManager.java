@@ -364,6 +364,7 @@ public class NotificationManager {
 				String docURL = null;
 				String filePath = null;
 				String filename = "instance";
+				String logContent = null;
 				if(nd.attach != null) {
 					System.out.println("Attaching link to email: " + nd.attach);
 					if(nd.attach.startsWith("pdf")) {
@@ -399,11 +400,12 @@ public class NotificationManager {
 								landscape,
 								null);
 						
-						System.out.println("Temporary PDF file: " + filePath);
+						logContent = filePath;
 						
 					} else {
 						docURL = "/webForm/" + ident +
 								"?datakey=instanceid&datakeyvalue=" + instanceId;
+						logContent = docURL;
 					}
 				}
 				
@@ -445,7 +447,7 @@ public class NotificationManager {
 							}
 						}
 						
-						log.info("userevent: " + remoteUser + " sending email of '" + docURL + "' to " + emails);
+						log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
 						
 						String subject = "Smap Notification";
 						if(nd.subject != null && nd.subject.trim().length() > 0) {
@@ -462,9 +464,9 @@ public class NotificationManager {
 							content = organisation.default_email_content;
 						}
 						
-						notify_details = "Sending email to: " + emails + " containing link " + docURL;
+						notify_details = "Sending email to: " + emails + " containing link " + logContent;
 						
-						log.info("+++ emailing to: " + emails + " docUrl: " + docURL + 
+						log.info("+++ emailing to: " + emails + " docUrl: " + logContent + 
 								" from: " + from + 
 								" subject: " + subject +
 								" smtp_host: " + emailServer.smtpHost +
