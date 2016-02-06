@@ -220,6 +220,7 @@ public class MyAssignments extends Application {
 					"t.initial_data," +
 					"t.update_id," +
 					"t.schedule_at," +
+					"t.location_trigger," +
 					"t.repeat," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
@@ -272,6 +273,7 @@ public class MyAssignments extends Application {
 				ta.task.initial_data = resultSet.getString("initial_data");
 				ta.task.update_id = resultSet.getString("update_id");
 				ta.task.scheduled_at = resultSet.getTimestamp("schedule_at");
+				ta.task.location_trigger = resultSet.getString("location_trigger");
 				ta.task.repeat = resultSet.getBoolean("repeat");
 				ta.task.address = resultSet.getString("address");
 				
@@ -321,8 +323,7 @@ public class MyAssignments extends Application {
 					"s.version, " +
 					"s.display_name, " +
 					"p.name, " +
-					"p.id as pid, " +
-					"s.location" +
+					"p.id as pid " +
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +

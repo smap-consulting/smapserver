@@ -1655,7 +1655,7 @@ function setLocationList(locns) {
 		h[++idx] = '</option>';
 		for(i = 0; i < locns.length; i++) {
 			h[++idx] = '<option value = "';
-			h[++idx] = locns[i].id;
+			h[++idx] = locns[i].uid;
 			h[++idx] = '">';
 			h[++idx] = locns[i].name;
 			h[++idx] = '</option>';

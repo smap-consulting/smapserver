@@ -38,6 +38,8 @@ var gTasks,					// Object containing the task data retrieved from the database
 	
 $(document).ready(function() {
 	
+	var bs = isBusinessServer();
+	
 	globals.gRegion = {};	// Initialise global values
 	globals.gRegions = undefined;
 	
@@ -838,6 +840,7 @@ function refreshTableAssignments(tasks) {
 			$('#task_properties_taskid').val(task.task_id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
 			$('#task_properties_scheduledDate').data("DateTimePicker").setDate(task.scheduleAt);
+			$('#nfc_select').val(task.location);
 			$('#task_properties').modal("show");  
 
 		});

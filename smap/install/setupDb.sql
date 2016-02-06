@@ -316,7 +316,6 @@ CREATE TABLE survey (
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey
 	instance_name text,								-- The rule for naming a survey instance form its data
-	location text,									-- Trigger for the form
 	last_updated_time DATE
 	);
 ALTER TABLE survey OWNER TO ws;
@@ -582,7 +581,8 @@ CREATE TABLE public.tasks (
 	geo_type text,
 	update_id text,
 	repeat boolean,
-	p_id integer REFERENCES project(id)
+	p_id integer REFERENCES project(id),
+	location_trigger text
 );
 SELECT AddGeometryColumn('tasks', 'geo_linestring', 4326, 'LINESTRING', 2);
 SELECT AddGeometryColumn('tasks', 'geo_polygon', 4326, 'POLYGON', 2);

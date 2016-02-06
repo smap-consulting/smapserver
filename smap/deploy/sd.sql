@@ -440,4 +440,4 @@ ALTER TABLE public.locations OWNER TO ws;
 alter table question add column repeatcount boolean default false;
 
 -- Upgrade to: 16.02 from 16.01
-alter table survey add column location text;
+alter table tasks add column location_trigger text;
