@@ -63,6 +63,7 @@ define({
 	"c_done": "Done",
 	"c_cancel": "Cancel",
 	"c_save": "Save",
+	"c_submit": "Submit",
 	"c_test": "Test",
 	"c_validate": "Validate",
 	"c_close": "Close",
@@ -126,6 +127,8 @@ define({
 	"c_print": "Print",
 	"c_repeat": "Repeat",
 	"c_scheduled": "Scheduled",
+	"c_t_c": "terms and conditions",
+	"c_agree": "I agree to the",
 	
 	// File Types
 	"ft": "File Type",
@@ -202,6 +205,7 @@ define({
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
 	"msg_confirm_del": "Are you sure you want to delete: ",
+	"msg_n_v": "Not valid",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -251,8 +255,14 @@ define({
 	"e_h_c1": "A 'relevant' statement for question is potentially referring to  itself instead of referring to another question",
 	"e_h_c2": "Relevant statements are evaluated before a question is asked so they cannot refer to their own questions",
 	"e_brackets": "Mismatched brackets in function",
-	"e_text": "Error with the following text:"
-		
+	"e_text": "Error with the following text:",
+	
+	// Register
+	"r_o_n": "Organisation Name",
+	"r_y_n": "Your Name",
+	"r_y_e": "Your Email",
+	"r_y_o": "Organisation Website",
+	"r_f": "Registration Form"
 	
 		
 	

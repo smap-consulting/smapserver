@@ -52,6 +52,8 @@ $(document).ready(function() {
 	
 	window.bootbox = bootbox;
 	
+	localise.setlang();
+	
     $('#registerForm').bootstrapValidator({
         feedbackIcons: {
             valid: 'glyphicon glyphicon-ok',
