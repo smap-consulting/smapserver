@@ -1323,6 +1323,7 @@ function isBusinessServer() {
 	
 	if(hostname !== 'localhost' &&
 			hostname !== 'dev.smap.com.au' &&
+			hostname !== 'app.kontrolid.com' &&
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0) {
 		bs = false;
