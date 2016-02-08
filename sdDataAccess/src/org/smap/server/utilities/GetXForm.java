@@ -1099,7 +1099,7 @@ public class GetXForm {
 		List<Question> questions = firstForm.getQuestions();
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
-			if(q.getName().equals(key)) {
+			if(q.getName().toLowerCase().trim().equals(key)) {
 				type = q.getType();
 				keyColumnName = q.getColumnName();
 				break;
