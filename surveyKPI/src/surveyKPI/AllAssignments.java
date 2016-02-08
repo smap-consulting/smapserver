@@ -1453,6 +1453,9 @@ public class AllAssignments extends Application {
 						scheduleAt = Timestamp.valueOf(item.getString());	
 					} else if(item.getFieldName().equals("location_trigger")) {
 						locationTrigger = item.getString();	
+						if(locationTrigger != null && locationTrigger.equals("-1")) {
+							locationTrigger = null;
+						}
 					}
 							
 				} else if(!item.isFormField()) {
