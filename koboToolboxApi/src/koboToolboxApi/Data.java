@@ -60,7 +60,7 @@ import org.smap.sdal.model.Survey;
 import utils.Utils;
 
 /*
- * Returns data for the passed in table name
+ * Provides access to collected data
  */
 @Path("/v1/data")
 public class Data extends Application {
@@ -86,6 +86,7 @@ public class Data extends Application {
 	
 	/*
 	 * KoboToolBox API version 1 /data
+	 * Returns a list of data end points
 	 */
 	@GET
 	@Produces("application/json")
@@ -131,7 +132,7 @@ public class Data extends Application {
 	
 	/*
 	 * KoboToolBox API version 1 /data
-	 * Get records for an individual server in json format
+	 * Get records for an individual survey in JSON format
 	 */
 	@GET
 	@Produces("application/json")
@@ -144,7 +145,7 @@ public class Data extends Application {
 		Response response = null;
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records csv");
+		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
