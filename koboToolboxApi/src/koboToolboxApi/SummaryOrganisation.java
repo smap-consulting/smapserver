@@ -64,68 +64,28 @@ import utils.Utils;
 
 /*
  * Returns overview data such as the number of submissions
+ *  User can get data for any organisations
  * This is a Smap specific extension to the KoboToolbox API
  */
-@Path("/v1/summary")
-public class Summary extends Application {
+@Path("/v1/summary/organisation")
+public class SummaryOrganisation extends Application {
 	
 	Authorise a = null;
 	
 	private static Logger log =
-			 Logger.getLogger(Summary.class.getName());
+			 Logger.getLogger(SummaryOrganisation.class.getName());
 	
-	public Summary() {
+	public SummaryOrganisation() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
-		authorisations.add(Authorise.ANALYST);
-		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.ORG);
 		a = new Authorise(authorisations, null);
 	}
 	
-	/*
-	 *  Get the available overview end points
-	 */
-	@GET
-	@Produces("application/json")
-	public Response getEndPoints(@Context HttpServletRequest request) { 
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
-		a.isAuthorised(sd, request.getRemoteUser());
-		
-		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().build();
-		}
-
-		ArrayList<SummaryEndPoint> endPoints = new ArrayList<SummaryEndPoint> ();
-		
-		SummaryEndPoint tasks = new SummaryEndPoint(request, 
-				"tasks", 
-				"Summary of tasks",
-				"status",
-				"scheduled",
-				"year,month,week, day",
-				"?group=status&x=scheduled&period=month");
-		endPoints.add(tasks);
-		
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-		String resp = gson.toJson(endPoints);
-		response = Response.ok(resp).build();
-
-		return response;
-	}
-	
-	/*
-	 * KoboToolBox API version 1 /data (Smap extension)
-	 */
 	@GET
 	@Produces("application/json")
 	@Path("/tasks")
-	public Response getTasks(@Context HttpServletRequest request,
+	public Response getTasksOrganisation(@Context HttpServletRequest request,
+			@QueryParam("organisation") int orgId,
 			@QueryParam("group") String group,
 			@QueryParam("x") String x,
 			@QueryParam("period") String period) { 
@@ -138,12 +98,10 @@ public class Summary extends Application {
 		// End Authorisation
 		
 		try {
-			int orgId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
-			if(orgId > 0) {
-				SummaryManager sm = new SummaryManager(orgId);
-				response = sm.getTasks(sd, group, x, period);
-			}
+			SummaryManager sm = new SummaryManager(orgId);
+			response = sm.getTasks(sd, group, x, period);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			response = Response.serverError().build();

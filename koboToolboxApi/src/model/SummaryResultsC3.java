@@ -1,43 +1,66 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+
+import koboToolboxApi.Summary;
 
 /*
  * Smap extension
  */
 public class SummaryResultsC3 {
 	
+	private static Logger log =
+			 Logger.getLogger(Summary.class.getName());
+	
 	private ArrayList<ArrayList<Integer>> data;
-	public ArrayList<String> columns;
+	public ArrayList<String> groups;
 	public ArrayList<String> x;
+	public String xFormat;
 
 	public SummaryResultsC3() {
-		columns = new ArrayList<String> ();
+		groups = new ArrayList<String> ();
 		x = new ArrayList<String> ();
 		data = new ArrayList<ArrayList<Integer>> ();
 	}
 	
-	public void add(String xValue, String column, int value) {
+	/*
+	 * Set all the groups
+	 */
+	public void setGroups(String group) {
+		
+		boolean groupExists = false;
+		
+		for(int i = 0; i < groups.size(); i++) {
+			if(groups.get(i).equals(group)) {
+				groupExists = true;
+			}
+		}
+		if(!groupExists) {
+			groups.add(group);
+			data.add(new ArrayList<Integer> ());
+		}
+	}
+	
+	/*
+	 * Add a data value
+	 */
+	public void add(String xValue, String group, int value) {
 		
 		int xIndex = -1;
 		int colIndex = -1;
 		
-		// 1. Get the column index
-		for(int i = 0; i < columns.size(); i++) {
-			if(columns.get(i).equals(column)) {
+		// 1. Get the group index
+		for(int i = 0; i < groups.size(); i++) {
+			if(groups.get(i).equals(group)) {
 				colIndex = i;
 				break;
 			}
 		}
-		if(colIndex < 0) {
-			columns.add(column);
-			data.add(new ArrayList<Integer> ());
-			colIndex = columns.size() - 1;
-		}
 		
-		// 2. Get the data index
+		// 2. Get the x interval index
 		for(int i = x.size() - 1; i >= 0; i--) {
 			if(x.get(i).equals(xValue)) {
 				xIndex = i;
@@ -46,9 +69,16 @@ public class SummaryResultsC3 {
 		}
 		if(xIndex < 0) {
 			x.add(xValue);
+			xIndex = x.size() - 1;
+			
+			// New xValue  initialise the values for this xvalue
+			for(int i = 0; i < groups.size(); i++) {
+				data.get(i).add(0);	
+			}
 		}
 		
 		// 3. Add the data
-		data.get(colIndex).add(value);
+		data.get(colIndex).set(xIndex, value);
 	}
+	
 }
