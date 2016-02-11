@@ -21,10 +21,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import managers.DataManager;
-import managers.SummaryManager;
+import managers.TasksManager;
 import model.DataEndPoint;
-import model.SummaryEndPoint;
-import model.SummaryResultsC3;
+import model.TasksEndPoint;
+import model.StatsResultsC3;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,6 +57,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Survey;
 
@@ -66,15 +67,16 @@ import utils.Utils;
  * Returns overview data such as the number of submissions
  * This is a Smap specific extension to the KoboToolbox API
  */
-@Path("/v1/summary")
-public class Summary extends Application {
+@Path("/v1/tasks")
+@Produces("application/json")
+public class Tasks extends Application {
 	
 	Authorise a = null;
 	
 	private static Logger log =
-			 Logger.getLogger(Summary.class.getName());
+			 Logger.getLogger(Tasks.class.getName());
 	
-	public Summary() {
+	public Tasks() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
@@ -82,10 +84,11 @@ public class Summary extends Application {
 	}
 	
 	/*
-	 *  Get the available overview end points
+	 *  Get the available end points for tasks
 	 */
 	@GET
 	@Produces("application/json")
+	@Path("/endpoints")
 	public Response getEndPoints(@Context HttpServletRequest request) { 
 		
 		// Authorisation - Access
@@ -101,16 +104,27 @@ public class Summary extends Application {
 		    response = Response.serverError().build();
 		}
 
-		ArrayList<SummaryEndPoint> endPoints = new ArrayList<SummaryEndPoint> ();
+		ArrayList<TasksEndPoint> endPoints = new ArrayList<TasksEndPoint> ();
 		
-		SummaryEndPoint tasks = new SummaryEndPoint(request, 
-				"tasks", 
-				"Summary of tasks",
+		TasksEndPoint ep = new TasksEndPoint(request, 
+				"stats", 
+				"Statistics on tasks",
 				"status",
 				"scheduled",
 				"year,month,week, day",
+				"user",
 				"?group=status&x=scheduled&period=month");
-		endPoints.add(tasks);
+		endPoints.add(ep);
+		
+		ep = new TasksEndPoint(request, 
+				null, 
+				"Individual tasks",
+				null,
+				null,
+				null,
+				"user",
+				"?user=2");
+		endPoints.add(ep);
 		
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		String resp = gson.toJson(endPoints);
@@ -120,15 +134,61 @@ public class Summary extends Application {
 	}
 	
 	/*
-	 * KoboToolBox API version 1 /data (Smap extension)
+	 * KoboToolBox API version 1 - get a list of tasks /data (Smap extension)
 	 */
 	@GET
 	@Produces("application/json")
-	@Path("/tasks")
 	public Response getTasks(@Context HttpServletRequest request,
+			@QueryParam("limit") int limit,
+			@QueryParam("user") int userId) { 
+		
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("koboToolboxApi - get individual tasks");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation
+		
+		try {
+			int orgId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
+			if(limit == 0) {
+				limit = 20;
+			}
+			
+			if(orgId > 0) {
+				TasksManager sm = new TasksManager(orgId);
+				response = sm.getTasks(sd, orgId, userId, limit);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			response = Response.serverError().build();
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+		}
+		
+	
+		return response;
+	}
+	
+	/*
+	 * KoboToolBox API version 1 for statistics on tasks /data (Smap extension)
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/stats")
+	public Response getTaskStatistics(@Context HttpServletRequest request,
 			@QueryParam("group") String group,
 			@QueryParam("x") String x,
-			@QueryParam("period") String period) { 
+			@QueryParam("period") String period,
+			@QueryParam("user") int userId) { 
 		
 		Response response = null;
 		
@@ -141,8 +201,8 @@ public class Summary extends Application {
 			int orgId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			if(orgId > 0) {
-				SummaryManager sm = new SummaryManager(orgId);
-				response = sm.getTasks(sd, group, x, period);
+				TasksManager sm = new TasksManager(orgId);
+				response = sm.getTaskStats(sd, orgId, group, x, period, userId);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -161,7 +221,6 @@ public class Summary extends Application {
 		return response;
 		
 	}
-	
 	
 }
 

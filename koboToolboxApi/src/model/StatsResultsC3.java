@@ -5,22 +5,22 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import koboToolboxApi.Summary;
+import koboToolboxApi.Tasks;
 
 /*
  * Smap extension
  */
-public class SummaryResultsC3 {
+public class StatsResultsC3 {
 	
 	private static Logger log =
-			 Logger.getLogger(Summary.class.getName());
+			 Logger.getLogger(Tasks.class.getName());
 	
 	private ArrayList<ArrayList<Integer>> data;
 	public ArrayList<String> groups;
 	public ArrayList<String> x;
 	public String xFormat;
 
-	public SummaryResultsC3() {
+	public StatsResultsC3() {
 		groups = new ArrayList<String> ();
 		x = new ArrayList<String> ();
 		data = new ArrayList<ArrayList<Integer>> ();
