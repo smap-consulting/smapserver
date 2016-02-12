@@ -42,7 +42,8 @@ require([
          'bootstrap.min',
          'bootstrapValidator.min',
          'app/localise',
-         'app/common'
+         'app/common',
+         'app/version'
          ], function($, bootstrap, bv, localise) {
 
 	var gToken;

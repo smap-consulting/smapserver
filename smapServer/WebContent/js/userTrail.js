@@ -55,7 +55,8 @@ require([
          'app/globals',
          'ol3/js/ol',
          'moment.min',
-         'bootstrap-datetimepicker.min'
+         'bootstrap-datetimepicker.min',
+         'app/version'
          
          ], function($, common, bootstrap, localise, globals) {
 

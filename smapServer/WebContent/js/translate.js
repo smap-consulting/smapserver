@@ -50,7 +50,8 @@ require([
          'app/globals',
          'app/changeset',
          'bootbox',
-         'jquery.autosize.min'], 
+         'jquery.autosize.min',
+         'app/version'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals, changeset, bootbox) {
 
 

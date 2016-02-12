@@ -76,7 +76,8 @@ create TABLE server (
 	email_domain text,
 	email_user text,
 	email_password text,
-	email_port integer
+	email_port integer,
+	version text
 	);
 ALTER TABLE server OWNER TO ws;
 

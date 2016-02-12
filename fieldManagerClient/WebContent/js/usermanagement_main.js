@@ -39,6 +39,7 @@ requirejs.config({
     	bootbox: '../../../../js/libs/bootbox.min',
     	bootstrapfileinput: '../../../../js/libs/bootstrap.file-input',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js'
@@ -47,7 +48,8 @@ requirejs.config({
        	'bootstrap': ['jquery'],
        	'bootstrapfileinput': ['jquery'],
     	'bootbox': ['bootstrap'],
-    	'common': ['jquery']
+    	'common': ['jquery'],
+    	'version': ['jquery']
     	}
     });
 
@@ -59,7 +61,8 @@ require([
          'globals',
          'bootbox',
          'app/userManagement',
-         'bootstrapfileinput'
+         'bootstrapfileinput',
+         'version'
          
          ], function($, bootstrap, common, localise, globals) {});
 

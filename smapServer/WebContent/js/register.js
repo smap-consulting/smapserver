@@ -45,7 +45,8 @@ require([
          'bootstrapValidator.min',
          'app/localise',
          'app/common',
-         'bootbox'
+         'bootbox',
+         'app/version'
          ], function($, bootstrap, bv, localise, common, bootbox) {
 	
 $(document).ready(function() {

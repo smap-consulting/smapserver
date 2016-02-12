@@ -40,6 +40,7 @@ requirejs.config({
     	       ],
     	modernizr: '../../../../js/libs/modernizr',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	bootstrap: '../../../../js/libs/bootstrap.min',
@@ -48,6 +49,7 @@ requirejs.config({
     shim: {
     	'bootstrap': ['jquery'],
     	'common': ['jquery'],
+    	'version': ['jquery'],
     	'tablesorter': ['jquery']
 	
     	}
@@ -60,7 +62,8 @@ require([
          'globals',
          'bootstrap',
          'app/notifications',  
-         'tablesorter'
+         'tablesorter',
+         'version'
          
          ], function($, common, localise, globals, bootstrap) {});
 

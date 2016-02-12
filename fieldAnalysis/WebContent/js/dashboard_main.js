@@ -46,6 +46,7 @@ require.config({
 
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
@@ -59,6 +60,7 @@ require.config({
     	'jquery.dataTables.min': ['jquery'],
     	'fp/flowplayer.min': ['jquery'],
     	'common': ['jquery'],
+    	'version': ['jquery'],
     	
     	'app/jqplot_image': ['jquery'],
     	'app/map-functions': ['jquery'],
@@ -103,7 +105,8 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
          'app/panels',
          
          'tablesorter',
-         'crf'
+         'crf',
+         'version'
          
          ], function($, jquery_ui, rmm, common, localise, globals) {});
 

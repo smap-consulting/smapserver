@@ -47,6 +47,7 @@ require.config({
     	modernizr: '../../../../js/libs/modernizr',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
@@ -54,12 +55,14 @@ require.config({
     },
     shim: {
     	'rmm': ['jquery'],
-    	'jquery_ui': ['jquery']
+    	'jquery_ui': ['jquery'],
+       	'common': ['jquery'],
+    	'version': ['jquery'],
     	
     	}
     });
 
-require(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'], 
+require(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals', 'version'], 
 		function($, jquery_ui, rmm, localise, globals) {
 	
 	var width = 960,

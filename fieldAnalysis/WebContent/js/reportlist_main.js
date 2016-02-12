@@ -42,6 +42,7 @@ requirejs.config({
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	lang_location: '../../../../js'
     },
@@ -49,6 +50,7 @@ requirejs.config({
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],	
        	'common': ['jquery'], 	
+       	'version': ['jquery'], 
        	'app/script': ['jquery_ui'],
        	'app/map-functions': ['jquery'],   	
     	}
@@ -64,6 +66,7 @@ require([
          'localise', 
          'app/map-functions',
          'app/script',
-         'app/reportlist'
+         'app/reportlist',
+         'version'
          
          ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});

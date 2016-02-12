@@ -47,7 +47,8 @@ require([
          'app/common', 
          'app/globals',
          'app/localise',
-         'bootstrapfileinput'
+         'bootstrapfileinput',
+         'app/version'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 	var gMaps,

@@ -57,7 +57,8 @@ require([
          'app/question',
          'app/optionlist',
          'app/editorMarkup',
-         'app/changeset'], 
+         'app/changeset',
+         'app/version'], 
 		function(
 				$, 
 				common, 

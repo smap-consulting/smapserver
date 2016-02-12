@@ -44,7 +44,8 @@ require([
          'modernizr',
          'app/localise',
          'app/ssc',
-         'app/globals'], 
+         'app/globals',
+         'app/version'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 

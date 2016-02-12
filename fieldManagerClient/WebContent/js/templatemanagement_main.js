@@ -40,13 +40,15 @@ requirejs.config({
     	       ],
     	modernizr: '../../../../js/libs/modernizr',
     	common: '../../../../js/app/common',
+    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	lang_location: '../../../../js'
     },
     shim: {
     	'bootstrap': ['jquery'],
-    	'common': ['jquery']
+    	'common': ['jquery'],
+    	'version': ['jquery']
 	
     	}
     });
@@ -57,7 +59,8 @@ require([
          'localise', 
          'globals',
          'bootstrap',
-         'app/templateManagement'
+         'app/templateManagement',
+         'version'
          
          ], function($, common, localise, globals, bootstrap) {});
 

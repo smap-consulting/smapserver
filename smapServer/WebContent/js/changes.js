@@ -46,7 +46,8 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
-         'jquery.autosize.min'], 
+         'jquery.autosize.min',
+         'app/version'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
