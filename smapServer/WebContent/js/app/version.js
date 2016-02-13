@@ -18,40 +18,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Reload the page from the server if the version is out of date
+ * Expected version of the web content
  */
 
 var gSmapVersion="160204";
-
-$(document).ready(function () {
-
-	getVersion();
-
-	
-});
-
-
-function getVersion() {
-	
-
-	$.ajax({
-		url: "/surveyKPI/version",
-		cache: false,
-		dataType: 'json',
-		success: function(data) {
-			if(data.version !== gSmapVersion) {
-				location.reload(true);
-			}
-		},
-		error: function(xhr, textStatus, err) {
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get version: " + err);
-			}
-		}
-	});	
-	
-	
-
-}

@@ -44,8 +44,7 @@ require([
          'modernizr',
          'app/localise',
          'app/ssc',
-         'app/globals',
-         'app/version'], 
+         'app/globals'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
@@ -55,6 +54,10 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
+	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	// Get the user details
 	globals.gIsAdministrator = false;

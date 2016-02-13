@@ -62,6 +62,9 @@ $(document).ready(function() {
 	}(document));    
 	    
 	initializeReportsMap();
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	 /*
 	  * Get the user details so we have the default project

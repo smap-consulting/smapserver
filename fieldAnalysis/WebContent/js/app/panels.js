@@ -121,6 +121,9 @@ $(document).ready(function() {
 	var aDate;
 	console.log("panels");
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
     // Add a new panel button click
     $('.db_settings_add').click(function() { 

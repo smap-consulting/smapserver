@@ -21,6 +21,9 @@ define(['jquery','jquery_ui', 'tablesorter', 'localise'], function($, ui, tables
 $(document).ready(function() {
 
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	$("#fl").tablesorter({ widgets: ['zebra'] });
 	$('#save_survey').button().click(function () {

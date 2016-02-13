@@ -55,8 +55,7 @@ require([
          'app/globals',
          'ol3/js/ol',
          'moment.min',
-         'bootstrap-datetimepicker.min',
-         'app/version'
+         'bootstrap-datetimepicker.min'
          
          ], function($, common, bootstrap, localise, globals) {
 
@@ -117,6 +116,9 @@ var trailStyle = new ol.style.Style({
 
 $(document).ready(function() {
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	localise.setlang();
 		
 	// Set up the start and end dates with date picker

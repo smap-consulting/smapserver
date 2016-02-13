@@ -42,8 +42,7 @@ require([
          'bootstrap.min',
          'bootstrapValidator.min',
          'app/localise',
-         'app/common',
-         'app/version'
+         'app/common'
          ], function($, bootstrap, bv, localise) {
 
 	var gToken;
@@ -54,6 +53,10 @@ $(document).ready(function() {
 	params,
 	pArray = [],
 	param = [];
+	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	// Get the authentication token if it has been passed in parameters
 	params = location.search.substr(location.search.indexOf("?") + 1)

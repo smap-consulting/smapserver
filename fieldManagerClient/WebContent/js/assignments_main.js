@@ -39,7 +39,6 @@ requirejs.config({
     	moment: '../../../../js/libs/moment.min',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
     	common: '../../../../js/app/common',
-    	version: '../../../../js/app/version',
     	globals: '../../../../js/app/globals',
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	bootbox: '../../../../js/libs/bootbox.min',
@@ -50,7 +49,6 @@ requirejs.config({
     shim: {
 
     	'common': ['jquery'],
-    	'version': ['jquery'],
     	'datetimepicker': ['moment'],
     	'bootstrap': ['jquery'],
     	'bootbox': ['bootstrap'],
@@ -77,8 +75,7 @@ require([
          'crf',
          'moment',
          'datetimepicker',
-         'file_input',
-         'version'
+         'file_input'
          
          ], function($, bootstrap, common, localise, globals) {});
 

@@ -50,8 +50,7 @@ require([
          'app/globals',
          'app/changeset',
          'bootbox',
-         'jquery.autosize.min',
-         'app/version'], 
+         'jquery.autosize.min'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals, changeset, bootbox) {
 
 
@@ -65,6 +64,9 @@ $(document).ready(function() {
 		pArray = [],
 		param = [];
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details

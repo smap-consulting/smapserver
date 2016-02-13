@@ -22,8 +22,11 @@ require.config({
     }
 });
 
-require(['jquery', 'bootstrap.min', 'app/localise', 'app/common', 'app/version'], function($, bootstrap, localise, common) {
+require(['jquery', 'bootstrap.min', 'app/localise', 'app/common'], function($, bootstrap, localise, common) {
 	localise.setlang();
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	/*
 	 * Enable self registration 

@@ -47,8 +47,7 @@ require([
          'app/common', 
          'app/globals',
          'app/localise',
-         'bootstrapfileinput',
-         'app/version'
+         'bootstrapfileinput'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 	var gMaps,
@@ -59,6 +58,9 @@ $(document).ready(function() {
 	
 	var bs = isBusinessServer();
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	// Get the user details
 	globals.gIsAdministrator = false;

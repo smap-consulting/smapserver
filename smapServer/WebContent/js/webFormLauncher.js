@@ -47,12 +47,14 @@ require([
          'app/common', 
          'app/globals',
          'app/localise',
-         'bootstrapfileinput',
-         'app/version'
+         'bootstrapfileinput'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 $(document).ready(function() {
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details

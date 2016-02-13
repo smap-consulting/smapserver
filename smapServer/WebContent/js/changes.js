@@ -46,8 +46,7 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
-         'jquery.autosize.min',
-         'app/version'], 
+         'jquery.autosize.min'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
@@ -62,7 +61,9 @@ $(document).ready(function() {
 		param = [];
 	
 	localise.setlang();		// Localise HTML
-	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 
 	// Get the user details
 	globals.gIsAdministrator = false;
