@@ -236,14 +236,22 @@ public class GeneralUtilityMethods {
 	static public void assertBusinessServer(String host) {
 		System.out.println("Host is: " + host);
 		
-		if(!host.contains("zarkman.com") &&
-				!host.equals("localhost") &&
-				!host.equals("app.kontrolid.com") &&
-				!host.equals("kontrolid.smap.com.au") &&
-				!host.equals("dev.smap.com.au")) {
+		if(!isBusinessServer(host)) {
 			throw new AuthorisationException();
 		}
 		
+	}
+	
+	static public boolean isBusinessServer(String host) {
+		
+		boolean businessServer = true;
+		
+		if(!host.endsWith("zarkman.com") &&
+				!host.equals("localhost") &&
+				!host.endsWith("x.smap.com.au")) {
+			businessServer = false;;
+		}
+		return businessServer;
 	}
 	
 	/*

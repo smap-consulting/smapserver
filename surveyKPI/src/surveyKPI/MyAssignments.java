@@ -378,6 +378,7 @@ public class MyAssignments extends Application {
 				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
 				tr.settings.ft_sync_incomplete = resultSet.getBoolean(3);
+				tr.settings.ft_location_trigger = GeneralUtilityMethods.isBusinessServer(request.getServerName());
 			}
 			
 			/*

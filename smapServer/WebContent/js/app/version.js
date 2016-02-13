@@ -21,7 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Reload the page from the server if the version is out of date
  */
 
-var gSmapVersion="160203";
+var gSmapVersion="160204";
 
 $(document).ready(function () {
 

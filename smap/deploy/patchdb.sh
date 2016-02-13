@@ -172,6 +172,6 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
 # update version reference
-new_version="160203"
+new_version="160204"
 echo "$new_version" > ~/smap_version
 echo "update server set version = '$new_version'" | sudo -u postgres psql -d survey_definitions
