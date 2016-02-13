@@ -248,7 +248,7 @@ public class GeneralUtilityMethods {
 		
 		if(!host.endsWith("zarkman.com") &&
 				!host.equals("localhost") &&
-				!host.endsWith("x.smap.com.au")) {
+				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
 		}
 		return businessServer;
