@@ -809,7 +809,7 @@ function respondToEvents($context) {
 	$context.find('.qname').keydown(function(e){
 		if(e.keyCode === 9) {
 			e.preventDefault();
-			$(this).closest('tr').find('.labelProp').focus();
+			$(this).closest('.row').find('.labelProp').focus();
 		}
 	});
 
