@@ -410,6 +410,10 @@ $(document).ready(function() {
 		updateTaskParams();
 	});
 	
+	// Respond to a new NFC being selected
+	$('#nfc_select').change(function(){
+		$('#task_properties_title').val($(this).find(':selected').text());
+	});
 	
 	enableUserProfileBS();										// Enable user profile button	
 	$('#refreshMenu').click(function(e) {	// Add refresh action
@@ -598,7 +602,9 @@ function questionChanged() {
  */
 function setAddressOptions() {
 	
-	var sId = $('#survey').val();
+	var sId = $('#survey').val(),
+		j,
+		i;
 	
 	if(sId) {
 		// Get the survey meta data
@@ -842,6 +848,7 @@ function refreshTableAssignments(tasks) {
 			// open the properties dialog
 			$('#task_properties_taskid').val(task.task_id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
+			$('#task_properties_title').val(task.title);
 			$('#task_properties_scheduledDate').data("DateTimePicker").setDate(task.scheduleAt);
 			$('#nfc_select').val(task.location_trigger);
 			$('#task_properties').modal("show");  

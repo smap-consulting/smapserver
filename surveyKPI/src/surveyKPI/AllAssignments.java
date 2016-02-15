@@ -242,6 +242,7 @@ public class AllAssignments extends Application {
 					user_name = "";
 				}
 				jp.put("user_name", user_name);
+				jp.put("title", resultSet.getString("title"));
 				jp.put("address", resultSet.getString("address"));
 				jp.put("repeat", resultSet.getBoolean("repeat"));
 				jp.put("scheduleAt", resultSet.getTimestamp("schedule_at"));
@@ -1428,6 +1429,7 @@ public class AllAssignments extends Application {
 		
 	
 		int taskId = 0;
+		String taskTitle = null;
 		boolean repeat = false;
 		Timestamp scheduleAt = null;
 		String locationTrigger = null;
@@ -1447,6 +1449,8 @@ public class AllAssignments extends Application {
 				
 					if(item.getFieldName().equals("taskid")) {
 						taskId = Integer.parseInt(item.getString());	
+					} if(item.getFieldName().equals("taskTitle")) {
+						taskTitle = item.getString();	
 					} else if(item.getFieldName().equals("repeat")) {
 						repeat = true;	
 					} else if(item.getFieldName().equals("scheduleAt")) {
@@ -1468,12 +1472,14 @@ public class AllAssignments extends Application {
 
 			}
 			
-			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ?, location_trigger = ? where id = ?;";
+			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ?, location_trigger = ?,  title = ? where id = ?;";
 			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
 			pstmtUpdate.setBoolean(1, repeat);
 			pstmtUpdate.setTimestamp(2, scheduleAt);
 			pstmtUpdate.setString(3, locationTrigger);
-			pstmtUpdate.setInt(4, taskId);
+			pstmtUpdate.setString(4, taskTitle);
+			pstmtUpdate.setInt(5, taskId);
+
 			log.info("SQL Update properties: " + pstmtUpdate.toString());
 			pstmtUpdate.executeUpdate();
 				

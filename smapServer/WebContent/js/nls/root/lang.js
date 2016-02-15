@@ -129,6 +129,10 @@ define({
 	"c_scheduled": "Scheduled",
 	"c_t_c": "terms and conditions",
 	"c_agree": "I agree to the",
+	"c_select": "Select",
+	"c_status": "Status",
+	"c_coords": "Coordinates",
+	"c_task": "Task",
 	
 	// File Types
 	"ft": "File Type",
@@ -232,6 +236,7 @@ define({
 	"t_ue": "Update Existing Results",
 	"t_ap": "Address Parameters",
 	"t_nfc": "NFC or Location",
+	"t_assigned": "Assigned",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",

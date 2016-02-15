@@ -494,7 +494,7 @@ public class Survey extends Application {
 				jp.put("geom", has_geom);
 				jp.put("f_id", fId);
 				jp.put("p_id", p_id);
-				if(p_id == null) {
+				if(p_id == null || p_id.equals("0")) {
 					jo.put("top_table", tableName);
 				}
 				jp.put("geom_id", geom_id);

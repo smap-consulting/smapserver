@@ -92,25 +92,24 @@ window.log = function(){
 					tab[++idx] = thisTg;
 					tab[++idx] = '">';
 					tab[++idx] = '<thead><tr>';
-					tab[++idx] = '<th>Select</th><th>Task</th><th>Status</th><th>Location</th><th>Repeat</th>';
+					tab[++idx] = '<th>' + localise.set["c_select"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_task"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_title"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_status"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_coords"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_repeat"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["t_assigned"] + '</th>';
+					tab[++idx] = '<th>' + localise.set["c_scheduled"] + '</th>';
 					
+					// Add address params
 					addressParams = settings.data.task_groups[currentTg].tg_address_params;
-					$.each(item.properties, function(key, value) {
-						if(includeKey(key)) {
-							if(key === 'address') {
-								addressParamsObj = $.parseJSON(addressParams);
-								for(i = 0; i < addressParamsObj.length; i++) {
-									if(addressParamsObj[i].selected) {
-										tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
-									}
-								}
-							} else if(key === 'task_group_id' || key === 'task_group_name') {
-								// ignore
-							} else {
-								tab[++idx] = '<th>' + key + '</th>';
-							}
+					addressParamsObj = $.parseJSON(addressParams);
+					for(i = 0; i < addressParamsObj.length; i++) {
+						if(addressParamsObj[i].selected) {
+							tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
 						}
-					});
+					}
+
 					tab[++idx] = '</tr></thead><tbody>';
 					
 				}
@@ -132,7 +131,14 @@ window.log = function(){
 					tab[++idx] = '"></td>';
 					
 					tab[++idx] = '<td><button type="button" class="task_edit">' + surveyName + '</button></td>';
+					
+					// Task title
+					tab[++idx] = '<td>';
+					tab[++idx] = item.properties.title;
+					tab[++idx] = '</td>';
+					
 					tab[++idx] = '<td class="' + item.properties.assignment_status + '">' + item.properties.assignment_status + '</td>';
+					
 					if(item.geometry) {
 						tab[++idx] = '<td>' + item.geometry.type + '[' + formatCoords(item.geometry.coordinates) + ']' + '</td>';
 					} else {
@@ -141,35 +147,37 @@ window.log = function(){
 					
 					tab[++idx] = '<td>';
 					tab[++idx] = item.properties.repeat ? 'yes' : 'no';
-					tab[++idx] = '</button></td>';
+					tab[++idx] = '</td>';
 					
-					$.each(item.properties, function(key, value) {
-	
-						if(includeKey(key)) {
-							
-							if(key === 'address' && addressParamsObj) {
-								addressObj = $.parseJSON(value);
-								j = 0;
-								for(i = 0; i < addressParamsObj.length; i++) {
-									if(addressParamsObj[i].selected) {
-										value = addAnchors(addressObj[j].value).join(',');
-										if(addressParamsObj[i].isBarcode) {
-											tab[++idx] = '<td class="barcode">' + value + '</td>';
-										} else {
-											tab[++idx] = '<td>' + value + '</td>';
-										}
-										j++;
-									} 
+					// Assigned user
+					tab[++idx] = '<td>';
+					tab[++idx] = item.properties.user_name;
+					tab[++idx] = '</td>';
+					
+					// Scheduled At
+					tab[++idx] = '<td>';
+					tab[++idx] = formatTimestamp(item.properties.scheduleAt);
+					tab[++idx] = '</td>';
+					
+					if(addressParamsObj) {
+						addressObj = $.parseJSON(item.properties.address);
+					
+						j = 0;
+						for(i = 0; i < addressParamsObj.length; i++) {
+							if(addressParamsObj[i].selected) {
+								value = addAnchors(addressObj[j].value).join(',');
+								
+								if(addressParamsObj[i].isBarcode) {
+									tab[++idx] = '<td class="barcode">' + value + '</td>';
+								} else {
+									value = addAnchors(value).join(',');							
+									tab[++idx] = '<td>' + value + '</td>';
 								}
-							} else if(key === 'scheduleAt') {
-								value = formatTimestamp(value);
-								tab[++idx] = '<td>' + value + '</td>';
-							} else {
-								value = addAnchors(value).join(',');							
-								tab[++idx] = '<td>' + value + '</td>';
-							}
+								j++;
+							} 
 						}
-					});
+							
+					}
 					tab[++idx] = '</tr>';
 				}
 				recCounter++;
