@@ -29,14 +29,14 @@
 			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
 			<li class="restrict_role analyst_role user_trail"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>
 			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
-			<li><a id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
+			<li><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">refresh</a></li> 
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 		</ul>
 	</div>
 	<p style="clear: both;"></p>
 	<div id="header">
 		<div id="username"></div>
-		<div id="banner">Monitoring</div>
+		<div id="banner" class="lang" data-lang="m_monitor">monitoring</div>
 	</div>
 </div>	<!-- Header -->
 
@@ -44,56 +44,56 @@
 	<div id="aside">
 		<form id="mon_controls">
 			<fieldset id="showsource" class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Source</legend>
-				<input type="radio" name="showsource" value="forms" checked="checked"/> Forms<br/>
-				<input type="radio" name="showsource" value="uploaded" /> Submitted<br/> 
-				<input type="radio" name="showsource" value="forwarded"/> Forwarded<br/>  
-				<input type="radio" name="showsource" value="notifications"/> Notifications<br/>  
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="c_source">source</legend>
+				<input type="radio" name="showsource" value="forms" checked="checked"/> <span class="lang" data-lang="m_tm">forms</span><br/>
+				<input type="radio" name="showsource" value="uploaded" /> <span class="lang" data-lang="c_submitted">submitted</span><br/> 
+				<input type="radio" name="showsource" value="forwarded"/> <span class="lang" data-lang="c_forwarded">forwarded</span><br/>  
+				<input type="radio" name="showsource" value="notifications"/> <span class="lang" data-lang="m_notify">notifications</span><br/>  
 			</fieldset>
 			<fieldset id="showtype" class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Show</legend>
-				<input type="radio" name="showtype" value="totals" checked="checked"/> Totals<br/> 
-				<input type="radio" name="showtype" value="instances"/> Instances (last 200)<br/>  
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="c_show">show</legend>
+				<input type="radio" name="showtype" value="totals" checked="checked"/> <span class="lang" data-lang="c_totals">totals</span><br/> 
+				<input type="radio" name="showtype" value="instances"/> <span class="lang" data-lang="c_instances">instances</span> <span class="lang" data-lang="mon_l200">last 200</span><br/>  
 			</fieldset>
 			<fieldset class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Data</legend>
-				<label for="project_name">Project</label>
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="c_data">data</legend>
+				<label for="project_name" class="lang" data-lang="c_project">Project</label>
 				<select class="project_list" id="project_name"></select><br/>
-				<label for="survey">Survey: </label>
+				<label for="survey" class="lang" data-lang="c_survey">Survey: </label>
 				<select id="survey" class="survey_select">
 				</select>
 			</fieldset>
 			<fieldset id="groupsurvey" style="display:none;" class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Group Totals by</legend>
-				<input type="radio" name="groupsurvey" value="device" checked="checked"/>Device<br/> 
-				<input type="radio" name="groupsurvey" value="month"/>Month<br/> 
-				<input type="radio" name="groupsurvey" value="week"/>Week<br/> 
-				<input type="radio" name="groupsurvey" value="day"/>Day<br/> 
+				<legend class="ui-widget-header ui-corner-all" class="lang" data-lang="mon_gtb">group totals by</legend>
+				<input type="radio" name="groupsurvey" value="device" checked="checked"/><span class="lang" data-lang="c_device">device</span><br/> 
+				<input type="radio" name="groupsurvey" value="month"/><span class="lang" data-lang="c_month">month</span><br/> 
+				<input type="radio" name="groupsurvey" value="week"/><span class="lang" data-lang="c_week">week</span><br/> 
+				<input type="radio" name="groupsurvey" value="day"/><span class="lang" data-lang="c_day">day</span><br/> 
 			</fieldset>
 			<fieldset id="showstatus" class="ui-widget-content">
 				<legend class="ui-widget-header ui-corner-all">Include</legend>
-					<input type="checkbox" name="showstatus" value="success" checked="checked"/> Success<br/> 
-					<input type="checkbox" name="showstatus" value="errors" checked="checked"/> Errors<br/> 
-					<input type="checkbox" name="showstatus" value="not_loaded" checked="checked"/> Not Loaded<br/>
-					<input type="checkbox" name="showstatus" value="duplicates" checked="checked"/> Duplicates<br/>  
-					<input type="checkbox" name="showstatus" value="merged" checked="checked"/> Merged<br/>  
+					<input type="checkbox" name="showstatus" value="success" checked="checked"/> <span class="lang" data-lang="c_success">success</span><br/> 
+					<input type="checkbox" name="showstatus" value="errors" checked="checked"/> <span class="lang" data-lang="c_errors">errors</span><br/> 
+					<input type="checkbox" name="showstatus" value="not_loaded" checked="checked"/> <span class="lang" data-lang="mon_nl">not loaded</span><br/>
+					<input type="checkbox" name="showstatus" value="duplicates" checked="checked"/> <span class="lang" data-lang="mon_dup">duplicates</span><br/>  
+					<input type="checkbox" name="showstatus" value="merged" checked="checked"/> <span class="lang" data-lang="mon_att">attachments</span><br/>  
 			</fieldset>
 			<fieldset id="showtarget" class="ui-widget-content">
-				<legend class="ui-widget-header ui-corner-all">Show As</legend>
-				<input type="radio" name="target" value="table" id="tableradio" checked="checked"/> Table<br/> 
+				<legend class="ui-widget-header ui-corner-all lang" data-lang="mon_sa">show as</legend>
+				<input type="radio" name="target" value="table" id="tableradio" checked="checked"/> <span class="lang" data-lang="c_table">table</span><br/> 
 				<!-- <input type="radio" name="target" value="graph"/> Graph<br/> -->
-				<span class="showmap"><input type="radio" name="target" value="map"/> Map<br/></span> 
+				<span class="showmap"><input type="radio" name="target" value="map"/> <span class="lang" data-lang="c_map">map</span><br/></span> 
 			</fieldset>
 			<div id="layers" style="display:none;">
-				<h1>Layers</h1>
+				<h1 class="lang" data-lang="c_map_layers">layers</h1>
 				<div id="current_layers">
 				</div>
-				<button id="zoomData" type="button">Zoom to Data</button><br/>
-				<button id="zoomRegions" type="button">Zoom to Grids</button><br/>
-				<button id="addLayer" type="button">Show Grids</button><br/>
-				<button id="removeLayer" type="button">Clear Grids</button><br/>
-				<button id="createLayer" type="button">Create Grid</button><br/>
-				<button id="deleteLayer" type="button">Delete Grids</button><br/>	
+				<button id="zoomData" type="button" class="lang" data-lang="c_zoom_data">zoom to data</button><br/>
+				<button id="zoomRegions" type="button" class="lang" data-lang="mon_zoom_grid">zoom to grids</button><br/>
+				<button id="addLayer" type="button" class="lang" data-lang="mon_show_grid">show grids</button><br/>
+				<button id="removeLayer" type="button" class="lang" data-lang="mon_clear_grid">clear grids</button><br/>
+				<button id="createLayer" type="button" class="lang" data-lang="mon_create_grid">create grid</button><br/>
+				<button id="deleteLayer" type="button" class="lang" data-lang="mon_del_grid">delete grids</button><br/>	
 			</div>
 		</form>
 	</div>
@@ -128,32 +128,30 @@
 
 <!-- Popup to allow the user to add a region as an overlay -->
 <div id="regions" style="display:none;">
-	<h1>Select a layer to add to the map as an overlay</h1>
+	<h1 class="lang" data-lang="mon_sel_layer">Select a layer</h1>
 	<select id="available_regions"></select>
 </div>
 
 <!-- Popup to allow the user to create a region as an overlay -->
 <div id="region_create" style="display:none;">
-	<h1>Create a new region</h1>
-	<p>Enter a name for the region and the width of each cell in meters. 
-	Click on the map to set the centre of one of the cells. Press the "shift"
-	button and drag the mouse to set the bounds.</p>
+	<h1 class="lang" data-lang="mon_c_reg">create region</h1>
+	<p class="lang" data-lang="mon_c_reg_i">enter a name for the region ...</p>
 	<form id="region_create_form">
-		<label for="region_name">Name (lowercase, no spaces or numbers)</label>
+		<label for="region_name"><span class="lang" data-lang="c_name">name</span> <span class="lang" data-lang="mon_name_cond">(lowercase ...)</span></label>
 		<input type="text" id="region_name" pattern="[a-z]+"><br/>
-		<label for="region_width">Cell Width (in Meters. greater than 10)</label>
+		<label for="region_width" class="lang" data-lang="mon_cw">Cell Width</label>
 		<input type="text" id="region_width" required><br/>
-		<label for="region_centre">Centre: (use mouse)</label>
+		<label for="region_centre" class="lang" data-lang="mon_centre">Centre</label>
 		<input type="text" id="region_centre" readonly=readonly><br/>	
-		<label for="region_bounds">Bounds: (use shift - mouse)</label>
+		<label for="region_bounds" class="lang" data-lang="mon_bounds">Bounds</label>
 		<input type="text" id="region_bounds" readonly=readonly><br/>
-		<input type="submit" id="region_submit" value="Create Grid" />
+		<button type="submit" id="region_submit" value="Create Grid" class="lang" data-lang="mon_create_grid">create</button>
 	</form>	
 </div>
 
 <!-- Popup to allow the user to delete regions -->
 <div id="regions_delete" style="display:none;">
-	<h1>Select the regions that you want to delete</h1>
+	<h1 class="lang" data-lang="mon_sel_del">Select to delete</h1>
 	<div></div>
 </div>
 
@@ -162,19 +160,19 @@
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
-				<label for="me_name">Name</label>
+				<label for="me_name" class="lang" data-lang="c_name">name</label>
 				<input type="text" id="me_name" required><br/>
 				<select id="me_language"></select><br/>
-				<label for="me_email">Email</label>
+				<label for="me_email" class="lang" data-lang="c_email">email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
+					<label for="reset_me_password" class="lang" data-lang="c_r_p">reset password</label>
 					<input type="checkbox" id="reset_me_password"/><br/>
 				</span>
 				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
+					<label for="me_password" class="lang" data-lang="c_password">Password</label>
 					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
+					<label for="me_password_confirm" class="lang" data-lang="c_c_p">Confirm Password</label>
 					<input id="me_password_confirm" type="password"><br/>	
 				</span>		
 			</form>	

@@ -104,9 +104,11 @@ window.log = function(){
 					// Add address params
 					addressParams = settings.data.task_groups[currentTg].tg_address_params;
 					addressParamsObj = $.parseJSON(addressParams);
-					for(i = 0; i < addressParamsObj.length; i++) {
-						if(addressParamsObj[i].selected) {
-							tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
+					if(addressParamsObj) {
+						for(i = 0; i < addressParamsObj.length; i++) {
+							if(addressParamsObj[i].selected) {
+								tab[++idx] = '<th>' + addressParamsObj[i].name + '</th>';
+							}
 						}
 					}
 
@@ -162,19 +164,20 @@ window.log = function(){
 					if(addressParamsObj) {
 						addressObj = $.parseJSON(item.properties.address);
 					
-						j = 0;
-						for(i = 0; i < addressParamsObj.length; i++) {
-							if(addressParamsObj[i].selected) {
-								value = addAnchors(addressObj[j].value).join(',');
-								
-								if(addressParamsObj[i].isBarcode) {
-									tab[++idx] = '<td class="barcode">' + value + '</td>';
-								} else {
-									value = addAnchors(value).join(',');							
-									tab[++idx] = '<td>' + value + '</td>';
-								}
-								j++;
-							} 
+						if(addressObj) {
+							j = 0;
+							for(i = 0; i < addressParamsObj.length; i++) {
+								if(addressParamsObj[i].selected) {
+									value = addAnchors(addressObj[j].value).join(',');
+									
+									if(addressParamsObj[i].isBarcode) {
+										tab[++idx] = '<td class="barcode">' + value + '</td>';
+									} else {							
+										tab[++idx] = '<td>' + value + '</td>';
+									}
+									j++;
+								} 
+							}
 						}
 							
 					}

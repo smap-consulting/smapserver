@@ -286,7 +286,7 @@ public class AllAssignments extends Application {
 			/*
 			 * Add task group details to the response
 			 */
-			String sql = "select tg_id, name, address_params from task_group;";
+			String sql = "select tg_id, name, address_params from task_group order by tg_id;";
 			if(pstmt != null) {pstmt.close();};
 			pstmt = connectionSD.prepareStatement(sql);
 			ResultSet tgrs = pstmt.executeQuery();

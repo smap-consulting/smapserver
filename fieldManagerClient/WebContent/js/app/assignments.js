@@ -190,13 +190,12 @@ $(document).ready(function() {
 			  url: url,
 			  success: function(data, status) {
 				  removeHourglass();
-				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html("File Loaded");
-				  //$('#load_tasks').modal("hide");
+				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["t_fl"]);
 			  },
 			  error: function(xhr, textStatus, err) {
 				 
 				  removeHourglass(); 
-				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error file not loaded: " + xhr.responseText);
+				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_efnl"] + xhr.responseText);
 				 
 			  }
 		});
@@ -225,7 +224,7 @@ $(document).ready(function() {
 			  error: function(xhr, textStatus, err) {
 				 
 				  removeHourglass(); 
-				  alert("Error properties not updated: " + xhr.responseText);
+				  alert(localise.set["msg_err_upd"] + xhr.responseText);
 				 
 			  }
 		});
@@ -240,8 +239,7 @@ $(document).ready(function() {
 		 * Make sure we have the survey id
 		 */
 		if(typeof s_id === "undefined" || s_id === null) {
-			alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-					"If the project does have surveys then try again in a few seconds");
+			alert(localise.set["msg_err_wait"]);
 			return;
 		}
 		
@@ -326,9 +324,9 @@ $(document).ready(function() {
 			  }, error: function(data, status) {
 				  removeHourglass();
 				  if(data.responseText.indexOf("<html>") !== 0) {
-					  alert("Error: " + data.responseText); 
+					  alert(localise.set["c_error"] + " : " + data.responseText); 
 				  } else {
-					  alert("Error adding tasks");
+					  alert(localise.set["msg_err_upd"]);
 				  }
 
 			  }
@@ -377,9 +375,9 @@ $(document).ready(function() {
 			  }, error: function(data, status) {
 				  removeHourglass();
 				  if(data.responseText.indexOf("<html>") !== 0) {
-					  alert("Error: " + data.responseText); 
+					  alert(localise.set["c_error"] + " : " + data.responseText); 
 				  } else {
-					  alert("Error adding tasks");
+					  alert(localise.set["msg_err_upd"]);
 				  }
 
 			  }
@@ -393,7 +391,8 @@ $(document).ready(function() {
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
-		bootbox.confirm('Are you sure you want to delete these ' + globals.gPendingUpdates.length + ' tasks?', function(result){
+		bootbox.confirm(localise.set["msg_confirm_del"] + globals.gPendingUpdates.length + ' ' + localise.set["m_assign"] + 
+				'?', function(result){
 			if(result) {
 				deleteData(globals.gPendingUpdates); 
 			}
@@ -891,7 +890,7 @@ function refreshTableAssignments(tasks) {
 			
 			// Reset any pending tasks
 			$('#new_task_count').html(0);
-			$('#map_alert').show().text("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
+			$('#map_alert').show().text(localise.set["t_add_tasks"]);
 			window.scrollTo(500, 0);
 		});
 		
@@ -910,8 +909,7 @@ function refreshTableAssignments(tasks) {
 			 * Make sure we have the survey id
 			 */
 			if(typeof s_id === "undefined" || s_id === null) {
-				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-						"If the project does have surveys then try again in a few seconds");
+				alert(localise.set["msg_err_wait"]);
 				return;
 			}
 			
@@ -941,7 +939,7 @@ function refreshTableAssignments(tasks) {
 			
 			var tg_id = $(this).val();
 			
-			bootbox.confirm('Are you sure you want to delete this group and all of its tasks?', function(result){
+			bootbox.confirm(localise.set["msg_confirm_del"] + ' ' + localise.set["msg_confirm_tasks"], function(result){
 				if(result) {
 					addHourglass();
 					$.ajax({
