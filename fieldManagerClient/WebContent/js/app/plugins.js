@@ -48,8 +48,7 @@ window.log = function(){
 				$.extend( settings, options );
 			}
 			
-			var recCounter = 1,
-				surveyName,
+			var surveyName,
 				tab = [],
 				idx = -1,
 				addressParams,
@@ -59,37 +58,43 @@ window.log = function(){
 				i,j,
 				$this = $(this),
 				assignmentStatus,
-				showCompleted;
+				showCompleted,
+				group,
+				anItem,
+				currentItemIndex = 0;
 			
-			$.each(settings.data.features, function(j, item) {
-				surveyName = getProperty(item.properties, 'survey_name');
-				assignmentStatus = getProperty(item.properties, 'assignment_status');
-				thisTg = item.properties.task_group_id;
-				if(currentTg !== thisTg) {
-					currentTg = thisTg;
-					if(recCounter > 1) {
-						tab[++idx] = '</tbody></table>';
-					}
+			$.each(settings.data.task_groups, function(j, group) {
+				currentTg = group.tg_id;
+
+			//$.each(settings.data.features, function(j, item) {
+			//	surveyName = getProperty(item.properties, 'survey_name');
+			//	assignmentStatus = getProperty(item.properties, 'assignment_status');
+			//	thisTg = item.properties.task_group_id;
+			//	if(currentTg !== thisTg) {
+			//		currentTg = thisTg;
+			//		if(recCounter > 1) {
+			//			tab[++idx] = '</tbody></table>';
+			//		}
 					
 					tab[++idx] = '<span class="task_group_name">';
-					tab[++idx] = item.properties.task_group_name;
+					tab[++idx] = group.tg_name;
 					tab[++idx] = '</span>';
 					// Add a button to delete the task group
 					tab[++idx] = '<span class="noPrint">';
 					tab[++idx] = '<button class="add_new_task btn btn-success" value="';
-					tab[++idx] = thisTg;
+					tab[++idx] = currentTg;
 					tab[++idx] = '"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Tasks</button>';
 					tab[++idx] = '<button class="save_new_task btn btn-warning" style="display:none;" value="';
-					tab[++idx] = thisTg;
+					tab[++idx] = currentTg;
 					tab[++idx] = '"><span class="glyphicon glyphicon-save" aria-hidden="true"></span> Save Tasks</button>';
 					tab[++idx] = '<button class="delete_task_group btn btn-danger" value="';
-					tab[++idx] = thisTg;
+					tab[++idx] = currentTg;
 					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Group</button>';
 					tab[++idx] = '</span>';
 					
 					// Create the table
 					tab[++idx] = '<table class="tasks table table-striped" id="tasktable';
-					tab[++idx] = thisTg;
+					tab[++idx] = currentTg;
 					tab[++idx] = '">';
 					tab[++idx] = '<thead><tr>';
 					tab[++idx] = '<th>' + localise.set["c_select"] + '</th>';
@@ -102,7 +107,7 @@ window.log = function(){
 					tab[++idx] = '<th>' + localise.set["c_scheduled"] + '</th>';
 					
 					// Add address params
-					addressParams = settings.data.task_groups[currentTg].tg_address_params;
+					addressParams = group.tg_address_params;
 					addressParamsObj = $.parseJSON(addressParams);
 					if(addressParamsObj) {
 						for(i = 0; i < addressParamsObj.length; i++) {
@@ -114,78 +119,14 @@ window.log = function(){
 
 					tab[++idx] = '</tr></thead><tbody>';
 					
-				}
+					anItem = addItems(currentItemIndex, settings, currentTg);		// Add items
+					currentItemIndex = anItem.currentItemIndex;
+					tab[++idx] = anItem.resp;
+
+					tab[++idx] = '</tbody></table>';
+					
+				});
 				
-				// Check if we should show this record
-				showCompleted = item.properties.task_id > 0 && (settings.showCompleted || assignmentStatus !== "submitted");
-				if(showCompleted) {
-					tab[++idx] = '<tr data-idx="';
-					tab[++idx] = recCounter - 1;
-					tab[++idx] = '">';
-					
-					// Add select checkbox
-					tab[++idx] = '<td class="control_td"><input class="select_row" type="checkbox" name="controls" data-taskid="';
-					tab[++idx] = item.properties.task_id;
-					tab[++idx] = '" data-assid="';
-					tab[++idx] = item.properties.assignment_id;
-					tab[++idx] = '" data-status="';
-					tab[++idx] = item.properties.assignment_status;
-					tab[++idx] = '"></td>';
-					
-					tab[++idx] = '<td><button type="button" class="task_edit">' + surveyName + '</button></td>';
-					
-					// Task title
-					tab[++idx] = '<td>';
-					tab[++idx] = item.properties.title;
-					tab[++idx] = '</td>';
-					
-					tab[++idx] = '<td class="' + item.properties.assignment_status + '">' + item.properties.assignment_status + '</td>';
-					
-					if(item.geometry) {
-						tab[++idx] = '<td>' + item.geometry.type + '[' + formatCoords(item.geometry.coordinates) + ']' + '</td>';
-					} else {
-						tab[++idx] = '<td></td>';
-					}
-					
-					tab[++idx] = '<td>';
-					tab[++idx] = item.properties.repeat ? 'yes' : 'no';
-					tab[++idx] = '</td>';
-					
-					// Assigned user
-					tab[++idx] = '<td>';
-					tab[++idx] = item.properties.user_name;
-					tab[++idx] = '</td>';
-					
-					// Scheduled At
-					tab[++idx] = '<td>';
-					tab[++idx] = formatTimestamp(item.properties.scheduleAt);
-					tab[++idx] = '</td>';
-					
-					if(addressParamsObj) {
-						addressObj = $.parseJSON(item.properties.address);
-					
-						if(addressObj) {
-							j = 0;
-							for(i = 0; i < addressParamsObj.length; i++) {
-								if(addressParamsObj[i].selected) {
-									value = addAnchors(addressObj[j].value).join(',');
-									
-									if(addressParamsObj[i].isBarcode) {
-										tab[++idx] = '<td class="barcode">' + value + '</td>';
-									} else {							
-										tab[++idx] = '<td>' + value + '</td>';
-									}
-									j++;
-								} 
-							}
-						}
-							
-					}
-					tab[++idx] = '</tr>';
-				}
-				recCounter++;
-			});
-			tab[++idx] = '</tbody></table>';
 			
 			// Populate table
 			$this.append(tab.join(''));
@@ -194,6 +135,104 @@ window.log = function(){
 	};
 		
 })(jQuery);
+
+function addItems(start_rec, settings, current_tg) {
+	
+	var i,
+		item,
+		addressParams,
+		addressObj,
+		addressParamsObj,
+		assignmentStatus,
+		surveyName,
+		tab = [],
+		idx = -1,
+		ret = {};
+	
+	for(i = start_rec; i < settings.data.features.length; i++) {
+		
+		item = settings.data.features[i];
+		if(current_tg != item.properties.task_group_id) {
+			break;	// end of task group			
+		}
+		
+		assignmentStatus = getProperty(item.properties, 'assignment_status');
+		surveyName = getProperty(item.properties, 'survey_name');
+		
+		// Check if we should show this record
+		showCompleted = item.properties.task_id > 0 && (settings.showCompleted || assignmentStatus !== "submitted");
+		
+		if(showCompleted) {
+			tab[++idx] = '<tr data-idx="';
+			//tab[++idx] = recCounter - 1;
+			tab[++idx] = '">';
+		
+			// Add select checkbox
+			tab[++idx] = '<td class="control_td"><input class="select_row" type="checkbox" name="controls" data-taskid="';
+			tab[++idx] = item.properties.task_id;
+			tab[++idx] = '" data-assid="';
+			tab[++idx] = item.properties.assignment_id;
+			tab[++idx] = '" data-status="';
+			tab[++idx] = item.properties.assignment_status;
+			tab[++idx] = '"></td>';
+		
+			tab[++idx] = '<td><button type="button" class="task_edit">' + surveyName + '</button></td>';
+		
+			// Task title
+			tab[++idx] = '<td>';
+			tab[++idx] = item.properties.title;
+			tab[++idx] = '</td>';
+		
+			tab[++idx] = '<td class="' + item.properties.assignment_status + '">' + item.properties.assignment_status + '</td>';
+		
+			if(item.geometry) {
+				tab[++idx] = '<td>' + item.geometry.type + '[' + formatCoords(item.geometry.coordinates) + ']' + '</td>';
+			} else {
+				tab[++idx] = '<td></td>';
+			}
+		
+			tab[++idx] = '<td>';
+			tab[++idx] = item.properties.repeat ? 'yes' : 'no';
+			tab[++idx] = '</td>';
+		
+			// Assigned user
+			tab[++idx] = '<td>';
+			tab[++idx] = item.properties.user_name;
+			tab[++idx] = '</td>';
+		
+			// Scheduled At
+			tab[++idx] = '<td>';
+			tab[++idx] = formatTimestamp(item.properties.scheduleAt);
+			tab[++idx] = '</td>';
+		
+			if(addressParamsObj) {
+				addressObj = $.parseJSON(item.properties.address);
+			
+				if(addressObj) {
+					j = 0;
+					for(i = 0; i < addressParamsObj.length; i++) {
+						if(addressParamsObj[i].selected) {
+							value = addAnchors(addressObj[j].value).join(',');
+							
+							if(addressParamsObj[i].isBarcode) {
+								tab[++idx] = '<td class="barcode">' + value + '</td>';
+							} else {							
+								tab[++idx] = '<td>' + value + '</td>';
+							}
+							j++;
+						} 
+					}
+				}
+					
+			}
+			tab[++idx] = '</tr>';
+		}
+	}
+	ret.currentItemIndex = i;
+	ret.resp = tab.join("");
+	
+	return ret;		// Return the counter to avoid going over same items for every task group
+}
 
 function formatTimestamp(value) {
 	var aValue = [];
