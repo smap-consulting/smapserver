@@ -31,7 +31,7 @@ $(document).ready(function() {
 	});
 	
 	/*
-	 * daterange Dialog
+	 * Server Side Calculate Dialog
 	 */	
 	$('#add_ssc_popup').dialog(
 		{

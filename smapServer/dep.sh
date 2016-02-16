@@ -22,5 +22,5 @@ sudo apachectl restart
 # clean up the temporary smapServer directory but first check that it is the right one
 if [ -f dep.sh ]
 then
-	rm -rf smapServer
+#	rm -rf smapServer
 fi

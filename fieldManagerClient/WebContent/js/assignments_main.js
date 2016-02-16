@@ -36,7 +36,7 @@ requirejs.config({
      	localise: '../../../../js/app/localise',
     	jquery: '../../../../js/libs/jquery-1.8.3.min',
     	modernizr: '../../../../js/libs/modernizr',
-    	moment: '../../../../js/libs/moment.min',
+    	moment: '../../../../js/libs/moment-with-locales.min',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
@@ -77,5 +77,16 @@ require([
          'datetimepicker',
          'file_input'
          
-         ], function($, bootstrap, common, localise, globals) {});
+         ], function($, 
+        		 bootstrap, 
+        		 common, 
+        		 localise, 
+        		 globals, 
+        		 bootbox, 
+        		 assignments, 
+        		 map_ol_mgmt, 
+        		 plugins,
+        		 barcode, 
+        		 crf, 
+        		 moment) {});
 

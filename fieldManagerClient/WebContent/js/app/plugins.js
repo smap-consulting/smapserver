@@ -164,7 +164,7 @@ function addItems(start_rec, settings, current_tg) {
 		
 		if(showCompleted) {
 			tab[++idx] = '<tr data-idx="';
-			//tab[++idx] = recCounter - 1;
+			tab[++idx] = i;
 			tab[++idx] = '">';
 		
 			// Add select checkbox

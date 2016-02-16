@@ -1355,8 +1355,8 @@ function isSelfRegistrationServer() {
 function validDates() {
 	var $d1 = $('#startDate'),
 		$d2 = $('#endDate'),
-		d1 = $d1.data("DateTimePicker").getDate(),
-		d2 = $d2.data("DateTimePicker").getDate()
+		d1 = $d1.data("DateTimePicker").date(),
+		d2 = $d2.data("DateTimePicker").date()
 			
 	if(!d1 || !d1.isValid()) {
 		$('#ut_alert').show().text("Invalid Start Date");
@@ -1395,11 +1395,11 @@ function getUtcDate($element, start, end) {
 		utcDate;
 	
 	if(start) {
-		theDate = $element.data("DateTimePicker").getDate().startOf('day');
+		theDate = $element.data("DateTimePicker").date().startOf('day');
 	} else if (end) {
-		theDate = $element.data("DateTimePicker").getDate().endOf('day');
+		theDate = $element.data("DateTimePicker").date().endOf('day');
 	} else {
-		theDate = $element.data("DateTimePicker").getDate();
+		theDate = $element.data("DateTimePicker").date();
 	}
 	
 	utcDate = moment.utc(theDate);
