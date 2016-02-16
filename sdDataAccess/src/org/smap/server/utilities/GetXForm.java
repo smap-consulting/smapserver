@@ -477,24 +477,30 @@ public class GetXForm {
     			
     			//if(subForm != null) {
        			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
-    				Form subForm = template.getSubForm(f,q);
+    				
+       				// Apply bind for repeat question
+       				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);
+					currentParent.appendChild(questionElement);
+       				
+					// Process sub form
+       				Form subForm = template.getSubForm(f,q);
     				populateForm(outputDoc, currentParent, BIND, subForm);
     				if(subForm.getRepeats() != null) {
     					// Add the calculation for repeat count
-    					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());
+    					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), true);
     					currentParent.appendChild(questionElement);
     				}
     				
     			} else if (q.getType().equals("begin group")) {
     				
-    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());
+    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);
 					currentParent.appendChild(questionElement);
 					
     			} else if(q.getType().equals("end group")) { 
     				
     			} else {
     			
-    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath());					
+    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);					
     				currentParent.appendChild(questionElement);
     				
     			}   						
@@ -600,7 +606,7 @@ public class GetXForm {
     /*
      * Populate the question element if this is part of the XForm bind
      */
-    public Element populateBindQuestion(Document outputXML, Form f, Question q, String parentXPath) {
+    public Element populateBindQuestion(Document outputXML, Form f, Question q, String parentXPath, boolean count) {
 
 		Element questionElement = outputXML.createElement("bind");
 		
@@ -608,46 +614,48 @@ public class GetXForm {
 		String type = q.getType();
 		if(type.equals("audio") || type.equals("video") || type.equals("image")) {
 			type = "binary";
-		} else if(type.equals("begin repeat")) {
+		} else if(type.equals("begin repeat") && count) {
 			type = "string";		// For a calculate
 		}
-		if(!type.equals("begin group")) {
+		if(!type.equals("begin group") && !type.equals("begin repeat")) {
 			questionElement.setAttribute("type", type);
 		}
 		
 		// Add reference
 		String reference = q.getPath();	
-		if(q.getType().equals("begin repeat")) {
+		if(q.getType().equals("begin repeat") && count) {
 			reference += "_count";					// Reference is to the calculate question for this form
 		}
 		questionElement.setAttribute("nodeset", reference);
 		
-		// Add read only
-		if(q.isReadOnly()) {
-			questionElement.setAttribute("readonly", "true()");
-		}
-		
-		// Add mandatory
-		if(q.isMandatory()) {
-			questionElement.setAttribute("required", "true()");
-		}
-		
-		// Add relevant
-		String relevant = q.getRelevant();
-		if(relevant != null && relevant.trim().length() > 0 ) {
-			questionElement.setAttribute("relevant", relevant);
-		}
-		
-		// Add constraint
-		String constraint = q.getConstraint();
-		if(constraint != null && constraint.trim().length() > 0 ) {
-			questionElement.setAttribute("constraint", constraint);
-		}
-		
-		// Add constraint message
-		String constraintMsg = q.getConstraintMsg();
-		if(constraintMsg != null && constraintMsg.trim().length() > 0 ) {
-			questionElement.setAttribute("jr:constraintMsg", constraintMsg);
+		if(!count) {
+			// Add read only
+			if(q.isReadOnly()) {
+				questionElement.setAttribute("readonly", "true()");
+			}
+			
+			// Add mandatory
+			if(q.isMandatory()) {
+				questionElement.setAttribute("required", "true()");
+			}
+			
+			// Add relevant
+			String relevant = q.getRelevant();
+			if(relevant != null && relevant.trim().length() > 0 ) {
+				questionElement.setAttribute("relevant", relevant);
+			}
+			
+			// Add constraint
+			String constraint = q.getConstraint();
+			if(constraint != null && constraint.trim().length() > 0 ) {
+				questionElement.setAttribute("constraint", constraint);
+			}
+			
+			// Add constraint message
+			String constraintMsg = q.getConstraintMsg();
+			if(constraintMsg != null && constraintMsg.trim().length() > 0 ) {
+				questionElement.setAttribute("jr:constraintMsg", constraintMsg);
+			}
 		}
 		
 		// Add calculate
@@ -657,7 +665,7 @@ public class GetXForm {
 			if(calculate == null) {
 				calculate = q.getCalculate();	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}
-		} else if(q.getType().equals("begin repeat")) {
+		} else if(q.getType().equals("begin repeat") && count) {
 			Form subForm = template.getSubForm(f,q);
 			String repeats = subForm.getRepeats();
 			if(repeats != null) {		// Add the path to the repeat count question
