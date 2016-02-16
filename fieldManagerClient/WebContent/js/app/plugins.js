@@ -202,7 +202,8 @@ function addItems(start_rec, settings, current_tg) {
 		
 			// Scheduled At
 			tab[++idx] = '<td>';
-			tab[++idx] = formatTimestamp(item.properties.scheduleAt);
+			//tab[++idx] = formatTimestamp(item.properties.scheduleAt);
+			tab[++idx] = localTime(item.properties.scheduleAt);
 			tab[++idx] = '</td>';
 		
 			if(addressParamsObj) {

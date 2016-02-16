@@ -1694,6 +1694,21 @@ function getVersion() {
 }
 
 /*
+ * Convert a timestamp in UTC to local time
+ */
+function localTime(utcTime) {
+	var utcDate  = moment.utc(utcTime).toDate();
+    return moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
+} 
+
+function utcTime(localTime) {
+
+	var localDate = moment(localTime).toDate();
+	return moment.utc(localDate).format('YYYY-MM-DD HH:mm:ss');
+
+}
+
+/*
  * Prevent the menu bar from extending over two lines
  */
 // From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse

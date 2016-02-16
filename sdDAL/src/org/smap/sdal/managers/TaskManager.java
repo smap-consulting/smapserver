@@ -67,6 +67,7 @@ public class TaskManager {
 			pstmt = sd.prepareStatement(sql);	
 			pstmt.setInt(1, oId);
 			
+			log.info("Get locations: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
 				Location locn = new Location();

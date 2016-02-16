@@ -209,6 +209,9 @@ $(document).ready(function() {
 	 */
 	$('#taskPropertiesSave').off().click(function() {
 		var url = "/surveyKPI/assignments/properties";
+		
+		$('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));	// Set the UTC date
+		
 		var f = document.forms.namedItem("taskProperties");
     	var formData = new FormData(f);
 		
@@ -844,7 +847,7 @@ function refreshTableAssignments(tasks) {
 			$('#task_properties_taskid').val(task.task_id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
 			$('#task_properties_title').val(task.title);
-			$('#task_properties_scheduledDate').data("DateTimePicker").date(task.scheduleAt);
+			$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
 			$('#nfc_select').val(task.location_trigger);
 			$('#task_properties').modal("show");  
 

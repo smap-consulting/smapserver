@@ -1453,7 +1453,7 @@ public class AllAssignments extends Application {
 						taskTitle = item.getString();	
 					} else if(item.getFieldName().equals("repeat")) {
 						repeat = true;	
-					} else if(item.getFieldName().equals("scheduleAt")) {
+					} else if(item.getFieldName().equals("scheduleAtUTC")) {
 						scheduleAt = Timestamp.valueOf(item.getString());	
 					} else if(item.getFieldName().equals("location_trigger")) {
 						locationTrigger = item.getString();	

@@ -158,7 +158,7 @@
 			            <label class="col-sm-2 control-label lang" data-lang="c_scheduled" for="task_properties_scheduledDate">scheduled</label>
 		            	<div class="col-sm-10">
 			            	<div class='input-group date' id='task_properties_scheduledDate' data-toggle="tooltip"  data-container="body" title="Scheduled date in local time zone">
-			                	<input type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" name="scheduleAt">
+			                	<input id="scheduleAt" type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" name="scheduleAt">
 			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
 			                </div>
 			             </div>
@@ -171,6 +171,7 @@
 			         </div>
 
 					<input id="task_properties_taskid" type="hidden" name="taskid" value="0" style="display:none;"/>
+					<input id="scheduleAtUTC" type="hidden" name="scheduleAtUTC" value="" style="display:none;"/>
 				</form>
 						
 			</div>
