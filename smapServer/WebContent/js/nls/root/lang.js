@@ -218,8 +218,7 @@ define({
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
-	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. " +
-			"If the project does have surveys then try again in a few seconds",
+	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
 	"msg_confirm_del": "Are you sure you want to delete",
@@ -301,9 +300,7 @@ define({
 	"mon_del_grid": "Delete Grids",
 	"mon_sel_layer": "Select a layer to add to the map as an overlay",
 	"mon_c_reg": "Create a new region",
-	"mon_c_reg_i": "Enter a name for the region and the width of each cell in meters.  " +
-			"Click on the map to set the centre of one of the cells. " +
-			"Press the \"shift\"button and drag the mouse to set the bounds.",
+	"mon_c_reg_i": "Enter a name for the region and the width of each cell in meters. Click on the map to set the centre of one of the cells. Press the \"shift\"button and drag the mouse to set the bounds.",
 	"mon_name_cond": "(lowercase, no spaces or numbers)",
 	"mon_cw": "Cell Width (in Meters. greater than 10)",
 	"mon_centre": "Centre: (click on map)",
