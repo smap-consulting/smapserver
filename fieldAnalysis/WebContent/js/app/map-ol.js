@@ -70,10 +70,10 @@ function initializeMap(idx){
 	map = new OpenLayers.Map("map_panel" + idx, mapOptions);  	
 		
 	// OSM Tile from mapquest
-	arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
+	arrayOSM = ["https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile2-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile3-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile4-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
 	
 	arrayHOT = ["http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
                "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",

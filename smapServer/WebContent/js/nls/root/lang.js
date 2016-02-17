@@ -145,6 +145,11 @@ define({
 	"c_success": "Success",
 	"c_errors": "Errors",
 	"c_error": "Error",
+	"c_lt": "Local Time",
+	"c_user": "User",
+	"c_location": "Location",
+	"c_ident": "Identifier",
+	"c_version": "Version",
 	
 	// File Types
 	"ft": "File Type",
@@ -305,7 +310,11 @@ define({
 	"mon_cw": "Cell Width (in Meters. greater than 10)",
 	"mon_centre": "Centre: (click on map)",
 	"mon_bounds": "Boundary: (click and drag on map while pressing shift key)",
-	"mon_sel_del": "Select the regions that you want to delete"
+	"mon_sel_del": "Select the regions that you want to delete",
+	"mon_ud": "Upload Date",
+	"mon_pi": "Phone Identifier",
+	"mon_fr": "Failure Reason",
+	"mon_file": "File with raw results"
 	
 		
 	
