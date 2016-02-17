@@ -166,7 +166,8 @@ public class AllAssignments extends Application {
 						" on a.task_id = t.id " + 
 						" and a.status != 'deleted' " +
 					"left outer join users u on a.assignee = u.id " +
-					" where tg.p_id = ? ";
+					" where tg.p_id = t.p_id " +
+					" and tg.p_id = ? ";
 					
 			String sql2 = null;
 			if(user_filter == 0) {					// All users (default)	
@@ -184,7 +185,7 @@ public class AllAssignments extends Application {
 			if(user_filter > 0) {
 				pstmt.setInt(2, user_filter);
 			}
-			log.info("SQL: " + pstmt.toString());
+			log.info("SQL get tasks: " + pstmt.toString());
 			
 			// Statement to get survey name
 			String sqlSurvey = "select display_name from survey where s_id = ?";
@@ -286,10 +287,14 @@ public class AllAssignments extends Application {
 			/*
 			 * Add task group details to the response
 			 */
-			String sql = "select tg_id, name, address_params from task_group order by tg_id;";
+			String sql = "select tg_id, name, address_params from task_group where p_id = ? order by tg_id;";
 			if(pstmt != null) {pstmt.close();};
 			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, projectId);
+			
+			log.info("SQL Get task groups: " + pstmt.toString());
 			ResultSet tgrs = pstmt.executeQuery();
+			
 			while (tgrs.next()) {
 				JSONObject tg = new JSONObject();
 				tg.put("tg_id", tgrs.getInt(1));

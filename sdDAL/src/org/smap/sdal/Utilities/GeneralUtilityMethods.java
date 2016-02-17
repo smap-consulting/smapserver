@@ -234,9 +234,10 @@ public class GeneralUtilityMethods {
 	 * Throw a 404 exception if this is not a business server
 	 */
 	static public void assertBusinessServer(String host) {
-		System.out.println("Host is: " + host);
+		log.info("Business Server check: " + host);
 		
 		if(!isBusinessServer(host)) {
+			log.info("Business Server check failed: " + host);
 			throw new AuthorisationException();
 		}
 		
@@ -259,11 +260,13 @@ public class GeneralUtilityMethods {
 	 * Throw a 404 exception if this is not a self registration server
 	 */
 	static public void assertSelfRegistrationServer(String host) {
-		System.out.println("Host is: " + host);
+		log.info("Self registration check: " + host);
 		
 		if(!host.equals("sg.smap.com.au") &&
 				!host.equals("localhost") &&
 				!host.equals("dev.smap.com.au")) {
+			
+			log.info("Self registration check failed: " + host);
 			throw new AuthorisationException();
 		}
 		
