@@ -27,6 +27,7 @@ define({
 	"m_import": "Import",
 	"m_calculations": "Calculations",
 	"m_resources": "Shared Resources",
+	"m_review": "Review",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -139,6 +140,7 @@ define({
 	"c_rec": "(Recommended)",
 	"c_source": "Source",	
 	"c_show": "Show",
+	"c_hide": "Hide",
 	"c_totals": "Totals",
 	"c_instances": "Instances",
 	"c_device": "Device",
@@ -314,7 +316,13 @@ define({
 	"mon_ud": "Upload Date",
 	"mon_pi": "Phone Identifier",
 	"mon_fr": "Failure Reason",
-	"mon_file": "File with raw results"
+	"mon_file": "File with raw results",
+	
+	// Analysis, reports, modify
+	"an_auth": "Author",
+	"an_published": "Published",
+	"an_dr": "Date Range",
+	"an_csel": "Clear Selection"
 	
 		
 	
