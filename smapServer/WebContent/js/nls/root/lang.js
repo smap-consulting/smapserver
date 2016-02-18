@@ -322,7 +322,12 @@ define({
 	"an_auth": "Author",
 	"an_published": "Published",
 	"an_dr": "Date Range",
-	"an_csel": "Clear Selection"
+	"an_csel": "Clear Selection",
+	
+	// Server Strings
+	"Upload Time": "Upload",
+	"_start": "Start Time",
+	"_end": "End Time"
 	
 		
 	

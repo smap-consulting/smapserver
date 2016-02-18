@@ -144,7 +144,11 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 			if(cols[i] !== "_instanceid" && cols[i] !== "instanceid" && cols[i] !== "_task_key" && 
 					cols[i] !== "_task_replace"&& cols[i] !== "prikey" && cols[i] !== "_modified") {
 				gTab[++gIdx] = '<th>';
-				gTab[++gIdx] = cols[i];
+				if(cols[i] === "Upload Time" || cols[i] === "_start" || cols[i] === "_end") {
+					gTab[++gIdx] = localise.set[cols[i]] + ' (' + localise.set["c_lt"] + ')';
+				} else {
+					gTab[++gIdx] = cols[i];
+				}
 				gTab[++gIdx] = '</th>';
 			}
 		}
@@ -269,7 +273,9 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 							}
 						} else if(key === "_complete") {
 							val = (val === "f") ? "No" : "Yes";
-						} 
+						} else if(key === "Upload Time" || key === "_start" || key === "_end") {
+							val = localTime(val);
+						}
 						gTab[++gIdx] = '<td ' + params + '>';
 						// If the value is zero and this is a select multiple then show a blank
 						if(val === "0" && key.trim().indexOf(" ") > 0) {	// Only select multiples can have a space in the key
