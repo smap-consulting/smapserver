@@ -64,6 +64,9 @@ $(document).ready(function() {
 		pArray = [],
 		param = [];
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details

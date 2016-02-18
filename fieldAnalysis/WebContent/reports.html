@@ -18,6 +18,7 @@
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/version.js"></script>
 	<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
 	<script data-main="js/reportlist_main" src="/js/libs/require.js"></script>
         
@@ -35,30 +36,29 @@
 	<div class="rmm noPrint" data-menu-style = "minimal" >
 		<!-- Menu Bar -->
 		<ul> 
-			<li><a href="/fieldManager/templateManagement.html" title="Administration">Administration</a></li>
-			<li><a href="/fieldAnalysis" title="Analysis">Analysis</a></li>
-			<li><a href="/fieldAnalysis/modify_data.html" title="Review">Review</a></li> 
-			<li><a id="word" href="#" title="Export to Word">Word</a></li> 
-			<li><a id="discuss" href="https://grow.smap.com.au" title="Discuss">Discuss</a></li> 
-			<li><a id="help" href="http://help.smap.com.au" target="_blank" title="Help">Help</a></li> 
+			<li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+			<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">Admin</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis">Analysis</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_review" href="/fieldAnalysis/modify_data.html">Review</a></li>
+			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li> 
 		</ul>
 	</div> 	
 	<p style="clear: both;"></p>
 	<div id="header">
 		<div id="username"></div>
-		<div id="banner">Smap Reports</div>
+		<div id="banner" class="lang" data-lang="m_reports">reports</div>
 	</div>
 		
 	<div id="fblogon">
 		<fb:login-button show-faces="true" width="200" max-rows="1" scope="publish_actions,user_groups">
 	  	</fb:login-button>
   	</div>	
-  	<label for="project_name">Select Project</label>
+  	<label for="project_name" class="lang" data-lang="c_project">project</label>
 	<select class="project_list" id="project_name"></select><br/>
 	<div id="slider" style="clear: both;">
 		<div class="slider-container">
 			<p>
-			<label for="dates_field">Date range:</label>
+			<label for="dates_field" class="lang" data-lang="an_dr">date range</label>
 			<input type="text" value="" id="dates_field" size="50" style='border:0; color:#f6931f; font-weight:bold;' />
 			</p>
 
@@ -68,8 +68,8 @@
 	</div>
 	<!-- Map -->
 	<div style="padding: 10px; border:1px solid blue;">
-		<button id="show_map" type="button">Show Map</button>
-		<button id="clear_bounds" type="button" >Clear Map Selection</button>
+		<button id="show_map" type="button" class="lang" data-lang="c_map">map</button>
+		<button id="clear_bounds" type="button" class="lang" data-lang="an_csel">clear</button>
 		<div id="map" style="width: 512px; height: 360px; display:none; "></div>
 	</div>
 	<!-- Content -->
@@ -94,6 +94,31 @@
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
+				<label for="me_name" data-lang="c_name" class="lang">Name</label>
+				<input type="text" id="me_name" required><br/>
+				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
+				<select id="me_language"></select><br/>
+				<label for="me_email" data-lang="c_email" class="lang">Email</label>
+				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
+				<span id="reset_me_password_fields" style="display:none;">
+					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
+					<input type="checkbox" id="reset_me_password"/><br/>
+				</span>
+				<span id="password_me_fields" style="display:none;">
+					<label for="me_password" data-lang="c_password" class="lang">Password</label>
+					<input id="me_password" type="password"><br/>	
+					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
+					<input id="me_password_confirm" type="password"><br/>	
+				</span>		
+			</form>	
+		</div>
+	</div>
+	
+	<!-- Popup to allow the user to edit their own details 
+	<div id="modify_me_popup" style="display:none;">
+	
+		<div class="left_panel">
+			<form id="me_edit_form">
 				<label for="me_name">Name</label>
 				<input type="text" id="me_name" required><br/>
 				<label for="me_email">Email</label>
@@ -111,6 +136,7 @@
 			</form>	
 		</div>
 	</div>
+	-->
 	
 	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 		

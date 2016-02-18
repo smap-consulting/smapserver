@@ -76,7 +76,8 @@ create TABLE server (
 	email_domain text,
 	email_user text,
 	email_password text,
-	email_port integer
+	email_port integer,
+	version text
 	);
 ALTER TABLE server OWNER TO ws;
 
@@ -581,7 +582,8 @@ CREATE TABLE public.tasks (
 	geo_type text,
 	update_id text,
 	repeat boolean,
-	p_id integer REFERENCES project(id)
+	p_id integer REFERENCES project(id),
+	location_trigger text
 );
 SELECT AddGeometryColumn('tasks', 'geo_linestring', 4326, 'LINESTRING', 2);
 SELECT AddGeometryColumn('tasks', 'geo_polygon', 4326, 'POLYGON', 2);

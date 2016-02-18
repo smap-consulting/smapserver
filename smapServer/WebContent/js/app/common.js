@@ -1323,6 +1323,7 @@ function isBusinessServer() {
 	
 	if(hostname !== 'localhost' &&
 			hostname !== 'dev.smap.com.au' &&
+			hostname !== 'app.kontrolid.com' &&
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0) {
 		bs = false;
@@ -1354,8 +1355,8 @@ function isSelfRegistrationServer() {
 function validDates() {
 	var $d1 = $('#startDate'),
 		$d2 = $('#endDate'),
-		d1 = $d1.data("DateTimePicker").getDate(),
-		d2 = $d2.data("DateTimePicker").getDate()
+		d1 = $d1.data("DateTimePicker").date(),
+		d2 = $d2.data("DateTimePicker").date()
 			
 	if(!d1 || !d1.isValid()) {
 		$('#ut_alert').show().text("Invalid Start Date");
@@ -1394,11 +1395,11 @@ function getUtcDate($element, start, end) {
 		utcDate;
 	
 	if(start) {
-		theDate = $element.data("DateTimePicker").getDate().startOf('day');
+		theDate = $element.data("DateTimePicker").date().startOf('day');
 	} else if (end) {
-		theDate = $element.data("DateTimePicker").getDate().endOf('day');
+		theDate = $element.data("DateTimePicker").date().endOf('day');
 	} else {
-		theDate = $element.data("DateTimePicker").getDate();
+		theDate = $element.data("DateTimePicker").date();
 	}
 	
 	utcDate = moment.utc(theDate);
@@ -1655,7 +1656,7 @@ function setLocationList(locns) {
 		h[++idx] = '</option>';
 		for(i = 0; i < locns.length; i++) {
 			h[++idx] = '<option value = "';
-			h[++idx] = locns[i].id;
+			h[++idx] = locns[i].uid;
 			h[++idx] = '">';
 			h[++idx] = locns[i].name;
 			h[++idx] = '</option>';
@@ -1663,6 +1664,47 @@ function setLocationList(locns) {
 	}
 	
 	$('.nfc_select').append(h.join(""));
+
+}
+
+/*
+ * Get the expected version from the server and reload the page if the versions don't match
+ */
+function getVersion() {
+	
+	if(typeof gSmapVersion !== "undefined") {
+		$.ajax({
+			url: "/surveyKPI/version",
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				if(data.version > gSmapVersion) {
+					setTimeout(function() {location.reload(true);}, 1000);
+				}
+			},
+			error: function(xhr, textStatus, err) {
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					// fail silently not the end of the world and the user does not need to know this failed
+				}
+			}
+		});
+	}
+}
+
+/*
+ * Convert a timestamp in UTC to local time
+ */
+function localTime(utcTime) {
+	var utcDate  = moment.utc(utcTime).toDate();
+    return moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
+} 
+
+function utcTime(localTime) {
+
+	var localDate = moment(localTime).toDate();
+	return moment.utc(localDate).format('YYYY-MM-DD HH:mm:ss');
 
 }
 

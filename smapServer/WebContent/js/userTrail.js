@@ -42,7 +42,7 @@ requirejs.config({
     shim: {
     	'app/common': ['jquery'],
     	'bootstrap.min': ['jquery'],
-    	'bootstrap-datetimepicker.min': ['moment.min']
+    	'bootstrap-datetimepicker.min': ['moment']
     	}
     });
 
@@ -53,11 +53,11 @@ require([
          'bootstrap.min', 
          'app/localise',
          'app/globals',
+         'moment',
          'ol3/js/ol',
-         'moment.min',
          'bootstrap-datetimepicker.min'
          
-         ], function($, common, bootstrap, localise, globals) {
+         ], function($, common, bootstrap, localise, globals, moment) {
 
 var gOverlayHasFeature;
 var gTrailData;
@@ -116,20 +116,21 @@ var trailStyle = new ol.style.Style({
 
 $(document).ready(function() {
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	localise.setlang();
 		
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({
-		pickTime: false,
+		locale: gUserLocale || 'en',
 		useCurrent: false
-	});
-	$('#startDate').data("DateTimePicker").setDate(moment());
+	}).data("DateTimePicker").date(moment());
 	
 	$('#endDate').datetimepicker({
-		pickTime: false,
+		locale: gUserLocale || 'en',
 		useCurrent: false
-	});
-	$('#endDate').data("DateTimePicker").setDate(moment());
+	}).data("DateTimePicker").date(moment());
 	
 	// Set base layers
 	var osm = new ol.layer.Tile({source: new ol.source.OSM()}); 
@@ -330,8 +331,8 @@ function updateUserList(users, addAll) {
 
 function getData() {
 	
-	var startDate = $('#startDate').data("DateTimePicker").getDate().startOf('day'),
-		endDate = $('#endDate').data("DateTimePicker").getDate().endOf('day');	// Get end of displayed date
+	var startDate = $('#startDate').data("DateTimePicker").date().startOf('day'),
+		endDate = $('#endDate').data("DateTimePicker").date().endOf('day');	// Get end of displayed date
 	
 	var startUtc = moment.utc(startDate),
 		endUtc = moment.utc(endDate);

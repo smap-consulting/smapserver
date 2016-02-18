@@ -149,6 +149,7 @@ public class AllAssignments extends Application {
 					"t.form_id," +
 					"t.initial_data," +
 					"t.schedule_at," +
+					"t.location_trigger," +
 					"t.repeat," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
@@ -165,7 +166,8 @@ public class AllAssignments extends Application {
 						" on a.task_id = t.id " + 
 						" and a.status != 'deleted' " +
 					"left outer join users u on a.assignee = u.id " +
-					" where tg.p_id = ? ";
+					" where tg.p_id = t.p_id " +
+					" and tg.p_id = ? ";
 					
 			String sql2 = null;
 			if(user_filter == 0) {					// All users (default)	
@@ -183,7 +185,7 @@ public class AllAssignments extends Application {
 			if(user_filter > 0) {
 				pstmt.setInt(2, user_filter);
 			}
-			log.info("SQL: " + pstmt.toString());
+			log.info("SQL get tasks: " + pstmt.toString());
 			
 			// Statement to get survey name
 			String sqlSurvey = "select display_name from survey where s_id = ?";
@@ -241,9 +243,11 @@ public class AllAssignments extends Application {
 					user_name = "";
 				}
 				jp.put("user_name", user_name);
+				jp.put("title", resultSet.getString("title"));
 				jp.put("address", resultSet.getString("address"));
 				jp.put("repeat", resultSet.getBoolean("repeat"));
 				jp.put("scheduleAt", resultSet.getTimestamp("schedule_at"));
+				jp.put("location_trigger", resultSet.getString("location_trigger"));
 				
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates
@@ -283,10 +287,14 @@ public class AllAssignments extends Application {
 			/*
 			 * Add task group details to the response
 			 */
-			String sql = "select tg_id, name, address_params from task_group;";
+			String sql = "select tg_id, name, address_params from task_group where p_id = ? order by tg_id;";
 			if(pstmt != null) {pstmt.close();};
 			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, projectId);
+			
+			log.info("SQL Get task groups: " + pstmt.toString());
 			ResultSet tgrs = pstmt.executeQuery();
+			
 			while (tgrs.next()) {
 				JSONObject tg = new JSONObject();
 				tg.put("tg_id", tgrs.getInt(1));
@@ -418,7 +426,8 @@ public class AllAssignments extends Application {
 							"initial_data, " +
 							"update_id," +
 							"address," +
-							"schedule_at) " +
+							"schedule_at," +
+							"location_trigger) " +
 						"values (" +
 							"?, " + 
 							"?, " + 
@@ -431,7 +440,8 @@ public class AllAssignments extends Application {
 							"?, " +
 							"?, " +
 							"?," +
-							"now() + interval '7 days');";		// Schedule for 1 week (TODO allow user to set)
+							"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
+							"?);";		
 				
 				String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
 				pstmtAssign = connectionSD.prepareStatement(assignSQL);
@@ -451,6 +461,7 @@ public class AllAssignments extends Application {
 				resultSet = pstmtGetSurveyIdent.executeQuery();
 				String initial_data_url = null;
 				String instanceId = null;
+				String locationTrigger = null;
 				String target_form_url = null;
 				if(resultSet.next()) {
 					String target_form_ident = resultSet.getString(1);
@@ -691,6 +702,7 @@ public class AllAssignments extends Application {
 									}
 									
 									pstmtInsert.setString(10, addressString);			// Address
+									pstmtInsert.setString(11, locationTrigger);			// Location that will start task
 									
 									log.info("Insert Task: " + pstmtInsert.toString());
 									
@@ -768,6 +780,7 @@ public class AllAssignments extends Application {
 						pstmtInsert.setString(8, null);			// Initial data url
 						pstmtInsert.setString(9, instanceId);
 						pstmtInsert.setString(10, null);		// Address TBD
+						pstmtInsert.setString(11, locationTrigger);
 						
 						log.info("Insert task: " + pstmtInsert.toString()); 
 						int count = pstmtInsert.executeUpdate();
@@ -1421,8 +1434,10 @@ public class AllAssignments extends Application {
 		
 	
 		int taskId = 0;
+		String taskTitle = null;
 		boolean repeat = false;
 		Timestamp scheduleAt = null;
+		String locationTrigger = null;
 		Calendar cal = Calendar.getInstance(); 
 		
 		
@@ -1439,10 +1454,17 @@ public class AllAssignments extends Application {
 				
 					if(item.getFieldName().equals("taskid")) {
 						taskId = Integer.parseInt(item.getString());	
+					} if(item.getFieldName().equals("taskTitle")) {
+						taskTitle = item.getString();	
 					} else if(item.getFieldName().equals("repeat")) {
 						repeat = true;	
-					} else if(item.getFieldName().equals("scheduleAt")) {
+					} else if(item.getFieldName().equals("scheduleAtUTC")) {
 						scheduleAt = Timestamp.valueOf(item.getString());	
+					} else if(item.getFieldName().equals("location_trigger")) {
+						locationTrigger = item.getString();	
+						if(locationTrigger != null && locationTrigger.equals("-1")) {
+							locationTrigger = null;
+						}
 					}
 							
 				} else if(!item.isFormField()) {
@@ -1455,11 +1477,14 @@ public class AllAssignments extends Application {
 
 			}
 			
-			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ? where id = ?;";
+			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ?, location_trigger = ?,  title = ? where id = ?;";
 			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
 			pstmtUpdate.setBoolean(1, repeat);
 			pstmtUpdate.setTimestamp(2, scheduleAt);
-			pstmtUpdate.setInt(3, taskId);
+			pstmtUpdate.setString(3, locationTrigger);
+			pstmtUpdate.setString(4, taskTitle);
+			pstmtUpdate.setInt(5, taskId);
+
 			log.info("SQL Update properties: " + pstmtUpdate.toString());
 			pstmtUpdate.executeUpdate();
 				

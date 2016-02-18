@@ -234,26 +234,39 @@ public class GeneralUtilityMethods {
 	 * Throw a 404 exception if this is not a business server
 	 */
 	static public void assertBusinessServer(String host) {
-		System.out.println("Host is: " + host);
+		log.info("Business Server check: " + host);
 		
-		if(!host.contains("zarkman.com") &&
-				!host.equals("localhost") &&
-				!host.equals("kontrolid.smap.com.au") &&
-				!host.equals("dev.smap.com.au")) {
+		if(!isBusinessServer(host)) {
+			log.info("Business Server check failed: " + host);
 			throw new AuthorisationException();
 		}
 		
+	}
+	
+	static public boolean isBusinessServer(String host) {
+		
+		boolean businessServer = true;
+		
+		if(!host.endsWith("zarkman.com") &&
+				!host.equals("localhost") &&
+				!host.equals("app.kontrolid.com") &&
+				!host.endsWith(".smap.com.au")) {
+			businessServer = false;;
+		}
+		return businessServer;
 	}
 	
 	/*
 	 * Throw a 404 exception if this is not a self registration server
 	 */
 	static public void assertSelfRegistrationServer(String host) {
-		System.out.println("Host is: " + host);
+		log.info("Self registration check: " + host);
 		
 		if(!host.equals("sg.smap.com.au") &&
 				!host.equals("localhost") &&
 				!host.equals("dev.smap.com.au")) {
+			
+			log.info("Self registration check failed: " + host);
 			throw new AuthorisationException();
 		}
 		

@@ -10,8 +10,6 @@ if [ $a24 -eq 0 ]; then
 	exit 1;
 fi
 
-
-
 version=1
 if [ -e ~/smap_version ]
 then
@@ -103,7 +101,6 @@ then
 echo "Applying patches for version 15.01"
 sudo mkdir /smap/media/organisation
 sudo chown -R tomcat7 /smap/media
-echo "1501" > ~/smap_version
 fi
 
 # version 15.02
@@ -111,7 +108,6 @@ if [ $version -lt "1502" ]
 then
 echo "Applying patches for version 15.02"
 sudo rm /var/lib/tomcat7/webapps/fieldManager.war
-echo "1502" > ~/smap_version
 fi
 
 # version 15.03
@@ -119,7 +115,6 @@ if [ $version -lt "1503" ]
 then
 sudo mkdir /usr/bin/smap/resources
 sudo mkdir /usr/bin/smap/resources/css
-echo "1503" > ~/smap_version
 fi
 
 # version 15.09
@@ -128,7 +123,6 @@ then
 
 # Patch the database
 java -jar version1/patch1505.jar apply survey_definitions results
-echo "1509" > ~/smap_version
 
 cd ../install
 # Set up new apache configuration structure
@@ -154,29 +148,16 @@ sudo chown tomcat7 /smap/misc
 
 fi
 
-# version 15.10
-if [ $version -lt "1510" ]
-then
-echo "1510" > ~/smap_version
-fi
-
 # version 15.11
 if [ $version -lt "1511" ]
 then
 java -jar version1/patch.jar apply survey_definitions results
-echo "1511" > ~/smap_version
-fi
-
-# version 15.12
-if [ $version -lt "1512" ]
-then
-echo "1512" > ~/smap_version
 fi
 
 # version 16.01
-if [ $version -lt "1601" ]
+if [ $version -lt "160101" ]
 then
-echo "1601" > ~/smap_version
+	echo "no patches for 16.01"
 fi
 #####################################################################################
 # All versions
@@ -190,3 +171,7 @@ cd ../deploy
 # Patch pyxform
 sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
+# update version reference
+new_version="160204"
+echo "$new_version" > ~/smap_version
+echo "update server set version = '$new_version'" | sudo -u postgres psql -d survey_definitions

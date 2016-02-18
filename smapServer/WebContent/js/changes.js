@@ -61,7 +61,9 @@ $(document).ready(function() {
 		param = [];
 	
 	localise.setlang();		// Localise HTML
-	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 
 	// Get the user details
 	globals.gIsAdministrator = false;

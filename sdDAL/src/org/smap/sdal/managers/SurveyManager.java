@@ -172,7 +172,7 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, p.name, p.id, " +
+		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id, " +
 				" s.def_lang, s.task_file, u.o_id, s.class," +
 				" s.instance_name " +
 				" from survey s, users u, user_project up, project p" +
@@ -200,13 +200,14 @@ public class SurveyManager {
 				s.setIdent(resultSet.getString(3));
 				s.setDisplayName(resultSet.getString(4));
 				s.setDeleted(resultSet.getBoolean(5));
-				s.setPName(resultSet.getString(6));
-				s.setPId(resultSet.getInt(7));
-				s.def_lang = resultSet.getString(8);
-				s.task_file = resultSet.getBoolean(9);
-				s.o_id = resultSet.getInt(10);
-				s.surveyClass = resultSet.getString(11);
-				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(12), true);
+				s.blocked = resultSet.getBoolean(6);
+				s.setPName(resultSet.getString(7));
+				s.setPId(resultSet.getInt(8));
+				s.def_lang = resultSet.getString(9);
+				s.task_file = resultSet.getBoolean(10);
+				s.o_id = resultSet.getInt(11);
+				s.surveyClass = resultSet.getString(12);
+				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(13), true);
 				
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);

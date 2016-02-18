@@ -438,3 +438,7 @@ ALTER TABLE public.locations OWNER TO ws;
 
 -- The following is deprecated but some code still refers to the column
 alter table question add column repeatcount boolean default false;
+
+-- Upgrade to: 16.02 from 16.01
+alter table tasks add column location_trigger text;
+alter table server add column version text;

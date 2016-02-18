@@ -52,6 +52,11 @@ $(document).ready(function() {
 	
 	window.bootbox = bootbox;
 	
+	localise.setlang();
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
+	
     $('#registerForm').bootstrapValidator({
         feedbackIcons: {
             valid: 'glyphicon glyphicon-ok',

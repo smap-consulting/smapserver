@@ -1360,7 +1360,7 @@ public class SubRelationalDB extends Subscriber {
 				if(ci.action.equals("add") || ci.action.equals("external option")
 						|| (ci.action.equals("move") && 
 								ci.question != null && 
-								ci.question.formIndex != ci.question.sourceFormIndex)) {		
+								ci.question.formIndex != ci.question.sourceFormIndex)) {	
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
@@ -1492,7 +1492,7 @@ public class SubRelationalDB extends Subscriber {
 	
 				} else {
 					// Record that this change has been processed
-					markChangeApplied(connectionSD, cId, false, "");
+					markChangeApplied(connectionSD, cId, true, "");
 				}
 
 			}

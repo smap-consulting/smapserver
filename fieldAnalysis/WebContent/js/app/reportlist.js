@@ -20,7 +20,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Purpose: Show a list of reports
  */
 
-define(['jquery', 'jquery_ui', 'localise', 'common', 'globals'], function($, ui, lang, common, globals) {
+define(['jquery', 'jquery_ui', 'localise', 'common', 'globals', 'moment'], 
+		function($, ui, lang, common, globals, moment) {
 	
 var reportList = null,
 	minDate = null,
@@ -61,6 +62,12 @@ $(document).ready(function() {
 	  d.getElementsByTagName('head')[0].appendChild(js);
 	}(document));    
 	    
+	window.moment = moment;	// Required as common.js not part of module
+	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
+	
 	initializeReportsMap();
 	
 	 /*
@@ -82,9 +89,9 @@ $(document).ready(function() {
 		var $map = $('#map'),
 			$this = $(this);
 		if($map.is(':visible')) {
-			$this.button('option', 'label', 'Show Map');
+			$this.button('option', 'label', localise.set["c_map"]);
 		} else {
-			$this.button('option', 'label', 'Hide Map');
+			$this.button('option', 'label', localise.set["c_hide"]);
 		}
 		$map.toggle();
 
@@ -257,18 +264,19 @@ function updateListView() {
 			
 			// Add Meta data box
 			html[++th] = '<div class="post-left">';
-			html[++th] = '<p class="post-item">Title: <a href="' + reportUrl + '" target="_blank">' + gData[index].title + '</a></p>'; 
-			html[++th] = '<p class="post-item">Author: ' + gData[index].author_name + '</p>';
-			html[++th] = '<p class="post-item">Location: ' + gData[index].smap.country +
+			html[++th] = '<p class="post-item">' + localise.set["c_title"] + ': <a href="' + reportUrl + '" target="_blank">' + gData[index].title + '</a></p>'; 
+			html[++th] = '<p class="post-item">' + localise.set["an_auth"] + ':' + gData[index].author_name + '</p>';
+			html[++th] = '<p class="post-item">' + localise.set["c_location"] +': ' + gData[index].smap.country +
 					',' + gData[index].smap.region + ',' + gData[index].smap.district + 
 					',' + gData[index].smap.community +'</p>';
-			html[++th] = '<p class="post-item">Published: ' + gData[index].smap.pub_date + '</p>';
+			html[++th] = '<p class="post-item">' + localise.set["an_published"] + '(' + 
+					localise.set["c_lt"] + '): ' + localTime(gData[index].smap.pub_date) + '</p>';
 			html[++th] = '<button class="edit_button" type="button" value="';
 			html[++th] = gData[index].smap.ident;
-			html[++th] = '">Edit</button>';
+			html[++th] = '">' + localise.set["c_edit"] + '</button>';
 			html[++th] = '<button class="delete_button" type="button" value="';
 			html[++th] = gData[index].smap.ident;
-			html[++th] = '">Delete</button>';
+			html[++th] = '">' + localise.set["c_del"] + '</button>';
 			html[++th] = '</div>';
 			
 			// Calculate available width for description
@@ -415,13 +423,10 @@ function setEarliestLatest() {
 
 // Get the date as a string
 function getDateString(unixDate) {
-	var uDate = new Date(unixDate * 1000),
-		dateDay = uDate.getDate(),
-		dateMonth = uDate.getMonth() + 1,
-		dateYear = uDate.getFullYear();
 	
-	// Todo make this locale dependent
-	return dateYear + "-" + dateMonth + "-" + dateDay;
+	var utcDate = moment.unix(unixDate);
+	return moment(utcDate).format('YYYY-MM-DD');
+
 } 
 
 /*
@@ -691,10 +696,10 @@ function initializeReportsMap() {
 	gMap = new OpenLayers.Map("map", mapOptions);  	
 		
 	// OSM Tile from mapquest
-	arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "http://otile4.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
+	arrayOSM = ["https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile2-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile3-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
+                 "https://otile4-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
 	 
 	// Add layers
 	gMap.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18}));

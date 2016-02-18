@@ -54,6 +54,10 @@ $(document).ready(function() {
 	pArray = [],
 	param = [];
 	
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
+	
 	// Get the authentication token if it has been passed in parameters
 	params = location.search.substr(location.search.indexOf("?") + 1)
 	pArray = params.split("&");

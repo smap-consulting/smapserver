@@ -27,6 +27,7 @@ define({
 	"m_import": "Import",
 	"m_calculations": "Calculations",
 	"m_resources": "Shared Resources",
+	"m_review": "Review",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -39,6 +40,7 @@ define({
 	"c_project": "Select Project",
 	"c_forms": "Forms",
 	"c_forward": "Forward",
+	"c_forwarded": "Forwarded",
 	"c_name": "Name",
 	"c_company_name": "Company Name",
 	"c_type": "Type",
@@ -63,6 +65,8 @@ define({
 	"c_done": "Done",
 	"c_cancel": "Cancel",
 	"c_save": "Save",
+	"c_submit": "Submit",
+	"c_submitted": "Submitted",
 	"c_test": "Test",
 	"c_validate": "Validate",
 	"c_close": "Close",
@@ -95,6 +99,7 @@ define({
 	"c_hour": "Hour",
 	"c_day": "Day",
 	"c_week": "Week",
+	"c_month": "Month",
 	"c_year": "Year",
 	"c_matches": "Matches",
 	"c_filter": "Filter",
@@ -126,6 +131,27 @@ define({
 	"c_print": "Print",
 	"c_repeat": "Repeat",
 	"c_scheduled": "Scheduled",
+	"c_t_c": "terms and conditions",
+	"c_agree": "I agree to the",
+	"c_select": "Select",
+	"c_status": "Status",
+	"c_coords": "Coordinates",
+	"c_task": "Task",
+	"c_rec": "(Recommended)",
+	"c_source": "Source",	
+	"c_show": "Show",
+	"c_hide": "Hide",
+	"c_totals": "Totals",
+	"c_instances": "Instances",
+	"c_device": "Device",
+	"c_success": "Success",
+	"c_errors": "Errors",
+	"c_error": "Error",
+	"c_lt": "Local Time",
+	"c_user": "User",
+	"c_location": "Location",
+	"c_ident": "Identifier",
+	"c_version": "Version",
 	
 	// File Types
 	"ft": "File Type",
@@ -199,9 +225,12 @@ define({
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
+	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",
-	"msg_confirm_del": "Are you sure you want to delete: ",
+	"msg_confirm_del": "Are you sure you want to delete",
+	"msg_confirm_tasks": "this group and all of its tasks?",
+	"msg_n_v": "Not valid",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -228,6 +257,10 @@ define({
 	"t_ue": "Update Existing Results",
 	"t_ap": "Address Parameters",
 	"t_nfc": "NFC or Location",
+	"t_assigned": "Assigned",
+	"t_fl": "File Loaded",
+	"t_efnl": "Error file not loaded",
+	"t_add_tasks": "Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
@@ -251,8 +284,50 @@ define({
 	"e_h_c1": "A 'relevant' statement for question is potentially referring to  itself instead of referring to another question",
 	"e_h_c2": "Relevant statements are evaluated before a question is asked so they cannot refer to their own questions",
 	"e_brackets": "Mismatched brackets in function",
-	"e_text": "Error with the following text:"
+	"e_text": "Error with the following text:",
+	
+	// Register
+	"r_o_n": "Organisation Name",
+	"r_y_n": "Your Name",
+	"r_y_e": "Your Email",
+	"r_y_o": "Organisation Website",
+	"r_f": "Registration Form",
 		
+	// Monitor
+	"mon_l200": "(last 200)",
+	"mon_gtb": "Group Totals by",
+	"mon_nl": "Not Loaded",
+	"mon_dup": "Duplicates",
+	"mon_att": "Extra Attachments",
+	"mon_sa": "Show As",
+	"mon_zoom_grid": "Zoom to Grids",
+	"mon_show_grid": "Show Grids",
+	"mon_clear_grid": "Clear Grids",
+	"mon_create_grid": "Create Grid",
+	"mon_del_grid": "Delete Grids",
+	"mon_sel_layer": "Select a layer to add to the map as an overlay",
+	"mon_c_reg": "Create a new region",
+	"mon_c_reg_i": "Enter a name for the region and the width of each cell in meters. Click on the map to set the centre of one of the cells. Press the \"shift\"button and drag the mouse to set the bounds.",
+	"mon_name_cond": "(lowercase, no spaces or numbers)",
+	"mon_cw": "Cell Width (in Meters. greater than 10)",
+	"mon_centre": "Centre: (click on map)",
+	"mon_bounds": "Boundary: (click and drag on map while pressing shift key)",
+	"mon_sel_del": "Select the regions that you want to delete",
+	"mon_ud": "Upload Date",
+	"mon_pi": "Phone Identifier",
+	"mon_fr": "Failure Reason",
+	"mon_file": "File with raw results",
+	
+	// Analysis, reports, modify
+	"an_auth": "Author",
+	"an_published": "Published",
+	"an_dr": "Date Range",
+	"an_csel": "Clear Selection",
+	
+	// Server Strings
+	"Upload Time": "Upload",
+	"_start": "Start Time",
+	"_end": "End Time"
 	
 		
 	

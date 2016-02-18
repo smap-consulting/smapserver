@@ -26,6 +26,7 @@ if (Modernizr.localstorage) {
 
 requirejs.config({
     baseUrl: 'js/libs',
+    locale: gUserLocale,
     waitSeconds: 0,
     paths: {
      	app: '../app',
@@ -66,4 +67,4 @@ require([
          'app/script',
          'app/reportlist'
          
-         ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});
+         ], function($, jquery_ui, modernizr, rmm, common, globals, localise, version) {});

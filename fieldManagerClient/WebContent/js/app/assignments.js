@@ -24,7 +24,8 @@ if (Modernizr.localstorage) {
 define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 
         'bootbox',
         'moment',
-        'datetimepicker'], 
+        'datetimepicker'
+        ], 
 		function($, bootstrap, ol_mgmt, common, lang, bootbox, moment, datetimepicker) {
 
 	
@@ -38,10 +39,17 @@ var gTasks,					// Object containing the task data retrieved from the database
 	
 $(document).ready(function() {
 	
+	var bs = isBusinessServer();
+	
+	window.moment = moment;		// Make moment global for use by common.js
+	
 	globals.gRegion = {};	// Initialise global values
 	globals.gRegions = undefined;
 	
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	getLoggedInUser(projectChanged, false, true, undefined);
 	
@@ -185,13 +193,12 @@ $(document).ready(function() {
 			  url: url,
 			  success: function(data, status) {
 				  removeHourglass();
-				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html("File Loaded");
-				  //$('#load_tasks').modal("hide");
+				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["t_fl"]);
 			  },
 			  error: function(xhr, textStatus, err) {
 				 
 				  removeHourglass(); 
-				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error file not loaded: " + xhr.responseText);
+				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_efnl"] + xhr.responseText);
 				 
 			  }
 		});
@@ -202,6 +209,9 @@ $(document).ready(function() {
 	 */
 	$('#taskPropertiesSave').off().click(function() {
 		var url = "/surveyKPI/assignments/properties";
+		
+		$('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));	// Set the UTC date
+		
 		var f = document.forms.namedItem("taskProperties");
     	var formData = new FormData(f);
 		
@@ -220,7 +230,7 @@ $(document).ready(function() {
 			  error: function(xhr, textStatus, err) {
 				 
 				  removeHourglass(); 
-				  alert("Error properties not updated: " + xhr.responseText);
+				  alert(localise.set["msg_err_upd"] + xhr.responseText);
 				 
 			  }
 		});
@@ -235,8 +245,7 @@ $(document).ready(function() {
 		 * Make sure we have the survey id
 		 */
 		if(typeof s_id === "undefined" || s_id === null) {
-			alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-					"If the project does have surveys then try again in a few seconds");
+			alert(localise.set["msg_err_wait"]);
 			return;
 		}
 		
@@ -265,69 +274,73 @@ $(document).ready(function() {
 			filteroId,
 			source_survey;
 	
-		updateTaskParams();
+		if(validDates()) {
+
+			updateTaskParams();
 		
-		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-		
-		if(!$('#empty_task_group').attr('checked')) {
+			assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
+			assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
 			
-			assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
-			assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
-			assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
-			
-			source_survey = $('#survey').val(); 						// The survey that provides the existing results	
-			if(!source_survey) {
-				source_survey = -1;
-			}
-			assignObj["source_survey_id"] = source_survey; 
-			assignObj["address_columns"] = gTaskParams;
-			assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
-			assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
-			
-			// Add filter if filter checkbox has been checked
-			if($('#filter_results_check').attr('checked')) {
+			if(!$('#empty_task_group').attr('checked')) {
 				
-				filterObj["qType"] = gFilterqType;
-				filterObj["qId"] = $('#filter_question option:selected').val();
-				filterObj["oValue"] = $('#filter_option option:selected').val();
-				filterObj["qText"] = $('#filter_text').val();
-				filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
-				filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
-				if(gFilterqType === "int") {
-					filterObj["qInteger"] = $('#filter_integer').val();
+				assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
+				assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
+				assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
+				
+				source_survey = $('#survey').val(); 						// The survey that provides the existing results	
+				if(!source_survey) {
+					source_survey = -1;
 				}
-				filterObj["lang"] = $('#filter_language option:selected').val();
-				assignObj["filter"] = filterObj;
-	
-			}
-		}
-
-    	assignString = JSON.stringify(assignObj);
-    	globals.gCurrentUserId = undefined;
-    	globals.gCurrentUserName = undefined;
+				assignObj["source_survey_id"] = source_survey; 
+				assignObj["address_columns"] = gTaskParams;
+				assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
+				assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
+				
+				// Add filter if filter checkbox has been checked
+				if($('#filter_results_check').attr('checked')) {
+					
+					filterObj["qType"] = gFilterqType;
+					filterObj["qId"] = $('#filter_question option:selected').val();
+					filterObj["oValue"] = $('#filter_option option:selected').val();
+					filterObj["qText"] = $('#filter_text').val();
+					filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
+					filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
+					if(gFilterqType === "int") {
+						filterObj["qInteger"] = $('#filter_integer').val();
+					}
+					filterObj["lang"] = $('#filter_language option:selected').val();
+					assignObj["filter"] = filterObj;
 		
-		addHourglass();
-		$.ajax({
-			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
-			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
-			  data: { settings: assignString },
-			  success: function(data, status) {
-				  removeHourglass();
-				  refreshAssignmentData(gUserFilter);
-				  clearNewTasks();
-			  }, error: function(data, status) {
-				  removeHourglass();
-				  if(data.responseText.indexOf("<html>") !== 0) {
-					  alert("Error: " + data.responseText); 
-				  } else {
-					  alert("Error adding tasks");
+				}
+			}
+	
+	    	assignString = JSON.stringify(assignObj);
+	    	globals.gCurrentUserId = undefined;
+	    	globals.gCurrentUserName = undefined;
+			
+			addHourglass();
+			$.ajax({
+				  type: "POST",
+				  contentType: "application/json",
+				  dataType: "json",
+				  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
+				  data: { settings: assignString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  $('#addTask').modal("hide");
+					  refreshAssignmentData(gUserFilter);
+					  clearNewTasks();
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  if(data.responseText.indexOf("<html>") !== 0) {
+						  alert(localise.set["c_error"] + " : " + data.responseText); 
+					  } else {
+						  alert(localise.set["msg_err_upd"]);
+					  }
+	
 				  }
-
-			  }
-		});
+			});
+		}
 		
 	});
 	
@@ -372,9 +385,9 @@ $(document).ready(function() {
 			  }, error: function(data, status) {
 				  removeHourglass();
 				  if(data.responseText.indexOf("<html>") !== 0) {
-					  alert("Error: " + data.responseText); 
+					  alert(localise.set["c_error"] + " : " + data.responseText); 
 				  } else {
-					  alert("Error adding tasks");
+					  alert(localise.set["msg_err_upd"]);
 				  }
 
 			  }
@@ -388,7 +401,8 @@ $(document).ready(function() {
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
-		bootbox.confirm('Are you sure you want to delete these ' + globals.gPendingUpdates.length + ' tasks?', function(result){
+		bootbox.confirm(localise.set["msg_confirm_del"] + globals.gPendingUpdates.length + ' ' + localise.set["m_assign"] + 
+				'?', function(result){
 			if(result) {
 				deleteData(globals.gPendingUpdates); 
 			}
@@ -405,6 +419,10 @@ $(document).ready(function() {
 		updateTaskParams();
 	});
 	
+	// Respond to a new NFC being selected
+	$('#nfc_select').change(function(){
+		$('#task_properties_title').val($(this).find(':selected').text());
+	});
 	
 	enableUserProfileBS();										// Enable user profile button	
 	$('#refreshMenu').click(function(e) {	// Add refresh action
@@ -415,30 +433,19 @@ $(document).ready(function() {
 	
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({
-		pickTime: false,
-		useCurrent: false
-	});
-	$('#startDate').data("DateTimePicker").setDate(moment());
+		useCurrent: false,
+		locale: gUserLocale || 'en'
+	}).data("DateTimePicker").date(moment());
 	
 	$('#endDate').datetimepicker({
-		pickTime: false,
-		useCurrent: false
-	});
-	$('#endDate').data("DateTimePicker").setDate(moment());
+		useCurrent: false,
+		locale: gUserLocale || 'en'
+	}).data("DateTimePicker").date(moment());
 	
 	$('#task_properties_scheduledDate').datetimepicker({
-		pickTime: true,
-		useCurrent: false
+		useCurrent: false,
+		locale: gUserLocale || 'en'
 	});
-	
-	// Add responses to changing parameters
-	$('#startDate,#endDate,#task_properties_scheduledDate').change(function(e) {	
-		if(validDates()) {
-			return true;
-		} else {
-			return false;
-		}
- 	 });
 	
 	/* 
 	 * Set focus to first element on opening modals
@@ -593,7 +600,9 @@ function questionChanged() {
  */
 function setAddressOptions() {
 	
-	var sId = $('#survey').val();
+	var sId = $('#survey').val(),
+		j,
+		i;
 	
 	if(sId) {
 		// Get the survey meta data
@@ -837,7 +846,9 @@ function refreshTableAssignments(tasks) {
 			// open the properties dialog
 			$('#task_properties_taskid').val(task.task_id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
-			$('#task_properties_scheduledDate').data("DateTimePicker").setDate(task.scheduleAt);
+			$('#task_properties_title').val(task.title);
+			$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
+			$('#nfc_select').val(task.location_trigger);
 			$('#task_properties').modal("show");  
 
 		});
@@ -878,7 +889,7 @@ function refreshTableAssignments(tasks) {
 			
 			// Reset any pending tasks
 			$('#new_task_count').html(0);
-			$('#map_alert').show().text("Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button");
+			$('#map_alert').show().text(localise.set["t_add_tasks"]);
 			window.scrollTo(500, 0);
 		});
 		
@@ -897,8 +908,7 @@ function refreshTableAssignments(tasks) {
 			 * Make sure we have the survey id
 			 */
 			if(typeof s_id === "undefined" || s_id === null) {
-				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-						"If the project does have surveys then try again in a few seconds");
+				alert(localise.set["msg_err_wait"]);
 				return;
 			}
 			
@@ -928,7 +938,7 @@ function refreshTableAssignments(tasks) {
 			
 			var tg_id = $(this).val();
 			
-			bootbox.confirm('Are you sure you want to delete this group and all of its tasks?', function(result){
+			bootbox.confirm(localise.set["msg_confirm_del"] + ' ' + localise.set["msg_confirm_tasks"], function(result){
 				if(result) {
 					addHourglass();
 					$.ajax({

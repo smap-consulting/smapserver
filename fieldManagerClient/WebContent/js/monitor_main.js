@@ -45,6 +45,7 @@ requirejs.config({
     	modernizr: '../../../../js/libs/modernizr',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
+    	moment: '../../../../js/libs/moment-with-locales.min',
     	globals: '../../../../js/app/globals',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
@@ -68,11 +69,13 @@ require([
          'common', 
          'localise', 
          'globals',
+         'moment',
          'app/monitor', 
          'app/map-ol-mgmt',
          'app/plugins',
          'tablesorter',
          'crf'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals) {});
+         ], function($, jquery_ui, modernizr, rmm, common, localise, globals, moment) {
+});
 

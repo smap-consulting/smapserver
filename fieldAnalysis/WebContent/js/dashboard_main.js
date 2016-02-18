@@ -80,7 +80,7 @@ require.config({
     	}
     });
 
-require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
+require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals', 'moment',
          
          'main/jqplot_main',
          'jquery-ui-timepicker-addon',
@@ -105,5 +105,7 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals',
          'tablesorter',
          'crf'
          
-         ], function($, jquery_ui, rmm, common, localise, globals) {});
+         ], function($, jquery_ui, rmm, common, localise, globals, moment) {
+	window.moment = moment;	// Required as common.js not part of module
+});
 

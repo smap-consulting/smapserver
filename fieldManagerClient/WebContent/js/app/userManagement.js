@@ -19,7 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 define(['jquery','localise', 'common', 'globals', 
         'bootbox', 
         'moment',
-        'datetimepicker'], function($, lang, common, globals, bootbox) {
+        'datetimepicker'], function($, lang, common, globals, bootbox, moment) {
 	
 var gUsers,
 	gGroups,
@@ -35,6 +35,10 @@ var gUsers,
 $(document).ready(function() {
 
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
+	
 	getUsers();
 	getGroups();
 	getProjects();
@@ -226,14 +230,14 @@ $(document).ready(function() {
 	/*
 	 * Add date time picker to usage date
 	 */
+	moment.locale();
 	$('#usageDate').datetimepicker({
-		pickTime: false,
 		useCurrent: false,
-		format: "mm/yyyy",
-		startView: "months", 
-		minViewMode: "months"
-	});
-	$('#usageDate').data("DateTimePicker").setDate(moment());
+		format: "MM/YYYY",
+		viewMode: "months",
+		locale: gUserLocale || 'en'
+	}).data("DateTimePicker").date(moment());
+
 	
 	isBusinessServer();
 	

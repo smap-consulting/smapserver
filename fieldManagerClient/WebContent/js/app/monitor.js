@@ -16,14 +16,20 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','jquery_ui', 'app/map-ol-mgmt', 'localise', 'common', 'globals'], function($, ui, ol_mgmt, lang, common, globals) {
+define(['jquery','jquery_ui', 'app/map-ol-mgmt', 'localise', 'common', 'globals', 'moment'], 
+		function($, ui, ol_mgmt, lang, common, globals, moment) {
 
 var gStartEvents = [],		// Only in this java script file
 	gPageCount = 1;			// Only in this java script file
 
 $(document).ready(function() {
 	
+	window.moment = moment;
+	
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	getLoggedInUser(projectChanged, true, true, undefined);
 	 
@@ -531,7 +537,7 @@ function refreshTable(data, showType) {
 	h[++i] = '<tr>';
 	if(showType === "totals") {
 		if(sId === "_all") {
-			h[++i] = '<th>Survey</th>';
+			h[++i] = '<th>' + localise.set["c_survey"] + '</th>';
 			if(isForwarded) {
 				h[++i] = '<th>Dest</th>';
 			}
@@ -542,36 +548,36 @@ function refreshTable(data, showType) {
 			}
 		}
 		if(typeof features[0].properties.success !== "undefined") {
-			h[++i] = '<th>Success</th>';
+			h[++i] = '<th>' + localise.set["c_success"] + '</th>';
 		} 
 		if(typeof features[0].properties.errors !== "undefined") {
-			h[++i] = '<th>Errors</th>';
+			h[++i] = '<th>' + localise.set["c_errors"] + '</th>';
 		}
 		if(typeof features[0].properties.duplicates  !== "undefined") {
-			h[++i] = '<th>Duplicates</th>';
+			h[++i] = '<th>' + localise.set["mon_dup"] + '</th>';
 		}
 		if(typeof features[0].properties.merged  !== "undefined") {
-			h[++i] = '<th>Merged</th>';
+			h[++i] = '<th>' + localise.set["mon_att"] + '</th>';
 		}
 		if(typeof features[0].properties.not_loaded  !== "undefined") {
-			h[++i] = '<th>Not Loaded</th>';
+			h[++i] = '<th>' + localise.set["mon_nl"] + '</th>';
 		}
 
 	} else {
 		h[++i] = '<th>Id</th>';
 		h[++i] = '<th>Upload Id</th>';
-		h[++i] = '<th>Upload Date</th>';
-		h[++i] = '<th>User</th>';
-		h[++i] = '<th>Phone Identifier</th>';
-		h[++i] = '<th>File with raw results</th>';
-		h[++i] = '<th>Survey</th>';
+		h[++i] = '<th>' + localise.set["mon_ud"] + ' ' + localise.set["c_lt"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_user"] + ' ' + localise.set["c_ident"] + '</th>';
+		h[++i] = '<th>' + localise.set["mon_pi"] + '</th>';
+		h[++i] = '<th>' + localise.set["mon_file"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_survey"] + '</th>';
 		h[++i] = '<th>Ident</th>';
 		if(isForwarded) {
 			h[++i] = '<th>Dest</th>';
 		}
-		h[++i] = '<th>Location</th>';
-		h[++i] = '<th>Status</th>';
-		h[++i] = '<th>Failure Reason</th>';
+		h[++i] = '<th>' + localise.set["c_location"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_status"] + '</th>';
+		h[++i] = '<th>' + localise.set["mon_fr"] + '</th>';
 	}
 	h[++i] = '</tr>';
 	$head.append(h.join(''));
@@ -604,7 +610,7 @@ function refreshTable(data, showType) {
 		} else {
 			h[++i] = '<td>' + ((typeof features[j].properties.se_id === "undefined") ? "" : features[j].properties.se_id) + '</td>';
 			h[++i] = '<td>' + features[j].properties.ue_id + '</td>';
-			h[++i] = '<td>' + features[j].properties.upload_time + '</td>';
+			h[++i] = '<td>' + localTime(features[j].properties.upload_time) + '</td>';
 			h[++i] = '<td>' + features[j].properties.user_name + '</td>';
 			h[++i] = '<td>' + features[j].properties.imei + '</td>';
 			h[++i] = '<td>' + features[j].properties.file_name + '</td>';
@@ -664,15 +670,15 @@ function refreshNotificationsTable(data, showType) {
 	// Add the head
 	h[++i] = '<tr>';
 	if(showType === "totals") {
-		h[++i] = '<th>Success</th>';
-		h[++i] = '<th>Errors</th>';
+		h[++i] = '<th>' + localise.set["c_success"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_errors"] + '</th>';
 
 	} else {
 		h[++i] = '<th>Id</th>';
-		h[++i] = '<th>Details</th>';
-		h[++i] = '<th>Status</th>';
-		h[++i] = '<th>Failure Reason</th>';
-		h[++i] = '<th>Time</th>';
+		h[++i] = '<th>' + localise.set["c_details"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_status"] + '</th>';
+		h[++i] = '<th>' + localise.set["mon_fr"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_lt"] + '</th>';
 	}
 	h[++i] = '</tr>';
 	$head.append(h.join(''));
@@ -691,8 +697,12 @@ function refreshNotificationsTable(data, showType) {
 			h[++i] = '<td>' + features[j].properties.notify_details + '</td>';
 			status = features[j].properties.status;
 			h[++i] = '<td class="' + status + '">' + status + '</td>';
-			h[++i] = '<td>' + features[j].properties.status_details + '</td>';
-			h[++i] = '<td>' + features[j].properties.event_time + '</td>';
+			if(features[j].properties.status_details) {
+				h[++i] = '<td>' + features[j].properties.status_details + '</td>';
+			} else {
+				h[++i] = '<td></td>';
+			}
+			h[++i] = '<td>' + localTime(features[j].properties.event_time) + '</td>';
 			
 
 		}
@@ -726,11 +736,11 @@ function refreshFormsTable(data) {
 	
 	// Add the head
 	h[++i] = '<tr>';
-		h[++i] = '<th>User Name</th>';
-		h[++i] = '<th>User Ident</th>';
-		h[++i] = '<th>Device Identifier</th>';
-		h[++i] = '<th>Survey Name</th>';
-		h[++i] = '<th>Survey Version</th>';
+		h[++i] = '<th>' + localise.set["c_user"] + ' ' + localise.set["c_name"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_user"] + ' ' + localise.set["c_ident"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_device"] + ' ' + localise.set["c_ident"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_survey"] + ' ' + localise.set["c_name"] + '</th>';
+		h[++i] = '<th>' + localise.set["c_survey"] + ' ' + localise.set["c_version"] + '</th>';
 	h[++i] = '</tr>';
 	$head.append(h.join(''));
 	

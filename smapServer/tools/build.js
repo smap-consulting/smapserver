@@ -11,6 +11,7 @@
     	app: '../app',
     	lang_location: '..',
 	bootbox: 'bootbox.min',
+	moment: 'moment-with-locales.min',
 	toggle: 'bootstrap-toggle.min',
 	bootstrap: 'bootstrap.min',
         bootstrapfileinput: 'bootstrap.file-input',

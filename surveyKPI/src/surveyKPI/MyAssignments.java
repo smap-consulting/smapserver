@@ -220,6 +220,7 @@ public class MyAssignments extends Application {
 					"t.initial_data," +
 					"t.update_id," +
 					"t.schedule_at," +
+					"t.location_trigger," +
 					"t.repeat," +
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
@@ -272,6 +273,7 @@ public class MyAssignments extends Application {
 				ta.task.initial_data = resultSet.getString("initial_data");
 				ta.task.update_id = resultSet.getString("update_id");
 				ta.task.scheduled_at = resultSet.getTimestamp("schedule_at");
+				ta.task.location_trigger = resultSet.getString("location_trigger");
 				ta.task.repeat = resultSet.getBoolean("repeat");
 				ta.task.address = resultSet.getString("address");
 				
@@ -376,6 +378,7 @@ public class MyAssignments extends Application {
 				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
 				tr.settings.ft_sync_incomplete = resultSet.getBoolean(3);
+				tr.settings.ft_location_trigger = GeneralUtilityMethods.isBusinessServer(request.getServerName());
 			}
 			
 			/*

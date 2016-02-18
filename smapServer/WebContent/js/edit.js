@@ -111,6 +111,9 @@ $(document).ready(function() {
 	window.bootbox = bootbox;
 	
 	localise.setlang();		// Localise HTML
+	if(typeof getVersion === "function") {
+		getVersion();			// Update if the version on the server has changed
+	}
 	
 	// Get the parameters and start editing a survey if one was passed as a parameter
 	params = location.search.substr(location.search.indexOf("?") + 1)
@@ -203,10 +206,15 @@ $(document).ready(function() {
 	});
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
 		changeset.validateAll();
-		if(changeset.numberIssues("error") === 0) {
-			changeset.save(surveyListDone);
+		if(globals.model.survey.blocked) {
+			bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
+			"survey on the form management page.");
 		} else {
-			bootbox.alert("Cannot save until errors are fixed");
+			if(changeset.numberIssues("error") === 0) {
+				changeset.save(surveyListDone);
+			} else {
+				bootbox.alert("Cannot save until errors are fixed");
+			}
 		}
 	});
 
@@ -640,6 +648,12 @@ function surveyDetailsDone() {
 	
 	$('#openFormModal').modal("hide");		// Hide the open form modal if its open
 	
+	// Show message if the survey is blocked
+	if(globals.model.survey.blocked) {
+		bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
+				"survey on the form management page.");
+	}
+	
 	updateSettingsData();		// Update edit view
 	
 	refreshForm();
@@ -795,7 +809,7 @@ function respondToEvents($context) {
 	$context.find('.qname').keydown(function(e){
 		if(e.keyCode === 9) {
 			e.preventDefault();
-			$(this).closest('tr').find('.labelProp').focus();
+			$(this).closest('.row').find('.labelProp').focus();
 		}
 	});
 

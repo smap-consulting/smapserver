@@ -16,6 +16,8 @@
     	modernizr: '../../../../smapServer/WebContent/js/libs/modernizr',
     	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu',
     	common: '../../../../smapServer/WebContent/js/app/common',
+        moment: '../../../../smapServer/WebContent/js/libs/moment-with-locales.min',
+    	version: '../../../../smapServer/WebContent/js/app/version',
     	globals: '../../../../smapServer/WebContent/js/app/globals',
     	tablesorter: '../../../../smapServer/WebContent/js/libs/tablesorter',
     	crf: '../../../../smapServer/WebContent/js/libs/commonReportFunctions',

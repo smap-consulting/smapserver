@@ -14,7 +14,7 @@
 		 Remove this if you use the .htaccess -->
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   
-	<title>Smap Field Analysis GIS</title>
+	<title class="lang" data-lang="m_analysis">analysis</title>
 	<meta name="description" content="Smap Analysis Module.">
 	<meta name="author" content="Neil Penman">
 	
@@ -38,6 +38,7 @@
 	
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/version.js"></script>
 	<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
 	<script src="/js/libs/d3.v3.min.js"></script>
 	<script data-main="js/dashboard_main" src="/js/libs/require.js"></script>
@@ -57,10 +58,6 @@
 				<li><a class="lang" data-lang="m_reports" href="reports.html" title="Reports">Reports</a></li>
 				<li><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
 				<li><a class="lang" data-lang="m_export" id="exportMenu" href="#" title="Export">Export</a></li> 
-				<!-- 
-				<li><a class="lang" data-lang="m_discuss" id="discuss" href="https://grow.smap.com.au" title="Discuss">Discuss</a></li>  
-				Replace with webforms temporarily maybe
-				-->
 				<li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
 				<li><a class="lang" data-lang="m_modify" href="/fieldAnalysis/modify_data.html" title="Modify">Modify</a></li>
 			</ul>

@@ -51,7 +51,7 @@ requirejs.config({
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],	
-       	'common': ['jquery'] 	
+       	'common': ['jquery']
     	}
     });
 
