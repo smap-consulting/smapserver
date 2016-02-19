@@ -327,61 +327,42 @@ public class XLSFormManager {
 				inMeta = false;
 			} 
 			
-			/*
-			 * Determine if this question is a repeat count
-			 *  For forms loaded after this code only q.repeatCount needs to be checked
-			 *  For backward compatability we record any calcualtion question as well and assume the calculate immediately
-			 *   before a begin repeat count is the correct one
-			 */
-			if(q.repeatCount) {
-				// Save the calculation as it contain the calculation for a repeat which needs to be placed in the begin repeat row
-				// Otherwise this "dummy" question is ignored
-				//savedCalculation = q.calculation;
-			} else {
 				
-				if(!inMeta && !q.name.equals("meta_groupEnd")) {
+			if(!inMeta && !q.name.equals("meta_groupEnd")) {
+				
+				if(isRow(q)) {
+					Row row = surveySheet.createRow(rowNumberSurvey++);
+					for(int i = 0; i < colsSurvey.size(); i++) {
+						Column col = colsSurvey.get(i);			
+						Cell cell = row.createCell(i);
+						CellStyle style = col.getStyle(styles, q);
+						if(style != null) {	cell.setCellStyle(style); }
+										
+						cell.setCellValue(col.getValue(q));
+			        }
 					
-					if(isRow(q)) {
-						Row row = surveySheet.createRow(rowNumberSurvey++);
-						for(int i = 0; i < colsSurvey.size(); i++) {
-							Column col = colsSurvey.get(i);			
-							Cell cell = row.createCell(i);
-							CellStyle style = col.getStyle(styles, q);
-							if(style != null) {	cell.setCellStyle(style); }
-											
-							cell.setCellValue(col.getValue(q));
-				        }
+					// If this is a sub form then process its questions now
+					Form subForm = survey.getSubForm(form, q);
+					if( subForm != null) {
 						
-						// If this is a sub form then process its questions now
-						Form subForm = survey.getSubForm(form, q);
-						if( subForm != null) {
-							// Add the repeat count using the saved calculation and the column index of the repeat count column
-							//Column col = colsSurvey.get(namedColumnIndexes.get("repeat_count").intValue());	
-							//Cell cell = row.createCell(col.getColNumber());
-							//CellStyle style = col.getStyle(styles, q);
-							//if(style != null) {	cell.setCellStyle(style); }
-							//cell.setCellValue(savedCalculation);
-							//savedCalculation = null;
-							
-							processFormForXLS(subForm, survey, surveySheet, choicesSheet, styles, 
-									colsSurvey, 
-									colsChoices,
-									filterIndexes,
-									addedOptionLists,
-									namedColumnIndexes);
-							
-							addEndGroup(surveySheet, "end repeat", q.name, styles.get("begin repeat"));
-						} 
+						processFormForXLS(subForm, survey, surveySheet, choicesSheet, styles, 
+								colsSurvey, 
+								colsChoices,
+								filterIndexes,
+								addedOptionLists,
+								namedColumnIndexes);
 						
-						// If this question has a list of choices then add these to the choices sheet but only if they have not already been added
-						if(q.list_name != null) {
-							if(addedOptionLists.get(q.list_name) == null) {
-								OptionList ol = survey.optionLists.get(q.list_name);
-								if(ol != null) {		// option list is populated for questions that are not select TODO Fix
-									addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
-								}
-								addedOptionLists.put(q.list_name, q.list_name);	// Remember lists that have been added
+						addEndGroup(surveySheet, "end repeat", q.name, styles.get("begin repeat"));
+					} 
+					
+					// If this question has a list of choices then add these to the choices sheet but only if they have not already been added
+					if(q.list_name != null) {
+						if(addedOptionLists.get(q.list_name) == null) {
+							OptionList ol = survey.optionLists.get(q.list_name);
+							if(ol != null) {		// option list is populated for questions that are not select TODO Fix
+								addChoiceList(survey, choicesSheet, ol, colsChoices, filterIndexes, styles, q.list_name);
 							}
+							addedOptionLists.put(q.list_name, q.list_name);	// Remember lists that have been added
 						}
 					}
 				}

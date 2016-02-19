@@ -41,7 +41,6 @@ public class Question {
 	public boolean visible;
 	public boolean readonly;
 	public boolean required;
-	public boolean repeatCount;
 	public boolean propertyType = false;	// If set these questions will not be shown in the editor
 	public boolean published;				// Set true if the question has been added to a results table
 	public boolean soft_deleted = false;	// Set true if the question has been deleted but exists in results tables

@@ -110,22 +110,6 @@ public class QuestionManager {
 				q.appearance = resultSet.getString(4);
 				q.l_id = resultSet.getInt(5);
 				
-			
-				// TODO following code looks like it does nothing
-				/*
-				pstmtOption.setInt(1, q.id);
-				log.info("Get options for CSV: " + pstmtOption.toString());
-				ResultSet rsOptions = pstmtOption.executeQuery();
-				while (rsOptions.next()) {
-					Option o = new Option();
-					o.id = rsOptions.getInt("o_id");
-					o.seq = rsOptions.getInt("seq");
-					o.text_id = rsOptions.getString("label_id");
-					
-					UtilityMethodsEmail.getLabels( sd, survey, o.text_id, null, o.labels, null, 0);
-				}
-				*/
-				
 				questions.add(q);
 			} 
 		} catch (Exception e) {
@@ -167,10 +151,9 @@ public class QuestionManager {
 				+ "readonly, "
 				+ "relevant, "
 				+ "qconstraint, "
-				+ "constraint_msg, "
-				+ "repeatcount"
+				+ "constraint_msg "
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -267,6 +250,7 @@ public class QuestionManager {
 				if(columnName == null) {
 					columnName = GeneralUtilityMethods.cleanName(q.name, true);
 				}
+				
 				pstmtInsertQuestion.setInt(1, q.fId );
 				pstmtInsertQuestion.setInt(2, q.l_id);
 				pstmtInsertQuestion.setInt(3, q.seq );
@@ -289,7 +273,6 @@ public class QuestionManager {
 				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
 				pstmtInsertQuestion.setString(17, constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
-				pstmtInsertQuestion.setBoolean(19, false);	// repeat count
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
@@ -308,28 +291,12 @@ public class QuestionManager {
 					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
 					int qId = rs.getInt(1);
-					//String repeatsPath = null;
-					//String repeatName = null;
-					//String convertedCalculation = null;
 					
-					/*
+					// The calculation holds the repeat value
+					String convertedCalculation = null;
 					if(q.calculation != null && q.calculation.trim().length() > 0) {
-						
-						// Update sequence numbers of questions after the repeat count question to be inserted
-						pstmtUpdateSeq.setInt(1, q.fId);
-						pstmtUpdateSeq.setInt(2, q.seq);
-						
-						log.info("Update sequences: " + pstmtUpdateSeq.toString());
-						pstmtUpdateSeq.executeUpdate();
-						
-						// Create a question to hold the repeat count calculation
-						repeatsPath = q.path + "_count";
-						repeatName = q.name + "_count";
 						convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-						createRepeatCountQuestion(sd, q.fId, q.seq, repeatName, convertedCalculation, repeatsPath );
-			
-					}	
-					*/			
+					}
 					
 					// Create the sub form
 					String tableName = "s" + sId + "_" + columnName;
@@ -341,7 +308,7 @@ public class QuestionManager {
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
-					pstmtForm.setString(7, q.calculation);
+					pstmtForm.setString(7, convertedCalculation);
 					pstmtForm.setString(8, q.path);
 					pstmtForm.setInt(9, q.childFormIndex);
 					
@@ -366,63 +333,6 @@ public class QuestionManager {
 		
 	}
 	
-	/*
-	 * Create a repeat cont question
-	 */
-	public int createRepeatCountQuestion(
-			Connection sd,
-			int fId, 
-			int seq, 
-			String repeatName, 
-			String convertedCalculation, 
-			String repeatsPath) throws SQLException {
-		
-		int qId = 0;
-		
-		String sql = "insert into question ("
-				+ "q_id, "
-				+ "f_id, "
-				+ "seq, "
-				+ "qname, "
-				+ "column_name, "
-				+ "qtype, "
-				+ "source, "
-				+ "calculate, "
-				+ "visible, "
-				+ "path, "
-				+ "readonly, "
-				+ "repeatcount"
-				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, 'string', 'user', ? , 'false', ?, 'false', 'true');";
-		
-		PreparedStatement pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-		
-		try {
-			pstmt.setInt(1, fId );
-			pstmt.setInt(2, seq );
-			pstmt.setString(3, repeatName );		// Question name
-			pstmt.setString(4, repeatName );		// Column name
-			pstmt.setString(5, convertedCalculation);
-			pstmt.setString(6, repeatsPath);
-			
-			log.info("Insert repeat count question: " + pstmt.toString());
-			pstmt.executeUpdate();
-
-			// Get the questionId of the new question
-			ResultSet rs = pstmt.getGeneratedKeys();
-			rs.next();
-			qId = rs.getInt(1);
-			
-		} catch(SQLException e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-	
-		}
-		
-		return qId;
-	}
 	
 	/*
 	 * Move Questions
@@ -841,9 +751,7 @@ public class QuestionManager {
 		String sqlGetSeq = "select seq, qtype, published from question where f_id = ? and qname = ?";
 		
 		PreparedStatement pstmtGetTableName = null;
-		//PreparedStatement pstmtTableExists = null;
 		PreparedStatement pstmtDeleteForm = null;
-		//PreparedStatement pstmtDeleteRepeatCount = null;
 		
 		try {
 			pstmtUpdateSeq = sd.prepareStatement(sqlUpdateSeq);
@@ -985,8 +893,6 @@ public class QuestionManager {
 				if(qType.equals("begin repeat")) {
 				
 					String tableName = null;
-					//String repeatCountPath = null;
-					//int parentFormId = 0;
 					
 					// 1. Get the table name for this form
 					String sqlGetTableName = "select table_name, parentform, repeats from form where parentquestion = ? and s_id = ?;";
@@ -996,38 +902,18 @@ public class QuestionManager {
 					ResultSet rsRepeat = pstmtGetTableName.executeQuery();
 					if(rsRepeat.next()) {
 						tableName = rsRepeat.getString(1);
-						//parentFormId = rsRepeat.getInt(2);
-						//repeatCountPath = rsRepeat.getString(3);
 					}
 					
 					System.out.println("Deleting form for table: " + tableName);
 					
 					// 2. If the results table exists for this form then throw an exception
 					if(tableName != null) {
-						/*
-						String sqlTableExists = "select count(*) from information_schema.tables where table_name ='" + tableName + "';";
-						pstmtTableExists = cResults.prepareStatement(sqlTableExists);
-						
-						int count = 0;
-						rsRepeat = pstmtTableExists.executeQuery();
-						if(rsRepeat.next()) {
-							count = rsRepeat.getInt(1);
-						}
-						*/
+				
 						if(GeneralUtilityMethods.tableExists(cResults, tableName)) {
 							throw new Exception("Cannot delete this form as it contains published data");
 						} else {
 							
-							// 3. Delete the repeat count question
-							//String sqlDeleteRepeatCount = "delete from question where f_id = ? and path = ?;";
-							//pstmtDeleteRepeatCount = sd.prepareStatement(sqlDeleteRepeatCount);
-							//pstmtDeleteRepeatCount.setInt(1, parentFormId);
-							//pstmtDeleteRepeatCount.setString(2, repeatCountPath);
-							
-							//log.info("Delete repeat count: " + pstmtDeleteRepeatCount.toString());
-							//pstmtDeleteRepeatCount.executeUpdate();
-							
-							// 4. Delete the form
+							// 3. Delete the form
 							String sqlDeleteForm = "delete from form where parentquestion = ? and s_id = ?;";
 							pstmtDeleteForm = sd.prepareStatement(sqlDeleteForm);
 							pstmtDeleteForm.setInt(1, q.id);
@@ -1429,7 +1315,8 @@ public class QuestionManager {
 			int parentFormId,
 			int parentQuestionId,
 			boolean sharedResults,
-			String formLabel) throws Exception {
+			String formLabel,
+			String repeats) throws Exception {
 		
 		String tablename = null;
 		int fId;									// Id of the newly created form
@@ -1439,11 +1326,11 @@ public class QuestionManager {
 		PreparedStatement pstmtGetTableName = sd.prepareStatement(sqlGetTableName);
 		
 		String sqlCreateForm = "insert into form ( f_id, s_id, name, label, table_name, parentform, "
-				+ "parentquestion, path) " +
-				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?);";
+				+ "parentquestion, path, repeats) " +
+				" values (nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?);";
 		PreparedStatement pstmtCreateForm = sd.prepareStatement(sqlCreateForm, Statement.RETURN_GENERATED_KEYS);
 		
-		String sqlGetSubForms = "select f.f_id, f.name, f.parentquestion, f.label from form f "
+		String sqlGetSubForms = "select f.f_id, f.name, f.parentquestion, f.label, f.repeats from form f "
 				+ "where f.parentform = ?;";
 		PreparedStatement pstmtGetSubForms = sd.prepareStatement(sqlGetSubForms);
 		
@@ -1474,6 +1361,7 @@ public class QuestionManager {
 			pstmtCreateForm.setInt(5,  parentFormId);
 			pstmtCreateForm.setInt(6,  parentQuestionId);
 			pstmtCreateForm.setString(7,  path);
+			pstmtCreateForm.setString(8,  repeats);
 		
 			log.info("Create new form: " + pstmtCreateForm.toString());
 			pstmtCreateForm.execute();
@@ -1497,6 +1385,7 @@ public class QuestionManager {
 				String subFormName = rs.getString(2);
 				int existingParentQuestionId = rs.getInt(3);
 				String existingFormLabel = rs.getString(4);
+				String existingRepeats = rs.getString(5);
 				
 				// Get the parent question id
 				pstmtGetParentQuestionId.setInt(1, fId);
@@ -1508,7 +1397,7 @@ public class QuestionManager {
 				if(rsParent.next()) {
 					newParentQuestionId = rsParent.getInt(1);
 					duplicateForm(sd, sId, existingSurveyId, subFormName, subFormId, subFormParentPath, fId, 
-							newParentQuestionId, sharedResults, existingFormLabel);
+							newParentQuestionId, sharedResults, existingFormLabel, existingRepeats);
 				}
 				
 				
@@ -1681,7 +1570,6 @@ public class QuestionManager {
 				 + "cascade_instance,"
 				 + "list_name,"
 				 + "column_name," 
-				 + "repeatcount, "
 				 + "published,"
 				 + "column_name_applied,"
 				 + "l_id)"						// List ids will need to be updated
@@ -1716,7 +1604,6 @@ public class QuestionManager {
 				 + "cascade_instance, "
 				 + "list_name, "
 				 + "column_name," 
-				 + "repeatcount, "
 				 + (sharedResults ? "published, " : "'false'")	// Set to false if this question is for a new table	
 				 + "column_name_applied, "
 				 + "l_id "

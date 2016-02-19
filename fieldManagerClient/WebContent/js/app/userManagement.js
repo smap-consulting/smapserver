@@ -341,6 +341,12 @@ $(document).ready(function() {
 				return false;
 			}
 		}
+		if(organisation.email_user.indexOf('@') > 0) {
+			error = true;
+			alert("Email user name should not include the email domain.  So for an email address of example@org.com the user name would be 'example'");
+			$('#o_email_user').focus();
+			return false;
+		}
 		
 		options = $(".puboption:checked").map(function(){
 	        	return $(this).val();
