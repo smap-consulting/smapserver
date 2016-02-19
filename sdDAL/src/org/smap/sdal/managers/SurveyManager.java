@@ -312,7 +312,7 @@ public class SurveyManager {
 				QuestionManager qm = new QuestionManager();
 				qm.duplicateLanguages(sd, sId, existingSurveyId);
 				qm.duplicateForm(sd, sId, existingSurveyId, 
-						"main", existingFormId, "", 0, 0, sharedResults, null);
+						"main", existingFormId, "", 0, 0, sharedResults, null, null);	// note: top level form cannot have repeats
 			
 			} else {
 				
@@ -519,8 +519,7 @@ public class SurveyManager {
 				+ "f.name, "
 				+ "f.parentform, "
 				+ "f.parentquestion, "
-				+ "f.table_name, "
-				+ "f.repeats "
+				+ "f.table_name "
 				+ "from form f where f.s_id = ?;";
 		PreparedStatement pstmtGetForms = sd.prepareStatement(sqlGetForms);	
 		
@@ -539,7 +538,6 @@ public class SurveyManager {
 				+ "q.visible, "
 				+ "q.readonly, "
 				+ "q.mandatory, "
-				+ "q.repeatcount, "
 				+ "q.published, "
 				+ "q.column_name, "
 				+ "q.source_param, "
@@ -551,6 +549,14 @@ public class SurveyManager {
 				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
+		// SQL to get the choice lists in this survey
+		ResultSet rsGetRepeatValue = null;
+		String sqlGetRepeatValue = "select repeats "
+				+ "from form "
+				+ "where s_id = ? "
+				+ "and parentquestion = ?;";
+		PreparedStatement pstmtGetRepeatValue = sd.prepareStatement(sqlGetRepeatValue);
+		
 		// SQL to get the choice lists in this survey
 		ResultSet rsGetLists = null;
 		String sqlGetLists = "select l_id, "
@@ -622,7 +628,6 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
-			f.repeat_path = rsGetForms.getString(6);		// Don't translate the repeat path
 				
 			/*
 			 * Get the questions for this form
@@ -632,7 +637,6 @@ public class SurveyManager {
 			rsGetQuestions = pstmtGetQuestions.executeQuery();
 			
 			boolean inMeta = false;				// Set true if the question is in the meta group
-			String savedCalculation = null;		// Contains the repeat count for a sub form
 			while (rsGetQuestions.next()) {
 				Question q = new Question();
 				
@@ -656,12 +660,11 @@ public class SurveyManager {
 				q.visible = rsGetQuestions.getBoolean(16);
 				q.readonly = rsGetQuestions.getBoolean(17);
 				q.required = rsGetQuestions.getBoolean(18);
-				q.repeatCount = rsGetQuestions.getBoolean(19);
-				q.published = rsGetQuestions.getBoolean(20);
-				q.columnName = rsGetQuestions.getString(21);
-				q.source_param = rsGetQuestions.getString(22);
-				q.path = rsGetQuestions.getString(23);
-				q.soft_deleted = rsGetQuestions.getBoolean(24);
+				q.published = rsGetQuestions.getBoolean(19);
+				q.columnName = rsGetQuestions.getString(20);
+				q.source_param = rsGetQuestions.getString(21);
+				q.path = rsGetQuestions.getString(22);
+				q.soft_deleted = rsGetQuestions.getBoolean(23);
 				
 				// Set an indicator if this is a property type question (_device etc)
 				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name, q.path);
@@ -671,16 +674,17 @@ public class SurveyManager {
 					continue;
 				}
 				
-				// If this question holds the repeat count calculation for the following begin repeat then save the calculation and discard it
-				if(q.repeatCount) {
-					savedCalculation = q.calculation;
-					continue;
-				}
-				
-				// If this is a begin repeat set the calculation from the preceeding repeat count question
+				// If this is a begin repeat set the calculation from its form
 				if(q.type.equals("begin repeat")) {
-					q.calculation = savedCalculation;
-					savedCalculation = null;
+					pstmtGetRepeatValue.setInt(1, s.id);
+					pstmtGetRepeatValue.setInt(2, q.id);
+					
+					log.info("Get repeat from form: " + pstmtGetRepeatValue.toString());
+					rsGetRepeatValue = pstmtGetRepeatValue.executeQuery();
+					if(rsGetRepeatValue.next()) {
+						q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetRepeatValue.getString(1), true);
+					}
+					
 				}
 				
 				// Translate type name to "note" if it is a read only string
@@ -823,6 +827,7 @@ public class SurveyManager {
 		try { if (pstmtGetOptions != null) {pstmtGetOptions.close();}} catch (SQLException e) {}
 		try { if (pstmtGetSSC != null) {pstmtGetSSC.close();}} catch (SQLException e) {}
 		try { if (pstmtGetChanges != null) {pstmtGetChanges.close();}} catch (SQLException e) {}
+		try { if (pstmtGetRepeatValue != null) {pstmtGetRepeatValue.close();}} catch (SQLException e) {}
 	}
 	
 
@@ -1409,6 +1414,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetQuestionDetails = null;
 		PreparedStatement pstmtGetListId = null;
 		PreparedStatement pstmtListname = null;
+		PreparedStatement pstmtUpdateRepeat = null;
 		
 		try {
 		
@@ -1416,258 +1422,249 @@ public class SurveyManager {
 				
 				/*
 				 * If the question type is a begin repeat and the property is "calculate" then 
-				 *  the repeat count question needs to be updated
-				 *  This repeat count question will be in the same form as the begin repeat question
+				 *  the repeat count attribute of the sub form needs to be updated
 				 */
 				if(ci.property.qType != null && ci.property.qType.equals("begin repeat") && 
 						ci.property.prop.equals("calculation")) {
 					
-					if(ci.property.repeat_path != null) {
-						// Existing repeat count question
-						String sqlGetQuestionId = "select q_id from question where trim(path) = ? and f_id in "
-								+ "(select f_id from question where q_id = ?);";
-						pstmtGetQuestionId = sd.prepareStatement(sqlGetQuestionId);
-						pstmtGetQuestionId.setString(1, ci.property.repeat_path.trim());
-						pstmtGetQuestionId.setInt(2, ci.property.qId);
-						
-						log.info("SQL: Getting question id: " + pstmtGetQuestionId.toString());
-						
-						ResultSet rs = pstmtGetQuestionId.executeQuery();
-						if(rs.next()) {
-							ci.property.qId = rs.getInt(1);
-						}
-					} else {
-						// Create a new repeat count question
-						
-						// Get details from the begin repeat question
-						String sqlGetQuestionDetails = "select f_id, qname, path, seq from question where q_id = ?;";
-						pstmtGetQuestionDetails = sd.prepareStatement(sqlGetQuestionDetails);
-						pstmtGetQuestionDetails.setInt(1, ci.property.qId);
-						
-						log.info("SQL: Getting question details: " + pstmtGetQuestionDetails.toString());
-						
-						ResultSet rs = pstmtGetQuestionDetails.executeQuery();
-						if(rs.next()) {
-							int fId = rs.getInt(1);
-							String repeatName = rs.getString(2) + "_count";
-							String repeatsPath = rs.getString(3) + "_count";
-							int seq = rs.getInt(4);		
-							
-							// Create the calculation question - leave calculation empty to be updated later
-							QuestionManager qm = new QuestionManager();
-							int newQId = qm.createRepeatCountQuestion(sd, fId, seq, repeatName, null, repeatsPath );
-							
-							ci.property.qId = newQId;
-						}
-						
-					}
-				}
-				
-				String property = translateProperty(ci.property.prop);
-				String propertyType = null;
-				String originalNewValue = ci.property.newVal;		// Save for logging
-				
-				// Convert "note" type to a read only string
-				// Add constraint that name and type properties can only be updated if the form has not been published
-				if(ci.property.prop.equals("type")) {
-					if(ci.property.newVal.equals("note")) {
-						setReadonly = true;
-						ci.property.newVal = "string";
-					} else if(ci.property.newVal.equals("calculate")) {
-						ci.property.newVal = "string";
-						ci.property.setVisible = true;
-						ci.property.visibleValue = false;
-					}
-					onlyIfNotPublished = true;
-				} else if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
-					onlyIfNotPublished = true;
-				} else if(ci.property.prop.equals("list_name")) {
-					// Convert the passed in list name to the list id that needs to be updated
-					String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
-					pstmtGetListId = sd.prepareStatement(sqlGetListId);
-					pstmtGetListId.setInt(1, sId);
+					String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
+					String oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
 					
-					// Get the new list id
-					pstmtGetListId.setString(2, ci.property.newVal);
-					ResultSet rs = pstmtGetListId.executeQuery();
-					if(rs.next()) {
-						ci.property.newVal = rs.getString(1);
-					} else {
-						ci.property.newVal = "0";
-					}
+					String sqlUpdateRepeat = "update form set repeats = ? "
+							+ "where s_id = ? "
+							+ "and parentquestion = ? "
+							+ "and trim(both from repeats) = ?;";
+					pstmtUpdateRepeat = sd.prepareStatement(sqlUpdateRepeat);
 					
-				} else if(ci.property.type.equals("optionlist")) {
-					// Get the list id for this option list
-					String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
-					pstmtGetListId = sd.prepareStatement(sqlGetListId);
-					pstmtGetListId.setInt(1, sId);
+					pstmtUpdateRepeat.setString(1, newVal);
+					pstmtUpdateRepeat.setInt(2, sId);
+					pstmtUpdateRepeat.setInt(3, ci.property.qId);
+					pstmtUpdateRepeat.setString(4, oldVal);
 					
-					pstmtGetListId.setString(2, ci.property.oldVal);
-					ResultSet rs = pstmtGetListId.executeQuery();
-					if(rs.next()) {
-						ci.property.l_id = rs.getInt(1);
-					} else {
-						ci.property.newVal = "0";
-					}
-					
-				}
-				
-				// Convert from $ syntax to paths
-				if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
-						|| ci.property.prop.equals("calculation")) {
-					ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-					ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
-				}
-				
-				if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
-			
-					// Create prepared statements, one for the case where an existing value is being updated
-					String sqlProperty1 = "update question set " + property + " = ? " +
-							"where q_id = ? and (" + property + " = ? " +
-							"or " + property + " is null) ";
-					
-					if(onlyIfNotPublished) {
-						sqlProperty1 += " and published = 'false';";
-					} else {
-						sqlProperty1 += ";";
-					}
-					pstmtProperty1 = sd.prepareStatement(sqlProperty1);
-					
-					// One for the case where the property has not been set before
-					String sqlProperty2 = "update question set " + property + " = ? " +
-							"where q_id = ? and " + property + " is null ";
-					if(onlyIfNotPublished) {
-						sqlProperty2 += " and published = 'false';";
-					} else {
-						sqlProperty2 += ";";
-					}
-					pstmtProperty2 = sd.prepareStatement(sqlProperty2);
-					
-					// Special case for list name (no integrity checking)
-					String sqlProperty3 = "update question set l_id = ? " +
-							"where q_id = ?";
-					pstmtProperty3 = sd.prepareStatement(sqlProperty3);
-					
-					// Update listname
-					String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?;";
-					pstmtListname = sd.prepareStatement(sqlListname);
-					
-					// Update for dependent properties
-					String sqlDependent = "update question set visible = ?, source = ? " +
-							"where q_id = ?;";
-					pstmtDependent = sd.prepareStatement(sqlDependent);
-					
-					// Update for readonly status if this is a type change to note
-					String sqlReadonly = "update question set readonly = 'true' " +
-							"where q_id = ?;";
-					pstmtReadonly = sd.prepareStatement(sqlReadonly);
-					
-					int count = 0;
-		
-					/*
-					 * Special case for change of list name in a question - don't try to check the integrity of the update
-					 * In fact any change to the list name is difficult to manage for integrity as it can be updated
-					 *  both in a question property change and as a list name change
-					 *  hence the integrity checking is relaxed at the moment 
-					 */
-					
-					if(ci.property.prop.equals("list_name")) {
-						pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
-						pstmtProperty3.setInt(2, ci.property.qId);
-						
-						log.info("Update list name property: " + pstmtProperty3.toString());
-						count = pstmtProperty3.executeUpdate();
-						
-					} else if (ci.property.type.equals("optionlist")) {
-						if( ci.property.l_id > 0) {
-							pstmtListname.setString(1, ci.property.newVal);
-							pstmtListname.setInt(2, ci.property.l_id);
-							pstmtListname.setInt(3, sId);
-							
-							log.info("Update name of list : " + pstmtListname.toString());
-							count = pstmtListname.executeUpdate();
-						} else {
-							count = 1;		// Report as success
-							ci.property.newVal = originalNewValue;	// Restore the original new value for logging
-						}
-						
-					} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
-						
-						pstmtProperty1.setInt(2, ci.property.qId);
-						
-						if(propertyType.equals("boolean")) {
-							pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
-							pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
-						} else if(propertyType.equals("integer")) {
-							pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
-							pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
-						} else {
-							pstmtProperty1.setString(1, ci.property.newVal);
-							pstmtProperty1.setString(3, ci.property.oldVal);
-						}
-						log.info("Update existing question property: " + pstmtProperty1.toString());
-						count = pstmtProperty1.executeUpdate();
-					} else {
-						
-						pstmtProperty2.setInt(2, ci.property.qId);
-						
-						if(propertyType.equals("boolean")) {
-							pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
-						} else if(propertyType.equals("integer")) {
-							pstmtProperty2.setInt(1, Integer.parseInt(ci.property.newVal));
-						} else {
-							pstmtProperty2.setString(1, ci.property.newVal);
-						}
-
-						log.info("Update question property: " + pstmtProperty2.toString());
-						count = pstmtProperty2.executeUpdate();
-					}
-					
-					if(ci.property.setVisible) {
-						pstmtDependent.setBoolean(1, ci.property.visibleValue);
-						pstmtDependent.setString(2, ci.property.sourceValue);
-						pstmtDependent.setInt(3, ci.property.qId);
-						log.info("Update dependent properties: " + pstmtDependent.toString());
-						pstmtDependent.executeUpdate();
-					}
-					
-					if(setReadonly) {
-						pstmtReadonly.setInt(1, ci.property.qId);
-						log.info("Update readonly status for note type: " + pstmtReadonly.toString());
-						pstmtReadonly.executeUpdate();
-					}
-					
+					log.info("Updating repeat count: " + pstmtUpdateRepeat.toString());
+					int count = pstmtUpdateRepeat.executeUpdate();
 					if(count == 0) {
 						String msg = "Warning: property \"" + ci.property.prop 
 								+ "\" for question "
 								+ ci.property.name
 								+ " was not updated to "
-								+ originalNewValue
+								+ ci.property.newVal
 								+ ". It may have already been updated by someone else";
 						log.info(msg);
 						throw new Exception(msg);		// No matching value assume it has already been modified
 					}
-						
-					// Update the survey manifest if this question references CSV files
-					if(ci.property.prop.equals("calculation")) {
-						updateSurveyManifest(sd, sId, null, ci.property.newVal);
-					} else if(ci.property.prop.equals("appearance")) {
-						updateSurveyManifest(sd, sId, ci.property.newVal, null);
-					}
-						
-					log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
-					
-					// Write the change log
-					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-					pstmtChangeLog.setInt(1, sId);
-					pstmtChangeLog.setInt(2, version);
-					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
-					pstmtChangeLog.setInt(4,userId);	
-					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-					pstmtChangeLog.execute();
 					
 				} else {
-					throw new Exception("Unknown property: " + property);
+				
+					/*
+					 * Update the question
+					 */
+					String property = translateProperty(ci.property.prop);
+					String propertyType = null;
+					String originalNewValue = ci.property.newVal;		// Save for logging
+					
+					// Convert "note" type to a read only string
+					// Add constraint that name and type properties can only be updated if the form has not been published
+					if(ci.property.prop.equals("type")) {
+						if(ci.property.newVal.equals("note")) {
+							setReadonly = true;
+							ci.property.newVal = "string";
+						} else if(ci.property.newVal.equals("calculate")) {
+							ci.property.newVal = "string";
+							ci.property.setVisible = true;
+							ci.property.visibleValue = false;
+						}
+						onlyIfNotPublished = true;
+					} else if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
+						onlyIfNotPublished = true;
+					} else if(ci.property.prop.equals("list_name")) {
+						// Convert the passed in list name to the list id that needs to be updated
+						String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+						pstmtGetListId = sd.prepareStatement(sqlGetListId);
+						pstmtGetListId.setInt(1, sId);
+						
+						// Get the new list id
+						pstmtGetListId.setString(2, ci.property.newVal);
+						ResultSet rs = pstmtGetListId.executeQuery();
+						if(rs.next()) {
+							ci.property.newVal = rs.getString(1);
+						} else {
+							ci.property.newVal = "0";
+						}
+						
+					} else if(ci.property.type.equals("optionlist")) {
+						// Get the list id for this option list
+						String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
+						pstmtGetListId = sd.prepareStatement(sqlGetListId);
+						pstmtGetListId.setInt(1, sId);
+						
+						pstmtGetListId.setString(2, ci.property.oldVal);
+						ResultSet rs = pstmtGetListId.executeQuery();
+						if(rs.next()) {
+							ci.property.l_id = rs.getInt(1);
+						} else {
+							ci.property.newVal = "0";
+						}
+						
+					}
+					
+					// Convert from $ syntax to paths
+					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
+							|| ci.property.prop.equals("calculation")) {
+						ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
+						ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
+					}
+					
+					if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
+				
+						// Create prepared statements, one for the case where an existing value is being updated
+						String sqlProperty1 = "update question set " + property + " = ? " +
+								"where q_id = ? and (" + property + " = ? " +
+								"or " + property + " is null) ";
+						
+						if(onlyIfNotPublished) {
+							sqlProperty1 += " and published = 'false';";
+						} else {
+							sqlProperty1 += ";";
+						}
+						pstmtProperty1 = sd.prepareStatement(sqlProperty1);
+						
+						// One for the case where the property has not been set before
+						String sqlProperty2 = "update question set " + property + " = ? " +
+								"where q_id = ? and " + property + " is null ";
+						if(onlyIfNotPublished) {
+							sqlProperty2 += " and published = 'false';";
+						} else {
+							sqlProperty2 += ";";
+						}
+						pstmtProperty2 = sd.prepareStatement(sqlProperty2);
+						
+						// Special case for list name (no integrity checking)
+						String sqlProperty3 = "update question set l_id = ? " +
+								"where q_id = ?";
+						pstmtProperty3 = sd.prepareStatement(sqlProperty3);
+						
+						// Update listname
+						String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?;";
+						pstmtListname = sd.prepareStatement(sqlListname);
+						
+						// Update for dependent properties
+						String sqlDependent = "update question set visible = ?, source = ? " +
+								"where q_id = ?;";
+						pstmtDependent = sd.prepareStatement(sqlDependent);
+						
+						// Update for readonly status if this is a type change to note
+						String sqlReadonly = "update question set readonly = 'true' " +
+								"where q_id = ?;";
+						pstmtReadonly = sd.prepareStatement(sqlReadonly);
+						
+						int count = 0;
+			
+						/*
+						 * Special case for change of list name in a question - don't try to check the integrity of the update
+						 * In fact any change to the list name is difficult to manage for integrity as it can be updated
+						 *  both in a question property change and as a list name change
+						 *  hence the integrity checking is relaxed at the moment 
+						 */
+						
+						if(ci.property.prop.equals("list_name")) {
+							pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
+							pstmtProperty3.setInt(2, ci.property.qId);
+							
+							log.info("Update list name property: " + pstmtProperty3.toString());
+							count = pstmtProperty3.executeUpdate();
+							
+						} else if (ci.property.type.equals("optionlist")) {
+							if( ci.property.l_id > 0) {
+								pstmtListname.setString(1, ci.property.newVal);
+								pstmtListname.setInt(2, ci.property.l_id);
+								pstmtListname.setInt(3, sId);
+								
+								log.info("Update name of list : " + pstmtListname.toString());
+								count = pstmtListname.executeUpdate();
+							} else {
+								count = 1;		// Report as success
+								ci.property.newVal = originalNewValue;	// Restore the original new value for logging
+							}
+							
+						} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+							
+							pstmtProperty1.setInt(2, ci.property.qId);
+							
+							if(propertyType.equals("boolean")) {
+								pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+								pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
+							} else if(propertyType.equals("integer")) {
+								pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
+								pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
+							} else {
+								pstmtProperty1.setString(1, ci.property.newVal);
+								pstmtProperty1.setString(3, ci.property.oldVal);
+							}
+							log.info("Update existing question property: " + pstmtProperty1.toString());
+							count = pstmtProperty1.executeUpdate();
+						} else {
+							
+							pstmtProperty2.setInt(2, ci.property.qId);
+							
+							if(propertyType.equals("boolean")) {
+								pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+							} else if(propertyType.equals("integer")) {
+								pstmtProperty2.setInt(1, Integer.parseInt(ci.property.newVal));
+							} else {
+								pstmtProperty2.setString(1, ci.property.newVal);
+							}
+	
+							log.info("Update question property: " + pstmtProperty2.toString());
+							count = pstmtProperty2.executeUpdate();
+						}
+						
+						if(ci.property.setVisible) {
+							pstmtDependent.setBoolean(1, ci.property.visibleValue);
+							pstmtDependent.setString(2, ci.property.sourceValue);
+							pstmtDependent.setInt(3, ci.property.qId);
+							log.info("Update dependent properties: " + pstmtDependent.toString());
+							pstmtDependent.executeUpdate();
+						}
+						
+						if(setReadonly) {
+							pstmtReadonly.setInt(1, ci.property.qId);
+							log.info("Update readonly status for note type: " + pstmtReadonly.toString());
+							pstmtReadonly.executeUpdate();
+						}
+						
+						if(count == 0) {
+							String msg = "Warning: property \"" + ci.property.prop 
+									+ "\" for question "
+									+ ci.property.name
+									+ " was not updated to "
+									+ originalNewValue
+									+ ". It may have already been updated by someone else";
+							log.info(msg);
+							throw new Exception(msg);		// No matching value assume it has already been modified
+						}
+							
+						// Update the survey manifest if this question references CSV files
+						if(ci.property.prop.equals("calculation")) {
+							updateSurveyManifest(sd, sId, null, ci.property.newVal);
+						} else if(ci.property.prop.equals("appearance")) {
+							updateSurveyManifest(sd, sId, ci.property.newVal, null);
+						}
+							
+						log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
+						
+						// Write the change log
+						Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+						pstmtChangeLog.setInt(1, sId);
+						pstmtChangeLog.setInt(2, version);
+						pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
+						pstmtChangeLog.setInt(4,userId);	
+						pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+						pstmtChangeLog.execute();
+						
+					} else {
+						throw new Exception("Unknown property: " + property);
+					}
 				}
 			}
 			
@@ -1688,6 +1685,7 @@ public class SurveyManager {
 			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (SQLException e) {}
 			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
 			try {if (pstmtListname != null) {pstmtListname.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateRepeat != null) {pstmtUpdateRepeat.close();}} catch (SQLException e) {}
 		
 		}
 	

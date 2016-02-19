@@ -384,7 +384,6 @@ CREATE TABLE question (
 	path text,
 	nodeset text,
 	nodeset_value text,
-	repeatcount boolean,				-- deprecated
 	nodeset_label text,
 	cascade_instance text,
 	list_name text,						-- Name of a set of options common across multiple questions
