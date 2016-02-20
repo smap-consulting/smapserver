@@ -268,8 +268,6 @@ public class OrganisationList extends Application {
 			Type type = new TypeToken<ArrayList<Organisation>>(){}.getType();		
 			ArrayList<Organisation> oArray = new Gson().fromJson(organisations, type);
 				
-				
-			String sql = null;
 			String requestUrl = request.getRequestURL().toString();
 			String userIdent = request.getRemoteUser();
 			String basePath = GeneralUtilityMethods.getBasePath(request);

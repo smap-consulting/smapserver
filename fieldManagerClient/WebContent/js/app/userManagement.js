@@ -321,7 +321,7 @@ $(document).ready(function() {
 		organisation.email_domain = $('#o_email_domain').val();
 		organisation.email_user = $('#o_email_user').val();
 		organisation.email_password = $('#o_email_password').val();
-		organisation.email_port = $('#o_email_port').val();
+		organisation.email_port = parseInt($('#o_email_port').val());
 		organisation.default_email_content = $('#o_default_email_content').val();
 	
 		if(typeof organisation.email_port !== "number") {
