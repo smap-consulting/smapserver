@@ -155,9 +155,15 @@ java -jar version1/patch.jar apply survey_definitions results
 fi
 
 # version 16.01
-if [ $version -lt "160101" ]
+if [ $version -lt "1601" ]
 then
 	echo "no patches for 16.01"
+fi
+
+# version 16.02
+if [ $version -lt "160201" ]
+then
+	echo "no patches for 16.02"
 fi
 #####################################################################################
 # All versions
@@ -172,6 +178,6 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
 # update version reference
-new_version="160204"
+new_version="160201"
 echo "$new_version" > ~/smap_version
 echo "update server set version = '$new_version'" | sudo -u postgres psql -d survey_definitions
