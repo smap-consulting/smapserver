@@ -4,9 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Location;
 
@@ -133,9 +136,9 @@ public class TaskManager {
 	/*
 	 * Check the task group rules and add any new tasks based on this submission
 	 */
-	public void updateTasksForSubmission(Connection sd, int sId) throws Exception {
+	public void updateTasksForSubmission(Connection sd, int sId, String hostname) throws Exception {
 		
-		String sqlGetRules = "select rule from task_group where source_s_id = ?;";
+		String sqlGetRules = "select tg_id, p_id, rule from task_group where source_s_id = ?;";
 		PreparedStatement pstmtGetRules = null;
 		
 		try {
@@ -147,9 +150,16 @@ public class TaskManager {
 			System.out.println("SQL get task rules: " + pstmtGetRules.toString());
 			ResultSet rs = pstmtGetRules.executeQuery();
 			while(rs.next()) {
-				System.out.println("Rule: " + rs.getString(1));
-				AssignFromSurvey as = new Gson().fromJson(rs.getString(1), AssignFromSurvey.class);
-				System.out.println("userevent: matching rule: " + as.task_group_name + " for survey: " + sId);
+					
+				int tgId = rs.getInt(1);
+				int pId = rs.getInt(2);
+				AssignFromSurvey as = new Gson().fromJson(rs.getString(3), AssignFromSurvey.class);
+
+				log.info("userevent: matching rule: " + as.task_group_name + " for survey: " + sId);	// For log
+				
+				/*
+				 * Check filter to see if this rule should be fired
+				 */
 				boolean fires = false;
 				String rule = null;
 				if(as.filter != null) {
@@ -160,10 +170,25 @@ public class TaskManager {
 				} else {
 					fires = true;
 				}
-				System.out.println("userevent: rule fires: " + (as.filter == null ? "no filter" : "yes filter") + " for survey: " + sId);
-
 				if(fires) {
-					writeTask(as);
+					log.info("userevent: rule fires: " + (as.filter == null ? "no filter" : "yes filter") + " for survey: " + sId);
+				} else {
+					log.info("rule did not fire");
+				}
+				if(fires) {
+					/*
+					 * Get data from new submission
+					 */
+					// TODO
+					String location = null;
+					String instanceId = "1";
+					String address = null;
+					String locationTrigger = null;
+					
+					/*
+					 * Write to the database
+					 */
+					writeTask(sd, as, hostname, tgId, pId, sId, location, instanceId, address, locationTrigger);
 				}
 			}
 		
@@ -186,7 +211,18 @@ public class TaskManager {
 	/*
 	 * Write the task into the task table
 	 */
-	private void writeTask(AssignFromSurvey as) {
+	public void writeTask(Connection sd,
+			AssignFromSurvey as,
+			String hostname,
+			int tgId,
+			int pId,
+			int sId,
+			String location,			// data from submission
+			String instanceId,			// data from submission
+			String address,				// data from submission
+			String locationTrigger		// data from task set up
+			) throws Exception {
+		
 		String insertSql1 = "insert into tasks (" +
 				"p_id, " +
 				"tg_id, " +
@@ -197,7 +233,6 @@ public class TaskManager {
 				"geo_type, ";
 				
 		String insertSql2 =	
-				"initial_data, " +
 				"update_id," +
 				"address," +
 				"schedule_at," +
@@ -212,12 +247,98 @@ public class TaskManager {
 				"?, " +	
 				"ST_GeomFromText(?, 4326), " +
 				"?, " +
-				"?, " +
 				"?," +
 				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
 				"?);";	
-		PreparedStatement pstmtInsertTask = null;
+		
+		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
+		
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtAssign = sd.prepareStatement(assignSQL);
+		
+		String title = as.project_name + " : " + as.survey_name;
+		
+		try {
+
+			String formIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			String formUrl = "http://" + hostname + "/formXML?key=" + formIdent;
+			String geoType = null;
+			String sql = null;
+			
+			/*
+			 * Location
+			 */
+			if(location == null) {
+				location = "POINT(0 0)";
+			} else if(location.startsWith("LINESTRING")) {
+				log.info("Starts with linestring: " + location.split(" ").length);
+				if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
+					location = location.replaceFirst("LINESTRING", "POINT");
+				}
+			}	 
+;
+			if(location.startsWith("POINT")) {
+				sql = insertSql1 + "geo_point," + insertSql2;
+				geoType = "POINT";
+			} else if(location.startsWith("POLYGON")) {
+				sql = insertSql1 + "geo_polygon," + insertSql2;
+				geoType = "POLYGON";
+			} else if(location.startsWith("LINESTRING")) {
+				sql = insertSql1 + "geo_linestring," + insertSql2;
+				geoType = "LINESTRING";
+			} else {
+				throw new Exception ("Unknown location type: " + location);
+			}
+			
+			
+			/*
+			 * Write the task to the database
+			 */
+
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			
+			pstmt.setInt(1, pId);
+			pstmt.setInt(2,  tgId);
+			pstmt.setString(3,  title);
+			pstmt.setInt(4, as.form_id);
+			pstmt.setString(5, formUrl);
+			pstmt.setString(6, geoType);
+			pstmt.setString(7, location);
+			pstmt.setString(8, instanceId);
+			pstmt.setString(9, address);
+			pstmt.setString(10, locationTrigger);
+			
+			System.out.println("Insert Tasks: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			/*
+			 * Assign the user to the new task
+			 */
+			if(as.user_id > 0) {
+				
+				ResultSet keys = pstmt.getGeneratedKeys();
+				if(keys.next()) {
+					int taskId = keys.getInt(1);
+
+					pstmtAssign.setInt(1, as.user_id);
+					pstmtAssign.setString(2, "accepted");
+					pstmtAssign.setInt(3, taskId);
+					
+					log.info("Assign user to task:" + pstmtAssign.toString());
+					
+					pstmtAssign.executeUpdate();
+				}
+				
+
+		
+			}
+			
+		} finally {
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
+		}
 	}
+	
 	
 
 }

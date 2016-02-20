@@ -304,7 +304,8 @@ public class SubRelationalDB extends Subscriber {
 			TaskManager tm = new TaskManager();
 			tm.updateTasksForSubmission(
 					connectionSD,
-					sId
+					sId,
+					server
 					);
 			
 		} catch (SQLException e) {
