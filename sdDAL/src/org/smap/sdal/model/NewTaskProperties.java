@@ -1,4 +1,4 @@
-package taskModel;
+package org.smap.sdal.model;
 
 public class NewTaskProperties {
 	public String user_ident;

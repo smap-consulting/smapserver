@@ -19,43 +19,22 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.TranslationManager;
-import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import taskModel.FieldTaskSettings;
-import taskModel.FormLocator;
-import taskModel.Geometry;
-import taskModel.Location;
-import taskModel.PointEntry;
-import taskModel.Task;
-import taskModel.TaskAssignment;
-import taskModel.TaskCompletionInfo;
-import taskModel.TaskResponse;
-
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;

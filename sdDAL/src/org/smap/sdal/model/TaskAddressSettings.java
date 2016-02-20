@@ -1,4 +1,4 @@
-package taskModel;
+package org.smap.sdal.model;
 
 public class TaskAddressSettings {
 	public boolean selected;

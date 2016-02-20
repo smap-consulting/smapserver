@@ -442,3 +442,7 @@ alter table question add column repeatcount boolean default false;
 -- Upgrade to: 16.02 from 16.01
 alter table tasks add column location_trigger text;
 alter table server add column version text;
+
+-- Upgrade to: 16.03 from 16.02
+alter table task_group add column rule text;
+alter table task_group add column source_s_id integer;

@@ -1,8 +1,6 @@
-package taskModel;
+package org.smap.sdal.model;
 
 import java.util.ArrayList;
-
-import model.SqlWhereClause;
 
 public class AssignFromSurvey {
 	public String task_group_name;

@@ -292,7 +292,7 @@ $(document).ready(function() {
 					source_survey = -1;
 				}
 				assignObj["source_survey_id"] = source_survey; 
-				assignObj["address_columns"] = gTaskParams;
+				assignObj["address_columns"] = removeUnselected(gTaskParams);
 				assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
 				assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
 				
@@ -456,6 +456,24 @@ $(document).ready(function() {
 	});
 	
 });
+
+/*
+ * Remove unselected address parameters
+ */
+function removeUnselected(taskParams) {
+	var i,
+		minimalParams = [];
+	if(taskParams) {
+		for( i = taskParams.length - 1; i >= 0; i-- ) {
+			if(taskParams[i].selected) {
+				minimalParams.push(taskParams[i]);
+			}
+		}
+	}
+	
+		
+	return minimalParams;
+}
 
 /*
  * Assign the specified user to all the pending assignment changes

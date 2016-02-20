@@ -562,7 +562,9 @@ CREATE TABLE public.task_group (
 	tg_id integer NOT NULL DEFAULT nextval('task_group_id_seq') PRIMARY KEY,
 	name text,
 	p_id integer,
-    address_params text
+    address_params text,
+    rule text,					-- The criteria for adding a new task to this group (JSON)
+    source_s_id integer			-- The source survey id for quick lookup from notifications engine
 );
 
 ALTER TABLE public.task_group OWNER TO ws;

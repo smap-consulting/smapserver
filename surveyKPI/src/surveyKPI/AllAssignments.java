@@ -43,17 +43,17 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
+import org.smap.sdal.model.Features;
+import org.smap.sdal.model.Geometry;
+import org.smap.sdal.model.TaskAddressSettings;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import taskModel.AssignFromSurvey;
-import taskModel.Features;
-import taskModel.Geometry;
 import taskModel.TaskAddress;
-import taskModel.TaskAddressSettings;
 import utilities.CSVReader;
 import utilities.QuestionInfo;
 
@@ -386,19 +386,26 @@ public class AllAssignments extends Application {
 			ResultSet keys = null;
 			if(as.task_group_id <= 0) {
 				
-				String addressParams = gson.toJson(as.address_columns); 				
-				String tgSql = "insert into task_group ( " +
-						"name, " +
-						"p_id, " +
-						"address_params) " +
-					"values (?, ?, ?);";
+				String addressParams = gson.toJson(as.address_columns); 	
+				String tgSql = "insert into task_group ( "
+						+ "name, "
+						+ "p_id, "
+						+ "address_params,"
+						+ "rule,"
+						+ "source_s_id) "
+						+ "values (?, ?, ?, ?, ?);";
 					
 				pstmtTaskGroup = connectionSD.prepareStatement(tgSql, Statement.RETURN_GENERATED_KEYS);
 				pstmtTaskGroup.setString(1, as.task_group_name);
 				pstmtTaskGroup.setInt(2, projectId);
 				pstmtTaskGroup.setString(3, addressParams);
+				pstmtTaskGroup.setString(4, settings);
+				pstmtTaskGroup.setInt(5, as.source_survey_id);
 				log.info("Insert into task group: " + pstmtTaskGroup.toString());
 				pstmtTaskGroup.execute();
+				
+				connectionSD.commit();		// Success as TG is created, even if there are no existing tasks ready to go this is good
+				
 				keys = pstmtTaskGroup.getGeneratedKeys();
 				if(keys.next()) {
 					taskGroupId = keys.getInt(1);
@@ -452,9 +459,6 @@ public class AllAssignments extends Application {
 				String getSurveyIdentSQL = "select ident from survey where s_id = ?;";
 				pstmtGetSurveyIdent = connectionSD.prepareStatement(getSurveyIdentSQL);
 				
-				/*
-				 * Todo: Generate form url and initial instance url in myassignments service
-				 */
 				String hostname = request.getServerName();
 			
 				pstmtGetSurveyIdent.setInt(1, as.form_id);
@@ -813,15 +817,16 @@ public class AllAssignments extends Application {
 				}
 			}
 			connectionSD.commit();
-				
+			
+			response = Response.ok().build();
+			
 		} catch (Exception e) {
 			log.info("Error: " + e.getMessage());
 			if(e.getMessage() != null && e.getMessage().contains("\"the_geom\" does not exist")) {
 				String msg = "The survey results do not have coordinates " + as.source_survey_name;
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
 			} else if(e.getMessage() != null && e.getMessage().contains("does not exist")) {
-				String msg = "No results have been submitted for " + as.source_survey_name;
-				response = Response.status(Status.NO_CONTENT).entity(msg).build();
+				response = Response.ok().build();	// No problem
 			} else {
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"", e);

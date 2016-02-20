@@ -38,6 +38,7 @@ import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
+import org.smap.sdal.model.Geometry;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
 
@@ -46,7 +47,6 @@ import com.google.gson.GsonBuilder;
 
 import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
-import taskModel.Geometry;
 import taskModel.Location;
 import taskModel.PointEntry;
 import taskModel.Task;

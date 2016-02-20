@@ -1,25 +1,13 @@
 package org.smap.sdal.managers;
 
-import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.servlet.http.HttpServletRequest;
-
-import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.Notification;
-import org.smap.sdal.model.NotifyDetails;
-import org.smap.sdal.model.Organisation;
+import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Location;
 
 import com.google.gson.Gson;
@@ -45,7 +33,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 /*
- * Manage the table that stores details on the forwarding of data onto other systems
+ * Manage the table that stores details on tasks
  */
 public class TaskManager {
 	
@@ -139,6 +127,96 @@ public class TaskManager {
 		}
 	
 		
+	}
+	
+	
+	/*
+	 * Check the task group rules and add any new tasks based on this submission
+	 */
+	public void updateTasksForSubmission(Connection sd, int sId) throws Exception {
+		
+		String sqlGetRules = "select rule from task_group where source_s_id = ?;";
+		PreparedStatement pstmtGetRules = null;
+		
+		try {
+			
+			// Remove existing data
+			pstmtGetRules = sd.prepareStatement(sqlGetRules);
+			pstmtGetRules.setInt(1, sId);
+			
+			System.out.println("SQL get task rules: " + pstmtGetRules.toString());
+			ResultSet rs = pstmtGetRules.executeQuery();
+			while(rs.next()) {
+				System.out.println("Rule: " + rs.getString(1));
+				AssignFromSurvey as = new Gson().fromJson(rs.getString(1), AssignFromSurvey.class);
+				System.out.println("userevent: matching rule: " + as.task_group_name + " for survey: " + sId);
+				boolean fires = false;
+				String rule = null;
+				if(as.filter != null) {
+					rule = testRule();
+					if(rule != null) {
+						fires = true;
+					}
+				} else {
+					fires = true;
+				}
+				System.out.println("userevent: rule fires: " + (as.filter == null ? "no filter" : "yes filter") + " for survey: " + sId);
+
+				if(fires) {
+					writeTask(as);
+				}
+			}
+		
+		} finally {
+			
+			try {if (pstmtGetRules != null) {pstmtGetRules.close();} } catch (SQLException e) {	}
+	
+		}
+	
+		
+	}
+	
+	/*
+	 * Return the criteria for firing this rule
+	 */
+	private String testRule() {
+		return null;
+	}
+	
+	/*
+	 * Write the task into the task table
+	 */
+	private void writeTask(AssignFromSurvey as) {
+		String insertSql1 = "insert into tasks (" +
+				"p_id, " +
+				"tg_id, " +
+				"type, " +
+				"title, " +
+				"form_id, " +
+				"url, " +
+				"geo_type, ";
+				
+		String insertSql2 =	
+				"initial_data, " +
+				"update_id," +
+				"address," +
+				"schedule_at," +
+				"location_trigger) " +
+			"values (" +
+				"?, " + 
+				"?, " + 
+				"'xform', " +
+				"?, " +
+				"?, " +
+				"?, " +
+				"?, " +	
+				"ST_GeomFromText(?, 4326), " +
+				"?, " +
+				"?, " +
+				"?," +
+				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
+				"?);";	
+		PreparedStatement pstmtInsertTask = null;
 	}
 	
 

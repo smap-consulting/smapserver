@@ -50,6 +50,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.Form;
@@ -190,7 +191,7 @@ public class SubRelationalDB extends Subscriber {
 		try {
 			
 			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id, uploadTime);
-			applyNotifications(ue_id, remoteUser, server);
+			applyNotifications(ue_id, remoteUser, server, survey.id);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
 			
@@ -270,7 +271,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Apply notifications
 	 */
-	private void applyNotifications(int ue_id, String remoteUser, String server) {
+	private void applyNotifications(int ue_id, String remoteUser, String server, int sId) {
 		
 		PreparedStatement pstmtGetUploadEvent = null;
 		PreparedStatement pstmtGetNotifications = null;
@@ -285,6 +286,7 @@ public class SubRelationalDB extends Subscriber {
 			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
 			cResults = DriverManager.getConnection(database, user, password);
 		
+			// Apply notifications
 			NotificationManager fm = new NotificationManager();
 			fm.notifyForSubmission(
 					connectionSD, 
@@ -297,6 +299,13 @@ public class SubRelationalDB extends Subscriber {
 					remoteUser, 
 					server,
 					gBasePath);	
+			
+			// Apply Tasks
+			TaskManager tm = new TaskManager();
+			tm.updateTasksForSubmission(
+					connectionSD,
+					sId
+					);
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
