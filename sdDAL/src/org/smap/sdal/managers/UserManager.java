@@ -178,7 +178,7 @@ public class UserManager {
 			}				
 				
 		} catch (Exception e) {
-			
+			log.log(Level.SEVERE,"Error", e);
 		    throw new Exception(e);
 		    
 		} finally {
