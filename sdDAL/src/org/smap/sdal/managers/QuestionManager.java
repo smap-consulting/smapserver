@@ -113,7 +113,7 @@ public class QuestionManager {
 				questions.add(q);
 			} 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
 			if(pstmtOption != null) try{pstmtOption.close();}catch(Exception e){}

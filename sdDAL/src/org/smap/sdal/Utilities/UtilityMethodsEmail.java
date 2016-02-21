@@ -338,7 +338,7 @@ public class UtilityMethodsEmail {
 					}
 					if(emailServer.emailUser == null) {
 						emailServer.emailUser = rs.getString(3);
-						if(emailServer.emailUser.indexOf('@') > 0) {
+						if(emailServer.emailUser != null && emailServer.emailUser.indexOf('@') > 0) {
 							emailServer.emailUser = emailServer.emailUser.substring(0, emailServer.emailUser.indexOf('@'));
 						}
 					}
