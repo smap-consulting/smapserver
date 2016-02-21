@@ -615,6 +615,7 @@ define([
 											prop: "name",		
 											newVal: "the_geom",
 											oldVal: question.name,
+											language: property.language,
 											formIndex: property.formIndex,
 											itemIndex: property.itemIndex
 										

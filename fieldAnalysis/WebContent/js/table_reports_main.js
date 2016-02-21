@@ -17,7 +17,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Entry point for report list page
+ * Entry point for table report page
  */
 
 requirejs.config({
@@ -38,11 +38,13 @@ requirejs.config({
     	modernizr: '../../../../js/libs/modernizr',
     	localise: '../../../../js/app/localise',
     	rmm: '../../../../js/libs/responsivemobilemenu',
+    	common: '../../../../js/app/common',
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js'
     },
     shim: {
     	'rmm': ['jquery'],
+       	'common': ['jquery'], 
     	'jquery_ui': ['jquery']
     	}
     });
@@ -53,14 +55,17 @@ require([
          'jquery_ui',
          'modernizr', 
          'rmm', 
+         'common', 
+         'moment',
          'crf', 
          'localise', 
          'app/table-functions',
          'app/table-reports'
          
-         ], function($, jquery_ui, modernizr, rmm, crf, localise, 
+         ], function($, jquery_ui, modernizr, rmm, common, moment, crf, localise, 
         		 table_functions, table_reports) {
 	
 	var data_source = $("#data_source").text();
+	window.moment = moment;	// Required as common.js not part of module
 	getData(data_source);
 });
