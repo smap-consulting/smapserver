@@ -72,12 +72,12 @@ $(document).ready(function() {
 		loadSurveys(sourceProject, "#survey", false, false, surveyChanged);			// Get surveys
 		
 		// Disable the update results checkbox if the source project and current project are different
-		if(sourceProject === globals.gCurrentProject) {
-			$('#update_results').attr("disabled", false);
-		} else {
-			$('#update_results').attr("disabled", true);
-			$('#update_results').attr("checked", false);
-		}
+		//if(sourceProject === globals.gCurrentProject) {
+		//	$('#update_results').attr("disabled", false);
+		//} else {
+		//	$('#update_results').attr("disabled", true);
+		//	$('#update_results').attr("checked", false);
+		//}
  	 });
 	
 	// Add a trigger to respond to the clicking of "filter tasks" 
@@ -91,14 +91,14 @@ $(document).ready(function() {
 	});
 	
 	// Add a trigger to respond to the clicking of "update results" 
-	$('#update_results').click(function() {
-		var updateResults = $('#update_results').is(':checked');
-		if(updateResults) {
-			$('#survey_to_complete').val($('#survey').val()).attr('disabled', 'disabled');
-		} else {
-			$('#survey_to_complete').removeAttr('disabled');
-		}
-	});
+	//$('#update_results').click(function() {
+	//	var updateResults = $('#update_results').is(':checked');
+	//	if(updateResults) {
+	//		$('#survey_to_complete').val($('#survey').val()).attr('disabled', 'disabled');
+	//	} else {
+	//		$('#survey_to_complete').removeAttr('disabled');
+	//	}
+	//});
 	
 	// Add response to the filters being changed
 	$('.task_filter').change(function() {
@@ -284,7 +284,7 @@ $(document).ready(function() {
 			if(!$('#empty_task_group').attr('checked')) {
 				
 				assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
-				assignObj["form_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
+				assignObj["target_survey_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
 				assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
 				
 				source_survey = $('#survey').val(); 						// The survey that provides the existing results	
@@ -294,7 +294,7 @@ $(document).ready(function() {
 				assignObj["source_survey_id"] = source_survey; 
 				assignObj["address_columns"] = removeUnselected(gTaskParams);
 				assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
-				assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the existing survey is to be updated	
+				assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the survey is to be updated	
 				
 				// Add filter if filter checkbox has been checked
 				if($('#filter_results_check').attr('checked')) {
@@ -360,7 +360,7 @@ $(document).ready(function() {
 		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
 		assignObj["survey_name"] = $('#survey_to_complete_new_task option:selected').text();	// The display name of the survey to complete
 		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-		assignObj["form_id"] = $('#survey_to_complete_new_task option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
+		assignObj["target_survey_id"] = $('#survey_to_complete_new_task option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
 		assignObj["task_group_id"] = gTaskGroupId;
 		assignObj["user_id"] = $('#users_select_new_task option:selected').val();
 		   			
@@ -513,9 +513,9 @@ function surveyChanged() {
 		sId = $('#survey').val();
 	
 	$('#filter_option').empty();
-	if(updateResults) {
-		$('#survey_to_complete').val(sId);
-	} 
+	//if(updateResults) {
+	//	$('#survey_to_complete').val(sId);
+	//} 
 	getLanguageList(sId, questionChanged, false, '#filter_language', false);
 	setAddressOptions();
 }

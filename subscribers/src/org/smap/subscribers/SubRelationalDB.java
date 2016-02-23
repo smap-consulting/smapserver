@@ -266,47 +266,71 @@ public class SubRelationalDB extends Subscriber {
 		}
 	}
 		
-	
-	
 	/*
 	 * Apply notifications
 	 */
-	private void applyNotifications(int ue_id, String remoteUser, String server, int sId) {
+	private void applyNotifications(int ueId, String remoteUser, String server, int sId) {
 		
 		PreparedStatement pstmtGetUploadEvent = null;
 		PreparedStatement pstmtGetNotifications = null;
 		PreparedStatement pstmtUpdateUploadEvent = null;
 		PreparedStatement pstmtNotificationLog = null;
 		
-		Connection connectionSD = null;
+		Connection sd = null;
 		Connection cResults = null;
+		
+		String ident = null;		// The survey ident
+		String instanceId = null;	// The submitted instance identifier
+		int pId = 0;				// The project containing the survey
 		
 		try {
 			Class.forName(dbClass);	 
-			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
+			sd = DriverManager.getConnection(databaseMeta, user, password);
 			cResults = DriverManager.getConnection(database, user, password);
 		
-			// Apply notifications
-			NotificationManager fm = new NotificationManager();
-			fm.notifyForSubmission(
-					connectionSD, 
-					cResults,
-					pstmtGetUploadEvent, 
-					pstmtGetNotifications, 
-					pstmtUpdateUploadEvent, 
-					pstmtNotificationLog, 
-					ue_id, 
-					remoteUser, 
-					server,
-					gBasePath);	
+			/*
+			 * Get details from the upload event
+			 */
+			String sqlGetUploadEvent = "select ue.ident, ue.instanceid, ue.p_id " +
+					" from upload_event ue " +
+					" where ue.ue_id = ?;";
+			pstmtGetUploadEvent = sd.prepareStatement(sqlGetUploadEvent);
+			pstmtGetUploadEvent.setInt(1, ueId);
+			ResultSet rs = pstmtGetUploadEvent.executeQuery();
+			if(rs.next()) {
+				ident = rs.getString(1);
+				instanceId = rs.getString(2);
+				pId = rs.getInt(3);
 			
-			// Apply Tasks
-			TaskManager tm = new TaskManager();
-			tm.updateTasksForSubmission(
-					connectionSD,
-					sId,
-					server
-					);
+			
+				// Apply notifications
+				NotificationManager fm = new NotificationManager();
+				fm.notifyForSubmission(
+						sd, 
+						cResults,
+						pstmtGetNotifications, 
+						pstmtUpdateUploadEvent, 
+						pstmtNotificationLog, 
+						ueId, 
+						remoteUser, 
+						server,
+						gBasePath,
+						sId,
+						ident,
+						instanceId,
+						pId);	
+				
+				// Apply Tasks
+				TaskManager tm = new TaskManager();
+				tm.updateTasksForSubmission(
+						sd,
+						cResults,
+						sId,
+						server,
+						instanceId,
+						pId
+						);
+			}
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -320,9 +344,9 @@ public class SubRelationalDB extends Subscriber {
 			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
+				if (sd != null) {
+					sd.close();
+					sd = null;
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();

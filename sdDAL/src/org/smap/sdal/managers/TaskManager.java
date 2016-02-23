@@ -43,6 +43,14 @@ public class TaskManager {
 	private static Logger log =
 			 Logger.getLogger(TaskManager.class.getName());
 	
+	private class TaskInstanceData {
+		int prikey = 0;						// data from submission
+		String location = null;				// data from submission
+		String address = null;				// data from submission
+		String locationTrigger = null;		// data from task set up
+	}
+	
+	
 	/*
 	 * Save a list of locations replacing the existing ones
 	 */
@@ -136,9 +144,14 @@ public class TaskManager {
 	/*
 	 * Check the task group rules and add any new tasks based on this submission
 	 */
-	public void updateTasksForSubmission(Connection sd, int sId, String hostname) throws Exception {
+	public void updateTasksForSubmission(Connection sd, 
+			Connection cResults,
+			int sId, 
+			String hostname,
+			String instanceId,
+			int pId) throws Exception {
 		
-		String sqlGetRules = "select tg_id, p_id, rule from task_group where source_s_id = ?;";
+		String sqlGetRules = "select tg_id, rule from task_group where source_s_id = ?;";
 		PreparedStatement pstmtGetRules = null;
 		
 		try {
@@ -152,8 +165,7 @@ public class TaskManager {
 			while(rs.next()) {
 					
 				int tgId = rs.getInt(1);
-				int pId = rs.getInt(2);
-				AssignFromSurvey as = new Gson().fromJson(rs.getString(3), AssignFromSurvey.class);
+				AssignFromSurvey as = new Gson().fromJson(rs.getString(2), AssignFromSurvey.class);
 
 				log.info("userevent: matching rule: " + as.task_group_name + " for survey: " + sId);	// For log
 				
@@ -179,16 +191,12 @@ public class TaskManager {
 					/*
 					 * Get data from new submission
 					 */
-					// TODO
-					String location = null;
-					String instanceId = "1";
-					String address = null;
-					String locationTrigger = null;
+					TaskInstanceData tid = getTaskInstanceData(sd, cResults, sId, instanceId);
 					
 					/*
 					 * Write to the database
 					 */
-					writeTask(sd, as, hostname, tgId, pId, sId, location, instanceId, address, locationTrigger);
+					writeTask(sd, as, hostname, tgId, pId, sId, tid, instanceId);
 				}
 			}
 		
@@ -217,10 +225,8 @@ public class TaskManager {
 			int tgId,
 			int pId,
 			int sId,
-			String location,			// data from submission
-			String instanceId,			// data from submission
-			String address,				// data from submission
-			String locationTrigger		// data from task set up
+			TaskInstanceData tid,			// data from submission
+			String instanceId	
 			) throws Exception {
 		
 		String insertSql1 = "insert into tasks (" +
@@ -233,6 +239,7 @@ public class TaskManager {
 				"geo_type, ";
 				
 		String insertSql2 =	
+				"initial_data," +
 				"update_id," +
 				"address," +
 				"schedule_at," +
@@ -247,6 +254,7 @@ public class TaskManager {
 				"?, " +	
 				"ST_GeomFromText(?, 4326), " +
 				"?, " +
+				"?, " +
 				"?," +
 				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
 				"?);";	
@@ -257,13 +265,25 @@ public class TaskManager {
 		PreparedStatement pstmtAssign = sd.prepareStatement(assignSQL);
 		
 		String title = as.project_name + " : " + as.survey_name;
+		String location = tid.location;
 		
 		try {
 
-			String formIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
-			String formUrl = "http://" + hostname + "/formXML?key=" + formIdent;
+			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			String formUrl = "http://" + hostname + "/formXML?key=" + targetSurveyIdent;
 			String geoType = null;
 			String sql = null;
+			String initial_data_url = null;
+			String targetInstanceId = null;
+			
+			/*
+			 * Set data to be update
+			 */
+			if(as.update_results) {
+				initial_data_url = "http://" + hostname + "/instanceXML/" + 
+						targetSurveyIdent + "/0?key=prikey&keyval=" + tid.prikey;					// deprecated
+				targetInstanceId = instanceId;										// New way to identify existing records to be updated
+			}
 			
 			/*
 			 * Location
@@ -271,7 +291,7 @@ public class TaskManager {
 			if(location == null) {
 				location = "POINT(0 0)";
 			} else if(location.startsWith("LINESTRING")) {
-				log.info("Starts with linestring: " + location.split(" ").length);
+				log.info("Starts with linestring: " + tid.location.split(" ").length);
 				if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
 					location = location.replaceFirst("LINESTRING", "POINT");
 				}
@@ -300,13 +320,14 @@ public class TaskManager {
 			pstmt.setInt(1, pId);
 			pstmt.setInt(2,  tgId);
 			pstmt.setString(3,  title);
-			pstmt.setInt(4, as.form_id);
+			pstmt.setInt(4, as.target_survey_id);
 			pstmt.setString(5, formUrl);
 			pstmt.setString(6, geoType);
 			pstmt.setString(7, location);
-			pstmt.setString(8, instanceId);
-			pstmt.setString(9, address);
-			pstmt.setString(10, locationTrigger);
+			pstmt.setString(8, initial_data_url);	
+			pstmt.setString(9, targetInstanceId);
+			pstmt.setString(10, tid.address);
+			pstmt.setString(11, tid.locationTrigger);
 			
 			System.out.println("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -339,6 +360,58 @@ public class TaskManager {
 		}
 	}
 	
+	/*
+	 * Get the instance data from a submission that is relevant for assigning a task
+	 *  location
+	 *  address
+	 *  location Trigger
+	 */
+	public TaskInstanceData getTaskInstanceData (Connection sd, Connection cResults, int sId, String instanceId) throws SQLException {
+		TaskInstanceData tid = new TaskInstanceData();
+		
+		/*
+		 * Only check the top level form
+		 * This differs from the approach taken in AllAssignments.java however I am not sure of the value
+		 *  of descending through sub forms in an attempt to get a location.
+		 */
+		String sqlGetForms = "select f.table_name, f.parentform from form f " +
+				"where f.s_id = ? " + 
+				"and f.parentform = 0 " +
+				"order by f.table_name;";	
+		PreparedStatement pstmtGetForms = null; 
+		
+		String sql1 = "select prikey, ST_AsText(the_geom) from ";
+		String sql2 = " where instanceid = ?";
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			pstmtGetForms = sd.prepareStatement(sqlGetForms);
+			pstmtGetForms.setInt(1, sId);
+			log.info("Get top level table: " + pstmtGetForms.toString());
+			ResultSet rs = pstmtGetForms.executeQuery();
+			if(rs.next()) {
+				String tableName = rs.getString(1);
+				
+				String sql = sql1 + tableName + sql2;
+				pstmt = cResults.prepareStatement(sql);
+				pstmt.setString(1, instanceId);
+				log.info("Get instance task data: " + pstmt.toString());
+				
+				ResultSet rsData = pstmt.executeQuery();
+				if(rsData.next()) {
+					tid.prikey = rsData.getInt(1);
+					tid.location = rsData.getString(2);
+				}
+			} else {
+				log.info("Error: failed to find top level form");
+			}
+		} finally {
+			if(pstmtGetForms != null) try {	pstmtGetForms.close(); } catch(SQLException e) {};
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+		}
+		return tid;
+	}
 	
 
 }

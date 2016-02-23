@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1519,6 +1520,7 @@ public class QuestionManager {
 				+ "text_id in (select label_id from option where l_id = ?); ";
 		PreparedStatement pstmt = null;
 		
+		Savepoint optionLabelsSP = sd.setSavepoint();
 		try {
 			
 			pstmt = sd.prepareStatement(sql);
@@ -1529,9 +1531,15 @@ public class QuestionManager {
 			pstmt.executeUpdate();
 			
 		} catch (Exception e) {
-			throw e;
+			if(e.getMessage().contains("duplicate key value violates unique constraint")) {
+				log.info("Warning:  Option labels already exist");
+				sd.rollback(optionLabelsSP);
+			} else {
+				throw e;
+			}
 		} finally {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+			sd.releaseSavepoint(optionLabelsSP);
 		}
 
 	}
@@ -1604,7 +1612,7 @@ public class QuestionManager {
 				 + "cascade_instance, "
 				 + "list_name, "
 				 + "column_name," 
-				 + (sharedResults ? "published, " : "'false'")	// Set to false if this question is for a new table	
+				 + (sharedResults ? "published, " : "'false', ")	// Set to false if this question is for a new table	
 				 + "column_name_applied, "
 				 + "l_id "
 				 

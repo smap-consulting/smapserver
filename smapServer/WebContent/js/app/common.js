@@ -1342,7 +1342,6 @@ function isSelfRegistrationServer() {
 	var sr = true;
 	
 	if(hostname !== 'localhost' &&
-			hostname !== 'dev.smap.com.au' &&
 			hostname !== 'sg.smap.com.au') {
 		sr = false;
 	}

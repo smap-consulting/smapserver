@@ -417,7 +417,7 @@ public class AllAssignments extends Application {
 			/*
 			 * Create the tasks unless no tasks have been specified
 			 */
-			if(as.form_id > 0) {
+			if(as.target_survey_id > 0) {
 				String sql = null;
 				ResultSet resultSet = null;
 				String insertSql1 = "insert into tasks (" +
@@ -461,17 +461,18 @@ public class AllAssignments extends Application {
 				
 				String hostname = request.getServerName();
 			
-				pstmtGetSurveyIdent.setInt(1, as.form_id);
+				pstmtGetSurveyIdent.setInt(1, as.target_survey_id);
 				resultSet = pstmtGetSurveyIdent.executeQuery();
 				String initial_data_url = null;
 				String instanceId = null;
 				String locationTrigger = null;
-				String target_form_url = null;
+				String target_survey_url = null;
+				String target_survey_ident = null;
 				if(resultSet.next()) {
-					String target_form_ident = resultSet.getString(1);
-					target_form_url = "http://" + hostname + "/formXML?key=" + target_form_ident;
+					target_survey_ident = resultSet.getString(1);
+					target_survey_url = "http://" + hostname + "/formXML?key=" + target_survey_ident;
 				} else {
-					throw new Exception("Form identifier not found for form id: " + as.form_id);
+					throw new Exception("Form identifier not found for form id: " + as.target_survey_id);
 				}
 				
 				/*
@@ -634,13 +635,13 @@ public class AllAssignments extends Application {
 									 *  is passed as an attribute.  
 									 *  The old path value of primary key is ignored with this new format
 									 *  and is set to zero here.
-									 */
-									if(as.update_results && (as.source_survey_id == as.form_id)) {
+									 */ 
+									if(as.update_results /*&& (as.source_survey_id == as.form_id)*/) {
 										initial_data_url = "http://" + hostname + "/instanceXML/" + 
-												source_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);		// deprecated
+												target_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);		// deprecated
 										instanceId = resultSet.getString("instanceid");										// New way to identify existing records to be updated
 									}
-									
+
 									String location = null;
 									log.info("Has geom: " +hasGeom);
 									if(hasGeom) {
@@ -674,8 +675,8 @@ public class AllAssignments extends Application {
 									pstmtInsert.setInt(1, projectId);
 									pstmtInsert.setInt(2, taskGroupId);
 									pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
-									pstmtInsert.setInt(4, as.form_id);
-									pstmtInsert.setString(5, target_form_url);	
+									pstmtInsert.setInt(4, as.target_survey_id);
+									pstmtInsert.setString(5, target_survey_url);	
 									pstmtInsert.setString(6, geoType);
 									pstmtInsert.setString(7, location);
 									pstmtInsert.setString(8, initial_data_url);			// Initial data deprecated
@@ -777,8 +778,8 @@ public class AllAssignments extends Application {
 							title = as.project_name + " : " + as.survey_name;
 						}
 						pstmtInsert.setString(3, title);
-						pstmtInsert.setInt(4, as.form_id);
-						pstmtInsert.setString(5, target_form_url);	
+						pstmtInsert.setInt(4, as.target_survey_id);
+						pstmtInsert.setString(5, target_survey_url);	
 						pstmtInsert.setString(6, "POINT");
 						pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
 						pstmtInsert.setString(8, null);			// Initial data url

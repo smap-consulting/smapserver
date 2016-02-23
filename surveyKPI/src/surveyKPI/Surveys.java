@@ -290,7 +290,7 @@ public class Surveys extends Application {
 			if(e.getMessage().contains("duplicate key")) {
 				String msg = "There is already a form called " + name + " in this project";
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
-				log.info(msg);
+				log.info(msg + e.getMessage());
 			} else {
 				log.log(Level.SEVERE, "SQL Error", e);
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
