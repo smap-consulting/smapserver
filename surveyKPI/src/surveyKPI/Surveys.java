@@ -599,9 +599,13 @@ public class Surveys extends Application {
 			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, "
 					+ "p_id = ?, "
 					+ "instance_name = ?, "
-					+ "version = ? "
+					+ "version = ?, "
+					+ "class = ? "
 					+ "where s_id = ?;";		
 		
+			if(survey.surveyClass != null && survey.surveyClass.equals("none")) {
+				survey.surveyClass = null;
+			}
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, survey.displayName);
 			pstmt.setString(2, newSurveyName);
@@ -610,7 +614,8 @@ public class Surveys extends Application {
 			pstmt.setInt(5, survey.p_id);
 			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD, false));
 			pstmt.setInt(7, version);
-			pstmt.setInt(8, sId);
+			pstmt.setString(8, survey.surveyClass);
+			pstmt.setInt(9, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();

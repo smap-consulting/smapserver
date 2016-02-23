@@ -362,7 +362,7 @@ $(document).ready(function() {
 		saveCurrentProject($('#set_project_name option:selected').val(), globals.gCurrentSurvey);	// Save the current project id
 		globals.model.settingsChange();
 	});
-	$('#set_default_language').change(function() {
+	$('#set_default_language, #set_style').change(function() {
 		globals.model.settingsChange();
 	});
 	$('#task_file').change(function() {
@@ -1372,6 +1372,7 @@ function updateSettingsData() {
 	$('.formName').html(globals.model.survey.displayName);
 	$('#set_survey_ident').val(globals.model.survey.ident);
 	$('#set_instance_name').val(globals.model.survey.instanceNameDefn);
+	$('#set_style').val(globals.model.survey.surveyClass);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 }
 

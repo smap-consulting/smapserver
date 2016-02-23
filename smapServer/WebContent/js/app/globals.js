@@ -661,6 +661,7 @@ define(function() {
 			var current =  this.createSettingsObject(
 				$('#set_survey_name').val(),
 				$('#set_instance_name').val(),
+				$('#set_style').val(),
 				$('#set_project_name option:selected').val(),
 				$('#set_default_language option:selected').text(),
 				$('#task_file').prop('checked')
@@ -669,6 +670,7 @@ define(function() {
 			// Update the model to reflect the current values
 			this.survey.displayName = current.displayName;
 			this.survey.instanceNameDefn = current.instanceNameDefn;
+			this.survey.surveyClass = current.surveyClass;
 			this.survey.p_id = current.p_id;
 			this.survey.def_lang = current.def_lang;
 			this.survey.task_file = current.task_file;
@@ -681,6 +683,7 @@ define(function() {
 					this.createSettingsObject(
 								this.survey.displayName, 
 								this.survey.instanceNameDefn,
+								this.survey.surveyClass,
 								this.survey.p_id, 
 								this.survey.def_lang,
 								this.survey.task_file
@@ -689,7 +692,7 @@ define(function() {
 			this.forceSettingsChange = false;
 		} 
 		
-		this.createSettingsObject = function(displayName, instanceNameDefn, p_id, def_lang, task_file) {
+		this.createSettingsObject = function(displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file) {
 			
 			var projId;
 			if(typeof p_id === "string") {
@@ -700,6 +703,7 @@ define(function() {
 			return {
 				displayName: displayName,
 				instanceNameDefn: instanceNameDefn,
+				surveyClass: surveyClass,
 				p_id: projId,
 				def_lang: def_lang,
 				task_file: task_file
