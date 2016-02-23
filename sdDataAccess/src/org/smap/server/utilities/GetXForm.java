@@ -1429,10 +1429,6 @@ public class GetXForm {
 				String qPath = q.getPath();
 				String qSource = q.getSource();
 				
-				if(!q.isPublished()) {		// Ignore questions that have not been published
-					continue;
-				}
-				
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
 	    			Form subForm = template.getSubForm(form, q);
 	    			
@@ -1449,46 +1445,51 @@ public class GetXForm {
 	    			record.add(new Results(qName, null, null, false, true, false, null));
 	    			
 	    		} else if(qType.equals("select")) {		// Get the data from all the option columns
-	    				
-					String sqlSelect = "select ";
-					List<Option> options = new ArrayList<Option>(q.getValidChoices());
-					UtilityMethods.sortOptions(options);	// Order within an XForm is not actually required, this is just for consistency of reading
-
-					boolean hasColumns = false;
-					for(Option option : options) {
-						if(hasColumns) {
-							sqlSelect += ",";
-						}
-						sqlSelect += q.getColumnName() + "__" + option.getColumnName();
-						hasColumns = true;
-					}
-					sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
-			    	log.info(sqlSelect);
-			    	
-			    	pstmt = connection.prepareStatement(sqlSelect);	 			
-			    	ResultSet resultSetOptions = pstmt.executeQuery();
-			    	resultSetOptions.next();		// There will only be one record
-		    		
+	    			
 			    	String optValue = "";
-			    	hasColumns = false;
-			    	for(Option option : options) {
-			    		String opt = q.getColumnName() + "__" + option.getColumnName();
-			    		boolean optSet = resultSetOptions.getBoolean(opt);
-			    		log.fine("Option " + opt + ":" + resultSetOptions.getString(opt));
-			    		if(optSet) {
-				    		if(hasColumns) {
-				    			optValue += " ";
+	    			if(q.isPublished()) {		// Get the data from the table if this question has been published
+						String sqlSelect = "select ";
+						List<Option> options = new ArrayList<Option>(q.getValidChoices());
+						UtilityMethods.sortOptions(options);	// Order within an XForm is not actually required, this is just for consistency of reading
+	
+						boolean hasColumns = false;
+						for(Option option : options) {
+							if(hasColumns) {
+								sqlSelect += ",";
+							}
+							sqlSelect += q.getColumnName() + "__" + option.getColumnName();
+							hasColumns = true;
+						}
+						sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
+				    	log.info(sqlSelect);
+				    	
+				    	pstmt = connection.prepareStatement(sqlSelect);	 			
+				    	ResultSet resultSetOptions = pstmt.executeQuery();
+				    	resultSetOptions.next();		// There will only be one record
+			    		
+				    	hasColumns = false;
+				    	for(Option option : options) {
+				    		String opt = q.getColumnName() + "__" + option.getColumnName();
+				    		boolean optSet = resultSetOptions.getBoolean(opt);
+				    		log.fine("Option " + opt + ":" + resultSetOptions.getString(opt));
+				    		if(optSet) {
+					    		if(hasColumns) {
+					    			optValue += " ";
+					    		}
+					    		optValue += option.getValue(); 
+					    		hasColumns = true;
 				    		}
-				    		optValue += option.getValue(); 
-				    		hasColumns = true;
-			    		}
-					}
+						}
+	    			}
 			    	
 	        		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
 				
 	    		} else if(qType.equals("image") || qType.equals("audio") || qType.equals("video") ) {		// Get the file name
 	    			
-	    			String value = resultSet.getString(index);
+	    			String value = null;
+	    			if(q.isPublished()) {		// Get the data from the table if this question has been published
+	    				value = resultSet.getString(index);
+	    			}
 	    			String filename = null;
 	    			if(value != null) {
 	    				int idx = value.lastIndexOf('/');
@@ -1503,11 +1504,17 @@ public class GetXForm {
 	    				value = filename;
 	    			}
 	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
-	    			index++;
+	    			
+	    			if(q.isPublished()) {
+	    				index++;
+	    			}
 	    			
 	    		} else if(qSource != null) {
   
-    				String value = resultSet.getString(index);
+	    			String value = null;
+	    			if(q.isPublished()) {		// Get the data from the table if this question has been published
+	    				value = resultSet.getString(index);
+	    			}
  				
     				if(value != null && qType.equals("geopoint")) {
     					int idx1 = value.indexOf('(');
@@ -1532,7 +1539,9 @@ public class GetXForm {
 
             		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
 
-	    			index++;
+            		if(q.isPublished()) {
+	    				index++;
+	    			}
     			}
     			
     		}
