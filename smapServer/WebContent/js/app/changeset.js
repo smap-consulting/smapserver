@@ -946,7 +946,7 @@ define([
 				} else {
 					// changed row for choices
 					$changedRow = $('#formList').find('li.option.l_' + 
-							jq(change.property.listName)).filter(function(index){
+							jq(change.property.optionList)).filter(function(index){
 						var $this = $(this);
 						return $this.data("id") == change.property.itemIndex;
 					});
@@ -1022,7 +1022,7 @@ define([
 				// Get the changed option row(s) Multiple rows if several questions share a list name
 				$changedRow = $('#formList').find('li.option').filter(function(index){
 					var $this = $(this);
-					return $this.data("list_name") == change.property.listName && $this.data("id") == change.property.itemIndex;
+					return $this.data("list_name") == change.property.optionList && $this.data("id") == change.property.itemIndex;
 				});
 				
 				newMarkup = markup.addOneOption(
