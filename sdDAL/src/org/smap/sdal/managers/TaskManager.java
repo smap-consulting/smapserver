@@ -380,6 +380,10 @@ public class TaskManager {
 				"order by f.table_name;";	
 		PreparedStatement pstmtGetForms = null; 
 		
+		String checkGeomSQL = "select count(*) from information_schema.columns where table_name = ? and column_name = 'the_geom'";
+		PreparedStatement pstmtCheckGeom = cResults.prepareStatement(checkGeomSQL);
+		
+		String sql0 = "select prikey from ";
 		String sql1 = "select prikey, ST_AsText(the_geom) from ";
 		String sql2 = " where instanceid = ?";
 		PreparedStatement pstmt = null;
@@ -393,20 +397,38 @@ public class TaskManager {
 			if(rs.next()) {
 				String tableName = rs.getString(1);
 				
-				String sql = sql1 + tableName + sql2;
-				pstmt = cResults.prepareStatement(sql);
-				pstmt.setString(1, instanceId);
-				log.info("Get instance task data: " + pstmt.toString());
-				
-				ResultSet rsData = pstmt.executeQuery();
-				if(rsData.next()) {
-					tid.prikey = rsData.getInt(1);
-					tid.location = rsData.getString(2);
+				/*
+				 * Check for a geometry column
+				 */
+				pstmtCheckGeom.setString(1, tableName);
+				ResultSet rsGeom = pstmtCheckGeom.executeQuery();
+				String sql = null;
+				if(rsGeom.next()) {
+					boolean hasGeom = (rsGeom.getInt(1) > 0);
+					if(hasGeom) {
+						sql = sql1 + tableName + sql2;
+					} else {
+						sql = sql0 + tableName + sql2;
+					}
+					pstmt = cResults.prepareStatement(sql);
+					pstmt.setString(1, instanceId);
+					log.info("Get instance task data: " + pstmt.toString());
+					
+					ResultSet rsData = pstmt.executeQuery();
+					if(rsData.next()) {
+						tid.prikey = rsData.getInt(1);
+						if(hasGeom) {
+							tid.location = rsData.getString(2);
+						}
+					}
 				}
+
+				
 			} else {
 				log.info("Error: failed to find top level form");
 			}
 		} finally {
+			if(pstmtCheckGeom != null) try {	pstmtCheckGeom.close(); } catch(SQLException e) {};
 			if(pstmtGetForms != null) try {	pstmtGetForms.close(); } catch(SQLException e) {};
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
 		}
