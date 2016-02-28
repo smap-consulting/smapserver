@@ -83,13 +83,13 @@ window.log = function(){
 					tab[++idx] = '<span class="noPrint">';
 					tab[++idx] = '<button class="add_new_task btn btn-success" value="';
 					tab[++idx] = currentTg;
-					tab[++idx] = '"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Tasks</button>';
+					tab[++idx] = '"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span>' + localise.set["t_add_tasks2"] + '</button>';
 					tab[++idx] = '<button class="save_new_task btn btn-warning" style="display:none;" value="';
 					tab[++idx] = currentTg;
-					tab[++idx] = '"><span class="glyphicon glyphicon-save" aria-hidden="true"></span> Save Tasks</button>';
+					tab[++idx] = '"><span class="glyphicon glyphicon-save" aria-hidden="true"></span>' + localise.set["t_save_tasks"] + '</button>';
 					tab[++idx] = '<button class="delete_task_group btn btn-danger" value="';
 					tab[++idx] = currentTg;
-					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Group</button>';
+					tab[++idx] = '"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span>' + localise.set["c_del"] + '</button>';
 					tab[++idx] = '</span>';
 					
 					// Create the table

@@ -1415,6 +1415,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetListId = null;
 		PreparedStatement pstmtListname = null;
 		PreparedStatement pstmtUpdateRepeat = null;
+		PreparedStatement pstmtUpdatePath = null;
 		
 		try {
 		
@@ -1513,6 +1514,11 @@ public class SurveyManager {
 							|| ci.property.prop.equals("calculation")) {
 						ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
 						ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
+						
+						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
+							// The property must have referred to a question that no longer exists - just set to null
+							ci.property.oldVal = "_force_update";
+						}
 					}
 					
 					if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
@@ -1520,7 +1526,7 @@ public class SurveyManager {
 						// Create prepared statements, one for the case where an existing value is being updated
 						String sqlProperty1 = "update question set " + property + " = ? " +
 								"where q_id = ? and (" + property + " = ? " +
-								"or " + property + " is null) ";
+								"or " + property + " is null or ? = '_force_update') ";
 						
 						if(onlyIfNotPublished) {
 							sqlProperty1 += " and published = 'false';";
@@ -1594,12 +1600,15 @@ public class SurveyManager {
 							if(propertyType.equals("boolean")) {
 								pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
 								pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
+								pstmtProperty1.setString(4, ci.property.oldVal);
 							} else if(propertyType.equals("integer")) {
 								pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
 								pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
+								pstmtProperty1.setString(4, ci.property.oldVal);
 							} else {
 								pstmtProperty1.setString(1, ci.property.newVal);
 								pstmtProperty1.setString(3, ci.property.oldVal);
+								pstmtProperty1.setString(4, ci.property.oldVal);
 							}
 							log.info("Update existing question property: " + pstmtProperty1.toString());
 							count = pstmtProperty1.executeUpdate();
@@ -1650,7 +1659,108 @@ public class SurveyManager {
 						} else if(ci.property.prop.equals("appearance")) {
 							updateSurveyManifest(sd, sId, ci.property.newVal, null);
 						}
+						
+						/*
+						 * If this is a name change then
+						 *   If it is a begin group then update the end group name
+						 *   update paths
+						 */
+						if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
+							String qType = null;
+							int fId = 0;
+							String currentPath = null;
+							String newPath = null;
+							String sqlGetQuestionDetails = "select f_id, path, qtype from question where q_id = ?";
+				
 							
+							// 1. Get question details
+							pstmtUpdatePath = sd.prepareStatement(sqlGetQuestionDetails);
+							pstmtUpdatePath.setInt(1, ci.property.qId);
+							ResultSet rsPath = pstmtUpdatePath.executeQuery();
+
+							if(rsPath.next()) {
+								fId = rsPath.getInt(1);
+								currentPath = rsPath.getString(2);
+								qType = rsPath.getString(3);
+								if(currentPath != null) {
+									newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + "/" + ci.property.newVal;
+								}
+							}
+							
+							// 2. If this is a begin group then update the end group
+							if(qType != null && qType.equals("begin group")) {
+								String sqlUpdateEndGroup = "update question set qname = ? "
+										+ "where f_id = ? "
+										+ "and qtype = 'end group' " 
+										+ "and qname = ?";
+								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+								pstmtUpdatePath = sd.prepareStatement(sqlUpdateEndGroup);
+								pstmtUpdatePath.setString(1,  ci.property.newVal + "_groupEnd");
+								pstmtUpdatePath.setInt(2,  fId);
+								pstmtUpdatePath.setString(3,  ci.property.oldVal + "_groupEnd");
+								
+								log.info("Updating group end name: " + pstmtUpdatePath.toString());
+								pstmtUpdatePath.executeUpdate();
+							}
+							
+							log.info("Current Path to be updated: " + currentPath + " to : " + newPath);
+							
+							if(currentPath != null && newPath != null) {
+								
+								// 2. Update all question paths with this path in them
+								String sqlUpdateQuestionPaths = "update question "
+									+ "set path = replace(path, ?, ?) "
+									+ "where q_id in "
+									+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
+								
+								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+								pstmtUpdatePath = sd.prepareStatement(sqlUpdateQuestionPaths);
+								pstmtUpdatePath.setString(1,  currentPath);
+								pstmtUpdatePath.setString(2,  newPath);
+								pstmtUpdatePath.setInt(3, sId);
+								
+								log.info("Updating question paths: " + pstmtUpdatePath.toString());
+								pstmtUpdatePath.executeUpdate();
+								
+								// 3. Update all paths in relevance
+								/*
+								String sqlUpdateRelevancePaths = "update question "
+										+ "set relevant = replace(relevant, ?, ?) "
+										+ "where relevant like ? "
+										+ "and q_id in "
+										+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
+									
+								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+								pstmtUpdatePath = sd.prepareStatement(sqlUpdateRelevancePaths);
+								pstmtUpdatePath.setString(1,  currentPath);
+								pstmtUpdatePath.setString(2,  newPath);
+								pstmtUpdatePath.setString(3, "%" + currentPath + "%");
+								pstmtUpdatePath.setInt(4, sId);
+								
+								log.info("Updating path: " + pstmtUpdatePath.toString());
+								pstmtUpdatePath.executeUpdate();
+								*/
+								// 3. Update all paths in constraints
+								/*
+								String sqlUpdateConstraintPaths = "update question "
+										+ "set qconstraint = replace(qconstraint, ?, ?) "
+										+ "where qconstraint like ? "
+										+ "and q_id in "
+										+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
+									
+								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+								pstmtUpdatePath = sd.prepareStatement(sqlUpdateConstraintPaths);
+								pstmtUpdatePath.setString(1,  currentPath);
+								pstmtUpdatePath.setString(2,  newPath);
+								pstmtUpdatePath.setString(3, "%" + currentPath + "%");
+								pstmtUpdatePath.setInt(4, sId);
+								
+								log.info("Updating path: " + pstmtUpdatePath.toString());
+								pstmtUpdatePath.executeUpdate();
+								*/
+							}
+							
+						}
 						log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
 						
 						// Write the change log
@@ -1686,6 +1796,7 @@ public class SurveyManager {
 			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
 			try {if (pstmtListname != null) {pstmtListname.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateRepeat != null) {pstmtUpdateRepeat.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
 		
 		}
 	

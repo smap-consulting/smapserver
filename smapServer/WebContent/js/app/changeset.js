@@ -628,7 +628,15 @@ define([
 							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
 								applyToEndGroup(survey.forms[property.formIndex], 
 										oldVal, 0, "rename", property.newVal);
+								
 							}	
+						}
+						
+						/*
+						 * If this is a change to a begin group then refresh the entire form
+						 */
+						if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
+							refresh = true;
 						}
 						
 						
@@ -1538,7 +1546,7 @@ define([
 	
 	function isValidODKOptionName(val) {
 		
-		var sqlCheck = /^[A-Za-z0-9_\-\.:/]*$/
+		var sqlCheck = /^[A-Za-z0-9_@\-\.:/]*$/
 		return sqlCheck.test(val);	
 	}
 	

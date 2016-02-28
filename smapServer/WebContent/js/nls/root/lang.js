@@ -261,6 +261,8 @@ define({
 	"t_fl": "File Loaded",
 	"t_efnl": "Error file not loaded",
 	"t_add_tasks": "Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button",
+	"t_add_tasks2": "Add Tasks",
+	"t_save_tasks": "Save Tasks",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
