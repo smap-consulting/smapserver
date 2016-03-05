@@ -21,4 +21,4 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Expected version of the web content
  */
 
-var gSmapVersion="160201";
+var gSmapVersion="160301";
