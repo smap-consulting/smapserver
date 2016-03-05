@@ -175,6 +175,10 @@ public class XFormData {
 		    		} catch (Exception e) {
 		    			
 		    		}
+		    	} else if(fieldName.equals("location_trigger"))  {
+		    		log.info("Got location trigger ++++++++++++++++++" + item.getString());
+		    	} else if(fieldName.equals("survey_notes"))  {
+		    		log.info("Got survey notes ++++++++++++++++++" + item.getString());
 		    	} else {
 		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
 		    	}		    	
