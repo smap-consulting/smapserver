@@ -1157,7 +1157,16 @@ public class SubRelationalDB extends Subscriber {
 				if(q.getSource() != null) {
 					
 					// Set column type for postgres
+					
 					String colType = q.getType();
+					if(colType.equals("begin repeat")) {
+						if(q.getName().startsWith("geopolygon")) {
+							colType = "geopolygon";
+						} else if(q.getName().startsWith("geolinestring")) {
+							colType = "geolinestring";
+						}
+					}
+					
 					if(colType.equals("string")) {
 						colType = "text";
 					} else if(colType.equals("decimal")) {
