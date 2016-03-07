@@ -78,8 +78,7 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
-	gTempLanguages = [],
-	gErrorPosition = 0;
+	gTempLanguages = [];
 
 // Media globals
 var gUrl,			// url to submit to

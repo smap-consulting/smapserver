@@ -104,7 +104,11 @@ define([
 				// Add buttons
 				h[++idx] = '<div class="col-xs-2 q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
-						if(question.type === "begin repeat" || question.type === "begin group" || question.type.indexOf("select") === 0) {
+						if(question.type === "begin repeat" 
+								|| question.type === "begin group" 
+								|| question.type === "geopolygon"
+								|| question.type === "geolinestring"
+								|| question.type.indexOf("select") === 0) {
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 							h[++idx] = globals.gElementIndex;
 							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
@@ -126,7 +130,7 @@ define([
 			h[++idx] = ' selectquestion';
 		}
 		h[++idx] = '">';
-		if(question.type === "begin repeat") {
+		if(question.type === "begin repeat" || question.type === "geopolygon" || question.type === "geolinestring") {
 			
 			h[++idx] = '<div class="question-controls">';
 			h[++idx] = '<div class="row">';
@@ -397,7 +401,7 @@ define([
 			h[++idx] = ' error ';
 		}
 		
-		if(type === "begin repeat" || type === "begin group") {
+		if(type === "begin repeat" || type === "begin group" || type === "geopolygon" || type === "geolinestring") {
 			h[++idx] = ' panel-warning" id="';
 		} else {
 			h[++idx] = ' panel-success" id="';
@@ -555,7 +559,10 @@ define([
 			if(type === "question" && selProperty !== "appearance" && 
 					((question.source != "user" && 
 					question.type != "begin group" && 
-					question.type != "begin repeat"))) {
+					question.type != "begin repeat" &&
+					question.type != "geopolygon" &&
+					question.type != "geolinestring"
+						))) {
 				h[++idx] = ' readonly tabindex="-1">';
 				h[++idx] = selLabel;
 				h[++idx] = ' not required';

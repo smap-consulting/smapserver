@@ -235,7 +235,11 @@ public class QuestionManager {
 					delete(sd, cResults, sId, oldQuestions, true, true);	// Force the delete as we are replacing the question
 				}
 				
-				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
+				String type = GeneralUtilityMethods.translateTypeToDB(q.type, q.name);
+				String source = q.source;
+				if(type.equals("geopolygon") || type.equals("geolinestring")) {
+					source = "user";
+				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 				String calculation = null;
 				if(!q.type.equals("begin repeat")) {
@@ -262,7 +266,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(6, type );
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
-				pstmtInsertQuestion.setString(9, q.source );
+				pstmtInsertQuestion.setString(9, source );
 				pstmtInsertQuestion.setString(10,  calculation);
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
