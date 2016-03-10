@@ -2145,12 +2145,16 @@ public class GeneralUtilityMethods {
 	/*
 	 * Translate a question type from its representation in the survey model to the database
 	 */
-	public static String translateTypeToDB(String in) {
+	public static String translateTypeToDB(String in, String name) {
 		
 		String out = in;
 		
 		if(in.equals("note")) {
 			out = "string";
+		} else if(in.equals("begin repeat") && name.startsWith("geopolygon")) {
+			out = "geopolygon";
+		} else if(in.equals("begin repeat") && name.startsWith("geolinestring")) {
+			out = "geolinestring";
 		}
 		
 		return out;

@@ -1151,13 +1151,26 @@ public class SubRelationalDB extends Subscriber {
 				
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance());
 				
-				System.out.println("Adding question: " + q.getName() + " : " + q.getType());
+				System.out.println("Write table structure, Adding question: " + q.getName() + " : " + q.getType());
+				String source = q.getSource();
+				
+				// Handle geopolygon and geolinestring
+				String colType = q.getType();
+				if(colType.equals("begin repeat")) {
+					if(q.getName().startsWith("geopolygon")) {
+						colType = "geopolygon";
+						source = "user";
+					} else if(q.getName().startsWith("geolinestring")) {
+						colType = "geolinestring";
+						source = "user";
+					}
+				}
 				
 				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
-				if(q.getSource() != null) {
+				
+				if(source != null) {
 					
 					// Set column type for postgres
-					String colType = q.getType();
 					if(colType.equals("string")) {
 						colType = "text";
 					} else if(colType.equals("decimal")) {
@@ -1181,7 +1194,7 @@ public class SubRelationalDB extends Subscriber {
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
 						}
-						GeometryColumn gc = new GeometryColumn(tableName, qName, "POLYGON");
+						GeometryColumn gc = new GeometryColumn(tableName, "the_geom", "POLYGON");
 						geoms.add(gc);
 						continue;
 					
@@ -1192,7 +1205,7 @@ public class SubRelationalDB extends Subscriber {
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
 						}
-						GeometryColumn gc = new GeometryColumn(tableName, qName, "LINESTRING");
+						GeometryColumn gc = new GeometryColumn(tableName, "the_geom", "LINESTRING");
 						geoms.add(gc);
 						continue;
 					

@@ -64,6 +64,7 @@ define(function() {
 		gLanguage2: 0,
 		errors: [],
 		changes: [],
+		gErrorPosition: 0,
 		gSelProperty: 'label',
 		gSelLabel: 'Question Text',
 		gIsQuestionView: true,

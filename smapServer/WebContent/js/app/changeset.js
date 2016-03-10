@@ -738,9 +738,16 @@ define([
 				} else if(change.question.type === "end group") {
 					refresh = true;
 				}
-				if(change.question.type === "geopoint" || change.question.type === "geotrace" || change.question.type === "geoshape") {
+				
+				// Change the name if this is a location question
+				if(change.question.type === "geopoint" || 
+						change.question.type === "geotrace" ||
+						change.question.type === "geoshape") {
 					change.question.name = "the_geom";
-				}  else if(change.question.type === "begin repeat") {
+				} 
+				
+				// Add a subform if required
+				if(change.question.type === "begin repeat") {
 					// New sub form
 					survey.forms.push({
 						id: undefined,
@@ -1215,7 +1222,7 @@ define([
 		
 		/*
 		 * Remove the existing error
-		 * If this validation has been called bu validateAll() then this removal would already have been done
+		 * If this validation has been called by validateAll() then this removal would already have been done
 		 */
 		if(removeExisting) {
 			removeValidationError(container, itemIndex,	"item", itemType);
@@ -1240,12 +1247,14 @@ define([
 				
 				// Check for multiple geom types in a single form
 				if(isValid) {
-					if(item.type === "geopoint") {
+					if(item.type === "geopoint" || item.type === "geoshape" || item.type === "geotrace") {
 						form = survey.forms[container];
 						for(j = 0; j < form.questions.length; j++) {		
 							otherQuestion = form.questions[j];
 							if(j != itemIndex) {
-								if(otherQuestion.type === item.type && !otherQuestion.soft_deleted && !otherQuestion.deleted) {
+								if(otherQuestion.type === "geopoint" || otherQuestion.type === "geotrace" ||
+										otherQuestion.type === "geoshape"
+										&& !otherQuestion.soft_deleted && !otherQuestion.deleted) {
 									addValidationError(
 											container,
 											itemIndex,
@@ -1739,16 +1748,27 @@ define([
 				}
 				
 				if(isValid) {
-					if(question.type == "geopoint" || question.type == "geoshape" || question.type == "geotrace") {
+					if(question.type == "geopoint" 
+							|| question.type == "geoshape" 
+							|| question.type == "geotrace"
+								) {
 						if(val !== 'the_geom') {
 							addValidationError(
 									container,
 									itemIndex,
 									"name",
-									"For a location question the mane must be 'the_geom'.",
+									"For a location question the nane must be 'the_geom'.",
 									itemType,
 									"error");
-						}
+						} 
+					} else if(val === 'the_geom') {
+						addValidationError(
+								container,
+								itemIndex,
+								"name",
+								"Only location questions can have a name of 'the_geom'.",
+								itemType,
+								"error");
 					}
 				}
 				
@@ -1773,7 +1793,7 @@ define([
 		 * Question name change require the questions in all the forms to be validated for duplicates
 		 * Note this is a stronger test than applied by xlsForm
 		 */
-		if(isValid) {
+		if(isValid && val !== 'the_geom') {
 			
 			if(itemType === "question") {
 				for(i = 0; i < survey.forms.length; i++) {
@@ -1892,7 +1912,7 @@ define([
 		
 		var i, pos;
 		
-		for(i = gErrorPosition + 1; i < gErrorPosition + globals.errors.length + 1; i++) {
+		for(i = globals.gErrorPosition + 1; i < globals.gErrorPosition + globals.errors.length + 1; i++) {
 				
 			if(i > globals.errors.length - 1 ) {
 				pos = i - globals.errors.length;
@@ -1901,12 +1921,12 @@ define([
 			}
 			
 			if(globals.errors[pos]. severity === severity) {
-				gErrorPosition = pos;
+				globals.gErrorPosition = pos;
 				break;
 			}
 		}
 		
-		focusOnError(gErrorPosition);
+		focusOnError(globals.gErrorPosition);
 	}
 
 

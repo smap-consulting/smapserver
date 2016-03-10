@@ -104,7 +104,9 @@ define([
 				// Add buttons
 				h[++idx] = '<div class="col-xs-2 q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
-						if(question.type === "begin repeat" || question.type === "begin group" || question.type.indexOf("select") === 0) {
+						if(question.type === "begin repeat" 
+								|| question.type === "begin group" 
+								|| question.type.indexOf("select") === 0) {
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 							h[++idx] = globals.gElementIndex;
 							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
@@ -555,7 +557,8 @@ define([
 			if(type === "question" && selProperty !== "appearance" && 
 					((question.source != "user" && 
 					question.type != "begin group" && 
-					question.type != "begin repeat"))) {
+					question.type != "begin repeat"
+						))) {
 				h[++idx] = ' readonly tabindex="-1">';
 				h[++idx] = selLabel;
 				h[++idx] = ' not required';

@@ -130,6 +130,7 @@ public class QuestionManager {
 	 */
 	public void save(Connection sd, Connection cResults, int sId, ArrayList<Question> questions) throws Exception {
 		
+		String formPath = null;
 		String columnName = null;
 		SurveyManager sm = new SurveyManager();		// To apply survey level updates resulting from this question change
 		
@@ -165,7 +166,7 @@ public class QuestionManager {
 				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtGetFormId = null;
-		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
+		String sqlGetFormId = "select f_id, path from form where s_id = ? and form_index = ?;";
 		
 		PreparedStatement pstmtGetOldQuestions = null;
 		String sqlGetOldQuestions = "select column_name from question q where q.f_id = ? and q.qname = ? and q.soft_deleted = 'true';";
@@ -187,6 +188,7 @@ public class QuestionManager {
 					ResultSet rs = pstmtGetFormId.executeQuery();
 					rs.next();
 					q.fId = rs.getInt(1);
+					formPath = rs.getString(2);
 					
 				}
 				
@@ -204,7 +206,7 @@ public class QuestionManager {
 				/*
 				 * Get the path of this question based on its position in the form
 				 */
-				q.path = getNewPath(sd, q);
+				q.path = getNewPath(sd, q, formPath);
 				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 				// as the editor expects
@@ -233,10 +235,14 @@ public class QuestionManager {
 					delete(sd, cResults, sId, oldQuestions, true, true);	// Force the delete as we are replacing the question
 				}
 				
-				String type = GeneralUtilityMethods.translateTypeToDB(q.type);
+				String type = GeneralUtilityMethods.translateTypeToDB(q.type, q.name);
+				String source = q.source;
+				if(type.equals("geopolygon") || type.equals("geolinestring")) {
+					source = "user";
+				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 				String calculation = null;
-				if(!q.type.equals("begin repeat")) {
+				if(!q.type.equals("begin repeat") && !q.type.equals("geopolygon") && !q.type.equals("geolinestring")) {
 					calculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
 				}
 			
@@ -260,7 +266,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(6, type );
 				pstmtInsertQuestion.setString(7, q.path + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
-				pstmtInsertQuestion.setString(9, q.source );
+				pstmtInsertQuestion.setString(9, source );
 				pstmtInsertQuestion.setString(10,  calculation);
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
@@ -287,7 +293,7 @@ public class QuestionManager {
 				sm.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
 				
 				// If this is a begin repeat then create a new form
-				if(q.type.equals("begin repeat")) {
+				if(q.type.equals("begin repeat") || q.type.equals("geopolygon") || q.type.equals("geolinestring")) {
 					
 					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
@@ -350,7 +356,7 @@ public class QuestionManager {
 		for(Question q : questions) {
 		
 			System.out.println("Move a question: " + q.name + " : " + q.type);
-			newPath = getNewPath(sd, q);
+			newPath = getNewPath(sd, q, null);
 
 			if(q.type.equals("begin group")) {
 				oldGroupPath = q.path;
@@ -517,7 +523,7 @@ public class QuestionManager {
 	/*
 	 * Get the new path of a question being moved
 	 */
-	private String getNewPath(Connection sd, Question q) throws SQLException {
+	private String getNewPath(Connection sd, Question q, String formPath) throws SQLException {
 		
 		String path = null;
 		boolean isInFrontOfRelatedQuestion = false;
@@ -559,9 +565,13 @@ public class QuestionManager {
 					// Set the path as per the related question
 					String pathBase = path.substring(0, path.lastIndexOf('/'));
 					path = pathBase + "/" + q.name; 
-				}	
+				}
+			} else if(formPath != null) {
+				// There are no other questions in this form, use the path of the form
+				log.info("No other questions in this form, setting the path to: " + formPath + "/" + q.name);
+				path = formPath + "/" + q.name; 
 			} else {
-				// There are no other questions in this form, use the path provided by the client
+				// Use the path set by the editor - not reliable
 				log.info("No other questions in this form, setting the path to: " + q.path);
 				path = q.path;
 			}
@@ -891,7 +901,7 @@ public class QuestionManager {
 				 *   delete the form, or
 				 *   move the questions into the parent form - TODO
 				 */
-				if(qType.equals("begin repeat")) {
+				if(qType.equals("begin repeat") || qType.equals("geopolygon") || qType.equals("geolinestring")) {
 				
 					String tableName = null;
 					

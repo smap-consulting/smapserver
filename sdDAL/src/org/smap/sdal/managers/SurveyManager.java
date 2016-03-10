@@ -675,7 +675,7 @@ public class SurveyManager {
 				}
 				
 				// If this is a begin repeat set the calculation from its form
-				if(q.type.equals("begin repeat")) {
+				if(q.type.equals("begin repeat") || q.type.equals("geopolygon") || q.type.equals("geolinestring")) {
 					pstmtGetRepeatValue.setInt(1, s.id);
 					pstmtGetRepeatValue.setInt(2, q.id);
 					
@@ -911,6 +911,7 @@ public class SurveyManager {
 	
 	/*
 	 * Apply an array of change sets to a survey
+	 * Apply updates
 	 */
 	public ChangeResponse applyChangeSetArray(Connection connectionSD, 
 			Connection cResults,
@@ -1416,6 +1417,7 @@ public class SurveyManager {
 		PreparedStatement pstmtListname = null;
 		PreparedStatement pstmtUpdateRepeat = null;
 		PreparedStatement pstmtUpdatePath = null;
+		PreparedStatement pstmtUpdateForm = null;
 		
 		try {
 		
@@ -1425,7 +1427,8 @@ public class SurveyManager {
 				 * If the question type is a begin repeat and the property is "calculate" then 
 				 *  the repeat count attribute of the sub form needs to be updated
 				 */
-				if(ci.property.qType != null && ci.property.qType.equals("begin repeat") && 
+				if(ci.property.qType != null && 
+						(ci.property.qType.equals("begin repeat") || ci.property.qType.equals("geopolygon") || ci.property.qType.equals("geolinestring")) && 
 						ci.property.prop.equals("calculation")) {
 					
 					String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
@@ -1703,6 +1706,27 @@ public class SurveyManager {
 								pstmtUpdatePath.executeUpdate();
 							}
 							
+							// 3. If this is a begin repeat, geopolygon or geolinestring (that is a form) then update the form specification
+							if(qType != null && (qType.equals("begin repeat") || qType.equals("geopolygon") || qType.equals("geolinestring"))){
+					
+								String sqlUpdateForm = "update form set name = ?, "
+										+ "table_name = ?, "
+										+ "path = replace(path, ?, ?) "
+										+ "where s_id = ? "
+										+ "and name = ?;";
+								try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}
+								pstmtUpdateForm = sd.prepareStatement(sqlUpdateForm);
+								pstmtUpdateForm.setString(1,  ci.property.newVal);
+								pstmtUpdateForm.setString(2,  "s" + sId + "_" + ci.property.newVal);
+								pstmtUpdateForm.setString(3,  currentPath);
+								pstmtUpdateForm.setString(4,  newPath);
+								pstmtUpdateForm.setInt(5,  sId);
+								pstmtUpdateForm.setString(6,  ci.property.oldVal);
+								
+								log.info("Updating form name: " + pstmtUpdateForm.toString());
+								pstmtUpdateForm.executeUpdate();
+							}
+							
 							log.info("Current Path to be updated: " + currentPath + " to : " + newPath);
 							
 							if(currentPath != null && newPath != null) {
@@ -1797,6 +1821,7 @@ public class SurveyManager {
 			try {if (pstmtListname != null) {pstmtListname.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateRepeat != null) {pstmtUpdateRepeat.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}
 		
 		}
 	
