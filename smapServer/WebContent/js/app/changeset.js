@@ -738,13 +738,16 @@ define([
 				} else if(change.question.type === "end group") {
 					refresh = true;
 				}
+				
+				// Change the name if this is a location question
 				if(change.question.type === "geopoint" || 
-						change.question.type === "geopolygon" ||
-						change.question.type === "geolinestring" ||
 						change.question.type === "geotrace" ||
 						change.question.type === "geoshape") {
 					change.question.name = "the_geom";
-				}  else if(change.question.type === "begin repeat") {
+				} 
+				
+				// Add a subform if required
+				if(change.question.type === "begin repeat") {
 					// New sub form
 					survey.forms.push({
 						id: undefined,
@@ -1244,14 +1247,12 @@ define([
 				
 				// Check for multiple geom types in a single form
 				if(isValid) {
-					if(item.type === "geopoint" || item.type === "geopolygon" || item.type === "geolinestring" 
-							|| item.type === "geoshape" || item.type === "geotrace") {
+					if(item.type === "geopoint" || item.type === "geoshape" || item.type === "geotrace") {
 						form = survey.forms[container];
 						for(j = 0; j < form.questions.length; j++) {		
 							otherQuestion = form.questions[j];
 							if(j != itemIndex) {
-								if(otherQuestion.type === "geopoint" || otherQuestion.type === "geopolygon" ||
-										otherQuestion.type === "geolinestring" || otherQuestion.type === "geotrace" ||
+								if(otherQuestion.type === "geopoint" || otherQuestion.type === "geotrace" ||
 										otherQuestion.type === "geoshape"
 										&& !otherQuestion.soft_deleted && !otherQuestion.deleted) {
 									addValidationError(
@@ -1352,10 +1353,7 @@ define([
 		
 		for(i = 0; i < item.labels.length; i++) {
 			if(typeof item.labels[i].text === "undefined" || item.labels[i].text.trim().length === 0) {
-				if(itemType === "question" && (item.type === "begin repeat" 
-							|| item.type === "begin group"
-							|| item.type === "geopolygon"
-							|| item.type === "geolinestring")) {
+				if(itemType === "question" && (item.type === "begin repeat" || item.type === "begin group")) {
 					continue;		// Don't report warnings on blank labels for these question types
 				}
 				addValidationError(
@@ -1753,8 +1751,6 @@ define([
 					if(question.type == "geopoint" 
 							|| question.type == "geoshape" 
 							|| question.type == "geotrace"
-							|| question.type == "geopolygon"
-							|| question.type == "geolinestring"
 								) {
 						if(val !== 'the_geom') {
 							addValidationError(

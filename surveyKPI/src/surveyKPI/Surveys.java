@@ -768,6 +768,8 @@ public class Surveys extends Application {
 						+ "and visible = 'true' "
 						+ "and qtype != 'begin repeat' "
 						+ "and qtype != 'begin group' "
+						+ "and qtype != 'geopolygon' "
+						+ "and qtype != 'geolinestring' "
 						+ "and f_id in (select f_id from form where s_id = ?);"; 
 			
 				pstmtRequired = connectionSD.prepareStatement(sqlRequired);	

@@ -242,7 +242,7 @@ public class QuestionManager {
 				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 				String calculation = null;
-				if(!q.type.equals("begin repeat")) {
+				if(!q.type.equals("begin repeat") && !q.type.equals("geopolygon") && !q.type.equals("geolinestring")) {
 					calculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
 				}
 			
@@ -293,7 +293,7 @@ public class QuestionManager {
 				sm.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
 				
 				// If this is a begin repeat then create a new form
-				if(q.type.equals("begin repeat")) {
+				if(q.type.equals("begin repeat") || q.type.equals("geopolygon") || q.type.equals("geolinestring")) {
 					
 					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
@@ -901,7 +901,7 @@ public class QuestionManager {
 				 *   delete the form, or
 				 *   move the questions into the parent form - TODO
 				 */
-				if(qType.equals("begin repeat")) {
+				if(qType.equals("begin repeat") || qType.equals("geopolygon") || qType.equals("geolinestring")) {
 				
 					String tableName = null;
 					

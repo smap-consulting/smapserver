@@ -424,23 +424,7 @@ define(function() {
 				source: "user"
 			},
 			{
-				name: "GPS Line (fieldTask)",
-				type: "geolinestring",
-				image: "/images/linestring_64.png",
-				canSelect: true,
-				visible: true,
-				source: "user"
-			},
-			{
-				name: "GPS Area (fieldTask)",
-				type: "geopolygon",
-				image: "/images/polygon_64.png",
-				canSelect: true,
-				visible:true,
-				source: "user"
-			},
-			{
-				name: "GPS Line (Web forms only)",
+				name: "GPS Line",
 				type: "geotrace",
 				image: "/images/linestring_64.png",
 				canSelect: true,
@@ -448,7 +432,7 @@ define(function() {
 				source: "user"
 			},
 			{
-				name: "GPS Area (Web forms only)",
+				name: "GPS Area",
 				type: "geoshape",
 				image: "/images/polygon_64.png",
 				canSelect: true,
