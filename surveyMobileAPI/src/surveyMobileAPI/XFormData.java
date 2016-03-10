@@ -100,6 +100,8 @@ public class XFormData {
 		
 		List <FileItem> items = upload.parseRequest(request);
 		int assignmentId = 0;
+		String surveyNotes = null;
+		String locationTrigger = null;
 		
 		serverName = request.getServerName();
 		SurveyInstance si = null;
@@ -176,9 +178,9 @@ public class XFormData {
 		    			
 		    		}
 		    	} else if(fieldName.equals("location_trigger"))  {
-		    		log.info("Got location trigger ++++++++++++++++++" + item.getString());
+		    		locationTrigger = item.getString();
 		    	} else if(fieldName.equals("survey_notes"))  {
-		    		log.info("Got survey notes ++++++++++++++++++" + item.getString());
+		    		surveyNotes = item.getString();
 		    	} else {
 		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
 		    	}		    	
@@ -260,6 +262,9 @@ public class XFormData {
 		ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);
 		ue.setStatus("success"); // Not really needed any more as status is really set in the subscriber event
 		ue.setIncomplete(incomplete);
+		ue.setLocationTrigger(locationTrigger);
+		ue.setSurveyNotes(surveyNotes);
+		
 		UploadEventManager uem = new UploadEventManager(pc);
 		uem.persist(ue);
 		

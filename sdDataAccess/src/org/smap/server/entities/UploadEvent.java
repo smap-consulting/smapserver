@@ -101,6 +101,12 @@ public class UploadEvent implements Serializable {
 	@Column(name="incomplete")
 	private boolean incomplete = false;
 	
+	@Column(name="survey_notes")
+	private String surveyNotes;
+	
+	@Column(name="location_trigger")
+	private String locationTrigger;
+	
 	/*
 	 * Constructor
 	 */
@@ -186,6 +192,14 @@ public class UploadEvent implements Serializable {
 		return incomplete;
 	}
 	
+	public String getSurveyNotes() {
+		return surveyNotes;
+	}
+	
+	public String getLocationTrigger() {
+		return locationTrigger;
+	}
+	
 	/*
 	 * Setters
 	 */
@@ -269,6 +283,14 @@ public class UploadEvent implements Serializable {
 	
 	public void setIncomplete(boolean value) {
 		incomplete = value;
+	}
+	
+	public void setSurveyNotes(String value) {
+		surveyNotes = value;
+	}
+	
+	public void setLocationTrigger(String value) {
+		locationTrigger = value;
 	}
 
 }

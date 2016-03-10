@@ -276,7 +276,9 @@ CREATE TABLE upload_event (
 	form_status text,
 	notifications_applied boolean,		-- Set after notifications are sent
 	incomplete boolean default false,	-- odk will set this if sending attachments in multiple posts
-	server_name text  -- Stores the server used to upload the results.  The url's of all attachments will reference this address
+	server_name text,  -- Stores the server used to upload the results.  The url's of all attachments will reference this address
+	survey_notes text,		-- Notes added during completion of the task
+	location_trigger text	-- The trigger for the completion of the task
 	);
 
 ALTER TABLE upload_event OWNER TO ws;
