@@ -122,7 +122,8 @@ public class SubRelationalDB extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId, int ue_id, Date uploadTime)  {
+			String basePath, String filePath, String updateId, int ue_id, Date uploadTime,
+			String surveyNotes, String locationTrigger)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;
@@ -190,7 +191,8 @@ public class SubRelationalDB extends Subscriber {
 
 		try {
 			
-			writeAllTableContent(instance, remoteUser, server, device, formStatus, updateId, survey.id, uploadTime);
+			writeAllTableContent(instance, remoteUser, server, device, 
+					formStatus, updateId, survey.id, uploadTime, surveyNotes, locationTrigger);
 			applyNotifications(ue_id, remoteUser, server, survey.id);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
@@ -368,7 +370,7 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private void writeAllTableContent(SurveyInstance instance, String remoteUser, 
 			String server, String device, String formStatus, String updateId,
-			int sId, Date uploadTime) throws SQLInsertException {
+			int sId, Date uploadTime, String surveyNotes, String locationTrigger) throws SQLInsertException {
 			
 		String response = null;
 		Connection cResults = null;
@@ -401,6 +403,8 @@ public class SubRelationalDB extends Subscriber {
 					instance.getUuid(), 
 					formStatus, 
 					instance.getVersion(), 
+					surveyNotes,
+					locationTrigger,
 					cResults,
 					cMeta,
 					sId,
@@ -503,6 +507,8 @@ public class SubRelationalDB extends Subscriber {
 			String uuid, 
 			String formStatus, 
 			int version,
+			String surveyNotes,
+			String locationTrigger,
 			Connection cRel,
 			Connection cMeta,
 			int sId,
@@ -580,6 +586,7 @@ public class SubRelationalDB extends Subscriber {
 				
 				boolean hasUploadTime = hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
 				boolean hasVersion = hasUploadTime || hasColumn(cRel, tableName, "_version");
+				boolean hasSurveyNotes = hasColumn(cRel, tableName, "_survey_notes");
 				sql = "INSERT INTO " + tableName + " (parkey";
 				if(parent_key == 0) {
 					sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
@@ -588,6 +595,9 @@ public class SubRelationalDB extends Subscriber {
 					}
 					if(hasVersion) {
 						sql += ",_version";
+					}
+					if(hasSurveyNotes) {
+						sql += ",_survey_notes, _location_trigger";
 					}
 					if(isBad) {
 						sql += ",_bad, _bad_reason";
@@ -620,6 +630,9 @@ public class SubRelationalDB extends Subscriber {
 					if(hasVersion) {
 						sql += ", ?";		// Version
 					}
+					if(hasSurveyNotes) {
+						sql += ", ?, ?";		// Survey Notes and Location Trigger
+					}
 					if(isBad) {
 						sql += ", ?, ?";	// _bad, _bad_reason
 					}
@@ -640,6 +653,10 @@ public class SubRelationalDB extends Subscriber {
 					}
 					if(hasVersion) {
 						pstmt.setInt(stmtIndex++, version);
+					}
+					if(hasSurveyNotes) {
+						pstmt.setString(stmtIndex++, surveyNotes);
+						pstmt.setString(stmtIndex++, locationTrigger);
 					}
 					if(isBad) {
 						pstmt.setBoolean(stmtIndex++, true);
@@ -663,7 +680,8 @@ public class SubRelationalDB extends Subscriber {
 		List<IE> childElements = element.getChildren();
 		for(IE child : childElements) {
 			writeTableContent(child, cResults, parent_key, sName, remoteUser, server, device, 
-					uuid, formStatus, version, cRel, cMeta, sId, uploadTime);
+					uuid, formStatus, version, surveyNotes, locationTrigger, 
+					cRel, cMeta, sId, uploadTime);
 		}
 		
 		return keys;
@@ -671,7 +689,7 @@ public class SubRelationalDB extends Subscriber {
 	}
 	
 	/*
-	 * Method to check for presence of a version column
+	 * Method to check for presence of the specified column
 	 */
 	boolean hasColumn(Connection cRel, String tablename, String columnName)  {
 		
@@ -1130,7 +1148,6 @@ public class SubRelationalDB extends Subscriber {
 
 		/*
 		 * Attempt to create the table, ignore any exception as the table may already be created
-		 * TODO implement as plpgsql with quote_ident() and quote_literal() protection
 		 */
 		if(columns.size() > 0) {
 			sql = "CREATE TABLE " + tableName + " (" +
@@ -1143,7 +1160,9 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text";
 			if(!form.hasParent()) {
-				sql += ", _user text, _version text, _complete boolean default true, _modified boolean default false"
+				sql += ", _user text, _version text, _survey_notes text, _location_trigger text,"
+						+ "_complete boolean default true, "
+						+ "_modified boolean default false"
 						+ ", _upload_time timestamp with time zone, _s_id integer ";
 			}
 							

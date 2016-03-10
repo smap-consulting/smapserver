@@ -1757,8 +1757,13 @@ public class GeneralUtilityMethods {
 			c.qType = "";
 			columnList.add(c);
 			
-			if(GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
+			if(GeneralUtilityMethods.columnType(cResults, table_name, "_survey_notes") != null) {
 				uptodateTable = true;		// This is the latest meta column that was added
+				
+			}
+			
+			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
+				
 				
 				c = new Column();
 				c.name = "_upload_time";
@@ -1794,6 +1799,20 @@ public class GeneralUtilityMethods {
 				c = new Column();
 				c.name = "instanceid";
 				c.humanName = "instanceid";
+				c.qType = "";
+				columnList.add(c);
+			}
+			
+			if(uptodateTable) {
+				c = new Column();
+				c.name = "_survey_notes";
+				c.humanName = "Survey Notes";
+				c.qType = "";
+				columnList.add(c);
+				
+				c = new Column();
+				c.name = "_location_trigger";
+				c.humanName = "Location Trigger";
 				c.qType = "";
 				columnList.add(c);
 			}

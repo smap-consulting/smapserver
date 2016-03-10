@@ -113,7 +113,8 @@ public class Neo4j extends Subscriber {
 	@Override
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
-			String basePath, String filePath, String updateId, int ue_id, Date uploadTime)  {
+			String basePath, String filePath, String updateId, int ue_id, Date uploadTime, 
+			String surveyNotes, String locationTrigger)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;

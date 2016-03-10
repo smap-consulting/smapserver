@@ -204,7 +204,9 @@ public class SubscriberBatch {
 												confFilePath, ue.getFormStatus(),
 												basePath, uploadFile, ue.getUpdateId(),
 												ue.getId(),
-												ue.getUploadTime());	// Call the subscriber	
+												ue.getUploadTime(),
+												ue.getSurveyNotes(),
+												ue.getLocationTrigger());	// Call the subscriber	
 									
 									} else {
 										
