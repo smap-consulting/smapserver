@@ -176,7 +176,14 @@ function addItems(start_rec, settings, current_tg) {
 			tab[++idx] = item.properties.assignment_status;
 			tab[++idx] = '"></td>';
 		
-			tab[++idx] = '<td><button type="button" class="task_edit">' + surveyName + '</button></td>';
+			tab[++idx] = '<td><button type="button" class="task_edit">';
+			
+			if(item.properties.location_trigger) {
+				tab[++idx] = '<span class="glyphicon glyphicon-tag"></span> ';
+			}
+			
+			tab[++idx] = surveyName;
+			tab[++idx] = '</button></td>';
 		
 			// Task title
 			tab[++idx] = '<td>';
