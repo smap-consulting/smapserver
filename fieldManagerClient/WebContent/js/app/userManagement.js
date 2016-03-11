@@ -411,7 +411,7 @@ $(document).ready(function() {
      * Get a usage report
      */
     $('#usageGet').click(function() {
-    	var usageMsec = $('#usageDate').data("DateTimePicker").getDate(),
+    	var usageMsec = $('#usageDate').data("DateTimePicker").date(),
     		d = new Date(usageMsec),
     		month = d.getMonth() + 1,
     		year = d.getFullYear(),
