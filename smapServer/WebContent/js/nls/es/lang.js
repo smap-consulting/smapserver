@@ -245,6 +245,8 @@ define(
     "t_fl": "Archivo cargado",
     "t_efnl": "Error archivo no cargado",
     "t_add_tasks": "Haga click en el mapa donde se quiera adicionar tareas. Cuando termine haga click en botón 'Guardar Tareas'",
+    "t_add_tasks2": "Agregar Tareas",
+    "t_save_tasks": "Guardar Tareas",
     "e_u_err": "Error en subida de formulario",
     "e_u_exists": "existe en proyecto",
     "e_h_rename": "Cambie el nombre del formulario o elimine el formulario anterior",
