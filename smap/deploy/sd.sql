@@ -448,3 +448,6 @@ alter table task_group add column rule text;
 alter table task_group add column source_s_id integer;
 alter table upload_event add column survey_notes text;
 alter table upload_event add column location_trigger text;
+
+-- Upgrade to 16.04 from 16.03
+alter table project add column tasks_only boolean;

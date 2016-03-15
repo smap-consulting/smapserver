@@ -120,6 +120,7 @@ create TABLE project (
 	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,
 	description text,
+	tasks_only boolean default false,	-- When true only tasks will be downloaded to fieldTask
 	changed_by text,
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);

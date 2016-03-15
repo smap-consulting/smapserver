@@ -257,6 +257,7 @@ $(document).ready(function() {
 	
 		project.name = $('#p_name').val();
 		project.desc = $('#p_desc').val();
+		project.tasks_only = $('#p_tasks_only').is(':checked');
 	  		
 		projectList[0] = project;
 		var projectString = JSON.stringify(projectList);
@@ -676,6 +677,7 @@ function openProjectDialog(existing, projectIndex) {
 	if(existing) {
 		$('#p_name').val(globals.gProjectList[projectIndex].name);
 		$('#p_desc').val(globals.gProjectList[projectIndex].desc);
+		$('#p_tasks_only').val(globals.gProjectList[projectIndex].tasks_only);
 	}
 	$('#create_project_popup').modal("show");
 }
