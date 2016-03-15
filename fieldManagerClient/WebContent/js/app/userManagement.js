@@ -677,7 +677,7 @@ function openProjectDialog(existing, projectIndex) {
 	if(existing) {
 		$('#p_name').val(globals.gProjectList[projectIndex].name);
 		$('#p_desc').val(globals.gProjectList[projectIndex].desc);
-		$('#p_tasks_only').val(globals.gProjectList[projectIndex].tasks_only);
+		$('#p_tasks_only').prop('checked', globals.gProjectList[projectIndex].tasks_only);
 	}
 	$('#create_project_popup').modal("show");
 }

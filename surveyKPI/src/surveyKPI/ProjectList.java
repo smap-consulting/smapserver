@@ -112,7 +112,7 @@ public class ProjectList extends Application {
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
 				
-				sql = "select id, name, description, changed_by, changed_ts " +
+				sql = "select id, name, description, tasks_only, changed_by, changed_ts " +
 						" from project " + 
 						" where o_id = ? " +
 						" order by name ASC;";				
@@ -128,6 +128,7 @@ public class ProjectList extends Application {
 					project.id = resultSet.getInt("id");
 					project.name = resultSet.getString("name");
 					project.desc = resultSet.getString("description");
+					project.tasks_only = resultSet.getBoolean("tasks_only");
 					project.changed_by = resultSet.getString("changed_by");
 					project.changed_ts = resultSet.getString("changed_ts");
 					projects.add(project);
@@ -195,8 +196,8 @@ public class ProjectList extends Application {
 			String sql = null;
 			int o_id;
 			int u_id;
-			int p_id = 0;
 			ResultSet resultSet = null;
+			
 			/*
 			 * Get the organisation and the user id
 			 */
@@ -244,6 +245,7 @@ public class ProjectList extends Application {
 							sql = "update project set " +
 									" name = ?, " + 
 									" description = ?, " + 
+									" tasks_only = ?, " + 
 									" changed_by = ?, " + 
 									" changed_ts = now() " + 
 									" where " +
@@ -253,8 +255,9 @@ public class ProjectList extends Application {
 							pstmt = connectionSD.prepareStatement(sql);
 							pstmt.setString(1, p.name);
 							pstmt.setString(2, p.desc);
-							pstmt.setString(3, request.getRemoteUser());
-							pstmt.setInt(4, p.id);
+							pstmt.setBoolean(3,p.tasks_only);
+							pstmt.setString(4, request.getRemoteUser());
+							pstmt.setInt(5, p.id);
 							
 							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();

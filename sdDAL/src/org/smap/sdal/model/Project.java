@@ -22,6 +22,7 @@ public class Project {
 	public int id;
 	public String name;
 	public String desc;
+	public boolean tasks_only;
 	public String changed_by;
 	public String changed_ts;
 }
