@@ -233,6 +233,7 @@ public class QueryGenerator {
 		if(parentForm > 0 && !excludeParents) {
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, parentForm);
+			log.info("sql: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			if (resultSet.next()) {
@@ -331,8 +332,8 @@ public class QueryGenerator {
 					if(requiredColumns.get(j).equals(name)) {
 						wantThisOne = true;
 						break;
-					} else if(name.equals("prikey") && requiredColumns.get(j).equals("_prikey_highest")
-							&& sqlDesc.gotPriKey == false) {
+					} else if(name.equals("prikey") && requiredColumns.get(j).equals("_prikey_lowest")
+							&& sqlDesc.gotPriKey == false && level == 0) {
 						wantThisOne = true;
 						break;
 					}

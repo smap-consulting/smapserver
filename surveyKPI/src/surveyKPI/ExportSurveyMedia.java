@@ -159,7 +159,7 @@ public class ExportSurveyMedia extends Application {
 				String media_name = mediaQInfo.getColumnName();
 				ArrayList<String> namedQuestions = new ArrayList<String> ();
 				ArrayList<String> requiredColumns = new ArrayList<String> ();
-				requiredColumns.add("_prikey_highest");	// Always get the highest level primary key for media that is the key for the media item itself
+				requiredColumns.add("_prikey_lowest");	// Always get the lowest level primary key for media that is the key for the media item itself
 				requiredColumns.add(media_name);			// Get the media question too
 				if(nameQuestionIdList != null) {
 					String nameQ [] = nameQuestionIdList.split(",");
