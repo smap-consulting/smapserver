@@ -85,6 +85,7 @@ public class MyAssignments extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getTasksCredentials(@Context HttpServletRequest request) throws SQLException {
+		log.info("webserviceevent : getTasksCredentials");
 		return getTasks(request, request.getRemoteUser());
 	}
 	
@@ -97,6 +98,8 @@ public class MyAssignments extends Application {
 	public Response getTaskskey(
 			@PathParam("key") String key,
 			@Context HttpServletRequest request) throws SQLException {
+		
+		log.info("webserviceevent : getTaskskey");
 		
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
@@ -133,6 +136,8 @@ public class MyAssignments extends Application {
 			@FormParam("assignInput") String assignInput,
 			@Context HttpServletRequest request) {
 		
+		log.info("webserviceevent : updateTasksKey");
+		
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UpdateTasksKey");
 		
@@ -166,6 +171,8 @@ public class MyAssignments extends Application {
 	public Response updateTasksCredentials(
 			@Context HttpServletRequest request, 
 			@FormParam("assignInput") String assignInput) {
+		
+		log.info("webserviceevent : updateTasksCredentials");
 		return updateTasks(request, assignInput, request.getRemoteUser());
 	}
 	
@@ -323,7 +330,8 @@ public class MyAssignments extends Application {
 					"s.version, " +
 					"s.display_name, " +
 					"p.name, " +
-					"p.id as pid " +
+					"p.id as pid, " +
+					"p.tasks_only as tasks_only " +
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
@@ -352,6 +360,7 @@ public class MyAssignments extends Application {
 				fl.name = resultSet.getString("display_name");
 				fl.project = resultSet.getString("name");
 				fl.pid = resultSet.getInt("pid");
+				fl.tasks_only = resultSet.getBoolean("tasks_only");
 				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
 				
 				tr.forms.add(fl);
