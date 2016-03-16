@@ -25,3 +25,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 function setCustom() {
 	// Menus
 }
+
+function setCustomUserTrail() {
+	// Menus
+}
+
+function setCustomDashboard() {
+	// Menus
+}

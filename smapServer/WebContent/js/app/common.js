@@ -280,6 +280,9 @@ function updateUserDetails(data, getOrganisationsFn) {
 		$('#my_license').val(userDetails.license);
 		$('#my_signature').attr("src", data.signature);
 	}
+	
+	// Hide any menus that have been disabled by custom java scripts
+	$('.perm_dis_menu').hide();
 }
 
 function addLanguageOptions($elem, current) {

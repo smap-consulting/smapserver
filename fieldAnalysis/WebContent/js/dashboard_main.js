@@ -106,6 +106,15 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals', 'moment'
          'crf'
          
          ], function($, jquery_ui, rmm, common, localise, globals, moment) {
+	
 	window.moment = moment;	// Required as common.js not part of module
+	
+	if(typeof setCustom === "function") {
+		setCustom();			// Apply custom javascript
+	}
+	if(typeof setCustomDashboard === "function") {
+		setCustomDashboard();			// Apply custom javascript
+	}
+	$('.perm_dis_menu').hide();
 });
 
