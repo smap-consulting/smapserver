@@ -349,13 +349,22 @@ CREATE TABLE form (
 	name text,
 	label text,
 	table_name text,
-	parentForm INTEGER,
-	parentQuestion INTEGER,
+	parentForm integer not null default 0,
+	parentQuestion integer not null default 0,
 	repeats text,
 	path text,
 	form_index int default -1					-- Temporary data used by the online editor
 	);
 ALTER TABLE form OWNER TO ws;
+
+DROP TABLE IF EXISTS listname CASCADE;
+CREATE TABLE listname (
+	l_id INTEGER DEFAULT NEXTVAL('l_seq') CONSTRAINT pk_listname PRIMARY KEY,
+	s_id integer references survey on delete cascade, 
+	name text
+	);
+ALTER TABLE listname OWNER TO ws;
+CREATE UNIQUE INDEX listname_name ON listname(s_id, name);
 
 -- q_itext references the text string in the translations table
 DROP TABLE IF EXISTS question CASCADE;
@@ -365,7 +374,8 @@ CREATE TABLE question (
 	l_id integer default 0,
 	seq INTEGER,
 	qName text NOT NULL,
-	column_name text,		-- Name of column in results table
+	column_name text,							-- Name of column in results table
+	column_name_applied boolean default false,	-- If set true column name has been added to results
 	qType text,
 	question text,
 	qtext_id text,
@@ -419,15 +429,6 @@ CREATE TABLE option (
 ALTER TABLE option OWNER TO ws;
 CREATE INDEX label_id_sequence ON option(label_id);
 CREATE index o_l_id ON option(l_id);
-
-DROP TABLE IF EXISTS listname CASCADE;
-CREATE TABLE listname (
-	l_id INTEGER DEFAULT NEXTVAL('l_seq') CONSTRAINT pk_listname PRIMARY KEY,
-	s_id integer references survey on delete cascade, 
-	name text
-	);
-ALTER TABLE listname OWNER TO ws;
-CREATE UNIQUE INDEX listname_name ON listname(s_id, name);
 
 -- Server side calculates
 DROP TABLE IF EXISTS ssc;
