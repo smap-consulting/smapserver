@@ -1418,6 +1418,10 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateRepeat = null;
 		PreparedStatement pstmtUpdatePath = null;
 		PreparedStatement pstmtUpdateForm = null;
+		PreparedStatement pstmtUpdateColumnName = null;
+		PreparedStatement pstmtUpdateLabelRef = null;
+		PreparedStatement pstmtUpdateHintRef = null;
+		PreparedStatement pstmtUpdateTranslations = null;
 		
 		try {
 		
@@ -1670,12 +1674,18 @@ public class SurveyManager {
 						 */
 						if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
 							String qType = null;
+							String qTextId = null;
+							String infoTextId = null;
 							int fId = 0;
 							String currentPath = null;
 							String newPath = null;
-							String sqlGetQuestionDetails = "select f_id, path, qtype from question where q_id = ?";
-				
+							String sqlGetQuestionDetails = "select f_id, path, qtype, qtext_id, infotext_id from question where q_id = ?";
+							String sqlUpdateColumnName = "update question set column_name = ? where q_id = ?;";
+							String sqlUpdateLabelRef = "update question set qtext_id = ? where q_id = ?;";
+							String sqlUpdateHintRef = "update question set infotext_id = ? where q_id = ?;";
+							String sqlUpdateTranslations = "update translation set text_id = ? where text_id = ? and s_id = ?";
 							
+
 							// 1. Get question details
 							pstmtUpdatePath = sd.prepareStatement(sqlGetQuestionDetails);
 							pstmtUpdatePath.setInt(1, ci.property.qId);
@@ -1685,12 +1695,48 @@ public class SurveyManager {
 								fId = rsPath.getInt(1);
 								currentPath = rsPath.getString(2);
 								qType = rsPath.getString(3);
+								qTextId = rsPath.getString(4);
+								infoTextId = rsPath.getString(5);
 								if(currentPath != null) {
 									newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + "/" + ci.property.newVal;
 								}
 							}
 							
-							// 2. If this is a begin group then update the end group
+							// 2. Update column name
+							pstmtUpdateColumnName = sd.prepareStatement(sqlUpdateColumnName);
+							pstmtUpdateColumnName.setString(1, 
+									GeneralUtilityMethods.cleanName(ci.property.newVal, true));
+							pstmtUpdateColumnName.setInt(2, ci.property.qId);
+							pstmtUpdateColumnName.executeUpdate();
+							
+							// 3. Update reference to label
+							pstmtUpdateTranslations = sd.prepareStatement(sqlUpdateTranslations);
+							if(qTextId != null) {
+								pstmtUpdateLabelRef = sd.prepareStatement(sqlUpdateLabelRef);
+								pstmtUpdateLabelRef.setString(1, newPath + ":label");
+								pstmtUpdateLabelRef.setInt(2, ci.property.qId);
+								pstmtUpdateLabelRef.executeUpdate();		
+					
+								pstmtUpdateTranslations.setString(1, newPath + ":label");
+								pstmtUpdateTranslations.setString(2, currentPath + ":label");
+								pstmtUpdateTranslations.setInt(3, sId);
+								pstmtUpdateTranslations.executeUpdate();
+							}
+							
+							// 4. Update reference to hint
+							if(infoTextId != null) {
+								pstmtUpdateHintRef = sd.prepareStatement(sqlUpdateHintRef);
+								pstmtUpdateHintRef.setString(1, newPath + ":hint");
+								pstmtUpdateHintRef.setInt(2, ci.property.qId);
+								pstmtUpdateHintRef.executeUpdate();
+								
+								pstmtUpdateTranslations.setString(1, newPath + ":hint");
+								pstmtUpdateTranslations.setString(2, currentPath + ":hint");
+								pstmtUpdateTranslations.setInt(3, sId);
+								pstmtUpdateTranslations.executeUpdate();
+							}
+							
+							// 5. If this is a begin group then update the end group
 							if(qType != null && qType.equals("begin group")) {
 								String sqlUpdateEndGroup = "update question set qname = ? "
 										+ "where f_id = ? "
@@ -1706,7 +1752,7 @@ public class SurveyManager {
 								pstmtUpdatePath.executeUpdate();
 							}
 							
-							// 3. If this is a begin repeat, geopolygon or geolinestring (that is a form) then update the form specification
+							// 6. If this is a begin repeat, geopolygon or geolinestring (that is a form) then update the form specification
 							if(qType != null && (qType.equals("begin repeat") || qType.equals("geopolygon") || qType.equals("geolinestring"))){
 					
 								String sqlUpdateForm = "update form set name = ?, "
@@ -1731,7 +1777,7 @@ public class SurveyManager {
 							
 							if(currentPath != null && newPath != null) {
 								
-								// 2. Update all question paths with this path in them
+								// 7. Update all question paths with this path in them
 								String sqlUpdateQuestionPaths = "update question "
 									+ "set path = replace(path, ?, ?) "
 									+ "where q_id in "
@@ -1746,42 +1792,7 @@ public class SurveyManager {
 								log.info("Updating question paths: " + pstmtUpdatePath.toString());
 								pstmtUpdatePath.executeUpdate();
 								
-								// 3. Update all paths in relevance
-								/*
-								String sqlUpdateRelevancePaths = "update question "
-										+ "set relevant = replace(relevant, ?, ?) "
-										+ "where relevant like ? "
-										+ "and q_id in "
-										+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
-									
-								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
-								pstmtUpdatePath = sd.prepareStatement(sqlUpdateRelevancePaths);
-								pstmtUpdatePath.setString(1,  currentPath);
-								pstmtUpdatePath.setString(2,  newPath);
-								pstmtUpdatePath.setString(3, "%" + currentPath + "%");
-								pstmtUpdatePath.setInt(4, sId);
-								
-								log.info("Updating path: " + pstmtUpdatePath.toString());
-								pstmtUpdatePath.executeUpdate();
-								*/
-								// 3. Update all paths in constraints
-								/*
-								String sqlUpdateConstraintPaths = "update question "
-										+ "set qconstraint = replace(qconstraint, ?, ?) "
-										+ "where qconstraint like ? "
-										+ "and q_id in "
-										+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
-									
-								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
-								pstmtUpdatePath = sd.prepareStatement(sqlUpdateConstraintPaths);
-								pstmtUpdatePath.setString(1,  currentPath);
-								pstmtUpdatePath.setString(2,  newPath);
-								pstmtUpdatePath.setString(3, "%" + currentPath + "%");
-								pstmtUpdatePath.setInt(4, sId);
-								
-								log.info("Updating path: " + pstmtUpdatePath.toString());
-								pstmtUpdatePath.executeUpdate();
-								*/
+
 							}
 							
 						}
@@ -1822,6 +1833,10 @@ public class SurveyManager {
 			try {if (pstmtUpdateRepeat != null) {pstmtUpdateRepeat.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateColumnName != null) {pstmtUpdateColumnName.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateLabelRef != null) {pstmtUpdateLabelRef.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateHintRef != null) {pstmtUpdateHintRef.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
 		
 		}
 	
