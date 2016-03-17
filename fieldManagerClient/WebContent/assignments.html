@@ -17,6 +17,7 @@
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/libs/OpenLayers/OpenLayers.js"></script>
 <script src="/js/app/version.js"></script>
+<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script data-main="js/assignments_main" src="/js/libs/require.js"></script>
 
 </head>
@@ -38,7 +39,7 @@
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
       <ul class="nav navbar-nav navbar-right">
-      	<li class="dropdown">
+      	<li id="m_modules" class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu" style="z-index:1010;">
             
@@ -50,12 +51,12 @@
           
           </ul>
         </li> 
-        <li><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-		<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>	
-		<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>			
+        <li id="m_tm"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
+		<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+		<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
+		<li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+		<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>	
+		<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>			
 		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
