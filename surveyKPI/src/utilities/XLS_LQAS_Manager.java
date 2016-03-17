@@ -52,7 +52,10 @@ public class XLS_LQAS_Manager {
 		}
 	}
 	
-	public void createLQASForm(Connection sd, Connection cResults, OutputStream outputStream, org.smap.sdal.model.Survey survey, LQAS lqas) throws Exception {
+	public void createLQASForm(Connection sd, Connection cResults, OutputStream outputStream, 
+			org.smap.sdal.model.Survey survey, 
+			LQAS lqas,
+			boolean showSources) throws Exception {
 		
 		// Get the table name
 		String tableName = GeneralUtilityMethods.getTableForQuestion(sd, survey.id, lqas.lot);
@@ -77,6 +80,8 @@ public class XLS_LQAS_Manager {
 					if(gotOne) {
 						sbSql.append(",");
 					}
+					sbSql.append(item.select);
+					sbSql.append(" as ");
 					sbSql.append(item.col_name);
 					gotOne = true;
 				}
@@ -154,6 +159,7 @@ public class XLS_LQAS_Manager {
 									!row.correctRespValue.equals("#") &&
 									!(row.correctRespValue.trim().length() == 0)) {
 								
+								System.out.println("Row: " + row.colName + " : " + value + " : "  + row.correctRespValue);
 								value = value.toLowerCase().trim().equals(row.correctRespValue) ? "1" : "0";
 							}
 							if(heading_row.colNum == row.colNum) {

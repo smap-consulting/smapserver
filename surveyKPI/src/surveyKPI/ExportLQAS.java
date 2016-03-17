@@ -86,6 +86,7 @@ public class ExportLQAS extends Application {
 	public Response getXLSFormService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
+			@QueryParam("sources") boolean showSources,
 			@QueryParam("filetype") String filetype) throws Exception {
 
 		try {
@@ -125,18 +126,20 @@ public class ExportLQAS extends Application {
 			
 			// Basic information group
 			LQASGroup g = new LQASGroup("Basic Information");
-			g.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender"));
-			g.items.add(new LQASItem("1.a2", "Age of Head of Household", null, "#","head_age"));
-			g.items.add(new LQASItem("1.b1", "Gender of person answering questions", "F", "Female","caregiver_gender"));
-			g.items.add(new LQASItem("1.b2", "Age of person answering questions", null, "#","caregiver_age"));
-			g.items.add(new LQASItem("2", "Is the child a boy or a girl", "F", "Female","child_gender"));
+			g.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender", "head_gender", new String[] {"head_gender"}));
+			g.items.add(new LQASItem("1.a2", "Age of Head of Household", null, "#","head_age", "head_age", new String[] {"head_age"}));
+			g.items.add(new LQASItem("1.b1", "Gender of person answering questions", "F", "Female","caregiver_gender","caregiver_gender", new String[] {"caregiver_gender"}));
+			g.items.add(new LQASItem("1.b2", "Age of person answering questions", null, "#","caregiver_age","caregiver_age", new String[] {"caregiver_age"}));
+			g.items.add(new LQASItem("2", "Is the child a boy or a girl", "F", "Female","child_gender","child_gender", new String[] {"child_gender"}));
 			lqas.groups.add(g);
 			
 			// Feeding group
 			g = new LQASGroup("Infant and young child feeding");
-			g.items.add(new LQASItem("4", "Has child ever been breastfed", "1", "Yes","breastfeed"));
-			g.items.add(new LQASItem("5", "Are you still breast feeding", "1", "Yes","still_bf"));
-			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "1", "Yes","still_bf"));
+			g.items.add(new LQASItem("4", "Has child ever been breastfed", "1", "Yes","breastfeed","breastfeed", new String[] {"breastfeed"}));
+			g.items.add(new LQASItem("5", "Are you still breast feeding", "1", "Yes","still_bf","still_bf", new String[] {"still_bf"}));
+			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "t", "Q12 B, D, E, G, H, I, J",
+					"cereal = '1' or leafy = '1' or vita_fruits = '1' or organ = '1' or flesh = '1' or egg = '1' or fish = '1'", "ate_vit",
+					new String[] {"cereal", "leafy", "vita_fruits", "organ", "flesh", "egg", "fish"}));
 			lqas.groups.add(g);
 			
 			/*
@@ -148,7 +151,7 @@ public class ExportLQAS extends Application {
 			
 			// Create XLSForm
 			XLS_LQAS_Manager xf = new XLS_LQAS_Manager(filetype);
-			xf.createLQASForm(sd, cResults, response.getOutputStream(), survey, lqas);
+			xf.createLQASForm(sd, cResults, response.getOutputStream(), survey, lqas, showSources);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
