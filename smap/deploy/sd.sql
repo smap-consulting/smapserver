@@ -100,8 +100,8 @@ alter table tasks drop constraint if exists tasks_form_id_fkey;
 alter table tasks add foreign key (form_id) references survey(s_id) on delete cascade;
 
 -- Changes for survey editor:
-alter table question add column list_name text;
-update question set list_name = qname where list_name is null and qtype like 'select%';
+-- alter table question add column list_name text;
+-- update question set list_name = qname where list_name is null and qtype like 'select%';
 alter table translation alter column t_id set DEFAULT NEXTVAL('t_seq');
 
 -- Add survey editing and versioning

@@ -107,8 +107,9 @@ public class QueryGenerator {
 			/*
 			 *  Prepare the statement to get the question type and read only status
 			 */
-			String sqlQType = "select q.qtype, q.readonly, q.qtext_id, q.q_id, q.list_name from question q, form f " +
+			String sqlQType = "select q.qtype, q.readonly, q.qtext_id, q.q_id, l.name from question q, form f, listname l " +
 					" where q.f_id = f.f_id " +
+					" and q.l_id = l.l_id " +
 					" and f.table_name = ? " +
 					" and q.qname = ?;";
 			pstmtQType = connectionSD.prepareStatement(sqlQType);

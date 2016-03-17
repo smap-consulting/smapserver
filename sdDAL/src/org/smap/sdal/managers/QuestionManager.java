@@ -1586,7 +1586,6 @@ public class QuestionManager {
 				 + "nodeset_value,"
 				 + "nodeset_label,"
 				 + "cascade_instance,"
-				 + "list_name,"
 				 + "column_name," 
 				 + "published,"
 				 + "column_name_applied,"
@@ -1620,7 +1619,6 @@ public class QuestionManager {
 				 + "nodeset_value, "
 				 + "nodeset_label, "
 				 + "cascade_instance, "
-				 + "list_name, "
 				 + "column_name," 
 				 + (sharedResults ? "published, " : "'false', ")	// Set to false if this question is for a new table	
 				 + "column_name_applied, "
@@ -1740,7 +1738,6 @@ public class QuestionManager {
     					 + "ovalue,"
     					 + "cascade_filters," 
     					 + "externalfile,"
-    					 + "list_name,"
     					 + "column_name,"
     					 + "published) "
     					 
@@ -1753,7 +1750,6 @@ public class QuestionManager {
     					 + "ovalue,"
     					 + "cascade_filters," 
     					 + "externalfile,"
-    					 + "list_name,"
     					 + "column_name,"
     					 + "'false'"
     					 + "from option where l_id = ?;";
