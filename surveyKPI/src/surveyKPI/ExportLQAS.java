@@ -140,6 +140,25 @@ public class ExportLQAS extends Application {
 			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "t", "Q12 B, D, E, G, H, I, J",
 					"cereal = '1' or leafy = '1' or vita_fruits = '1' or organ = '1' or flesh = '1' or egg = '1' or fish = '1'", "ate_vit",
 					new String[] {"cereal", "leafy", "vita_fruits", "organ", "flesh", "egg", "fish"}));
+			g.items.add(new LQASItem("6b", "Child ate iron-rich foods in the past 24 hours", "t", "Q12 G, H, I, J or P",
+					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or insect = '1'", "ate_iron",
+					new String[] {"organ", "flesh", "egg", "fish", "insect"}));
+			g.items.add(new LQASItem("6c", "Child ate animal source foods in the past 24 hours", "t", "Q12 G, H, I, J, L or P",
+					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or dairy = '1' or insect = '1'", "ate_iron",
+					new String[] {"organ", "flesh", "egg", "fish", "dairy", "insect"}));
+			g.items.add(new LQASItem("6d", "Child had food from at least 4 food groups during the previous day and night", 
+					"t", "",
+					"case when cereal = '1' then 1 else 0 end + case when vita = '1' then 1 else 0 end"
+					+ " + case when tubers = '1' then 1 else 0 end + case when leafy = '1' then 1 else 0 end"
+					+ " + case when vita_fruits = '1' then 1 else 0 end + case when fruits = '1' then 1 else 0 end"
+					+ " + case when organ = '1' then 1 else 0 end + case when flesh = '1' then 1 else 0 end"
+					+ " + case when egg = '1' then 1 else 0 end + case when fish = '1' then 1 else 0 end"
+					+ " + case when nuts = '1' then 1 else 0 end + case when dairy = '1' then 1 else 0 end"
+					+ " + case when oil = '1' then 1 else 0 end + case when sweet = '1' then 1 else 0 end"
+					+ " + case when solid = '1' then 1 else 0 end + case when insect = '1' then 1 else 0 end >= 4", 
+					"food_groups_4",
+					new String[] {"cereal", "vita", "tubers", "leafy", "vita_fruits", "fruits", "organ", "flesh", "egg", "fish", "nuts", 
+							"dairy", "oil", "sweet", "solid", "insect"}));
 			lqas.groups.add(g);
 			
 			/*

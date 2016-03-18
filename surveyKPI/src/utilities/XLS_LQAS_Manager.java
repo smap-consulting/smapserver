@@ -67,6 +67,7 @@ public class XLS_LQAS_Manager {
 		
 		// Create styles
 		Map<String, CellStyle> styles = createStyles(wb);
+		HashMap<String, String> columnNames = new HashMap<String, String> ();		// Keep track of duplicate column names
 		
 		try {
 			
@@ -83,6 +84,19 @@ public class XLS_LQAS_Manager {
 					sbSql.append(item.select);
 					sbSql.append(" as ");
 					sbSql.append(item.col_name);
+					columnNames.put(item.col_name, item.col_name);		// Only source columns need the duplicate test
+					
+					// If show sources was selected then add the source columns
+					if(showSources && item.sourceColumns != null) {
+						for(int i = 0; i < item.sourceColumns.length; i++ ) {
+							if(columnNames.get(item.sourceColumns[i]) == null) {
+								sbSql.append(",");
+								sbSql.append(item.sourceColumns[i]);
+								columnNames.put(item.sourceColumns[i], item.sourceColumns[i]);
+							}
+						}
+					}
+					
 					gotOne = true;
 				}
 			}
@@ -104,30 +118,41 @@ public class XLS_LQAS_Manager {
 				 */
 				int rowNum = 3;		// Arbitrarily start from 4th row as per example LQAS output
 				
-				LotRow new_row = new LotRow(rowNum++, false, false, null, null);			// Title
+				LotRow new_row = new LotRow(rowNum++, false, false, null, null, false);			// Title
 				new_row.addCell(new LotCell(survey.displayName, 2, 10, false, styles.get("title"), 0));
 				lot.addRow(new_row);
 				
-				new_row = new LotRow(rowNum++, false, false, null, null);			// Signature and date
+				new_row = new LotRow(rowNum++, false, false, null, null, false);			// Signature and date
 				new_row.addCell(new LotCell("Survey Team Supervisor: ______________", 5, 5, false,styles.get("default"), 0));
 				new_row.addCell(new LotCell("Date: ______________", 12, 5, false,styles.get("default"), 0));
 				lot.addRow(new_row);
 				
 				rowNum++;	// blank
 				
-				LotRow heading_row = new LotRow(rowNum++, false, false, null, null);	// Heading row
+				LotRow heading_row = new LotRow(rowNum++, false, false, null, null, false);	// Heading row
 				heading_row.addCell(new LotCell("#", heading_row.colNum++, 1, false,styles.get("data_header"), 8 * 256));
 				heading_row.addCell(new LotCell("Indicator", heading_row.colNum++, 1, false,styles.get("data_header"), 40 * 256));
 				heading_row.addCell(new LotCell("Correct Response Key", heading_row.colNum++, 1, false,styles.get("data_header"), 15 * 256));
 				lot.addRow(heading_row);
 				
 				for(LQASGroup group : lqas.groups) {
-					new_row = new LotRow(rowNum++, false, true, null, null);
+					new_row = new LotRow(rowNum++, false, true, null, null, false);
 					new_row.addCell(new LotCell(group.ident, 0, 1, false, styles.get("group"), 0));
 					lot.addRow(new_row);
 					
 					for(LQASItem item : group.items) {
-						new_row = new LotRow(rowNum++, true, false, item.col_name, item.correctRespValue);
+						// Add the source data if required
+						if(showSources && item.sourceColumns != null) {
+							for(int i = 0; i < item.sourceColumns.length; i++ ) {
+								new_row = new LotRow(rowNum++, true, false, item.sourceColumns[i], null, true);
+								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
+								new_row.addCell(new LotCell(item.sourceColumns[i], new_row.colNum++, 1, false, styles.get("source"), 0));
+								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
+								lot.addRow(new_row);
+								new_row.formulaStart = new_row.colNum;
+							}
+						}
+						new_row = new LotRow(rowNum++, true, false, item.col_name, item.correctRespValue, false);
 						new_row.addCell(new LotCell(item.ident, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.desc, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.correctRespText, new_row.colNum++, 1, false, styles.get("default"), 0));
@@ -159,13 +184,13 @@ public class XLS_LQAS_Manager {
 									!row.correctRespValue.equals("#") &&
 									!(row.correctRespValue.trim().length() == 0)) {
 								
-								System.out.println("Row: " + row.colName + " : " + value + " : "  + row.correctRespValue);
 								value = value.toLowerCase().trim().equals(row.correctRespValue) ? "1" : "0";
 							}
 							if(heading_row.colNum == row.colNum) {
 								heading_row.addCell(new LotCell(String.valueOf(index), heading_row.colNum++, 1, false, styles.get("data_header"), 256 *3));
 							}
-							row.addCell(new LotCell(value, row.colNum++, 1, false, styles.get("data"), 0));
+	
+							row.addCell(new LotCell(value, row.colNum++, 1, false, row.sourceRow ? styles.get("source") : styles.get("data"), 0));
 							row.formulaEnd = row.colNum - 1;
 							
 						}
@@ -271,6 +296,13 @@ public class XLS_LQAS_Manager {
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
         styles.put("data", style);
+        
+        style = wb.createCellStyle();
+        style.setFillForegroundColor(HSSFColor.LIGHT_YELLOW.index);
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setAlignment(CellStyle.ALIGN_CENTER);
+        style.setWrapText(true);
+        styles.put("source", style);
         
         style = wb.createCellStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);

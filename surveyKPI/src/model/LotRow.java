@@ -12,8 +12,9 @@ public class LotRow {
 	
 	public int rowNum = 0;
 	public int colNum = 0;					// Next available column in this row
-	public boolean dataRow = false;		// Cells added for each data record
+	public boolean dataRow = false;			// Cells added for each data record
 	public boolean groupRow = false;		// Cell width changes with each data record
+	public boolean sourceRow = false;		// A data row added for diagnosis
 	public String colName = null;
 	public String correctRespValue = null;
 	public int formulaStart = 0;
@@ -21,10 +22,11 @@ public class LotRow {
 	
 	ArrayList<LotCell> cells = new ArrayList<LotCell> ();
 	
-	public LotRow(int rowNum, boolean dataRow, boolean groupRow, String colName, String correctRespValue) {
+	public LotRow(int rowNum, boolean dataRow, boolean groupRow, String colName, String correctRespValue, boolean sourceRow) {
 		this.rowNum = rowNum;
 		this.dataRow = dataRow;
 		this.groupRow = groupRow;
+		this.sourceRow = sourceRow;
 		this.colName = colName;
 		this.correctRespValue = correctRespValue;
 		
