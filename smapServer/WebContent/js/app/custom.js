@@ -30,6 +30,22 @@ function setCustomUserTrail() {
 	// Menus
 }
 
+function setCustomTemplateMgmt() {
+	// Menus
+}
+
+function setCustomUserMgmt() {
+	// Menus
+}
+
+function setCustomResources() {
+	// Menus
+}
+
+function setCustomNotifications() {
+	// Menus
+}
+
 function setCustomDashboard() {
 	// Menus
 }

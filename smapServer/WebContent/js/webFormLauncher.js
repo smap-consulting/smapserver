@@ -55,6 +55,14 @@ $(document).ready(function() {
 	if(typeof getVersion === "function") {
 		getVersion();			// Update if the version on the server has changed
 	}
+	
+	/*
+	 * Apply customised javascript
+	 */
+	if(typeof setCustom === "function") {
+		setCustom();			// Apply custom javascript
+	}
+	
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details

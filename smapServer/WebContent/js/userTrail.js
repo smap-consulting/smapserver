@@ -120,17 +120,6 @@ $(document).ready(function() {
 		getVersion();			// Update if the version on the server has changed
 	}
 	localise.setlang();
-	
-	/*
-	 * Apply customised javascript
-	 */
-	if(typeof setCustom === "function") {
-		setCustom();			// Apply custom javascript
-	}
-	if(typeof setCustomUserTrail === "function") {
-		setCustomUserTrail();			// Apply custom javascript
-	}
-	$('.perm_dis_menu').hide();
 		
 	// Set up the start and end dates with date picker
 	$('#startDate').datetimepicker({

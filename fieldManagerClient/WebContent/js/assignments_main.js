@@ -89,13 +89,6 @@ require([
         		 barcode, 
         		 crf, 
         		 moment) {
-	
-	if(typeof setCustom === "function") {
-		setCustom();			// Apply custom javascript
-	}
-	if(typeof setCustomAssignments === "function") {
-		setCustomAssignments();			// Apply custom javascript
-	}
-	$('.perm_dis_menu').hide();
+
 });
 

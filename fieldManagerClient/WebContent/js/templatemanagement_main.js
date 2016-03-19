@@ -59,5 +59,7 @@ require([
          'bootstrap',
          'app/templateManagement'
          
-         ], function($, common, localise, globals, bootstrap) {});
+         ], function($, common, localise, globals, bootstrap) {
+	
+});
 

@@ -35,9 +35,6 @@ $(document).ready(function() {
 	if(typeof getVersion === "function") {
 		getVersion();			// Update if the version on the server has changed
 	}
-	if(typeof setCustom === "function") {
-		setCustom();			// Apply custom javascript
-	}
 	
 	/*
 	 * Add functionality to control buttons

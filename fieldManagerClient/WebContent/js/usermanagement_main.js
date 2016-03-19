@@ -61,5 +61,7 @@ require([
          'app/userManagement',
          'bootstrapfileinput'
          
-         ], function($, bootstrap, common, localise, globals) {});
+         ], function($, bootstrap, common, localise, globals) {
+
+});
 

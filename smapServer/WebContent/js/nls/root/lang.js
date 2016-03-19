@@ -171,7 +171,6 @@ define({
 	"tm_g_new": "Create new Form",
 	"tm_g_temp_i1": "Download a template to create a new form on your personal computer. When you have finished, upload it to the server by clicking on the upload button below. You will first need to select the XLS file containing the form you have created and give it a name.",
 	"tm_g_temp_i3": "Reference Guide",
-	"tm_g_temp_i4": "Other editors can be used including: ",
 	"tm_ul_f": "Upload the spreadsheet",
 	"tm_si": "Specify survey identifier",
 	"tm_up": "Upload Template",
