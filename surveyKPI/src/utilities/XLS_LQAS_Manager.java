@@ -25,6 +25,7 @@ import net.sourceforge.jeval.Evaluator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -173,7 +174,7 @@ public class XLS_LQAS_Manager {
 								new_row.formulaStart = new_row.colNum;
 							}
 						}
-						new_row = new LotRow(rowNum++, true, false, item.col_name, item.correctRespValue, false, false);
+						new_row = new LotRow(rowNum++, true, false, "", item.correctRespValue, false, false);
 						new_row.addCell(new LotCell(item.ident, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.desc, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.correctRespText, new_row.colNum++, 1, false, styles.get("default"), 0));
@@ -182,6 +183,12 @@ public class XLS_LQAS_Manager {
 					}
 				}
 				
+				rowNum++;	// blank
+				
+				LotRow f1_row = new LotRow(rowNum++, false, true, null, null, false, false);	// Footer row
+				f1_row.addCell(new LotCell("The eight food groups are: 1. milk other than breast milk, cheese or yogurt (Q9 L); 2. foods made from grains, roots, and tubers, including porridge, fortified baby food from grains (Q9 A or C); 3. vitamin A-rich fruits and vegetables (and red palm oil) (Q9 B, D, E or P); 4. other fruits and vegetables (Q9 F); 5. eggs (Q9 I); 6. meat, poultry, fish, and shellfish (and organ meats) (Q9 G, H, J or O); 7. legumes and nuts (Q.9 K); 8. foods made with oil, fat, butter (Q9M). ", 
+						0, 1, false, styles.get("default"), 0));
+				lot.addRow(f1_row);
 							
 				/*
 				 * Get the data for this lot
@@ -213,7 +220,7 @@ public class XLS_LQAS_Manager {
 							String value = null;
 							
 							if(!row.sourceRow) {
-								System.out.println("Expression: " + row.correctRespValue);
+								System.out.println("Evaluate: " + row.correctRespValue);
 								value = eval.evaluate(row.correctRespValue);
 								if(value == null || value.trim().length() == 0) {
 									value = "X";
@@ -222,10 +229,8 @@ public class XLS_LQAS_Manager {
 										!row.correctRespValue.equals("#") &&
 										!(row.correctRespValue.trim().length() == 0)) {
 									
-									if(value.equals("1.0")) {
-										value = "1";
-									} else if(value.equals("0.0")) {
-										value = "0";
+									if(value.endsWith(".0")) {
+										value = value.substring(0, value.length() - 2);
 									} else {
 										// Strip quotes from value
 										if(value.charAt(0) == '\'') {
@@ -239,10 +244,8 @@ public class XLS_LQAS_Manager {
 								} 
 							} else if(!row.rawSource) {
 								value = eval.evaluate(row.colName);
-								if(value.equals("1.0")) {
-									value = "1";
-								} else if(value.equals("0.0")) {
-									value = "0";
+								if(value.endsWith(".0")) {
+									value = value.substring(0, value.length() - 2);
 								} else {
 									// Strip quotes from value
 									if(value.charAt(0) == '\'') {
@@ -254,6 +257,10 @@ public class XLS_LQAS_Manager {
 								}
 							} else {
 								value = rs.getString(row.colName);
+							}
+							
+							if(value == null || value.equals("null")) {
+								value = "X";
 							}
 							
 							if(heading_row.colNum == row.colNum) {
@@ -365,6 +372,10 @@ public class XLS_LQAS_Manager {
         style = wb.createCellStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("data", style);
         
         style = wb.createCellStyle();
@@ -372,6 +383,10 @@ public class XLS_LQAS_Manager {
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("source", style);
         
         style = wb.createCellStyle();
@@ -379,16 +394,28 @@ public class XLS_LQAS_Manager {
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("raw_source", style);
         
         style = wb.createCellStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
         style.setFont(boldFont);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("data_header", style);
         
         style = wb.createCellStyle();
         style.setWrapText(true);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("default", style);
         
 
