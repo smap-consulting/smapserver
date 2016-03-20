@@ -20,6 +20,7 @@ import model.Lot;
 import model.LotCell;
 import model.LotRow;
 import model.LotSummary;
+import net.sourceforge.jeval.Evaluator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.*;
@@ -30,6 +31,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
+import org.smap.sdal.model.LQASdataItem;
 
 import surveyKPI.ExportLQAS;
 
@@ -71,35 +73,35 @@ public class XLS_LQAS_Manager {
 		
 		try {
 			
+			Evaluator eval = new Evaluator();
+			
 			/*
 			 * Create the Data Query
 			 */
 			StringBuffer sbSql = new StringBuffer("select ");
 			boolean gotOne = false;
-			for(LQASGroup group : lqas.groups) {
-				for(LQASItem item : group.items) {
-					if(gotOne) {
-						sbSql.append(",");
-					}
-					sbSql.append(item.select);
-					sbSql.append(" as ");
-					sbSql.append(item.col_name);
-					columnNames.put(item.col_name, item.col_name);		// Only source columns need the duplicate test
-					
-					// If show sources was selected then add the source columns
-					if(showSources && item.sourceColumns != null) {
-						for(int i = 0; i < item.sourceColumns.length; i++ ) {
-							if(columnNames.get(item.sourceColumns[i]) == null) {
-								sbSql.append(",");
-								sbSql.append(item.sourceColumns[i]);
-								columnNames.put(item.sourceColumns[i], item.sourceColumns[i]);
-							}
+			for(LQASdataItem dataItem : lqas.dataItems) {
+				if(gotOne) {
+					sbSql.append(",");
+				}
+				sbSql.append(dataItem.select);
+				sbSql.append(" as ");
+				sbSql.append(dataItem.ident);
+				
+				// If show sources was selected then add the source columns
+				if(showSources && dataItem.sourceColumns != null) {
+					for(int i = 0; i < dataItem.sourceColumns.length; i++ ) {
+						if(columnNames.get(dataItem.sourceColumns[i]) == null) {
+							sbSql.append(",");
+							sbSql.append(dataItem.sourceColumns[i]);
+							columnNames.put(dataItem.sourceColumns[i], dataItem.sourceColumns[i]);
 						}
 					}
-					
-					gotOne = true;
 				}
+				
+				gotOne = true;
 			}
+			
 			sbSql.append(" from ");
 			sbSql.append(tableName);
 			sbSql.append(" where ");
@@ -118,25 +120,25 @@ public class XLS_LQAS_Manager {
 				 */
 				int rowNum = 3;		// Arbitrarily start from 4th row as per example LQAS output
 				
-				LotRow new_row = new LotRow(rowNum++, false, false, null, null, false);			// Title
+				LotRow new_row = new LotRow(rowNum++, false, false, null, null, false, false);			// Title
 				new_row.addCell(new LotCell(survey.displayName, 2, 10, false, styles.get("title"), 0));
 				lot.addRow(new_row);
 				
-				new_row = new LotRow(rowNum++, false, false, null, null, false);			// Signature and date
+				new_row = new LotRow(rowNum++, false, false, null, null, false, false);			// Signature and date
 				new_row.addCell(new LotCell("Survey Team Supervisor: ______________", 5, 5, false,styles.get("default"), 0));
 				new_row.addCell(new LotCell("Date: ______________", 12, 5, false,styles.get("default"), 0));
 				lot.addRow(new_row);
 				
 				rowNum++;	// blank
 				
-				LotRow heading_row = new LotRow(rowNum++, false, false, null, null, false);	// Heading row
+				LotRow heading_row = new LotRow(rowNum++, false, false, null, null, false, false);	// Heading row
 				heading_row.addCell(new LotCell("#", heading_row.colNum++, 1, false,styles.get("data_header"), 8 * 256));
 				heading_row.addCell(new LotCell("Indicator", heading_row.colNum++, 1, false,styles.get("data_header"), 40 * 256));
 				heading_row.addCell(new LotCell("Correct Response Key", heading_row.colNum++, 1, false,styles.get("data_header"), 15 * 256));
 				lot.addRow(heading_row);
 				
 				for(LQASGroup group : lqas.groups) {
-					new_row = new LotRow(rowNum++, false, true, null, null, false);
+					new_row = new LotRow(rowNum++, false, true, null, null, false, false);
 					new_row.addCell(new LotCell(group.ident, 0, 1, false, styles.get("group"), 0));
 					lot.addRow(new_row);
 					
@@ -144,7 +146,26 @@ public class XLS_LQAS_Manager {
 						// Add the source data if required
 						if(showSources && item.sourceColumns != null) {
 							for(int i = 0; i < item.sourceColumns.length; i++ ) {
-								new_row = new LotRow(rowNum++, true, false, item.sourceColumns[i], null, true);
+								
+								// Add the raw source columns
+								for(int j = 0; j < lqas.dataItems.size(); j++) {
+									LQASdataItem di = lqas.dataItems.get(j);
+									if(di.ident.equals(item.sourceColumns[i])) {
+										if(di.sourceColumns != null) {
+											for(int k = 0; k < di.sourceColumns.length; k++) {
+												new_row = new LotRow(rowNum++, true, false, di.sourceColumns[k], null, true, true);
+												new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("raw_source"), 0));
+												new_row.addCell(new LotCell(di.sourceColumns[k], new_row.colNum++, 1, false, styles.get("raw_source"), 0));
+												new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("raw_source"), 0));
+												lot.addRow(new_row);
+												new_row.formulaStart = new_row.colNum;
+											}
+										}
+										break;
+									}
+									
+								}
+								new_row = new LotRow(rowNum++, true, false, "#{" + item.sourceColumns[i] + "}", null, true, false);
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
 								new_row.addCell(new LotCell(item.sourceColumns[i], new_row.colNum++, 1, false, styles.get("source"), 0));
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
@@ -152,7 +173,7 @@ public class XLS_LQAS_Manager {
 								new_row.formulaStart = new_row.colNum;
 							}
 						}
-						new_row = new LotRow(rowNum++, true, false, item.col_name, item.correctRespValue, false);
+						new_row = new LotRow(rowNum++, true, false, item.col_name, item.correctRespValue, false, false);
 						new_row.addCell(new LotCell(item.ident, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.desc, new_row.colNum++, 1, false, styles.get("default"), 0));
 						new_row.addCell(new LotCell(item.correctRespText, new_row.colNum++, 1, false, styles.get("default"), 0));
@@ -171,21 +192,70 @@ public class XLS_LQAS_Manager {
 				int index = 0;
 				while(rs.next()) {
 					
+					/*
+					 * Set the evaluation parameters
+					 */
+					for(LQASdataItem dataItem : lqas.dataItems) {
+						String v = rs.getString(dataItem.ident);
+						if(dataItem.isString) {
+							eval.putVariable(dataItem.ident, "'" + v + "'");
+						} else {
+							eval.putVariable(dataItem.ident, v);
+						}
+					}
+					
+					
 					index++;
 					
 					for(LotRow row : lot.rows) {
 						if(row.dataRow) {
 							
-							String value = rs.getString(row.colName);
-							if(value == null || value.trim().length() == 0) {
-								value = "X";
+							String value = null;
+							
+							if(!row.sourceRow) {
+								System.out.println("Expression: " + row.correctRespValue);
+								value = eval.evaluate(row.correctRespValue);
+								if(value == null || value.trim().length() == 0) {
+									value = "X";
+								}
+								if(row.correctRespValue != null && 
+										!row.correctRespValue.equals("#") &&
+										!(row.correctRespValue.trim().length() == 0)) {
+									
+									if(value.equals("1.0")) {
+										value = "1";
+									} else if(value.equals("0.0")) {
+										value = "0";
+									} else {
+										// Strip quotes from value
+										if(value.charAt(0) == '\'') {
+											value = value.substring(1);
+										}
+										if(value.charAt(value.length() - 1) == '\'') {
+											value = value.substring(0, value.length() - 1);
+										}
+									}
+									
+								} 
+							} else if(!row.rawSource) {
+								value = eval.evaluate(row.colName);
+								if(value.equals("1.0")) {
+									value = "1";
+								} else if(value.equals("0.0")) {
+									value = "0";
+								} else {
+									// Strip quotes from value
+									if(value.charAt(0) == '\'') {
+										value = value.substring(1);
+									}
+									if(value.charAt(value.length() - 1) == '\'') {
+										value = value.substring(0, value.length() - 1);
+									}
+								}
+							} else {
+								value = rs.getString(row.colName);
 							}
-							if(row.correctRespValue != null && 
-									!row.correctRespValue.equals("#") &&
-									!(row.correctRespValue.trim().length() == 0)) {
-								
-								value = value.toLowerCase().trim().equals(row.correctRespValue) ? "1" : "0";
-							}
+							
 							if(heading_row.colNum == row.colNum) {
 								heading_row.addCell(new LotCell(String.valueOf(index), heading_row.colNum++, 1, false, styles.get("data_header"), 256 *3));
 							}
@@ -303,6 +373,13 @@ public class XLS_LQAS_Manager {
         style.setAlignment(CellStyle.ALIGN_CENTER);
         style.setWrapText(true);
         styles.put("source", style);
+        
+        style = wb.createCellStyle();
+        style.setFillForegroundColor(HSSFColor.LAVENDER.index);
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setAlignment(CellStyle.ALIGN_CENTER);
+        style.setWrapText(true);
+        styles.put("raw_source", style);
         
         style = wb.createCellStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);

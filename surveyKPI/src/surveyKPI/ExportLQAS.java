@@ -45,6 +45,7 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
+import org.smap.sdal.model.LQASdataItem;
 
 import utilities.XLSFormManager;
 import utilities.XLS_LQAS_Manager;
@@ -53,6 +54,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.parser.XMLParser;
+
+import net.sourceforge.jeval.Evaluator;
 
 /*
  * Creates an LQAS report in XLS
@@ -124,43 +127,81 @@ public class ExportLQAS extends Application {
 			 */
 			LQAS lqas = new LQAS("sa");
 			
+			// Add data items
+			lqas.dataItems.add(new LQASdataItem("head_gender", "head_gender", null, true));
+			lqas.dataItems.add(new LQASdataItem("head_age",  "head_age", null, true));
+			lqas.dataItems.add(new LQASdataItem("caregiver_gender","caregiver_gender", null, true));
+			lqas.dataItems.add(new LQASdataItem("caregiver_age","caregiver_age", null, true));
+			lqas.dataItems.add(new LQASdataItem("child_gender","child_gender", null, true));
+			lqas.dataItems.add(new LQASdataItem("breastfeed","breastfeed", null, true));
+			lqas.dataItems.add(new LQASdataItem("still_bf","still_bf", null, true));
+			lqas.dataItems.add(new LQASdataItem("vita_source", 
+					"cereal = '1' or leafy = '1' or vita_fruits = '1' or organ = '1' or flesh = '1' or egg = '1' or fish = '1'", 
+					new String[] {"cereal", "leafy", "vita_fruits", "organ", "flesh", "egg", "fish"}, true));
+			lqas.dataItems.add(new LQASdataItem("iron_source", 
+					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or insect = '1'", 
+					new String[] {"organ", "flesh", "egg", "fish", "insect"}, true));
+			lqas.dataItems.add(new LQASdataItem("animal_source",  
+					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or dairy = '1' or insect = '1'", 
+					new String[] {"organ", "flesh", "egg", "fish", "dairy", "insect"}, true));
+			
+			lqas.dataItems.add(new LQASdataItem("dairy_fg", 
+					"case when dairy = '1' then 1 else 0 end", 
+					new String[] {"dairy"}, false));
+			lqas.dataItems.add(new LQASdataItem("grains_fg", 
+					"case when cereal = '1' or tubers = '1' then 1 else 0 end", 
+					new String[] {"cereal", "tubers"}, false));
+			lqas.dataItems.add(new LQASdataItem("vita_fg", 
+					"case when vita = '1' or leafy = '1' or vita_fruits = '1' or insect = '1' then 1 else 0 end", 
+					new String[] {"vita", "leafy", "vita_fruits", "insect"}, false));
+			lqas.dataItems.add(new LQASdataItem("fruits_fg", 
+					"case when fruits = '1' then 1 else 0 end", 
+					new String[] {"fruits"}, false));
+			lqas.dataItems.add(new LQASdataItem("eggs_fg", 
+					"case when egg = '1' then 1 else 0 end",
+					new String[] {"egg"}, false));
+			lqas.dataItems.add(new LQASdataItem("meat_fg", 
+					"case when organ = '1' or flesh='1' or fish = '1' or solid='1' then 1 else 0 end", 
+					new String[] {"organ", "flesh", "fish", "solid"}, false));
+			lqas.dataItems.add(new LQASdataItem("nuts_fg", 
+					"case when nuts = '1' then 1 else 0 end",
+					new String[] {"nuts"}, false));
+			lqas.dataItems.add(new LQASdataItem("oil_fg",  
+					"case when oil = '1' then 1 else 0 end", 
+					new String[] {"oil"}, false));
+
+			
 			// Basic information group
 			LQASGroup g = new LQASGroup("Basic Information");
-			g.items.add(new LQASItem("1.a1", "Gender of Head of Household", "F", "Female","head_gender", "head_gender", new String[] {"head_gender"}));
-			g.items.add(new LQASItem("1.a2", "Age of Head of Household", null, "#","head_age", "head_age", new String[] {"head_age"}));
-			g.items.add(new LQASItem("1.b1", "Gender of person answering questions", "F", "Female","caregiver_gender","caregiver_gender", new String[] {"caregiver_gender"}));
-			g.items.add(new LQASItem("1.b2", "Age of person answering questions", null, "#","caregiver_age","caregiver_age", new String[] {"caregiver_age"}));
-			g.items.add(new LQASItem("2", "Is the child a boy or a girl", "F", "Female","child_gender","child_gender", new String[] {"child_gender"}));
+			g.items.add(new LQASItem("1.a1", "Gender of Head of Household", "#{head_gender} == 'F'", "Female","head_gender", "head_gender", new String[] {"head_gender"}));
+			g.items.add(new LQASItem("1.a2", "Age of Head of Household", "#{head_age}", "#","head_age", "head_age", new String[] {"head_age"}));
+			g.items.add(new LQASItem("1.b1", "Gender of person answering questions", "#{caregiver_gender} == 'F'", "Female","caregiver_gender","caregiver_gender", new String[] {"caregiver_gender"}));
+			g.items.add(new LQASItem("1.b2", "Age of person answering questions", "#{caregiver_age}", "#","caregiver_age","caregiver_age", new String[] {"caregiver_age"}));
+			g.items.add(new LQASItem("2", "Is the child a boy or a girl", "#{caregiver_gender} == 'F'", "Female","child_gender","child_gender", new String[] {"child_gender"}));
 			lqas.groups.add(g);
 			
 			// Feeding group
 			g = new LQASGroup("Infant and young child feeding");
-			g.items.add(new LQASItem("4", "Has child ever been breastfed", "1", "Yes","breastfeed","breastfeed", new String[] {"breastfeed"}));
-			g.items.add(new LQASItem("5", "Are you still breast feeding", "1", "Yes","still_bf","still_bf", new String[] {"still_bf"}));
-			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "t", "Q12 B, D, E, G, H, I, J",
+			g.items.add(new LQASItem("4", "Has child ever been breastfed", "#{breastfeed} == '1'", "Yes","breastfeed","breastfeed", new String[] {"breastfeed"}));
+			g.items.add(new LQASItem("5", "Are you still breast feeding", "#{still_bf} == '1'", "Yes","still_bf","still_bf", new String[] {"still_bf"}));			
+			g.items.add(new LQASItem("6a", "Child ate vitamin A-rich foods in the past 24 hours", "#{vita_source} == 't'", "Q12 B, D, E, G, H, I, J",
 					"cereal = '1' or leafy = '1' or vita_fruits = '1' or organ = '1' or flesh = '1' or egg = '1' or fish = '1'", "ate_vit",
-					new String[] {"cereal", "leafy", "vita_fruits", "organ", "flesh", "egg", "fish"}));
-			g.items.add(new LQASItem("6b", "Child ate iron-rich foods in the past 24 hours", "t", "Q12 G, H, I, J or P",
+					new String[] {"vita_source"}));
+			g.items.add(new LQASItem("6b", "Child ate iron-rich foods in the past 24 hours", "#{iron_source} == 't'", "Q12 G, H, I, J or P",
 					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or insect = '1'", "ate_iron",
-					new String[] {"organ", "flesh", "egg", "fish", "insect"}));
-			g.items.add(new LQASItem("6c", "Child ate animal source foods in the past 24 hours", "t", "Q12 G, H, I, J, L or P",
+					new String[] {"iron_source"}));
+			g.items.add(new LQASItem("6c", "Child ate animal source foods in the past 24 hours", "#{animal_source} == 't'", "Q12 G, H, I, J, L or P",
 					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or dairy = '1' or insect = '1'", "ate_iron",
-					new String[] {"organ", "flesh", "egg", "fish", "dairy", "insect"}));
-			g.items.add(new LQASItem("6d", "Child had food from at least 4 food groups during the previous day and night", 
-					"t", "",
-					"case when cereal = '1' then 1 else 0 end + case when vita = '1' then 1 else 0 end"
-					+ " + case when tubers = '1' then 1 else 0 end + case when leafy = '1' then 1 else 0 end"
-					+ " + case when vita_fruits = '1' then 1 else 0 end + case when fruits = '1' then 1 else 0 end"
-					+ " + case when organ = '1' then 1 else 0 end + case when flesh = '1' then 1 else 0 end"
-					+ " + case when egg = '1' then 1 else 0 end + case when fish = '1' then 1 else 0 end"
-					+ " + case when nuts = '1' then 1 else 0 end + case when dairy = '1' then 1 else 0 end"
-					+ " + case when oil = '1' then 1 else 0 end + case when sweet = '1' then 1 else 0 end"
-					+ " + case when solid = '1' then 1 else 0 end + case when insect = '1' then 1 else 0 end >= 4", 
-					"food_groups_4",
-					new String[] {"cereal", "vita", "tubers", "leafy", "vita_fruits", "fruits", "organ", "flesh", "egg", "fish", "nuts", 
-							"dairy", "oil", "sweet", "solid", "insect"}));
-			lqas.groups.add(g);
+					new String[] {"animal_source"}));
 			
+			g.items.add(new LQASItem("6d", "Child had food from at least 4 food groups during the previous day and night", 
+					"#{dairy_fg} + #{grains_fg} + #{vita_fg} + #{fruits_fg} + #{eggs_fg} + #{meat_fg} + #{nuts_fg} + #{oil_fg} >= 4", "",
+					"", 
+					"food_groups_4",
+					new String[] {"dairy_fg", "grains_fg", "vita_fg", "fruits_fg", "eggs_fg", "meat_fg", "nuts_fg", "oil_fg"}));
+			
+			lqas.groups.add(g);
+
 			/*
 			 * End of setting up of test definition
 			 */

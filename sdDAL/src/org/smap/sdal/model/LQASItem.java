@@ -1,5 +1,7 @@
 package org.smap.sdal.model;
 
+import net.sourceforge.jeval.Evaluator;
+
 /*
  * Contains set of changes that need to be applied in a single transaction
  */
