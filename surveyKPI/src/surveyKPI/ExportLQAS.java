@@ -175,6 +175,8 @@ public class ExportLQAS extends Application {
 			
 			lqas.dataItems.add(new LQASdataItem("pregnant", "pregnant", null, true));
 			lqas.dataItems.add(new LQASdataItem("pregnant_avoid", "pregnant_avoid", null, true));
+			
+			
 
 			
 			// Basic information group

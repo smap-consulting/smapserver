@@ -126,8 +126,8 @@ public class XLS_LQAS_Manager {
 				lot.addRow(new_row);
 				
 				new_row = new LotRow(rowNum++, false, false, null, null, false, false);			// Signature and date
-				new_row.addCell(new LotCell("Survey Team Supervisor: ______________", 5, 5, false,styles.get("default"), 0));
-				new_row.addCell(new LotCell("Date: ______________", 12, 5, false,styles.get("default"), 0));
+				new_row.addCell(new LotCell("Survey Team Supervisor: ______________", 5, 5, false,styles.get("no_border"), 0));
+				new_row.addCell(new LotCell("Date: ______________", 12, 5, false,styles.get("no_border"), 0));
 				lot.addRow(new_row);
 				
 				rowNum++;	// blank
@@ -187,8 +187,23 @@ public class XLS_LQAS_Manager {
 				
 				LotRow f1_row = new LotRow(rowNum++, false, true, null, null, false, false);	// Footer row
 				f1_row.addCell(new LotCell("The eight food groups are: 1. milk other than breast milk, cheese or yogurt (Q9 L); 2. foods made from grains, roots, and tubers, including porridge, fortified baby food from grains (Q9 A or C); 3. vitamin A-rich fruits and vegetables (and red palm oil) (Q9 B, D, E or P); 4. other fruits and vegetables (Q9 F); 5. eggs (Q9 I); 6. meat, poultry, fish, and shellfish (and organ meats) (Q9 G, H, J or O); 7. legumes and nuts (Q.9 K); 8. foods made with oil, fat, butter (Q9M). ", 
-						0, 1, false, styles.get("default"), 0));
+						0, 1, false, styles.get("no_border"), 0));
 				lot.addRow(f1_row);
+				
+				if(showSources) {
+					rowNum++;
+					LotRow k0_row = new LotRow(rowNum++, false, false, null, null, false, false);	// Key sources
+					k0_row.addCell(new LotCell("Key", 0, 1, false, styles.get("data_header"), 0));
+					lot.addRow(k0_row);
+					
+					LotRow k1_row = new LotRow(rowNum++, false, false, null, null, false, false);	// Key sources
+					k1_row.addCell(new LotCell("Calculated Data", 0, 1, false, styles.get("source"), 0));
+					lot.addRow(k1_row);
+					
+					LotRow k2_row = new LotRow(rowNum++, false, false, null, null, false, false);	// Key sources
+					k2_row.addCell(new LotCell("Collected data", 0, 1, false, styles.get("raw_source"), 0));
+					lot.addRow(k2_row);
+				}
 							
 				/*
 				 * Get the data for this lot
@@ -220,7 +235,6 @@ public class XLS_LQAS_Manager {
 							String value = null;
 							
 							if(!row.sourceRow) {
-								System.out.println("Evaluate: " + row.correctRespValue);
 								value = eval.evaluate(row.correctRespValue);
 								if(value == null || value.trim().length() == 0) {
 									value = "X";
@@ -345,10 +359,13 @@ public class XLS_LQAS_Manager {
     /**
      * create a library of cell styles
      */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
+    private Map<String, CellStyle> createStyles(Workbook wb){
         
     	Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
 
+    	/*
+    	 * Create fonts
+    	 */
         Font largeFont = wb.createFont();
         largeFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         largeFont.setFontHeightInPoints((short) 14);
@@ -356,70 +373,67 @@ public class XLS_LQAS_Manager {
         Font boldFont = wb.createFont();
         boldFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         
+        /*
+         * Create styles
+         */
         CellStyle style = wb.createCellStyle();
         style.setFont(largeFont);
+        style.setAlignment(CellStyle.ALIGN_LEFT);
         styles.put("title", style);
 
-        style = wb.createCellStyle();
+        style = wb.createCellStyle();	
         style.setWrapText(true);
-       
+        style.setAlignment(CellStyle.ALIGN_LEFT);
+        styles.put("no_border", style);
+        
+        // Remaining styles are all derived from a common base style
+        style = getBaseStyle();
+        style = wb.createCellStyle();
         style.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setFont(boldFont);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
         styles.put("group", style);
         
-        style = wb.createCellStyle();
+        style = getBaseStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);
-        style.setWrapText(true);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("data", style);
         
-        style = wb.createCellStyle();
+        style = getBaseStyle();
         style.setFillForegroundColor(HSSFColor.LIGHT_YELLOW.index);
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_CENTER);
-        style.setWrapText(true);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("source", style);
         
-        style = wb.createCellStyle();
+        style = getBaseStyle();
         style.setFillForegroundColor(HSSFColor.LAVENDER.index);
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_CENTER);
-        style.setWrapText(true);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         styles.put("raw_source", style);
         
-        style = wb.createCellStyle();
+        style = getBaseStyle();
         style.setAlignment(CellStyle.ALIGN_CENTER);
-        style.setWrapText(true);
-        style.setFont(boldFont);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        style.setFont(boldFont);  
         styles.put("data_header", style);
         
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        style = getBaseStyle();
         styles.put("default", style);
         
 
         return styles;
+    }
+    
+    private CellStyle getBaseStyle() {
+    	
+    	CellStyle style = wb.createCellStyle();
+    	
+        style.setWrapText(true);
+        style.setAlignment(CellStyle.ALIGN_LEFT);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        
+        return style;
     }
 
 }
