@@ -30,6 +30,10 @@ function setCustomUserTrail() {
 	// Menus
 }
 
+function setCustomAssignments() {
+	// Menus
+}
+
 function setCustomTemplateMgmt() {
 	// Menus
 }
@@ -48,4 +52,11 @@ function setCustomNotifications() {
 
 function setCustomDashboard() {
 	// Menus
+}
+
+function setCustomMonitor() {
+	// Menus
+}
+
+function setCustomRegister() {
 }

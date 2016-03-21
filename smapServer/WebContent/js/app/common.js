@@ -1345,7 +1345,8 @@ function isSelfRegistrationServer() {
 	var sr = true;
 	
 	if(hostname !== 'localhost' &&
-			hostname !== 'sg.smap.com.au') {
+			hostname !== 'sg.smap.com.au' &&
+			hostname !== 'app.kontrolid.com') {
 		sr = false;
 	}
 	return sr;

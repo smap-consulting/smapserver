@@ -57,6 +57,12 @@ $(document).ready(function() {
 	if(typeof getVersion === "function") {
 		getVersion();			// Update if the version on the server has changed
 	}
+	localise.setlang();
+	
+	// Add the organisation to the title
+	if(window.location.hostname.indexOf("smap") > 0) {
+		$('#website_id').text("Smap");
+	}
 	
 	// Get the authentication token if it has been passed in parameters
 	params = location.search.substr(location.search.indexOf("?") + 1)

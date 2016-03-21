@@ -264,7 +264,7 @@ public class GeneralUtilityMethods {
 		
 		if(!host.equals("sg.smap.com.au") &&
 				!host.equals("localhost") &&
-				!host.equals("dev.smap.com.au")) {
+				!host.equals("app.kontrolid.com")) {
 			
 			log.info("Self registration check failed: " + host);
 			throw new AuthorisationException();

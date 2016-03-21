@@ -13,6 +13,7 @@
 <script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
+<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script src="/js/libs/OpenLayers/OpenLayers.js"></script>
 <script data-main="js/monitor_main" src="/js/libs/require.js"></script>
 
@@ -22,15 +23,15 @@
 <div>
 	<div class="rmm noPrint" data-menu-style = "minimal">
 		<ul>
-			<li><a class="lang" data-lang="m_home" href="/index.html" target="_top">Home</a></li>
-			<li><a class="lang" data-lang="m_tm" href="templateManagement.html" target="_top">Form Management</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
-			<li class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
-			<li class="restrict_role analyst_role user_trail"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>
-			<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
-			<li><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">refresh</a></li> 
-			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+			<li id="m_home"><a class="lang" data-lang="m_home" href="/index.html" target="_top">Home</a></li>
+			<li id="m_tm"><a class="lang" data-lang="m_tm" href="templateManagement.html" target="_top">Form Management</a></li>
+			<li id="m_analysis" class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="userManagement.html">Users</a></li>
+			<li id="m_assign" class="restrict_role analyst_role"><a class="lang" data-lang="m_assign" href="assignments.html">Tasks</a></li>
+			<li id="m_locations" class="restrict_role analyst_role user_trail"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>
+			<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
+			<li id="m_refresh"><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">refresh</a></li> 
+			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 		</ul>
 	</div>
 	<p style="clear: both;"></p>
@@ -179,6 +180,9 @@
 		</div>
 	</div>
 	
+	<script>
+		setCustomMonitor();			// Apply custom javascript
+    </script>
 	<script src="//maps.google.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 
 </body>
