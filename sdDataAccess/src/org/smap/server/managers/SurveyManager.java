@@ -164,6 +164,7 @@ public class SurveyManager {
 		return count == 1;
 	}
 
+	/*
 	public void persist(Survey s) {
 		EntityManager em = pc.getEntityManager();
 		try {
@@ -190,6 +191,7 @@ public class SurveyManager {
 		} finally {
 		}
 	}
+	*/
 	
 	/*
 	 * Returns a survey name without spaces and truncated to 30 characters.

@@ -114,6 +114,10 @@ public class Form implements Serializable {
 		return type;
 	}
 
+	public int getSurveyId() {
+		return s_id;
+	}
+	
 	public String getName() {
 		return name;
 	}
@@ -167,6 +171,9 @@ public class Form implements Serializable {
 		return path;
 	}
 
+	public void setId(int value) {
+		f_id = value;
+	}
 	
 	public void setSurveyId(int value) {
 		this.s_id = value;

@@ -133,6 +133,7 @@ public class FormManager {
 		return subFormId;
 	}
 
+	/*
 	public void persist(Form... formList) {
 		EntityManager em = pc.getEntityManager();
 		try {
@@ -152,6 +153,7 @@ public class FormManager {
 
 		}
 	}
+	*/
 
 	public void delete(Form... f) {
 		EntityManager em = pc.getEntityManager();

@@ -308,6 +308,10 @@ public class Question implements Serializable {
 	 * Setters
 	 */
 
+	public void setId(int v) {
+		q_id = v;
+	}
+	
 	public void setSeq(int seq) {
 		this.seq = seq;
 	}

@@ -130,6 +130,10 @@ public class Option implements Serializable{
 	public String getColumnName() {
 		return column_name;
 	}
+	
+	public String getCascadeFilters() {
+		return cascade_filters;
+	}
 
 	public int getSeq() {
 		return seq;

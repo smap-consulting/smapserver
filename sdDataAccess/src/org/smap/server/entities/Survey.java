@@ -141,6 +141,10 @@ public class Survey implements Serializable {
 	 * Setters
 	 */
 	
+	public void setId(int v) {
+		id = v;
+	}
+	
 	public void setDisplayName(String v) {
 		display_name = v;
 	}

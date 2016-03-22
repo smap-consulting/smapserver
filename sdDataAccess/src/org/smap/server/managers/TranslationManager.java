@@ -103,6 +103,7 @@ public class TranslationManager {
 		}
 	}
 
+	/*
 	public void persist(Translation t) {
 		try {
 			em.getTransaction().begin();
@@ -141,4 +142,6 @@ public class TranslationManager {
 			// TODO handle exceptions, specifically constraint violations
 		}
 	}
+	*/
+	
 }

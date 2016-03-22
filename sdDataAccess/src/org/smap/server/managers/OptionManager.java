@@ -51,6 +51,7 @@ public class OptionManager {
 		return count.intValue();
 	}
 
+	/*
 	public void persist(Option o) {
 		try {
 			em.getTransaction().begin();
@@ -60,4 +61,5 @@ public class OptionManager {
 			// TODO handle exceptions, specifically constraint violations
 		}
 	}
+	*/
 }

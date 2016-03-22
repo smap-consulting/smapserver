@@ -128,7 +128,7 @@ public class QuestionManager {
 		}
 	}
 */
-	
+	/*
 	public void persist(Question q) {
 		try {
 			em.getTransaction().begin();
@@ -140,4 +140,5 @@ public class QuestionManager {
 			// TODO handle exceptions, specifically constraint violations
 		}
 	}
+	*/
 }
