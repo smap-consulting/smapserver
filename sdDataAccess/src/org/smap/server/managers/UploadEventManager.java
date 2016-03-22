@@ -34,6 +34,7 @@ import org.smap.server.entities.UploadEvent;
  */
 public class UploadEventManager {
 
+	/*
 	private EntityManager em = null;
 
 	public UploadEventManager(PersistenceContext pc) {
@@ -46,10 +47,12 @@ public class UploadEventManager {
 		List<UploadEvent> eventList = query.getResultList();
 		return eventList;
 	}
+	*/
 	
 	/**
 	 * This method is used to return upload events for a specified survey template.
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<UploadEvent> getBySurveyName(String name) {
 		List<UploadEvent> eventList = null;
@@ -63,12 +66,14 @@ public class UploadEventManager {
 		}
 		return eventList;
 	}
+	*/
 	
 	/**
 	 * This method is used to return complete upload events that have not been submitted 
 	 * successfully to the specified subscriber
 	 * if sId > 0 then only uploads for that survey are returned
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<UploadEvent> getFailedForSubscriber(String name, int sId) {
 		List<UploadEvent> eventList = null;
@@ -101,6 +106,7 @@ public class UploadEventManager {
 		}
 		return eventList;
 	}
+	*/
 	
 	/**
 	 * This method is used to return complete upload events that have not been submitted 
@@ -132,6 +138,7 @@ public class UploadEventManager {
 	}
 	*/
 
+	/*
 	public void persist(UploadEvent ue) throws Exception {
 
 		try {
@@ -145,5 +152,6 @@ public class UploadEventManager {
 			throw new Exception("Error: Failed to write to upload event table");
 		}
 	}
+	*/
 	
 }

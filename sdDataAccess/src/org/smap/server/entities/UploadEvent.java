@@ -164,6 +164,10 @@ public class UploadEvent implements Serializable {
 		return assignmentId;
 	}
 	
+	public String getInstanceId() {
+		return instanceId;
+	}
+	
 	public String getStatus() {
 		return status;
 	}
@@ -203,6 +207,9 @@ public class UploadEvent implements Serializable {
 	/*
 	 * Setters
 	 */
+	public void setId(int v) {
+		ue_id = v;
+	}
 	
 	public void setIdent(String v) {
 		ident = v;

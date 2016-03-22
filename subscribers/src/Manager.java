@@ -48,12 +48,12 @@ public class Manager {
 		
 		System.out.println("Starting subscriber: " + smapId + " : " + fileLocn + " : " + subscriberType);
 		int delaySecs = 10;
-		PersistenceContext pc = new PersistenceContext(smapId);
+		//PersistenceContext pc = new PersistenceContext(smapId);
 		
 		while(true) {
 
 			SubscriberBatch batchJob = new SubscriberBatch();
-			batchJob.go(pc, smapId, fileLocn, subscriberType);	// Run the batch job for the specified server
+			batchJob.go(smapId, fileLocn, subscriberType);	// Run the batch job for the specified server
 
 			try {
 				Thread.sleep(delaySecs * 1000);

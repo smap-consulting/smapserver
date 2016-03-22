@@ -45,6 +45,7 @@ public class PersistenceContext {
 		return em;
 	}
 	
+	/*
 	// Force a reset of the persistence unit / entity manager factory
 	public void resetPersistenceUnit(String pu) {
 		persistenceUnit = pu;
@@ -52,6 +53,7 @@ public class PersistenceContext {
 		EntityManagerFactory emf = EMFManager.getManager().getEntityManagerFactory(persistenceUnit);
 		em = emf.createEntityManager();
 	}
+	*/
 	
 
 }

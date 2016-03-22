@@ -43,6 +43,8 @@ import org.smap.subscribers.Subscriber;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import JdbcManagers.JdbcUploadEventManager;
+
 /*****************************************************************************
 
 This file is part of SMAP.
@@ -76,9 +78,10 @@ public class SubscriberBatch {
 	/**
 	 * @param args
 	 */
-	public void go(PersistenceContext pc, String smapId, String basePath, String subscriberType) {
+	public void go(String smapId, String basePath, String subscriberType) {
 		
-		UploadEventManager uem = new UploadEventManager(pc);
+		//UploadEventManager uem = new UploadEventManager(pc);
+		
 		confFilePath = "./" + smapId;
 
 		// Get the connection details for the meta data database
@@ -86,6 +89,7 @@ public class SubscriberBatch {
 		String databaseMeta = null;
 		String userMeta = null;
 		String passwordMeta = null;
+		JdbcUploadEventManager uem = null;
 		
 		try {
 			db = dbf.newDocumentBuilder();
@@ -98,6 +102,8 @@ public class SubscriberBatch {
 			Class.forName(dbClassMeta);
 			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
 		
+			uem = new JdbcUploadEventManager(sd);
+			
 			/*
 			 * Get subscribers and their configuration
 			 * This is re-evaluated every time the batch job is run to allow
@@ -129,11 +135,10 @@ public class SubscriberBatch {
 					if(s.isEnabled()) {
 						
 						List<UploadEvent> uel = null;
-						if(s.isSurveySpecific()) {
-							uel = uem.getFailedForSubscriber(s.getSubscriberName(), s.getSurveyId());
-						} else {
-							uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
-						}
+						
+						uel = uem.getFailed(s.getSubscriberName());
+						//uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
+						
 									
 						if(uel.isEmpty()) {
 							
@@ -316,6 +321,8 @@ public class SubscriberBatch {
 			e.printStackTrace();
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+			
+			if(uem != null) {uem.close();}
 			
 			try {if (sd != null) {
 					sd.close();

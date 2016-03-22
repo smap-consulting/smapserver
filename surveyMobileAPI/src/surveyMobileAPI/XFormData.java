@@ -58,6 +58,7 @@ import org.smap.server.entities.UploadEvent;
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.UploadEventManager;
 
+import JdbcManagers.JdbcUploadEventManager;
 import exceptions.SurveyBlockedException;
 
 class SaveDetails {
@@ -207,14 +208,14 @@ public class XFormData {
 			if(survey.getDeleted()) {
 				String reason = survey.displayName + " has been deleted";
 				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
-					writeUploadError(user, survey, templateName, si, pc, reason);
+					writeUploadError(sd, user, survey, templateName, si, pc, reason);
 				}
 				throw new NotFoundException();
 			}
 			if(survey.getBlocked()) {	// Throw an exception if the survey has been blocked form accepting any more submssions
 				String reason = survey.displayName + " has been blocked";
 				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
-					writeUploadError(user, survey, templateName, si, pc, reason);
+					writeUploadError(sd, user, survey, templateName, si, pc, reason);
 				}
 				throw new SurveyBlockedException();
 			}
@@ -258,8 +259,15 @@ public class XFormData {
 			ue.setLocationTrigger(locationTrigger);
 			ue.setSurveyNotes(surveyNotes);
 			
-			UploadEventManager uem = new UploadEventManager(pc);
-			uem.persist(ue);
+			JdbcUploadEventManager uem = null;
+			try {
+				uem = new JdbcUploadEventManager(sd);
+				uem.write(ue);
+			} finally {
+				if(uem != null) {uem.close();}
+			}
+			//UploadEventManager uem = new UploadEventManager(pc);
+			//uem.persist(ue);
 			
 			log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 		} finally {
@@ -267,7 +275,7 @@ public class XFormData {
 		}
 	}
 	
-	private void writeUploadError(String user, Survey survey, String templateName, 
+	private void writeUploadError(Connection sd, String user, Survey survey, String templateName, 
 			SurveyInstance si, PersistenceContext pc, String reason) throws Exception {
 		log.info("Writing upload error");
 		UploadEvent ue = new UploadEvent();
@@ -282,8 +290,17 @@ public class XFormData {
 		ue.setImei(si.getImei());
 		ue.setStatus("error"); // Not really needed any more as status is really set in the subscriber event
 		ue.setReason(reason);
-		UploadEventManager uem = new UploadEventManager(pc);
-		uem.persist(ue);
+		
+		JdbcUploadEventManager uem = null;
+		try {
+			uem = new JdbcUploadEventManager(sd);
+			uem.write(ue);
+		} finally {
+			if(uem != null) {uem.close();}
+		}
+		
+		//UploadEventManager uem = new UploadEventManager(pc);
+		//uem.persist(ue);
 	}
 	
 	private SaveDetails saveToDisk(
