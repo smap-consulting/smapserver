@@ -24,12 +24,6 @@ import org.smap.server.entities.Project;
 import org.smap.server.entities.Question;
 import org.smap.server.entities.Survey;
 import org.smap.server.entities.Translation;
-import org.smap.server.managers.FormManager;
-import org.smap.server.managers.OptionManager;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.ProjectManager;
-import org.smap.server.managers.QuestionManager;
-import org.smap.server.managers.TranslationManager;
 import org.smap.server.utilities.UtilityMethods;
 
 import JdbcManagers.JdbcFormManager;
@@ -1442,7 +1436,7 @@ public class SurveyTemplate {
 	 *  useExternalChoices is set false when getting an XForm
 	 *      Return the dummy choice that points to the external file columns
 	 */
-	public void extendInstance(SurveyInstance instance, boolean useExternalChoices) {
+	public void extendInstance(Connection sd, SurveyInstance instance, boolean useExternalChoices) throws SQLException {
 		List<Form> formList  = getAllForms(); 
 		
 		// Set the display name
@@ -1452,16 +1446,18 @@ public class SurveyTemplate {
 		 */
 		for(Form f : formList) {
 			instance.setForm(f.getPath(), f.getTableName(), f.getType());
-			List <Question> questionList = f.getQuestions();
-			extendQuestions(instance, questionList, f.getPath(), useExternalChoices);
+			List <Question> questionList = f.getQuestions(sd);
+			extendQuestions(sd, instance, questionList, f.getPath(), useExternalChoices);
 		}
 	}
 	
 	
-	public void extendQuestions(SurveyInstance instance, 
+	public void extendQuestions(
+			Connection sd,
+			SurveyInstance instance, 
 			List <Question> questionList, 
 			String formPath,
-			boolean useExternalChoices) {
+			boolean useExternalChoices) throws SQLException {
 		
 		for(Question q : questionList) {
 			
@@ -1489,9 +1485,9 @@ public class SurveyTemplate {
 					// Add the options to this multi choice question
 					Collection <Option> optionList = null;
 					if(useExternalChoices) {
-						optionList = q.getValidChoices();
+						optionList = q.getValidChoices(sd);
 					} else {
-						optionList = q.getChoices();
+						optionList = q.getChoices(sd);
 					}
 
 					for(Option o : optionList) {

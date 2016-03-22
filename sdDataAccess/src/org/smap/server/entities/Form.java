@@ -20,6 +20,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -32,6 +34,8 @@ import javax.persistence.Transient;
 
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.QuestionManager;
+
+import JdbcManagers.JdbcQuestionManager;
 
 /*
  * Class to store Form objects
@@ -134,11 +138,20 @@ public class Form implements Serializable {
 		return parentform;
 	}
 	
-	public List<Question> getQuestions() {
+	public List<Question> getQuestions(Connection sd) throws SQLException {
 		if(questions == null) {
-			PersistenceContext pc = new PersistenceContext("pgsql_jpa");
-			QuestionManager qm = new QuestionManager(pc);
-			questions = qm.getByFormId(f_id);
+			//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+			//QuestionManager qm = new QuestionManager(pc);
+			//questions = qm.getByFormId(f_id);
+			
+			JdbcQuestionManager qm = null;
+			try {
+				qm = new JdbcQuestionManager(sd);
+				questions = qm.getByFormId(f_id);
+				
+			} finally {
+				if(qm != null) {qm.close();}
+			}
 		}
 		return questions;
 	}

@@ -33,6 +33,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.model.Results;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.ResultsDataSource;
+import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -74,8 +75,11 @@ public class GetXForm {
      	   
        	String response = null;
        	this.template = template;
-  	    	
+  	    
+       	Connection sd = null;
     	try {
+    		sd = SDDataSource.getConnection("getXForm");
+    		
     		log.info("Getting survey as XML-------------------------------");
     		// Create a new XML Document
     		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -94,8 +98,8 @@ public class GetXForm {
   		
     		Element parent;
         	parent = populateRoot(outputXML);
-        	populateHead(outputXML, b, parent);
-        	populateBody(outputXML, parent);
+        	populateHead(sd,outputXML, b, parent);
+        	populateBody(sd, outputXML, parent);
 
     		// Write the survey to a string and return it to the calling program
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -112,6 +116,9 @@ public class GetXForm {
     	} catch (Exception e) {
     		response = e.getMessage();
     		e.printStackTrace();
+    	} finally {
+    		 try {
+             	if (sd != null) {sd.close(); sd = null;}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection", e);}
     	}
 
     	return response;
@@ -139,7 +146,7 @@ public class GetXForm {
      * Populate the head element
      * @param outputXML
      */
-    public void populateHead(Document outputDoc, DocumentBuilder documentBuilder, Element parent) {
+    public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, Element parent) throws SQLException {
 
     	Survey s = template.getSurvey();
     	
@@ -156,11 +163,11 @@ public class GetXForm {
     	
     	Element itextElement = outputDoc.createElement("itext");
     	modelElement.appendChild(itextElement);
-    	populateItext(outputDoc, documentBuilder, itextElement);
+    	populateItext(sd, outputDoc, documentBuilder, itextElement);
     	
     	Element instanceElement = outputDoc.createElement("instance");
     	modelElement.appendChild(instanceElement); 	
-    	populateInstance(outputDoc, instanceElement);
+    	populateInstance(sd, outputDoc, instanceElement);
     	
     	if(template.hasCascade()) {
     		
@@ -176,7 +183,7 @@ public class GetXForm {
     	}
     	// Add forms to bind elements
     	if(firstForm != null) {		
-    		populateForm(outputDoc, modelElement, BIND, firstForm);
+    		populateForm(sd, outputDoc, modelElement, BIND, firstForm);
     	}
 
     	
@@ -186,10 +193,10 @@ public class GetXForm {
     /*
      * Populate the itext element with language translations
      */
-    public void populateItext(Document outputDoc, DocumentBuilder builder, Element parent) {
+    public void populateItext(Connection sd, Document outputDoc, DocumentBuilder builder, Element parent) throws SQLException {
     	
        	Survey s = template.getSurvey();
-    	enableTranslationElements(firstForm);	// Enable the translations that are actually used
+    	enableTranslationElements(sd, firstForm);	// Enable the translations that are actually used
     	
     	HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = template.getTranslations();
 		// Write the translation objects
@@ -292,14 +299,14 @@ public class GetXForm {
      * This function is required because not all questions in a survey are enabled
      *  and it would be inefficient to download the iText for disabled questions
      */
-    public void enableTranslationElements(Form f) {
+    public void enableTranslationElements(Connection sd, Form f) throws SQLException {
        	if(firstForm != null) {
    
        	   	HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = template.getTranslations();
        	   	Collection<HashMap<String, HashMap<String, Translation>>> c = translations.values();
 
        	   	
-	    	List <Question> questions = f.getQuestions();		
+	    	List <Question> questions = f.getQuestions(sd);		
 	    	for(Question q : questions) {
 	    		
 	    		if(q.getEnabled()) {
@@ -311,7 +318,7 @@ public class GetXForm {
 	    			
 	    			// If this is a choice question, add the items
 	    			if(q.getType().startsWith("select")) {
-	    			   	Collection <Option> options = q.getChoices(); 
+	    			   	Collection <Option> options = q.getChoices(sd); 
 	    		    	List <Option> optionList = new ArrayList <Option> (options);
 	    		    	
 	    		    	for(Option o : optionList) {
@@ -324,7 +331,7 @@ public class GetXForm {
 	    			if(q.getType().equals("begin repeat") || q.getType().equals("geolinestring") || q.getType().equals("geopolygon")) {
 	    				
 	    				Form subForm = template.getSubForm(f,q);			
-	    				enableTranslationElements(subForm);
+	    				enableTranslationElements(sd, subForm);
 	    				
 	    			}
 	    			
@@ -365,14 +372,14 @@ public class GetXForm {
     /*
      * Populate the Instance element starting with the top level form
      */
-    public void populateInstance(Document outputDoc, Element parent) {
+    public void populateInstance(Connection sd, Document outputDoc, Element parent) throws SQLException {
     	
     	if(firstForm != null) {
     		Element formElement = outputDoc.createElement(firstForm.getName());
     		formElement.setAttribute("id", template.getSurvey().getIdent()); 
     		formElement.setAttribute("version", String.valueOf(template.getSurvey().getVersion()));
     		formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
-    		populateForm(outputDoc, formElement, INSTANCE, firstForm); 	// Process the top level form
+    		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm); 	// Process the top level form
     		parent.appendChild(formElement);   		
     	}
     }
@@ -389,7 +396,7 @@ public class GetXForm {
 
  
     
-    public void populateBody(Document outputDoc, Element parent) {
+    public void populateBody(Connection sd, Document outputDoc, Element parent) throws SQLException {
     	Element bodyElement = outputDoc.createElement("h:body");
     	/*
     	 * Add class if it is set
@@ -400,7 +407,7 @@ public class GetXForm {
     		gSurveyClass = surveyClass;
     	}
        	if(firstForm != null) {
-    		populateForm(outputDoc, bodyElement, BODY, firstForm); 		// Process the top level form
+    		populateForm(sd, outputDoc, bodyElement, BODY, firstForm); 		// Process the top level form
     	}
     	
     	parent.appendChild(bodyElement);
@@ -415,7 +422,7 @@ public class GetXForm {
      * @param f
      * @param parentXPath
      */
-    public void populateForm(Document outputDoc, Element parentElement, int location, Form f) {
+    public void populateForm(Connection sd, Document outputDoc, Element parentElement, int location, Form f) throws SQLException {
 
     	Element currentParent = parentElement;
        	Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
@@ -423,7 +430,7 @@ public class GetXForm {
 		/*
 		 * Add the questions from the template
 		 */
-    	List <Question> questions = f.getQuestions();		
+    	List <Question> questions = f.getQuestions(sd);		
     	for(Question q : questions) {
     		
     		// Skip questions that are not enabled
@@ -447,7 +454,7 @@ public class GetXForm {
     				
     				Element formElement_template = outputDoc.createElement(subForm.getName());
     				formElement_template.setAttribute("jr:template", "");
-    				populateForm(outputDoc, formElement_template, INSTANCE, subForm);	
+    				populateForm(sd, outputDoc, formElement_template, INSTANCE, subForm);	
     				currentParent.appendChild(formElement_template);
     				
     			} else if(qType.equals("begin group")) {
@@ -484,7 +491,7 @@ public class GetXForm {
        				
 					// Process sub form
        				Form subForm = template.getSubForm(f,q);
-    				populateForm(outputDoc, currentParent, BIND, subForm);
+    				populateForm(sd, outputDoc, currentParent, BIND, subForm);
     				if(subForm.getRepeats() != null) {
     					// Add the calculation for repeat count
     					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), true);
@@ -531,12 +538,12 @@ public class GetXForm {
     				}
     				groupElement.appendChild(repeatElement);
     				   				
-    				populateForm(outputDoc, repeatElement, BODY, subForm);
+    				populateForm(sd, outputDoc, repeatElement, BODY, subForm);
 
     			} else {	// Add question to output
     				if(q.isVisible()) {
     					
-    					questionElement = populateBodyQuestion(outputDoc, f, q, f.getPath());	
+    					questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath());	
     					currentParent.appendChild(questionElement);
 
     				}
@@ -567,18 +574,18 @@ public class GetXForm {
     /*
      * Populate a repeating group
      */
-    public void createRepeatingGroup(Document outputXML, Element parent, Form subF, int location, 
-    		String parentXPath, Question parentQuestion) {
+    public void createRepeatingGroup(Connection sd, Document outputXML, Element parent, Form subF, int location, 
+    		String parentXPath, Question parentQuestion) throws SQLException {
 
 		if(location == INSTANCE) {
 			
 			Element subFormParent = outputXML.createElement(parentQuestion.getName());
-			populateForm(outputXML, subFormParent, location, subF);
+			populateForm(sd, outputXML, subFormParent, location, subF);
 			parent.appendChild(subFormParent);
 			
 		} else if(location == BIND) {
 			
-			populateForm(outputXML, parent, location, subF);
+			populateForm(sd, outputXML, parent, location, subF);
 			
 		} else {		// BODY
 			
@@ -595,7 +602,7 @@ public class GetXForm {
 			repeatElement.setAttribute("nodeset", subF.getPath());
 			subFormParent.appendChild(repeatElement);
 			
-			populateForm(outputXML, repeatElement, location, subF);
+			populateForm(sd, outputXML, repeatElement, location, subF);
 			parent.appendChild(subFormParent);
 			
 		}
@@ -699,7 +706,7 @@ public class GetXForm {
      * @param f
      * @param q
      */
-    public Element populateBodyQuestion(Document outputXML, Form f, Question q, String parentXPath) {
+    public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws SQLException {
 
 		Element questionElement = null;
 		String type = q.getType();
@@ -804,7 +811,7 @@ public class GetXForm {
 		
 		// If this is a choice question and it doesn't store it's items in itemset, then add the items
 		if(!cascade && questionElement != null && q.getType().startsWith("select")) {
-			populateOptions(outputXML, questionElement, q);
+			populateOptions(sd, outputXML, questionElement, q);
 		}
 		return questionElement;
     }
@@ -815,9 +822,9 @@ public class GetXForm {
      * @param parent
      * @param q
      */
-    public void populateOptions(Document outputXML, Element parent, Question q) {
+    public void populateOptions(Connection sd, Document outputXML, Element parent, Question q) throws SQLException {
 
-    	Collection <Option> options = q.getChoices(); 
+    	Collection <Option> options = q.getChoices(sd); 
     	List <Option> optionList = new ArrayList <Option> (options);
   
 		/*
@@ -944,7 +951,8 @@ public class GetXForm {
     		boolean simplifyMedia) throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
     	String instanceXML = null;
     	
-    	Connection connection = null; 
+    	Connection cResults = null;
+    	Connection sd = null;
     	
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder b = dbf.newDocumentBuilder();    		
@@ -970,7 +978,8 @@ public class GetXForm {
 		}
 		
 		String requester = "GetXForm - getInstance";
-		connection = ResultsDataSource.getConnection(requester);
+		cResults = ResultsDataSource.getConnection(requester);
+		sd = SDDataSource.getConnection(requester);
 	 
 		/*
 		 * Replace the primary key with the primary key of the record that matches the passed in key and key value
@@ -979,14 +988,14 @@ public class GetXForm {
 			if(key != null && keyval != null) { 
 				if(key.equals("prikey")) {
 					priKey = Integer.parseInt(keyval);
-					if(!priKeyValid(connection, firstForm, priKey)) {
+					if(!priKeyValid(cResults, firstForm, priKey)) {
 						priKey = 0;
 					}
 				} else {
-					priKey = getPrimaryKey(connection, firstForm, key, keyval);
+					priKey = getPrimaryKey(cResults, firstForm, key, keyval);
 				}
 			} else {
-				if(!priKeyValid(connection, firstForm, priKey)) {
+				if(!priKeyValid(cResults, firstForm, priKey)) {
 					priKey = 0;
 				}
 			}
@@ -996,13 +1005,13 @@ public class GetXForm {
 			boolean hasData = false;
 			if(priKey > 0) {
 				hasData = true;
-				populateForm(outputXML, firstForm, priKey, -1, connection, template, 
+				populateForm(outputXML, firstForm, priKey, -1, cResults, sd, template, 
 						null, sId, templateName, false, simplifyMedia);    
 			} else if(key != null && keyval != null)  {
 				// Create a blank form containing only the key values
 				hasData = true;
 				log.info("Outputting blank form");
-				populateBlankForm(outputXML, firstForm, connection,  template, null, 
+				populateBlankForm(outputXML, firstForm, cResults,  template, null, 
 						sId, key, keyval, templateName, false);
 			} 
 			
@@ -1019,11 +1028,21 @@ public class GetXForm {
 			}
 		} finally {
 			try {
-            	if (connection != null) {
-            		connection.close();
-            		connection = null;
+            	if (cResults != null) {
+            		cResults.close();
+            		cResults = null;
             	}
             	log.info("   Release results connection: " + requester);
+            } catch (SQLException e) {
+            	log.log(Level.SEVERE, "Failed to close connection", e);
+            }	
+			
+			try {
+            	if (sd != null) {
+            		sd.close();
+            		cResults = null;
+            	}
+            	log.info("   Release survey definitions connection: " + requester);
             } catch (SQLException e) {
             	log.log(Level.SEVERE, "Failed to close connection", e);
             }	
@@ -1096,7 +1115,7 @@ public class GetXForm {
 	 * Get the primary key from the passed in key values
 	 *  The key must be in the top level form
 	 */
-	int getPrimaryKey(Connection connection, Form firstForm, String key, String keyval) throws ApplicationException, SQLException {
+	int getPrimaryKey(Connection sd, Form firstForm, String key, String keyval) throws ApplicationException, SQLException {
 		int prikey = 0;
 		String table = firstForm.getTableName().replace("'", "''");	// Escape apostrophes
 		key = key.replace("'", "''");	// Escape apostrophes
@@ -1104,7 +1123,7 @@ public class GetXForm {
 		String keyColumnName = null;
 		
 		// Get the key type
-		List<Question> questions = firstForm.getQuestions();
+		List<Question> questions = firstForm.getQuestions(sd);
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
 			if(q.getName().toLowerCase().trim().equals(key)) {
@@ -1119,7 +1138,7 @@ public class GetXForm {
 		String sql = "select prikey from " + table + " where " + keyColumnName + " = ? " +
 				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
 		
-		PreparedStatement pstmt = connection.prepareStatement(sql);
+		PreparedStatement pstmt = sd.prepareStatement(sql);
 		if(type.equals("string") || type.equals("barcode")) {
 			pstmt.setString(1, keyval);
 		} else if (type.equals("int")) {
@@ -1166,7 +1185,7 @@ public class GetXForm {
      *   b) as a java rosa template
      * @param outputDoc
      */
-    public void populateBlankForm(Document outputDoc, Form form, Connection connection, SurveyTemplate template,
+    public void populateBlankForm(Document outputDoc, Form form, Connection sd, SurveyTemplate template,
        		Element parentElement,
     		int sId,
     		String key,
@@ -1176,7 +1195,7 @@ public class GetXForm {
 	
  		List<Results> record = new ArrayList<Results> ();
  		
-    	List<Question> questions = form.getQuestions();
+    	List<Question> questions = form.getQuestions(sd);
 		for(Question q : questions) {
 			
 			String qName = q.getName();
@@ -1220,7 +1239,7 @@ public class GetXForm {
     		item= record.get(j);   			
 
     		if(item.subForm != null) {
-				populateBlankForm(outputDoc, item.subForm, connection, template, 
+				populateBlankForm(outputDoc, item.subForm, sd, template, 
 						currentParent, sId, key, keyval, survey_ident, isTemplate);				
     		} else if (item.begin_group) { 
 
@@ -1264,7 +1283,8 @@ public class GetXForm {
      * @param outputDoc
      */
     public void populateForm(Document outputDoc, Form form, int id, int parentId, 
-    		Connection connection,
+    		Connection cResults,
+    		Connection sd,
     		SurveyTemplate template,
     		Element parentElement,
     		int sId,
@@ -1272,7 +1292,7 @@ public class GetXForm {
     		boolean isFirstSubForm,
     		boolean simplifyMedia) throws SQLException {
 	
-		List<List<Results>> results = getResults(form, id, parentId, connection, template, simplifyMedia);  // Add the child elements
+		List<List<Results>> results = getResults(form, id, parentId, cResults, sd, template, simplifyMedia);  // Add the child elements
     	boolean generatedTemplate = false;
 		// For each record returned from the database add a form element
     	for(int i = 0; i < results.size(); i++) {
@@ -1294,7 +1314,7 @@ public class GetXForm {
     			if(item.subForm != null) {
     				boolean needTemplate = (!generatedTemplate && (parentElement == null));
     				populateForm(outputDoc, item.subForm, -1, 
-    						Integer.parseInt(priKey.value), connection, template, 
+    						Integer.parseInt(priKey.value), cResults, sd, template, 
     						currentParent, sId, survey_ident, 
     						needTemplate,
     						simplifyMedia);
@@ -1362,7 +1382,8 @@ public class GetXForm {
      * @param id
      * @param parentId
      */
-    List<List<Results>> getResults(Form form, int id, int parentId, Connection connection,
+    List<List<Results>> getResults(Form form, int id, int parentId, Connection cResults,
+    		Connection sd,
     		SurveyTemplate template,
     		boolean simplifyMedia) throws SQLException{
  
@@ -1375,7 +1396,7 @@ public class GetXForm {
     	 */
     	
     	String sql = "select prikey";
-    	List<Question> questions = form.getQuestions();
+    	List<Question> questions = form.getQuestions(sd);
     	for(Question q : questions) {
     		String col = null;
     		
@@ -1406,7 +1427,7 @@ public class GetXForm {
     	}
     	log.info(sql);
 
-    	PreparedStatement pstmt = connection.prepareStatement(sql);	 			
+    	PreparedStatement pstmt = cResults.prepareStatement(sql);	 			
     	ResultSet resultSet = pstmt.executeQuery();
 		
     	// For each record returned from the database add the data values to the instance
@@ -1449,7 +1470,7 @@ public class GetXForm {
 			    	String optValue = "";
 	    			if(q.isPublished()) {		// Get the data from the table if this question has been published
 						String sqlSelect = "select ";
-						List<Option> options = new ArrayList<Option>(q.getValidChoices());
+						List<Option> options = new ArrayList<Option>(q.getValidChoices(sd));
 						UtilityMethods.sortOptions(options);	// Order within an XForm is not actually required, this is just for consistency of reading
 	
 						boolean hasColumns = false;
@@ -1463,7 +1484,7 @@ public class GetXForm {
 						sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
 				    	log.info(sqlSelect);
 				    	
-				    	pstmt = connection.prepareStatement(sqlSelect);	 			
+				    	pstmt = cResults.prepareStatement(sqlSelect);	 			
 				    	ResultSet resultSetOptions = pstmt.executeQuery();
 				    	resultSetOptions.next();		// There will only be one record
 			    		

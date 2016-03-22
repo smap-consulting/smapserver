@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +46,8 @@ import org.smap.server.managers.OptionManager;
 import org.smap.server.managers.PersistenceContext;
 import org.smap.server.managers.QuestionManager;
 import org.smap.server.utilities.UtilityMethods;
+
+import JdbcManagers.JdbcOptionManager;
 
 /*
  * Class to store Question objects
@@ -542,11 +545,11 @@ public class Question implements Serializable {
 	/*
 	 * Only return choices that were not created by an external csv file
 	 */
-	public Collection<Option> getChoices() {
+	public Collection<Option> getChoices(Connection sd) throws SQLException {
 		Collection<Option> internalChoices = new ArrayList<Option> ();
 		
 		if (choices == null) {
-			loadChoices();
+			loadChoices(sd);
 		}
 		
 		ArrayList<Option> cArray = new ArrayList<Option>(choices);
@@ -562,10 +565,10 @@ public class Question implements Serializable {
 	 * Return all non external choices 
 	 *   or if there is a single external choice then return all external choices
 	 */
-	public Collection<Option> getValidChoices() {
+	public Collection<Option> getValidChoices(Connection sd) throws SQLException {
 		
 		if (choices == null) {
-			loadChoices();
+			loadChoices(sd);
 		}
 		
 		Collection<Option> externalChoices = new ArrayList<Option> ();
@@ -621,11 +624,19 @@ public class Question implements Serializable {
 		 return po;
 	 }
 	 
-	 private Collection<Option> loadChoices() {
+	 private Collection<Option> loadChoices(Connection sd) throws SQLException {
 		 if(choices == null) {
-				PersistenceContext pc = new PersistenceContext("pgsql_jpa");
-				OptionManager om = new OptionManager(pc);
-				choices = om.getByQuestionId(q_id);
+				//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+				//OptionManager om = new OptionManager(pc);
+				//choices = om.getByQuestionId(q_id);
+				
+				JdbcOptionManager om = null;
+				try {
+					om = new JdbcOptionManager(sd);
+					choices = om.getByListId(l_id);
+				} finally {
+					if(om != null) {om.close();}
+				}
 			}
 			return choices;
 	 }

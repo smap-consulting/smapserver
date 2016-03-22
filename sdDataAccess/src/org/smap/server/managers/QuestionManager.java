@@ -30,11 +30,13 @@ import org.smap.server.entities.Survey;
 
 public class QuestionManager {
 
+	/*
 	private EntityManager em = null;
 
 	public QuestionManager(PersistenceContext pc) {
 		em = pc.getEntityManager();
 	}
+	*/
 /*
 	@SuppressWarnings("unchecked")
 	public List<Question> getAll() {
@@ -44,6 +46,7 @@ public class QuestionManager {
 		return questionList;
 	}
 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Question> getByFormId(int formId) {
 		Query query = em
@@ -54,6 +57,7 @@ public class QuestionManager {
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
+	*/
 /*
 	@SuppressWarnings("unchecked")
 	public List<Question> getBySurveyId(int surveyId) {

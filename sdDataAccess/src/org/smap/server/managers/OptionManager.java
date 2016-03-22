@@ -28,12 +28,15 @@ import org.smap.server.entities.Option;
 
 public class OptionManager {
 
+	/*
 	private EntityManager em = null;
 
 	public OptionManager(PersistenceContext pc) {
 		em = pc.getEntityManager();
 	}
-
+	*/
+	
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Option> getByQuestionId(int questionId) {
 		Query query = em.createQuery("SELECT o FROM OPTION o, QUESTION q "
@@ -42,7 +45,7 @@ public class OptionManager {
 		List<Option> optionList = query.getResultList();
 		return optionList;
 	}
-
+	*/
 	/*
 	public int getCountForQuestion(int questionId) {
 		Query query = em.createQuery("SELECT COUNT(o) FROM OPTION o, QUESTION q "

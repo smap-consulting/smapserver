@@ -69,7 +69,7 @@ public class SubscriberBatch {
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	DocumentBuilder db = null;
 	Document xmlConf = null;		
-	Connection connection = null;
+	Connection sd = null;
 	PreparedStatement pstmt = null;
 	
 	
@@ -96,7 +96,7 @@ public class SubscriberBatch {
 			passwordMeta = xmlConf.getElementsByTagName("password").item(0).getTextContent();
 			
 			Class.forName(dbClassMeta);
-			connection = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
+			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
 		
 			/*
 			 * Get subscribers and their configuration
@@ -107,9 +107,9 @@ public class SubscriberBatch {
 			 */
 			List<Subscriber> subscribers = null;
 			if(subscriberType.equals("upload")) {
-				subscribers = init(connection, pstmt);		// Get subscribers 
+				subscribers = init(sd, pstmt);		// Get subscribers 
 			} else if(subscriberType.equals("forward")) {
-				subscribers = initForward(connection, pstmt);		// Get subscribers 
+				subscribers = initForward(sd, pstmt);		// Get subscribers 
 			} else {
 				System.out.println("Unknown subscriber type: " + subscriberType + " known values are upload, forward");
 			}
@@ -192,11 +192,11 @@ public class SubscriberBatch {
 										SurveyTemplate template = new SurveyTemplate();
 										
 										template.readDatabase(templateName);					
-										template.extendInstance(instance, true);	// Extend the instance with information from the template
+										template.extendInstance(sd, instance, true);	// Extend the instance with information from the template
 										// instance.getTopElement().printIEModel("   ");	// Debug
 										
 										// Get attachments from incomplete submissions
-										getAttachmentsFromIncompleteSurveys(connection, s.getSubscriberName(), ue.getFilePath(), ue.getOrigSurveyIdent(), ue.getIdent());
+										getAttachmentsFromIncompleteSurveys(sd, s.getSubscriberName(), ue.getFilePath(), ue.getOrigSurveyIdent(), ue.getIdent());
 										
 										is3 = new FileInputStream(uploadFile);	// Get an input stream for the file in case the subscriber uses that rather than an Instance object
 										s.upload(instance, is3, ue.getUserName(), 
@@ -295,9 +295,9 @@ public class SubscriberBatch {
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 			
-			try {if (connection != null) {
-					connection.close();
-					connection = null;
+			try {if (sd != null) {
+					sd.close();
+					sd = null;
 				}
 			} catch (SQLException e) {
 				System.out.println("Failed to close connection");
@@ -430,11 +430,11 @@ public class SubscriberBatch {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtUpdate = null;
 		try {
-			pstmt = connection.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, origIdent);
 			pstmt.setString(2, ident);
 			
-			pstmtUpdate = connection.prepareStatement(sqlUpdate);
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
 			
 			File finalFile = new File(finalPath);
 			File finalDirFile = finalFile.getParentFile();

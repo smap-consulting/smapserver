@@ -68,6 +68,7 @@ public class JdbcQuestionManager {
 				+ ", ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
+	PreparedStatement pstmtGetByFormId;
 	String sqlGet = "select "
 			+ "q_id, "
 			+ "f_id, "
@@ -100,6 +101,8 @@ public class JdbcQuestionManager {
 			+ "from question where soft_deleted = 'false' and ";
 	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
 			+ " order by f_id, seq";
+	String sqlGetByFormId = "f_id  = ?"
+			+ " order by seq";
 	
 	/*
 	 * Constructor
@@ -107,6 +110,7 @@ public class JdbcQuestionManager {
 	public JdbcQuestionManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlGetBySurveyId);
+		pstmtGetByFormId = sd.prepareStatement(sqlGet + sqlGetByFormId);
 	}
 	
 	/*
@@ -156,6 +160,14 @@ public class JdbcQuestionManager {
 	public List <Question> getBySurveyId(int sId) throws SQLException {
 		pstmtGetBySurveyId.setInt(1, sId);
 		return getQuestionList(pstmtGetBySurveyId);
+	}
+	
+	/*
+	 * Get a list of questions in the passed in form
+	 */
+	public List <Question> getByFormId(int fId) throws SQLException {
+		pstmtGetByFormId.setInt(1, fId);
+		return getQuestionList(pstmtGetByFormId);
 	}
 	
 	/*
