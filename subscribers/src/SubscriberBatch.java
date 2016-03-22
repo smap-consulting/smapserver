@@ -255,13 +255,35 @@ public class SubscriberBatch {
 									// Save the status unless the host was unreachable
 									//  unreachable events are logged but not otherwise recorded
 									if(se.getStatus() != null && !se.getStatus().equals("host_unreachable")) {
-										se.setUploadEvent(ue);
-										SubscriberEventManager sem = new SubscriberEventManager(pc);
+										
+										String sqlUpdateStatus = "insert into subscriber_event ("
+												+ "se_id,"
+												+ "ue_id,"
+												+ "subscriber,"
+												+ "status,"
+												+ "reason,"
+												+ "dest) "
+												+ "values (nextval('se_seq'), ?, ?, ?, ?, ?);";
+										PreparedStatement pstmt = null;
 										try {
-											sem.persist(se);
-										} catch (Exception e) {
-											e.printStackTrace();
+											pstmt = sd.prepareStatement(sqlUpdateStatus);
+											pstmt.setInt(1, ue.getId());
+											pstmt.setString(2, se.getSubscriber());
+											pstmt.setString(3, se.getStatus());
+											pstmt.setString(4, se.getReason());
+											pstmt.setString(5, se.getDest());
+											pstmt.executeUpdate();
+										} finally {
+											if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 										}
+		
+										//se.setUploadEvent(ue);
+										//SubscriberEventManager sem = new SubscriberEventManager(pc);
+										//try {
+										//	sem.persist(se);
+										//} catch (Exception e) {
+										//	e.printStackTrace();
+										//}
 									} else if(se.getStatus() != null && se.getStatus().equals("host_unreachable")) {
 										// If the host is unreachable then stop forwarding for 10 seconds
 										// Also stop processing this subscriber, it may be that it has been taken off line

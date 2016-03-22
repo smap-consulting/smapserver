@@ -30,20 +30,24 @@ import org.smap.server.entities.UploadEvent;
 
 public class SubscriberEventManager {
 
+	/*
 	private EntityManager em = null;
 
 	public SubscriberEventManager(PersistenceContext pc) {
 		em = pc.getEntityManager();
 	}
+	*/
 	
+	/*
 	@SuppressWarnings("unchecked")
 	public List<String> getSubscribers() {
 		Query query = em.createQuery("SELECT DISTINCT se.subscriber FROM SUBSCRIBER_EVENT se ORDER BY se.subscriber desc");
 		List<String> subscribers = query.getResultList();
 		return subscribers;
 	}
+	*/
 
-
+	/*
 	public void persist(SubscriberEvent se) throws Exception {
 		try {
 			em.getTransaction().begin();
@@ -54,4 +58,5 @@ public class SubscriberEventManager {
 			throw new Exception("Error: Failed to write to upload event table");
 		}
 	}
+	*/
 }

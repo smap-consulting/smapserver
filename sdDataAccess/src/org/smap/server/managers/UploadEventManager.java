@@ -107,6 +107,7 @@ public class UploadEventManager {
 	 * successfully to the specified subscriber
 	 * if sId > 0 then only uploads for that survey are returned
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<UploadEvent> getIncomplete(String origIdent, String ident) {
 		List<UploadEvent> eventList = null;
@@ -129,6 +130,7 @@ public class UploadEventManager {
 		}
 		return eventList;
 	}
+	*/
 
 	public void persist(UploadEvent ue) throws Exception {
 
