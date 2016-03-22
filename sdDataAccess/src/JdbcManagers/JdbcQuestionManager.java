@@ -24,7 +24,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
 
@@ -64,10 +67,51 @@ public class JdbcQuestionManager {
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?);";
 	
+	PreparedStatement pstmtGetBySurveyId;
+	String sqlGet = "select "
+			+ "q_id, "
+			+ "f_id, "
+			+ "seq, "
+			+ "qname, "
+			+ "qtype, "
+			+ "question, "
+			+ "qtext_id, "
+			+ "defaultanswer, "
+			+ "info, "
+			+ "infotext_id,"
+			+ "visible,"
+			+ "source,"
+			+ "source_param,"
+			+ "readonly,"
+			+ "mandatory,"
+			+ "relevant,"
+			+ "calculate,"
+			+ "qconstraint,"
+			+ "constraint_msg,"
+			+ "appearance,"
+			+ "path,"
+			+ "nodeset,"
+			+ "nodeset_value,"
+			+ "nodeset_label,"
+			+ "cascade_instance,"
+			+ "column_name,"
+			+ "published,"
+			+ "l_id "
+			+ "from question where soft_deleted = 'false' and ";
+	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
+			+ " order by f_id, seq";
+	
+	/*
+	 * Constructor
+	 */
 	public JdbcQuestionManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlGetBySurveyId);
 	}
 	
+	/*
+	 * Write to the database
+	 */
 	public void write(Question q) throws SQLException {
 		pstmt.setInt(1, q.getFormId());
 		pstmt.setInt(2, q.getSeq());
@@ -106,7 +150,60 @@ public class JdbcQuestionManager {
 		}
 	}
 	
+	/*
+	 * Get a list of questions in the passed in survey
+	 */
+	public List <Question> getBySurveyId(int sId) throws SQLException {
+		pstmtGetBySurveyId.setInt(1, sId);
+		return getQuestionList(pstmtGetBySurveyId);
+	}
+	
+	/*
+	 * Close prepared statements
+	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
+	}
+	
+	private List<Question> getQuestionList(PreparedStatement pstmt) throws SQLException {
+		
+		ArrayList <Question> questions = new ArrayList<Question> ();
+		
+		ResultSet rs = pstmt.executeQuery();
+		while(rs.next()) {
+			Question q = new Question();
+			q.setId(rs.getInt(1));
+			q.setFormId(rs.getInt(2));
+			q.setSeq(rs.getInt(3));
+			q.setName(rs.getString(4));
+			q.setType(rs.getString(5));
+			q.setQuestion(rs.getString(6));
+			q.setInfoTextId(rs.getString(7));
+			q.setDefaultAnswer(rs.getString(8));
+			q.setInfo(rs.getString(9));
+			q.setInfoTextId(rs.getString(10));
+			q.setVisible(rs.getBoolean(11));
+			q.setSource(rs.getString(12));
+			q.setSourceParam(rs.getString(13));
+			q.setReadOnly(rs.getBoolean(14));
+			q.setMandatory(rs.getBoolean(15));
+			q.setRelevant(rs.getString(16));
+			q.setCalculate(rs.getString(17));
+			q.setConstraint(rs.getString(18));
+			q.setConstraintMsg(rs.getString(19));
+			q.setAppearance(rs.getString(20));
+			q.setPath(rs.getString(21));
+			q.setNodeset(rs.getString(22));
+			q.setNodesetValue(rs.getString(23));
+			q.setNodesetLabel(rs.getString(24));
+			q.setCascadeInstance(rs.getString(25));
+			q.setColumnName(rs.getString(26));
+			q.setPublished(rs.getBoolean(27));
+			q.setListId(rs.getInt(28));
+		
+			questions.add(q);
+		}
+		return questions;
 	}
 }

@@ -86,9 +86,20 @@ public class Project implements Serializable {
 	/*
 	 * Setters
 	 */
+	public void setId(int v) {
+		id = v;
+	}
+	
+	public void setOId(int v) {
+		o_id = v;
+	}
 	
 	public void setName(String v) {
 		name = v;
+	}
+	
+	public void setChangedBy(String v) {
+		changed_by = v;
 	}
 	
 

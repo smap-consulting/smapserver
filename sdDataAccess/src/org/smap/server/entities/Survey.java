@@ -145,6 +145,10 @@ public class Survey implements Serializable {
 		id = v;
 	}
 	
+	public void setName(String v) {
+		name = v;
+	}
+	
 	public void setDisplayName(String v) {
 		display_name = v;
 	}
@@ -167,6 +171,10 @@ public class Survey implements Serializable {
 	
 	public void setProjectId(int v) {
 		p_id = v;
+	}
+	
+	public void setDeleted(boolean v) {
+		deleted = v;
 	}
 	
 	public void setVersion(int v) {

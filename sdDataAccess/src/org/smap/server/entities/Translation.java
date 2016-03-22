@@ -115,6 +115,10 @@ public class Translation implements Serializable{
 	/*
 	 * Setters
 	 */
+	public void setId(int v) {
+		t_id = v;
+	}
+	
 	public void setSurveyId(int value) {
 		s_id = value;
 	}

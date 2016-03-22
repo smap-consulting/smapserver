@@ -29,6 +29,7 @@ import org.smap.server.entities.Survey;
 
 public class FormManager {
 
+	/*
 	//private EntityManager em = null;
 	private PersistenceContext pc = null;
 
@@ -36,7 +37,9 @@ public class FormManager {
 		// em = pc.getEntityManager();
 		this.pc = pc;
 	}
+	*/
 
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Form> getAll() {
 		EntityManager em = pc.getEntityManager();
@@ -44,13 +47,17 @@ public class FormManager {
 		List<Form> formList = query.getResultList();
 		return formList;
 	}
+	*/
 
+	/*
 	public Form getById(int formId) {
 		EntityManager em = pc.getEntityManager();
 		Form f = em.find(Form.class, formId);
 		return f;
 	}
+	*/
 
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Form> getBySurveyId(int surveyId) {
 		EntityManager em = pc.getEntityManager();
@@ -61,7 +68,9 @@ public class FormManager {
 		List<Form> formList = query.getResultList();
 		return formList;
 	}
-
+	*/
+	
+	/*
 	public List<Form> getBySurvey(Survey survey) {
 		EntityManager em = pc.getEntityManager();
 		int s_id = survey.getId();
@@ -72,8 +81,9 @@ public class FormManager {
 
 		return formList;
 	}
+	*/
 	
-
+	/*
 	@SuppressWarnings("unchecked")
 	public Form getFirstFormBySurveyId(int surveyId) throws Exception {
 
@@ -93,7 +103,9 @@ public class FormManager {
 		return formList.get(0);
 
 	}
-
+	*/
+	
+	/*
 	@SuppressWarnings("unchecked")
 	public Form loadFormWithQuestion(int questionId) {
 
@@ -109,10 +121,12 @@ public class FormManager {
 		return f;
 
 	}
-
+	*/
+	
 	/*
 	 * If question has a subForm then return the subForm identifier else return
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public int getSubFormId(int parentForm, int parentQuestion) {
 		int subFormId = 0;
@@ -132,7 +146,8 @@ public class FormManager {
 
 		return subFormId;
 	}
-
+	*/
+	
 	/*
 	public void persist(Form... formList) {
 		EntityManager em = pc.getEntityManager();
@@ -154,7 +169,8 @@ public class FormManager {
 		}
 	}
 	*/
-
+	
+	/*
 	public void delete(Form... f) {
 		EntityManager em = pc.getEntityManager();
 		try {
@@ -175,7 +191,9 @@ public class FormManager {
 		}
 
 	}
+	*/
 
+	/*
 	public void merge(Form f) {
 		EntityManager em = pc.getEntityManager();
 		try {
@@ -189,7 +207,8 @@ public class FormManager {
 
 		}
 	}
-
+	*/
+	
 	/**
 	 * Returns a form using a question id
 	 * 
@@ -198,6 +217,7 @@ public class FormManager {
 	 * @return The return form. If no form is found, then a null value is
 	 *         returned
 	 */
+	/*
 	public Form getByQuestionId(int parseInt) {
 		EntityManager em = pc.getEntityManager();
 		Query query = em
@@ -210,6 +230,7 @@ public class FormManager {
 
 		return f;
 	}
+	*/
 
 
 }

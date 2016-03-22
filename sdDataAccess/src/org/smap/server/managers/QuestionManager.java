@@ -101,6 +101,7 @@ public class QuestionManager {
 		return questionList;
 	}
 */
+	/*
 	public List<Question> getBySurvey(Survey survey) {
 		Query query = em.createQuery("SELECT q FROM QUESTION q, FORM f WHERE "
 				+ "q.f_id = f.id AND f.s_id = ?1 "
@@ -110,6 +111,7 @@ public class QuestionManager {
 		List<Question> questionList = query.getResultList();
 		return questionList;
 	}
+	*/
 
 	/*
 	public Question getById(int questionId) {

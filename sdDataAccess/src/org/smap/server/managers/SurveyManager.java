@@ -19,17 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.server.managers;
 
-import java.util.List;
-import java.util.logging.Logger;
-
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
-import javax.persistence.Query;
-
-import org.smap.server.entities.MissingTemplateException;
-import org.smap.server.entities.Survey;
-
 
 /**
  * 
@@ -39,6 +28,7 @@ import org.smap.server.entities.Survey;
  */
 public class SurveyManager {
 
+	/*
 	//private EntityManager em = null;
 	private PersistenceContext pc = null;
 	
@@ -49,7 +39,8 @@ public class SurveyManager {
 		// em = pc.getEntityManager();
 		this.pc = pc;
 	}
-
+	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Survey> getAll() {
 		EntityManager em = pc.getEntityManager();
@@ -57,6 +48,7 @@ public class SurveyManager {
 		List<Survey> surveyList = query.getResultList();
 		return surveyList;
 	}
+	*/
 
 	/**
 	 * Retrieves the survey by the survey's ID.
@@ -65,12 +57,13 @@ public class SurveyManager {
 	 *            The surveyID used to retrieve the survey
 	 * @return The survey found within the database. Returns null if no value
 	 *         found.
-	 */
+	 *
 	public Survey getById(int surveyId) {
 		EntityManager em = pc.getEntityManager();
 		Survey s = em.find(Survey.class, surveyId);
 		return s;
 	}
+	*/
 	
 	/**
 	 * Retrieves the survey by the survey's ident
@@ -80,7 +73,7 @@ public class SurveyManager {
 	 * @return The survey found within the database. Returns null if no value
 	 *         found.
 	 * @throws MissingTemplateException 
-	 */
+	 *
 	public Survey getByIdent(String ident) throws MissingTemplateException {
 		EntityManager em = pc.getEntityManager();
 		Survey survey = null;
@@ -106,14 +99,15 @@ public class SurveyManager {
 		}
 		return survey;
 	}
-
+	*/
+	
 	/**
 	 * This method is used to return a survey based on its name.
 	 * 
 	 * @param name
 	 *            The name of the survey to find.
 	 * @return The survey found. Can return null.
-	 */
+	 *
 	public Survey getByName(String name) throws MissingTemplateException {
 		EntityManager em = pc.getEntityManager();
 		Survey survey = null;
@@ -129,13 +123,14 @@ public class SurveyManager {
 		}
 		return survey;
 	}
+	*/
 	
 	/**
 	 * This method is used to delete a survey based on its name.
 	 * 
 	 * @param name
 	 *            The name of the survey to delete.
-	 */
+	 *
 	public void delete(String name) {
 
 		EntityManager em = pc.getEntityManager();
@@ -145,14 +140,14 @@ public class SurveyManager {
 		deleteQuery.executeUpdate();
 		em.getTransaction().commit();
 	}
-
+	*/
 	/**
 	 * Checks to confirm that a survey exists.
 	 * 
 	 * @param name
 	 *            Name of the survey to search for
 	 * @return returns True if survey found, false if it isn't.
-	 */
+	 *
 	public boolean surveyExists(String name, int projectId) {
 		EntityManager em = pc.getEntityManager();
 		Query query = em.createQuery(
@@ -163,6 +158,7 @@ public class SurveyManager {
 		Long count = (Long) query.getSingleResult();
 		return count == 1;
 	}
+	*/
 
 	/*
 	public void persist(Survey s) {
@@ -197,7 +193,7 @@ public class SurveyManager {
 	 * Returns a survey name without spaces and truncated to 30 characters.
 	 * 
 	 * @return survey name
-	 */
+	 *
 	public String generateSurveyName(String displayName) {
 		String surveyName = null;
 		int maxLength = 30;
@@ -212,4 +208,5 @@ public class SurveyManager {
 		
 		return surveyName;
 	}
+	*/
 }

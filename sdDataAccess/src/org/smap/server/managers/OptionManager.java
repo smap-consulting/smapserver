@@ -43,6 +43,7 @@ public class OptionManager {
 		return optionList;
 	}
 
+	/*
 	public int getCountForQuestion(int questionId) {
 		Query query = em.createQuery("SELECT COUNT(o) FROM OPTION o, QUESTION q "
 				+ "WHERE q.q_id = ?1 and q.l_id = o.l_id ");
@@ -50,7 +51,8 @@ public class OptionManager {
 		Long count = (Long) query.getSingleResult();
 		return count.intValue();
 	}
-
+	*/
+	
 	/*
 	public void persist(Option o) {
 		try {

@@ -183,6 +183,10 @@ public class Form implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public void setTableName(String v) {		// Override automatically generated table name
+		table_name = v;
+	}
 
 	public void setLabel(String label) {
 		this.label = label;

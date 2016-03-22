@@ -158,6 +158,10 @@ public class Option implements Serializable{
 	/*
 	 * Setters
 	 */
+    public void setId(int v) {
+    	o_id = v;
+    }
+    
     public void setListId(int value) {
     	l_id = value;
     }
@@ -175,9 +179,16 @@ public class Option implements Serializable{
 		this.column_name = GeneralUtilityMethods.cleanName(v, false);
 	}
 	
+	public void setColumnName(String v) {
+		column_name = v;
+	}
        
     public void setSeq(int sequence) {
     	seq = sequence ;
+    }
+    
+    public void setExternalFile(boolean v) {
+    	externalFile = v;
     }
     
     public void addCascadeKeyValue(String k, String v) {
@@ -193,6 +204,10 @@ public class Option implements Serializable{
     }
     
     // Set the filter text string from the list of key value pairs
+    public void setCascadeFilters(String v) {
+    	cascade_filters = v;
+    }
+    
     public void setCascadeFilters() {
     	
     	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();

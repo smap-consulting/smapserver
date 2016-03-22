@@ -34,16 +34,18 @@ import org.smap.server.entities.Translation;
 
 public class TranslationManager {
 
+	/*
 	private EntityManager em = null;
 
 	public TranslationManager(PersistenceContext pc) {
 		em = pc.getEntityManager();
 	}
-
+	*/
 	/**
 	 * Get Media
 	 * 
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Translation> getManifestBySurvey(Survey survey, String language)
 	{
@@ -57,8 +59,9 @@ public class TranslationManager {
 		List<Translation> translationList = query.getResultList();
 		return translationList;
 	}
+	*/
 	
-	
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurvey(Survey survey) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
@@ -68,7 +71,9 @@ public class TranslationManager {
 		List<Translation> translationList = query.getResultList();
 		return translationList;
 	}
+	*/
 	
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurveyAndLanguage(Survey survey, String language) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
@@ -79,7 +84,8 @@ public class TranslationManager {
 		List<Translation> translationList = query.getResultList();
 		return translationList;
 	}
-	
+	*/
+	/*
 	@SuppressWarnings("unchecked")
 	public List<Translation> getBySurveyAndLanguageAndType(Survey survey, String language, String form) {
 		Query query = em.createQuery("SELECT t FROM TRANSLATION t " +
@@ -92,7 +98,9 @@ public class TranslationManager {
 		List<Translation> translationList = query.getResultList();
 		return translationList;
 	}
-
+	*/
+	
+	/*
 	public void remove(Translation t) {
 		try {
 			em.getTransaction().begin();
@@ -102,7 +110,8 @@ public class TranslationManager {
 			// TODO handle exceptions, specifically constraint violations
 		}
 	}
-
+	*/
+	
 	/*
 	public void persist(Translation t) {
 		try {

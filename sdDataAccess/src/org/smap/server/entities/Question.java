@@ -316,6 +316,10 @@ public class Question implements Serializable {
 		this.seq = seq;
 	}
 	
+	public void setListId(int v) {
+		l_id = v;
+	}
+	
 	public void setListId(Connection sd, int sId) {
 		
 		if(this.l_id == 0) {		// No list has been set for this question
@@ -367,9 +371,17 @@ public class Question implements Serializable {
 		
 	}
 
+	public void setPublished(boolean v) {
+		published = v;
+	}
+	
 	public void setName(String name) {
 		this.name = name;
 		this.column_name = GeneralUtilityMethods.cleanName(name, true);
+	}
+	
+	public void setColumnName(String v) {	// Override column name
+		column_name = v;
 	}
 
 	public void setType(String type) {

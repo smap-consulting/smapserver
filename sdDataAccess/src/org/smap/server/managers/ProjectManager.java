@@ -38,6 +38,7 @@ import org.smap.server.entities.Survey;
  */
 public class ProjectManager {
 
+	/*
 	//private EntityManager em = null;
 	private PersistenceContext pc = null;
 
@@ -46,19 +47,19 @@ public class ProjectManager {
 		this.pc = pc;
 	}
 
-	/**
+	
 	 * Retrieves the project by the project's ID.
 	 * 
 	 * @param id
 	 *            The projectID used to retrieve the survey
 	 * @return The project found within the database. Returns null if no value
 	 *         found.
-	 */
+	 *
 	public Project getById(int projectId) {
 		EntityManager em = pc.getEntityManager();
 		Project p = em.find(Project.class, projectId);
 		return p;
 	}
-	
+	*/
 
 }
