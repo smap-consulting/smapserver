@@ -41,8 +41,28 @@ public class JdbcQuestionManager {
 			+ "qtext_id, "
 			+ "defaultanswer, "
 			+ "info, "
-			+ "infotext_id) "
-			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+			+ "infotext_id,"
+			+ "visible,"
+			+ "source,"
+			+ "source_param,"
+			+ "readonly,"
+			+ "mandatory,"
+			+ "relevant,"
+			+ "calculate,"
+			+ "qconstraint,"
+			+ "constraint_msg,"
+			+ "appearance,"
+			+ "path,"
+			+ "nodeset,"
+			+ "nodeset_value,"
+			+ "nodeset_label,"
+			+ "cascade_instance,"
+			+ "column_name,"
+			+ "published,"
+			+ "l_id) "
+			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+				+ ", ?, ?, ?, ?, ?, ?, ?);";
 	
 	public JdbcQuestionManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -58,6 +78,25 @@ public class JdbcQuestionManager {
 		pstmt.setString(7, q.getDefaultAnswer());
 		pstmt.setString(8,  q.getInfo());
 		pstmt.setString(9, q.getInfoTextId());	
+		pstmt.setBoolean(10, q.isVisible());	
+		pstmt.setString(11, q.getSource());	
+		pstmt.setString(12, q.getSourceParam());	
+		pstmt.setBoolean(13, q.isReadOnly());
+		pstmt.setBoolean(14, q.isMandatory());
+		pstmt.setString(15, q.getRelevant());
+		pstmt.setString(16, q.getCalculate());
+		pstmt.setString(17, q.getConstraint());
+		pstmt.setString(18, q.getConstraintMsg());
+		pstmt.setString(19, q.getAppearance());
+		pstmt.setString(20, q.getPath());
+		pstmt.setString(21, q.getNodeset());
+		pstmt.setString(22, q.getNodesetValue());
+		pstmt.setString(23, q.getNodesetLabel());
+		pstmt.setString(24, q.getCascadeInstance());
+		pstmt.setString(25, q.getColumnName());
+		pstmt.setBoolean(26, q.isPublished());
+		pstmt.setInt(27, q.getListId());
+		
 		pstmt.executeUpdate();
 		
 		ResultSet rs = pstmt.getGeneratedKeys();
