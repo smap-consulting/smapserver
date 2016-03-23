@@ -70,14 +70,6 @@ $(document).ready(function() {
 	$('#project_select,#project_name').change(function() {
 		var sourceProject = $('#project_select option:selected').val();
 		loadSurveys(sourceProject, "#survey", false, false, surveyChanged);			// Get surveys
-		
-		// Disable the update results checkbox if the source project and current project are different
-		//if(sourceProject === globals.gCurrentProject) {
-		//	$('#update_results').attr("disabled", false);
-		//} else {
-		//	$('#update_results').attr("disabled", true);
-		//	$('#update_results').attr("checked", false);
-		//}
  	 });
 	
 	// Add a trigger to respond to the clicking of "filter tasks" 
@@ -89,16 +81,6 @@ $(document).ready(function() {
 	$('#empty_task_group').attr('checked', false).click(function() {
 		$('#add_task_from_existing').toggle();
 	});
-	
-	// Add a trigger to respond to the clicking of "update results" 
-	//$('#update_results').click(function() {
-	//	var updateResults = $('#update_results').is(':checked');
-	//	if(updateResults) {
-	//		$('#survey_to_complete').val($('#survey').val()).attr('disabled', 'disabled');
-	//	} else {
-	//		$('#survey_to_complete').removeAttr('disabled');
-	//	}
-	//});
 	
 	// Add response to the filters being changed
 	$('.task_filter').change(function() {

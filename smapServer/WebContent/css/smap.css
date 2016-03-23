@@ -813,9 +813,11 @@ tr.deleted td a {
 	height: 24px;
 }
 
-.pSidebar label, .pSidebar button /*, .tExport*/ {
+.pSidebar label.ui-button, .pSidebar button, .pSidebar .pfoot form input {
 	width: 90%;
 	margin: auto;
+	margin-left: 5px;
+	max-width: none;
 }
 
 .pSidebar h3 {

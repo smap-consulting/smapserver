@@ -434,7 +434,7 @@ public class Items extends Application {
 							} else if(name.equals("Survey Name")) {
 								// Get the display name
 								String displayName = surveyNames.get(value);
-								if(displayName == null) {
+								if(displayName == null && value.length() > 0) {
 									displayName = GeneralUtilityMethods.getSurveyName(sd, Integer.parseInt(value));
 									surveyNames.put(value, displayName);
 								}

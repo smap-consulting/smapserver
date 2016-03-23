@@ -854,7 +854,7 @@ function getViewSurveys (view) {
 			success: function(data) {
 				globals.gSelector.setSurveyList(data);
 				if(view) {
-					setSurveyViewSurveys(data, view.sId, '#settings_survey, #export_survey');
+					setSurveyViewSurveys(data, view.sId, '#settings_survey, #export_survey, #survey_to_update');
 				}
 			},
 			error: function(xhr, textStatus, err) {

@@ -116,7 +116,82 @@ function setTableSurvey(view) {
 	$selFoot.find('.tDelete').button().off().click(function() {
 		deleteAllTables(view.sId);
 	});
+	
+	/*
+	 * Enable the dialog to import data
+	 */
+	$('#load_data_popup').dialog(
+		{
+			autoOpen: false, closeOnEscape:true, draggable:true, model:true,
+			show:"drop",
+			zIndex: 2000,
+			buttons: [
+		        {
+		        	text: localise.set["c_cancel"],
+		        	click: function() {
+		        		$(this).dialog("close");
+		        	}
+		        },
+		        {
+		        	text: localise.set["m_import"],
+		        	click: function() {
+		        		importData();
+		        	}
+		        }
+			]
+		}
+	);
+	$selFoot.find('.tImport').button().off().click(function() {
+		var surveyList = globals.gSelector.getSurveyList();
+		if(!surveyList) {	// Surveys have not yet been retrieved
+			getViewSurveys({sId:"-1"});
+		} 
+		
+		$('#load_tasks_alert').hide();
+		$('#clear_existing_alert').hide();
+		$('#load_data_popup').dialog("open");
+	});
 
+	$('#clear_existing').change(function(){
+		var isset = $("#clear_existing:checked").val()
+		if(isset) {
+			$('#clear_existing_alert').show();
+		} else {
+			$('#clear_existing_alert').hide();
+		}
+	});
+	
+}
+
+/*
+ * Import data
+ */
+function importData() {
+	var url = "/surveyKPI/assignments/load";
+	var f = document.forms.namedItem("loadtasks");
+	var formData = new FormData(f);
+	
+	$('#load_tasks_alert').hide();
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  data: formData,
+		  cache: false,
+          contentType: false,
+          processData:false,
+		  url: url,
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#load_data_popup').close();
+			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["t_fl"]);
+		  },
+		  error: function(xhr, textStatus, err) {
+			 
+			  removeHourglass(); 
+			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_efnl"] + xhr.responseText);
+			 
+		  }
+	});
 }
 
 function exportTable($this, view) {

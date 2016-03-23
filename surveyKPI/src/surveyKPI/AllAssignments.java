@@ -1557,7 +1557,7 @@ public class AllAssignments extends Application {
 				// This column name is in the survey
 				col = new Column();
 				col.name = qName;
-				col.columnName = rs.getString("columnName");
+				col.columnName = rs.getString("column_name");
 				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
 				col.type = rs.getString("qtype");
 				
