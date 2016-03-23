@@ -21,19 +21,9 @@ package org.smap.server.entities;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-
-import org.smap.server.utilities.UtilityMethods;
-
 /*
  * Class to store Survey objects
  */
-@Entity(name = "PROJECT")
 public class Project implements Serializable {
 
 	/**
@@ -42,19 +32,12 @@ public class Project implements Serializable {
 	private static final long serialVersionUID = 2645224176464784459L;
 
 	// Database Attributes
-	@Id
-	@Column(name="id", nullable=false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator="project_seq")
-	@SequenceGenerator(name="project_seq", sequenceName="project_seq")
 	private int id;
 	
-	@Column(name="o_id")
 	private int o_id;
 	
-	@Column(name="name")
 	private String name;
 	
-	@Column(name="changed_by")
 	private String changed_by;
 	
 	/*

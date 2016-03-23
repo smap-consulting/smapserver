@@ -415,7 +415,7 @@ public class PutXForm {
     	}
     	
     	// If this is a direct value we should create a translation so that there is a translation for every string
-    	if(c.ref == null && name != null && !name.equals("value") && ref != null) {
+    	if(c.ref == null && name != null && !name.equals("value") && ref != null && c.direct != null && c.direct.trim().length() > 0) {
     		c.ref = ref + "_direct:" + name;	// Make sure dummy translations do not have the same id as a real translation by adding "_direct"
     		template.addDummyTranslation(c.ref, c.direct);
     	}

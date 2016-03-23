@@ -29,10 +29,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.persistence.PersistenceException;
-
-import org.smap.server.entities.Option;
-import org.smap.server.entities.Survey;
 import org.smap.server.entities.Translation;
 
 public class JdbcTranslationManager {
@@ -69,11 +65,13 @@ public class JdbcTranslationManager {
 		pstmt.setString(3, text_id);
 		pstmt.setString(4, type);
 		pstmt.setString(5, value);
+		
+		System.out.println("Write translation: " + pstmt.toString());
 		pstmt.executeUpdate();
 	}
 	
 	/*
-	 * Write multipe translation objects to the database
+	 * Write multiple translation objects to the database
 	 */
 	public void persistBatch(int sId, Collection<HashMap<String, Translation>> l) throws SQLException {
 		

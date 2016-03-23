@@ -22,89 +22,57 @@ package org.smap.server.entities;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 
 /*
  * Class to store an upload event
  */
-@Entity(name = "UPLOAD_EVENT")
 public class UploadEvent implements Serializable {
 
 	private static final long serialVersionUID = -4784547709615805141L;
 
 	// Database Attributes
-	@Id
-	@Column(name="ue_id", nullable=false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator="ue_seq")
-	@SequenceGenerator(name="ue_seq", sequenceName="ue_seq")
 	private int ue_id;
 
-	@Column(name="upload_time")
 	private Date uploadTime;
 	
-	@Column(name="user_name")
 	private String userName;
 	
-	@Column(name="file_name")
 	private String fileName;
 	
-	@Column(name="survey_name")
 	private String surveyName;
 	
-	@Column(name="s_id")
 	private int s_id;
 	
-	@Column(name="ident")
 	private String ident;
 	
-	@Column(name="p_id")
 	private int p_id;
 	
-	@Column(name="imei")
 	private String imei;
 	
-	@Column(name="orig_survey_ident")
 	private String origSurveyIdent;
-	
-	@Column(name="update_id")
+
 	private String updateId;
 	
-	@Column(name="assignment_id")
 	private int assignmentId;
 	
-	@Column(name="instanceid")
 	private String instanceId;
 
-	@Column(name="status")
 	private String status;
 	
-	@Column(name="reason")
 	private String reason;
+		
+	private String location; 	// Store location as a string of "longitude latitude"
 	
-	@Column(name="location")	// Store location as a string of "longitude latitude"
-	private String location; 
-	
-	@Column(name="server_name")
 	private String serverName;
 	
-	@Column(name="form_status")
 	private String formStatus;
 	
-	@Column(name="file_path")
 	private String filePath;
 	
-	@Column(name="incomplete")
 	private boolean incomplete = false;
 	
-	@Column(name="survey_notes")
 	private String surveyNotes;
 	
-	@Column(name="location_trigger")
 	private String locationTrigger;
 	
 	/*

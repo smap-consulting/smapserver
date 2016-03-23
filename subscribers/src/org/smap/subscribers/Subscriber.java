@@ -19,17 +19,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.subscribers;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.Date;
 
 import org.smap.model.SurveyInstance;
 import org.smap.server.entities.HostUnreachableException;
 import org.smap.server.entities.SubscriberEvent;
-import org.smap.server.managers.PersistenceContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 
 public abstract class Subscriber {

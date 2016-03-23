@@ -55,8 +55,6 @@ import org.smap.sdal.model.Survey;
 import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.UploadEvent;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.UploadEventManager;
 
 import JdbcManagers.JdbcUploadEventManager;
 import exceptions.SurveyBlockedException;
@@ -95,7 +93,7 @@ public class XFormData {
 		
 		// Use Apache Commons file upload to get the items in the file
 		SaveDetails saveDetails = null;
-		PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+		//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
 		DiskFileItemFactory  factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		
@@ -208,14 +206,14 @@ public class XFormData {
 			if(survey.getDeleted()) {
 				String reason = survey.displayName + " has been deleted";
 				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
-					writeUploadError(sd, user, survey, templateName, si, pc, reason);
+					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new NotFoundException();
 			}
 			if(survey.getBlocked()) {	// Throw an exception if the survey has been blocked form accepting any more submssions
 				String reason = survey.displayName + " has been blocked";
 				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
-					writeUploadError(sd, user, survey, templateName, si, pc, reason);
+					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new SurveyBlockedException();
 			}
@@ -276,7 +274,7 @@ public class XFormData {
 	}
 	
 	private void writeUploadError(Connection sd, String user, Survey survey, String templateName, 
-			SurveyInstance si, PersistenceContext pc, String reason) throws Exception {
+			SurveyInstance si, String reason) throws Exception {
 		log.info("Writing upload error");
 		UploadEvent ue = new UploadEvent();
 		ue.setUserName(user);

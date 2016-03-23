@@ -21,69 +21,40 @@ package org.smap.server.entities;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Transient;
-
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.server.utilities.UtilityMethods;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-@Entity(name="OPTION")
 public class Option implements Serializable{
 	
 	private static final long serialVersionUID = -6410553162606844278L;
 
-	@Id
-	@Column(name="o_id", nullable=false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator="o_seq")
-	@SequenceGenerator(name="o_seq", sequenceName="o_seq")
+	// Database attributes
 	private int o_id;
 	
-	@Column(name="l_id")
 	private int l_id;
 	
-	@Column(name="label")
 	private String label = null;
 	
-	@Column(name="label_id")
 	private String label_id = null;
 	
-	@Column(name="ovalue")
 	private String value = null;
 	
-	@Column(name="column_name")
 	private String column_name = null;
 
-	@Column(name="cascade_filters")
 	private String cascade_filters = null;
 	
-	@Column(name="seq")
 	private int seq;						// Order in which options should be displayed
 	
-	@Column(name="externalfile")
 	private boolean externalFile;			// Set true if this choice was created by loading an external file
 	
-	@Transient
+	// Other attributes
 	private String questionRef = null;	// Reference of the parent question
-	@Transient
+
 	private String cascadeInstanceId = null;  // Reference to a cascade instance
-	@Transient
+
 	private HashMap<String, String> cascadeKeyValues = new HashMap<String, String>();
 	
 	public Option() {

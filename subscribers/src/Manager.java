@@ -3,7 +3,6 @@ import java.net.InetAddress;
 import java.text.DateFormat;
 import java.util.Date;
 
-import org.smap.server.managers.PersistenceContext;
 import org.smap.subscribers.Subscriber;
 
 /*****************************************************************************

@@ -60,8 +60,6 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.SurveyManager;
 import org.smap.server.utilities.PutXForm;
 
 import com.google.gson.Gson;

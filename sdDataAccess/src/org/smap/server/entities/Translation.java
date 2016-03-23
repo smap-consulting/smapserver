@@ -20,46 +20,26 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Transient;
 
-@Entity(name="TRANSLATION")
 public class Translation implements Serializable{
 	
 
 	private static final long serialVersionUID = 2497891756771818289L;
 
-	@Id
-	@Column(name="t_id", nullable=false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator = "t_seq")
-	@SequenceGenerator(name = "t_seq", sequenceName = "t_seq")
+	// Database attributes
 	private int t_id;
 	
-	@Column(name = "s_id")
 	private int s_id;
 	
-	@Column(name="language")
 	private String language = "default";	// Language Identifier
 	
-	@Column(name="text_id")		// Lookup String for the language value
 	private String text_id;
 	
-	@Column(name="type")		// The , type ie none, short, long, audio, video, image
 	private String type;
 	
-	@Column(name="value")
 	private String value = null;	// The translated text
 	
-	@Transient
+	// Other attributes
 	private boolean enabled = false; // Unique reference to this question
 
 	public Translation() {
