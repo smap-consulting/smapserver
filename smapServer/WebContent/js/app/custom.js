@@ -60,3 +60,6 @@ function setCustomMonitor() {
 
 function setCustomRegister() {
 }
+
+function setCustomEdit() {
+}
