@@ -191,7 +191,7 @@ public class JdbcQuestionManager {
 			q.setName(rs.getString(4));
 			q.setType(rs.getString(5));
 			q.setQuestion(rs.getString(6));
-			q.setInfoTextId(rs.getString(7));
+			q.setQTextId(rs.getString(7));
 			q.setDefaultAnswer(rs.getString(8));
 			q.setInfo(rs.getString(9));
 			q.setInfoTextId(rs.getString(10));
