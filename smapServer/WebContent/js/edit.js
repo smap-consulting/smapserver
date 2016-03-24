@@ -27,7 +27,7 @@ require.config({
     locale: gUserLocale,
     paths: {
     	app: '../app',
-    	jquery: 'jquery-1.8.3.min',
+    	jquery: 'jquery-2.1.1',
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
     	lang_location: '..'

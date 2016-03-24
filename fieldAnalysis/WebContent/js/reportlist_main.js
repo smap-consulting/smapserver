@@ -32,10 +32,7 @@ requirejs.config({
      	app: '../app',
     	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
-    	jquery: [
-    	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-    	       '../../../../js/libs/jquery-1.8.3.min'
-    	       ],
+    	jquery: '../../../../js/libs/jquery-2.1.1',
     	jquery_ui: [
     	            '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min',
     	            '../../../../js/libs/jquery-ui-1.10.3.custom.min'

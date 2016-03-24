@@ -29,10 +29,7 @@ requirejs.config({
     waitSeconds: 0,
     paths: {
     	app: '../app',
-    	jquery: [
-      	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-      	       '../../../../js/libs/jquery-1.8.3.min'
-      	       ],
+    	jquery: '../../../../js/libs/jquery-2.1.1',
        	lang_location: '../'
     },
     shim: {

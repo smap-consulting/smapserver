@@ -11,7 +11,7 @@
      	i18n: '../../../../smapServer/WebContent/js/libs/i18n',
      	async: '../../../../smapServer/WebContent/js/libs/async',
      	localise: '../../../../smapServer/WebContent/js/app/localise',
-    	jquery: '../../../../smapServer/WebContent/js/libs/jquery-1.8.3.min',
+    	jquery: '../../../../smapServer/WebContent/js/libs/jquery-2.1.1',
     	jquery_ui: '../../../../smapServer/WebContent/js/libs/jquery-ui-1.10.3.custom.min',
     	modernizr: '../../../../smapServer/WebContent/js/libs/modernizr',
     	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu',

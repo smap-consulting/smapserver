@@ -34,7 +34,7 @@ requirejs.config({
     	i18n: 'i18n',
     	jquery: [
     	       '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min',
-    	       'jquery-1.8.3.min'
+    	       'jquery-2.1.1'
     	       ],
     	modernizr: 'modernizr',
     	lang_location: '..'

@@ -27,7 +27,7 @@ requirejs.config({
     waitSeconds: 0,
     paths: {
     	app: '../app',
-    	jquery: 'jquery-1.8.3.min',
+    	jquery: 'jquery-2.1.1',
        	lang_location: '../'
     },
     shim: {

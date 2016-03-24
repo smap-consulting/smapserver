@@ -34,7 +34,7 @@ requirejs.config({
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
-    	jquery: '../../../../js/libs/jquery-1.8.3.min',
+    	jquery: '../../../../js/libs/jquery-2.1.1',
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	bootbox: '../../../../js/libs/bootbox.min',
     	bootstrapfileinput: '../../../../js/libs/bootstrap.file-input',
