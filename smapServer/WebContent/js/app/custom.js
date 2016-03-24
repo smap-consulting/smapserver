@@ -63,3 +63,7 @@ function setCustomRegister() {
 
 function setCustomEdit() {
 }
+
+function setCustomWebForms() {
+	
+}
