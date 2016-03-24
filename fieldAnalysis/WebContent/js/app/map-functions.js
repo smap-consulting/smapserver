@@ -674,7 +674,6 @@ function addSharedMaps(map, sharedMaps) {
 			layer = sharedMaps[i];
 			
 			if(layer.type === "mapbox") {
-				console.log("Mapbox: " + i);
 				layerUrl = "http://a.tiles.mapbox.com/v4/" + layer.config.mapid + "/${z}/${x}/${y}.png?access_token=" + mb_public_access;
 				map.addLayer(new OpenLayers.Layer.XYZ(layer.name,
 					    [layerUrl], {
@@ -683,7 +682,6 @@ function addSharedMaps(map, sharedMaps) {
 					    numZoomLevels: layer.zoom
 					}));
 			} else if(layer.type === "vector") {
-				console.log("Vector: " + i);
 				layerUrl = "/media/organisation/1/" + layer.config.vectorData;
 				var vectorLayer = new OpenLayers.Layer.Vector(layer.name + ".", {
 					projection: "EPSG:4326",

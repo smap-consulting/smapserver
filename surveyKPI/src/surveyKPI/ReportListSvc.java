@@ -1063,7 +1063,7 @@ public class ReportListSvc extends Application {
 					respBuf.append(report.smap.data_url);
 				respBuf.append("</span>");		
 				respBuf.append("<script data-main=\"/fieldAnalysis/js/map_reports_main\" src=\"/js/libs/require.js\"></script>");
-				respBuf.append("<script src=\"//maps.google.com/maps/api/js?v=3.6&amp;sensor=false\"></script>");
+				respBuf.append("<script src=\"//maps.google.com/maps/api/js?v=3.6&amp\"></script>");
 				respBuf.append("<script src=\"/js/libs/OpenLayers/OpenLayers.js\"></script>");
 				
 			} else if(report.smap.data_type.equals("graph")) {

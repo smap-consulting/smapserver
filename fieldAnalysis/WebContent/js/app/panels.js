@@ -457,7 +457,7 @@ function addNewPanel(type) {
 
 	views[idx] = {id:-1, seq: idx, state: "shown", title:"New Chart", pId: idx, 
 			sId:-1, type:type, region:"None", lang:"", qId:"-1", table:"", groupId:-1,
-			groupType:"normal"};		// default to graph type
+			groupType:"normal", layerId:"-1"};		
 	gExpandedPanelSeq = idx;	// Make sure this panel is shown as expanded when the panels are initially refreshed. This happens after panel creation
 
 	var $panels = $('#panels');
@@ -841,7 +841,6 @@ function savePanels(newPanel) {
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/dashboard/",
 		  data: { settings: viewsString },
 		  success: function(data, status) {
@@ -870,7 +869,6 @@ function savePanelState(view) {
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
-		  dataType: "json",
 		  url: dashboardStateURL(),
 		  data: { state: viewString },
 		  success: function(data, status) {
