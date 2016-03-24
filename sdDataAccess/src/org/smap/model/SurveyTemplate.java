@@ -1,15 +1,14 @@
 package org.smap.model;
 
 import java.io.File;
-import java.lang.reflect.Type;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.Set;
 import java.util.Vector;
@@ -25,21 +24,11 @@ import org.smap.server.entities.Project;
 import org.smap.server.entities.Question;
 import org.smap.server.entities.Survey;
 import org.smap.server.entities.Translation;
-import org.smap.server.managers.FormManager;
-import org.smap.server.managers.OptionManager;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.ProjectManager;
-import org.smap.server.managers.QuestionManager;
-import org.smap.server.managers.SurveyManager;
-import org.smap.server.managers.TranslationManager;
 import org.smap.server.utilities.UtilityMethods;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import JdbcManagers.JdbcFormManager;
 import JdbcManagers.JdbcOptionManager;
+import JdbcManagers.JdbcProjectManager;
 import JdbcManagers.JdbcQuestionManager;
 import JdbcManagers.JdbcSurveyManager;
 import JdbcManagers.JdbcTranslationManager;
@@ -50,12 +39,12 @@ public class SurveyTemplate {
 			 Logger.getLogger(SurveyTemplate.class.getName());
 	
 	//private Connection connection;
-	PersistenceContext pc = null;
-	FormManager fPersist = null;
-	ProjectManager pPersist = null;
-	QuestionManager qPersist = null;
-	OptionManager oPersist = null;
-	TranslationManager tPersist = null;
+	//PersistenceContext pc = null;
+	//FormManager fPersist = null;
+	//ProjectManager pPersist = null;
+	//QuestionManager qPersist = null;
+	//OptionManager oPersist = null;
+	//TranslationManager tPersist = null;
 
 	// The model data
 	int surveyId;
@@ -86,12 +75,12 @@ public class SurveyTemplate {
 	 */
 	public SurveyTemplate() {
 
-		pc = new PersistenceContext("pgsql_jpa");
-		pPersist = new ProjectManager(pc);
-		fPersist = new FormManager(pc);
-		qPersist = new QuestionManager(pc);
-		oPersist = new OptionManager(pc);
-		tPersist = new TranslationManager(pc);
+		//pc = new PersistenceContext("pgsql_jpa");
+		//pPersist = new ProjectManager(pc);
+		//fPersist = new FormManager(pc);
+		//qPersist = new QuestionManager(pc);
+		//oPersist = new OptionManager(pc);
+		//tPersist = new TranslationManager(pc);
 	}
 
 	public HashMap<String, HashMap<String, HashMap<String, Translation>>> getTranslations() {
@@ -825,6 +814,12 @@ public class SurveyTemplate {
 		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Write Database");
 		sd.setAutoCommit(false);
 		
+		JdbcSurveyManager sm = null;
+		JdbcFormManager fm = null;
+		JdbcQuestionManager qm = null;
+		JdbcOptionManager om = null;
+		JdbcTranslationManager tm = null;
+		
 		try {
 			Collection c = null;
 			Iterator itr = null;
@@ -834,17 +829,17 @@ public class SurveyTemplate {
 				throw new Exception("No forms in this survey");
 			}
 			//SurveyManager surveys = new SurveyManager(pc);
-			JdbcSurveyManager sm = new JdbcSurveyManager(sd);
+			sm = new JdbcSurveyManager(sd);
 			System.out.println("Persisting survey");
 			sm.write(survey);
-			sm.close();
+			
 			//surveys.persist(survey);
 	
 			/*
 			 * Forms 1. Create record for each form and get its primary key
 			 */
 			List<Form> formList = new ArrayList<Form>(forms.values());
-			JdbcFormManager fm = new JdbcFormManager(sd);
+			fm = new JdbcFormManager(sd);
 			for(Form f : formList) {
 				f.setSurveyId(survey.getId());
 				fm.write(f);
@@ -994,7 +989,7 @@ public class SurveyTemplate {
 				}
 			});
 	
-			JdbcQuestionManager qm  = new JdbcQuestionManager(sd);
+			qm  = new JdbcQuestionManager(sd);
 			for (Question q : questionList) {
 				Form f = getForm(q.getFormRef());
 				if(f == null) {
@@ -1027,7 +1022,6 @@ public class SurveyTemplate {
 					}
 				} 			
 			}
-			qm.close();
 			
 	
 			/*
@@ -1047,7 +1041,6 @@ public class SurveyTemplate {
 				fm.update(f);
 			}
 			//fPersist.persist(formArray);
-			fm.close();
 	
 			/*
 			 * Persist the options
@@ -1067,7 +1060,7 @@ public class SurveyTemplate {
 				}
 			});
 			
-			JdbcOptionManager om = new JdbcOptionManager(sd);
+			om = new JdbcOptionManager(sd);
 			for (Option o : optionList) {
 				Question q = getQuestion(o.getQuestionRef()); // Get the question id
 				o.setListId(q.getListId());
@@ -1076,13 +1069,12 @@ public class SurveyTemplate {
 				//oPersist.persist(o);
 				om.write(o);
 			}
-			om.close();
 			
 			// Write the translation objects
 			Set<String> langs = translations.keySet();
 			String[] languages = (String[]) langs.toArray(new String[0]);
 			int sId = survey.getId();
-			JdbcTranslationManager tm = new JdbcTranslationManager(sd);
+			tm = new JdbcTranslationManager(sd);
 			if(languages.length > 0) {
 				for(int langIndex = 0; langIndex < languages.length; langIndex++) {
 					HashMap<?, HashMap<String, Translation>> aLanguageTranslation = translations.get(languages[langIndex]);	// A single language
@@ -1115,13 +1107,17 @@ public class SurveyTemplate {
 					//tPersist.persist(trans);
 				}
 			}
-			tm.close();
 			
 			sd.commit();
 		} catch (Exception e) {
 			try{sd.rollback();} catch(Exception ex) {}
 			throw e;
 		} finally {
+			if(sm != null) {sm.close();};
+			if(fm != null) {fm.close();};
+			if(qm != null) {qm.close();};
+			if(om != null) {om.close();};
+			if(tm != null) {tm.close();};
 			if(sd != null) try{sd.close();} catch(Exception e){};
 		}
 
@@ -1169,17 +1165,29 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyIdent the ident of the survey
 	 */
-	public void readDatabase(String surveyIdent) throws MissingTemplateException {
+	public void readDatabase(String surveyIdent) throws MissingTemplateException, SQLException {
 
-		// Locate the survey object
-		SurveyManager surveys = new SurveyManager(pc);
-		survey = surveys.getByIdent(surveyIdent);
-
-		if(survey != null) {
-			readDatabase(survey);	// Get the rest of the survey
-		} else {
-			System.out.println("Error: Survey Template not found: " + surveyId);
-			throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
+		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Read Database");
+		JdbcSurveyManager sm = null;
+		
+		try {
+			// Locate the survey object
+			//SurveyManager surveys = new SurveyManager(pc);
+			//survey = surveys.getByIdent(surveyIdent);
+	
+			sm = new JdbcSurveyManager(sd);
+			
+			survey = sm.getByIdent(surveyIdent);
+			
+			if(survey != null) {
+				readDatabase(survey, sd);	// Get the rest of the survey
+			} else {
+				System.out.println("Error: Survey Template not found: " + surveyId);
+				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
+			}
+		} finally {
+			if(sm != null) {sm.close();}
+			if(sd != null) try{sd.close();} catch(Exception e){};
 		}
 
 	}
@@ -1189,17 +1197,30 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyId the primary key of the survey
 	 */
-	public void readDatabase(int surveyId) throws MissingTemplateException {
+	public void readDatabase(int surveyId) throws MissingTemplateException, SQLException {
 
-		// Locate the survey object
-		SurveyManager surveys = new SurveyManager(pc);
-		survey = surveys.getById(surveyId);
-
-		if(survey != null) {
-			readDatabase(survey);	// Get the rest of the survey
-		} else {
-			System.out.println("Error: Survey Template not found: " + surveyId);
-			throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
+		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Read Database");
+		JdbcSurveyManager sm = null;
+		
+		try {
+			// Locate the survey object
+			//SurveyManager surveys = new SurveyManager(pc);
+			//survey = surveys.getById(surveyId);
+			
+			sm = new JdbcSurveyManager(sd);
+			
+			survey = sm.getById(surveyId);
+	
+			if(survey != null) {
+				readDatabase(survey, sd);	// Get the rest of the survey
+			} else {
+				System.out.println("Error: Survey Template not found: " + surveyId);
+				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
+			}
+			
+		} finally {
+			if(sm != null) {sm.close();}
+			if(sd != null) try{sd.close();} catch(Exception e){};
 		}
 
 	}
@@ -1209,105 +1230,130 @@ public class SurveyTemplate {
 	 * Method to read the remaining survey template from the database once the 
 	 *  survey to be read has been identified
 	 */
-	private void readDatabase(Survey survey) {
+	private void readDatabase(Survey survey, Connection sd) throws SQLException {
 
 		/*
 		 * Get the project name
 		 */
-		project = pPersist.getById(survey.getProjectId());
+		//project = pPersist.getById(survey.getProjectId());
 		
-		/*
-		 * Get the forms
-		 */	
-		List <Form> formList = fPersist.getBySurvey(survey);
-		for(int i= 0; i < formList.size(); i++) {
-			String ref = formList.get(i).getPath();
-			if(ref != null) {
-				forms.put(ref, formList.get(i));
-			}
-			if(formList.get(i).getParentForm() == 0) {
-				firstFormRef = ref;
-			}
-		}
+		JdbcProjectManager pm = null;
+		JdbcFormManager fm = null;
+		JdbcQuestionManager qm = null;
+		JdbcOptionManager om = null;
+		JdbcTranslationManager tm = null;
 		
-		/*
-		 * Get questions
-		 */
-		List <Question> qList = qPersist.getBySurvey(survey);
-		for(int i= 0; i < qList.size(); i++) {
-			Question q = qList.get(i);
-			int f_id = q.getFormId();
-			String formRef = getFormById(f_id).getPath();
-			String qRef = q.getPath();
-			if(qRef != null) {
-				q.setFormRef(formRef);
-				questions.put(qRef, q);
-				
-				boolean cascade = false;
-				String cascadeInstanceId = q.getCascadeInstance();
-				if(cascadeInstanceId != null) {
-					CascadeInstance ci = new CascadeInstance();
-					ci.name = cascadeInstanceId;
-					ci.valueKey = q.getNodesetValue();
-					String label = q.getNodesetLabel();
-					if(label.startsWith("jr:itext")) {
-						// Text id reference, set the label_id
-						int idx1 = label.indexOf('(');
-						int idx2 = label.indexOf(')', idx1 + 1);
-						ci.labelKey = label.substring(idx1 + 1, idx2);
-					} else {
-						ci.labelKey = label;
-					}
-
-					// Cascade options are shared, check that this instance has not been added already by another question
-					
-					if(!cascadeInstanceLoaded(cascadeInstanceId)) {
-						cascadeInstances.add(ci);
-					}
-					cascade = true;
+		try {
+			pm = new JdbcProjectManager(sd);
+			project = pm.getById(survey.getProjectId());
+			
+			/*
+			 * Get the forms
+			 */	
+			fm = new JdbcFormManager(sd);
+			//List <Form> formList = fPersist.getBySurvey(survey);
+			List <Form> formList = fm.getBySurveyId(survey.getId());
+			for(int i= 0; i < formList.size(); i++) {
+				String ref = formList.get(i).getPath();
+				if(ref != null) {
+					forms.put(ref, formList.get(i));
 				}
-		
-				/*
-				 * Get options for this question
-				 */
-				List <Option> oList = oPersist.getByQuestionId(q.getId());
-				for(int j= 0; j < oList.size(); j++) {
-					Option o = oList.get(j);
-					o.setQuestionRef(qRef);
-					String oRef = qRef + "/" + o.getId();
-					if(oRef != null) {
-						if(cascade) {
-							o.setCascadeInstanceId(cascadeInstanceId);
-							// Cascade options are shared, check that this option has not been added already by another question
-							if(!cascadeOptionLoaded(cascadeInstanceId, o.getValue())) {
-								cascade_options.put(oRef, o);
-							}
+				if(formList.get(i).getParentForm() == 0) {
+					firstFormRef = ref;
+				}
+			}
+			
+			/*
+			 * Get questions
+			 */
+			qm = new JdbcQuestionManager(sd);
+			//List <Question> qList = qPersist.getBySurvey(survey);
+			List <Question> qList = qm.getBySurveyId(survey.getId());
+			for(int i= 0; i < qList.size(); i++) {
+				Question q = qList.get(i);
+				int f_id = q.getFormId();
+				String formRef = getFormById(f_id).getPath();
+				String qRef = q.getPath();
+				if(qRef != null) {
+					q.setFormRef(formRef);
+					questions.put(qRef, q);
+					
+					boolean cascade = false;
+					String cascadeInstanceId = q.getCascadeInstance();
+					if(cascadeInstanceId != null) {
+						CascadeInstance ci = new CascadeInstance();
+						ci.name = cascadeInstanceId;
+						ci.valueKey = q.getNodesetValue();
+						String label = q.getNodesetLabel();
+						if(label.startsWith("jr:itext")) {
+							// Text id reference, set the label_id
+							int idx1 = label.indexOf('(');
+							int idx2 = label.indexOf(')', idx1 + 1);
+							ci.labelKey = label.substring(idx1 + 1, idx2);
 						} else {
-							options.put(oRef, o);
+							ci.labelKey = label;
+						}
+	
+						// Cascade options are shared, check that this instance has not been added already by another question
+						
+						if(!cascadeInstanceLoaded(cascadeInstanceId)) {
+							cascadeInstances.add(ci);
+						}
+						cascade = true;
+					}
+			
+					/*
+					 * Get options for this question
+					 */
+					om = new JdbcOptionManager(sd);
+					//List <Option> oList = oPersist.getByQuestionId(q.getId());
+					List <Option> oList = om.getByListId(q.getListId());
+					for(int j= 0; j < oList.size(); j++) {
+						Option o = oList.get(j);
+						o.setQuestionRef(qRef);
+						String oRef = qRef + "/" + o.getId();
+						if(oRef != null) {
+							if(cascade) {
+								o.setCascadeInstanceId(cascadeInstanceId);
+								// Cascade options are shared, check that this option has not been added already by another question
+								if(!cascadeOptionLoaded(cascadeInstanceId, o.getValue())) {
+									cascade_options.put(oRef, o);
+								}
+							} else {
+								options.put(oRef, o);
+							}
 						}
 					}
 				}
-			}
-		}	
-		
-		/*
-		 * Get translations
-		 */
-		List <Translation> tList = tPersist.getBySurvey(survey);
-		for(Translation t : tList) {
-			HashMap<String, HashMap<String, Translation>> languageMap = translations.get(t.getLanguage());
-			if(languageMap == null) {
-				languageMap = new HashMap<String, HashMap <String, Translation>> ();
-				translations.put(t.getLanguage(), languageMap);
-			}
+			}	
 			
-			HashMap<String, Translation> types = languageMap.get(t.getTextId());
-			if(types == null) {
-				types = new HashMap<String, Translation> ();
-				languageMap.put(t.getTextId(), types);
+			/*
+			 * Get translations
+			 */
+			tm = new JdbcTranslationManager(sd);
+			List <Translation> tList = tm.getBySurveyId(survey.getId());
+			//List <Translation> tList = tPersist.getBySurvey(survey);
+			for(Translation t : tList) {
+				HashMap<String, HashMap<String, Translation>> languageMap = translations.get(t.getLanguage());
+				if(languageMap == null) {
+					languageMap = new HashMap<String, HashMap <String, Translation>> ();
+					translations.put(t.getLanguage(), languageMap);
+				}
+				
+				HashMap<String, Translation> types = languageMap.get(t.getTextId());
+				if(types == null) {
+					types = new HashMap<String, Translation> ();
+					languageMap.put(t.getTextId(), types);
+				}
+				
+				types.put(t.getType(), t);			
 			}
-			
-			types.put(t.getType(), t);			
+		} finally {
+			if(pm != null) {pm.close();}
+			if(fm != null) {fm.close();}
+			if(qm != null) {qm.close();}
+			if(om != null) {om.close();}
+			if(tm != null) {tm.close();}
 		}
 
 
@@ -1390,7 +1436,7 @@ public class SurveyTemplate {
 	 *  useExternalChoices is set false when getting an XForm
 	 *      Return the dummy choice that points to the external file columns
 	 */
-	public void extendInstance(SurveyInstance instance, boolean useExternalChoices) {
+	public void extendInstance(Connection sd, SurveyInstance instance, boolean useExternalChoices) throws SQLException {
 		List<Form> formList  = getAllForms(); 
 		
 		// Set the display name
@@ -1400,16 +1446,18 @@ public class SurveyTemplate {
 		 */
 		for(Form f : formList) {
 			instance.setForm(f.getPath(), f.getTableName(), f.getType());
-			List <Question> questionList = f.getQuestions();
-			extendQuestions(instance, questionList, f.getPath(), useExternalChoices);
+			List <Question> questionList = f.getQuestions(sd);
+			extendQuestions(sd, instance, questionList, f.getPath(), useExternalChoices);
 		}
 	}
 	
 	
-	public void extendQuestions(SurveyInstance instance, 
+	public void extendQuestions(
+			Connection sd,
+			SurveyInstance instance, 
 			List <Question> questionList, 
 			String formPath,
-			boolean useExternalChoices) {
+			boolean useExternalChoices) throws SQLException {
 		
 		for(Question q : questionList) {
 			
@@ -1437,9 +1485,9 @@ public class SurveyTemplate {
 					// Add the options to this multi choice question
 					Collection <Option> optionList = null;
 					if(useExternalChoices) {
-						optionList = q.getValidChoices();
+						optionList = q.getValidChoices(sd);
 					} else {
-						optionList = q.getChoices();
+						optionList = q.getChoices(sd);
 					}
 
 					for(Option o : optionList) {

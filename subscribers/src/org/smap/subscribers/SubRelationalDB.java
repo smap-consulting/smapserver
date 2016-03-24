@@ -1097,31 +1097,30 @@ public class SubRelationalDB extends Subscriber {
 	private void writeAllTableStructures(SurveyTemplate template) {
 			
 		String response = null;
-		Connection connection = null;
+		Connection sd = null;
 		
 		try {
 		    Class.forName(dbClass);	 
-			connection = DriverManager.getConnection(database, user, password);
-			Statement statement = connection.createStatement();
+			sd = DriverManager.getConnection(database, user, password);
 			
 			List<Form> forms = template.getAllForms();	
-			connection.setAutoCommit(false);
+			sd.setAutoCommit(false);
 			for(Form form : forms) {		
-				writeTableStructure(form, statement);
-				connection.commit();
+				writeTableStructure(form, sd);
+				sd.commit();
 			}	
-			connection.setAutoCommit(true);
+			sd.setAutoCommit(true);
 	
 
 
 		} catch (Exception e) {
-			if(connection != null) {
+			if(sd != null) {
 				try {
 					response = "Error: Rolling back: " + e.getMessage();	// TODO can't roll back within higher level transaction
 					System.out.println(response);
 					e.printStackTrace();
-					connection.rollback();
-					connection.setAutoCommit(true);
+					sd.rollback();
+					sd.setAutoCommit(true);
 				} catch (SQLException ex) {
 					System.out.println(ex.getMessage());
 				}
@@ -1130,8 +1129,8 @@ public class SubRelationalDB extends Subscriber {
 			
 		} finally {
 			try {
-				if (connection != null) {
-					connection.close();
+				if (sd != null) {
+					sd.close();
 				}
 			} catch (SQLException e) {
 				System.out.println("Failed to close connection");
@@ -1140,9 +1139,10 @@ public class SubRelationalDB extends Subscriber {
 		}		
 	}
 	
-	private void writeTableStructure(Form form, Statement statement) {
+	private void writeTableStructure(Form form, Connection sd) throws SQLException {
+		
 		String tableName = form.getTableName();
-		List<Question> columns = form.getQuestions();
+		List<Question> columns = form.getQuestions(sd);
 		String sql = null;	
 		List <GeometryColumn> geoms = new ArrayList<GeometryColumn> ();
 
@@ -1238,7 +1238,7 @@ public class SubRelationalDB extends Subscriber {
 					if(colType.equals("select")) {
 						// Create a column for each option
 						// Values in this column can only be '0' or '1', not using boolean as it may be easier for analysis with an integer
-						Collection<Option> options = q.getValidChoices();
+						Collection<Option> options = q.getValidChoices(sd);
 						if(options != null) {
 							List<Option> optionList = new ArrayList <Option> (options);
 							UtilityMethods.sortOptions(optionList);	
@@ -1263,19 +1263,26 @@ public class SubRelationalDB extends Subscriber {
 			}
 			sql += ");";
 			
+			PreparedStatement pstmt = null;
+			PreparedStatement pstmtGeom = null;
 			try {
-				System.out.println("Sql statement: " + sql);
-				statement.execute(sql);
+				pstmt = sd.prepareStatement(sql);
+				System.out.println("Sql statement: " + pstmt.toString());
+				pstmt.executeUpdate(sql);
 				// Add geometry columns
 				for(GeometryColumn gc : geoms) {
 					String gSql = "SELECT AddGeometryColumn('" + gc.tableName + 
 						"', '" + gc.columnName + "', " + 
 						gc.srid + ", '" + gc.type + "', " + gc.dimension + ");";
-					System.out.println("Sql statement: " + gSql);
-					statement.execute(gSql);
+					
+					pstmtGeom = sd.prepareStatement(gSql);
+					System.out.println("Sql statement: " + pstmtGeom.toString());
+					pstmtGeom.executeUpdate(gSql);
 				}
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());
+			} finally {
+				if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 			}
 			
 		}

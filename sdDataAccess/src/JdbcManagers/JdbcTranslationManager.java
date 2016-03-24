@@ -21,14 +21,14 @@ package JdbcManagers;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
-import javax.persistence.PersistenceException;
-
-import org.smap.server.entities.Survey;
 import org.smap.server.entities.Translation;
 
 public class JdbcTranslationManager {
@@ -36,19 +36,43 @@ public class JdbcTranslationManager {
 	PreparedStatement pstmt = null;
 	String sql = "insert into translation (s_id, language, text_id, type, value) values (?, ?, ?, ?, ?);";
 	
+	PreparedStatement pstmtGetBySurveyId = null;
+	String sqlGet = "select "
+			+ "t_id,"
+			+ "s_id,"
+			+ "language,"
+			+ "text_id,"
+			+ "type,"
+			+ "value "
+			+ "from translation where ";
+	String sqlGetBySurveyId = "s_id = ? "
+			+ "order by language;";
+			
+	/*
+	 * Constructor
+	 */
 	public JdbcTranslationManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql);
+		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlGetBySurveyId);
 	}
 	
+	/*
+	 * Write a new translation object to the database
+	 */
 	public void write(int sId, String language, String text_id, String type, String value) throws SQLException {
 		pstmt.setInt(1, sId);
 		pstmt.setString(2, language);
 		pstmt.setString(3, text_id);
 		pstmt.setString(4, type);
 		pstmt.setString(5, value);
+		
+		System.out.println("Write translation: " + pstmt.toString());
 		pstmt.executeUpdate();
 	}
 	
+	/*
+	 * Write multiple translation objects to the database
+	 */
 	public void persistBatch(int sId, Collection<HashMap<String, Translation>> l) throws SQLException {
 		
 		Iterator<HashMap<String,Translation>> itrL = l.iterator();
@@ -67,7 +91,38 @@ public class JdbcTranslationManager {
 			
 	}
 	
+	/*
+	 * Get translations by survey id
+	 */
+	public List<Translation> getBySurveyId(int sId) throws SQLException {
+		pstmtGetBySurveyId.setInt(1, sId);
+		return getTranslationList(pstmtGetBySurveyId);
+	}
+	/*
+	 * Close prepared statements
+	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
+	}
+	
+	private List<Translation> getTranslationList(PreparedStatement pstmt) throws SQLException {
+	
+		ArrayList <Translation> trans = new ArrayList<Translation> ();
+		
+		ResultSet rs = pstmt.executeQuery();
+		while(rs.next()) {
+			Translation t = new Translation();
+			
+			t.setId(rs.getInt(1));
+			t.setSurveyId(rs.getInt(2));
+			t.setLanguage(rs.getString(3));
+			t.setTextId(rs.getString(4));
+			t.setType(rs.getString(5));
+			t.setValue(rs.getString(6));
+			
+			trans.add(t);
+		}
+		return trans;
 	}
 }

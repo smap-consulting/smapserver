@@ -60,12 +60,12 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.SurveyManager;
 import org.smap.server.utilities.PutXForm;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import JdbcManagers.JdbcSurveyManager;
 
   
 /**
@@ -136,7 +136,10 @@ public class TemplateUpload extends Application {
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 		ArrayList<String> mesgArray = new ArrayList<String> ();
 		
+		JdbcSurveyManager sm = null;
+		Connection sd = SDDataSource.getConnection("fieldManager-Template Upload");
 		try {
+		
 			/*
 			 * Parse the request
 			 */
@@ -163,15 +166,14 @@ public class TemplateUpload extends Application {
 						log.info("Template: " + projectId);
 						
 						// Authorisation - Access
-						Connection connectionSD = SDDataSource.getConnection("fieldManager-Template Upload");
-						a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+						a.isValidProject(sd, request.getRemoteUser(), projectId);
 						// End Authorisation
 						
 						// Get the project name
 						PreparedStatement pstmt = null;
 						try {
 							String sql = "select name from project where id = ?;";
-							pstmt = connectionSD.prepareStatement(sql);
+							pstmt = sd.prepareStatement(sql);
 							pstmt.setInt(1, projectId);
 							ResultSet rs = pstmt.executeQuery();
 							if(rs.next()) {
@@ -181,13 +183,6 @@ public class TemplateUpload extends Application {
 							e.printStackTrace();
 						} finally {
 							if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
-							try {
-								if (connectionSD != null) {
-									connectionSD.close();
-								}
-							} catch (SQLException e) {
-								log.log(Level.SEVERE, "Failed to close connection",e);
-							}
 						}
 					} else if(item.getFieldName().equals("surveyIdent")) {
 						surveyIdent = item.getString();
@@ -213,8 +208,10 @@ public class TemplateUpload extends Application {
 			fileName = uploadedFile.getName();
 			
 			// If the survey display name already exists on this server, for this project, then throw an error
-			SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
-			if(surveys.surveyExists(displayName, projectId)) {
+			
+			//SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
+			sm = new JdbcSurveyManager(sd);
+			if(sm.surveyExists(displayName, projectId)) {
 				// String mesg = "Survey " + displayName + " Exists in project " + projectName;
 				mesgArray.add("$c_survey");
 				mesgArray.add(" '");
@@ -370,6 +367,9 @@ public class TemplateUpload extends Application {
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,"Error encountered while uploading file",ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			if(sm != null) {sm.close();}
+			try {if (sd != null) {sd.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection",e);}
 		}
 		
 		return response;

@@ -20,71 +20,47 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Transient;
-
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.QuestionManager;
+import JdbcManagers.JdbcQuestionManager;
 
 /*
  * Class to store Form objects
  */
-@Entity(name = "FORM")
 public class Form implements Serializable {
 
 	private static final long serialVersionUID = -4728483138310578702L;
 
 	// Database Attributes
-	@Id
-	@Column(name = "f_id", nullable = false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator = "f_seq")
-	@SequenceGenerator(name = "f_seq", sequenceName = "f_seq")
 	private int f_id;
-
-	@Column(name = "s_id")
+	
 	private int s_id;
 	
-	@Column(name = "name")
 	private String name = null;
 
-	@Column(name = "label")
 	private String label = null;
 
-	@Column(name = "table_name")
 	private String table_name = null;
 	
-	@Column(name = "parentform")
 	private int parentform = 0;
 	
-	@Column(name = "parentquestion")
 	private int parentquestion = 0;
 	
-	@Column(name = "repeats")
 	private String repeats = null;
 	
-	@Column(name = "path")
 	private String path = null;	// Xpath of this form
 	
-	@Transient
+	// Other attributes
 	private List<Question> questions = null;
 	
-	@Transient
 	private String parentFormRef = null;
 	
-	@Transient
 	private String repeatsRef = null;
 	
-	@Transient
 	private String parentQuestionRef = null;
 	
-	@Transient
 	public int qSeq = 0;		// Used to store current sequence while saving a forms questions
 	/*
 	 * Constructor
@@ -134,11 +110,20 @@ public class Form implements Serializable {
 		return parentform;
 	}
 	
-	public List<Question> getQuestions() {
+	public List<Question> getQuestions(Connection sd) throws SQLException {
 		if(questions == null) {
-			PersistenceContext pc = new PersistenceContext("pgsql_jpa");
-			QuestionManager qm = new QuestionManager(pc);
-			questions = qm.getByFormId(f_id);
+			//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+			//QuestionManager qm = new QuestionManager(pc);
+			//questions = qm.getByFormId(f_id);
+			
+			JdbcQuestionManager qm = null;
+			try {
+				qm = new JdbcQuestionManager(sd);
+				questions = qm.getByFormId(f_id);
+				
+			} finally {
+				if(qm != null) {qm.close();}
+			}
 		}
 		return questions;
 	}
@@ -182,6 +167,10 @@ public class Form implements Serializable {
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public void setTableName(String v) {		// Override automatically generated table name
+		table_name = v;
 	}
 
 	public void setLabel(String label) {

@@ -31,6 +31,7 @@ import org.smap.server.entities.Survey;
 
 public class JdbcSurveyManager {
 
+	// Create new
 	PreparedStatement pstmt = null;
 	String sql = "insert into survey ("
 			+ "s_id, "
@@ -46,16 +47,49 @@ public class JdbcSurveyManager {
 			+ "instance_name) "
 			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?);";
 	
+	// Update
 	PreparedStatement pstmtUpdate = null;
 	String sqlUpdate = "update survey set "
 			+ "ident = ? "
 			+ "where s_id = ?;";
 	
+	// Retrieve
+	PreparedStatement pstmtGetByIdent = null;
+	PreparedStatement pstmtGetById = null;
+	String sqlGet = "select "
+			+ "s_id, "
+			+ "name,"
+			+ "display_name, "
+			+ "p_id, "
+			+ "def_lang, "
+			+ "class,"
+			+ "ident,"
+			+ "version,"
+			+ "manifest,"
+			+ "instance_name,"
+			+ "deleted "
+			+ "from survey where ";
+	String sqlIdentWhere = "ident = ?;";
+	String sqlIdWhere = "s_id = ?;";
+
+	// Check existence
+	PreparedStatement pstmtExists = null;
+	String sqlExists = "select count(*) from survey where display_name = ? and p_id = ?;";
+	
+	/*
+	 * Constructor
+	 */
 	public JdbcSurveyManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		pstmtUpdate = sd.prepareStatement(sqlUpdate);
+		pstmtGetByIdent = sd.prepareStatement(sqlGet + sqlIdentWhere);
+		pstmtGetById = sd.prepareStatement(sqlGet + sqlIdWhere);
+		pstmtExists = sd.prepareStatement(sqlExists);
 	}
 	
+	/*
+	 * Store a new survey
+	 */
 	public void write(Survey s) throws SQLException {
 		pstmt.setString(1, s.getName());
 		pstmt.setString(2, s.getDisplayName());
@@ -81,14 +115,81 @@ public class JdbcSurveyManager {
 		}
 	}
 	
+	/*
+	 * Update a survey
+	 */
 	public void update(Survey s) throws SQLException {
 		pstmtUpdate.setString(1, s.getIdent());
 		pstmtUpdate.setInt(2, s.getId());
 		pstmtUpdate.executeUpdate();
 	}
 	
+	/*
+	 * Get a survey using its ident
+	 */
+	public Survey getByIdent(String ident) throws SQLException {
+		pstmtGetByIdent.setString(1, ident);
+		return getSurvey(pstmtGetByIdent);
+	}
+	
+	/*
+	 * Get a survey using its id
+	 */
+	public Survey getById(int id) throws SQLException {
+		pstmtGetById.setInt(1, id);
+		return getSurvey(pstmtGetById);
+	}
+	
+	/*
+	 * Return true if a survey exists with the specified name and projectId
+	 */
+	public boolean surveyExists(String name, int projectId) throws SQLException {
+		
+		boolean exists = false;
+		
+		pstmtExists.setString(1, name);
+		pstmtExists.setInt(2,  projectId);
+		ResultSet rs = pstmtExists.executeQuery();
+		if(rs.next()) {
+			if(rs.getInt(1) > 0) {
+				exists = true;
+			}
+		}
+		return exists;
+	}
+	
+	/*
+	 * Close statements
+	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtUpdate != null) {pstmtUpdate.close();}} catch(Exception e) {};
+		try {if(pstmtGetByIdent != null) {pstmtGetByIdent.close();}} catch(Exception e) {};
+		try {if(pstmtGetById != null) {pstmtGetById.close();}} catch(Exception e) {};
+	}
+	
+	/*
+	 * Common function to populate a survey object from the database
+	 * The query used to find the survey is specified in the prepared statement
+	 */
+	private Survey getSurvey(PreparedStatement pstmt) throws SQLException {
+		Survey s = null;
+		
+		ResultSet rs = pstmt.executeQuery();
+		if(rs.next()) {
+			s = new Survey();
+			s.setId(rs.getInt(1));
+			s.setName(rs.getString(2));
+			s.setDisplayName(rs.getString(3));
+			s.setProjectId(rs.getInt(4));
+			s.setDefLang(rs.getString(5));
+			s.setSurveyClass(rs.getString(6));
+			s.setIdent(rs.getString(7));
+			s.setVersion(rs.getInt(8));
+			s.setManifest(rs.getString(9));
+			s.setInstanceName(rs.getString(10));
+			s.setDeleted(rs.getBoolean(11));
+		}
+		return s;
 	}
 }

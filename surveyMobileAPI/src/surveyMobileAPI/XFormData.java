@@ -55,9 +55,8 @@ import org.smap.sdal.model.Survey;
 import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.UploadEvent;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.UploadEventManager;
 
+import JdbcManagers.JdbcUploadEventManager;
 import exceptions.SurveyBlockedException;
 
 class SaveDetails {
@@ -94,7 +93,7 @@ public class XFormData {
 		
 		// Use Apache Commons file upload to get the items in the file
 		SaveDetails saveDetails = null;
-		PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+		//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
 		DiskFileItemFactory  factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		
@@ -109,170 +108,173 @@ public class XFormData {
 		String form_status = request.getHeader("form_status");
 		boolean incomplete = false;	// Set true if odk has more attachments to send
 	
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + serverName.toLowerCase();
-		}
+		Connection sd = null;
 		
-		/*
-		 * Save the XML submission file
-		 */
-		Iterator<FileItem> iter = items.iterator();
-		String thisInstanceId = null;
-		while (iter.hasNext()) {
-		    FileItem item = (FileItem) iter.next();	    
-	    	String name = item.getFieldName();
-	        if(name.equals("xml_submission_file") || name.equals("xml_submission_data")) {		// xml_submission_data is the name used by webForms
-	        	si = new SurveyInstance(item.getInputStream());
-	        	
-	        	// Extend the instance with data available in the template
-	        	// This will get a default location if one exists
-				templateName = si.getTemplateName();
-				
-				saveDetails = saveToDisk(item, request, basePath, null, templateName, null, 0, 0);
-				log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
-				
-				SurveyTemplate template = new SurveyTemplate();
-				template.readDatabase(templateName);										
-				template.extendInstance(si, false);
-				
-				thisInstanceId = si.getUuid();
-
-				break;	// There is only one XML submission file
-	        }
-		}
-		
-    	/*
-    	 * Complete saving to disk 
-    	 * Return error if save to disk fails (exception thrown)
-    	 */
-		iter = items.iterator();
-		int iosImageCount = 0;
-		int iosVideoCount = 0;
-		log.info("############################ Saving everything to disk  ######################");
-		while (iter.hasNext()) {
-		    FileItem item = (FileItem) iter.next();	 
-		    String fieldName = item.getFieldName();
-		    String dataUrl = null;
-		    
-		    log.info("==== Item: " + fieldName);
-		    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
-		    	// Check to see if this form field indicates the submission is incomplete
-		    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
-		    		log.info("    ++++++ Incomplete Submission");
-		    		incomplete = true;
-		    	} else if ((dataUrl = item.getString()).startsWith("data:")) {
-		    		// File Attachment from web forms
-		    		SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, 
-		    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7), iosImageCount, iosVideoCount);
-		    		iosImageCount = attachSaveDetails.iosImageCount;
-		    		iosVideoCount = attachSaveDetails.iosVideoCount;
-		    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
-		    	} else if(fieldName.equals("assignment_id"))  {
-		    		log.info("Got assignment id ++++++++++++++++++" + item.getString());
-		    		try {
-		    			assignmentId = Integer.parseInt(item.getString());
-		    		} catch (Exception e) {
-		    			
-		    		}
-		    	} else if(fieldName.equals("location_trigger"))  {
-		    		locationTrigger = item.getString();
-		    	} else if(fieldName.equals("survey_notes"))  {
-		    		surveyNotes = item.getString();
-		    	} else {
-		    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
-		    	}		    	
-		    } else {
-		        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
-		        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, 
-		        			saveDetails.instanceDir, templateName, null, iosImageCount, iosVideoCount);
-		        	iosImageCount = attachSaveDetails.iosImageCount;
-		        	iosVideoCount = attachSaveDetails.iosVideoCount;
-			    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
-		        }
-		    }
-		}
-		log.info("####################### End of Saving everything to disk ##############################");
-		
-		Connection connectionSD = null;
-		Survey survey = null;
 		try {
+			sd = SDDataSource.getConnection("surveyMobileAPI-XFormData");
+			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
+			if(basePath == null) {
+				basePath = "/smap";
+			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+				basePath = "/ebs1/servers/" + serverName.toLowerCase();
+			}
+			
+			/*
+			 * Save the XML submission file
+			 */
+			Iterator<FileItem> iter = items.iterator();
+			String thisInstanceId = null;
+			while (iter.hasNext()) {
+			    FileItem item = (FileItem) iter.next();	    
+		    	String name = item.getFieldName();
+		        if(name.equals("xml_submission_file") || name.equals("xml_submission_data")) {		// xml_submission_data is the name used by webForms
+		        	si = new SurveyInstance(item.getInputStream());
+		        	
+		        	// Extend the instance with data available in the template
+		        	// This will get a default location if one exists
+					templateName = si.getTemplateName();
+					
+					saveDetails = saveToDisk(item, request, basePath, null, templateName, null, 0, 0);
+					log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
+					
+					SurveyTemplate template = new SurveyTemplate();
+					template.readDatabase(templateName);										
+					template.extendInstance(sd, si, false);
+					
+					thisInstanceId = si.getUuid();
+	
+					break;	// There is only one XML submission file
+		        }
+			}
+			
+	    	/*
+	    	 * Complete saving to disk 
+	    	 * Return error if save to disk fails (exception thrown)
+	    	 */
+			iter = items.iterator();
+			int iosImageCount = 0;
+			int iosVideoCount = 0;
+			log.info("############################ Saving everything to disk  ######################");
+			while (iter.hasNext()) {
+			    FileItem item = (FileItem) iter.next();	 
+			    String fieldName = item.getFieldName();
+			    String dataUrl = null;
+			    
+			    log.info("==== Item: " + fieldName);
+			    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
+			    	// Check to see if this form field indicates the submission is incomplete
+			    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
+			    		log.info("    ++++++ Incomplete Submission");
+			    		incomplete = true;
+			    	} else if ((dataUrl = item.getString()).startsWith("data:")) {
+			    		// File Attachment from web forms
+			    		SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, 
+			    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7), iosImageCount, iosVideoCount);
+			    		iosImageCount = attachSaveDetails.iosImageCount;
+			    		iosVideoCount = attachSaveDetails.iosVideoCount;
+			    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
+			    	} else if(fieldName.equals("assignment_id"))  {
+			    		log.info("Got assignment id ++++++++++++++++++" + item.getString());
+			    		try {
+			    			assignmentId = Integer.parseInt(item.getString());
+			    		} catch (Exception e) {
+			    			
+			    		}
+			    	} else if(fieldName.equals("location_trigger"))  {
+			    		locationTrigger = item.getString();
+			    	} else if(fieldName.equals("survey_notes"))  {
+			    		surveyNotes = item.getString();
+			    	} else {
+			    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
+			    	}		    	
+			    } else {
+			        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
+			        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, 
+			        			saveDetails.instanceDir, templateName, null, iosImageCount, iosVideoCount);
+			        	iosImageCount = attachSaveDetails.iosImageCount;
+			        	iosVideoCount = attachSaveDetails.iosVideoCount;
+				    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
+			        }
+			    }
+			}
+			log.info("####################### End of Saving everything to disk ##############################");
+			
+
 			SurveyManager sm = new SurveyManager();
-			connectionSD = SDDataSource.getConnection("surveyMobileAPI-XFormData");
-			survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
+			Survey survey = sm.getSurveyId(sd, templateName);	// Get the survey id from the templateName / key
 			
 			if(survey.getDeleted()) {
 				String reason = survey.displayName + " has been deleted";
-				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(connectionSD, user, si.getImei(), templateName, reason)) {
-					writeUploadError(user, survey, templateName, si, pc, reason);
+				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
+					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new NotFoundException();
 			}
 			if(survey.getBlocked()) {	// Throw an exception if the survey has been blocked form accepting any more submssions
 				String reason = survey.displayName + " has been blocked";
-				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(connectionSD, user, si.getImei(), templateName, reason)) {
-					writeUploadError(user, survey, templateName, si, pc, reason);
+				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
+					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new SurveyBlockedException();
 			}
 			
-			a.isValidSurvey(connectionSD, user, survey.id, false);		// Throw an exception of the user is not authorised to upload this survey		
-		
-		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
+			a.isValidSurvey(sd, user, survey.id, false);		// Throw an exception of the user is not authorised to upload this survey		
+			
+			
+			
+			/*
+			 * DeviceId should be included in the survey contents, 
+			 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
+			 */
+			String masterDeviceId = si.getImei();
+			if(masterDeviceId == null || masterDeviceId.trim().length() == 0) {
+				masterDeviceId = deviceId;
+				if(masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
+					masterDeviceId = masterDeviceId.substring(11);
 				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}	
-		}
-		
-		/*
-		 * DeviceId should be included in the survey contents, 
-		 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
-		 */
-		String masterDeviceId = si.getImei();
-		if(masterDeviceId == null || masterDeviceId.trim().length() == 0) {
-			masterDeviceId = deviceId;
-			if(masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
-				masterDeviceId = masterDeviceId.substring(11);
 			}
+			
+			// Write the upload event
+			UploadEvent ue = new UploadEvent();
+			ue.setUserName(user);
+			ue.setFormStatus(form_status);
+			ue.setServerName(serverName);
+			ue.setSurveyId(survey.id);
+			ue.setIdent(templateName);
+			ue.setFilePath(saveDetails.filePath);
+			ue.setProjectId(survey.getPId());
+			ue.setUploadTime(new Date());	
+			ue.setFileName(saveDetails.fileName);
+			ue.setSurveyName(survey.getDisplayName());
+			ue.setUpdateId(updateInstanceId);
+			ue.setAssignmentId(assignmentId);
+			ue.setInstanceId(thisInstanceId);
+			ue.setLocation(si.getSurveyGeopoint());
+			ue.setImei(masterDeviceId);
+			ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);
+			ue.setStatus("success"); // Not really needed any more as status is really set in the subscriber event
+			ue.setIncomplete(incomplete);
+			ue.setLocationTrigger(locationTrigger);
+			ue.setSurveyNotes(surveyNotes);
+			
+			JdbcUploadEventManager uem = null;
+			try {
+				uem = new JdbcUploadEventManager(sd);
+				uem.write(ue);
+			} finally {
+				if(uem != null) {uem.close();}
+			}
+			//UploadEventManager uem = new UploadEventManager(pc);
+			//uem.persist(ue);
+			
+			log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
+		} finally {
+			try {if (sd != null) {sd.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection", e);}
 		}
-		
-		// Write the upload event
-		UploadEvent ue = new UploadEvent();
-		ue.setUserName(user);
-		ue.setFormStatus(form_status);
-		ue.setServerName(serverName);
-		ue.setSurveyId(survey.id);
-		ue.setIdent(templateName);
-		ue.setFilePath(saveDetails.filePath);
-		ue.setProjectId(survey.getPId());
-		ue.setUploadTime(new Date());	
-		ue.setFileName(saveDetails.fileName);
-		ue.setSurveyName(survey.getDisplayName());
-		ue.setUpdateId(updateInstanceId);
-		ue.setAssignmentId(assignmentId);
-		ue.setInstanceId(thisInstanceId);
-		ue.setLocation(si.getSurveyGeopoint());
-		ue.setImei(masterDeviceId);
-		ue.setOrigSurveyIdent(saveDetails.origSurveyIdent);
-		ue.setStatus("success"); // Not really needed any more as status is really set in the subscriber event
-		ue.setIncomplete(incomplete);
-		ue.setLocationTrigger(locationTrigger);
-		ue.setSurveyNotes(surveyNotes);
-		
-		UploadEventManager uem = new UploadEventManager(pc);
-		uem.persist(ue);
-		
-		log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 	}
 	
-	private void writeUploadError(String user, Survey survey, String templateName, 
-			SurveyInstance si, PersistenceContext pc, String reason) throws Exception {
+	private void writeUploadError(Connection sd, String user, Survey survey, String templateName, 
+			SurveyInstance si, String reason) throws Exception {
 		log.info("Writing upload error");
 		UploadEvent ue = new UploadEvent();
 		ue.setUserName(user);
@@ -286,8 +288,17 @@ public class XFormData {
 		ue.setImei(si.getImei());
 		ue.setStatus("error"); // Not really needed any more as status is really set in the subscriber event
 		ue.setReason(reason);
-		UploadEventManager uem = new UploadEventManager(pc);
-		uem.persist(ue);
+		
+		JdbcUploadEventManager uem = null;
+		try {
+			uem = new JdbcUploadEventManager(sd);
+			uem.write(ue);
+		} finally {
+			if(uem != null) {uem.close();}
+		}
+		
+		//UploadEventManager uem = new UploadEventManager(pc);
+		//uem.persist(ue);
 	}
 	
 	private SaveDetails saveToDisk(

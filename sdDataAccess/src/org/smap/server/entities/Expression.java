@@ -19,8 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.server.entities;
 
-import org.smap.server.managers.FormManager;
-
 /*
  * Decompose an expression from the database into its constituent parts
  */

@@ -21,20 +21,12 @@ package org.smap.server.entities;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.utilities.UtilityMethods;
 
 /*
  * Class to store Survey objects
  */
-@Entity(name = "SURVEY")
 public class Survey implements Serializable {
 
 	/**
@@ -43,40 +35,26 @@ public class Survey implements Serializable {
 	private static final long serialVersionUID = 2645224176464784459L;
 
 	// Database Attributes
-	@Id
-	@Column(name="s_id", nullable=false)
-	@GeneratedValue(strategy = GenerationType.AUTO, generator="s_seq")
-	@SequenceGenerator(name="s_seq", sequenceName="s_seq")
 	private int id;
 	
-	@Column(name="name")
 	private String name;
 	
-	@Column(name="ident")
 	private String ident;
 	
-	@Column(name="display_name")
 	private String display_name;
 	
-	@Column(name="def_lang")
 	private String def_lang;
 	
-	@Column(name="p_id")
 	private int p_id;
 	
-	@Column(name="deleted")
 	private boolean deleted = false;
 	
-	@Column(name="version")
 	private int version;
 	
-	@Column(name="manifest")
 	private String manifest;
 	
-	@Column(name="instance_name")
 	private String instanceName;
 	
-	@Column(name="class")
 	private String surveyClass;
 	
 	/*
@@ -145,6 +123,10 @@ public class Survey implements Serializable {
 		id = v;
 	}
 	
+	public void setName(String v) {
+		name = v;
+	}
+	
 	public void setDisplayName(String v) {
 		display_name = v;
 	}
@@ -167,6 +149,10 @@ public class Survey implements Serializable {
 	
 	public void setProjectId(int v) {
 		p_id = v;
+	}
+	
+	public void setDeleted(boolean v) {
+		deleted = v;
 	}
 	
 	public void setVersion(int v) {

@@ -35,13 +35,12 @@ import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.entities.UploadEvent;
-import org.smap.server.managers.PersistenceContext;
-import org.smap.server.managers.SubscriberEventManager;
-import org.smap.server.managers.UploadEventManager;
 import org.smap.subscribers.SmapForward;
 import org.smap.subscribers.Subscriber;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+
+import JdbcManagers.JdbcUploadEventManager;
 
 /*****************************************************************************
 
@@ -69,16 +68,17 @@ public class SubscriberBatch {
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	DocumentBuilder db = null;
 	Document xmlConf = null;		
-	Connection connection = null;
+	Connection sd = null;
 	PreparedStatement pstmt = null;
 	
 	
 	/**
 	 * @param args
 	 */
-	public void go(PersistenceContext pc, String smapId, String basePath, String subscriberType) {
+	public void go(String smapId, String basePath, String subscriberType) {
 		
-		UploadEventManager uem = new UploadEventManager(pc);
+		//UploadEventManager uem = new UploadEventManager(pc);
+		
 		confFilePath = "./" + smapId;
 
 		// Get the connection details for the meta data database
@@ -86,6 +86,7 @@ public class SubscriberBatch {
 		String databaseMeta = null;
 		String userMeta = null;
 		String passwordMeta = null;
+		JdbcUploadEventManager uem = null;
 		
 		try {
 			db = dbf.newDocumentBuilder();
@@ -96,8 +97,10 @@ public class SubscriberBatch {
 			passwordMeta = xmlConf.getElementsByTagName("password").item(0).getTextContent();
 			
 			Class.forName(dbClassMeta);
-			connection = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
+			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
 		
+			uem = new JdbcUploadEventManager(sd);
+			
 			/*
 			 * Get subscribers and their configuration
 			 * This is re-evaluated every time the batch job is run to allow
@@ -107,9 +110,9 @@ public class SubscriberBatch {
 			 */
 			List<Subscriber> subscribers = null;
 			if(subscriberType.equals("upload")) {
-				subscribers = init(connection, pstmt);		// Get subscribers 
+				subscribers = init(sd, pstmt);		// Get subscribers 
 			} else if(subscriberType.equals("forward")) {
-				subscribers = initForward(connection, pstmt);		// Get subscribers 
+				subscribers = initForward(sd, pstmt);		// Get subscribers 
 			} else {
 				System.out.println("Unknown subscriber type: " + subscriberType + " known values are upload, forward");
 			}
@@ -129,11 +132,10 @@ public class SubscriberBatch {
 					if(s.isEnabled()) {
 						
 						List<UploadEvent> uel = null;
-						if(s.isSurveySpecific()) {
-							uel = uem.getFailedForSubscriber(s.getSubscriberName(), s.getSurveyId());
-						} else {
-							uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
-						}
+						
+						uel = uem.getFailed(s.getSubscriberName());
+						//uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
+						
 									
 						if(uel.isEmpty()) {
 							
@@ -192,11 +194,11 @@ public class SubscriberBatch {
 										SurveyTemplate template = new SurveyTemplate();
 										
 										template.readDatabase(templateName);					
-										template.extendInstance(instance, true);	// Extend the instance with information from the template
+										template.extendInstance(sd, instance, true);	// Extend the instance with information from the template
 										// instance.getTopElement().printIEModel("   ");	// Debug
 										
 										// Get attachments from incomplete submissions
-										getAttachmentsFromIncompleteSurveys(connection, s.getSubscriberName(), ue.getFilePath(), ue.getOrigSurveyIdent(), ue.getIdent());
+										getAttachmentsFromIncompleteSurveys(sd, s.getSubscriberName(), ue.getFilePath(), ue.getOrigSurveyIdent(), ue.getIdent());
 										
 										is3 = new FileInputStream(uploadFile);	// Get an input stream for the file in case the subscriber uses that rather than an Instance object
 										s.upload(instance, is3, ue.getUserName(), 
@@ -255,13 +257,35 @@ public class SubscriberBatch {
 									// Save the status unless the host was unreachable
 									//  unreachable events are logged but not otherwise recorded
 									if(se.getStatus() != null && !se.getStatus().equals("host_unreachable")) {
-										se.setUploadEvent(ue);
-										SubscriberEventManager sem = new SubscriberEventManager(pc);
+										
+										String sqlUpdateStatus = "insert into subscriber_event ("
+												+ "se_id,"
+												+ "ue_id,"
+												+ "subscriber,"
+												+ "status,"
+												+ "reason,"
+												+ "dest) "
+												+ "values (nextval('se_seq'), ?, ?, ?, ?, ?);";
+										PreparedStatement pstmt = null;
 										try {
-											sem.persist(se);
-										} catch (Exception e) {
-											e.printStackTrace();
+											pstmt = sd.prepareStatement(sqlUpdateStatus);
+											pstmt.setInt(1, ue.getId());
+											pstmt.setString(2, se.getSubscriber());
+											pstmt.setString(3, se.getStatus());
+											pstmt.setString(4, se.getReason());
+											pstmt.setString(5, se.getDest());
+											pstmt.executeUpdate();
+										} finally {
+											if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 										}
+		
+										//se.setUploadEvent(ue);
+										//SubscriberEventManager sem = new SubscriberEventManager(pc);
+										//try {
+										//	sem.persist(se);
+										//} catch (Exception e) {
+										//	e.printStackTrace();
+										//}
 									} else if(se.getStatus() != null && se.getStatus().equals("host_unreachable")) {
 										// If the host is unreachable then stop forwarding for 10 seconds
 										// Also stop processing this subscriber, it may be that it has been taken off line
@@ -295,9 +319,11 @@ public class SubscriberBatch {
 		} finally {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 			
-			try {if (connection != null) {
-					connection.close();
-					connection = null;
+			if(uem != null) {uem.close();}
+			
+			try {if (sd != null) {
+					sd.close();
+					sd = null;
 				}
 			} catch (SQLException e) {
 				System.out.println("Failed to close connection");
@@ -430,11 +456,11 @@ public class SubscriberBatch {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtUpdate = null;
 		try {
-			pstmt = connection.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, origIdent);
 			pstmt.setString(2, ident);
 			
-			pstmtUpdate = connection.prepareStatement(sqlUpdate);
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
 			
 			File finalFile = new File(finalPath);
 			File finalDirFile = finalFile.getParentFile();
