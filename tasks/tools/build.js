@@ -24,7 +24,12 @@
 	file_input: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	moment: '../../../../smapServer/WebContent/js/libs/moment-with-locales.min',
 	datetimepicker: '../../../../smapServer/WebContent/js/libs/bootstrap-datetimepicker.min',
-	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu'
+	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu',
+
+	inspinia: '../../../../smapServer/WebContent/js/libs/wb/inspinia',
+	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
+	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
+	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min'
     },
     dir: '../tasks',
     modules: [

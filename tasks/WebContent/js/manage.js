@@ -44,7 +44,12 @@ requirejs.config({
     	bootbox: '../../../../js/libs/bootbox.min',
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js',
-    	file_input: '../../../../js/libs/bootstrap.file-input'
+    	file_input: '../../../../js/libs/bootstrap.file-input',
+    	
+    	inspinia: '../../../../js/libs/wb/inspinia',
+    	metismenu: '../../../../js/libs/wb/metisMenu/jquery.metisMenu',
+    	slimscroll: '../../../../js/libs/wb/slimscroll/jquery.slimscroll.min',
+    	pace: '../../../../js/libs/wb/pace/pace.min'
     },
     shim: {
 
@@ -56,7 +61,11 @@ requirejs.config({
     	'app/plugins': ['jquery'],
     	'crf': ['jquery'],
     	'file_input': ['jquery'],
-    	'app/assignments': ['file_input']
+    	'app/assignments': ['file_input'],
+    	
+    	'inspinia': ['jquery'],
+    	'metismenu': ['jquery'],
+    	'slimscroll': ['jquery']
 	
     	}
     });
@@ -75,7 +84,12 @@ require([
          'crf',
          'moment',
          'datetimepicker',
-         'file_input'
+         'file_input',
+         
+         'inspinia',
+         'metismenu',
+         'slimscroll',
+         'pace'
          
          ], function($, 
         		 bootstrap, 
