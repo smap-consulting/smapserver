@@ -3,6 +3,7 @@ package org.smap.model;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Set;
 import java.util.Vector;
@@ -818,272 +820,283 @@ public class SurveyTemplate {
 		// Start using plain old JDBC as we are migrating away from hibernate
 		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Write Database");
 		
-		Collection c = null;
-		Iterator itr = null;
-
-		if(forms.values().size() == 0) {
-			System.out.println("No forms in this survey");
-			throw new Exception("No forms in this survey");
-		}
-		SurveyManager surveys = new SurveyManager(pc);
-		System.out.println("Persisting survey");
-		surveys.persist(survey);
-
-		/*
-		 * Forms 1. Create record for each form and get its primary key
-		 */
-		List<Form> formList = new ArrayList<Form>(forms.values());
-		for(Form f : formList) {
-			f.setSurveyId(survey.getId());
-		}
-		
-		Form [] formArray = formList.toArray(new Form[formList.size()]);
-		System.out.println("Persisting forms");
-		fPersist.persist(formArray);
-		
-		/*
-		 * Questions.
-		 */
-		List<Question> questionList = new ArrayList<Question>(questions.values());
-		
-		/*
-		 * Hack
-		 * Add four preload questions that arn't currently supported by odkBuild editor
-		 * These questions will be added to the top level form as the form_ref is null
-		 */
-		boolean alreadyHas_device = false;
-		boolean alreadyHas_start = false;
-		boolean alreadyHas_end = false;
-		boolean alreadyHas_instanceid = false;
-		boolean alreadyHas_instancename = false;
-		boolean alreadyHas_task_key = false;
-		for (Question q : questionList) {
-			if(q.getSourceParam() != null) {
-				if(q.getSourceParam().equals("deviceid")) {
-					alreadyHas_device = true;
-				} else if(q.getSourceParam().equals("start")) {
-					alreadyHas_start = true;
-				} else if(q.getSourceParam().equals("end")) {
-					alreadyHas_end = true;
-				} 
+		try {
+			Collection c = null;
+			Iterator itr = null;
+	
+			if(forms.values().size() == 0) {
+				System.out.println("No forms in this survey");
+				throw new Exception("No forms in this survey");
 			}
-
-			if(q.getName().equals("_instanceid") ||
-					q.getPath().endsWith("/meta/instanceID")) {
-					alreadyHas_instanceid = true;
-			} else if(q.getName().equals("_task_key")) {
-					alreadyHas_task_key = true;
-			} else if(q.getPath().toLowerCase().trim().endsWith("/meta/instancename") ) {
-					alreadyHas_instancename = true;
+			SurveyManager surveys = new SurveyManager(pc);
+			System.out.println("Persisting survey");
+			surveys.persist(survey);
+	
+			/*
+			 * Forms 1. Create record for each form and get its primary key
+			 */
+			List<Form> formList = new ArrayList<Form>(forms.values());
+			for(Form f : formList) {
+				f.setSurveyId(survey.getId());
 			}
-
-		}
-
-		if(!alreadyHas_device) {
-			Question q = new Question();	// Device id
-			q.setName("_device");
-			q.setSeq(-3);
-			q.setVisible(false);
-			q.setSource("property");
-			q.setSourceParam("deviceid");
-			questionList.add(q);
-		}
-		
-		if(!alreadyHas_start) {
-			Question q = new Question();	// Start time
-			q.setName("_start");
-			q.setSeq(-2);
-			q.setVisible(false);
-			q.setSource("timestamp");
-			q.setSourceParam("start");
-			q.setType("dateTime");
-			questionList.add(q);
-		}
-		
-		if(!alreadyHas_end) {
-			Question q = new Question();	// End time
-			q.setName("_end");
-			q.setSeq(-1);
-			q.setVisible(false);
-			q.setSource("timestamp");
-			q.setSourceParam("end");
-			q.setType("dateTime");
-			questionList.add(q);
-		}
-		
-		if(!alreadyHas_instanceid) {
-			Question q = new Question();	// Instance Id
-			q.setName("_instanceid");
-			q.setSeq(-1);
-			q.setVisible(false);
-			q.setSource("user");
-			q.setCalculate("concat('uuid:', uuid())");
-			q.setReadOnly(true);
-			q.setType("string");
-			questionList.add(q);
-		}
-		
-		if(!alreadyHas_instancename) {
-			Question q = new Question();	// Instance Name
-			q.setName("instanceName");
-			q.setPath("/main/meta/instanceName");
-			q.setSeq(-1);
-			q.setVisible(false);
-			q.setSource("user");
-			q.setCalculate("");
-			q.setReadOnly(true);
-			q.setType("string");
-			questionList.add(q);
-		}
-		
-		if(!alreadyHas_task_key) {
-			Question q = new Question();	// Task Key
-			q.setName("_task_key");
-			q.setSeq(-1);
-			q.setVisible(false);
-			q.setSource("tasks");
-			q.setType("string");
-			questionList.add(q);
-		}
-		
-		/*
-		 * Set the sequence number of any questions that have the default sequence "-1" but
-		 * need to be placed within a non repeat group
-		 */
-		for (Question q : questionList) {
-			if(q.getSeq() == -1) {
-				String ref = q.getPath();
-				String group = UtilityMethods.getGroupFromPath(ref);
-				for(Question q2 : questionList) {
-					
-					if(q2.getPath() != null) {
-						if(q2.getPath().equals(group)) {
-							q.setSeq(q2.getSeq() + 1);
-
+			
+			Form [] formArray = formList.toArray(new Form[formList.size()]);
+			System.out.println("Persisting forms");
+			fPersist.persist(formArray);
+			
+			/*
+			 * Questions.
+			 */
+			List<Question> questionList = new ArrayList<Question>(questions.values());
+			
+			/*
+			 * Hack
+			 * Add four preload questions that arn't currently supported by odkBuild editor
+			 * These questions will be added to the top level form as the form_ref is null
+			 */
+			boolean alreadyHas_device = false;
+			boolean alreadyHas_start = false;
+			boolean alreadyHas_end = false;
+			boolean alreadyHas_instanceid = false;
+			boolean alreadyHas_instancename = false;
+			boolean alreadyHas_task_key = false;
+			for (Question q : questionList) {
+				if(q.getSourceParam() != null) {
+					if(q.getSourceParam().equals("deviceid")) {
+						alreadyHas_device = true;
+					} else if(q.getSourceParam().equals("start")) {
+						alreadyHas_start = true;
+					} else if(q.getSourceParam().equals("end")) {
+						alreadyHas_end = true;
+					} 
+				}
+	
+				if(q.getName().equals("_instanceid") ||
+						q.getPath().endsWith("/meta/instanceID")) {
+						alreadyHas_instanceid = true;
+				} else if(q.getName().equals("_task_key")) {
+						alreadyHas_task_key = true;
+				} else if(q.getPath().toLowerCase().trim().endsWith("/meta/instancename") ) {
+						alreadyHas_instancename = true;
+				}
+	
+			}
+	
+			if(!alreadyHas_device) {
+				Question q = new Question();	// Device id
+				q.setName("_device");
+				q.setSeq(-3);
+				q.setVisible(false);
+				q.setSource("property");
+				q.setSourceParam("deviceid");
+				questionList.add(q);
+			}
+			
+			if(!alreadyHas_start) {
+				Question q = new Question();	// Start time
+				q.setName("_start");
+				q.setSeq(-2);
+				q.setVisible(false);
+				q.setSource("timestamp");
+				q.setSourceParam("start");
+				q.setType("dateTime");
+				questionList.add(q);
+			}
+			
+			if(!alreadyHas_end) {
+				Question q = new Question();	// End time
+				q.setName("_end");
+				q.setSeq(-1);
+				q.setVisible(false);
+				q.setSource("timestamp");
+				q.setSourceParam("end");
+				q.setType("dateTime");
+				questionList.add(q);
+			}
+			
+			if(!alreadyHas_instanceid) {
+				Question q = new Question();	// Instance Id
+				q.setName("_instanceid");
+				q.setSeq(-1);
+				q.setVisible(false);
+				q.setSource("user");
+				q.setCalculate("concat('uuid:', uuid())");
+				q.setReadOnly(true);
+				q.setType("string");
+				questionList.add(q);
+			}
+			
+			if(!alreadyHas_instancename) {
+				Question q = new Question();	// Instance Name
+				q.setName("instanceName");
+				q.setPath("/main/meta/instanceName");
+				q.setSeq(-1);
+				q.setVisible(false);
+				q.setSource("user");
+				q.setCalculate("");
+				q.setReadOnly(true);
+				q.setType("string");
+				questionList.add(q);
+			}
+			
+			if(!alreadyHas_task_key) {
+				Question q = new Question();	// Task Key
+				q.setName("_task_key");
+				q.setSeq(-1);
+				q.setVisible(false);
+				q.setSource("tasks");
+				q.setType("string");
+				questionList.add(q);
+			}
+			
+			/*
+			 * Set the sequence number of any questions that have the default sequence "-1" but
+			 * need to be placed within a non repeat group
+			 */
+			for (Question q : questionList) {
+				if(q.getSeq() == -1) {
+					String ref = q.getPath();
+					String group = UtilityMethods.getGroupFromPath(ref);
+					for(Question q2 : questionList) {
+						
+						if(q2.getPath() != null) {
+							if(q2.getPath().equals(group)) {
+								q.setSeq(q2.getSeq() + 1);
+	
+							}
 						}
 					}
 				}
 			}
-		}
-		
-		/*
-		 * Sort the list by sequence
-		 */
-		java.util.Collections.sort(questionList, new Comparator<Question>() {
-			@Override
-			public int compare(Question object1, Question object2) {
-				if (object1.getSeq() < object2.getSeq())
-					return -1;
-				else if (object1.getSeq() == object2.getSeq())
-					return 0;
-				else
-					return 1;
-			}
-		});
-
-		for (Question q : questionList) {
-			Form f = getForm(q.getFormRef());
-			if(f == null) {
-				
-				/*
-				 * Try and get the formRef from the question path
-				 */
-				String qPath = q.getPath();
-				if(qPath != null) {
-					String formRef = getFormFromQuestionPath(qPath);
-					f = getForm(formRef);
+			
+			/*
+			 * Sort the list by sequence
+			 */
+			java.util.Collections.sort(questionList, new Comparator<Question>() {
+				@Override
+				public int compare(Question object1, Question object2) {
+					if (object1.getSeq() < object2.getSeq())
+						return -1;
+					else if (object1.getSeq() == object2.getSeq())
+						return 0;
+					else
+						return 1;
 				}
-				
+			});
+	
+			for (Question q : questionList) {
+				Form f = getForm(q.getFormRef());
 				if(f == null) {
-					// Still no form then allocate this question to the top level form
-					f = getForm(firstFormRef);
-					q.setPath(f.getPath() + "/" + q.getName()); 
+					
+					/*
+					 * Try and get the formRef from the question path
+					 */
+					String qPath = q.getPath();
+					if(qPath != null) {
+						String formRef = getFormFromQuestionPath(qPath);
+						f = getForm(formRef);
+					}
+					
+					if(f == null) {
+						// Still no form then allocate this question to the top level form
+						f = getForm(firstFormRef);
+						q.setPath(f.getPath() + "/" + q.getName()); 
+					}
+	
+	
 				}
-
-
+	
+				if(f != null) {
+					q.setFormId(f.getId());
+					q.setSeq(f.qSeq++);
+					q.setListId(sd, survey.getId());
+					if(!q.isRepeatCount()) {
+						qPersist.persist(q);
+					}
+				} 			
 			}
-
-			if(f != null) {
-				q.setFormId(f.getId());
-				q.setSeq(f.qSeq++);
-				q.setListId(sd, survey.getId());
-				if(!q.isRepeatCount()) {
-					qPersist.persist(q);
+			
+	
+			/*
+			 * Forms 2. Update the form record with parent form and question keys
+			 */
+			for(Form f : formList) {
+				System.out.println("###: " + f.getName() + " : " + f.getId());
+				if (f.getParentFormRef() != null) {
+					f.setParentForm(forms.get(f.getParentFormRef()).getId());
+					f.setParentQuestionId(questions.get(f.getParentQuestionRef()).getId());
 				}
-			} 			
-		}
-		
-
-		/*
-		 * Forms 2. Update the form record with parent form and question keys
-		 */
-		for(Form f : formList) {
-			System.out.println("###: " + f.getName() + " : " + f.getId());
-			if (f.getParentFormRef() != null) {
-				f.setParentForm(forms.get(f.getParentFormRef()).getId());
-				f.setParentQuestionId(questions.get(f.getParentQuestionRef()).getId());
+				if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
+					String rRef = f.getRepeatsRef().trim();
+					Question qRef = questions.get(rRef);
+					f.setRepeats(qRef.getCalculate());
+				}
 			}
-			if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
-				String rRef = f.getRepeatsRef().trim();
-				Question qRef = questions.get(rRef);
-				f.setRepeats(qRef.getCalculate());
+			fPersist.persist(formArray);
+	
+			/*
+			 * Persist the options
+			 */
+			
+			// Sort options by sequence number
+			List<Option> optionList = new ArrayList<Option>(options.values());
+			java.util.Collections.sort(optionList, new Comparator<Option>() {
+				@Override
+				public int compare(Option object1, Option object2) {
+					if (object1.getSeq() < object2.getSeq())
+						return -1;
+					else if (object1.getSeq() == object2.getSeq())
+						return 0;
+					else
+						return 1;
+				}
+			});
+			
+			for (Option o : optionList) {
+				Question q = getQuestion(o.getQuestionRef()); // Get the question id
+				o.setListId(q.getListId());
+				o.setSeq(q.oSeq++);
+				o.setCascadeFilters();	// Set the filter value based on the key value pairs
+				oPersist.persist(o);
 			}
-		}
-		fPersist.persist(formArray);
-
-		/*
-		 * Persist the options
-		 */
-		
-		// Sort options by sequence number
-		List<Option> optionList = new ArrayList<Option>(options.values());
-		java.util.Collections.sort(optionList, new Comparator<Option>() {
-			@Override
-			public int compare(Option object1, Option object2) {
-				if (object1.getSeq() < object2.getSeq())
-					return -1;
-				else if (object1.getSeq() == object2.getSeq())
-					return 0;
-				else
-					return 1;
-			}
-		});
-		
-		for (Option o : optionList) {
-			Question q = getQuestion(o.getQuestionRef()); // Get the question id
-			o.setListId(q.getListId());
-			o.setSeq(q.oSeq++);
-			o.setCascadeFilters();	// Set the filter value based on the key value pairs
-			oPersist.persist(o);
-		}
-		
-		// Write the translation objects
-		Set<String> langs = translations.keySet();
-		String[] languages = (String[]) langs.toArray(new String[0]);
-		if(languages.length > 0) {
-			for(int langIndex = 0; langIndex < languages.length; langIndex++) {
-				HashMap<?, HashMap<String, Translation>> aLanguageTranslation = translations.get(languages[langIndex]);	// A single language
-				Collection<HashMap<String, Translation>> l = aLanguageTranslation.values();
-				
-				tPersist.persistBatch(l, survey);
-				
+			
+			// Write the translation objects
+			Set<String> langs = translations.keySet();
+			String[] languages = (String[]) langs.toArray(new String[0]);
+			if(languages.length > 0) {
+				for(int langIndex = 0; langIndex < languages.length; langIndex++) {
+					HashMap<?, HashMap<String, Translation>> aLanguageTranslation = translations.get(languages[langIndex]);	// A single language
+					Collection<HashMap<String, Translation>> l = aLanguageTranslation.values();
+					
+					tPersist.persistBatch(l, survey);
+					
+					for(int i = 0; i < dummyTranslations.size(); i++) {
+						// Need to copy the translation as there will be one Translation object for every language and we don't want to overwrite
+						Translation trans = new Translation(dummyTranslations.elementAt(i));
+						trans.setSurveyId(survey.getId());
+						trans.setLanguage(languages[langIndex]);
+						trans.setType("none");	// Default dummy translations to a type of "none"
+						tPersist.persist(trans);
+					}
+				}
+			} else {
+				// No languages specified, just create the dummy elements with a language of "default"
 				for(int i = 0; i < dummyTranslations.size(); i++) {
-					// Need to copy the translation as there will be one Translation object for every language and we don't want to overwrite
-					Translation trans = new Translation(dummyTranslations.elementAt(i));
+					Translation trans = dummyTranslations.elementAt(i);
 					trans.setSurveyId(survey.getId());
-					trans.setLanguage(languages[langIndex]);
+					trans.setLanguage("default");
 					trans.setType("none");	// Default dummy translations to a type of "none"
 					tPersist.persist(trans);
 				}
 			}
-		} else {
-			// No languages specified, just create the dummy elements with a language of "default"
-			for(int i = 0; i < dummyTranslations.size(); i++) {
-				Translation trans = dummyTranslations.elementAt(i);
-				trans.setSurveyId(survey.getId());
-				trans.setLanguage("default");
-				trans.setType("none");	// Default dummy translations to a type of "none"
-				tPersist.persist(trans);
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Error: Failed to close connection", e);
 			}
 		}
 
