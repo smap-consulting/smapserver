@@ -335,7 +335,7 @@ public class WebForm extends Application{
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template);		
+			String formXML = xForm.get(template, true);		
 			
 			// If required get the instance data 
 			String instanceXML = null;

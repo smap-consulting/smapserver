@@ -113,7 +113,7 @@ public class FormXML extends Application{
 			template.readDatabase(survey.id);
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			response = xForm.get(template);
+			response = xForm.get(template, false);
 			log.info("userevent: " + user + " : download survey : " + templateName);		
 		
 		} catch (Exception e) {
