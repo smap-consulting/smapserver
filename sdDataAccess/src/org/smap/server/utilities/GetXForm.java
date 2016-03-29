@@ -71,7 +71,7 @@ public class GetXForm {
     /*
      * Get the XForm as a string
      */
-    public String get(SurveyTemplate template) {
+    public String get(SurveyTemplate template, boolean isWebForms) {
      	   
        	String response = null;
        	this.template = template;
@@ -98,7 +98,7 @@ public class GetXForm {
   		
     		Element parent;
         	parent = populateRoot(outputXML);
-        	populateHead(sd,outputXML, b, parent);
+        	populateHead(sd,outputXML, b, parent, isWebForms);
         	populateBody(sd, outputXML, parent);
 
     		// Write the survey to a string and return it to the calling program
@@ -146,7 +146,8 @@ public class GetXForm {
      * Populate the head element
      * @param outputXML
      */
-    public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, Element parent) throws SQLException {
+    public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, 
+    		Element parent, boolean isWebForms) throws SQLException {
 
     	Survey s = template.getSurvey();
     	
@@ -167,7 +168,7 @@ public class GetXForm {
     	
     	Element instanceElement = outputDoc.createElement("instance");
     	modelElement.appendChild(instanceElement); 	
-    	populateInstance(sd, outputDoc, instanceElement);
+    	populateInstance(sd, outputDoc, instanceElement, isWebForms);
     	
     	if(template.hasCascade()) {
     		
@@ -372,13 +373,15 @@ public class GetXForm {
     /*
      * Populate the Instance element starting with the top level form
      */
-    public void populateInstance(Connection sd, Document outputDoc, Element parent) throws SQLException {
+    public void populateInstance(Connection sd, Document outputDoc, Element parent, boolean isWebForms) throws SQLException {
     	
     	if(firstForm != null) {
     		Element formElement = outputDoc.createElement(firstForm.getName());
     		formElement.setAttribute("id", template.getSurvey().getIdent()); 
     		formElement.setAttribute("version", String.valueOf(template.getSurvey().getVersion()));
-    		formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
+    		if(!isWebForms) {
+    			formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
+    		}
     		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm); 	// Process the top level form
     		parent.appendChild(formElement);   		
     	}

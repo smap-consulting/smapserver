@@ -198,7 +198,7 @@ public class Survey extends Application {
 						template.readDatabase(sId);
 						GetXForm xForm = new GetXForm();
 						
-						String xmlForm = xForm.get(template);
+						String xmlForm = xForm.get(template, false);
 						
 						File f = new File(sourceName);
 						
