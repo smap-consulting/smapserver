@@ -138,7 +138,7 @@ public class XFormData {
 					log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
 					
 					SurveyTemplate template = new SurveyTemplate();
-					template.readDatabase(templateName);										
+					template.readDatabase(sd, templateName);										
 					template.extendInstance(sd, si, false);
 					
 					thisInstanceId = si.getUuid();

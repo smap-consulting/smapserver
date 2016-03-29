@@ -84,14 +84,13 @@ public class JdbcUploadEventManager {
 			+ "ue.instanceid,"
 			+ "ue.assignment_id,"
 			+ "ue.survey_notes,"
-			+ "ue.location_trigger) "
-			+ "ue.values "
+			+ "ue.location_trigger "
 			+ "from upload_event ue "
 				+ "where ue.status = 'success' "
 				+ "and ue.s_id is not null "
 				+ "and ue.incomplete = 'false' "
 				+ "and not exists (select se.se_id from subscriber_event se "
-					+ "where se.subscriber = ? and se.ue_id = ue.ue) ";
+					+ "where se.subscriber = ? and se.ue_id = ue.ue_id); ";
 	
 	/*
 	 * Constructor
@@ -150,7 +149,7 @@ public class JdbcUploadEventManager {
 	private List <UploadEvent> getUploadEventList(PreparedStatement pstmt) throws SQLException {
 		ArrayList <UploadEvent> ueList = new ArrayList<UploadEvent> ();
 		
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = pstmtFailed.executeQuery();
 		while(rs.next()) {
 			UploadEvent ue = new UploadEvent();
 			ue.setId(rs.getInt(1));

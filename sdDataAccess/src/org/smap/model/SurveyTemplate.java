@@ -1165,9 +1165,8 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyIdent the ident of the survey
 	 */
-	public void readDatabase(String surveyIdent) throws MissingTemplateException, SQLException {
+	public void readDatabase(Connection sd, String surveyIdent) throws MissingTemplateException, SQLException {
 
-		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Read Database");
 		JdbcSurveyManager sm = null;
 		
 		try {
@@ -1187,7 +1186,6 @@ public class SurveyTemplate {
 			}
 		} finally {
 			if(sm != null) {sm.close();}
-			if(sd != null) try{sd.close();} catch(Exception e){};
 		}
 
 	}

@@ -394,7 +394,6 @@ public class SubRelationalDB extends Subscriber {
 			}
 			Keys keys = writeTableContent(
 					topElement, 
-					cResults, 
 					0, 
 					instance.getTemplateName(), 
 					remoteUser, 
@@ -498,7 +497,6 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private  Keys writeTableContent(
 			IE element, 
-			Connection cResults, 
 			int parent_key, 
 			String sName, 
 			String remoteUser, 
@@ -539,10 +537,10 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			keys.duplicateKeys = new ArrayList<Integer>();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
-				boolean tableCreated = createTable(cResults, tableName, sName);
+				boolean tableCreated = createTable(cRel, cMeta, tableName, sName);
 				boolean tableChanged = false;
 				boolean tablePublished = false;
-				keys.duplicateKeys = checkDuplicate(cResults, tableName, uuid);
+				keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
 				/*
 				 * Bug fix duplicates
 				 *
@@ -641,7 +639,7 @@ public class SubRelationalDB extends Subscriber {
 				sql += addSqlValues(columns, sName, device, server, false);
 				sql += ");";
 				
-				pstmt = cResults.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+				pstmt = cRel.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 				int stmtIndex = 1;
 				pstmt.setInt(stmtIndex++, parent_key);
 				if(parent_key == 0) {
@@ -679,7 +677,7 @@ public class SubRelationalDB extends Subscriber {
 		//Write any child forms
 		List<IE> childElements = element.getChildren();
 		for(IE child : childElements) {
-			writeTableContent(child, cResults, parent_key, sName, remoteUser, server, device, 
+			writeTableContent(child, parent_key, sName, remoteUser, server, device, 
 					uuid, formStatus, version, surveyNotes, locationTrigger, 
 					cRel, cMeta, sId, uploadTime);
 		}
@@ -1059,7 +1057,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Create the table if it does not already exit in the database
 	 */
-	private boolean createTable(Connection cResults, String tableName, String sName) {
+	private boolean createTable(Connection cResults, Connection sd, String tableName, String sName) {
 		boolean tableCreated = false;
 		String sql = "select count(*) from information_schema.tables where table_name =?;";
 		
@@ -1079,8 +1077,8 @@ public class SubRelationalDB extends Subscriber {
 			} else {
 				System.out.println("        Table does not exist");
 				SurveyTemplate template = new SurveyTemplate();   
-				template.readDatabase(sName);	
-				writeAllTableStructures(template);
+				template.readDatabase(sd, sName);	
+				writeAllTableStructures(sd, cResults, template);
 				tableCreated = true;
 			}
 		} catch (Exception e) {
@@ -1094,33 +1092,30 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Create the tables for the survey
 	 */
-	private void writeAllTableStructures(SurveyTemplate template) {
+	private void writeAllTableStructures(Connection sd, Connection cResults, SurveyTemplate template) {
 			
 		String response = null;
-		Connection sd = null;
 		
 		try {
 		    Class.forName(dbClass);	 
-			sd = DriverManager.getConnection(database, user, password);
 			
 			List<Form> forms = template.getAllForms();	
-			sd.setAutoCommit(false);
+			cResults.setAutoCommit(false);
 			for(Form form : forms) {		
-				writeTableStructure(form, sd);
-				sd.commit();
+				writeTableStructure(form, sd, cResults);
+				cResults.commit();
 			}	
-			sd.setAutoCommit(true);
+			cResults.setAutoCommit(true);
 	
 
 
 		} catch (Exception e) {
-			if(sd != null) {
+			if(cResults != null) {
 				try {
 					response = "Error: Rolling back: " + e.getMessage();	// TODO can't roll back within higher level transaction
 					System.out.println(response);
 					e.printStackTrace();
-					sd.rollback();
-					sd.setAutoCommit(true);
+					cResults.rollback();
 				} catch (SQLException ex) {
 					System.out.println(ex.getMessage());
 				}
@@ -1128,18 +1123,11 @@ public class SubRelationalDB extends Subscriber {
 			}
 			
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
-			}
+			try {if (cResults != null) {cResults.setAutoCommit(true);}} catch (SQLException e) {}
 		}		
 	}
 	
-	private void writeTableStructure(Form form, Connection sd) throws SQLException {
+	private void writeTableStructure(Form form, Connection sd, Connection cResults) throws SQLException {
 		
 		String tableName = form.getTableName();
 		List<Question> columns = form.getQuestions(sd);
@@ -1266,23 +1254,25 @@ public class SubRelationalDB extends Subscriber {
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtGeom = null;
 			try {
-				pstmt = sd.prepareStatement(sql);
+				pstmt = cResults.prepareStatement(sql);
 				System.out.println("Sql statement: " + pstmt.toString());
-				pstmt.executeUpdate(sql);
+				pstmt.executeUpdate();
 				// Add geometry columns
 				for(GeometryColumn gc : geoms) {
 					String gSql = "SELECT AddGeometryColumn('" + gc.tableName + 
 						"', '" + gc.columnName + "', " + 
 						gc.srid + ", '" + gc.type + "', " + gc.dimension + ");";
 					
-					pstmtGeom = sd.prepareStatement(gSql);
+					if(pstmtGeom != null) try{pstmtGeom.close();}catch(Exception e) {}
+					pstmtGeom = cResults.prepareStatement(gSql);
 					System.out.println("Sql statement: " + pstmtGeom.toString());
-					pstmtGeom.executeUpdate(gSql);
+					pstmtGeom.executeUpdate();
 				}
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());
 			} finally {
 				if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+				if(pstmtGeom != null) try{pstmtGeom.close();}catch(Exception e) {}
 			}
 			
 		}
