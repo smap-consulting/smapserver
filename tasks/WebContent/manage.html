@@ -1,21 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+-->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8">
 
-<title>Tasks</title>
+	<title>Tasks</title>
 
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/css/wb/animate.css" rel="stylesheet">
+    <link href="/css/wb/style.css" rel="stylesheet">
+
+<!-- 
 <link rel="stylesheet" href="/css/normalize.css" />
 <link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
 <link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 <link rel="stylesheet" href="/css/bootstrap-dialog.min.css" /> 
 <link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
 <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+-->
 
-<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
-<script src="/js/libs/modernizr.js"></script>
+<script> if (!window.console) console = {log: function() {}}; </script>
+<!--
 <script src="/js/libs/OpenLayers/OpenLayers.js"></script>
+-->
+
+<script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script data-main="js/manage" src="/js/libs/require.js"></script>
@@ -23,107 +38,221 @@
 </head>
 <body>
 
-<header class="navbar navbar-default navbar-static-top noPrint" role="banner">
-  <div class="container">
-    <div class="navbar-header">
-      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a href="#" class="navbar-brand">
-      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-     	<span class="lang" data-lang="m_assign" >Tasks</span>
-      </a>
-    </div>
-	<nav class="collapse navbar-collapse" role="navigation">
-      <ul class="nav navbar-nav navbar-right">
-      	<li id="m_modules" class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu" style="z-index:1010;">
-            
-            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
-            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
-            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
-            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
-          
-          </ul>
-        </li> 
-        <li id="m_tm"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
-		<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-		<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
-		<li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-		<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>	
-		<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>			
-		<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
-        <li>
-         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-			</a>
-		</li>
-      </ul>
-      	
+<div id="wrapper">
+
+	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
+		<div class="sidebar-collapse">
+	    	<ul class="nav metismenu" id="side-menu">
+				<li class="nav-header">
+	
+			      <a href="#" class="navbar-brand">
+			      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+			     	<span class="lang" data-lang="m_assign" >Tasks</span>
+			      </a>
+			      
+			    </li>
+	  
+	      	<li id="m_modules" class="dropdown">
+	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
+	          <ul class="dropdown-menu" role="menu" style="z-index:1010;">
+	            
+	            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+	            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
+	            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
+	            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
+	            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
+	          
+	          </ul>
+	        </li> 
+	        <li id="m_tm"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
+			<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
+			<li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+			<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>	
+			<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>			
+			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+	        <!--  
+	        <li>
+	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+				</a>
+			</li>
+			-->
+	      </ul>
+		</div>
+		
 	</nav>
 
-  </div>
-</header>
+	<div id="page-wrapper" class="gray-bg">
+		<div class="wrapper wrapper-content">
 
+			<div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">
+                            <h5>Filter</h5>
+                            <div class="ibox-tools">
+                                <a class="collapse-link">
+                                    <i class="fa fa-chevron-up"></i>
+                                </a>
+                      
+                            </div>
+                        </div>
+                        <div class="ibox-content">
+                            <div class="row">
+                            	<div class="col-sm-5 m-b-xs">
+                            		<label class="control-label lang" data-lang="c_project" for="project_name">proj</label>
+									<select class="project_list input-sm form-control input-s-sm inline" id="project_name"></select>
+                                </div>
+                                <div class="col-sm-4 m-b-xs">
+									<label class="control-label lang" data-lang="t_show" for="users_filter">show for</label>
+									<select class="task_filter input-sm form-control input-s-sm inline" id="users_filter"></select>
+                                </div>
+                                <div class="col-sm-3">
+									<label>
+										<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
+										<span class="lang" data-lang="t_complete">completed tasks</span>
+									</label>   
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
 
-<div class="container">
-	<div class="row">
-		<div id="aside" class="noPrint col-xs-12 col-sm-3 col-md-3 col-lg-3">
-			<form role="form" class="form" id="mon_controls">
-		
-				<div id="layers" style="display:none;">
-					<label class="lang control-label" data-lang="c_project" for="project_name">Select Project</label>
-					<select class="project_list form-control" id="project_name"></select>
+                                        <th></th>
+                                        <th>Project </th>
+                                        <th>Completed </th>
+                                        <th>Task</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" checked="" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
+                                        <td>Project<small>This is example of project</small></td>
+                                        <td><span class="pie" style="display: none;">0.52/1.561</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.990700825968545 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
+                                        <td>20%</td>
+                                        <td>Jul 14, 2013</td>
+                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
+                                        <td>Alpha project</td>
+                                        <td><span class="pie" style="display: none;">6,9</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 12.702282018339785 14.47213595499958 Z" fill="#1ab394"></path><path d="M 8 8 L 12.702282018339785 14.47213595499958 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
+                                        <td>40%</td>
+                                        <td>Jul 16, 2013</td>
+                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
+                                        <td>Betha project</td>
+                                        <td><span class="pie" style="display: none;">3,1</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 1 1 0 8.000000000000002 Z" fill="#1ab394"></path><path d="M 8 8 L 0 8.000000000000002 A 8 8 0 0 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
+                                        <td>75%</td>
+                                        <td>Jul 18, 2013</td>
+                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="icheckbox_square-green" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
+                                        <td>Gamma project</td>
+                                        <td><span class="pie" style="display: none;">4,9</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 15.48012994148332 10.836839096340286 Z" fill="#1ab394"></path><path d="M 8 8 L 15.48012994148332 10.836839096340286 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
+                                        <td>18%</td>
+                                        <td>Jul 22, 2013</td>
+                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-            		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  						<div class="panel panel-default">
-    						<div class="panel-heading" role="tab" id="headingOne">
-								<h4 class="panel-title">
-					       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
-					       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
-					         	Maps
-					       		</a>
-					     		</h4>
-    						</div>
-	    					<div id="collapseLayers" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
-								<div id="current_layers"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="tabs-container">
+            	<ul class="nav nav-tabs">
+                	<li class="active"><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
+                    <li class=""><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
+                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
+                </ul>
+                <div class="tab-content">
+                	<div id="table-view" class="tab-pane active">
+                    	<div class="panel-body">
+                                    <strong>Lorem ipsum dolor sit amet, consectetuer adipiscing</strong>
+
+                                    <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. I am alone, and feel the charm of
+                                        existence in this spot, which was created for the bliss of souls like mine.</p>
+
+                                    <p>I am so happy, my dear friend, so absorbed in the exquisite sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at
+                                        the present moment; and yet I feel that I never was a greater artist than now. When.</p>
+                        </div>
+					</div>
+					<div id="map-view" class="tab-pane">
+						<div class="panel-body">
+                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+		  						<div class="panel panel-default">
+		    						<div class="panel-heading" role="tab" id="headingOne">
+										<h4 class="panel-title">
+							       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
+							       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
+							         	Maps
+							       		</a>
+							     		</h4>
+		    						</div>
+			    					<div id="collapseLayers" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+										<div id="current_layers"></div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
-					
-					<label class="control-label lang" data-lang="t_show" for="users_filter">show for</label>
-					<select class="task_filter form-control" id="users_filter"></select>
-					<div class="checkbox">
-						<label>
-							<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
-							<span class="lang" data-lang="t_complete">completed tasks</span>
-						</label>
-					</div>
-					
-					<button class="btn btn-info btn-block lang" data-lang="c_zoom_data" id="zoomData" type="button">zoom to data</button>
-					<button class="btn btn-success btn-block lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
-					<button class="btn btn-success btn-block lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
-					<button class="btn btn-danger btn-block lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
-					<button class="btn btn-info btn-block lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
-					
-				</div>
-			</form>
-		</div>
+					<div id="cal-view" class="tab-pane">
+						<div class="panel-body">
+                                    <strong>Donec quam felis</strong>
 
-		<div id="scroll_zone_indent" class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
-			<div id="monitor">
-				<div id="map" class="noPrint"></div>
-				<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
-				<div id="tasks_table" class="yesPrint table-responsive"></div>
+                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
+                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
+
+                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
+                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+                    
+			<div class="row">
+				
+					<form role="form" class="form" id="mon_controls">
+				
+						<div id="layers" style="display:none;">
+							
+		
+		            		
+							
+							
+							<button class="btn btn-info btn-block lang" data-lang="c_zoom_data" id="zoomData" type="button">zoom to data</button>
+							<button class="btn btn-success btn-block lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
+							<button class="btn btn-success btn-block lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
+							<button class="btn btn-danger btn-block lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
+							<button class="btn btn-info btn-block lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
+							
+						</div>
+					</form>
+				
+		
+				
+					<div id="monitor">
+						<div id="map" class="noPrint"></div>
+						<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
+						<div id="tasks_table" class="yesPrint table-responsive"></div>
+					</div>
+				
 			</div>
 		</div>
 	</div>
-</div>
+
 
 <img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
@@ -205,6 +334,8 @@
 		</div>
 	</div>
 </div>
+
+</div>	<!-- #wrapper -->
 
 <!-- Modal to load tasks from a file
 <div id="load_tasks" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="loadTasksLabel" aria-hidden="true">

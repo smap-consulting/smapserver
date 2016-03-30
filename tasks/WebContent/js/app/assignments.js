@@ -778,7 +778,7 @@ function refreshAssignmentData(user_filter) {
 			cache: false,
 			dataType: 'json',
 			success: function(data) {
-				refreshMapAssignments(data);
+				//refreshMapAssignments(data);
 				refreshTableAssignments(data);
 				removeHourglass();
 			},
