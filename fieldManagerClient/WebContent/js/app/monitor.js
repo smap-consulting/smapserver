@@ -200,8 +200,6 @@ $(document).ready(function() {
 			addHourglass();
     		$.ajax({
     			  type: "POST",
-    			  contentType: "application/json",
-    			  dataType: "json",
     			  url: "/surveyKPI/regions",
     			  data: { settings: regionString },
     			  success: function(data, status) {
@@ -332,8 +330,8 @@ function setcontrols() {
 		$('#groupsurvey').show();
 	}
 	if(showType === "totals") {
-		$("input[value='map']", "#showtarget").removeAttr('checked');
-		$("input[value='table']", "#showtarget").attr('checked','checked');
+		$("input[value='map']", "#showtarget").prop('checked', false);
+		$("input[value='table']", "#showtarget").prop('checked',true);
 		$(".showmap").hide();
 		$('#map,#layers,.get_less_more').hide();
 		$('#events_table').show();

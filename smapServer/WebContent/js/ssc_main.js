@@ -162,8 +162,6 @@ function saveSSC() {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + fn + "/add",
 		  data: { 
 			  form: form,
@@ -192,8 +190,6 @@ function deleteSSC(idx) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + ssc.fn + "/delete/" + ssc.id,
 		  success: function(data, status) {
 			  removeHourglass();

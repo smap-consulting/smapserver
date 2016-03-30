@@ -73,12 +73,12 @@ $(document).ready(function() {
  	 });
 	
 	// Add a trigger to respond to the clicking of "filter tasks" 
-	$('#filter_results_check').attr('checked', false).click(function() {
+	$('#filter_results_check').prop('checked', false).click(function() {
 		$('#filter_results').toggle();
 	});
 	
 	// Add a trigger to respond to the clicking of "empty_task_group" 
-	$('#empty_task_group').attr('checked', false).click(function() {
+	$('#empty_task_group').prop('checked', false).click(function() {
 		$('#add_task_from_existing').toggle();
 	});
 	
@@ -263,7 +263,7 @@ $(document).ready(function() {
 			assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
 			assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
 			
-			if(!$('#empty_task_group').attr('checked')) {
+			if(!$('#empty_task_group').is(':checked')) {
 				
 				assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
 				assignObj["target_survey_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
@@ -279,7 +279,7 @@ $(document).ready(function() {
 				assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the survey is to be updated	
 				
 				// Add filter if filter checkbox has been checked
-				if($('#filter_results_check').attr('checked')) {
+				if($('#filter_results_check').is(':checked')) {
 					
 					filterObj["qType"] = gFilterqType;
 					filterObj["qId"] = $('#filter_question option:selected').val();
@@ -303,8 +303,6 @@ $(document).ready(function() {
 			addHourglass();
 			$.ajax({
 				  type: "POST",
-				  contentType: "application/json",
-				  dataType: "json",
 				  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 				  data: { settings: assignString },
 				  success: function(data, status) {
@@ -356,8 +354,6 @@ $(document).ready(function() {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 			  data: { settings: assignString },
 			  success: function(data, status) {
@@ -738,8 +734,6 @@ function saveData(data) {
 
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/assignments",
 		  data: { settings: assignString },
 		  success: function(data, status) {
@@ -758,8 +752,6 @@ function deleteData(data) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/assignments",
 		  data: { settings: deleteString },
 		  success: function(data, status) {
@@ -943,8 +935,6 @@ function refreshTableAssignments(tasks) {
 					addHourglass();
 					$.ajax({
 						  type: "DELETE",
-						  contentType: "application/json",
-						  dataType: "json",
 						  url: "/surveyKPI/assignments/" + tg_id,
 						  success: function(data, status) {
 							  removeHourglass();

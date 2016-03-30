@@ -92,8 +92,6 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/register",
 			  data: { registrationDetails: regString },
 			  success: function(data, status) {
@@ -116,7 +114,7 @@ $(document).ready(function() {
  */
 function validateForm() {
 	var status = true,
-		hasAccepted = $('#accept_tc').attr("checked"),
+		hasAccepted = $('#accept_tc').is(":checked"),
 		org_name = $('#org_name').val(),
 		admin_name = $('#admin_name').val(),
 		admin_email = $('#admin_email').val();

@@ -105,8 +105,6 @@ $(document).ready(function() {
 			fn = "any";
 		$.ajax({
 			  type: "DELETE",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/ssc/" + sId + "/" + fn + "/delete/" + id,
 			  success: function(data, status) {
 				  removeHourglass();
@@ -170,8 +168,6 @@ function saveSurvey() {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/survey/" + sId + "/rename",
 		  data: { 
 			  name: sName,
@@ -198,8 +194,6 @@ function saveSSC() {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/ssc/" + sId + "/" + fn + "/add",
 		  data: { 
 			  form: form,

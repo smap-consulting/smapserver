@@ -467,7 +467,7 @@ define(function() {
 					  removeHourglass();
 					  globals.model.savedSettings = settings;
 					  globals.model.forceSettingsChange = false;
-					  $('#save_settings').attr("disabled", true);
+					  $('#save_settings').prop("disabled", true);
 					  
 					  $('.formName').html(globals.model.survey.displayName);
 					  $('#settingsModal').modal("hide");
@@ -631,9 +631,9 @@ define(function() {
 			
 			$('.m_save_survey').find('.badge').html(this.translateChanges.length);
 			if(this.translateChanges.length > 0) {
-				$('.m_save_survey').removeClass('disabled').attr('disabled', false);
+				$('.m_save_survey').removeClass('disabled').prop('disabled', false);
 			} else {
-				$('.m_save_survey').addClass('disabled').attr('disabled', true);;
+				$('.m_save_survey').addClass('disabled').prop('disabled', true);;
 			}
 		}
 		
@@ -642,9 +642,9 @@ define(function() {
 			this.translateChanges = [];
 			$('.m_save_survey').find('.badge').html(this.translateChanges.length);
 			if(this.translateChanges.length > 0) {
-				$('.m_save_survey').removeClass('disabled').attr('disabled', false);
+				$('.m_save_survey').removeClass('disabled').prop('disabled', false);
 			} else {
-				$('.m_save_survey').addClass('disabled').attr('disabled', true);;
+				$('.m_save_survey').addClass('disabled').prop('disabled', true);;
 			}
 		}
 		
@@ -715,9 +715,9 @@ define(function() {
 			var current = globals.model.getSettings();
 			
 			if(JSON.stringify(current) !== globals.model.savedSettings || globals.model.forceSettingsChange) {
-				$('#save_settings').attr("disabled", false);
+				$('#save_settings').prop("disabled", false);
 			} else {
-				$('#save_settings').attr("disabled", true);
+				$('#save_settings').prop("disabled", true);
 			}
 		}
 		
@@ -728,7 +728,7 @@ define(function() {
 		 */
 		this.settingsAddPdfClicked = function() {
 			globals.model.forceSettingsChange = true;
-			$('#save_settings').attr("disabled", false);
+			$('#save_settings').prop("disabled", false);
 		}
 	}
 

@@ -123,8 +123,6 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/onetimelogon",
 			  data: { passwordDetails: pdString },
 			  success: function(data, status) {
@@ -147,8 +145,6 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "GET",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/onetimelogon/" + email,
 			  success: function(data, status) {
 				  removeHourglass();

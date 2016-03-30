@@ -52,7 +52,7 @@ $(document).ready(function() {
 		gShowDeleted = $('#show_deleted').is(':checked');
 		completeSurveyList();
 	});
-	$('#show_deleted').removeAttr('checked');
+	$('#show_deleted').prop('checked', false);
 	
 	// Get the user details
 	getLoggedInUser(projectSet, false, true, undefined);

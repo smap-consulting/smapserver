@@ -165,8 +165,6 @@ function saveCurrentProject(projectId, surveyId) {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/user",
 			  data: { user: userString },
 			  success: function(data, status) {
@@ -518,8 +516,6 @@ function saveCurrentUser(user) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/user",
 		  data: { user: userString },
 		  success: function(data, status) {

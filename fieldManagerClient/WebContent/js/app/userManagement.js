@@ -128,14 +128,13 @@ $(document).ready(function() {
 			send_email = $('input[name=send_email]:checked', '#send_email_fields').val();
 	
 		// Ignore click if button disabled
-		console.log($('#userDetailsSave').attr("disabled"));
-		if($('#userDetailsSave').attr("disabled") == "disabled") {
+		console.log($('#userDetailsSave').prop("disabled"));
+		if($('#userDetailsSave').prop("disabled")) {
 			return;
 		}
 		
 		// Disable the save button to prevent double clicking
-		$('#userDetailsSave').attr("disabled", true);
-		console.log($('#userDetailsSave').attr("disabled"));
+		$('#userDetailsSave').prop("disabled", true);
 		
 		if(gCurrentUserIndex === -1) {
 			user.id = -1;
@@ -156,13 +155,13 @@ $(document).ready(function() {
 			alert("User ident must be specified and either be an email address or " +
 					"only include lowercase characters from a-z and numbers.  No spaces.");
 			$('#user_ident').focus();
-			$('#userDetailsSave').attr("disabled", false);
+			$('#userDetailsSave').prop("disabled", false);
 			return false;
 		}
 		if(user.ident.indexOf(' ') !== -1) {
 			alert("Spaces are not allowed in the user ident");
 			$('#user_ident').focus();
-			$('#userDetailsSave').attr("disabled", false);
+			$('#userDetailsSave').prop("disabled", false);
 			return false;
 		}
 		if(user.email.length > 0) {
@@ -170,7 +169,7 @@ $(document).ready(function() {
 				error = true;
 				alert("Email is not valid");
 				$('#user_email').focus();
-				$('#userDetailsSave').attr("disabled", false);
+				$('#userDetailsSave').prop("disabled", false);
 				return false;
 			}
 		}
@@ -180,7 +179,7 @@ $(document).ready(function() {
 			error = true;
 			alert("If sending an email to the user then email address must be specified");
 			$('#user_email').focus();
-			$('#userDetailsSave').attr("disabled", false);
+			$('#userDetailsSave').prop("disabled", false);
 			return false;
 		}
 	
@@ -191,7 +190,7 @@ $(document).ready(function() {
 				user.password = undefined;
 				alert("Passwords, if specified, must be longer than 1 character");
 				$('#user_password').focus();
-				$('#userDetailsSave').attr("disabled", false);
+				$('#userDetailsSave').prop("disabled", false);
 				return false;
 			}
 			if($('#user_password_confirm').val() !== user.password) {
@@ -199,7 +198,7 @@ $(document).ready(function() {
 				user.password = undefined;
 				alert("Passwords do not match");
 				$('#user_password').focus();
-				$('#userDetailsSave').attr("disabled", false);
+				$('#userDetailsSave').prop("disabled", false);
 				return false;
 			}
 		} else {
@@ -266,7 +265,6 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/projectList",
 			  data: { projects: projectString },
 			  success: function(data, status) {
@@ -281,8 +279,8 @@ $(document).ready(function() {
 				  if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 				  } else {
-					  var msg = err;
-					  if(err.indexOf("Conflict") >= 0) {
+					  var msg = err.message;
+					  if(msg && msg.indexOf("Conflict") >= 0) {
 						  msg = "Duplicate project name";
 					  }
 					  alert("Error: Failed to save project details: " + msg);
@@ -657,8 +655,8 @@ function openUserDialog(existing, userIndex) {
 			    });
 		 } else {
 			 $('#password_fields').show();
-			 $('input[type=radio][name=send_email]').attr('disabled',true);
-			 $('#set_password').attr('checked',true);
+			 $('input[type=radio][name=send_email]').prop('disabled',true);
+			 $('#set_password').prop('checked',true);
 		 }
 	}
 	 
@@ -748,18 +746,17 @@ function writeUserDetails(userList, $dialog) {
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
-		  dataType: "json",
 		  async: false,
 		  url: "/surveyKPI/userList",
 		  data: { users: userString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  $('#userDetailsSave').attr("disabled", false);
+			  $('#userDetailsSave').prop("disabled", false);
 			  getUsers();
 			  $dialog.modal("hide");
 		  }, error: function(xhr, textStatus, err) {
 			  removeHourglass();
-			  $('#userDetailsSave').attr("disabled", false);
+			  $('#userDetailsSave').prop("disabled", false);
 			  if(xhr.readyState == 0 || xhr.status == 0) {
 				  $dialog.modal("hide");
 				  return;  // Not an error
@@ -1248,7 +1245,6 @@ function deleteUsers () {
 			  type: "DELETE",
 			  contentType: "application/json",
 			  async: false,
-			  dataType: "json",
 			  url: "/surveyKPI/userList",
 			  data: { users: JSON.stringify(users) },
 			  success: function(data, status) {
@@ -1292,7 +1288,6 @@ function deleteProjects () {
 			  type: "DELETE",
 			  contentType: "application/json",
 			  async: false,
-			  dataType: "json",
 			  url: "/surveyKPI/projectList",
 			  data: { projects: JSON.stringify(projects) },
 			  success: function(data, status) {
@@ -1335,7 +1330,6 @@ function deleteOrganisations () {
 			  type: "DELETE",
 			  contentType: "application/json",
 			  async: false,
-			  dataType: "json",
 			  url: "/surveyKPI/organisationList",
 			  data: { organisations: JSON.stringify(organisations) },
 			  success: function(data, status) {
@@ -1363,7 +1357,6 @@ function moveToOrganisations (orgId, users, projects) {
 		  type: "POST",
 		  contentType: "application/json",
 		  async: false,
-		  dataType: "json",
 		  url: "/surveyKPI/organisationList/setOrganisation",
 		  data: { 
 			  orgId: orgId,

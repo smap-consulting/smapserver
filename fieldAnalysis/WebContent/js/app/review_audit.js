@@ -107,8 +107,6 @@ function enableReversal() {
 				        		addHourglass();
 				        		$.ajax({
 				        			  type: "POST",
-				        			  contentType: "application/json",
-				        			  dataType: "json",
 				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/undo/" + gChangeset,
 				        			  success: function(data, status) {
 				        				  removeHourglass();
@@ -211,7 +209,7 @@ function getAuditList(highlightCS) {
 				$('h1', '#reversal_popup').html("Reverse change number " + gChangeset);
 				$('#reversal_popup').dialog("open");
 			});
-			$('.reversed .reverse').attr("disabled", "disabled");
+			$('.reversed .reverse').prop("disabled", true);
 			
 			$('.details').button().click(function(e) {
 

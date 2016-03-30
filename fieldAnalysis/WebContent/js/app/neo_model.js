@@ -44,8 +44,6 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			        		var $dialog = $(this);
 			        		$.ajax({
 			        			  type: "POST",
-			        			  contentType: "application/json",
-			        			  dataType: "json",
 			        			  async: false,
 			        			  url: "/surveyKPI/survey/" + local_sId + "/model",
 			        			  data: { model: graphString },
@@ -433,9 +431,9 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		
 		if(taElement.properties) {
 			for(i = 0; i < taElement.properties.length; i++) {
-				$('#ta_prop_' + taElement.properties[i].colName).attr('checked','checked');
+				$('#ta_prop_' + taElement.properties[i].colName).prop('checked',true);
 				if(taElement.properties[i].unique) {
-					$('#ta_prop_' + taElement.properties[i].colName).parent().next().find('.unique').attr('checked','checked');
+					$('#ta_prop_' + taElement.properties[i].colName).parent().next().find('.unique').prop('checked',true);
 				}
 			}
 		}

@@ -468,8 +468,6 @@ function getQuestionInfo(sId, language, qId) {
 		i,
 		qInfo;
 	
-	console.log("Question list");
-	console.log(qList);
 	if(qList) {
 		for(i = 0; i < qList.length; i++) {
 			if(qList[i].id == qId) {

@@ -217,8 +217,6 @@ function saveMap() {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  async: false,
 		  url: url,
 		  data: { map: mapString },
@@ -369,8 +367,6 @@ function delete_map(id) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  contentType: "application/json",
-		  dataType: "json",
 		  async: false,
 		  url: "/surveyKPI/shared/maps/" + id,
 		  success: function(data, status) {

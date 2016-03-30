@@ -324,8 +324,6 @@ $(document).ready(function() {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  url: "/surveyKPI/surveys/save_languages/" + gSId,
 			  data: { languages: languagesString },
 				success: function(data) {
@@ -553,8 +551,6 @@ function setAllRequired(required) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  url: "/surveyKPI/surveys/set_required/" + gSId + "/" + (required ? "true" : "false"),
 			success: function(data) {
 				removeHourglass();
@@ -798,9 +794,9 @@ function respondToEvents($context) {
 	// Mainly a problem with Firefox however in Chrome selecting text by dragging does not work
 	// Refer: http://stackoverflow.com/questions/21680363/prevent-drag-event-to-interfere-with-input-elements-in-firefox-using-html5-drag
 	$context.find('input, textarea').focusin(function() {
-		$(this).closest('.draggable').attr("draggable", false);
+		$(this).closest('.draggable').prop("draggable", false);
 	}).blur(function() {
-        $(this).closest('.draggable').attr("draggable", true);
+        $(this).closest('.draggable').prop("draggable", true);
         console.log("blur");
     });
 	
@@ -1061,7 +1057,7 @@ function respondToEvents($context) {
 	 * 
 	 * First add handlers for draggable components
 	 */
-	$('.draggable').attr('draggable', 'true')
+	$('.draggable').prop('draggable', 'true')
 	
 	.off('dragstart')
 	.on('dragstart', function(evt){

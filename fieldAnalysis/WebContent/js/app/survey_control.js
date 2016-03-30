@@ -225,10 +225,10 @@ function getViewData(view) {
 		if(typeof view.timeGroup === "undefined") {
 			view.timeGroup = "none";
 		}
-		$('#time_group').removeAttr("disabled").val(view.timeGroup);
+		$('#time_group').prop("disabled", false).val(view.timeGroup);
 		
 	} else {
-		$('#time_group').attr("disabled", "disabled").val("none");
+		$('#time_group').prop("disabled", true).val("none");
 	}
 	
 	// Set the date question id if appropriate
@@ -285,9 +285,9 @@ function typeChangeEvent(type) {
 	
 	// Enable the timeseries select if appropriate
 	if((qId != "-1") && (type === "map" || type === "graph" || type === "table")) {
-		$('#time_group').removeAttr("disabled");
+		$('#time_group').prop("disabled", false);
 	} else {
-		$('#time_group').attr("disabled", "disabled").val("none");
+		$('#time_group').prop("disabled", true).val("none");
 	}
 	
 }
@@ -329,10 +329,10 @@ function surveyChangeEvent(sId) {
 
 	gSurveyControlView.sId = sId;
 
-	$('#settings_group').attr("disabled", "disabled").val("-1");
-	$('#q1_function').attr("disabled", "disabled").val("none");
+	$('#settings_group').prop("disabled", true).val("-1");
+	$('#q1_function').prop("disabled", true).val("none");
 	$('.select_only', '#p_settings').hide();
-	$('#time_group').attr("disabled", "disabled").val("none");
+	$('#time_group').prop("disabled", true).val("none");
 
 
 }
@@ -369,10 +369,10 @@ function questionChangeEvent(sId, qId, question) {
 	if(qId == "-1") {	
 		// Disable question level filters
 		$('#settings_group').val("-1");
-		$('#settings_group').attr("disabled", "disabled");
-		$('#q1_function').attr("disabled", "disabled").val("none");
+		$('#settings_group').prop("disabled", true);
+		$('#q1_function').prop("disabled", true).val("none");
 		$('.select_only', '#p_settings').hide();
-		$('#time_group').attr("disabled", "disabled").val("none");
+		$('#time_group').prop("disabled", true).val("none");
 		
 	} else {
 		
@@ -398,12 +398,12 @@ function questionChangeEvent(sId, qId, question) {
 			setQ1Functions(qMeta.type, undefined, "average");
 		}
 		// Enable question group bys
-		$('#settings_group').removeAttr("disabled");
-		$('#q1_function').removeAttr("disabled");
+		$('#settings_group').prop("disabled", false);
+		$('#q1_function').prop("disabled", false);
 		
 		// Enable the timeseries select if appropriate
 		if(type === "map" || type === "graph" || type === "table") {
-			$('#time_group').removeAttr("disabled");
+			$('#time_group').prop("disabled", false);
 		} 
 
 	}
@@ -496,12 +496,12 @@ function groupChangeEvent(sId, groupId) {
 //Set the state of the survey view control according to the view
 function setSurveyViewControl(view) {
 
-	$('#settings_survey').removeAttr("disabled");
+	$('#settings_survey').prop("disabled", false);
 	if(view.sId) {
 		$('#settings_survey').val(view.sId);
 	}
 	
-	$('#settings_language').removeAttr("disabled");
+	$('#settings_language').prop("disabled", false);
 	if(view.lang) {
 		$('#settings_language').val(view.lang);
 	}
@@ -529,12 +529,12 @@ function setSurveyViewControl(view) {
 	if(view.qId && view.qId != "-1") {
 		$('#settings_question').val(view.qId);	
 		$('#q1_function').val(view.fn);	
-		$('#settings_group').removeAttr("disabled");
-		$('#q1_function').removeAttr("disabled");
+		$('#settings_group').prop("disabled", false);
+		$('#q1_function').prop("disabled", false);
 	} else {
 		$('#settings_question').val("-1");
-		$('#settings_group').attr("disabled", "disabled");
-		$('#q1_function').attr("disabled", "disabled");
+		$('#settings_group').prop("disabled", true);
+		$('#q1_function').prop("disabled", true);
 		$('.select_only', '#p_settings').hide();
 	}	
 		

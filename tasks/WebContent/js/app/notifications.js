@@ -161,8 +161,6 @@ function saveNotification() {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
-			  contentType: "application/json",
-			  dataType: "json",
 			  async: false,
 			  url: url,
 			  data: { notification: notificationString },
@@ -290,9 +288,9 @@ function edit_notification(idx) {
 		
 		$('#fwd_host').val(notification.remote_host);
 		if(notification.enabled) {
-			$('#nt_enabled').attr('checked','checked');
+			$('#nt_enabled').prop('checked', true);
 		} else {
-			$('#nt_enabled').removeAttr('checked');
+			$('#nt_enabled').prop('checked', false);
 		}
 		gUpdateFwdPassword = false;
 		gSelectedNotification = notification.id;
@@ -351,8 +349,6 @@ function delete_notification(id) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  contentType: "application/json",
-		  dataType: "json",
 		  async: false,
 		  url: "/surveyKPI/notifications/" + id,
 		  success: function(data, status) {
@@ -431,8 +427,6 @@ function getRemoteSurveys() {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
-		  contentType: "application/json",
-		  dataType: "json",
 		  async: true,
 		  url: "/surveyKPI/notifications/getRemoteSurveys",
 		  data: { remote: remoteString },
