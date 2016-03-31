@@ -524,7 +524,9 @@ public class GetXForm {
     				currentParent.appendChild(groupElement);
     				
     				Element labelElement = outputDoc.createElement("label");
-    				String labelRef = subForm.getLabel();
+    				
+    				String labelRef = q.getQTextId();
+    				//String labelRef = subForm.getLabel();
     				if(labelRef != null && !labelRef.trim().isEmpty()) {
     					String label = "jr:itext('" + labelRef + "')";
     					labelElement.setAttribute("ref", label);

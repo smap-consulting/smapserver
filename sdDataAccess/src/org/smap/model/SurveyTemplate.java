@@ -1118,6 +1118,7 @@ public class SurveyTemplate {
 			if(qm != null) {qm.close();};
 			if(om != null) {om.close();};
 			if(tm != null) {tm.close();};
+			
 			if(sd != null) try{sd.close();} catch(Exception e){};
 		}
 
