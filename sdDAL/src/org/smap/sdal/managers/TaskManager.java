@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.TaskGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,9 +51,103 @@ public class TaskManager {
 		String locationTrigger = null;		// data from task set up
 	}
 	
+	/*
+	 * Get the current task groups
+	 */
+	public ArrayList<TaskGroup> getTaskGroups(Connection sd, int projectId) throws Exception {
+		
+		String sql = "select tg_id, name, address_params, is_barcode, p_id, rule, source_s_id "
+				+ "from task_group where p_id = ? order by tg_id asc;";
+		PreparedStatement pstmt = null;
+		
+		String sqlTotal = "select tg.tg_id, count(t.id)  "
+				+ "from task_group tg "
+				+ "left outer join tasks t "
+				+ "on tg.tg_id = t.tg_id " 
+				+ "left outer join assignments a "
+				+ "on a.task_id = t.id " 
+				+ "and a.status != 'deleted' "
+				+ "where tg.p_id = ? "
+				+ "group by tg.tg_id "
+				+ "order by tg.tg_id asc;";
+		PreparedStatement pstmtTotal = null;
+		
+		String sqlComplete = "select tg.tg_id, count(a.id)  "
+				+ "from task_group tg "
+				+ "left outer join tasks t "
+				+ "on tg.tg_id = t.tg_id " 
+				+ "left outer join assignments a "
+				+ "on a.task_id = t.id " 
+				+ "and a.status = 'submitted' "
+				+ "where tg.p_id = ? "
+				+ "group by tg.tg_id "
+				+ "order by tg.tg_id asc;";
+		PreparedStatement pstmtComplete = null;
+		
+		ArrayList<TaskGroup> taskgroups = new ArrayList<TaskGroup> ();
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, projectId);
+			log.info("Get task groups: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			pstmtTotal = sd.prepareStatement(sqlTotal);	
+			pstmtTotal.setInt(1, projectId);
+			log.info("Get task groups totals: " + pstmtTotal.toString());
+			ResultSet rsTotal = pstmtTotal.executeQuery();
+			
+			pstmtComplete = sd.prepareStatement(sqlComplete);	
+			pstmtComplete.setInt(1, projectId);
+			log.info("Get task groups totals: " + pstmtComplete.toString());
+			ResultSet rsComplete = pstmtComplete.executeQuery();
+			
+			while (rs.next()) {
+				TaskGroup tg = new TaskGroup();
+				
+				tg.tg_id = rs.getInt(1);
+				tg.name = rs.getString(2);
+				tg.address_params = rs.getString(3);
+				tg.is_barcode = rs.getBoolean(4);
+				tg.p_id = rs.getInt(5);
+				tg.rule = rs.getString(6);
+				tg.source_s_id = rs.getInt(7);
+				
+				if(rsTotal.next()) {
+					int tg_id = rsTotal.getInt(1);
+					if(tg.tg_id == tg_id) {
+						tg.totalTasks = rsTotal.getInt(2);
+					} else {
+						throw new Exception("Total tasks id mismatch");
+					}
+				}
+				
+				if(rsComplete.next()) {
+					int tg_id = rsComplete.getInt(1);
+					if(tg.tg_id == tg_id) {
+						tg.completeTasks = rsComplete.getInt(2);
+					} else {
+						throw new Exception("Total tasks id mismatch");
+					}
+				}
+				taskgroups.add(tg);
+			}
+			
+
+		} catch(Exception e) {
+			throw(e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			try {if (pstmtTotal != null) {pstmtTotal.close();} } catch (SQLException e) { }
+			try {if (pstmtComplete != null) {pstmtComplete.close();} } catch (SQLException e) {	}
+		}
+
+		return taskgroups;
+	}
 	
 	/*
-	 * Save a list of locations replacing the existing ones
+	 * Get the current locations available for an organisation
 	 */
 	public ArrayList<Location>  getLocations(Connection sd, 
 			int oId) throws SQLException {

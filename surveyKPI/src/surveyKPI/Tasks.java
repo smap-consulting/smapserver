@@ -58,6 +58,7 @@ import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.TaskGroup;
 
 import utilities.XLSFormManager;
 import utilities.XLSTaskManager;
@@ -91,6 +92,56 @@ public class Tasks extends Application {
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
+	}
+	
+	/*
+	 * Get the task groups
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/taskgroups/{projectId}")
+	public Response getTaskGroups(
+			@Context HttpServletRequest request,
+			@PathParam("projectId") int projectId 
+			) throws IOException {
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		
+		Response response = null;
+		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), projectId);
+		// End authorisation
+	
+		try {
+			
+			// Get locations
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			TaskManager tm = new TaskManager();
+			ArrayList<TaskGroup> taskgroups = tm.getTaskGroups(sd, projectId);		
+			
+			// Return groups to calling program
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(taskgroups);	
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
 	}
 	
 	/*

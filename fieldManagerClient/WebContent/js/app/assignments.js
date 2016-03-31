@@ -689,7 +689,6 @@ function getUsers(projectId) {
 	
 	$.ajax({
 		url: "/surveyKPI/userList",
-		dataType: 'json',
 		cache: false,
 		success: function(data) {
 

@@ -49,7 +49,8 @@ requirejs.config({
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/slimscroll/jquery.slimscroll.min',
-    	pace: '../../../../js/libs/wb/pace/pace.min'
+    	pace: '../../../../js/libs/wb/pace/pace.min',
+    	peity: '../../../../js/libs/wb/peity/jquery.peity.min'
     },
     shim: {
 
@@ -65,7 +66,8 @@ requirejs.config({
     	
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
-    	'slimscroll': ['jquery']
+    	'slimscroll': ['jquery'],
+    	'peity': ['jquery']
 	
     	}
     });
@@ -77,9 +79,9 @@ require([
          'localise', 
          'globals',
          'bootbox',
-         'app/assignments', 
+         'app/task_assignments', 
          'app/map-ol-mgmt',
-         'app/plugins',
+         'app/task_plugins',
          'jquery-barcode',
          'crf',
          'moment',
@@ -89,7 +91,8 @@ require([
          'inspinia',
          'metismenu',
          'slimscroll',
-         'pace'
+         'pace',
+         'peity'
          
          ], function($, 
         		 bootstrap, 

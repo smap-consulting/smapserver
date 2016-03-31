@@ -139,52 +139,6 @@ $(document).ready(function() {
 		globals.gPendingUpdates = [];
 	});
 	
-	// Load a file containing tasks
-	$('.file-inputs').bootstrapFileInput();
-	$('#loadTasks').button().off().click(function () {
-		// open the modal
-		document.forms.namedItem("loadtasks").reset();
-		$('#load_tasks_alert').hide();
-		$('#clear_existing_alert').hide();
-		$('#load_tasks').modal("show");
-	});
-	
-	$('#clear_existing').change(function(){
-		var isset = $("#clear_existing:checked").val()
-		if(isset) {
-			$('#clear_existing_alert').show();
-		} else {
-			$('#clear_existing_alert').hide();
-		}
-	});
-	
-	$('#loadTasksSave').off().click(function() {
-		
-		var url = "/surveyKPI/assignments/load";
-		var f = document.forms.namedItem("loadtasks");
-    	var formData = new FormData(f);
-		
-		$('#load_tasks_alert').hide();
-		addHourglass();
-		$.ajax({
-			  type: "POST",
-			  data: formData,
-			  cache: false,
-	          contentType: false,
-	          processData:false,
-			  url: url,
-			  success: function(data, status) {
-				  removeHourglass();
-				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["t_fl"]);
-			  },
-			  error: function(xhr, textStatus, err) {
-				 
-				  removeHourglass(); 
-				  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_efnl"] + xhr.responseText);
-				 
-			  }
-		});
-	});
 	
 	/*
 	 * Update the properties of a task
@@ -479,7 +433,7 @@ function projectChanged() {
 	globals.gCurrentProject = $('#project_name option:selected').val();
 	globals.gCurrentSurvey = -1;
 	loadSurveys(globals.gCurrentProject, undefined, false, false, surveyChanged);			// Get surveys
-	refreshAssignmentData(gUserFilter);		// Get the assignments from the server
+	refreshTaskGroupData();		// Get the task groups from the server
 	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 	getUsers(globals.gCurrentProject);										// Get the users that have access to this project
 	$('#project_select').val(globals.gCurrentProject);	// Set the source project equal to the current project
@@ -687,7 +641,6 @@ function getUsers(projectId) {
 	
 	$.ajax({
 		url: "/surveyKPI/userList",
-		dataType: 'json',
 		cache: false,
 		success: function(data) {
 
@@ -767,6 +720,48 @@ function deleteData(data) {
 }
 
 /*
+ * Get the task groups from the server
+ */
+function refreshTaskGroupData() {
+
+	if(typeof globals.gCurrentProject !== "undefined" && globals.gCurrentProject != -1) {
+		addHourglass();
+		$.ajax({
+			url: "/surveyKPI/tasks/taskgroups/" + globals.gCurrentProject,
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				refreshTableTaskGroups(data);
+				removeHourglass();
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Failed to get task group data");
+				}
+			}
+		});
+	}
+}
+
+/*
+ * Update the table view of task groups
+ */
+function refreshTableTaskGroups(taskgroups) {
+	
+	if(typeof taskgroups != "undefined") {
+		$('#taskgroup_table').empty().generateTaskGroupTable(
+				{
+					'data': taskgroups
+				});
+	}
+	
+	$("span.pie", '#taskgroup_table').peity("pie")
+}
+
+/*
  * Get the assignments from the server
  */
 function refreshAssignmentData(user_filter) {
@@ -793,15 +788,6 @@ function refreshAssignmentData(user_filter) {
 		});
 	}
 }
-
-/*
-function clearDialogs() {
-	globals.gCurrentUserId = undefined;
-	globals.gPendingUpdates = [];
-	//globals.gDeleteSelected = false;	
-	$(".ui-dialog-content").modal("hide");
-}
-*/
 
 function refreshTableAssignments(tasks) {
 	

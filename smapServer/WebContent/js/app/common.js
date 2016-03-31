@@ -165,6 +165,7 @@ function saveCurrentProject(projectId, surveyId) {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
+			  contentType: "application/json",
 			  url: "/surveyKPI/user",
 			  data: { user: userString },
 			  success: function(data, status) {
@@ -516,6 +517,7 @@ function saveCurrentUser(user) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
+		  contentType: "application/json",
 		  url: "/surveyKPI/user",
 		  data: { user: userString },
 		  success: function(data, status) {
@@ -533,8 +535,8 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/user",
+		contentType: "application/json",
 		cache: false,
-		dataType: 'json',
 		success: function(data) {
 			removeHourglass();
 		
