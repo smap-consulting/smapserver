@@ -145,6 +145,7 @@ public class JdbcQuestionManager {
 		pstmt.setBoolean(26, q.isPublished());
 		pstmt.setInt(27, q.getListId());
 		
+		System.out.println("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
 		
 		ResultSet rs = pstmt.getGeneratedKeys();
