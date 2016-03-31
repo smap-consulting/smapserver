@@ -80,14 +80,8 @@ $(document).ready(function() {
         $.ajax({
             url: '/fieldManagerServer/formUpload',
             type: 'POST',
-           // xhr: function () {
-           // 	var myXhr = $.ajaxSettings.xhr();
-        	//	if(myXhr.upload){ 
-        	//		myXhr.upload.addEventListener('progress', progressFn, false); 
-        	//	}
-        //		return myXhr;
-          //  },
             data: formData,
+            dataType: 'text',
             cache: false,
             contentType: false,
             processData:false,
