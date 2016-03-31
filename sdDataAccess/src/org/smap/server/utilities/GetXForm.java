@@ -561,12 +561,12 @@ public class GetXForm {
     			/*
     			 * Set the parent element according to whether we are entering or leaving a non repeat group
     			 */
-    			if(qType.equals("end group") && q.isVisible()) {
+    			if(qType.equals("end group")) {
     				
        				currentParent = elementStack.pop();
        				// currentParentPath = pathStack.pop();
        				
-    			} else if (qType.equals("begin group") && q.isVisible()) {
+    			} else if (qType.equals("begin group")) {
     				//pathStack.push(currentParentPath);
             		//currentParentPath = currentParentPath + "/" + q.getName();
             		
