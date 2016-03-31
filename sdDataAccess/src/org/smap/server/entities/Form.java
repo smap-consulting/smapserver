@@ -40,8 +40,6 @@ public class Form implements Serializable {
 	
 	private String name = null;
 
-	private String label = null;
-
 	private String table_name = null;
 	
 	private int parentform = 0;
@@ -96,10 +94,6 @@ public class Form implements Serializable {
 	
 	public String getName() {
 		return name;
-	}
-
-	public String getLabel() {
-		return label;
 	}
 	
 	public String getTableName() {
@@ -171,10 +165,6 @@ public class Form implements Serializable {
 	
 	public void setTableName(String v) {		// Override automatically generated table name
 		table_name = v;
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
 	}
 
 	public void setParentForm(int value) {

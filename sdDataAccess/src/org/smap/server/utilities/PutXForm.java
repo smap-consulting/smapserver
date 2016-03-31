@@ -449,7 +449,6 @@ public class PutXForm {
 		    	Form newRepeatForm = template.getForm(ref);
 		    	newRepeatForm.setParentFormRef(parentFormRef);	// Set the parent form
 		    	newRepeatForm.setParentQuestionRef(parentQuestion.getPath());	// Set the parent question
-		    	newRepeatForm.setLabel(parentQuestion.getQTextId());
 		    	if(nr != null) {
 		    		String repeats = nr.getNodeValue();
 		    		template.getForm(ref).setRepeatsRef(repeats);
