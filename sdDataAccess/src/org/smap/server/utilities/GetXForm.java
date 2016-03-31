@@ -391,6 +391,9 @@ public class GetXForm {
     
     public void populateBody(Document outputDoc, Element parent) {
     	Element bodyElement = outputDoc.createElement("h:body");
+    	
+    	log.info("Populate body:" + bodyElement.toString());
+    	
     	/*
     	 * Add class if it is set
     	 */
@@ -419,7 +422,9 @@ public class GetXForm {
 
     	Element currentParent = parentElement;
        	Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
-    	    	
+    	   
+       	log.info("Populate form: " + f.getName() + " : " + parentElement.toString());
+       	
 		/*
 		 * Add the questions from the template
 		 */
@@ -516,7 +521,6 @@ public class GetXForm {
     				Element labelElement = outputDoc.createElement("label");
     				
     				String labelRef = q.getQTextId();
-    				//String labelRef = subForm.getLabel();
     				if(labelRef != null && !labelRef.trim().isEmpty()) {
     					String label = "jr:itext('" + labelRef + "')";
     					labelElement.setAttribute("ref", label);
@@ -547,18 +551,19 @@ public class GetXForm {
     			/*
     			 * Set the parent element according to whether we are entering or leaving a non repeat group
     			 */
-    			if(qType.equals("end group")) {
+    			if(qType.equals("end group") && q.isVisible()) {
     				
        				currentParent = elementStack.pop();
        				// currentParentPath = pathStack.pop();
        				
-    			} else if (qType.equals("begin group")) {
+    			} else if (qType.equals("begin group") && q.isVisible()) {
     				//pathStack.push(currentParentPath);
             		//currentParentPath = currentParentPath + "/" + q.getName();
             		
        				elementStack.push(currentParent);
     				currentParent = questionElement;
     			}
+    			
     			
     		}
 
