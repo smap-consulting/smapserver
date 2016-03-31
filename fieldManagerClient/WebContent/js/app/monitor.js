@@ -200,6 +200,7 @@ $(document).ready(function() {
 			addHourglass();
     		$.ajax({
     			  type: "POST",
+    			  dataType: 'text',
     			  url: "/surveyKPI/regions",
     			  data: { settings: regionString },
     			  success: function(data, status) {
@@ -207,7 +208,6 @@ $(document).ready(function() {
     				  setMapRegions(globals.gRegion["name"]);
     				  removeHourglass();
     			  }, error: function(data, status) {
-    				  console.log(data);
     				  removeHourglass();
     				  alert("Error: Failed to create region"); 
     			  }

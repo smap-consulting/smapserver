@@ -840,6 +840,7 @@ function savePanels(newPanel) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
+		  dataType: 'text',
 		  contentType: "application/json",
 		  url: "/surveyKPI/dashboard/",
 		  data: { settings: viewsString },
@@ -868,6 +869,7 @@ function savePanelState(view) {
 	var viewString = JSON.stringify(saveView);
 	$.ajax({
 		  type: "POST",
+		  dataType: 'text',
 		  contentType: "application/json",
 		  url: dashboardStateURL(),
 		  data: { state: viewString },

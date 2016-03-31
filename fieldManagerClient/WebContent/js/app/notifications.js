@@ -161,6 +161,7 @@ function saveNotification() {
 		addHourglass();
 		$.ajax({
 			  type: "POST",
+			  dataType: 'text',
 			  async: false,
 			  url: url,
 			  data: { notification: notificationString },

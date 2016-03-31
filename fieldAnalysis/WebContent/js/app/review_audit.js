@@ -107,6 +107,7 @@ function enableReversal() {
 				        		addHourglass();
 				        		$.ajax({
 				        			  type: "POST",
+				        			  dataType: 'text',
 				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/undo/" + gChangeset,
 				        			  success: function(data, status) {
 				        				  removeHourglass();
@@ -117,7 +118,6 @@ function enableReversal() {
 				        						blockingChangeset;
 				        					
 				        					removeHourglass();
-				        					console.log(xhr);
 				        					alert(xhr.responseText);
 				        					resp = xhr.responseText.split(":");
 				        					if(resp.length > 0) {

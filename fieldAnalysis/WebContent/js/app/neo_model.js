@@ -44,6 +44,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			        		var $dialog = $(this);
 			        		$.ajax({
 			        			  type: "POST",
+			        			  dataType: 'text',
 			        			  async: false,
 			        			  url: "/surveyKPI/survey/" + local_sId + "/model",
 			        			  data: { model: graphString },

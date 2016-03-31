@@ -182,6 +182,7 @@ function saveReport() {
 	//$('#report_save').button( "disable" );
 	$.ajax({
 		  type: "POST",
+		  dataType: 'text',
 		  url: url,
 		  data: { report: reportString },
 		  success: function(data, status) {

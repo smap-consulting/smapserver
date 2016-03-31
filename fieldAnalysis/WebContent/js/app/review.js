@@ -229,6 +229,7 @@ function enableTextUpdate() {
 				        		addHourglass();
 				        		$.ajax({
 				        			  type: "POST",
+				        			  dataType: 'text',
 				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
 				        			  data: { updates: updateString },
 				        			  success: function(data, status) {
@@ -537,6 +538,7 @@ function saveTargetResults() {
 		 	addHourglass();
 			$.ajax({
 				  type: "POST",
+    			  dataType: 'text',
 				  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
 				  data: { updates: updateString },
 				  success: function(data, status) {
