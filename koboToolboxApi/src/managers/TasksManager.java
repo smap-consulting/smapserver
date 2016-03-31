@@ -159,6 +159,9 @@ public class TasksManager {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {			
 				String groupVal = rs.getString("group");	
+				if(groupVal == null) {
+					groupVal = "new";
+				}
 				res.setGroups(groupVal);
 			}
 			
@@ -167,6 +170,9 @@ public class TasksManager {
 			while(rs.next()) {
 				String xValue = rs.getString("xvalue");
 				String groupVal = rs.getString("group");
+				if(groupVal == null) {
+					groupVal = "new";
+				}
 				int value = rs.getInt("value");
 				
 				res.add(xValue, groupVal, value);

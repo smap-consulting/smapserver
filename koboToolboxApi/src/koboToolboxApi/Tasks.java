@@ -198,6 +198,7 @@ public class Tasks extends Application {
 		// End Authorisation
 		
 		try {
+			
 			int orgId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			if(orgId > 0) {
@@ -206,7 +207,7 @@ public class Tasks extends Application {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			response = Response.serverError().build();
+			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			try {
 				if (sd != null) {

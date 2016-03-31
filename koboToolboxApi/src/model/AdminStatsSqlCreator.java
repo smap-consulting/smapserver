@@ -62,7 +62,6 @@ public class AdminStatsSqlCreator {
 		String groupSel = null;
 		String valueCol = null;
 		String tables = null;
-		String join = null;
 		String orgCheck = null;
 		String userCheck = null;
 		
@@ -73,21 +72,22 @@ public class AdminStatsSqlCreator {
 		if(type.equals("tasks")) {
 			
 			// Get the x column
-			if(x.equals("scheduled")) {
+			if(x == null || x.equals("scheduled")) {
 				xCol = "schedule_at";
 			} else {
 				throw new Exception("Unknown value for x axis: " + x);
 			}
 			
 			// Get the group column
-			if(group.equals("status")) {
+			if(group == null || group.equals("status")) {
 				groupSel = "assignments.status";
 			} else {
 				throw new Exception("Unknown value for group: " + group);
 			}
 			
-			tables = "assignments, tasks";
-			join = "tasks.id = assignments.task_id";
+			tables = "tasks left outer join assignments "
+				+ "on task_id = tasks.id " 
+				+ "and assignments.status != 'deleted' ";
 			
 			// Get the check for the user filter
 			if(userId > 0) {
@@ -156,12 +156,8 @@ public class AdminStatsSqlCreator {
 		
 		// Add where
 		boolean needsAnd = false;
-		if(join != null || orgCheck != null || userCheck != null) {
+		if(orgCheck != null || userCheck != null) {
 			sql.append(" where ");
-		}
-		if(join != null) {
-			sql.append(join);
-			needsAnd = true;
 		}
 		if(orgCheck != null) {
 			if(needsAnd) {
