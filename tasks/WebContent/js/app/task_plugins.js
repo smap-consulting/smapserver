@@ -87,11 +87,14 @@ window.log = function(){
 
 function addSelectCheckBox() {
 	
-	return '<td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" checked="" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>';
+	return '<td><input type="radio" name="taskgroup"></td>';
 	
 }
 
 function addPie(complete, total) {
+	complete = complete || 0;
+	total = total || 1;			// 1 is an arbitary total as 0 out of 0 does not render
+	
 	return '<td><span class="pie">' + complete + '/' + total + '</span></td>';
 }
 	

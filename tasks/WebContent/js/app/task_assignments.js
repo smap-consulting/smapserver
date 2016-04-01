@@ -758,7 +758,13 @@ function refreshTableTaskGroups(taskgroups) {
 				});
 	}
 	
-	$("span.pie", '#taskgroup_table').peity("pie")
+	$("span.pie", '#taskgroup_table').peity("pie", {
+		  fill: ["green", "red"]
+	});
+	$('input', '#taskgroup_table').iCheck({
+	    checkboxClass: 'icheckbox_square-green',
+	    radioClass: 'iradio_square-green'
+	  });
 }
 
 /*

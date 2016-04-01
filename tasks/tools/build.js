@@ -30,7 +30,8 @@
 	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
-	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min'
+	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
+	icheck: '../../../../smapServer/WebContent/js/libs/wb/plugins/iCheck/icheck.min',
     },
     dir: '../tasks',
     modules: [
