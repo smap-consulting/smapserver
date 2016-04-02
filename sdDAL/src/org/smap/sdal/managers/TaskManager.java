@@ -11,7 +11,10 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.AssignFromSurvey;
+import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.Task;
+import org.smap.sdal.model.TaskAssignment;
 import org.smap.sdal.model.TaskGroup;
 
 import com.google.gson.Gson;
@@ -144,6 +147,75 @@ public class TaskManager {
 		}
 
 		return taskgroups;
+	}
+	
+	/*
+	 * Get the assignments for the specified task group
+	 */
+	public ArrayList<TaskAssignment> getAssignments(Connection sd, 
+			int projectId, 
+			int taskGroupId, 
+			boolean completed) throws Exception {
+		
+		String sql = "select t.id as t_id, "
+				+ "t.type as type,"
+				+ "a.id as a_id,"
+				+ "a.status as status "
+				+ "from tasks t "
+				+ "left outer join assignments a "
+				+ "on a.task_id = t.id " 
+				+ "where t.p_id = ? "				// Need project id for security
+				+ "and t.tg_id = ? "
+				+ "order by t.id asc;";
+		
+
+		PreparedStatement pstmt = null;
+		
+		ArrayList<TaskAssignment> tasks = new ArrayList<TaskAssignment> ();
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, projectId);
+			pstmt.setInt(2, taskGroupId);
+			log.info("Get tasks: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			while (rs.next()) {
+				
+				String status = rs.getString("status");
+				if(status == null) {
+					status = "new";
+				}
+				
+				// Ignore any tasks that are not required
+				if(status.equals("submitted") && !completed) {
+					continue;
+				}
+				
+				TaskAssignment ta = new TaskAssignment();
+				ta.task = new Task();
+				ta.assignment = new Assignment();
+				
+				ta.task.id = rs.getInt("t_id");
+				ta.task.type = rs.getString("type");
+			
+				ta.assignment.assignment_id = rs.getInt("a_id");
+				ta.assignment.assignment_status = status;				
+			
+				
+				tasks.add(ta);
+			}
+			
+
+		} catch(Exception e) {
+			throw(e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+		
+		}
+
+		return tasks;
 	}
 	
 	/*

@@ -21,12 +21,12 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
-define(['jquery','bootstrap', 'app/map-ol-mgmt', 'common', 'localise', 
+define(['jquery','bootstrap', 'mapbox_app', 'common', 'localise', 
         'bootbox',
         'moment',
         'datetimepicker'
         ], 
-		function($, bootstrap, ol_mgmt, common, lang, bootbox, moment, datetimepicker) {
+		function($, bootstrap, mapbox_app, common, lang, bootbox, moment, datetimepicker) {
 
 	
 							// The following globals are only in this java script file
@@ -492,7 +492,6 @@ function questionChanged() {
 			// Get the meta data for the question
 			$.ajax({
 				url: questionMetaURL(sId, language, qId),
-				dataType: 'json',
 				cache: false,
 				success: function(data) {
 					var i,
@@ -758,24 +757,37 @@ function refreshTableTaskGroups(taskgroups) {
 				});
 	}
 	
+	// Add events onto the task group table
 	$("span.pie", '#taskgroup_table').peity("pie", {
 		  fill: ["green", "red"]
 	});
+	
 	$('input', '#taskgroup_table').iCheck({
 	    checkboxClass: 'icheckbox_square-green',
 	    radioClass: 'iradio_square-green'
-	  });
+	});
+	
+	$('.taskgroup', '#taskgroup_table').on('ifChecked', function(event){
+		globals.gCurrentTaskGroup = $(this).val();
+		refreshAssignmentData(-1, true);
+	});
+	refreshAssignmentData(-1, true);
+	
 }
 
 /*
  * Get the assignments from the server
  */
-function refreshAssignmentData(user_filter) {
-
-	if(typeof globals.gCurrentProject !== "undefined" && globals.gCurrentProject != -1) {
+function refreshAssignmentData(user_filter, completed) {
+	
+	if(typeof globals.gCurrentTaskGroup !== "undefined" && globals.gCurrentTaskGroup != -1) {
 		addHourglass();
 		$.ajax({
-			url: "/surveyKPI/assignments/" + globals.gCurrentProject + "?user=" + user_filter,
+			url: "/surveyKPI/tasks/assignments/" + 
+					globals.gCurrentProject + 
+					"?tg=" + globals.gCurrentTaskGroup +
+					"&user=" + user_filter +
+					"&completed=" + completed,
 			cache: false,
 			dataType: 'json',
 			success: function(data) {
@@ -798,12 +810,17 @@ function refreshAssignmentData(user_filter) {
 function refreshTableAssignments(tasks) {
 	
 	if(typeof tasks != "undefined") {
-		$('#tasks_table').empty().generateTaskTable(
+		$('#task_table').empty().generateTaskTable(
 				{
 					'data': tasks,
 					'maxAddCols' : 10,
 					'showCompleted' : $('#filter_completed').prop('checked')
 				});
+		
+		$('input', '#task_table').iCheck({
+		    checkboxClass: 'icheckbox_square-green',
+		    radioClass: 'iradio_square-green'
+		});
 		
 		// Respond to selection of a task
 		$(".tasks").find(".select_row").change(function() {

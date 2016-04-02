@@ -41,16 +41,16 @@ import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Geometry;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.Task;
+import org.smap.sdal.model.TaskAssignment;
+import org.smap.sdal.model.TaskLocation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
-import taskModel.Location;
 import taskModel.PointEntry;
-import taskModel.Task;
-import taskModel.TaskAssignment;
 import taskModel.TaskCompletionInfo;
 import taskModel.TaskResponse;
 
@@ -265,7 +265,7 @@ public class MyAssignments extends Application {
 				// Create the new Task Assignment Objects
 				TaskAssignment ta = new TaskAssignment();
 				ta.task = new Task();
-				ta.location = new Location();
+				ta.location = new TaskLocation();
 				ta.assignment = new Assignment();
 
 				// Populate the new Task Assignment

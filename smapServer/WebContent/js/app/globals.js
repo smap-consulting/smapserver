@@ -50,6 +50,7 @@ define(function() {
 		gCurrentUserName: undefined,
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
+		gCurrentTaskGroup: undefined,
 		
 		// Editor
 		gExistingSurvey: false,		// Set true if modifying an existing survey

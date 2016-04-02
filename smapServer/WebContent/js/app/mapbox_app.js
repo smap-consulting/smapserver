@@ -20,7 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * This javascript file handles map initialization and events.
  */
 
-
+/*
 var selectResultsControl = null, // OpenLayers select control for vector feature layer
 	bounds,
 	allLayers,   // Vector layers, Layer 0 = events, layer 1 = regions
@@ -29,10 +29,58 @@ var selectResultsControl = null, // OpenLayers select control for vector feature
 	map,
 	gNewTasksLayer = false,		// Only in this java script file
 	gTaskClick;					// Only in this java script file
+*/
 
 /**
  * Map Initialization
  */
+function initializeMap() {
+	
+	if(!L.mapbox.accessToken) {
+		addHourglass();
+		$.ajax({
+			url: '/surveyKPI/server',
+			cache: false,
+			success: function(data) {
+				removeHourglass();
+				if(data.mapbox_default) {
+					L.mapbox.accessToken = data.mapbox_default;
+					initializeMapKeySet();
+				} else {
+					alert("mapbox key not set");
+				}
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Error: Failed to get mapbox key: " + err);
+				}
+			}
+		});	
+		
+	} else {
+		initializeMapKeySet()
+	}
+	
+	 
+}
+
+/*
+ * This function does the initialization once the mapbox key has been set
+ */
+function initializeMapKeySet() {
+	// Replace 'mapbox.streets' with your map id.
+	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
+	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	});
+	
+	var map = L.mapbox.map('map', 'mapbox.streets')
+    .setView([40, -74.50], 9);
+}
+
+/*
 function initializeMap(){
 	// Set options and initialize map
 
@@ -155,16 +203,21 @@ function initializeMap(){
 		});
 	}
 	
+	
 }
+*/
 
+/*
 function incrementNewTaskCount() {
 	var currentS = $('#new_task_count').html(),
 		currentI = 0;
 	
 	$('#new_task_count').html(parseInt(currentS) + 1);
 }
+*/
 
 // add a marker
+/*
 function addMarker(lonlat, clearOld) {
     var size = new OpenLayers.Size(21,25);	
     var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
@@ -183,8 +236,10 @@ function addMarker(lonlat, clearOld) {
 	$('#region_centre').val(point.lon.toFixed(2) + " : " + point.lat.toFixed(2));
 
 }
+*/
 
 // Zoom to layer
+/*
 function zoomTo(layerName) {
 	
 	var layer = null;
@@ -223,11 +278,12 @@ function zoomTo(layerName) {
 		}
 	}
 }
-
+*/
 /*
  * -----------------------------------------------------------
  * Functions to set the map data
  */
+/*
 function refreshMap(data) {
 	"use strict";
 	
@@ -248,10 +304,11 @@ function refreshMap(data) {
 	}
 
 }
-
+*/
 /*
  * Refresh the tasks layer
  */
+/*
 function refreshMapAssignments(data) {
 	"use strict";
 	
@@ -270,12 +327,13 @@ function refreshMapAssignments(data) {
 	selectResultsControl.activate();
 
 }
-
+*/
 /*
  * This function adds a vector layer to the map, this layer should consist only of polygons
  * Commonly it would be the same layer that is being used to geo-spatially aggregate the survey
  * data, however if the data isn't being aggregated then it can be any arbitrary vector layer
  */
+/*
 function setMapRegions(region) {
 	
 	
@@ -341,7 +399,8 @@ function setMapRegions(region) {
 	getRegion(region);
 
 }
-
+*/
+/*
 function clearLayer(layerName) {
 	var i, num;
 	
@@ -356,7 +415,8 @@ function clearLayer(layerName) {
 		}
 	}
 }
-
+*/
+/*
 function loadFeatures(data) {
 	
 	var features = JSON.stringify(data);
@@ -441,8 +501,9 @@ function loadFeatures(data) {
 	
 	
 }
-
+*/
 // Respond to a feature being selected
+/*
 function onFeatureSelectOL(feature) {
 	
 	var status,
@@ -459,40 +520,11 @@ function onFeatureSelectOL(feature) {
 	}
 	
 	// Action for assignments
-	/*
-	if(globals.gCurrentUserName && 
-				(feature.attributes.assignment_status === "new" || feature.attributes.assignment_status === "accepted")) {
-			
-		feature.attributes.user_name = globals.gCurrentUserName;
-		feature.attributes.assignment_status = "accepted";	// By pass pending state
-		globals.gAssignmentsLayer.redraw();
-		var user = {id: globals.gCurrentUserId};
-		var assignment = {
-				assignment_id: feature.attributes.assignment_id,
-				assignment_status: "accepted",
-				user: user,
-				task_id: feature.attributes.task_id			
-				};
-		globals.gPendingUpdates.push(assignment);
-		
-	} else if(globals.gDeleteSelected) {
-		
-		deleteFeature(feature);
 
-	}
-	
-	else {
-
-		$("#features").show();		  
-		$("#features").featureSelect(feature.data, feature.cluster);
-		$('#fDel').off().click(function() {	// Closing the panel manually
-			$("#features").hide().empty();
-		});
-	}
-	*/
 
 }
-
+*/
+/*
 function processFeatureSelection(feature) {
 	if(feature.attributes.isSelected === 6) {			// Is selected has line width of selected feature
 		removePendingTask(feature.attributes.task_id, "map");
@@ -502,8 +534,9 @@ function processFeatureSelection(feature) {
 		feature.attributes.isSelected = 6;
 	}
 }
+*/
 
-
+/*
 function onFeatureUnselect() {
 	var layer = allLayers[0],
 		i,
@@ -522,18 +555,20 @@ function onFeatureUnselect() {
 		}
     }
 }
-
+*/
+/*
 function processFeatureUnselect(feature) {
 	if(feature.attributes.isSelected === 6) {			// Is selected has line width of selected feature
 		removePendingTask(feature.attributes.task_id, "map");
 		feature.attributes.isSelected = 0;
 	} 
 }
-
+*/
 /*
  * --------
  * Assignments specific
  */
+/*
 function loadAssignments(data) {
 
 	var showCompleted,
@@ -667,7 +702,8 @@ function loadAssignments(data) {
 	allLayers[0] = globals.gAssignmentsLayer;
 	
 }
-
+*/
+/*
 function updateMapTaskSelections(task_id, selected) {
 	var feats = globals.gAssignmentsLayer.getFeaturesByAttribute("task_id", task_id);
 	var selF = feats[0];
@@ -676,7 +712,8 @@ function updateMapTaskSelections(task_id, selected) {
 		globals.gAssignmentsLayer.drawFeature(selF);
 	}
 }
-
+*/
+/*
 function registerForClicks() {
 	// Register for clicks so we can get the report location
 	
@@ -686,8 +723,9 @@ function registerForClicks() {
 	});
 
 }
-
+*/
 // Functions for creating new ad-hoc tasks
+/*
 function registerForNewTasks() {
 	
 	// Create the new tasks layer if it does not already exist
@@ -699,17 +737,19 @@ function registerForNewTasks() {
 	
 	gTaskClick.activate();
 }
-
+*/
+/*
 function clearNewTasks() {
 	gTaskClick.deactivate();
 	clearLayer("New Tasks");
 	gNewTasksLayer = undefined;
 	$('#new_task_count').html("0");  // clear New Task Count
 }
-
+*/
 /*
  * Get the new tasks as geoJSON
  */
+/*
 function getTasksAsGeoJSON() {
 	var featuresString = new OpenLayers.Format.GeoJSON({
 		'internalProjection': new OpenLayers.Projection("EPSG:900913"),
@@ -718,6 +758,7 @@ function getTasksAsGeoJSON() {
 
 	return featuresString;
 }
+*/
 
 /*
 function deleteFeature(feature) {		

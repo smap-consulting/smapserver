@@ -45,7 +45,9 @@ requirejs.config({
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js',
     	file_input: '../../../../js/libs/bootstrap.file-input',
+    	mapbox_app: '../../../../js/app/mapbox_app',
     	
+    	mapbox: '../../../../js/libs/mapbox/js/mapbox',
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/slimscroll/jquery.slimscroll.min',
@@ -64,7 +66,11 @@ requirejs.config({
     	'crf': ['jquery'],
     	'file_input': ['jquery'],
     	'app/assignments': ['file_input'],
-    	
+    	'mapbox_app' : ['jquery', 'mapbox'],
+    	'mapbox': {
+            exports: 'L'
+        },
+        
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
     	'slimscroll': ['jquery'],
@@ -82,13 +88,14 @@ require([
          'globals',
          'bootbox',
          'app/task_assignments', 
-         'app/map-ol-mgmt',
          'app/task_plugins',
          'jquery-barcode',
          'crf',
          'moment',
+         'mapbox',
          'datetimepicker',
          'file_input',
+         'mapbox_app',
          
          'inspinia',
          'metismenu',
@@ -104,11 +111,20 @@ require([
         		 globals, 
         		 bootbox, 
         		 assignments, 
-        		 map_ol_mgmt, 
         		 task_plugins,
         		 barcode, 
         		 crf, 
-        		 moment) {
-
+        		 moment,
+        		 mapbox) {
+	/*
+	L.mapbox.accessToken = 'pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg';
+	// Replace 'mapbox.streets' with your map id.
+	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
+	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	});
+	
+	var map = L.mapbox.map('map', 'mapbox.streets')
+    .setView([40, -74.50], 9);
+*/
 });
 

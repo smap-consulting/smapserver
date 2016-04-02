@@ -3,6 +3,7 @@ package taskModel;
 import java.util.List;
 
 import org.smap.sdal.model.Project;
+import org.smap.sdal.model.TaskAssignment;
 
 import com.google.gson.annotations.SerializedName;
 

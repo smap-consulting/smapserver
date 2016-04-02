@@ -62,7 +62,7 @@ window.log = function(){
 			for(i = 0; i < settings.data.length; i++) {
 				group = settings.data[i];
 				tab[++idx] = '<tr>';
-					tab[++idx] = addSelectCheckBox();
+					tab[++idx] = addSelectCheckBox(true, group.tg_id, i == 0);
 					
 					tab[++idx] = '<td>';
 						tab[++idx] = group.name;
@@ -85,9 +85,83 @@ window.log = function(){
 		
 })(jQuery);
 
-function addSelectCheckBox() {
+(function($) {
+	$.fn.generateTaskTable = function( options ) {
+		
+		// plugin's default options
+		var settings = {
+		    'rowClass': '',
+		    'colClass': 'ui-widget-content',
+		    'fields': [],
+		    'nodataString': 'No records found.',
+		    'data': {}
+		}
+		
+		return this.each(function() {
+			if ( options ) { 
+				$.extend( settings, options );
+			}
+			
+			var surveyName,
+				tab = [],
+				idx = -1,
+				i,
+				$this = $(this),
+				addressParams,
+				addressObj,
+				addressParamsObj,
+				assignmentStatus,
+				group;
+			
+			for(i = 0; i < settings.data.length; i++) {
+				task = settings.data[i];
+				tab[++idx] = '<tr>';
+					tab[++idx] = addSelectCheckBox(false, false);
+					
+					tab[++idx] = '<td></td>';		// todo form
+					tab[++idx] = '<td></td>';		// todo name
+					
+					tab[++idx] = '<td>';			// status
+						tab[++idx] = task.assignment.assignment_status;
+					tab[++idx] = '</td>';
+					
+					tab[++idx] = '<td></td>';		// todo repeat
+					tab[++idx] = '<td></td>';		// todo assigned
+					tab[++idx] = '<td></td>';		// todo scheduled
+					tab[++idx] = '<td></td>';		// todo trigger
+					tab[++idx] = '<td></td>';		// todo edit
+					
+				
+				tab[++idx] = '</tr>';
+			}
+				
+			
+			// Populate table
+			$this.append(tab.join(''));
+
+		});
+	};
+		
+})(jQuery);
+
+function addSelectCheckBox(isRadio, tg_id, checked) {
 	
-	return '<td><input type="radio" name="taskgroup"></td>';
+	var h  = [],
+		idx = -1;
+	
+	h[++idx] = '<td><input type=';
+	h[++idx] = isRadio ? '"radio"' : '"checkbox"';
+	h[++idx] = 'name="taskgroup"';
+	h[++idx] = ' class="taskgroup" value="';
+	h[++idx] = tg_id;
+	h[++idx] = '"';
+	if(checked) {
+		h[++idx] = ' checked';
+		globals.gCurrentTaskGroup = tg_id;
+	}
+	h[++idx] = '></td>';
+	
+	return h.join('');
 	
 }
 

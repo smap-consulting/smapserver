@@ -451,3 +451,6 @@ alter table upload_event add column location_trigger text;
 
 -- Upgrade to 16.04 from 16.03
 alter table project add column tasks_only boolean;
+
+-- Upgrade to 16.05 from 16.04
+alter table server add column mapbox_default text;

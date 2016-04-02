@@ -16,6 +16,8 @@
 
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
+    
+    <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
 
 <!-- 
 <link rel="stylesheet" href="/css/normalize.css" />
@@ -27,14 +29,16 @@
 -->
 
 <script> if (!window.console) console = {log: function() {}}; </script>
-<!--
-<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
--->
 
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script data-main="js/manage" src="/js/libs/require.js"></script>
+
+<!-- temp -->
+<style>
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
 
 </head>
 <body>
@@ -129,38 +133,6 @@
                                     </tr>
                                     </thead>
                                     <tbody id="taskgroup_table">
-                                    <tr>
-                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" checked="" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
-                                        <td>Project<small>This is example of project</small></td>
-                                        <td><span class="pie" style="display: none;">0.52/1.561</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.990700825968545 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
-                                        <td>20%</td>
-                                        <td>Jul 14, 2013</td>
-                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
-                                        <td>Alpha project</td>
-                                        <td><span class="pie" style="display: none;">6,9</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 12.702282018339785 14.47213595499958 Z" fill="#1ab394"></path><path d="M 8 8 L 12.702282018339785 14.47213595499958 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
-                                        <td>40%</td>
-                                        <td>Jul 16, 2013</td>
-                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="icheckbox_square-green checked" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
-                                        <td>Betha project</td>
-                                        <td><span class="pie" style="display: none;">3,1</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 1 1 0 8.000000000000002 Z" fill="#1ab394"></path><path d="M 8 8 L 0 8.000000000000002 A 8 8 0 0 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
-                                        <td>75%</td>
-                                        <td>Jul 18, 2013</td>
-                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="icheckbox_square-green" style="position: relative;"><input type="checkbox" class="i-checks" name="input[]" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div></td>
-                                        <td>Gamma project</td>
-                                        <td><span class="pie" style="display: none;">4,9</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 15.48012994148332 10.836839096340286 Z" fill="#1ab394"></path><path d="M 8 8 L 15.48012994148332 10.836839096340286 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg></td>
-                                        <td>18%</td>
-                                        <td>Jul 22, 2013</td>
-                                        <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
-                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -179,15 +151,26 @@
                 </ul>
                 <div class="tab-content">
                 	<div id="table-view" class="tab-pane active">
-                    	<div class="panel-body">
-                                    <strong>Lorem ipsum dolor sit amet, consectetuer adipiscing</strong>
+                    	 <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
 
-                                    <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. I am alone, and feel the charm of
-                                        existence in this spot, which was created for the bliss of souls like mine.</p>
-
-                                    <p>I am so happy, my dear friend, so absorbed in the exquisite sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at
-                                        the present moment; and yet I feel that I never was a greater artist than now. When.</p>
-                        </div>
+                                        <th></th>
+                                        <th>Form</th>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Repeat</th>
+                                        <th>Assigned</th>
+                                        <th>Scheduled</th>
+                                        <th>Trigger</th>
+                                        <th>Edit</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="task_table">
+                                    </tbody>
+                                </table>
+                            </div>
 					</div>
 					<div id="map-view" class="tab-pane">
 						<div class="panel-body">
@@ -201,6 +184,8 @@
 							       		</a>
 							     		</h4>
 		    						</div>
+		    						<div id="map" class="noPrint"></div>
+									<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
 			    					<div id="collapseLayers" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
 										<div id="current_layers"></div>
 									</div>
@@ -242,13 +227,6 @@
 					</form>
 				
 		
-				
-					<div id="monitor">
-						<div id="map" class="noPrint"></div>
-						<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
-						<div id="tasks_table" class="yesPrint table-responsive"></div>
-					</div>
-				
 			</div>
 		</div>
 	</div>
@@ -680,6 +658,8 @@
 <script>
 	setCustomAssignments();			// Apply custom javascript
 </script>
+
+
 
 </body>
 </html>

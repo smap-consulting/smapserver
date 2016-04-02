@@ -1,4 +1,4 @@
-package taskModel;
+package org.smap.sdal.model;
 
 import java.sql.Timestamp;
 
