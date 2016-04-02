@@ -1254,7 +1254,8 @@ public class SurveyTemplate {
 						if(cascade) {
 							o.setCascadeInstanceId(cascadeInstanceId);
 							// Cascade options are shared, check that this option has not been added already by another question
-							if(!cascadeOptionLoaded(cascadeInstanceId, o.getValue())) {
+							//if(!cascadeOptionLoaded(cascadeInstanceId, o.getValue())) {
+							if(!cascadeOptionLoaded(cascadeInstanceId, o.getLabelId())) {
 								cascade_options.put(oRef, o);
 							}
 						} else {
@@ -1301,7 +1302,8 @@ public class SurveyTemplate {
 		itr = c.iterator();
 		while (itr.hasNext()) {
 			Option o = itr.next();
-			if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getValue().equals(value)) {
+			//if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getValue().equals(value)) {
+			if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getLabelId().equals(value)) {
 				loaded = true;
 				break;
 			}

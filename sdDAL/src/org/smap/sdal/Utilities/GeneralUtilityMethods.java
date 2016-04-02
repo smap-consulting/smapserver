@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1847,7 +1848,6 @@ public class GeneralUtilityMethods {
 				}
 				
 				if(!includeRO && ro) {
-					log.info("Dropping readonly: " + cName);
 					continue;			// Drop read only columns if they are not selected to be exported				
 				}
 				
@@ -1860,16 +1860,24 @@ public class GeneralUtilityMethods {
 					pstmtSelectMultiple.setInt(1, qId);
 					pstmtSelectMultiple.setBoolean(2, external);
 					ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
+					
+					HashMap<String, String> uniqueColumns = new HashMap<String, String> (); 
 					while (rsMultiples.next()) {
-						c = new Column();
-						c.name = question_column_name + "__" + rsMultiples.getString(1);
-						c.humanName = question_human_name + " - " + rsMultiples.getString(2);
-						c.question_name = question_column_name;
-						c.option_name = rsMultiples.getString(1);
-						c.qId = qId;
-						c.qType = qType;
-						c.ro = ro;
-						realQuestions.add(c);
+						String uk = question_column_name + "xx" + rsMultiples.getString(2);		// Column name can be randomised so don't use it for uniqueness
+						
+						if(uniqueColumns.get(uk) == null) {
+							uniqueColumns.put(uk, uk);
+						
+							c = new Column();
+							c.name = question_column_name + "__" + rsMultiples.getString(1);
+							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
+							c.question_name = question_column_name;
+							c.option_name = rsMultiples.getString(1);
+							c.qId = qId;
+							c.qType = qType;
+							c.ro = ro;
+							realQuestions.add(c);
+						}
 					}
 				} else {
 					c = new Column();
