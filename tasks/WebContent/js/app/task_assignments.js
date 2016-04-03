@@ -791,8 +791,9 @@ function refreshAssignmentData(user_filter, completed) {
 			cache: false,
 			dataType: 'json',
 			success: function(data) {
-				//refreshMapAssignments(data);
-				refreshTableAssignments(data);
+				globals.gTaskList = data;
+				refreshMapAssignments();
+				refreshTableAssignments();
 				removeHourglass();
 			},
 			error: function(xhr, textStatus, err) {
@@ -807,12 +808,14 @@ function refreshAssignmentData(user_filter, completed) {
 	}
 }
 
-function refreshTableAssignments(tasks) {
+function refreshTableAssignments() {
+	
+	var tasks = globals.gTaskList;
 	
 	if(typeof tasks != "undefined") {
 		$('#task_table').empty().generateTaskTable(
 				{
-					'data': tasks,
+					'data': globals.gTaskList,
 					'maxAddCols' : 10,
 					'showCompleted' : $('#filter_completed').prop('checked')
 				});
@@ -822,7 +825,24 @@ function refreshTableAssignments(tasks) {
 		    radioClass: 'iradio_square-green'
 		});
 		
+		
 		// Respond to selection of a task
+		$('input', '#task_table').on('ifChanged', function(event){
+			var $this = $(this),
+				idx = $this.val(),
+				selected = $this.is(':checked');
+			
+
+			globals.gTaskList.features[idx].properties.selected = selected;
+			refreshMapAssignments();
+			if(selected) {
+				$this.closest('tr').addClass("info");
+			} else {
+				$this.closest('tr').removeClass("info");
+			}
+		});
+		
+		/*
 		$(".tasks").find(".select_row").change(function() {
 			var $this = $(this);
 			
@@ -834,6 +854,7 @@ function refreshTableAssignments(tasks) {
 				removePendingTask($this.data("taskid"), "table");
 			}
 		});
+		*/
 		
 		// Respond to clicking on a row
 		$(".tasks").find(".task_edit").click(function() {
@@ -944,7 +965,7 @@ function refreshTableAssignments(tasks) {
 					addHourglass();
 					$.ajax({
 						  type: "DELETE",
-						  url: "/surveyKPI/assignments/" + tg_id,
+						  url: "/surveyKPI/assignments/" + tg_id + "?completed=true",
 						  success: function(data, status) {
 							  removeHourglass();
 							  refreshAssignmentData(gUserFilter);
@@ -963,7 +984,6 @@ function refreshTableAssignments(tasks) {
 		
 	}
 }
-
 
 /*
  * Show the task parameters in the modal

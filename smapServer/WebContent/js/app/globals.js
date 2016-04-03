@@ -51,6 +51,7 @@ define(function() {
 		gAssignmentsLayer: undefined,
 		gPendingUpdates: [],
 		gCurrentTaskGroup: undefined,
+		gTaskList: undefined,
 		
 		// Editor
 		gExistingSurvey: false,		// Set true if modifying an existing survey

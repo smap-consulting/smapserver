@@ -31,6 +31,9 @@ var selectResultsControl = null, // OpenLayers select control for vector feature
 	gTaskClick;					// Only in this java script file
 */
 
+	var map,
+		featureLayer;
+	
 /**
  * Map Initialization
  */
@@ -76,9 +79,47 @@ function initializeMapKeySet() {
 	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 	});
 	
-	var map = L.mapbox.map('map', 'mapbox.streets')
-    .setView([40, -74.50], 9);
+	map = L.mapbox.map('map', 'mapbox.streets').setView([0, 0], 1);;
+	featureLayer = L.mapbox.featureLayer(undefined, {
+	    pointToLayer: function(feature, latlon) {
+	    	
+	    	var option = {
+	    		    radius: 8,
+	    		    weight: 5,
+	    		    stroke: false,
+	    		    opacity: 1,
+	    		    fillOpacity: 0.8
+	    		};
+	    	
+	    	if(feature.properties.status === "new") {
+	    		option.fillColor = "#0000ff";
+	    	} else if(feature.properties.status === "accepted") {
+	    		option.fillColor = "#ffff00";
+	    	} else if(feature.properties.status === "accepted") {
+	    		option.fillColor = "#ffff00";
+	    	} else if(feature.properties.status === "submitted") {
+	    		option.fillColor = "#009933";
+	    	} else {
+	    		option.fillColor = "#fff";
+	    	}
+	    	
+	    	if(feature.properties.selected) {
+	    		option.stroke = true;
+	    		option.color = "#ff9900";
+	    	}
+	    	
+	        return L.circleMarker(latlon, option);
+	    }
+	}).addTo(map);
 }
+
+/*
+ * Assignment specific
+ */
+function refreshMapAssignments() {
+	featureLayer.setGeoJSON(globals.gTaskList);
+}
+
 
 /*
 function initializeMap(){

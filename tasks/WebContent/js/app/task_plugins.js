@@ -63,6 +63,9 @@ window.log = function(){
 				group = settings.data[i];
 				tab[++idx] = '<tr>';
 					tab[++idx] = addSelectCheckBox(true, group.tg_id, i == 0);
+					if(i == 0) {
+						globals.gCurrentTaskGroup = group.tg_id;
+					}
 					
 					tab[++idx] = '<td>';
 						tab[++idx] = group.name;
@@ -113,16 +116,16 @@ window.log = function(){
 				assignmentStatus,
 				group;
 			
-			for(i = 0; i < settings.data.length; i++) {
-				task = settings.data[i];
+			for(i = 0; i < settings.data.features.length; i++) {
+				task = settings.data.features[i];
 				tab[++idx] = '<tr>';
-					tab[++idx] = addSelectCheckBox(false, false);
+					tab[++idx] = addSelectCheckBox(false, i, false);
 					
 					tab[++idx] = '<td></td>';		// todo form
 					tab[++idx] = '<td></td>';		// todo name
 					
 					tab[++idx] = '<td>';			// status
-						tab[++idx] = task.assignment.assignment_status;
+						tab[++idx] = task.properties.status;
 					tab[++idx] = '</td>';
 					
 					tab[++idx] = '<td></td>';		// todo repeat
@@ -144,7 +147,7 @@ window.log = function(){
 		
 })(jQuery);
 
-function addSelectCheckBox(isRadio, tg_id, checked) {
+function addSelectCheckBox(isRadio, val, checked) {
 	
 	var h  = [],
 		idx = -1;
@@ -153,11 +156,10 @@ function addSelectCheckBox(isRadio, tg_id, checked) {
 	h[++idx] = isRadio ? '"radio"' : '"checkbox"';
 	h[++idx] = 'name="taskgroup"';
 	h[++idx] = ' class="taskgroup" value="';
-	h[++idx] = tg_id;
+	h[++idx] = val;
 	h[++idx] = '"';
 	if(checked) {
 		h[++idx] = ' checked';
-		globals.gCurrentTaskGroup = tg_id;
 	}
 	h[++idx] = '></td>';
 	

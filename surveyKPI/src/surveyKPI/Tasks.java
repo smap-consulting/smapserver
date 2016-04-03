@@ -60,6 +60,7 @@ import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.TaskAssignment;
 import org.smap.sdal.model.TaskGroup;
+import org.smap.sdal.model.TaskManagement;
 
 import utilities.XLSFormManager;
 import utilities.XLSTaskManager;
@@ -149,6 +150,57 @@ public class Tasks extends Application {
 	 */
 	@GET
 	@Produces("application/json")
+	@Path("/assignmentsx/{projectId}")
+	public Response getAssignmentsx(
+			@Context HttpServletRequest request,
+			@PathParam("projectId") int projectId,
+			@QueryParam("tg") int taskGroupId, 
+			@QueryParam("completed") boolean completed
+			) throws IOException {
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		
+		Response response = null;
+		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), projectId);
+		// End authorisation
+	
+		try {
+			
+			// Get assignments
+			TaskManager tm = new TaskManager();
+			ArrayList<TaskAssignment> tasks = tm.getAssignmentsx(sd, projectId, taskGroupId, completed);		
+			
+			// Return groups to calling program
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(tasks);	
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Get the assignments for a task group
+	 */
+	@GET
+	@Produces("application/json")
 	@Path("/assignments/{projectId}")
 	public Response getAssignments(
 			@Context HttpServletRequest request,
@@ -172,12 +224,13 @@ public class Tasks extends Application {
 			
 			// Get assignments
 			TaskManager tm = new TaskManager();
-			ArrayList<TaskAssignment> tasks = tm.getAssignments(sd, projectId, taskGroupId, completed);		
+			TaskManagement t = tm.getAssignments(sd, projectId, taskGroupId, completed);		
 			
 			// Return groups to calling program
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(tasks);	
+			String resp = gson.toJson(t);	
 			response = Response.ok(resp).build();	
+			System.out.println("Resp: " + resp);
 			
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);

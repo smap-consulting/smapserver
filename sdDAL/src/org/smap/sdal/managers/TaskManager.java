@@ -15,10 +15,14 @@ import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Task;
 import org.smap.sdal.model.TaskAssignment;
+import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
+import org.smap.sdal.model.TaskManagement;
+import org.smap.sdal.model.TaskProperties;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 
 /*****************************************************************************
 
@@ -152,7 +156,7 @@ public class TaskManager {
 	/*
 	 * Get the assignments for the specified task group
 	 */
-	public ArrayList<TaskAssignment> getAssignments(Connection sd, 
+	public ArrayList<TaskAssignment> getAssignmentsx(Connection sd, 
 			int projectId, 
 			int taskGroupId, 
 			boolean completed) throws Exception {
@@ -216,6 +220,102 @@ public class TaskManager {
 		}
 
 		return tasks;
+	}
+	
+	/*
+	 * Get the assignments for the specified task group
+	 */
+	public TaskManagement getAssignments(Connection sd, 
+			int projectId, 
+			int taskGroupId, 
+			boolean completed) throws Exception {
+		
+		String sql = "select t.id as t_id, "
+				+ "t.type as type,"
+				+ "t.geo_type as geo_type,"
+				+ "a.id as a_id,"
+				+ "a.status as status "
+				+ "from tasks t "
+				+ "left outer join assignments a "
+				+ "on a.task_id = t.id " 
+				+ "where t.p_id = ? "				// Need project id for security
+				+ "and t.tg_id = ? "
+				+ "order by t.id asc;";
+		PreparedStatement pstmt = null;
+		
+		String sqlPoint = "select ST_AsGeoJSON(geo_point) from tasks where id = ?;";
+		PreparedStatement pstmtPoint = null;
+		String sqlLine = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
+		PreparedStatement pstmtLine = null;
+		String sqlPoly = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
+		PreparedStatement pstmtPoly = null;
+
+		TaskManagement t = new TaskManagement();
+		
+		try {
+			// Prepare geo queries
+			pstmtPoint = sd.prepareStatement(sqlPoint);
+			pstmtLine = sd.prepareStatement(sqlLine);
+			pstmtPoly = sd.prepareStatement(sqlPoly);
+			
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, projectId);
+			pstmt.setInt(2, taskGroupId);
+			log.info("Get tasks: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			JsonParser parser = new JsonParser();
+			while (rs.next()) {
+				
+				String status = rs.getString("status");
+				if(status == null) {
+					status = "new";
+				}
+				
+				// Ignore any tasks that are not required
+				if(status.equals("submitted") && !completed) {
+					continue;
+				}
+				
+				TaskFeature tf = new TaskFeature();
+				tf.properties = new TaskProperties();
+				
+				tf.properties.id = rs.getInt("t_id");
+				tf.properties.type = rs.getString("type");
+				tf.properties.status = status;	
+				
+				// Add geometry
+				String geo_type = rs.getString("geo_type");
+				ResultSet rsGeo = null;
+				if(geo_type != null) {
+					if(geo_type.equals("POINT")) {
+						pstmtPoint.setInt(1, tf.properties.id);
+						rsGeo = pstmtPoint.executeQuery();
+					} else if (geo_type.equals("POLYGON")) {
+						sql = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
+					} else if (geo_type.equals("LINESTRING")) {
+						sql = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
+					}
+				}
+				if(rsGeo != null && rsGeo.next()) {
+					System.out.println("original: " + rsGeo.getString(1));
+					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();
+					
+				}
+			
+				
+				t.features.add(tf);
+			}
+			
+
+		} catch(Exception e) {
+			throw(e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+		
+		}
+
+		return t;
 	}
 	
 	/*

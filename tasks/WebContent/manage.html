@@ -37,13 +37,13 @@
 
 <!-- temp -->
 <style>
-  #map { position:absolute; top:0; bottom:0; width:100%; }
+  #map {  width:100%; height: 400px;}
 </style>
 
 </head>
-<body>
+<body style="width:100%;">
 
-<div id="wrapper">
+<div id="wrapper" style="width:100%;">
 
 	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
 		<div class="sidebar-collapse">
@@ -88,8 +88,8 @@
 		
 	</nav>
 
-	<div id="page-wrapper" class="gray-bg">
-		<div class="wrapper wrapper-content">
+	<div id="page-wrapper" class="gray-bg" style="width:100%;">
+		<div class="wrapper wrapper-content" style="width:100%;">
 
 			<div class="row">
                 <div class="col-lg-12">
@@ -142,69 +142,69 @@
                 </div>
 
             </div>
-            
-            <div class="tabs-container">
-            	<ul class="nav nav-tabs">
-                	<li class="active"><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
-                    <li class=""><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
-                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
-                </ul>
-                <div class="tab-content">
-                	<div id="table-view" class="tab-pane active">
-                    	 <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                    <tr>
-
-                                        <th></th>
-                                        <th>Form</th>
-                                        <th>Name</th>
-                                        <th>Status</th>
-                                        <th>Repeat</th>
-                                        <th>Assigned</th>
-                                        <th>Scheduled</th>
-                                        <th>Trigger</th>
-                                        <th>Edit</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="task_table">
-                                    </tbody>
-                                </table>
-                            </div>
-					</div>
-					<div id="map-view" class="tab-pane">
-						<div class="panel-body">
-                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-		  						<div class="panel panel-default">
-		    						<div class="panel-heading" role="tab" id="headingOne">
-										<h4 class="panel-title">
-							       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
-							       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
-							         	Maps
-							       		</a>
-							     		</h4>
-		    						</div>
-		    						<div id="map" class="noPrint"></div>
-									<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
-			    					<div id="collapseLayers" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
-										<div id="current_layers"></div>
+            <div class="row" style="height: 500px; widt:100%">
+            <div class="col-lg-12">
+	            <div class="tabs-container">
+	            	<ul class="nav nav-tabs">
+	                    <li class="active"><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
+	                    <li class=""><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
+	                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
+	                </ul>
+					<div class="tab-content" style="width:100%;">
+						<div id="map-view" class="tab-pane active" style="width:100%;">
+							<div class="panel-body" style="width:100%;">
+	                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+			  						<div class="panel panel-default" style="width:100%;">
+			    						<div class="panel-heading" role="tab" id="headingOne">
+											<h4 class="panel-title">
+								       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
+								       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
+								         	Maps
+								       		</a>
+								     		</h4>
+			    						</div>
+			    						<div id="map"></div>
+										<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
 									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-					<div id="cal-view" class="tab-pane">
-						<div class="panel-body">
-                                    <strong>Donec quam felis</strong>
-
-                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
-                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
-
-                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
-                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
+	                	<div id="table-view" class="tab-pane">
+	                    	 <div class="table-responsive">
+	                                <table class="table table-striped">
+	                                    <thead>
+	                                    <tr>
+	
+	                                        <th></th>
+	                                        <th>Form</th>
+	                                        <th>Name</th>
+	                                        <th>Status</th>
+	                                        <th>Repeat</th>
+	                                        <th>Assigned</th>
+	                                        <th>Scheduled</th>
+	                                        <th>Trigger</th>
+	                                        <th>Edit</th>
+	                                    </tr>
+	                                    </thead>
+	                                    <tbody id="task_table">
+	                                    </tbody>
+	                                </table>
+	                            </div>
+						</div>
+						<div id="cal-view" class="tab-pane">
+							<div class="panel-body">
+	                                    <strong>Donec quam felis</strong>
+	
+	                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
+	                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
+	
+	                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
+	                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
+							</div>
 						</div>
 					</div>
 				</div>
+			</div>
 			</div>
                     
 			<div class="row">
