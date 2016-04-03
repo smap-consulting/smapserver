@@ -283,7 +283,6 @@ public class ExportSurveyOSM extends Application {
 								String qType = rsType.getString(1);
 								boolean ro = rsType.getBoolean(2);
 								if(!exp_ro && ro) {
-									System.out.println("Dropping readonly: " + name);
 									continue;			// Drop read only columns if they are not selected to be exported				
 								}
 								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {

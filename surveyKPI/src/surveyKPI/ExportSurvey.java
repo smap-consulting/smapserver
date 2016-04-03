@@ -412,7 +412,6 @@ public class ExportSurvey extends Application {
 							String optionName = null;
 								
 							if(!exp_ro && ro) {
-								log.info("Dropping readonly: " + name);
 								continue;			// Drop read only columns if they are not selected to be exported				
 							}
 								

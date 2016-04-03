@@ -34,6 +34,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -604,21 +605,7 @@ public class SubRelationalDB extends Subscriber {
 
 				sql += addSqlColumns(columns);
 				
-				/*
-				sql += ") VALUES (" + parent_key;
-				if(parent_key == 0) {
-					sql += ",'" + remoteUser + "', '" + complete + "'";	
-					if(hasUploadTime) {
-						sql += ",'" + uploadTime + "'," + sId;
-					}
-					if(hasVersion) {
-						sql += "," + version;
-					}
-					if(isBad) {
-						sql += ",'true','" + bad_reason + "'";
-					}
-				}
-				*/
+				
 				sql += ") VALUES (?";		// parent key
 				if(parent_key == 0) {
 					sql += ", ?, ?";		// remote user, complete	
@@ -807,8 +794,12 @@ public class SubRelationalDB extends Subscriber {
 			if(colType.equals("select")) {
 				List<IE> options = col.getChildren();
 				UtilityMethods.sortElements(options);
+				HashMap<String, String> uniqueColumns = new HashMap<String, String> (); 
 				for(IE option : options) {
-					sql += "," + option.getColumnName();
+					if(uniqueColumns.get(option.getColumnName()) == null) {
+						uniqueColumns.put(option.getColumnName(), option.getColumnName());
+						sql += "," + option.getColumnName();
+					}		
 				}
 			} else if(colType.equals("geopolygon") || colType.equals("geolinestring") || colType.equals("geopoint")
 					|| colType.equals("geoshape") || colType.equals("geotrace")) {
@@ -835,8 +826,12 @@ public class SubRelationalDB extends Subscriber {
 			if(colType.equals("select")) {
 				List<IE> options = col.getChildren();
 				UtilityMethods.sortElements(options);
+				HashMap<String, String> uniqueColumns = new HashMap<String, String> (); 
 				for(IE option : options) {
-					sql += "," + (colPhoneOnly ? "" : option.getValue());
+					if(uniqueColumns.get(option.getColumnName()) == null) {
+						uniqueColumns.put(option.getColumnName(), option.getColumnName());
+						sql += "," + (colPhoneOnly ? "" : option.getValue());
+					}			
 				}
 			} else if(colType.equals("begin group")) {
 				// Non repeating group, process these child columns at the same level as the parent
@@ -1158,7 +1153,6 @@ public class SubRelationalDB extends Subscriber {
 				
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance());
 				
-				System.out.println("Write table structure, Adding question: " + q.getName() + " : " + q.getType());
 				String source = q.getSource();
 				
 				// Handle geopolygon and geolinestring
@@ -1229,14 +1223,19 @@ public class SubRelationalDB extends Subscriber {
 						Collection<Option> options = q.getValidChoices(sd);
 						if(options != null) {
 							List<Option> optionList = new ArrayList <Option> (options);
+							HashMap<String, String> uniqueColumns = new HashMap<String, String> (); 
 							UtilityMethods.sortOptions(optionList);	
 							for(Option option : optionList) {
 								
 								// Create if its an external choice and this question uses external choices
 								//  or its not an external choice and this question does not use external choices
 								if(hasExternalOptions && option.getExternalFile() || !hasExternalOptions && !option.getExternalFile()) {
+									
 									String name = q.getColumnName() + "__" + option.getColumnName();
-									sql += ", " + name + " integer";
+									if(uniqueColumns.get(name) == null) {
+										uniqueColumns.put(name, name);
+										sql += ", " + name + " integer";
+									}
 								}
 							}
 						} else {

@@ -1372,7 +1372,8 @@ public class SurveyTemplate {
 		itr = c.iterator();
 		while (itr.hasNext()) {
 			Option o = itr.next();
-			if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getValue().equals(value)) {
+			//if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getValue().equals(value)) {
+			if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getLabelId().equals(value)) {
 				loaded = true;
 				break;
 			}

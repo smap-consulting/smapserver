@@ -371,7 +371,6 @@ public class QueryGenerator {
 					}
 					list_name = validStataName(list_name);	// Make sure the list name is a valid stata name
 					if(!exp_ro && ro) {
-						log.info("Dropping readonly: " + name);
 						continue;			// Drop read only columns if they are not selected to be exported				
 					}
 					

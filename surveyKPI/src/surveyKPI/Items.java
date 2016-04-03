@@ -251,8 +251,13 @@ public class Items extends Application {
 					} else if(c.qType.equals("image") || c.qType.equals("audio") || c.qType.equals("video")) {
 							cols.append("'" + urlprefix + "' || " + c.name + " as " + c.name);
 				
-					} else {
+					} else if(c.name.equals("prikey") || c.name.equals("parkey") 
+							|| c.name.equals("_bad") || c.name.equals("_bad_reason")) {
+						cols.append(tName + "." + c.name + " as " +  c.name);
+						
+					}  else {
 						cols.append(c.name);
+						
 					}
 					
 					
@@ -298,7 +303,7 @@ public class Items extends Application {
 				
 				String sqlFilter = "";
 				if(start_key > 0) {
-					sqlFilter = "prikey > " +  start_key;
+					sqlFilter = tName + ".prikey > " +  start_key;
 					if(!bBad) {
 						sqlFilter += " AND _bad = 'false'";
 					}
@@ -383,7 +388,7 @@ public class Items extends Application {
 					}
 				}
 				sql2.append(whereClause);
-				sql2.append(" order by prikey " + sqlLimit +";");
+				sql2.append(" order by " + tName + ".prikey " + sqlLimit +";");
 				
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql2.toString());
