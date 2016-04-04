@@ -452,7 +452,11 @@ public class ExportSurvey extends Application {
 							
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
-									qName.append(getContent(sd, c.humanName, true,false, colName, qType, split_locn));
+									String humanName = c.humanName;
+									if(f.maxRepeats > 1) {
+										humanName += "(r " + (k + 1) + ")";
+									}
+									qName.append(getContent(sd, humanName, true,false, colName, qType, split_locn));
 									if(!language.equals("none")) {
 										qText.append(getContent(sd, getQuestion(sd, name, sId, f, language, merge_select_multiple), true, false, name, qType, split_locn));
 									}
