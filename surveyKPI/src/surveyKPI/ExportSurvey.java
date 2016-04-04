@@ -404,7 +404,7 @@ public class ExportSurvey extends Application {
 							String name = c.name;
 							String qType = c.qType;
 							boolean ro = c.ro;
-							System.out.println("Processing column: " + c.name);
+							String humanName = c.humanName;
 							
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
@@ -425,34 +425,35 @@ public class ExportSurvey extends Application {
 								optionName = c.option_name;
 							}
 											
-							String colName = name;
 							if(isSelectMultiple && merge_select_multiple) {
-								colName = selectMultipleQuestionName;
+								humanName = selectMultipleQuestionName;
 								
 								// Add the name of sql column to a look up table for the get data stage
 								selMultChoiceNames.put(name, optionName);
 							}
-							if(f.maxRepeats > 1) {	// Columns need to be repeated horizontally
-								colName += "_" + (k + 1);
-							}
+							
 							if(qType.equals("dateTime")) {
-								colName += " (GMT)";
+								humanName += " (GMT)";
+							}
+							
+							if(f.maxRepeats > 1) {	// Columns need to be repeated horizontally
+								humanName += "(r " + (k + 1) + ")";
 							}
 							
 							// If the user has requested that select multiples be merged then we only want the question added once
 							boolean skipSelectMultipleOption = false;
 							if(isSelectMultiple && merge_select_multiple) {
-								String n = selectMultipleColumnNames.get(colName);
+								String n = selectMultipleColumnNames.get(humanName);
 								if(n != null) {
 									skipSelectMultipleOption = true;
 								} else {
-									selectMultipleColumnNames.put(colName, colName);
+									selectMultipleColumnNames.put(humanName, humanName);
 								}
 							}
 							
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
-									qName.append(getContent(sd, c.humanName, true,false, colName, qType, split_locn));
+									qName.append(getContent(sd, humanName, true,false, name, qType, split_locn));
 									if(!language.equals("none")) {
 										qText.append(getContent(sd, getQuestion(sd, name, sId, f, language, merge_select_multiple), true, false, name, qType, split_locn));
 									}
