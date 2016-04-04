@@ -132,7 +132,11 @@ window.log = function(){
 					tab[++idx] = '<td></td>';		// todo assigned
 					tab[++idx] = '<td></td>';		// todo scheduled
 					tab[++idx] = '<td></td>';		// todo trigger
-					tab[++idx] = '<td></td>';		// todo edit
+					tab[++idx] = '<td>';			// edit
+					tab[++idx] ='<button class="btn btn-info task_edit" value="';
+					tab[++idx] = i;
+					tab[++idx] = '" type="button"><i class="fa fa-paste"></i></button>';
+					tab[++idx] = '</td>';		
 					
 				
 				tab[++idx] = '</tr>';

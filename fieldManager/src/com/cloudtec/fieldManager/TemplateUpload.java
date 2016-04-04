@@ -356,17 +356,17 @@ public class TemplateUpload extends Application {
 			}
 			
 			// Return OK with no messages
-			response = Response.ok().build();	
+			response = Response.ok("{}").build();	
 			
 		} catch(AuthorisationException ex) {
 			log.log(Level.SEVERE,"Authorisation error loading template", ex);
 			throw ex;		// re-throw
 		} catch(FileUploadException ex) {
 			log.log(Level.SEVERE,"Error encountered while parsing the request", ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
+			response = Response.serverError().entity("{msg: " + ex.getMessage() + "}").build();
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,"Error encountered while uploading file",ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
+			response = Response.serverError().entity("{msg: " + ex.getMessage() + "}").build();
 		} finally {
 			if(sm != null) {sm.close();}
 			try {if (sd != null) {sd.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection",e);}

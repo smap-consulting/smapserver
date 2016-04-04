@@ -41,9 +41,9 @@
 </style>
 
 </head>
-<body style="width:100%;">
+<body>
 
-<div id="wrapper" style="width:100%;">
+<div id="wrapper">
 
 	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
 		<div class="sidebar-collapse">
@@ -88,8 +88,8 @@
 		
 	</nav>
 
-	<div id="page-wrapper" class="gray-bg" style="width:100%;">
-		<div class="wrapper wrapper-content" style="width:100%;">
+	<div id="page-wrapper" class="gray-bg">
+		<div class="wrapper wrapper-content">
 
 			<div class="row">
                 <div class="col-lg-12">
@@ -104,45 +104,47 @@
                             </div>
                         </div>
                         <div class="ibox-content">
-                            <div class="row">
-                            	<div class="col-sm-5 m-b-xs">
-                            		<label class="control-label lang" data-lang="c_project" for="project_name">proj</label>
-									<select class="project_list input-sm form-control input-s-sm inline" id="project_name"></select>
-                                </div>
-                                <div class="col-sm-4 m-b-xs">
-									<label class="control-label lang" data-lang="t_show" for="users_filter">show for</label>
-									<select class="task_filter input-sm form-control input-s-sm inline" id="users_filter"></select>
-                                </div>
-                                <div class="col-sm-3">
-									<label>
-										<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
-										<span class="lang" data-lang="t_complete">completed tasks</span>
-									</label>   
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                    <tr>
-
-                                        <th></th>
-                                        <th>Task Group</th>
-                                        <th>Completed</th>
-                                        <th>Remaining</th>
-                                        <th>Dynamic</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="taskgroup_table">
-                                    </tbody>
-                                </table>
-                            </div>
+                        	<div class="scroll_content">
+	                            <div class="row">
+	                            	<div class="col-sm-5 m-b-xs">
+	                            		<label class="control-label lang" data-lang="c_project" for="project_name">proj</label>
+										<select class="project_list input-sm form-control input-s-sm inline" id="project_name"></select>
+	                                </div>
+	                                <div class="col-sm-4 m-b-xs">
+										<label class="control-label lang" data-lang="t_show" for="users_filter">show for</label>
+										<select class="task_filter input-sm form-control input-s-sm inline" id="users_filter"></select>
+	                                </div>
+	                                <div class="col-sm-3">
+										<label>
+											<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
+											<span class="lang" data-lang="t_complete">completed tasks</span>
+										</label>   
+	                                </div>
+	                            </div>
+	                            <div class="table-responsive">
+	                                <table class="table table-striped">
+	                                    <thead>
+	                                    <tr>
+	
+	                                        <th></th>
+	                                        <th>Task Group</th>
+	                                        <th>Completed</th>
+	                                        <th>Remaining</th>
+	                                        <th>Dynamic</th>
+	                                    </tr>
+	                                    </thead>
+	                                    <tbody id="taskgroup_table">
+	                                    </tbody>
+	                                </table>
+	                            </div>
+	                    	</div>
 
                         </div>
                     </div>
                 </div>
 
             </div>
-            <div class="row" style="height: 500px; widt:100%">
+            <div class="row" style="height: 500px">
             <div class="col-lg-12">
 	            <div class="tabs-container">
 	            	<ul class="nav nav-tabs">
@@ -150,11 +152,11 @@
 	                    <li class=""><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
 	                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
 	                </ul>
-					<div class="tab-content" style="width:100%;">
-						<div id="map-view" class="tab-pane active" style="width:100%;">
-							<div class="panel-body" style="width:100%;">
+					<div class="tab-content">
+						<div id="map-view" class="tab-pane active">
+							<div class="panel-body">
 	                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-			  						<div class="panel panel-default" style="width:100%;">
+			  						<div class="panel panel-default">
 			    						<div class="panel-heading" role="tab" id="headingOne">
 											<h4 class="panel-title">
 								       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
@@ -315,51 +317,7 @@
 
 </div>	<!-- #wrapper -->
 
-<!-- Modal to load tasks from a file
-<div id="load_tasks" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="loadTasksLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" data-lang="t_lt_file" id="loadTasksLabel">load tasks from a file</h4>
-   			</div>
-		     <div class="modal-body">
-				<div class="container-fluid">
-					<form role="form" class="form-horizontal" enctype="multipart/form-data" name="loadtasks">
-		
-						<div class="form-group">
-							<label for="survey_to_update" class="col-sm-2 control-label lang" data-lang="c_survey">survey</label>
-							<div class="col-sm-10">
-								<select class="survey_select form-control" id="survey_to_update" name="survey"></select>
-							</div>
-						</div>
-						<div class="checkbox">
-							<label>
-								<input type="checkbox" name="clear_existing" value="clear_existing" id="clear_existing">
-									<span class="lang" data-lang="t_ce">clear existing tasks</span>
-							</label>
-						</div>
-						<div id="clear_existing_alert" style="display:none;" class="alert alert-warning lang" role="alert" data-lang="t_ce_warn">This will clear all the existing data</div>
-						<div class="form-group">
-	     					<div class="input-group">
-	     						<span class="input-group-btn">
-	       							<input name="files" title="Add" class="file-inputs" type="file" accept="text/csv, application/zip">
-	     						</span>
-	    					 	<input type="text" id="upload_msg" class="upload_file_msg form-control" placeholder="File with tasks...">
-	   						</div>
-	        			</div>           			
-					</form>
-					<div id="load_tasks_alert" style="display:none;" class="alert alert-success" role="alert"></div>
-				</div>
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="loadTasksSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
--->
+
 
 <!-- Modal to allow the user to add tasks from an existing survey -->
 <div id="addTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">

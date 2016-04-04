@@ -842,24 +842,10 @@ function refreshTableAssignments() {
 			}
 		});
 		
-		/*
-		$(".tasks").find(".select_row").change(function() {
-			var $this = $(this);
-			
-			if($this.is(':checked')) {
-				$this.closest('tr').addClass("info");
-				addPendingTask($this.data("taskid"), $this.data("assid"), $this.data("status"), "table");
-			} else {
-				$this.closest('tr').removeClass("info");
-				removePendingTask($this.data("taskid"), "table");
-			}
-		});
-		*/
-		
 		// Respond to clicking on a row
-		$(".tasks").find(".task_edit").click(function() {
+		$(".task_edit", '#task_table').click(function() {
 			var $this = $(this),
-				idx = $this.closest('tr').data("idx"),
+				idx = $this.val(),
 				task = gTasks.features[idx].properties,
 				scheduleDate;
 		            	

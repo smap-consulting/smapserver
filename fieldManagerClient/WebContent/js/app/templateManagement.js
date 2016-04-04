@@ -81,7 +81,7 @@ $(document).ready(function() {
             url: '/fieldManagerServer/formUpload',
             type: 'POST',
             data: formData,
-            dataType: 'text',
+            dataType: 'json',
             cache: false,
             contentType: false,
             processData:false,
