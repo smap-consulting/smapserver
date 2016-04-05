@@ -34,7 +34,6 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gTaskGroupIndex = -1,	// Currently selected task group
 	gTaskParams = [],		// Parameters for a new task	
 	gFilterqType,			// The type of the filter question select, select1, int, string
-	gUserFilter = "0",		// Default to all users
 	gTaskGroupId = 0;		// Currently selected task group
 	
 $(document).ready(function() {
@@ -84,8 +83,7 @@ $(document).ready(function() {
 	
 	// Add response to the filters being changed
 	$('.task_filter').change(function() {
-		gUserFilter = $('#users_filter').val();
-		refreshAssignmentData(gUserFilter);
+		refreshAssignmentData();
 	});
 	
 	// Add response to a source survey being selected 
@@ -133,7 +131,7 @@ $(document).ready(function() {
 	$('#assignUserSave').off().click(function() {
 		updatePendingAssignments("accepted", $('#users_select_user').val());
         saveData(globals.gPendingUpdates);
-		refreshAssignmentData(gUserFilter);
+		refreshAssignmentData();
 		globals.gCurrentUserId = undefined;
 		globals.gCurrentUserName = undefined;
 		globals.gPendingUpdates = [];
@@ -161,7 +159,7 @@ $(document).ready(function() {
 			  url: url,
 			  success: function(data, status) {
 				  removeHourglass();
-				  refreshAssignmentData(gUserFilter);
+				  refreshAssignmentData();
 			  },
 			  error: function(xhr, textStatus, err) {
 				 
@@ -262,7 +260,7 @@ $(document).ready(function() {
 				  success: function(data, status) {
 					  removeHourglass();
 					  $('#addTask').modal("hide");
-					  refreshAssignmentData(gUserFilter);
+					  refreshAssignmentData();
 					  clearNewTasks();
 				  }, error: function(data, status) {
 					  removeHourglass();
@@ -312,7 +310,7 @@ $(document).ready(function() {
 			  data: { settings: assignString },
 			  success: function(data, status) {
 				  removeHourglass();
-				  refreshAssignmentData(gUserFilter);
+				  refreshAssignmentData();
 				  clearNewTasks();
 			  }, error: function(data, status) {
 				  removeHourglass();
@@ -358,7 +356,7 @@ $(document).ready(function() {
 	
 	enableUserProfileBS();										// Enable user profile button	
 	$('#refreshMenu').click(function(e) {	// Add refresh action
-		refreshAssignmentData(gUserFilter);
+		refreshAssignmentData();
 	}); 
 	
 	$('#tasks_print').button();									// Add button styling
@@ -689,7 +687,7 @@ function saveData(data) {
 		  url: "/surveyKPI/assignments",
 		  data: { settings: assignString },
 		  success: function(data, status) {
-			  refreshAssignmentData(gUserFilter);
+			  refreshAssignmentData();
 		  }, error: function(data, status) {
 			  console.log(data);
 			  alert("Error: Failed to update tasks"); 
@@ -708,7 +706,7 @@ function deleteData(data) {
 		  data: { settings: deleteString },
 		  success: function(data, status) {
 			  removeHourglass();
-			  refreshAssignmentData(gUserFilter);
+			  refreshAssignmentData();
 			  globals.gPendingUpdates = [];
 		  }, error: function(data, status) {
 			  console.log(data);
@@ -769,7 +767,7 @@ function refreshTableTaskGroups(taskgroups) {
 	
 	$('.taskgroup', '#taskgroup_table').on('ifChecked', function(event){
 		globals.gCurrentTaskGroup = $(this).val();
-		refreshAssignmentData(-1, true);
+		refreshAssignmentData(-1);
 	});
 	refreshAssignmentData(-1, true);
 	
@@ -778,7 +776,10 @@ function refreshTableTaskGroups(taskgroups) {
 /*
  * Get the assignments from the server
  */
-function refreshAssignmentData(user_filter, completed) {
+function refreshAssignmentData() {
+	
+	var user_filter = $('#users_filter').val(),
+		completed = $('#filter_completed').is(':checked');
 	
 	if(typeof globals.gCurrentTaskGroup !== "undefined" && globals.gCurrentTaskGroup != -1) {
 		addHourglass();
@@ -835,14 +836,9 @@ function refreshTableAssignments() {
 
 			globals.gTaskList.features[idx].properties.selected = selected;
 			refreshMapAssignments();
-			if(selected) {
-				$this.closest('tr').addClass("info");
-			} else {
-				$this.closest('tr').removeClass("info");
-			}
 		});
 		
-		// Respond to clicking on a row
+		// Respond to clicking on task edit button
 		$(".task_edit", '#task_table').click(function() {
 			var $this = $(this),
 				idx = $this.val(),
@@ -852,7 +848,7 @@ function refreshTableAssignments() {
 			console.log(task);
 		
 			// open the properties dialog
-			$('#task_properties_taskid').val(task.task_id);
+			$('#task_properties_taskid').val(task.id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
 			$('#task_properties_title').val(task.title);
 			$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
@@ -954,7 +950,7 @@ function refreshTableAssignments() {
 						  url: "/surveyKPI/assignments/" + tg_id + "?completed=true",
 						  success: function(data, status) {
 							  removeHourglass();
-							  refreshAssignmentData(gUserFilter);
+							  refreshAssignmentData();
 						  }, error: function(data, status) {
 							  removeHourglass();
 							  console.log(data);
@@ -1049,7 +1045,7 @@ function updateTaskParams() {
 		gTasks.task_groups[gTaskGroupIndex].tg_address_params = JSON.stringify(gTaskParams);
 		// Update the task params in the database TODO
 		
-		refreshAssignmentData(gUserFilter);
+		refreshAssignmentData();
 		//refreshTableAssignments(gTasks);	// Refresh the table view
 	}
 }

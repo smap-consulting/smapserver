@@ -1408,6 +1408,7 @@ public class AllAssignments extends Application {
 	
 	/*
 	 * Update the task properties
+	 * Keep in version 16.04+
 	 */
 	@POST
 	@Path("/properties")

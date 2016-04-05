@@ -5,6 +5,7 @@ surveyKPI/build
 fieldManager/build
 surveyMobileAPI/build/classes/.gitignore
 smapServer/WebContent/build/js
+koboToolboxApi/.gitignore
 
 # Eclipse artifacts
 *.pydevproject
