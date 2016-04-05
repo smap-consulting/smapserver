@@ -156,7 +156,7 @@ public class Review extends Application {
 		String name = null;
 		String qtype = null;
 		String targetName = null;
-		String targetType = null;
+		//String targetType = null;
 		boolean hasTarget = false;
 		PreparedStatement  pstmt = null;
 		PreparedStatement  pstmtTarget = null;
@@ -214,7 +214,6 @@ public class Review extends Application {
 					ResultSet rsTarget = pstmtTarget.executeQuery();
 					if(rsTarget.next()) {
 						targetName = rsTarget.getString(1);
-						targetType = rsTarget.getString(2);
 						hasTarget = true;
 					}
 					log.info("Target name: " + targetName);
@@ -268,8 +267,6 @@ public class Review extends Application {
 			response = Response.ok(resp).build();
 
 		} catch (ApplicationException e) {
-			
-			try { dConnection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			
 		    String msg = e.getMessage();
 		    log.info(msg);
