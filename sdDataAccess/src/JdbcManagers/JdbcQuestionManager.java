@@ -54,6 +54,7 @@ public class JdbcQuestionManager {
 			+ "calculate,"
 			+ "qconstraint,"
 			+ "constraint_msg,"
+			+ "required_msg,"
 			+ "appearance,"
 			+ "path,"
 			+ "nodeset,"
@@ -65,7 +66,7 @@ public class JdbcQuestionManager {
 			+ "l_id) "
 			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?);";
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
 	PreparedStatement pstmtGetByFormId;
@@ -89,6 +90,7 @@ public class JdbcQuestionManager {
 			+ "calculate,"
 			+ "qconstraint,"
 			+ "constraint_msg,"
+			+ "required_msg,"
 			+ "appearance,"
 			+ "path,"
 			+ "nodeset,"
@@ -135,15 +137,16 @@ public class JdbcQuestionManager {
 		pstmt.setString(16, q.getCalculate());
 		pstmt.setString(17, q.getConstraint());
 		pstmt.setString(18, q.getConstraintMsg());
-		pstmt.setString(19, q.getAppearance());
-		pstmt.setString(20, q.getPath());
-		pstmt.setString(21, q.getNodeset());
-		pstmt.setString(22, q.getNodesetValue());
-		pstmt.setString(23, q.getNodesetLabel());
-		pstmt.setString(24, q.getCascadeInstance());
-		pstmt.setString(25, q.getColumnName());
-		pstmt.setBoolean(26, q.isPublished());
-		pstmt.setInt(27, q.getListId());
+		pstmt.setString(19, q.getRequiredMsg());
+		pstmt.setString(20, q.getAppearance());
+		pstmt.setString(21, q.getPath());
+		pstmt.setString(22, q.getNodeset());
+		pstmt.setString(23, q.getNodesetValue());
+		pstmt.setString(24, q.getNodesetLabel());
+		pstmt.setString(25, q.getCascadeInstance());
+		pstmt.setString(26, q.getColumnName());
+		pstmt.setBoolean(27, q.isPublished());
+		pstmt.setInt(28, q.getListId());
 		
 		System.out.println("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
@@ -205,15 +208,16 @@ public class JdbcQuestionManager {
 			q.setCalculate(rs.getString(17));
 			q.setConstraint(rs.getString(18));
 			q.setConstraintMsg(rs.getString(19));
-			q.setAppearance(rs.getString(20));
-			q.setPath(rs.getString(21));
-			q.setNodeset(rs.getString(22));
-			q.setNodesetValue(rs.getString(23));
-			q.setNodesetLabel(rs.getString(24));
-			q.setCascadeInstance(rs.getString(25));
-			q.setColumnName(rs.getString(26));
-			q.setPublished(rs.getBoolean(27));
-			q.setListId(rs.getInt(28));
+			q.setRequiredMsg(rs.getString(20));
+			q.setAppearance(rs.getString(21));
+			q.setPath(rs.getString(22));
+			q.setNodeset(rs.getString(23));
+			q.setNodesetValue(rs.getString(24));
+			q.setNodesetLabel(rs.getString(25));
+			q.setCascadeInstance(rs.getString(26));
+			q.setColumnName(rs.getString(27));
+			q.setPublished(rs.getBoolean(28));
+			q.setListId(rs.getInt(29));
 		
 			questions.add(q);
 		}

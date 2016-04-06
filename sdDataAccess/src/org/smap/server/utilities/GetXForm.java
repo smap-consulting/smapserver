@@ -602,7 +602,7 @@ public class GetXForm {
 			Element subFormParent = outputXML.createElement("group");  
 			subFormParent.setAttribute("ref", subF.getPath());
 			
-			// TODO Sets the repeat label to the parent question - Is this right?
+			// TODO Sets the repeat label to the parent question 
 			Element labelElement = outputXML.createElement("label");
 			String jrRef = "jr:itext('" + parentQuestion.getQTextId() + "')";
 			labelElement.setTextContent(jrRef);
@@ -654,6 +654,12 @@ public class GetXForm {
 			// Add mandatory
 			if(q.isMandatory()) {
 				questionElement.setAttribute("required", "true()");
+				
+				// Add required message
+				String requiredMsg = q.getRequiredMsg();
+				if(requiredMsg != null && requiredMsg.trim().length() > 0 ) {
+					questionElement.setAttribute("jr:requiredMsg", requiredMsg);
+				}
 			}
 			
 			// Add relevant

@@ -955,6 +955,9 @@ public class PutXForm {
 	    		} else if (name.equals("jr:constraintMsg")) {
 	   				q.setConstraintMsg(attribute.getNodeValue());   			
 	    			
+	    		} else if (name.equals("jr:requiredMsg")) {
+	   				q.setRequiredMsg(attribute.getNodeValue());   			
+	    			
 	    		} else if (name.equals("calculate")) {
 	    			
 	   				q.setCalculate(attribute.getNodeValue()); 

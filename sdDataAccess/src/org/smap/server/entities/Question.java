@@ -87,6 +87,8 @@ public class Question implements Serializable {
 	
 	private String constraint_msg;
 	
+	private String required_msg;
+	
 	private String appearance;
 	
 	private String path;	// Xpath to this question
@@ -216,6 +218,10 @@ public class Question implements Serializable {
 	
 	public String getConstraintMsg() {
 		return constraint_msg;
+	}
+	
+	public String getRequiredMsg() {
+		return required_msg;
 	}
 	
 	public String getAppearance() {
@@ -396,6 +402,10 @@ public class Question implements Serializable {
 	
 	public void setConstraintMsg(String v) {
 		constraint_msg = v;
+	}
+	
+	public void setRequiredMsg(String v) {
+		required_msg = v;
 	}
 	
 	public void setAppearance(String v) {

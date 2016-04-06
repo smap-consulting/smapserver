@@ -393,6 +393,7 @@ CREATE TABLE question (
 	calculate text,
 	qConstraint text,
 	constraint_msg text,
+	required_msg text,
 	appearance text,
 	enabled BOOLEAN default true,
 	path text,
