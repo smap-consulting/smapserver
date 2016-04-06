@@ -34,6 +34,7 @@
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
 	icheck: '../../../../smapServer/WebContent/js/libs/wb/plugins/iCheck/icheck.min',
+	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
     },
     dir: '../tasks',
     modules: [

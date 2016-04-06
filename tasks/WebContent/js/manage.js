@@ -53,7 +53,8 @@ requirejs.config({
     	slimscroll: '../../../../js/libs/wb/slimscroll/jquery.slimscroll.min',
     	pace: '../../../../js/libs/wb/pace/pace.min',
     	peity: '../../../../js/libs/wb/peity/jquery.peity.min',
-    	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min'
+    	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
+    	footable: '../../../../js/libs/wb/plugins/footable/footable.all.min'
     },
     shim: {
 
@@ -75,7 +76,8 @@ requirejs.config({
     	'metismenu': ['jquery'],
     	'slimscroll': ['jquery'],
     	'peity': ['jquery'],
-    	'icheck': ['jquery']
+    	'icheck': ['jquery'],
+    	'footable': ['jquery']
 	
     	}
     });
@@ -102,7 +104,8 @@ require([
          'slimscroll',
          'pace',
          'peity',
-         'icheck'
+         'icheck',
+         'footable'
          
          ], function($, 
         		 bootstrap, 
@@ -116,15 +119,6 @@ require([
         		 crf, 
         		 moment,
         		 mapbox) {
-	/*
-	L.mapbox.accessToken = 'pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg';
-	// Replace 'mapbox.streets' with your map id.
-	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
-	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	});
-	
-	var map = L.mapbox.map('map', 'mapbox.streets')
-    .setView([40, -74.50], 9);
-*/
+
 });
 

@@ -50,6 +50,8 @@ $(document).ready(function() {
 		getVersion();			// Update if the version on the server has changed
 	}
 	
+	$("#side-menu").metisMenu();
+	
 	getLoggedInUser(projectChanged, false, true, undefined);
 	
 	// Set change function on projects
@@ -113,7 +115,7 @@ $(document).ready(function() {
 
 	// Add zoom to data button
 	$('#zoomData').button().click(function () {
-		zoomTo("assignments");
+		zoomToFeatureLayer();
 	});
 	
 	// Add a trigger to open the modal that assigns a user to tasks
@@ -820,6 +822,8 @@ function refreshTableAssignments() {
 					'maxAddCols' : 10,
 					'showCompleted' : $('#filter_completed').prop('checked')
 				});
+		
+		$('#task_table').footable();
 		
 		$('input', '#task_table').iCheck({
 		    checkboxClass: 'icheckbox_square-green',

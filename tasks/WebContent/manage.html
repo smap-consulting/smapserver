@@ -13,19 +13,14 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
     <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
-
+	<link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
+	<link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
+	
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
     
+    
     <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
-
-<!-- 
-<link rel="stylesheet" href="/css/normalize.css" />
-<link rel="stylesheet" href="/js/libs/OpenLayers/theme/default/style.tidy.css" type="text/css">
-<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
-<link rel="stylesheet" href="/css/bootstrap-dialog.min.css" /> 
-<link rel="stylesheet" href="/css/bootstrap-datetimepicker.min.css" />
-<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
 -->
 
 <script> if (!window.console) console = {log: function() {}}; </script>
@@ -48,27 +43,19 @@
 	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
 		<div class="sidebar-collapse">
 	    	<ul class="nav metismenu" id="side-menu">
-				<li class="nav-header">
-	
-			      <a href="#" class="navbar-brand">
-			      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-			     	<span class="lang" data-lang="m_assign" >Tasks</span>
-			      </a>
-			      
-			    </li>
-	  
-	      	<li id="m_modules" class="dropdown">
-	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
-	          <ul class="dropdown-menu" role="menu" style="z-index:1010;">
-	            
-	            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
-	            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"></span><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></a></li>
-	            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></a></li>
-	            <li><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></a></li>
-	            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></a></li>
-	          
-	          </ul>
-	        </li> 
+				
+		      	<li>
+		          <a href="#" id="m_modules"  aria-expanded="false"><span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
+		          <ul class="nav nav-second-level" aria-expanded="false">
+		            
+		            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
+		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		          
+		          </ul>
+		        </li> 
 	        <li id="m_tm"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
 			<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
 			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
@@ -83,6 +70,9 @@
 				</a>
 			</li>
 			-->
+			<li class="nav-divider"></li>
+			<li id="zoomData"><a class="lang" data-lang="tm_zoom_map">zoom to data</a></li>
+			
 	      </ul>
 		</div>
 		
@@ -145,90 +135,112 @@
 
             </div>
             <div class="row" style="height: 500px">
-            <div class="col-lg-12">
-	            <div class="tabs-container">
-	            	<ul class="nav nav-tabs">
-	                    <li class="active"><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
-	                    <li class=""><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
-	                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
-	                </ul>
-					<div class="tab-content">
-						<div id="map-view" class="tab-pane active">
-							<div class="panel-body">
-	                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-			  						<div class="panel panel-default">
-			    						<div class="panel-heading" role="tab" id="headingOne">
-											<h4 class="panel-title">
-								       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
-								       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
-								         	Maps
-								       		</a>
-								     		</h4>
-			    						</div>
-			    						<div id="map"></div>
-										<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
+	            <div class="col-lg-12">
+	            	<div class="ibox float-e-margins">
+	            		<div class="ibox-title">
+	                    	<h5>Tasks</h5>
+	                    	<div class="ibox-tools">
+	                        	<a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+	                        </div>
+	                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                                <i class="fa fa-wrench"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-user">
+                                <li><a href="#">Config option 1</a>
+                                </li>
+                                <li><a href="#">Config option 2</a>
+                                </li>
+                            </ul>
+	                       
+	                	</div>
+	                	
+	                	<div class="ibox-content">
+				            <div class="tabs-container">
+				            	<ul class="nav nav-tabs">
+				                    <li class="active"><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
+				                    <li class=""><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
+				                    <li class=""><a data-toggle="tab" href="#cal-view"><i class="fa fa-calendar"></i></a></li>
+				                </ul>
+								<div class="tab-content">
+									<div id="map-view" class="tab-pane active">
+										<div class="panel-body">
+				                                   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+						  						<div class="panel panel-default">
+						    						<div class="panel-heading" role="tab" id="headingOne">
+														<h4 class="panel-title">
+											       		<a data-toggle="collapse" data-parent="#accordion" href="#collapseLayers" 
+											       				aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="c_map_layers">
+											         	Maps
+											       		</a>
+											     		</h4>
+						    						</div>
+						    						<div id="map"></div>
+													<div id="map_alert" style="display:none;" class="alert alert-info" role="alert"></div>
+												</div>
+											</div>
+										</div>
+									</div>
+				                	<div id="table-view" class="tab-pane">
+				                    	 <div class="table-responsive">
+				                                <table class="table table-striped">
+				                                    <thead>
+				                                    <tr>
+				                                    	<th data-hide="phone"></th>				<!-- Select -->
+				                                        <th>Form</th>							<!-- Form or task to be done -->
+				                                        <th>Name</th>							<!-- Task name -->
+				                                        <th>Status</th>							<!-- Task status -->
+				                                        <th data-hide="phone">Assigned</th>		<!-- Person task assigned to (Tablet) -->
+				                                        <th data-hide="phone"></th>				<!-- Icon NFC -->
+				                                        <th data-hide="phone"></th>				<!-- Icon GeoFence -->
+				                                        <th data-hide="phone"></th>				<!-- Icon Repeat Count -->
+				                                        <th data-hide="phone"></th>				<!-- Icon Generated -->
+				                                        <th data-hide="phone">Scheduled</th>	<!-- Scheduled Time (Full Screen) -->
+				                                        <th data-hide="phone">Duration</th>		<!-- Scheduled Time (Full Screen) -->
+				                                        <th data-hide="phone">Trigger</th>		<!-- NFC number or geofence link -->
+				                                        <th data-hide="all">Coordinates</th>	<!-- Lat, Long -->
+				                                        <th data-hide="all">Address</th>		<!-- Address -->
+				                                        <th data-hide="all">Instructions</th>	<!-- Instructions passed to user-->
+				                                        <th data-hide="all">Initial Data</th>	<!-- Link to initial data -->
+				                                        <th>Edit</th>							<!-- Button to edit -->
+				                                    </tr>
+				                                    </thead>
+				                                    <tbody id="task_table">
+				                                    </tbody>
+				                                </table>
+				                            </div>
+									</div>
+									<div id="cal-view" class="tab-pane">
+										<div class="panel-body">
+				                                    <strong>Donec quam felis</strong>
+				
+				                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
+				                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
+				
+				                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
+				                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-	                	<div id="table-view" class="tab-pane">
-	                    	 <div class="table-responsive">
-	                                <table class="table table-striped">
-	                                    <thead>
-	                                    <tr>
-	
-	                                        <th></th>
-	                                        <th>Form</th>
-	                                        <th>Name</th>
-	                                        <th>Status</th>
-	                                        <th>Repeat</th>
-	                                        <th>Assigned</th>
-	                                        <th>Scheduled</th>
-	                                        <th>Trigger</th>
-	                                        <th>Edit</th>
-	                                    </tr>
-	                                    </thead>
-	                                    <tbody id="task_table">
-	                                    </tbody>
-	                                </table>
-	                            </div>
-						</div>
-						<div id="cal-view" class="tab-pane">
-							<div class="panel-body">
-	                                    <strong>Donec quam felis</strong>
-	
-	                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
-	                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
-	
-	                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
-	                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
-							</div>
-						</div>
 					</div>
 				</div>
-			</div>
-			</div>
-                    
-			<div class="row">
-				
-					<form role="form" class="form" id="mon_controls">
-				
-						<div id="layers" style="display:none;">
-							
-		
-		            		
-							
-							
-							<button class="btn btn-info btn-block lang" data-lang="c_zoom_data" id="zoomData" type="button">zoom to data</button>
-							<button class="btn btn-success btn-block lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
-							<button class="btn btn-success btn-block lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
-							<button class="btn btn-danger btn-block lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
-							<button class="btn btn-info btn-block lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
-							
-						</div>
-					</form>
-				
-		
+	                    
+				<div class="row">
+					
+						<form role="form" class="form" id="mon_controls">
+					
+							<div id="layers" style="display:none;">
+								<button class="btn btn-success btn-block lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
+								<button class="btn btn-success btn-block lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
+								<button class="btn btn-danger btn-block lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
+								<button class="btn btn-info btn-block lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
+								
+							</div>
+						</form>
+					
+			
+				</div>
 			</div>
 		</div>
 	</div>
