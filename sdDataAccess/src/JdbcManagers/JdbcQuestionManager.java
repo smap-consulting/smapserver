@@ -101,7 +101,7 @@ public class JdbcQuestionManager {
 			+ "column_name,"
 			+ "published,"
 			+ "l_id,"
-			+ "autoplay"
+			+ "autoplay "
 			+ "from question where soft_deleted = 'false' and ";
 	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
 			+ " order by f_id, seq";
@@ -185,11 +185,11 @@ public class JdbcQuestionManager {
 		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
 	}
 	
-	private List<Question> getQuestionList(PreparedStatement pstmt) throws SQLException {
+	private List<Question> getQuestionList(PreparedStatement pstmtGet) throws SQLException {
 		
 		ArrayList <Question> questions = new ArrayList<Question> ();
 		
-		ResultSet rs = pstmt.executeQuery();
+		ResultSet rs = pstmtGet.executeQuery();
 		while(rs.next()) {
 			Question q = new Question();
 			q.setId(rs.getInt(1));
