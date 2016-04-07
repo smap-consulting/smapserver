@@ -138,6 +138,7 @@ public class MediaInfo {
 		ArrayList<MediaItem> media = new ArrayList<MediaItem> ();
 		
 		if(folder != null) {
+			log.info("MediaInfo: Getting files from folder: " + folder);
 			ArrayList <File> files = new ArrayList<File> (FileUtils.listFiles(folder, FileFilterUtils.fileFileFilter(), null));
 			
 			for(int i = 0; i < files.size(); i++) {

@@ -63,10 +63,11 @@ public class JdbcQuestionManager {
 			+ "cascade_instance,"
 			+ "column_name,"
 			+ "published,"
-			+ "l_id) "
+			+ "l_id,"
+			+ "autoplay) "
 			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
 	PreparedStatement pstmtGetByFormId;
@@ -99,7 +100,8 @@ public class JdbcQuestionManager {
 			+ "cascade_instance,"
 			+ "column_name,"
 			+ "published,"
-			+ "l_id "
+			+ "l_id,"
+			+ "autoplay"
 			+ "from question where soft_deleted = 'false' and ";
 	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
 			+ " order by f_id, seq";
@@ -147,6 +149,7 @@ public class JdbcQuestionManager {
 		pstmt.setString(26, q.getColumnName());
 		pstmt.setBoolean(27, q.isPublished());
 		pstmt.setInt(28, q.getListId());
+		pstmt.setString(29, q.getAutoPlay());
 		
 		System.out.println("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
@@ -218,6 +221,7 @@ public class JdbcQuestionManager {
 			q.setColumnName(rs.getString(27));
 			q.setPublished(rs.getBoolean(28));
 			q.setListId(rs.getInt(29));
+			q.setAutoPlay(rs.getString(30));
 		
 			questions.add(q);
 		}

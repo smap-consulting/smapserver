@@ -453,5 +453,6 @@ alter table upload_event add column location_trigger text;
 alter table project add column tasks_only boolean;
 alter table server add column mapbox_default text;
 alter table question add column required_msg text;
+alter table question add column autoplay text;
 
 

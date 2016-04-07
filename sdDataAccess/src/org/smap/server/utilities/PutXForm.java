@@ -570,6 +570,14 @@ public class PutXForm {
 			// Survey level manifests can be set in the appearance attribute
 			template.addManifestFromAppearance(appearance);	
 		}
+		
+    	// Set the autoplay
+		Node autoplayNode = nm.getNamedItem("autoplay");	
+		String autoplay = null;
+		if(autoplayNode != null) {
+			autoplay = autoplayNode.getNodeValue();
+			q.setAutoPlay(autoplay);
+		}
     	
     	if(eName.equals("group")) {
     		setGroupLabel(questionRef, n);	// Get the label for this group

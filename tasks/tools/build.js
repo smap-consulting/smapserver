@@ -35,6 +35,7 @@
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
 	icheck: '../../../../smapServer/WebContent/js/libs/wb/plugins/iCheck/icheck.min',
 	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
+	calendar: '../../../../smapServer/WebContent/js/libs/wb/plugins/fullcalendar/fullcalendar.min',
     },
     dir: '../tasks',
     modules: [

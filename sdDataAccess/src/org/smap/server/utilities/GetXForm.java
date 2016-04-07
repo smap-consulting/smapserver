@@ -765,6 +765,14 @@ public class GetXForm {
 				questionElement.setAttribute("appearance", appearance);
 			}
 		}
+		
+		// Add the autoplay
+		if(questionElement != null) {
+			String autoplay = q.getAutoPlay();
+			if(autoplay != null) {
+				questionElement.setAttribute("autoplay", autoplay);
+			}
+		}
 			
 		// Add the label
 		if(questionElement !=null) {

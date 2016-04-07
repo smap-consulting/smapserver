@@ -14,7 +14,9 @@
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
     <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
 	<link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
-	<link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
+	<link href="/css/wb/plugins/fullcalendar/fullcalendar.css" rel="stylesheet">
+    <link href="/css/wb/plugins/fullcalendar/fullcalendar.print.css" rel='stylesheet' media='print'>
+	
 	
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
@@ -32,7 +34,7 @@
 
 <!-- temp -->
 <style>
-  #map {  width:100%; height: 400px;}
+  #map {  width:100%; height: 300px;}
 </style>
 
 </head>
@@ -81,7 +83,7 @@
 	<div id="page-wrapper" class="gray-bg">
 		<div class="wrapper wrapper-content">
 
-			<div class="row">
+			<div class="row border-bottom white-bg">
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
@@ -134,7 +136,7 @@
                 </div>
 
             </div>
-            <div class="row" style="height: 500px">
+            <div class="row" style="height: 300px">
 	            <div class="col-lg-12">
 	            	<div class="ibox float-e-margins">
 	            		<div class="ibox-title">
@@ -142,19 +144,16 @@
 	                    	<div class="ibox-tools">
 	                        	<a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
 	                        </div>
-	                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                                <i class="fa fa-wrench"></i>
-                            </a>
-                            <ul class="dropdown-menu dropdown-user">
-                                <li><a href="#">Config option 1</a>
-                                </li>
-                                <li><a href="#">Config option 2</a>
-                                </li>
-                            </ul>
-	                       
+	                  
 	                	</div>
 	                	
 	                	<div class="ibox-content">
+	                	
+	                			<button class="btn btn-success lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
+								<button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
+								<button class="btn btn-danger lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
+								<button class="btn btn-info lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
+				            
 				            <div class="tabs-container">
 				            	<ul class="nav nav-tabs">
 				                    <li class="active"><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
@@ -211,13 +210,84 @@
 									</div>
 									<div id="cal-view" class="tab-pane">
 										<div class="panel-body">
-				                                    <strong>Donec quam felis</strong>
-				
-				                                    <p>Thousand unknown plants are noticed by me: when I hear the buzz of the little world among the stalks, and grow familiar with the countless indescribable forms of the insects
-				                                        and flies, then I feel the presence of the Almighty, who formed us in his own image, and the breath </p>
-				
-				                                    <p>I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine. I am so happy, my dear friend, so absorbed in the exquisite
-				                                        sense of mere tranquil existence, that I neglect my talents. I should be incapable of drawing a single stroke at the present moment; and yet.</p>
+				                                   <div class="wrapper wrapper-content">
+    <div class="row animated fadeInDown">
+        <div class="col-lg-3">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Draggable Events</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li><a href="#">Config option 1</a>
+                            </li>
+                            <li><a href="#">Config option 2</a>
+                            </li>
+                        </ul>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <div id='external-events'>
+                        <p>Drag a event and drop into callendar.</p>
+                        <div class='external-event navy-bg'>Go to shop and buy some products.</div>
+                        <div class='external-event navy-bg'>Check the new CI from Corporation.</div>
+                        <div class='external-event navy-bg'>Send documents to John.</div>
+                        <div class='external-event navy-bg'>Phone to Sandra.</div>
+                        <div class='external-event navy-bg'>Chat with Michael.</div>
+                        <p class="m-t">
+                            <input type='checkbox' id='drop-remove' class="i-checks" checked /> <label for='drop-remove'>remove after drop</label>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <h2>FullCalendar</h2> is a jQuery plugin that provides a full-sized, drag & drop calendar like the one below. It uses AJAX to fetch events on-the-fly for each month and is
+                    easily configured to use your own feed format (an extension is provided for Google Calendar).
+                    <p>
+                        <a href="http://arshaw.com/fullcalendar/" target="_blank">FullCalendar documentation</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Striped Table </h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li><a href="#">Config option 1</a>
+                            </li>
+                            <li><a href="#">Config option 2</a>
+                            </li>
+                        </ul>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 										</div>
 									</div>
 								</div>
@@ -226,21 +296,7 @@
 					</div>
 				</div>
 	                    
-				<div class="row">
-					
-						<form role="form" class="form" id="mon_controls">
-					
-							<div id="layers" style="display:none;">
-								<button class="btn btn-success btn-block lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
-								<button class="btn btn-success btn-block lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
-								<button class="btn btn-danger btn-block lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
-								<button class="btn btn-info btn-block lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
-								
-							</div>
-						</form>
-					
-			
-				</div>
+				
 			</div>
 		</div>
 	</div>
