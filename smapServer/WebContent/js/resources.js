@@ -76,6 +76,8 @@ $(document).ready(function() {
 		$('#mapPanel').hide();
 	   	$('#nfcPanel').hide();
 		$('#mediaPanel').show();
+		
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     })
     $('#mapTab a').click(function (e) {
     	e.preventDefault();
@@ -84,6 +86,8 @@ $(document).ready(function() {
 		$('#mapPanel').show();
 	   	$('#nfcPanel').hide();
 		$('#mediaPanel').hide();
+		
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     })
     $('#nfcTab a').click(function (e) {
     	e.preventDefault();
@@ -92,13 +96,15 @@ $(document).ready(function() {
     	$('#nfcPanel').show();
 		$('#mapPanel').hide();
 		$('#mediaPanel').hide();
+		
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     })
     
     /*
      * Set up media tab
      */
     $('.file-inputs').bootstrapFileInput();
-    $('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
+    $('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     
     // Respond to file upload
     $('#submitFiles').click( function() {

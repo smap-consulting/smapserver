@@ -322,8 +322,12 @@ public class Tasks extends Application {
 					// Return tags to calling program
 					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 					String resp = gson.toJson(locations);
-						
-					response = Response.ok(resp).build();	
+					
+					if(locations.size() > 0) {
+						response = Response.ok(resp).build();
+					} else {
+						response = Response.serverError().entity("no tags found").build();
+					}
 					
 					break;
 						

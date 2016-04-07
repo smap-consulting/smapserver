@@ -230,6 +230,8 @@ define({
 	"msg_confirm_del": "Are you sure you want to delete",
 	"msg_confirm_tasks": "this group and all of its tasks?",
 	"msg_n_v": "Not valid",
+	"msg_u_f": "Error upload failed",
+	"msg_u_nt": "No nfc tags found",
 	
 	// Editor
 	"e_b_e": "Base on existing form",

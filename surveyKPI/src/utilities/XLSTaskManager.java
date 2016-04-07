@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
@@ -27,6 +28,9 @@ import org.smap.sdal.model.Location;
 import org.w3c.dom.Element;
 
 public class XLSTaskManager {
+	
+	private static Logger log =
+			 Logger.getLogger(SurveyInfo.class.getName());
 	
 	Workbook wb = null;
 	int rowNumberSurvey = 1;		// Heading row is 0
@@ -77,9 +81,13 @@ public class XLSTaskManager {
                     		Location t = new Location();
                     		t.group = group;
                     		t.type = "nfc";
-                    		t.uid = getColumn(row, "uid", header, lastCellNum);
-                    		t.name = getColumn(row, "tagname", header, lastCellNum);
-                    		tags.add(t);
+                    		try {
+                    			t.uid = getColumn(row, "uid", header, lastCellNum);
+                    			t.name = getColumn(row, "tagname", header, lastCellNum);
+                    			tags.add(t);
+                    		} catch (Exception e) {
+                    			log.info("Error getting nfc columnL" + e.getMessage());
+                    		}
                     	}
                     	
                     }
@@ -116,9 +124,9 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * Convert a row to Json
+	 * The the value of a cell at the specified column
 	 */
-	private String getColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum) {
+	private String getColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum) throws Exception {
 		
 		Integer cellIndex;
 		int idx;
@@ -138,6 +146,8 @@ public class XLSTaskManager {
 					}
 				}
 			}
+		} else {
+			throw new Exception("Column " + name + " not found");
 		}
 
 		return value;

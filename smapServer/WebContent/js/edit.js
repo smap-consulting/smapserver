@@ -296,7 +296,7 @@ $(document).ready(function() {
     	gIsSurveyLevel = true;
     	
 		//}
-		$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
 		$('#mediaModal').modal('show');
 
 	});
@@ -1292,7 +1292,7 @@ function mediaPropSelected($this) {
 	    $('#mediaSelectSave').trigger("click");
 	});
 	
-	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("");
+	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
 	$('#mediaModal').modal('show');
 
 }

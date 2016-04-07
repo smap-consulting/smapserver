@@ -587,7 +587,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 
 /*
  * Upload files to the server
- * Writes status to   #upload_msg
+ * Writes status to   .upload_file_msg
  */
 function uploadFiles(url, formName, callback, sId) {
    	
@@ -615,7 +615,7 @@ function uploadFiles(url, formName, callback, sId) {
 			$('#submitFiles').removeClass('disabled');
 			var surveyId = sId;
         	callback(data, surveyId);
-        	$('#upload_msg').removeClass('alert-danger').addClass('alert-success').html("Upload Success");
+        	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html(localise.set["c_success"]);
         	document.forms.namedItem(formName).reset();
         	
         },
@@ -625,7 +625,14 @@ function uploadFiles(url, formName, callback, sId) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Upload failed: " + err);
+				var msg = xhr.responseText;
+				if(msg && msg.indexOf("no tags") >= 0) {
+					msg = localise.set["msg_u_nt"];
+				} else {
+					msg = localise.set["msg_u_f"];
+				}
+				document.forms.namedItem(formName).reset();
+				$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(msg);
 
 			}
         }
@@ -832,7 +839,7 @@ function getFilesFromServer(url, sId, callback) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+				$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
 			}
 		}
 	});	
@@ -858,7 +865,7 @@ function delete_media(url, sId) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				$('#upload_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
+				$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html("Error: " + err);
 			}
 		}
 	});	
