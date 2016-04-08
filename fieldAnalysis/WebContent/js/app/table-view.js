@@ -142,10 +142,12 @@ function setTableSurvey(view) {
 		}
 	);
 	$selFoot.find('.tImport').button().off().click(function() {
-		var surveyList = globals.gSelector.getSurveyList();
-		if(!surveyList) {	// Surveys have not yet been retrieved
-			getViewSurveys({sId:"-1"});
-		} 
+		//var surveyList = globals.gSelector.getSurveyList();
+		//if(!surveyList) {	// Surveys have not yet been retrieved
+		//	getViewSurveys({sId:"-1"});
+		//}
+		$('#survey_to_update').val(view.sId);
+		$('#survey_to_update_name').text(view.sName);
 		
 		$('#load_tasks_alert').hide();
 		$('#clear_existing_alert').hide();
@@ -182,13 +184,20 @@ function importData() {
 		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
-			  $('#load_data_popup').close();
-			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["t_fl"]);
+			  $('#load_data_popup').dialog("close");
+			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html();
+			  refreshAnalysisData();
 		  },
 		  error: function(xhr, textStatus, err) {
 			 
+			  var msg = xhr.responseText;
+			  if(msg && msg === "only csv") {
+				  msg = localise.set["t_efnl"] + " " + localise.set["msg_csv"];
+			  } else {
+				  msg = localise.set["t_fl"] + " " + xhr.responseText;
+			  }
 			  removeHourglass(); 
-			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_efnl"] + xhr.responseText);
+			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(msg);
 			 
 		  }
 	});

@@ -1144,6 +1144,8 @@ public class AllAssignments extends Application {
 		            zis.closeEntry();
 				}
 				zis.close();
+			} else if(!contentType.equals("text/csv")) {
+				throw new Exception("only csv");
 			}
 			
 			/*

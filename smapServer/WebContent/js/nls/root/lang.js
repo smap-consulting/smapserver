@@ -232,6 +232,7 @@ define({
 	"msg_n_v": "Not valid",
 	"msg_u_f": "Error upload failed",
 	"msg_u_nt": "No nfc tags found",
+	"msg_csv": "Only CSV files and Zip files containing CSV and media files are allowed",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
