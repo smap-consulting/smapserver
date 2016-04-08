@@ -1709,6 +1709,32 @@ function localTime(utcTime) {
     return moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
 } 
 
+/*
+ * Convert all timestamps surrounded by smooth braces in the string to local time
+ */
+function convertTimesToLocal(elem) {
+	
+	var times = [],
+		reg = /\([0-9][0-9][0-9][0-9]_[0-9][0-9]_[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\)/g,
+		i,
+		time,
+		newTime;
+	
+	if (elem) {
+		times = elem.match(reg);
+		if(times) {
+			for(i = 0; i < times.length; i++) {
+				if(times[i].length > 3) {
+					time = times[i].substring(2, times[i].length - 1);		// Remove the brackets
+					newTime = localTime(time);
+					elem = elem.replace(time, newTime);
+				}
+			}
+		}
+	}
+	return elem;
+}
+
 function utcTime(localTime) {
 
 	var localDate = moment(localTime).toDate();

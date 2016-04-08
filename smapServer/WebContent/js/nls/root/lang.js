@@ -152,6 +152,7 @@ define({
 	"c_location": "Location",
 	"c_ident": "Identifier",
 	"c_version": "Version",
+	"c_deleted": "Deleted",
 	
 	// File Types
 	"ft": "File Type",

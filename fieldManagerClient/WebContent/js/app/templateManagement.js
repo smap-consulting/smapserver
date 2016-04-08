@@ -16,8 +16,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-define(['jquery','localise', 'common', 'globals',  'bootstrap'], 
-		function($, lang, common, globals, bootstrap) {
+define(['jquery','localise', 'common', 'globals',  'bootstrap','moment'], 
+		function($, lang, common, globals, bootstrap, moment) {
 	
 var	gSurveys,		// Only in this java script file
 	gUpdateFwdPassword,
@@ -354,6 +354,7 @@ function getSurveysForList(projectId) {
 			cache: false,
 			success: function(data) {
 				gSurveys = data;
+				setLocalTime();		// Convert timestamps from UTC to local time
 				completeSurveyList();
 				removeHourglass();
 			},
@@ -366,6 +367,18 @@ function getSurveysForList(projectId) {
 				}
 			}
 		});	
+	}
+}
+
+/*
+ * Set any timestamps in the display name to local time
+ */
+function setLocalTime() {
+	var i;
+	
+	for(i = 0; i < gSurveys.length; i++) {
+		survey = gSurveys[i];
+		convertTimesToLocal(survey.displayName);
 	}
 }
 
@@ -396,6 +409,7 @@ function completeSurveyList() {
 
 	for(i = 0; i < gSurveys.length; i++) {
 		survey = gSurveys[i];
+		
 		if(gShowDeleted || !survey.deleted) {
 			h[++idx] = '<tr';
 			if(survey.deleted) {

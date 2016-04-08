@@ -1046,7 +1046,7 @@ public class Survey extends Application {
 						// Add date and time to the display name
 						DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss");
 						Calendar cal = Calendar.getInstance();
-						String newDisplayName = surveyDisplayName + "_" + dateFormat.format(cal.getTime());
+						String newDisplayName = surveyDisplayName + " (" + dateFormat.format(cal.getTime()) + ")";
 						
 						// Update the "name"
 						String newName = null;

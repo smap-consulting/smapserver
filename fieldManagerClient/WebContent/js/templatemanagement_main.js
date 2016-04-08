@@ -34,6 +34,7 @@ requirejs.config({
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
+    	moment: '../../../../js/libs/moment-with-locales.min',
     	jquery: '../../../../js/libs/jquery-2.1.1',
     	modernizr: '../../../../js/libs/modernizr',
     	common: '../../../../js/app/common',
@@ -54,9 +55,12 @@ require([
          'localise', 
          'globals',
          'bootstrap',
+         'moment',
          'app/templateManagement'
          
-         ], function($, common, localise, globals, bootstrap) {
+         ], function($, common, localise, globals, bootstrap, moment) {
+	
+	window.moment = moment;		// Make moment global for use by common.js
 	
 });
 
