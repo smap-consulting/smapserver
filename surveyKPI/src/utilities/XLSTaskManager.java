@@ -24,8 +24,13 @@ import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TaskFeature;
+import org.smap.sdal.model.TaskListGeoJson;
+import org.smap.sdal.model.TaskProperties;
 import org.smap.sdal.model.Location;
 import org.w3c.dom.Element;
+
+
 
 public class XLSTaskManager {
 	
@@ -33,14 +38,70 @@ public class XLSTaskManager {
 			 Logger.getLogger(SurveyInfo.class.getName());
 	
 	Workbook wb = null;
-	int rowNumberSurvey = 1;		// Heading row is 0
-	int rowNumberChoices = 1;		// Heading row is 0
-	int rowNumberSettings = 1;		// Heading row is 0
+	int rowNumber = 1;		// Heading row is 0
+	
+	private class Column {
+		String name;
+		int colNumber;
+		
+		public Column(int col, String n) {
+			colNumber = col;
+			name = n;
+		}
+		
+		// Return the width of this column
+		public int getWidth() {
+			int width = 256 * 20;		// 20 characters is default
+			return width;
+		}
+		
+		// Get a value for this column from the provided properties object
+		public String getValue(TaskProperties props) {
+			String value = null;
+			
+			if(name.equals("id")) {
+				value = String.valueOf(props.id);
+			} else if(name.equals("title")) {
+				value = String.valueOf(props.title);
+			}
+			
+			if(value == null) {
+				value = "";
+			}
+			return value;
+		}
+	}
 
 	public XLSTaskManager() {
 
 	}
 	
+	public XLSTaskManager(String type) {
+		if(type != null && type.equals("xls")) {
+			wb = new HSSFWorkbook();
+		} else {
+			wb = new XSSFWorkbook();
+		}
+	}
+	
+	public void createXLSTaskList(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
+		
+		Sheet taskListSheet = wb.createSheet("survey");
+		taskListSheet.createFreezePane(2, 1);
+		
+		Map<String, CellStyle> styles = createStyles(wb);
+
+		ArrayList<Column> cols = getColumns();
+		createHeader(cols, taskListSheet, styles);	
+		processTaskListForXLS(tl, taskListSheet, styles, cols);
+		
+		wb.write(outputStream);
+		outputStream.close();
+	}
+	
+	/*
+	 * Get an array of locations from an XLS worksheet
+	 */
 	public ArrayList<Location> convertWorksheetToTagArray(InputStream inputStream, String type) throws IOException {
 		
 		Sheet sheet = null;
@@ -151,6 +212,84 @@ public class XLSTaskManager {
 		}
 
 		return value;
+	}
+	
+	/*
+	 * Get the columns for the settings sheet
+	 */
+	private ArrayList<Column> getColumns() {
+		
+		ArrayList<Column> cols = new ArrayList<Column> ();
+		
+		int colNumber = 0;
+		
+		cols.add(new Column(colNumber++, "id"));
+		cols.add(new Column(colNumber++, "title"));
+		
+		return cols;
+	}
+	
+	/*
+     * create a library of cell styles
+     */
+    private static Map<String, CellStyle> createStyles(Workbook wb){
+        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
+
+        CellStyle style = wb.createCellStyle();
+        Font headerFont = wb.createFont();
+        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        style.setFont(headerFont);
+        styles.put("header", style);
+
+        style = wb.createCellStyle();
+        style.setWrapText(true);
+        styles.put("default", style);
+
+        return styles;
+    }
+    
+	/*
+	 * Create a header row and set column widths
+	 */
+	private void createHeader(ArrayList<Column> cols, Sheet sheet, Map<String, CellStyle> styles) {
+		// Set column widths
+		for(int i = 0; i < cols.size(); i++) {
+			sheet.setColumnWidth(i, cols.get(i).getWidth());
+		}
+				
+		Row headerRow = sheet.createRow(0);
+		CellStyle headerStyle = styles.get("header");
+		for(int i = 0; i < cols.size(); i++) {
+			Column col = cols.get(i);
+			
+            Cell cell = headerRow.createCell(i);
+            cell.setCellStyle(headerStyle);
+            cell.setCellValue(col.name);
+        }
+	}
+	
+	/*
+	 * Convert a task list array to XLS
+	 */
+	private void processTaskListForXLS(
+			TaskListGeoJson tl, 
+			Sheet sheet,
+			Map<String, CellStyle> styles,
+			ArrayList<Column> cols) throws IOException {
+		
+		for(TaskFeature feature : tl.features)  {
+			
+			TaskProperties props = feature.properties;
+				
+			Row row = sheet.createRow(rowNumber++);
+			for(int i = 0; i < cols.size(); i++) {
+				Column col = cols.get(i);			
+				Cell cell = row.createCell(i);
+				cell.setCellStyle(styles.get("default"));			
+				cell.setCellValue(col.getValue(props));
+	        }
+			
+		}
 	}
 
 }

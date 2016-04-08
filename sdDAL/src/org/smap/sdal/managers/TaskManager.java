@@ -17,7 +17,7 @@ import org.smap.sdal.model.Task;
 import org.smap.sdal.model.TaskAssignment;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
-import org.smap.sdal.model.TaskManagement;
+import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
 
 import com.google.gson.Gson;
@@ -154,10 +154,52 @@ public class TaskManager {
 	}
 	
 	/*
-	 * Get the assignments for the specified task group
+	 * Get  details for a task group
 	 */
-	public TaskManagement getAssignments(Connection sd, 
-			int projectId, 
+	public TaskGroup getTaskGroupDetails(Connection sd, int tgId) throws Exception {
+		
+		String sql = "select tg_id, name, address_params, is_barcode, p_id, rule, source_s_id "
+				+ "from task_group where tg_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		TaskGroup tg = new TaskGroup ();
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, tgId);
+			log.info("Get task group details: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			
+			
+			if (rs.next()) {
+				
+				tg.tg_id = rs.getInt(1);
+				tg.name = rs.getString(2);
+				tg.address_params = rs.getString(3);
+				tg.is_barcode = rs.getBoolean(4);
+				tg.p_id = rs.getInt(5);
+				tg.rule = rs.getString(6);
+				tg.source_s_id = rs.getInt(7);
+
+			}
+			
+
+		} catch(Exception e) {
+			throw(e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+		
+		}
+
+		return tg;
+	}
+	
+	/*
+	 * Get the tasks for the specified task group
+	 */
+	public TaskListGeoJson getTasks(Connection sd, 
 			int taskGroupId, 
 			boolean completed) throws Exception {
 		
@@ -172,8 +214,7 @@ public class TaskManager {
 				+ "from tasks t "
 				+ "left outer join assignments a "
 				+ "on a.task_id = t.id " 
-				+ "where t.p_id = ? "				// Need project id for security
-				+ "and t.tg_id = ? "
+				+ "where t.tg_id = ? "
 				+ "order by t.id asc;";
 		PreparedStatement pstmt = null;
 		
@@ -184,7 +225,7 @@ public class TaskManager {
 		String sqlPoly = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
 		PreparedStatement pstmtPoly = null;
 
-		TaskManagement t = new TaskManagement();
+		TaskListGeoJson tl = new TaskListGeoJson();
 		
 		try {
 			// Prepare geo queries
@@ -193,8 +234,7 @@ public class TaskManager {
 			pstmtPoly = sd.prepareStatement(sqlPoly);
 			
 			pstmt = sd.prepareStatement(sql);	
-			pstmt.setInt(1, projectId);
-			pstmt.setInt(2, taskGroupId);
+			pstmt.setInt(1, taskGroupId);
 			log.info("Get tasks: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			
@@ -241,7 +281,7 @@ public class TaskManager {
 				}
 			
 				
-				t.features.add(tf);
+				tl.features.add(tf);
 			}
 			
 
@@ -252,7 +292,7 @@ public class TaskManager {
 		
 		}
 
-		return t;
+		return tl;
 	}
 	
 	/*

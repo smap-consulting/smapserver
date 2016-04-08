@@ -52,11 +52,6 @@ public class Authorise {
 		} else {
 			permittedGroups = groups;
 		}
-		//requiredGroup = group;
-
-		// permittedGroups = new ArrayList<String> ();
-		// permittedGroups.add(ANALYST);
-		//permittedGroups.add(ADMIN);
 	}
 	
 	/*
@@ -188,6 +183,69 @@ public class Authorise {
 		
  		if(count == 0) {
  			log.info("Survey validation failed for: " + user + " survey was: " + sId);
+ 			
+			try {
+				if (conn != null) {		// Close connection as errors thrown here should not be caught
+					conn.close();
+					conn = null;
+				}
+			} catch (SQLException e3) {
+				log.log(Level.SEVERE,"Failed to close connection", e3);
+			}
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is entitled to access this particular task group
+	 */
+	public boolean isValidTaskGroup(Connection conn, String user, int tgId, boolean isDeleted)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+
+		String sql = "select count(*) from task_group tg, users u, user_project up, project p " +
+				" where u.id = up.u_id" +
+				" and p.id = up.p_id" +
+				" and tg.p_id = up.p_id" +
+				" and tg.tg_id = ? " +
+				" and u.ident = ?;";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, tgId);
+			pstmt.setString(2, user);
+			
+			log.info("IsValidTaskGroup: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " task group was: " + tgId);
  			
 			try {
 				if (conn != null) {		// Close connection as errors thrown here should not be caught

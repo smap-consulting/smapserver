@@ -42,8 +42,12 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TaskManager;
+import org.smap.sdal.model.TaskGroup;
+import org.smap.sdal.model.TaskListGeoJson;
 
 import utilities.XLSFormManager;
+import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,29 +55,23 @@ import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.parser.XMLParser;
 
 /*
- * Creates an XLS Form from the survey definition
+ * Creates an XLS file with the list of current tasks
  */
 
-@Path("/xlsForm/{sId}")
-public class CreateXLSForm extends Application {
+@Path("/xlsTasks/{tgId}")
+public class CreateXLSTasks extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
-			 Logger.getLogger(CreateXLSForm.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
+			 Logger.getLogger(CreateXLSTasks.class.getName());
+
 	
 	@GET
 	@Produces("application/x-download")
-	public Response getXLSFormService (@Context HttpServletRequest request, 
+	public Response getXLSTasksService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
-			@PathParam("sId") int sId,
+			@PathParam("tgId") int tgId,
 			@QueryParam("filetype") String filetype) throws Exception {
 
 		try {
@@ -83,15 +81,14 @@ public class CreateXLSForm extends Application {
 		    throw new Exception("Can't find PostgreSQL JDBC Driver");
 		}
 				
+		Connection sd = SDDataSource.getConnection("createXLSTasks");	
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("createXLSForm");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+
+		a.isAuthorised(sd, request.getRemoteUser());		
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
 		// End Authorisation 
 		
-		SurveyManager sm = new SurveyManager();
-		org.smap.sdal.model.Survey survey = null;
-		Connection cResults = ResultsDataSource.getConnection("createXLSForm");
+		TaskManager tm = new TaskManager();
 		
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
@@ -102,15 +99,18 @@ public class CreateXLSForm extends Application {
 		
 		try {
 			
-			// Get the survey details
-			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false, false, false);
+			// Get the task group name
+			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
+			
+			// Get the task list
+			TaskListGeoJson tl = tm.getTasks(sd, tgId, true);
 			
 			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);
+			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response);
 			
-			// Create XLSForm
-			XLSFormManager xf = new XLSFormManager(filetype);
-			xf.createXLSForm(response.getOutputStream(), survey);
+			// Create XLSTasks File
+			XLSTaskManager xf = new XLSTaskManager(filetype);
+			xf.createXLSTaskList(response.getOutputStream(), tl);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
@@ -118,19 +118,9 @@ public class CreateXLSForm extends Application {
 		} finally {
 			
 			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
+				if (sd != null) {
+					sd.close();
+					sd = null;
 				}
 				
 			} catch (SQLException e) {

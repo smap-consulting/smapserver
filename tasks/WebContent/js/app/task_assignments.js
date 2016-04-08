@@ -861,9 +861,8 @@ function refreshAssignmentData() {
 		addHourglass();
 		$.ajax({
 			url: "/surveyKPI/tasks/assignments/" + 
-					globals.gCurrentProject + 
-					"?tg=" + globals.gCurrentTaskGroup +
-					"&user=" + user_filter +
+					globals.gCurrentTaskGroup +
+					"?user=" + user_filter +
 					"&completed=" + completed,
 			cache: false,
 			dataType: 'json',
