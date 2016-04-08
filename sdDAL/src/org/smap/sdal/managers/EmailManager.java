@@ -1,7 +1,9 @@
 package org.smap.sdal.managers;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -81,7 +83,8 @@ public class EmailManager {
 			String filename,
 			String adminEmail,
 			EmailServer emailServer,
-			String serverName) throws Exception  {
+			String serverName,
+			ResourceBundle localisation) throws Exception  {
 		
 		if(emailServer.smtpHost == null) {
 			throw new Exception("Cannot send email, smtp_host not available");
@@ -167,18 +170,29 @@ public class EmailManager {
 				    txtMessage.append(docURL);
 			    }
 		    } else if(type.equals("reset")) {
-			    txtMessage.append("Goto https://");
+			    //txtMessage.append("Goto");
+		    	txtMessage.append(localisation.getString("c_goto"));
+			    txtMessage.append(" https://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
-			    txtMessage.append(" to reset your password.\n\n");
-			    txtMessage.append("Your user name is: ");
-			    txtMessage.append(identString.toString());
+			    txtMessage.append(" ");
+			    //txtMessage.append("to reset your password");
+			    txtMessage.append(localisation.getString("email_rp"));
 			    txtMessage.append("\n\n");
-			    txtMessage.append(" The link is valid for ");
+			    //txtMessage.append("Your user name is: ");
+			    txtMessage.append(localisation.getString("email_un"));
+			    txtMessage.append(": ");
+			    txtMessage.append(identString.toString());
+			    txtMessage.append("\n\n ");
+			    //txtMessage.append("The link is valid for");
+			    txtMessage.append(localisation.getString("email_vf"));
+			    txtMessage.append(" ");
 			    txtMessage.append(interval);
-			    txtMessage.append("\n");
-			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
+			    txtMessage.append("\n ");
+			    //txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to");	
+			    txtMessage.append(localisation.getString("email_dnr"));
+			    txtMessage.append(" ");
 			    txtMessage.append(adminEmail);
 			    txtMessage.append(".");
 			

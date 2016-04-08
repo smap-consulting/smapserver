@@ -58,6 +58,8 @@ import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -447,6 +449,12 @@ public class UserList extends Application {
 		
 		PreparedStatement pstmt = null;
 		try {	
+			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String sql = null;
 			int o_id;
 			String adminName = null;
@@ -486,7 +494,8 @@ public class UserList extends Application {
 								isOrgUser,
 								request.getRemoteUser(),
 								request.getServerName(),
-								adminName);
+								adminName,
+								localisation);
 
 								
 					} else {

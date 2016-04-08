@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -210,7 +211,8 @@ public class UserManager {
 			boolean isOrgUser, 
 			String userIdent,
 			String serverName,
-			String adminName) throws Exception {
+			String adminName,
+			ResourceBundle localisation) throws Exception {
 		
 		int u_id = -1;
 		String sql = "insert into users (ident, realm, name, email, o_id, password) " +
@@ -265,7 +267,8 @@ public class UserManager {
 							null,
 							organisation.admin_email, 
 							emailServer,
-							serverName);
+							serverName,
+							localisation);
 				} else {
 					throw new Exception("Email not enabled - set passwords directly");
 				}

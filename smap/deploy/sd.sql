@@ -454,5 +454,6 @@ alter table project add column tasks_only boolean;
 alter table server add column mapbox_default text;
 alter table question add column required_msg text;
 alter table question add column autoplay text;
+alter table organisation add column locale text;
 
 

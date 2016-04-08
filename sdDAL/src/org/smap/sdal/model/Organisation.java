@@ -42,4 +42,5 @@ public class Organisation {
 	public int email_port;
 	public String default_email_content;
 	public String website;
+	public String locale;
 }

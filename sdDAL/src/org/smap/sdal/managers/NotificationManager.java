@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -330,8 +332,10 @@ public class NotificationManager {
 		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
-		// Get the organisation defaults
+		// Localisation
 		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, remoteUser);
+		Locale locale = new Locale(organisation.locale);
+		ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 		pstmtGetNotifications.setInt(1, sId);
 		log.info("Get notifications:: " + pstmtGetNotifications.toString());
@@ -472,7 +476,8 @@ public class NotificationManager {
 								filename,
 								organisation.admin_email, 
 								emailServer,
-								serverName);
+								serverName,
+								localisation);
 					} catch(Exception e) {
 						status = "error";
 						error_details = e.getMessage();

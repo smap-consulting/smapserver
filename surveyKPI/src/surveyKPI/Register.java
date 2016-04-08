@@ -65,6 +65,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -123,6 +125,11 @@ public class Register extends Application {
 		PreparedStatement pstmt = null;
 		try {
 			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String requestUrl = request.getRequestURL().toString();
 			String userIdent = request.getRemoteUser();
 			String basePath = GeneralUtilityMethods.getBasePath(request);
@@ -171,7 +178,8 @@ public class Register extends Application {
 					false,
 					request.getRemoteUser(),
 					request.getServerName(),
-					rd.admin_name);			 
+					rd.admin_name,
+					localisation);			 
 			
 			/*
 			 * 3. Create a default project

@@ -37,11 +37,15 @@ import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 
+import org.smap.sdal.resources.*;
+
 import com.google.gson.Gson;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,6 +98,13 @@ public class PasswordReset extends Application {
 			
 			try {	
 				
+				// Localisation
+				Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
+				Locale locale = new Locale(organisation.locale);
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				System.out.println("The string is: " + localisation.getString("email_un"));
+				
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
 				 *  This is a hacky attempt to support legacy idents that were not emails
@@ -111,15 +122,15 @@ public class PasswordReset extends Application {
 					
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
 					if(emailServer.smtpHost != null) {
-
-						Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
-
+						
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset";
 					    
 					    EmailManager em = new EmailManager();
 						em.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
-					    		idents, null, null, null, organisation.admin_email, emailServer, request.getServerName());
+					    		idents, null, null, null, organisation.admin_email, emailServer, 
+					    		request.getServerName(),
+					    		localisation);
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";

@@ -181,7 +181,8 @@ public class UtilityMethodsEmail {
 		Organisation o = new Organisation();
 		
 		String sqlOrganisation = "select o.id, o.name, o.company_name, o.admin_email, o.smtp_host, " +
-				" o.email_domain, o.default_email_content " +
+				" o.email_domain, o.default_email_content,"
+				+ "o.locale " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id " +
 				" and u.ident = ?;";
@@ -201,6 +202,11 @@ public class UtilityMethodsEmail {
 				o.smtp_host = rs.getString(5);
 				o.email_domain = rs.getString(6);
 				o.default_email_content = rs.getString(7);
+				o.locale = rs.getString(8);
+				
+				if(o.locale == null) {
+					o.locale = "en";
+				}
 				
 			}
 		} catch (SQLException e) {
