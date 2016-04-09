@@ -265,7 +265,7 @@ public class UserManager {
 							null, 
 							null,
 							null,
-							organisation.admin_email, 
+							organisation.getAdminEmail(), 
 							emailServer,
 							serverName,
 							localisation);

@@ -461,6 +461,7 @@ public class NotificationManager {
 							" email_domain: " + emailServer.emailDomain);
 					try {
 						EmailManager em = new EmailManager();
+						
 						em.sendEmail(
 								emails, 
 								null, 
@@ -474,7 +475,7 @@ public class NotificationManager {
 								docURL, 
 								filePath,
 								filename,
-								organisation.admin_email, 
+								organisation.getAdminEmail(), 
 								emailServer,
 								serverName,
 								localisation);

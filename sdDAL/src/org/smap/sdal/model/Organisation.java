@@ -43,4 +43,17 @@ public class Organisation {
 	public String default_email_content;
 	public String website;
 	public String locale;
+	
+	public String getAdminEmail() {
+		String email = null;
+		if(admin_email != null) {
+			email = admin_email;
+		} else if(email_user != null) {
+			email = email_user;
+		} else {
+			email = company_email;
+		}
+		
+		return email;
+	}
 }

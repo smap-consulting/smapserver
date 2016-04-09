@@ -128,7 +128,7 @@ public class PasswordReset extends Application {
 					    
 					    EmailManager em = new EmailManager();
 						em.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
-					    		idents, null, null, null, organisation.admin_email, emailServer, 
+					    		idents, null, null, null, organisation.getAdminEmail(), emailServer, 
 					    		request.getServerName(),
 					    		localisation);
 					    response = Response.ok().build();
