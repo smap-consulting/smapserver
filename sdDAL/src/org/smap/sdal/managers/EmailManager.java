@@ -199,32 +199,43 @@ public class EmailManager {
 		    } else if(type.equals("newuser")) {
 		    	
 			    txtMessage.append(adminName);
-			    txtMessage.append(" has given you access to a Smap server with address http://");
+			    txtMessage.append(" ");
+			    txtMessage.append(localisation.getString("email_hga"));
+			    //txtMessage.append("has given you access to a Smap server with address");
+			    txtMessage.append(" https://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("\n");
-			    txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link https://");
+			    txtMessage.append(localisation.getString("email_sp"));
+			    //txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link");
+			    txtMessage.append(" https://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
 			    txtMessage.append("\n\n");
-			    txtMessage.append("Your user name is: ");
+			    txtMessage.append(localisation.getString("email_un"));
+			    txtMessage.append(": ");
 			    txtMessage.append(identString.toString());
 			    txtMessage.append("\n\n");
-			    txtMessage.append(" The link is valid for ");
+			    txtMessage.append(localisation.getString("email_vf"));
+			    txtMessage.append(" ");
 			    txtMessage.append(interval);
 			    txtMessage.append("\n");
-			    txtMessage.append(" Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to ");	
+			    txtMessage.append(localisation.getString("email_dnr"));
+			    txtMessage.append(" ");
 			    txtMessage.append(adminEmail);
 			    txtMessage.append(".");			
 
 		    } else if(type.equals("notify")) {
-			    txtMessage.append("This email is a notification from a smap server.  ");
-			    //txtMessage.append(serverName);
+		    	txtMessage.append(localisation.getString("email_ian"));
+			    //txtMessage.append("This email is a notification from");
+			    txtMessage.append(" https://");
+			    txtMessage.append(serverName);
+			    txtMessage.append(". ");
 			    
-			    // TODO make this generic
-			    txtMessage.append(" The server administrator email is ");
+			    txtMessage.append(localisation.getString("email_dnr"));
+			    txtMessage.append(" ");
 			    txtMessage.append(adminEmail);
-			    txtMessage.append(" You can send an email to the administrator if you think that you should not be receiving these notifications.");
+			    txtMessage.append(".");	
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
 			    	txtMessage.append("http://");

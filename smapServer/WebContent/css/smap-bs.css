@@ -39,6 +39,10 @@
 	font-weight: 800;
 }
 
+.navbar-header > .navbar-brand > img {
+	display: inline;	
+}
+
 /* Collapse menu bar */
 
 .collapsed .navbar-header {

@@ -61,7 +61,7 @@ public class Logout extends Application {
 		/*
 		 * Delete any session keys for this user
 		 */
-		Connection sd = SDDataSource.getConnection("surveyMobileAPI-Upload");
+		Connection sd = SDDataSource.getConnection("surveyKPI-Logout");
 		try {
 			GeneralUtilityMethods.deleteAccessKeys(sd, request.getRemoteUser());
 		} catch (SQLException e) {

@@ -513,7 +513,7 @@ public class WebForm extends Application{
 			output.append("<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>\n");
 		}
 			
-		output.append("<link rel='shortcut icon' href='images/favicon.ico'>\n");
+		output.append("<link rel='shortcut icon' href='favicon.ico'>\n");
 		//	<!-- For third-generation iPad with high-resolution Retina display: -->
 		output.append("<link rel='apple-touch-icon-precomposed' sizes='144x144' href='images/fieldTask_144_144_min.png'>\n");
 		//	<!-- For iPhone with high-resolution Retina display: -->
