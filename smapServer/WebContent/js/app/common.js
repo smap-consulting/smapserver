@@ -1705,7 +1705,13 @@ function getVersion() {
  * Convert a timestamp in UTC to local time
  */
 function localTime(utcTime) {
-	var utcDate  = moment.utc(utcTime).toDate();
+	var utcDate;
+	
+	if(utcTime.indexOf('+') > 0) {
+		utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss Z').toDate();
+	} else {
+		utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss').toDate();
+	}
     return moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
 } 
 
@@ -1725,7 +1731,7 @@ function convertTimesToLocal(elem) {
 		if(times) {
 			for(i = 0; i < times.length; i++) {
 				if(times[i].length > 3) {
-					time = times[i].substring(2, times[i].length - 1);		// Remove the brackets
+					time = times[i].substring(1, times[i].length - 1);		// Remove the brackets
 					newTime = localTime(time);
 					elem = elem.replace(time, newTime);
 				}
