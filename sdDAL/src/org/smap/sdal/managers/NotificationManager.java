@@ -333,7 +333,7 @@ public class NotificationManager {
 		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
 
 		// Localisation
-		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, remoteUser);
+		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, remoteUser);
 		Locale locale = new Locale(organisation.locale);
 		ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
@@ -437,10 +437,17 @@ public class NotificationManager {
 					
 					log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
 					
-					String subject = "Smap Notification";
+					// Set the subject
+					String subject = "";
 					if(nd.subject != null && nd.subject.trim().length() > 0) {
 						subject = nd.subject;
+					} else {
+						if(serverName != null && serverName.contains("smap")) {
+							subject = "Smap ";
+						}
+						subject += localisation.getString("c_notify");
 					}
+					
 					String from = "smap";
 					if(nd.from != null && nd.from.trim().length() > 0) {
 						from = nd.from;

@@ -45,13 +45,14 @@ public class Organisation {
 	public String locale;
 	
 	public String getAdminEmail() {
+		
 		String email = null;
-		if(admin_email != null) {
+		if(admin_email != null && admin_email.trim().length() > 0) {
 			email = admin_email;
-		} else if(email_user != null) {
-			email = email_user;
-		} else {
+		} else if(company_email != null && company_email.trim().length() > 0) {
 			email = company_email;
+		} else {
+			email = email_user;
 		}
 		
 		return email;

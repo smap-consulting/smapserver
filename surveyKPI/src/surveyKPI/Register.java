@@ -126,7 +126,7 @@ public class Register extends Application {
 		try {
 			
 			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, request.getRemoteUser());
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			

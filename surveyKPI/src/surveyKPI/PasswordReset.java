@@ -98,13 +98,7 @@ public class PasswordReset extends Application {
 			
 			try {	
 				
-				// Localisation
-				Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, request.getRemoteUser());
-				Locale locale = new Locale(organisation.locale);
-				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-				
-				System.out.println("The string is: " + localisation.getString("email_un"));
-				
+
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
 				 *  This is a hacky attempt to support legacy idents that were not emails
@@ -120,21 +114,30 @@ public class PasswordReset extends Application {
 					// Update succeeded
 					System.out.println("Sending email");
 					
+					// Localisation
+					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
+					Locale locale = new Locale(organisation.locale);
+					ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+					
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
+					
+					
 					if(emailServer.smtpHost != null) {
 						
 						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
 					    String sender = "reset";
 					    
+					    String subject = localisation.getString("c_r_p");
 					    EmailManager em = new EmailManager();
-						em.sendEmail(email, uuid, "reset", "Password Reset", null, sender, null, interval, 
+						em.sendEmail(email, uuid, "reset", subject, null, sender, null, interval, 
 					    		idents, null, null, null, organisation.getAdminEmail(), emailServer, 
 					    		request.getServerName(),
 					    		localisation);
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";
-						System.out.println(msg);
+						log.info(msg);
+						msg = localisation.getString("email_ne");
 						response = Response.status(Status.NOT_FOUND).entity(msg).build();
 					}
 				} else {

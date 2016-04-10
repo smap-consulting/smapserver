@@ -176,6 +176,7 @@ public class UtilityMethodsEmail {
 	 */
 	static public Organisation getOrganisationDefaults(
 			Connection sd, 
+			String email,
 			String user) throws SQLException {
 		
 		Organisation o = new Organisation();
@@ -184,15 +185,27 @@ public class UtilityMethodsEmail {
 				" o.email_domain, o.default_email_content,"
 				+ "o.locale, o.company_email " +
 				" from organisation o, users u " +
-				" where u.o_id = o.id " +
-				" and u.ident = ?;";
+				" where u.o_id = o.id ";
+		String sqlUser = " and u.ident = ?;";
+		String sqlEmail = " and u.email ilike ?;";
+		String sql = null;
+		
+		if(user == null) {
+			sql = sqlOrganisation + sqlEmail;
+		} else {
+			sql = sqlOrganisation + sqlUser;
+		}
 		
 		PreparedStatement pstmt = null;
 		
 		try {
 			
-			pstmt = sd.prepareStatement(sqlOrganisation);
-			pstmt.setString(1, user);
+			pstmt = sd.prepareStatement(sql);
+			if(user == null) {
+				pstmt.setString(1, email);
+			} else {
+				pstmt.setString(1, user);
+			}
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				o.id = rs.getInt(1);
@@ -260,6 +273,7 @@ public class UtilityMethodsEmail {
 					String emailuser = rs.getString(3);
 					String emailpassword = rs.getString(4);
 					int emailport = rs.getInt(5);
+				
 					if(host != null) {
 						if(host.trim().length() > 0) {
 							emailServer.smtpHost = host;
@@ -300,6 +314,7 @@ public class UtilityMethodsEmail {
 					String emailuser = rs.getString(3);
 					String emailpassword = rs.getString(4);
 					int emailport = rs.getInt(5);
+					
 					if(host != null) {
 						if(host.trim().length() > 0) {
 							emailServer.smtpHost = host;

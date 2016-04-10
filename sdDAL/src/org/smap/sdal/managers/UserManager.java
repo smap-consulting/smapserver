@@ -245,8 +245,9 @@ public class UserManager {
 				if(emailServer.smtpHost != null) {
 	
 					log.info("Send email");
-					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, userIdent);
+					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, userIdent);
 					
+					String subject = localisation.getString("email_ac") + " " + serverName;
 					String interval = "48 hours";
 					String uuid = UtilityMethodsEmail.setOnetimePassword(sd, pstmt, u.email, interval);
 					ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(sd, pstmt, u.email);
@@ -256,7 +257,7 @@ public class UserManager {
 							u.email, 
 							uuid, 
 							"newuser", 
-							"Account created on Smap", 
+							subject, 
 							null, 
 							sender, 
 							adminName, 
