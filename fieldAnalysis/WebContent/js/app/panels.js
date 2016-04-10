@@ -804,7 +804,7 @@ function savePanels(newPanel) {
 		idx,
 		i,
 		inViews = [],
-		saveViews,
+		saveViews = [],
 		viewString;
 
 	// Set the sequence	
@@ -827,14 +827,18 @@ function savePanels(newPanel) {
 	}
 	
 	// Get a deep copy of the views as some properties will need to be deleted so that stringify can work
-	saveViews = $.extend(true, [], inViews);
-	// Remove view items that should not be saved
-	for(i = 0; i < saveViews.length; i++) {
-		delete saveViews[i].bounds;
-		delete saveViews[i].selectResultsControl;
-		delete saveViews[i].allLayers;
-		delete saveViews[i].results;
+	//saveViews = $.extend(true, [], inViews);
+	for(i = 0; i < inViews.length; i++) {
+		saveViews[i] = copyView(inViews[i]);
 	}
+	
+	// Remove view items that should not be saved
+	//for(i = 0; i < saveViews.length; i++) {
+	//	delete saveViews[i].bounds;
+	//	delete saveViews[i].selectResultsControl;
+	//	delete saveViews[i].allLayers;
+	//	delete saveViews[i].results;
+	//}
 
 	viewsString = JSON.stringify(saveViews);
 	addHourglass();
@@ -861,10 +865,11 @@ function savePanels(newPanel) {
 
 function savePanelState(view) {
 	
-	var saveView = $.extend(true, {}, view);
-	delete saveView.allLayers;
-	delete saveView.bounds;
-	delete saveView.selectResultsControl;
+	//var saveView = $.extend(true, {}, view);
+	var saveView = copyView(view);
+	//delete saveView.allLayers;
+	//delete saveView.bounds;
+	//delete saveView.selectResultsControl;
 	
 	var viewString = JSON.stringify(saveView);
 	$.ajax({

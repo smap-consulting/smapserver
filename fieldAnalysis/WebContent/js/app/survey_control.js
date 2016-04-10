@@ -114,14 +114,49 @@ $(document).ready(function() {
 
 //Handle click on settings button
 function showSettings($this) {
+	
 	globals.gViewIdx = $this.attr("value");
+	
 	var views = globals.gSelector.getViews();
-	gSurveyControlView = $.extend(true, {}, views[globals.gViewIdx]);	// Get a copy of the current view
+	
+	gSurveyControlView = copyView(views[globals.gViewIdx]);		// Get a copy of the current view
+
+	//gSurveyControlView = $.extend(true, {}, views[globals.gViewIdx]);	// Get a copy of the current view (stack overflow)
 	
 	getViewData(gSurveyControlView);
 	setSurveyViewControl(gSurveyControlView);		// Set the values in the settings dialog from the view
 	
 	$('#p_settings').dialog("open");
+}
+
+/*
+ * Copy a view
+ */
+function copyView(v) {
+	cp = {
+			type: v.type,
+			title: v.title,
+			timeGroup: v.timeGroup,
+			tableCount: v.tableCount,
+			table: v.table,
+			state: v.state,
+			seq: v.seq,
+			sName: v.sName,
+			sId: v.sId,
+			question: v.question,
+			qId_is_calc: v.qId_is_calc,
+			qId: v.qId,
+			pId: v.pId,
+			layerId: v.layerId,
+			lang: v.lang,
+			id: v.id,
+			groupType: v.groupType,
+			groupQuestionText: v.groupQuestionText,
+			groupQuestionId: v.groupQuestionId,
+			dateQuestionId: v.dateQuestionId
+	}
+	
+	return cp;
 }
 
 /*
