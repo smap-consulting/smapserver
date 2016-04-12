@@ -98,16 +98,18 @@ function surveyChanged(qId) {
 		sId = $('#survey').val(),
 		qList;
 	
-	if(!qId) {
-		qId = "-1";
-	}
-	
-	qList = globals.gSelector.getSurveyQuestions(sId, language);
-	
-	if(!qList) {
-		getQuestionList(sId, language, qId, "-1", undefined, false, undefined);
-	} else {
-		setSurveyViewQuestions(qList, qId);
+	if(sId) {
+		if(!qId) {
+			qId = "-1";
+		}
+		
+		qList = globals.gSelector.getSurveyQuestions(sId, language);
+		
+		if(!qList) {
+			getQuestionList(sId, language, qId, "-1", undefined, false, undefined);
+		} else {
+			setSurveyViewQuestions(qList, qId);
+		}
 	}
 }
 

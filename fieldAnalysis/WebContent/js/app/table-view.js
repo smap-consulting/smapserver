@@ -254,7 +254,6 @@ function deleteAllTables(sId) {
 			$.ajax({
 				type : 'Delete',
 				url : deleteSurveyDataURL(sId),
-				dataType : 'json',
 				success : function(response) {
 					removeHourglass();
 					refreshAnalysisData();
