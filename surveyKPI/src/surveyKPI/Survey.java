@@ -63,6 +63,7 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -1045,7 +1046,8 @@ public class Survey extends Application {
 						
 						// Add date and time to the display name
 						DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss");
-						Calendar cal = Calendar.getInstance();
+						dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+						Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));		// Store all dates in UTC
 						String newDisplayName = surveyDisplayName + " (" + dateFormat.format(cal.getTime()) + ")";
 						
 						// Update the "name"

@@ -377,8 +377,7 @@ function setLocalTime() {
 	var i;
 	
 	for(i = 0; i < gSurveys.length; i++) {
-		survey = gSurveys[i];
-		convertTimesToLocal(survey.displayName);
+		gSurveys[i].displayName = convertTimesToLocal(gSurveys[i].displayName);
 	}
 }
 
