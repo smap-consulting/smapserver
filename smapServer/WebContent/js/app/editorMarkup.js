@@ -519,7 +519,14 @@ define([
 			    	h[++idx] = 'glyphicon-remove-sign"> No';
 			    }
 			    h[++idx] = '</span></button>';
-			} else if(selProperty === "media") {
+			} else if(selProperty === "autoplay") {		// Add a radio buttons to select autoplay status
+				
+				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection">';
+					h[++idx] = '<button type="button" class="btn btn-default">Video</button>';
+					h[++idx] = '<button type="button" class="btn btn-default">Audio</button>';
+				h[++idx] = '</div>';
+				
+			}else if(selProperty === "media") {
 				h[++idx] = '<div class="row">';
 				if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
 					h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
