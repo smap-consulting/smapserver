@@ -305,7 +305,7 @@ public class Tasks extends Application {
 					}
 	
 					// Authorisation - Access
-					sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+					sd = SDDataSource.getConnection("Tasks-LocationUpload");
 					a.isAuthorised(sd, request.getRemoteUser());
 					// End authorisation
 
@@ -355,7 +355,181 @@ public class Tasks extends Application {
 		
 	}
 	
+	/*
+	 * Download Tasks for a task group in an XLS file
+	 */
+	@GET
+	@Path ("/xls/{tgId}")
+	@Produces("application/x-download")
+	public Response getXLSTasksService (@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("tgId") int tgId,
+			@QueryParam("filetype") String filetype) throws Exception {
 
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+				
+		Connection sd = SDDataSource.getConnection("createXLSTasks");	
+		// Authorisation - Access
+
+		a.isAuthorised(sd, request.getRemoteUser());		
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+		// End Authorisation 
+		
+		TaskManager tm = new TaskManager();
+		
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
+		// Set file type to "xlsx" unless "xls" has been specified
+		if(filetype == null || !filetype.equals("xls")) {
+			filetype = "xlsx";
+		}
+		
+		try {
+			
+			// Get the task group name
+			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
+			
+			// Get the task list
+			TaskListGeoJson tl = tm.getTasks(sd, tgId, true);
+			
+			// Set file name
+			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response);
+			
+			// Create XLSTasks File
+			XLSTaskManager xf = new XLSTaskManager(filetype);
+			xf.createXLSTaskFile(response.getOutputStream(), tl);
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			throw new Exception("Exception: " + e.getMessage());
+		} finally {
+			
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+		return Response.ok("").build();
+	}
+
+	/*
+	 * Upload tasks for a task group
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/xls/{tg_id}")
+	public Response uploadTasks(
+			@Context HttpServletRequest request,
+			@PathParam("tgId") int tgId
+			) throws IOException {
+		
+		Response response = null;
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
+
+		log.info("userevent: " + request.getRemoteUser() + " : upload tasks from xls file for group: " + tgId);
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+
+		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+	
+		Connection sd = null; 
+
+		try {
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+
+			while(itr.hasNext()) {
+				FileItem item = (FileItem) itr.next();
+				
+				// Get form parameters
+				
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					String fileName = item.getName();
+					String filetype = null;
+					if(fileName.endsWith("xlsx")) {
+						filetype = "xlsx";
+					} else if(fileName.endsWith("xls")) {
+						filetype = "xls";
+					} else {
+						log.info("unknown file type for item: " + fileName);
+						continue;	
+					}
+	
+					// Authorisation - Access
+					sd = SDDataSource.getConnection("Tasks-TaskUpload");
+					a.isAuthorised(sd, request.getRemoteUser());
+					// End authorisation
+
+					// Process xls file
+					XLSTaskManager xf = new XLSTaskManager();
+					ArrayList<Location> locations = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
+					
+					// Save locations to disk
+					//int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					//TaskManager tm = new TaskManager();
+					//tm.saveLocations(sd, locations, oId);
+					
+					// Return tags to calling program
+					//Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					//String resp = gson.toJson(locations);
+					
+					//if(locations.size() > 0) {
+					//	response = Response.ok(resp).build();
+					//} else {
+					//	response = Response.serverError().entity("no tags found").build();
+					//}
+					
+					break;
+						
+				}
+			}
+			
+		} catch(FileUploadException ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+	
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+		
+	}
 	
 
 }

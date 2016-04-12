@@ -13,13 +13,15 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
     <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
-	<link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
+
 	<link href="/css/wb/plugins/fullcalendar/fullcalendar.css" rel="stylesheet">
     <link href="/css/wb/plugins/fullcalendar/fullcalendar.print.css" rel='stylesheet' media='print'>
 	
 	
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
+    	
+    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
     
     <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
@@ -55,15 +57,13 @@
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
 		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">Tasks</span></a></li>
 		          
 		          </ul>
 		        </li> 
-	        <li id="m_tm"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
-			<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
-			<li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-			<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>	
-			<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>			
+	        <li id="m_t_manage"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
+			<li id="m_t_dash" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+
 			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 	        <!--  
 	        <li>
@@ -181,29 +181,22 @@
 									</div>
 				                	<div id="table-view" class="tab-pane">
 				                    	 <div class="table-responsive">
-				                                <table class="table table-striped">
+				                                <table id="task_table" class="table-striped">
 				                                    <thead>
 				                                    <tr>
-				                                    	<th data-hide="phone"></th>				<!-- Select -->
-				                                        <th>Form</th>							<!-- Form or task to be done -->
-				                                        <th>Name</th>							<!-- Task name -->
-				                                        <th>Status</th>							<!-- Task status -->
-				                                        <th data-hide="phone">Assigned</th>		<!-- Person task assigned to (Tablet) -->
-				                                        <th data-hide="phone"></th>				<!-- Icon NFC -->
-				                                        <th data-hide="phone"></th>				<!-- Icon GeoFence -->
-				                                        <th data-hide="phone"></th>				<!-- Icon Repeat Count -->
-				                                        <th data-hide="phone"></th>				<!-- Icon Generated -->
-				                                        <th data-hide="phone">Scheduled</th>	<!-- Scheduled Time (Full Screen) -->
-				                                        <th data-hide="phone">Duration</th>		<!-- Scheduled Time (Full Screen) -->
-				                                        <th data-hide="phone">Trigger</th>		<!-- NFC number or geofence link -->
-				                                        <th data-hide="all">Coordinates</th>	<!-- Lat, Long -->
-				                                        <th data-hide="all">Address</th>		<!-- Address -->
-				                                        <th data-hide="all">Instructions</th>	<!-- Instructions passed to user-->
-				                                        <th data-hide="all">Initial Data</th>	<!-- Link to initial data -->
-				                                        <th>Edit</th>							<!-- Button to edit -->
+				                                    	<th></th>
+				                                        <th>Form</th>
+				                                        <th>Name</th>
+				                                        <th>Status</th>
+				                                        <th>Assigned</th>
+				                                        <th>x</th>
+				                                        <th>y</th>
+				                                        <th>z</th>
+				                                        <th>Scheduled</th>                                      
+				                                        <th>Edit</th>
 				                                    </tr>
 				                                    </thead>
-				                                    <tbody id="task_table">
+				                                    <tbody id="task_table_body">
 				                                    </tbody>
 				                                </table>
 				                            </div>

@@ -61,8 +61,14 @@ public class XLSTaskManager {
 			
 			if(name.equals("id")) {
 				value = String.valueOf(props.id);
-			} else if(name.equals("title")) {
-				value = String.valueOf(props.title);
+			} else if(name.equals("form")) {
+				value = String.valueOf(props.form_name);
+			} else if(name.equals("name")) {
+				value = String.valueOf(props.name);
+			} else if(name.equals("status")) {
+				value = String.valueOf(props.status);
+			} else if(name.equals("assignee_ident")) {
+				value = String.valueOf(props.assignee_ident);
 			}
 			
 			if(value == null) {
@@ -84,14 +90,35 @@ public class XLSTaskManager {
 		}
 	}
 	
-	public void createXLSTaskList(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
+	/*
+	 * Create an XLS file from a task list
+	 */
+	public void getXLSTaskList(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
 		
 		Sheet taskListSheet = wb.createSheet("survey");
-		taskListSheet.createFreezePane(2, 1);
+		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
 		Map<String, CellStyle> styles = createStyles(wb);
 
-		ArrayList<Column> cols = getColumns();
+		ArrayList<Column> cols = getColumnList();
+		createHeader(cols, taskListSheet, styles);	
+		processTaskListForXLS(tl, taskListSheet, styles, cols);
+		
+		wb.write(outputStream);
+		outputStream.close();
+	}
+	
+	/*
+	 * Write a task list to an XLS file
+	 */
+	public void createXLSTaskFile(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
+		
+		Sheet taskListSheet = wb.createSheet("survey");
+		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
+		
+		Map<String, CellStyle> styles = createStyles(wb);
+
+		ArrayList<Column> cols = getColumnList();
 		createHeader(cols, taskListSheet, styles);	
 		processTaskListForXLS(tl, taskListSheet, styles, cols);
 		
@@ -147,7 +174,7 @@ public class XLSTaskManager {
                     			t.name = getColumn(row, "tagname", header, lastCellNum);
                     			tags.add(t);
                     		} catch (Exception e) {
-                    			log.info("Error getting nfc columnL" + e.getMessage());
+                    			log.info("Error getting nfc column" + e.getMessage());
                     		}
                     	}
                     	
@@ -217,14 +244,17 @@ public class XLSTaskManager {
 	/*
 	 * Get the columns for the settings sheet
 	 */
-	private ArrayList<Column> getColumns() {
+	private ArrayList<Column> getColumnList() {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
 		int colNumber = 0;
 		
 		cols.add(new Column(colNumber++, "id"));
-		cols.add(new Column(colNumber++, "title"));
+		cols.add(new Column(colNumber++, "form"));
+		cols.add(new Column(colNumber++, "name"));
+		cols.add(new Column(colNumber++, "status"));
+		cols.add(new Column(colNumber++, "assignee_ident"));
 		
 		return cols;
 	}

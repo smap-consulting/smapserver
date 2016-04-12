@@ -121,11 +121,30 @@ window.log = function(){
 				tab[++idx] = '<tr>';
 					tab[++idx] = addSelectCheckBox(false, i, false);
 					
-					tab[++idx] = '<td></td>';		// todo form
-					tab[++idx] = '<td></td>';		// todo name
+					tab[++idx] = '<td>';
+						tab[++idx] = task.properties.form_name;	
+					tab[++idx] = '</td>';		
+
+					tab[++idx] = '<td>';			// Task name
+						tab[++idx] = task.properties.name;		
+					tab[++idx] = '</td>';
+				
+					tab[++idx] = '<td class="' + task.properties.status + '">';
+						tab[++idx] = task.properties.status;
+					tab[++idx] = '</td>';
 					
 					tab[++idx] = '<td>';			// status
-						tab[++idx] = task.properties.status;
+						tab[++idx] = task.properties.assignee_name;
+					tab[++idx] = '</td>';
+					
+					tab[++idx] = '<td>';			// NFC
+						if(task.properties.location_trigger && task.properties.nfc.location_trigger > 0) {
+							if(task.properties.location_trigger.indexOf('{') == 0) {
+								tab[++idx] = '<i class="fa fa-crosshairs"></i>';	// Geo fence
+							} else {
+								tab[++idx] = '<i class="fa fa-wifi"></i>';			// NFC
+							}
+						}		
 					tab[++idx] = '</td>';
 					
 					tab[++idx] = '<td></td>';		// todo repeat

@@ -206,14 +206,23 @@ public class TaskManager {
 		String sql = "select t.id as t_id, "
 				+ "t.type as type,"
 				+ "t.geo_type as geo_type,"
-				+ "t.title as title,"
+				+ "t.title as name,"
 				+ "t.schedule_at as schedule_at,"
 				+ "t.location_trigger as location_trigger,"
+				+ "s.s_id as form_id,"
+				+ "s.display_name as form_name,"
 				+ "a.id as a_id,"
-				+ "a.status as status "
+				+ "a.status as status,"
+				+ "u.id as assignee,"
+				+ "u.name as assignee_name,"
+				+ "u.ident as assignee_ident "
 				+ "from tasks t "
+				+ "join survey s "
+				+ "on t.form_id = s.s_id "
 				+ "left outer join assignments a "
 				+ "on a.task_id = t.id " 
+				+ "join users u "
+				+ "on a.assignee = u.id "
 				+ "where t.tg_id = ? "
 				+ "order by t.id asc;";
 		PreparedStatement pstmt = null;
@@ -256,9 +265,15 @@ public class TaskManager {
 				
 				tf.properties.id = rs.getInt("t_id");
 				tf.properties.type = rs.getString("type");
-				tf.properties.title = rs.getString("title");
+				tf.properties.name = rs.getString("name");
 				tf.properties.scheduled_at = rs.getTimestamp("schedule_at");
 				tf.properties.status = status;	
+				tf.properties.form_id = rs.getInt("form_id");
+				tf.properties.form_name = rs.getString("form_name");
+				tf.properties.assignee = rs.getInt("assignee");
+				tf.properties.assignee_name = rs.getString("assignee_name");
+				tf.properties.assignee_ident = rs.getString("assignee_ident");
+				tf.properties.location_trigger = rs.getString("location_trigger");
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");

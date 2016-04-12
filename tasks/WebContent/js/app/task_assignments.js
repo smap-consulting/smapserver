@@ -889,23 +889,20 @@ function refreshTableAssignments() {
 	var tasks = globals.gTaskList;
 	
 	if(typeof tasks != "undefined") {
-		$('#task_table').empty().generateTaskTable(
+		$('#task_table_body').empty().generateTaskTable(
 				{
 					'data': globals.gTaskList,
-					'maxAddCols' : 10,
 					'showCompleted' : $('#filter_completed').prop('checked')
 				});
 		
-		$('#task_table').footable();
-		
-		$('input', '#task_table').iCheck({
+		$('input', '#task_table_body').iCheck({
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
 		});
 		
 		
 		// Respond to selection of a task
-		$('input', '#task_table').on('ifChanged', function(event){
+		$('input', '#task_table_body').on('ifChanged', function(event){
 			var $this = $(this),
 				idx = $this.val(),
 				selected = $this.is(':checked');
@@ -916,7 +913,7 @@ function refreshTableAssignments() {
 		});
 		
 		// Respond to clicking on task edit button
-		$(".task_edit", '#task_table').click(function() {
+		$(".task_edit", '#task_table_body').click(function() {
 			var $this = $(this),
 				idx = $this.val(),
 				task = gTasks.features[idx].properties,
