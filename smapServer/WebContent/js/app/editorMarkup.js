@@ -522,8 +522,8 @@ define([
 			} else if(selProperty === "autoplay") {		// Add a radio buttons to select autoplay status
 				
 				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection">';
-					h[++idx] = '<button type="button" class="btn btn-default">Video</button>';
-					h[++idx] = '<button type="button" class="btn btn-default">Audio</button>';
+					h[++idx] = '<button type="button" class="btn btn-default" value="audio">Video</button>';
+					h[++idx] = '<button type="button" class="btn btn-default" value="audio">Audio</button>';
 				h[++idx] = '</div>';
 				
 			}else if(selProperty === "media") {
