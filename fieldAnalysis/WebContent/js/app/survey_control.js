@@ -143,16 +143,22 @@ function copyView(v) {
 			seq: v.seq,
 			sName: v.sName,
 			sId: v.sId,
+			region: v.region,
 			question: v.question,
 			qId_is_calc: v.qId_is_calc,
 			qId: v.qId,
 			pId: v.pId,
 			layerId: v.layerId,
 			lang: v.lang,
+			key_words: v.key_words,
 			id: v.id,
 			groupType: v.groupType,
 			groupQuestionText: v.groupQuestionText,
 			groupQuestionId: v.groupQuestionId,
+			fromDate: v.fromDate,
+			toDate: v.toDate,
+			fn: v.fn,
+			filter: v.filter,
 			dateQuestionId: v.dateQuestionId
 	}
 	
