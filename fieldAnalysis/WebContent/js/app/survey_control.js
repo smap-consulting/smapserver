@@ -273,7 +273,7 @@ function getViewData(view) {
 	}
 	
 	// Set the date question id if appropriate
-	if(typeof view.dateQuestionId !== "undefined") {
+	if(typeof view.dateQuestionId !== "undefined" && view.dateQuestionId != 0) {
 		$('#settings_date_question').val(view.dateQuestionId);
 	}
 	

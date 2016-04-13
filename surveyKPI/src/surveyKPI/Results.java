@@ -478,7 +478,7 @@ public class Results extends Application {
 						if(groupValue != null && groupValue.trim().length() > 0) {
 							matchingGroups.add(timeValue + groupValue);
 						}					
-					} else if(group.getType().equals("string") || group.getType().equals("int")) {
+					} else if(group.getType().equals("string") || group.getType().equals("int") || group.getType().equals("calculate")) {
 						groupValue = resultSet.getString(group.getColumnName());
 						if(groupValue != null  && groupValue.trim().length() > 0) {
 							matchingGroups.add(timeValue + groupValue);
