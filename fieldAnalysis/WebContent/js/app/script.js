@@ -501,15 +501,18 @@ function addDatePickList(sMeta, currentDate) {
 		h[++idx] = '</option>';
 		
 	}
-	if(typeof currentDate !== "undefined") {
+	
+	$("#settings_date_question").html((h.join('')));
+	
+	if(typeof currentDate !== "undefined" && currentDate != 0) {
 		value = currentDate;
 	} else {
 		value = $("#settings_date_question").val();
 	}
-	$("#settings_date_question").html((h.join('')));
-	if(typeof value !== "undefined") {
-		$("#settings_date_question").val(value);
-	}
+
+	//if(typeof value !== "undefined" ) {
+	//	$("#settings_date_question").val(value);
+	//}
 	
 
 }
