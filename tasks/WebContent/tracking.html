@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+-->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8">
+
+	<title>Tasks</title>
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
+
+	<link href="/css/wb/plugins/fullcalendar/fullcalendar.css" rel="stylesheet">
+    <link href="/css/wb/plugins/fullcalendar/fullcalendar.print.css" rel='stylesheet' media='print'>
+	
+	
+    <link href="/css/wb/animate.css" rel="stylesheet">
+    <link href="/css/wb/style.css" rel="stylesheet">
+    	
+    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+    
+    
+    <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
+
+<script> if (!window.console) console = {log: function() {}}; </script>
+
+<script src="/js/libs/modernizr.js"></script>
+<script src="/js/app/version.js"></script>
+<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+<script data-main="js/taskManagement" src="/js/libs/require.js"></script>
+
+<!-- temp -->
+<style>
+  #map {  width:100%; height: 300px;}
+</style>
+
+</head>
+<body>
+
+<div id="wrapper">
+
+	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
+		<div class="sidebar-collapse">
+	    	<ul class="nav metismenu" id="side-menu">
+				
+		      	<li>
+		          <a href="#" id="m_modules"  aria-expanded="false"><span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
+		          <ul class="nav nav-second-level" aria-expanded="false">
+		            
+		            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
+		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">Tasks</span></a></li>
+		          
+		          </ul>
+		        </li> 
+	        <li id="m_t_manage"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
+			<li id="m_t_dash" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+
+			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+	        <!--  
+	        <li>
+	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+				</a>
+			</li>
+			-->
+			
+	      </ul>
+		</div>
+		
+	</nav>
+
+
+</div>
+
+
+<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+
+<!-- Popup to show features when a user clicks on a geometry item -->
+<div id="features" class="feature-panel-right"></div>
+
+<!-- Modal to show task properties and allow them to be edited -->
+<div id="task_properties" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="taskPropLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="taskPropLabel"></h4>
+   			</div>
+		     <div class="modal-body">	
+	   			<form role="form" class="form-horizontal" name="taskProperties">
+	   				<div class="form-group">
+			            <label class="col-sm-2 control-label lang" data-lang="c_title" for="task_properties_title">title</label>
+		            	<div class="col-sm-10">
+			                <input id="task_properties_title" type='text' class="form-control"  name="taskTitle">
+			             </div>
+			         </div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label lang" data-lang="c_repeat" for="users_select_user">repeat</label>
+						<div class="col-sm-10">
+							<div class="checkbox">
+								<input type="checkbox" name="repeat" value="repeat" id="task_properties_repeat">
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+			            <label class="col-sm-2 control-label lang" data-lang="c_scheduled" for="task_properties_scheduledDate">scheduled</label>
+		            	<div class="col-sm-10">
+			            	<div class='input-group date' id='task_properties_scheduledDate' data-toggle="tooltip"  data-container="body" title="Scheduled date in local time zone">
+			                	<input id="scheduleAt" type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" name="scheduleAt">
+			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                </div>
+			             </div>
+			         </div>
+			         <div class="form-group bus_only" style="display:none;">
+			            <label class="col-sm-2 control-label lang" data-lang="t_nfc" for="nfc_select">nfc</label>
+		            	<div class="col-sm-10">
+			            	<select class="form-control nfc_select" id="nfc_select" name="location_trigger"></select>
+			             </div>
+			         </div>
+
+					<input id="task_properties_taskid" type="hidden" name="taskid" value="0" style="display:none;"/>
+					<input id="scheduleAtUTC" type="hidden" name="scheduleAtUTC" value="" style="display:none;"/>
+				</form>
+						
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="taskPropertiesSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to assign a user to a task-->
+<div id="assign_user" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="assignUserLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="assignUserLabel"></h4>
+   			</div>
+		     <div class="modal-body">
+				<p class="single lang" data-lang="t_choose_user">choose user</p>
+				<form class="form" role="form" id="user_assign_form">
+					<label class="control-label lang" data-lang="c_user" for="users_select_user">user</label>
+					<select class="form-control users_select" id="users_select_user"></select>
+				</form>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="assignUserSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+</div>	<!-- #wrapper -->
+
+
+
+<!-- Modal to allow the user to add tasks from an existing survey -->
+<div id="addTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="addTaskLabel"></h4>
+   			</div>
+		    <div class="modal-body">
+		    
+					<form role="form" class="form-horizontal" id="assign_survey_form">
+						<div class="form-group">
+							<label class="lang col-sm-2 control-label lang" data-lang="c_name" for="task_group_name">name</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" id="task_group_name">
+							</div>
+						</div>
+						
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" name="empty_task_group" value="empty_task_group" id="empty_task_group">
+									<span class="lang" data-lang="t_ceg">empty group</span>
+							</label>
+						</div>
+						
+						<div id="add_task_from_existing">
+							<div class="form-group">
+								<label for="project_select" class="col-sm-2 control-label lang" data-lang="t_ep">existing project</label>
+								<div class="col-sm-10">
+									<select id="project_select" class="project_list form-control"></select>
+								</div>
+							</div>
+						
+							<div class="form-group">
+								<label for="survey" class="col-sm-2 control-label lang" data-lang="t_es">existing survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey"></select><br/>
+								</div>
+							</div>
+							
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">
+										<span class="lang" data-lang="t_ft">filter tasks</span>
+								</label>
+							</div>
+									
+							<div id="filter_results" style="display:none;">
+									
+									<div class="form-group">
+										<label for="filter_language" class="col-sm-2 control-label lang" data-lang="c_lang">Language</label>
+										<div class="col-sm-10">
+											<select id="filter_language" class="form-control"></select>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label for="filter_question" class="col-sm-2 control-label lang" data-lang="t_fq">Filter by question</label>
+										<div class="col-sm-10">
+											<select class="selected_question form-control" id="filter_question"></select>
+										</div>
+									</div>
+								
+									<div class="filter_option_only" style="display:none;">
+										<div class="form-group">
+											<label class="col-sm-2 control-label lang" data-lang="t_so" for="filter_option">selected option</label>
+											<div class="col-sm-10">
+												<select class="form-control selected_option" id="filter_option"></select>
+											</div>
+										</div>
+									</div>
+									
+								<div class="filter_integer_only" style="display:none;">
+									<div class="form-group">
+										<label class="col-sm-2 control-label lang" for="filter_integer" data-lang="t_sn">numeric value</label>
+										<div class="col-sm-10">
+											<input type="number" class="selected_integer form-control" id="filter_integer">
+										</div>
+									</div>
+								</div>
+								
+								<div class="filter_text_only" style="display:none;">
+									<div class="form-group">
+										<label class="col-sm-2 control-label lang" for="filter_text" data-lang="t_st">text value</label>
+										<div class="col-sm-10">
+											<input type="text" class="selected_text form-control" id="filter_text">
+										</div>
+									</div>
+								</div>
+								
+								<div class="filter_date_only" style="display:none;">
+	
+		            				<div class="form-group">
+		            					<label class="col-sm-2 control-label lang" for="startDate" data-lang="c_from">from</label>
+		            					<div class="col-sm-10">
+			                				<div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                				</div>
+			                			</div>
+		            				</div>
+		     
+		            				<div class="form-group">
+		            				    <label class="col-sm-2 control-label lang" for="endDate" data-lang="c_to">to</label>
+		            				    <div class="col-sm-10">
+			                				<div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
+			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
+			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                				</div>
+			                			</div>
+		            				</div>
+		            				<div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
+								</div>
+							
+							</div>
+							<div class="checkbox">
+								<label>
+									<input id="update_results" type="checkbox" name="update_results" value="update_results"/>
+										<span class="lang" data-lang="t_ue">update existing</span>
+								</label>
+							</div>
+							
+							<div class="panel-group" role="tablist" aria-multiselectable="true">
+  								<div class="panel panel-default">
+    								<div class="panel-heading" role="tab" id="headingTaskParams">
+										<h4 class="panel-title">
+						       				<a data-toggle="collapse" data-parent="#show_task_params" href="#collapseTaskParams" 
+						       						aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="t_ap">
+						         				address parameters
+						       				</a>
+					     				</h4>
+    								</div>
+			    					<div id="collapseTaskParams" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
+										<div id="task_params_table"></div>
+									</div>
+								</div>
+							</div>
+											
+							
+							<div class="form-group">
+								<label for="survey_to_complete" class="col-sm-2 control-label lang" data-lang="t_ns">New Survey</label>
+								<div class="col-sm-10">
+									<select class="survey_select form-control" id="survey_to_complete"></select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+								<label for="users_task_group" class="col-sm-2 control-label lang" data-lang="t_assign">assign user</label>
+								<div class="col-sm-10">
+									<select class="form-control users_select" id="users_task_group"></select>
+								</div>
+							</div>
+						</div>
+										
+					</form>	
+
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="addNewGroupSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to allow the user to add new tasks  -->
+<div id="addNewTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="addNewTaskLabel"></h4>
+   			</div>
+		    <div class="modal-body">
+		    
+		    	<h4>Number of tasks to add: <span id="new_task_count">0</span></h4>
+		    	<div id="ts_alert" style="display:none;" class="alert alert-info" role="alert"></div>
+				<form role="form" class="form-horizontal" id="assign_survey_form">
+						
+					<div class="form-group">
+						<label for="users_select_new_task" class="col-sm-2 control-label lang" data-lang="c_user">user</label>
+						<div class="col-sm-10">
+							<select class="users_select form-control" id="users_select_new_task"></select>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="survey_to_complete_new_task" class="col-sm-2 control-label lang" data-lang="t_ns">new survey</label>
+						<div class="col-sm-10">
+							<select class="survey_select form-control" id="survey_to_complete_new_task"></select>
+						</div>
+					</div>
+				
+				</form>	
+
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="addNewTaskSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- Modal to allow the user to manage the task parameters -->
+<div id="task_params" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title" id="modifyMeLabel"></h4>
+   			</div>
+		    <div class="modal-body">
+				<div id="task_params_table"></div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="taskParamsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div> 
+        </div>
+	</div>
+</div>
+
+
+<!-- Modal to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="modifyMeLabel"></h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+	
+<script src="//maps.google.com/maps/api/js?v=3.6&amp"></script>
+
+<script>
+	setCustomAssignments();			// Apply custom javascript
+</script>
+
+
+
+</body>
+</html>

@@ -20,7 +20,7 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 	
 	window.localise = {	// Set global while migrating app to AMD
 		setlang: function () {
-	     
+			
 			$(".lang").each(function(index) {
 				var $this = $(this);
 				var code = $this.data("lang");
@@ -30,6 +30,11 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 			});
 			if(typeof responsiveMobileMenu === "function") {
 				rmmResizeLabels();		// Resize menus
+			}
+			
+			// Set RTL
+			if(gUserLocale && gUserLocale === "ar") {
+				$('html').attr("dir", "rtl").attr("lang", "ar");
 			}
 		},
 		set: lang

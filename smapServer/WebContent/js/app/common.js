@@ -291,6 +291,10 @@ function addLanguageOptions($elem, current) {
 		i,
 		languages = [
 		             {
+			            	locale: "ar",
+			            	name: "Arabic"
+			         },
+		             {
 		            	locale: "en",
 		            	name: "English"
 		             },

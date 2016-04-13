@@ -39,7 +39,7 @@
     dir: '../tasks',
     modules: [
         {
-            name: '../manage'
+            name: '../taskManagement'
         }
 
     ]
