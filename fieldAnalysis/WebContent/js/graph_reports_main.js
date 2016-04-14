@@ -67,7 +67,18 @@ require([
          'main/jqplot_main'
          
          ], function($, jquery_ui, rmm, crf, localise, 
-        		 graph_functions, graph_reports) {
+        		 graph_functions, graph_reports, jqplot) {
+	
+	// Hack to get around jquery upgrade - need to upgrade or replace jqplot
+	window.jQuery.browser = {};
+	(function () {
+	    window.jQuery.browser.msie = false;
+	    window.jQuery.browser.version = 0;
+	    if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
+	        window.jQuery.browser.msie = true;
+	        window.jQuery.browser.version = RegExp.$1;
+	    }
+	})();
 	
 	var data_source = $("#data_source").text();
 	getData(data_source);

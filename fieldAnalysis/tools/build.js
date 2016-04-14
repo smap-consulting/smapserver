@@ -29,15 +29,15 @@
             name: '../jqplot_main',
 	    include: [
  		'jqplot/jquery.jqplot.min',
-         	'jqplot/plugins/jqplot.highlighter.min',
-         	'jqplot/plugins/jqplot.cursor.min',
-         	'jqplot/plugins/jqplot.dateAxisRenderer.min',
-         	'jqplot/plugins/jqplot.barRenderer.min',
-         	'jqplot/plugins/jqplot.categoryAxisRenderer.min',
-         	'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min',
-         	'jqplot/plugins/jqplot.canvasAxisTickRenderer.min',
-         	'jqplot/plugins/jqplot.canvasTextRenderer.min',
-         	'jqplot/plugins/jqplot.enhancedLegendRenderer.min'
+         	'jqplot/plugins/jqplot.highlighter',
+         	'jqplot/plugins/jqplot.cursor',
+         	'jqplot/plugins/jqplot.dateAxisRenderer',
+         	'jqplot/plugins/jqplot.barRenderer',
+         	'jqplot/plugins/jqplot.categoryAxisRenderer',
+         	'jqplot/plugins/jqplot.canvasAxisLabelRenderer',
+         	'jqplot/plugins/jqplot.canvasAxisTickRenderer',
+         	'jqplot/plugins/jqplot.canvasTextRenderer',
+         	'jqplot/plugins/jqplot.enhancedLegendRenderer'
 		],
 	    exclude: ['jquery', 'jquery_ui']
         },
