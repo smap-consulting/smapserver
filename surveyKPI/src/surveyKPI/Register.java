@@ -126,8 +126,13 @@ public class Register extends Application {
 		try {
 			
 			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
-			Locale locale = new Locale(organisation.locale);
+			//Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
+			String hostname = request.getServerName();
+			String loc_code = "en";
+			if(hostname.contains("kontrolid")) {
+				loc_code = "es";
+			} 
+			Locale locale = new Locale(loc_code);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			String requestUrl = request.getRequestURL().toString();
