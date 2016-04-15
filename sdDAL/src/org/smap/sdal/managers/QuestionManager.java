@@ -1381,7 +1381,7 @@ public class QuestionManager {
 			rs.next();
 			fId = rs.getInt(1);
 			
-			duplicateQuestions(sd, originalFormId, fId, sharedResults);
+			duplicateQuestions(sd, originalFormId, sId, fId, sharedResults);
 			duplicateQuestionLabels(sd, sId, existingSurveyId, originalFormId);
 			duplicateOptionsInForm(sd, sId, fId, existingSurveyId);
 			
@@ -1557,7 +1557,7 @@ public class QuestionManager {
 	/*
 	 * Copy questions in a form to a new form
 	 */
-	public void duplicateQuestions(Connection sd, int existingFormId, int newFormId, boolean sharedResults) throws Exception {
+	public void duplicateQuestions(Connection sd, int existingFormId, int sId, int newFormId, boolean sharedResults) throws Exception {
 		
 		String sql = "insert into question("
 				 + "q_id,"
@@ -1628,6 +1628,11 @@ public class QuestionManager {
 				 + "and soft_deleted = 'false';";	
 		PreparedStatement pstmt = null;
 		
+		String sqlGetQuestionsForManifest = "select appearance, calculate from question "
+				+ "where f_id = ? "
+				+ "and (appearance is not null or calculate is not null);";
+		PreparedStatement pstmtGetQuestionsForManifest = null;
+		
 		try {
 			
 			pstmt = sd.prepareStatement(sql);
@@ -1636,10 +1641,23 @@ public class QuestionManager {
 			log.info("Duplicating questions: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
+			// Update the survey manifest if this question references CSV files
+			SurveyManager sm = new SurveyManager();	
+			pstmtGetQuestionsForManifest = sd.prepareStatement(sqlGetQuestionsForManifest);
+			pstmtGetQuestionsForManifest.setInt(1, existingFormId);
+			log.info("Getting questions that may affect manifest: " + pstmtGetQuestionsForManifest.toString());
+			
+			ResultSet rs = pstmtGetQuestionsForManifest.executeQuery();
+			while(rs.next()) {
+				sm.updateSurveyManifest(sd, sId, rs.getString("appearance"), rs.getString("calculate"));
+			}
+			
+			
 		} catch (Exception e) {
 			throw e;
 		} finally {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+			if(pstmtGetQuestionsForManifest != null) try {pstmtGetQuestionsForManifest.close();} catch(Exception e){};
 		}
 
 	}
