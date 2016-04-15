@@ -857,12 +857,12 @@ public class ReportListSvc extends Application {
 		
 		StringBuffer respBuf = new StringBuffer();
 		
-		if(format.equals("html")) {
-			respBuf.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">");
-		} else if(format.equals("embed")) {
-			respBuf.append("<!doctype html>");
-		}
-		
+		//if(format.equals("html")) {
+		//	respBuf.append("<!DOCTYPE html>");
+		//} else if(format.equals("embed")) {
+		//	respBuf.append("<!doctype html>");
+		//}
+		respBuf.append("<!doctype html>");
 		//respBuf.append("<html style=\"width: 95%; height: 95%;\">");
 		respBuf.append("<html style=\"width: 100%; height: 100%;\">");
 		respBuf.append("<head>");

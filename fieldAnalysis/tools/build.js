@@ -58,8 +58,8 @@
             name: '../table_reports_main'
         },
         {
-            name: '../graph_reports_main',
-	    exclude: ['../jqplot_main']
+            name: '../graph_reports_main'
+//	    exclude: ['../jqplot_main']
         },
         {
             name: '../map_reports_main'

@@ -48,11 +48,14 @@
 		<div id="username"></div>
 		<div id="banner" class="lang" data-lang="m_reports">reports</div>
 	</div>
-		
+	
+	<!--
+	Disable until facebook interface re-implmented	
 	<div id="fblogon">
 		<fb:login-button show-faces="true" width="200" max-rows="1" scope="publish_actions,user_groups">
 	  	</fb:login-button>
-  	</div>	
+  	</div>
+  	-->
   	<label for="project_name" class="lang" data-lang="c_project">project</label>
 	<select class="project_list" id="project_name"></select><br/>
 	<div id="slider" style="clear: both;">
@@ -79,6 +82,8 @@
 </div>	<!-- Container -->
 
 	<!-- Popup to allow user to select facebook groups -->
+	<!--  
+	Disable until facebook interface re-implmented
 	<div id="fb_groups" title="Facebook Groups" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
@@ -88,6 +93,7 @@
 			</fieldset>		
 		</form>
 	</div>
+	-->
 
 	<!-- Popup to allow the user to edit their own details -->
 	<div id="modify_me_popup" style="display:none;">
@@ -113,30 +119,6 @@
 			</form>	
 		</div>
 	</div>
-	
-	<!-- Popup to allow the user to edit their own details 
-	<div id="modify_me_popup" style="display:none;">
-	
-		<div class="left_panel">
-			<form id="me_edit_form">
-				<label for="me_name">Name</label>
-				<input type="text" id="me_name" required><br/>
-				<label for="me_email">Email</label>
-				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
-				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
-					<input type="checkbox" id="reset_me_password"/><br/>
-				</span>
-				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
-					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
-					<input id="me_password_confirm" type="password"><br/>	
-				</span>		
-			</form>	
-		</div>
-	</div>
-	-->
 	
 	<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 		
