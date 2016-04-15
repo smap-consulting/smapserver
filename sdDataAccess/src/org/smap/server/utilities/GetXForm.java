@@ -1016,7 +1016,7 @@ public class GetXForm {
 						priKey = 0;
 					}
 				} else {
-					priKey = getPrimaryKey(cResults, firstForm, key, keyval);
+					priKey = getPrimaryKey(sd, firstForm, key, keyval);
 				}
 			} else {
 				if(!priKeyValid(cResults, firstForm, priKey)) {

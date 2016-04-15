@@ -26,13 +26,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
+import org.smap.server.utilities.GetXForm;
 
 public class JdbcQuestionManager {
 
+	private static Logger log =
+			 Logger.getLogger(GetXForm.class.getName());
+	
 	PreparedStatement pstmt = null;
 	String sql = "insert into question ("
 			+ "q_id, "
@@ -182,6 +187,7 @@ public class JdbcQuestionManager {
 	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+		try {if(pstmtGetByFormId != null) {pstmtGetByFormId.close();}} catch(Exception e) {};
 		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
 	}
 	
@@ -189,6 +195,7 @@ public class JdbcQuestionManager {
 		
 		ArrayList <Question> questions = new ArrayList<Question> ();
 		
+		log.info("Get question list: " + pstmtGet.toString());
 		ResultSet rs = pstmtGet.executeQuery();
 		while(rs.next()) {
 			Question q = new Question();
