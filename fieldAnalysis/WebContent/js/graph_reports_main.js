@@ -47,9 +47,10 @@ requirejs.config({
     shim: {
     	'rmm': ['jquery'],
     	'jquery_ui': ['jquery'],
-    	
+    	'crf': ['jquery'],
     	'main/jqplot_main': ['jquery'],
-    	'app/graph-functions': ['main/jqplot_main']
+    	'app/graph-functions': ['main/jqplot_main'],
+    	'app/graph-reports': ['app/graph-functions']
     	
     	}
     });
@@ -61,13 +62,21 @@ require([
          'rmm', 
          'crf', 
          'localise', 
+         'main/jqplot_main',
          'app/graph-functions',
-         'app/graph-reports',
+         'app/graph-reports'
          
-         'main/jqplot_main'
-         
-         ], function($, jquery_ui, rmm, crf, localise, 
-        		 graph_functions, graph_reports) {
+         ], function($, jquery_ui, rmm, crf, localise) {
+	
+	window.jQuery.browser = {};
+	(function () {
+	    window.jQuery.browser.msie = false;
+	    window.jQuery.browser.version = 0;
+	    if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
+	        window.jQuery.browser.msie = true;
+	        window.jQuery.browser.version = RegExp.$1;
+	    }
+	})();
 	
 	var data_source = $("#data_source").text();
 	getData(data_source);

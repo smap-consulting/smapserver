@@ -2422,6 +2422,7 @@ public class SurveyManager {
 				pstmtUpdate = sd.prepareStatement(sqlUpdate);
 				pstmtUpdate.setString(1, manifest);
 				pstmtUpdate.setInt(2,sId);
+				log.info("Updating manifest:" + pstmtUpdate.toString());
 				pstmtUpdate.executeUpdate();
 			}
 			

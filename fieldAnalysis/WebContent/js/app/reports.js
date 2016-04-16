@@ -183,6 +183,8 @@ function saveReport() {
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
+		  contentType: "application/json",
+		  //dataType: 'text/plain',
 		  url: url,
 		  data: { report: reportString },
 		  success: function(data, status) {

@@ -577,8 +577,9 @@ public class ReportListSvc extends Application {
 							"?" +
 						");";
 						
-				log.info(sql + " : " + aReport.smap.description);
+				if(pstmt != null) try{pstmt.close();} catch(Exception e) {}
 				pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+				
 				pstmt.setString(1, aReport.title);
 				pstmt.setString(2, aReport.smap.description);
 				pstmt.setString(3, aReport.smap.country);
@@ -597,6 +598,8 @@ public class ReportListSvc extends Application {
 				pstmt.setInt(16, dimURL.height);
 				pstmt.setInt(17, dimThumb.width);
 				pstmt.setInt(18, dimThumb.height);
+				
+				log.info("Insert report: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 			} else {
@@ -617,7 +620,7 @@ public class ReportListSvc extends Application {
 						"where ident = ? " +
 						"and p_id = ?;";
 						
-				log.info(sql);
+				if(pstmt != null) try{pstmt.close();} catch(Exception e) {}
 				pstmt = connection.prepareStatement(sql);
 				pstmt.setString(1, aReport.title);
 				pstmt.setString(2, aReport.smap.description);
@@ -629,6 +632,8 @@ public class ReportListSvc extends Application {
 				pstmt.setString(8, geomValue);
 				pstmt.setString(9, aReport.smap.ident);
 				pstmt.setInt(10, projectId);
+				
+				log.info("Update report: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 				int count = pstmt.executeUpdate();
@@ -642,6 +647,8 @@ public class ReportListSvc extends Application {
 			connection.setAutoCommit(true);
 			response = Response.ok().build();
 				
+			log.info("return success");
+			
 		} catch (Exception e) {
 			try { connection.rollback();connection.setAutoCommit(true);} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			response = Response.serverError().build();
@@ -850,12 +857,12 @@ public class ReportListSvc extends Application {
 		
 		StringBuffer respBuf = new StringBuffer();
 		
-		if(format.equals("html")) {
-			respBuf.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">");
-		} else if(format.equals("embed")) {
-			respBuf.append("<!doctype html>");
-		}
-		
+		//if(format.equals("html")) {
+		//	respBuf.append("<!DOCTYPE html>");
+		//} else if(format.equals("embed")) {
+		//	respBuf.append("<!doctype html>");
+		//}
+		respBuf.append("<!doctype html>");
 		//respBuf.append("<html style=\"width: 95%; height: 95%;\">");
 		respBuf.append("<html style=\"width: 100%; height: 100%;\">");
 		respBuf.append("<head>");
