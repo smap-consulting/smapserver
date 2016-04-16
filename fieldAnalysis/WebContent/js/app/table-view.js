@@ -385,6 +385,7 @@ function toggleBad($elem, fId, pKey, value, sId, theView) {
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
+		  contentType: "application/json",
 		  data: { value: toBeBad, sId: sId, reason: reason},
 		  url: toggleBadURL(fId, pKey),
 		  success: function(data, status) {
