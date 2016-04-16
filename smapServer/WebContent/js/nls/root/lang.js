@@ -153,6 +153,13 @@ define({
 	"c_ident": "Identifier",
 	"c_version": "Version",
 	"c_deleted": "Deleted",
+	"c_yes": "Yes",
+	"c_no": "No",
+	"c_reason": "Reason",
+	"c_complete": "Complete",
+	"c_record": "Record",
+	"c_records": "Records",
+	"c_of": "of",
 	
 	// File Types
 	"ft": "File Type",
@@ -200,6 +207,9 @@ define({
 	"a_to_date": "To date",
 	"a_fq": "Filter question",
 	"a_res": "Please provide a reason",
+	"a_mb": "Marked Bad",
+	"a_cm": "Cluster Members",
+	
 	
 	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
@@ -330,10 +340,14 @@ define({
 	"an_dr": "Date Range",
 	"an_csel": "Clear Selection",
 	
-	// Server Strings
+	// Server Strings and direct word conversions
 	"Upload Time": "Upload",
 	"_start": "Start Time",
-	"_end": "End Time"
+	"_end": "End Time",
+	"percent": "Percent",
+	"count": "Count",
+	"none": "None",
+	"average": "Average"
 		
 	
 		

@@ -794,7 +794,7 @@ function addSharedMaps(map, sharedMaps) {
 			h[++idx] = '</tbody></table>';
 			
 			if(clusterData) {
-				h[++idx] = '<h3>Cluster Members</h3>';
+				h[++idx] = '<h3>' + localise.set["a_cm"] + '</h3>';
 				h[++idx] = '<table border="1"><thead>';
 				h[++idx] = '<tr><td>Location</td><td>Answer</td></tr>';
 				h[++idx] = '</thead><tbody>';
@@ -814,9 +814,9 @@ function addSharedMaps(map, sharedMaps) {
 				
 				// Show the data records that make up this item
 				if(aDataItem.records) {
-					h[++idx] = '<h3>Data Records</h3>';
+					h[++idx] = '<h3>' + localise.set["c_data"] + '</h3>';
 					h[++idx] = '<table border="1"><thead>';
-					h[++idx] = '<tr><td>Primary Key</td><td>Record Value</td></tr>';
+					h[++idx] = '<tr><td>' + localise.set["c_record"] + '</td><td>' + localise.set["c_value"] + '</td></tr>';
 					h[++idx] = '</thead><tbody>';
 					for(i = 0; i < aDataItem.records.length; i++) {
 						h[++idx] = '<tr>';
@@ -864,25 +864,30 @@ function addSharedMaps(map, sharedMaps) {
 						&& key !== "instanceid") {
 					
 					if(key === "_device") {
-						key = "Device";
+						key = localise.set["c_device"];  //"Device";
 					} else if (key === "_user") {
-						key = "Submitted By";
+						key = localise.set["c_user"];  // "Submitted By";
 					} else if (key === "_start") {
-						key = "Start Survey";
+						key = localise.set["_start"] + " (" + localise.set["c_lt"] +")"; // "Start Survey";
+						value = localTime(value);
 					} else if (key === "_end") {
-						key = "End Survey";
+						key = key = localise.set["_end"] + " (" + localise.set["c_lt"] +")";  // "End Survey";
+						value = localTime(value);
+					} else if (key === "Upload Time") {
+						key = key = localise.set[key] + " (" + localise.set["c_lt"] +")"; 
+						value = localTime(value);
 					} else if (key === "_bad") {
-						key = "Marked Bad";
+						key = localise.set["a_mb"];  // "Marked Bad";
 						if(value === "t") {
-							value = "Yes";
+							value = localise.set["c_yes"];   // "Yes";
 						} else {
-							value = "No";
+							value = localise.set["c_no"];   // "No";
 						}
 					} else if (key === "_bad_reason") {
-						key = "Reason";
+						key = localise.set["c_reason"];     // "Reason";
 					} else if (key === "_complete") {
-						key = "Complete";
-						value = (value === "t") ? "Yes" : "No";
+						key = localise.set["c_complete"];		// "Complete";
+						value = (value === "t") ? localise.set["c_yes"] : localise.set["c_no"];
 					}
 					
 					h[++idx] = '<tr>';
@@ -892,9 +897,9 @@ function addSharedMaps(map, sharedMaps) {
 							value_c = clusterData[i].attributes[key_orig];
 							if(key_orig === "_bad") {
 								if(value_c === "t") {
-									value_c = "Yes";
+									value_c = localise.set["c_yes"];
 								} else {
-									value_c = "No";
+									value_c = localise.set["c_no"];
 								}
 							}
 							h[++idx] = '<td>' + addAnchors(value_c).join(',') + '</td>';

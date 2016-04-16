@@ -56,7 +56,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 	if(typeof disp_desc !== "undefined") {
 		gTab[++gIdx] = disp_desc;
 	} else if(fn != "none") {
-		gTab[++gIdx] = fn + " of: ";
+		gTab[++gIdx] = localise.set[fn] + " " + localise.set["c_of"] + " : ";
 		gTab[++gIdx] = title;
 	} else {
 		gTab[++gIdx] = title;
@@ -64,9 +64,11 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 	if(typeof data.totals !== "undefined") {
 		gTab[++gIdx] = '(';
 		gTab[++gIdx] = data.totals.total_count;
-		gTab[++gIdx] = ' records, ';
+		gTab[++gIdx] = ' ';
+		gTab[++gIdx] = data.totals.total_count == 1 ? localise.set["c_record"] : localise.set["c_records"];
+		gTab[++gIdx] = ' ';
 		gTab[++gIdx] = data.totals.bad_count;
-		gTab[++gIdx] = ' marked bad)';
+		gTab[++gIdx] = " " + localise.set["a_mb"] + ")";   // ' marked bad)';
 	}
 	
 	gTab[++gIdx] = '</p>';
