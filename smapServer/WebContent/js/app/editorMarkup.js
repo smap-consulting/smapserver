@@ -521,9 +521,28 @@ define([
 			    h[++idx] = '</span></button>';
 			} else if(selProperty === "autoplay") {		// Add a radio buttons to select autoplay status
 				
-				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection">';
-					h[++idx] = '<button type="button" class="btn btn-default" value="audio">Video</button>';
-					h[++idx] = '<button type="button" class="btn btn-default" value="audio">Audio</button>';
+				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection" data-toggle="buttons-radio">';
+					// Add "none" autoplay option
+					h[++idx] = '<button data-prop="autoplay" type="button" class="btn btn-default labelButton ';
+					if(question[selProperty] == "none") {
+						h[++idx] = "active";
+					}
+					h[++idx] = '" value="none">None</button>';
+					
+					// Add video autoplay option
+					h[++idx] = '<button data-prop="autoplay" type="button" class="btn btn-default labelButton ';
+					if(question[selProperty] == "video") {
+						h[++idx] = "active";
+					}
+					h[++idx] = '" value="video">Video</button>';
+					
+					// Add audio autoplay option
+					h[++idx] = '<button data-prop="autoplay" type="button" class="btn btn-default labelButton ';
+					if(question[selProperty] == "audio") {
+						h[++idx] = "active";
+					}
+					h[++idx] = '" value="audio">Audio</button>';
+					
 				h[++idx] = '</div>';
 				
 			}else if(selProperty === "media") {

@@ -738,10 +738,11 @@ function respondToEvents($context) {
 			$li = $this.closest('li'),
 			formIndex = $li.data("fid"),
 			itemIndex = $li.data("id"),
-			newVal = $this.hasClass("prop_no"),		// If set false then newVal will be true
+			newVal,		
 			type,
 			optionList = $li.data("list_name"),
-			qname = $li.data("qname");
+			qname = $li.data("qname"),
+			labelType;
 		
 		if($li.hasClass("option")) {
 			type = "option";
@@ -749,7 +750,12 @@ function respondToEvents($context) {
 			type = "question";
 		}
 
-		var labelType = prop === "hint" ? "hint" : "text";
+		labelType = prop === "hint" ? "hint" : "text";
+		if(prop === "required") {
+			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
+		} else if (prop === "autoplay") {
+			newVal = $this.val();
+		}
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});

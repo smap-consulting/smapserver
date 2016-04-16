@@ -48,6 +48,7 @@ public class Question {
 	int width = -1;							// Display width, generated from appearance column 
 												//  (for the moment - should probably have its own column 
 												//  entry but I want to maintain compatibility with xlsform)
+	public String autoplay;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	
 	private static Logger log =

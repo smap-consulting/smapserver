@@ -542,7 +542,8 @@ public class SurveyManager {
 				+ "q.column_name, "
 				+ "q.source_param, "
 				+ "q.path, "
-				+ "q.soft_deleted "
+				+ "q.soft_deleted, "
+				+ "q.autoplay "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -665,6 +666,10 @@ public class SurveyManager {
 				q.source_param = rsGetQuestions.getString(21);
 				q.path = rsGetQuestions.getString(22);
 				q.soft_deleted = rsGetQuestions.getBoolean(23);
+				q.autoplay = rsGetQuestions.getString(24);
+				if(q.autoplay == null) {
+					q.autoplay = "none";
+				}
 				
 				// Set an indicator if this is a property type question (_device etc)
 				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name, q.path);
