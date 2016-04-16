@@ -901,6 +901,8 @@ function addSharedMaps(map, sharedMaps) {
 								} else {
 									value_c = localise.set["c_no"];
 								}
+							} else if (key_orig === "_start" || key_orig === "_end" || key_orig === "Upload Time") {
+								value_c = localTime(value_c);
 							}
 							h[++idx] = '<td>' + addAnchors(value_c).join(',') + '</td>';
 						}
