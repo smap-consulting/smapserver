@@ -1,55 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
--->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title>Tasks</title>
+	<title>Tracking</title>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
 
-	<link href="/css/wb/plugins/fullcalendar/fullcalendar.css" rel="stylesheet">
-    <link href="/css/wb/plugins/fullcalendar/fullcalendar.print.css" rel='stylesheet' media='print'>
+    <link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
 	
 	
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
-    	
-    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
-    
-    
-    <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
 
 <script> if (!window.console) console = {log: function() {}}; </script>
 
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script data-main="js/taskManagement" src="/js/libs/require.js"></script>
-
-<!-- temp -->
-<style>
-  #map {  width:100%; height: 300px;}
-</style>
+<script data-main="js/tracking" src="/js/libs/require.js"></script>
 
 </head>
 <body>
 
 <div id="wrapper">
 
-	<nav class="navbar-default navbar-static-side noPrint" role="navigation">
+	<nav class="navbar-default navbar-static-side" role="navigation">
 		<div class="sidebar-collapse">
 	    	<ul class="nav metismenu" id="side-menu">
 				
 		      	<li>
-		          <a href="#" id="m_modules"  aria-expanded="false"><span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
-		          <ul class="nav nav-second-level" aria-expanded="false">
+		          <a href="#" id="m_modules"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
+		          <ul class="nav nav-second-level animated fadeInRight m-t-xs">
 		            
 		            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
@@ -60,10 +44,8 @@
 		          
 		          </ul>
 		        </li> 
-	        <li id="m_t_manage"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
-			<li id="m_t_dash" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
 
-			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
 	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -77,318 +59,215 @@
 		
 	</nav>
 
-
-</div>
-
-
-<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-
-<!-- Popup to show features when a user clicks on a geometry item -->
-<div id="features" class="feature-panel-right"></div>
-
-<!-- Modal to show task properties and allow them to be edited -->
-<div id="task_properties" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="taskPropLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="taskPropLabel"></h4>
-   			</div>
-		     <div class="modal-body">	
-	   			<form role="form" class="form-horizontal" name="taskProperties">
-	   				<div class="form-group">
-			            <label class="col-sm-2 control-label lang" data-lang="c_title" for="task_properties_title">title</label>
-		            	<div class="col-sm-10">
-			                <input id="task_properties_title" type='text' class="form-control"  name="taskTitle">
-			             </div>
-			         </div>
-					<div class="form-group">
-						<label class="col-sm-2 control-label lang" data-lang="c_repeat" for="users_select_user">repeat</label>
-						<div class="col-sm-10">
-							<div class="checkbox">
-								<input type="checkbox" name="repeat" value="repeat" id="task_properties_repeat">
-							</div>
-						</div>
-					</div>
-					<div class="form-group">
-			            <label class="col-sm-2 control-label lang" data-lang="c_scheduled" for="task_properties_scheduledDate">scheduled</label>
-		            	<div class="col-sm-10">
-			            	<div class='input-group date' id='task_properties_scheduledDate' data-toggle="tooltip"  data-container="body" title="Scheduled date in local time zone">
-			                	<input id="scheduleAt" type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" name="scheduleAt">
-			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-			                </div>
-			             </div>
-			         </div>
-			         <div class="form-group bus_only" style="display:none;">
-			            <label class="col-sm-2 control-label lang" data-lang="t_nfc" for="nfc_select">nfc</label>
-		            	<div class="col-sm-10">
-			            	<select class="form-control nfc_select" id="nfc_select" name="location_trigger"></select>
-			             </div>
-			         </div>
-
-					<input id="task_properties_taskid" type="hidden" name="taskid" value="0" style="display:none;"/>
-					<input id="scheduleAtUTC" type="hidden" name="scheduleAtUTC" value="" style="display:none;"/>
-				</form>
-						
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="taskPropertiesSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-<!-- Modal to assign a user to a task-->
-<div id="assign_user" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="assignUserLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="assignUserLabel"></h4>
-   			</div>
-		     <div class="modal-body">
-				<p class="single lang" data-lang="t_choose_user">choose user</p>
-				<form class="form" role="form" id="user_assign_form">
-					<label class="control-label lang" data-lang="c_user" for="users_select_user">user</label>
-					<select class="form-control users_select" id="users_select_user"></select>
-				</form>
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="assignUserSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-</div>	<!-- #wrapper -->
-
-
-
-<!-- Modal to allow the user to add tasks from an existing survey -->
-<div id="addTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="addTaskLabel"></h4>
-   			</div>
-		    <div class="modal-body">
-		    
-					<form role="form" class="form-horizontal" id="assign_survey_form">
-						<div class="form-group">
-							<label class="lang col-sm-2 control-label lang" data-lang="c_name" for="task_group_name">name</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="task_group_name">
-							</div>
-						</div>
-						
-						<div class="checkbox">
-							<label>
-								<input type="checkbox" name="empty_task_group" value="empty_task_group" id="empty_task_group">
-									<span class="lang" data-lang="t_ceg">empty group</span>
-							</label>
-						</div>
-						
-						<div id="add_task_from_existing">
-							<div class="form-group">
-								<label for="project_select" class="col-sm-2 control-label lang" data-lang="t_ep">existing project</label>
-								<div class="col-sm-10">
-									<select id="project_select" class="project_list form-control"></select>
-								</div>
-							</div>
-						
-							<div class="form-group">
-								<label for="survey" class="col-sm-2 control-label lang" data-lang="t_es">existing survey</label>
-								<div class="col-sm-10">
-									<select class="survey_select form-control" id="survey"></select><br/>
-								</div>
-							</div>
-							
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" name="filter_results" value="filter_results" id="filter_results_check">
-										<span class="lang" data-lang="t_ft">filter tasks</span>
-								</label>
-							</div>
-									
-							<div id="filter_results" style="display:none;">
-									
-									<div class="form-group">
-										<label for="filter_language" class="col-sm-2 control-label lang" data-lang="c_lang">Language</label>
-										<div class="col-sm-10">
-											<select id="filter_language" class="form-control"></select>
-										</div>
-									</div>
-									
-									<div class="form-group">
-										<label for="filter_question" class="col-sm-2 control-label lang" data-lang="t_fq">Filter by question</label>
-										<div class="col-sm-10">
-											<select class="selected_question form-control" id="filter_question"></select>
-										</div>
-									</div>
-								
-									<div class="filter_option_only" style="display:none;">
-										<div class="form-group">
-											<label class="col-sm-2 control-label lang" data-lang="t_so" for="filter_option">selected option</label>
-											<div class="col-sm-10">
-												<select class="form-control selected_option" id="filter_option"></select>
-											</div>
-										</div>
-									</div>
-									
-								<div class="filter_integer_only" style="display:none;">
-									<div class="form-group">
-										<label class="col-sm-2 control-label lang" for="filter_integer" data-lang="t_sn">numeric value</label>
-										<div class="col-sm-10">
-											<input type="number" class="selected_integer form-control" id="filter_integer">
-										</div>
-									</div>
-								</div>
-								
-								<div class="filter_text_only" style="display:none;">
-									<div class="form-group">
-										<label class="col-sm-2 control-label lang" for="filter_text" data-lang="t_st">text value</label>
-										<div class="col-sm-10">
-											<input type="text" class="selected_text form-control" id="filter_text">
-										</div>
-									</div>
-								</div>
-								
-								<div class="filter_date_only" style="display:none;">
+    <div id="page-wrapper" class="gray-bg">
+    	
+    	<!-- Header Row -->
+    	<div class="row border-bottom">
+        	<nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+        		<div class="navbar-header">
+            		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+        		</div>
+	            <ul class="nav navbar-top-links navbar-right">
 	
-		            				<div class="form-group">
-		            					<label class="col-sm-2 control-label lang" for="startDate" data-lang="c_from">from</label>
-		            					<div class="col-sm-10">
-			                				<div class='input-group date' id='startDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-			                				</div>
-			                			</div>
-		            				</div>
-		     
-		            				<div class="form-group">
-		            				    <label class="col-sm-2 control-label lang" for="endDate" data-lang="c_to">to</label>
-		            				    <div class="col-sm-10">
-			                				<div class='input-group date' id='endDate' data-toggle="tooltip"  data-container="body" title="Dates in local time zone">
-			                    				<input type='text' class="form-control" data-date-format="YYYY/MM/DD"/>
-			                    				<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
-			                				</div>
-			                			</div>
-		            				</div>
-		            				<div id="ut_alert" style="display:none;" class="alert alert-danger" role="alert"></div>
-								</div>
-							
-							</div>
-							<div class="checkbox">
-								<label>
-									<input id="update_results" type="checkbox" name="update_results" value="update_results"/>
-										<span class="lang" data-lang="t_ue">update existing</span>
-								</label>
-							</div>
-							
-							<div class="panel-group" role="tablist" aria-multiselectable="true">
-  								<div class="panel panel-default">
-    								<div class="panel-heading" role="tab" id="headingTaskParams">
-										<h4 class="panel-title">
-						       				<a data-toggle="collapse" data-parent="#show_task_params" href="#collapseTaskParams" 
-						       						aria-expanded="true" aria-controls="collapseLayers" class="lang" data-lang="t_ap">
-						         				address parameters
-						       				</a>
-					     				</h4>
-    								</div>
-			    					<div id="collapseTaskParams" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
-										<div id="task_params_table"></div>
-									</div>
-								</div>
-							</div>
-											
-							
-							<div class="form-group">
-								<label for="survey_to_complete" class="col-sm-2 control-label lang" data-lang="t_ns">New Survey</label>
-								<div class="col-sm-10">
-									<select class="survey_select form-control" id="survey_to_complete"></select>
-								</div>
-							</div>
-							
-							<div class="form-group">
-								<label for="users_task_group" class="col-sm-2 control-label lang" data-lang="t_assign">assign user</label>
-								<div class="col-sm-10">
-									<select class="form-control users_select" id="users_task_group"></select>
-								</div>
-							</div>
-						</div>
-										
-					</form>	
+	            </ul>
 
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="addNewGroupSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-<!-- Modal to allow the user to add new tasks  -->
-<div id="addNewTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="addNewTaskLabel"></h4>
-   			</div>
-		    <div class="modal-body">
-		    
-		    	<h4>Number of tasks to add: <span id="new_task_count">0</span></h4>
-		    	<div id="ts_alert" style="display:none;" class="alert alert-info" role="alert"></div>
-				<form role="form" class="form-horizontal" id="assign_survey_form">
-						
-					<div class="form-group">
-						<label for="users_select_new_task" class="col-sm-2 control-label lang" data-lang="c_user">user</label>
-						<div class="col-sm-10">
-							<select class="users_select form-control" id="users_select_new_task"></select>
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label for="survey_to_complete_new_task" class="col-sm-2 control-label lang" data-lang="t_ns">new survey</label>
-						<div class="col-sm-10">
-							<select class="survey_select form-control" id="survey_to_complete_new_task"></select>
-						</div>
-					</div>
-				
-				</form>	
-
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="addNewTaskSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-
-<!-- Modal to allow the user to manage the task parameters -->
-<div id="task_params" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="modifyMeLabel"></h4>
-   			</div>
-		    <div class="modal-body">
-				<div id="task_params_table"></div>
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="taskParamsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div> 
+        	</nav>
         </div>
-	</div>
+        
+        <!-- Table iBox -->
+        <div class="wrapper wrapper-content animated fadeInRight">
+        	<div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                    	<div class="ibox-title">
+                            <h5>M&E Tracking</h5>
+
+                           
+                        </div>
+                        <div class="ibox-content">
+                        	<table class="footable table table-stripped toggle-arrow-tiny" data-page-size="8">
+                                <thead>
+                                <tr>
+
+                                    <th data-toggle="true">Project</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th data-hide="all">Company</th>
+                                    <th data-hide="all">Completed</th>
+                                    <th data-hide="all">Task</th>
+                                    <th data-hide="all">Date</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>Project - This is example of project</td>
+                                    <td>Patrick Smith</td>
+                                    <td>0800 051213</td>
+                                    <td>Inceptos Hymenaeos Ltd</td>
+                                    <td><span class="pie">0.52/1.561</span></td>
+                                    <td>20%</td>
+                                    <td>Jul 14, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Alpha project</td>
+                                    <td>Alice Jackson</td>
+                                    <td>0500 780909</td>
+                                    <td>Nec Euismod In Company</td>
+                                    <td><span class="pie">6,9</span></td>
+                                    <td>40%</td>
+                                    <td>Jul 16, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Betha project</td>
+                                    <td>John Smith</td>
+                                    <td>0800 1111</td>
+                                    <td>Erat Volutpat</td>
+                                    <td><span class="pie">3,1</span></td>
+                                    <td>75%</td>
+                                    <td>Jul 18, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Gamma project</td>
+                                    <td>Anna Jordan</td>
+                                    <td>(016977) 0648</td>
+                                    <td>Tellus Ltd</td>
+                                    <td><span class="pie">4,9</span></td>
+                                    <td>18%</td>
+                                    <td>Jul 22, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Alpha project</td>
+                                    <td>Alice Jackson</td>
+                                    <td>0500 780909</td>
+                                    <td>Nec Euismod In Company</td>
+                                    <td><span class="pie">6,9</span></td>
+                                    <td>40%</td>
+                                    <td>Jul 16, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Project
+                                        <small>This is example of project</small>
+                                    </td>
+                                    <td>Patrick Smith</td>
+                                    <td>0800 051213</td>
+                                    <td>Inceptos Hymenaeos Ltd</td>
+                                    <td><span class="pie">0.52/1.561</span></td>
+                                    <td>20%</td>
+                                    <td>Jul 14, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Gamma project</td>
+                                    <td>Anna Jordan</td>
+                                    <td>(016977) 0648</td>
+                                    <td>Tellus Ltd</td>
+                                    <td><span class="pie">4,9</span></td>
+                                    <td>18%</td>
+                                    <td>Jul 22, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Project
+                                        <small>This is example of project</small>
+                                    </td>
+                                    <td>Patrick Smith</td>
+                                    <td>0800 051213</td>
+                                    <td>Inceptos Hymenaeos Ltd</td>
+                                    <td><span class="pie">0.52/1.561</span></td>
+                                    <td>20%</td>
+                                    <td>Jul 14, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Alpha project</td>
+                                    <td>Alice Jackson</td>
+                                    <td>0500 780909</td>
+                                    <td>Nec Euismod In Company</td>
+                                    <td><span class="pie">6,9</span></td>
+                                    <td>40%</td>
+                                    <td>Jul 16, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Betha project</td>
+                                    <td>John Smith</td>
+                                    <td>0800 1111</td>
+                                    <td>Erat Volutpat</td>
+                                    <td><span class="pie">3,1</span></td>
+                                    <td>75%</td>
+                                    <td>Jul 18, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Gamma project</td>
+                                    <td>Anna Jordan</td>
+                                    <td>(016977) 0648</td>
+                                    <td>Tellus Ltd</td>
+                                    <td><span class="pie">4,9</span></td>
+                                    <td>18%</td>
+                                    <td>Jul 22, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Alpha project</td>
+                                    <td>Alice Jackson</td>
+                                    <td>0500 780909</td>
+                                    <td>Nec Euismod In Company</td>
+                                    <td><span class="pie">6,9</span></td>
+                                    <td>40%</td>
+                                    <td>Jul 16, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Project
+                                        <small>This is example of project</small>
+                                    </td>
+                                    <td>Patrick Smith</td>
+                                    <td>0800 051213</td>
+                                    <td>Inceptos Hymenaeos Ltd</td>
+                                    <td><span class="pie">0.52/1.561</span></td>
+                                    <td>20%</td>
+                                    <td>Jul 14, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Gamma project</td>
+                                    <td>Anna Jordan</td>
+                                    <td>(016977) 0648</td>
+                                    <td>Tellus Ltd</td>
+                                    <td><span class="pie">4,9</span></td>
+                                    <td>18%</td>
+                                    <td>Jul 22, 2013</td>
+                                    <td><a href="#"><i class="fa fa-check text-navy"></i></a></td>
+                                </tr>
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <ul class="pagination pull-right"></ul>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                	</div>
+             	</div>
+        	</div>
+        </div>
+    </div>
+
 </div>
+
+
+<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+
+
 
 
 <!-- Modal to allow the user to edit their own details -->
@@ -457,8 +336,6 @@
 		</div>
 	</div>
 </div>
-	
-<script src="//maps.google.com/maps/api/js?v=3.6&amp"></script>
 
 <script>
 	setCustomAssignments();			// Apply custom javascript

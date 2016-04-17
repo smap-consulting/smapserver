@@ -1907,6 +1907,53 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Add the management columns for the survey
+	 */
+	public static void addManagementColumns(ArrayList<Column> columnList) {
+		// TODO check that these exist
+		// TODO Possibly the columns should vary with survey
+		// TODO Possibly there could be more than one set of managment columns for a single survey
+		
+		// Hardcoded for now
+		Column c = new Column();
+		c.name = "_mgmt_responsible";
+		c.humanName = "Responsible Person";
+		c.qType = "string";
+		columnList.add(c);
+		
+		c = new Column();
+		c.name = "_mgmt_action_deadline";
+		c.humanName = "Action Deadline";
+		c.qType = "date";
+		columnList.add(c);
+		
+		c = new Column();
+		c.name = "_mgmt_action_date";
+		c.humanName = "Date of Action";
+		c.qType = "date";
+		columnList.add(c);
+		
+		c = new Column();
+		c.name = "_mgmt_action_taken";
+		c.humanName = "Action Taken";
+		c.qType = "string";
+		columnList.add(c);
+		
+		c = new Column();
+		c.name = "_mgmt_address_recommendation";
+		c.humanName = "Does the Action Address the Recommendation";
+		c.qType = "string";
+		columnList.add(c);
+		
+		c = new Column();
+		c.name = "_mgmt_comment";
+		c.humanName = "Comment";
+		c.qType = "string";
+		columnList.add(c);
+		
+	}
+	
+	/*
 	 * Return true if this question is a property type question like deviceid
 	 */
 	public static boolean isPropertyType(String source_param, String name, String path) {

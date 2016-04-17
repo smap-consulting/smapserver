@@ -140,7 +140,9 @@ public class Data extends Application {
 	public Response getDataRecords(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@QueryParam("start") int start,
-			@QueryParam("limit") int limit) { 
+			@QueryParam("limit") int limit,
+			@QueryParam("mgmt") boolean mgmt,
+			@QueryParam("complete") boolean complete) { 
 		
 		Response response = null;
 		
@@ -150,7 +152,7 @@ public class Data extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records csv");
+		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records");
 		
 		String sqlGetMainForm = "select f_id, table_name from form where s_id = ? and parentform = 0;";
 		PreparedStatement pstmtGetMainForm = null;
@@ -183,6 +185,10 @@ public class Data extends Application {
 						true		// include instance id
 						);
 				
+				if(mgmt) {
+					GeneralUtilityMethods.addManagementColumns(columns);
+				}
+				
 				for(int i = 0; i < columns.size(); i ++) {
 					Column c = columns.get(i);
 					if(i > 0) {
@@ -194,13 +200,17 @@ public class Data extends Application {
 				if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
 					
 					String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
-							+ " where prikey >= ?"
-							+ " order by prikey asc;";
+							+ " where prikey >= ?";
+					String sqlSelect = "";
+					String sqlGetDataOrder = " order by prikey asc;";
 					
-					pstmtGetData = cResults.prepareStatement(sqlGetData);
+					if(mgmt && !complete) {
+						sqlSelect = " and _mgmt_action_date is null ";
+					}
+					pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
 					pstmtGetData.setInt(1, start);
 					
-					log.info("Get CSV data: " + pstmtGetData.toString());
+					log.info("Get data: " + pstmtGetData.toString());
 					rs = pstmtGetData.executeQuery();
 					
 					int index = 0;

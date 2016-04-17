@@ -32,6 +32,7 @@
 	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
+	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
 	icheck: '../../../../smapServer/WebContent/js/libs/wb/plugins/iCheck/icheck.min',
 	calendar: '../../../../smapServer/WebContent/js/libs/wb/plugins/fullcalendar/fullcalendar.min',
@@ -40,6 +41,9 @@
     modules: [
         {
             name: '../taskManagement'
+        },
+        {
+            name: '../tracking'
         }
 
     ]

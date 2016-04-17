@@ -114,7 +114,7 @@ public class Survey extends Application {
 	
 	@Path("/download")
 	@GET
-	public Response getSurveyPDF(@Context HttpServletRequest request,
+	public Response getSurveyDownload(@Context HttpServletRequest request,
 			@QueryParam("type") String type,
 			@QueryParam("language") String language,
 			@PathParam("sId") int sId) { 
@@ -144,6 +144,7 @@ public class Survey extends Application {
 			String sourceName = null;
 			String display_name = null;
 			String fileBasePath = null;		// File path excluding extensions
+			String folderPath = null;
 			String filename = null;
 			String filepath = null;
 			String sourceExt = null;
@@ -159,9 +160,9 @@ public class Survey extends Application {
 					"FROM survey s " + 
 					"where s.s_id = ?;";
 			
-			log.info(sql + " : " + sId);
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
+			log.info("Get survey details: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			if (resultSet.next()) {				
@@ -171,7 +172,8 @@ public class Survey extends Application {
 				String basePath = GeneralUtilityMethods.getBasePath(request);
 				String target_name = GeneralUtilityMethods.convertDisplayNameToFileName(display_name);
 				
-				fileBasePath = basePath + "/templates/" + projectId + "/" + target_name; 			
+				fileBasePath = basePath + "/templates/" + projectId + "/" + target_name; 
+				folderPath = basePath + "/templates/" + projectId;
 
 				String ext;		
 				if(type.equals("codebook")) {
@@ -189,6 +191,7 @@ public class Survey extends Application {
 				}
 				sourceName = fileBasePath + sourceExt;
 
+				log.info("Source name: " + sourceName + " type: " + type);
 				/*
 				 * The XML file for a code book or an XML download needs to be generated so that it contains the latest changes
 				 */
@@ -201,8 +204,13 @@ public class Survey extends Application {
 						
 						String xmlForm = xForm.get(template, false);
 						
+					    // 1. Create the project folder if it does not exist
+					    File folder = new File(folderPath);
+					    FileUtils.forceMkdir(folder);
+					    
 						File f = new File(sourceName);
 						
+						// 2. Re-Create the file
 						if(f.exists()) {
 							f.delete();
 						} 
@@ -244,8 +252,8 @@ public class Survey extends Application {
 								" " + language +
 	        					" >> /var/log/tomcat7/survey.log 2>&1"});
 						code = proc.waitFor();
+						log.info("Process exitValue: " + code);
 					}
-	                log.info("Process exitValue: " + code);
 	        		
 	                File file = new File(filepath);
 	                byte [] fileData = new byte[(int)file.length()];

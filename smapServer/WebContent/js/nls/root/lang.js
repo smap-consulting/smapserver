@@ -160,6 +160,9 @@ define({
 	"c_record": "Record",
 	"c_records": "Records",
 	"c_of": "of",
+	"c_media": "Media",
+	"c_changes": "Changes",
+	"c_calc": "Calculations",
 	
 	// File Types
 	"ft": "File Type",
