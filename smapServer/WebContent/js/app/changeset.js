@@ -1291,23 +1291,23 @@ define([
 			if(!isValid) {
 				updateModelWithErrorStatus(container, itemIndex, itemType);	// Update model and DOM
 			}
-		}
 		
 		
-		/*
-		 * If there were no errors check for warnings
-		 * Only do this on validateAll as otherwise it is just annoying to get the warnings
-		 */
-		if(!removeExisting) {
-			if(isValid) {	
-				if(item.visible || itemType === "option") {
-					isValid = checkBlankLabels(container, itemIndex, itemType, item, "warning");
+			/*
+			 * If there were no errors check for warnings
+			 * Only do this on validateAll as otherwise it is just annoying to get the warnings
+			 */
+			if(!removeExisting) {
+				if(isValid) {	
+					if(item.visible || itemType === "option") {
+						isValid = checkBlankLabels(container, itemIndex, itemType, item, "warning");
+					}
 				}
-			}
-			
-			if(isValid) {
-				if(item.visible && itemType === "question") {
-					isValid = checkMissingChoices(container, itemIndex, itemType, item, "warning");
+				
+				if(isValid) {
+					if(item.visible && itemType === "question") {
+						isValid = checkMissingChoices(container, itemIndex, itemType, item, "warning");
+					}
 				}
 			}
 		}
@@ -1911,22 +1911,31 @@ define([
 	function nextIssue(severity) {
 		
 		var i, pos;
-		
-		for(i = globals.gErrorPosition + 1; i < globals.gErrorPosition + globals.errors.length + 1; i++) {
+		/*
+		 * Make sure we start inside the array
+		 */
+		if(globals.errors.length > 0) {
+			if(globals.gErrorPosition > globals.errors.length - 1) {
+				globals.gErrorPosition  = 0;
+			}
+			for(i = globals.gErrorPosition + 1; i < globals.gErrorPosition + globals.errors.length + 1; i++) {
+					
+				if(i > globals.errors.length - 1 ) {
+					pos = i - globals.errors.length;
+				} else {
+					pos = i;
+				}
 				
-			if(i > globals.errors.length - 1 ) {
-				pos = i - globals.errors.length;
-			} else {
-				pos = i;
+				if(globals.errors[pos].severity === severity) {
+					globals.gErrorPosition = pos;
+					break;
+				}
 			}
 			
-			if(globals.errors[pos]. severity === severity) {
-				globals.gErrorPosition = pos;
-				break;
-			}
+			focusOnError(globals.gErrorPosition);
+		} else {
+			globals.gErrorPosition = 0;
 		}
-		
-		focusOnError(globals.gErrorPosition);
 	}
 
 
