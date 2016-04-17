@@ -27,6 +27,7 @@ if (Modernizr.localstorage) {
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
+    locale: gUserLocale,
     paths: {
     	app: '../app',
     	jquery: '../../../../js/libs/jquery-2.1.1',

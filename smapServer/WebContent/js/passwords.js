@@ -25,6 +25,7 @@ if (Modernizr.localstorage) {
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
+    locale: gUserLocale,
     paths: {
     	app: '../app',
     	jquery: 'jquery-2.1.1',
@@ -58,6 +59,7 @@ $(document).ready(function() {
 		getVersion();			// Update if the version on the server has changed
 	}
 	localise.setlang();
+	$('#forgottenPasswordEmail').attr('data-bv-emailaddress-message', localise.set["msg_inv_email"]);
 	
 	// Add the organisation to the title
 	if(window.location.hostname.indexOf("smap") > 0) {

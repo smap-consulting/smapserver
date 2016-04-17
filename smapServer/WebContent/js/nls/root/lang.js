@@ -244,6 +244,7 @@ define({
 	"msg_u_f": "Error upload failed",
 	"msg_u_nt": "No nfc tags found",
 	"msg_csv": "Only CSV files and Zip files containing CSV and media files are allowed",
+	"msg_inv_email": "Not a valid email address",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -347,7 +348,10 @@ define({
 	"percent": "Percent",
 	"count": "Count",
 	"none": "None",
-	"average": "Average"
+	"average": "Average",
+	
+	// Web forms
+	"wf_sig": "Signature"
 		
 	
 		
