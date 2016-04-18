@@ -60,6 +60,10 @@ DROP SEQUENCE IF EXISTS se_seq CASCADE;
 CREATE SEQUENCE se_seq START 1;
 ALTER SEQUENCE se_seq OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS dp_seq CASCADE;
+CREATE SEQUENCE dp_seq START 1;
+ALTER SEQUENCE dp_seq OWNER TO ws;
+
 -- User management
 DROP SEQUENCE IF EXISTS project_seq CASCADE;
 CREATE SEQUENCE project_seq START 10;
@@ -129,6 +133,7 @@ create TABLE project (
 CREATE UNIQUE INDEX idx_project ON project(o_id,name);
 ALTER TABLE project OWNER TO ws;
 
+
 DROP TABLE IF EXISTS regions CASCADE;
 create TABLE regions (
 	id INTEGER DEFAULT NEXTVAL('regions_seq') CONSTRAINT pk_regions PRIMARY KEY,
@@ -154,6 +159,17 @@ create TABLE map (
 	version integer
 	);
 ALTER TABLE map OWNER TO ws;
+
+DROP TABLE IF EXISTS data_processing CASCADE;
+create TABLE data_processing (
+	id INTEGER DEFAULT NEXTVAL('dp_seq') CONSTRAINT pk_dp PRIMARY KEY,
+	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	type text,			-- lqas || manage
+	description text,
+	config text
+	);
+ALTER TABLE data_processing OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS users_seq CASCADE;
 CREATE SEQUENCE users_seq START 2;

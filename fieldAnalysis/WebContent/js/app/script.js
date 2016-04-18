@@ -69,6 +69,7 @@ $(document).ready(function() {
 			        		split_locn = $('#splitlocn:checked').prop("checked"),
 			        		merge_select_multiple = $('#mergeSelectMultiple:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
+			        		sources = $('#sources').prop("checked"),
 			        		forms = [],
 			        		name_questions = [];
 		        			
@@ -126,7 +127,11 @@ $(document).ready(function() {
 		        			
 		        			url = exportSurveyMediaURL(sId, displayName, undefined, mediaQuestion, name_questions.join(','));
 		        		
-		        		}else {
+		        		} else if(format === "lqas") {
+		        			
+		        			url = exportSurveyLqasURL(sId, sources);
+		        		
+		        		} else {
 		        			// XLS export
 		        			forms = $(':checkbox:checked', '.selectforms').map(function() {
 		        			      return this.value;
@@ -139,7 +144,12 @@ $(document).ready(function() {
 		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms, exportReadOnly, merge_select_multiple);
 		        		}
 		        		
-		        		$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
+		        		if(format === "lqas") {
+		        			downloadFile(url, displayName + ".xlsx", 
+		        					"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		        		} else {
+		        			$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
+		        		}
 		        		$(this).dialog("close");
 		        	}
 		        }
@@ -192,26 +202,29 @@ $(document).ready(function() {
 		
 		$('').hide();		// Hide the thingsat model by default
 		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas').hide();
 			$('.showosm,.showro,.showlang').show();
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
+			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showshape,.showro,.showlang').show();
 		} else if(format === "stata") {
-			$('.showxls,.showosm,.showthingsat, .showmedia').hide();
+			$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		} else if(format === "thingsat") {
-			$('.showxls,.showosm, .showmedia').hide();
+			$('.showxls,.showosm, .showmedia, .showlqas').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 			showModel();			// Show the thingsat model
 		} else if(format === "trail") {
-			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia').hide();
+			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showshape,.showspreadsheet').show();
 		} else if(format === "media") {
-			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia').hide();
+			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
 			$('.showspreadsheet,.showmedia, .showlang').show();
+		} else if(format === "lqas") {
+			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
+			$('.showlqas').show();
 		} else {
-			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia').hide();
+			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showxls,.showspreadsheet,.showro,.showlang').show();
 		}
 	});
@@ -888,6 +901,19 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 	return encodeURI(url);
 }
 
+function exportSurveyLqasURL (sId, sources) {
+
+	var url = "/surveyKPI/lqasExport/";
+
+	url += sId;
+	
+	if(sources) {
+		url+="?sources=true";
+	}
+	
+	return encodeURI(url);
+}
+
 /*
  * Web service handler for exporting an entire survey to OSM
  */
@@ -981,4 +1007,36 @@ function exportSurveyLocationURL (sId, filename, form, format, type) {
 	url += "&type=" + type;
 		
 	return encodeURI(url);
+}
+
+
+function downloadFile(url, filename, mime) {
+
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', url, true);
+	xhr.responseType = 'blob';
+	 
+	xhr.onload = function(e) {
+		if (this.status == 200) {
+		    // get binary data as a response
+			var blob = new Blob([this.response], { type: mime });
+			var downloadUrl = URL.createObjectURL(blob);
+			var a = document.createElement("a");
+			a.href = downloadUrl;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+		    setTimeout(function(){
+		        document.body.removeChild(a);
+		        window.URL.revokeObjectURL(url);  
+		    }, 100);  
+		  } else {
+			  alert("Error: Download Failed");
+		  }
+	};
+	 
+	xhr.send();
+	
+	
+    
 }

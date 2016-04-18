@@ -68,15 +68,6 @@ public class ExportLQAS extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(ExportLQAS.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	/*
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	*/
 
 	/*
 	 * Assume:
@@ -123,8 +114,8 @@ public class ExportLQAS extends Application {
 			
 			/*
 			 * Get the LQAS definition to apply to this survey
-			 * Presumably this will be obtained from the database having been set up by the user
 			 */
+			//LQAS lqas = getLqasConfig();
 			LQAS lqas = new LQAS("sa");
 			
 			// Add data items
@@ -235,6 +226,12 @@ public class ExportLQAS extends Application {
 			 * End of setting up of test definition
 			 */
 			
+			// Write out the definition ==== Temp
+		   	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+			String json = gson.toJson(lqas);
+			System.out.println("json: " + json);
+			
+			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);
 			
@@ -271,5 +268,10 @@ public class ExportLQAS extends Application {
 		return Response.ok("").build();
 	}
 	
+	private LQAS getLqasConfig() {
+		
+		LQAS lqas = null;
+		return lqas;
+	}
 
 }

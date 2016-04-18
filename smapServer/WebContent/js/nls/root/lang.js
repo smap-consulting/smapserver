@@ -163,6 +163,7 @@ define({
 	"c_media": "Media",
 	"c_changes": "Changes",
 	"c_calc": "Calculations",
+	"c_trans": "Translate",
 	
 	// File Types
 	"ft": "File Type",
@@ -212,6 +213,7 @@ define({
 	"a_res": "Please provide a reason",
 	"a_mb": "Marked Bad",
 	"a_cm": "Cluster Members",
+	"a_dv": "Show Details",
 	
 	
 	// Messages
@@ -354,7 +356,14 @@ define({
 	"average": "Average",
 	
 	// Web forms
-	"wf_sig": "Signature"
+	"wf_sig": "Signature",
+	
+	// Editor
+	"ed_qt": "Question Text",
+	"ed_ct": "Choice Text",
+	"ed_qh": "Question Hint",
+	"ed_ap": "Appearance",
+	"ed_con": "Constraint"
 		
 	
 		

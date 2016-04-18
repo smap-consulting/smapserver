@@ -456,4 +456,16 @@ alter table question add column required_msg text;
 alter table question add column autoplay text;
 alter table organisation add column locale text;
 
+-- Add data processing table
+CREATE SEQUENCE dp_seq START 1;
+ALTER SEQUENCE dp_seq OWNER TO ws;
 
+create TABLE data_processing (
+	id INTEGER DEFAULT NEXTVAL('dp_seq') CONSTRAINT pk_dp PRIMARY KEY,
+	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	type text,			-- lqas || manage
+	description text,
+	config text
+	);
+ALTER TABLE data_processing OWNER TO ws;
