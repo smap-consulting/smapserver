@@ -184,10 +184,10 @@ public class Dashboard extends Application {
 			
 		} catch (SQLException e) {
 		    log.log(Level.SEVERE, "SQL Error", e);
-		    response = Response.serverError().build();
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error", e);
-			response = Response.serverError().build();
+			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection", e);}

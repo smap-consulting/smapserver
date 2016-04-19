@@ -37,6 +37,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
@@ -176,11 +177,10 @@ public class QuestionList extends Application {
 			}
 				
 		} catch (SQLException e) {
-		    System.out.println("Connection Failed! Check output console");
-		    e.printStackTrace();
+		    log.log(Level.SEVERE, "SQL Error", e);
 		    return "Error: Failed to retrieve dataset";
 		} catch (JSONException e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE, "Json Error", e);
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
@@ -190,8 +190,7 @@ public class QuestionList extends Application {
 					connectionSD = null;
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
+				log.log(Level.SEVERE, "Error", e);
 			}
 		}
 
@@ -273,8 +272,7 @@ public class QuestionList extends Application {
 			getQuestionsForm(pstmt, pstmtGetParent, language, sId, fId, jaQuestions);
 				
 		} catch (SQLException e) {
-		    System.out.println("Connection Failed! Check output console");
-		    e.printStackTrace();
+		    log.log(Level.SEVERE, "SQL Error", e);
 		    return "Error: Failed to retrieve dataset";
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -288,8 +286,7 @@ public class QuestionList extends Application {
 					connectionSD = null;
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
+				log.log(Level.SEVERE, "Error", e);
 			}
 		}
 

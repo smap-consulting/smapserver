@@ -26,6 +26,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 		addHourglass();
 	 	$.ajax({
 			url: url,
+			cache: false,
 			dataType: 'json',
 			success: function(data) {
 				removeHourglass();
@@ -81,6 +82,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
  	function getAsyncQuestionMeta(aUrl, asId, aqId, alanguage, view) {
  	 	$.ajax({
  			url: aUrl,
+ 			cache: false,
  			dataType: 'json',
  			success: function(data) {
  				gMetaInProgress--;

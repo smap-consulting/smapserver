@@ -84,11 +84,121 @@ require([
         		 localise, 
         		 globals) {
 	
+	var gSurveyMeta = {},
+		gTrackingData = {};
+	
 	 $(document).ready(function() {
 
-         $('.footable').footable();
+		var i,
+			params,
+			pArray = [],
+			param = [],
+			openingNew = false,
+			dont_get_current_survey = true,
+			bs = isBusinessServer();
+			
+		localise.setlang();		// Localise HTML
+		 
+		// Get the parameters and show a management survey if required
+		params = location.search.substr(location.search.indexOf("?") + 1)
+		pArray = params.split("&");
+		dont_get_current_survey = false;
+		for (i = 0; i < pArray.length; i++) {
+			param = pArray[i].split("=");
+			if ( param[0] === "id" ) {
+				dont_get_current_survey = true;		// Use the passed in survey id
+				globals.gCurrentSurvey = param[1];
+				saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+			} else if ( param[0] === "new" ) {
+				dont_get_current_survey = true;		// Don't set teh current survey from the users defaults
+				globals.gCurrentSurvey = -1;
+				// TODO display list of 
+			}
+		}
+		
+		// Get the user details
+		globals.gIsAdministrator = false;
+		getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
+		
+		// Get the data for the current survey
+		if(!gSurveyMeta[globals.gCurrentSurvey]) {
+			getSurveyMetaData(globals.gCurrentSurvey);
+		}
+		getTrackingData(globals.gCurrentSurvey);
 
      });
+	 
+	 function getSurveyList() {
+		 loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
+	 }
+	 
+	 function surveyListDone() {
+		 //getSurveyDetails(surveyDetailsDone);
+	 }
+	 
+	 function getTrackingData(sId) {
+		 
+		 var url = '/api/v1/data/' + sId;
+		 
+		 addHourglass();
+		 $.ajax({
+			 url: url,
+			 cache: false,
+			 dataType: 'json',
+			 success: function(data) {
+				 removeHourglass();
+				 gTrackingData[sId] = data;
+				 if(gSurveyMeta[sId]) {
+					 showTrackingData(sId);
+				 }
+			 },
+			 error: function(xhr, textStatus, err) {
+				 removeHourglass();
+				 if(xhr.readyState == 0 || xhr.status == 0) {
+					 return;  // Not an error
+				 } else {
+						alert("Error failed to get data from survey:" + sId);
+				 }
+			 }
+		 });
+	 }
+	 
+	 function getSurveyMetaData(sId) {
+		 
+		 var url = '/surveyKPI/questionsInMainForm/' + sId;
+		 
+		 addHourglass();
+		 $.ajax({
+			 url: url,
+			 cache: false,
+			 dataType: 'json',
+			 success: function(data) {
+				 removeHourglass();
+				 gSurveyMeta[sId] = data;
+				 if(gTrackingData[sId]) {
+					 showTrackingData(sId);
+				 }
+			 },
+			 error: function(xhr, textStatus, err) {
+				 removeHourglass();
+				 if(xhr.readyState == 0 || xhr.status == 0) {
+					 return;  // Not an error
+				 } else {
+						alert("Error failed to get data from survey:" + sId);
+				 }
+			 }
+		 });
+	 }
+	 
+	 function showTrackingData(sId) {
+		 var x = 1,
+		 	tracking = gTrackingData[sId],
+		 	meta = gSurveyMeta[sId];
+		 	
+		 
+		$('.footable').footable();
+	 }
+	
 
 });
 

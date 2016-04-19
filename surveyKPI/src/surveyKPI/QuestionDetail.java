@@ -49,17 +49,17 @@ import java.util.logging.Logger;
  */
 
 @Path("/question/{sId}/{lang}/{qId}")
-public class Question extends Application {
+public class QuestionDetail extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 
 	private static Logger log =
-			 Logger.getLogger(Question.class.getName());
+			 Logger.getLogger(QuestionDetail.class.getName());
 	
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Question.class);
+		s.add(QuestionDetail.class);
 		return s;
 	}
 
