@@ -84,7 +84,7 @@ require([
         		 localise, 
         		 globals) {
 	
-	var gSurveyMeta = {},
+	var gSurveyConfig = {},
 		gTrackingData = {};
 	
 	 $(document).ready(function() {
@@ -110,7 +110,7 @@ require([
 				globals.gCurrentSurvey = param[1];
 				saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
 			} else if ( param[0] === "new" ) {
-				dont_get_current_survey = true;		// Don't set teh current survey from the users defaults
+				dont_get_current_survey = true;		// Don't set the current survey from the users defaults
 				globals.gCurrentSurvey = -1;
 				// TODO display list of 
 			}
@@ -121,21 +121,40 @@ require([
 		getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
 		
 		// Get the data for the current survey
-		if(!gSurveyMeta[globals.gCurrentSurvey]) {
-			getSurveyMetaData(globals.gCurrentSurvey);
+		if(!gSurveyConfig[globals.gCurrentSurvey]) {
+			getSurveyConfigData(globals.gCurrentSurvey);
 		}
 		getTrackingData(globals.gCurrentSurvey);
 
+		 /*
+		  * Set up dialog to edit survey config or to add a new survey
+		  */
+		 $('#setSurveyConfig').on('show.bs.modal', function (event) {
+			 var $this = $(this),
+			 	$invoker = $(event.relatedTarget);
+			 
+			 if($invoker.data("action") === "edit") {
+				 // Get the configurable data for this tracking survey
+				 // Hide survey select
+			 }  else {
+				 // Get the column names for the current survey
+				 getSurveyColumns(globals.gCurrentSurvey);
+			 }
+			 $('#setSurveyForm')[0].reset(); 
+		});
      });
 	 
+	 /*
+	  * Get the list of available surveys in this project
+	  * Called after the user details have been retrieved
+	  */
 	 function getSurveyList() {
-		 loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
+		 loadTrackingSurveys(globals.gCurrentProject);
 	 }
 	 
-	 function surveyListDone() {
-		 //getSurveyDetails(surveyDetailsDone);
-	 }
-	 
+	 /*
+	  * Get the tracking data for the specified survey
+	  */
 	 function getTrackingData(sId) {
 		 
 		 var url = '/api/v1/data/' + sId;
@@ -148,7 +167,7 @@ require([
 			 success: function(data) {
 				 removeHourglass();
 				 gTrackingData[sId] = data;
-				 if(gSurveyMeta[sId]) {
+				 if(gSurveyConfig[sId]) {
 					 showTrackingData(sId);
 				 }
 			 },
@@ -163,37 +182,11 @@ require([
 		 });
 	 }
 	 
-	 function getSurveyMetaData(sId) {
-		 
-		 var url = '/surveyKPI/questionsInMainForm/' + sId;
-		 
-		 addHourglass();
-		 $.ajax({
-			 url: url,
-			 cache: false,
-			 dataType: 'json',
-			 success: function(data) {
-				 removeHourglass();
-				 gSurveyMeta[sId] = data;
-				 if(gTrackingData[sId]) {
-					 showTrackingData(sId);
-				 }
-			 },
-			 error: function(xhr, textStatus, err) {
-				 removeHourglass();
-				 if(xhr.readyState == 0 || xhr.status == 0) {
-					 return;  // Not an error
-				 } else {
-						alert("Error failed to get data from survey:" + sId);
-				 }
-			 }
-		 });
-	 }
 	 
 	 function showTrackingData(sId) {
 		 var x = 1,
 		 	tracking = gTrackingData[sId],
-		 	meta = gSurveyMeta[sId],
+		 	meta = gSurveyConfig[sId],
 		 	h = [],
 		 	idx = -1,
 		 	i,
@@ -219,21 +212,134 @@ require([
 		$('.footable').footable();
 	 }
 	 
-	 /*
-	  * Set up dialog to edit survey config or to add a new survey
-	  */
-	 $('#setSurveyConfig').on('show.bs.modal', function (event) {
-		 var $this = $(this),
-		 	$invoker = $(event.relatedTarget);
-		 
-		 if($invoker.data("action") === "edit") {
-			 // Hide survey select
-		 }
-		  
-		 $('#setSurveyForm')[0].reset();
-		 
-	});
+	/*
+	 * Get surveys and update the survey lists on this page
+	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
+	 *   applied to the survey
+	 */	
+	 function loadTrackingSurveys(projectId, callback) {
+	 	
+	 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
+	 		$elemNonTracking = $('.nonTrackingSurveys'),
+	 		$elemTracking = $('.trackingSurveys');
+
+	 	
+	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
+	 		
+	 		addHourglass();
+
+	 		$.ajax({
+	 			url: url,
+	 			dataType: 'json',
+	 			cache: false,
+	 			success: function(data) {
+	 				
+	 				var i,
+	 					item,
+	 					hNT = [],
+	 					idxNT = -1,
+	 					hT = [],
+	 					idxT = -1,
+	 					firstSurvey = -1;
+	 				
+	 				removeHourglass();
+	 				
+	 				for(i = 0; i < data.length; i++) {
+	 					item = data[i];
+	 					if(typeof item.trackingId === "undefined") {
+	 						hNT[++idxNT] = '<option value="';
+	 						hNT[++idxNT] = item.id;
+	 						hNT[++idxNT] = '">';
+	 						hNT[++idxNT] = item.displayName;
+	 						hNT[++idxNT] = '</option>';
+	 					} else {
+	 						hT[++idxT] = '<tr>';
+	 							hT[++idxT] = '<th data-toggle="true">';
+	 							hT[++idxT] = item.displayName;
+	 							ht[++idxT] = '</th>';
+	 						hT[++idxT] = '</tr>';
+	 					}
+	 					
+	 					if(i == 0) {
+	 						firstSurvey = item.id;
+	 					}
+	 				}
+
+	 				$elemNonTracking.empty().html(hNT.join(''));
+	 				$elemTracking.empty().html(hT.join(''));
+	 				
+	 				if(globals.gCurrentSurvey <= 0) {
+	 					globals.gCurrentSurvey = firstSurvey;
+	 					saveCurrentProject(-1, globals.gCurrentSurvey);
+	 				}
+	 				
+	 				if(typeof callback == "function") {
+	 					callback();
+	 				}
+	 			},
+	 			error: function(xhr, textStatus, err) {
+	 				
+	 				removeHourglass();
+	 				if(xhr.readyState == 0 || xhr.status == 0) {
+	 		              return;  // Not an error
+	 				} else {
+	 					console.log("Error: Failed to get list of surveys: " + err);
+	 				}
+	 			}
+	 		});	
+	 	} else {
+	 		$elem.empty();
+	 		if(addAll) {
+	 			$elem.append('<option value="_all">All Surveys</option>');	
+	 		}
+	 		
+	 		if(callback) {
+	 			callback();
+	 		}
+
+	 	}
+	 }
 	
+	 /*
+	  * Get the columns for a survey that is not currently being tracked
+	  */
+	 function getSurveyColumns(sId) {
+		 
+		 if(!gSurveyConfig[sId]) {
+			 var url = '/surveyKPI/tracked/questionsInMainForm/' + sId;
+			 
+			 addHourglass();
+			 $.ajax({
+				 url: url,
+				 cache: false,
+				 dataType: 'json',
+				 success: function(data) {
+					 removeHourglass();
+					 gSurveyConfig[sId] = data;
+					// Add survey columns to the dialog
+				 },
+				 error: function(xhr, textStatus, err) {
+					 removeHourglass();
+					 if(xhr.readyState == 0 || xhr.status == 0) {
+						 return;  // Not an error
+					 } else {
+							alert("Error failed to get column names from survey: " + sId + " " + xhr.responseText);
+					 }
+				 }
+			 });
+		 } else {
+			 // Add survey columns to the dialog
+		 }
+		 
+		 
+	 }
+	 
+	 /*
+	  * Get the configuration data for a tracked survey
+	  */
+	 function getSurveyConfigData(sId) {
+		 
+	 }
 
 });
 

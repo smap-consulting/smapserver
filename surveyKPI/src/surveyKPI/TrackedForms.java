@@ -35,6 +35,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.Question;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,8 +50,8 @@ import java.util.logging.Logger;
 /*
  * Get the questions in the top level form for the requested survey
  */
-@Path("/questionsInMainForm/{sId}")
-public class QuestionInForm extends Application {
+@Path("/tracked")
+public class TrackedForms extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
@@ -62,6 +63,7 @@ public class QuestionInForm extends Application {
 	 *  Exclude read only
 	 */
 	@GET
+	@Path("/questionsInMainForm/{sId}")
 	@Produces("application/json")
 	public Response getQuestions(@Context HttpServletRequest request,
 			@PathParam("sId") int sId) { 
@@ -72,14 +74,14 @@ public class QuestionInForm extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		ArrayList<Question> questions = new ArrayList<Question> ();
+		ArrayList<TableColumn> questions = new ArrayList<TableColumn> ();
 		Response response = null;
 		
 		PreparedStatement pstmt = null;
 		try {
 			
-			String sql = "SELECT q.q_id, q.qtype, "
-					+ "q.qname, q.column_name "
+			String sql = "select  "
+					+ "q.qname as name "
 					+ "from form f, question q "
 					+ "where f.f_id = q.f_id "
 					+ "and f.s_id = ? "
@@ -95,12 +97,7 @@ public class QuestionInForm extends Application {
 			log.info("Get questions: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
-				Question q = new Question();
-				
-				q.id = rs.getInt("q_id");
-				q.type = rs.getString("qtype");
-				q.name = rs.getString("qname");
-				q.columnName = rs.getString("column_name");
+				TableColumn q = new TableColumn(rs.getString("name"));
 				
 				questions.add(q);
 			}
