@@ -96,8 +96,41 @@
 					</div>
         	</div>
         </div>
-            
-        <!-- Table iBox -->
+        
+               <!-- Tracked items to process -->
+        <div class="wrapper wrapper-content animated fadeInRight">
+        	<div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                    	<div class="ibox-title">
+                            <h5>Tracked Forms</h5>
+                            <div class="ibox-tools">
+                                <a class="collapse-link">
+                                    <i class="fa fa-chevron-up"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="ibox-content">
+                        	<a data-toggle="modal" class="btn btn-success" href="#setSurveyConfig" data-action="add"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
+                        	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
+                                <thead>
+                                <tr>
+                                	<th data-toggle="true">Project</th>
+                               		<th>Name</th>
+                               		<th>Edit</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                        	</table>
+                        </div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		  
+        <!-- Tracked items to process -->
         <div class="wrapper wrapper-content animated fadeInRight">
         	<div class="row">
                 <div class="col-lg-12">
@@ -291,6 +324,35 @@
 <img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
 
+<!-- Modal to add or edit a survey -->
+<div id="setSurveyConfig" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Select Form</h3>
+
+						<p>Select the form that you want to track.</p>
+
+						<form id="setSurveyForm" role="form">
+							<div class="form-group"><label>Email</label> <input type="email" placeholder="Enter email" class="form-control"></div>
+							<div class="form-group"><label>Password</label> <input type="password" placeholder="Password" class="form-control"></div>
+							<div>
+								<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+								<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+								
+							</div>
+						</form>
+					</div>
+					<div class="col-sm-6"><h4>Questions</h4>
+						<p>Select the questions you want to include and those that you want to be always visible.</p>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 
 <!-- Modal to allow the user to edit their own details -->

@@ -218,6 +218,21 @@ require([
 		 
 		$('.footable').footable();
 	 }
+	 
+	 /*
+	  * Set up dialog to edit survey config or to add a new survey
+	  */
+	 $('#setSurveyConfig').on('show.bs.modal', function (event) {
+		 var $this = $(this),
+		 	$invoker = $(event.relatedTarget);
+		 
+		 if($invoker.data("action") === "edit") {
+			 // Hide survey select
+		 }
+		  
+		 $('#setSurveyForm')[0].reset();
+		 
+	});
 	
 
 });
