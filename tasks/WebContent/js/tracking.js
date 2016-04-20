@@ -193,7 +193,27 @@ require([
 	 function showTrackingData(sId) {
 		 var x = 1,
 		 	tracking = gTrackingData[sId],
-		 	meta = gSurveyMeta[sId];
+		 	meta = gSurveyMeta[sId],
+		 	h = [],
+		 	idx = -1,
+		 	i,
+		 	$head = $('#trackingTable').find('thead'),
+		 	$body = $('#trackingTable').find('tbody');
+		 
+		 // Add head
+		 h[idx++] = '<tr>';
+		 for(i = 0; i < meta.length; i++) {
+			 if(i = 0) {
+				 h[++idx]= '<th data-toggle="true">';
+			 } else {
+				 h[++idx] = '<th>';
+			 }
+			 h[++idx] = meta[i].name;
+			 
+			 
+		 }
+		 h[idx++] = '</tr>';
+		 
 		 	
 		 
 		$('.footable').footable();
