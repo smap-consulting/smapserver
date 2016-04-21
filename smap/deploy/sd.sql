@@ -457,6 +457,8 @@ alter table question add column autoplay text;
 alter table organisation add column locale text;
 
 -- Add data processing table
+alter table survey add column managed_id integer;
+
 CREATE SEQUENCE dp_seq START 1;
 ALTER SEQUENCE dp_seq OWNER TO ws;
 
@@ -469,3 +471,4 @@ create TABLE data_processing (
 	config text
 	);
 ALTER TABLE data_processing OWNER TO ws;
+--insert into data_processing(o_id, name, type) values (1, 'm&e tracking', 'manage');

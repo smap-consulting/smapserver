@@ -84,8 +84,10 @@ require([
         		 localise, 
         		 globals) {
 	
-	var gSurveyConfig = {},
-		gTrackingData = {};
+	var cache = {
+		surveyConfig: {},
+		trackingData: {}
+	};
 	
 	 $(document).ready(function() {
 
@@ -121,28 +123,38 @@ require([
 		getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
 		
 		// Get the data for the current survey
-		if(!gSurveyConfig[globals.gCurrentSurvey]) {
+		if(!cache.surveyConfig[globals.gCurrentSurvey]) {
 			getSurveyConfigData(globals.gCurrentSurvey);
 		}
 		getTrackingData(globals.gCurrentSurvey);
 
-		 /*
-		  * Set up dialog to edit survey config or to add a new survey
-		  */
-		 $('#setSurveyConfig').on('show.bs.modal', function (event) {
-			 var $this = $(this),
-			 	$invoker = $(event.relatedTarget);
-			 
-			 if($invoker.data("action") === "edit") {
-				 // Get the configurable data for this tracking survey
-				 // Hide survey select
-			 }  else {
-				 // Get the column names for the current survey
-				 getSurveyColumns(globals.gCurrentSurvey);
-			 }
-			 $('#setSurveyForm')[0].reset(); 
+		/*
+		 * Set up dialog to add a new managed survey
+		 */
+		//$('#addManagedSurvey').on('show.bs.modal', function (event) {
+	
+		//});
+		$('#managedSurveyCreate').click(function(){
+			createManagedSurvey($('#newManagedSurvey').val(), 1);	// TODO remove hard coding of managed survey defn (current set to 1)
 		});
      });
+	 
+	 /*
+	  * Refresh the data used in this page
+	  */
+	 function refreshData() {
+		 
+		 // Clear cache
+		 cache.surveyConfig = {};
+		 cache.trackingData = {};
+		 
+		 // Get the list of available surveys
+		 getSurveyList();
+			
+		 // Get the data for the current survey
+		 getSurveyConfigData(globals.gCurrentSurvey);
+		 getTrackingData(globals.gCurrentSurvey);
+	 }
 	 
 	 /*
 	  * Get the list of available surveys in this project
@@ -166,8 +178,8 @@ require([
 			 dataType: 'json',
 			 success: function(data) {
 				 removeHourglass();
-				 gTrackingData[sId] = data;
-				 if(gSurveyConfig[sId]) {
+				 cache.trackingData[sId] = data;
+				 if(cache.surveyConfig[sId]) {
 					 showTrackingData(sId);
 				 }
 			 },
@@ -185,8 +197,8 @@ require([
 	 
 	 function showTrackingData(sId) {
 		 var x = 1,
-		 	tracking = gTrackingData[sId],
-		 	meta = gSurveyConfig[sId],
+		 	tracking = cache.trackingData[sId],
+		 	meta = cache.surveyConfig[sId],
 		 	h = [],
 		 	idx = -1,
 		 	i,
@@ -221,7 +233,7 @@ require([
 	 	
 	 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
 	 		$elemNonTracking = $('.nonTrackingSurveys'),
-	 		$elemTracking = $('.trackingSurveys');
+	 		$elemTracking = $('#surveyTable').find('tbody');
 
 	 	
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
@@ -246,7 +258,7 @@ require([
 	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(typeof item.trackingId === "undefined") {
+	 					if(item.managed_id === 0) {
 	 						hNT[++idxNT] = '<option value="';
 	 						hNT[++idxNT] = item.id;
 	 						hNT[++idxNT] = '">';
@@ -256,7 +268,7 @@ require([
 	 						hT[++idxT] = '<tr>';
 	 							hT[++idxT] = '<th data-toggle="true">';
 	 							hT[++idxT] = item.displayName;
-	 							ht[++idxT] = '</th>';
+	 							hT[++idxT] = '</th>';
 	 						hT[++idxT] = '</tr>';
 	 					}
 	 					
@@ -305,8 +317,8 @@ require([
 	  */
 	 function getSurveyColumns(sId) {
 		 
-		 if(!gSurveyConfig[sId]) {
-			 var url = '/surveyKPI/tracked/questionsInMainForm/' + sId;
+		 if(!cache.surveyConfig[sId]) {
+			 var url = '/surveyKPI/managed/questionsInMainForm/' + sId;
 			 
 			 addHourglass();
 			 $.ajax({
@@ -315,7 +327,7 @@ require([
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
-					 gSurveyConfig[sId] = data;
+					 cache.surveyConfig[sId] = data;
 					// Add survey columns to the dialog
 				 },
 				 error: function(xhr, textStatus, err) {
@@ -339,6 +351,35 @@ require([
 	  */
 	 function getSurveyConfigData(sId) {
 		 
+	 }
+	 
+	 /*
+	  * Create a new managed Survey
+	  */
+	 function createManagedSurvey(sId, manageId) {
+		 
+		 var saveObj = {
+				 sId: sId,
+				 manageId: manageId
+		 }
+		 
+		 saveString = JSON.stringify(saveObj);
+		 addHourglass();
+		 $.ajax({
+			 type: "POST",
+				  dataType: 'text',
+				  contentType: "application/json",
+				  url: "/surveyKPI/managed/add",
+				  data: { settings: saveString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  refreshData();
+					  alert("Error: Failed to create managed service");
+				  }
+			});
 	 }
 
 });

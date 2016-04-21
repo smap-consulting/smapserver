@@ -111,7 +111,7 @@
                             </div>
                         </div>
                         <div class="ibox-content">
-                        	<a data-toggle="modal" class="btn btn-success" href="#setSurveyConfig" data-action="add"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
+                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey" data-action="add"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
                         	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
                                 <thead>
                                 <tr>
@@ -323,29 +323,43 @@
 <img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
 
-<!-- Modal to add or edit a survey -->
-<div id="setSurveyConfig" class="modal fade" aria-hidden="true">
+<!-- Modal to add a survey as managed -->
+<div id="addManagedSurvey" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b">Select Form</h3>
+
+						<p>Select the form that you want to manage.</p>
+
+						<form id="setSurveyForm" role="form">
+							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="project_name">Select Project</label>
+							<div class="col-sm-8">
+								<select class="nonTrackingSurveys form-control" id="newManagedSurvey"></select>
+							</div>
+					
+						</form>
+					</div>
+				</div>
+			</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+					<button id="managedSurveyCreate" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to edit the configuration of a managed survey -->
+<div id="editSurveyConfig" class="modal fade" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-body">
 				<div class="row">
 					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Select Form</h3>
 
-						<p>Select the form that you want to track.</p>
-
-						<form id="setSurveyForm" role="form">
-							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="project_name">Select Project</label>
-							<div class="col-sm-8">
-								<select class="nonTrackingSurveys form-control" id="newTrackingSurvey"></select>
-							</div>
-					
-				
-							<div>
-								<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-								<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-								
-							</div>
-						</form>
+						
 					</div>
 					<div class="col-sm-6"><h4>Questions</h4>
 						<p>Select the questions you want to include and those that you want to be always visible.</p>
@@ -356,7 +370,6 @@
 		</div>
 	</div>
 </div>
-
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

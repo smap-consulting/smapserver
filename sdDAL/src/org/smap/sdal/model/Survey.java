@@ -35,6 +35,7 @@ public class Survey {
 	public ArrayList<ChangeLog> changes  = new ArrayList<ChangeLog> ();
 	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
 	public String pdfTemplateName;
+	public int managed_id;
 
 	
 	// Getters
@@ -117,5 +118,6 @@ public class Survey {
 	public void setDeleted(boolean v) { deleted = v;};
 	public void setBlocked(boolean v) { blocked = v;};
 	public void setHasManifest(boolean v) { hasManifest = v;};
+	public void setManagedId(int v) { managed_id = v;};
 	
 }

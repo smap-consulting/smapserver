@@ -338,7 +338,8 @@ CREATE TABLE survey (
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey
 	instance_name text,								-- The rule for naming a survey instance form its data
-	last_updated_time DATE
+	last_updated_time DATE,
+	managed_id integer								-- Identifier of configuration for managing records
 	);
 ALTER TABLE survey OWNER TO ws;
 DROP INDEX IF EXISTS SurveyDisplayName;
