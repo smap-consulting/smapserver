@@ -480,7 +480,6 @@ create TABLE show_columns (
 	id INTEGER DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_sc PRIMARY KEY,
 	dp_id INTEGER REFERENCES data_processing(id) ON DELETE CASCADE,
 	q_id INTEGER REFERENCES question(q_id) ON DELETE CASCADE,
-	include boolean,
-	hidden boolean			
+	config text		
 	);
 ALTER TABLE show_columns OWNER TO ws;

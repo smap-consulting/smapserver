@@ -31,29 +31,21 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.DataProcessingConfig;
-import org.smap.sdal.model.Question;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import model.Settings;
-
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,8 +81,9 @@ public class ManagedForms extends Application {
 		ArrayList<TableColumn> configColumns = null;
 		Response response = null;
 		
-		String sql = "select config from data_processing where id = ?;";
+		String sql = "select config from show_columns where id = ? and dp_id = ?;";
 		PreparedStatement pstmt = null;
+		
 		
 		String sqlGetForm = "select  "
 				+ "f_id,"
@@ -134,11 +127,12 @@ public class ManagedForms extends Application {
 					);		
 			
 			/*
-			 * Get the columns from the 
+			 * Get the columns to show for this survey and management function
 			 */
 			if(dpId > 0) {
 				pstmt = sd.prepareStatement(sql);	 
 				pstmt.setInt(1,  sId);
+				pstmt.setInt(1,  dpId);
 	
 				if(rs != null) {
 					rs.close();
@@ -149,8 +143,8 @@ public class ManagedForms extends Application {
 				
 					System.out.println("   Config: " + config);
 					if(config != null) {
-						DataProcessingConfig dpConfig = gson.fromJson(config, DataProcessingConfig.class);
-						configColumns = dpConfig.columns;
+						Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();	
+						configColumns = gson.fromJson(config, type);
 					} 
 				}
 			} else {
@@ -161,8 +155,7 @@ public class ManagedForms extends Application {
 			 * Add any configuration settings
 			 * Order the config according to the current survey definition and
 			 * Add any new columns that may have been added to the survey since the configuration was created
-			 */
-			
+			 */			
 			for(int i = 0; i < columnList.size(); i++) {
 				Column c = columnList.get(i);
 				if(keepThis(c.name)) {
@@ -180,9 +173,6 @@ public class ManagedForms extends Application {
 					columns.add(tc);
 				}
 			}
-			
-			String resp = gson.toJson(columns);
-			response = Response.ok(resp).build();
 		
 				
 		} catch (SQLException e) {
@@ -242,9 +232,6 @@ public class ManagedForms extends Application {
 			response = Response.serverError().build();
 		    return response;
 		}
-		
-		String user = request.getRemoteUser();
-		log.info("Settings:" + settings);
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		AddManaged am = gson.fromJson(settings, AddManaged.class);
