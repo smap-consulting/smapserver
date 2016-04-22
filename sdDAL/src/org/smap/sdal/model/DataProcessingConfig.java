@@ -6,7 +6,7 @@ public class DataProcessingConfig {
 	public ArrayList<TableColumn> columns;		
 
 	public DataProcessingConfig() {
-		columns = new ArrayList<TableColumn> ();
+		
 	}
 	
 }

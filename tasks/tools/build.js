@@ -43,7 +43,7 @@
             name: '../taskManagement'
         },
         {
-            name: '../tracking'
+            name: '../managed'
         }
 
     ]

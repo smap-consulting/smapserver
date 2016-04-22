@@ -88,7 +88,8 @@ require([
 			surveyConfig: {},
 			managedData: {}
 		},
-		gIsManagedSurvey = false;
+
+		gManageId = undefined;
 	
 	 $(document).ready(function() {
 
@@ -157,9 +158,9 @@ require([
 	 }
 	 
 	 function managedSurveysLoaded() {
-		 if(globals.gCurrentSurvey > 0 && gIsManagedSurvey) {
+		 if(globals.gCurrentSurvey > 0 && gManageId) {
 			 getManagedData(globals.gCurrentSurvey);
-			 getSurveyConfig(globals.gCurrentSurvey);
+			 getSurveyConfig(globals.gCurrentSurvey, gManageId);
 		 }
 	 }
 	 
@@ -199,6 +200,7 @@ require([
 		 var x = 1,
 		 	managed = cache.managedData[sId],
 		 	config = cache.surveyConfig[sId],
+		 	columns = config.columns,
 		 	h = [],
 		 	idx = -1,
 		 	i,j,
@@ -209,8 +211,8 @@ require([
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
-		 for(i = 0; i < config.length; i++) {
-			 headItem = config[i];
+		 for(i = 0; i < columns.length; i++) {
+			 headItem = columns[i];
 			 
 			 if(headItem.include) {
 				 if(!doneFirst) {
@@ -235,8 +237,8 @@ require([
 		 for(j = 0; j < managed.length; j++) {
 			 record = managed[j];
 			 h[++idx] = '<tr>';
-			 for(i = 0; i < config.length; i++) {
-				 headItem = config[i];
+			 for(i = 0; i < columns.length; i++) {
+				 headItem = columns[i];
 				 if(headItem.include) {
 					 h[++idx] = '<td>';
 					 h[++idx] = record[headItem.name];
@@ -264,7 +266,7 @@ require([
 	 		$elemTracking = $('#surveyTable').find('tbody');
 
 	 	
-		gIsManagedSurvey = false;
+		gIsManageId = undefined;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
@@ -306,8 +308,8 @@ require([
 	 		 					saveCurrentProject(-1, globals.gCurrentSurvey);
 	 		 				}
 	 					}
-	 					if(item.id === globals.gCurrentSurvey) {
-	 						gIsManagedSurvey = true;
+	 					if(item.managed_id > 0 && item.id === globals.gCurrentSurvey) {
+	 						gManageId = item.managed_id;
 	 					}
 	 				}
 
@@ -344,10 +346,10 @@ require([
 	 /*
 	  * Get the columns for a survey
 	  */
-	 function getSurveyConfig(sId) {
+	 function getSurveyConfig(sId, manageId) {
 		 
 		 if(!cache.surveyConfig[sId]) {
-			 var url = '/surveyKPI/managed/questionsInMainForm/' + sId;
+			 var url = '/surveyKPI/managed/config/' + sId + "/" + manageId;
 			 
 			 addHourglass();
 			 $.ajax({

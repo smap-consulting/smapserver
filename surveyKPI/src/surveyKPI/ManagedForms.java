@@ -61,15 +61,14 @@ public class ManagedForms extends Application {
 			 Logger.getLogger(Review.class.getName());
 	
 	/*
-	 * Return a list of all questions in the top level form
-	 *  Exclude read only
+	 * Return the management configuration
 	 */
 	@GET
-	@Path("/questionsInMainForm/{sId}")
+	@Path("/config/{sId}/{dpId}")
 	@Produces("application/json")
-	public Response getQuestions(@Context HttpServletRequest request,
+	public Response getConfig(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
-			@QueryParam("dpId") int dpId) { 
+			@PathParam("dpId") int dpId) { 
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
@@ -79,11 +78,12 @@ public class ManagedForms extends Application {
 		
 		ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 		ArrayList<TableColumn> configColumns = null;
+		DataProcessingConfig dpConfig = null;
+
 		Response response = null;
 		
 		String sql = "select config from show_columns where id = ? and dp_id = ?;";
 		PreparedStatement pstmt = null;
-		
 		
 		String sqlGetForm = "select  "
 				+ "f_id,"
@@ -132,7 +132,7 @@ public class ManagedForms extends Application {
 			if(dpId > 0) {
 				pstmt = sd.prepareStatement(sql);	 
 				pstmt.setInt(1,  sId);
-				pstmt.setInt(1,  dpId);
+				pstmt.setInt(2,  dpId);
 	
 				if(rs != null) {
 					rs.close();
@@ -145,7 +145,11 @@ public class ManagedForms extends Application {
 					if(config != null) {
 						Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();	
 						configColumns = gson.fromJson(config, type);
-					} 
+					} else {
+						configColumns = new ArrayList<TableColumn> ();
+					}
+				} else {
+					configColumns = new ArrayList<TableColumn> ();
 				}
 			} else {
 				configColumns = new ArrayList<TableColumn> ();
@@ -173,6 +177,15 @@ public class ManagedForms extends Application {
 					columns.add(tc);
 				}
 			}
+			
+			/*
+			 * Add the data processing columns and configuration
+			 */
+			dpConfig = getDataProcessingConfig(dpId);
+			columns.addAll(dpConfig.columns);
+			dpConfig.columns = columns;
+			
+			response = Response.ok(gson.toJson(dpConfig)).build();
 		
 				
 		} catch (SQLException e) {
@@ -232,6 +245,9 @@ public class ManagedForms extends Application {
 			response = Response.serverError().build();
 		    return response;
 		}
+		
+		String user = request.getRemoteUser();
+		log.info("Settings:" + settings);
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		AddManaged am = gson.fromJson(settings, AddManaged.class);
@@ -308,11 +324,38 @@ public class ManagedForms extends Application {
 				name.equals("Upload Time") ||
 				name.equals("Survey Notes") ||
 				name.equals("_start") ||
+				name.equals("decision_date") ||
+				name.equals("Action Deadline") ||
+				name.equals("Date of Action") ||
+				name.equals("Does the Action Address the Recommendation") ||
 				name.equals("_end") 
 				) {
 			hide = true;
 		}
 		return hide;
+	}
+	
+	/*
+	 * Get the data processing configuration from the database
+	 */
+	private DataProcessingConfig getDataProcessingConfig(int dpId) {
+		DataProcessingConfig dpConfig = null;
+		
+		/*
+		 * Manually create this (TODO retrieve from database)
+		 */
+		dpConfig = new DataProcessingConfig();
+		dpConfig.columns = new ArrayList<TableColumn> ();
+		ArrayList<Column> columns = new ArrayList<Column> ();
+		GeneralUtilityMethods.addManagementColumns(columns);
+		for(int i = 0; i < columns.size(); i++) {
+			String name = columns.get(i).humanName;
+			TableColumn tc = new TableColumn(name);
+			tc.hide = hideDefault(name);
+			dpConfig.columns.add(tc);
+		}
+		
+		return dpConfig;
 	}
 
 }
