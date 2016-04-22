@@ -8,7 +8,7 @@ public class Column {
 	public String qType;
 	public boolean ro;
 	public String humanName;
-	
+
 	public boolean isGeometry () {
 		boolean geom = false;
 		if(qType.equals("geopoint") || qType.equals("geopolygon") || qType.equals("geolinestring") 

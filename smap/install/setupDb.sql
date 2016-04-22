@@ -64,6 +64,10 @@ DROP SEQUENCE IF EXISTS dp_seq CASCADE;
 CREATE SEQUENCE dp_seq START 1;
 ALTER SEQUENCE dp_seq OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS sc_seq CASCADE;
+CREATE SEQUENCE sc_seq START 1;
+ALTER SEQUENCE sc_seq OWNER TO ws;
+
 -- User management
 DROP SEQUENCE IF EXISTS project_seq CASCADE;
 CREATE SEQUENCE project_seq START 10;
@@ -170,6 +174,16 @@ create TABLE data_processing (
 	config text
 	);
 ALTER TABLE data_processing OWNER TO ws;
+
+DROP TABLE IF EXISTS show_columns CASCADE;
+create TABLE show_columns (
+	id INTEGER DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_sc PRIMARY KEY,
+	dp_id INTEGER REFERENCES data_processing(id) ON DELETE CASCADE,
+	q_id INTEGER REFERENCES question(q_id) ON DELETE CASCADE,
+	include boolean,
+	hidden boolean			
+	);
+ALTER TABLE show_columns OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS users_seq CASCADE;
 CREATE SEQUENCE users_seq START 2;

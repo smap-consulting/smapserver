@@ -36,7 +36,10 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.Column;
+import org.smap.sdal.model.DataProcessingConfig;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.TableColumn;
 
@@ -73,56 +76,136 @@ public class ManagedForms extends Application {
 	@Path("/questionsInMainForm/{sId}")
 	@Produces("application/json")
 	public Response getQuestions(@Context HttpServletRequest request,
-			@PathParam("sId") int sId) { 
+			@PathParam("sId") int sId,
+			@QueryParam("dpId") int dpId) { 
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		ArrayList<TableColumn> questions = new ArrayList<TableColumn> ();
+		ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+		ArrayList<TableColumn> configColumns = null;
 		Response response = null;
 		
+		String sql = "select config from data_processing where id = ?;";
 		PreparedStatement pstmt = null;
+		
+		String sqlGetForm = "select  "
+				+ "f_id,"
+				+ "table_name "
+				+ "from form "
+				+ "where s_id = ? "
+				+ "and parentform = 0;";
+		PreparedStatement pstmtGetForm = null;
+		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
+		int fId;
+		ResultSet rs = null;
+		String tableName;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-			
-			String sql = "select  "
-					+ "q.qname as name "
-					+ "from form f, question q "
-					+ "where f.f_id = q.f_id "
-					+ "and f.s_id = ? "
-					+ "and q.source is not null "
-					+ "and q.readonly = 'false' "
-					+ "and (f.parentform is null or f.parentform = 0) "
-					+ "order by q.seq asc;";
-			
-			
-			pstmt = connectionSD.prepareStatement(sql);	 
-			pstmt.setInt(1,  sId);
 
-			log.info("Get questions: " + pstmt.toString());
-			ResultSet rs = pstmt.executeQuery();
-			while(rs.next()) {
-				TableColumn q = new TableColumn(rs.getString("name"));
-				
-				questions.add(q);
+			/*
+			 * Get formId of top level form and its table name
+			 * These are required by the getColumnsInForm method
+			 */
+			pstmtGetForm = sd.prepareStatement(sqlGetForm);
+			pstmtGetForm.setInt(1, sId);
+			rs = pstmtGetForm.executeQuery();
+			if(rs.next()) {
+				fId = rs.getInt(1);
+				tableName = rs.getString(2);
+			} else {
+				throw new Exception("Failed to get parent form");
 			}
 			
-			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-			String resp = gson.toJson(questions);
+			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+					sd,
+					cResults,
+					0,
+					fId,
+					tableName,
+					false,	// Don't include Read only
+					true,	// Include parent key
+					true,	// Include "bad"
+					true	// Include instanceId
+					);		
+			
+			/*
+			 * Get the columns from the 
+			 */
+			if(dpId > 0) {
+				pstmt = sd.prepareStatement(sql);	 
+				pstmt.setInt(1,  sId);
+	
+				if(rs != null) {
+					rs.close();
+				}
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					String config = rs.getString("config");
+				
+					System.out.println("   Config: " + config);
+					if(config != null) {
+						DataProcessingConfig dpConfig = gson.fromJson(config, DataProcessingConfig.class);
+						configColumns = dpConfig.columns;
+					} 
+				}
+			} else {
+				configColumns = new ArrayList<TableColumn> ();
+			}
+			
+			/*
+			 * Add any configuration settings
+			 * Order the config according to the current survey definition and
+			 * Add any new columns that may have been added to the survey since the configuration was created
+			 */
+			
+			for(int i = 0; i < columnList.size(); i++) {
+				Column c = columnList.get(i);
+				if(keepThis(c.name)) {
+					TableColumn tc = new TableColumn(c.humanName);
+					tc.hide = hideDefault(c.humanName);
+					for(int j = 0; j < configColumns.size(); j++) {
+						TableColumn tcConfig = configColumns.get(j);
+						if(tcConfig.name.equals(tc.name)) {
+							tc.include = tcConfig.include;
+							tc.hide = tcConfig.hide;
+							break;
+						}
+					}
+					
+					columns.add(tc);
+				}
+			}
+			
+			String resp = gson.toJson(columns);
 			response = Response.ok(resp).build();
 		
 				
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "SQL Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
+			
 			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "SQL Error", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
 				}
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "SQL Error", e);
@@ -203,6 +286,46 @@ public class ManagedForms extends Application {
 		}
 		
 		return response;
+	}
+	
+	/*
+	 * Identify any columns that should be dropped
+	 */
+	private boolean keepThis(String name) {
+		boolean keep = true;
+		
+		if(name.equals("_s_id") ||
+				name.equals("parkey") ||
+				name.equals("_version") ||
+				name.equals("_complete") ||
+				name.equals("_location_trigger") ||
+				name.equals("_device") ||
+				name.equals("_bad") ||
+				name.equals("_bad_reason") ||
+				name.equals("instanceid")
+				) {
+			keep = false;
+		}
+		return keep;
+	}
+	
+	/*
+	 * Set a default hide value
+	 */
+	private boolean hideDefault(String name) {
+		boolean hide = false;
+		
+		if(name.equals("_s_id") ||
+				name.equals("prikey") ||
+				name.equals("User") ||
+				name.equals("Upload Time") ||
+				name.equals("Survey Notes") ||
+				name.equals("_start") ||
+				name.equals("_end") 
+				) {
+			hide = true;
+		}
+		return hide;
 	}
 
 }

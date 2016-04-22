@@ -85,9 +85,10 @@ require([
         		 globals) {
 	
 	var cache = {
-		surveyConfig: {},
-		trackingData: {}
-	};
+			surveyConfig: {},
+			managedData: {}
+		},
+		gIsManagedSurvey = false;
 	
 	 $(document).ready(function() {
 
@@ -120,13 +121,7 @@ require([
 		
 		// Get the user details
 		globals.gIsAdministrator = false;
-		getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
-		
-		// Get the data for the current survey
-		if(!cache.surveyConfig[globals.gCurrentSurvey]) {
-			getSurveyConfigData(globals.gCurrentSurvey);
-		}
-		getTrackingData(globals.gCurrentSurvey);
+		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
 
 		/*
 		 * Set up dialog to add a new managed survey
@@ -146,14 +141,11 @@ require([
 		 
 		 // Clear cache
 		 cache.surveyConfig = {};
-		 cache.trackingData = {};
+		 cache.managedData = {};
 		 
 		 // Get the list of available surveys
 		 getSurveyList();
-			
-		 // Get the data for the current survey
-		 getSurveyConfigData(globals.gCurrentSurvey);
-		 getTrackingData(globals.gCurrentSurvey);
+		 
 	 }
 	 
 	 /*
@@ -161,13 +153,20 @@ require([
 	  * Called after the user details have been retrieved
 	  */
 	 function getSurveyList() {
-		 loadTrackingSurveys(globals.gCurrentProject);
+		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
+	 }
+	 
+	 function managedSurveysLoaded() {
+		 if(globals.gCurrentSurvey > 0 && gIsManagedSurvey) {
+			 getManagedData(globals.gCurrentSurvey);
+			 getSurveyConfig(globals.gCurrentSurvey);
+		 }
 	 }
 	 
 	 /*
 	  * Get the tracking data for the specified survey
 	  */
-	 function getTrackingData(sId) {
+	 function getManagedData(sId) {
 		 
 		 var url = '/api/v1/data/' + sId;
 		 
@@ -178,9 +177,9 @@ require([
 			 dataType: 'json',
 			 success: function(data) {
 				 removeHourglass();
-				 cache.trackingData[sId] = data;
+				 cache.managedData[sId] = data;
 				 if(cache.surveyConfig[sId]) {
-					 showTrackingData(sId);
+					 showManagedData(sId);
 				 }
 			 },
 			 error: function(xhr, textStatus, err) {
@@ -195,33 +194,62 @@ require([
 	 }
 	 
 	 
-	 function showTrackingData(sId) {
+	 function showManagedData(sId) {
+		 
 		 var x = 1,
-		 	tracking = cache.trackingData[sId],
-		 	meta = cache.surveyConfig[sId],
+		 	managed = cache.managedData[sId],
+		 	config = cache.surveyConfig[sId],
 		 	h = [],
 		 	idx = -1,
-		 	i,
-		 	$head = $('#trackingTable').find('thead'),
-		 	$body = $('#trackingTable').find('tbody');
+		 	i,j,
+		 	$table = $('#trackingTable'),
+		 	doneFirst = false,
+		 	headItem;
 		 
 		 // Add head
-		 h[idx++] = '<tr>';
-		 for(i = 0; i < meta.length; i++) {
-			 if(i = 0) {
-				 h[++idx]= '<th data-toggle="true">';
-			 } else {
-				 h[++idx] = '<th>';
-			 }
-			 h[++idx] = meta[i].name;
+		 h[++idx] = '<thead>';
+		 h[++idx] = '<tr>';
+		 for(i = 0; i < config.length; i++) {
+			 headItem = config[i];
 			 
+			 if(headItem.include) {
+				 if(!doneFirst) {
+					 h[++idx]= '<th data-toggle="true">';
+					 doneFirst = true;
+				 } else {
+					 if(headItem.hide) {
+						 h[++idx] = '<th data-hide="all">';
+					 } else {
+						 h[++idx] = '<th>';
+					 }
+				 }
+				 h[++idx] = headItem.name;
+				 h[++idx] = '</th>';
+			 }
+		 }
+		 h[++idx] = '</tr>';
+		 h[++idx] = '</thead>';
+		 
+		 // Add body
+		 h[++idx] = '<tbody>';
+		 for(j = 0; j < managed.length; j++) {
+			 record = managed[j];
+			 h[++idx] = '<tr>';
+			 for(i = 0; i < config.length; i++) {
+				 headItem = config[i];
+				 if(headItem.include) {
+					 h[++idx] = '<td>';
+					 h[++idx] = record[headItem.name];
+					 h[++idx] = '</td>';
+				 }
+			 }
+			 h[++idx] = '</tr>';
 			 
 		 }
-		 h[idx++] = '</tr>';
+		 h[++idx] = '</tbody>';
 		 
-		 	
-		 
-		$('.footable').footable();
+		 $table.empty().append(h.join(''));	
+		 $('.footable').footable();
 	 }
 	 
 	/*
@@ -229,13 +257,14 @@ require([
 	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
 	 *   applied to the survey
 	 */	
-	 function loadTrackingSurveys(projectId, callback) {
+	 function loadManagedSurveys(projectId, callback) {
 	 	
 	 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
 	 		$elemNonTracking = $('.nonTrackingSurveys'),
 	 		$elemTracking = $('#surveyTable').find('tbody');
 
 	 	
+		gIsManagedSurvey = false;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
@@ -255,7 +284,6 @@ require([
 	 					firstSurvey = -1;
 	 				
 	 				removeHourglass();
-	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
 	 					if(item.managed_id === 0) {
@@ -273,17 +301,18 @@ require([
 	 					}
 	 					
 	 					if(i == 0) {
-	 						firstSurvey = item.id;
+	 						if(globals.gCurrentSurvey <= 0) {
+	 		 					globals.gCurrentSurvey = item.id;
+	 		 					saveCurrentProject(-1, globals.gCurrentSurvey);
+	 		 				}
+	 					}
+	 					if(item.id === globals.gCurrentSurvey) {
+	 						gIsManagedSurvey = true;
 	 					}
 	 				}
 
 	 				$elemNonTracking.empty().html(hNT.join(''));
 	 				$elemTracking.empty().html(hT.join(''));
-	 				
-	 				if(globals.gCurrentSurvey <= 0) {
-	 					globals.gCurrentSurvey = firstSurvey;
-	 					saveCurrentProject(-1, globals.gCurrentSurvey);
-	 				}
 	 				
 	 				if(typeof callback == "function") {
 	 					callback();
@@ -313,9 +342,9 @@ require([
 	 }
 	
 	 /*
-	  * Get the columns for a survey that is not currently being tracked
+	  * Get the columns for a survey
 	  */
-	 function getSurveyColumns(sId) {
+	 function getSurveyConfig(sId) {
 		 
 		 if(!cache.surveyConfig[sId]) {
 			 var url = '/surveyKPI/managed/questionsInMainForm/' + sId;
@@ -328,7 +357,9 @@ require([
 				 success: function(data) {
 					 removeHourglass();
 					 cache.surveyConfig[sId] = data;
-					// Add survey columns to the dialog
+					 if(cache.managedData[sId]) {
+						 showManagedData(sId);
+					 }
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();
@@ -339,17 +370,8 @@ require([
 					 }
 				 }
 			 });
-		 } else {
-			 // Add survey columns to the dialog
-		 }
+		 } 
 		 
-		 
-	 }
-	 
-	 /*
-	  * Get the configuration data for a tracked survey
-	  */
-	 function getSurveyConfigData(sId) {
 		 
 	 }
 	 
