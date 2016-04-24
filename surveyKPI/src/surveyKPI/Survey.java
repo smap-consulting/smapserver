@@ -891,7 +891,6 @@ public class Survey extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted);  // Note if hard delete is set to true the survey should have already been soft deleted
 		// End Authorisation
 		
-		// Escape any quotes
 		if(sId != 0) {
 
 			String sql = null;				

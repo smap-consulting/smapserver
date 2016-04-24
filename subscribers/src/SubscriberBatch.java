@@ -97,7 +97,6 @@ public class SubscriberBatch {
 			passwordMeta = xmlConf.getElementsByTagName("password").item(0).getTextContent();
 			
 			Class.forName(dbClassMeta);
-			System.out.println("Open sd connection");
 			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
 		
 			uem = new JdbcUploadEventManager(sd);
@@ -323,7 +322,6 @@ public class SubscriberBatch {
 			if(uem != null) {uem.close();}
 			
 			try {if (sd != null) {
-					System.out.println("Close sd connection");
 					sd.close();
 					sd = null;
 				}

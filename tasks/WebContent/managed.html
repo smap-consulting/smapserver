@@ -111,7 +111,7 @@
                             </div>
                         </div>
                         <div class="ibox-content">
-                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey" data-action="add"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
+                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
                         	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
                                 <thead>
                                 <tr>
@@ -155,6 +155,27 @@
 
 <img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
+<!-- Modal to edit a record -->
+<div id="editRecord" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b">Edit Record</h3>
+
+						<form id="editRecordForm" role="form" class="form-horizontal">
+					
+						</form>
+					</div>
+				</div>
+			</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+					<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
 
 <!-- Modal to add a survey as managed -->
 <div id="addManagedSurvey" class="modal fade" aria-hidden="true">

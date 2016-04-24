@@ -29,6 +29,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Column;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
@@ -250,6 +251,7 @@ public class GeneralUtilityMethods {
 		
 		if(!host.endsWith("zarkman.com") &&
 				!host.equals("localhost") &&
+				!host.startsWith("10.0") &&
 				!host.equals("app.kontrolid.com") &&
 				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
@@ -2591,6 +2593,43 @@ public class GeneralUtilityMethods {
 		}
 		
 		return table;
+	}
+	
+	/*
+	 * Get the details of the top level form
+	 */
+	public static Form getTopLevelForm(Connection sd, int sId) throws SQLException {
+		
+		Form f = new Form ();
+		
+		String sql = "select  "
+				+ "f_id,"
+				+ "table_name "
+				+ "from form "
+				+ "where s_id = ? "
+				+ "and parentform = 0;";
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  sId);
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				f.id = rs.getInt("f_id");
+				f.tableName = rs.getString("table_name");
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return f;
+		
 	}
 	
 }

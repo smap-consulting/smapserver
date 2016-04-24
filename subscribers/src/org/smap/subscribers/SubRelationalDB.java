@@ -849,7 +849,7 @@ public class SubRelationalDB extends Subscriber {
 	String getDbString(IE col, String surveyName, String device, String server, boolean phoneOnly) {
 		
 		String qType = col.getQType();
-		String value = col.getValue();	// Escape quotes and trim
+		String value = col.getValue();	
 		String colName = col.getName();
 		
 		/*

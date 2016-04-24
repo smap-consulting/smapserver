@@ -25,6 +25,7 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
+"use strict";
 requirejs.config({
     baseUrl: 'js/libs',
     locale: gUserLocale,
@@ -43,6 +44,7 @@ requirejs.config({
     	lang_location: '../../../../js',
     	file_input: '../../../../js/libs/bootstrap.file-input',
     	mapbox_app: '../../../../js/app/mapbox_app',
+    	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
     	
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
@@ -76,7 +78,8 @@ require([
          'metismenu',
          'slimscroll',
          'pace',
-         'footable'
+         'footable',
+         'datetimepicker',
          
          ], function($, 
         		 bootstrap, 
@@ -88,8 +91,10 @@ require([
 			surveyConfig: {},
 			managedData: {}
 		},
-
-		gManageId = undefined;
+		gManageId = undefined,
+		gUpdate = [],
+		gCurrentIndex,
+		gPriKey;
 	
 	 $(document).ready(function() {
 
@@ -125,11 +130,144 @@ require([
 		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
 
 		/*
-		 * Set up dialog to add a new managed survey
+		 * Set up dialog to edit a record
 		 */
-		//$('#addManagedSurvey').on('show.bs.modal', function (event) {
-	
-		//});
+		$('#editRecord').on('show.bs.modal', function (event) {
+			var index = $(event.relatedTarget).data("index"),
+				record = cache.managedData[globals.gCurrentSurvey][index],
+				config = cache.surveyConfig[globals.gCurrentSurvey],
+				$form = $('#editRecordForm'),
+				h = [],
+				idx = -1,
+				i,
+				configItem,
+				first = true;
+			
+			gCurrentIndex = index;
+			gPriKey = record["prikey"];
+			
+			// Clear the update array
+			gUpdate = [];
+			$('#saveRecord').prop("disabled", true);
+			
+			for(i = 0; i < config.length; i++) {
+				configItem = config[i];
+				
+				// Add form group and label
+				h[++idx] = '<div class="form-group"><label class="col-lg-4 control-label">';
+				h[++idx] = configItem.humanName;
+				h[++idx] = '</label>';
+				
+				// Add Data
+				h[++idx] = ' <div class="col-lg-8">';
+				if(configItem.readonly) {		// Read only text
+					h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+					h[++idx] = record[configItem.humanName];
+					h[++idx] = '">';
+				} else {
+					h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], i, first);
+					first = false;
+				}
+				h[++idx] = '</div>';
+				
+				// Close form group
+				h[++idx] = '</div>';
+				
+			}
+			
+			$form.html(h.join(''));
+			
+			// Set up date fields
+			$form.find('.date').datetimepicker({
+				locale: gUserLocale || 'en'
+			});
+			
+			// Respond to changes in the data by creating an update object
+			$form.find('.form-control').change(function() {
+				var $this = $(this),
+					itemIndex = $this.data("item"),
+					value = $this.val(),
+					record = cache.managedData[globals.gCurrentSurvey][gCurrentIndex],
+					config = cache.surveyConfig[globals.gCurrentSurvey],
+					currentValue,
+					name = config[itemIndex].name,
+					i,
+					foundExistingUpdate;
+				
+				currentValue = record[config[itemIndex].humanName];
+				if(typeof currentValue === "undefined") {
+					currentValue = "";
+				}
+				
+				if(currentValue !== value) {
+					// Add new value to array, or update existing
+					foundExistingUpdate = false;
+					for(i = 0; i < gUpdate.length; i++) {
+						if(gUpdate[i].name === name) {
+							foundExistingUpdate = true;
+							gUpdate[i].value = value;
+							break;
+						}
+					}
+					
+					if(!foundExistingUpdate) {
+						// Add new value
+						gUpdate.push({
+							name: name,
+							value: value,
+							currentValue: currentValue,
+							prikey: gPriKey
+						});
+					}
+					
+				} else {
+					// Delete value from array of updates
+					for(i = 0; i < gUpdate.length; i++) {
+						if(gUpdate[i].name === name) {
+							gUpdate.splice(i, 1);
+							break;
+						}
+					}
+				}
+				console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
+				
+				if(gUpdate.length > 0) {
+					$('#saveRecord').prop("disabled", false);
+				} else {
+					$('#saveRecord').prop("disabled", true);
+				}
+
+			});
+			
+			// Set focus to first editable data item
+			$form.find('[autofocus]').focus();
+			
+			
+		});
+		
+		$('#saveRecord').click(function(){
+			 saveString = JSON.stringify(gUpdate);
+			 addHourglass();
+			 $.ajax({
+				 type: "POST",
+					  dataType: 'text',
+					  contentType: "application/json",
+					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gManageId,
+					  data: { settings: saveString },
+					  success: function(data, status) {
+						  removeHourglass();
+						  
+					  }, error: function(data, status) {
+						  removeHourglass();
+						  refreshData();
+						  alert("Error: Failed to update record");
+					  }
+				});
+		});
+		
+		/*
+		 * Create new managed surveys
+		 */
 		$('#managedSurveyCreate').click(function(){
 			createManagedSurvey($('#newManagedSurvey').val(), 1);	// TODO remove hard coding of managed survey defn (current set to 1)
 		});
@@ -199,8 +337,8 @@ require([
 		 
 		 var x = 1,
 		 	managed = cache.managedData[sId],
-		 	config = cache.surveyConfig[sId],
-		 	columns = config.columns,
+		 	columns = cache.surveyConfig[sId],
+
 		 	h = [],
 		 	idx = -1,
 		 	i,j,
@@ -225,10 +363,11 @@ require([
 						 h[++idx] = '<th>';
 					 }
 				 }
-				 h[++idx] = headItem.name;
+				 h[++idx] = headItem.humanName;
 				 h[++idx] = '</th>';
 			 }
 		 }
+		 h[++idx] = '<th>Action</th>';
 		 h[++idx] = '</tr>';
 		 h[++idx] = '</thead>';
 		 
@@ -239,12 +378,21 @@ require([
 			 h[++idx] = '<tr>';
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
+				
 				 if(headItem.include) {
 					 h[++idx] = '<td>';
-					 h[++idx] = record[headItem.name];
+					 if(headItem.readonly || !headItem.inline) {
+						 h[++idx] = record[headItem.humanName];
+					 } else {
+						 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
+					 }
 					 h[++idx] = '</td>';
 				 }
+					 
 			 }
+			 h[++idx] = '<td><a data-toggle="modal" href="#editRecord" data-index="';
+			 h[++idx] = j;
+			 h[++idx] = '"><i class="fa fa-check text-navy"></i></a></td>';
 			 h[++idx] = '</tr>';
 			 
 		 }
@@ -254,6 +402,43 @@ require([
 		 $('.footable').footable();
 	 }
 	 
+	/*
+	 * Add the markup for an editable column
+	 */
+	function addEditableColumnMarkup(column, value, itemIndex, first) {
+		var h = [],
+			idx = -1;
+		
+		if(column.type === "text") {
+			h[++idx] = ' <input type="text" class="form-control editable" value="';
+			h[++idx] = value;
+			h[++idx] = '" data-item="';
+			h[++idx] = itemIndex;
+			if(first) {
+				h[++idx] = '" autofocus/>';
+			} else {
+				h[++idx] = '"/>';
+			}
+		} else if(column.type === "date") {
+			 h[++idx] = '<div class="input-group date" data-container="body">';
+             h[++idx] = '<input type="text" class="form-control editable" data-date-format="YYYY-MM-DD" value="';
+             h[++idx] = value;
+             h[++idx] = '" data-item="';
+             h[++idx] = itemIndex;
+             if(first) {
+ 				h[++idx] = '" autofocus/>';
+ 			} else {
+ 				h[++idx] = '"/>';
+ 			}
+             h[++idx] = '<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>';
+             h[++idx] = '</div>';
+		} else {
+			h[++idx] = value;
+		}
+		
+		return h.join('');
+	} 
+	
 	/*
 	 * Get surveys and update the survey lists on this page
 	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
@@ -372,7 +557,11 @@ require([
 					 }
 				 }
 			 });
-		 } 
+		 } else {
+			 if(cache.managedData[sId]) {
+				 showManagedData(sId);
+			 }
+		 }
 		 
 		 
 	 }

@@ -36,7 +36,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.Column;
-import org.smap.sdal.model.DataProcessingConfig;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
@@ -78,25 +78,14 @@ public class ManagedForms extends Application {
 		
 		ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 		ArrayList<TableColumn> configColumns = null;
-		DataProcessingConfig dpConfig = null;
 
 		Response response = null;
 		
 		String sql = "select config from show_columns where id = ? and dp_id = ?;";
 		PreparedStatement pstmt = null;
 		
-		String sqlGetForm = "select  "
-				+ "f_id,"
-				+ "table_name "
-				+ "from form "
-				+ "where s_id = ? "
-				+ "and parentform = 0;";
-		PreparedStatement pstmtGetForm = null;
-		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
-		int fId;
 		ResultSet rs = null;
-		String tableName;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 
@@ -104,22 +93,14 @@ public class ManagedForms extends Application {
 			 * Get formId of top level form and its table name
 			 * These are required by the getColumnsInForm method
 			 */
-			pstmtGetForm = sd.prepareStatement(sqlGetForm);
-			pstmtGetForm.setInt(1, sId);
-			rs = pstmtGetForm.executeQuery();
-			if(rs.next()) {
-				fId = rs.getInt(1);
-				tableName = rs.getString(2);
-			} else {
-				throw new Exception("Failed to get parent form");
-			}
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);
 			
 			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
 					0,
-					fId,
-					tableName,
+					f.id,
+					f.tableName,
 					false,	// Don't include Read only
 					true,	// Include parent key
 					true,	// Include "bad"
@@ -134,9 +115,6 @@ public class ManagedForms extends Application {
 				pstmt.setInt(1,  sId);
 				pstmt.setInt(2,  dpId);
 	
-				if(rs != null) {
-					rs.close();
-				}
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					String config = rs.getString("config");
@@ -163,7 +141,7 @@ public class ManagedForms extends Application {
 			for(int i = 0; i < columnList.size(); i++) {
 				Column c = columnList.get(i);
 				if(keepThis(c.name)) {
-					TableColumn tc = new TableColumn(c.humanName);
+					TableColumn tc = new TableColumn(c.name, c.humanName);
 					tc.hide = hideDefault(c.humanName);
 					for(int j = 0; j < configColumns.size(); j++) {
 						TableColumn tcConfig = configColumns.get(j);
@@ -181,11 +159,9 @@ public class ManagedForms extends Application {
 			/*
 			 * Add the data processing columns and configuration
 			 */
-			dpConfig = getDataProcessingConfig(dpId);
-			columns.addAll(dpConfig.columns);
-			dpConfig.columns = columns;
+			getDataProcessingConfig(dpId, columns);
 			
-			response = Response.ok(gson.toJson(dpConfig)).build();
+			response = Response.ok(gson.toJson(columns)).build();
 		
 				
 		} catch (SQLException e) {
@@ -196,7 +172,6 @@ public class ManagedForms extends Application {
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
 			
 			try {
 				if (sd != null) {
@@ -220,7 +195,7 @@ public class ManagedForms extends Application {
 	}
 
 	/*
-	 * Update the settings
+	 * Make a survey managed
 	 */
 	class AddManaged {
 		int sId;
@@ -231,7 +206,7 @@ public class ManagedForms extends Application {
 	@Produces("text/html")
 	@Consumes("application/json")
 	@Path("/add")
-	public Response updateSettings(
+	public Response setManaged(
 			@Context HttpServletRequest request, 
 			@FormParam("settings") String settings
 			) { 
@@ -246,15 +221,14 @@ public class ManagedForms extends Application {
 		    return response;
 		}
 		
-		String user = request.getRemoteUser();
-		log.info("Settings:" + settings);
-		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		AddManaged am = gson.fromJson(settings, AddManaged.class);
 		
 		String sql = "update survey set managed_id = ? where s_id = ?;";
-		
 		PreparedStatement pstmt = null;
+		
+		String sqlAdd = null;
+		PreparedStatement pstmtAdd = null;
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
@@ -262,13 +236,47 @@ public class ManagedForms extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), am.sId, false);
 		// End Authorisation
 
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
+		
 		try {
 
+			// 1. Add the management id to the survey record
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, am.manageId);
 			pstmt.setInt(2, am.sId);
 			log.info("Adding managed survey: " + pstmt.toString());
 			pstmt.executeUpdate();
+			
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
+
+			// 2.  Add the data processing columns to the results table
+			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+			getDataProcessingConfig(am.manageId, columns);
+			
+			for(int i = 0; i < columns.size(); i++) {
+				TableColumn tc = columns.get(i);
+				if(tc.type != null) {
+					sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + tc.type;
+					if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
+					
+					pstmtAdd = cResults.prepareStatement(sqlAdd);
+					log.info("Adding management column: " + pstmtAdd.toString());
+					try {
+						pstmtAdd.executeUpdate();
+					} catch (Exception e) {
+						String msg = e.getMessage();
+						if(msg.contains("already exists")) {
+							System.out.println("Info: Management column already exists");
+						} else {
+							throw e;
+						}
+					} finally {
+						pstmtAdd.close();
+					}
+				} else {
+					System.out.println("Error: managed column not added as type was null: " + tc.name);
+				}
+			}
 			
 			response = Response.ok().build();
 				
@@ -278,10 +286,184 @@ public class ManagedForms extends Application {
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+			try {if (pstmtAdd != null) {pstmtAdd.close();}} catch (Exception e) {}
 			
 			try {
 				if (sd != null) {
 					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Update a data record
+	 */
+	class Update {
+		String name;
+		String value;
+		String currentValue;
+		int prikey;
+	}
+	
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/update/{sId}/{dpId}")
+	public Response updateManagedRecord(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("dpId") int dpId,
+			@FormParam("settings") String settings
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		System.out.println("Updates: " + settings);
+		Type type = new TypeToken<ArrayList<Update>>(){}.getType();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		ArrayList<Update> updates = gson.fromJson(settings, type);
+		
+		
+		String sqlCanUpdate = "select count(*) from survey "
+				+ "where s_id = ? "
+				+ "and managed_id = ? "
+				+ "and blocked = 'false' "
+				+ "and deleted = 'false';";
+		PreparedStatement pstmtCanUpdate = null;
+		
+		PreparedStatement pstmtUpdate = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		// End Authorisation
+
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Update Managed Forms");
+		
+		try {
+
+			/*
+			 * Verify that the survey is managed by the provided data processing id and get
+			 */
+			pstmtCanUpdate = sd.prepareStatement(sqlCanUpdate);
+			pstmtCanUpdate.setInt(1, sId);
+			pstmtCanUpdate.setInt(2, dpId);
+			ResultSet rs = pstmtCanUpdate.executeQuery();
+			int count = 0;
+			if(rs.next()) {
+				count = rs.getInt(1);
+			}
+			if(count == 0) {
+				throw new Exception("Cannot update this survey. Check it is not blocked or deleted");
+			}
+			
+			/*
+			 * Get the data processing columns
+			 */
+			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+			getDataProcessingConfig(dpId, columns);
+			
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
+			
+			/*
+			 * Process each column
+			 */
+			cResults.setAutoCommit(false);
+			for(int i = 0; i < updates.size(); i++) {
+			
+				Update u = updates.get(i);
+				
+				// 1. Escape quotes in update name, though not really necessary due to next step 
+				u.name = u.name.replace("'", "''").trim();
+				
+				// 2. Confirm this is an editable managed column
+				boolean updateable = false;
+				String columnType = null;
+				for(int j = 0; j < columns.size(); j++) {
+					TableColumn tc = columns.get(j);
+					if(tc.name.equals(u.name)) {
+						if(!tc.readonly) {
+							updateable = true;
+							columnType = tc.type;
+						}
+						break;
+					}
+				}
+				if(!updateable) {
+					throw new Exception("Update failed " + u.name + " is not updatable");
+				}
+				
+				// 2. Apply the update
+				if(u.value != null && u.value.trim().length() == 0) {
+					u.value = null;
+				}
+				if(u.currentValue != null && u.currentValue.trim().length() == 0) {
+					u.currentValue = null;
+				}
+				String sqlUpdate = "update " + f.tableName
+						+ " set " + u.name + " = ? "
+						+ "where "
+						+ "prikey = ? "
+						+ "and " + u.name;
+				if(u.currentValue == null) {
+					sqlUpdate += " is null;";
+				} else {
+					sqlUpdate += " = ?;";
+				}
+						
+				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
+				if(columnType.equals("text")) {
+					pstmtUpdate.setString(1, u.value);
+				}
+				pstmtUpdate.setInt(2, u.prikey);
+				if(u.currentValue != null) {
+					if(type.equals("text")) {
+						pstmtUpdate.setString(3, u.currentValue);
+					}
+				}
+				
+				log.info("Updating managed survey: " + pstmtUpdate.toString());
+				pstmtUpdate.executeUpdate();
+				
+			}
+			cResults.commit();
+			response = Response.ok().build();
+				
+		} catch (Exception e) {
+			try{cResults.rollback();} catch(Exception ex) {}
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			try{cResults.setAutoCommit(true);} catch(Exception ex) {}
+			
+			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
+			
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
 				}
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"Failed to close connection", e);
@@ -325,37 +507,49 @@ public class ManagedForms extends Application {
 				name.equals("Survey Notes") ||
 				name.equals("_start") ||
 				name.equals("decision_date") ||
-				name.equals("Action Deadline") ||
-				name.equals("Date of Action") ||
-				name.equals("Does the Action Address the Recommendation") ||
+				name.equals("_mgmt_action_date") ||
+				name.equals("_mgmt_address_recommendation") ||
 				name.equals("_end") 
 				) {
 			hide = true;
 		}
+		
 		return hide;
 	}
 	
+	private void addProcessing(TableColumn tc) {
+		String name = tc.name;
+		if(name.equals("_mgmt_responsible")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
+		} else if(name.equals("_mgmt_action_deadline")) {
+			tc.hide = true;
+			tc.readonly = false;
+			tc.type = "date";
+		}
+	}
+	
+	
 	/*
-	 * Get the data processing configuration from the database
+	 * Add the data processing columns
 	 */
-	private DataProcessingConfig getDataProcessingConfig(int dpId) {
-		DataProcessingConfig dpConfig = null;
+	private void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns) {
 		
 		/*
 		 * Manually create this (TODO retrieve from database)
 		 */
-		dpConfig = new DataProcessingConfig();
-		dpConfig.columns = new ArrayList<TableColumn> ();
 		ArrayList<Column> columns = new ArrayList<Column> ();
 		GeneralUtilityMethods.addManagementColumns(columns);
 		for(int i = 0; i < columns.size(); i++) {
-			String name = columns.get(i).humanName;
-			TableColumn tc = new TableColumn(name);
-			tc.hide = hideDefault(name);
-			dpConfig.columns.add(tc);
+			Column c = columns.get(i);
+			TableColumn tc = new TableColumn(c.name, c.humanName);
+			tc.hide = hideDefault(c.name);
+			addProcessing(tc);
+			System.out.println("   " + c.name + " ---- " + c.humanName + " ---- " + tc.hide);
+			formColumns.add(tc);
 		}
 		
-		return dpConfig;
 	}
 
 }
