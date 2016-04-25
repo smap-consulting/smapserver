@@ -816,7 +816,7 @@ function respondToEvents($context) {
 
 	
 	// validate the question name on every character change
-	$context.find('.qname').keyup(function(){
+	$context.find('.qname').keyup(function() {
 
 		var $this = $(this),
 			$li = $this.closest('li'),

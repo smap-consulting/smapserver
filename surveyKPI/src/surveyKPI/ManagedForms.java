@@ -256,7 +256,13 @@ public class ManagedForms extends Application {
 			for(int i = 0; i < columns.size(); i++) {
 				TableColumn tc = columns.get(i);
 				if(tc.type != null) {
-					sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + tc.type;
+					String type;
+					if(tc.type.equals("select_one")) {
+						type = "text";
+					} else {
+						type = tc.type;
+					}
+					sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
 					if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
 					
 					pstmtAdd = cResults.prepareStatement(sqlAdd);
@@ -431,13 +437,18 @@ public class ManagedForms extends Application {
 				}
 				pstmtUpdate.setInt(2, u.prikey);
 				if(u.currentValue != null) {
-					if(type.equals("text")) {
+					if(columnType.equals("text")) {
 						pstmtUpdate.setString(3, u.currentValue);
 					}
 				}
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
-				pstmtUpdate.executeUpdate();
+				count = pstmtUpdate.executeUpdate();
+				if(count == 0) {
+					throw new Exception("Update failed: "
+							+ "Try refreshing your view of the data as someone may already "
+							+ "have updated this record.");
+				}
 				
 			}
 			cResults.commit();
@@ -527,6 +538,25 @@ public class ManagedForms extends Application {
 			tc.hide = true;
 			tc.readonly = false;
 			tc.type = "date";
+		} else if(name.equals("_mgmt_action_date")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "date";
+		} else if(name.equals("_mgmt_action_taken")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
+		} else if(name.equals("_mgmt_address_recommendation")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "select_one";
+			tc.choices = new ArrayList<String> ();
+			tc.choices.add("Yes");
+			tc.choices.add("No, needs further work");		
+		} else if(name.equals("_mgmt_comment")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
 		}
 	}
 	

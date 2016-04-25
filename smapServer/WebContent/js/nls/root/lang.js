@@ -28,6 +28,7 @@ define({
 	"m_calculations": "Calculations",
 	"m_resources": "Shared Resources",
 	"m_review": "Review",
+	"m_managed": "Managed Forms",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
