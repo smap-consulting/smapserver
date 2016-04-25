@@ -44,6 +44,9 @@
         },
         {
             name: '../managed'
+        },
+        {
+            name: '../managed_admin'
         }
 
     ]

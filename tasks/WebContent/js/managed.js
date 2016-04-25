@@ -294,11 +294,25 @@ require([
 		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
 	 }
 	 
+	 /*
+	  * List of surveys has finished loading
+	  */
 	 function managedSurveysLoaded() {
 		 if(globals.gCurrentSurvey > 0 && gManageId) {
 			 getManagedData(globals.gCurrentSurvey);
 			 getSurveyConfig(globals.gCurrentSurvey, gManageId);
 		 }
+		 
+		$('#survey_name').change(function() {
+			var sId = $(this).val();
+			globals.gCurrentSurvey = sId;
+			
+			if(globals.gCurrentSurvey > 0 && gManageId) {
+				 getManagedData(globals.gCurrentSurvey);
+				 saveCurrentProject(-1, globals.gCurrentSurvey);
+				 getSurveyConfig(globals.gCurrentSurvey, gManageId);
+			 }
+		});
 	 }
 	 
 	 /*
@@ -331,13 +345,15 @@ require([
 		 });
 	 }
 	 
-	 
+	 /*
+	  * Show the survey data along with the management columns
+	  */
 	 function showManagedData(sId) {
 		 
 		 var x = 1,
 		 	managed = cache.managedData[sId],
 		 	columns = cache.surveyConfig[sId],
-
+		 
 		 	h = [],
 		 	idx = -1,
 		 	i,j,
@@ -345,6 +361,8 @@ require([
 		 	doneFirst = false,
 		 	headItem;
 		 
+		 $('#survey_title').html($('#survey_name option:selected').text());
+		 	
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
@@ -446,11 +464,10 @@ require([
 	 function loadManagedSurveys(projectId, callback) {
 	 	
 	 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
-	 		$elemNonTracking = $('.nonTrackingSurveys'),
-	 		$elemTracking = $('#surveyTable').find('tbody');
+	 		$elemSurveys = $('#survey_name');
 
 	 	
-		gIsManageId = undefined;
+		gManageId = undefined;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
@@ -463,42 +480,41 @@ require([
 	 				
 	 				var i,
 	 					item,
-	 					hNT = [],
-	 					idxNT = -1,
-	 					hT = [],
-	 					idxT = -1,
-	 					firstSurvey = -1;
+	 					h = [],
+	 					idx = -1,
+	 					firstSurvey = true,
+	 					firstSurveyId = undefined;
 	 				
 	 				removeHourglass();
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(item.managed_id === 0) {
-	 						hNT[++idxNT] = '<option value="';
-	 						hNT[++idxNT] = item.id;
-	 						hNT[++idxNT] = '">';
-	 						hNT[++idxNT] = item.displayName;
-	 						hNT[++idxNT] = '</option>';
-	 					} else {
-	 						hT[++idxT] = '<tr>';
-	 							hT[++idxT] = '<th data-toggle="true">';
-	 							hT[++idxT] = item.displayName;
-	 							hT[++idxT] = '</th>';
-	 						hT[++idxT] = '</tr>';
+	 					if(item.managed_id > 0) {
+	 						h[++idx] = '<option value="';
+	 						h[++idx] = item.id;
+	 						h[++idx] = '">';
+	 						h[++idx] = item.displayName;
+	 						h[++idx] = '</option>';
+	 					
+	 						if(firstSurvey) {
+	 							firstSurveyId = item.id;
+	 						}
+	 						
+	 						if(item.id === globals.gCurrentSurvey) {
+		 						gManageId = item.managed_id;
+		 					}
+	 						
 	 					}
 	 					
-	 					if(i == 0) {
-	 						if(globals.gCurrentSurvey <= 0) {
-	 		 					globals.gCurrentSurvey = item.id;
-	 		 					saveCurrentProject(-1, globals.gCurrentSurvey);
-	 		 				}
-	 					}
-	 					if(item.managed_id > 0 && item.id === globals.gCurrentSurvey) {
-	 						gManageId = item.managed_id;
-	 					}
 	 				}
-
-	 				$elemNonTracking.empty().html(hNT.join(''));
-	 				$elemTracking.empty().html(hT.join(''));
+	 				
+	 				$elemSurveys.empty().html(h.join(''));
+	 				
+	 				if(!gManageId && firstSurveyId) {
+ 		 				globals.gCurrentSurvey = firstSurveyId;
+ 		 				saveCurrentProject(-1, globals.gCurrentSurvey);
+ 		 			} else if(gManageId && firstSurveyId) {
+ 		 				$elemSurveys.val(globals.gCurrentSurvey);
+ 		 			}
 	 				
 	 				if(typeof callback == "function") {
 	 					callback();
@@ -514,17 +530,7 @@ require([
 	 				}
 	 			}
 	 		});	
-	 	} else {
-	 		$elem.empty();
-	 		if(addAll) {
-	 			$elem.append('<option value="_all">All Surveys</option>');	
-	 		}
-	 		
-	 		if(callback) {
-	 			callback();
-	 		}
-
-	 	}
+	 	} 
 	 }
 	
 	 /*
