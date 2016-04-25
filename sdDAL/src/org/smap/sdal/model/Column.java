@@ -8,6 +8,7 @@ public class Column {
 	public String qType;
 	public boolean ro;
 	public String humanName;
+	public String calculation;		// Derived values - used with managed forms
 
 	public boolean isGeometry () {
 		boolean geom = false;
@@ -16,6 +17,14 @@ public class Column {
 			geom = true;
 		}
 		return geom;
+	}
+	
+	public boolean isCalculate() {
+		boolean isCalculate = false;
+		if(qType.equals("calculate")) {
+			isCalculate = true;
+		}
+		return isCalculate;
 	}
 	
 	public boolean isAttachment() {
@@ -36,6 +45,8 @@ public class Column {
 			selName = "'" + urlprefix + "' || " + name + " as " + name;
 		} else if(isGeometry()) {
 			selName = "ST_AsGeoJson(" + name + ") ";
+		} else if(isCalculate()) {
+			selName = calculation;
 		} else {
 			selName = name;
 		}

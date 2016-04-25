@@ -45,6 +45,9 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -256,6 +259,11 @@ public class ManagedForms extends Application {
 			for(int i = 0; i < columns.size(); i++) {
 				TableColumn tc = columns.get(i);
 				if(tc.type != null) {
+					
+					if(tc.type.equals("calculate")) {
+						continue;		// Calculated types are not stored in the database
+					}
+					
 					String type;
 					if(tc.type.equals("select_one")) {
 						type = "text";
@@ -384,6 +392,7 @@ public class ManagedForms extends Application {
 			getDataProcessingConfig(dpId, columns);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
+			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 			
 			/*
 			 * Process each column
@@ -433,6 +442,12 @@ public class ManagedForms extends Application {
 						
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
 				if(columnType.equals("text")) {
+					pstmtUpdate.setString(1, u.value);
+				} else if(columnType.equals("date")) {
+					java.util.Date inputDate = dateFormat.parse(u.value);
+					pstmtUpdate.setDate(1,new java.sql.Date(inputDate.getTime()));
+				} else {
+					log.info("Warning: unknown type: " + columnType + " value: " + u.value);
 					pstmtUpdate.setString(1, u.value);
 				}
 				pstmtUpdate.setInt(2, u.prikey);
@@ -518,8 +533,6 @@ public class ManagedForms extends Application {
 				name.equals("Survey Notes") ||
 				name.equals("_start") ||
 				name.equals("decision_date") ||
-				name.equals("_mgmt_action_date") ||
-				name.equals("_mgmt_address_recommendation") ||
 				name.equals("_end") 
 				) {
 			hide = true;
@@ -542,6 +555,10 @@ public class ManagedForms extends Application {
 			tc.hide = false;
 			tc.readonly = false;
 			tc.type = "date";
+		} else if(name.equals("_mgmt_response_status")) {
+			tc.hide = false;
+			tc.readonly = true;
+			tc.type = "calculated";
 		} else if(name.equals("_mgmt_action_taken")) {
 			tc.hide = false;
 			tc.readonly = false;

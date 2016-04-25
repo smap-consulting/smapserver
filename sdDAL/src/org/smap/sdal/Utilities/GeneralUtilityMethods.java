@@ -1936,6 +1936,18 @@ public class GeneralUtilityMethods {
 		columnList.add(c);
 		
 		c = new Column();
+		c.name = "_mgmt_response_status";
+		c.humanName = "Response Status";
+		c.qType = "calculate";
+		c.calculation = "CASE "
+				+ "WHEN _mgmt_action_deadline >= _mgmt_action_date THEN 'Deadline met' "
+				+ "WHEN _mgmt_action_deadline < _mgmt_action_date THEN 'Done with delay' "
+				+ "WHEN _mgmt_action_deadline > now() THEN 'In the pipeline' "
+	            + "ELSE 'Deadline crossed' "
+	            + "END";
+		columnList.add(c);
+		
+		c = new Column();
 		c.name = "_mgmt_action_taken";
 		c.humanName = "Action Taken";
 		c.qType = "string";

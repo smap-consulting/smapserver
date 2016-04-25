@@ -184,59 +184,10 @@ require([
 			
 			// Respond to changes in the data by creating an update object
 			$form.find('.form-control').keyup(function() {
-				var $this = $(this),
-					itemIndex = $this.data("item"),
-					value = $this.val(),
-					record = cache.managedData[globals.gCurrentSurvey][gCurrentIndex],
-					config = cache.surveyConfig[globals.gCurrentSurvey],
-					currentValue,
-					name = config[itemIndex].name,
-					i,
-					foundExistingUpdate;
-				
-				currentValue = record[config[itemIndex].humanName];
-				if(typeof currentValue === "undefined") {
-					currentValue = "";
-				}
-				
-				if(currentValue !== value) {
-					// Add new value to array, or update existing
-					foundExistingUpdate = false;
-					for(i = 0; i < gUpdate.length; i++) {
-						if(gUpdate[i].name === name) {
-							foundExistingUpdate = true;
-							gUpdate[i].value = value;
-							break;
-						}
-					}
-					
-					if(!foundExistingUpdate) {
-						// Add new value
-						gUpdate.push({
-							name: name,
-							value: value,
-							currentValue: currentValue,
-							prikey: gPriKey
-						});
-					}
-					
-				} else {
-					// Delete value from array of updates
-					for(i = 0; i < gUpdate.length; i++) {
-						if(gUpdate[i].name === name) {
-							gUpdate.splice(i, 1);
-							break;
-						}
-					}
-				}
-				console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
-				
-				if(gUpdate.length > 0) {
-					$('#saveRecord').prop("disabled", false);
-				} else {
-					$('#saveRecord').prop("disabled", true);
-				}
-
+				dataChanged($(this));
+			});
+			$form.find('.date').on("dp.change", function() {
+				dataChanged($(this).find('input'));
 			});
 			
 			// Set focus to first editable data item
@@ -286,6 +237,64 @@ require([
 		 
 	 }
 	 
+	 /*
+	  * User has changed a managed value
+	  */
+	 function dataChanged($this) {
+		
+		 var 
+			itemIndex = $this.data("item"),
+			value = $this.val(),
+			record = cache.managedData[globals.gCurrentSurvey][gCurrentIndex],
+			config = cache.surveyConfig[globals.gCurrentSurvey],
+			currentValue,
+			name = config[itemIndex].name,
+			i,
+			foundExistingUpdate;
+		
+		currentValue = record[config[itemIndex].humanName];
+		if(typeof currentValue === "undefined") {
+			currentValue = "";
+		}
+		
+		if(currentValue !== value) {
+			// Add new value to array, or update existing
+			foundExistingUpdate = false;
+			for(i = 0; i < gUpdate.length; i++) {
+				if(gUpdate[i].name === name) {
+					foundExistingUpdate = true;
+					gUpdate[i].value = value;
+					break;
+				}
+			}
+			
+			if(!foundExistingUpdate) {
+				// Add new value
+				gUpdate.push({
+					name: name,
+					value: value,
+					currentValue: currentValue,
+					prikey: gPriKey
+				});
+			}
+			
+		} else {
+			// Delete value from array of updates
+			for(i = 0; i < gUpdate.length; i++) {
+				if(gUpdate[i].name === name) {
+					gUpdate.splice(i, 1);
+					break;
+				}
+			}
+		}
+		console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
+		
+		if(gUpdate.length > 0) {
+			$('#saveRecord').prop("disabled", false);
+		} else {
+			$('#saveRecord').prop("disabled", true);
+		}
+	 }
 	 /*
 	  * Get the list of available surveys in this project
 	  * Called after the user details have been retrieved
