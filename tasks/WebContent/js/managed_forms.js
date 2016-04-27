@@ -352,9 +352,13 @@ require([
 	 /*
 	  * Get the tracking data for the specified survey
 	  */
-	 function getManagedData(sId) {
+	 function getManagedData(sId, sort, dirn) {
 		 
 		 var url = '/api/v1/data/' + sId + "?mgmt=true";
+		 
+		 if(sort) {
+			 url += "&sort=" + sort + "&dirn=" + dirn;
+		 }
 		 
 		 addHourglass();
 		 $.ajax({
@@ -440,10 +444,22 @@ require([
 			 
 		 }
 		 h[++idx] = '</tbody>';
-		 
-		 //$table.removeClass("footable-loaded").empty().append(h.join(''));	
+		 	
 		 $table.empty().append(h.join(''));
-		 //$('.footable').footable();
+		 
+		 // Respond to sort requests
+		 $table.find('th').click(function(){
+			 var sort = $(this).text();
+			 console.log(sort);
+			 // TODO Save sort setting
+			 // TODO update icon showing sort order
+			 // TODO get sort order
+			 
+			 // Update table
+			 getManagedData(globals.gCurrentSurvey, sort, "asc");
+		 });
+			
+
 	 }
 	 
 	/*
@@ -641,33 +657,7 @@ require([
 		 
 	 }
 	 
-	 /*
-	  * Create a new managed Survey
-	  */
-	 function createManagedSurvey(sId, manageId) {
-		 
-		 var saveObj = {
-				 sId: sId,
-				 manageId: manageId
-		 }
-		 
-		 saveString = JSON.stringify(saveObj);
-		 addHourglass();
-		 $.ajax({
-			 type: "POST",
-				  dataType: 'text',
-				  contentType: "application/json",
-				  url: "/surveyKPI/managed/add",
-				  data: { settings: saveString },
-				  success: function(data, status) {
-					  removeHourglass();
-					  refreshData();
-				  }, error: function(data, status) {
-					  removeHourglass();
-					  alert("Error: Failed to create managed service");
-				  }
-			});
-	 }
+
 
 });
 

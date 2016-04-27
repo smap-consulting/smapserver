@@ -141,7 +141,10 @@ public class Data extends Application {
 			@PathParam("sId") int sId,
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
-			@QueryParam("mgmt") boolean mgmt) { 
+			@QueryParam("mgmt") boolean mgmt,
+			@QueryParam("sort") String sort,		// Column Humn Name to sort on
+			@QueryParam("dirn") String dirn			// Sort direction, asc || desc
+			) { 
 		
 		Response response = null;
 		
@@ -159,6 +162,10 @@ public class Data extends Application {
 		
 		StringBuffer columnSelect = new StringBuffer();
 
+		if(sort != null && dirn == null) {
+			dirn = "asc";
+		}
+		
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
@@ -203,10 +210,16 @@ public class Data extends Application {
 					String sqlSelect = "";
 					
 					String sqlGetDataOrder = null;
-					if(mgmt) {
-						sqlGetDataOrder = " order by prikey desc;";
+					if(sort != null) {
+						// User has requested a specific sort order
+						sqlGetDataOrder = " order by " + getSortColumn(columns, sort) + " " + dirn + ";";
 					} else {
-						sqlGetDataOrder = " order by prikey asc;";
+						// Set default sort order
+						if(mgmt) {
+							sqlGetDataOrder = " order by prikey desc;";
+						} else {
+							sqlGetDataOrder = " order by prikey asc;";
+						}
 					}
 					
 					pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
@@ -305,6 +318,22 @@ public class Data extends Application {
 		
 		return response;
 		
+	}
+	
+	private String getSortColumn(ArrayList<Column> columns, String sort) {
+		String col = "prikey";	// default to prikey
+		for(int i = 0; i < columns.size(); i++) {
+			if(columns.get(i).humanName.equals(sort)) {
+				Column c = columns.get(i);
+				if(c.isCalculate()) {
+					col = c.calculation;
+				} else {
+					col = c.name;
+				}
+				break;
+			}
+		}
+		return col;
 	}
 	
 	

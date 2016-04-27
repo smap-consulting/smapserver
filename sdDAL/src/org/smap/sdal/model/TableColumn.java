@@ -14,7 +14,7 @@ public class TableColumn {
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management
-	public String type;		// text || select_one
+	public String type;		// text || select_one || date || calculate
 	public ArrayList<String> choices;			// If type is select_one
 	public ArrayList<TableColumnMarkup> markup;	// Specify how to present the data
 	
