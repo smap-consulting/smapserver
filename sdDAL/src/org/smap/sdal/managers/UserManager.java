@@ -332,7 +332,6 @@ public class UserManager {
 				pstmt.executeUpdate();
 				
 				// update existing user
-				System.out.println("password:" + u.password);
 				String pwdString = null;
 				if(u.password == null) {
 					// Do not update the password
@@ -376,6 +375,8 @@ public class UserManager {
 				// Update the groups and projects
 				insertUserGroupsProjects(sd, u, u.id, isOrgUser);
 	
+			} else {
+				throw new Exception("Invalid user");
 			}
 		} finally {		
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}

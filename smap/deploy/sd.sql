@@ -483,3 +483,5 @@ create TABLE show_columns (
 	config text		
 	);
 ALTER TABLE show_columns OWNER TO ws;
+
+insert into groups(id,name) values(5,'manage');
