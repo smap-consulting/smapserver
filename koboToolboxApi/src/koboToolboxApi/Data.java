@@ -325,9 +325,13 @@ public class Data extends Application {
 	 */
 	private String getSortColumn(ArrayList<Column> columns, String sort) {
 		String col = "prikey";	// default to prikey
+		System.out.println("Getting sort column: " + sort + "x");
+		sort = sort.trim();
 		for(int i = 0; i < columns.size(); i++) {
+			System.out.println("        x" + columns.get(i).humanName + "x");
 			if(columns.get(i).humanName.equals(sort)) {
 				Column c = columns.get(i);
+
 				if(c.isCalculate()) {
 					col = c.calculation;
 				} else {
