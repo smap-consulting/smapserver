@@ -235,7 +235,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 	}
 	
 	/*
-	 * Show administrator only functions
+	 * Show restricted functions
 	 */
 	if(groups) {
 		for(i = 0; i < groups.length; i++) {
@@ -248,6 +248,9 @@ function updateUserDetails(data, getOrganisationsFn) {
 			if(groups[i].name === "analyst") {
 				globals.gIsAnalyst = true;
 			}
+			if(groups[i].name === "manage") {
+				globals.gIsManage = true;
+			}
 		}
 	}
 	
@@ -258,6 +261,9 @@ function updateUserDetails(data, getOrganisationsFn) {
 	} 
 	if(globals.gIsAdministrator) {
 		$('.admin_role').show();
+	} 
+	if(globals.gIsManage) {
+		$('.manage_role').show();
 	} 
 	if(globals.gIsOrgAdministrator) {
 		$('.org_role').show();

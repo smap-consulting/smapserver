@@ -441,7 +441,8 @@ public class ManagedForms extends Application {
 				}
 						
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
-				if(columnType.equals("text")) {
+				
+				if(columnType.equals("text") || columnType.equals("select_one")) {
 					pstmtUpdate.setString(1, u.value);
 				} else if(columnType.equals("date")) {
 					java.util.Date inputDate = dateFormat.parse(u.value);
@@ -452,9 +453,12 @@ public class ManagedForms extends Application {
 				}
 				pstmtUpdate.setInt(2, u.prikey);
 				if(u.currentValue != null) {
-					if(columnType.equals("text")) {
+					if(columnType.equals("text") || columnType.equals("select_one")) {
 						pstmtUpdate.setString(3, u.currentValue);
 					}
+				} else if(columnType.equals("date")) {
+					java.util.Date inputDate = dateFormat.parse(u.currentValue);
+					pstmtUpdate.setDate(3,new java.sql.Date(inputDate.getTime()));
 				}
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
@@ -533,6 +537,8 @@ public class ManagedForms extends Application {
 				name.equals("Survey Notes") ||
 				name.equals("_start") ||
 				name.equals("decision_date") ||
+				name.equals("programme") ||
+				name.equals("project") ||
 				name.equals("_end") 
 				) {
 			hide = true;
@@ -543,6 +549,7 @@ public class ManagedForms extends Application {
 	
 	private void addProcessing(TableColumn tc) {
 		String name = tc.name;
+		tc.mgmt = true;
 		if(name.equals("_mgmt_responsible")) {
 			tc.hide = false;
 			tc.readonly = false;

@@ -136,9 +136,12 @@ require([
 			var index = $(event.relatedTarget).data("index"),
 				record = cache.managedData[globals.gCurrentSurvey][index],
 				config = cache.surveyConfig[globals.gCurrentSurvey],
-				$form = $('#editRecordForm'),
+				$editForm = $('#editRecordForm'),
+				$surveyForm = $('#surveyForm'),
 				h = [],
 				idx = -1,
+				m = [],
+				cnt = -1,
 				i,
 				configItem,
 				first = true;
@@ -153,45 +156,37 @@ require([
 			for(i = 0; i < config.length; i++) {
 				configItem = config[i];
 				
-				// Add form group and label
-				h[++idx] = '<div class="form-group"><label class="col-lg-4 control-label">';
-				h[++idx] = configItem.humanName;
-				h[++idx] = '</label>';
-				
-				// Add Data
-				h[++idx] = ' <div class="col-lg-8">';
-				if(configItem.readonly) {		// Read only text
-					h[++idx] = '<input type="text" disabled="" class="form-control" value="';
-					h[++idx] = record[configItem.humanName];
-					h[++idx] = '">';
+				if(configItem.mgmt) {
+					h[++idx] = getEditMarkup(configItem, i, first);
 				} else {
-					h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], i, first);
+					m[++cnt] = getEditMarkup(configItem, i, first);
+				}
+				if(!configItem.readonly) {
 					first = false;
 				}
-				h[++idx] = '</div>';
-				
-				// Close form group
-				h[++idx] = '</div>';
-				
 			}
 			
-			$form.html(h.join(''));
+			$editForm.html(h.join(''));
+			$surveyForm.html(m.join(''));
 			
 			// Set up date fields
-			$form.find('.date').datetimepicker({
+			$editForm.find('.date').datetimepicker({
 				locale: gUserLocale || 'en'
 			});
 			
 			// Respond to changes in the data by creating an update object
-			$form.find('.form-control').keyup(function() {
+			$editForm.find('.form-control').keyup(function() {
 				dataChanged($(this));
 			});
-			$form.find('.date').on("dp.change", function() {
+			$editForm.find('.date').on("dp.change", function() {
 				dataChanged($(this).find('input'));
+			});
+			$editForm.find('select').change(function() {
+				dataChanged($(this));
 			});
 			
 			// Set focus to first editable data item
-			$form.find('[autofocus]').focus();
+			$editForm.find('[autofocus]').focus();
 			
 			
 		});
@@ -222,6 +217,37 @@ require([
 			createManagedSurvey($('#newManagedSurvey').val(), 1);	// TODO remove hard coding of managed survey defn (current set to 1)
 		});
      });
+	 
+	 /*
+	  * Get the markup to edit the record
+	  */
+	 function getEditMarkup(configItem, itemIndex, first) {
+		 
+		 var h = [],
+		 	idx = -1;
+		 	
+		// Add form group and label
+		h[++idx] = '<div class="form-group"><label class="col-lg-4 control-label">';
+		h[++idx] = configItem.humanName;
+		h[++idx] = '</label>';
+		
+		// Add Data
+		h[++idx] = ' <div class="col-lg-8">';
+		if(configItem.readonly) {		// Read only text
+			h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+			h[++idx] = record[configItem.humanName];
+			h[++idx] = '">';
+		} else {
+			h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], itemIndex, first);
+			first = false;
+		}
+		h[++idx] = '</div>';
+		
+		// Close form group
+		h[++idx] = '</div>';
+		
+		return h.join('');
+	 }
 	 
 	 /*
 	  * Refresh the data used in this page
@@ -378,17 +404,8 @@ require([
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
 			 
-			 if(headItem.include) {
-				 if(!doneFirst) {
-					 h[++idx]= '<th data-toggle="true">';
-					 doneFirst = true;
-				 } else {
-					 if(headItem.hide) {
-						 h[++idx] = '<th data-hide="all">';
-					 } else {
-						 h[++idx] = '<th>';
-					 }
-				 }
+			 if(headItem.include && !headItem.hide) {
+				 h[++idx] = '<th>';
 				 h[++idx] = headItem.humanName;
 				 h[++idx] = '</th>';
 			 }
@@ -405,7 +422,7 @@ require([
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
 				
-				 if(headItem.include) {
+				 if(headItem.include && !headItem.hide) {
 					 h[++idx] = '<td>';
 					 if(headItem.readonly || !headItem.inline) {
 						 h[++idx] = record[headItem.humanName];
@@ -424,8 +441,9 @@ require([
 		 }
 		 h[++idx] = '</tbody>';
 		 
-		 $table.removeClass("footable-loaded").empty().append(h.join(''));	
-		 $('.footable').footable();
+		 //$table.removeClass("footable-loaded").empty().append(h.join(''));	
+		 $table.empty().append(h.join(''));
+		 //$('.footable').footable();
 	 }
 	 
 	/*
@@ -433,7 +451,8 @@ require([
 	 */
 	function addEditableColumnMarkup(column, value, itemIndex, first) {
 		var h = [],
-			idx = -1;
+			idx = -1,
+			i;
 		
 		if(column.type === "text") {
 			h[++idx] = ' <input type="text" class="form-control editable" value="';
@@ -458,6 +477,26 @@ require([
  			}
              h[++idx] = '<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>';
              h[++idx] = '</div>';
+		} else if(column.type === "select_one") {
+			h[++idx] = ' <select class="form-control editable" ';
+			h[++idx] = '" data-item="';
+			h[++idx] = itemIndex;
+			h[++idx] = '">';
+			if(column.choices) {
+				for(i = 0; i < column.choices.length; i++) {
+					h[++idx] = '<option';
+					if(column.choices[i] === value) {
+						h[++idx] =' selected="selected"'
+					}
+					h[++idx] = ' value="';
+					h[++idx] = column.choices[i];
+					h[++idx] = '">'
+					h[++idx] = column.choices[i];
+					h[++idx] = '</option>';
+				}
+			}
+			h[++idx] = '</select>';
+			
 		} else {
 			h[++idx] = value;
 		}

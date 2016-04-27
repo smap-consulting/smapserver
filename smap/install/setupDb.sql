@@ -274,11 +274,13 @@ insert into groups(id,name) values(1,'admin');
 insert into groups(id,name) values(2,'analyst');
 insert into groups(id,name) values(3,'enum');
 insert into groups(id,name) values(4,'org admin');
+insert into groups(id,name) values(5,'manage');
 
 insert into user_group (u_id, g_id) values (1, 1);
 insert into user_group (u_id, g_id) values (1, 2);
 insert into user_group (u_id, g_id) values (1, 3);
 insert into user_group (u_id, g_id) values (1, 4);
+insert into user_group (u_id, g_id) values (1, 5);
 
 insert into project (id, o_id, name) values (1, 1, 'A project');
 

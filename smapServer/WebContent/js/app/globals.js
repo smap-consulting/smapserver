@@ -30,6 +30,7 @@ define(function() {
 		gEditingReportProject: undefined,   		// Set if fieldAnalysis called to edit a report
 		gIsAdministrator: false,
 		gIsAnalyst: false,
+		gIsManage: false,
 		gIsOrgAdministrator: false,
 		gSendTrail: false,
 		gViewIdx: 0,

@@ -141,8 +141,7 @@ public class Data extends Application {
 			@PathParam("sId") int sId,
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
-			@QueryParam("mgmt") boolean mgmt,
-			@QueryParam("complete") boolean complete) { 
+			@QueryParam("mgmt") boolean mgmt) { 
 		
 		Response response = null;
 		
@@ -202,11 +201,14 @@ public class Data extends Application {
 					String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
 							+ " where prikey >= ?";
 					String sqlSelect = "";
-					String sqlGetDataOrder = " order by prikey asc;";
 					
-					if(mgmt && !complete) {
-						sqlSelect = " and _mgmt_action_date is null ";
+					String sqlGetDataOrder = null;
+					if(mgmt) {
+						sqlGetDataOrder = " order by prikey desc;";
+					} else {
+						sqlGetDataOrder = " order by prikey asc;";
 					}
+					
 					pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
 					pstmtGetData.setInt(1, start);
 					

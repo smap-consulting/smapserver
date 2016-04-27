@@ -10,6 +10,7 @@ public class TableColumn {
 	public String humanName;
 	public boolean include;		// Include in the table
 	public boolean hide;		// Only show on expand
+	public boolean mgmt = false;
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management

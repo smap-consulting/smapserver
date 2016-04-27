@@ -3,6 +3,13 @@
 	margin-top: 20px;	
 }
 
+@media screen and (min-width: 768px) {
+    .custom-modal-width {
+        width: 80%; 
+    }
+}
+
+
 /* 
  * Restore default bootstrap button styles 
  */
