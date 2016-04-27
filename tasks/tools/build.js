@@ -43,10 +43,10 @@
             name: '../taskManagement'
         },
         {
-            name: '../managed'
+            name: '../managed_forms'
         },
         {
-            name: '../managed_admin'
+            name: '../manage'
         }
 
     ]

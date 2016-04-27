@@ -157,9 +157,9 @@ require([
 				configItem = config[i];
 				
 				if(configItem.mgmt) {
-					h[++idx] = getEditMarkup(configItem, i, first);
+					h[++idx] = getEditMarkup(configItem, i, first, record);
 				} else {
-					m[++cnt] = getEditMarkup(configItem, i, first);
+					m[++cnt] = getEditMarkup(configItem, i, first, record);
 				}
 				if(!configItem.readonly) {
 					first = false;
@@ -210,18 +210,17 @@ require([
 				});
 		});
 		
-		/*
-		 * Create new managed surveys
-		 */
-		$('#managedSurveyCreate').click(function(){
-			createManagedSurvey($('#newManagedSurvey').val(), 1);	// TODO remove hard coding of managed survey defn (current set to 1)
+		// Refresh menu
+		$('#m_refresh').click(function (){
+			refreshData();
 		});
+		
      });
 	 
 	 /*
 	  * Get the markup to edit the record
 	  */
-	 function getEditMarkup(configItem, itemIndex, first) {
+	 function getEditMarkup(configItem, itemIndex, first, record) {
 		 
 		 var h = [],
 		 	idx = -1;
@@ -423,7 +422,8 @@ require([
 				 headItem = columns[i];
 				
 				 if(headItem.include && !headItem.hide) {
-					 h[++idx] = '<td>';
+					 h[++idx] = getHighlightedCell(record[headItem.humanName], headItem.markup);
+						 
 					 if(headItem.readonly || !headItem.inline) {
 						 h[++idx] = record[headItem.humanName];
 					 } else {
@@ -444,6 +444,28 @@ require([
 		 //$table.removeClass("footable-loaded").empty().append(h.join(''));	
 		 $table.empty().append(h.join(''));
 		 //$('.footable').footable();
+	 }
+	 
+	/*
+	 * Get the markup for the data cell
+	 */
+	 function getHighlightedCell(value, markup) {
+		 var elem = undefined,
+		 	i;
+		 
+		 if(value && markup && markup.length > 0) {
+			 for(i = 0; i < markup.length; i++) {
+				 if(value === markup[i].value) {
+					 elem = '<td class="' + markup[i].classes + '">';
+					 break;
+				 }
+			 }
+		 }
+		 if(!elem) {
+			 elem = '<td>';
+		 }
+		 
+		 return elem;
 	 }
 	 
 	/*

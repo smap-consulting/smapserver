@@ -38,6 +38,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableColumnMarkup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -429,11 +430,18 @@ public class ManagedForms extends Application {
 				if(u.currentValue != null && u.currentValue.trim().length() == 0) {
 					u.currentValue = null;
 				}
-				String sqlUpdate = "update " + f.tableName
-						+ " set " + u.name + " = ? "
-						+ "where "
+				
+				String sqlUpdate = "update " + f.tableName;
+				
+				if(u.value == null) {
+					sqlUpdate += " set " + u.name + " = null ";
+				} else {
+					sqlUpdate += " set " + u.name + " = ? ";		
+				}
+				sqlUpdate += "where "
 						+ "prikey = ? "
 						+ "and " + u.name;
+				
 				if(u.currentValue == null) {
 					sqlUpdate += " is null;";
 				} else {
@@ -442,24 +450,28 @@ public class ManagedForms extends Application {
 						
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
 				
-				if(columnType.equals("text") || columnType.equals("select_one")) {
-					pstmtUpdate.setString(1, u.value);
-				} else if(columnType.equals("date")) {
-					java.util.Date inputDate = dateFormat.parse(u.value);
-					pstmtUpdate.setDate(1,new java.sql.Date(inputDate.getTime()));
-				} else {
-					log.info("Warning: unknown type: " + columnType + " value: " + u.value);
-					pstmtUpdate.setString(1, u.value);
+				// Set the parameters
+				int paramCount = 1;
+				if(u.value != null) {
+					if(columnType.equals("text") || columnType.equals("select_one")) {
+						pstmtUpdate.setString(paramCount++, u.value);
+					} else if(columnType.equals("date")) {
+						java.util.Date inputDate = dateFormat.parse(u.value);
+						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+					} else {
+						log.info("Warning: unknown type: " + columnType + " value: " + u.value);
+						pstmtUpdate.setString(paramCount++, u.value);
+					}
 				}
-				pstmtUpdate.setInt(2, u.prikey);
+				pstmtUpdate.setInt(paramCount++, u.prikey);
 				if(u.currentValue != null) {
 					if(columnType.equals("text") || columnType.equals("select_one")) {
-						pstmtUpdate.setString(3, u.currentValue);
+						pstmtUpdate.setString(paramCount++, u.currentValue);
+					} else if(columnType.equals("date")) {
+						java.util.Date inputDate = dateFormat.parse(u.currentValue);
+						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
 					}
-				} else if(columnType.equals("date")) {
-					java.util.Date inputDate = dateFormat.parse(u.currentValue);
-					pstmtUpdate.setDate(3,new java.sql.Date(inputDate.getTime()));
-				}
+				} 
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
 				count = pstmtUpdate.executeUpdate();
@@ -539,6 +551,7 @@ public class ManagedForms extends Application {
 				name.equals("decision_date") ||
 				name.equals("programme") ||
 				name.equals("project") ||
+				name.equals("instanceName") ||
 				name.equals("_end") 
 				) {
 			hide = true;
@@ -566,6 +579,11 @@ public class ManagedForms extends Application {
 			tc.hide = false;
 			tc.readonly = true;
 			tc.type = "calculated";
+			tc.markup = new ArrayList<TableColumnMarkup> ();
+			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
+			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
+			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
+			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
 		} else if(name.equals("_mgmt_action_taken")) {
 			tc.hide = false;
 			tc.readonly = false;

@@ -21,7 +21,7 @@
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script data-main="js/managed_admin" src="/js/libs/require.js"></script>
+<script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
 </head>
 <body>
@@ -41,12 +41,12 @@
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
 		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">Tasks</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/config.html"><i class="fa fa-icon-gear"></i> <span class="nav-label lang" data-lang="m_config">config</span></a></li>
 		          
 		          </ul>
 		        </li> 
 
-			<li id="m_web_forms"><a class="lang" data-lang="m_web_forms" href="/webForm.html">web forms</a></li>
+			<li id="m_web_forms"><a href="/webForm.html"><i class="fa fa-list-alt" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
@@ -72,10 +72,9 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
-	
-
-					
-					</li>
+	          		<li>
+                    	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
+                	</li>
 	            </ul>
 
         	</nav>
@@ -83,10 +82,10 @@
         
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="col-sm-6">
-            	<h2>Submission Tracking</h2>   
+        	<div class="col-sm-2">
+            	<h2>Manage Records</h2>   
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-5">
             	<div class="row">
 					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
 						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
@@ -96,39 +95,19 @@
 					</form>	
 				</div>
         	</div>
+        	<div class="col-sm-5">
+            	<div class="row">
+					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">select survey</label>
+						<div class="col-sm-8">
+							<select class="survey_list form-control" id="survey_name"></select>
+						</div>
+					</form>	
+				</div>
+        	</div>
         </div>
         
-               <!-- Tracked items to process -->
-        <div class="wrapper wrapper-content animated fadeInRight">
-        	<div class="row">
-                <div class="col-lg-12">
-                    <div class="ibox float-e-margins">
-                    	<div class="ibox-title">
-                            <h5>Tracked Forms</h5>
-                            <div class="ibox-tools">
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="ibox-content">
-                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i>Add Survey</a>
-                        	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
-                                <thead>
-                                <tr>
-                               		<th data-toggle="true">Name</th>
-                               		<th>Edit</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                        	</table>
-                        </div>
-					</div>
-				</div>
-			</div>
-		</div>
-		
+
 		  
         <!-- Tracked items to process -->
         <div class="wrapper wrapper-content animated fadeInRight">
@@ -136,12 +115,12 @@
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
                     	<div class="ibox-title">
-                            <h5>M&E Tracking</h5>
+                            <h5 id="survey_title"></h5>
 
                            
                         </div>
                         <div class="ibox-content">
-                        	<table id="trackingTable" class="footable table table-stripped toggle-arrow-tiny" data-page-size="8">
+                        	<table id="trackingTable" class="table table-striped toggle-arrow-tiny" data-page-size="8">
                              
                             </table>
                         </div>
@@ -158,11 +137,17 @@
 
 <!-- Modal to edit a record -->
 <div id="editRecord" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog">
+	<div class="modal-dialog custom-modal-width">
 		<div class="modal-content">
 			<div class="modal-body">
 				<div class="row">
-					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b">Edit Record</h3>
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Form Data</h3>
+
+						<form id="surveyForm" role="form" class="form-horizontal">
+					
+						</form>
+					</div>
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Management Data</h3>
 
 						<form id="editRecordForm" role="form" class="form-horizontal">
 					
