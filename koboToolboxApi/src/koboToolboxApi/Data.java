@@ -320,6 +320,9 @@ public class Data extends Application {
 		
 	}
 	
+	/*
+	 * Convert the human name for the sort column into sql
+	 */
 	private String getSortColumn(ArrayList<Column> columns, String sort) {
 		String col = "prikey";	// default to prikey
 		for(int i = 0; i < columns.size(); i++) {

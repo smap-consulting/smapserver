@@ -94,7 +94,9 @@ require([
 		gManageId = undefined,
 		gUpdate = [],
 		gCurrentIndex,
-		gPriKey;
+		gPriKey,
+		gSort,
+		gDirn;
 	
 	 $(document).ready(function() {
 
@@ -408,7 +410,13 @@ require([
 			 headItem = columns[i];
 			 
 			 if(headItem.include && !headItem.hide) {
-				 h[++idx] = '<th>';
+				 if(gSort && headItem.humanName === gSort.trim()) {
+					 h[++idx] = '<th class="sort-';
+					 h[++idx] = gDirn;
+					 h[++idx] = '">';
+				 } else {
+					 h[++idx] = '<th>';
+				 }
 				 h[++idx] = headItem.humanName;
 				 h[++idx] = '</th>';
 			 }
@@ -447,16 +455,35 @@ require([
 		 	
 		 $table.empty().append(h.join(''));
 		 
+		 // Add sort icon
+		 $table.find('th.sort-asc').each(function() {
+			 var $this = $(this);
+			 $this.html($this.text() + ' <i class="fa fa-sort-up"></i>');
+		 });
+		 $table.find('th.sort-desc').each(function() {
+			 var $this = $(this);
+			 $this.html($this.text() + ' <i class="fa fa-sort-down"></i>');
+		 });
+		 
 		 // Respond to sort requests
 		 $table.find('th').click(function(){
-			 var sort = $(this).text();
-			 console.log(sort);
-			 // TODO Save sort setting
-			 // TODO update icon showing sort order
-			 // TODO get sort order
+			 var	$this = $(this), 
+			 		html = $this.html();	// Use to look for existing sort tags
+			 
+			 gSort = $this.text();
+			 
+			 if($this.find('i').length > 0) {
+				 if(gDirn === "asc") {
+					 gDirn = "desc";
+				 } else {
+					 gDirn = "asc";
+				 }
+			 } else {
+				 gDirn = "asc";
+			 }
 			 
 			 // Update table
-			 getManagedData(globals.gCurrentSurvey, sort, "asc");
+			 getManagedData(globals.gCurrentSurvey, gSort, gDirn);
 		 });
 			
 

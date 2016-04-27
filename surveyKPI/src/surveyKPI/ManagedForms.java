@@ -543,7 +543,6 @@ public class ManagedForms extends Application {
 		boolean hide = false;
 		
 		if(name.equals("_s_id") ||
-				name.equals("prikey") ||
 				name.equals("User") ||
 				name.equals("Upload Time") ||
 				name.equals("Survey Notes") ||

@@ -9,6 +9,10 @@
     }
 }
 
+/* Column sort */
+th.sort-asc,th.sort-desc {
+	background-color:  #cce6ff;
+}
 
 /* 
  * Restore default bootstrap button styles 
