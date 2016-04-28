@@ -30,6 +30,9 @@ define({
 	"m_review": "Review",
 	"m_mf": "Managed Forms",
 	"m_manage": "Manage",
+	"m_manage_dash": "Management Dashboard",
+	"m_s_m_f": "Setup Managed Forms",
+	"m_task_m": "Task Management",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -285,6 +288,7 @@ define({
 	"t_add_tasks2": "Add Tasks",
 	"t_save_tasks": "Save Tasks",
 	"t_tasks_only": "Tasks Only",
+	"t_tg": "Task Group",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
@@ -365,8 +369,10 @@ define({
 	"ed_ct": "Choice Text",
 	"ed_qh": "Question Hint",
 	"ed_ap": "Appearance",
-	"ed_con": "Constraint"
-		
+	"ed_con": "Constraint",
 	
+	// Managed Forms
+	"mf_fd": "Form Data",
+	"mf_md": "Management Data",
 		
 });

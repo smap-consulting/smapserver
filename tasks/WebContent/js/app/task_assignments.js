@@ -824,14 +824,49 @@ function refreshTaskGroupData() {
  */
 function refreshTableTaskGroups(taskgroups) {
 	
+	var h =[],
+		idx = -1,
+		i,
+		grp,
+		firstTg,
+		hasCurrentTg = false;
+		
+	//if(typeof taskgroups != "undefined") {
+	//	$('#taskgroup_table').empty().generateTaskGroupTable(
+	//			{
+	//				'data': taskgroups
+	//			});
+	//}
 	if(typeof taskgroups != "undefined") {
-		$('#taskgroup_table').empty().generateTaskGroupTable(
-				{
-					'data': taskgroups
-				});
+		for(i = 0; i < taskgroups.length; i++) {
+			grp = taskgroups[i];
+			h[++idx] = '<option value="';
+			h[++idx] = grp.tg_id;
+			h[++idx] = '">';
+			h[++idx] = grp.name;
+			h[++idx] = '</option>';
+			
+			if(i==0) {
+				firstTg = grp.tg_id
+			}
+			if(grp.tg_id == globals.gCurrentTaskGroup) {
+				hasCurrentTg = true;
+			}
+		}
 	}
+	$('#taskgroup').html(h.join(''));
+	
+	// Set current value for the task group
+	if(!hasCurrentTg) {
+		globals.gCurrentTaskGroup = firstTg;
+	}
+	$('#taskgroup').val(globals.gCurrentTaskGroup);
+	
+	
+	
 	
 	// Add events onto the task group table
+	/*
 	$("span.pie", '#taskgroup_table').peity("pie", {
 		  fill: ["green", "red"]
 	});
@@ -845,6 +880,11 @@ function refreshTableTaskGroups(taskgroups) {
 		globals.gCurrentTaskGroup = $(this).val();
 		refreshAssignmentData(-1);
 	});
+	*/
+	$('#taskgroup').change(function() {
+		globals.gCurrentTaskGroup = $(this).val();
+		refreshAssignmentData(-1);
+	})
 	refreshAssignmentData(-1, true);
 	
 }
@@ -867,10 +907,10 @@ function refreshAssignmentData() {
 			cache: false,
 			dataType: 'json',
 			success: function(data) {
+				removeHourglass();
 				globals.gTaskList = data;
 				refreshMapAssignments();
 				refreshTableAssignments();
-				removeHourglass();
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
@@ -886,15 +926,16 @@ function refreshAssignmentData() {
 
 function refreshTableAssignments() {
 	
-	var tasks = globals.gTaskList;
+	var tasks = globals.gTaskList.features,
+		h = [],
+		idx = -1,
+		i,
+		item;
 	
 	if(typeof tasks != "undefined") {
-		$('#task_table_body').empty().generateTaskTable(
-				{
-					'data': globals.gTaskList,
-					'showCompleted' : $('#filter_completed').prop('checked')
-				});
 		
+		$('#task_table_body').empty().html(getTableBody(tasks));
+	
 		$('input', '#task_table_body').iCheck({
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
@@ -1122,6 +1163,74 @@ function updateTaskParams() {
 		refreshAssignmentData();
 		//refreshTableAssignments(gTasks);	// Refresh the table view
 	}
+}
+
+function getTableBody(tasks) {
+	var surveyName,
+		tab = [],
+		idx = -1,
+		i;
+
+	for(i = 0; i < tasks.length; i++) {
+		task = tasks[i];
+		tab[++idx] = '<tr>';
+			tab[++idx] = addSelectCheckBox(false, i, false);
+			
+			tab[++idx] = '<td>';
+				tab[++idx] = task.properties.form_name;	
+			tab[++idx] = '</td>';		
+	
+			tab[++idx] = '<td>';			// Task name
+				tab[++idx] = task.properties.name;		
+			tab[++idx] = '</td>';
+		
+			tab[++idx] = '<td class="' + getStatusClass(task.properties.status) + '">';	// status
+				tab[++idx] = task.properties.status;
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';		// Assignee	
+				tab[++idx] = task.properties.assignee_name;
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';			// NFC
+				if(task.properties.location_trigger && task.properties.location_trigger.length > 0) {
+					if(task.properties.location_trigger.indexOf('{') == 0) {
+						tab[++idx] = '<i class="fa fa-crosshairs"></i>';	// Geo fence
+					} else {
+						tab[++idx] = '<i class="fa fa-wifi"></i>';			// NFC
+					}
+				}		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';		// scheduled
+				tab[++idx] = task.properties.scheduled_at;
+			tab[++idx] = '<td>';			// edit
+			tab[++idx] ='<button class="btn btn-info task_edit" value="';
+			tab[++idx] = i;
+			tab[++idx] = '" type="button"><i class="fa fa-paste"></i></button>';
+			tab[++idx] = '</td>';		
+			
+		
+		tab[++idx] = '</tr>';
+	}
+	return tab.join('');
+	
+
+
+}
+
+function getStatusClass(status) {
+	
+	var statusClass = "";
+	
+	if(status === "new") {
+		statusClass = "bg-danger";
+	} else if(status === "submitted") {
+		statusClass = "bg-success";
+	} else if(status === "accepted") {
+		statusClass = "bg-warning";
+	}
+	return statusClass;
 }
 
 });

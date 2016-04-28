@@ -21,7 +21,7 @@
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
     	
-    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+    <link rel="stylesheet" href="/css/smap-wb.css" type="text/css">
     
     
     <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
@@ -48,7 +48,7 @@
 	    	<ul class="nav metismenu" id="side-menu">
 				
 		      	<li>
-		          <a href="#" id="m_modules"  aria-expanded="false"><span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
+		          <a href="#" id="m_modules"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span></a>
 		          <ul class="nav nav-second-level" aria-expanded="false">
 		            
 		            <li><a class="lang" data-lang="m_home" href="/index.html">Home</a></li>
@@ -56,14 +56,14 @@
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
 		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">Tasks</span></a></li>
+			        <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-gear"></i> <span class="nav-label lang" data-lang="m_manage">manage</span></a></li>
 		          
 		          </ul>
 		        </li> 
-	        <li id="m_t_manage"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>           
-			<li id="m_t_dash" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+	        <li id="m_s_m_f"><a href="/tasks/manage.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_s_m_f">setup mf</span></a></li>           
+			<li id="m_dash" class="restrict_role admin_role analyst_role"><a href="/tasks/dashboard.html"><i class="fa fa-bar-chart"></i> <span class="lang" data-lang="m_manage_dash">mgmt dashboard</span></a></li>
 
-			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
 	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -72,7 +72,7 @@
 			</li>
 			-->
 			<li class="nav-divider"></li>
-			<li id="zoomData"><a class="lang" data-lang="tm_zoom_map">zoom to data</a></li>
+			
 			
 	      </ul>
 		</div>
@@ -80,62 +80,55 @@
 	</nav>
 
 	<div id="page-wrapper" class="gray-bg">
-		<div class="wrapper wrapper-content">
-
-			<div class="row border-bottom white-bg">
-                <div class="col-lg-12">
-                    <div class="ibox float-e-margins">
-                        <div class="ibox-title">
-                            <h5>Filter</h5>
-                            <div class="ibox-tools">
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                      
-                            </div>
-                        </div>
-                        <div class="ibox-content">
-                        	<div class="scroll_content">
-	                            <div class="row">
-	                            	<div class="col-sm-5 m-b-xs">
-	                            		<label class="control-label lang" data-lang="c_project" for="project_name">proj</label>
-										<select class="project_list input-sm form-control input-s-sm inline" id="project_name"></select>
-	                                </div>
-	                                <div class="col-sm-4 m-b-xs">
-										<label class="control-label lang" data-lang="t_show" for="users_filter">show for</label>
-										<select class="task_filter input-sm form-control input-s-sm inline" id="users_filter"></select>
-	                                </div>
-	                                <div class="col-sm-3">
-										<label>
-											<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
-											<span class="lang" data-lang="t_complete">completed tasks</span>
-										</label>   
-	                                </div>
-	                            </div>
-	                            <div class="table-responsive">
-	                                <table class="table table-striped">
-	                                    <thead>
-	                                    <tr>
 	
-	                                        <th></th>
-	                                        <th>Task Group</th>
-	                                        <th>Completed</th>
-	                                        <th>Remaining</th>
-	                                        <th>Dynamic</th>
-	                                    </tr>
-	                                    </thead>
-	                                    <tbody id="taskgroup_table">
-	                                    </tbody>
-	                                </table>
-	                            </div>
-	                    	</div>
+	    <!-- Navbar Row -->
+    	<div class="row border-bottom">
+        	<nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+        		<div class="navbar-header">
+            		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+            		
+        		</div>
+        		
+	            <ul class="nav navbar-top-links navbar-right">
+	            	<li><button class="btn btn-info lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button></li>
+	            	<li><button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button></li>
+	          		<li><a href="#" id="zoomData"><span class="lang" data-lang="tm_zoom_map">zoom to data</span></a></li>  			
+                    <li><a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a></li>
+	            </ul>
 
-                        </div>
-                    </div>
-                </div>
-
+        	</nav>
+        </div>
+        
+        <!-- Header Row -->
+        <div class="row wrapper border-bottom white-bg page-heading">
+        	<div class="col-sm-2">
+            	<h2 class="lang" data-lang="m_task_m">manage</h2>   
             </div>
-            <div class="row" style="height: 300px">
+            <div class="col-sm-5">
+            	<div class="row">
+					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+						<div class="col-sm-8">
+							<select class="project_list form-control" id="project_name"></select>
+						</div>
+					</form>	
+				</div>
+        	</div>
+        	<div class="col-sm-5">
+            	<div class="row">
+					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+						<label class="lang col-sm-4 control-label" data-lang="t_tg" for="task_group">task group</label>
+						<div class="col-sm-8">
+							<select class="form-control" id="taskgroup"></select>
+						</div>
+					</form>	
+				</div>
+        	</div>
+        </div>
+        
+		<div class="wrapper wrapper-content animated fadeInRight">
+
+            <div class="row">
 	            <div class="col-lg-12">
 	            	<div class="ibox float-e-margins">
 	            		<div class="ibox-title">
@@ -147,11 +140,28 @@
 	                	</div>
 	                	
 	                	<div class="ibox-content">
-	                	
-	                			<button class="btn btn-success lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
-								<button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button>
-								<button class="btn btn-danger lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
-								<button class="btn btn-info lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button>
+	                		<div class="row border-bottom">
+	                			<div class="col-lg-4">
+	                				<button class="btn btn-success lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
+									<button class="btn btn-danger lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
+								</div>
+								<div class="col-lg-4">
+									<form role="form" class="form-horizontal">
+										<div class="form-group">
+											<label class="control-label lang col-sm-5" data-lang="t_show" for="users_filter">show for</label>
+											<div class="col-sm-7">
+												<select class="task_filter input-sm form-control input-s-sm inline" id="users_filter"></select>
+											</div>
+										</div>
+									</form>
+								</div>
+								<div class="col-lg-3">
+									<label>
+										<input type="checkbox" name="taskfilter" value="completed" class="task_filter" id="filter_completed" checked="checked"/>
+										<span class="lang" data-lang="t_complete">completed tasks</span>
+									</label>   
+								</div>
+	                         </div>     
 				            
 				            <div class="tabs-container">
 				            	<ul class="nav nav-tabs">
@@ -180,7 +190,7 @@
 									</div>
 				                	<div id="table-view" class="tab-pane">
 				                    	 <div class="table-responsive">
-				                                <table id="task_table" class="table-striped">
+				                                <table id="task_table" class="table table-striped">
 				                                    <thead>
 				                                    <tr>
 				                                    	<th></th>
@@ -188,9 +198,7 @@
 				                                        <th>Name</th>
 				                                        <th>Status</th>
 				                                        <th>Assigned</th>
-				                                        <th>x</th>
-				                                        <th>y</th>
-				                                        <th>z</th>
+				                                        <th></th>
 				                                        <th>Scheduled</th>                                      
 				                                        <th>Edit</th>
 				                                    </tr>

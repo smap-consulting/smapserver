@@ -109,7 +109,7 @@ require([
 			bs = isBusinessServer();
 			
 		localise.setlang();		// Localise HTML
-		 
+		
 		// Get the parameters and show a management survey if required
 		params = location.search.substr(location.search.indexOf("?") + 1)
 		pArray = params.split("&");

@@ -41,7 +41,7 @@
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
 		            <li><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/config.html"><i class="fa fa-icon-gear"></i> <span class="nav-label lang" data-lang="m_config">config</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/manage.html"><i class="fa fa-gear"></i> <span class="nav-label lang" data-lang="m_manage">manage</span></a></li>
 		          
 		          </ul>
 		        </li> 
@@ -83,12 +83,12 @@
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
         	<div class="col-sm-2">
-            	<h2>Manage Records</h2>   
+            	<h2 class="lang" data-lang="m_mf">manage</h2>   
             </div>
             <div class="col-sm-5">
             	<div class="row">
 					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
 						<div class="col-sm-8">
 							<select class="project_list form-control" id="project_name"></select>
 						</div>
@@ -98,7 +98,7 @@
         	<div class="col-sm-5">
             	<div class="row">
 					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">select survey</label>
+						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
 						<div class="col-sm-8">
 							<select class="survey_list form-control" id="survey_name"></select>
 						</div>
@@ -141,13 +141,13 @@
 		<div class="modal-content">
 			<div class="modal-body">
 				<div class="row">
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Form Data</h3>
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
 						<form id="surveyForm" role="form" class="form-horizontal">
 					
 						</form>
 					</div>
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Management Data</h3>
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
 
 						<form id="editRecordForm" role="form" class="form-horizontal">
 					

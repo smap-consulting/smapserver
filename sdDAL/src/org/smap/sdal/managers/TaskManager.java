@@ -221,7 +221,7 @@ public class TaskManager {
 				+ "on t.form_id = s.s_id "
 				+ "left outer join assignments a "
 				+ "on a.task_id = t.id " 
-				+ "join users u "
+				+ "left outer join users u "
 				+ "on a.assignee = u.id "
 				+ "where t.tg_id = ? "
 				+ "order by t.id asc;";
