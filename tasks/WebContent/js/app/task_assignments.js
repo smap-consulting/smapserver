@@ -112,9 +112,20 @@ $(document).ready(function() {
 		globals.gCurrentUserId = $('option:selected', $(this)).val();
 	});
 
-	// Add zoom to data button
-	$('#zoomData').button().click(function () {
+	/*
+	 * Menus
+	 */
+	$('#zoomData').button().click(function () {	// Add zoom to data button
 		zoomToFeatureLayer('map');
+	});
+	$('#m_export_pdf').click(function () {	// Export to PDF
+		
+	});
+	$('#m_export_xls').click(function () {	// Export to XLS
+		var url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup,
+			name = $('#taskgroup option:selected').text();
+		downloadFile(url, name + ".xlsx", 
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	});
 	
 	// Add a trigger to open the modal that assigns a user to tasks

@@ -1762,6 +1762,35 @@ function utcTime(localTime) {
 
 }
 
+function downloadFile(url, filename, mime) {
+
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', url, true);
+	xhr.responseType = 'blob';
+	 
+	xhr.onload = function(e) {
+		if (this.status == 200) {
+		    // get binary data as a response
+			var blob = new Blob([this.response], { type: mime });
+			var downloadUrl = URL.createObjectURL(blob);
+			var a = document.createElement("a");
+			a.href = downloadUrl;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+		    setTimeout(function(){
+		        document.body.removeChild(a);
+		        window.URL.revokeObjectURL(url);  
+		    }, 100);  
+		  } else {
+			  alert("Error: Download Failed");
+		  }
+	};
+	 
+	xhr.send();
+	
+}
+
 /*
  * Prevent the menu bar from extending over two lines
  */
