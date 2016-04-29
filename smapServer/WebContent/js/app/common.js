@@ -1715,14 +1715,18 @@ function getVersion() {
  * Convert a timestamp in UTC to local time
  */
 function localTime(utcTime) {
-	var utcDate;
+	var utcDate,
+		localTime;
 	
-	if(utcTime.indexOf('+') > 0) {
-		utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss Z').toDate();
-	} else {
-		utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss').toDate();
+	if(utcTime) {
+		if(utcTime.indexOf('+') > 0) {
+			utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss Z').toDate();
+		} else {
+			utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss').toDate();
+		}
+    	localTime = moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
 	}
-    return moment(utcDate).format('YYYY-MM-DD HH:mm:ss');
+	return localTime;
 } 
 
 /*

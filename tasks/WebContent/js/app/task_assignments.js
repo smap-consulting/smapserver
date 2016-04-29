@@ -957,7 +957,7 @@ function refreshTableAssignments() {
 		$(".task_edit", '#task_table_body').click(function() {
 			var $this = $(this),
 				idx = $this.val(),
-				task = gTasks.features[idx].properties,
+				task = gTasks[idx].properties,
 				scheduleDate;
 		            	
 			console.log(task);
@@ -965,8 +965,11 @@ function refreshTableAssignments() {
 			// open the properties dialog
 			$('#task_properties_taskid').val(task.id);
 			$('#task_properties_repeat').prop('checked', task.repeat);
-			$('#task_properties_title').val(task.title);
-			$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
+			$('#task_properties_title').val(task.name);
+			if(task.scheduleAt) {
+				$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
+			} 
+			
 			$('#nfc_select').val(task.location_trigger);
 			$('#task_properties').modal("show");  
 
