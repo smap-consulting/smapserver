@@ -201,6 +201,7 @@ $(document).ready(function() {
     		$.ajax({
     			  type: "POST",
     			  dataType: 'text',
+				  contentType: "application/json",
     			  url: "/surveyKPI/regions",
     			  data: { settings: regionString },
     			  success: function(data, status) {
