@@ -104,7 +104,7 @@ $(document).ready(function() {
 	});
 
 	// Initialise the map
-	initializeMap();
+	initializeMap('map');
 	$('#layers').show();
 	
 	// Change Functions
@@ -115,7 +115,7 @@ $(document).ready(function() {
 
 	// Add zoom to data button
 	$('#zoomData').button().click(function () {
-		zoomToFeatureLayer();
+		zoomToFeatureLayer('map');
 	});
 	
 	// Add a trigger to open the modal that assigns a user to tasks
@@ -910,7 +910,7 @@ function refreshAssignmentData() {
 			success: function(data) {
 				removeHourglass();
 				globals.gTaskList = data;
-				refreshMapAssignments();
+				refreshMapAssignments('map', globals.gTaskList);
 				refreshTableAssignments();
 			},
 			error: function(xhr, textStatus, err) {
@@ -951,7 +951,7 @@ function refreshTableAssignments() {
 			
 
 			globals.gTaskList.features[idx].properties.selected = selected;
-			refreshMapAssignments();
+			refreshMapAssignments('map', globals.gTaskList);
 		});
 		
 		// Respond to clicking on task edit button
@@ -972,6 +972,10 @@ function refreshTableAssignments() {
 			} 
 			
 			$('#nfc_select').val(task.location_trigger);
+			if(task.update_id && task.update_id.length > 0) {
+				$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id) + 
+						' ' + getInitialDataUrl(task.form_id, task.update_id));
+			}
 			$('#task_properties').modal("show");  
 
 		});
@@ -1208,11 +1212,7 @@ function getTableBody(tasks) {
 			
 			tab[++idx] = '<td>';			// Existing data
 			if(task.properties.update_id && task.properties.update_id.length > 0) {
-				tab[++idx] = '<a href="';
-				tab[++idx] = task.properties.initial_data;
-				tab[++idx] = '">'
-				tab[++idx] = '<i class="fa fa-file-text"></i>';	// Edit existing data
-				tab[++idx] = '</a>';
+				tab[++idx] = getInitialDataLink(task.properties.form_id, task.properties.update_id);
 			}		
 			tab[++idx] = '</td>';
 			
@@ -1229,8 +1229,29 @@ function getTableBody(tasks) {
 	}
 	return tab.join('');
 	
+}
 
-
+function getInitialDataLink(form_id, update_id) {
+	var tab = [];
+		idx = -1;
+		
+	tab[++idx] = '<a href="';
+	tab[++idx] = getWebFormUrl(task.properties.form_id, task.properties.update_id);
+	tab[++idx] = '" target="_blank">'
+	tab[++idx] = '<i class="fa fa-file-text"></i>';	// Edit existing data
+	tab[++idx] = '</a>';
+	
+	return tab.join('');
+}
+function getWebFormUrl(form_id, update_id) {
+	var url;
+	
+	url = "/webForm/" + form_id;
+	if(update_id) {
+		url += "?datakey=instanceid&datakeyvalue=" + update_id;
+	}
+	
+	return url;
 }
 
 function getStatusClass(status) {

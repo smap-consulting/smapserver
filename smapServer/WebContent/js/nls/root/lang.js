@@ -289,6 +289,7 @@ define({
 	"t_save_tasks": "Save Tasks",
 	"t_tasks_only": "Tasks Only",
 	"t_tg": "Task Group",
+	"t_id": "Initial Data",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",

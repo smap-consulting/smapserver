@@ -1016,7 +1016,7 @@ public class GetXForm {
 						priKey = 0;
 					}
 				} else {
-					priKey = getPrimaryKey(sd, firstForm, key, keyval);
+					priKey = getPrimaryKey(sd, cResults, firstForm, key, keyval);
 				}
 			} else {
 				if(!priKeyValid(cResults, firstForm, priKey)) {
@@ -1139,7 +1139,7 @@ public class GetXForm {
 	 * Get the primary key from the passed in key values
 	 *  The key must be in the top level form
 	 */
-	int getPrimaryKey(Connection sd, Form firstForm, String key, String keyval) throws ApplicationException, SQLException {
+	int getPrimaryKey(Connection sd, Connection cResults, Form firstForm, String key, String keyval) throws ApplicationException, SQLException {
 		int prikey = 0;
 		String table = firstForm.getTableName().replace("'", "''");	// Escape apostrophes
 		key = key.replace("'", "''");	// Escape apostrophes
@@ -1162,7 +1162,7 @@ public class GetXForm {
 		String sql = "select prikey from " + table + " where " + keyColumnName + " = ? " +
 				"and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
 		
-		PreparedStatement pstmt = sd.prepareStatement(sql);
+		PreparedStatement pstmt = cResults.prepareStatement(sql);
 		if(type.equals("string") || type.equals("barcode")) {
 			pstmt.setString(1, keyval);
 		} else if (type.equals("int")) {

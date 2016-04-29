@@ -15,15 +15,18 @@ You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-var map,
-	featureLayer,
-	gUserLocation,		// bounds
-	gLocationLayer;
+//var map,
+//	featureLayer,
+//	gUserLocation,		// bounds
+//	gLocationLayer;
+
+var gUserLocation;
+var mapData = {};
 	
 /**
  * Map Initialization
  */
-function initializeMap() {
+function initializeMap(elementId) {
 	
 	if(!L.mapbox.accessToken) {
 		addHourglass();
@@ -34,7 +37,7 @@ function initializeMap() {
 				removeHourglass();
 				if(data.mapbox_default) {
 					L.mapbox.accessToken = data.mapbox_default;
-					initializeMapKeySet();
+					initializeMapKeySet(elementId);
 				} else {
 					alert("mapbox key not set");
 				}
@@ -50,7 +53,7 @@ function initializeMap() {
 		});	
 		
 	} else {
-		initializeMapKeySet();
+		initializeMapKeySet(elementId);
 	}
 	
 	 
@@ -59,17 +62,17 @@ function initializeMap() {
 /*
  * This function does the initialization once the mapbox key has been set
  */
-function initializeMapKeySet() {
+function initializeMapKeySet(elementId) {
 	
 	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
 	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 	});
 	
-	map = L.mapbox.map('map', 'mapbox.streets').setView([0, 0], 1);
+	var thisMapData = {};
 	
-	gLocationLayer = L.mapbox.featureLayer().addTo(map);
-	
-	featureLayer = L.mapbox.featureLayer(undefined, {
+	thisMapData.map = L.mapbox.map(elementId, 'mapbox.streets').setView([0, 0], 1);
+	thisMapData.gLocationLayer = L.mapbox.featureLayer().addTo(thisMapData.map);
+	thisMapData.featureLayer = L.mapbox.featureLayer(undefined, {
 	    pointToLayer: function(feature, latlon) {
 	    	
 	    	var option = {
@@ -100,17 +103,19 @@ function initializeMapKeySet() {
 	        return L.circleMarker(latlon, option);
 	    }
 	});
-	featureLayer.addTo(map);
+	mapData[elementId] = thisMapData;
+
+	thisMapData.featureLayer.addTo(thisMapData.map);
 	
 	/*
 	 * Set users current found
 	 */
-	map.locate();
-	map.on('locationfound', function(e) {
+	thisMapData.map.locate();
+	thisMapData.map.on('locationfound', function(e) {
 		
 		gUserLocation = e.bounds;
 	    
-		gLocationLayer.setGeoJSON({
+		thisMapData.gLocationLayer.setGeoJSON({
 	        type: 'Feature',
 	        geometry: {
 	            type: 'Point',
@@ -123,7 +128,7 @@ function initializeMapKeySet() {
 	        }
 	    });
 		
-		zoomToFeatureLayer();
+		zoomToFeatureLayer(elementId);
 
 	});
 }
@@ -131,18 +136,24 @@ function initializeMapKeySet() {
 /*
  * Assignment specific
  */
-function refreshMapAssignments() {
-	featureLayer.setGeoJSON(globals.gTaskList);
-	zoomToFeatureLayer();
+function refreshMapAssignments(elementId, taskList) {
+	var thisMapData = mapData[elementId];
+	
+	if(thisMapData) {
+		thisMapData.featureLayer.setGeoJSON(taskList);
+		zoomToFeatureLayer(elementId);
+	}
 }
 
 /*
  * Zoom to the specified layer
  */
-function zoomToFeatureLayer() {
+function zoomToFeatureLayer(elementId) {
 	"use strict";
 	
-	var flBounds = featureLayer.getBounds(),
+	var thisMapData = mapData[elementId];
+	
+	var flBounds = thisMapData.featureLayer.getBounds(),
 		validFlBounds = false,
 		validUserLocation = false;
 	
@@ -154,11 +165,11 @@ function zoomToFeatureLayer() {
 	}
 	
 	if(validUserLocation && validFlBounds) {
-		map.fitBounds(flBounds.extend(gUserLocation));
+		thisMapData.map.fitBounds(flBounds.extend(gUserLocation));
 	} else if(validFlBounds) {
-		map.fitBounds(flBounds);
+		thisMapData.map.fitBounds(flBounds);
 	} else if(validUserLocation) {
-		map.fitBounds(gUserLocation);
+		thisMapData.map.fitBounds(gUserLocation);
 	}
 }
 

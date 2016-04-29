@@ -265,7 +265,7 @@ function completeSurveyList(surveyList, filterProjectId) {
 					// Add the initial data parameters
 					params = taskList[i].task.initial_data;
 					params = params.substring(params.indexOf('?'));
-					// TODO Hack to fix inconistency in parameter names between webforms and fieldTask
+					// TODO Hack to fix inconsistency in parameter names between webforms and fieldTask
 					params = params.replace("key=", "datakey=");
 					params = params.replace("keyval=", "datakeyvalue=");
 					h[++idx] = params;
