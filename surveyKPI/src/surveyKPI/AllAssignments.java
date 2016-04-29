@@ -819,7 +819,8 @@ public class AllAssignments extends Application {
 			}
 			connectionSD.commit();
 			
-			response = Response.ok().build();
+			log.info("Returning task group id:" + taskGroupId);
+			response = Response.ok().entity("{\"tg_id\": " + taskGroupId + "}").build();
 			
 		} catch (Exception e) {
 			log.info("Error: " + e.getMessage());

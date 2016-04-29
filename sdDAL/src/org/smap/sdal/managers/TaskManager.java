@@ -209,6 +209,8 @@ public class TaskManager {
 				+ "t.title as name,"
 				+ "t.schedule_at as schedule_at,"
 				+ "t.location_trigger as location_trigger,"
+				+ "t.update_id as update_id,"
+				+ "t.initial_data as initial_data,"
 				+ "s.s_id as form_id,"
 				+ "s.display_name as form_name,"
 				+ "a.id as a_id,"
@@ -274,6 +276,8 @@ public class TaskManager {
 				tf.properties.assignee_name = rs.getString("assignee_name");
 				tf.properties.assignee_ident = rs.getString("assignee_ident");
 				tf.properties.location_trigger = rs.getString("location_trigger");
+				tf.properties.update_id = rs.getString("update_id");
+				tf.properties.initial_data = rs.getString("initial_data");
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");

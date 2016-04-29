@@ -259,11 +259,13 @@ $(document).ready(function() {
 				  type: "POST",
 				  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 				  data: { settings: assignString },
+				  dataType: 'json',
 				  success: function(data, status) {
 					  removeHourglass();
 					  $('#addTask').modal("hide");
+					  globals.gCurrentTaskGroup = data.tg_id;
+					  refreshTaskGroupData();
 					  refreshAssignmentData();
-					  clearNewTasks();
 				  }, error: function(data, status) {
 					  removeHourglass();
 					  if(data.responseText.indexOf("<html>") !== 0) {
@@ -313,7 +315,6 @@ $(document).ready(function() {
 			  success: function(data, status) {
 				  removeHourglass();
 				  refreshAssignmentData();
-				  clearNewTasks();
 			  }, error: function(data, status) {
 				  removeHourglass();
 				  if(data.responseText.indexOf("<html>") !== 0) {
@@ -1205,12 +1206,22 @@ function getTableBody(tasks) {
 				}		
 			tab[++idx] = '</td>';
 			
+			tab[++idx] = '<td>';			// Existing data
+			if(task.properties.update_id && task.properties.update_id.length > 0) {
+				tab[++idx] = '<a href="';
+				tab[++idx] = task.properties.initial_data;
+				tab[++idx] = '">'
+				tab[++idx] = '<i class="fa fa-file-text"></i>';	// Edit existing data
+				tab[++idx] = '</a>';
+			}		
+			tab[++idx] = '</td>';
+			
 			tab[++idx] = '<td>';		// scheduled
 				tab[++idx] = task.properties.scheduled_at;
 			tab[++idx] = '<td>';			// edit
-			tab[++idx] ='<button class="btn btn-info task_edit" value="';
+			tab[++idx] ='<button class="btn btn-default task_edit" value="';
 			tab[++idx] = i;
-			tab[++idx] = '" type="button"><i class="fa fa-paste"></i></button>';
+			tab[++idx] = '" type="button"><i class="fa fa-edit"></i></button>';
 			tab[++idx] = '</td>';		
 			
 		
