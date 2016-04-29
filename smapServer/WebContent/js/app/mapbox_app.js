@@ -70,6 +70,8 @@ function initializeMapKeySet(elementId) {
 	
 	var thisMapData = {};
 	
+	console.log("initialise map: " + elementId);
+	
 	thisMapData.map = L.mapbox.map(elementId, 'mapbox.streets').setView([0, 0], 1);
 	thisMapData.gLocationLayer = L.mapbox.featureLayer().addTo(thisMapData.map);
 	thisMapData.featureLayer = L.mapbox.featureLayer(undefined, {

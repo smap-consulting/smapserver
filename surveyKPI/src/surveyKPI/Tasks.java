@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,6 +60,7 @@ import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.TaskAssignment;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
@@ -391,6 +394,11 @@ public class Tasks extends Application {
 		
 		try {
 			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			// Get the task group name
 			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
 			
@@ -402,7 +410,7 @@ public class Tasks extends Application {
 			
 			// Create XLSTasks File
 			XLSTaskManager xf = new XLSTaskManager(filetype);
-			xf.createXLSTaskFile(response.getOutputStream(), tl);
+			xf.createXLSTaskFile(response.getOutputStream(), tl, localisation);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
@@ -424,7 +432,7 @@ public class Tasks extends Application {
 	}
 
 	/*
-	 * Upload tasks for a task group
+	 * Upload tasks for a task group from an XLS file
 	 */
 	@POST
 	@Produces("application/json")

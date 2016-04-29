@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
@@ -30,6 +31,8 @@ import org.smap.sdal.model.TaskProperties;
 import org.smap.sdal.model.Location;
 import org.w3c.dom.Element;
 
+import com.google.gson.JsonElement;
+
 
 
 public class XLSTaskManager {
@@ -42,11 +45,14 @@ public class XLSTaskManager {
 	
 	private class Column {
 		String name;
+		String human_name;
 		int colNumber;
 		
-		public Column(int col, String n) {
+		public Column(ResourceBundle localisation, int col, String n) {
 			colNumber = col;
 			name = n;
+			//human_name = localisation.getString(n);
+			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
 		}
 		
 		// Return the width of this column
@@ -56,7 +62,7 @@ public class XLSTaskManager {
 		}
 		
 		// Get a value for this column from the provided properties object
-		public String getValue(TaskProperties props) {
+		public String getValue(TaskProperties props, JsonElement geometry) {
 			String value = null;
 			
 			if(name.equals("id")) {
@@ -69,6 +75,24 @@ public class XLSTaskManager {
 				value = String.valueOf(props.status);
 			} else if(name.equals("assignee_ident")) {
 				value = String.valueOf(props.assignee_ident);
+			} else if(name.equals("location_trigger")) {
+				value = String.valueOf(props.location_trigger);
+			} else if(name.equals("scheduled_at")) {
+				value = String.valueOf(props.scheduled_at);
+			} else if(name.equals("guidance")) {
+				value = String.valueOf(props.guidance);		
+			} else if(name.equals("repeat")) {
+				value = String.valueOf(props.repeat);
+			} else if(name.equals("duration")) {
+				value = String.valueOf(props.duration);
+			} else if(name.equals("email")) {
+				value = String.valueOf(props.email);
+			} else if(name.equals("lon")) {
+				value = String.valueOf(props.lon);
+			} else if(name.equals("lat")) {
+				value = String.valueOf(props.lat);
+			} else if(name.equals("address")) {
+				value = String.valueOf(props.address);
 			}
 			
 			if(value == null) {
@@ -93,14 +117,14 @@ public class XLSTaskManager {
 	/*
 	 * Create an XLS file from a task list
 	 */
-	public void getXLSTaskList(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
+	public void getXLSTaskList(OutputStream outputStream, TaskListGeoJson tl, ResourceBundle localisation) throws IOException {
 		
 		Sheet taskListSheet = wb.createSheet("survey");
 		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
 		Map<String, CellStyle> styles = createStyles(wb);
 
-		ArrayList<Column> cols = getColumnList();
+		ArrayList<Column> cols = getColumnList(localisation);
 		createHeader(cols, taskListSheet, styles);	
 		processTaskListForXLS(tl, taskListSheet, styles, cols);
 		
@@ -111,14 +135,14 @@ public class XLSTaskManager {
 	/*
 	 * Write a task list to an XLS file
 	 */
-	public void createXLSTaskFile(OutputStream outputStream, TaskListGeoJson tl) throws IOException {
+	public void createXLSTaskFile(OutputStream outputStream, TaskListGeoJson tl, ResourceBundle localisation) throws IOException {
 		
 		Sheet taskListSheet = wb.createSheet("survey");
 		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
 		Map<String, CellStyle> styles = createStyles(wb);
 
-		ArrayList<Column> cols = getColumnList();
+		ArrayList<Column> cols = getColumnList(localisation);
 		createHeader(cols, taskListSheet, styles);	
 		processTaskListForXLS(tl, taskListSheet, styles, cols);
 		
@@ -244,17 +268,27 @@ public class XLSTaskManager {
 	/*
 	 * Get the columns for the settings sheet
 	 */
-	private ArrayList<Column> getColumnList() {
+	private ArrayList<Column> getColumnList(ResourceBundle localisation) {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
 		int colNumber = 0;
+	
+		cols.add(new Column(localisation, colNumber++, "id"));
+		cols.add(new Column(localisation, colNumber++, "form"));
+		cols.add(new Column(localisation, colNumber++, "name"));
+		cols.add(new Column(localisation, colNumber++, "status"));
+		cols.add(new Column(localisation, colNumber++, "assignee_ident"));
+		cols.add(new Column(localisation, colNumber++, "location_trigger"));
+		cols.add(new Column(localisation, colNumber++, "scheduled_at"));
+		cols.add(new Column(localisation, colNumber++, "guidance"));
+		cols.add(new Column(localisation, colNumber++, "repeat"));
+		cols.add(new Column(localisation, colNumber++, "duration"));
+		cols.add(new Column(localisation, colNumber++, "email"));
+		cols.add(new Column(localisation, colNumber++, "address"));
+		cols.add(new Column(localisation, colNumber++, "lon"));
+		cols.add(new Column(localisation, colNumber++, "lat"));
 		
-		cols.add(new Column(colNumber++, "id"));
-		cols.add(new Column(colNumber++, "form"));
-		cols.add(new Column(colNumber++, "name"));
-		cols.add(new Column(colNumber++, "status"));
-		cols.add(new Column(colNumber++, "assignee_ident"));
 		
 		return cols;
 	}
@@ -294,7 +328,7 @@ public class XLSTaskManager {
 			
             Cell cell = headerRow.createCell(i);
             cell.setCellStyle(headerStyle);
-            cell.setCellValue(col.name);
+            cell.setCellValue(col.human_name);
         }
 	}
 	
@@ -316,7 +350,7 @@ public class XLSTaskManager {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
 				cell.setCellStyle(styles.get("default"));			
-				cell.setCellValue(col.getValue(props));
+				cell.setCellValue(col.getValue(props, feature.geometry));
 	        }
 			
 		}

@@ -211,6 +211,10 @@ public class TaskManager {
 				+ "t.location_trigger as location_trigger,"
 				+ "t.update_id as update_id,"
 				+ "t.initial_data as initial_data,"
+				+ "t.address as address,"
+				+ "t.guidance as guidance,"
+				+ "t.duration as duration,"
+				+ "t.email as email,"
 				+ "s.s_id as form_id,"
 				+ "s.display_name as form_name,"
 				+ "a.id as a_id,"
@@ -229,7 +233,7 @@ public class TaskManager {
 				+ "order by t.id asc;";
 		PreparedStatement pstmt = null;
 		
-		String sqlPoint = "select ST_AsGeoJSON(geo_point) from tasks where id = ?;";
+		String sqlPoint = "select ST_AsGeoJSON(geo_point), ST_X(geo_point), ST_Y(geo_point) from tasks where id = ?;";
 		PreparedStatement pstmtPoint = null;
 		String sqlLine = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
 		PreparedStatement pstmtLine = null;
@@ -278,6 +282,10 @@ public class TaskManager {
 				tf.properties.location_trigger = rs.getString("location_trigger");
 				tf.properties.update_id = rs.getString("update_id");
 				tf.properties.initial_data = rs.getString("initial_data");
+				tf.properties.address = rs.getString("address");
+				tf.properties.guidance = rs.getString("guidance");
+				tf.properties.duration = rs.getFloat("duration");
+				tf.properties.email = rs.getString("email");
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");
@@ -296,7 +304,11 @@ public class TaskManager {
 				}
 				if(rsGeo != null && rsGeo.next()) {
 					System.out.println("original: " + rsGeo.getString(1));
-					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();			
+					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();	
+					if(geo_type.equals("POINT")) {
+						tf.properties.lon = rsGeo.getString(2);
+						tf.properties.lat = rsGeo.getString(3);
+					}
 				}
 			
 				

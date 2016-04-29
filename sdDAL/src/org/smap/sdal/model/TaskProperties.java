@@ -20,7 +20,12 @@ public class TaskProperties {
 	public Timestamp scheduled_at;
 	public String location_trigger;
 	public boolean repeat;
-	public String address;			// Key value pairs representing an unstructured address
+	public String address;			// Text address
+	public String guidance;			// Key value pairs representing an unstructured address
+	public float duration;			// In seconds
+	public String email;
+	public String lon;				// Duplicates data in geometry
+	public String lat;
 	
 	public String status;
 }

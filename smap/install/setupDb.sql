@@ -622,6 +622,9 @@ CREATE TABLE public.tasks (
 	geo_type text,
 	update_id text,
 	repeat boolean,
+	duration interval second,
+	email text,
+	guidance text,
 	p_id integer REFERENCES project(id),
 	location_trigger text
 );

@@ -485,3 +485,8 @@ create TABLE show_columns (
 ALTER TABLE show_columns OWNER TO ws;
 
 insert into groups(id,name) values(5,'manage');
+
+-- Tasks
+alter table tasks add column duration interval second;
+alter table tasks add column email text;
+alter table tasks add column guidance text;
