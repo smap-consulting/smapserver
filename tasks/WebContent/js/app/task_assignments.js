@@ -103,9 +103,8 @@ $(document).ready(function() {
 		questionChanged();
 	});
 
-	// Initialise the map
+	// Initialise the maps
 	initializeMap('map');
-	$('#layers').show();
 	
 	// Change Functions
 	$('.users_select').change(function () {
@@ -959,6 +958,7 @@ function refreshTableAssignments() {
 			var $this = $(this),
 				idx = $this.val(),
 				task = gTasks[idx].properties,
+				taskFeature = gTasks[idx],
 				scheduleDate;
 		            	
 			console.log(task);
@@ -977,6 +977,10 @@ function refreshTableAssignments() {
 						' ' + getInitialDataUrl(task.form_id, task.update_id));
 			}
 			$('#task_properties').modal("show");  
+			if(!mapData['mapModal']) {
+				initializeMap('mapModal');
+				refreshMapAssignments('mapModal', [taskFeature])
+			}
 
 		});
 		
