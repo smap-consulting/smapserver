@@ -36,6 +36,7 @@ public class User {
 	public boolean ft_send_trail;
 	public int current_project_id;
 	public int current_survey_id;
+	public int current_task_group_id;
 	public int o_id;
 	public String organisation_name;
 	public String company_name;

@@ -151,30 +151,37 @@ public class UserSvc extends Application {
 				u.email = null;
 			}
 			
-			if(u.current_project_id > 0 || u.current_survey_id > 0) {
+			if(u.current_project_id > 0 || u.current_survey_id > 0 || u.current_task_group_id > 0) {
 				/*
-				 * If the current project/survey is to be changed then only update the project id and survey id
+				 * If the current project/survey is to be changed then update both the project id, survey id and task_group_id
 				 */
 				String sql = null;
 				if(u.current_project_id > 0) {
-					sql = "update users set current_project_id = ?, current_survey_id = ? where ident = ?;";
-				} else {
+					sql = "update users set current_project_id = ?, current_survey_id = ?, current_task_group_id = ? where ident = ?;";
+				} else if(u.current_survey_id > 0) {
 					// Only update the survey id
 					sql = "update users set current_survey_id = ? where ident = ?;";
+				} else if(u.current_task_group_id > 0) {
+					// Only update the task group id
+					sql = "update users set current_task_group_id = ? where ident = ?;";
 				}
 							
 				pstmt = connectionSD.prepareStatement(sql);
 				if(u.current_project_id > 0) {
 					pstmt.setInt(1, u.current_project_id);
 					pstmt.setInt(2, u.current_survey_id);
-					pstmt.setString(3, request.getRemoteUser());
-				} else {
+					pstmt.setInt(3, u.current_task_group_id);
+					pstmt.setString(4, request.getRemoteUser());
+				} else if(u.current_survey_id > 0) {
 					pstmt.setInt(1, u.current_survey_id);
+					pstmt.setString(2, request.getRemoteUser());
+				} else if(u.current_task_group_id > 0) {
+					pstmt.setInt(1, u.current_task_group_id);
 					pstmt.setString(2, request.getRemoteUser());
 				}
 				
 				
-				log.info("SQL: " + sql + " : " + u.current_project_id + " : " + u.current_survey_id + " : " + request.getRemoteUser());
+				log.info("Update user defaults: " + pstmt.toString());
 				int count = pstmt.executeUpdate();
 				if(count == 0) {
 					log.info("Failed to update current project id and survey id");

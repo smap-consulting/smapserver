@@ -327,6 +327,26 @@ public class TaskManager {
 	}
 	
 	/*
+	 * Save the tasks for the specified task group
+	 */
+	public void writeTaskList(Connection sd, 
+			TaskListGeoJson tl,
+			int pId,
+			int tgId,
+			String hostname) throws Exception {
+		
+		ArrayList<TaskFeature> features = tl.features;
+		for(int i = 0; i < features.size(); i++) {
+			TaskFeature tf = features.get(i);
+			
+			
+				writeTask(sd, pId, tgId, tf, hostname);
+		
+		}
+	
+	}
+	
+	/*
 	 * Get the current locations available for an organisation
 	 */
 	public ArrayList<Location>  getLocations(Connection sd, 
@@ -471,7 +491,7 @@ public class TaskManager {
 					/*
 					 * Write to the database
 					 */
-					writeTask(sd, as, hostname, tgId, pId, sId, tid, instanceId);
+					writeTaskCreatedFromSurveyResults(sd, as, hostname, tgId, pId, sId, tid, instanceId);
 				}
 			}
 		
@@ -494,7 +514,7 @@ public class TaskManager {
 	/*
 	 * Write the task into the task table
 	 */
-	public void writeTask(Connection sd,
+	public void writeTaskCreatedFromSurveyResults(Connection sd,
 			AssignFromSurvey as,
 			String hostname,
 			int tgId,
@@ -571,7 +591,7 @@ public class TaskManager {
 					location = location.replaceFirst("LINESTRING", "POINT");
 				}
 			}	 
-;
+
 			if(location.startsWith("POINT")) {
 				sql = insertSql1 + "geo_point," + insertSql2;
 				geoType = "POINT";
@@ -710,6 +730,153 @@ public class TaskManager {
 		return tid;
 	}
 	
+	
+	/*
+	 * Create a new task
+	 */
+	private void writeTask(Connection sd, int pId, int tgId, TaskFeature tf, String hostname) throws Exception {
+		
+		// 1. Delete the existing task if the task is being updated
+		if(tf.properties.id > 0) {
+			
+		}
+		
+		// 2. Get the form id, if only the form name is specified
+		if(tf.properties.form_id <= 0 && tf.properties.form_name != null) {
+			
+		}
+		
+		// 2. Get the assignee id, if only the assignee ident is specified
+		if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null) {
+			
+		}
+		
+		// 3. If this is a new task group then create it and get the task group id
+		
+		
+		// Write the task
+		String insertSql1 = "insert into tasks (" +
+				"p_id, " +
+				"tg_id, " +
+				"type, " +
+				"title, " +
+				"form_id, " +
+				"url, " +
+				"geo_type, ";
+				
+		String insertSql2 =	
+				"initial_data," +
+				"update_id," +
+				"address," +
+				"schedule_at," +
+				"location_trigger) " +
+			"values (" +
+				"?, " + 
+				"?, " + 
+				"'xform', " +
+				"?, " +
+				"?, " +
+				"?, " +
+				"?, " +	
+				"ST_GeomFromText(?, 4326), " +
+				"?, " +
+				"?, " +
+				"?," +
+				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
+				"?);";	
+		
+		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
+		
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtAssign = sd.prepareStatement(assignSQL);
+		
+		String location = tf.properties.location;
+		
+		try {
+
+			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, tf.properties.form_id);
+			String formUrl = "http://" + hostname + "/formXML?key=" + targetSurveyIdent;
+			String geoType = null;
+			String sql = null;
+			String initial_data_url = null;
+			String targetInstanceId = null;
+			
+
+			/*
+			 * Location
+			 */
+			if(location == null) {
+				location = "POINT(0 0)";
+			} else if(location.startsWith("LINESTRING")) {
+				log.info("Starts with linestring: " + tf.properties.location.split(" ").length);
+				if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
+					location = location.replaceFirst("LINESTRING", "POINT");
+				}
+			}	 
+
+			if(location.startsWith("POINT")) {
+				sql = insertSql1 + "geo_point," + insertSql2;
+				geoType = "POINT";
+			} else if(location.startsWith("POLYGON")) {
+				sql = insertSql1 + "geo_polygon," + insertSql2;
+				geoType = "POLYGON";
+			} else if(location.startsWith("LINESTRING")) {
+				sql = insertSql1 + "geo_linestring," + insertSql2;
+				geoType = "LINESTRING";
+			} else {
+				throw new Exception ("Unknown location type: " + location);
+			}
+			
+			
+			/*
+			 * Write the task to the database
+			 */
+
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			
+			pstmt.setInt(1, pId);
+			pstmt.setInt(2,  tgId);
+			pstmt.setString(3,  tf.properties.name);
+			pstmt.setInt(4, tf.properties.form_id);
+			pstmt.setString(5, formUrl);
+			pstmt.setString(6, geoType);
+			pstmt.setString(7, location);
+			pstmt.setString(8, initial_data_url);	
+			pstmt.setString(9, targetInstanceId);
+			pstmt.setString(10, tf.properties.address);
+			pstmt.setString(11, tf.properties.location_trigger);
+			
+			System.out.println("Insert Tasks: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			/*
+			 * Assign the user to the new task
+			 */
+			if(tf.properties.assignee > 0) {
+				
+				ResultSet keys = pstmt.getGeneratedKeys();
+				if(keys.next()) {
+					int taskId = keys.getInt(1);
+
+					pstmtAssign.setInt(1, tf.properties.assignee);
+					pstmtAssign.setString(2, "accepted");
+					pstmtAssign.setInt(3, taskId);
+					
+					log.info("Assign user to task:" + pstmtAssign.toString());
+					
+					pstmtAssign.executeUpdate();
+				}
+				
+
+		
+			}
+			
+		} finally {
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
+		}
+		
+	}
 
 }
 

@@ -119,14 +119,23 @@ $(document).ready(function() {
 		zoomToFeatureLayer('map');
 	});
 	$('#m_export_pdf').click(function () {	// Export to PDF
-		
+		alert("Not implemented");
 	});
+	
 	$('#m_export_xls').click(function () {	// Export to XLS
 		var url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup,
 			name = $('#taskgroup option:selected').text();
 		downloadFile(url, name + ".xlsx", 
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	});
+	
+	$('#m_import_xls').click(function () {	// Import from XLS
+		$('#import_taskgroup').modal("show");
+	});
+	$(('#importTaskGroupGo')).click(function(){
+		importTaskGroup();
+	});
+    $('.file-inputs').bootstrapFileInput();
 	
 	// Add a trigger to open the modal that assigns a user to tasks
 	$('#assignUser').button().click(function () {
@@ -894,6 +903,7 @@ function refreshTableTaskGroups(taskgroups) {
 	*/
 	$('#taskgroup').change(function() {
 		globals.gCurrentTaskGroup = $(this).val();
+		saveCurrentProject(undefined, undefined, globals.gCurrentTaskGroup);
 		refreshAssignmentData(-1);
 	})
 	refreshAssignmentData(-1, true);
@@ -1281,6 +1291,37 @@ function getStatusClass(status) {
 		statusClass = "bg-warning";
 	}
 	return statusClass;
+}
+
+function importTaskGroup() {
+	var url = '/surveyKPI/tasks/xls/' + globals.gCurrentProject,
+		name = $('#taskgroup option:selected').text();
+
+	$('#tg_to_import').val(globals.gCurrentTaskGroup);
+	var f = document.forms.namedItem("loadtasks");
+	var formData = new FormData(f);
+	
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  data: formData,
+		  cache: false,
+	      contentType: false,
+	      processData:false,
+		  url: url,
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#import_taskgroup').modal("hide");
+			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html();
+			  refreshAssignmentData();
+		  },
+		  error: function(xhr, textStatus, err) {
+			  removeHourglass(); 
+			  var msg = xhr.responseText;
+			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(msg);
+			 
+		  }
+	});
 }
 
 });

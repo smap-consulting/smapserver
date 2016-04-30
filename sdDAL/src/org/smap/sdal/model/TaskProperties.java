@@ -24,8 +24,9 @@ public class TaskProperties {
 	public String guidance;			// Key value pairs representing an unstructured address
 	public float duration;			// In seconds
 	public String email;
-	public String lon;				// Duplicates data in geometry
+	public String lon;				// Duplicates data in geometry, used when working with XLS exports
 	public String lat;
+	public String location;			// WKT version of geometry
 	
 	public String status;
 }

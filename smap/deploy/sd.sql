@@ -490,3 +490,4 @@ insert into groups(id,name) values(5,'manage');
 alter table tasks add column duration interval second;
 alter table tasks add column email text;
 alter table tasks add column guidance text;
+alter table users add column current_task_group_id integer;

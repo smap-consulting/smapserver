@@ -152,13 +152,14 @@ function getMyProjects(projectId, callback, getAll) {
 /*
  * Save the current project id in the user defaults
  */
-function saveCurrentProject(projectId, surveyId) {
+function saveCurrentProject(projectId, surveyId, taskGroupId) {
 
 	if(surveyId > 0 || projectId > 0) {
 		
 		var user = {
 				current_project_id: projectId,
-				current_survey_id: surveyId
+				current_survey_id: surveyId,
+				current_task_group_id: taskGroupId
 				};
 		var userString = JSON.stringify(user);
 		
@@ -566,6 +567,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 				globals.gCurrentSurvey = data.current_survey_id;
 			}
 			globals.gCurrentProject = data.current_project_id;
+			globals.gCurrentTaskGroup = data.current_task_group_id;
 			$('#projectId').val(globals.gCurrentProject);		// Set the project value for the hidden field in template upload
 			
 			if(getProjects) {

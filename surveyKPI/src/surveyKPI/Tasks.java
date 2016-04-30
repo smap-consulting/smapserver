@@ -64,6 +64,7 @@ import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.TaskAssignment;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
+import org.smap.sdal.model.TaskProperties;
 
 import utilities.XLSFormManager;
 import utilities.XLSTaskManager;
@@ -436,17 +437,18 @@ public class Tasks extends Application {
 	 */
 	@POST
 	@Produces("application/json")
-	@Path("/xls/{tg_id}")
+	@Path("/xls/{pId}")
 	public Response uploadTasks(
 			@Context HttpServletRequest request,
-			@PathParam("tgId") int tgId
+			@PathParam("pId") int pId
 			) throws IOException {
 		
 		Response response = null;
+		int tgId = 0;
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 
-		log.info("userevent: " + request.getRemoteUser() + " : upload tasks from xls file for group: " + tgId);
+		log.info("userevent: " + request.getRemoteUser() + " : upload tasks from xls file for project: " + pId);
 		
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
@@ -469,6 +471,9 @@ public class Tasks extends Application {
 				
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+					if(item.getFieldName().equals("tg")) {
+						tgId = Integer.valueOf(item.getString());
+					}
 					
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
@@ -491,26 +496,44 @@ public class Tasks extends Application {
 					// Authorisation - Access
 					sd = SDDataSource.getConnection("Tasks-TaskUpload");
 					a.isAuthorised(sd, request.getRemoteUser());
+					a.isValidProject(sd, request.getRemoteUser(), pId);
+					a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
 					// End authorisation
 
 					// Process xls file
 					XLSTaskManager xf = new XLSTaskManager();
-					ArrayList<Location> locations = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
+					TaskListGeoJson tl = xf.getXLSTaskList(filetype, item.getInputStream());
 					
-					// Save locations to disk
-					//int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
-					//TaskManager tm = new TaskManager();
-					//tm.saveLocations(sd, locations, oId);
+					/*
+					 * Convert lon, lat locations into WKT for update
+					 */
+					for(int i = 0; i < tl.features.size(); i++) {
+						TaskProperties props = tl.features.get(i).properties;
+						if(props.lat != null && props.lon != null) {
+							props.location = "POINT(" + props.lon + " " + props.lat + ")";
+						}
+					}
+					// Save tasks to the database
+					TaskManager tm = new TaskManager();
+					tm.writeTaskList(sd, tl, pId, tgId, request.getServerName());
 					
-					// Return tags to calling program
-					//Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-					//String resp = gson.toJson(locations);
+					/*
+					 * Get the tasks out of the database
+					 * This is required because saving an external task list adds additional default data including geometries
+					 *  from latitude and longitude
+					 *  Also we may not want to return complete tasks
+					 */
+					tl = tm.getTasks(sd, tgId, true);	// TODO set "complete" flag from passed in parameter
+					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					String resp = gson.toJson(tl);
 					
-					//if(locations.size() > 0) {
-					//	response = Response.ok(resp).build();
-					//} else {
-					//	response = Response.serverError().entity("no tags found").build();
-					//}
+					System.out.println("Task list: " + resp);
+					
+					if(tl.features.size() > 0) {
+						response = Response.ok(resp).build();
+					} else {
+						response = Response.serverError().entity("no tasks found").build();
+					}
 					
 					break;
 						

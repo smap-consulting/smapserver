@@ -115,21 +115,68 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * Create an XLS file from a task list
+	 * Create a task list from an XLS file
 	 */
-	public void getXLSTaskList(OutputStream outputStream, TaskListGeoJson tl, ResourceBundle localisation) throws IOException {
+	public TaskListGeoJson getXLSTaskList(String type, InputStream inputStream) throws IOException {
 		
-		Sheet taskListSheet = wb.createSheet("survey");
-		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
+		Sheet sheet = null;
+        Row row = null;
+        int lastRowNum = 0;
+        TaskListGeoJson tl = new TaskListGeoJson();
+        tl.features = new ArrayList<TaskFeature> ();
+        HashMap<String, Integer> header = null;
+        
+		if(type != null && type.equals("xls")) {
+			wb = new HSSFWorkbook(inputStream);
+		} else {
+			wb = new XSSFWorkbook(inputStream);
+		}
 		
-		Map<String, CellStyle> styles = createStyles(wb);
+		sheet = wb.getSheetAt(0);
+		if(sheet.getPhysicalNumberOfRows() > 0) {
+			
+			lastRowNum = sheet.getLastRowNum();
+			boolean needHeader = true;
+			
+            for(int j = 0; j <= lastRowNum; j++) {
+                
+            	row = sheet.getRow(j);
+                
+                if(row != null) {
+                	
+                    int lastCellNum = row.getLastCellNum();
+                    
+                	if(needHeader) {
+                		header = getHeader(row, lastCellNum);
+                		needHeader = false;
+                	} else {
+                		TaskFeature tf = new TaskFeature();
+                		TaskProperties tp = new TaskProperties();
+                		tf.properties = tp;
 
-		ArrayList<Column> cols = getColumnList(localisation);
-		createHeader(cols, taskListSheet, styles);	
-		processTaskListForXLS(tl, taskListSheet, styles, cols);
+                		
+                		try {
+                			tp.id = Integer.parseInt(getColumn(row, "id", header, lastCellNum));
+                			tp.form_name = getColumn(row, "form", header, lastCellNum);
+                			tp.name = getColumn(row, "name", header, lastCellNum);
+                			
+                			tp.lon = getColumn(row, "lon", header, lastCellNum);
+                			tp.lat = getColumn(row, "lat", header, lastCellNum);
+                			tl.features.add(tf);
+                			System.out.println(" Adding new task: " + tp.name);
+                		} catch (Exception e) {
+                			log.info("Error getting task column" + e.getMessage());
+                		}
+                	}
+                	
+                }
+                
+            }
+		}
+	
+		return tl;
 		
-		wb.write(outputStream);
-		outputStream.close();
+		
 	}
 	
 	/*

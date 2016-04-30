@@ -210,6 +210,7 @@ CREATE TABLE users (
 	user_role text,
 	current_project_id integer,		-- Set to the last project the user selected
 	current_survey_id integer,		-- Set to the last survey the user selected
+	current_task_group_id integer,	-- Set to the last task group the user selected
 	one_time_password varchar(36),	-- For password reset
 	one_time_password_expiry timestamp,		-- Time and date one time password expires
 	password_reset boolean default false,	-- Set true if the user has reset their password
