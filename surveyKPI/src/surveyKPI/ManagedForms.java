@@ -31,6 +31,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
@@ -253,7 +254,12 @@ public class ManagedForms extends Application {
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
 
-			// 2.  Add the data processing columns to the results table
+			// 2. Create results tables if they do not exist
+			TableManager tm = new TableManager();
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+			tm.createTable(cResults, sd, f.tableName, sIdent);
+			
+			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			getDataProcessingConfig(am.manageId, columns);
 			
@@ -567,17 +573,17 @@ public class ManagedForms extends Application {
 			tc.readonly = false;
 			tc.type = "text";
 		} else if(name.equals("_mgmt_action_deadline")) {
-			tc.hide = true;
+			tc.hide = false;
 			tc.readonly = false;
 			tc.type = "date";
 		} else if(name.equals("_mgmt_action_date")) {
-			tc.hide = false;
+			tc.hide = true;
 			tc.readonly = false;
 			tc.type = "date";
 		} else if(name.equals("_mgmt_response_status")) {
 			tc.hide = false;
 			tc.readonly = true;
-			tc.type = "calculated";
+			tc.type = "calculate";
 			tc.markup = new ArrayList<TableColumnMarkup> ();
 			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
 			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));

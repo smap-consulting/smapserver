@@ -501,7 +501,7 @@ define([
 			selLabel = globals.gSelLabel,
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
 		
-			if(selProperty === "required") {		// Add a boolean type
+			if(selProperty === "required" && type === "question") {		// Add a boolean type
 				
 			    h[++idx] = '<button type="button" class="btn labelButton ';
 			    if(question[selProperty]) {
@@ -519,7 +519,7 @@ define([
 			    	h[++idx] = 'glyphicon-remove-sign"> No';
 			    }
 			    h[++idx] = '</span></button>';
-			} else if(selProperty === "autoplay") {		// Add a radio buttons to select autoplay status
+			} else if(selProperty === "autoplay" && type === "question") {		// Add a radio buttons to select autoplay status
 				
 				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection" data-toggle="buttons-radio">';
 					// Add "none" autoplay option
@@ -545,7 +545,7 @@ define([
 					
 				h[++idx] = '</div>';
 				
-			}else if(selProperty === "media") {
+			} else if(selProperty === "media") {
 				h[++idx] = '<div class="row">';
 				if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
 					h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
@@ -580,6 +580,9 @@ define([
 			h[++idx] = '" data-prop="';
 			h[++idx] = selProperty;
 			h[++idx] = '"';
+			if(type === "option" && selProperty !== "label") {
+				h[++idx] = ' readonly tabindex="-1"';
+			}
 			if(type === "question" && selProperty !== "appearance" && 
 					((question.source != "user" && 
 					question.type != "begin group" && 

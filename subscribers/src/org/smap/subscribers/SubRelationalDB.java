@@ -47,6 +47,7 @@ import org.apache.commons.io.FileUtils;
 import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
+import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.NotificationManager;
@@ -68,23 +69,7 @@ import com.google.gson.GsonBuilder;
 
 public class SubRelationalDB extends Subscriber {
 
-	/*
-	 * Class to store information about geometry columns
-	 * Needed to support two phase creation of geometry columns in tables
-	 */
-	private class GeometryColumn {
-		public String tableName = null;
-		public String columnName = null;
-		public String srid = "4326";
-		public String type = null;
-		public String dimension = "2";
-		
-		public GeometryColumn(String tableName, String columnName, String type) {
-			this.tableName = tableName;
-			this.columnName = columnName;
-			this.type = type;
-		}
-	}
+
 	
 	private class Keys {
 		ArrayList<Integer> duplicateKeys = new ArrayList<Integer>();
@@ -537,8 +522,9 @@ public class SubRelationalDB extends Subscriber {
 			 *   2) Check if this survey is a duplicate
 			 */
 			keys.duplicateKeys = new ArrayList<Integer>();
+			TableManager tm = new TableManager();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
-				boolean tableCreated = createTable(cRel, cMeta, tableName, sName);
+				boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName);
 				boolean tableChanged = false;
 				boolean tablePublished = false;
 				keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
@@ -565,7 +551,7 @@ public class SubRelationalDB extends Subscriber {
 					tablePublished = addUnpublishedColumns(cMeta, cRel, sId);
 				}
 				if(tableCreated || tableChanged || tablePublished) {
-					markPublished(cMeta, sId);		// TODO only mark published if there have been changes made
+					markPublished(cMeta, sId);		// only mark published if there have been changes made
 				}
 			}
 			
@@ -1051,7 +1037,7 @@ public class SubRelationalDB extends Subscriber {
 	
 	/*
 	 * Create the table if it does not already exit in the database
-	 */
+	 *
 	private boolean createTable(Connection cResults, Connection sd, String tableName, String sName) {
 		boolean tableCreated = false;
 		String sql = "select count(*) from information_schema.tables where table_name =?;";
@@ -1083,10 +1069,10 @@ public class SubRelationalDB extends Subscriber {
 		}
 		return tableCreated;
 	}
-	
+	*/
 	/*
 	 * Create the tables for the survey
-	 */
+	 *
 	private void writeAllTableStructures(Connection sd, Connection cResults, SurveyTemplate template) {
 			
 		String response = null;
@@ -1121,7 +1107,9 @@ public class SubRelationalDB extends Subscriber {
 			try {if (cResults != null) {cResults.setAutoCommit(true);}} catch (SQLException e) {}
 		}		
 	}
+	*/
 	
+	/*
 	private void writeTableStructure(Form form, Connection sd, Connection cResults) throws SQLException {
 		
 		String tableName = form.getTableName();
@@ -1129,18 +1117,18 @@ public class SubRelationalDB extends Subscriber {
 		String sql = null;	
 		List <GeometryColumn> geoms = new ArrayList<GeometryColumn> ();
 
-		/*
+		*
 		 * Attempt to create the table, ignore any exception as the table may already be created
-		 */
+		 *
 		if(columns.size() > 0) {
 			sql = "CREATE TABLE " + tableName + " (" +
 				"prikey SERIAL PRIMARY KEY, " +
 				"parkey int ";
 	
-			/*
+			*
 			 * Create default columns
 			 * only add _user and _version, _complete, _modified to the top level form
-			 */
+			 *
 			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text";
 			if(!form.hasParent()) {
 				sql += ", _user text, _version text, _survey_notes text, _location_trigger text,"
@@ -1277,6 +1265,7 @@ public class SubRelationalDB extends Subscriber {
 		}
 
 	}
+	*/
 	
 	/*
 	 * Check for duplicates specified using a column named instanceid or _instanceid
@@ -1418,11 +1407,13 @@ public class SubRelationalDB extends Subscriber {
 				 * 		new questions
 				 * 		new select multiple options 
 				 * 		questions that have been moved to a new table
+				 * 		questions whose column_name has been changed
 				 */
 				if(ci.action.equals("add") || ci.action.equals("external option")
 						|| (ci.action.equals("move") && 
 								ci.question != null && 
-								ci.question.formIndex != ci.question.sourceFormIndex)) {	
+								ci.question.formIndex != ci.question.sourceFormIndex)
+						|| (ci.action.equals("update") && ci.property != null && ci.property.prop.equals("name"))) {
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
@@ -1472,10 +1463,14 @@ public class SubRelationalDB extends Subscriber {
 						}
 						
 					
-					} else if(ci.question != null ) {
+					} else if(ci.question != null || (ci.property != null && ci.property.prop.equals("name"))) {
 						// Don't rely on any parameters in the change item, they may have been changed again after the question was added
-						int qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, sId, ci.question.id, ci.question.name);
-						
+						int qId = 0;
+						if(ci.question != null) {
+							qId = GeneralUtilityMethods.getQuestionId(connectionSD, ci.question.fId, sId, ci.question.id, ci.question.name);
+						} else {
+							qId = ci.property.qId;
+						}
 						QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 
 						if(qd.type.equals("begin group") || qd.type.equals("end group")) {
@@ -1881,7 +1876,7 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Mark published: " + pstmtSetPublishedSharedForm.toString());
 					pstmtSetPublishedSharedForm.executeUpdate();
 					
-					// 3.1b Update questions in the shared form
+					// 3.1b Update options in the shared form
 					pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
 					pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
 					System.out.println("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());

@@ -40,6 +40,13 @@ then
         tar -xzf $deploy_from/fieldManager.tgz -C /var/www/smap
 fi
 
+if [ -e $deploy_from/tasks.tgz ]
+then
+        echo "Updating tasks"
+        rm -rf /var/www/smap/tasks
+        tar -xzf $deploy_from/tasks.tgz -C /var/www/smap
+fi
+
 cp $deploy_from/fieldTask.apk /var/www/smap
 cp $deploy_from/smapUploader.jar /var/www/smap
 cp $deploy_from/fieldTask.apk /var/www/default
