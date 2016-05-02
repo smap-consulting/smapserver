@@ -1049,7 +1049,7 @@ function refreshTableAssignments() {
 				task = gTasks[idx].properties,
 				taskFeature = gTasks[idx];
 			
-			editTask(true, task, taskFeature);
+			editTask(false, task, taskFeature);
 		});
 		
 		// Show barcodes
@@ -1138,6 +1138,12 @@ function editTask(isNew, task, taskFeature) {
         	
 	console.log(task);
 
+	if(isNew) {
+		$('#taskPropLabel').html(localise.set["t_add_task"]);
+	} else {
+		$('#taskPropLabel').html(localise.set["t_edit_task"]);
+	}
+	
 	/*
 	 * Set up data
 	 */

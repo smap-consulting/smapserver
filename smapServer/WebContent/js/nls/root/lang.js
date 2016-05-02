@@ -287,10 +287,12 @@ define({
 	"t_efnl": "Error file not loaded",
 	"t_add_tasks": "Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button",
 	"t_add_task": "Add Task",
+	"t_edit_task": "Edit Task",
 	"t_add_tasks2": "Add Tasks",
 	"t_save_tasks": "Save Tasks",
 	"t_tasks_only": "Tasks Only",
 	"t_tg": "Task Group",
+	"t_tasks": "Tasks",
 	"t_id": "Initial Data",
 	
 	// template load errors

@@ -91,8 +91,61 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
+	            	<!-- 
 	            	<li><button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button></li>
 	            	<li><button class="btn btn-danger lang" data-lang="t_del_group" id="deleteTaskGroup" type="button">del task group</button></li>
+	          		-->
+	          		 <li class="dropdown">
+	                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+	                        <span class="lang" data-lang="t_tasks">Tasks</span>
+	                    </a>
+	                    <ul class="dropdown-menu dropdown-alerts">
+	                        <li>	
+	                            <a class="btn-success" href="#" id="addSingleTask">
+	                                <div>
+	                                	<span class="lang" data-lang="t_add_task">add task</span>
+	                                </div>
+	                            </a>
+	                        </li>
+	                        <li>	
+	                            <a class="btn-success" href="#" id="assignUser">
+	                                <div>
+	                                	<span class="lang" data-lang="t_assign">add task</span>
+	                                </div>
+	                            </a>
+	                        </li>
+	                        <li>
+	                            <a class="btn-danger" href="#" id="deleteTasks">
+	                                 <div>
+	                                	<span class="lang" data-lang="c_del_sel">del tasks</span>
+	                                </div>
+	                            </a>
+	                        </li>
+	                       
+	                    </ul>
+                	</li>     
+	          		<li class="dropdown">
+	                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+	                        <span class="lang" data-lang="t_tg">Task Group</span>
+	                    </a>
+	                    <ul class="dropdown-menu dropdown-alerts">
+	                        <li>
+	                            <a class="btn-success" href="#" id="addTaskGroup">
+	                                <div>
+	                                	<span class="lang" data-lang="t_add_group">add task group</span>
+	                                </div>
+	                            </a>
+	                        </li>
+	                        <li>
+	                            <a class="btn-danger" href="#" id="deleteTaskGroup">
+	                                 <div>
+	                                	<span class="lang" data-lang="t_del_group">del task group</span>
+	                                </div>
+	                            </a>
+	                        </li>
+	                       
+	                    </ul>
+                	</li>     
 	          		<li><a href="#" id="zoomData"><span class="lang" data-lang="tm_zoom_map">zoom to data</span></a></li>  			
                     <li><a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a></li>
                     <li class="dropdown">
@@ -165,7 +218,7 @@
 	            <div class="col-lg-12">
 	            	<div class="ibox float-e-margins">
 	            		<div class="ibox-title">
-	                    	<h5>Tasks</h5>
+	                    	<h5 class="lang" data-lang="t_tasks">tasks</h5>
 	                    	<div class="ibox-tools">
 	                        	<a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
 	                        </div>
@@ -175,9 +228,11 @@
 	                	<div class="ibox-content">
 	                		<div class="row border-bottom">
 	                			<div class="col-lg-4">
+	                				<!--
 	                				<button class="btn btn-success" id="addSingleTask"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span><span class="lang" data-lang="t_add_task">add</span></button>
 	                				<button class="btn btn-success lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
 									<button class="btn btn-danger lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
+									-->
 								</div>
 								<div class="col-lg-4">
 									<form role="form" class="form-horizontal">
