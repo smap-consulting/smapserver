@@ -18,8 +18,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -44,35 +46,29 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import model.MediaResponse;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.MediaInfo;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.managers.PDFManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Organisation;
-import org.smap.sdal.model.TaskAssignment;
+import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
 
-import utilities.XLSFormManager;
 import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.itextpdf.tool.xml.ElementList;
-import com.itextpdf.tool.xml.parser.XMLParser;
+import com.google.gson.reflect.TypeToken;
+
+import model.Settings;
 
 /*
  * Manages Tasks
@@ -250,7 +246,7 @@ public class Tasks extends Application {
 	}
 	
 	/*
-	 * Upload locations used in task assignment
+	 * Upload locations used in task assignment from an XLS file
 	 * A location can be:
 	 *   An NFC tag
 	 *   A geofence
@@ -562,5 +558,61 @@ public class Tasks extends Application {
 		
 	}
 	
+	/*
+	 * A task or create a new task
+	 */
+	@POST
+	@Path("/task/{pId}/{tgId}")
+	@Consumes("application/json")
+	public Response updateSettings(
+			@Context HttpServletRequest request,
+			@PathParam("pId") int pId,
+			@PathParam("tgId") int tgId,
+			@FormParam("task") String task
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String user = request.getRemoteUser();
+		log.info("TaskFeature:" + task);
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
+		a.isAuthorised(sd, user);
+		// End Authorisation
+		
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
+		TaskManager tm = new TaskManager();
+		
+		try {
+			tm.writeTask(sd, pId, tgId, tf, request.getServerName());
+			response = Response.ok().build();
+		
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+	
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+	}
 
 }

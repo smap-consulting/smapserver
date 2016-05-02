@@ -163,21 +163,49 @@ $(document).ready(function() {
 	 * Update the properties of a task
 	 */
 	$('#taskPropertiesSave').off().click(function() {
-		var url = "/surveyKPI/assignments/properties";
+		var url = "/surveyKPI/tasks/task/",
+			taskFeature = {
+				properties: {}
+			};
 		
-		$('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));	// Set the UTC date
+		url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
 		
-		var f = document.forms.namedItem("taskProperties");
-    	var formData = new FormData(f);
+		/*
+		 * Set the properties of the taskFeature from the dialog
+		 */
+		taskFeature.properties["id"] = $('#task_properties_taskid').val();		// task id
+		if(taskFeature.properties["id"] == "") {
+			taskFeature.properties["id"] = 0;
+		}
+		taskFeature.properties["name"] = $('#task_properties_title').val();		// task name
+		taskFeature.properties["form_id"] = $('#task_properties_sname').val();	// form id
+		taskFeature.properties["repeat"] = $('#task_properties_repeat').prop('checked');
+			
+		taskFeature.properties["scheduleAt"] = $('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));
+		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
+
+		// TODO task update details (updating existing record)
+		
+		// Validations
+		/*
+		if(taskFeature.properties["repeat"]) || user.ident.length == 0) {
+			alert("User ident must be specified and either be an email address or " +
+					"only include lowercase characters from a-z and numbers.  No spaces.");
+			$('#user_ident').focus();
+			$('#userDetailsSave').prop("disabled", false);
+			return false;
+		}
+		*/
+		
+		tfString = JSON.stringify(taskFeature);
 		
 		addHourglass();
 		$.ajax({
 			  type: "POST",
-			  data: formData,
-			  cache: false,
-	          contentType: false,
-	          processData:false,
+			  dataType: 'text',
+			  contentType: "application/json",
 			  url: url,
+			  data: { task: tfString },
 			  success: function(data, status) {
 				  removeHourglass();
 				  refreshAssignmentData();
@@ -297,6 +325,45 @@ $(document).ready(function() {
 			});
 		}
 		
+	});
+	
+	/*
+	 * Function to delete current task group
+	 */
+	$('#deleteTaskGroup').button().click(function () {
+		
+		var tg_id = globals.gCurrentTaskGroup;
+		
+		bootbox.confirm(localise.set["msg_confirm_del"] + ' ' + localise.set["msg_confirm_tasks"] + ' (' + $('#taskgroup option:selected').text() + ')', function(result){
+			if(result) {
+				addHourglass();
+				$.ajax({
+					  type: "DELETE",
+					  url: "/surveyKPI/assignments/" + tg_id,
+					  success: function(data, status) {
+						  removeHourglass();
+						  refreshTaskGroupData();
+					  }, error: function(data, status) {
+						  removeHourglass();
+						  console.log(data);
+						  alert("Error: Failed to delete task group"); 
+					  }
+				});	
+			}
+		});
+		
+		
+		
+	});
+	
+	// Add function to add tasks to group
+	$('#addSingleTask').click(function () {
+		var task = {},
+			taskFeature = {
+				properties: {}
+			};
+		
+		editTask(true, task, taskFeature);
 	});
 	
 	/*
@@ -482,6 +549,7 @@ $(document).ready(function() {
 
 	
 });
+
 
 /*
  * Remove unselected address parameters
@@ -904,9 +972,9 @@ function refreshTableTaskGroups(taskgroups) {
 	$('#taskgroup').change(function() {
 		globals.gCurrentTaskGroup = $(this).val();
 		saveCurrentProject(undefined, undefined, globals.gCurrentTaskGroup);
-		refreshAssignmentData(-1);
+		refreshAssignmentData();
 	})
-	refreshAssignmentData(-1, true);
+	refreshAssignmentData();
 	
 }
 
@@ -979,30 +1047,9 @@ function refreshTableAssignments() {
 			var $this = $(this),
 				idx = $this.val(),
 				task = gTasks[idx].properties,
-				taskFeature = gTasks[idx],
-				scheduleDate;
-		            	
-			console.log(task);
-		
-			// open the properties dialog
-			$('#task_properties_taskid').val(task.id);
-			$('#task_properties_repeat').prop('checked', task.repeat);
-			$('#task_properties_title').val(task.name);
-			if(task.scheduleAt) {
-				$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
-			} 
+				taskFeature = gTasks[idx];
 			
-			$('#nfc_select').val(task.location_trigger);
-			if(task.update_id && task.update_id.length > 0) {
-				$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id) + 
-						' ' + getInitialDataUrl(task.form_id, task.update_id));
-			}
-			$('#task_properties').modal("show");  
-			if(!mapData['mapModal']) {
-				initializeMap('mapModal');
-				refreshMapAssignments('mapModal', [taskFeature])
-			}
-
+			editTask(true, task, taskFeature);
 		});
 		
 		// Show barcodes
@@ -1012,38 +1059,6 @@ function refreshTableAssignments() {
 		});
 		
 		gTasks = tasks;
-		
-		// Add function to add tasks to group
-		$('.add_new_task').button().click(function () {
-			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-			var s_id = $('#survey').val(),
-				$this = $(this);
-			
-			/*
-			 * Make sure we have the survey id
-			 */
-			if(typeof s_id === "undefined" || s_id === null) {
-				alert("Either waiting for the server or there are no surveys in this project to assign to a user. " +
-						"If the project does have surveys then try again in a few seconds");
-				return;
-			}
-
-			// Enable selection of locations for new tasks
-			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-			registerForNewTasks();
-			
-			$('.save_new_task').hide();					// Close any other create new task buttons
-			$('.add_new_task').show();
-			
-			$this.hide();								// Enable the button to save new tasks
-			$this.siblings('.save_new_task').show();
-			
-			// Reset any pending tasks
-			$('#new_task_count').html(0);
-			$('#map_alert').show().text(localise.set["t_add_tasks"]);
-			window.scrollTo(500, 0);
-		});
 		
 		/*
 		 * Function to save new ad hoc tasks
@@ -1113,6 +1128,39 @@ function refreshTableAssignments() {
 		});
 		
 	}
+}
+
+/*
+ * Edit an existing task or create a new one
+ */
+function editTask(isNew, task, taskFeature) {
+	var scheduleDate;
+        	
+	console.log(task);
+
+	/*
+	 * Set up data
+	 */
+	$('#task_properties_taskid').val(task.id);
+	$('#task_properties_repeat').prop('checked', task.repeat);
+	$('#task_properties_title').val(task.name);
+	if(task.scheduleAt) {
+		$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
+	} 
+
+	$('#nfc_select').val(task.location_trigger);
+	if(task.update_id && task.update_id.length > 0) {
+		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id) + 
+				' ' + getInitialDataUrl(task.form_id, task.update_id));
+	}
+	
+	$('#task_properties').modal("show"); 
+	
+	if(!mapData['mapModal']) {
+		initializeMap('mapModal');
+		refreshMapAssignments('mapModal', [taskFeature])
+	}
+	
 }
 
 /*

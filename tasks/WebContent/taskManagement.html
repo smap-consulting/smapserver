@@ -91,8 +91,8 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
-	            	<li><button class="btn btn-info lang" data-lang="c_print" id="tasks_print" onclick="window.print();">print</button></li>
 	            	<li><button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button></li>
+	            	<li><button class="btn btn-danger lang" data-lang="t_del_group" id="deleteTaskGroup" type="button">del task group</button></li>
 	          		<li><a href="#" id="zoomData"><span class="lang" data-lang="tm_zoom_map">zoom to data</span></a></li>  			
                     <li><a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a></li>
                     <li class="dropdown">
@@ -175,6 +175,7 @@
 	                	<div class="ibox-content">
 	                		<div class="row border-bottom">
 	                			<div class="col-lg-4">
+	                				<button class="btn btn-success" id="addSingleTask"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span><span class="lang" data-lang="t_add_task">add</span></button>
 	                				<button class="btn btn-success lang" data-lang="t_assign" id="assignUser" type="button">assign users</button>
 									<button class="btn btn-danger lang" data-lang="c_del_sel" id="deleteTasks" type="button">delete selected</button>
 								</div>
@@ -356,7 +357,13 @@
 		            	<div class="col-sm-10">
 			                <input id="task_properties_title" type='text' class="form-control"  name="taskTitle">
 			             </div>
-			         </div>
+			        </div>
+			        <div class="form-group">
+			         	<label class="lang col-sm-2 control-label" data-lang="c_survey" for="task_properties_sname">survey</label>
+							<div class="col-sm-10">
+								<select class="survey_select form-control" id="task_properties_sname"></select>
+							</div>
+						</div>
 					<div class="form-group">
 						<label class="col-sm-2 control-label lang" data-lang="c_repeat" for="users_select_user">repeat</label>
 						<div class="col-sm-10">

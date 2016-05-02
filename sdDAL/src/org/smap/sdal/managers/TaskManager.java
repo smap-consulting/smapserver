@@ -336,10 +336,7 @@ public class TaskManager {
 		ArrayList<TaskFeature> features = tl.features;
 		for(int i = 0; i < features.size(); i++) {
 			TaskFeature tf = features.get(i);
-			
-			
 				writeTask(sd, pId, tgId, tf, hostname);
-		
 		}
 	
 	}
@@ -732,7 +729,7 @@ public class TaskManager {
 	/*
 	 * Create a new task
 	 */
-	private void writeTask(Connection sd, int pId, int tgId, TaskFeature tf, String hostname) throws Exception {
+	public void writeTask(Connection sd, int pId, int tgId, TaskFeature tf, String hostname) throws Exception {
 		
 		// 1. Delete the existing task if the task is being updated
 		if(tf.properties.id > 0) {
