@@ -524,7 +524,7 @@ public class SubRelationalDB extends Subscriber {
 			keys.duplicateKeys = new ArrayList<Integer>();
 			TableManager tm = new TableManager();
 			if(parent_key == 0) {	// top level survey has a parent key of 0
-				boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName);
+				boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName, sId);
 				boolean tableChanged = false;
 				boolean tablePublished = false;
 				keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
@@ -542,17 +542,17 @@ public class SubRelationalDB extends Subscriber {
 					throw new Exception("Duplicate survey: " + uuid);
 				}
 				// Apply any updates that have been made to the table structure since the last submission
-				if(tableCreated) {
-					markAllChangesApplied(cMeta, sId);
-				} else {
+				if(!tableCreated) {
 					tableChanged = applyTableChanges(cMeta, cRel, sId);
 					
 					// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
 					tablePublished = addUnpublishedColumns(cMeta, cRel, sId);
+					
+					if(tableChanged || tablePublished) {
+						tm.markPublished(cMeta, sId);		// only mark published if there have been changes made
+					}
 				}
-				if(tableCreated || tableChanged || tablePublished) {
-					markPublished(cMeta, sId);		// only mark published if there have been changes made
-				}
+				
 			}
 			
 			boolean isBad = false;
@@ -1779,123 +1779,6 @@ public class SubRelationalDB extends Subscriber {
 		
 		return qd;
 	}
-	/*
-	 * Mark all the questions and options in the survey as published
-	 * Mark as published any questions in other surveys that share this results table
-	 */
-	private void markPublished(Connection sd, int sId) throws SQLException {
-		
-		class FormDetail {
-			boolean isSubmitter;
-			int fId;
-			int submittingFormId;
-			String table_name;
-		}
-		ArrayList<FormDetail> forms = new ArrayList<FormDetail> ();
-		
-
-		String sqlGetSharingForms = "select f.s_id, f.f_id, f.table_name from form f, survey s "
-				+ "where s.s_id = f.s_id "
-				+ "and s.deleted = 'false' "
-				+ "and f.table_name in (select table_name from form where s_id = ?);";
-		
-		String sqlSetPublishedThisForm = "update question set published = 'true' where f_id = ?;";
-		
-		String sqlSetOptionsPublishedThisForm = "update option set published = 'true' "
-				+ "where l_id in (select l_id from question q where f_id = ?);";
-		
-		String sqlSetPublishedSharedForm = "update question set published = 'true' "
-				+ "where f_id = ? "
-				+ "and column_name in (select column_name from question where f_id = ?);";
-		
-		String sqlSetOptionsPublishedSharedForm = "update option set published = 'true' "
-				+ "where l_id in (select l_id from question q where f_id = ? "
-				+ "and column_name in (select column_name from question where f_id = ?));";
-		
-		PreparedStatement pstmtGetForms = null;
-		PreparedStatement pstmtSetPublishedThisForm = null;
-		PreparedStatement pstmtSetPublishedSharedForm = null;
-		PreparedStatement pstmtSetOptionsPublishedThisForm = null;
-		PreparedStatement pstmtSetOptionsPublishedSharedForm = null;
-		
-		try {
-			
-			pstmtGetForms = sd.prepareStatement(sqlGetSharingForms);
-			pstmtSetPublishedThisForm = sd.prepareStatement(sqlSetPublishedThisForm);
-			pstmtSetPublishedSharedForm = sd.prepareStatement(sqlSetPublishedSharedForm);
-			pstmtSetOptionsPublishedThisForm = sd.prepareStatement(sqlSetOptionsPublishedThisForm);
-			pstmtSetOptionsPublishedSharedForm = sd.prepareStatement(sqlSetOptionsPublishedSharedForm);
-			
-			// 1. Get all the affected forms
-			pstmtGetForms.setInt(1, sId);
-			
-			System.out.println("Get sharing forms: " + pstmtGetForms.toString());
-			ResultSet rs = pstmtGetForms.executeQuery();
-			
-			while(rs.next()) {
-				
-				FormDetail fd = new FormDetail();
-				fd.isSubmitter = (sId == rs.getInt(1));
-				fd.fId = rs.getInt(2);
-				fd.table_name = rs.getString(3);
-				forms.add(fd);
-			}
-			
-			// 2. For all shared forms record the matching formId of the submitting form
-			for(FormDetail fd : forms) {
-				if(!fd.isSubmitter) {
-					for(FormDetail fd2 : forms) {
-						if(fd2.isSubmitter && fd.table_name.equals(fd2.table_name)) {
-							fd.submittingFormId = fd2.fId;
-							break;
-						}
-					}
-				}
-			}
-			
-			// 3. Mark the forms published
-			for(FormDetail fd : forms) {
-				
-				if(fd.isSubmitter) {
-					
-					// 3.1a Update questions in the submitting form
-					pstmtSetPublishedThisForm.setInt(1, fd.fId);
-					System.out.println("Mark published: " + pstmtSetPublishedThisForm.toString());
-					pstmtSetPublishedThisForm.executeUpdate();
-					
-					// 3.2a Update Options in the submitting form
-					pstmtSetOptionsPublishedThisForm.setInt(1, fd.fId);
-					System.out.println("Mark published: " + pstmtSetOptionsPublishedThisForm.toString());
-					pstmtSetOptionsPublishedThisForm.executeUpdate();
-					
-				} else {
-					
-					// 3.1b Update questions in the shared form
-					pstmtSetPublishedSharedForm.setInt(1, fd.fId);
-					pstmtSetPublishedSharedForm.setInt(2, fd.submittingFormId);
-					System.out.println("Mark published: " + pstmtSetPublishedSharedForm.toString());
-					pstmtSetPublishedSharedForm.executeUpdate();
-					
-					// 3.1b Update options in the shared form
-					pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
-					pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
-					System.out.println("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());
-					pstmtSetOptionsPublishedSharedForm.executeUpdate();
-				}
-			
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			throw e;
-		} finally {
-			try {if (pstmtGetForms != null) {pstmtGetForms.close();}} catch (Exception e) {}
-			try {if (pstmtSetPublishedThisForm != null) {pstmtSetPublishedThisForm.close();}} catch (Exception e) {}
-			try {if (pstmtSetPublishedSharedForm != null) {pstmtSetPublishedSharedForm.close();}} catch (Exception e) {}
-			try {if (pstmtSetOptionsPublishedThisForm != null) {pstmtSetOptionsPublishedThisForm.close();}} catch (Exception e) {}
-			try {if (pstmtSetOptionsPublishedSharedForm != null) {pstmtSetOptionsPublishedSharedForm.close();}} catch (Exception e) {}
-		}
-		
-	}
 	
 	private void markChangeApplied(Connection sd, int cId, boolean success, String msg) throws SQLException {
 		
@@ -1923,27 +1806,5 @@ public class SubRelationalDB extends Subscriber {
 		
 	}
 	
-	private void markAllChangesApplied(Connection sd, int sId) throws SQLException {
-		
-		String sqlUpdateChange = "update survey_change "
-				+ "set apply_results = 'false', "
-				+ "success = 'true' "
-				+ "where s_id = ? ";
-		
-		PreparedStatement pstmtUpdateChange = null;
-		try {
-			pstmtUpdateChange = sd.prepareStatement(sqlUpdateChange);
-			
-			pstmtUpdateChange.setInt(1, sId);
-			pstmtUpdateChange.executeUpdate();
-			
-		}catch (SQLException e) {
-			e.printStackTrace();
-			throw e;
-		} finally {
-			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
-		}
-		
-	}
 
 }

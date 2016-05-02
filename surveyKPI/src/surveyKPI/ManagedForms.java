@@ -124,7 +124,6 @@ public class ManagedForms extends Application {
 				if(rs.next()) {
 					String config = rs.getString("config");
 				
-					System.out.println("   Config: " + config);
 					if(config != null) {
 						Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();	
 						configColumns = gson.fromJson(config, type);
@@ -245,19 +244,23 @@ public class ManagedForms extends Application {
 		
 		try {
 
-			// 1. Add the management id to the survey record
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
+			
+			// 1. Create results tables if they do not exist
+			TableManager tm = new TableManager();
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+			tm.createTable(cResults, sd, f.tableName, sIdent, am.sId);
+			
+			
+			sd.setAutoCommit(false);
+			cResults.setAutoCommit(false);
+			
+			// 2. Add the management id to the survey record
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, am.manageId);
 			pstmt.setInt(2, am.sId);
 			log.info("Adding managed survey: " + pstmt.toString());
 			pstmt.executeUpdate();
-			
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
-
-			// 2. Create results tables if they do not exist
-			TableManager tm = new TableManager();
-			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-			tm.createTable(cResults, sd, f.tableName, sIdent);
 			
 			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
@@ -287,7 +290,7 @@ public class ManagedForms extends Application {
 					} catch (Exception e) {
 						String msg = e.getMessage();
 						if(msg.contains("already exists")) {
-							System.out.println("Info: Management column already exists");
+							log.info("Management column already exists");
 						} else {
 							throw e;
 						}
@@ -295,16 +298,24 @@ public class ManagedForms extends Application {
 						pstmtAdd.close();
 					}
 				} else {
-					System.out.println("Error: managed column not added as type was null: " + tc.name);
+					log.info("Error: managed column not added as type was null: " + tc.name);
 				}
 			}
+			
+			sd.commit();
+			cResults.commit();
 			
 			response = Response.ok().build();
 				
 		} catch (Exception e) {
+			try{cResults.rollback();} catch(Exception ex) {}
+			try{sd.rollback();} catch(Exception ex) {}
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
+			
+			try{cResults.setAutoCommit(true);} catch(Exception e){};
+			try{sd.setAutoCommit(true);} catch(Exception e){};
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 			try {if (pstmtAdd != null) {pstmtAdd.close();}} catch (Exception e) {}
@@ -352,7 +363,6 @@ public class ManagedForms extends Application {
 		    return response;
 		}
 		
-		System.out.println("Updates: " + settings);
 		Type type = new TypeToken<ArrayList<Update>>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		ArrayList<Update> updates = gson.fromJson(settings, type);
@@ -623,7 +633,6 @@ public class ManagedForms extends Application {
 			TableColumn tc = new TableColumn(c.name, c.humanName);
 			tc.hide = hideDefault(c.name);
 			addProcessing(tc);
-			System.out.println("   " + c.name + " ---- " + c.humanName + " ---- " + tc.hide);
 			formColumns.add(tc);
 		}
 		

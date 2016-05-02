@@ -65,7 +65,7 @@ public class TableManager {
 	/*
 	 * Create the table if it does not already exit in the database
 	 */
-	public boolean createTable(Connection cResults, Connection sd, String tableName, String sName) {
+	public boolean createTable(Connection cResults, Connection sd, String tableName, String sName, int sId) throws SQLException {
 		boolean tableCreated = false;
 		String sql = "select count(*) from information_schema.tables where table_name =?;";
 		
@@ -94,7 +94,157 @@ public class TableManager {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
+		
+		if(tableCreated) {
+			markPublished(sd, sId);
+			markAllChangesApplied(sd, sId);
+		}
+		
 		return tableCreated;
+	}
+	
+	/*
+	 * Mark all the questions and options in the survey as published
+	 * Mark as published any questions in other surveys that share this results table
+	 */
+	public void markPublished(Connection sd, int sId) throws SQLException {
+		
+		class FormDetail {
+			boolean isSubmitter;
+			int fId;
+			int submittingFormId;
+			String table_name;
+		}
+		ArrayList<FormDetail> forms = new ArrayList<FormDetail> ();
+		
+
+		String sqlGetSharingForms = "select f.s_id, f.f_id, f.table_name from form f, survey s "
+				+ "where s.s_id = f.s_id "
+				+ "and s.deleted = 'false' "
+				+ "and f.table_name in (select table_name from form where s_id = ?);";
+		
+		String sqlSetPublishedThisForm = "update question set published = 'true' where f_id = ?;";
+		
+		String sqlSetOptionsPublishedThisForm = "update option set published = 'true' "
+				+ "where l_id in (select l_id from question q where f_id = ?);";
+		
+		String sqlSetPublishedSharedForm = "update question set published = 'true' "
+				+ "where f_id = ? "
+				+ "and column_name in (select column_name from question where f_id = ?);";
+		
+		String sqlSetOptionsPublishedSharedForm = "update option set published = 'true' "
+				+ "where l_id in (select l_id from question q where f_id = ? "
+				+ "and column_name in (select column_name from question where f_id = ?));";
+		
+		PreparedStatement pstmtGetForms = null;
+		PreparedStatement pstmtSetPublishedThisForm = null;
+		PreparedStatement pstmtSetPublishedSharedForm = null;
+		PreparedStatement pstmtSetOptionsPublishedThisForm = null;
+		PreparedStatement pstmtSetOptionsPublishedSharedForm = null;
+		
+		try {
+			
+			pstmtGetForms = sd.prepareStatement(sqlGetSharingForms);
+			pstmtSetPublishedThisForm = sd.prepareStatement(sqlSetPublishedThisForm);
+			pstmtSetPublishedSharedForm = sd.prepareStatement(sqlSetPublishedSharedForm);
+			pstmtSetOptionsPublishedThisForm = sd.prepareStatement(sqlSetOptionsPublishedThisForm);
+			pstmtSetOptionsPublishedSharedForm = sd.prepareStatement(sqlSetOptionsPublishedSharedForm);
+			
+			// 1. Get all the affected forms
+			pstmtGetForms.setInt(1, sId);
+			
+			System.out.println("Get sharing forms: " + pstmtGetForms.toString());
+			ResultSet rs = pstmtGetForms.executeQuery();
+			
+			while(rs.next()) {
+				
+				FormDetail fd = new FormDetail();
+				fd.isSubmitter = (sId == rs.getInt(1));
+				fd.fId = rs.getInt(2);
+				fd.table_name = rs.getString(3);
+				forms.add(fd);
+			}
+			
+			// 2. For all shared forms record the matching formId of the submitting form
+			for(FormDetail fd : forms) {
+				if(!fd.isSubmitter) {
+					for(FormDetail fd2 : forms) {
+						if(fd2.isSubmitter && fd.table_name.equals(fd2.table_name)) {
+							fd.submittingFormId = fd2.fId;
+							break;
+						}
+					}
+				}
+			}
+			
+			// 3. Mark the forms published
+			for(FormDetail fd : forms) {
+				
+				if(fd.isSubmitter) {
+					
+					// 3.1a Update questions in the submitting form
+					pstmtSetPublishedThisForm.setInt(1, fd.fId);
+					System.out.println("Mark published: " + pstmtSetPublishedThisForm.toString());
+					pstmtSetPublishedThisForm.executeUpdate();
+					
+					// 3.2a Update Options in the submitting form
+					pstmtSetOptionsPublishedThisForm.setInt(1, fd.fId);
+					System.out.println("Mark published: " + pstmtSetOptionsPublishedThisForm.toString());
+					pstmtSetOptionsPublishedThisForm.executeUpdate();
+					
+				} else {
+					
+					// 3.1b Update questions in the shared form
+					pstmtSetPublishedSharedForm.setInt(1, fd.fId);
+					pstmtSetPublishedSharedForm.setInt(2, fd.submittingFormId);
+					System.out.println("Mark published: " + pstmtSetPublishedSharedForm.toString());
+					pstmtSetPublishedSharedForm.executeUpdate();
+					
+					// 3.1b Update options in the shared form
+					pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
+					pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
+					System.out.println("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());
+					pstmtSetOptionsPublishedSharedForm.executeUpdate();
+				}
+			
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtGetForms != null) {pstmtGetForms.close();}} catch (Exception e) {}
+			try {if (pstmtSetPublishedThisForm != null) {pstmtSetPublishedThisForm.close();}} catch (Exception e) {}
+			try {if (pstmtSetPublishedSharedForm != null) {pstmtSetPublishedSharedForm.close();}} catch (Exception e) {}
+			try {if (pstmtSetOptionsPublishedThisForm != null) {pstmtSetOptionsPublishedThisForm.close();}} catch (Exception e) {}
+			try {if (pstmtSetOptionsPublishedSharedForm != null) {pstmtSetOptionsPublishedSharedForm.close();}} catch (Exception e) {}
+		}
+		
+	}
+	
+	/*
+	 * Mark all the columns in the table as published been applied
+	 */
+	private void markAllChangesApplied(Connection sd, int sId) throws SQLException {
+		
+		String sqlUpdateChange = "update survey_change "
+				+ "set apply_results = 'false', "
+				+ "success = 'true' "
+				+ "where s_id = ? ";
+		
+		PreparedStatement pstmtUpdateChange = null;
+		try {
+			pstmtUpdateChange = sd.prepareStatement(sqlUpdateChange);
+			
+			pstmtUpdateChange.setInt(1, sId);
+			pstmtUpdateChange.executeUpdate();
+			
+		}catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			try {if (pstmtUpdateChange != null) {pstmtUpdateChange.close();}} catch (Exception e) {}
+		}
+		
 	}
 	
 	/*
