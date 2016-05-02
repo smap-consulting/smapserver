@@ -63,7 +63,7 @@ public class TaskManager {
 	 */
 	public ArrayList<TaskGroup> getTaskGroups(Connection sd, int projectId) throws Exception {
 		
-		String sql = "select tg_id, name, address_params, is_barcode, p_id, rule, source_s_id "
+		String sql = "select tg_id, name, address_params, p_id, rule, source_s_id "
 				+ "from task_group where p_id = ? order by tg_id asc;";
 		PreparedStatement pstmt = null;
 		
@@ -116,10 +116,9 @@ public class TaskManager {
 				tg.tg_id = rs.getInt(1);
 				tg.name = rs.getString(2);
 				tg.address_params = rs.getString(3);
-				tg.is_barcode = rs.getBoolean(4);
-				tg.p_id = rs.getInt(5);
-				tg.rule = rs.getString(6);
-				tg.source_s_id = rs.getInt(7);
+				tg.p_id = rs.getInt(4);
+				tg.rule = rs.getString(5);
+				tg.source_s_id = rs.getInt(6);
 				
 				if(rsTotal.next()) {
 					int tg_id = rsTotal.getInt(1);
@@ -158,7 +157,7 @@ public class TaskManager {
 	 */
 	public TaskGroup getTaskGroupDetails(Connection sd, int tgId) throws Exception {
 		
-		String sql = "select tg_id, name, address_params, is_barcode, p_id, rule, source_s_id "
+		String sql = "select tg_id, name, address_params, p_id, rule, source_s_id "
 				+ "from task_group where tg_id = ?;";
 		PreparedStatement pstmt = null;
 		
@@ -178,10 +177,9 @@ public class TaskManager {
 				tg.tg_id = rs.getInt(1);
 				tg.name = rs.getString(2);
 				tg.address_params = rs.getString(3);
-				tg.is_barcode = rs.getBoolean(4);
-				tg.p_id = rs.getInt(5);
-				tg.rule = rs.getString(6);
-				tg.source_s_id = rs.getInt(7);
+				tg.p_id = rs.getInt(4);
+				tg.rule = rs.getString(5);
+				tg.source_s_id = rs.getInt(6);
 
 			}
 			

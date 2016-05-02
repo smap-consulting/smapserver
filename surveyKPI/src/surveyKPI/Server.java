@@ -38,7 +38,6 @@ public class Server extends Application {
 	
 	private class ServerData {
 		String smtp_host;
-		String smtp_domain;
 		String email_domain;
 		String email_user;
 		String email_password;
@@ -61,7 +60,6 @@ public class Server extends Application {
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("SurveyKPI - version");
 		String sql = "select smtp_host,"
-				+ "smtp_domain,"
 				+ "email_domain,"
 				+ "email_user,"
 				+ "email_password,"
@@ -76,7 +74,6 @@ public class Server extends Application {
 			pstmt = sd.prepareStatement(sql);
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				data.smtp_domain = rs.getString("smtp_domain");
 				data.email_domain = rs.getString("email_domain");
 				data.email_user = rs.getString("email_user");
 				data.email_password = rs.getString("email_password");
