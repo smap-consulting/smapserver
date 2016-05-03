@@ -54,7 +54,8 @@ requirejs.config({
     	pace: '../../../../js/libs/wb/pace/pace.min',
     	peity: '../../../../js/libs/wb/peity/jquery.peity.min',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
-    	calendar: '../../../../js/libs/wb/plugins/fullcalendar/fullcalendar.min'
+    	calendar: '../../../../js/libs/wb/plugins/fullcalendar/fullcalendar.min',
+    	jquery_ui: '../../../../js/libs/wb/jquery-ui.custom.min'
     },
     shim: {
 
@@ -77,7 +78,8 @@ requirejs.config({
     	'slimscroll': ['jquery'],
     	'peity': ['jquery'],
     	'icheck': ['jquery'],
-    	'calendar': ['jquery']
+    	'calendar': ['jquery_ui'],
+    	'jquery_ui': ['jquery']
 	
     	}
     });
@@ -105,7 +107,8 @@ require([
          'pace',
          'peity',
          'icheck',
-         'calendar'
+         'calendar',
+         'jquery_ui'
          
          ], function($, 
         		 bootstrap, 

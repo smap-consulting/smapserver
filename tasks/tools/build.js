@@ -10,7 +10,6 @@
      	async: '../../../../smapServer/WebContent/js/libs/async',
      	localise: '../../../../smapServer/WebContent/js/app/localise',
     	jquery: '../../../../smapServer/WebContent/js/libs/jquery-2.1.1',
-    	jquery_ui: '../../../../smapServer/WebContent/js/libs/jquery-ui-1.10.3.custom.min',
     	modernizr: '../../../../smapServer/WebContent/js/libs/modernizr',
     	common: '../../../../smapServer/WebContent/js/app/common',
     	globals: '../../../../smapServer/WebContent/js/app/globals',
@@ -29,6 +28,7 @@
 	mapbox: '../../../../smapServer/WebContent/js/libs/mapbox/js/mapbox',
 
 	inspinia: '../../../../smapServer/WebContent/js/libs/wb/inspinia',
+	jquery_ui: '../../../../smapServer/WebContent/js/libs/wb/jquery-ui-1.10.4.min',
 	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',

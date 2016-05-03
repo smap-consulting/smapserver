@@ -36,7 +36,9 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gFilterqType,			// The type of the filter question select, select1, int, string
 	gTaskGroupId = 0,		// Currently selected task group
 	gCurrentTaskFeature,	// Currently edited task feature
-	gClickOnMapEnabled = false;	// Listen to clicks on the map
+	gClickOnMapEnabled = false,		// Listen to clicks on the map
+	gCalendarInitialised = false,	// Set true when the calendar pane has been initialised
+	gMapInitialised = false;		// Set true when the map pane has been initialised
 	
 $(document).ready(function() {
 	
@@ -104,9 +106,6 @@ $(document).ready(function() {
 	$('#filter_question').change(function() {
 		questionChanged();
 	});
-
-	// Initialise the map
-	initializeMap('map', 1, true, undefined);
 	
 	// Change Functions
 	$('.users_select').change(function () {
@@ -488,78 +487,24 @@ $(document).ready(function() {
 	
 	
 	/*
-	 * Initialise the calendar
+	 * Take action on tab change to initialise tab contents
+	 * Refer: http://stackoverflow.com/questions/20705905/bootstrap-3-jquery-event-for-active-tab-change
 	 */
-    var date = new Date();
-    var d = date.getDate();
-    var m = date.getMonth();
-    var y = date.getFullYear();
-
-    $('#calendar').fullCalendar({
-        header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'month,agendaWeek,agendaDay'
-        },
-        editable: true,
-        droppable: true, // this allows things to be dropped onto the calendar
-        drop: function() {
-            // is the "remove after drop" checkbox checked?
-            if ($('#drop-remove').is(':checked')) {
-                // if so, remove the element from the "Draggable Events" list
-                $(this).remove();
-            }
-        },
-        events: [
-            {
-                title: 'All Day Event',
-                start: new Date(y, m, 1)
-            },
-            {
-                title: 'Long Event',
-                start: new Date(y, m, d-5),
-                end: new Date(y, m, d-2)
-            },
-            {
-                id: 999,
-                title: 'Repeating Event',
-                start: new Date(y, m, d-3, 16, 0),
-                allDay: false
-            },
-            {
-                id: 999,
-                title: 'Repeating Event',
-                start: new Date(y, m, d+4, 16, 0),
-                allDay: false
-            },
-            {
-                title: 'Meeting',
-                start: new Date(y, m, d, 10, 30),
-                allDay: false
-            },
-            {
-                title: 'Lunch',
-                start: new Date(y, m, d, 12, 0),
-                end: new Date(y, m, d, 14, 0),
-                allDay: false
-            },
-            {
-                title: 'Birthday Party',
-                start: new Date(y, m, d+1, 19, 0),
-                end: new Date(y, m, d+1, 22, 30),
-                allDay: false
-            },
-            {
-                title: 'Click for Google',
-                start: new Date(y, m, 28),
-                end: new Date(y, m, 29),
-                url: 'http://google.com/'
-            }
-        ]
-    });
-
-
-	
+	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+		  var target = $(e.target).attr("href") // activated tab
+		  console.log("panel change: " + target);
+		  if(target === '#cal-view') {
+			  if(!gCalendarInitialised) {
+				  gCalendarInitialised = true;
+				  initialiseCalendar();
+			  }
+		  } else if(target === '#map-view') {
+			  if(!gMapInitialised) {
+				  gMapInitialised = true;
+				  initializeMap('map', 1, true, undefined);
+			  }
+		  }
+	});
 });
 
 
@@ -1012,6 +957,7 @@ function refreshAssignmentData() {
 				globals.gTaskList = data;
 				refreshMapAssignments('map', globals.gTaskList);
 				refreshTableAssignments();
+				initialiseCalendar();
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
@@ -1431,5 +1377,143 @@ function importTaskGroup() {
 		  }
 	});
 }
+
+
+
+/*
+ * Initialise the calendar
+ */
+function initialiseCalendar() {
+	var date = new Date();
+	var d = date.getDate();
+	var m = date.getMonth();
+	var y = date.getFullYear();
+	var events =  [
+	                                   {
+	                                       title: 'All Day Event',
+	                                       start: new Date(y, m, 1)
+	                                   },
+	                                   {
+	                                       title: 'Long Event',
+	                                       start: new Date(y, m, d-5),
+	                                       end: new Date(y, m, d-2)
+	                                   },
+	                                   {
+	                                       id: 999,
+	                                       title: 'Repeating Event',
+	                                       start: new Date(y, m, d-3, 16, 0),
+	                                       allDay: false
+	                                   },
+	                                   {
+	                                       id: 999,
+	                                       title: 'Repeating Event',
+	                                       start: new Date(y, m, d+4, 16, 0),
+	                                       allDay: false
+	                                   },
+	                                   {
+	                                       title: 'Meeting',
+	                                       start: new Date(y, m, d, 10, 30),
+	                                       allDay: false
+	                                   },
+	                                   {
+	                                       title: 'Lunch',
+	                                       start: new Date(y, m, d, 12, 0),
+	                                       end: new Date(y, m, d, 14, 0),
+	                                       allDay: false
+	                                   },
+	                                   {
+	                                       title: 'Birthday Party',
+	                                       start: new Date(y, m, d+1, 19, 0),
+	                                       end: new Date(y, m, d+1, 22, 30),
+	                                       allDay: false
+	                                   },
+	                                   {
+	                                       title: 'Click for Google',
+	                                       start: new Date(y, m, 28),
+	                                       end: new Date(y, m, 29),
+	                                       url: 'http://google.com/'
+	                                   }
+	                               ];
+
+	
+	$('#calendar').fullCalendar({
+	    header: {
+	        left: 'prev,next today',
+	        center: 'title',
+	        right: 'month,agendaWeek,agendaDay'
+	    },
+	    editable: true,
+	    droppable: true, 
+	    drop: function() {
+	    	$(this).remove();
+	    },
+	    events: [
+                 {
+                     title: 'All Day Event',
+                     start: new Date(y, m, 1)
+                 },
+                 {
+                     title: 'Long Event',
+                     start: new Date(y, m, d-5),
+                     end: new Date(y, m, d-2)
+                 },
+                 {
+                     id: 999,
+                     title: 'Repeating Event',
+                     start: new Date(y, m, d-3, 16, 0),
+                     allDay: false
+                 },
+                 {
+                     id: 999,
+                     title: 'Repeating Event',
+                     start: new Date(y, m, d+4, 16, 0),
+                     allDay: false
+                 },
+                 {
+                     title: 'Meeting',
+                     start: new Date(y, m, d, 10, 30),
+                     allDay: false
+                 },
+                 {
+                     title: 'Lunch',
+                     start: new Date(y, m, d, 12, 0),
+                     end: new Date(y, m, d, 14, 0),
+                     allDay: false
+                 },
+                 {
+                     title: 'Birthday Party',
+                     start: new Date(y, m, d+1, 19, 0),
+                     end: new Date(y, m, d+1, 22, 30),
+                     allDay: false
+                 },
+                 {
+                     title: 'Click for Google',
+                     start: new Date(y, m, 28),
+                     end: new Date(y, m, 29),
+                     url: 'http://google.com/'
+                 }
+             ]
+	});
+	
+	 $('#external-events div.external-event').each(function() {
+
+         // store data so the calendar knows to render an event upon drop
+         $(this).data('event', {
+             title: $.trim($(this).text()), // use the element's text as the event title
+             stick: true // maintain when user navigates (see docs on the renderEvent method)
+         });
+
+         // make the event draggable using jQuery UI
+         $(this).draggable({
+             zIndex: 1111999,
+             revert: true,      // will cause the event to go back to its
+             revertDuration: 0  //  original position after the drag
+         });
+
+     });
+
+	
+}
+
 
 });
