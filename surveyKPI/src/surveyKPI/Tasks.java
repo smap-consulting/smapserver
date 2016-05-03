@@ -500,15 +500,6 @@ public class Tasks extends Application {
 					XLSTaskManager xf = new XLSTaskManager();
 					TaskListGeoJson tl = xf.getXLSTaskList(filetype, item.getInputStream());
 					
-					/*
-					 * Convert lon, lat locations into WKT for update
-					 */
-					for(int i = 0; i < tl.features.size(); i++) {
-						TaskProperties props = tl.features.get(i).properties;
-						if(props.lat != null && props.lon != null) {
-							props.location = "POINT(" + props.lon + " " + props.lat + ")";
-						}
-					}
 					// Save tasks to the database
 					TaskManager tm = new TaskManager();
 					tm.writeTaskList(sd, tl, pId, tgId, request.getServerName());
@@ -559,7 +550,7 @@ public class Tasks extends Application {
 	}
 	
 	/*
-	 * A task or create a new task
+	 * Modify a task or create a new task
 	 */
 	@POST
 	@Path("/task/{pId}/{tgId}")

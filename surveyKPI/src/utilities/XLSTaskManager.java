@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.Option;
@@ -62,7 +63,7 @@ public class XLSTaskManager {
 		}
 		
 		// Get a value for this column from the provided properties object
-		public String getValue(TaskProperties props, JsonElement geometry) {
+		public String getValue(TaskProperties props) {
 			String value = null;
 			
 			if(name.equals("id")) {
@@ -88,9 +89,9 @@ public class XLSTaskManager {
 			} else if(name.equals("email")) {
 				value = String.valueOf(props.email);
 			} else if(name.equals("lon")) {
-				value = String.valueOf(props.lon);
+				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
 			} else if(name.equals("lat")) {
-				value = String.valueOf(props.lat);
+				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lat"));
 			} else if(name.equals("address")) {
 				value = String.valueOf(props.address);
 			}
@@ -159,9 +160,8 @@ public class XLSTaskManager {
                 			tp.id = Integer.parseInt(getColumn(row, "id", header, lastCellNum));
                 			tp.form_name = getColumn(row, "form", header, lastCellNum);
                 			tp.name = getColumn(row, "name", header, lastCellNum);
-                			
-                			tp.lon = getColumn(row, "lon", header, lastCellNum);
-                			tp.lat = getColumn(row, "lat", header, lastCellNum);
+                			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum) + " " + 
+                					getColumn(row, "lat", header, lastCellNum) + ")";
                 			tl.features.add(tf);
                 			System.out.println(" Adding new task: " + tp.name);
                 		} catch (Exception e) {
@@ -397,7 +397,7 @@ public class XLSTaskManager {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
 				cell.setCellStyle(styles.get("default"));			
-				cell.setCellValue(col.getValue(props, feature.geometry));
+				cell.setCellValue(col.getValue(props));
 	        }
 			
 		}

@@ -26,7 +26,7 @@ var mapData = {};
 /**
  * Map Initialization
  */
-function initializeMap(elementId) {
+function initializeMap(elementId, zoom, setUserLocation, callbackClick) {
 	
 	if(!L.mapbox.accessToken) {
 		addHourglass();
@@ -37,7 +37,7 @@ function initializeMap(elementId) {
 				removeHourglass();
 				if(data.mapbox_default) {
 					L.mapbox.accessToken = data.mapbox_default;
-					initializeMapKeySet(elementId);
+					initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick);
 				} else {
 					alert("mapbox key not set");
 				}
@@ -53,7 +53,7 @@ function initializeMap(elementId) {
 		});	
 		
 	} else {
-		initializeMapKeySet(elementId);
+		initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick);
 	}
 	
 	 
@@ -62,7 +62,7 @@ function initializeMap(elementId) {
 /*
  * This function does the initialization once the mapbox key has been set
  */
-function initializeMapKeySet(elementId) {
+function initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick) {
 	
 	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
 	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -72,8 +72,10 @@ function initializeMapKeySet(elementId) {
 	
 	console.log("initialise map: " + elementId);
 	
-	thisMapData.map = L.mapbox.map(elementId, 'mapbox.streets').setView([0, 0], 1);
-	thisMapData.gLocationLayer = L.mapbox.featureLayer().addTo(thisMapData.map);
+	thisMapData.map = L.mapbox.map(elementId, 'mapbox.streets').setView([0, 0], zoom);
+	if(setUserLocation) {
+		thisMapData.gLocationLayer = L.mapbox.featureLayer().addTo(thisMapData.map);
+	}
 	thisMapData.featureLayer = L.mapbox.featureLayer(undefined, {
 	    pointToLayer: function(feature, latlon) {
 	    	
@@ -82,7 +84,8 @@ function initializeMapKeySet(elementId) {
 	    		    weight: 5,
 	    		    stroke: false,
 	    		    opacity: 1,
-	    		    fillOpacity: 0.8
+	    		    fillOpacity: 0.8,
+	    		    draggable: true
 	    		};
 	    	
 	    	if(feature.properties.status === "new") {
@@ -105,34 +108,50 @@ function initializeMapKeySet(elementId) {
 	        return L.circleMarker(latlon, option);
 	    }
 	});
-	mapData[elementId] = thisMapData;
-
-	thisMapData.featureLayer.addTo(thisMapData.map);
 	
 	/*
-	 * Set users current found
+	 * Add call backs
 	 */
-	thisMapData.map.locate();
-	thisMapData.map.on('locationfound', function(e) {
-		
-		gUserLocation = e.bounds;
-	    
-		thisMapData.gLocationLayer.setGeoJSON({
-	        type: 'Feature',
-	        geometry: {
-	            type: 'Point',
-	            coordinates: [e.latlng.lng, e.latlng.lat]
-	        },
-	        properties: {
-	            'title': 'Here I am!',
-	            'marker-color': '#ff8888',
-	            'marker-symbol': 'star'
-	        }
-	    });
-		
-		zoomToFeatureLayer(elementId);
+	if(typeof callbackClick === "function") {
+		thisMapData.map.on('click', function(data) {
+			callbackClick(data.latlng);
+		});
+	}
+	
+	thisMapData.featureLayer.addTo(thisMapData.map);
+	mapData[elementId] = thisMapData;
 
-	});
+
+	
+	/*
+	 * Set users current location
+	 */
+	if(setUserLocation) {
+		thisMapData.map.locate();
+		thisMapData.map.on('locationfound', function(e) {
+			
+			gUserLocation = e.bounds;
+		    
+			thisMapData.gLocationLayer.setGeoJSON({
+		        type: 'Feature',
+		        geometry: {
+		            type: 'Point',
+		            coordinates: [e.latlng.lng, e.latlng.lat]
+		        },
+		        properties: {
+		            'title': 'Here I am!',
+		            'marker-color': '#ff8888',
+		            'marker-symbol': 'star'
+		        }
+		    });
+			zoomToFeatureLayer(elementId);
+		});
+		
+	} else {
+			zoomToFeatureLayer(elementId);
+	}
+
+
 }
 
 /*
@@ -145,6 +164,26 @@ function refreshMapAssignments(elementId, taskList) {
 		thisMapData.featureLayer.setGeoJSON(taskList);
 		zoomToFeatureLayer(elementId);
 	}
+}
+
+/*
+ * Add a draggable marker to the map
+ */
+function addDraggableMarker(elementId, latlng, callback) {
+	// Creates a single, draggable marker on the page.
+	var m = L.marker(latlng, {
+	    icon: L.mapbox.marker.icon({
+	        'marker-color': '1087bf'
+	    }),
+	    draggable: true
+	}).addTo(mapData[elementId].map).on('dragend', function(data) {
+	    if(typeof callback === "function") {
+	    	callback(data.target._latlng);
+	    }
+	    mapData[elementId].map.panTo(data.target._latlng);
+	});
+	
+	mapData[elementId].map.panTo(latlng);
 }
 
 /*

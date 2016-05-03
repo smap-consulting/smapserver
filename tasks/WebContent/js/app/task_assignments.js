@@ -34,7 +34,9 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gTaskGroupIndex = -1,	// Currently selected task group
 	gTaskParams = [],		// Parameters for a new task	
 	gFilterqType,			// The type of the filter question select, select1, int, string
-	gTaskGroupId = 0;		// Currently selected task group
+	gTaskGroupId = 0,		// Currently selected task group
+	gCurrentTaskFeature,	// Currently edited task feature
+	gClickOnMapEnabled = false;	// Listen to clicks on the map
 	
 $(document).ready(function() {
 	
@@ -103,8 +105,8 @@ $(document).ready(function() {
 		questionChanged();
 	});
 
-	// Initialise the maps
-	initializeMap('map');
+	// Initialise the map
+	initializeMap('map', 1, true, undefined);
 	
 	// Change Functions
 	$('.users_select').change(function () {
@@ -1135,9 +1137,9 @@ function refreshTableAssignments() {
  */
 function editTask(isNew, task, taskFeature) {
 	var scheduleDate;
-        	
-	console.log(task);
 
+	gCurrentTaskFeature = taskFeature;
+	
 	if(isNew) {
 		$('#taskPropLabel').html(localise.set["t_add_task"]);
 	} else {
@@ -1163,10 +1165,52 @@ function editTask(isNew, task, taskFeature) {
 	$('#task_properties').modal("show"); 
 	
 	if(!mapData['mapModal']) {
-		initializeMap('mapModal');
-		refreshMapAssignments('mapModal', [taskFeature])
+		setTimeout(function() {
+				initializeMap('mapModal', 14, false, clickOnMap);
+				if(gCurrentTaskFeature.geometry.coordinates[0] || gCurrentTaskFeature.geometry.coordinates[1]) {
+					addDraggableMarker('mapModal', 
+							new L.LatLng(gCurrentTaskFeature.geometry.coordinates[0], gCurrentTaskFeature.geometry.coordinates[0]),
+							onDragEnd);
+				} else {
+					gClickOnMapEnabled = true;
+				}
+				//refreshMapAssignments('mapModal', [gCurrentTaskFeature]); 
+			}, 500);
 	}
 	
+}
+
+/*
+ * Respond to a click on the map
+ */
+function clickOnMap(latlng) {
+	var x = 1,
+		coords = [];
+	
+	if(gClickOnMapEnabled) {
+		
+		gClickOnMapEnabled = false;
+		
+		coords[0] = latlng.lng;
+		coords[1] = latlng.lat;
+		
+		gCurrentTaskFeature.geometry.coordinates = coords;
+		addDraggableMarker('mapModal', latlng,	onDragEnd);
+
+	}
+}
+
+/*
+ * Respond to a drag of the task location
+ */
+function onDragEnd(latlng) {
+	var x = 1,
+		coords = [];
+	
+	coords[0] = latlng.lng;
+	coords[1] = latlng.lat;
+	
+	gCurrentTaskFeature.geometry.coordinates = coords;
 }
 
 /*

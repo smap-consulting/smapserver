@@ -2644,5 +2644,38 @@ public class GeneralUtilityMethods {
 		
 	}
 	
+	/*
+	 * Convert a location in well known text into latitude
+	 */
+	public static String wktToLatLng(String location, String axis) {
+		String val = null;
+		int idx;
+		int idx2;
+		String [] coords = null;
+		
+		if(location != null) {
+			idx = location.indexOf('(');
+			if(idx >= 0) {
+				idx2 = location.lastIndexOf(')'); 
+				if(idx2 >= 0) {
+					System.out.println("location: " + location);
+					location = location.substring(idx, idx2 - 1);
+					System.out.println("location2: " + location);
+					coords = location.split(" ");
+					
+					if(coords.length > 1) {
+						if(axis.equals("lng")) {
+							val = coords[0];
+						} else {
+							val = coords[1];
+						}
+					}
+				}
+				
+			}
+		}
+			
+		return val;
 	
+	}
 }
