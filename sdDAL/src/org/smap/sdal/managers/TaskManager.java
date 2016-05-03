@@ -215,6 +215,7 @@ public class TaskManager {
 				+ "t.email as email,"
 				+ "s.s_id as form_id,"
 				+ "s.display_name as form_name,"
+				+ "s.blocked as blocked,"
 				+ "a.id as a_id,"
 				+ "a.status as status,"
 				+ "u.id as assignee,"
@@ -274,6 +275,7 @@ public class TaskManager {
 				tf.properties.status = status;	
 				tf.properties.form_id = rs.getInt("form_id");
 				tf.properties.form_name = rs.getString("form_name");
+				tf.properties.blocked = rs.getBoolean("blocked");
 				tf.properties.assignee = rs.getInt("assignee");
 				tf.properties.assignee_name = rs.getString("assignee_name");
 				tf.properties.assignee_ident = rs.getString("assignee_ident");

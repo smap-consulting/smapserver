@@ -455,7 +455,7 @@ $(document).ready(function() {
 	});
 	
 	enableUserProfileBS();										// Enable user profile button	
-	$('#refreshMenu').click(function(e) {	// Add refresh action
+	$('#m_refresh').click(function(e) {	// Add refresh action
 		refreshAssignmentData();
 	}); 
 	
@@ -502,6 +502,7 @@ $(document).ready(function() {
 			  if(!gMapInitialised) {
 				  gMapInitialised = true;
 				  initializeMap('map', 1, true, undefined);
+				  refreshMapAssignments('map', globals.gTaskList);
 			  }
 		  }
 	});
@@ -988,6 +989,8 @@ function refreshTableAssignments() {
 		    radioClass: 'iradio_square-green'
 		});
 		
+		//$('.has_tt', '#task_table_body').tooltip();
+		
 		
 		// Respond to selection of a task
 		$('input', '#task_table_body').on('ifChanged', function(event){
@@ -1130,7 +1133,6 @@ function editTask(isNew, task, taskFeature) {
 				} else {
 					gClickOnMapEnabled = true;
 				}
-				//refreshMapAssignments('mapModal', [gCurrentTaskFeature]); 
 			}, 500);
 	}
 	
@@ -1293,6 +1295,12 @@ function getTableBody(tasks) {
 			if(task.properties.update_id && task.properties.update_id.length > 0) {
 				tab[++idx] = getInitialDataLink(task.properties.form_id, task.properties.update_id);
 			}		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';			// Blocked
+			if(task.properties.blocked) {
+				tab[++idx] = '<i class="fa fa-ban has_tt" title="Survey Blocked"></i>';	// Survey Blocked
+			} 
 			tab[++idx] = '</td>';
 			
 			tab[++idx] = '<td>';		// scheduled

@@ -11,6 +11,7 @@ public class TaskProperties {
 	public String url;
 	public int form_id;
 	public String form_name;
+	public boolean blocked;
 	public String form_version;
 	public int assignee;
 	public String assignee_ident;

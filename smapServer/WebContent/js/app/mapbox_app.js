@@ -88,16 +88,20 @@ function initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick) {
 	    		    draggable: true
 	    		};
 	    	
-	    	if(feature.properties.status === "new") {
-	    		option.fillColor = "#0000ff";
-	    	} else if(feature.properties.status === "accepted") {
-	    		option.fillColor = "#ffff00";
-	    	} else if(feature.properties.status === "accepted") {
-	    		option.fillColor = "#ffff00";
-	    	} else if(feature.properties.status === "submitted") {
-	    		option.fillColor = "#009933";
+	    	if(feature.properties.blocked) {
+	    		option.fillColor = "#aaa";
 	    	} else {
-	    		option.fillColor = "#fff";
+		    	if(feature.properties.status === "new") {
+		    		option.fillColor = "#0000ff";
+		    	} else if(feature.properties.status === "accepted") {
+		    		option.fillColor = "#ffff00";
+		    	} else if(feature.properties.status === "accepted") {
+		    		option.fillColor = "#ffff00";
+		    	} else if(feature.properties.status === "submitted") {
+		    		option.fillColor = "#009933";
+		    	} else {
+		    		option.fillColor = "#fff";
+		    	}
 	    	}
 	    	
 	    	if(feature.properties.selected) {
