@@ -185,6 +185,13 @@ $(document).ready(function() {
 			
 		taskFeature.properties["scheduleAt"] = $('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));
 		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
+		
+		/*
+		 * Convert the geoJson geometry into a WKT location for update
+		 */
+		if(gCurrentTaskFeature.geometry) {
+			taskFeature.properties.location = "POINT(" + gCurrentTaskFeature.geometry.coordinates.join(" ") + ")";
+		}
 
 		// TODO task update details (updating existing record)
 		
@@ -362,6 +369,9 @@ $(document).ready(function() {
 	$('#addSingleTask').click(function () {
 		var task = {},
 			taskFeature = {
+				geometry: {
+					coordinates: []
+				},	
 				properties: {}
 			};
 		

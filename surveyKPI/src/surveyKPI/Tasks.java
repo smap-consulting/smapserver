@@ -578,6 +578,7 @@ public class Tasks extends Application {
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
 		a.isAuthorised(sd, user);
+		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();

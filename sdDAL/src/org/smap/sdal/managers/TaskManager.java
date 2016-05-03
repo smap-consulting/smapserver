@@ -303,10 +303,10 @@ public class TaskManager {
 				if(rsGeo != null && rsGeo.next()) {
 					System.out.println("original: " + rsGeo.getString(1));
 					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();	
-					if(geo_type.equals("POINT")) {
-						tf.properties.lon = rsGeo.getString(2);
-						tf.properties.lat = rsGeo.getString(3);
-					}
+					//if(geo_type.equals("POINT")) {
+					//	tf.properties.lon = rsGeo.getString(2);
+					//	tf.properties.lat = rsGeo.getString(3);
+					//}
 				}
 			
 				
@@ -731,25 +731,9 @@ public class TaskManager {
 	 */
 	public void writeTask(Connection sd, int pId, int tgId, TaskFeature tf, String hostname) throws Exception {
 		
-		// 1. Delete the existing task if the task is being updated
-		if(tf.properties.id > 0) {
-			
-		}
+		String deleteSql = "delete from tasks where id = ? and p_id = ?;";
+		PreparedStatement pstmtDel = null;
 		
-		// 2. Get the form id, if only the form name is specified
-		if(tf.properties.form_id <= 0 && tf.properties.form_name != null) {
-			
-		}
-		
-		// 2. Get the assignee id, if only the assignee ident is specified
-		if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null) {
-			
-		}
-		
-		// 3. If this is a new task group then create it and get the task group id
-		
-		
-		// Write the task
 		String insertSql1 = "insert into tasks (" +
 				"p_id, " +
 				"tg_id, " +
@@ -779,16 +763,40 @@ public class TaskManager {
 				"?," +
 				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
 				"?);";	
+		PreparedStatement pstmt = null;
 		
 		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
-		
-		PreparedStatement pstmt = null;
 		PreparedStatement pstmtAssign = sd.prepareStatement(assignSQL);
 		
-		String location = tf.properties.location;
+
 		
 		try {
 
+			pstmtDel = sd.prepareStatement(deleteSql);
+			pstmtAssign = sd.prepareStatement(assignSQL);
+			
+			// 1. Delete the existing task if the task is being updated
+			if(tf.properties.id > 0) {
+				pstmtDel.setInt(1, tf.properties.id);
+				pstmtDel.setInt(2,  pId);
+				
+				log.info("Delete existing task, prior to update." + pstmtDel.toString());
+				pstmtDel.executeUpdate();
+			}
+			
+			// 2. Get the form id, if only the form name is specified
+			if(tf.properties.form_id <= 0 && tf.properties.form_name != null) {
+				
+			}
+			
+			// 2. Get the assignee id, if only the assignee ident is specified
+			if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null) {
+				
+			}
+			
+			// 3. If this is a new task group then create it and get the task group id
+			
+			
 			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, tf.properties.form_id);
 			String formUrl = "http://" + hostname + "/formXML?key=" + targetSurveyIdent;
 			String geoType = null;
@@ -800,6 +808,7 @@ public class TaskManager {
 			/*
 			 * Location
 			 */
+			String location = tf.properties.location;
 			if(location == null) {
 				location = "POINT(0 0)";
 			} else if(location.startsWith("LINESTRING")) {
@@ -868,6 +877,7 @@ public class TaskManager {
 			
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+			if(pstmtDel != null) try {	pstmtDel.close(); } catch(SQLException e) {};
 			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
 		}
 		
