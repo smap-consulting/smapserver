@@ -175,7 +175,7 @@ public class Tasks extends Application {
 			TaskListGeoJson t = tm.getTasks(sd, tgId, completed);		
 			
 			// Return groups to calling program
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(t);	
 			response = Response.ok(resp).build();	
 			System.out.println("Resp: " + resp);

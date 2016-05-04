@@ -1714,6 +1714,24 @@ function getVersion() {
 }
 
 /*
+ * Convert a timestamp in UTC to local time and return a date object
+ */
+function localTimeAsDate(utcTime) {
+	var utcDate,
+		localTime;
+	
+	if(utcTime) {
+		if(utcTime.indexOf('+') > 0) {
+			utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss Z').toDate();
+		} else {
+			utcDate  = moment.utc(utcTime, 'YYYY-MM-DD HH:mm:ss').toDate();
+		}
+    	localTime = moment(utcDate);
+	}
+	return localTime;
+} 
+
+/*
  * Convert a timestamp in UTC to local time
  */
 function localTime(utcTime) {

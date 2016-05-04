@@ -1023,23 +1023,13 @@ function refreshTableAssignments() {
 			}
 		});
 		
-		// Respond to clicking on task edit button
-		$(".task_edit", '#task_table_body').click(function() {
-			var $this = $(this),
-				idx = $this.val(),
-				task = gTasks[idx].properties,
-				taskFeature = gTasks[idx];
-			
-			editTask(false, task, taskFeature);
-		});
+
 		
 		// Show barcodes
 		$(".tasks").find('.barcode').each(function(index) {
 			var $bcElement = $(this);
 			$bcElement.barcode($bcElement.text(), "code11");
 		});
-		
-		gTasks = tasks;
 		
 		/*
 		 * Function to save new ad hoc tasks
@@ -1434,6 +1424,55 @@ function initialiseCalendar() {
 	var m = date.getMonth();
 	var y = date.getFullYear();
 	
+	var events = getEvents();
+	/*
+	var events =  [
+	                      {
+	                          title: 'All Day Event',
+	                          start: new Date(y, m, 1)
+	                      },
+	                      {
+	                          title: 'Long Event',
+	                          start: new Date(y, m, d-5),
+	                          end: new Date(y, m, d-2)
+	                      },
+	                      {
+	                          id: 999,
+	                          title: 'Repeating Event',
+	                          start: new Date(y, m, d-3, 16, 0),
+	                          allDay: false
+	                      },
+	                      {
+	                          id: 999,
+	                          title: 'Repeating Event',
+	                          start: new Date(y, m, d+4, 16, 0),
+	                          allDay: false
+	                      },
+	                      {
+	                          title: 'Meeting',
+	                          start: new Date(y, m, d, 10, 30),
+	                          allDay: false
+	                      },
+	                      {
+	                          title: 'Lunch',
+	                          start: new Date(y, m, d, 12, 0),
+	                          end: new Date(y, m, d, 14, 0),
+	                          allDay: false
+	                      },
+	                      {
+	                          title: 'Birthday Party',
+	                          start: new Date(y, m, d+1, 19, 0),
+	                          end: new Date(y, m, d+1, 22, 30),
+	                          allDay: false
+	                      },
+	                      {
+	                          title: 'Click for Google',
+	                          start: new Date(y, m, 28),
+	                          end: new Date(y, m, 29),
+	                          url: 'http://google.com/'
+	                      }
+	                  ];
+	 */
 	$('#calendar').fullCalendar({
 	    header: {
 	        left: 'prev,next today',
@@ -1447,52 +1486,8 @@ function initialiseCalendar() {
 	    drop: function() {
 	    	$(this).remove();
 	    },
-	    events: [
-                 {
-                     title: 'All Day Event',
-                     start: new Date(y, m, 1)
-                 },
-                 {
-                     title: 'Long Event',
-                     start: new Date(y, m, d-5),
-                     end: new Date(y, m, d-2)
-                 },
-                 {
-                     id: 999,
-                     title: 'Repeating Event',
-                     start: new Date(y, m, d-3, 16, 0),
-                     allDay: false
-                 },
-                 {
-                     id: 999,
-                     title: 'Repeating Event',
-                     start: new Date(y, m, d+4, 16, 0),
-                     allDay: false
-                 },
-                 {
-                     title: 'Meeting',
-                     start: new Date(y, m, d, 10, 30),
-                     allDay: false
-                 },
-                 {
-                     title: 'Lunch',
-                     start: new Date(y, m, d, 12, 0),
-                     end: new Date(y, m, d, 14, 0),
-                     allDay: false
-                 },
-                 {
-                     title: 'Birthday Party',
-                     start: new Date(y, m, d+1, 19, 0),
-                     end: new Date(y, m, d+1, 22, 30),
-                     allDay: false
-                 },
-                 {
-                     title: 'Click for Google',
-                     start: new Date(y, m, 28),
-                     end: new Date(y, m, 29),
-                     url: 'http://google.com/'
-                 }
-             ]
+	    events: events
+	    
 	});
 	
 	 $('#external-events div.external-event').each(function() {
@@ -1513,6 +1508,37 @@ function initialiseCalendar() {
      });
 
 	
+}
+
+/*
+ * Convert the current task list into events
+ */
+function getEvents() {
+	var tasks = tasks = globals.gTaskList.features,
+		events = [],
+		event = {},
+		h = [];
+		idx = -1;
+	
+	for(i = 0; i < tasks.length; i++) {
+		task = tasks[i].properties;
+			if(task.scheduled_at) {
+			event = {
+				title: task.name,
+				start: localTimeAsDate(task.scheduled_at),
+				allDay: false
+			};
+			events.push(event);
+		} else {
+			h[++idx] = '<div class="external-event navy-bg">';
+			h[++idx] = task.name;
+			h[++idx] = '</div>';
+		}
+	}
+	
+	$('#dragTask').html(h.join(''));
+	
+	return events;
 }
 
 
