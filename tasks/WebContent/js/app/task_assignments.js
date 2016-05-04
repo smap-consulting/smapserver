@@ -337,6 +337,7 @@ $(document).ready(function() {
 	
 	/*
 	 * Function to delete current task group
+	 * Keep
 	 */
 	$('#deleteTaskGroup').button().click(function () {
 		
@@ -359,12 +360,13 @@ $(document).ready(function() {
 				});	
 			}
 		});
-		
-		
+	
 		
 	});
 	
-	// Add function to add tasks to group
+	/*
+	 * New Style add task function
+	 */
 	$('#addSingleTask').click(function () {
 		var task = {},
 			taskFeature = {
@@ -378,8 +380,8 @@ $(document).ready(function() {
 	});
 	
 	/*
-	 * Save new ad-hoc tasks in a group
-	 */
+	 * Save new ad-hoc tasks in a group  - Deprecated
+	 *
 	$('#addNewTaskSave').click(function () {
 		var error = false,
 			assignObj = {},
@@ -424,10 +426,13 @@ $(document).ready(function() {
 		});
 		
 	});
+	*/
 	
+	/*
 	$('#addNewTask').on('hidden.bs.modal', function () {
 		  $('#map_alert').hide();
-		})
+		});
+	*/
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
@@ -972,6 +977,9 @@ function refreshAssignmentData() {
 	}
 }
 
+/*
+ * Update the table view of task data
+ */
 function refreshTableAssignments() {
 	
 	var tasks = globals.gTaskList.features,
@@ -988,8 +996,6 @@ function refreshTableAssignments() {
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
 		});
-		
-		//$('.has_tt', '#task_table_body').tooltip();
 		
 		
 		// Respond to selection of a task
@@ -1023,7 +1029,8 @@ function refreshTableAssignments() {
 		
 		/*
 		 * Function to save new ad hoc tasks
-		 */
+		 * Deprecate
+		 *
 		$('.save_new_task').button().click(function () {
 			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
 			var s_id = $('#survey').val(),
@@ -1031,10 +1038,7 @@ function refreshTableAssignments() {
 				taskCount = $('#new_task_count').html(),
 				taskCountInt = parseInt(taskCount);
 			
-			
-			/*
-			 * Make sure we have the survey id
-			 */
+		
 			if(typeof s_id === "undefined" || s_id === null) {
 				alert(localise.set["msg_err_wait"]);
 				return;
@@ -1058,10 +1062,12 @@ function refreshTableAssignments() {
 			gTaskGroupId = $this.val();		
 			$('#addNewTask').modal("show");  // open the modal
 		});
+		*/
 		
 		/*
 		 * Function to delete a task group
-		 */
+		 * Deprecate
+		 *
 		$('.delete_task_group').button().click(function () {
 			
 			var tg_id = $(this).val();
@@ -1083,10 +1089,9 @@ function refreshTableAssignments() {
 					});	
 				}
 			});
-			
-			
-			
+
 		});
+		*/
 		
 	}
 }
@@ -1254,6 +1259,10 @@ function updateTaskParams() {
 	}
 }
 
+/*
+ * Create HTML for task table
+ * New
+ */
 function getTableBody(tasks) {
 	var surveyName,
 		tab = [],
@@ -1330,6 +1339,7 @@ function getInitialDataLink(form_id, update_id) {
 	
 	return tab.join('');
 }
+
 function getWebFormUrl(form_id, update_id) {
 	var url;
 	
@@ -1355,6 +1365,9 @@ function getStatusClass(status) {
 	return statusClass;
 }
 
+/*
+ * Import a task group from a spreadsheet
+ */
 function importTaskGroup() {
 	var url = '/surveyKPI/tasks/xls/' + globals.gCurrentProject,
 		name = $('#taskgroup option:selected').text();
