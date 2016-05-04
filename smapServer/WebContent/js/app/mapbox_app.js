@@ -20,13 +20,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 //	gUserLocation,		// bounds
 //	gLocationLayer;
 
-var gUserLocation;
-var mapData = {};
+var gUserLocation,
+	gDraggableMarker,
+	mapData = {};
 	
 /**
- * Map Initialization
+ * Map Initialisation
  */
-function initializeMap(elementId, zoom, setUserLocation, callbackClick) {
+function initialiseMap(elementId, zoom, setUserLocation, callbackClick, callbackInitialised) {
 	
 	if(!L.mapbox.accessToken) {
 		addHourglass();
@@ -37,7 +38,7 @@ function initializeMap(elementId, zoom, setUserLocation, callbackClick) {
 				removeHourglass();
 				if(data.mapbox_default) {
 					L.mapbox.accessToken = data.mapbox_default;
-					initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick);
+					initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, callbackInitialised);
 				} else {
 					alert("mapbox key not set");
 				}
@@ -53,16 +54,16 @@ function initializeMap(elementId, zoom, setUserLocation, callbackClick) {
 		});	
 		
 	} else {
-		initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick);
+		initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, callbackInitialised);
 	}
 	
 	 
 }
 
 /*
- * This function does the initialization once the mapbox key has been set
+ * This function does the initialisation once the mapbox key has been set
  */
-function initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick) {
+function initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, callbackInitialised) {
 	
 	var mapboxTiles = L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
 	    attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -90,6 +91,9 @@ function initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick) {
 	    	
 	    	if(feature.properties.blocked) {
 	    		option.fillColor = "#aaa";
+	    		option.weight = 1;
+	    		option.stroke = true;
+	    		
 	    	} else {
 		    	if(feature.properties.status === "new") {
 		    		option.fillColor = "#0000ff";
@@ -154,6 +158,10 @@ function initializeMapKeySet(elementId, zoom, setUserLocation, callbackClick) {
 	} else {
 			zoomToFeatureLayer(elementId);
 	}
+	
+	if(typeof callbackInitialised === "function") {
+		callbackInitialised();
+	}
 
 
 }
@@ -175,7 +183,12 @@ function refreshMapAssignments(elementId, taskList) {
  */
 function addDraggableMarker(elementId, latlng, callback) {
 	// Creates a single, draggable marker on the page.
-	var m = L.marker(latlng, {
+	
+	if(gDraggableMarker) {
+		mapData[elementId].map.removeLayer(gDraggableMarker);
+	}
+	
+	gDraggableMarker = L.marker(latlng, {
 	    icon: L.mapbox.marker.icon({
 	        'marker-color': '1087bf'
 	    }),

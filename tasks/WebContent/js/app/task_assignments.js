@@ -38,8 +38,9 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gCurrentTaskFeature,	// Currently edited task feature
 	gClickOnMapEnabled = false,		// Listen to clicks on the map
 	gCalendarInitialised = false,	// Set true when the calendar pane has been initialised
-	gMapInitialised = false;		// Set true when the map pane has been initialised
-	
+	gMapInitialised = false,		// Set true when the map pane has been initialised
+	gModalMapInitialised = false;	// Set true then the modal map has been initialised
+
 $(document).ready(function() {
 	
 	var bs = isBusinessServer();
@@ -501,18 +502,25 @@ $(document).ready(function() {
 		  if(target === '#cal-view') {
 			  if(!gCalendarInitialised) {
 				  gCalendarInitialised = true;
-				  initialiseCalendar();
+				  setTimeout(function() {
+					  initialiseCalendar();
+				  }, 500);
 			  }
 		  } else if(target === '#map-view') {
 			  if(!gMapInitialised) {
 				  gMapInitialised = true;
-				  initializeMap('map', 1, true, undefined);
-				  refreshMapAssignments('map', globals.gTaskList);
+				  initialiseMap('map', 1, true, undefined, refreshMainMap);
 			  }
 		  }
 	});
 });
 
+/*
+ * Refresh the main map
+ */
+function refreshMainMap() {
+	refreshMapAssignments('map', globals.gTaskList);
+}
 
 /*
  * Remove unselected address parameters
@@ -961,9 +969,13 @@ function refreshAssignmentData() {
 			success: function(data) {
 				removeHourglass();
 				globals.gTaskList = data;
-				refreshMapAssignments('map', globals.gTaskList);
+				if(gMapInitialised) {
+					refreshMapAssignments('map', globals.gTaskList);
+				}
 				refreshTableAssignments();
-				initialiseCalendar();
+				if(gCalendarInitialised) {
+					initialiseCalendar();
+				}
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
@@ -1006,7 +1018,9 @@ function refreshTableAssignments() {
 			
 
 			globals.gTaskList.features[idx].properties.selected = selected;
-			refreshMapAssignments('map', globals.gTaskList);
+			if(gMapInitialised) {
+				refreshMapAssignments('map', globals.gTaskList);
+			}
 		});
 		
 		// Respond to clicking on task edit button
@@ -1128,19 +1142,29 @@ function editTask(isNew, task, taskFeature) {
 	
 	$('#task_properties').modal("show"); 
 	
-	if(!mapData['mapModal']) {
+	if(!gModalMapInitialised) {
 		setTimeout(function() {
-				initializeMap('mapModal', 14, false, clickOnMap);
-				if(gCurrentTaskFeature.geometry.coordinates[0] || gCurrentTaskFeature.geometry.coordinates[1]) {
-					addDraggableMarker('mapModal', 
-							new L.LatLng(gCurrentTaskFeature.geometry.coordinates[0], gCurrentTaskFeature.geometry.coordinates[0]),
-							onDragEnd);
-				} else {
-					gClickOnMapEnabled = true;
-				}
+				initialiseMap('mapModal', 14, false, clickOnMap, modalMapReady);		
 			}, 500);
+		gModalMapInitialised = true;
+	} else {
+		gClickOnMapenabled = false;
+		modalMapReady();
 	}
 	
+}
+
+/*
+ * Called when the modal map is ready to accept features
+ */
+function modalMapReady() {
+	if(gCurrentTaskFeature.geometry.coordinates[0] || gCurrentTaskFeature.geometry.coordinates[1]) {
+		addDraggableMarker('mapModal', 
+				new L.LatLng(gCurrentTaskFeature.geometry.coordinates[1], gCurrentTaskFeature.geometry.coordinates[0]),
+				onDragEnd);
+	} else {
+		gClickOnMapEnabled = true;
+	}
 }
 
 /*
@@ -1409,53 +1433,6 @@ function initialiseCalendar() {
 	var d = date.getDate();
 	var m = date.getMonth();
 	var y = date.getFullYear();
-	var events =  [
-	                                   {
-	                                       title: 'All Day Event',
-	                                       start: new Date(y, m, 1)
-	                                   },
-	                                   {
-	                                       title: 'Long Event',
-	                                       start: new Date(y, m, d-5),
-	                                       end: new Date(y, m, d-2)
-	                                   },
-	                                   {
-	                                       id: 999,
-	                                       title: 'Repeating Event',
-	                                       start: new Date(y, m, d-3, 16, 0),
-	                                       allDay: false
-	                                   },
-	                                   {
-	                                       id: 999,
-	                                       title: 'Repeating Event',
-	                                       start: new Date(y, m, d+4, 16, 0),
-	                                       allDay: false
-	                                   },
-	                                   {
-	                                       title: 'Meeting',
-	                                       start: new Date(y, m, d, 10, 30),
-	                                       allDay: false
-	                                   },
-	                                   {
-	                                       title: 'Lunch',
-	                                       start: new Date(y, m, d, 12, 0),
-	                                       end: new Date(y, m, d, 14, 0),
-	                                       allDay: false
-	                                   },
-	                                   {
-	                                       title: 'Birthday Party',
-	                                       start: new Date(y, m, d+1, 19, 0),
-	                                       end: new Date(y, m, d+1, 22, 30),
-	                                       allDay: false
-	                                   },
-	                                   {
-	                                       title: 'Click for Google',
-	                                       start: new Date(y, m, 28),
-	                                       end: new Date(y, m, 29),
-	                                       url: 'http://google.com/'
-	                                   }
-	                               ];
-
 	
 	$('#calendar').fullCalendar({
 	    header: {
@@ -1463,6 +1440,8 @@ function initialiseCalendar() {
 	        center: 'title',
 	        right: 'month,agendaWeek,agendaDay'
 	    },
+	    contentHeight: 300,
+	    aspectRatio: 1.35,
 	    editable: true,
 	    droppable: true, 
 	    drop: function() {
