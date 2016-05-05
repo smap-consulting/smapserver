@@ -375,6 +375,7 @@ define({
 	"ed_qh": "Question Hint",
 	"ed_ap": "Appearance",
 	"ed_con": "Constraint",
+	"ed_r_msg": "Required Text Message",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

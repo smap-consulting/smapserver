@@ -225,7 +225,7 @@ public class Tasks extends Application {
 			
 			
 			// Return tags to calling program
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(locations);	
 			response = Response.ok(resp).build();	
 			
@@ -319,7 +319,7 @@ public class Tasks extends Application {
 					tm.saveLocations(sd, locations, oId);
 					
 					// Return tags to calling program
-					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(locations);
 					
 					if(locations.size() > 0) {
@@ -511,7 +511,7 @@ public class Tasks extends Application {
 					 *  Also we may not want to return complete tasks
 					 */
 					tl = tm.getTasks(sd, tgId, true);	// TODO set "complete" flag from passed in parameter
-					Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(tl);
 					
 					System.out.println("Task list: " + resp);
@@ -581,7 +581,7 @@ public class Tasks extends Application {
 		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
 		TaskManager tm = new TaskManager();
 		

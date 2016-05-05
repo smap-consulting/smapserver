@@ -5,8 +5,7 @@ SMAP is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
-SMAP is distributed in the hope that it will be useful,
+uSMAP is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -503,6 +502,9 @@ define([
 		
 			if(selProperty === "required" && type === "question") {		// Add a boolean type
 				
+				h[++idx] = '<div class="row">';
+				
+				h[++idx] = '<div class="col-sm-6">';
 			    h[++idx] = '<button type="button" class="btn labelButton ';
 			    if(question[selProperty]) {
 			    	h[++idx] = 'prop_yes" ';
@@ -519,6 +521,20 @@ define([
 			    	h[++idx] = 'glyphicon-remove-sign"> No';
 			    }
 			    h[++idx] = '</span></button>';
+			    h[++idx] = '</div>';
+			    /*
+			     * Add the text area for the required response text
+			     */
+			    h[++idx] = '<div class="col-sm-6">';
+			    h[++idx] = '<textarea class="labelProp has_tt" title="';
+			    h[++idx] = localise.set['ed_r_msg'];
+				h[++idx] = '" data-prop="required_msg">';	
+				h[++idx] = question["required_msg"];
+				h[++idx] = '</textarea>';
+			    h[++idx] = '</div>';
+			    
+				h[++idx] ='</div>';		// End Row
+				
 			} else if(selProperty === "autoplay" && type === "question") {		// Add a radio buttons to select autoplay status
 				
 				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection" data-toggle="buttons-radio">';

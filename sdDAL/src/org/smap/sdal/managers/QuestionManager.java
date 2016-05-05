@@ -153,9 +153,10 @@ public class QuestionManager {
 				+ "readonly, "
 				+ "relevant, "
 				+ "qconstraint, "
-				+ "constraint_msg "
+				+ "constraint_msg, "
+				+ "required_msg"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -280,6 +281,7 @@ public class QuestionManager {
 				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
 				pstmtInsertQuestion.setString(17, constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
+				pstmtInsertQuestion.setString(19, q.required_msg);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
@@ -1579,6 +1581,7 @@ public class QuestionManager {
 				 + "calculate, "
 				 + "qconstraint, "
 				 + "constraint_msg,"
+				 + "required_msg,"
 				 + "appearance,"
 				 + "enabled,"
 				 + "path,"
@@ -1612,6 +1615,7 @@ public class QuestionManager {
 				 + "calculate, "
 				 + "qconstraint, "
 				 + "constraint_msg, "
+				 + "required_msg, "
 				 + "appearance, "
 				 + "enabled, "
 				 + "path, "

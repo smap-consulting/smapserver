@@ -36,6 +36,7 @@ public class Question {
 	public String calculation;
 	public String constraint;
 	public String constraint_msg;
+	public String required_msg;
 	public String relevant;
 	//public String repeats;
 	public boolean visible;

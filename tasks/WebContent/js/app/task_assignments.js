@@ -172,6 +172,8 @@ $(document).ready(function() {
 		
 		url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
 		
+		console.log("saving task: " + utcTime($('#task_properties_scheduledDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm")));
+		
 		/*
 		 * Set the properties of the taskFeature from the dialog
 		 */
@@ -182,9 +184,9 @@ $(document).ready(function() {
 		taskFeature.properties["name"] = $('#task_properties_title').val();		// task name
 		taskFeature.properties["form_id"] = $('#task_properties_sname').val();	// form id
 		taskFeature.properties["repeat"] = $('#task_properties_repeat').prop('checked');
-			
-		taskFeature.properties.scheduled_at = utcTime($('#task_properties_scheduledDate').val());
-		taskFeature.properties.schedule_finish = utcTime($('#task_properties_scheduledFinDate').val());
+		
+		taskFeature.properties.scheduled_at = utcTime($('#task_properties_scheduledDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm"));
+		taskFeature.properties.schedule_finish = utcTime($('#task_properties_scheduledFinDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm"));
 		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
 		
 		/*
@@ -1169,6 +1171,8 @@ function editTask(isNew, task, taskFeature) {
 	var scheduleDate,
 		splitDate = [];
 
+	console.log("open edit task: " + task.scheduled_at);
+	
 	gCurrentTaskFeature = taskFeature;
 	
 	$('form[name="taskProperties"]')[0].reset();
@@ -1190,8 +1194,7 @@ function editTask(isNew, task, taskFeature) {
 		$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduled_at));
 	} 
 	if(task.schedule_finish) {
-		splitDate = localTime(task.schedule_finish).split(" ");
-		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(splitDate[1]);
+		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(localTime(task.schedule_finish));
 	} 
 
 	$('#nfc_select').val(task.location_trigger);
@@ -1400,6 +1403,7 @@ function getTableBody(tasks) {
 			
 			tab[++idx] = '<td>';		// scheduled
 				tab[++idx] = localTime(task.properties.scheduled_at);
+				console.log("Loaded: " + task.properties.name + ": " + task.properties.scheduled_at);
 			tab[++idx] = '<td>';			// edit
 			tab[++idx] ='<button class="btn btn-default task_edit" value="';
 			tab[++idx] = i;
