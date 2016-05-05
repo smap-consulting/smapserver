@@ -2348,7 +2348,7 @@ public class GeneralUtilityMethods {
 	 */
 	public static void cleanQuestionSequences(Connection sd, int fId) throws SQLException {
 		
-		String sql = "select q_id, seq from question where f_id = ? order by seq asc;";
+		String sql = "select q_id, seq, qname from question where f_id = ? order by seq asc;";
 		PreparedStatement pstmt = null;
 		
 		String sqlUpdate = "update question set seq = ? where q_id = ?;";
@@ -2362,9 +2362,17 @@ public class GeneralUtilityMethods {
 			
 			ResultSet rs = pstmt.executeQuery();
 			int newSeq = 0;
+			boolean inMeta = false;
 			while(rs.next()) {
 				int qId = rs.getInt(1);
 				int seq = rs.getInt(2);
+				String qname = rs.getString(3);
+				
+				// Once we reach the meta group ensure their sequence remains well after any other questions
+				if(qname.equals("meta")) {
+					newSeq += 5000;
+				}
+				
 				if(seq != newSeq) {
 					pstmtUpdate.setInt(1,newSeq);
 					pstmtUpdate.setInt(2, qId);
