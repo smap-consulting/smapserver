@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -60,15 +59,10 @@ import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
-import org.smap.sdal.model.TaskProperties;
-
 import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import model.Settings;
 
 /*
  * Manages Tasks

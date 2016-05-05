@@ -39,10 +39,11 @@ public class XLSFormManager {
 		public static final int COL_READONLY = 9;
 		public static final int COL_APPEARANCE = 10;
 		public static final int COL_REQUIRED = 11;
-		public static final int COL_CALCULATION = 12;
-		public static final int COL_IMAGE = 13;
-		public static final int COL_VIDEO = 14;
-		public static final int COL_AUDIO = 15;
+		public static final int COL_REQUIRED_MSG = 12;
+		public static final int COL_CALCULATION = 13;
+		public static final int COL_IMAGE = 14;
+		public static final int COL_VIDEO = 15;
+		public static final int COL_AUDIO = 16;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
@@ -161,6 +162,9 @@ public class XLSFormManager {
 				
 			} else if(type == COL_REQUIRED) {				
 				value = q.required ? "yes" : "no";		
+				
+			} else if(type == COL_REQUIRED_MSG) {				
+				value = q.required_msg;		
 				
 			} else if(type == COL_IMAGE) {				
 				value = q.labels.get(labelIndex).image;
@@ -482,7 +486,7 @@ public class XLSFormManager {
 		// Add remaining columns
 		cols.add(new Column(colNumber++,"choice_filter", Column.COL_CHOICE_FILTER, 0, "choice_filter"));
 		cols.add(new Column(colNumber++,"constraint", Column.COL_CONSTRAINT, 0, "constraint"));
-		cols.add(new Column(colNumber++,"constraint_msg", Column.COL_CONSTRAINT_MSG, 0, "constraint_message"));
+		cols.add(new Column(colNumber++,"constraint_message", Column.COL_CONSTRAINT_MSG, 0, "constraint_msg"));
 		cols.add(new Column(colNumber++,"relevant", Column.COL_RELEVANT, 0, "relevant"));
 		cols.add(new Column(colNumber++, "repeat_count", Column.COL_REPEAT_COUNT, 0, "repeat_count"));
 		
@@ -492,6 +496,7 @@ public class XLSFormManager {
 		cols.add(new Column(colNumber++, "readonly", Column.COL_READONLY, 0, "readonly"));
 		cols.add(new Column(colNumber++, "appearance", Column.COL_APPEARANCE, 0, "appearance"));
 		cols.add(new Column(colNumber++, "required", Column.COL_REQUIRED, 0, "required"));
+		cols.add(new Column(colNumber++,"required_message", Column.COL_REQUIRED_MSG, 0, "required_msg"));
 		cols.add(new Column(colNumber++, "calculation", Column.COL_CALCULATION, 0, "calculation"));
 		
 		// Add media columns (Do this as the last columns since these columns are less used
