@@ -206,12 +206,13 @@ public class TaskManager {
 				+ "t.geo_type as geo_type,"
 				+ "t.title as name,"
 				+ "t.schedule_at as schedule_at,"
+				+ "t.schedule_finish as schedule_finish,"
+				+ "t.schedule_at + interval '1 hour' as default_finish,"
 				+ "t.location_trigger as location_trigger,"
 				+ "t.update_id as update_id,"
 				+ "t.initial_data as initial_data,"
 				+ "t.address as address,"
 				+ "t.guidance as guidance,"
-				+ "t.duration as duration,"
 				+ "t.email as email,"
 				+ "s.s_id as form_id,"
 				+ "s.display_name as form_name,"
@@ -272,6 +273,10 @@ public class TaskManager {
 				tf.properties.type = rs.getString("type");
 				tf.properties.name = rs.getString("name");
 				tf.properties.scheduled_at = rs.getTimestamp("schedule_at");
+				tf.properties.schedule_finish = rs.getTimestamp("schedule_finish");
+				if(tf.properties.schedule_finish == null) {
+					tf.properties.schedule_finish = rs.getTimestamp("default_finish");
+				}
 				tf.properties.status = status;	
 				tf.properties.form_id = rs.getInt("form_id");
 				tf.properties.form_name = rs.getString("form_name");
@@ -284,7 +289,6 @@ public class TaskManager {
 				tf.properties.initial_data = rs.getString("initial_data");
 				tf.properties.address = rs.getString("address");
 				tf.properties.guidance = rs.getString("guidance");
-				tf.properties.duration = rs.getFloat("duration");
 				tf.properties.email = rs.getString("email");
 				
 				// Add geometry
@@ -750,6 +754,7 @@ public class TaskManager {
 				"update_id," +
 				"address," +
 				"schedule_at," +
+				"schedule_finish," +
 				"location_trigger) " +
 			"values (" +
 				"?, " + 
@@ -763,7 +768,8 @@ public class TaskManager {
 				"?, " +
 				"?, " +
 				"?," +
-				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
+				"?," + 
+				"?," + 
 				"?);";	
 		PreparedStatement pstmt = null;
 		
@@ -850,7 +856,9 @@ public class TaskManager {
 			pstmt.setString(8, initial_data_url);	
 			pstmt.setString(9, targetInstanceId);
 			pstmt.setString(10, tf.properties.address);
-			pstmt.setString(11, tf.properties.location_trigger);
+			pstmt.setTimestamp(11, tf.properties.scheduled_at);
+			pstmt.setTimestamp(12, tf.properties.schedule_finish);
+			pstmt.setString(13, tf.properties.location_trigger);
 			
 			System.out.println("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();

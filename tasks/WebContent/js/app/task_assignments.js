@@ -183,14 +183,19 @@ $(document).ready(function() {
 		taskFeature.properties["form_id"] = $('#task_properties_sname').val();	// form id
 		taskFeature.properties["repeat"] = $('#task_properties_repeat').prop('checked');
 			
-		taskFeature.properties["scheduleAt"] = $('#scheduleAtUTC').val(utcTime($('#scheduleAt').val()));
+		taskFeature.properties.scheduled_at = utcTime($('#task_properties_scheduledDate').val());
+		taskFeature.properties.schedule_finish = utcTime($('#task_properties_scheduledFinDate').val());
 		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
 		
 		/*
 		 * Convert the geoJson geometry into a WKT location for update
 		 */
 		if(gCurrentTaskFeature.geometry) {
-			taskFeature.properties.location = "POINT(" + gCurrentTaskFeature.geometry.coordinates.join(" ") + ")";
+			if(gCurrentTaskFeature.geometry.coordinates && gCurrentTaskFeature.geometry.coordinates.length > 1) {
+				taskFeature.properties.location = "POINT(" + gCurrentTaskFeature.geometry.coordinates.join(" ") + ")";
+			} else {
+				taskFeature.properties.location = "POINT(0 0)";
+			}
 		}
 
 		// TODO task update details (updating existing record)
@@ -217,6 +222,7 @@ $(document).ready(function() {
 			  data: { task: tfString },
 			  success: function(data, status) {
 				  removeHourglass();
+				  $('#task_properties').modal("hide"); 
 				  refreshAssignmentData();
 			  },
 			  error: function(xhr, textStatus, err) {
@@ -468,7 +474,7 @@ $(document).ready(function() {
 	$('#tasks_print').button();									// Add button styling
 	
 	// Set up the start and end dates with date picker
-	$('#startDate').datetimepicker({
+	$('#startDate').datetimepicker({					// Selecting start end times for tasks generated from survey
 		useCurrent: false,
 		locale: gUserLocale || 'en'
 	}).data("DateTimePicker").date(moment());
@@ -481,6 +487,54 @@ $(document).ready(function() {
 	$('#task_properties_scheduledDate').datetimepicker({
 		useCurrent: false,
 		locale: gUserLocale || 'en'
+	});
+	
+	$('#task_properties_scheduledFinDate').datetimepicker({
+		useCurrent: false,
+		locale: gUserLocale || 'en'
+	});
+	
+	$('#task_properties_scheduledDate').on("dp.change", function() {
+		
+		var startDateLocal = $(this).data("DateTimePicker").date(),
+			endDateLocal = $('#task_properties_scheduledFinDate').data("DateTimePicker").date(),
+			originalStart = gCurrentTaskFeature.properties.scheduled_at,
+			originalEnd = gCurrentTaskFeature.properties.schedule_finish,
+			newEndDate,
+			duration;
+		
+		if(startDateLocal) {
+			
+			gCurrentTaskFeature.properties.scheduled_at = utcTime(startDateLocal.format("YYYY-MM-DD HH:mm"));
+			
+			if(!endDateLocal) {
+				newEndDate = startDateLocal.add(1, 'hours');
+			} else {
+				if(originalEnd && originalStart) {
+					duration = moment(originalEnd, "YYYY-MM-DD HH:mm").diff(moment(originalStart, "YYYY-MM-DD HH:mm"), 'hours');
+				} else {
+					duration = 1;
+				}
+				newEndDate = startDateLocal.add(duration, 'hours');
+			}
+		} else {
+			if(!endDate) {
+				return;
+			} else {
+				// Clear the end date
+			}
+		}
+		
+		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(newEndDate);
+		
+	});
+	
+$('#task_properties_scheduledFinDate').on("dp.change", function() {
+		
+		var endDateLocal = $('#task_properties_scheduledFinDate').data("DateTimePicker").date();
+		
+		gCurrentTaskFeature.properties.schedule_finish = utcTime(endDateLocal.format("YYYY-MM-DD HH:mm"));
+		
 	});
 	
 	/* 
@@ -1023,7 +1077,15 @@ function refreshTableAssignments() {
 			}
 		});
 		
-
+		// Respond to clicking on task edit button
+		$(".task_edit", '#task_table_body').click(function() {
+			var $this = $(this),
+				idx = $this.val(),
+				taskFeature = globals.gTaskList.features[idx],
+				task = taskFeature.properties;
+			
+			editTask(false, task, taskFeature);
+		});
 		
 		// Show barcodes
 		$(".tasks").find('.barcode').each(function(index) {
@@ -1104,9 +1166,13 @@ function refreshTableAssignments() {
  * Edit an existing task or create a new one
  */
 function editTask(isNew, task, taskFeature) {
-	var scheduleDate;
+	var scheduleDate,
+		splitDate = [];
 
 	gCurrentTaskFeature = taskFeature;
+	
+	$('form[name="taskProperties"]')[0].reset();
+	clearDraggableMarker('mapModal');
 	
 	if(isNew) {
 		$('#taskPropLabel').html(localise.set["t_add_task"]);
@@ -1120,8 +1186,12 @@ function editTask(isNew, task, taskFeature) {
 	$('#task_properties_taskid').val(task.id);
 	$('#task_properties_repeat').prop('checked', task.repeat);
 	$('#task_properties_title').val(task.name);
-	if(task.scheduleAt) {
-		$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduleAt));
+	if(task.scheduled_at) {
+		$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduled_at));
+	} 
+	if(task.schedule_finish) {
+		splitDate = localTime(task.schedule_finish).split(" ");
+		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(splitDate[1]);
 	} 
 
 	$('#nfc_select').val(task.location_trigger);
@@ -1134,7 +1204,9 @@ function editTask(isNew, task, taskFeature) {
 	
 	if(!gModalMapInitialised) {
 		setTimeout(function() {
-				initialiseMap('mapModal', 14, false, clickOnMap, modalMapReady);		
+				initialiseMap('mapModal', 14, 
+						!gCurrentTaskFeature.geometry.coordinates[0] && !gCurrentTaskFeature.geometry.coordinates[1], 		// Show user location if there is no task location
+						clickOnMap, modalMapReady);		
 			}, 500);
 		gModalMapInitialised = true;
 	} else {
@@ -1158,7 +1230,7 @@ function modalMapReady() {
 }
 
 /*
- * Respond to a click on the map
+ * Respond to a click on the modal map
  */
 function clickOnMap(latlng) {
 	var x = 1,
@@ -1178,7 +1250,7 @@ function clickOnMap(latlng) {
 }
 
 /*
- * Respond to a drag of the task location
+ * Respond to a drag of the task location on the modal map
  */
 function onDragEnd(latlng) {
 	var x = 1,
@@ -1327,7 +1399,7 @@ function getTableBody(tasks) {
 			tab[++idx] = '</td>';
 			
 			tab[++idx] = '<td>';		// scheduled
-				tab[++idx] = task.properties.scheduled_at;
+				tab[++idx] = localTime(task.properties.scheduled_at);
 			tab[++idx] = '<td>';			// edit
 			tab[++idx] ='<button class="btn btn-default task_edit" value="';
 			tab[++idx] = i;
@@ -1522,12 +1594,15 @@ function getEvents() {
 	
 	for(i = 0; i < tasks.length; i++) {
 		task = tasks[i].properties;
-			if(task.scheduled_at) {
+		if(task.scheduled_at) {
 			event = {
 				title: task.name,
 				start: localTimeAsDate(task.scheduled_at),
 				allDay: false
 			};
+			if(task.schedule_finish) {
+				event.end = localTimeAsDate(task.schedule_finish)
+			}
 			events.push(event);
 		} else {
 			h[++idx] = '<div class="external-event navy-bg">';

@@ -19,11 +19,11 @@ public class TaskProperties {
 	public String initial_data;
 	public String update_id;
 	public Timestamp scheduled_at;
+	public Timestamp schedule_finish;
 	public String location_trigger;
 	public boolean repeat;
 	public String address;			// Text address
 	public String guidance;			// Key value pairs representing an unstructured address
-	public float duration;			// In seconds
 	public String email;
 	public String location;			// WKT version of geometry, duplicates data in geometry, used when updating location
 	

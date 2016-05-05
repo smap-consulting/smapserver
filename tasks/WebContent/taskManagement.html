@@ -370,10 +370,19 @@
 						</div>
 					</div>
 					<div class="form-group">
-			            <label class="col-sm-2 control-label lang" data-lang="c_scheduled" for="task_properties_scheduledDate">scheduled</label>
+			            <label class="col-sm-2 control-label lang" data-lang="c_from" for="task_properties_scheduledDate">from</label>
 		            	<div class="col-sm-10">
 			            	<div class='input-group date' id='task_properties_scheduledDate' data-toggle="tooltip"  data-container="body" title="Scheduled date in local time zone">
-			                	<input id="scheduleAt" type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" name="scheduleAt">
+			                	<input type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm">
+			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+			                </div>
+			             </div>
+					</div>
+					<div class="form-group">	      
+			            <label class="col-sm-2 control-label lang" data-lang="c_to" for="task_properties_scheduledFinDate">to</label>
+		            	<div class="col-sm-10">
+			            	<div class='input-group date' id='task_properties_scheduledFinDate' data-toggle="tooltip"  data-container="body" title="Finish time">
+			                	<input type='text' class="form-control" data-date-format="YYYY-MM-DD HH:mm">
 			                   	<span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
 			                </div>
 			             </div>
@@ -407,7 +416,7 @@
 			</div>
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="taskPropertiesSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+            	<button id="taskPropertiesSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

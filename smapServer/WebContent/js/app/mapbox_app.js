@@ -181,6 +181,15 @@ function refreshMapAssignments(elementId, taskList) {
 /*
  * Add a draggable marker to the map
  */
+function clearDraggableMarker(elementId) {
+	if(gDraggableMarker) {
+		mapData[elementId].map.removeLayer(gDraggableMarker);
+	}
+}
+
+/*
+ * Add a draggable marker to the map
+ */
 function addDraggableMarker(elementId, latlng, callback) {
 	// Creates a single, draggable marker on the page.
 	

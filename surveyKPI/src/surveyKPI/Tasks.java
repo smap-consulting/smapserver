@@ -555,7 +555,7 @@ public class Tasks extends Application {
 	@POST
 	@Path("/task/{pId}/{tgId}")
 	@Consumes("application/json")
-	public Response updateSettings(
+	public Response updateTask(
 			@Context HttpServletRequest request,
 			@PathParam("pId") int pId,
 			@PathParam("tgId") int tgId,

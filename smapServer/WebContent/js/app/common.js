@@ -1777,8 +1777,14 @@ function convertTimesToLocal(elem) {
 
 function utcTime(localTime) {
 
-	var localDate = moment(localTime).toDate();
-	return moment.utc(localDate).format('YYYY-MM-DD HH:mm:ss');
+	var utcTime,
+		localDate;
+	
+	if(localTime) {
+		localDate = moment(localTime).toDate();
+		utcTime =  moment.utc(localDate).format('YYYY-MM-DD HH:mm:ss');
+	}
+	return utcTime;
 
 }
 

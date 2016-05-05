@@ -84,8 +84,8 @@ public class XLSTaskManager {
 				value = String.valueOf(props.guidance);		
 			} else if(name.equals("repeat")) {
 				value = String.valueOf(props.repeat);
-			} else if(name.equals("duration")) {
-				value = String.valueOf(props.duration);
+			} else if(name.equals("schedule_finish")) {
+				value = String.valueOf(props.schedule_finish);
 			} else if(name.equals("email")) {
 				value = String.valueOf(props.email);
 			} else if(name.equals("lon")) {
