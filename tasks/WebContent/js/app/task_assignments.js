@@ -445,10 +445,35 @@ $(document).ready(function() {
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
-		bootbox.confirm(localise.set["msg_confirm_del"] + globals.gPendingUpdates.length + ' ' + localise.set["m_assign"] + 
+		
+		var bulkAction = {
+				action: "delete",
+				taskIds: getSelectedTaskIds()
+		};
+		
+		bootbox.confirm(localise.set["msg_confirm_del"] + ' ' + bulkAction.taskIds.length + ' ' + localise.set["m_assign"] + 
 				'?', function(result){
 			if(result) {
-				deleteData(globals.gPendingUpdates); 
+				var baString = JSON.stringify(bulkAction),
+					url = "/surveyKPI/tasks/bulk/";
+				
+				url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
+				addHourglass();
+				$.ajax({
+					  type: "POST",
+					  dataType: 'text',
+					  contentType: "application/json",
+					  url: url,
+					  data: { tasks: baString },
+					  success: function(data, status) {
+						  removeHourglass();
+						  refreshAssignmentData();
+					  }, error: function(data, status) {
+						  console.log(data);
+						  removeHourglass();
+						  alert("Error: Failed to update tasks"); 
+					  }
+				});
 			}
 		});
 	});
@@ -570,6 +595,22 @@ $('#task_properties_scheduledFinDate').on("dp.change", function() {
 		  }
 	});
 });
+
+/*
+ * Get an array of taskIds that have been selected
+ */
+function getSelectedTaskIds() {
+	
+	var taskIds = [],
+		idx;
+	
+	$('input[type=checkbox]:checked', '#task_table').each(function() {
+		idx = $(this).val();
+		taskIds.push(globals.gTaskList.features[idx].properties.id);
+	});
+	
+	return taskIds;
+}
 
 /*
  * Refresh the main map
@@ -882,27 +923,6 @@ function saveData(data) {
 		  }, error: function(data, status) {
 			  console.log(data);
 			  alert("Error: Failed to update tasks"); 
-		  }
-	});
-}
-
-function deleteData(data) {
-	
-	var deleteString = JSON.stringify(data);
-
-	addHourglass();
-	$.ajax({
-		  type: "DELETE",
-		  url: "/surveyKPI/assignments",
-		  data: { settings: deleteString },
-		  success: function(data, status) {
-			  removeHourglass();
-			  refreshAssignmentData();
-			  globals.gPendingUpdates = [];
-		  }, error: function(data, status) {
-			  console.log(data);
-			  removeHourglass();
-			  alert("Error: Failed to delete tasks"); 
 		  }
 	});
 }

@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Organisation;
+import org.smap.sdal.model.Project;
+import org.smap.sdal.model.TaskBulkAction;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
@@ -63,6 +66,7 @@ import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*
  * Manages Tasks
@@ -575,12 +579,72 @@ public class Tasks extends Application {
 		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
 		TaskManager tm = new TaskManager();
 		
 		try {
 			tm.writeTask(sd, pId, tgId, tf, request.getServerName());
+			response = Response.ok().build();
+		
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+	
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Apply an action to an array of task ids
+	 */
+	@POST
+	@Path("/bulk/{pId}/{tgId}")
+	@Consumes("application/json")
+	public Response bulkAction(
+			@Context HttpServletRequest request,
+			@PathParam("pId") int pId,
+			@PathParam("tgId") int tgId,
+			@FormParam("tasks") String tasks
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String user = request.getRemoteUser();
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
+		a.isAuthorised(sd, user);
+		a.isValidProject(sd, user, pId);
+		// End Authorisation
+		
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		TaskBulkAction bulkAction = gson.fromJson(tasks, TaskBulkAction.class);
+		TaskManager tm = new TaskManager();
+		
+		log.info("userevent: " + request.getRemoteUser() + " : bulk action for : " + tgId + " " 
+					+ bulkAction.action + " : assign user: " + bulkAction.user + " : " + bulkAction.taskIds.toString());
+		
+		try {
+			tm.applyBulkAction(sd, pId, bulkAction);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {

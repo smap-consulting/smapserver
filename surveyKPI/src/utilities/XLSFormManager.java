@@ -44,6 +44,7 @@ public class XLSFormManager {
 		public static final int COL_IMAGE = 14;
 		public static final int COL_VIDEO = 15;
 		public static final int COL_AUDIO = 16;
+		public static final int COL_AUTOPLAY = 17;
 		
 		public static final int COL_LIST_NAME = 100;
 		public static final int COL_CHOICE_NAME = 101;
@@ -159,6 +160,9 @@ public class XLSFormManager {
 				
 			} else if(type == COL_APPEARANCE) {				
 				value = q.appearance;		
+				
+			} else if(type == COL_AUTOPLAY) {				
+				value = q.autoplay;		
 				
 			} else if(type == COL_REQUIRED) {				
 				value = q.required ? "yes" : "no";		
@@ -495,6 +499,7 @@ public class XLSFormManager {
 		cols.add(new Column(colNumber++, "default", Column.COL_DEFAULT, 0, "default"));
 		cols.add(new Column(colNumber++, "readonly", Column.COL_READONLY, 0, "readonly"));
 		cols.add(new Column(colNumber++, "appearance", Column.COL_APPEARANCE, 0, "appearance"));
+		cols.add(new Column(colNumber++, "autoplay", Column.COL_AUTOPLAY, 0, "autoplay"));
 		cols.add(new Column(colNumber++, "required", Column.COL_REQUIRED, 0, "required"));
 		cols.add(new Column(colNumber++,"required_message", Column.COL_REQUIRED_MSG, 0, "required_msg"));
 		cols.add(new Column(colNumber++, "calculation", Column.COL_CALCULATION, 0, "calculation"));

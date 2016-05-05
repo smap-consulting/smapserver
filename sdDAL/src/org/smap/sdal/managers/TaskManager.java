@@ -15,6 +15,7 @@ import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Task;
 import org.smap.sdal.model.TaskAssignment;
+import org.smap.sdal.model.TaskBulkAction;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
@@ -889,6 +890,46 @@ public class TaskManager {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
 			if(pstmtDel != null) try {	pstmtDel.close(); } catch(SQLException e) {};
 			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
+		}
+		
+	}
+	
+	/*
+	 * Apply an action to multiple tasks
+	 */
+	public void applyBulkAction(Connection sd, int pId, TaskBulkAction action) throws Exception {
+		
+		String deleteSql = "delete from tasks where p_id = ? ";
+		String whereSql = "and id in (";
+		
+
+		PreparedStatement pstmt = null;
+	
+		
+		try {
+
+			if(action.taskIds.size() == 0) {
+				throw new Exception("No tasks");
+			} 
+			
+			for(int i = 0; i < action.taskIds.size(); i++) {
+				if(i > 0) {
+					whereSql += ",";
+				}
+				whereSql += action.taskIds.get(i).toString();
+			}
+			whereSql += ")";
+			
+			pstmt = sd.prepareStatement(deleteSql + whereSql);
+			pstmt.setInt(1, pId);
+			
+			pstmt.executeUpdate();
+			
+
+			
+		} finally {
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+			
 		}
 		
 	}
