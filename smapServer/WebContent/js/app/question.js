@@ -282,7 +282,7 @@ define([
 			beforeFormIndex = $beforeElement.data("fid");
 			if(beforeFormIndex == formIndex) {
 				beforeItemIndex = $beforeElement.data("id");
-				seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex], beforeFormIndex === sourceFormIndex, sourceItemIndex);	
+				seq = getSequenceQuestion(beforeItemIndex, survey.forms[beforeFormIndex], false/*beforeFormIndex === sourceFormIndex*/, sourceItemIndex);	
 				if(locn === "after") {
 					seq++;
 				}
