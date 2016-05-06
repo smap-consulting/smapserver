@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class TaskBulkAction {
 	public String action;
-	public String user;
+	public int userId;
 	public ArrayList<Integer> taskIds; 
 
 }

@@ -139,7 +139,7 @@ $(document).ready(function() {
 	});
     $('.file-inputs').bootstrapFileInput();
 	
-	// Add a trigger to open the modal that assigns a user to tasks
+	// Add a trigger to open the modal that bulk assigns a user to tasks
 	$('#assignUser').button().click(function () {
 		
 		globals.gCurrentUserName = $('#users_select_user option:selected').text();
@@ -152,12 +152,36 @@ $(document).ready(function() {
 	 * Save the assigned user
 	 */
 	$('#assignUserSave').off().click(function() {
-		updatePendingAssignments("accepted", $('#users_select_user').val());
-        saveData(globals.gPendingUpdates);
-		refreshAssignmentData();
-		globals.gCurrentUserId = undefined;
-		globals.gCurrentUserName = undefined;
-		globals.gPendingUpdates = [];
+		
+		var bulkAction = {
+				action: "assign",
+				userId: $('#users_select_user').val(),
+				taskIds: getSelectedTaskIds()
+			},
+			baString = JSON.stringify(bulkAction),
+			url;
+		
+	
+		url = "/surveyKPI/tasks/bulk/";			
+		url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
+				
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  dataType: 'text',
+			  contentType: "application/json",
+			  url: url,
+			  data: { tasks: baString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  refreshAssignmentData();
+			  }, error: function(data, status) {
+				  console.log(data);
+				  removeHourglass();
+				  alert("Error: Failed to update tasks"); 
+			  }
+		});
+		
 	});
 	
 	
@@ -168,11 +192,11 @@ $(document).ready(function() {
 		var url = "/surveyKPI/tasks/task/",
 			taskFeature = {
 				properties: {}
-			};
+			},
+			fromDate,
+			toDate;
 		
 		url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
-		
-		console.log("saving task: " + utcTime($('#task_properties_scheduledDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm")));
 		
 		/*
 		 * Set the properties of the taskFeature from the dialog
@@ -183,10 +207,17 @@ $(document).ready(function() {
 		}
 		taskFeature.properties["name"] = $('#task_properties_title').val();		// task name
 		taskFeature.properties["form_id"] = $('#task_properties_sname').val();	// form id
+		taskFeature.properties.assignee = $('#task_properties_user').val();	// assignee
 		taskFeature.properties["repeat"] = $('#task_properties_repeat').prop('checked');
 		
-		taskFeature.properties.scheduled_at = utcTime($('#task_properties_scheduledDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm"));
-		taskFeature.properties.schedule_finish = utcTime($('#task_properties_scheduledFinDate').data("DateTimePicker").date().format("YYYY-MM-DD HH:mm"));
+		fromDate = $('#task_properties_scheduledDate').data("DateTimePicker").date();
+		toDate = $('#task_properties_scheduledFinDate').data("DateTimePicker").date();
+		if(fromDate) {
+			taskFeature.properties.scheduled_at = utcTime(fromDate.format("YYYY-MM-DD HH:mm"));
+		}
+		if(toDate) {
+			taskFeature.properties.schedule_finish = utcTime(toDate.format("YYYY-MM-DD HH:mm"));
+		}
 		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
 		
 		/*
@@ -866,7 +897,7 @@ function getUsers(projectId) {
 	$('#users_filter').append('<option value="-1">Unassigned Users</options>');
 
 	$('#users_select_new_task').append('<option value="-1">Unassigned</options>');
-	$('#users_task_group, #users_select_user').append('<option value="-1">Unassigned</options>');
+	$('#users_task_group, #users_select_user, #task_properties_user').append('<option value="-1">Unassigned</options>');
 	
 	$.ajax({
 		url: "/surveyKPI/userList",
@@ -1207,7 +1238,6 @@ function editTask(isNew, task, taskFeature) {
 	/*
 	 * Set up data
 	 */
-	$('#task_properties_taskid').val(task.id);
 	$('#task_properties_repeat').prop('checked', task.repeat);
 	$('#task_properties_title').val(task.name);
 	if(task.scheduled_at) {

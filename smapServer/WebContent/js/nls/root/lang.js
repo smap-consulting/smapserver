@@ -33,6 +33,7 @@ define({
 	"m_manage_dash": "Management Dashboard",
 	"m_s_m_f": "Setup Managed Forms",
 	"m_task_m": "Task Management",
+	"m_user_profile": "User Profile",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -44,6 +45,7 @@ define({
 	"c_desc": "Description",
 	"c_project": "Select Project",
 	"c_forms": "Forms",
+	"c_form": "Form",
 	"c_forward": "Forward",
 	"c_forwarded": "Forwarded",
 	"c_name": "Name",
@@ -294,6 +296,8 @@ define({
 	"t_tg": "Task Group",
 	"t_tasks": "Tasks",
 	"t_id": "Initial Data",
+	"t_n_s": "Tasks without start time",
+	"t_drag": "Drag a task and drop onto calendar",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",

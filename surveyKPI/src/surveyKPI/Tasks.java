@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -57,7 +56,6 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Organisation;
-import org.smap.sdal.model.Project;
 import org.smap.sdal.model.TaskBulkAction;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
@@ -66,7 +64,6 @@ import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 /*
  * Manages Tasks
@@ -641,7 +638,7 @@ public class Tasks extends Application {
 		TaskManager tm = new TaskManager();
 		
 		log.info("userevent: " + request.getRemoteUser() + " : bulk action for : " + tgId + " " 
-					+ bulkAction.action + " : assign user: " + bulkAction.user + " : " + bulkAction.taskIds.toString());
+					+ bulkAction.action + " : assign user: " + bulkAction.userId + " : " + bulkAction.taskIds.toString());
 		
 		try {
 			tm.applyBulkAction(sd, pId, bulkAction);

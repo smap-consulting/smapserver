@@ -899,12 +899,14 @@ public class TaskManager {
 	 */
 	public void applyBulkAction(Connection sd, int pId, TaskBulkAction action) throws Exception {
 		
-		String deleteSql = "delete from tasks where p_id = ? ";
-		String whereSql = "and id in (";
+		String deleteSql = "delete from tasks where p_id = ? and id in (";
+		String assignSql = "update assignments set assignee = ? "
+				+ "where task_id in (select task_id from tasks where p_id = ?) "		// Authorisation
+				+ "and task_id in (";
+		String whereSql = "";
 		
 
 		PreparedStatement pstmt = null;
-	
 		
 		try {
 
@@ -920,9 +922,17 @@ public class TaskManager {
 			}
 			whereSql += ")";
 			
-			pstmt = sd.prepareStatement(deleteSql + whereSql);
-			pstmt.setInt(1, pId);
+			if(action.action.equals("delete")) {
+				pstmt = sd.prepareStatement(deleteSql + whereSql);
+				pstmt.setInt(1, pId);
+			} else if(action.action.equals("assign")) {
+				
+				pstmt = sd.prepareStatement(assignSql + whereSql);
+				pstmt.setInt(1,action.userId);
+				pstmt.setInt(2, pId);
+			}
 			
+			log.info("Bulk update: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 
