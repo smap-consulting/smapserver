@@ -903,10 +903,17 @@ public class TaskManager {
 		String assignSql = "update assignments set assignee = ? "
 				+ "where task_id in (select task_id from tasks where p_id = ?) "		// Authorisation
 				+ "and task_id in (";
+		String sqlGetUnassigned = "select id from tasks "
+				+ "where id not in (select task_id from assignments) "
+				+ "and id in (";
+		String sqlCreateAssignments = "insert into assignments (assignee, status, task_id, assigned_date) "
+				+ "values(?, 'accepted', ?, now())";
 		String whereSql = "";
 		
 
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGetUnassigned = null;
+		PreparedStatement pstmtCreateAssignments = null;
 		
 		try {
 
@@ -927,6 +934,19 @@ public class TaskManager {
 				pstmt.setInt(1, pId);
 			} else if(action.action.equals("assign")) {
 				
+				// Get tasks that have not had an assignemnt created
+				pstmtGetUnassigned = sd.prepareStatement(sqlGetUnassigned + whereSql);
+				pstmtCreateAssignments = sd.prepareCall(sqlCreateAssignments);
+				log.info("Getting unassigned tasks: " + pstmtGetUnassigned.toString());
+				ResultSet rs = pstmtGetUnassigned.executeQuery();
+				while (rs.next()) {
+					// Create the first assignment for this task
+					pstmtCreateAssignments.setInt(1, action.userId);
+					pstmtCreateAssignments.setInt(2, rs.getInt(1));
+					log.info("Create assignment: " + pstmtCreateAssignments.toString());
+					pstmtCreateAssignments.executeUpdate();
+				}
+				// Update assignments
 				pstmt = sd.prepareStatement(assignSql + whereSql);
 				pstmt.setInt(1,action.userId);
 				pstmt.setInt(2, pId);
@@ -934,12 +954,11 @@ public class TaskManager {
 			
 			log.info("Bulk update: " + pstmt.toString());
 			pstmt.executeUpdate();
-			
-
-			
+				
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
-			
+			if(pstmtGetUnassigned != null) try {pstmtGetUnassigned.close(); } catch(SQLException e) {};
+			if(pstmtCreateAssignments != null) try {pstmtCreateAssignments.close(); } catch(SQLException e) {};	
 		}
 		
 	}
