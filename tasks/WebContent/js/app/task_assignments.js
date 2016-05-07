@@ -201,24 +201,24 @@ $(document).ready(function() {
 		/*
 		 * Set the properties of the taskFeature from the dialog
 		 */
-		taskFeature.properties["id"] = $('#task_properties_taskid').val();		// task id
-		if(taskFeature.properties["id"] == "") {
+		taskFeature.properties.id = gCurrentTaskFeature.properties.id;		// task id
+		if(!taskFeature.properties.id || taskFeature.properties.id == "") {
 			taskFeature.properties["id"] = 0;
 		}
-		taskFeature.properties["name"] = $('#task_properties_title').val();		// task name
-		taskFeature.properties["form_id"] = $('#task_properties_sname').val();	// form id
-		taskFeature.properties.assignee = $('#task_properties_user').val();	// assignee
-		taskFeature.properties["repeat"] = $('#task_properties_repeat').prop('checked');
+		taskFeature.properties.name = $('#tp_name').val();		// task name
+		taskFeature.properties.form_id = $('#tp_form_name').val();	// form id
+		taskFeature.properties.assignee = $('#tp_user').val();	// assignee
+		taskFeature.properties.repeat = $('#tp_repeat').prop('checked');
 		
-		fromDate = $('#task_properties_scheduledDate').data("DateTimePicker").date();
-		toDate = $('#task_properties_scheduledFinDate').data("DateTimePicker").date();
+		fromDate = $('#tp_from').data("DateTimePicker").date();
+		toDate = $('#tp_to').data("DateTimePicker").date();
 		if(fromDate) {
-			taskFeature.properties.scheduled_at = utcTime(fromDate.format("YYYY-MM-DD HH:mm"));
+			taskFeature.properties.from = utcTime(fromDate.format("YYYY-MM-DD HH:mm"));
 		}
 		if(toDate) {
-			taskFeature.properties.schedule_finish = utcTime(toDate.format("YYYY-MM-DD HH:mm"));
+			taskFeature.properties.to = utcTime(toDate.format("YYYY-MM-DD HH:mm"));
 		}
-		taskFeature.properties["location_trigger"] = $('#nfc_select').val();
+		taskFeature.properties.location_trigger = $('#nfc_select').val();
 		
 		/*
 		 * Convert the geoJson geometry into a WKT location for update
@@ -521,7 +521,7 @@ $(document).ready(function() {
 	
 	// Respond to a new NFC being selected
 	$('#nfc_select').change(function(){
-		$('#task_properties_title').val($(this).find(':selected').text());
+		$('#tp_name').val($(this).find(':selected').text());
 	});
 	
 	enableUserProfileBS();										// Enable user profile button	
@@ -542,28 +542,28 @@ $(document).ready(function() {
 		locale: gUserLocale || 'en'
 	}).data("DateTimePicker").date(moment());
 	
-	$('#task_properties_scheduledDate').datetimepicker({
+	$('#tp_from').datetimepicker({
 		useCurrent: false,
 		locale: gUserLocale || 'en'
 	});
 	
-	$('#task_properties_scheduledFinDate').datetimepicker({
+	$('#tp_to').datetimepicker({
 		useCurrent: false,
 		locale: gUserLocale || 'en'
 	});
 	
-	$('#task_properties_scheduledDate').on("dp.change", function() {
+	$('#tp_from').on("dp.change", function() {
 		
 		var startDateLocal = $(this).data("DateTimePicker").date(),
-			endDateLocal = $('#task_properties_scheduledFinDate').data("DateTimePicker").date(),
-			originalStart = gCurrentTaskFeature.properties.scheduled_at,
-			originalEnd = gCurrentTaskFeature.properties.schedule_finish,
+			endDateLocal = $('#tp_to').data("DateTimePicker").date(),
+			originalStart = gCurrentTaskFeature.properties.from,
+			originalEnd = gCurrentTaskFeature.properties.to,
 			newEndDate,
 			duration;
 		
 		if(startDateLocal) {
 			
-			gCurrentTaskFeature.properties.scheduled_at = utcTime(startDateLocal.format("YYYY-MM-DD HH:mm"));
+			gCurrentTaskFeature.properties.from = utcTime(startDateLocal.format("YYYY-MM-DD HH:mm"));
 			
 			if(!endDateLocal) {
 				newEndDate = startDateLocal.add(1, 'hours');
@@ -583,15 +583,15 @@ $(document).ready(function() {
 			}
 		}
 		
-		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(newEndDate);
+		$('#tp_to').data("DateTimePicker").date(newEndDate);
 		
 	});
 	
-$('#task_properties_scheduledFinDate').on("dp.change", function() {
+$('#tp_to').on("dp.change", function() {
 		
-		var endDateLocal = $('#task_properties_scheduledFinDate').data("DateTimePicker").date();
+		var endDateLocal = $('#tp_to').data("DateTimePicker").date();
 		
-		gCurrentTaskFeature.properties.schedule_finish = utcTime(endDateLocal.format("YYYY-MM-DD HH:mm"));
+		gCurrentTaskFeature.properties.to = utcTime(endDateLocal.format("YYYY-MM-DD HH:mm"));
 		
 	});
 	
@@ -897,7 +897,7 @@ function getUsers(projectId) {
 	$('#users_filter').append('<option value="-1">Unassigned Users</options>');
 
 	$('#users_select_new_task').append('<option value="-1">Unassigned</options>');
-	$('#users_task_group, #users_select_user, #task_properties_user').append('<option value="-1">Unassigned</options>');
+	$('#users_task_group, #users_select_user, #tp_user').append('<option value="-1">Unassigned</options>');
 	
 	$.ajax({
 		url: "/surveyKPI/userList",
@@ -1081,7 +1081,7 @@ function refreshAssignmentData() {
 				}
 				refreshTableAssignments();
 				if(gCalendarInitialised) {
-					initialiseCalendar();
+					updateCalendar();
 				}
 			},
 			error: function(xhr, textStatus, err) {
@@ -1146,71 +1146,6 @@ function refreshTableAssignments() {
 			$bcElement.barcode($bcElement.text(), "code11");
 		});
 		
-		/*
-		 * Function to save new ad hoc tasks
-		 * Deprecate
-		 *
-		$('.save_new_task').button().click(function () {
-			//var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
-			var s_id = $('#survey').val(),
-				$this = $(this),
-				taskCount = $('#new_task_count').html(),
-				taskCountInt = parseInt(taskCount);
-			
-		
-			if(typeof s_id === "undefined" || s_id === null) {
-				alert(localise.set["msg_err_wait"]);
-				return;
-			}
-			
-			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-			registerForNewTasks();
-			
-			// Reset buttons
-			$this.hide();
-			$this.siblings('.add_new_task').show();
-			
-			// Notify the user if we are adding a task without location
-			$('#ts_alert').hide().text("");
-			if(taskCountInt == 0) {
-				$('#new_task_count').html(1);
-				$('#ts_alert').show().text("Adding task without location");
-			}
-
-			gTaskGroupId = $this.val();		
-			$('#addNewTask').modal("show");  // open the modal
-		});
-		*/
-		
-		/*
-		 * Function to delete a task group
-		 * Deprecate
-		 *
-		$('.delete_task_group').button().click(function () {
-			
-			var tg_id = $(this).val();
-			
-			bootbox.confirm(localise.set["msg_confirm_del"] + ' ' + localise.set["msg_confirm_tasks"], function(result){
-				if(result) {
-					addHourglass();
-					$.ajax({
-						  type: "DELETE",
-						  url: "/surveyKPI/assignments/" + tg_id + "?completed=true",
-						  success: function(data, status) {
-							  removeHourglass();
-							  refreshAssignmentData();
-						  }, error: function(data, status) {
-							  removeHourglass();
-							  console.log(data);
-							  alert("Error: Failed to delete task group"); 
-						  }
-					});	
-				}
-			});
-
-		});
-		*/
 		
 	}
 }
@@ -1222,7 +1157,7 @@ function editTask(isNew, task, taskFeature) {
 	var scheduleDate,
 		splitDate = [];
 
-	console.log("open edit task: " + task.scheduled_at);
+	console.log("open edit task: " + task.from);
 	
 	gCurrentTaskFeature = taskFeature;
 	
@@ -1238,13 +1173,17 @@ function editTask(isNew, task, taskFeature) {
 	/*
 	 * Set up data
 	 */
-	$('#task_properties_repeat').prop('checked', task.repeat);
-	$('#task_properties_title').val(task.name);
-	if(task.scheduled_at) {
-		$('#task_properties_scheduledDate').data("DateTimePicker").date(localTime(task.scheduled_at));
+	$('#tp_repeat').prop('checked', task.repeat);
+	$('#tp_name').val(task.name);		// name
+	$('#tp_form_name').val(taskFeature.properties.form_id);	// form id
+	$('#tp_user').val(taskFeature.properties.assignee);	// assignee
+
+	// Set end date first as otherwise since it will be null, it will be defaulted when from date set
+	if(task.to) {
+		$('#tp_to').data("DateTimePicker").date(localTime(task.to));
 	} 
-	if(task.schedule_finish) {
-		$('#task_properties_scheduledFinDate').data("DateTimePicker").date(localTime(task.schedule_finish));
+	if(task.from) {
+		$('#tp_from').data("DateTimePicker").date(localTime(task.from));
 	} 
 
 	$('#nfc_select').val(task.location_trigger);
@@ -1452,8 +1391,8 @@ function getTableBody(tasks) {
 			tab[++idx] = '</td>';
 			
 			tab[++idx] = '<td>';		// scheduled
-				tab[++idx] = localTime(task.properties.scheduled_at);
-				console.log("Loaded: " + task.properties.name + ": " + task.properties.scheduled_at);
+				tab[++idx] = localTime(task.properties.from);
+				console.log("Loaded: " + task.properties.name + ": " + task.properties.from);
 			tab[++idx] = '<td>';			// edit
 			tab[++idx] ='<button class="btn btn-default task_edit" value="';
 			tab[++idx] = i;
@@ -1516,6 +1455,8 @@ function importTaskGroup() {
 	var f = document.forms.namedItem("loadtasks");
 	var formData = new FormData(f);
 	
+	$('#load_tasks_alert').hide();
+	
 	addHourglass();
 	$.ajax({
 		  type: "POST",
@@ -1527,7 +1468,7 @@ function importTaskGroup() {
 		  success: function(data, status) {
 			  removeHourglass();
 			  $('#import_taskgroup').modal("hide");
-			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html();
+			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').empty("");
 			  refreshAssignmentData();
 		  },
 		  error: function(xhr, textStatus, err) {
@@ -1551,54 +1492,7 @@ function initialiseCalendar() {
 	var y = date.getFullYear();
 	
 	var events = getEvents();
-	/*
-	var events =  [
-	                      {
-	                          title: 'All Day Event',
-	                          start: new Date(y, m, 1)
-	                      },
-	                      {
-	                          title: 'Long Event',
-	                          start: new Date(y, m, d-5),
-	                          end: new Date(y, m, d-2)
-	                      },
-	                      {
-	                          id: 999,
-	                          title: 'Repeating Event',
-	                          start: new Date(y, m, d-3, 16, 0),
-	                          allDay: false
-	                      },
-	                      {
-	                          id: 999,
-	                          title: 'Repeating Event',
-	                          start: new Date(y, m, d+4, 16, 0),
-	                          allDay: false
-	                      },
-	                      {
-	                          title: 'Meeting',
-	                          start: new Date(y, m, d, 10, 30),
-	                          allDay: false
-	                      },
-	                      {
-	                          title: 'Lunch',
-	                          start: new Date(y, m, d, 12, 0),
-	                          end: new Date(y, m, d, 14, 0),
-	                          allDay: false
-	                      },
-	                      {
-	                          title: 'Birthday Party',
-	                          start: new Date(y, m, d+1, 19, 0),
-	                          end: new Date(y, m, d+1, 22, 30),
-	                          allDay: false
-	                      },
-	                      {
-	                          title: 'Click for Google',
-	                          start: new Date(y, m, 28),
-	                          end: new Date(y, m, 29),
-	                          url: 'http://google.com/'
-	                      }
-	                  ];
-	 */
+
 	$('#calendar').fullCalendar({
 	    header: {
 	        left: 'prev,next today',
@@ -1612,11 +1506,49 @@ function initialiseCalendar() {
 	    drop: function() {
 	    	$(this).remove();
 	    },
+	    dayClick: function(date, jsEvent, view) {
+
+	        console.log('Clicked on: ' + date.format());
+	        console.log('Coordinates: ' + jsEvent.pageX + ',' + jsEvent.pageY);
+	        console.log('Current view: ' + view.name);
+
+	        // change the day's background color just for fun
+	        //$(this).css('background-color', 'red');
+	        $('#calendar').fullCalendar( 'gotoDate', date );
+	        $('#calendar').fullCalendar( 'changeView', 'agendaDay' );
+
+	    },
+	    eventDrop: function(event, delta, revertFunc) {
+	    	var feature = {
+	    		properties: {
+	    			id: globals.gTaskList.features[event.taskIdx].properties.id,
+	    			from:  utcTime(event.start.format("YYYY-MM-DD HH:mm")),
+	    			to:  utcTime(event.end.format("YYYY-MM-DD HH:mm"))
+	    		}	
+	    	}
+	        updateWhen(feature, revertFunc, event.taskIdx);
+	    },
+	    eventResize: function(event, delta, revertFunc) {
+	    	var feature = {
+	    		properties: {
+	    			id: globals.gTaskList.features[event.taskIdx].properties.id,
+	    			from:  utcTime(event.start.format("YYYY-MM-DD HH:mm")),
+	    			to:  utcTime(event.end.format("YYYY-MM-DD HH:mm"))
+	    		}	
+	    	}
+	        updateWhen(feature, revertFunc, event.taskIdx);
+	    },
+	    eventClick: function(event) {
+	    	var taskFeature = globals.gTaskList.features[event.taskIdx],
+				task = taskFeature.properties;
+		
+	    	editTask(false, task, taskFeature);
+	    },
 	    events: events
 	    
 	});
 	
-	 $('#external-events div.external-event').each(function() {
+	$('#external-events div.external-event').each(function() {
 
          // store data so the calendar knows to render an event upon drop
          $(this).data('event', {
@@ -1637,6 +1569,50 @@ function initialiseCalendar() {
 }
 
 /*
+ * Update a single property
+ * No need to refresh assignments after the update as the change has already been applied to the local model
+ */
+function updateWhen(taskFeature, revertFunc, idx) {
+	
+	var url = "/surveyKPI/tasks/when/" + globals.gCurrentProject + "/" + globals.gCurrentTaskGroup,
+		tfString = JSON.stringify(taskFeature),
+		tasks = globals.gTaskList.features,
+		i;
+
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  dataType: 'text',
+		  contentType: "application/json",
+		  url: url,
+		  data: { task: tfString },
+		  success: function(data, status) {
+			  removeHourglass();
+			  
+			  tasks[idx].properties.from = taskFeature.properties.from;
+			  tasks[idx].properties.to = taskFeature.properties.to;
+			
+			  refreshTableAssignments();
+		  },
+		  error: function(xhr, textStatus, err) {
+			 
+			  removeHourglass(); 
+			  revertFunc();
+			  alert(localise.set["msg_err_upd"] + xhr.responseText);
+			 
+		  }
+	});
+}
+
+function updateCalendar() {
+	
+	var events = getEvents();
+	
+	 $('#calendar').fullCalendar('removeEvents');
+	 $('#calendar').fullCalendar('addEventSource', events )
+}
+
+/*
  * Convert the current task list into events
  */
 function getEvents() {
@@ -1648,14 +1624,15 @@ function getEvents() {
 	
 	for(i = 0; i < tasks.length; i++) {
 		task = tasks[i].properties;
-		if(task.scheduled_at) {
+		if(task.from) {
 			event = {
 				title: task.name,
-				start: localTimeAsDate(task.scheduled_at),
-				allDay: false
+				start: localTimeAsDate(task.from),
+				allDay: false,
+				taskIdx: i
 			};
-			if(task.schedule_finish) {
-				event.end = localTimeAsDate(task.schedule_finish)
+			if(task.to) {
+				event.end = localTimeAsDate(task.to)
 			}
 			events.push(event);
 		} else {

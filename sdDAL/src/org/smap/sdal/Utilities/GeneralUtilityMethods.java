@@ -2667,7 +2667,7 @@ public class GeneralUtilityMethods {
 				idx2 = location.lastIndexOf(')'); 
 				if(idx2 >= 0) {
 					System.out.println("location: " + location);
-					location = location.substring(idx, idx2 - 1);
+					location = location.substring(idx + 1, idx2);
 					System.out.println("location2: " + location);
 					coords = location.split(" ");
 					

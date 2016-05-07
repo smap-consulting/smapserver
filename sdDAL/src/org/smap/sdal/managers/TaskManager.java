@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -231,10 +232,10 @@ public class TaskManager {
 				+ "left outer join users u "
 				+ "on a.assignee = u.id "
 				+ "where t.tg_id = ? "
-				+ "order by t.id asc;";
+				+ "order by t.schedule_at asc;";
 		PreparedStatement pstmt = null;
 		
-		String sqlPoint = "select ST_AsGeoJSON(geo_point), ST_X(geo_point), ST_Y(geo_point) from tasks where id = ?;";
+		String sqlPoint = "select ST_AsGeoJSON(geo_point), ST_AsText(geo_point) from tasks where id = ?;";
 		PreparedStatement pstmtPoint = null;
 		String sqlLine = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
 		PreparedStatement pstmtLine = null;
@@ -273,10 +274,10 @@ public class TaskManager {
 				tf.properties.id = rs.getInt("t_id");
 				tf.properties.type = rs.getString("type");
 				tf.properties.name = rs.getString("name");
-				tf.properties.scheduled_at = rs.getTimestamp("schedule_at");
-				tf.properties.schedule_finish = rs.getTimestamp("schedule_finish");
-				if(tf.properties.schedule_finish == null) {
-					tf.properties.schedule_finish = rs.getTimestamp("default_finish");
+				tf.properties.from = rs.getTimestamp("schedule_at");
+				tf.properties.to = rs.getTimestamp("schedule_finish");
+				if(tf.properties.to == null) {
+					tf.properties.to = rs.getTimestamp("default_finish");
 				}
 				tf.properties.status = status;	
 				tf.properties.form_id = rs.getInt("form_id");
@@ -310,10 +311,9 @@ public class TaskManager {
 				if(rsGeo != null && rsGeo.next()) {
 					System.out.println("original: " + rsGeo.getString(1));
 					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();	
-					//if(geo_type.equals("POINT")) {
-					//	tf.properties.lon = rsGeo.getString(2);
-					//	tf.properties.lat = rsGeo.getString(3);
-					//}
+					if(geo_type.equals("POINT")) {
+						tf.properties.location = rsGeo.getString(2);
+					}
 				}
 			
 				
@@ -777,8 +777,8 @@ public class TaskManager {
 		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
 		PreparedStatement pstmtAssign = sd.prepareStatement(assignSQL);
 		
-
-		
+		String sqlGetFormIdFromName = "select s_id from survey where display_name = ? and p_id = ? and deleted = 'false'";
+		PreparedStatement pstmtGetFormId = sd.prepareStatement(sqlGetFormIdFromName);
 		try {
 
 			pstmtDel = sd.prepareStatement(deleteSql);
@@ -794,8 +794,20 @@ public class TaskManager {
 			}
 			
 			// 2. Get the form id, if only the form name is specified
-			if(tf.properties.form_id <= 0 && tf.properties.form_name != null) {
-				
+			if(tf.properties.form_id <= 0) {
+				if(tf.properties.form_name == null) {
+					throw new Exception("Missing form Name");
+				} else {
+					pstmtGetFormId.setString(1, tf.properties.form_name);
+					pstmtGetFormId.setInt(2, pId);
+					log.info("Get survey id: " + pstmtGetFormId.toString());
+					ResultSet rs = pstmtGetFormId.executeQuery();
+					if(rs.next()) {
+						tf.properties.form_id = rs.getInt(1);
+					} else {
+						throw new Exception("Form not found: " + tf.properties.form_name);
+					}
+				}
 			}
 			
 			// 2. Get the assignee id, if only the assignee ident is specified
@@ -818,6 +830,7 @@ public class TaskManager {
 			 * Location
 			 */
 			String location = tf.properties.location;
+			System.out.println("Location: " + location);
 			if(location == null) {
 				location = "POINT(0 0)";
 			} else if(location.startsWith("LINESTRING")) {
@@ -857,8 +870,8 @@ public class TaskManager {
 			pstmt.setString(8, initial_data_url);	
 			pstmt.setString(9, targetInstanceId);
 			pstmt.setString(10, tf.properties.address);
-			pstmt.setTimestamp(11, tf.properties.scheduled_at);
-			pstmt.setTimestamp(12, tf.properties.schedule_finish);
+			pstmt.setTimestamp(11, tf.properties.from);
+			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
 			
 			System.out.println("Insert Tasks: " + pstmt.toString());
@@ -962,7 +975,33 @@ public class TaskManager {
 		}
 		
 	}
+	
+	/*
+	 * Update a task start date and time
+	 */
+	public void updateWhen(Connection sd, int pId, int taskId, 
+			Timestamp from,
+			Timestamp to) throws Exception {
+		
+		String sql = "update tasks set schedule_at = ?, schedule_finish = ? where p_id = ? and id = ?;";
+		PreparedStatement pstmt = null;
+		
+		try {
 
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setTimestamp(1, from);
+			pstmt.setTimestamp(2, to);
+			pstmt.setInt(3, pId);
+			pstmt.setInt(4, taskId);
+		
+			log.info("Update start date and time: " + pstmt.toString());
+			pstmt.executeUpdate();
+				
+		} finally {
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+		
+		}		
+	}
 }
 
 

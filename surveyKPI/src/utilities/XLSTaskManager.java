@@ -78,14 +78,14 @@ public class XLSTaskManager {
 				value = String.valueOf(props.assignee_ident);
 			} else if(name.equals("location_trigger")) {
 				value = String.valueOf(props.location_trigger);
-			} else if(name.equals("scheduled_at")) {
-				value = String.valueOf(props.scheduled_at);
+			} else if(name.equals("from")) {
+				value = String.valueOf(props.from);
 			} else if(name.equals("guidance")) {
 				value = String.valueOf(props.guidance);		
 			} else if(name.equals("repeat")) {
 				value = String.valueOf(props.repeat);
-			} else if(name.equals("schedule_finish")) {
-				value = String.valueOf(props.schedule_finish);
+			} else if(name.equals("to")) {
+				value = String.valueOf(props.to);
 			} else if(name.equals("email")) {
 				value = String.valueOf(props.email);
 			} else if(name.equals("lon")) {
@@ -157,11 +157,11 @@ public class XLSTaskManager {
 
                 		
                 		try {
-                			tp.id = Integer.parseInt(getColumn(row, "id", header, lastCellNum));
-                			tp.form_name = getColumn(row, "form", header, lastCellNum);
-                			tp.name = getColumn(row, "name", header, lastCellNum);
-                			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum) + " " + 
-                					getColumn(row, "lat", header, lastCellNum) + ")";
+                			tp.id = Integer.parseInt(getColumn(row, "id", header, lastCellNum, "0"));
+                			tp.form_name = getColumn(row, "form", header, lastCellNum, null);
+                			tp.name = getColumn(row, "name", header, lastCellNum, "");
+                			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
+                					getColumn(row, "lat", header, lastCellNum, "0") + ")";
                 			tl.features.add(tf);
                 			System.out.println(" Adding new task: " + tp.name);
                 		} catch (Exception e) {
@@ -198,7 +198,7 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * Get an array of locations from an XLS worksheet
+	 * Get an array of locations from an XLS file
 	 */
 	public ArrayList<Location> convertWorksheetToTagArray(InputStream inputStream, String type) throws IOException {
 		
@@ -241,8 +241,8 @@ public class XLSTaskManager {
                     		t.group = group;
                     		t.type = "nfc";
                     		try {
-                    			t.uid = getColumn(row, "uid", header, lastCellNum);
-                    			t.name = getColumn(row, "tagname", header, lastCellNum);
+                    			t.uid = getColumn(row, "uid", header, lastCellNum, null);
+                    			t.name = getColumn(row, "tagname", header, lastCellNum, null);
                     			tags.add(t);
                     		} catch (Exception e) {
                     			log.info("Error getting nfc column" + e.getMessage());
@@ -258,6 +258,18 @@ public class XLSTaskManager {
 		return tags;
 
 	}
+	
+	/*
+	 * Create an XLS file from an array of tag locations
+	 */
+	/*
+	 * Write a task list to an XLS file
+	 */
+	public void createXLSLocationsFile(OutputStream outputStream, ArrayList<Location> locations, ResourceBundle localisation) throws IOException {
+		
+		// TODO
+	}
+
 	
 	/*
 	 * Get a hashmap of column name and column index
@@ -283,9 +295,9 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * The the value of a cell at the specified column
+	 * Get the value of a cell at the specified column
 	 */
-	private String getColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum) throws Exception {
+	private String getColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum, String def) throws Exception {
 		
 		Integer cellIndex;
 		int idx;
@@ -297,7 +309,7 @@ public class XLSTaskManager {
 			if(idx <= lastCellNum) {
 				Cell c = row.getCell(idx);
 				if(c != null) {
-					value = c.toString();
+					value = c.getStringCellValue();
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
 						if(value != null && value.endsWith(".0")) {
 							value = value.substring(0, value.lastIndexOf('.'));
@@ -309,6 +321,9 @@ public class XLSTaskManager {
 			throw new Exception("Column " + name + " not found");
 		}
 
+		if(value == null) {		// Set to default value if null
+			value = def;
+		}
 		return value;
 	}
 	
@@ -327,7 +342,8 @@ public class XLSTaskManager {
 		cols.add(new Column(localisation, colNumber++, "status"));
 		cols.add(new Column(localisation, colNumber++, "assignee_ident"));
 		cols.add(new Column(localisation, colNumber++, "location_trigger"));
-		cols.add(new Column(localisation, colNumber++, "scheduled_at"));
+		cols.add(new Column(localisation, colNumber++, "from"));
+		cols.add(new Column(localisation, colNumber++, "to"));
 		cols.add(new Column(localisation, colNumber++, "guidance"));
 		cols.add(new Column(localisation, colNumber++, "repeat"));
 		cols.add(new Column(localisation, colNumber++, "duration"));

@@ -18,8 +18,8 @@ public class TaskProperties {
 	public String assignee_name;
 	public String initial_data;
 	public String update_id;
-	public Timestamp scheduled_at;
-	public Timestamp schedule_finish;
+	public Timestamp from;
+	public Timestamp to;
 	public String location_trigger;
 	public boolean repeat;
 	public String address;			// Text address

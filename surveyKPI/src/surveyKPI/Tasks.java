@@ -21,6 +21,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -351,6 +352,74 @@ public class Tasks extends Application {
 	}
 	
 	/*
+	 * Download locations into an XLS file
+	 */
+	@GET
+	@Path ("/locations/download")
+	@Produces("application/x-download")
+	public Response getXLSLocationsService (@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@QueryParam("filetype") String filetype) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+				
+		Connection sd = SDDataSource.getConnection("createXLSTasks");	
+		// Authorisation - Access
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End authorisation
+		
+		TaskManager tm = new TaskManager();
+		
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		
+		// Set file type to "xlsx" unless "xls" has been specified
+		if(filetype == null || !filetype.equals("xls")) {
+			filetype = "xlsx";
+		}
+		
+		try {
+			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			// Get the current locations
+			ArrayList<Location> locations = tm.getLocations(sd, organisation.id);
+			
+			// Set file name
+			GeneralUtilityMethods.setFilenameInResponse("locations." + filetype, response);
+			
+			// Create XLSTasks File
+			XLSTaskManager xf = new XLSTaskManager(filetype);
+			xf.createXLSLocationsFile(response.getOutputStream(), locations, localisation);
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			throw new Exception("Exception: " + e.getMessage());
+		} finally {
+			
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+		return Response.ok("").build();
+	}
+	
+	
+	/*
 	 * Download Tasks for a task group in an XLS file
 	 */
 	@GET
@@ -582,6 +651,64 @@ public class Tasks extends Application {
 		
 		try {
 			tm.writeTask(sd, pId, tgId, tf, request.getServerName());
+			response = Response.ok().build();
+		
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+	
+			try {
+				if (sd != null) {
+					sd.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+			
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Update start date and time of a task
+	 */
+	@POST
+	@Path("/when/{pId}/{tgId}")
+	@Consumes("application/json")
+	public Response updateTaskFromDate(
+			@Context HttpServletRequest request,
+			@PathParam("pId") int pId,
+			@PathParam("tgId") int tgId,
+			@FormParam("task") String task
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String user = request.getRemoteUser();
+		log.info("Update task start: " + task);
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
+		a.isAuthorised(sd, user);
+		a.isValidProject(sd, user, pId);
+		// End Authorisation
+		
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
+		TaskManager tm = new TaskManager();
+		
+		try {
+			tm.updateWhen(sd, pId, tf.properties.id, tf.properties.from, tf.properties.to);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {
