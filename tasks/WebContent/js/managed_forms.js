@@ -173,7 +173,9 @@ require([
 			
 			// Set up date fields
 			$editForm.find('.date').datetimepicker({
-				locale: gUserLocale || 'en'
+				locale: gUserLocale || 'en',
+				useCurrent: false,
+				showTodayButton: true
 			});
 			
 			// Respond to changes in the data by creating an update object

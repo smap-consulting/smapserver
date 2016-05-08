@@ -746,6 +746,8 @@ public class GetXForm {
 		} else if (type.equals("begin group") || type.equals("begin repeat")
 				|| type.equals("geolinestring") || type.equals("geopolygon")) {	
 			questionElement = outputXML.createElement("group");
+		} else if (type.equals("acknowledge")) {
+			questionElement = outputXML.createElement("trigger");
 		} else {
 			log.info("Warning Unknown type- populateBodyQuestion: " + type);
 			questionElement = outputXML.createElement("input");

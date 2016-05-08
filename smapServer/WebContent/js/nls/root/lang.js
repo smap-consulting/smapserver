@@ -383,6 +383,6 @@ define({
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
-	"mf_md": "Management Data",
+	"mf_md": "Management Data"
 		
 });

@@ -343,6 +343,8 @@ public class TableManager {
 						colType = "text";
 					} else if(colType.equals("barcode")) {
 						colType = "text";
+					} else if(colType.equals("acknowledge")) {
+						colType = "text";
 					} else if(colType.equals("geopoint")) {
 						
 						// Add geometry columns after the table is created using AddGeometryColumn()

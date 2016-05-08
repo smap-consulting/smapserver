@@ -168,6 +168,7 @@ public class IE {
 								|| qt.equals("barcode")
 								|| qt.equals("geoshape")
 								|| qt.equals("geotrace")
+								|| qt.equals("acknowledge")
 								|| qt.equals("begin group"))
 								{	
 							questions.add(child);

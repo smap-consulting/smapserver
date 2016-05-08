@@ -868,7 +868,7 @@ public class SubRelationalDB extends Subscriber {
 	
 				value = value.replace("'", "''").trim();
 						
-				if(qType.equals("string") || qType.equals("select1") || qType.equals("barcode")) {
+				if(qType.equals("string") || qType.equals("select1") || qType.equals("barcode") || qType.equals("acknowledge")) {
 					value = "'" + value + "'";
 					
 				} else if(qType.equals("int") || qType.equals("decimal")) {
@@ -1632,6 +1632,8 @@ public class SubRelationalDB extends Subscriber {
 					} else if(qType.equals("note")) {
 							qType = "text";
 					} else if(qType.equals("select1")) {
+						qType = "text";
+					} else if(qType.equals("acknowledge")) {
 						qType = "text";
 					} else if (qType.equals("select")) {
 						qType = "integer";

@@ -555,6 +555,10 @@ public class PutXForm {
     		q.setType("select1");		
     	}
     	
+    	if(eName.equals("trigger")) {		// Set the trigger type
+    		q.setType("acknowledge");
+    	}
+    	
     	if(q.getSource() == null) {    	// Set the source (where the source is null then no results will be stored for this question)
     		if(!eName.equals("group")) {	// groups do not record any data therefore no source
     			q.setSource("user");		

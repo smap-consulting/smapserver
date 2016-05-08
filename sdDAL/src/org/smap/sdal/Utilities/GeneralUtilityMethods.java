@@ -1943,6 +1943,7 @@ public class GeneralUtilityMethods {
 				+ "WHEN _mgmt_action_deadline >= _mgmt_action_date THEN 'Deadline met' "
 				+ "WHEN _mgmt_action_deadline < _mgmt_action_date THEN 'Done with delay' "
 				+ "WHEN _mgmt_action_deadline > now() THEN 'In the pipeline' "
+				+ "WHEN _mgmt_action_deadline is null THEN 'In the pipeline' "
 	            + "ELSE 'Deadline crossed' "
 	            + "END";
 		columnList.add(c);
