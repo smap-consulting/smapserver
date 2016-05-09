@@ -916,7 +916,7 @@ function refreshTaskGroupData() {
 			cache: false,
 			dataType: 'json',
 			success: function(data) {
-				refreshTableTaskGroups(data);
+				refreshTaskGroupList(data);
 				removeHourglass();
 			},
 			error: function(xhr, textStatus, err) {
@@ -934,7 +934,7 @@ function refreshTaskGroupData() {
 /*
  * Update the table view of task groups
  */
-function refreshTableTaskGroups(taskgroups) {
+function refreshTaskGroupList(taskgroups) {
 	
 	var h =[],
 		idx = -1,
@@ -943,13 +943,13 @@ function refreshTableTaskGroups(taskgroups) {
 		firstTg,
 		hasCurrentTg = false;
 		
-	//if(typeof taskgroups != "undefined") {
-	//	$('#taskgroup_table').empty().generateTaskGroupTable(
-	//			{
-	//				'data': taskgroups
-	//			});
-	//}
+	if(!taskgroups || taskgroups.length == 0) {
+		$('#tasks_row').hide();
+	} else {
+		$('#tasks_row').show();
+	}
 	if(typeof taskgroups != "undefined") {
+
 		for(i = 0; i < taskgroups.length; i++) {
 			grp = taskgroups[i];
 			h[++idx] = '<option value="';
@@ -975,24 +975,6 @@ function refreshTableTaskGroups(taskgroups) {
 	$('#taskgroup').val(globals.gCurrentTaskGroup);
 	
 	
-	
-	
-	// Add events onto the task group table
-	/*
-	$("span.pie", '#taskgroup_table').peity("pie", {
-		  fill: ["green", "red"]
-	});
-	
-	$('input', '#taskgroup_table').iCheck({
-	    checkboxClass: 'icheckbox_square-green',
-	    radioClass: 'iradio_square-green'
-	});
-	
-	$('.taskgroup', '#taskgroup_table').on('ifChecked', function(event){
-		globals.gCurrentTaskGroup = $(this).val();
-		refreshAssignmentData(-1);
-	});
-	*/
 	$('#taskgroup').change(function() {
 		globals.gCurrentTaskGroup = $(this).val();
 		saveCurrentProject(undefined, undefined, globals.gCurrentTaskGroup);
