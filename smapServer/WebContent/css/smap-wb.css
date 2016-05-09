@@ -18,6 +18,22 @@ th.sort-asc,th.sort-desc {
 	background-color:  #cce6ff;
 }
 
+/*
+ * Smap color scheme
+ */
+body {
+	background-color: #2c3d29;
+}
+
+.mini-navbar, .nav-second-level {
+	background-color: #2c3d29;
+}
+
+.navbar-default .nav > li > a:hover,
+.navbar-default .nav > li > a:focus {
+  background-color: #0b5b0b;
+  color: #fff;
+}
 
 /* 
  * Restore default bootstrap button styles 

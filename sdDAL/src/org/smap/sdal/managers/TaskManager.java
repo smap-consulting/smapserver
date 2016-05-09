@@ -309,7 +309,6 @@ public class TaskManager {
 					}
 				}
 				if(rsGeo != null && rsGeo.next()) {
-					System.out.println("original: " + rsGeo.getString(1));
 					tf.geometry = parser.parse(rsGeo.getString(1)).getAsJsonObject();	
 					if(geo_type.equals("POINT")) {
 						tf.properties.location = rsGeo.getString(2);
@@ -338,12 +337,14 @@ public class TaskManager {
 			TaskListGeoJson tl,
 			int pId,
 			int tgId,
-			String hostname) throws Exception {
+			String hostname,
+			boolean updateResources,
+			int oId) throws Exception {
 		
 		ArrayList<TaskFeature> features = tl.features;
 		for(int i = 0; i < features.size(); i++) {
 			TaskFeature tf = features.get(i);
-				writeTask(sd, pId, tgId, tf, hostname);
+				writeTask(sd, pId, tgId, tf, hostname, updateResources, oId);
 		}
 	
 	}
@@ -736,7 +737,12 @@ public class TaskManager {
 	/*
 	 * Create a new task
 	 */
-	public void writeTask(Connection sd, int pId, int tgId, TaskFeature tf, String hostname) throws Exception {
+	public void writeTask(Connection sd, int pId, int tgId, 
+			TaskFeature tf, 
+			String hostname,
+			boolean updateResources,
+			int oId		// Set if NFC Resources are to be updates
+			) throws Exception {
 		
 		String deleteSql = "delete from tasks where id = ? and p_id = ?;";
 		PreparedStatement pstmtDel = null;
@@ -779,6 +785,19 @@ public class TaskManager {
 		
 		String sqlGetFormIdFromName = "select s_id from survey where display_name = ? and p_id = ? and deleted = 'false'";
 		PreparedStatement pstmtGetFormId = sd.prepareStatement(sqlGetFormIdFromName);
+		
+		String sqlGetAssigneeId = "select u.id from users u, user_project up "
+				+ "where u.ident = ? "
+				+ "and u.id = up.u_id "
+				+ "and up.p_id = ?";
+		PreparedStatement pstmtGetAssigneeId = sd.prepareStatement(sqlGetAssigneeId);
+		
+		String sqlHasLocationTrigger = "select count(*) from locations where o_id = ? and uid = ? and locn_type = 'nfc';";
+		PreparedStatement pstmtHasLocationTrigger = null;
+		
+		String sqlUpdateLocationTrigger = "insert into locations (o_id, locn_group, locn_type, uid, name) values (?, 'tg', 'nfc', ?, ?);";
+		PreparedStatement pstmtUpdateLocationTrigger = null;
+		
 		try {
 
 			pstmtDel = sd.prepareStatement(deleteSql);
@@ -811,11 +830,19 @@ public class TaskManager {
 			}
 			
 			// 2. Get the assignee id, if only the assignee ident is specified
-			if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null) {
+			if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null && tf.properties.assignee_ident.trim().length() > 0) {
 				
+				pstmtGetAssigneeId.setString(1, tf.properties.assignee_ident);
+				pstmtGetAssigneeId.setInt(2, pId);
+				log.info("Get user id: " + pstmtGetAssigneeId.toString());
+				ResultSet rs = pstmtGetAssigneeId.executeQuery();
+				if(rs.next()) {
+					tf.properties.assignee = rs.getInt(1);
+				} else {
+					throw new Exception("Assignee not found: " + tf.properties.assignee_ident);
+				}
 			}
 			
-			// 3. If this is a new task group then create it and get the task group id
 			
 			
 			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, tf.properties.form_id);
@@ -830,7 +857,6 @@ public class TaskManager {
 			 * Location
 			 */
 			String location = tf.properties.location;
-			System.out.println("Location: " + location);
 			if(location == null) {
 				location = "POINT(0 0)";
 			} else if(location.startsWith("LINESTRING")) {
@@ -874,7 +900,7 @@ public class TaskManager {
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
 			
-			System.out.println("Insert Tasks: " + pstmt.toString());
+			log.info("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 			/*
@@ -894,15 +920,41 @@ public class TaskManager {
 					
 					pstmtAssign.executeUpdate();
 				}
-				
-
 		
 			}
 			
+			/*
+			 * Create a location_trigger resource to match the trigger in the loaded task
+			 */
+			if(updateResources) {
+				if(tf.properties.location_trigger != null && tf.properties.location_trigger.trim().length() > 0) {
+					pstmtHasLocationTrigger = sd.prepareStatement(sqlHasLocationTrigger);
+					pstmtHasLocationTrigger.setInt(1, oId);
+					pstmtHasLocationTrigger.setString(2, tf.properties.location_trigger);
+					ResultSet rs = pstmtHasLocationTrigger.executeQuery();
+					if(rs.next()) {
+						int count = rs.getInt(1);
+						if(count == 0) {
+							pstmtUpdateLocationTrigger = sd.prepareStatement(sqlUpdateLocationTrigger);
+							pstmtUpdateLocationTrigger.setInt(1, oId);
+							pstmtUpdateLocationTrigger.setString(2,tf.properties.location_trigger);
+							pstmtUpdateLocationTrigger.setString(3,tf.properties.name);
+							log.info("Adding NFC resource: " + pstmtUpdateLocationTrigger.toString());
+							pstmtUpdateLocationTrigger.executeUpdate();
+						}
+					}
+				}
+			}
+			
+			
 		} finally {
-			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
-			if(pstmtDel != null) try {	pstmtDel.close(); } catch(SQLException e) {};
-			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
+			if(pstmt != null) try {pstmt.close(); } catch(SQLException e) {};
+			if(pstmtDel != null) try {pstmtDel.close(); } catch(SQLException e) {};
+			if(pstmtAssign != null) try {pstmtAssign.close(); } catch(SQLException e) {};
+			if(pstmtGetFormId != null) try {pstmtGetFormId.close(); } catch(SQLException e) {};
+			if(pstmtGetAssigneeId != null) try {pstmtGetAssigneeId.close(); } catch(SQLException e) {};
+			if(pstmtHasLocationTrigger != null) try {pstmtHasLocationTrigger.close(); } catch(SQLException e) {};
+			if(pstmtUpdateLocationTrigger != null) try {pstmtUpdateLocationTrigger.close(); } catch(SQLException e) {};
 		}
 		
 	}
@@ -995,6 +1047,28 @@ public class TaskManager {
 			pstmt.setInt(4, taskId);
 		
 			log.info("Update start date and time: " + pstmt.toString());
+			pstmt.executeUpdate();
+				
+		} finally {
+			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
+		
+		}		
+	}
+	
+	/*
+	 * Delete the tasks in a task group
+	 */
+	public void deleteTasksInTaskGroup(Connection sd, int tgId) throws SQLException {
+		
+		String sql = "delete from tasks where tg_id = ?; "; 
+		PreparedStatement pstmt = null;
+		
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, tgId);
+		
+			log.info("Delete tasks in task group: " + pstmt.toString());
 			pstmt.executeUpdate();
 				
 		} finally {

@@ -745,7 +745,7 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="importLabel" class="lang" data-lang="m_import"></h4>
+     			<h4 class="modal-title lang" id="importLabel" data-lang="m_import">import</h4>
    			</div>
 		    <div class="modal-body">
 				<form role="form" class="form-horizontal" enctype="multipart/form-data" name="loadtasks">
@@ -753,16 +753,22 @@
 		
 					<input id="tg_to_import" type="hidden" name="tg" value="-1" style="display:none;">
 					
-					<fieldset>	
-						<div class="form-group">
-	     					<div class="input-group">
-	     						<span class="input-group-btn">
-	       							<input name="files" title="Add" class="file-inputs" type="file" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-	     						</span>
-	    					 	<input type="text" class="upload_file_msg form-control">
-	   						</div>
-	        			</div>           			
-					</fieldset>
+					<div class="form-group">
+     					<div class="input-group">
+     						<span class="input-group-btn">
+       							<input name="files" title="Add" class="file-inputs" type="file" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+     						</span>
+    					 	<input type="text" class="upload_file_msg form-control">
+   						</div>
+        			</div> 
+        			<div class="form-group">
+						<label class="col-sm-4 control-label lang" data-lang="t_ce" for="tg_clear">clear</label>
+						<div class="col-sm-8">
+							<div class="checkbox">
+								<input type="checkbox" name="tg_clear" value="true" id="tg_clear">
+							</div>
+						</div>
+					</div>          			
 
 					  			
 				</form>

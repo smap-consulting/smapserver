@@ -420,7 +420,7 @@ public class Tasks extends Application {
 	
 	
 	/*
-	 * Download Tasks for a task group in an XLS file
+	 * Export Tasks for a task group in an XLS file
 	 */
 	@GET
 	@Path ("/xls/{tgId}")
@@ -493,7 +493,7 @@ public class Tasks extends Application {
 	}
 
 	/*
-	 * Upload tasks for a task group from an XLS file
+	 * Import tasks for a task group from an XLS file
 	 */
 	@POST
 	@Produces("application/json")
@@ -505,6 +505,7 @@ public class Tasks extends Application {
 		
 		Response response = null;
 		int tgId = 0;
+		boolean tgClear = false;
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 
@@ -516,6 +517,9 @@ public class Tasks extends Application {
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
 		Connection sd = null; 
+		String fileName = null;
+		String filetype = null;
+		FileItem file = null;
 
 		try {
 			/*
@@ -533,6 +537,8 @@ public class Tasks extends Application {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					if(item.getFieldName().equals("tg")) {
 						tgId = Integer.valueOf(item.getString());
+					} else if(item.getFieldName().equals("tg_clear")) {
+						tgClear = Boolean.valueOf(item.getString());
 					}
 					
 				} else if(!item.isFormField()) {
@@ -542,8 +548,7 @@ public class Tasks extends Application {
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
 					
-					String fileName = item.getName();
-					String filetype = null;
+					fileName = item.getName();
 					if(fileName.endsWith("xlsx")) {
 						filetype = "xlsx";
 					} else if(fileName.endsWith("xls")) {
@@ -552,43 +557,51 @@ public class Tasks extends Application {
 						log.info("unknown file type for item: " + fileName);
 						continue;	
 					}
-	
-					// Authorisation - Access
-					sd = SDDataSource.getConnection("Tasks-TaskUpload");
-					a.isAuthorised(sd, request.getRemoteUser());
-					a.isValidProject(sd, request.getRemoteUser(), pId);
-					a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
-					// End authorisation
-
-					// Process xls file
-					XLSTaskManager xf = new XLSTaskManager();
-					TaskListGeoJson tl = xf.getXLSTaskList(filetype, item.getInputStream());
 					
-					// Save tasks to the database
-					TaskManager tm = new TaskManager();
-					tm.writeTaskList(sd, tl, pId, tgId, request.getServerName());
-					
-					/*
-					 * Get the tasks out of the database
-					 * This is required because saving an external task list adds additional default data including geometries
-					 *  from latitude and longitude
-					 *  Also we may not want to return complete tasks
-					 */
-					tl = tm.getTasks(sd, tgId, true);	// TODO set "complete" flag from passed in parameter
-					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-					String resp = gson.toJson(tl);
-					
-					System.out.println("Task list: " + resp);
-					
-					if(tl.features.size() > 0) {
-						response = Response.ok(resp).build();
-					} else {
-						response = Response.serverError().entity("no tasks found").build();
-					}
-					
-					break;
-						
+					file = item;
 				}
+			}
+	
+			if(file != null && tgId > 0) {
+				// Authorisation - Access
+				sd = SDDataSource.getConnection("Tasks-TaskUpload");
+				a.isAuthorised(sd, request.getRemoteUser());
+				a.isValidProject(sd, request.getRemoteUser(), pId);
+				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+				// End authorisation
+
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				
+				// Process xls file
+				XLSTaskManager xf = new XLSTaskManager();
+				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream());
+				
+				// Save tasks to the database
+				TaskManager tm = new TaskManager();
+				
+				if(tgClear) {
+					tm.deleteTasksInTaskGroup(sd, tgId);
+				}
+				tm.writeTaskList(sd, tl, pId, tgId, request.getServerName(), true, oId);
+				
+				/*
+				 * Get the tasks out of the database
+				 * This is required because saving an external task list adds additional default data including geometries
+				 *  from latitude and longitude
+				 *  Also we may not want to return complete tasks
+				 */
+				tl = tm.getTasks(sd, tgId, true);	// TODO set "complete" flag from passed in parameter
+				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				String resp = gson.toJson(tl);
+				
+				System.out.println("Task list: " + resp);
+				
+				if(tl.features.size() > 0) {
+					response = Response.ok(resp).build();
+				} else {
+					response = Response.serverError().entity("no tasks found").build();
+				}
+					
 			}
 			
 		} catch(FileUploadException ex) {
@@ -650,7 +663,7 @@ public class Tasks extends Application {
 		TaskManager tm = new TaskManager();
 		
 		try {
-			tm.writeTask(sd, pId, tgId, tf, request.getServerName());
+			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, 0);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {

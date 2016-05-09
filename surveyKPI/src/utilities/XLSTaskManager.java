@@ -66,34 +66,40 @@ public class XLSTaskManager {
 		public String getValue(TaskProperties props) {
 			String value = null;
 			
-			if(name.equals("id")) {
-				value = String.valueOf(props.id);
-			} else if(name.equals("form")) {
-				value = String.valueOf(props.form_name);
+			if(name.equals("form")) {
+				value = props.form_name;
 			} else if(name.equals("name")) {
-				value = String.valueOf(props.name);
+				value = props.name;
 			} else if(name.equals("status")) {
-				value = String.valueOf(props.status);
+				value = props.status;
 			} else if(name.equals("assignee_ident")) {
-				value = String.valueOf(props.assignee_ident);
+				value = props.assignee_ident;
 			} else if(name.equals("location_trigger")) {
-				value = String.valueOf(props.location_trigger);
+				value = props.location_trigger;
 			} else if(name.equals("from")) {
-				value = String.valueOf(props.from);
+				if(props.from == null) {
+					value = null;
+				} else {
+					value = String.valueOf(props.from);
+				}
+			} else if(name.equals("to")) {
+				if(props.to == null) {
+					value = null;
+				} else {
+					value = String.valueOf(props.to);
+				}
 			} else if(name.equals("guidance")) {
-				value = String.valueOf(props.guidance);		
+				value = props.guidance;		
 			} else if(name.equals("repeat")) {
 				value = String.valueOf(props.repeat);
-			} else if(name.equals("to")) {
-				value = String.valueOf(props.to);
 			} else if(name.equals("email")) {
-				value = String.valueOf(props.email);
+				value = props.email;
 			} else if(name.equals("lon")) {
 				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
 			} else if(name.equals("lat")) {
 				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lat"));
 			} else if(name.equals("address")) {
-				value = String.valueOf(props.address);
+				value = props.address;
 			}
 			
 			if(value == null) {
@@ -157,13 +163,15 @@ public class XLSTaskManager {
 
                 		
                 		try {
-                			tp.id = Integer.parseInt(getColumn(row, "id", header, lastCellNum, "0"));
+                			tp.id = 0;
                 			tp.form_name = getColumn(row, "form", header, lastCellNum, null);
                 			tp.name = getColumn(row, "name", header, lastCellNum, "");
+                			tp.status = getColumn(row, "status", header, lastCellNum, "new");
+                			tp.location_trigger = getColumn(row, "location_trigger", header, lastCellNum, null);
+                			tp.assignee_ident = getColumn(row, "assignee_ident", header, lastCellNum, null);
                 			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
                 					getColumn(row, "lat", header, lastCellNum, "0") + ")";
                 			tl.features.add(tf);
-                			System.out.println(" Adding new task: " + tp.name);
                 		} catch (Exception e) {
                 			log.info("Error getting task column" + e.getMessage());
                 		}
@@ -309,12 +317,19 @@ public class XLSTaskManager {
 			if(idx <= lastCellNum) {
 				Cell c = row.getCell(idx);
 				if(c != null) {
-					value = c.getStringCellValue();
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+						value = c.getStringCellValue();
 						if(value != null && value.endsWith(".0")) {
 							value = value.substring(0, value.lastIndexOf('.'));
 						}
+					} else if(c.getCellType() == Cell.CELL_TYPE_STRING) {
+						value = c.getStringCellValue();
+					} else {
+						value = null;
 					}
+					
+					System.out.println("Cell: " + name + " : " + value);
+
 				}
 			}
 		} else {
@@ -324,6 +339,7 @@ public class XLSTaskManager {
 		if(value == null) {		// Set to default value if null
 			value = def;
 		}
+		
 		return value;
 	}
 	
@@ -336,7 +352,6 @@ public class XLSTaskManager {
 		
 		int colNumber = 0;
 	
-		cols.add(new Column(localisation, colNumber++, "id"));
 		cols.add(new Column(localisation, colNumber++, "form"));
 		cols.add(new Column(localisation, colNumber++, "name"));
 		cols.add(new Column(localisation, colNumber++, "status"));
@@ -412,7 +427,8 @@ public class XLSTaskManager {
 			for(int i = 0; i < cols.size(); i++) {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
-				cell.setCellStyle(styles.get("default"));			
+				cell.setCellStyle(styles.get("default"));	
+				String value = col.getValue(props);
 				cell.setCellValue(col.getValue(props));
 	        }
 			

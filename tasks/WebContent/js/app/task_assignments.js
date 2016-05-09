@@ -419,60 +419,6 @@ $(document).ready(function() {
 		editTask(true, task, taskFeature);
 	});
 	
-	/*
-	 * Save new ad-hoc tasks in a group  - Deprecated
-	 *
-	$('#addNewTaskSave').click(function () {
-		var error = false,
-			assignObj = {},
-			assignString,
-			url,
-			filterObj = {},
-			filterqId,
-			filteroId,
-			source_survey;
-	
-		assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-		assignObj["survey_name"] = $('#survey_to_complete_new_task option:selected').text();	// The display name of the survey to complete
-		assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-		assignObj["target_survey_id"] = $('#survey_to_complete_new_task option:selected').val(); 						// The form id is the survey id of the survey used to complete the task!
-		assignObj["task_group_id"] = gTaskGroupId;
-		assignObj["user_id"] = $('#users_select_new_task option:selected').val();
-		   			
-		assignObj["source_survey_id"] = -1;
-		assignObj["new_tasks"] = $.parseJSON(getTasksAsGeoJSON());
-	
-		assignString = JSON.stringify(assignObj);
-		globals.gCurrentUserId = undefined;
-		globals.gCurrentUserName = undefined;
-	
-		addHourglass();
-		$.ajax({
-			  type: "POST",
-			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
-			  data: { settings: assignString },
-			  success: function(data, status) {
-				  removeHourglass();
-				  refreshAssignmentData();
-			  }, error: function(data, status) {
-				  removeHourglass();
-				  if(data.responseText.indexOf("<html>") !== 0) {
-					  alert(localise.set["c_error"] + " : " + data.responseText); 
-				  } else {
-					  alert(localise.set["msg_err_upd"]);
-				  }
-
-			  }
-		});
-		
-	});
-	*/
-	
-	/*
-	$('#addNewTask').on('hidden.bs.modal', function () {
-		  $('#map_alert').hide();
-		});
-	*/
 	
 	// Delete Tasks button 
 	$('#deleteTasks').button().click(function () {
@@ -587,7 +533,7 @@ $(document).ready(function() {
 		
 	});
 	
-$('#tp_to').on("dp.change", function() {
+	$('#tp_to').on("dp.change", function() {
 		
 		var endDateLocal = $('#tp_to').data("DateTimePicker").date();
 		
@@ -1470,6 +1416,7 @@ function importTaskGroup() {
 			  $('#import_taskgroup').modal("hide");
 			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').empty("");
 			  refreshAssignmentData();
+			  getLocations(setLocationList);	// Refresh the location data since new locations may have been loaded
 		  },
 		  error: function(xhr, textStatus, err) {
 			  removeHourglass(); 
