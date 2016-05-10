@@ -25,15 +25,16 @@ body {
 	background-color: #2c3d29;
 }
 
-.mini-navbar, .nav-second-level {
+.mini-navbar, .nav-second-level, .nav > li.active {
 	background-color: #2c3d29;
 }
 
 .navbar-default .nav > li > a:hover,
 .navbar-default .nav > li > a:focus {
-  background-color: #0b5b0b;
+  background-color: #0b3d08;
   color: #fff;
 }
+
 
 /* 
  * Restore default bootstrap button styles 

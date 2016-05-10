@@ -73,20 +73,6 @@ $(document).ready(function() {
 			]
 		}
 	);
-
-	// Report save button
-	/*
-	$('#report_save').button().click(function() {
-		
-		// Validate
-		if(!gReport.smap.data_bounds) {
-			alert("You need to select the area covered by the report. Hold down shift key and " +
-					"drag the mouse over the map.");
-		} else {
-			saveReport();
-		}
-	});
-	*/
 		
 });
 
@@ -117,8 +103,6 @@ function setReport(data) {
 	$('#report_region').val(data.smap.region);
 	$('#report_district').val(data.smap.district);
 	$('#report_community').val(data.smap.community);
-
-	//$('#report_save').button( "enable" );
 	
 	gReport = data;
 }
@@ -179,12 +163,10 @@ function saveReport() {
 	}
 	
 	addHourglass();
-	//$('#report_save').button( "disable" );
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
 		  contentType: "application/json",
-		  //dataType: 'text/plain',
 		  url: url,
 		  data: { report: reportString },
 		  success: function(data, status) {

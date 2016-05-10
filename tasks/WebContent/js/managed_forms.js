@@ -89,9 +89,10 @@ require([
 	
 	var cache = {
 			surveyConfig: {},
-			managedData: {}
+			managedData: {},
+			surveyList: {}
 		},
-		gManageId = undefined,
+		gSelectedSurveyIndex = undefined,
 		gUpdate = [],
 		gCurrentIndex,
 		gPriKey,
@@ -129,8 +130,26 @@ require([
 		
 		// Get the user details
 		globals.gIsAdministrator = false;
-		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
+		getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
 
+		// Set change function on projects
+		$('#project_name').change(function() {
+			projectChanged();
+	 	 });
+		
+		// Set change function on survey
+		$('#survey_name').change(function() {
+			gSelectedSurveyIndex = $(this).val();
+			
+			globals.gCurrentSurvey = cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].id;
+			
+			if(globals.gCurrentSurvey > 0) {
+				 getManagedData(globals.gCurrentSurvey);
+				 saveCurrentProject(-1, globals.gCurrentSurvey);
+				 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
+			 }
+		});
+		
 		/*
 		 * Set up dialog to edit a record
 		 */
@@ -202,7 +221,7 @@ require([
 				 type: "POST",
 					  dataType: 'text',
 					  contentType: "application/json",
-					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gManageId,
+					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id,
 					  data: { settings: saveString },
 					  success: function(data, status) {
 						  removeHourglass();
@@ -220,6 +239,18 @@ require([
 		});
 		
      });
+	 
+	 /*
+	  * Function called when the current project is changed
+	  */
+	 function projectChanged() {
+
+	 	globals.gCurrentProject = $('#project_name option:selected').val();
+	 	globals.gCurrentSurvey = -1;
+	 	refreshData();
+	 	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+	 	
+	 }
 	 
 	 /*
 	  * Get the markup to edit the record
@@ -260,9 +291,10 @@ require([
 		 // Clear cache
 		 cache.surveyConfig = {};
 		 cache.managedData = {};
+		 cache.surveyList = {};
 		 
 		 // Get the list of available surveys
-		 getSurveyList();
+		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
 		 
 	 }
 	 
@@ -324,33 +356,18 @@ require([
 			$('#saveRecord').prop("disabled", true);
 		}
 	 }
-	 /*
-	  * Get the list of available surveys in this project
-	  * Called after the user details have been retrieved
-	  */
-	 function getSurveyList() {
-		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
-	 }
 	 
 	 /*
 	  * List of surveys has finished loading
 	  */
 	 function managedSurveysLoaded() {
-		 if(globals.gCurrentSurvey > 0 && gManageId) {
+		 if(globals.gCurrentSurvey > 0 && cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id) {
 			 getManagedData(globals.gCurrentSurvey);
-			 getSurveyConfig(globals.gCurrentSurvey, gManageId);
+			 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
+		 } else {
+			 // No managed surveys in this project
+			 $('#trackingTable').empty();
 		 }
-		 
-		$('#survey_name').change(function() {
-			var sId = $(this).val();
-			globals.gCurrentSurvey = sId;
-			
-			if(globals.gCurrentSurvey > 0 && gManageId) {
-				 getManagedData(globals.gCurrentSurvey);
-				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 getSurveyConfig(globals.gCurrentSurvey, gManageId);
-			 }
-		});
 	 }
 	 
 	 /*
@@ -582,7 +599,6 @@ require([
 	 		$elemSurveys = $('#survey_name');
 
 	 	
-		gManageId = undefined;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
@@ -598,24 +614,30 @@ require([
 	 					h = [],
 	 					idx = -1,
 	 					firstSurvey = true,
-	 					firstSurveyId = undefined;
+	 					firstSurveyId = undefined,
+	 					firstSurveyIndex = undefined;
 	 				
 	 				removeHourglass();
+	 				
+	 				cache.surveyList[globals.gCurrentProject] = data;
+	 				gSelectedSurveyIndex = undefined;
+	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
 	 					if(item.managed_id > 0) {
 	 						h[++idx] = '<option value="';
-	 						h[++idx] = item.id;
+	 						h[++idx] = i;
 	 						h[++idx] = '">';
 	 						h[++idx] = item.displayName;
 	 						h[++idx] = '</option>';
 	 					
 	 						if(firstSurvey) {
 	 							firstSurveyId = item.id;
+	 							firstSurveyIndex = i;
 	 						}
 	 						
 	 						if(item.id === globals.gCurrentSurvey) {
-		 						gManageId = item.managed_id;
+		 						gSelectedSurveyIndex = i;
 		 					}
 	 						
 	 					}
@@ -624,10 +646,11 @@ require([
 	 				
 	 				$elemSurveys.empty().html(h.join(''));
 	 				
-	 				if(!gManageId && firstSurveyId) {
+	 				if(!gSelectedSurveyIndex && firstSurveyId) {
  		 				globals.gCurrentSurvey = firstSurveyId;
  		 				saveCurrentProject(-1, globals.gCurrentSurvey);
- 		 			} else if(gManageId && firstSurveyId) {
+ 		 				gSelectedSurveyIndex = firstSurveyIndex;
+ 		 			} else if(gSelectedSurveyIndex && firstSurveyId) {
  		 				$elemSurveys.val(globals.gCurrentSurvey);
  		 			}
 	 				
@@ -651,10 +674,10 @@ require([
 	 /*
 	  * Get the columns for a survey
 	  */
-	 function getSurveyConfig(sId, manageId) {
+	 function getSurveyConfig(sId, managed_id) {
 		 
 		 if(!cache.surveyConfig[sId]) {
-			 var url = '/surveyKPI/managed/config/' + sId + "/" + manageId;
+			 var url = '/surveyKPI/managed/config/' + sId + "/" + managed_id;
 			 
 			 addHourglass();
 			 $.ajax({
