@@ -62,6 +62,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 
@@ -365,13 +366,7 @@ public class ReportListSvc extends Application {
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
 		Report aReport = gson.fromJson(reportString, type);
 		
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + serverName.toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 
 		String ident = null;
 
