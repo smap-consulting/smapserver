@@ -36,6 +36,7 @@ public class Survey {
 	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
 	public String pdfTemplateName;
 	public int managed_id;
+	public int version;
 
 	
 	// Getters
@@ -119,5 +120,6 @@ public class Survey {
 	public void setBlocked(boolean v) { blocked = v;};
 	public void setHasManifest(boolean v) { hasManifest = v;};
 	public void setManagedId(int v) { managed_id = v;};
+	public void setVersion(int v) { version = v;};
 	
 }

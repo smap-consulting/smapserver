@@ -217,7 +217,7 @@ public class FormList extends Application {
 				form.name = s.getName();
 				form.name = s.getDisplayName();
 				form.majorMinorVersion = " ";
-				form.version = " ";
+				form.version = String.valueOf(s.version);
 				form.downloadUrl = protocol + host + port + responsePath + "/formXML?key=" + form.formID;
 				if(s.hasManifest()) {
 					form.manifestUrl = protocol + host + port + responsePath +

@@ -72,7 +72,7 @@ public class SurveyManager {
 		ArrayList<Survey> surveys = new ArrayList<Survey>();	// Results of request
 		
 		ResultSet resultSet = null;
-		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident, s.managed_id" +
+		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident, s.managed_id, s.version" +
 				" from survey s, users u, user_project up, project p" +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -112,6 +112,7 @@ public class SurveyManager {
 			s.setBlocked(resultSet.getBoolean(5));
 			s.setIdent(resultSet.getString(6));
 			s.setManagedId(resultSet.getInt(7));
+			s.setVersion(resultSet.getInt(8));
 			
 			surveys.add(s);
 		} 
