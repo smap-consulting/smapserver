@@ -1503,7 +1503,7 @@ public class SubRelationalDB extends Subscriber {
 							} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
 								qd.type = "text";					
 							} else if(qd.type.equals("decimal")) {
-								qd.type = "real";
+								qd.type = "double precision";
 							} else if(qd.type.equals("barcode")) {
 								qd.type = "text";
 							} else if(qd.type.equals("note")) {

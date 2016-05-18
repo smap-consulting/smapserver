@@ -639,14 +639,14 @@ function loadAssignments(data) {
 		for(i= 0, j = 0; i < featuresObj.length; i++) {
 			if(featuresObj[i].attributes.assignment_status !== "submitted" && 
 					featuresObj[i].geometry &&
-					(featuresObj[i].geometry.x > 0.01 || featuresObj[i].geometry.y > 0.01)) {
+					(Math.abs(featuresObj[i].geometry.x) > 0.01 || Math.abs(featuresObj[i].geometry.y) > 0.01)) {
 				featuresToLoad.push(featuresObj[i]);
 				j++;
 			}
 		}
 	} else {
 		for(i= 0, j = 0; i < featuresObj.length; i++) {
-			if(featuresObj[i].geometry && (featuresObj[i].geometry.x > 0.01 || featuresObj[i].geometry.y > 0.01)) {
+			if(featuresObj[i].geometry && (Math.abs(featuresObj[i].geometry.x) > 0.01 || Math.abs(featuresObj[i].geometry.y) > 0.01)) {
 				featuresToLoad.push(featuresObj[i]);
 				j++;
 			}

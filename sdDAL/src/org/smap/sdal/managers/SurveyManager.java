@@ -1450,7 +1450,7 @@ public class SurveyManager {
 					String sqlUpdateRepeat = "update form set repeats = ? "
 							+ "where s_id = ? "
 							+ "and parentquestion = ? "
-							+ "and trim(both from repeats) = ?;";
+							+ "and (trim(both from repeats) = ? or repeats is null);";
 					pstmtUpdateRepeat = sd.prepareStatement(sqlUpdateRepeat);
 					
 					pstmtUpdateRepeat.setString(1, newVal);

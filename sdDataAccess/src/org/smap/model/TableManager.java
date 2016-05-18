@@ -338,7 +338,7 @@ public class TableManager {
 					if(colType.equals("string")) {
 						colType = "text";
 					} else if(colType.equals("decimal")) {
-						colType = "real";
+						colType = "double precision";
 					} else if(colType.equals("select1")) {
 						colType = "text";
 					} else if(colType.equals("barcode")) {
