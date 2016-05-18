@@ -37,6 +37,7 @@ public class Survey {
 	public String pdfTemplateName;
 	public int managed_id;
 	public int version;
+	public boolean loadedFromXLS;
 
 	
 	// Getters
@@ -121,5 +122,6 @@ public class Survey {
 	public void setHasManifest(boolean v) { hasManifest = v;};
 	public void setManagedId(int v) { managed_id = v;};
 	public void setVersion(int v) { version = v;};
+	public void setLoadedFromXLS(boolean v) { loadedFromXLS = v;};
 	
 }

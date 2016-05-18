@@ -251,14 +251,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="dtLabel">Download</h4>
+     			<h4 class="modal-title" id="dtLabel"></h4>
    			</div>
 		     <div class="modal-body">
 				<form role="form">
 					<fieldset>
-						<legend class="lang" data-lang="ft">File Type:</legend>
-						<input type="radio" name="download_type" value="xls" checked="checked"/> <span data-lang="ft_xls" class="lang">Original Uploaded XLS Form</span><br/> 
-						<input type="radio" name="download_type" value="xls_edited"/> <span data-lang="ft_xls_edited" class="lang">Edited XLS Form</span><br/>
+						<legend class="lang" data-lang="ft">type</legend>
+						<input type="radio" name="download_type" value="xls_edited" checked="checked"/> <span data-lang="ft_xls" class="lang">latest XLS</span> 
+							(<span class="lang" data-lang="c_version"></span>: <span id="dtversion"></span>)<br/> 
+						<span id="dtorigxls"><input type="radio" name="download_type" value="xls"/> <span data-lang="ft_xls_orig" class="lang">original XLS</span> 
+							(<span class="lang" data-lang="c_version"></span>: 1)<br/></span>
 						<input type="radio" name="download_type" value="xml"/> <span data-lang="ft_xml" class="lang">XML Form</span><br/>
 						<input type="radio" name="download_type" value="codebook"/> <span data-lang="ft_codebook" class="lang">Codebook</span><br/> 
 						<input type="radio" name="download_type" value="pdf"/> <span data-lang="ft_pdf" class="lang">PDF Template</span><br/> 

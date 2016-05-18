@@ -354,7 +354,8 @@ CREATE TABLE survey (
 	manifest text,									-- JSON set of manifest information for the survey
 	instance_name text,								-- The rule for naming a survey instance form its data
 	last_updated_time DATE,
-	managed_id integer								-- Identifier of configuration for managing records
+	managed_id integer,								-- Identifier of configuration for managing records
+	loaded_from_xls boolean default false			-- Set true if the survey was initially loaded from an XLS Form
 	);
 ALTER TABLE survey OWNER TO ws;
 DROP INDEX IF EXISTS SurveyDisplayName;

@@ -491,3 +491,8 @@ alter table tasks add column schedule_finish timestamp with time zone;
 alter table tasks add column email text;
 alter table tasks add column guidance text;
 alter table users add column current_task_group_id integer;
+
+-- Upgrade to 16.05 from 16.04
+alter table survey add column loaded_from_xls boolean;
+update survey set loaded_from_xls = 'true' where loaded_from_xls is null;
+alter table survey alter column loaded_from_xls set default false;

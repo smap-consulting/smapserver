@@ -66,21 +66,11 @@ public class SurveyTemplate {
 	private int nextOptionSeq = 0;
 	private int nextQuestionSeq = 0;
 	private int MAX_COLUMNS = 1600 - 10;		// Max number of columns in Postgres is 1600, allow for automcatically generated columns
-	
-	// Manage creation of groups
-	//private boolean inGroup = false;
 
 	/*
 	 * Constructor
 	 */
 	public SurveyTemplate() {
-
-		//pc = new PersistenceContext("pgsql_jpa");
-		//pPersist = new ProjectManager(pc);
-		//fPersist = new FormManager(pc);
-		//qPersist = new QuestionManager(pc);
-		//oPersist = new OptionManager(pc);
-		//tPersist = new TranslationManager(pc);
 	}
 
 	public HashMap<String, HashMap<String, HashMap<String, Translation>>> getTranslations() {
@@ -828,12 +818,9 @@ public class SurveyTemplate {
 				System.out.println("No forms in this survey");
 				throw new Exception("No forms in this survey");
 			}
-			//SurveyManager surveys = new SurveyManager(pc);
 			sm = new JdbcSurveyManager(sd);
 			System.out.println("Persisting survey");
 			sm.write(survey);
-			
-			//surveys.persist(survey);
 	
 			/*
 			 * Forms 1. Create record for each form and get its primary key
@@ -844,10 +831,6 @@ public class SurveyTemplate {
 				f.setSurveyId(survey.getId());
 				fm.write(f);
 			}
-			
-			//Form [] formArray = formList.toArray(new Form[formList.size()]);
-			//System.out.println("Persisting forms");
-			//fPersist.persist(formArray);
 			
 			/*
 			 * Questions.

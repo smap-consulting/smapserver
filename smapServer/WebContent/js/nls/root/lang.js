@@ -175,6 +175,7 @@ define({
 	// File Types
 	"ft": "File Type",
 	"ft_xls": "XLS Form",
+	"ft_xls_orig": "Original XLS file",
 	"ft_xml": "XML Form",
 	"ft_codebook": "Codebook",
 	"ft_pdf": "PDF Template",

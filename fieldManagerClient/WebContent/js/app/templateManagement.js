@@ -503,6 +503,9 @@ function completeSurveyList() {
 	});
 	
 	$('.pdf_td').click(function(e) {
+		var surveyIndex = $(this).closest('tr').find("[name='controls']").val(),
+			surveyVersion = gSurveys[surveyIndex].version,
+			loadedFromXLS = gSurveys[surveyIndex].loadedFromXLS;
 		
 		gSelectedTemplate = $(this).val();
 		$.getJSON("/surveyKPI/languages/" + gSelectedTemplate, function(data) {
@@ -515,7 +518,13 @@ function completeSurveyList() {
 			});
 		});
 		gSelectedTemplateName = $(this).parent().siblings(".displayName").text();
-		$('h4', '#download_template').html("Download " + gSelectedTemplateName);
+		$('h4', '#download_template').html(localise.set["c_download"] + " " + gSelectedTemplateName);
+		$('#dtversion').html(surveyVersion);
+		if(loadedFromXLS) {
+			$('#dtorigxls').show();
+		} else {
+			$('#dtorigxls').hide();
+		}
 		$('#download_template').modal('show');
 	});
 	

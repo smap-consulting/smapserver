@@ -44,8 +44,9 @@ public class JdbcSurveyManager {
 			+ "ident,"
 			+ "version,"
 			+ "manifest,"
-			+ "instance_name) "
-			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?);";
+			+ "instance_name,"
+			+ "loaded_from_xls) "
+			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	// Update
 	PreparedStatement pstmtUpdate = null;
@@ -100,6 +101,7 @@ public class JdbcSurveyManager {
 		pstmt.setInt(7, s.getVersion());
 		pstmt.setString(8, s.getManifest());
 		pstmt.setString(9, s.getInstanceName());
+		pstmt.setBoolean(10, s.getLoadedFromXls());
 		pstmt.executeUpdate();
 					
 		ResultSet rs = pstmt.getGeneratedKeys();

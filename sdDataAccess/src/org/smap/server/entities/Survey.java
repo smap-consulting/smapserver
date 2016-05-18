@@ -57,6 +57,8 @@ public class Survey implements Serializable {
 	
 	private String surveyClass;
 	
+	private boolean loaded_from_xls = false;
+	
 	/*
 	 * Constructor
 	 */
@@ -88,6 +90,10 @@ public class Survey implements Serializable {
 	
 	public String getSurveyClass() {
 		return surveyClass;
+	}
+	
+	public boolean getLoadedFromXls() {
+		return loaded_from_xls;
 	}
 	
 	public int getProjectId() {
@@ -145,6 +151,10 @@ public class Survey implements Serializable {
 	
 	public void setSurveyClass(String v) {
 		surveyClass = v;
+	}
+	
+	public void setLoadedFromXls(boolean v) {
+		loaded_from_xls = v;
 	}
 	
 	public void setProjectId(int v) {

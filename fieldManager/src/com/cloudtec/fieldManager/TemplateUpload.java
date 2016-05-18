@@ -99,6 +99,7 @@ public class TemplateUpload extends Application {
 	}
 
     private class SaveResponse {
+    	public boolean isXls = false;
     	public int code = 0;
     	public String fileName = null;
     	public ArrayList<String> errMesg = new ArrayList<String> ();
@@ -116,7 +117,6 @@ public class TemplateUpload extends Application {
 	@Produces("application/json")
 	public Response  formUpload(@Context HttpServletRequest request) {
  
-		//String contextPath = request.getContextPath();
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();
 		String displayName = null;
 		int projectId = -1;
@@ -207,12 +207,9 @@ public class TemplateUpload extends Application {
 			
 			fileName = uploadedFile.getName();
 			
-			// If the survey display name already exists on this server, for this project, then throw an error
-			
-			//SurveyManager surveys = new SurveyManager(new PersistenceContext("pgsql_jpa"));
+			// If the survey display name already exists on this server, for this project, then throw an error		
 			sm = new JdbcSurveyManager(sd);
 			if(sm.surveyExists(displayName, projectId)) {
-				// String mesg = "Survey " + displayName + " Exists in project " + projectName;
 				mesgArray.add("$c_survey");
 				mesgArray.add(" '");
 				mesgArray.add(displayName);
@@ -283,6 +280,8 @@ public class TemplateUpload extends Application {
 			// Set the initial survey version
 			model.getSurvey().setVersion(1);
 			
+			// Set an indicator if this form was created from an excel file
+			model.getSurvey().setLoadedFromXls(resp.isXls);
 			
 			// If there is more than one geom per form or too many questions then throw an error
 			ArrayList formsWithError = null;
@@ -403,8 +402,10 @@ public class TemplateUpload extends Application {
 		log.info("     ItemName" + itemName);
 		if(itemName.toLowerCase().endsWith("xls")) {
 			isXLS = true;
+			response.isXls = true;
 		} else if(itemName.toLowerCase().endsWith("xlsx")) {
 			isXLSX = true;
+			response.isXls = true;
 		}
 
 		// Construct the file folder and full path
