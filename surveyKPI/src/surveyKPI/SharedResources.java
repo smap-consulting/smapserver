@@ -59,7 +59,15 @@ import java.util.logging.Logger;
 @Path("/shared")
 public class SharedResources extends Application {
 	
-	Authorise orgLevelAuth = new Authorise(null, Authorise.ADMIN);
+	Authorise orgLevelAuth = null;
+	
+	public SharedResources() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		orgLevelAuth = new Authorise(authorisations, null);		
+	}
 	
 	private static Logger log =
 			 Logger.getLogger(SharedResources.class.getName());

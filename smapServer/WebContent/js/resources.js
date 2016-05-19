@@ -225,6 +225,7 @@ function saveMap() {
 		  type: "POST",
 		  async: false,
 		  url: url,
+		  contentType: "application/json",
 		  data: { map: mapString },
 		  success: function(data, status) {
 			  removeHourglass();

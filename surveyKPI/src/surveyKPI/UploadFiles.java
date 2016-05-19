@@ -65,9 +65,18 @@ import java.util.logging.Logger;
 @Path("/upload")
 public class UploadFiles extends Application {
 	
-	// Analysts can upload files to a single survey, Admin is required to do this for the whole organisation
-	Authorise surveyLevelAuth = new Authorise(null, Authorise.ANALYST);
-	Authorise orgLevelAuth = new Authorise(null, Authorise.ADMIN);
+	// Allow analysts and admin to upload resources for the whole organisation
+	Authorise surveyLevelAuth = null;
+	Authorise orgLevelAuth = null;
+	
+	public UploadFiles() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		orgLevelAuth = new Authorise(authorisations, null);	
+		surveyLevelAuth = new Authorise(authorisations, null);
+	}
 	
 	private static Logger log =
 			 Logger.getLogger(UploadFiles.class.getName());
