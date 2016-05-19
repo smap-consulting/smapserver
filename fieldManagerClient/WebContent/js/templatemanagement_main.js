@@ -46,7 +46,8 @@ requirejs.config({
     	'bootstrap': ['jquery'],
     	'common': ['jquery']
 	
-    	}
+    	},
+    urlArgs: "_v=" +  gSmapVersion
     });
 
 require([
