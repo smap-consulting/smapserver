@@ -42,6 +42,7 @@ define({
 	"ss_su": "Get Smap Uploader",
 	
 	// Common
+	"c_apply": "Apply",
 	"c_desc": "Description",
 	"c_project": "Select Project",
 	"c_forms": "Forms",
@@ -386,6 +387,6 @@ define({
 	"mf_fd": "Form Data",
 	"mf_md": "Management Data",
 	"mf_sc": "Sortable Columns",
-	"mf_sc_i": "Select the columns that you want to see in the table. You can then sort on these columns"
+	"mf_sc_i": "Select the columns that you want to see in the table then press the 'Apply' button. You can then sort on these columns"
 		
 });

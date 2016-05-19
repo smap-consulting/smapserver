@@ -205,6 +205,6 @@ body {
 /*
  * Sidebar
  */
-.setings-item .switch {
-  float: right;
+.sidebar-content button {
+  width: 100%;
 }

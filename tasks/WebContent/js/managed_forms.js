@@ -232,6 +232,42 @@ require([
 				});
 		});
 		
+		// Apply changes to the table columns that are shown
+		$('#applyTableSort').click(function(){
+			
+			var tableColumns = [],
+				tc,
+				$this;
+			
+			$('input', '#tab-settings-content').each(function(){
+				$this = $(this);
+				tc = {};
+				tc.name = $this.val();
+				tc.hide = !$this.is(':checked');
+				tc.include = true;
+				tableColumns.push(tc);
+			});
+			
+			 saveString = JSON.stringify(tableColumns);
+			 
+			 addHourglass();
+			 $.ajax({
+				 type: "POST",
+					  dataType: 'text',
+					  contentType: "application/json",
+					  url: "/surveyKPI/managed/updatecols/" + globals.gCurrentSurvey,
+					  data: { settings: saveString },
+					  success: function(data, status) {
+						  removeHourglass();
+						  $('#right-sidebar').removeClass("sidebar-open");
+						  refreshData();
+					  }, error: function(data, status) {
+						  removeHourglass();
+						  alert(data.responseText);
+					  }
+				});
+		});
+		
 		// Refresh menu
 		$('#m_refresh').click(function (){
 			refreshData();

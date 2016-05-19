@@ -325,6 +325,14 @@ public class ManagedForms extends Application {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
 		}
 		
 		return response;
@@ -520,6 +528,83 @@ public class ManagedForms extends Application {
 			try {
 				if (cResults != null) {
 					cResults.close();
+				}
+			} catch (SQLException e) {
+				log.log(Level.SEVERE,"Failed to close connection", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/updatecols/{sId}")
+	public Response updateTableColumns(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@FormParam("settings") String settings
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+
+		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = 'mf';";
+		PreparedStatement pstmtUpdate = null;
+		
+		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, 'mf');";
+		PreparedStatement pstmtInsert = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		// End Authorisation
+
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
+		
+		try {
+
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
+			pstmtUpdate.setString(1, settings);
+			pstmtUpdate.setInt(2, uId);
+			pstmtUpdate.setInt(3, sId);
+			log.info("Updating managed form settings: " + pstmtUpdate.toString());
+			int count = pstmtUpdate.executeUpdate();
+			if(count == 0) {
+				pstmtInsert = sd.prepareStatement(sqlInsert);
+				pstmtInsert.setString(1, settings);
+				pstmtInsert.setInt(2, uId);
+				pstmtInsert.setInt(3, sId);
+				log.info("Inserting managed form settings: " + pstmtInsert.toString());
+				pstmtInsert.executeUpdate();
+			}
+
+			response = Response.ok().build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
+			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
+	
+			try {
+				if (sd != null) {
+					sd.close();
 				}
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"Failed to close connection", e);
