@@ -471,18 +471,6 @@ create TABLE data_processing (
 	config text
 	);
 ALTER TABLE data_processing OWNER TO ws;
---insert into data_processing(o_id, name, type) values (1, 'm&e tracking', 'manage');
-
-CREATE SEQUENCE sc_seq START 1;
-ALTER SEQUENCE sc_seq OWNER TO ws;
-
-create TABLE show_columns (
-	id INTEGER DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_sc PRIMARY KEY,
-	dp_id INTEGER REFERENCES data_processing(id) ON DELETE CASCADE,
-	q_id INTEGER REFERENCES question(q_id) ON DELETE CASCADE,
-	config text		
-	);
-ALTER TABLE show_columns OWNER TO ws;
 
 insert into groups(id,name) values(5,'manage');
 
@@ -496,3 +484,16 @@ alter table users add column current_task_group_id integer;
 alter table survey add column loaded_from_xls boolean;
 update survey set loaded_from_xls = 'true' where loaded_from_xls is null;
 alter table survey alter column loaded_from_xls set default false;
+
+CREATE SEQUENCE set_seq START 1;
+ALTER SEQUENCE set_seq OWNER TO ws;
+
+CREATE TABLE general_settings (
+	id INTEGER DEFAULT NEXTVAL('set_seq') CONSTRAINT pk_settings PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	key text,
+	settings text		-- JSON
+
+	);
+ALTER TABLE general_settings OWNER TO ws;

@@ -45,12 +45,11 @@ requirejs.config({
     	file_input: '../../../../js/libs/bootstrap.file-input',
     	mapbox_app: '../../../../js/app/mapbox_app',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
-    	
+    	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
-    	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
-    	footable: '../../../../js/libs/wb/plugins/footable/footable.all.min'
+    	pace: '../../../../js/libs/wb/plugins/pace/pace.min'
     },
     shim: {
 
@@ -62,8 +61,8 @@ requirejs.config({
     	'file_input': ['jquery'],
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
-    	'slimscroll': ['jquery'],
-    	'footable': ['jquery']
+    	'icheck': ['jquery'],
+    	'slimscroll': ['jquery']
 	
     	}
     });
@@ -78,8 +77,8 @@ require([
          'metismenu',
          'slimscroll',
          'pace',
-         'footable',
          'datetimepicker',
+         'icheck'
          
          ], function($, 
         		 bootstrap, 
@@ -418,7 +417,9 @@ require([
 		 	i,j,
 		 	$table = $('#trackingTable'),
 		 	doneFirst = false,
-		 	headItem;
+		 	headItem,
+		 	hColSort = [],
+		 	hColSortIdx = -1;
 		 
 		 $('#survey_title').html($('#survey_name option:selected').text());
 		 	
@@ -427,6 +428,8 @@ require([
 		 h[++idx] = '<tr>';
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
+			 
+			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
 			 
 			 if(headItem.include && !headItem.hide) {
 				 if(gSort && headItem.humanName === gSort.trim()) {
@@ -472,7 +475,8 @@ require([
 		 }
 		 h[++idx] = '</tbody>';
 		 	
-		 $table.empty().append(h.join(''));
+		 $table.html(h.join(''));
+		 $('#tab-settings-content').html(hColSort.join(''));
 		 
 		 // Add sort icon
 		 $table.find('th.sort-asc').each(function() {
@@ -505,9 +509,42 @@ require([
 			 getManagedData(globals.gCurrentSurvey, gSort, gDirn);
 		 });
 			
+		 // Set checkboxes in column sort section of settings
+		 $('input', '#tab-settings-content').iCheck({
+			 checkboxClass: 'icheckbox_square-green',
+			 radioClass: 'iradio_square-green'
+		 });
 
 	 }
 	 
+	/*
+	 * Add the column to the settings
+	 */
+	function addToColumnSort(item) {
+		var h = [],
+			idx = -1;
+		
+		if(item.include) {
+			h[++idx] = '<div class="setings-item">';
+			h[++idx] = '<span>';
+				h[++idx] = item.humanName;
+			h[++idx] = '</span>';
+			
+			h[++idx] = '<div class="switch">';
+			h[++idx] = '<input type="checkbox" name="columnSelect"';
+			h[++idx] = ' class="columnSelect" value="';
+			h[++idx] = item.name;
+			h[++idx] = '"';
+			if(!item.hide) {
+				h[++idx] = ' checked';
+			}
+			h[++idx] = '>';
+			h[++idx] = '</div>';
+			h[++idx] = '</div>';
+		}
+		return h.join('');
+	}
+	
 	/*
 	 * Get the markup for the data cell
 	 */

@@ -175,14 +175,6 @@ create TABLE data_processing (
 	);
 ALTER TABLE data_processing OWNER TO ws;
 
-create TABLE show_columns (
-	id INTEGER DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_sc PRIMARY KEY,
-	dp_id INTEGER REFERENCES data_processing(id) ON DELETE CASCADE,
-	q_id INTEGER REFERENCES question(q_id) ON DELETE CASCADE,
-	config text		
-	);
-ALTER TABLE show_columns OWNER TO ws;
-
 DROP SEQUENCE IF EXISTS users_seq CASCADE;
 CREATE SEQUENCE users_seq START 2;
 ALTER SEQUENCE users_seq OWNER TO ws;
@@ -541,7 +533,7 @@ CREATE TABLE language (
 	);
 ALTER TABLE language OWNER TO ws;
 
--- Tables to manage dashboard settings
+-- Tables to manage settings
 
 DROP SEQUENCE IF EXISTS ds_seq CASCADE;
 CREATE SEQUENCE ds_seq START 1;
@@ -578,6 +570,21 @@ CREATE TABLE dashboard_settings (
 	);
 ALTER TABLE dashboard_settings OWNER TO ws;
 
+
+DROP SEQUENCE IF EXISTS set_seq CASCADE;
+CREATE SEQUENCE set_seq START 1;
+ALTER SEQUENCE set_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS general_settings CASCADE;
+CREATE TABLE general_settings (
+	id INTEGER DEFAULT NEXTVAL('set_seq') CONSTRAINT pk_settings PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	key text,			-- Identifies type of setting such as "mf" managed forms
+	settings text		-- JSON
+
+	);
+ALTER TABLE general_settings OWNER TO ws;
 
 
 --- Task Management -----------------------------------

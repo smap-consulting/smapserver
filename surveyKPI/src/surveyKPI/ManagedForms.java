@@ -86,7 +86,8 @@ public class ManagedForms extends Application {
 
 		Response response = null;
 		
-		String sql = "select config from show_columns where id = ? and dp_id = ?;";
+		// SQL to get default settings for this user and survey
+		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
 		PreparedStatement pstmt = null;
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
@@ -94,11 +95,8 @@ public class ManagedForms extends Application {
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 
-			/*
-			 * Get formId of top level form and its table name
-			 * These are required by the getColumnsInForm method
-			 */
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			
 			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
@@ -117,12 +115,12 @@ public class ManagedForms extends Application {
 			 */
 			if(dpId > 0) {
 				pstmt = sd.prepareStatement(sql);	 
-				pstmt.setInt(1,  sId);
-				pstmt.setInt(2,  dpId);
+				pstmt.setInt(1,  uId);
+				pstmt.setInt(2,  sId);
 	
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
-					String config = rs.getString("config");
+					String config = rs.getString("settings");
 				
 					if(config != null) {
 						Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();	

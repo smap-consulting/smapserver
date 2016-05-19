@@ -201,3 +201,10 @@ body {
     color: #d9534f;
     background-color: #fff
 }
+
+/*
+ * Sidebar
+ */
+.setings-item .switch {
+  float: right;
+}
