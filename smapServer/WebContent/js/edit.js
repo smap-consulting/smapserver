@@ -110,9 +110,6 @@ $(document).ready(function() {
 	window.bootbox = bootbox;
 	
 	localise.setlang();		// Localise HTML
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	
 	// Get the parameters and start editing a survey if one was passed as a parameter
 	params = location.search.substr(location.search.indexOf("?") + 1)

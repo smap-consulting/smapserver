@@ -55,9 +55,6 @@ $(document).ready(function() {
 	pArray = [],
 	param = [];
 	
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	localise.setlang();
 	$('#forgottenPasswordEmail').attr('data-bv-emailaddress-message', localise.set["msg_inv_email"]);
 	

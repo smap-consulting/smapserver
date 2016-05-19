@@ -27,9 +27,6 @@ $(document).ready(function() {
 	window.moment = moment;
 	
 	localise.setlang();		// Localise HTML
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	
 	getLoggedInUser(projectChanged, true, true, undefined);
 	 

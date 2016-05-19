@@ -64,9 +64,6 @@ $(document).ready(function() {
 	    
 	window.moment = moment;	// Required as common.js not part of module
 	localise.setlang();		// Localise HTML
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	
 	initializeReportsMap();
 	

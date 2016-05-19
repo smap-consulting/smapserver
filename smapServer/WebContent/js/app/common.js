@@ -1688,32 +1688,6 @@ function setLocationList(locns) {
 }
 
 /*
- * Get the expected version from the server and reload the page if the versions don't match
- */
-function getVersion() {
-	
-	if(typeof gSmapVersion !== "undefined") {
-		$.ajax({
-			url: "/surveyKPI/version",
-			cache: false,
-			dataType: 'json',
-			success: function(data) {
-				if(data.version > gSmapVersion) {
-					setTimeout(function() {location.reload(true);}, 1000);
-				}
-			},
-			error: function(xhr, textStatus, err) {
-				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					// fail silently not the end of the world and the user does not need to know this failed
-				}
-			}
-		});
-	}
-}
-
-/*
  * Convert a timestamp in UTC to local time and return a date object
  */
 function localTimeAsDate(utcTime) {

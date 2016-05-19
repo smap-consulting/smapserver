@@ -47,9 +47,6 @@ $(document).ready(function() {
 	globals.gRegions = undefined;
 	
 	localise.setlang();		// Localise HTML
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	
 	getLoggedInUser(projectChanged, false, true, undefined);
 	

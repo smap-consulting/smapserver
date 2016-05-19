@@ -34,10 +34,6 @@ define(['jquery', 'jquery_ui', 'localise', 'common', 'globals'], function($, ui,
 
 $(document).ready(function() {
 	
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
-	
 	 /*
 	  * Get the user details so we have the default project
 	  * Then load the available projects for the user and load the surveys for the default project

@@ -55,10 +55,6 @@ $(document).ready(function() {
 		pArray = [],
 		param = [];
 	
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
-	
 	// Get the user details
 	globals.gIsAdministrator = false;
 	dont_get_current_survey = false;		// The current survey was not passed in the parameters
