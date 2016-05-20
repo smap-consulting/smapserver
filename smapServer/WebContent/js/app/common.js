@@ -252,11 +252,17 @@ function updateUserDetails(data, getOrganisationsFn) {
 			if(groups[i].name === "manage") {
 				globals.gIsManage = true;
 			}
+			if(groups[i].name === "enum") {
+				globals.gIsEnum = true;
+			}
 		}
 	}
 	
 	// Only show items relevant to a user
 	$('.restrict_role').hide();
+	if(globals.gIsEnum) {
+		$('.enum_role').show();
+	}
 	if(globals.gIsAnalyst) {
 		$('.analyst_role').show();
 	} 
@@ -387,45 +393,8 @@ function enableUserProfile () {
 		        }, {
 		        	text: "Logout",
 		        	click: function() {
-		        		// Call logout function
-		        		jQuery.ajax({
-		        		    type: "GET",
-		        			cache: false,
-		        		    url: "/surveyKPI/logout",
-		        		    error: function(data, status) {
-		        				  window.location.href="/";
-		        			},
-		        			success: function(data,status) {
-		        				window.location.href="/";
-		        			}
-		        		});
-		        		
-		        		// For firefox need to do an invalid logon to logout
-		        		jQuery.ajax({
-		        		    type: "GET",
-		        			cache: false,
-		        		    url: "/fieldManager/templateManagement.html",
-		        		    username: "shkdhasfkhd",
-		        		    password: "sieinkdnfkdf"
-		        		});
-		        	
-		        		/*
-		        		jQuery.ajax({
-		        		    type: "GET",
-		        			cache: false,
-		        		    url: "/fieldManager/templateManagement.html",
-		        		    username: "shkdhasfkhd",
-		        		    password: "sieinkdnfkdf",
-		        		    error: function(data, status) {
-		        				  window.location.href="/";
-		        			},
-		        			success: function(data,status) {
-		        				window.location.href="/";
-		        			}
-		        		});
-		        		*/
+		        		logout();
 		        		$(this).dialog("close");
-		        		
 		        	}
 		        	
 		        }
@@ -442,6 +411,26 @@ function enableUserProfile () {
 			 $('#password_me_fields').hide();
 		 }
 	 });
+}
+
+/*
+ * Logout function
+ */
+function logout() {
+	jQuery.ajax({
+	    type: "GET",
+		cache: false,
+	    url: "/surveyKPI/logout",
+	    beforeSend: function(xhr){xhr.setRequestHeader("Authorization","Basic YXNkc2E6");},
+	    username: "shkdhasfkhd",
+	    password: "sieinkdnfkdf",
+	    error: function(data, status) {
+			  window.location.href="/logout.html";
+		},
+		success: function(data,status) {
+			window.location.href="/logout.html";
+		}
+	});
 }
 
 /*

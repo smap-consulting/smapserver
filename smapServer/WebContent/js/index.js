@@ -19,8 +19,44 @@ require.config({
     }
 });
 
-require(['jquery', 'bootstrap.min', 'app/localise', 'app/common'], function($, bootstrap, localise, common) {
+require(['jquery', 'bootstrap.min', 'app/localise', 'app/common','app/globals'], 
+		function($, bootstrap, localise, common, globals) {
+	
+	var params,
+		pArray = [],
+		param = [],
+		i,
+		loggedin=false;
+	
 	localise.setlang();
+	
+	/*
+	 * If the user is logged in then get their details
+	 */
+	params = location.search.substr(location.search.indexOf("?") + 1)
+	pArray = params.split("&");
+	for (i = 0; i < pArray.length; i++) {
+		param = pArray[i].split("=");
+		if(param.length > 1) {
+			if ( param[0] === "loggedin" && param[1] === "yes" ) {
+				getLoggedInUser(undefined, false, false, undefined, false, false);
+				loggedin = true;
+			} 
+		}
+	}
+	
+	/*
+	 * If the user is not logged in then enable the login button and disable other menus
+	 * which depend on their authorisation level
+	 */
+	if(loggedin) {
+		$('.loggedin').show();
+		$('.notloggedin').hide();
+	} else {
+		$('.restrict_role').hide();
+		$('.notloggedin').show();
+		$('.loggedin').hide();
+	}
 	
 	/*
 	 * Enable self registration 
@@ -28,4 +64,11 @@ require(['jquery', 'bootstrap.min', 'app/localise', 'app/common'], function($, b
 	if(isSelfRegistrationServer()) {
 		$('#signup').show();
 	}
+	
+	/*
+	 * Add logout function
+	 */
+	$('#logout').click(function(){
+		logout();
+	});
  });

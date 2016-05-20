@@ -29,6 +29,7 @@ define(function() {
 		gLoggedInUser: undefined,
 		gEditingReportProject: undefined,   		// Set if fieldAnalysis called to edit a report
 		gIsAdministrator: false,
+		gIsEnum: false,
 		gIsAnalyst: false,
 		gIsManage: false,
 		gIsOrgAdministrator: false,

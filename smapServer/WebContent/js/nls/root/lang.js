@@ -34,6 +34,7 @@ define({
 	"m_s_m_f": "Setup Managed Forms",
 	"m_task_m": "Task Management",
 	"m_user_profile": "User Profile",
+	"m_login": "Login",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -387,6 +388,11 @@ define({
 	"mf_fd": "Form Data",
 	"mf_md": "Management Data",
 	"mf_sc": "Sortable Columns",
-	"mf_sc_i": "Select the columns that you want to see in the table then press the 'Apply' button. You can then sort on these columns"
+	"mf_sc_i": "Select the columns that you want to see in the table then press the 'Apply' button. You can then sort on these columns",
+	
+	// Logout
+	"lo_back": "Back",
+	"lo_out": "You are logged out of the Smap Server",
+	"lo_lo": "Logged Out"
 		
 });
