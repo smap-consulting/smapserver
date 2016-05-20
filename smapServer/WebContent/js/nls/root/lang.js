@@ -383,6 +383,7 @@ define({
 	"ed_ap": "Appearance",
 	"ed_con": "Constraint",
 	"ed_r_msg": "Required Text Message",
+	"ed_o_o_g": "Only one geometry question can be added to a form",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

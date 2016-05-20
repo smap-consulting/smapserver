@@ -1252,14 +1252,14 @@ define([
 						for(j = 0; j < form.questions.length; j++) {		
 							otherQuestion = form.questions[j];
 							if(j != itemIndex) {
-								if(otherQuestion.type === "geopoint" || otherQuestion.type === "geotrace" ||
-										otherQuestion.type === "geoshape"
-										&& !otherQuestion.soft_deleted && !otherQuestion.deleted) {
+								if(!otherQuestion.soft_deleted && !otherQuestion.deleted && 
+										(otherQuestion.type === "geopoint" || otherQuestion.type === "geotrace" ||
+										otherQuestion.type === "geoshape")) {
 									addValidationError(
 											container,
 											itemIndex,
 											"item",
-											"Only one geometry question can be added to a form.",
+											localise.set["ed_o_o_g"],	// Only one geometry question can be added to a form
 											itemType,
 											"error");
 									isValid = false;
