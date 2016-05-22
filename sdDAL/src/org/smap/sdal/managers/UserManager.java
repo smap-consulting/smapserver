@@ -142,7 +142,7 @@ public class UserManager {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, user.id);
-			log.info("SQL: " + sql + ":" + user.id);
+			log.info("SQL: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			while(resultSet.next()) {
@@ -167,7 +167,7 @@ public class UserManager {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, user.id);
-			log.info("SQL: " + sql + ":" + user.id);
+			log.info("SQL: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			while(resultSet.next()) {
@@ -231,7 +231,7 @@ public class UserManager {
 			pstmt.setString(4, u.email);
 			pstmt.setInt(5, o_id);
 			pstmt.setString(6, pwdString);
-			log.info("SQL: " + sql + ":" + u.ident + ":" + "smap" + ":" + u.name + ":" + u.email + ":" + o_id);
+			log.info("SQL: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 			ResultSet rs = pstmt.getGeneratedKeys();
@@ -308,7 +308,7 @@ public class UserManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, u.id);
 			pstmt.setInt(2, o_id);
-			log.info("SQL: " + sql + ":" + u.id + ":" + o_id);
+			log.info("SQL: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 		
 			if(resultSet.next()) {
@@ -322,7 +322,7 @@ public class UserManager {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, u.id);
-				log.info("SQL: " + sql + ":" + u.id);
+				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 				// Delete existing user projects
@@ -330,7 +330,7 @@ public class UserManager {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, u.id);
-				log.info("SQL: " + sql + ":" + u.id);
+				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 				// update existing user
@@ -371,7 +371,7 @@ public class UserManager {
 					pstmt.setInt(6, u.id);
 				}
 				
-				log.info("SQL: " + sql + ":" + u.ident + ":" + "smap");
+				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 			
 				// Update the groups and projects
@@ -401,7 +401,7 @@ public class UserManager {
 				pstmt = conn.prepareStatement(sql);
 				pstmt.setInt(1, u_id);
 				pstmt.setInt(2, g.id);
-				log.info("SQL: " + sql + ":" + u_id + ":" + g.id);
+				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 			}
 		}
@@ -412,7 +412,7 @@ public class UserManager {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, u_id);
 			pstmt.setInt(2, p.id);
-			log.info("SQL: " + sql + ":" + u_id + ":" + p.id);
+			log.info("SQL: " + pstmt.toString());
 			pstmt.executeUpdate();
 		}
 	}
