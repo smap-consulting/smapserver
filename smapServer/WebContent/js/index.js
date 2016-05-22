@@ -46,6 +46,14 @@ require(['jquery', 'bootstrap.min', 'app/localise', 'app/common','app/globals'],
 	}
 	
 	/*
+	 * Enable self registration 
+	 */
+	if(isSelfRegistrationServer()) {
+		$('#signup').show();
+	}
+	
+	
+	/*
 	 * If the user is not logged in then enable the login button and disable other menus
 	 * which depend on their authorisation level
 	 */
@@ -56,13 +64,6 @@ require(['jquery', 'bootstrap.min', 'app/localise', 'app/common','app/globals'],
 		$('.restrict_role').hide();
 		$('.notloggedin').show();
 		$('.loggedin').hide();
-	}
-	
-	/*
-	 * Enable self registration 
-	 */
-	if(isSelfRegistrationServer()) {
-		$('#signup').show();
 	}
 	
 	/*
