@@ -230,6 +230,7 @@ define(
     "t_ce": "Clear Existing Tasks",
     "t_ce_warn": "This will clear all the existing data in the survey. Are you sure you want to do this?",
     "t_ceg": "Create Empty Task Group",
+    "t_cfe": "Create from existing results",
     "t_ep": "Existing Project",
     "t_es": "Existing Survey",
     "t_ns": "New Survey",

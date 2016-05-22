@@ -83,8 +83,8 @@ $(document).ready(function() {
 		$('#filter_results').toggle();
 	});
 	
-	// Add a trigger to respond to the clicking of "empty_task_group" 
-	$('#empty_task_group').prop('checked', false).click(function() {
+	// Add a trigger to respond to the clicking of "add_from_survey" 
+	$('#add_from_survey').prop('checked', false).click(function() {
 		$('#add_task_from_existing').toggle();
 	});
 	
@@ -312,7 +312,7 @@ $(document).ready(function() {
 			assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
 			assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
 			
-			if(!$('#empty_task_group').is(':checked')) {
+			if($('#add_from_survey').is(':checked')) {
 				
 				assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
 				assignObj["target_survey_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
