@@ -1391,8 +1391,13 @@ public class PDFManager {
 			processSelect(valueCell, di, generateBlank, gv);
 		} else if (di.type.equals("image")) {
 			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
-				Image img = Image.getInstance(basePath + "/" + di.value);
-				valueCell.addElement(img);
+				try {
+					Image img = Image.getInstance(basePath + "/" + di.value);
+					valueCell.addElement(img);
+				} catch(Exception e) {
+					log.info("Error: image " + basePath + "/" + di.value + " not found: " + e.getMessage());
+				}
+
 			} else {
 				// TODO add empty image
 			}
