@@ -113,7 +113,9 @@ function initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, ca
 	    		option.color = "#ff9900";
 	    	}
 	    	
-	        return L.circleMarker(latlon, option);
+	    	if(feature.geometry.coordinates[0] !== 0 && feature.geometry.coordinates[1] !== 0) {
+	        	return L.circleMarker(latlon, option);
+	    	}
 	    }
 	});
 	
