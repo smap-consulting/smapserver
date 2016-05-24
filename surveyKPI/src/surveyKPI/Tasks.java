@@ -432,6 +432,7 @@ public class Tasks extends Application {
 	public Response getXLSTasksService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("tgId") int tgId,
+			@QueryParam("tz") String tz,
 			@QueryParam("filetype") String filetype) throws Exception {
 
 		try {
@@ -457,6 +458,12 @@ public class Tasks extends Application {
 			filetype = "xlsx";
 		}
 		
+		if(tz == null) {
+			tz = "GMT";
+		}
+		
+		log.info("Exporting tasks with timzone: " + tz);
+		
 		try {
 			
 			// Localisation
@@ -475,7 +482,7 @@ public class Tasks extends Application {
 			
 			// Create XLSTasks File
 			XLSTaskManager xf = new XLSTaskManager(filetype);
-			xf.createXLSTaskFile(response.getOutputStream(), tl, localisation);
+			xf.createXLSTaskFile(response.getOutputStream(), tl, localisation, tz);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);

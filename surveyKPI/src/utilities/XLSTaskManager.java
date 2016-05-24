@@ -3,12 +3,19 @@ package utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 //import org.apache.poi.ss.usermodel.Workbook;
 //import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +25,7 @@ import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
@@ -108,6 +116,19 @@ public class XLSTaskManager {
 			}
 			return value;
 		}
+	
+		// Get a date value for this column from the provided properties object
+		public Timestamp getDateValue(TaskProperties props) {
+			Timestamp value = null;
+			
+			if(name.equals("from")) {
+				value = props.from;
+			} else if(name.equals("to")) {
+				value = props.to;
+			} 
+			
+			return value;
+		}
 	}
 
 	public XLSTaskManager() {
@@ -133,6 +154,8 @@ public class XLSTaskManager {
         TaskListGeoJson tl = new TaskListGeoJson();
         tl.features = new ArrayList<TaskFeature> ();
         HashMap<String, Integer> header = null;
+        String sv= null;
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm zzz");
         
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook(inputStream);
@@ -172,6 +195,12 @@ public class XLSTaskManager {
                 			tp.assignee_ident = getColumn(row, "assignee_ident", header, lastCellNum, null);
                 			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
                 					getColumn(row, "lat", header, lastCellNum, "0") + ")";
+                			
+                			// Get from value
+                			sv = getColumn(row, "from", header, lastCellNum, null);
+                			System.out.println("from: " + sv);
+                		    Date parsedDate = dateFormat.parse(sv);
+                			tp.from = new Timestamp(parsedDate.getTime());
                 			tl.features.add(tf);
                 		} catch (Exception e) {
                 			log.log(Level.SEVERE, e.getMessage(), e);
@@ -191,16 +220,18 @@ public class XLSTaskManager {
 	/*
 	 * Write a task list to an XLS file
 	 */
-	public void createXLSTaskFile(OutputStream outputStream, TaskListGeoJson tl, ResourceBundle localisation) throws IOException {
+	public void createXLSTaskFile(OutputStream outputStream, TaskListGeoJson tl, ResourceBundle localisation, 
+			String tz) throws IOException {
 		
-		Sheet taskListSheet = wb.createSheet("survey");
+		Sheet taskListSheet = wb.createSheet("tasks");
+		Sheet taskSettingsSheet = wb.createSheet("settings");
 		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
 		Map<String, CellStyle> styles = createStyles(wb);
 
 		ArrayList<Column> cols = getColumnList(localisation);
 		createHeader(cols, taskListSheet, styles);	
-		processTaskListForXLS(tl, taskListSheet, styles, cols);
+		processTaskListForXLS(tl, taskListSheet, taskSettingsSheet, styles, cols, tz);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -312,6 +343,8 @@ public class XLSTaskManager {
 		int idx;
 		String value = null;
 		double dValue = 0.0;
+		Date dateValue = null;
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
 	
 		cellIndex = header.get(name);
 		if(cellIndex != null) {
@@ -321,10 +354,15 @@ public class XLSTaskManager {
 				if(c != null) {
 					log.info("Get column: " + name);
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-						dValue = c.getNumericCellValue();
-						value = String.valueOf(dValue);
-						if(value != null && value.endsWith(".0")) {
-							value = value.substring(0, value.lastIndexOf('.'));
+						if (HSSFDateUtil.isCellDateFormatted(c)) {
+							dateValue = c.getDateCellValue();
+							value = dateFormat.format(dateValue);
+						} else {
+							dValue = c.getNumericCellValue();
+							value = String.valueOf(dValue);
+							if(value != null && value.endsWith(".0")) {
+								value = value.substring(0, value.lastIndexOf('.'));
+							}
 						}
 					} else if(c.getCellType() == Cell.CELL_TYPE_STRING) {
 						value = c.getStringCellValue();
@@ -418,13 +456,17 @@ public class XLSTaskManager {
 	private void processTaskListForXLS(
 			TaskListGeoJson tl, 
 			Sheet sheet,
+			Sheet settingsSheet,
 			Map<String, CellStyle> styles,
-			ArrayList<Column> cols) throws IOException {
+			ArrayList<Column> cols,
+			String tz) throws IOException {
 		
 		DataFormat format = wb.createDataFormat();
 		CellStyle styleTimestamp = wb.createCellStyle();
-		styleTimestamp.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));
+		ZoneId timeZoneId = ZoneId.of(tz);
+		ZoneId gmtZoneId = ZoneId.of("GMT");
 		
+		styleTimestamp.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
 		
 		for(TaskFeature feature : tl.features)  {
 			
@@ -434,14 +476,29 @@ public class XLSTaskManager {
 			for(int i = 0; i < cols.size(); i++) {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
-				cell.setCellStyle(styles.get("default"));	
-				cell.setCellValue(col.getValue(props));
+
 				if(col.name.equals("from") || col.name.equals("to")) {
 					cell.setCellStyle(styleTimestamp);
+					LocalDateTime gmtDate = col.getDateValue(props).toLocalDateTime();
+					ZonedDateTime gmtZoned = ZonedDateTime.of(gmtDate, gmtZoneId);
+					ZonedDateTime localZoned = gmtZoned.withZoneSameInstant(timeZoneId);
+					Timestamp ts = new Timestamp(localZoned.getLong(ChronoField.INSTANT_SECONDS) * 1000L);
+					cell.setCellValue(ts);
+				} else {
+					cell.setCellStyle(styles.get("default"));	
+					cell.setCellValue(col.getValue(props));
 				}
-	        }
-			
+	        }	
 		}
+		
+		// Populate settings sheet
+		Row settingsRow = settingsSheet.createRow(0);
+		Cell k = null;
+		Cell v = null;
+		k = settingsRow.createCell(0);
+		k.setCellValue("Time Zone:");
+		v = settingsRow.createCell(1);
+		v.setCellValue(tz);
 	}
 
 }

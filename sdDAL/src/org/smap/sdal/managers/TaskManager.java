@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -883,7 +885,6 @@ public class TaskManager {
 			/*
 			 * Write the task to the database
 			 */
-
 			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			
 			pstmt.setInt(1, pId);
@@ -897,6 +898,7 @@ public class TaskManager {
 			pstmt.setString(9, targetInstanceId);
 			pstmt.setString(10, tf.properties.address);
 			pstmt.setTimestamp(11, tf.properties.from);
+			System.out.println("Adding from: " + tf.properties.from);
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
 			
