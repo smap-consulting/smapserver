@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
@@ -173,7 +174,7 @@ public class XLSTaskManager {
                 					getColumn(row, "lat", header, lastCellNum, "0") + ")";
                 			tl.features.add(tf);
                 		} catch (Exception e) {
-                			log.info("Error getting task column" + e.getMessage());
+                			log.log(Level.SEVERE, e.getMessage(), e);
                 		}
                 	}
                 	
@@ -310,6 +311,7 @@ public class XLSTaskManager {
 		Integer cellIndex;
 		int idx;
 		String value = null;
+		double dValue = 0.0;
 	
 		cellIndex = header.get(name);
 		if(cellIndex != null) {
@@ -317,8 +319,10 @@ public class XLSTaskManager {
 			if(idx <= lastCellNum) {
 				Cell c = row.getCell(idx);
 				if(c != null) {
+					log.info("Get column: " + name);
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-						value = c.getStringCellValue();
+						dValue = c.getNumericCellValue();
+						value = String.valueOf(dValue);
 						if(value != null && value.endsWith(".0")) {
 							value = value.substring(0, value.lastIndexOf('.'));
 						}
@@ -327,8 +331,6 @@ public class XLSTaskManager {
 					} else {
 						value = null;
 					}
-					
-					System.out.println("Cell: " + name + " : " + value);
 
 				}
 			}

@@ -283,6 +283,8 @@ function updateUserDetails(data, getOrganisationsFn) {
 	if(!globals.gSendTrail) {
 		$('.user_trail').hide();
 	}
+	isBusinessServer();		// Reset server specific menus
+	
 	// 	Customer configurable details - the configurable part is TODO
 	$('#my_name').val(data.name);			// Add the name to the configurable list
 	
@@ -1331,13 +1333,17 @@ function isBusinessServer() {
 	var bs;
 	
 	if(hostname !== 'localhost' &&
-			hostname !== 'dev.smap.com.au' &&
+			hostname.indexOf('.smap.com.au') < 0 &&
 			hostname !== 'app.kontrolid.com' &&
 			hostname !== 'kontrolid.smap.com.au' &&
-			hostname.indexOf('zarkman.com') < 0) {
+			hostname.indexOf('zarkman.com') < 0 &&
+			hostname.indexOf('10.0') != 0) {
 		bs = false;
+		$('.bus_only').hide();
+		$('.public_only').show();
 	} else {
 		bs = true
+		$('.public_only').hide();
 		$('.bus_only').show();
 	}
 	return bs;

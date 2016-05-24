@@ -39,8 +39,8 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gClickOnMapEnabled = false,		// Listen to clicks on the map
 	gCalendarInitialised = false,	// Set true when the calendar pane has been initialised
 	gMapInitialised = false,		// Set true when the map pane has been initialised
-	gModalMapInitialised = false;	// Set true then the modal map has been initialised
-
+	gModalMapInitialised = false,	// Set true then the modal map has been initialised
+	gIdx = 0;						// Idx set when external task dropped on calendar
 $(document).ready(function() {
 	
 	var bs = isBusinessServer();
@@ -563,6 +563,8 @@ $(document).ready(function() {
 				  setTimeout(function() {
 					  initialiseCalendar();
 				  }, 500);
+			  } else {
+				  $('#calendar').fullCalendar('render');
 			  }
 		  } else if(target === '#map-view') {
 			  if(!gMapInitialised) {
@@ -1454,7 +1456,7 @@ function initialiseCalendar() {
 	    			from:  utcTime(event.start.format("YYYY-MM-DD HH:mm")),
 	    			to:  utcTime(event.end.format("YYYY-MM-DD HH:mm"))
 	    		}	
-	    	}
+	    	};
 	        updateWhen(feature, revertFunc, event.taskIdx);
 	    },
 	    eventResize: function(event, delta, revertFunc) {
@@ -1464,7 +1466,7 @@ function initialiseCalendar() {
 	    			from:  utcTime(event.start.format("YYYY-MM-DD HH:mm")),
 	    			to:  utcTime(event.end.format("YYYY-MM-DD HH:mm"))
 	    		}	
-	    	}
+	    	};
 	        updateWhen(feature, revertFunc, event.taskIdx);
 	    },
 	    eventClick: function(event) {
@@ -1472,6 +1474,24 @@ function initialiseCalendar() {
 				task = taskFeature.properties;
 		
 	    	editTask(false, task, taskFeature);
+	    },
+	    eventReceive: function(event) {
+	        event.taskIdx = gIdx;
+	        var feature = {
+		    		properties: {
+		    			id: globals.gTaskList.features[event.taskIdx].properties.id,
+		    			from:  utcTime(event.start.format("YYYY-MM-DD HH:mm")),
+		    			to:  utcTime(event.end.format("YYYY-MM-DD HH:mm"))
+		    		}	
+		    	};
+	        
+	        globals.gTaskList.features[event.taskIdx].from = utcTime(event.start.format("YYYY-MM-DD HH:mm"));
+	        globals.gTaskList.features[event.taskIdx].to = utcTime(event.end.format("YYYY-MM-DD HH:mm"));
+	        updateWhen(feature, undefined, event.taskIdx);
+	    },
+	    drop: function() {
+	    	gIdx = $(this).data("idx");
+	    	$(this).remove();
 	    },
 	    events: events
 	    
@@ -1565,7 +1585,10 @@ function getEvents() {
 			}
 			events.push(event);
 		} else {
-			h[++idx] = '<div class="external-event navy-bg">';
+			h[++idx] = '<div class="external-event navy-bg" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" data-start="09:00" data-duration = "01:00"';
+			h[++idx] = '>';	
 			h[++idx] = task.name;
 			h[++idx] = '</div>';
 		}
