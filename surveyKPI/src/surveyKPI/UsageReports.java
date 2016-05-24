@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.UsagePDFManager;
+import org.smap.sdal.managers.MiscPDFManager;
 
 /*
  * Creates a PDF
@@ -98,8 +98,8 @@ public class UsageReports extends Application {
 		String org_name = GeneralUtilityMethods.getOrganisationName(connectionSD, oId);
 		
 		try {
-			UsagePDFManager pm = new UsagePDFManager();
-			pm.createPdf(
+			MiscPDFManager pm = new MiscPDFManager();
+			pm.createUsagePdf(
 					connectionSD,
 					response.getOutputStream(),
 					basePath, 

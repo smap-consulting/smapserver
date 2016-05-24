@@ -421,6 +421,11 @@ public class XLSTaskManager {
 			Map<String, CellStyle> styles,
 			ArrayList<Column> cols) throws IOException {
 		
+		DataFormat format = wb.createDataFormat();
+		CellStyle styleTimestamp = wb.createCellStyle();
+		styleTimestamp.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));
+		
+		
 		for(TaskFeature feature : tl.features)  {
 			
 			TaskProperties props = feature.properties;
@@ -430,8 +435,10 @@ public class XLSTaskManager {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
 				cell.setCellStyle(styles.get("default"));	
-				String value = col.getValue(props);
 				cell.setCellValue(col.getValue(props));
+				if(col.name.equals("from") || col.name.equals("to")) {
+					cell.setCellStyle(styleTimestamp);
+				}
 	        }
 			
 		}

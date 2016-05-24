@@ -32,6 +32,9 @@ import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
+import org.smap.sdal.model.TaskFeature;
+import org.smap.sdal.model.TaskListGeoJson;
+import org.smap.sdal.model.TaskProperties;
 import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
@@ -95,12 +98,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 /*
- * Manage the table that stores details on the forwarding of data onto other systems
+ * Manage the creation of PDFS on usage
  */
-public class UsagePDFManager {
+public class MiscPDFManager {
 	
 	private static Logger log =
-			 Logger.getLogger(UsagePDFManager.class.getName());
+			 Logger.getLogger(MiscPDFManager.class.getName());
 	
 	int marginLeft = 36;
 	int marginRight = 36;
@@ -139,7 +142,7 @@ public class UsagePDFManager {
 	 * Call this function to create a PDF
 	 * Return a suggested name for the PDF file derived from the results
 	 */
-	public void createPdf(
+	public void createUsagePdf(
 			Connection connectionSD,
 			OutputStream outputStream,
 			String basePath, 
@@ -345,6 +348,105 @@ public class UsagePDFManager {
 
 	
 	}
+	
+	
+	/*
+	 * Call this function to create a PDF
+	 * Return a suggested name for the PDF file derived from the results
+	 */
+	public void createTasksPdf(
+			Connection sd,
+			OutputStream outputStream,
+			String basePath, 
+			HttpServletResponse response,
+			int tgId) {
+		
+		try {
+			
+			// Get fonts and embed them
+			String os = System.getProperty("os.name");
+			log.info("Operating System:" + os);
+			
+			if(os.startsWith("Mac")) {
+				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
+				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
+			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
+				// Linux / Unix
+				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
+				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
+			}
+			
+			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 12); 
+			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			
+			/*
+			 * Get the tasks for this task group
+			 */
+			// Get assignments
+			TaskManager tm = new TaskManager();
+			TaskListGeoJson t = tm.getTasks(sd, tgId, false);	
+			PdfWriter writer = null;			
+				
+			/*
+			 * Create document in two passes, the second pass adds the letter head
+			 */
+				
+			// Create the underlying document as a byte array
+			Document document = new Document(PageSize.A4);
+			document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
+			writer = PdfWriter.getInstance(document, outputStream);
+				
+			writer.setInitialLeading(12);
+			writer.setPageEvent(new PageSizer()); 
+			document.open();
+			
+			PdfPTable table = new PdfPTable(4);
+			
+			// Add the header row
+			table.getDefaultCell().setBorderColor(BaseColor.LIGHT_GRAY);
+			table.getDefaultCell().setBackgroundColor(VLG);
+			
+			table.addCell("Form Name");
+			table.addCell("Task Name");
+			table.addCell("Status");
+			table.addCell("Assigned To");
+	
+			table.setHeaderRows(1);
+			
+			// Add the task data
+			
+			table.getDefaultCell().setBackgroundColor(null);
+			for(TaskFeature tf : t.features) {
+				TaskProperties p = tf.properties;
+
+				table.addCell(p.form_name);
+				table.addCell(p.name);
+				table.addCell(p.status);
+				table.addCell(p.assignee_name);
+				
+			}
+			
+
+			
+			document.add(table);
+			document.close();
+				
+		
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			
+		}  
+
+	
+	}
+	
 	
 	/*
 	 * Add the filename to the response

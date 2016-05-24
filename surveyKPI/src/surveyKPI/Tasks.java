@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -52,8 +53,11 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.MiscPDFManager;
+import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Organisation;
@@ -800,6 +804,67 @@ public class Tasks extends Application {
 		}
 		
 		return response;
+	}
+	
+	
+	/*
+	 * Get a PDF of tasks
+	 */
+	@GET
+	@Path("/pdf/{tgId}")
+	@Produces("application/x-download")
+	public Response getPDFService (@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("tgId") int tgId,
+			@QueryParam("landscape") boolean landscape) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+		
+		log.info("Create PDF for task group:" + tgId + " for record: " + tgId);
+		
+		// Authorisation - Access
+		String user = request.getRemoteUser();
+		Connection sd = SDDataSource.getConnection("createPDF");	
+		a.isAuthorised(sd, request.getRemoteUser());		
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+		// End Authorisation 
+		
+		// Get the base path
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+	
+		
+		try {
+			MiscPDFManager pm = new MiscPDFManager();  
+			
+			pm.createTasksPdf(
+					sd,
+					response.getOutputStream(),
+					basePath, 
+					response,
+					tgId);
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			throw new Exception("Exception: " + e.getMessage());
+		} finally {
+			
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+				
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Failed to close connection", e);
+			}
+			
+		}
+		return Response.ok("").build();
 	}
 
 }

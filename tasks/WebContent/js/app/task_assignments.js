@@ -121,12 +121,17 @@ $(document).ready(function() {
 		zoomToFeatureLayer('map');
 	});
 	$('#m_export_pdf').click(function () {	// Export to PDF
-		alert("Not implemented");
+		var url = '/surveyKPI/tasks/pdf/' + globals.gCurrentTaskGroup,
+			name = $('#taskgroup option:selected').text();
+	
+		downloadFile(url, name + ".pdf", 
+			"application/pdf");
 	});
 	
 	$('#m_export_xls').click(function () {	// Export to XLS
 		var url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup,
 			name = $('#taskgroup option:selected').text();
+		
 		downloadFile(url, name + ".xlsx", 
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	});
