@@ -129,7 +129,15 @@ $(document).ready(function() {
 	});
 	
 	$('#m_export_xls').click(function () {	// Export to XLS
-		var url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + "?tz=Australia/Sydney",
+		var tz = Intl.DateTimeFormat().resolvedOptions().timeZone,
+			tzParam = "",
+			url;
+		
+		if(tz) {
+			tzParam = "?tz=" + tz;
+		}
+		
+		url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + tzParam,
 			name = $('#taskgroup option:selected').text();
 		
 		downloadFile(url, name + ".xlsx", 

@@ -13,10 +13,10 @@ then
 	rm -rf $4
 	rm $4.zip
 	mkdir $4
-#	echo "pgsql2shp -f $4/$2 -u ws -P ws1234 $1 \"$3\""
-#	pgsql2shp -f $4/$2 -u ws -P ws1234 $1 "$3"
-	echo  "ogr2ogr -f \"ESRI Shapefile\" $4/$2 PG:\"host=localhost user=ws dbname=$1 password=ws1234\" -sql \"$3\""
-	ogr2ogr -f "ESRI Shapefile" $4/$2 PG:"dbname=$1 host=localhost user=ws password=ws1234" -sql "$3"
+	echo "pgsql2shp -f $4/$2 -u ws -P ws1234 $1 \"$3\""
+	pgsql2shp -f $4/$2 -u ws -P ws1234 $1 "$3"
+#	echo  "ogr2ogr -f \"ESRI Shapefile\" $4/$2 PG:\"host=localhost user=ws dbname=$1 password=ws1234\" -sql \"$3\""
+#	ogr2ogr -f "ESRI Shapefile" $4/$2 PG:"dbname=$1 host=localhost user=ws password=ws1234" -sql "$3"
 	zip -rj $4.zip $4
 fi
 if [ "$5" = "media" ]

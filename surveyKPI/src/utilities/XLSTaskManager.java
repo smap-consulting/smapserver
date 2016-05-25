@@ -149,13 +149,15 @@ public class XLSTaskManager {
 	public TaskListGeoJson getXLSTaskList(String type, InputStream inputStream) throws IOException {
 		
 		Sheet sheet = null;
+		Sheet settingsSheet = null;
         Row row = null;
         int lastRowNum = 0;
         TaskListGeoJson tl = new TaskListGeoJson();
         tl.features = new ArrayList<TaskFeature> ();
         HashMap<String, Integer> header = null;
         String sv= null;
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm zzz");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+		String tz = "GMT";
         
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook(inputStream);
@@ -163,7 +165,35 @@ public class XLSTaskManager {
 			wb = new XSSFWorkbook(inputStream);
 		}
 		
-		sheet = wb.getSheetAt(0);
+		/*
+		 * Get the task sheet settings
+		 */
+		settingsSheet = wb.getSheet("settings");
+		if(settingsSheet.getPhysicalNumberOfRows() > 0) {
+			int lastSettingsRow = settingsSheet.getLastRowNum();
+			for(int j = 0; j <= lastSettingsRow; j++) {
+				row = settingsSheet.getRow(j);
+                
+                if(row != null) {         	
+                    int lastCellNum = row.getLastCellNum();
+                    if(lastCellNum > 0) {
+                    	Cell c = row.getCell(0);
+                    	String k = c.getStringCellValue();
+                    	if(k != null && k.trim().toLowerCase().equals("time zone:")) {
+                    		c = row.getCell(1);
+                    		tz = c.getStringCellValue();
+                    		break;
+                    	}
+                    }
+                }
+			}
+		}
+		
+		System.out.println("Getting tasks worksheet with timezone: " + tz);
+		ZoneId timeZoneId = ZoneId.of(tz);
+		ZoneId gmtZoneId = ZoneId.of("GMT");
+		
+		sheet = wb.getSheet("tasks");
 		if(sheet.getPhysicalNumberOfRows() > 0) {
 			
 			lastRowNum = sheet.getLastRowNum();
@@ -197,10 +227,9 @@ public class XLSTaskManager {
                 					getColumn(row, "lat", header, lastCellNum, "0") + ")";
                 			
                 			// Get from value
-                			sv = getColumn(row, "from", header, lastCellNum, null);
-                			System.out.println("from: " + sv);
-                		    Date parsedDate = dateFormat.parse(sv);
-                			tp.from = new Timestamp(parsedDate.getTime());
+                			tp.from = getGmtDate(row, "from", header, lastCellNum, timeZoneId, gmtZoneId);
+                			tp.to = getGmtDate(row, "to", header, lastCellNum, timeZoneId, gmtZoneId);
+                		    
                 			tl.features.add(tf);
                 		} catch (Exception e) {
                 			log.log(Level.SEVERE, e.getMessage(), e);
@@ -215,6 +244,17 @@ public class XLSTaskManager {
 		return tl;
 		
 		
+	}
+	
+	/*
+	 * Get a GMT date from the spreadsheet
+	 */
+	Timestamp getGmtDate(Row row, String name, HashMap<String, Integer> header, int lastCellNum, ZoneId timeZoneId, ZoneId gmtZoneId) throws Exception {
+		LocalDateTime localDate = getDateColumn(row, name, header, lastCellNum, null).toLocalDateTime();
+		ZonedDateTime localZoned = ZonedDateTime.of(localDate, timeZoneId);
+		ZonedDateTime gmtZoned = localZoned.withZoneSameInstant(gmtZoneId);
+		
+		return Timestamp.valueOf(gmtZoned.toLocalDateTime());
 	}
 	
 	/*
@@ -381,6 +421,36 @@ public class XLSTaskManager {
 		}
 		
 		return value;
+	}
+	
+	/*
+	 * Get the timestamp value of a cell at the specified column
+	 */
+	private Timestamp getDateColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum, String def) throws Exception {
+		
+		Integer cellIndex;
+		int idx;
+		Timestamp tsValue = null;
+	
+		cellIndex = header.get(name);
+		if(cellIndex != null) {
+			idx = cellIndex;
+			if(idx <= lastCellNum) {
+				Cell c = row.getCell(idx);
+				if(c != null) {
+					log.info("Get date column: " + name);
+					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+						if (HSSFDateUtil.isCellDateFormatted(c)) {
+							tsValue = new Timestamp(c.getDateCellValue().getTime());
+						} 
+					} 
+				}
+			}
+		} else {
+			throw new Exception("Column " + name + " not found");
+		}
+		
+		return tsValue;
 	}
 	
 	/*
