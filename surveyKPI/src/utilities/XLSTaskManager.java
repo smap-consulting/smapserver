@@ -552,8 +552,16 @@ public class XLSTaskManager {
 					LocalDateTime gmtDate = col.getDateValue(props).toLocalDateTime();
 					ZonedDateTime gmtZoned = ZonedDateTime.of(gmtDate, gmtZoneId);
 					ZonedDateTime localZoned = gmtZoned.withZoneSameInstant(timeZoneId);
+					LocalDateTime localDate = localZoned.toLocalDateTime();
 					Timestamp ts = new Timestamp(localZoned.getLong(ChronoField.INSTANT_SECONDS) * 1000L);
-					cell.setCellValue(ts);
+					Timestamp ts2 = Timestamp.valueOf(localDate);
+					System.out.println("gmtDate:" + gmtDate.toString());
+					System.out.println("gmtZoned:" + gmtZoned.toString());
+					System.out.println("localZoned:" + localZoned.toString());
+					System.out.println("ts:" + ts.toString());
+					System.out.println("ts2:" + ts2.toString());
+					
+					cell.setCellValue(ts2);
 				} else {
 					cell.setCellStyle(styles.get("default"));	
 					cell.setCellValue(col.getValue(props));
