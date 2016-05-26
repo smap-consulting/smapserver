@@ -299,6 +299,8 @@ $(document).ready(function() {
 			registerForNewTasks();
 		}
 		
+		// Clear form
+		$('#assign_survey_form')[0].reset();
 		// open the modal
 		$('#addTask').modal("show");
 

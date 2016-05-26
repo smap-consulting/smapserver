@@ -373,6 +373,7 @@ public class AllAssignments extends Application {
 		PreparedStatement pstmtCheckGeom = null;
 		PreparedStatement pstmtTaskGroup = null;
 		PreparedStatement pstmtGetSurveyIdent = null;
+		PreparedStatement pstmtUniqueTg = null;
 		
 		try {
 			connectionRel = ResultsDataSource.getConnection("surveyKPI-AllAssignments");
@@ -385,6 +386,24 @@ public class AllAssignments extends Application {
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			ResultSet keys = null;
 			if(as.task_group_id <= 0) {
+				
+				/*
+				 * Check that a task group of this name does not already exist
+				 * This would be better implemented as a constraint on the database but existing customers probably have task
+				 *  groups with duplicate names
+				 */
+				String checkUniqeTg = "select count(*) from task_group where name = ? and p_id = ?;";
+				pstmtUniqueTg = connectionSD.prepareStatement(checkUniqeTg);
+				pstmtUniqueTg.setString(1, as.task_group_name);
+				pstmtUniqueTg.setInt(2, projectId);
+				log.info("Check uniqueness of task group name in project: " + pstmtUniqueTg.toString());
+				ResultSet rs = pstmtUniqueTg.executeQuery();
+				
+				if(rs.next()) {
+					if(rs.getInt(1) > 0) {
+						throw new Exception("Task Group Name " + as.task_group_name + " already Exists");
+					}
+				}
 				
 				String addressParams = gson.toJson(as.address_columns); 	
 				String tgSql = "insert into task_group ( "
@@ -843,6 +862,7 @@ public class AllAssignments extends Application {
 			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
 			if(pstmtTaskGroup != null) try {	pstmtTaskGroup.close(); } catch(SQLException e) {};
 			if(pstmtGetSurveyIdent != null) try {	pstmtGetSurveyIdent.close(); } catch(SQLException e) {};
+			if(pstmtUniqueTg != null) try {	pstmtUniqueTg.close(); } catch(SQLException e) {};
 			if (connectionSD != null) try { 
 				connectionSD.setAutoCommit(true);
 				connectionSD.close(); 
