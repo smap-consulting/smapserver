@@ -339,7 +339,6 @@ public class Tasks extends Application {
 				response = Response.serverError().entity("no file found").build();
 			}
 			
-			return response;
 			
 		} catch(FileUploadException ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
@@ -359,7 +358,7 @@ public class Tasks extends Application {
 			
 		}
 		
-		
+		return response;
 	}
 	
 	/*
