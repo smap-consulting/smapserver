@@ -261,8 +261,6 @@ public class Tasks extends Application {
 		Response response = null;
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
-
-		log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: ");
 		
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
@@ -277,12 +275,14 @@ public class Tasks extends Application {
 			 */
 			List<?> items = uploadHandler.parseRequest(request);
 			Iterator<?> itr = items.iterator();
+			String fileName = null;
+			FileItem fileItem = null;
+			String filetype = null;
 
 			while(itr.hasNext()) {
+				
 				FileItem item = (FileItem) itr.next();
-				
-				// Get form parameters
-				
+				// Get form parameters	
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					
@@ -293,8 +293,9 @@ public class Tasks extends Application {
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
 					
-					String fileName = item.getName();
-					String filetype = null;
+					fileName = item.getName();
+					fileItem = item;
+					
 					if(fileName.endsWith("xlsx")) {
 						filetype = "xlsx";
 					} else if(fileName.endsWith("xls")) {
@@ -304,34 +305,41 @@ public class Tasks extends Application {
 						continue;	
 					}
 	
-					// Authorisation - Access
-					sd = SDDataSource.getConnection("Tasks-LocationUpload");
-					a.isAuthorised(sd, request.getRemoteUser());
-					// End authorisation
-
-					// Process xls file
-					XLSTaskManager xf = new XLSTaskManager();
-					ArrayList<Location> locations = xf.convertWorksheetToTagArray(item.getInputStream(), filetype);
-					
-					// Save locations to disk
-					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
-					TaskManager tm = new TaskManager();
-					tm.saveLocations(sd, locations, oId);
-					
-					// Return tags to calling program
-					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-					String resp = gson.toJson(locations);
-					
-					if(locations.size() > 0) {
-						response = Response.ok(resp).build();
-					} else {
-						response = Response.serverError().entity("no tags found").build();
-					}
-					
 					break;
 						
 				}
 			}
+			
+			if(fileName != null) {
+				// Authorisation - Access
+				sd = SDDataSource.getConnection("Tasks-LocationUpload");
+				a.isAuthorised(sd, request.getRemoteUser());
+				// End authorisation
+				
+				// Process xls file
+				XLSTaskManager xf = new XLSTaskManager();
+				ArrayList<Location> locations = xf.convertWorksheetToTagArray(fileItem.getInputStream(), filetype);
+				
+				// Save locations to disk
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
+				TaskManager tm = new TaskManager();
+				tm.saveLocations(sd, locations, oId);
+				
+				// Return tags to calling program
+				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				String resp = gson.toJson(locations);
+				
+				if(locations.size() > 0) {
+					response = Response.ok(resp).build();
+				} else {
+					response = Response.serverError().entity("no tags found").build();
+				}
+			} else {
+				response = Response.serverError().entity("no file found").build();
+			}
+			
+			return response;
 			
 		} catch(FileUploadException ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
@@ -351,7 +359,6 @@ public class Tasks extends Application {
 			
 		}
 		
-		return response;
 		
 	}
 	
