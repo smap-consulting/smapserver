@@ -37,13 +37,19 @@ $(document).ready(function() {
 	 * Add functionality to control buttons
 	 */
 	$('#delete_survey').click(function () {
-		surveyDelete();
+		if(!$(this).hasClass("disabled")) {
+			surveyDelete();
+		}
 	});
 	$('#erase_survey').click(function () {
-		surveyErase();
+		if(!$(this).hasClass("disabled")) {
+			surveyErase();
+		}
 	});
 	$('#un_delete_survey').click(function () {
-		surveyUnDelete();
+		if(!$(this).hasClass("disabled")) {
+			surveyUnDelete();
+		}
 	});
 	$('#show_deleted').click(function() {
 		gShowDeleted = $('#show_deleted').is(':checked');

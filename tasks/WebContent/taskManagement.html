@@ -22,8 +22,6 @@
     <link href="/css/wb/style.css" rel="stylesheet">
     	
     <link rel="stylesheet" href="/css/smap-wb.css" type="text/css">
-    
-    
     <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
 
 <script> if (!window.console) console = {log: function() {}}; </script>
@@ -94,34 +92,25 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
-	            	<!-- 
-	            	<li><button class="btn btn-success lang" data-lang="t_add_group" id="addTaskGroup" type="button">add task group</button></li>
-	            	<li><button class="btn btn-danger lang" data-lang="t_del_group" id="deleteTaskGroup" type="button">del task group</button></li>
-	          		-->
+	            	
 	          		 <li class="dropdown">
 	                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
 	                        <span class="lang" data-lang="t_tasks">Tasks</span>
 	                    </a>
 	                    <ul class="dropdown-menu dropdown-alerts">
 	                        <li>	
-	                            <a class="btn-success" href="#" id="addSingleTask">
-	                                <div>
-	                                	<span class="lang" data-lang="t_add_task">add task</span>
-	                                </div>
+	                            <a type="button" href="#" id="addSingleTask">
+	                                <span class="lang" data-lang="t_add_task">add task</span>
 	                            </a>
 	                        </li>
 	                        <li>	
-	                            <a class="btn-success" href="#" id="assignUser">
-	                                <div>
+	                            <a type="button" class="btn for_selected" href="#" id="assignUser">
 	                                	<span class="lang" data-lang="t_assign">add task</span>
-	                                </div>
 	                            </a>
 	                        </li>
 	                        <li>
-	                            <a class="btn-danger" href="#" id="deleteTasks">
-	                                 <div>
-	                                	<span class="lang" data-lang="c_del_sel">del tasks</span>
-	                                </div>
+	                            <a type="button" class="btn for_selected" href="#" id="deleteTasks">
+	                                <span class="lang" data-lang="c_del_sel">del tasks</span>
 	                            </a>
 	                        </li>
 	                       

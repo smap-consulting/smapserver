@@ -40,7 +40,9 @@ var gTasks,					// Object containing the task data retrieved from the database
 	gCalendarInitialised = false,	// Set true when the calendar pane has been initialised
 	gMapInitialised = false,		// Set true when the map pane has been initialised
 	gModalMapInitialised = false,	// Set true then the modal map has been initialised
-	gIdx = 0;						// Idx set when external task dropped on calendar
+	gIdx = 0,						// Idx set when external task dropped on calendar
+	gSelectedCount = 0;
+
 $(document).ready(function() {
 	
 	var bs = isBusinessServer();
@@ -153,7 +155,7 @@ $(document).ready(function() {
     $('.file-inputs').bootstrapFileInput();
 	
 	// Add a trigger to open the modal that bulk assigns a user to tasks
-	$('#assignUser').button().click(function () {
+	$('#assignUser').click(function () {
 		
 		globals.gCurrentUserName = $('#users_select_user option:selected').text();
 		globals.gCurrentUserId = $('#users_select_user option:selected').val();
@@ -281,7 +283,7 @@ $(document).ready(function() {
 	})
 		
 	// Create new task group
-	$('#addTaskGroup').button().click(function () {
+	$('#addTaskGroup').click(function () {
 		var taskSource = $('input[name=task_source]:checked', '#assign_survey_form').val(),
 			s_id = $('#survey').val();
 		
@@ -394,7 +396,7 @@ $(document).ready(function() {
 	 * Function to delete current task group
 	 * Keep
 	 */
-	$('#deleteTaskGroup').button().click(function () {
+	$('#deleteTaskGroup').click(function () {
 		
 		var tg_id = globals.gCurrentTaskGroup;
 		
@@ -436,7 +438,7 @@ $(document).ready(function() {
 	
 	
 	// Delete Tasks button 
-	$('#deleteTasks').button().click(function () {
+	$('#deleteTasks').click(function () {
 		
 		var bulkAction = {
 				action: "delete",
@@ -1052,6 +1054,9 @@ function refreshTableAssignments() {
 		i,
 		item;
 	
+	gSelectedCount = 0;
+	$('.for_selected').addClass('disabled');
+	
 	if(typeof tasks != "undefined") {
 		
 		$('#task_table_body').empty().html(getTableBody(tasks));
@@ -1068,7 +1073,18 @@ function refreshTableAssignments() {
 				idx = $this.val(),
 				selected = $this.is(':checked');
 			
-
+			if(selected) {
+				gSelectedCount++;
+			} else {
+				gSelectedCount--;
+			}
+			
+			if(gSelectedCount > 0) {
+				$('.for_selected').removeClass('disabled');
+			} else {
+				$('.for_selected').addClass('disabled');
+			}
+			
 			globals.gTaskList.features[idx].properties.selected = selected;
 			if(gMapInitialised) {
 				refreshMapAssignments('map', globals.gTaskList);
