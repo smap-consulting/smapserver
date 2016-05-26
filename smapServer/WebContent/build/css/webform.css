@@ -7826,6 +7826,21 @@ input:not([type="radio"]):not([type="checkbox"]), textarea {
   right: 20px;
   bottom: 45px;
 }
+
+.jump-nav {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    -moz-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: nowrap;
+    -ms-flex-wrap: nowrap;
+    -moz-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+}
+
 .form-footer .first-page, .form-footer .last-page {
   width: 50%;
   opacity: 0.7;

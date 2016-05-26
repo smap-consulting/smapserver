@@ -82,13 +82,6 @@ public class WebForm extends Application{
 	private static Logger log =
 			 Logger.getLogger(WebForm.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(WebForm.class);
-		return s;
-	}
-	
 	class SurveyData {
 		String modelStr;
 		String instanceStrToEdit;
@@ -328,24 +321,6 @@ public class WebForm extends Application{
 		// Generate the web form
 		try {	    
 
-			// Get the XML of the Form
-			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
-			String surveyClass = template.getSurveyClass();
-			
-			//template.printModel();	// debug
-			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true);		
-			
-			// If required get the instance data 
-			String instanceXML = null;
-			String instanceStrToEditId = null;
-			if(datakey != null && datakeyvalue != null) {
-				xForm = new GetXForm();
-				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0, simplifyMedia);
-				instanceStrToEditId = xForm.getInstanceId();
-			}
-			
 			/*
 			 * Get the media manifest so we can set the url's of media files used the form
 			 */
@@ -374,6 +349,25 @@ public class WebForm extends Application{
 	            	log.log(Level.SEVERE, "Failed to close connection", e);
 	            }
 			}
+			
+			// Get the XML of the Form
+			SurveyTemplate template = new SurveyTemplate();
+			template.readDatabase(survey.id);
+			String surveyClass = template.getSurveyClass();
+			
+			//template.printModel();	// debug
+			GetXForm xForm = new GetXForm();
+			String formXML = xForm.get(template, true);		
+			
+			// If required get the instance data 
+			String instanceXML = null;
+			String instanceStrToEditId = null;
+			if(datakey != null && datakeyvalue != null) {
+				xForm = new GetXForm();
+				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0, simplifyMedia);
+				instanceStrToEditId = xForm.getInstanceId();
+			}
+			
     		
 			if(mimeType.equals("json")) {
 				jr = new JsonResponse();
@@ -396,7 +390,11 @@ public class WebForm extends Application{
     					mv.url = url;
     					jr.manifestList.add(mv);
     				} else {
-    					formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
+    					if(type.equals("csv")) {
+    						//formXML = formXML.replaceFirst("</instance>", "</instance><instance id=\"hhplotdetails\" src=\"/media/organisation/1/hhplotdetails.csv\" />");
+    					} else {
+    						formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
+    					}
     				}
     			}
 			}
@@ -436,7 +434,11 @@ public class WebForm extends Application{
 					outputString.append(")");
 				}
     		} else {
-    			outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, assignmentId, survey.surveyClass, orgId, accessKey));
+    			outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, 
+    					assignmentId, 
+    					survey.surveyClass, 
+    					orgId, 
+    					accessKey));
     		}
     		
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
@@ -869,21 +871,26 @@ public class WebForm extends Application{
 		output.append("<section class='form-footer'>\n");
 		output.append("<div class='content'>\n");
 		output.append("<fieldset class='draft question'><div class='option-wrapper'><label class='select'><input class='ignore' type='checkbox' name='draft'/><span class='option-label'>Save as Draft</span></label></div></fieldset>\n");
-		output.append("<div class='main-controls'>\n");
-		if(surveyClass !=null && surveyClass.contains("pages")) {
-			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
-			output.append("<a class='next-page' href='#'>Next</span></a>\n");
-		}
 		
+		output.append("<div class='main-controls'>\n");
 		if(dataToEditId == null) {
 			output.append("<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>\n");
 		} else {
 			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
 		}
-				
+		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
+		output.append("<a class='next-page' href='#'>Next</span></a>\n");
 		output.append("</div>\n");	// main controls
-		output.append("<a class='btn btn-default disabled first-page' href='#'>Return to Beginning</a>\n");
-		output.append("<a class='btn btn-default disabled last-page' href='#'>Go to End</a>\n");
+		
+		if(surveyClass !=null && surveyClass.contains("pages")) {
+			
+			output.append("<div class='jump-nav'>\n");
+			output.append("<a class='btn btn-default disabled first-page' href='#'>Return to Beginning</a>\n");
+			output.append("<a class='btn btn-default disabled last-page' href='#'>Go to End</a>\n");
+			output.append("</div>");
+		}
+				
+
 		output.append("</div>\n");	// content
 		output.append("</section> <!-- end form-footer -->\n");
 		
