@@ -1138,6 +1138,7 @@ function editTask(isNew, task, taskFeature) {
 	$('#tp_name').val(task.name);		// name
 	$('#tp_form_name').val(taskFeature.properties.form_id);	// form id
 	$('#tp_user').val(taskFeature.properties.assignee);	// assignee
+	$('#tp_repeat').prop('checked', taskFeature.properties.repeat);
 
 	// Set end date first as otherwise since it will be null, it will be defaulted when from date set
 	if(task.to) {
@@ -1348,6 +1349,12 @@ function getTableBody(tasks) {
 			tab[++idx] = '<td>';			// Blocked
 			if(task.properties.blocked) {
 				tab[++idx] = '<i class="fa fa-ban has_tt" title="Survey Blocked"></i>';	// Survey Blocked
+			} 
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';			// Repeat Count
+			if(task.properties.repeat) {
+				tab[++idx] = task.properties.repeat_count;	
 			} 
 			tab[++idx] = '</td>';
 			

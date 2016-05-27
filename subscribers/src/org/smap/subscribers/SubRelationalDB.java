@@ -201,6 +201,7 @@ public class SubRelationalDB extends Subscriber {
 		Connection connectionSD = null;
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtGetUploadEvent = null;
+		PreparedStatement pstmtRepeats = null;
 		
 		String sqlGetUploadEvent = "select ue.assignment_id " +
 				" from upload_event ue " +
@@ -212,13 +213,16 @@ public class SubRelationalDB extends Subscriber {
 				"and a.assignee IN (SELECT id FROM users u " +
 					"where u.ident = ?);";
 		
+		String sqlRepeats = "UPDATE tasks SET repeat_count = repeat_count + 1 " +
+				"where id = (select task_id from assignments where id = ?);";
+		
 		
 		try {
 			connectionSD = DriverManager.getConnection(databaseMeta, user, password);
 			
 			pstmtGetUploadEvent = connectionSD.prepareStatement(sqlGetUploadEvent);
 			pstmt = connectionSD.prepareStatement(sql);
- 		
+			pstmtRepeats = connectionSD.prepareStatement(sqlRepeats);
 			pstmtGetUploadEvent.setInt(1, ue_id);
 			ResultSet rs = pstmtGetUploadEvent.executeQuery();
 			
@@ -229,6 +233,10 @@ public class SubRelationalDB extends Subscriber {
 					pstmt.setString(2, remoteUser);
 					System.out.println("Updating assignment status: " + pstmt.toString());
 					pstmt.executeUpdate();
+					
+					pstmtRepeats.setInt(1, assignment_id);
+					System.out.println("Updating task repeats: " + pstmtRepeats.toString());
+					pstmtRepeats.executeUpdate();
 				}
 				
 
@@ -241,6 +249,7 @@ public class SubRelationalDB extends Subscriber {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
+			try {if (pstmtRepeats != null) {pstmtRepeats.close();}} catch (SQLException e) {}
 			
 			try {
 				if (connectionSD != null) {

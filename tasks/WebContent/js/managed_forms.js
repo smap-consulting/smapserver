@@ -505,7 +505,7 @@ require([
 			 }
 			 h[++idx] = '<td><a data-toggle="modal" href="#editRecord" data-index="';
 			 h[++idx] = j;
-			 h[++idx] = '"><i class="fa fa-check text-navy"></i></a></td>';
+			 h[++idx] = '"><i class="fa fa-edit text-navy"></i></a></td>';
 			 h[++idx] = '</tr>';
 			 
 		 }

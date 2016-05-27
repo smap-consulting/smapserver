@@ -500,3 +500,4 @@ ALTER TABLE general_settings OWNER TO ws;
 
 alter table tasks alter column schedule_finish type timestamp;
 alter table tasks alter column schedule_at type timestamp;
+alter table tasks add column repeat_count integer default 0;

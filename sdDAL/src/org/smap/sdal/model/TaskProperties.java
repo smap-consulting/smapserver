@@ -22,6 +22,7 @@ public class TaskProperties {
 	public Timestamp to;
 	public String location_trigger;
 	public boolean repeat;
+	public int repeat_count;
 	public String address;			// Text address
 	public String guidance;			// Key value pairs representing an unstructured address
 	public String email;

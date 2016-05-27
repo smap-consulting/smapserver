@@ -218,6 +218,8 @@ public class TaskManager {
 				+ "t.address as address,"
 				+ "t.guidance as guidance,"
 				+ "t.email as email,"
+				+ "t.repeat as repeat,"
+				+ "t.repeat_count as repeat_count,"
 				+ "s.s_id as form_id,"
 				+ "s.display_name as form_name,"
 				+ "s.blocked as blocked,"
@@ -294,6 +296,8 @@ public class TaskManager {
 				tf.properties.address = rs.getString("address");
 				tf.properties.guidance = rs.getString("guidance");
 				tf.properties.email = rs.getString("email");
+				tf.properties.repeat = rs.getBoolean("repeat");
+				tf.properties.repeat_count = rs.getInt("repeat_count");
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");
@@ -764,7 +768,8 @@ public class TaskManager {
 				"address," +
 				"schedule_at," +
 				"schedule_finish," +
-				"location_trigger) " +
+				"location_trigger,"
+				+ "repeat) " +
 			"values (" +
 				"?, " + 
 				"?, " + 
@@ -779,7 +784,8 @@ public class TaskManager {
 				"?," +
 				"?," + 
 				"?," + 
-				"?);";	
+				"?,"
+				+ "?);";	
 		PreparedStatement pstmt = null;
 		
 		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
@@ -901,6 +907,7 @@ public class TaskManager {
 			System.out.println("Adding from: " + tf.properties.from);
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
+			pstmt.setBoolean(14, tf.properties.repeat);
 			
 			log.info("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();
