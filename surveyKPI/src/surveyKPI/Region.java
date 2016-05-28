@@ -114,6 +114,7 @@ public class Region extends Application {
 		
 			log.info("SQL: " + sql + " : " + region);
 			
+			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
 			pstmt = connection.prepareStatement(sql);	 			
 			resultSet = pstmt.executeQuery();
 
@@ -162,14 +163,7 @@ public class Region extends Application {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
 			
-			try {
-				if (connection != null) {
-					connection.close();
-					connection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Region", connection);
 		}
 
 		//System.out.println(ja.toString());

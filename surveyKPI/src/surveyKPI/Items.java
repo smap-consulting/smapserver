@@ -529,14 +529,7 @@ public class Items extends Application {
 					log.log(Level.SEVERE,"Error: Failed to close connection", e);
 				}
 				
-				try {
-					if (connection != null) {
-						connection.close();
-						connection = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE,"Error: Failed to close connection", e);
-				}
+				ResultsDataSource.closeConnection("surveyKPI-Items", connection);	
 			}
 		}
 
@@ -619,14 +612,7 @@ public class Items extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (cRel != null) {
-					cRel.close();
-					cRel = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Items", cRel);
 		}
 		
 		return response;

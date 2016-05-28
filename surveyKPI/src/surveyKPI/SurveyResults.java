@@ -184,14 +184,7 @@ public class SurveyResults extends Application {
 						log.log(Level.SEVERE,"Survey: Failed to close connection", e);
 					}
 
-					try {
-						if (connectionRel != null) {
-							connectionRel.close();
-							connectionRel = null;
-						}
-					} catch (SQLException e) {
-						log.log(Level.SEVERE, "Survey: Failed to close connection", e);
-					}
+					ResultsDataSource.closeConnection("surveyKPI-SurveyResults", connectionRel);
 				}
 			}
 

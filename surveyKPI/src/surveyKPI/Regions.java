@@ -305,14 +305,7 @@ public class Regions extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (connection != null) {
-					connection.setAutoCommit(true);
-					connection.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Regions", connection);
 		}
 		
 		return response;
@@ -431,14 +424,7 @@ public class Regions extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (connection != null) {
-					connection.setAutoCommit(true);
-					connection.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Regions", connection);
 		}
 		
 		return response;

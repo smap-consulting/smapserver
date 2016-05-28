@@ -299,14 +299,8 @@ public class UserList extends Application {
 			} catch (SQLException e) {
 			
 			}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection: ", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+
 		}
 
 		return response;

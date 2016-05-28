@@ -297,14 +297,7 @@ public class Data extends Application {
 			
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close results connection", e);
-			}
+			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);
 			
 			try {
 				if (sd != null) {

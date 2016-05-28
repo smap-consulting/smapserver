@@ -133,6 +133,7 @@ public class Table extends Application {
 				if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
 				if(pstmtGetType != null) try {	pstmtGetType.close(); } catch(SQLException e) {};
 				if (connectionSD != null) try { connectionSD.close();	} catch(SQLException e) {};
+				ResultsDataSource.closeConnection("surveyKPI-Table", connectionRel);
 			}
 
 		}

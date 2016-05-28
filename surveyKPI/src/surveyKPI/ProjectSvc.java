@@ -199,14 +199,7 @@ public class ProjectSvc extends Application {
 			
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-ProjectSvc", dConnection);
 		}
 
 

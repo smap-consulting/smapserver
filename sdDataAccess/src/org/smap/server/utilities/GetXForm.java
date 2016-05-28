@@ -1053,15 +1053,7 @@ public class GetXForm {
 				instanceXML = "";
 			}
 		} finally {
-			try {
-            	if (cResults != null) {
-            		cResults.close();
-            		cResults = null;
-            	}
-            	log.info("   Release results connection: " + requester);
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }	
+			ResultsDataSource.closeConnection(requester, cResults);
 			
 			try {
             	if (sd != null) {

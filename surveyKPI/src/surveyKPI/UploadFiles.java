@@ -226,13 +226,7 @@ public class UploadFiles extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("fieldManager-MediaUpload", cResults);
 		}
 		
 		return response;

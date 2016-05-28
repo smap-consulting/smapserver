@@ -183,13 +183,7 @@ public class ManagedForms extends Application {
 				log.log(Level.SEVERE, "SQL Error", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
 		}
 
 
@@ -326,13 +320,7 @@ public class ManagedForms extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Add Managed Forms", cResults);
 		}
 		
 		return response;
@@ -525,13 +513,7 @@ public class ManagedForms extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Update Managed Forms", cResults);
 		}
 		
 		return response;
@@ -569,8 +551,6 @@ public class ManagedForms extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
-
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
 		
 		try {
 

@@ -127,15 +127,7 @@ public class CreateXLSForm extends Application {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("createXLSForm", cResults);
 			
 		}
 		return Response.ok("").build();

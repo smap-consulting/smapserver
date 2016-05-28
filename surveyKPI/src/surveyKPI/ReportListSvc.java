@@ -322,13 +322,7 @@ public class ReportListSvc extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (connection != null) {
-					connection.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
 		return response;
@@ -661,14 +655,7 @@ public class ReportListSvc extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (connection != null) {
-					connection.close();
-					connection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
 		return response;
@@ -783,14 +770,7 @@ public class ReportListSvc extends Application {
 					log.log(Level.SEVERE, "Failed to close connection", e);
 				}
 				
-				try {
-					if (connectionRel != null) {
-						connectionRel.close();
-						connectionRel = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close connection", e);
-				}
+				ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connectionRel);		
 			}
 		} else {
 			response = Response.status(Status.NOT_FOUND).entity("No ident specified").build();
@@ -1214,13 +1194,7 @@ public class ReportListSvc extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connection != null) {
-					connection.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
 		return aReport;

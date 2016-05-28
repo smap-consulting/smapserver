@@ -318,8 +318,9 @@ public class AllAssignments extends Application {
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {};
 			if (pstmtSurvey != null) try {pstmtSurvey.close();} catch (SQLException e) {};
 			if (pstmtGeo != null) try {pstmtGeo.close();} catch (SQLException e) {};		
-			try {if (connectionSD != null) {connectionSD.close();}} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
+			
+			if (connectionSD != null) {
+				SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 			}
 		}
 
@@ -863,11 +864,13 @@ public class AllAssignments extends Application {
 			if(pstmtTaskGroup != null) try {	pstmtTaskGroup.close(); } catch(SQLException e) {};
 			if(pstmtGetSurveyIdent != null) try {	pstmtGetSurveyIdent.close(); } catch(SQLException e) {};
 			if(pstmtUniqueTg != null) try {	pstmtUniqueTg.close(); } catch(SQLException e) {};
+			
 			if (connectionSD != null) try { 
 				connectionSD.setAutoCommit(true);
 				connectionSD.close(); 
 			} catch(SQLException e) {};
-			if (connectionRel != null) try { connectionRel.close(); } catch(SQLException e) {};
+			
+			ResultsDataSource.closeConnection("surveyKPI-AllAssignments", connectionRel);
 			
 		}
 		
@@ -1416,14 +1419,7 @@ public class AllAssignments extends Application {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE,"", e);
 			}
-			try {
-				if (results != null) {
-					results.setAutoCommit(true);
-					results.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", results);
 		}
 		
 		return response;

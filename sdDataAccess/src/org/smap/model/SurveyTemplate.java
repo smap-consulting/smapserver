@@ -1557,7 +1557,7 @@ public class SurveyTemplate {
 			e.printStackTrace();
 		} finally {
 			if(connectionSD != null) try{connectionSD.close();} catch(Exception e){};
-			if(cResults != null) try{cResults.close();} catch(Exception e){};
+			org.smap.sdal.Utilities.ResultsDataSource.closeConnection("fieldManager-SurveyTemplate", cResults);
 		}
 			
 	}

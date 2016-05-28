@@ -598,15 +598,7 @@ public class Survey extends Application {
 			    response = Response.serverError().entity("Survey: Failed to close connection").build();
 			}
 			
-			try {
-				if (connectionRel != null) {
-					connectionRel.close();
-					connectionRel = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
 		}
 
 		return response;
@@ -1131,14 +1123,7 @@ public class Survey extends Application {
 					log.log(Level.SEVERE, "Failed to close connection", e);
 				}
 				
-				try {
-					if (connectionRel != null) {
-						connectionRel.close();
-						connectionRel = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close connection", e);
-				}
+				ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
 			}
 		}
 

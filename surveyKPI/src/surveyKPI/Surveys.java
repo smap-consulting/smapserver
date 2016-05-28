@@ -216,15 +216,7 @@ public class Surveys extends Application {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Surveys", cResults);
 			
 		}
 
@@ -311,15 +303,7 @@ public class Surveys extends Application {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Surveys", cResults);
 			
 		}
 
@@ -348,7 +332,6 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
@@ -469,15 +452,7 @@ public class Surveys extends Application {
 				log.log(Level.SEVERE, "Failed to close connection", e);
 			}
 			
-			try {
-				if (cResults != null) {
-					cResults.close();
-					cResults = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Surveys", cResults);
 			
 		}
 

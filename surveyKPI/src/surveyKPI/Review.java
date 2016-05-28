@@ -299,14 +299,7 @@ public class Review extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Review", dConnection);
 		}
 
 		return response;
@@ -594,14 +587,7 @@ public class Review extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Audit", dConnection);
 		}
 
 
@@ -723,14 +709,7 @@ public class Review extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Audit", dConnection);
 		}
 
 
@@ -1006,14 +985,7 @@ public class Review extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-Review", dConnection);
 		}
 
 		return response;
@@ -1364,14 +1336,7 @@ public class Review extends Application {
 				log.log(Level.SEVERE,"Failed to close connection", e);
 			}
 			
-			try {
-				if (dConnection != null) {
-					dConnection.close();
-					dConnection = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("surveyKPI-ReviewResultsText", dConnection);
 		}
 
 		return response;
