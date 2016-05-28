@@ -93,7 +93,7 @@ public class Data extends Application {
 	public Response getData(@Context HttpServletRequest request) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		Connection sd = SDDataSource.getConnection("koboToolBoxAPI-getData");
 		a.isAuthorised(sd, request.getRemoteUser());
 		
 		Response response = null;
@@ -116,7 +116,7 @@ public class Data extends Application {
 			e.printStackTrace();
 			response = Response.serverError().build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
+			SDDataSource.closeConnection("koboToolBoxAPI-getData", sd);
 		}
 
 		return response;

@@ -131,7 +131,7 @@ public class Survey extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey-getSurveyDownload");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 
@@ -290,7 +290,7 @@ public class Survey extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-Survey-getSurveyDownload", connectionSD);
 			
 		}
 
@@ -326,7 +326,7 @@ public class Survey extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey-getSurveyMeta");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
@@ -359,7 +359,7 @@ public class Survey extends Application {
 			// Add the sId to the response so that it is available in the survey meta object
 			jo.put("sId", sId);
 			
-			connectionRel = ResultsDataSource.getConnection("surveyKPI-Survey");
+			connectionRel = ResultsDataSource.getConnection("surveyKPI-Survey-getSurveyMeta");
 					
 			String sql = null;
 			ResultSet resultSet = null;
@@ -580,8 +580,8 @@ public class Survey extends Application {
 			try {if (pstmtTables != null) {pstmtTables.close();}} catch (SQLException e) {}
 			try {if (pstmtGeom != null) {pstmtGeom.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
-			ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
+			SDDataSource.closeConnection("surveyKPI-Survey-getSurveyMeta", connectionSD);
+			ResultsDataSource.closeConnection("surveyKPI-Survey-getSurveyMeta", connectionRel);
 		}
 
 		return response;

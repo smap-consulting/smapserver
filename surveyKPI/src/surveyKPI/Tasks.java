@@ -113,7 +113,7 @@ public class Tasks extends Application {
 		Connection sd = null; 
 		
 		// Authorisation - Access
-		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		sd = SDDataSource.getConnection("surveyKPI - Tasks - getTaskGroups");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidProject(sd, request.getRemoteUser(), projectId);
 		// End authorisation
@@ -133,7 +133,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("fieldManager-MediaUpload", sd);
+			SDDataSource.closeConnection("surveyKPI - Tasks - getTaskGroups", sd);
 		}
 		
 		return response;
@@ -157,7 +157,7 @@ public class Tasks extends Application {
 		Connection sd = null; 
 		
 		// Authorisation - Access
-		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		sd = SDDataSource.getConnection("surveyKPI - Tasks - getTasks");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
 		// End authorisation
@@ -178,7 +178,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("fieldManager-MediaUpload", sd);
+			SDDataSource.closeConnection("surveyKPI - Tasks - getTasks", sd);
 		}
 		
 		return response;
@@ -200,7 +200,7 @@ public class Tasks extends Application {
 		Connection sd = null; 
 		
 		// Authorisation - Access
-		sd = SDDataSource.getConnection("fieldManager-MediaUpload");
+		sd = SDDataSource.getConnection("surveyKPI - Tasks - getLocations");
 		a.isAuthorised(sd, request.getRemoteUser());
 		// End authorisation
 	
@@ -221,7 +221,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("fieldManager-MediaUpload",sd);
+			SDDataSource.closeConnection("surveyKPI - Tasks - getLocations",sd);
 		}
 		
 		return response;

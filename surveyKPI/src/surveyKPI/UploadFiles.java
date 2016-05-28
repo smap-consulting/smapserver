@@ -153,7 +153,7 @@ public class UploadFiles extends Application {
 					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
 	
 					// Authorisation - Access
-					connectionSD = SDDataSource.getConnection("fieldManager-MediaUpload");
+					connectionSD = SDDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
 					if(sId > 0) {
 						surveyLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
 						surveyLevelAuth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
@@ -162,7 +162,7 @@ public class UploadFiles extends Application {
 					}
 					// End authorisation
 					
-					cResults = ResultsDataSource.getConnection("fieldManager-MediaUpload");
+					cResults = ResultsDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
 					
 					String basePath = GeneralUtilityMethods.getBasePath(request);
 					
@@ -218,8 +218,8 @@ public class UploadFiles extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
-			SDDataSource.closeConnection("fieldManager-MediaUpload", connectionSD);
-			ResultsDataSource.closeConnection("fieldManager-MediaUpload", cResults);
+			SDDataSource.closeConnection("surveyKPI - uploadFiles - sendMedia", connectionSD);
+			ResultsDataSource.closeConnection("surveyKPI - uploadFiles - sendMedia", cResults);
 		}
 		
 		return response;

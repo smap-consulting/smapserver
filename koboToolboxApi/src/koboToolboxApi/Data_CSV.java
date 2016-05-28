@@ -90,7 +90,7 @@ public class Data_CSV extends Application {
 			@Context HttpServletResponse response) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		Connection sd = SDDataSource.getConnection("koboToolBoxApi-getDataCSV");
 		a.isAuthorised(sd, request.getRemoteUser());
 		
 		StringBuffer record = null;
@@ -129,7 +129,7 @@ public class Data_CSV extends Application {
 			e.printStackTrace();
 			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
+			SDDataSource.closeConnection("koboToolBoxApi-getDataCSV", sd);
 		}
 
 
