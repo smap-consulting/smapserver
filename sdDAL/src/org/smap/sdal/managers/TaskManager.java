@@ -468,16 +468,24 @@ public class TaskManager {
 				
 				/*
 				 * Check filter to see if this rule should be fired
+				 * In addition avoid permanent loops of tasks being reassigned after completion
+				 *   Don't fire if form to be updated is the same one that has been submitted 
 				 */
 				boolean fires = false;
 				String rule = null;
-				if(as.filter != null) {
-					rule = testRule();
-					if(rule != null) {
+				// 
+				if(as.update_results 
+						&& as.source_survey_id == as.target_survey_id) {
+					log.info("Rule not fired due to circular reference");
+				} else {
+					if(as.filter != null) {
+						rule = testRule();		// TODO
+						if(rule != null) {
+							fires = true;
+						}
+					} else {
 						fires = true;
 					}
-				} else {
-					fires = true;
 				}
 				if(fires) {
 					log.info("userevent: rule fires: " + (as.filter == null ? "no filter" : "yes filter") + " for survey: " + sId);
