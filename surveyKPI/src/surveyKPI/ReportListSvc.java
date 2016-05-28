@@ -314,14 +314,7 @@ public class ReportListSvc extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-ReportListSvc", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
@@ -646,15 +639,7 @@ public class ReportListSvc extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-ReportListSvc", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
@@ -716,21 +701,16 @@ public class ReportListSvc extends Application {
 		    return response;
 		}
 		
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ReportListSvc");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
-		// End Authorisation
 		
-		String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-
-		if(basePath == null) {
-			basePath = "/smap";
-		} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
-			basePath = "/ebs1/servers/" + request.getServerName().toLowerCase();
-		}
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		if(ident != null) {
+			
+			// Authorisation - Access
+			Connection connectionSD = SDDataSource.getConnection("surveyKPI-ReportListSvc");
+			a.isAuthorised(connectionSD, request.getRemoteUser());
+			a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+			// End Authorisation
 
 			String sql = null;				
 			Connection connectionRel = null; 
@@ -758,18 +738,9 @@ public class ReportListSvc extends Application {
 				response = Response.serverError().entity(e.getMessage()).build();
 			}
 			finally {
-				try {
-					if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-ReportListSvc", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connectionRel);		
 			}
 		} else {

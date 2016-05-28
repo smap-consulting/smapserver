@@ -111,23 +111,9 @@ public class SubscriberSvc extends Application {
 			log.log(Level.SEVERE,"", e);
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-SubscriberSvc", connectionSD);
 			
 		}
 

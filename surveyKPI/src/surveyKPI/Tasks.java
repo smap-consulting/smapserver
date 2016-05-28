@@ -133,13 +133,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("fieldManager-MediaUpload", sd);
 		}
 		
 		return response;
@@ -184,13 +178,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("fieldManager-MediaUpload", sd);
 		}
 		
 		return response;
@@ -233,13 +221,7 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("fieldManager-MediaUpload",sd);
 		}
 		
 		return response;
@@ -348,13 +330,7 @@ public class Tasks extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("Tasks-LocationUpload", sd);
 			
 		}
 		
@@ -414,15 +390,7 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("createXLSTasks", sd);	
 			
 		}
 		return Response.ok("").build();
@@ -495,15 +463,7 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("createXLSTasks", sd);	
 			
 		}
 		return Response.ok("").build();
@@ -629,13 +589,7 @@ public class Tasks extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("Tasks-TaskUpload", sd);
 			
 		}
 		
@@ -688,13 +642,7 @@ public class Tasks extends Application {
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-tasks", sd);
 			
 		}
 		
@@ -746,13 +694,7 @@ public class Tasks extends Application {
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-tasks", sd);
 			
 		}
 		
@@ -805,14 +747,8 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-tasks", sd);
 			
 		}
 		
@@ -866,15 +802,7 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("createPDF", sd);	
 			
 		}
 		return Response.ok("").build();

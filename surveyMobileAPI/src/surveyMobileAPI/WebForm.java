@@ -124,14 +124,7 @@ public class WebForm extends Application{
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-				log.info("   Release sd connection: " + requester);
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection(requester, connectionSD);
 		}
 		
 		if (user == null) {
@@ -169,14 +162,7 @@ public class WebForm extends Application{
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-				log.info("   Release sd connection: " + requester);
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection(requester, connectionSD);
 		}
 		
 		return resp;
@@ -209,14 +195,7 @@ public class WebForm extends Application{
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-				log.info("   Release sd connection: " + requester);
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection(requester, connectionSD);
 		}
 		
 		if (user == null) {
@@ -300,15 +279,7 @@ public class WebForm extends Application{
     		} catch (Exception e) {
     			log.log(Level.SEVERE, "WebForm", e);
     		} finally {
-    			try {
-	            	if (connectionSD != null) {
-	            		connectionSD.close();
-	            		connectionSD = null;
-	            	}
-	            	log.info("   Release sd connection: " + requester);
-	            } catch (SQLException e) {
-	            	log.log(Level.SEVERE, "Failed to close connection", e);
-	            }	
+    			SDDataSource.closeConnection(requester, connectionSD);
     		}
         } else {
         	throw new AuthorisationException();

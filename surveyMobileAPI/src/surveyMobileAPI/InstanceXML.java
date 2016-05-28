@@ -115,15 +115,7 @@ public class InstanceXML extends Application{
 		a.isAuthorised(connectionSD, user);
 		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
 		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
-		try {
-			if (connectionSD != null) {
-				connectionSD.close();
-				connectionSD = null;
-				log.info("Closed connection: " + connectionString);
-			}
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Failed to close connection", e);
-		}
+		SDDataSource.closeConnection(connectionString, connectionSD);
 		// End Authorisation
 		 
 		// Extract the data

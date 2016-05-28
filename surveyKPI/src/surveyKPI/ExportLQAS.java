@@ -244,16 +244,7 @@ public class ExportLQAS extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("createLQAS", sd);		
 			ResultsDataSource.closeConnection("createLQAS", cResults);
 			
 		}

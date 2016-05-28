@@ -79,14 +79,7 @@ public class ReportLogs extends Application {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-				log.info("    Release definitions connection " + requester);
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection(requester, connectionSD);
 		}
 		
 		if (user == null) {
@@ -154,15 +147,7 @@ public class ReportLogs extends Application {
 		} finally {
 			
 			try {if ( pstmt != null ) { pstmt.close(); }} catch (Exception e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				} 
-				log.info("    Release definitions connection " + requester);
-			} catch (SQLException e) {	
-				log.log(Level.SEVERE,"SQL Exception", e);
-			}
+			SDDataSource.closeConnection(requester, connectionSD);
 		}
 		
 		return response;

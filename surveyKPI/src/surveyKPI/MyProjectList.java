@@ -74,7 +74,6 @@ public class MyProjectList extends Application {
 		
 		// Authorisation - Authorisation is not required only the users project will be returned
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyProjectList");
-		//a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
 		
 		/*
@@ -118,14 +117,7 @@ public class MyProjectList extends Application {
 		    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection: ", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-MyProjectList", connectionSD);
 		}
 
 		return response;

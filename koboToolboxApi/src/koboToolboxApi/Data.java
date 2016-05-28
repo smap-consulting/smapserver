@@ -116,16 +116,8 @@ public class Data extends Application {
 			e.printStackTrace();
 			response = Response.serverError().build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
 		}
-
 
 		return response;
 	}
@@ -297,16 +289,8 @@ public class Data extends Application {
 			
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			
-			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);
-			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
+			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
 		}
 		
 		return response;

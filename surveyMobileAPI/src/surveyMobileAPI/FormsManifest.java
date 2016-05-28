@@ -177,31 +177,12 @@ public class FormsManifest {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyMobileAPI-FormsManifest", connectionSD);
 		}		
 
 		return responseStr.toString();
 	}
 
-	private String getFileName(String value)
-	{
-		String filename = value.substring(value.lastIndexOf('/')+1, value.length());
-		return filename;
-	}
 }

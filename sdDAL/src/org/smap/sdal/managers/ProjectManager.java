@@ -90,10 +90,7 @@ public class ProjectManager {
 			
 			try { if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			if (connectionSD != null) {
-        		connectionSD.close();
-        		connectionSD = null;
-        	}
+			SDDataSource.closeConnection("ProjectManager", connectionSD);
 		}
 		
 		return p;

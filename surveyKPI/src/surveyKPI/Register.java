@@ -120,7 +120,6 @@ public class Register extends Application {
 		}
 		
 		Connection sd = SDDataSource.getConnection("surveyKPI-OrganisationList");
-
 		
 		PreparedStatement pstmt = null;
 		try {
@@ -231,21 +230,9 @@ public class Register extends Application {
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-OrganisationList", sd);
 		}
 		
 		return response;

@@ -41,7 +41,7 @@ public class SDDataSource {
 			c.setAutoCommit(true);
 			c.close(); 
 			count--;
-			log.info(" $$$$ " + count + " Close SurveyDefinitions connection: " + requester + " : " + c.toString());
+			log.info(" $$$$ " + count + " Close SurveyDefinitions connection: " + requester);
 		} catch(SQLException e) {
 			log.log(Level.SEVERE,"Failed to close surveyDefinitions connection", e);
 		}

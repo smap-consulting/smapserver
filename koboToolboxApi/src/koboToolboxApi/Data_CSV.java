@@ -129,14 +129,7 @@ public class Data_CSV extends Application {
 			e.printStackTrace();
 			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
 		}
 
 
@@ -264,15 +257,7 @@ public class Data_CSV extends Application {
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records csv", cResults);
-			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("koboToolboxApi - get data records csv", sd);
 		}
 		
 

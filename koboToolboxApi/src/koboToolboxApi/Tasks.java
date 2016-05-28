@@ -91,10 +91,6 @@ public class Tasks extends Application {
 	@Path("/endpoints")
 	public Response getEndPoints(@Context HttpServletRequest request) { 
 		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
-		a.isAuthorised(sd, request.getRemoteUser());
-		
 		Response response = null;
 		
 		try {
@@ -103,7 +99,13 @@ public class Tasks extends Application {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
 		    response = Response.serverError().build();
 		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("KoboToolBoxAPI - Tasks - Endpoints");
+		a.isAuthorised(sd, request.getRemoteUser());
 
+		SDDataSource.closeConnection("KoboToolBoxAPI - Tasks - Endpoints", sd);
+		
 		ArrayList<TasksEndPoint> endPoints = new ArrayList<TasksEndPoint> ();
 		
 		TasksEndPoint ep = new TasksEndPoint(request, 
@@ -164,14 +166,7 @@ public class Tasks extends Application {
 			e.printStackTrace();
 			response = Response.serverError().build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("koboToolboxApi - get individual tasks", sd);
 		}
 		
 	
@@ -193,7 +188,7 @@ public class Tasks extends Application {
 		Response response = null;
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("koboToolboxApi - get task summary");
+		Connection sd = SDDataSource.getConnection("koboToolboxApi - get task statistics");
 		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
@@ -209,14 +204,7 @@ public class Tasks extends Application {
 			e.printStackTrace();
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("koboToolboxApi - get task statistics", sd);
 		}
 		
 		return response;

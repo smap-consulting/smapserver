@@ -175,15 +175,7 @@ public class SurveyResults extends Application {
 					try {if (pstmtRemoveChangeHistory != null) {pstmtRemoveChangeHistory.close();}} catch (SQLException e) {}
 					try {if (pstmtGetSoftDeletedQuestions != null) {pstmtGetSoftDeletedQuestions.close();}} catch (SQLException e) {}
 
-					try {
-						if (connectionSD != null) {
-							connectionSD.close();
-							connectionSD = null;
-						}
-					} catch (SQLException e) {
-						log.log(Level.SEVERE,"Survey: Failed to close connection", e);
-					}
-
+					SDDataSource.closeConnection("surveyKPI-SurveyResults", connectionSD);
 					ResultsDataSource.closeConnection("surveyKPI-SurveyResults", connectionRel);
 				}
 			}

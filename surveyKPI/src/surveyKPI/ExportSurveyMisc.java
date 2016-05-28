@@ -377,15 +377,7 @@ public class ExportSurveyMisc extends Application {
 				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
 				
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close sd connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}

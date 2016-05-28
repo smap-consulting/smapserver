@@ -297,14 +297,7 @@ public class EventList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-EventList", connectionSD);
 		}
 		
 		return jo.toString();
@@ -450,24 +443,11 @@ public class EventList extends Application {
 		} catch (JSONException e) {
 			log.log(Level.SEVERE, "JSON Exception", e);
 		} finally {
-			try {
-				if(resultSet != null) {
-					resultSet.close();
-				}
-			} catch (SQLException e) {
 			
-			}
-			
+			try {if(resultSet != null) {resultSet.close();}	} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-EventList", connectionSD);
 		}
 		
 		return jo.toString();
@@ -562,14 +542,7 @@ public class EventList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-EventList", connectionSD);
 		}
 		
 		return jo.toString();
@@ -685,14 +658,7 @@ public class EventList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-EventList", connectionSD);
 		}
 		
 		return jo.toString();
@@ -1090,14 +1056,7 @@ public class EventList extends Application {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtSurvey != null) {pstmtSurvey.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-EventList", connectionSD);
 		}
 		
 		return jo.toString();

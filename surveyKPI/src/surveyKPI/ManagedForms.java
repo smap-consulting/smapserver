@@ -175,14 +175,7 @@ public class ManagedForms extends Application {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-QuestionsInForm", sd);
 			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
 		}
 
@@ -312,14 +305,7 @@ public class ManagedForms extends Application {
 			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 			try {if (pstmtAdd != null) {pstmtAdd.close();}} catch (Exception e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);	
 			ResultsDataSource.closeConnection("surveyKPI-Add Managed Forms", cResults);
 		}
 		
@@ -505,14 +491,7 @@ public class ManagedForms extends Application {
 			
 			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 			ResultsDataSource.closeConnection("surveyKPI-Update Managed Forms", cResults);
 		}
 		
@@ -582,13 +561,7 @@ public class ManagedForms extends Application {
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
 	
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 		}
 		
 		return response;

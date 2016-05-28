@@ -186,22 +186,9 @@ public class QuestionDetail extends Application {
 			log.log(Level.SEVERE, "Exception", e);
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-Question", connectionSD);
 		}
 
 		return jo.toString();

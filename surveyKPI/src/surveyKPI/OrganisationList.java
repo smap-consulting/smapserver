@@ -184,14 +184,7 @@ public class OrganisationList extends Application {
 		    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection: ", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}
 
 		return response;
@@ -320,21 +313,9 @@ public class OrganisationList extends Application {
 			
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-OrganisationList", connectionSD);
 		}
 		
 		return response;
@@ -443,17 +424,9 @@ public class OrganisationList extends Application {
 			
 		} finally {
 			
-			try {
-				if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-OrganisationList", connectionSD);
 		}
 		
 		return response;
@@ -584,14 +557,7 @@ public class OrganisationList extends Application {
 			try {if (pstmt3 != null) {pstmt3.close();}	} catch (SQLException e) {}
 			try {if (pstmt4 != null) {pstmt4.close();}	} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-OrganisationList", connectionSD);
 		}
 		
 		return response;

@@ -290,15 +290,7 @@ public class Survey extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			
 		}
 
@@ -588,16 +580,7 @@ public class Survey extends Application {
 			try {if (pstmtTables != null) {pstmtTables.close();}} catch (SQLException e) {}
 			try {if (pstmtGeom != null) {pstmtGeom.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
 		}
 
@@ -663,16 +646,7 @@ public class Survey extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 		}
 
 		return response;
@@ -738,15 +712,7 @@ public class Survey extends Application {
 				
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE,"Failed to close connection", e);
-				    response = Response.serverError().entity("Survey: Failed to close connection").build();
-				}
+				SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 				
 			}
 		}
@@ -836,15 +802,7 @@ public class Survey extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			
 		}
 
@@ -1114,15 +1072,7 @@ public class Survey extends Application {
 				try {if (pstmtDelTem != null) {pstmtDelTem.close();}} catch (SQLException e) {}
 				try {if (pstmtIdent != null) {pstmtIdent.close();}} catch (SQLException e) {}
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
 			}
 		}

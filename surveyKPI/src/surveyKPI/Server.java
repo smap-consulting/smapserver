@@ -93,15 +93,7 @@ public class Server extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("SurveyKPI - version", sd);
 			
 		}
 

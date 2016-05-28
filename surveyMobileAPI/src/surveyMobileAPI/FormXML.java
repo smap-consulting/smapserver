@@ -92,14 +92,7 @@ public class FormXML extends Application{
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
     		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
-            try {
-            	if (connectionSD != null) {
-            		connectionSD.close();
-            		connectionSD = null;
-            	}
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }
+    		SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
         } else {
         	throw new AuthorisationException();
         }

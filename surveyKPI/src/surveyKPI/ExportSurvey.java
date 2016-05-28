@@ -578,15 +578,7 @@ public class ExportSurvey extends Application {
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 				
-				try {
-					if (sd != null) {
-						sd.close();
-						sd = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close sd connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-ExportSurvey", sd);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}

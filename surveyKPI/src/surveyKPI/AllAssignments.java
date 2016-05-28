@@ -319,9 +319,7 @@ public class AllAssignments extends Application {
 			if (pstmtSurvey != null) try {pstmtSurvey.close();} catch (SQLException e) {};
 			if (pstmtGeo != null) try {pstmtGeo.close();} catch (SQLException e) {};		
 			
-			if (connectionSD != null) {
-				SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
-			}
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 		}
 
 		return response;
@@ -865,11 +863,7 @@ public class AllAssignments extends Application {
 			if(pstmtGetSurveyIdent != null) try {	pstmtGetSurveyIdent.close(); } catch(SQLException e) {};
 			if(pstmtUniqueTg != null) try {	pstmtUniqueTg.close(); } catch(SQLException e) {};
 			
-			if (connectionSD != null) try { 
-				connectionSD.setAutoCommit(true);
-				connectionSD.close(); 
-			} catch(SQLException e) {};
-			
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-AllAssignments", connectionRel);
 			
 		}
@@ -967,14 +961,8 @@ public class AllAssignments extends Application {
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (SQLException e) {}
 			try {if (pstmtDelete != null) {pstmtDelete.close();}} catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);	// Set auto commit back to true to ensure the connection has this when returned to the pool
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"", e);
-			}
+
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 		}
 		
 		return response;
@@ -1412,13 +1400,8 @@ public class AllAssignments extends Application {
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
 			try {if (pstmtGetTableNames != null) {pstmtGetTableNames.close();}} catch (SQLException e) {}
 			try {if (pstmtGetChoices != null) {pstmtGetChoices.close();}} catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"", e);
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", results);
 		}
 		
@@ -1529,14 +1512,7 @@ public class AllAssignments extends Application {
 			
 		} finally {
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					log.info("closed connection: " + dbConnectionTitle);
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"", e);
-			}
+			SDDataSource.closeConnection(dbConnectionTitle, connectionSD);
 			
 		}
 		
@@ -1698,15 +1674,7 @@ public class AllAssignments extends Application {
 			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
 			if (pstmtDeleteEmptyGroup != null) try {pstmtDeleteEmptyGroup.close();} catch (SQLException e) {};
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.info("Failed to close connection");
-				log.log(Level.SEVERE,"", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 		}
 		
 		return response;
@@ -1759,14 +1727,7 @@ public class AllAssignments extends Application {
 			
 			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.info("Failed to close connection");
-				log.log(Level.SEVERE,"", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 		}
 		
 		return response;
@@ -1825,13 +1786,7 @@ public class AllAssignments extends Application {
 		} finally {
 			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
 		}
 		
 		return response;

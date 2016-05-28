@@ -67,13 +67,7 @@ public class Logout extends Application {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-Logout", sd);
 		}
 		
 		// Throw an authorisation exception to close browser session (chrome works with this at least)

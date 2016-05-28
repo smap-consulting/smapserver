@@ -122,21 +122,9 @@ public class GroupList extends Application {
 		    response = Response.serverError().build();
 		    
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection: ", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-GroupList", connectionSD);
 		}
 
 		return response;

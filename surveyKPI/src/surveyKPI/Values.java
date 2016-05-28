@@ -98,13 +98,10 @@ public class Values extends Application {
 		    return response;
 		}
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Results");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Values");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
-		
-
-
 					
 		try {
 			dConnection = ResultsDataSource.getConnection("surveyKPI-Values");
@@ -169,23 +166,9 @@ public class Values extends Application {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Values", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Values", dConnection);
 		}
 

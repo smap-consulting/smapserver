@@ -290,15 +290,7 @@ public class Review extends Application {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtTarget != null) {pstmtTarget.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Review", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Review", dConnection);
 		}
 
@@ -477,14 +469,7 @@ public class Review extends Application {
 			try {if (pstmtGetQuestion != null) {pstmtGetQuestion.close();}} catch (SQLException e) {}
 			try {if (pstmtGetOption != null) {pstmtGetOption.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Exception", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
 		}
 
 		return response;
@@ -570,23 +555,9 @@ public class Review extends Application {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Review", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Audit", dConnection);
 		}
 
@@ -692,23 +663,9 @@ public class Review extends Application {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Review", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Audit", dConnection);
 		}
 
@@ -976,15 +933,7 @@ public class Review extends Application {
 			try {if (pstmtGetRecords != null) {pstmtGetRecords.close();}} catch (SQLException e) {}
 			try {if (pstmtGetOptionColumnName != null) {pstmtGetOptionColumnName.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Review", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Review", dConnection);
 		}
 
@@ -1327,15 +1276,7 @@ public class Review extends Application {
 			try {if (pstmtGetUserName != null) {pstmtGetUserName.close();}} catch (SQLException e) {}
 			try {if (pstmtGetLaterChangeset != null) {pstmtGetLaterChangeset.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Results", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-ReviewResultsText", dConnection);
 		}
 

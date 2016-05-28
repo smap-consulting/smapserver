@@ -740,15 +740,7 @@ public class Results extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Results", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Results", dConnection);
 		}
 

@@ -184,14 +184,7 @@ public class QuestionList extends Application {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Error", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
 		}
 
 
@@ -280,14 +273,7 @@ public class QuestionList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetParent != null) {pstmtGetParent.close();	}} catch (SQLException e) {	}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Error", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
 		}
 
 

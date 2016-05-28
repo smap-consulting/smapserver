@@ -151,14 +151,8 @@ public class ProjectList extends Application {
 		    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection: ", e);
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}
 
 		return response;
@@ -284,17 +278,9 @@ public class ProjectList extends Application {
 			}
 		} finally {
 			
-			try {connectionSD.setAutoCommit(true);} catch (SQLException e1) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}
 		
 		return response;
@@ -418,14 +404,7 @@ public class ProjectList extends Application {
 			try {
 				if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}
 		
 		return response;

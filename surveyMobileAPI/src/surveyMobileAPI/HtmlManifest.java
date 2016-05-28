@@ -193,14 +193,7 @@ public class HtmlManifest extends Application{
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception", e);
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyMobileAPI-HtmlManifest", connectionSD);
 		}
 		
 		// Add default manifest entries

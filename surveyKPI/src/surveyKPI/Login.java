@@ -100,14 +100,7 @@ public class Login extends Application {
 			log.log(Level.SEVERE, "Failed to get access key", e);
 			response = Response.serverError().build();
 		} finally {
-			try {
-            	if (connectionSD != null) {
-            		connectionSD.close();
-            		connectionSD = null;
-            	}
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }
+			SDDataSource.closeConnection("surveyKPI-login-key", connectionSD);
 		}
 		
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();

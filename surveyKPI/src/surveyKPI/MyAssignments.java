@@ -109,13 +109,7 @@ public class MyAssignments extends Application {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyMobileAPI-Upload", connectionSD);
 		}
 		
 		if (user == null) {
@@ -146,13 +140,7 @@ public class MyAssignments extends Application {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-UpdateTasksKey", connectionSD);
 		}
 		
 		if (user == null) {
@@ -440,13 +428,8 @@ public class MyAssignments extends Application {
 			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (Exception e) {}
 			try {if (pstmtGeo != null) {pstmtGeo.close();} } catch (Exception e) {}
 			try {if (pstmt != null) {pstmt.close();} } catch (Exception e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
 		}
 
 		return response;
@@ -634,14 +617,8 @@ public class MyAssignments extends Application {
 			try {if ( pstmtUser != null ) { pstmtUser.close(); }} catch (Exception e) {}
 			try {if ( pstmtTasks != null ) { pstmtTasks.close(); }} catch (Exception e) {}
 			try {if ( pstmtTrail != null ) { pstmtTrail.close(); }} catch (Exception e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
-				} 
-			} catch (SQLException e) {	
-				log.log(Level.SEVERE,"SQL Exception", e);
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
 		}
 		
 		return response;

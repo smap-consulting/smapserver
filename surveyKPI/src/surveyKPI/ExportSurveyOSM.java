@@ -342,15 +342,8 @@ public class ExportSurveyOSM extends Application {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close sd connection", e);
-				}
-				
+
+				SDDataSource.closeConnection("surveyKPI-ExportSurveyOSM", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}

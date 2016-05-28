@@ -196,18 +196,9 @@ public class ExportSurveyThingsat extends Application {
 			log.log(Level.SEVERE, "Exception", e);
 		} finally {
 
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close sd connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
-		}
-	
+		}	
 		
 		return response;
 		

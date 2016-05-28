@@ -517,18 +517,8 @@ public class Items extends Application {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtFDetails != null) {pstmtFDetails.close();	}} catch (SQLException e) {	}
-				//try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (SQLException e) {	}
-				//try {if (pstmtSelectMultiple != null) {pstmtSelectMultiple.close();	}} catch (SQLException e) {	}
 				
-				try {
-					if (sd != null) {
-						sd.close();
-						sd = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE,"Error: Failed to close connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-Items", sd);
 				ResultsDataSource.closeConnection("surveyKPI-Items", connection);	
 			}
 		}
@@ -603,15 +593,7 @@ public class Items extends Application {
 			}
 		} finally {
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("surveyKPI-Items", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-Items", cRel);
 		}
 		

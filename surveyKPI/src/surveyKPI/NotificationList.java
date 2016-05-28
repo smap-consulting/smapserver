@@ -130,15 +130,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Notifications", connectionSD);
 			
 		}
 
@@ -334,15 +326,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			
 		}
 
@@ -413,15 +397,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			
 		}
 
@@ -487,15 +463,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
 			
 		}
 

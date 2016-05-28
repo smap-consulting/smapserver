@@ -136,13 +136,7 @@ public class SharedResources extends Application {
 	
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SDDataSource.closeConnection("surveyKPI-SharedResources", sd);
 		}
 		
 		return response;		
@@ -241,20 +235,9 @@ public class SharedResources extends Application {
 			}
 		} finally {
 			
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-SharedResources", sd);
 		}
 		
 		return response;
@@ -310,15 +293,7 @@ public class SharedResources extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			    response = Response.serverError().entity("Survey: Failed to close connection").build();
-			}
+			SDDataSource.closeConnection("surveyKPI-DeleteMap", sd);
 			
 		}
 

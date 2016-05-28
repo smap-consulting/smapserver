@@ -117,8 +117,7 @@ public class GetXForm {
     		response = e.getMessage();
     		e.printStackTrace();
     	} finally {
-    		 try {
-             	if (sd != null) {sd.close(); sd = null;}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection", e);}
+    		SDDataSource.closeConnection("getXForm", sd);
     	}
 
     	return response;
@@ -1054,16 +1053,7 @@ public class GetXForm {
 			}
 		} finally {
 			ResultsDataSource.closeConnection(requester, cResults);
-			
-			try {
-            	if (sd != null) {
-            		sd.close();
-            		cResults = null;
-            	}
-            	log.info("   Release survey definitions connection: " + requester);
-            } catch (SQLException e) {
-            	log.log(Level.SEVERE, "Failed to close connection", e);
-            }	
+			SDDataSource.closeConnection(requester, sd);
 		}
 		
     	return instanceXML;

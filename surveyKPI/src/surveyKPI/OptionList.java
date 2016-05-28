@@ -116,15 +116,8 @@ public class OptionList extends Application {
 			e.printStackTrace();
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
-			}
+			
+			SDDataSource.closeConnection("surveyKPI-OptionList", connectionSD);
 		}
 
 

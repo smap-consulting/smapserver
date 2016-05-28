@@ -94,11 +94,10 @@ public class PasswordReset extends Application {
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-onetimelogon");
 		PreparedStatement pstmt = null;
 
-		if(email != null && email.trim().length() > 0) {		
+		try {
 			
-			try {	
+			if(email != null && email.trim().length() > 0) {	
 				
-
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
 				 *  This is a hacky attempt to support legacy idents that were not emails
@@ -146,39 +145,32 @@ public class PasswordReset extends Application {
 					System.out.println(msg);
 					response = Response.status(Status.NOT_FOUND).entity(msg).build();
 				}
+			} else {
+				response = Response.status(Status.NOT_FOUND).entity("Email not specified").build();
+			}
 				
 
-			} catch (SQLException e) {
+		} catch (SQLException e) {
 				
-				String msg = e.getMessage();
-				String respMsg = "Database Error";
-				if(msg.contains("does not exist")) {
-					log.info("No data: " + msg);
-					respMsg = "Database Error: No data";
-				} else {
-					log.log(Level.SEVERE,"Exception", e);
-				}	
-				response = Response.status(Status.NOT_FOUND).entity(respMsg).build();
-	
-			} catch (Exception e) {
+			String msg = e.getMessage();
+			String respMsg = "Database Error";
+			if(msg.contains("does not exist")) {
+				log.info("No data: " + msg);
+				respMsg = "Database Error: No data";
+			} else {
 				log.log(Level.SEVERE,"Exception", e);
-				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity("System Error").build();
-			} finally {
+			}	
+			response = Response.status(Status.NOT_FOUND).entity(respMsg).build();
+	
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Exception", e);
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity("System Error").build();
+		} finally {
 				
-				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE,"Failed to close connection", e);
-				}
-			}
-		} else {
-			response = Response.status(Status.NOT_FOUND).entity("Email not specified").build();
-		}
+			SDDataSource.closeConnection("surveyKPI-onetimelogon", connectionSD);
+		} 
 
 		return response;
 	}

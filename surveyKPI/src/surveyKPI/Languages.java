@@ -119,22 +119,9 @@ public class Languages extends Application {
 			log.log(Level.SEVERE, "Exception", e);
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			try {
-				try {
-					if (pstmt != null) {
-						pstmt.close();
-					}
-				} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-				}
-				
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("surveyKPI-Languages", connectionSD);
 		}
 
 		return response;

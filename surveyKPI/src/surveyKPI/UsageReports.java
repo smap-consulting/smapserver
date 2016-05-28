@@ -115,15 +115,7 @@ public class UsageReports extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-				
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
+			SDDataSource.closeConnection("createPDF", connectionSD);	
 			
 		}
 		return Response.ok("").build();

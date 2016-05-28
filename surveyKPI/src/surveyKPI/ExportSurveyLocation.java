@@ -210,15 +210,7 @@ public class ExportSurveyLocation extends Application {
 				
 				if(pstmtGetIdent != null) try {pstmtGetIdent.close();} catch(Exception e) {};
 				
-				try {
-					if (connectionSD != null) {
-						connectionSD.close();
-						connectionSD = null;
-					}
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Failed to close sd connection", e);
-				}
-				
+				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);		
 				
 			}
 		}

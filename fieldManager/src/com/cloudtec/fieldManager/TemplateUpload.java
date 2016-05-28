@@ -368,7 +368,7 @@ public class TemplateUpload extends Application {
 			response = Response.serverError().entity("{msg: " + ex.getMessage() + "}").build();
 		} finally {
 			if(sm != null) {sm.close();}
-			try {if (sd != null) {sd.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection",e);}
+			SDDataSource.closeConnection("fieldManager-Template Upload", sd);
 		}
 		
 		return response;
@@ -737,13 +737,7 @@ public class TemplateUpload extends Application {
 			e.printStackTrace();
 		} finally {
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection",e);
-			}
+			SDDataSource.closeConnection("fieldManager-Template Upload", connectionSD);
 		}
 		
 		Message m = new Message();

@@ -269,7 +269,7 @@ public class XFormData {
 			
 			log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 		} finally {
-			try {if (sd != null) {sd.close();}} catch (SQLException e) {log.log(Level.SEVERE, "Failed to close connection", e);}
+			SDDataSource.closeConnection("surveyMobileAPI-XFormData", sd);
 		}
 	}
 	

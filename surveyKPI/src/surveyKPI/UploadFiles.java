@@ -218,14 +218,7 @@ public class UploadFiles extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				log.log(Level.SEVERE,"Failed to close connection", e);
-			}
-			
+			SDDataSource.closeConnection("fieldManager-MediaUpload", connectionSD);
 			ResultsDataSource.closeConnection("fieldManager-MediaUpload", cResults);
 		}
 		
@@ -270,6 +263,8 @@ public class UploadFiles extends Application {
 		} catch(Exception e) {
 			e.printStackTrace();
 			response = Response.serverError().build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
 		}
 		
 		return response;
@@ -313,6 +308,8 @@ public class UploadFiles extends Application {
 		} catch(Exception e) {
 			e.printStackTrace();
 			response = Response.serverError().build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
 		}
 		
 		return response;
@@ -381,13 +378,7 @@ public class UploadFiles extends Application {
 	
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
 		}
 		
 		return response;		

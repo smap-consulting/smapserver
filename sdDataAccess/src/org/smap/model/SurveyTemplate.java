@@ -1103,7 +1103,7 @@ public class SurveyTemplate {
 			if(om != null) {om.close();};
 			if(tm != null) {tm.close();};
 			
-			if(sd != null) try{sd.close();} catch(Exception e){};
+			org.smap.sdal.Utilities.SDDataSource.closeConnection("SurveyTemplate-Write Database", sd);
 		}
 
 	}
@@ -1203,7 +1203,7 @@ public class SurveyTemplate {
 			
 		} finally {
 			if(sm != null) {sm.close();}
-			if(sd != null) try{sd.close();} catch(Exception e){};
+			org.smap.sdal.Utilities.SDDataSource.closeConnection("SurveyTemplate-Read Database", sd);
 		}
 
 	}
@@ -1556,7 +1556,7 @@ public class SurveyTemplate {
 			// Record exception but otherwise ignore
 			e.printStackTrace();
 		} finally {
-			if(connectionSD != null) try{connectionSD.close();} catch(Exception e){};
+			org.smap.sdal.Utilities.SDDataSource.closeConnection("fieldManager-SurveyTemplate", connectionSD);
 			org.smap.sdal.Utilities.ResultsDataSource.closeConnection("fieldManager-SurveyTemplate", cResults);
 		}
 			

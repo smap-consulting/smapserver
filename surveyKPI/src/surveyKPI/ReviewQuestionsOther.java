@@ -202,22 +202,9 @@ public class ReviewQuestionsOther extends Application {
 		    e.printStackTrace();
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			}
-			try {
-				if (connectionSD != null) {
-					connectionSD.close();
-					connectionSD = null;
-				}
-			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
-			    e.printStackTrace();
-			}
+			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
 		}
 
 		return response;
