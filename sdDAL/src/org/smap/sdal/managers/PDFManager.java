@@ -1344,7 +1344,12 @@ public class PDFManager {
 		}
 		
 		// Set the content of the value cell
-		updateValueCell(valueCell, di, generateBlank, basePath, gv);
+		try {
+			updateValueCell(valueCell, di, generateBlank, basePath, gv);
+		} catch (Exception e) {
+			log.info("Error updating value cell, continuing: " + basePath + " : " + di.value);
+			log.log(Level.SEVERE, "Exception", e);
+		}
 		
 		int widthValue = 5;
 		if(di.widthLabel == 10) {

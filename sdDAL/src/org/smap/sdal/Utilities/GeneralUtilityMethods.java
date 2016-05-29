@@ -1492,7 +1492,7 @@ public class GeneralUtilityMethods {
 		PreparedStatement pstmtResults = null;
 		
 		String sqlQuestion = "select qType, qName, f_id from question where q_id = ?";
-		String sqlOption = "select o.ovalue from option o, question q where q.q_id = ? and q.l_id = o.l_id";
+		String sqlOption = "select o.ovalue, o.column_name from option o, question q where q.q_id = ? and q.l_id = o.l_id";
 		
 		String qType = null;
 		String qName = null;
@@ -1526,8 +1526,9 @@ public class GeneralUtilityMethods {
 					query.append("select ");
 					int count = 0;
 					while(rsOptions.next()) {
-						String oName = rsOptions.getString(1);
-						options.add(oName);
+						String oValue = rsOptions.getString(1);
+						String oColumnName = rsOptions.getString(2);
+						options.add(oValue);
 						
 						if(count > 0) {
 							query.append(",");
@@ -1535,9 +1536,9 @@ public class GeneralUtilityMethods {
 						query.append(" t0.");
 						query.append(qName);
 						query.append("__");
-						query.append(oName);
+						query.append(oColumnName);
 						query.append(" as ");
-						query.append(oName);
+						query.append(oValue);
 						count++;
 					}
 					query.append(" from ");
@@ -1593,7 +1594,9 @@ public class GeneralUtilityMethods {
 								email=email.replaceAll("_dot_", ".");
 								log.info("******** " + email);
 								String emails[] = email.split(",");
-								responses.add(email);
+								for(int i = 0; i < emails.length; i++) {
+									responses.add(emails[i]);
+								}
 							}
 						}
 					} else {
