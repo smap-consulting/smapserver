@@ -71,6 +71,7 @@ define({
 	"c_edit": "Edit",
 	"c_del": "Delete",
 	"c_download": "Download",
+	"c_upload": "Upload",
 	"c_done": "Done",
 	"c_cancel": "Cancel",
 	"c_save": "Save",

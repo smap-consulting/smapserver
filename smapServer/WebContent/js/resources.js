@@ -117,6 +117,15 @@ $(document).ready(function() {
     	}
     });
     
+    // Respond to nfc download
+    $('#downloadNfcFiles').click( function() {
+    	if(!$('#downloadNfcFiles').hasClass('disabled')) {
+		
+		downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    	}
+    });
+    
     /*
      * Set up maps tab
      */

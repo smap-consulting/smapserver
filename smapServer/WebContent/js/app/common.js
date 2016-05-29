@@ -154,7 +154,7 @@ function getMyProjects(projectId, callback, getAll) {
  */
 function saveCurrentProject(projectId, surveyId, taskGroupId) {
 
-	if(surveyId > 0 || projectId > 0) {
+	if(surveyId > 0 || projectId > 0 || taskGroupId > 0) {
 		
 		var user = {
 				current_project_id: projectId,

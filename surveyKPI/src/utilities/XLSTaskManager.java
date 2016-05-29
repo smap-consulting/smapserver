@@ -280,7 +280,7 @@ public class XLSTaskManager {
 	/*
 	 * Get an array of locations from an XLS file
 	 */
-	public ArrayList<Location> convertWorksheetToTagArray(InputStream inputStream, String type) throws IOException {
+	public ArrayList<Location> convertWorksheetToTagArray(InputStream inputStream, String type) throws Exception {
 		
 		Sheet sheet = null;
         Row row = null;
@@ -347,7 +347,30 @@ public class XLSTaskManager {
 	 */
 	public void createXLSLocationsFile(OutputStream outputStream, ArrayList<Location> locations, ResourceBundle localisation) throws IOException {
 		
-		// TODO
+		HashMap<String, Sheet> sheetMap = new HashMap<String, Sheet> ();
+		HashMap<String, Integer> rowMap = new HashMap<String, Integer> ();
+		
+		ArrayList<Column> cols = getLocationColumnList(localisation);
+		Map<String, CellStyle> styles = createStyles(wb);
+		
+		/*
+		 * Create the worksheets
+		 */
+		for(int i = 0; i < locations.size(); i++) {
+			Location l = locations.get(i);
+			Sheet ns = sheetMap.get(l.group);
+			if(ns == null) {
+				ns = wb.createSheet(l.group);
+				createHeader(cols, ns, styles);
+				sheetMap.put(l.group, ns);
+				rowMap.put(l.group, 1);
+			}
+			addLocation(l, ns, styles, rowMap);
+		}
+		
+		
+		wb.write(outputStream);
+		outputStream.close();
 	}
 
 	
@@ -482,6 +505,21 @@ public class XLSTaskManager {
 	}
 	
 	/*
+	 * Get the columns for the settings sheet
+	 */
+	private ArrayList<Column> getLocationColumnList(ResourceBundle localisation) {
+		
+		ArrayList<Column> cols = new ArrayList<Column> ();
+		
+		int colNumber = 0;
+	
+		cols.add(new Column(localisation, colNumber++, "UID"));
+		cols.add(new Column(localisation, colNumber++, "tagName"));
+		
+		return cols;
+	}
+	
+	/*
      * create a library of cell styles
      */
     private static Map<String, CellStyle> createStyles(Workbook wb){
@@ -577,6 +615,32 @@ public class XLSTaskManager {
 		k.setCellValue("Time Zone:");
 		v = settingsRow.createCell(1);
 		v.setCellValue(tz);
+	}
+	
+	/*
+	 * add a location to XLS
+	 */
+	private void addLocation(
+			
+		Location l, 
+		Sheet sheet,
+		Map<String, CellStyle> styles,
+		Map<String, Integer> rowMap) throws IOException {
+		
+		int groupRow = rowMap.get(l.group);
+		
+		Row row = sheet.createRow(groupRow++);
+		rowMap.put(l.group, groupRow);
+		
+		Cell cell = row.createCell(0);
+		cell.setCellStyle(styles.get("default"));	
+		cell.setCellValue(l.uid);
+	    
+		cell = row.createCell(1);
+		cell.setCellStyle(styles.get("default"));	
+		cell.setCellValue(l.name);
+
+	
 	}
 
 }

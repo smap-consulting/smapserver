@@ -237,8 +237,7 @@ public class Tasks extends Application {
 	@Produces("application/json")
 	@Path("/locations/upload")
 	public Response uploadLocations(
-			@Context HttpServletRequest request
-			) throws IOException {
+			@Context HttpServletRequest request) {
 		
 		Response response = null;
 		
@@ -302,17 +301,21 @@ public class Tasks extends Application {
 				XLSTaskManager xf = new XLSTaskManager();
 				ArrayList<Location> locations = xf.convertWorksheetToTagArray(fileItem.getInputStream(), filetype);
 				
-				// Save locations to disk
-				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
-				log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
-				TaskManager tm = new TaskManager();
-				tm.saveLocations(sd, locations, oId);
-				
-				// Return tags to calling program
-				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-				String resp = gson.toJson(locations);
-				
+				/*
+				 * Only save tags if we found some, otherwise its likely to be an error
+				 * An alternate mechanism is available to delete all locations
+				 */
 				if(locations.size() > 0) {
+					// Save locations to disk
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
+					TaskManager tm = new TaskManager();
+					tm.saveLocations(sd, locations, oId);
+					
+					// Return tags to calling program
+					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					String resp = gson.toJson(locations);
+				
 					response = Response.ok(resp).build();
 				} else {
 					response = Response.serverError().entity("no tags found").build();
