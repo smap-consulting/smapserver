@@ -142,14 +142,6 @@ $(document).ready(function() {
 		source: gTrailSource
 	});
 	
-	// Source and Layer objects for gps path
-	//gPathSource = new ol.source.Vector({
-	//	});
-	
-	//gPathLayer = new ol.layer.Vector ({
-	//	source: gPathSource
-	//});
-	
 	// Source and Layer objects for survey locations
 	gSurveyLocationSource = new ol.source.Vector({
 		features: gSurveys

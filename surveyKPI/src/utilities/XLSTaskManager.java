@@ -250,11 +250,17 @@ public class XLSTaskManager {
 	 * Get a GMT date from the spreadsheet
 	 */
 	Timestamp getGmtDate(Row row, String name, HashMap<String, Integer> header, int lastCellNum, ZoneId timeZoneId, ZoneId gmtZoneId) throws Exception {
-		LocalDateTime localDate = getDateColumn(row, name, header, lastCellNum, null).toLocalDateTime();
-		ZonedDateTime localZoned = ZonedDateTime.of(localDate, timeZoneId);
-		ZonedDateTime gmtZoned = localZoned.withZoneSameInstant(gmtZoneId);
 		
-		return Timestamp.valueOf(gmtZoned.toLocalDateTime());
+		Timestamp result = null;
+		
+		if(getDateColumn(row, name, header, lastCellNum, null) != null) {
+			LocalDateTime localDate = getDateColumn(row, name, header, lastCellNum, null).toLocalDateTime();
+			ZonedDateTime localZoned = ZonedDateTime.of(localDate, timeZoneId);
+			ZonedDateTime gmtZoned = localZoned.withZoneSameInstant(gmtZoneId);
+			result = Timestamp.valueOf(gmtZoned.toLocalDateTime());
+		}
+		
+		return result;
 	}
 	
 	/*
@@ -587,19 +593,16 @@ public class XLSTaskManager {
 
 				if(col.name.equals("from") || col.name.equals("to")) {
 					cell.setCellStyle(styleTimestamp);
-					LocalDateTime gmtDate = col.getDateValue(props).toLocalDateTime();
-					ZonedDateTime gmtZoned = ZonedDateTime.of(gmtDate, gmtZoneId);
-					ZonedDateTime localZoned = gmtZoned.withZoneSameInstant(timeZoneId);
-					LocalDateTime localDate = localZoned.toLocalDateTime();
-					Timestamp ts = new Timestamp(localZoned.getLong(ChronoField.INSTANT_SECONDS) * 1000L);
-					Timestamp ts2 = Timestamp.valueOf(localDate);
-					System.out.println("gmtDate:" + gmtDate.toString());
-					System.out.println("gmtZoned:" + gmtZoned.toString());
-					System.out.println("localZoned:" + localZoned.toString());
-					System.out.println("ts:" + ts.toString());
-					System.out.println("ts2:" + ts2.toString());
 					
-					cell.setCellValue(ts2);
+					if(col.getDateValue(props) != null) {
+						LocalDateTime gmtDate = col.getDateValue(props).toLocalDateTime();
+						ZonedDateTime gmtZoned = ZonedDateTime.of(gmtDate, gmtZoneId);
+						ZonedDateTime localZoned = gmtZoned.withZoneSameInstant(timeZoneId);
+						LocalDateTime localDate = localZoned.toLocalDateTime();
+						Timestamp ts2 = Timestamp.valueOf(localDate);
+						cell.setCellValue(ts2);
+					}
+
 				} else {
 					cell.setCellStyle(styles.get("default"));	
 					cell.setCellValue(col.getValue(props));

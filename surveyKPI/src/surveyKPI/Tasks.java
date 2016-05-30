@@ -148,7 +148,8 @@ public class Tasks extends Application {
 	public Response getTasks(
 			@Context HttpServletRequest request,
 			@PathParam("tgId") int tgId,
-			@QueryParam("completed") boolean completed
+			@QueryParam("completed") boolean completed,
+			@QueryParam("user") int userId
 			) throws IOException {
 		
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
@@ -166,7 +167,7 @@ public class Tasks extends Application {
 			
 			// Get assignments
 			TaskManager tm = new TaskManager();
-			TaskListGeoJson t = tm.getTasks(sd, tgId, completed);		
+			TaskListGeoJson t = tm.getTasks(sd, tgId, completed, userId);		
 			
 			// Return groups to calling program
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
@@ -452,7 +453,7 @@ public class Tasks extends Application {
 			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
 			
 			// Get the task list
-			TaskListGeoJson tl = tm.getTasks(sd, tgId, true);
+			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);
 			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response);
@@ -480,7 +481,8 @@ public class Tasks extends Application {
 	@Path("/xls/{pId}")
 	public Response uploadTasks(
 			@Context HttpServletRequest request,
-			@PathParam("pId") int pId
+			@PathParam("pId") int pId,
+			@QueryParam("user") int userId
 			) throws IOException {
 		
 		Response response = null;
@@ -570,7 +572,7 @@ public class Tasks extends Application {
 				 *  from latitude and longitude
 				 *  Also we may not want to return complete tasks
 				 */
-				tl = tm.getTasks(sd, tgId, true);	// TODO set "complete" flag from passed in parameter
+				tl = tm.getTasks(sd, tgId, true, userId);	// TODO set "complete" flag from passed in parameter
 				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 				String resp = gson.toJson(tl);
 				

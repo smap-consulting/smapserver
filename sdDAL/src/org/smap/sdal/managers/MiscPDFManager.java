@@ -386,7 +386,7 @@ public class MiscPDFManager {
 			 */
 			// Get assignments
 			TaskManager tm = new TaskManager();
-			TaskListGeoJson t = tm.getTasks(sd, tgId, false);	
+			TaskListGeoJson t = tm.getTasks(sd, tgId, false, 0);	
 			PdfWriter writer = null;			
 				
 			/*

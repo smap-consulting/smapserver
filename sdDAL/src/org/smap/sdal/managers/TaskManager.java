@@ -203,7 +203,8 @@ public class TaskManager {
 	 */
 	public TaskListGeoJson getTasks(Connection sd, 
 			int taskGroupId, 
-			boolean completed) throws Exception {
+			boolean completed,
+			int userId) throws Exception {
 		
 		String sql = "select t.id as t_id, "
 				+ "t.type as type,"
@@ -267,8 +268,16 @@ public class TaskManager {
 					status = "new";
 				}
 				
+				int assignee = rs.getInt("assignee"); 
+				
 				// Ignore any tasks that are not required
-				if(status.equals("submitted") && !completed) {
+				if(!completed && (status.equals("submitted") || status.equals("complete"))) {
+					continue;
+				}
+				if(userId > 0 && userId != assignee) {	// Assigned to a specific user only
+					continue;
+				}
+				if(userId < 0 && assignee > 0) {		// Unassigned only
 					continue;
 				}
 				

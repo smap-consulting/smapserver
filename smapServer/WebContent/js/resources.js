@@ -59,6 +59,7 @@ $(document).ready(function() {
 	// Get the user details
 	globals.gIsAdministrator = false;
 	globals.gCurrentSurvey = undefined;
+	getLoggedInUser(undefined, false, false, undefined, false, true);
 	
 	getFilesFromServer('/surveyKPI/upload/media', undefined, refreshMediaView);		// Get files available to the entire organisation
 	

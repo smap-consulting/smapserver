@@ -1360,7 +1360,6 @@ function getTableBody(tasks) {
 			
 			tab[++idx] = '<td>';		// scheduled
 				tab[++idx] = localTime(task.properties.from);
-				console.log("Loaded: " + task.properties.name + ": " + task.properties.from);
 			tab[++idx] = '<td>';			// edit
 			tab[++idx] ='<button class="btn btn-default task_edit" value="';
 			tab[++idx] = i;
