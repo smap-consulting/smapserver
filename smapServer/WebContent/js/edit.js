@@ -453,25 +453,31 @@ $(document).ready(function() {
 			existing_form,
 			shared_results;
 		
-		changeset.setHasChanges(0);		// Clear any existing changes from a previous form
-		
-		if(globals.gExistingSurvey) {
-			globals.gCurrentSurvey = $('#survey_name option:selected').val();	
-			saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id as the current survey
-			getSurveyDetails(surveyDetailsDone);
-		} else {
-			name = $('#new_form_name').val();
-			if(typeof name === "undefined" || name.trim() == "") {
-				bootbox.alert("Please specify a name for the new survey");
-				return false;
+		if(globals.gCurrentProject > 0) {
+			changeset.setHasChanges(0);		// Clear any existing changes from a previous form
+			
+			if(globals.gExistingSurvey) {
+				globals.gCurrentSurvey = $('#survey_name option:selected').val();	
+				saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id as the current survey
+				getSurveyDetails(surveyDetailsDone);
+			} else {
+				name = $('#new_form_name').val();
+				if(typeof name === "undefined" || name.trim() == "") {
+					bootbox.alert("Please specify a name for the new survey");
+					return false;
+				}
+				existing = $('#base_on_existing').prop('checked');
+				existing_survey = $('#survey_name').val();
+				existing_form = $('#form_name').val();
+				shared_results = $('#shared_results').prop('checked');
+				createNewSurvey(name, existing, existing_survey, existing_form, shared_results, surveyDetailsDone);
 			}
-			existing = $('#base_on_existing').prop('checked');
-			existing_survey = $('#survey_name').val();
-			existing_form = $('#form_name').val();
-			shared_results = $('#shared_results').prop('checked');
-			createNewSurvey(name, existing, existing_survey, existing_form, shared_results, surveyDetailsDone);
+		} else {
+			alert(localise.set["msg_val_p"]);
+			return false;
 		}
- 	 });
+	 });
+	
 	
     /*
      * Save a selected media file
