@@ -396,7 +396,7 @@ define({
 	
 	// Logout
 	"lo_back": "Back",
-	"lo_out": "You are logged out of the Smap Server",
+	"lo_out": "You are logged out of ",
 	"lo_lo": "Logged Out"
 		
 });
