@@ -920,7 +920,13 @@ public class TaskManager {
 			pstmt.setString(8, initial_data_url);	
 			pstmt.setString(9, targetInstanceId);
 			pstmt.setString(10, tf.properties.address);
+			if(tf.properties.from == null) {
+				Calendar cal = Calendar.getInstance();
+				cal.add(Calendar.HOUR, 7 * 24);
+				tf.properties.from = new Timestamp(cal.getTime().getTime());
+			}
 			pstmt.setTimestamp(11, tf.properties.from);
+				
 			System.out.println("Adding from: " + tf.properties.from);
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);

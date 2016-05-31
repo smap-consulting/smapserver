@@ -295,14 +295,15 @@ $(document).ready(function() {
 			return;
 		}
 		
-		if(taskSource === "new") {
-			globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
-			globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
-			registerForNewTasks();
-		}
+		//if(taskSource === "new") {
+		//	globals.gCurrentUserName = $('#users_select_new_task option:selected').text();
+		//	globals.gCurrentUserId = $('#users_select_new_task option:selected').val();
+		//	registerForNewTasks();
+		//}
 		
 		// Clear form
 		$('#assign_survey_form')[0].reset();
+		$('#add_task_from_existing').hide();
 		// open the modal
 		$('#addTask').modal("show");
 
@@ -967,7 +968,12 @@ function refreshTaskGroupList(taskgroups) {
 	} else {
 		$('#tasks_row').show();
 	}
-	if(typeof taskgroups != "undefined") {
+	
+	$('.for_selected, .for_is_tg').addClass('disabled');		// Disable task buttons
+	
+	if(typeof taskgroups != "undefined" && taskgroups.length > 0) {
+		
+		$('.for_is_tg').removeClass('disabled');				// Enable adding of task to the task group
 
 		for(i = 0; i < taskgroups.length; i++) {
 			grp = taskgroups[i];
@@ -1055,7 +1061,6 @@ function refreshTableAssignments() {
 		item;
 	
 	gSelectedCount = 0;
-	$('.for_selected').addClass('disabled');
 	
 	if(typeof tasks != "undefined") {
 		

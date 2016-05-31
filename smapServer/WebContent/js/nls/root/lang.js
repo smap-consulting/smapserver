@@ -82,6 +82,7 @@ define({
 	"c_close": "Close",
 	"c_logout": "Logout",
 	"c_block": "Block",
+	"c_blocked": "Blocked",
 	"c_graph": "Graph",
 	"c_map": "Map",
 	"c_map_layers": "Map Layers",	

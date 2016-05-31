@@ -453,7 +453,7 @@ public class MyAssignments extends Application {
 		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
 		
-		// Authorisation nor required a user can only update their own assignments
+		// Authorisation not required a user can only update their own assignments
 		
 		log.info("Response:" + assignInput);
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
@@ -468,8 +468,13 @@ public class MyAssignments extends Application {
 		PreparedStatement pstmtUser = null;
 		PreparedStatement pstmtTasks = null;
 		PreparedStatement pstmtTrail = null;
+		PreparedStatement pstmtRepeats = null;
 		try {
 			String sql = null;
+			
+			String sqlRepeats = "UPDATE tasks SET repeat_count = repeat_count + 1 " +
+					"where id = (select task_id from assignments where id = ?);";
+			pstmtRepeats = connectionSD.prepareStatement(sqlRepeats);
 
 			connectionSD.setAutoCommit(false);
 			for(TaskAssignment ta : tr.taskAssignments) {
@@ -500,6 +505,12 @@ public class MyAssignments extends Application {
 					pstmt.setString(1, ta.assignment.assignment_status);
 					pstmt.setInt(2, ta.assignment.assignment_id);
 					pstmt.setString(3, userName);
+					
+					if(ta.assignment.assignment_status.equals("submitted")) {
+						pstmtRepeats.setInt(1, ta.assignment.assignment_id);
+						System.out.println("Updating task repeats: " + pstmtRepeats.toString());
+						pstmtRepeats.executeUpdate();
+					}
 				}
 				
 				log.info("update assignments: " + pstmt.toString());
@@ -617,6 +628,7 @@ public class MyAssignments extends Application {
 			try {if ( pstmtUser != null ) { pstmtUser.close(); }} catch (Exception e) {}
 			try {if ( pstmtTasks != null ) { pstmtTasks.close(); }} catch (Exception e) {}
 			try {if ( pstmtTrail != null ) { pstmtTrail.close(); }} catch (Exception e) {}
+			try {if ( pstmtRepeats != null ) { pstmtRepeats.close(); }} catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
 		}

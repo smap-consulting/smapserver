@@ -890,12 +890,19 @@ function removeHourglass() {
 function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 	
 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
-		$elem;
+		$elem,
+		selector_disable_blocked,
+		h = [],
+		idx = -1,
+		i,
+		item;
 	
 	if(selector === undefined) {
 		selector = ".survey_select";	// Update the entire class of survey select controls
 	}
+	selector_disable_blocked = selector + ".disable_blocked";
 	$elem = $(selector);
+	$elem_disable_blocked = $(selector_disable_blocked);
 	
 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 		
@@ -913,12 +920,28 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 				removeHourglass();
 				$elem.empty();
 				if(addAll) {
-					$elem.append('<option value="_all">All Surveys</option>');	
+					h[++idx] = '<option value="_all">All Surveys</option>';	
 				}
-				$.each(data, function(j, item) {
-					$elem.append('<option value="' + item.id + '">' + item.displayName + '</option>');
-				});
+				
+				for(i = 0; i < data.length; i++) {
+					item = data[i];
+					h[++idx] = '<option';
+					if(item.blocked) {
+						h[++idx] = ' class="blocked"';
+					}
+					h[++idx] = ' value="';
+					h[++idx] = item.id;
+					h[++idx] = '">';
+					h[++idx] = item.displayName;
+					if(item.blocked) {
+						h[++idx] = ' (' + localise.set["c_blocked"] + ')';
+					}
+					h[++idx] = '</option>';
+				}
 
+				$elem.empty().append(h.join(''));
+				$("option.blocked", $elem_disable_blocked).attr("disabled", "disabled");
+				
 				//globals.gCurrentSurvey = $elem.val();   // TODO set to current global survey
 				if(globals.gCurrentSurvey > 0) {
 					$elem.val(globals.gCurrentSurvey);

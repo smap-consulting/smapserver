@@ -50,7 +50,7 @@
 							<i class="glyphicon glyphicon-user" aria-hidden="true"></i> <span class="lang" data-lang="m_user_profile"></span></a>
 				</li>
 		      	<li>
-		          <a href="#" id="m_modules"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span></a>
+		          <a href="#" id="m_modules_inspinia"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span></a>
 		          <ul class="nav nav-second-level" aria-expanded="false">
 		            
 		            <li><a class="lang" data-lang="m_home" href="/index.html?loggedin=yes">Home</a></li>
@@ -99,7 +99,7 @@
 	                    </a>
 	                    <ul class="dropdown-menu dropdown-alerts">
 	                        <li>	
-	                            <a type="button" href="#" id="addSingleTask">
+	                            <a type="button" class="btn for_is_tg" href="#" id="addSingleTask">
 	                                <span class="lang" data-lang="t_add_task">add task</span>
 	                            </a>
 	                        </li>
@@ -122,14 +122,14 @@
 	                    </a>
 	                    <ul class="dropdown-menu dropdown-alerts">
 	                        <li>
-	                            <a class="btn-success" href="#" id="addTaskGroup">
+	                            <a type="button" class="btn" href="#" id="addTaskGroup">
 	                                <div>
 	                                	<span class="lang" data-lang="t_add_group">add task group</span>
 	                                </div>
 	                            </a>
 	                        </li>
 	                        <li>
-	                            <a class="btn-danger" href="#" id="deleteTaskGroup">
+	                            <a type="button" class="btn for_is_tg" href="#" id="deleteTaskGroup">
 	                                 <div>
 	                                	<span class="lang" data-lang="t_del_group">del task group</span>
 	                                </div>
@@ -344,7 +344,7 @@
 			        <div class="form-group">
 			         	<label class="lang col-sm-2 control-label" data-lang="c_survey" for="tp_form_name">survey</label>
 						<div class="col-sm-10">
-							<select class="survey_select form-control" id="tp_form_name"></select>
+							<select class="survey_select disable_blocked form-control" id="tp_form_name"></select>
 						</div>
 					</div>
 					<div class="form-group">
@@ -579,7 +579,7 @@
 							<div class="form-group">
 								<label for="survey_to_complete" class="col-sm-2 control-label lang" data-lang="t_ns">New Survey</label>
 								<div class="col-sm-10">
-									<select class="survey_select form-control" id="survey_to_complete"></select>
+									<select class="survey_select disable_blocked form-control" id="survey_to_complete"></select>
 								</div>
 							</div>
 							
@@ -601,46 +601,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- Modal to allow the user to add new tasks 
-<div id="addNewTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addTaskLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="addNewTaskLabel"></h4>
-   			</div>
-		    <div class="modal-body">
-		    
-		    	<h4>Number of tasks to add: <span id="new_task_count">0</span></h4>
-		    	<div id="ts_alert" style="display:none;" class="alert alert-info" role="alert"></div>
-				<form role="form" class="form-horizontal" id="assign_survey_form">
-						
-					<div class="form-group">
-						<label for="users_select_new_task" class="col-sm-2 control-label lang" data-lang="c_user">user</label>
-						<div class="col-sm-10">
-							<select class="users_select form-control" id="users_select_new_task"></select>
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label for="survey_to_complete_new_task" class="col-sm-2 control-label lang" data-lang="t_ns">new survey</label>
-						<div class="col-sm-10">
-							<select class="survey_select form-control" id="survey_to_complete_new_task"></select>
-						</div>
-					</div>
-				
-				</form>	
-
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="addNewTaskSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
--->
 
 <!-- Modal to allow the user to manage the task parameters -->
 <div id="task_params" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
