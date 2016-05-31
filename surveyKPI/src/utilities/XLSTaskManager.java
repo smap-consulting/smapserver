@@ -189,7 +189,6 @@ public class XLSTaskManager {
 			}
 		}
 		
-		System.out.println("Getting tasks worksheet with timezone: " + tz);
 		ZoneId timeZoneId = ZoneId.of(tz);
 		ZoneId gmtZoneId = ZoneId.of("GMT");
 		
@@ -229,6 +228,13 @@ public class XLSTaskManager {
                 			// Get from value
                 			tp.from = getGmtDate(row, "from", header, lastCellNum, timeZoneId, gmtZoneId);
                 			tp.to = getGmtDate(row, "to", header, lastCellNum, timeZoneId, gmtZoneId);
+                			
+                			String repValue = getColumn(row, "repeat", header, lastCellNum, null);
+                			if(repValue != null && repValue.equals("true")) {
+                				tp.repeat = true;
+                			} else {
+                				tp.repeat = false;
+                			}
                 		    
                 			tl.features.add(tf);
                 		} catch (Exception e) {
