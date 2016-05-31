@@ -131,6 +131,8 @@ require([
 		globals.gIsAdministrator = false;
 		getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
 
+		enableUserProfileBS();										// Enable user profile button	
+		
 		// Set change function on projects
 		$('#project_name').change(function() {
 			projectChanged();

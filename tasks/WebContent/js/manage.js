@@ -129,7 +129,7 @@ require([
 		globals.gIsAdministrator = false;
 		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
 
-
+		enableUserProfileBS();	
 		
 		$('#saveRecord').click(function(){
 			 saveString = JSON.stringify(gUpdate);
