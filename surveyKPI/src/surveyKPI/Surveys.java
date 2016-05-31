@@ -526,7 +526,8 @@ public class Surveys extends Application {
 					+ "p_id = ?, "
 					+ "instance_name = ?, "
 					+ "version = ?, "
-					+ "class = ? "
+					+ "class = ?,"
+					+ "hrk = ? "
 					+ "where s_id = ?;";		
 		
 			if(survey.surveyClass != null && survey.surveyClass.equals("none")) {
@@ -541,7 +542,8 @@ public class Surveys extends Application {
 			pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD, false));
 			pstmt.setInt(7, version);
 			pstmt.setString(8, survey.surveyClass);
-			pstmt.setInt(9, sId);
+			pstmt.setString(9, survey.hrk);
+			pstmt.setInt(10, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();

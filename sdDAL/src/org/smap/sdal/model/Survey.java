@@ -38,6 +38,7 @@ public class Survey {
 	public int managed_id;
 	public int version;
 	public boolean loadedFromXLS;
+	public String hrk;
 
 	
 	// Getters

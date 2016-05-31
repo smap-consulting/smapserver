@@ -669,7 +669,8 @@ define(function() {
 				$('#set_style').val(),
 				$('#set_project_name option:selected').val(),
 				$('#set_default_language option:selected').text(),
-				$('#task_file').prop('checked')
+				$('#task_file').prop('checked'),
+				$('#set_hrk').val()
 			);
 			
 			// Update the model to reflect the current values
@@ -679,6 +680,7 @@ define(function() {
 			this.survey.p_id = current.p_id;
 			this.survey.def_lang = current.def_lang;
 			this.survey.task_file = current.task_file;
+			this.survey.hrk = current.hrk;
 			
 			return current;
 		} 
@@ -691,13 +693,14 @@ define(function() {
 								this.survey.surveyClass,
 								this.survey.p_id, 
 								this.survey.def_lang,
-								this.survey.task_file
+								this.survey.task_file,
+								this.hrk
 								));
 			
 			this.forceSettingsChange = false;
 		} 
 		
-		this.createSettingsObject = function(displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file) {
+		this.createSettingsObject = function(displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file, hrk) {
 			
 			var projId;
 			if(typeof p_id === "string") {
@@ -711,7 +714,8 @@ define(function() {
 				surveyClass: surveyClass,
 				p_id: projId,
 				def_lang: def_lang,
-				task_file: task_file
+				task_file: task_file,
+				hrk: hrk
 			}
 		}
 		

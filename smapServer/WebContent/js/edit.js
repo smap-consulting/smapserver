@@ -349,7 +349,7 @@ $(document).ready(function() {
  	 });
 	
 	// Check for changes in settings
-	$('#set_survey_name, #set_instance_name').keyup(function(){
+	$('#set_survey_name, #set_instance_name, #set_hrk').keyup(function(){
 		globals.model.settingsChange();
 	});
 	$('#set_project_name').change(function() {
@@ -1372,6 +1372,7 @@ function updateSettingsData() {
 	$('#set_instance_name').val(globals.model.survey.instanceNameDefn);
 	$('#set_style').val(globals.model.survey.surveyClass);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
+	$('#set_hrk').val(globals.model.survey.hrk);
 }
 
 
