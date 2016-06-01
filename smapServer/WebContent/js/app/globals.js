@@ -173,9 +173,11 @@ define(function() {
 			var qList = this.getSurveyQuestions(sId, language),
 				i;
 			
-			for(i = 0; i < qList.length; i++) {
-				if(qList[i].id == qId) {
-					return qList[i];
+			if(qList) {
+				for(i = 0; i < qList.length; i++) {
+					if(qList[i].id == qId) {
+						return qList[i];
+					}
 				}
 			}
 			return null;

@@ -948,6 +948,8 @@ function refreshTaskGroupData() {
 				}
 			}
 		});
+	} else {
+		$('.for_selected, .for_is_tg').addClass('disabled');		// Disable task buttons
 	}
 }
 
