@@ -448,9 +448,10 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			if(hasHrk) {
 				String topLevelTable = GeneralUtilityMethods.getMainResultsTable(cMeta, cResults, sId);
-				String sql = "update " + topLevelTable + " set _hrk = " + 
-						GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta) +
-						" where _hrk is null;";
+				String sql = "update " + topLevelTable + " set _hrk = "
+						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta)
+						+ " || '-' || prikey "
+						+ " where _hrk is null;";
 				pstmtHrk = cResults.prepareStatement(sql);
 				System.out.println("Adding HRK: " + pstmtHrk.toString());
 				pstmtHrk.executeUpdate();
