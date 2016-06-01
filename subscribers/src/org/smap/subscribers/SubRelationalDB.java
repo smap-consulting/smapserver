@@ -402,7 +402,8 @@ public class SubRelationalDB extends Subscriber {
 					cResults,
 					cMeta,
 					sId,
-					uploadTime);
+					uploadTime,
+					GeneralUtilityMethods.getHrk(cMeta, sId));
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
@@ -505,163 +506,184 @@ public class SubRelationalDB extends Subscriber {
 			Connection cRel,
 			Connection cMeta,
 			int sId,
-			Date uploadTime) throws SQLException, Exception {
+			Date uploadTime,
+			String hrk) throws SQLException, Exception {
 
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtHrk = null;
 		
-		/*
-		 * Write the Instance element to a table if it is a form type
-		 * The sub elements of a complex question will be written to their own table
-		 *  as well as being handled as a composite/complex question by the parent form
-		 */
-		if(element.getType() != null && (element.getType().equals("form") 
-				|| (element.getQType() != null && element.getQType().equals("geopolygon"))
-				|| (element.getQType() != null && element.getQType().equals("geolinestring"))
-				)) {
-			
-			// Write form
-			String tableName = element.getTableName();
-			List<IE> columns = element.getQuestions();
-			String sql = null;	
-			
+		try {
 			/*
-			 * If this is the top level form then 
-			 *   1) create all the tables for this survey if they do not already exist
-			 *   2) Check if this survey is a duplicate
+			 * Write the Instance element to a table if it is a form type
+			 * The sub elements of a complex question will be written to their own table
+			 *  as well as being handled as a composite/complex question by the parent form
 			 */
-			keys.duplicateKeys = new ArrayList<Integer>();
-			TableManager tm = new TableManager();
-			if(parent_key == 0) {	// top level survey has a parent key of 0
-				boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName, sId);
-				boolean tableChanged = false;
-				boolean tablePublished = false;
-				keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
+			if(element.getType() != null && (element.getType().equals("form") 
+					|| (element.getQType() != null && element.getQType().equals("geopolygon"))
+					|| (element.getQType() != null && element.getQType().equals("geolinestring"))
+					)) {
+				
+				// Write form
+				String tableName = element.getTableName();
+				List<IE> columns = element.getQuestions();
+				String sql = null;	
+				
 				/*
-				 * Bug fix duplicates
-				 *
-				if(keys.duplicateKeys.size() > 0 && 
-						getDuplicatePolicy() == DUPLICATE_DROP && 
-						formStatus.equals("complete")) {
-					throw new Exception("Duplicate survey: " + uuid);
-				}
-				*/
-				if(keys.duplicateKeys.size() > 0 && 
-						getDuplicatePolicy() == DUPLICATE_DROP) {
-					throw new Exception("Duplicate survey: " + uuid);
-				}
-				// Apply any updates that have been made to the table structure since the last submission
-				if(!tableCreated) {
-					tableChanged = applyTableChanges(cMeta, cRel, sId);
-					
-					// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
-					tablePublished = addUnpublishedColumns(cMeta, cRel, sId);
-					
-					if(tableChanged || tablePublished) {
-						tm.markPublished(cMeta, sId);		// only mark published if there have been changes made
+				 * If this is the top level form then 
+				 *   1) create all the tables for this survey if they do not already exist
+				 *   2) Check if this survey is a duplicate
+				 */
+				keys.duplicateKeys = new ArrayList<Integer>();
+				TableManager tm = new TableManager();
+				if(parent_key == 0) {	// top level survey has a parent key of 0
+					boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName, sId);
+					boolean tableChanged = false;
+					boolean tablePublished = false;
+					keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
+					/*
+					 * Bug fix duplicates
+					 *
+					if(keys.duplicateKeys.size() > 0 && 
+							getDuplicatePolicy() == DUPLICATE_DROP && 
+							formStatus.equals("complete")) {
+						throw new Exception("Duplicate survey: " + uuid);
 					}
+					*/
+					if(keys.duplicateKeys.size() > 0 && 
+							getDuplicatePolicy() == DUPLICATE_DROP) {
+						throw new Exception("Duplicate survey: " + uuid);
+					}
+					// Apply any updates that have been made to the table structure since the last submission
+					if(!tableCreated) {
+						tableChanged = applyTableChanges(cMeta, cRel, sId);
+						
+						// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+						tablePublished = addUnpublishedColumns(cMeta, cRel, sId);
+						
+						if(tableChanged || tablePublished) {
+							tm.markPublished(cMeta, sId);		// only mark published if there have been changes made
+						}
+					}
+					
 				}
 				
+				boolean isBad = false;
+				boolean complete = true;
+				String bad_reason = null;
+				if(formStatus != null && (formStatus.equals("incomplete") || formStatus.equals("draft"))) {
+					isBad = true;
+					bad_reason = "incomplete";
+					complete = false;
+				}
+				
+				/*
+				 * Write the record
+				 */
+				if(columns.size() > 0) {
+					
+					boolean hasUploadTime = GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
+					boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");
+					boolean hasSurveyNotes = GeneralUtilityMethods.hasColumn(cRel, tableName, "_survey_notes");
+					boolean hasHrk = GeneralUtilityMethods.hasColumn(cRel, tableName, "_hrk");
+					sql = "INSERT INTO " + tableName + " (parkey";
+					if(parent_key == 0) {
+						sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
+						if(hasUploadTime) {
+							sql += ",_upload_time,_s_id";
+						}
+						if(hasVersion) {
+							sql += ",_version";
+						}
+						if(hasSurveyNotes) {
+							sql += ",_survey_notes, _location_trigger";
+						}
+						if(isBad) {
+							sql += ",_bad, _bad_reason";
+						}
+					}
+	
+					sql += addSqlColumns(columns);
+					
+					
+					sql += ") VALUES (?";		// parent key
+					if(parent_key == 0) {
+						sql += ", ?, ?";		// remote user, complete	
+						if(hasUploadTime) {
+							sql += ", ?, ?";	// upload time, survey id
+						}
+						if(hasVersion) {
+							sql += ", ?";		// Version
+						}
+						if(hasSurveyNotes) {
+							sql += ", ?, ?";		// Survey Notes and Location Trigger
+						}
+						if(isBad) {
+							sql += ", ?, ?";	// _bad, _bad_reason
+						}
+					}
+					
+					sql += addSqlValues(columns, sName, device, server, false);
+					sql += ");";
+					
+					pstmt = cRel.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+					int stmtIndex = 1;
+					pstmt.setInt(stmtIndex++, parent_key);
+					if(parent_key == 0) {
+						pstmt.setString(stmtIndex++, remoteUser);
+						pstmt.setBoolean(stmtIndex++, complete);
+						if(hasUploadTime) {
+							pstmt.setTimestamp(stmtIndex++, new Timestamp(uploadTime.getTime()));
+							pstmt.setInt(stmtIndex++, sId);
+						}
+						if(hasVersion) {
+							pstmt.setInt(stmtIndex++, version);
+						}
+						if(hasSurveyNotes) {
+							pstmt.setString(stmtIndex++, surveyNotes);
+							pstmt.setString(stmtIndex++, locationTrigger);
+						}
+						if(isBad) {
+							pstmt.setBoolean(stmtIndex++, true);
+							pstmt.setString(stmtIndex++, bad_reason);
+						}
+					}
+					
+					System.out.println("        SQL statement: " + pstmt.toString());	
+					pstmt.executeUpdate();
+					
+					ResultSet rs = pstmt.getGeneratedKeys();
+					if( rs.next()) {
+						parent_key = rs.getInt(1);
+						keys.newKey = parent_key;
+					}
+					
+					/*
+					 * Update any Human readable keys if this survey has them
+					 */
+					if(hasHrk) {
+						sql = "update " + tableName + " set _hrk = " + 
+								GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta) +
+								" where _hrk is null;";
+						pstmtHrk = cRel.prepareStatement(sql);
+						System.out.println("Adding HRK: " + pstmtHrk.toString());
+						pstmtHrk.executeUpdate();
+					}
+	
+					
+				}
 			}
 			
-			boolean isBad = false;
-			boolean complete = true;
-			String bad_reason = null;
-			if(formStatus != null && (formStatus.equals("incomplete") || formStatus.equals("draft"))) {
-				isBad = true;
-				bad_reason = "incomplete";
-				complete = false;
+			//Write any child forms
+			List<IE> childElements = element.getChildren();
+			for(IE child : childElements) {
+				writeTableContent(child, parent_key, sName, remoteUser, server, device, 
+						uuid, formStatus, version, surveyNotes, locationTrigger, 
+						cRel, cMeta, sId, uploadTime, null);
 			}
-			
-			/*
-			 * Write the record
-			 */
-			if(columns.size() > 0) {
-				
-				boolean hasUploadTime = GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
-				boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");
-				boolean hasSurveyNotes = GeneralUtilityMethods.hasColumn(cRel, tableName, "_survey_notes");
-				sql = "INSERT INTO " + tableName + " (parkey";
-				if(parent_key == 0) {
-					sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
-					if(hasUploadTime) {
-						sql += ",_upload_time,_s_id";
-					}
-					if(hasVersion) {
-						sql += ",_version";
-					}
-					if(hasSurveyNotes) {
-						sql += ",_survey_notes, _location_trigger";
-					}
-					if(isBad) {
-						sql += ",_bad, _bad_reason";
-					}
-				}
-
-				sql += addSqlColumns(columns);
-				
-				
-				sql += ") VALUES (?";		// parent key
-				if(parent_key == 0) {
-					sql += ", ?, ?";		// remote user, complete	
-					if(hasUploadTime) {
-						sql += ", ?, ?";	// upload time, survey id
-					}
-					if(hasVersion) {
-						sql += ", ?";		// Version
-					}
-					if(hasSurveyNotes) {
-						sql += ", ?, ?";		// Survey Notes and Location Trigger
-					}
-					if(isBad) {
-						sql += ", ?, ?";	// _bad, _bad_reason
-					}
-				}
-				
-				sql += addSqlValues(columns, sName, device, server, false);
-				sql += ");";
-				
-				pstmt = cRel.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-				int stmtIndex = 1;
-				pstmt.setInt(stmtIndex++, parent_key);
-				if(parent_key == 0) {
-					pstmt.setString(stmtIndex++, remoteUser);
-					pstmt.setBoolean(stmtIndex++, complete);
-					if(hasUploadTime) {
-						pstmt.setTimestamp(stmtIndex++, new Timestamp(uploadTime.getTime()));
-						pstmt.setInt(stmtIndex++, sId);
-					}
-					if(hasVersion) {
-						pstmt.setInt(stmtIndex++, version);
-					}
-					if(hasSurveyNotes) {
-						pstmt.setString(stmtIndex++, surveyNotes);
-						pstmt.setString(stmtIndex++, locationTrigger);
-					}
-					if(isBad) {
-						pstmt.setBoolean(stmtIndex++, true);
-						pstmt.setString(stmtIndex++, bad_reason);
-					}
-				}
-				
-				System.out.println("        SQL statement: " + pstmt.toString());	
-				pstmt.executeUpdate();
-				
-				ResultSet rs = pstmt.getGeneratedKeys();
-				if( rs.next()) {
-					parent_key = rs.getInt(1);
-					keys.newKey = parent_key;
-				}
-				
-			}
-		}
-		
-		//Write any child forms
-		List<IE> childElements = element.getChildren();
-		for(IE child : childElements) {
-			writeTableContent(child, parent_key, sName, remoteUser, server, device, 
-					uuid, formStatus, version, surveyNotes, locationTrigger, 
-					cRel, cMeta, sId, uploadTime);
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
+			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {}
 		}
 		
 		return keys;

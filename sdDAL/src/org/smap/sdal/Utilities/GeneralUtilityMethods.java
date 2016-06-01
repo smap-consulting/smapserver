@@ -768,6 +768,40 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the survey human readable key survey id
+	 */
+	static public String getHrk(
+			Connection sd, 
+			int surveyId) throws SQLException {
+		
+		String hrk = null;
+		
+		String sql = "select hrk " +
+				" from survey " +
+				" where s_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, surveyId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				hrk = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return hrk;
+	}
+	
+	/*
 	 * Get the question id using the form id and question name
 	 * Used by the editor to get the question id of a newly created question
 	 * 
@@ -871,6 +905,45 @@ public class GeneralUtilityMethods {
 		}
 		
 		return path;
+	}
+	
+	/*
+	 * Get the column name from the question name
+	 * This assumes that all names in the survey are unique
+	 */
+	static public String getColumnName(
+			Connection sd, 
+			int sId,
+			String qName) throws SQLException {
+		
+		String column_name = null;
+		
+		String sql = "select q.column_name " +
+				" from question q, form f" +
+				" where q.f_id = f.f_id " +
+				" and f.s_id = ? " +
+				" and q.qname = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, qName);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				column_name = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return column_name;
 	}
 	
 	/*
@@ -2173,7 +2246,6 @@ public class GeneralUtilityMethods {
 			
 			String matched = matcher.group();
 			String qname = matched.substring(2, matched.length() - 1);
-			System.out.println("Matched: " + qname);
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();
@@ -2215,6 +2287,70 @@ public class GeneralUtilityMethods {
 			output.append(input.substring(start));		
 		}
 		
+		return output.toString().trim();
+	}
+	
+	/*
+	 * Convert names in xls format ${ } to an SQL query
+	 */
+	public static String convertAllxlsNamesToQuery(String input, int sId, Connection sd) throws SQLException {
+		
+		if(input == null) {
+			return null;
+		} else if(input.trim().length() == 0) {
+			return null;
+		}
+		
+		
+		StringBuffer output = new StringBuffer("");
+		String item;
+		
+		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			String qname = matched.substring(2, matched.length() - 1);
+			System.out.println("Matched: " + qname);
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			item = input.substring(start, startOfGroup).trim();
+			if(item.length() > 0) {
+				if(output.length() > 0) {
+					output.append(" || ");
+				}
+				output.append('\'');
+				output.append(item);
+				output.append('\'');
+			}
+			
+			// Add the column name
+			if(output.length() > 0) {
+				output.append(" || ");
+			}
+			output.append(getColumnName(sd, sId, qname));
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			item = input.substring(start).trim();
+			if(item.length() > 0) {
+				if(output.length() > 0) {
+					output.append(" || ");
+				}
+				output.append('\'');
+				output.append(item);
+				output.append('\'');
+			}
+		}
+		
+		System.out.println("HRK: " + output.toString().trim());
 		return output.toString().trim();
 	}
 	

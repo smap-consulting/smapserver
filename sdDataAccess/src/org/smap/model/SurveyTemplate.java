@@ -57,7 +57,7 @@ public class SurveyTemplate {
 	private String firstFormName = null;
 	private int nextOptionSeq = 0;
 	private int nextQuestionSeq = 0;
-	private int MAX_COLUMNS = 1600 - 10;		// Max number of columns in Postgres is 1600, allow for automcatically generated columns
+	private int MAX_COLUMNS = 1600 - 20;		// Max number of columns in Postgres is 1600, allow for automcatically generated columns
 
 	/*
 	 * Constructor
