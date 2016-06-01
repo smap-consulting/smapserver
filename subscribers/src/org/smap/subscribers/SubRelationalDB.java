@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
@@ -69,7 +70,8 @@ import com.google.gson.GsonBuilder;
 
 public class SubRelationalDB extends Subscriber {
 
-
+	private static Logger log =
+			 Logger.getLogger(Subscriber.class.getName());
 	
 	private class Keys {
 		ArrayList<Integer> duplicateKeys = new ArrayList<Integer>();
@@ -370,7 +372,7 @@ public class SubRelationalDB extends Subscriber {
 		String response = null;
 		Connection cResults = null;
 		Connection cMeta = null;
-		//Statement statement = null;
+		PreparedStatement pstmtHrk = null;
 		
 		System.out.println("UploadTime: " + uploadTime.toGMTString());
 		try {
@@ -387,6 +389,8 @@ public class SubRelationalDB extends Subscriber {
 				String msg = "Error: Top element name " + topElement.getName() + " in survey did not match a form in the template";
 				throw new Exception(msg);
 			}
+			String hrk = GeneralUtilityMethods.getHrk(cMeta, sId);
+			boolean hasHrk = (hrk != null);
 			Keys keys = writeTableContent(
 					topElement, 
 					0, 
@@ -402,8 +406,7 @@ public class SubRelationalDB extends Subscriber {
 					cResults,
 					cMeta,
 					sId,
-					uploadTime,
-					GeneralUtilityMethods.getHrk(cMeta, sId));
+					uploadTime);
 
 			// 
 			if(keys.duplicateKeys.size() > 0) {
@@ -435,10 +438,24 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Existing key:" + existingKey);
 					ArrayList<Integer> existingKeys = new ArrayList<Integer>();
 					existingKeys.add(Integer.parseInt(existingKey));
-					replaceExistingRecord(cResults, cMeta, topElement,existingKeys , keys.newKey);		// Mark the existing record as being replaced
+					replaceExistingRecord(cResults, cMeta, topElement,existingKeys , keys.newKey, hasHrk);		// Mark the existing record as being replaced
 				}
 				
 			}
+			
+			/*
+			 * Update any Human readable keys if this survey has them
+			 */
+			if(hasHrk) {
+				String topLevelTable = GeneralUtilityMethods.getMainResultsTable(cMeta, cResults, sId);
+				String sql = "update " + topLevelTable + " set _hrk = " + 
+						GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta) +
+						" where _hrk is null;";
+				pstmtHrk = cResults.prepareStatement(sql);
+				System.out.println("Adding HRK: " + pstmtHrk.toString());
+				pstmtHrk.executeUpdate();
+			}
+			
 			cResults.commit();
 			cResults.setAutoCommit(true);
 
@@ -469,6 +486,8 @@ public class SubRelationalDB extends Subscriber {
 			}
 			
 		} finally {
+			
+			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {};
 			try {
 				if (cResults != null) {
 					cResults.close();
@@ -506,8 +525,7 @@ public class SubRelationalDB extends Subscriber {
 			Connection cRel,
 			Connection cMeta,
 			int sId,
-			Date uploadTime,
-			String hrk) throws SQLException, Exception {
+			Date uploadTime) throws SQLException, Exception {
 
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
@@ -657,18 +675,6 @@ public class SubRelationalDB extends Subscriber {
 						parent_key = rs.getInt(1);
 						keys.newKey = parent_key;
 					}
-					
-					/*
-					 * Update any Human readable keys if this survey has them
-					 */
-					if(hasHrk) {
-						sql = "update " + tableName + " set _hrk = " + 
-								GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta) +
-								" where _hrk is null;";
-						pstmtHrk = cRel.prepareStatement(sql);
-						System.out.println("Adding HRK: " + pstmtHrk.toString());
-						pstmtHrk.executeUpdate();
-					}
 	
 					
 				}
@@ -679,7 +685,7 @@ public class SubRelationalDB extends Subscriber {
 			for(IE child : childElements) {
 				writeTableContent(child, parent_key, sName, remoteUser, server, device, 
 						uuid, formStatus, version, surveyNotes, locationTrigger, 
-						cRel, cMeta, sId, uploadTime, null);
+						cRel, cMeta, sId, uploadTime);
 			}
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
@@ -694,48 +700,73 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Method to replace an existing record
 	 */
-	private  void replaceExistingRecord(Connection cRel, Connection cMeta, IE element, ArrayList<Integer> existingKeys, long newKey) throws SQLException, Exception {
+	private  void replaceExistingRecord(Connection cRel, Connection cMeta, 
+			IE element, 
+			ArrayList<Integer> existingKeys, 
+			long newKey,
+			boolean hasHrk) throws SQLException, Exception {
 
 		/*
 		 * Set the record as bad with the reason being that it has been replaced
 		 */		
 		String tableName = element.getTableName();
+		PreparedStatement pstmt = null;
 		
-		// Check that the new record is not bad
-		String sql = "select _bad from " + tableName + " where prikey = ?;";
-		boolean isGood = false;
-		PreparedStatement pstmt = cRel.prepareStatement(sql);
-		pstmt = cRel.prepareStatement(sql);
-		pstmt.setLong(1, newKey);
-		ResultSet rs = pstmt.executeQuery();
-		if(rs.next()) {
-			isGood = !rs.getBoolean(1);
-		}
-		pstmt.close();
+		PreparedStatement pstmtHrk = null;
 		
-		if(isGood) {
-			// Get the survey id and form id for this table
-			String bad_reason = "Replaced by " + newKey;
-			int s_id;
-			int f_id;
-			sql = "select f.s_id, f.f_id from form f where f.table_name = ?;";
-
-			pstmt = cMeta.prepareStatement(sql);
-			pstmt.setString(1, tableName);
-			rs = pstmt.executeQuery();
+		try {
+			// Check that the new record is not bad
+			String sql = "select _bad from " + tableName + " where prikey = ?;";
+			boolean isGood = false;
+			pstmt = cRel.prepareStatement(sql);
+			pstmt = cRel.prepareStatement(sql);
+			pstmt.setLong(1, newKey);
+			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				s_id = rs.getInt(1);
-				f_id = rs.getInt(2);
-				
-				// Mark the records replaced
-				for(int i = 0; i < existingKeys.size(); i++) {	
-					int dupKey = existingKeys.get(i);
-					org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, 
-							true, bad_reason, dupKey, s_id, f_id, true, false);
-				}
+				isGood = !rs.getBoolean(1);
 			}
-			pstmt.close();		
-
+			pstmt.close();
+			
+			if(isGood) {
+				// Get the survey id and form id for this table
+				String bad_reason = "Replaced by " + newKey;
+				int s_id;
+				int f_id;
+				sql = "select f.s_id, f.f_id from form f where f.table_name = ?;";
+	
+				pstmt = cMeta.prepareStatement(sql);
+				pstmt.setString(1, tableName);
+				rs = pstmt.executeQuery();
+				if(rs.next()) {
+					s_id = rs.getInt(1);
+					f_id = rs.getInt(2);
+					
+					// Mark the records replaced
+					for(int i = 0; i < existingKeys.size(); i++) {	
+						int dupKey = existingKeys.get(i);
+						org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, 
+								true, bad_reason, dupKey, s_id, f_id, true, false);
+						
+						// Set the hrk of the new record to the hrk of the old record
+						// This can only be done for one old record, possibly there is never more than 1
+						if(hasHrk && i == 0) {
+							String sqlHrk = "update " + tableName + " set _hrk = (select t2._hrk from "
+									+ tableName
+									+ " t2 where t2.prikey = ?) "
+									+ "where prikey = ?;";
+							pstmtHrk = cRel.prepareStatement(sqlHrk);
+							pstmtHrk.setInt(1, dupKey);
+							pstmtHrk.setLong(2, newKey);
+							log.info("Updating hrk with original value: " + pstmtHrk.toString());
+							pstmtHrk.executeUpdate();
+						}
+					}
+				}	
+	
+			}
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e) {};
+			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {};
 		}
 	
 	}
