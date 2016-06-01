@@ -447,8 +447,11 @@ public class Surveys extends Application {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtGet = null;
 		PreparedStatement pstmtChangeLog = null;
+		PreparedStatement pstmtAddHrk = null;
 		
+		Connection cResults = null;
 		try {
+				
 			/*
 			 * Parse the request
 			 */
@@ -570,6 +573,20 @@ public class Surveys extends Application {
 				pstmtChangeLog.execute();
 			}
 			
+			// If the human readable key (HRK) is not null then make sure the HRK column exists in the results file
+			if(survey.hrk != null) {
+				cResults = ResultsDataSource.getConnection("surveyKPI-Surveys-saveSettings");
+				String tableName = GeneralUtilityMethods.getMainResultsTable(connectionSD, cResults, sId);
+				if(tableName != null){
+					boolean hasHrk = GeneralUtilityMethods.hasColumn(cResults, tableName, "_hrk");
+					if(!hasHrk) {
+						String sqlAddHrk = "alter table " + tableName + " add column _hrk text;";
+						pstmtAddHrk = cResults.prepareStatement(sqlAddHrk);
+						pstmtAddHrk.executeUpdate();
+					}
+				}
+			}
+			
 			connectionSD.commit();
 			connectionSD.setAutoCommit(true);
 			
@@ -598,10 +615,12 @@ public class Surveys extends Application {
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"sql error", e);
+			try{connectionSD.rollback();} catch(Exception ex) {};
 		    response = Response.serverError().entity(e.getMessage()).build();
 		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception loading settings", e);
+			try{connectionSD.rollback();} catch(Exception ex) {};
 		    response = Response.serverError().entity(e.getMessage()).build();
 		    try {connectionSD.setAutoCommit(true);} catch(Exception ex) {}
 		} finally {
@@ -609,8 +628,10 @@ public class Surveys extends Application {
 			if (pstmtGet != null) try {pstmtGet.close();} catch (SQLException e) {}
 			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {}
 			if (pstmtChangeLog != null) try {pstmtChangeLog.close();} catch (SQLException e) {}
+			if (pstmtAddHrk != null) try {pstmtAddHrk.close();} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
+			ResultsDataSource.closeConnection("surveyKPI-Survey", cResults);
 			
 		}
 

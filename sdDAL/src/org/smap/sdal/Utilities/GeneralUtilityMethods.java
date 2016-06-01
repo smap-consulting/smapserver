@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -2556,6 +2557,40 @@ public class GeneralUtilityMethods {
 		return mi;
 			
 	}
+
+	/*
+	 * Get the main results table for a survey if it exists
+	 */
+	public static String getMainResultsTable(Connection sd, Connection conn, int sId) {
+		String table = null;
+		
+		String sqlGetMainForm = "select table_name from form where s_id = ? and parentform = 0;";
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sqlGetMainForm);
+			pstmt.setInt(1,sId);
+			
+			log.info("Getting main form: " + pstmt.toString() );
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String table_name = rs.getString(1);
+				if(tableExists(conn, table_name)) {
+					table = table_name;
+				}
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			
+		}
+		
+		return table;
+	}
 	
 	/*
 	 * Check for the existence of a table
@@ -2578,6 +2613,39 @@ public class GeneralUtilityMethods {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		return (count > 0);
+	}
+	
+	/*
+	 * Method to check for presence of the specified column
+	 */
+	public static boolean hasColumn(Connection cRel, String tablename, String columnName)  {
+		
+		boolean hasColumn = false;
+		
+		String sql = "select column_name " +
+					"from information_schema.columns " +
+					"where table_name = ? and column_name = ?;";
+		
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = cRel.prepareStatement(sql);
+			pstmt.setString(1, tablename);
+			pstmt.setString(2, columnName);
+			System.out.println("SQL: " + pstmt.toString());
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				hasColumn = true;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+		
+		return hasColumn;
 	}
 	
 	/*
