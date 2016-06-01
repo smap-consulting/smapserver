@@ -253,6 +253,7 @@ public class TableManager {
 	private void writeAllTableStructures(Connection sd, Connection cResults, SurveyTemplate template) {
 			
 		String response = null;
+		boolean hasHrk = (template.getHrk() != null);
 		
 		try {
 		    //Class.forName(dbClass);	 
@@ -260,7 +261,7 @@ public class TableManager {
 			List<Form> forms = template.getAllForms();	
 			cResults.setAutoCommit(false);
 			for(Form form : forms) {		
-				writeTableStructure(form, sd, cResults);
+				writeTableStructure(form, sd, cResults, hasHrk);
 				cResults.commit();
 			}	
 			cResults.setAutoCommit(true);
@@ -285,7 +286,7 @@ public class TableManager {
 		}		
 	}
 	
-	private void writeTableStructure(Form form, Connection sd, Connection cResults) throws SQLException {
+	private void writeTableStructure(Form form, Connection sd, Connection cResults, boolean hasHrk) throws SQLException {
 		
 		String tableName = form.getTableName();
 		List<Question> columns = form.getQuestions(sd);
@@ -310,6 +311,10 @@ public class TableManager {
 						+ "_complete boolean default true, "
 						+ "_modified boolean default false"
 						+ ", _upload_time timestamp with time zone, _s_id integer ";
+			}
+			
+			if(hasHrk) {
+				sql += ", _hrk text ";
 			}
 							
 			for(Question q : columns) {

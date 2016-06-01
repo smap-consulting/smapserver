@@ -68,7 +68,8 @@ public class JdbcSurveyManager {
 			+ "version,"
 			+ "manifest,"
 			+ "instance_name,"
-			+ "deleted "
+			+ "deleted,"
+			+ "hrk "
 			+ "from survey where ";
 	String sqlIdentWhere = "ident = ?;";
 	String sqlIdWhere = "s_id = ?;";
@@ -191,6 +192,7 @@ public class JdbcSurveyManager {
 			s.setManifest(rs.getString(9));
 			s.setInstanceName(rs.getString(10));
 			s.setDeleted(rs.getBoolean(11));
+			s.setHrk(rs.getString(12));
 		}
 		return s;
 	}

@@ -59,6 +59,8 @@ public class Survey implements Serializable {
 	
 	private boolean loaded_from_xls = false;
 	
+	private String hrk = null;
+	
 	/*
 	 * Constructor
 	 */
@@ -121,6 +123,10 @@ public class Survey implements Serializable {
 		return GeneralUtilityMethods.esc(display_name);
 	}
 	
+	public String getHrk() {
+		return hrk;
+	}
+	
 	/*
 	 * Setters
 	 */
@@ -175,6 +181,10 @@ public class Survey implements Serializable {
 	
 	public void setInstanceName(String v) {
 		instanceName = v;
+	}
+	
+	public void setHrk(String v) {
+		hrk = v;
 	}
 	
 

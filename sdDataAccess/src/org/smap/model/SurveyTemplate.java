@@ -38,14 +38,6 @@ public class SurveyTemplate {
 	private static Logger log =
 			 Logger.getLogger(SurveyTemplate.class.getName());
 	
-	//private Connection connection;
-	//PersistenceContext pc = null;
-	//FormManager fPersist = null;
-	//ProjectManager pPersist = null;
-	//QuestionManager qPersist = null;
-	//OptionManager oPersist = null;
-	//TranslationManager tPersist = null;
-
 	// The model data
 	int surveyId;
 	private HashMap<String, Question> questions = new HashMap<String, Question>();
@@ -105,6 +97,11 @@ public class SurveyTemplate {
 	public String getSurveyClass() {
 		return survey.getSurveyClass();
 	}
+	
+	public String getHrk() {
+		return survey.getHrk();
+	}
+	
 	public void setNextOptionSeq(int seq) {
 		nextOptionSeq = seq;
 	}
