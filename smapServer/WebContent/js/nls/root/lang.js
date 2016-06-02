@@ -390,6 +390,7 @@ define({
 	"ed_req": "Required",
 	"ed_ap": "Auto play",
 	"ed_ls": "Linked Survey",
+	"ed_ls_add": "Add link",
 	
 	"ed_r_msg": "Required Text Message",
 	"ed_o_o_g": "Only one geometry question can be added to a form",

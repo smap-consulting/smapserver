@@ -516,9 +516,11 @@ define([
 				h[++idx] = '">';
 				h[++idx] = '<span class="glyphicon ';
 				if(question[selProperty]) {
-			    	h[++idx] = 'glyphicon-ok-sign"> Yes';
+			    	h[++idx] = 'glyphicon-ok-sign"> ';
+			    	h[++idx] = localise.set["c_yes"];
 			    } else {
-			    	h[++idx] = 'glyphicon-remove-sign"> No';
+			    	h[++idx] = 'glyphicon-remove-sign"> ';
+			    	h[++idx] = localise.set["c_no"];
 			    }
 			    h[++idx] = '</span></button>';
 			    h[++idx] = '</div>';
@@ -563,9 +565,43 @@ define([
 				
 			} else if(selProperty === "linked_survey" && type === "question") {		// Add a select to get the linked survey
 				
-				h[++idx] = '<select>';
-				h[++idx] = '<option value="sa">survey 1</option>';
+h[++idx] = '<div class="row">';
+				
+				h[++idx] = '<div class="col-sm-6">';
+			    h[++idx] = '<button type="button" class="btn labelButton ';
+			    if(question[selProperty]) {
+			    	h[++idx] = 'prop_yes" ';
+			    } else {
+			    	h[++idx] = 'prop_no" ';
+			    }
+			    h[++idx] = ' data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon ';
+				if(question[selProperty]) {
+			    	h[++idx] = 'glyphicon-ok-sign"> ';
+			    	h[++idx] = localise.set["c_yes"];
+			    } else {
+			    	h[++idx] = 'glyphicon-remove-sign"> ';
+			    	h[++idx] = localise.set["c_no"];
+			    }
+			    h[++idx] = '</span></button>';
+			    h[++idx] = '</div>';
+			    /*
+			     * Add the select question for the linked survey
+			     */
+			    h[++idx] = '<div class="col-sm-6">';
+				h[++idx] = '<div class="form-group">';
+				h[++idx] = '<label class="lang control-label" data-lang="c_survey">survey</label>';
+				h[++idx] = '<select class="form-control survey_select">';
 				h[++idx] = '</select>';
+				h[++idx] = '</div>';	// Form Group
+				
+			 
+			    
+				h[++idx] ='</div>';		// End Row
+				
+			
 				
 			} else if(selProperty === "media") {
 				h[++idx] = '<div class="row">';
