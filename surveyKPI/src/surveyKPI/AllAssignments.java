@@ -1339,10 +1339,15 @@ public class AllAssignments extends Application {
 								} else if(col.type.equals("date")) {
 									Date dateVal = Date.valueOf(value); 
 									pstmtInsert.setDate(index++, dateVal);
-								} else if(col.type.equals("datetime")) {
-									SimpleDateFormat form = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-									java.util.Date uDate = form.parse(value);
-									Timestamp tsVal = new Timestamp(uDate.getTime());
+								} else if(col.type.equals("dateTime")) {
+									SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+									Timestamp tsVal = null;
+									try {
+										java.util.Date uDate = dateFormat.parse(value);
+										tsVal = new Timestamp(uDate.getTime());
+									} catch (Exception e) {
+										log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+									}
 									
 									pstmtInsert.setTimestamp(index++, tsVal);
 								} else {
