@@ -1418,7 +1418,7 @@ public class SurveyManager {
 		boolean setReadonly = false;
 		boolean onlyIfNotPublished = false;
 		
-		PreparedStatement pstmtProperty1 = null;
+		//PreparedStatement pstmtProperty1 = null;
 		PreparedStatement pstmtProperty2 = null;
 		PreparedStatement pstmtProperty3 = null;
 		PreparedStatement pstmtDependent = null;
@@ -1543,20 +1543,20 @@ public class SurveyManager {
 					if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
 				
 						// Create prepared statements, one for the case where an existing value is being updated
-						String sqlProperty1 = "update question set " + property + " = ? " +
-								"where q_id = ? and (" + property + " = ? " +
-								"or " + property + " is null or ? = '_force_update') ";
+						//String sqlProperty1 = "update question set " + property + " = ? " +
+						//		"where q_id = ? and (" + property + " = ? " +
+						//		"or " + property + " is null or ? = '_force_update') ";
 						
-						if(onlyIfNotPublished) {
-							sqlProperty1 += " and published = 'false';";
-						} else {
-							sqlProperty1 += ";";
-						}
-						pstmtProperty1 = sd.prepareStatement(sqlProperty1);
+						//if(onlyIfNotPublished) {
+						//	sqlProperty1 += " and published = 'false';";
+						//} else {
+						//	sqlProperty1 += ";";
+						//}
+						//pstmtProperty1 = sd.prepareStatement(sqlProperty1);
 						
 						// One for the case where the property has not been set before
 						String sqlProperty2 = "update question set " + property + " = ? " +
-								"where q_id = ? and " + property + " is null ";
+								"where q_id = ? ";
 						if(onlyIfNotPublished) {
 							sqlProperty2 += " and published = 'false';";
 						} else {
@@ -1612,26 +1612,27 @@ public class SurveyManager {
 								ci.property.newVal = originalNewValue;	// Restore the original new value for logging
 							}
 							
-						} else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+						} //else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
+						//	
+						//	pstmtProperty1.setInt(2, ci.property.qId);
 							
-							pstmtProperty1.setInt(2, ci.property.qId);
-							
-							if(propertyType.equals("boolean")) {
-								pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
-								pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
-								pstmtProperty1.setString(4, ci.property.oldVal);
-							} else if(propertyType.equals("integer")) {
-								pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
-								pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
-								pstmtProperty1.setString(4, ci.property.oldVal);
-							} else {
-								pstmtProperty1.setString(1, ci.property.newVal);
-								pstmtProperty1.setString(3, ci.property.oldVal);
-								pstmtProperty1.setString(4, ci.property.oldVal);
-							}
-							log.info("Update existing question property: " + pstmtProperty1.toString());
-							count = pstmtProperty1.executeUpdate();
-						} else {
+						//	if(propertyType.equals("boolean")) {
+						//		pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
+						//		pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
+						//		pstmtProperty1.setString(4, ci.property.oldVal);
+						//	} else if(propertyType.equals("integer")) {
+						//		pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
+						//		pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
+						//		pstmtProperty1.setString(4, ci.property.oldVal);
+						//	} else {
+						//		pstmtProperty1.setString(1, ci.property.newVal);
+						//		pstmtProperty1.setString(3, ci.property.oldVal);
+						//		pstmtProperty1.setString(4, ci.property.oldVal);
+						//	}
+						//	log.info("Update existing question property: " + pstmtProperty1.toString());
+						//	count = pstmtProperty1.executeUpdate();
+						//} 
+						else {
 							
 							pstmtProperty2.setInt(2, ci.property.qId);
 							
@@ -1833,7 +1834,7 @@ public class SurveyManager {
 			}
 			throw e;
 		} finally {
-			try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
+			//try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty3 != null) {pstmtProperty3.close();}} catch (SQLException e) {}
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
