@@ -26,13 +26,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.smap.model.SurveyTemplate;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Survey;
 
 public class JdbcFormManager {
 
+	private static Logger log =
+			 Logger.getLogger(SurveyTemplate.class.getName());
+	
 	PreparedStatement pstmt = null;
 	String sql = "insert into form ("
 			+ "f_id, "
@@ -124,10 +129,11 @@ public class JdbcFormManager {
 	/*
 	 * Get an array of forms
 	 */
-	private List <Form> getFormList(PreparedStatement pstmt) throws SQLException {
+	private List <Form> getFormList(PreparedStatement aPstmt) throws SQLException {
 		ArrayList <Form> forms = new ArrayList<Form> ();
 		
-		ResultSet rs = pstmt.executeQuery();
+		log.info("Get form list: " + aPstmt.toString());
+		ResultSet rs = aPstmt.executeQuery();
 		while(rs.next()) {
 			Form f = new Form();
 			f.setId(rs.getInt(1));

@@ -1203,15 +1203,15 @@ public class AllAssignments extends Application {
 						 * Create the insert statement
 						 */		
 						boolean moreThanOneCol = false;
-						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
+						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(parkey,instanceid");
 						for(int i = 0; i < columns.size(); i++) {
 							
 							Column col = columns.get(i);
 							
 							if(i > 0) {
 								moreThanOneCol = true;
-								sqlInsert.append(",");
 							}
+							sqlInsert.append(",");
 							if(col.type.equals("select")) {
 								for(int j = 0; j < col.choices.size(); j++) {
 									if(j > 0) {
@@ -1234,14 +1234,12 @@ public class AllAssignments extends Application {
 							sqlInsert.append("the_geom");
 						}
 						
-						sqlInsert.append(") values("); 
+						sqlInsert.append(") values(0, ?"); 
 						for(int i = 0; i < columns.size(); i++) {
 							
 							Column col = columns.get(i);
 							
-							if(i > 0) {
-								sqlInsert.append(",");
-							}
+							sqlInsert.append(",");
 							if(col.type.equals("select")) {
 								
 								for(int j = 0; j < col.choices.size(); j++) {
@@ -1290,6 +1288,8 @@ public class AllAssignments extends Application {
 						while ((line = reader.readNext()) != null) {
 							
 							int index = 1;
+							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
+							
 							for(int i = 0; i < columns.size(); i++) {
 								Column col = columns.get(i);
 								String value = line[col.index].trim();				
