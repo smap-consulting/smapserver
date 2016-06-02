@@ -385,6 +385,12 @@ define({
 	"ed_qh": "Question Hint",
 	"ed_ap": "Appearance",
 	"ed_con": "Constraint",
+	"ed_con_mesg": "Constraint Message",
+	"ed_rel": "Relevant",
+	"ed_req": "Required",
+	"ed_ap": "Auto play",
+	"ed_ls": "Linked Survey",
+	
 	"ed_r_msg": "Required Text Message",
 	"ed_o_o_g": "Only one geometry question can be added to a form",
 	"ed_hrk": "Unique Key",

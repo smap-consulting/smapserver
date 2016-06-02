@@ -561,6 +561,12 @@ define([
 					
 				h[++idx] = '</div>';
 				
+			} else if(selProperty === "linked_survey" && type === "question") {		// Add a select to get the linked survey
+				
+				h[++idx] = '<select>';
+				h[++idx] = '<option value="sa">survey 1</option>';
+				h[++idx] = '</select>';
+				
 			} else if(selProperty === "media") {
 				h[++idx] = '<div class="row">';
 				if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
