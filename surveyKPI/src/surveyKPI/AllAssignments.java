@@ -1203,15 +1203,15 @@ public class AllAssignments extends Application {
 						 * Create the insert statement
 						 */		
 						boolean moreThanOneCol = false;
-						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(");
+						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(parkey,instanceid");
 						for(int i = 0; i < columns.size(); i++) {
 							
 							Column col = columns.get(i);
 							
 							if(i > 0) {
 								moreThanOneCol = true;
-								sqlInsert.append(",");
 							}
+							sqlInsert.append(",");
 							if(col.type.equals("select")) {
 								for(int j = 0; j < col.choices.size(); j++) {
 									if(j > 0) {
@@ -1234,14 +1234,12 @@ public class AllAssignments extends Application {
 							sqlInsert.append("the_geom");
 						}
 						
-						sqlInsert.append(") values("); 
+						sqlInsert.append(") values(0, ?"); 
 						for(int i = 0; i < columns.size(); i++) {
 							
 							Column col = columns.get(i);
 							
-							if(i > 0) {
-								sqlInsert.append(",");
-							}
+							sqlInsert.append(",");
 							if(col.type.equals("select")) {
 								
 								for(int j = 0; j < col.choices.size(); j++) {
@@ -1290,6 +1288,8 @@ public class AllAssignments extends Application {
 						while ((line = reader.readNext()) != null) {
 							
 							int index = 1;
+							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
+							
 							for(int i = 0; i < columns.size(); i++) {
 								Column col = columns.get(i);
 								String value = line[col.index].trim();				
@@ -1339,10 +1339,15 @@ public class AllAssignments extends Application {
 								} else if(col.type.equals("date")) {
 									Date dateVal = Date.valueOf(value); 
 									pstmtInsert.setDate(index++, dateVal);
-								} else if(col.type.equals("datetime")) {
-									SimpleDateFormat form = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-									java.util.Date uDate = form.parse(value);
-									Timestamp tsVal = new Timestamp(uDate.getTime());
+								} else if(col.type.equals("dateTime")) {
+									SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+									Timestamp tsVal = null;
+									try {
+										java.util.Date uDate = dateFormat.parse(value);
+										tsVal = new Timestamp(uDate.getTime());
+									} catch (Exception e) {
+										log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+									}
 									
 									pstmtInsert.setTimestamp(index++, tsVal);
 								} else {
