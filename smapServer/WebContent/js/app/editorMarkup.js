@@ -980,7 +980,7 @@ define([
 		
 		// Restore collapsed panels
 		for(i = 0; i < gCollapsedPanels.length; i++) {
-			$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
+			$('#' + gCollapsedPanels[i]).find('.collapse').first().addClass("in");
 		}
 		
 		
