@@ -253,7 +253,7 @@ $(document).ready(function() {
 		        	text: "Delete",
 		        	click: function() {
 		        		$dialog=$(this);
-		        		if(confirm("Are you sure you want to delete these regions")) {
+		        		if(confirm(localise.set["msg_del_r"])) {
 		        			var count = 0;
 		        			var allCalled = false;
 		        			$('#regions_delete input:checked').each(function(index) {

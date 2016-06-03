@@ -554,7 +554,7 @@ function surveyErase() {
 		}
 	});
 	
-	decision = confirm("Are you sure you want to permanently erase these surveys and all of their data?\n" + h.join());	
+	decision = confirm(localise.set["msg_erase"] + "\n" + h.join());	
 	
 	if (decision == true) {
 		for(i = 0; i < surveys.length; i++) {
@@ -582,7 +582,7 @@ function surveyUnDelete() {
 		}
 	});
 
-	decision = confirm("Are you sure you want to restore these surveys?\n" + h.join());
+	decision = confirm(localise.set["msg_restore"] + "\n" + h.join());
 
 	if (decision == true) {
 		for(i = 0; i < surveys.length; i++) {
@@ -610,7 +610,7 @@ function surveyDelete() {
 		}
 	});
 
-	decision = confirm("Are you sure you want to delete these surveys?\n" + h.join());
+	decision = confirm(localise.set["msg_del_s"] + "\n" + h.join());
 
 	if (decision == true) {
 		for(i = 0; i < surveys.length; i++) {
@@ -650,12 +650,9 @@ function deleteTemplate(template, name, hard) {
 				if (totalRows == 0) {							
 					executeDelete(template, true, hard);	// Delete survey template and data tables
 				} else {
-					
-					msg = "There are " +
-						totalRows +
-						"data rows submitted for " +
-						name +
-						". Are you sure you want to delete this data?";
+					msg = localise.set["msg_del_recs"];
+					msg = msg.replace("%s1", totalRows);
+					msg = msg.replace("%s2", name);
 					
 					decision = confirm(msg);
 					if (decision == true) {

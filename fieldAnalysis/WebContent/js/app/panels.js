@@ -469,40 +469,30 @@ function addNewPanel(type) {
 function delPanel($this, idx) {
 
 	var msg,
-		decision = false,
 		views,
 		e;		// event
 	
 	if(typeof idx === "undefined") {
-		// Confirm that the user wants to delete the panel and get the panel index
-		//msg = "Are you sure you want to delete the panel?";
-		//decision = confirm(msg);
-		decision = true;	// Asking the user for confirmation is unnecessary
 		idx = $this.attr("value");
-	} else {
-		// Delete called to explicitely remove the specified panel
-		decision = true;
-	}
-	
-	if (decision === true) {
-			
-		views = globals.gSelector.getViews();
-		if(views[idx].state === "expanded") {
-			gExpandedPanelSeq = idx;	
-			$('.pSmall').removeClass('pHide');	// unhide other panels
-		}
-		views[idx].state = "deleted";
-
-		$('#p' + idx).remove();
+	} 
 		
-		// Send a resized event to the analysis panels in case they need to take some action
-		e = jQuery.Event("resized");
-		$('.analysis').trigger(e);
-		savePanelState(views[idx]);	// Save the state
-		if(views[idx].layerId != "-1") {
-			refreshPanels();	// If this panel's data was stored in a different panel then refresh all the panels to remove it
-		}
+	views = globals.gSelector.getViews();
+	if(views[idx].state === "expanded") {
+		gExpandedPanelSeq = idx;	
+		$('.pSmall').removeClass('pHide');	// unhide other panels
 	}
+	views[idx].state = "deleted";
+
+	$('#p' + idx).remove();
+	
+	// Send a resized event to the analysis panels in case they need to take some action
+	e = jQuery.Event("resized");
+	$('.analysis').trigger(e);
+	savePanelState(views[idx]);	// Save the state
+	if(views[idx].layerId != "-1") {
+		refreshPanels();	// If this panel's data was stored in a different panel then refresh all the panels to remove it
+	}
+
 }
 
 

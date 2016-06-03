@@ -50,6 +50,7 @@ public class Question {
 												//  (for the moment - should probably have its own column 
 												//  entry but I want to maintain compatibility with xlsform)
 	public String autoplay;
+	public int linked_survey;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	
 	private static Logger log =

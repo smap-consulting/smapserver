@@ -496,6 +496,8 @@ define([
 	function getFeaturedMarkup(question, type) {
 		var h = [],
 			idx = -1,
+			i,
+			linkedSurveys = globals.model.survey.linkedSurveys,
 			selProperty = globals.gSelProperty,
 			selLabel = globals.gSelLabel,
 			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
@@ -565,9 +567,9 @@ define([
 				
 			} else if(selProperty === "linked_survey" && type === "question") {		// Add a select to get the linked survey
 				
-h[++idx] = '<div class="row">';
+				h[++idx] = '<div class="row">';
 				
-				h[++idx] = '<div class="col-sm-6">';
+				h[++idx] = '<div class="col-xs-6">';	// Start checkbox column
 			    h[++idx] = '<button type="button" class="btn labelButton ';
 			    if(question[selProperty]) {
 			    	h[++idx] = 'prop_yes" ';
@@ -580,25 +582,44 @@ h[++idx] = '<div class="row">';
 				h[++idx] = '<span class="glyphicon ';
 				if(question[selProperty]) {
 			    	h[++idx] = 'glyphicon-ok-sign"> ';
-			    	h[++idx] = localise.set["c_yes"];
+			    	h[++idx] = localise.set["ed_l"];
 			    } else {
 			    	h[++idx] = 'glyphicon-remove-sign"> ';
-			    	h[++idx] = localise.set["c_no"];
+			    	h[++idx] = localise.set["ed_nl"];
 			    }
 			    h[++idx] = '</span></button>';
 			    h[++idx] = '</div>';
 			    /*
 			     * Add the select question for the linked survey
 			     */
-			    h[++idx] = '<div class="col-sm-6">';
+			    h[++idx] = '<div class="col-xs-6">';	// Start select column
+			    h[++idx] = '<div ';
+			    if(!question[selProperty]) {
+			    	h[++idx] = 'style="display:none;';
+			    }
+			    h[++idx] = '>';
 				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<label class="lang control-label" data-lang="c_survey">survey</label>';
-				h[++idx] = '<select class="form-control survey_select">';
+				h[++idx] = '<select class="form-control labelSelect"';
+				h[++idx] = ' data-prop="';
+					h[++idx] = selProperty;
+				h[++idx] = '">';
+				for(i = 0; i < linkedSurveys.length; i++) {
+					h[++idx] = '<option value="';
+					h[++idx] = linkedSurveys[i].id;
+					h[++idx] = '"';
+					if((question[selProperty] && question[selProperty] == linkedSurveys[i].id) || 
+							(!question[selProperty] && i == 0)) {
+						h[++idx] = ' selected';
+					} 
+					h[++idx] = '>';
+					h[++idx] = linkedSurveys[i].name;
+					h[++idx] = '</option>';
+				}
 				h[++idx] = '</select>';
 				h[++idx] = '</div>';	// Form Group
-				
-			 
-			    
+				h[++idx] = '</div>';	// Show / No show
+
+				h[++idx] ='</div>';		// End Col 
 				h[++idx] ='</div>';		// End Row
 				
 			

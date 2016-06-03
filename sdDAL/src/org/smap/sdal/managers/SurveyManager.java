@@ -44,6 +44,7 @@ import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
+import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
@@ -549,7 +550,8 @@ public class SurveyManager {
 				+ "q.source_param, "
 				+ "q.path, "
 				+ "q.soft_deleted, "
-				+ "q.autoplay "
+				+ "q.autoplay,"
+				+ "q.linked_survey "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -607,6 +609,16 @@ public class SurveyManager {
 				+ "and c.user_id = u.id "
 				+ "order by c_id desc; ";
 		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
+		
+		// Get the changes that have been made to this survey
+		ResultSet rsGetLinkable = null;
+		String sqlGetLinkable = "select s.s_id, s.display_name "
+				+ "from survey s, project p "
+				+ "where s.p_id = p.id "
+				+ "and p.o_id = ? "
+				+ "and s.hrk is not null "
+				+ "order by s.display_name asc; ";
+		PreparedStatement pstmtGetLinkable = sd.prepareStatement(sqlGetLinkable);
 		
 		// Get the available languages
 		s.languages = GeneralUtilityMethods.getLanguages(sd, s.id);
@@ -674,6 +686,7 @@ public class SurveyManager {
 				q.path = rsGetQuestions.getString(23);
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
+				q.linked_survey = rsGetQuestions.getInt(26);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}
@@ -833,6 +846,20 @@ public class SurveyManager {
 			s.changes.add(cl);
 		}
 		
+		// Add the linkable surveys
+		pstmtGetLinkable.setInt(1, oId);
+		rsGetLinkable = pstmtGetLinkable.executeQuery();
+		while(rsGetLinkable.next()) {
+			int linkedId = rsGetLinkable.getInt(1);
+			if(linkedId != s.id) {	// Remove any self referentials links
+				LinkedSurvey ls = new LinkedSurvey();
+				ls.id = linkedId;
+				ls.name = rsGetLinkable.getString(2);
+				s.linkedSurveys.add(ls);
+			}
+		}
+		
+		
 		// Close statements
 		try { if (pstmtGetForms != null) {pstmtGetForms.close();}} catch (SQLException e) {}
 		try { if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
@@ -840,6 +867,7 @@ public class SurveyManager {
 		try { if (pstmtGetSSC != null) {pstmtGetSSC.close();}} catch (SQLException e) {}
 		try { if (pstmtGetChanges != null) {pstmtGetChanges.close();}} catch (SQLException e) {}
 		try { if (pstmtGetRepeatValue != null) {pstmtGetRepeatValue.close();}} catch (SQLException e) {}
+		try { if (pstmtGetLinkable != null) {pstmtGetLinkable.close();}} catch (SQLException e) {}
 	}
 	
 
@@ -1541,18 +1569,6 @@ public class SurveyManager {
 					}
 					
 					if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {
-				
-						// Create prepared statements, one for the case where an existing value is being updated
-						//String sqlProperty1 = "update question set " + property + " = ? " +
-						//		"where q_id = ? and (" + property + " = ? " +
-						//		"or " + property + " is null or ? = '_force_update') ";
-						
-						//if(onlyIfNotPublished) {
-						//	sqlProperty1 += " and published = 'false';";
-						//} else {
-						//	sqlProperty1 += ";";
-						//}
-						//pstmtProperty1 = sd.prepareStatement(sqlProperty1);
 						
 						// One for the case where the property has not been set before
 						String sqlProperty2 = "update question set " + property + " = ? " +

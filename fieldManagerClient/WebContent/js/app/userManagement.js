@@ -533,7 +533,7 @@ function getProjects() {
 function getOrganisations() {
 
 	// Show the current organisation
-	$('#org_alert').text("Organisation: " + globals.gLoggedInUser.organisation_name);
+	$('#org_alert').text(localise.set["c_org"] + ": " + globals.gLoggedInUser.organisation_name);
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/organisationList",
@@ -1235,7 +1235,7 @@ function deleteUsers () {
 	});
 	
 	
-	decision = confirm("Are you sure you want to delete these users?\n" + h.join());
+	decision = confirm(localise.set["msg_del_users"] +"\n" + h.join());
 	if (decision === true) {
 		addHourglass();
 		$.ajax({
@@ -1278,7 +1278,7 @@ function deleteProjects () {
 	});
 
 	
-	decision = confirm("Are you sure you want to delete these projects?\n" + h.join());
+	decision = confirm(localise.set["msg_del_projects"] + "\n" + h.join());
 	if (decision === true) {
 		addHourglass();
 		$.ajax({
@@ -1320,7 +1320,7 @@ function deleteOrganisations () {
 	});
 
 	
-	decision = confirm("Are you sure you want to delete these organisations?\n" + h.join());
+	decision = confirm(localise.set["mesg_del_orgs"] + "\n" + h.join());
 	if (decision === true) {
 		addHourglass();
 		$.ajax({

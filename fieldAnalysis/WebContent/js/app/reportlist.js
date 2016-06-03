@@ -355,7 +355,7 @@ function updateListView() {
 
 function reportDelete(ident) {
 	
-	var msg = "Are you sure you want to delete this report?";
+	var msg = localise.set["msg_del_rep"];
 	var decision = confirm(msg);
 	if (decision == true) {
 		

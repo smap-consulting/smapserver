@@ -39,6 +39,7 @@ public class Survey {
 	public int version;
 	public boolean loadedFromXLS;
 	public String hrk;
+	public ArrayList<LinkedSurvey> linkedSurveys = new ArrayList<LinkedSurvey> ();
 
 	
 	// Getters

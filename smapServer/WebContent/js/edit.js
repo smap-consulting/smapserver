@@ -758,12 +758,48 @@ function respondToEvents($context) {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
 		} else if (prop === "autoplay") {
 			newVal = $this.val();
+		} else if (prop === "linked_survey") {
+			if($this.hasClass("prop_no")) {
+				newVal = $this.closest('.row').find(".labelSelect").val();
+			} else {
+				newVal = undefined;
+			}
 		}
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});
 	
-	// Respond to clicks on a label button
+	// Respond to changes on a label select
+	$context.find('.labelSelect').off().change(function() {
+
+		var $this = $(this),
+			prop = $this.data("prop"),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			newVal,		
+			type,
+			optionList = $li.data("list_name"),
+			qname = $li.data("qname"),
+			labelType;
+		
+		if($li.hasClass("option")) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+
+		labelType = prop === "hint" ? "hint" : "text";
+		if (prop === "linked_survey") {
+			newVal = $this.val();
+			
+			updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+		} 
+		
+
+	});
+	
+	// Respond to clicks on a label text area
 	$context.find('.labelProp').change(function(){
 
 		var $this = $(this),
@@ -954,7 +990,7 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			item = $(this).data("id");
 		
-		bootbox.confirm("Are you sure you want to delete this question?", function(result) {
+		bootbox.confirm(localise.set["msg_del_q"], function(result) {
 			if(result) {
 				question.deleteQuestion(item);
 			}
@@ -968,7 +1004,7 @@ function respondToEvents($context) {
 			$context,						// Updated Html
 			item = $(this).data("id");
 		
-		bootbox.confirm("Are you sure you want to delete this choice list?", function(result) {
+		bootbox.confirm(localise.set["msg_del_cl"], function(result) {
 			if(result) {
 				$context = optionlist.deleteList(item);
 				respondToEvents($context);		// The entire view is refreshed after deleting an option list
@@ -1007,7 +1043,7 @@ function respondToEvents($context) {
 			index = $this.data("id"),
 			list_name = $this.data("list_name");
 		
-		bootbox.confirm("Are you sure you want to delete this choice?", function(result) {
+		bootbox.confirm(localise.set["msg_del_c"], function(result) {
 			if(result) {
 				$context = question.deleteOption(index, list_name);
 			}

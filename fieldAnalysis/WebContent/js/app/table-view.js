@@ -244,10 +244,10 @@ function exportTable($this, view) {
 }
 
 function deleteAllTables(sId) {
-	var msg = "Are you sure you want to delete all the data in this survey?";
+	var msg = localise.set["msg_del_data"];
 	var decision = confirm(msg);
 	if (decision == true) {
-		var msg2 = "Are you really sure?";
+		var msg2 = localise.set["msg_del_data2"];
 		var decision2 = confirm(msg2);		
 		if(decision2 == true) {
 			addHourglass();
