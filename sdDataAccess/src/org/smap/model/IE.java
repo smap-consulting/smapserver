@@ -3,8 +3,13 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class IE {
+	
+	private static Logger log =
+			 Logger.getLogger(IE.class.getName());
+	
 	private String name = null;
 	private String tableName = null;
 	private String columnName = null;
@@ -196,7 +201,7 @@ public class IE {
 							}
 							
 						} else {
-							System.out.println("Warning question ignored, type:" + child.getQType());
+							log.info("Warning question ignored, type:" + child.getQType());
 						}
 					}
 				}

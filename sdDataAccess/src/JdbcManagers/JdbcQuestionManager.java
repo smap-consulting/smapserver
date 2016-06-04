@@ -156,7 +156,7 @@ public class JdbcQuestionManager {
 		pstmt.setInt(28, q.getListId());
 		pstmt.setString(29, q.getAutoPlay());
 		
-		System.out.println("Write question: " + pstmt.toString());
+		log.info("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
 		
 		ResultSet rs = pstmt.getGeneratedKeys();

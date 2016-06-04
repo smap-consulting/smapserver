@@ -28,11 +28,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.smap.server.entities.Translation;
 
 public class JdbcTranslationManager {
 
+	private static Logger log =
+			 Logger.getLogger(JdbcTranslationManager.class.getName());
+	
 	PreparedStatement pstmt = null;
 	String sql = "insert into translation (s_id, language, text_id, type, value) values (?, ?, ?, ?, ?);";
 	
@@ -66,7 +70,7 @@ public class JdbcTranslationManager {
 		pstmt.setString(4, type);
 		pstmt.setString(5, value);
 		
-		System.out.println("Write translation: " + pstmt.toString());
+		log.info("Write translation: " + pstmt.toString());
 		pstmt.executeUpdate();
 	}
 	
@@ -84,7 +88,6 @@ public class JdbcTranslationManager {
 
 			while(itrT.hasNext()) {
 				Translation trans = (Translation) itrT.next();
-				System.out.println("Write: " + trans.getValue());
 				write(sId, trans.getLanguage(), trans.getTextId(), trans.getType(), trans.getValue());
 			}
 		}
