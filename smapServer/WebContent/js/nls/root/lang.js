@@ -107,6 +107,7 @@ define({
 	"c_to": "To",
 	"c_properties": "Properties",
 	"c_question": "Question",
+	"c_questions": "Questionsxx",
 	"c_include": "Include",
 	"c_unique": "Unique",
 	"c_survey": "Survey",
@@ -182,6 +183,7 @@ define({
 	"c_trans": "Translate",
 	"c_org": "Organisation",
 	"c_orgs": "Organisations",
+	"c_all_s": "All Surveys",
 	
 	// File Types
 	"ft": "File Type",

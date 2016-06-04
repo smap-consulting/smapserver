@@ -920,7 +920,9 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 				removeHourglass();
 				$elem.empty();
 				if(addAll) {
-					h[++idx] = '<option value="_all">All Surveys</option>';	
+					h[++idx] = '<option value="_all">';
+					h[++idx] = localise.set["c_all_s"];		// All Surveys
+					h[++idx] = '</option>';	
 				}
 				
 				for(i = 0; i < data.length; i++) {
