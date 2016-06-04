@@ -1,6 +1,7 @@
 
 FileETag None
-ExpiresActive On   
+ExpiresActive On  
+ExpiresDefault A3600 
 
 <VirtualHost *:80>
 	ServerAdmin webmaster@localhost
@@ -52,7 +53,6 @@ ExpiresActive On
 
 	<Directory /var/www/smap>
         Options -Indexes FollowSymLinks MultiViews
-		ExpiresDefault A7776000
         AllowOverride None
         Order allow,deny
         allow from all
