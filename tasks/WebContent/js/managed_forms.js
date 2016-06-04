@@ -144,14 +144,7 @@ require([
 		// Set change function on survey
 		$('#survey_name').change(function() {
 			gSelectedSurveyIndex = $(this).val();
-			
-			globals.gCurrentSurvey = cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].id;
-			
-			if(globals.gCurrentSurvey > 0) {
-				 getManagedData(globals.gCurrentSurvey);
-				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
-			 }
+			surveyChanged();
 		});
 		
 		/*
@@ -281,6 +274,22 @@ require([
      });
 	 
 	 /*
+	  * Function called when the current survey is changed
+	  */
+	 function surveyChanged() {
+			globals.gCurrentSurvey = cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].id;
+			
+			if(globals.gCurrentSurvey > 0) {
+				 getManagedData(globals.gCurrentSurvey);
+				 saveCurrentProject(-1, globals.gCurrentSurvey);
+				 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
+			 } else {
+				 // No managed surveys in this project
+				 $('#trackingTable').empty();
+			 }
+	 }
+	 
+	 /*
 	  * Function called when the current project is changed
 	  */
 	 function projectChanged() {
@@ -334,7 +343,7 @@ require([
 		 cache.surveyList = {};
 		 
 		 // Get the list of available surveys
-		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
+		 loadManagedSurveys(globals.gCurrentProject, surveyChanged);
 		 
 	 }
 	 
@@ -399,7 +408,7 @@ require([
 	 
 	 /*
 	  * List of surveys has finished loading
-	  */
+	  *
 	 function managedSurveysLoaded() {
 		 if(globals.gCurrentSurvey > 0 && cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id) {
 			 getManagedData(globals.gCurrentSurvey);
@@ -409,6 +418,7 @@ require([
 			 $('#trackingTable').empty();
 		 }
 	 }
+	 */
 	 
 	 /*
 	  * Get the tracking data for the specified survey
@@ -712,6 +722,7 @@ require([
 	 						if(firstSurvey) {
 	 							firstSurveyId = item.id;
 	 							firstSurveyIndex = i;
+	 							firstSurvey = false;
 	 						}
 	 						
 	 						if(item.id === globals.gCurrentSurvey) {
@@ -726,7 +737,6 @@ require([
 	 				
 	 				if(!gSelectedSurveyIndex && firstSurveyId) {
  		 				globals.gCurrentSurvey = firstSurveyId;
- 		 				saveCurrentProject(-1, globals.gCurrentSurvey);
  		 				gSelectedSurveyIndex = firstSurveyIndex;
  		 			} else if(gSelectedSurveyIndex && firstSurveyId) {
  		 				$elemSurveys.val(globals.gCurrentSurvey);

@@ -816,7 +816,7 @@ public class SurveyTemplate {
 				throw new Exception("No forms in this survey");
 			}
 			sm = new JdbcSurveyManager(sd);
-			System.out.println("Persisting survey");
+			log.info("Persisting survey");
 			sm.write(survey);
 	
 			/*
