@@ -29,6 +29,7 @@ define({
 	"m_resources": "Shared Resources",
 	"m_review": "Review",
 	"m_mf": "Managed Forms",
+	"m_br": "Browse Results",
 	"m_manage": "Manage",
 	"m_manage_dash": "Management Dashboard",
 	"m_s_m_f": "Setup Managed Forms",

@@ -1,6 +1,6 @@
 ({
     appDir: '../WebContent',
-    //optimize: 'none',
+    optimize: 'none',
     wrapShim: false,
     waitSeconds: 0,
     baseUrl: 'js/libs',
@@ -44,6 +44,9 @@
         },
         {
             name: '../managed_forms'
+        },
+        {
+            name: '../browse_results'
         },
         {
             name: '../manage'
