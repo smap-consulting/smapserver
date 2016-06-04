@@ -49,7 +49,8 @@ requirejs.config({
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
-    	pace: '../../../../js/libs/wb/plugins/pace/pace.min'
+    	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
+    	crf: '../../../../js/libs/commonReportFunctions',
     },
     shim: {
 
@@ -62,7 +63,8 @@ requirejs.config({
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
     	'icheck': ['jquery'],
-    	'slimscroll': ['jquery']
+    	'slimscroll': ['jquery'],
+    	'crf': ['jquery']
 	
     	}
     });
@@ -78,7 +80,8 @@ require([
          'slimscroll',
          'pace',
          'datetimepicker',
-         'icheck'
+         'icheck',
+         'crf'
          
          ], function($, 
         		 bootstrap, 
@@ -497,7 +500,7 @@ require([
 					 h[++idx] = getHighlightedCell(record[headItem.humanName], headItem.markup);
 						 
 					 if(headItem.readonly || !headItem.inline) {
-						 h[++idx] = record[headItem.humanName];
+						 h[++idx] = addAnchors(record[headItem.humanName]);
 					 } else {
 						 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
 					 }
