@@ -72,9 +72,9 @@
 
 	<div id="org_alert" class="alert alert-info" role="alert"></div>
     <ul class="nav nav-pills" role="tablist">
-        <li id="usersTab" role="presentation" class="active"><a href="#">Users</a></li>
-        <li id="projectsTab" role="presentation"><a href="#">Projects</a></li>
-        <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#">Organisations</a></li>
+        <li id="usersTab" role="presentation" class="active"><a href="#" class="lang" data-lang="m_user">users</a></li>
+        <li id="projectsTab" role="presentation"><a href="#" class="lang" data-lang="c_projects">projects</a></li>
+        <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_orgs">orgs</a></li>
     </ul>
 	
 	
@@ -85,13 +85,13 @@
 			<div class="container">
 				<form role="form" class="form-horizontal" id="user_filter_form">
 					<div class="form-group">
-						<label class="control-label col-sm-4" for="group_name">Show users with security group:</label>
+						<label class="control-label col-sm-4" for="group_name"><span class="lang" data-lang="u_show_u"></span>:</label>
 						<div class="col-sm-4">
 							<select class="form-control" id="group_name"></select>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="control-label col-sm-4" for="project_name">Show users in project:</label>
+						<label class="control-label col-sm-4" for="project_name"><span class="lang" data-lang="u_show_p"></span>:</label>
 						<div class="col-sm-4">
 							<select class="form-control project_list" id="project_name"></select>
 						</div>
@@ -108,9 +108,9 @@
 			</div>
 			<div class="row">	   	
 			   	<div class="col-md-12 col-xs-12">
-					<button class="btn btn-success" id="create_user">Add User</button>
-					<button class="btn btn-danger" id="delete_user">Delete User</button>
-					<button class="btn btn-warning restrict_role org_role move_to_org">Move To Organisation</button>
+					<button class="btn btn-success lang" id="create_user" data-lang="u_add">add</button>
+					<button class="btn btn-danger lang" id="delete_user" data-lang="u_del">del</button>
+					<button class="btn btn-warning restrict_role org_role move_to_org lang" data-lang="u_mv">move</button>
 				</div>
 			</div>
 		</div>
@@ -126,9 +126,9 @@
 
 		<div id="project_table"></div>
 
-		<button class="btn btn-success" id="create_project">Add Project</button>
-		<button class="btn btn-danger" id="delete_project">Delete Project</button>
-		<button class="btn btn-warning restrict_role org_role move_to_org">Move To Organisation</button>
+		<button class="btn btn-success lang" id="create_project" data-lang="u_add_p">Add Project</button>
+		<button class="btn btn-danger lang" id="delete_project" data-lang="u_del_p">Delete Project</button>
+		<button class="btn btn-warning restrict_role org_role move_to_org lang" data-lang="u_mv">move</button>
 
 	</div>
 	
@@ -136,8 +136,8 @@
     <div id="organisationPanel" style="display:none;">
 
 		<div id="organisation_table"></div>
-		<button id="create_organisation" class="btn btn-success" >Add Organisation</button>
-		<button class="btn btn-danger" id="delete_organisation">Delete Organisation</button>
+		<button id="create_organisation" class="btn btn-success lang" data-lang="u_add_o">Add Organisation</button>
+		<button class="btn btn-danger" id="delete_organisation lang" data-lang="u_del_o">Delete Organisation</button>
 	</div>
 	
 	
@@ -151,12 +151,12 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="modifyUserLabel">User Details</h4>
+     			<h4 class="modal-title lang" id="modifyUserLabel" data-lang="u_det">details</h4>
    			</div>
 		     <div class="modal-body row">
      			<div class="col-md-6">
 					<form role="form" class="form" id="user_create_form">
-						<label for="user_ident" class="control-label">Ident (lowercase, no spaces or an email address)</label>
+						<label for="user_ident" class="control-label lang" data-lang="u_ident">ident</label>
 						<input type="text" id="user_ident" required pattern="[a-z0-9_]+" class="form-control">
 							
 						<label for="user_name" data-lang="c_name" class="lang control-label">Name</label>
@@ -170,13 +170,13 @@
 							<div class="radio">
 								<label>
 									<input type="radio" id="send_email" name="send_email" value="send_email" checked="checked"/>
-									 Send email to new user
+										<span class="lang" data-lang="u_email">send email</span>
 								</label>
 							</div>
 							<div class="radio">
 								<label>
 									<input  type="radio" id="set_password" name="send_email" value="set_password" />
-									Specify password
+									<span class="lang" data-lang="u_set_p">set password</span>
 								</label>
 							</div>
 						</div>
@@ -193,13 +193,13 @@
 						</div>
 						<div id="password_fields" style="display:none;">
 							<div class="form-group">
-								<label for="user_password" data-lang="c_password" class="lang col-sm-4 control-label">Password</label>
+								<label for="user_password" data-lang="c_password" class="lang col-sm-4 control-label">password</label>
 								<div class="col-sm-8">
 									<input id="user_password" type="password" placeholder="Password" class="form-control">
 								</div>
 							</div>	
 							<div class="form-group">
-								<label for="user_password_confirm" data-lang="c_c_p" class="lang col-sm-4 control-label">Confirm Password</label>
+								<label for="user_password_confirm" data-lang="c_c_p" class="lang col-sm-4 control-label">confirm</label>
 								<div class="col-sm-8">
 									<input id="user_password_confirm" type="password" placeholder="Password" class="form-control">
 								</div>
@@ -210,11 +210,11 @@
      			<div class="col-md-6">	
 					<div class="right_panel">
 						<div class="bg-danger">
-							<h4>Security Groups</h4>
+							<h4 class="lang" data-lang="u_sg">security</h4>
 							<div id = "user_groups"></div>
 						</div>
 						<div class="bg-warning">
-							<h4>Projects</h4>
+							<h4 class="lang" data-lang="c_projects">projects</h4>
 							<div id = "user_projects"></div>
 						</div>
 
@@ -237,13 +237,13 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="createProjectLabel">Project Details</h4>
+     			<h4 class="modal-title lang" id="createProjectLabel" data-lang="u_det_p">project details</h4>
    			</div>
 		    <div class="modal-body">
 		     
 				<form class="form" role="form" id="project_create_form">	
 					<div class="form-group">
-						<label for="p_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<label for="p_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
 						<div class="col-sm-10">
 							<input type="text" id="p_name" class="form-control" required tabindex="1"><br/>
 						</div> 
@@ -280,14 +280,14 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="createOrganisationLabel">Organisation Details</h4>
+     			<h4 class="modal-title lang" id="createOrganisationLabel" data-lang="u_det_o">org details</h4>
    			</div>
 		    <div class="modal-body">
 				<form class="form" role="form" class="form-horizontal" id="organisation_create_form">
 
 					<fieldset>
 						<div class="form-group">
-							<label for="o_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+							<label for="o_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
 							<div class="col-sm-10">
 								<input type="text" id="o_name" class="form-control" tabindex="1" required><br/>
 							</div>
@@ -298,22 +298,22 @@
    							<div class="panel-heading" role="tab" id="companyDetails">
 								<h4 class="panel-title">
 					       			<a data-toggle="collapse" data-parent="#show_publishing_params" href="#collapseCompanyDetails" aria-expanded="true" aria-controls="collapseLayers">
-					         				Organisation Details
+					         				<span class="lang" data-lang="u_det_o">org details</span>
 					       			</a>
 				     			</h4>
    							</div>
 			    			<div id="collapseCompanyDetails" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
 					
-								<label for="o_company_name" data-lang="c_company_name" class="lang control-label">Organisation Name</label>
+								<label for="o_company_name" data-lang="c_company_name" class="lang control-label">org name</label>
 								<input type="text" id="o_company_name" class="form-control" tabindex="2"><br/>
 								
-								<label for="o_company_address" class="control-label">Organisation Address</label>
+								<label for="o_company_address" class="lang control-label" data-lang="c_company_addr">org address</label>
 								<input type="text" id="o_company_address" class="form-control" tabindex="3"><br/>
 								
-								<label for="o_company_phone" class="control-label">Organisation Phone</label>
+								<label for="o_company_phone" class="lang control-label" data-lang="c_company_phone">org phone</label>
 								<input type="text" id="o_company_phone" class="form-control" tabindex="3"><br/>
 						
-								<label for="o_company_email" class="control-label">Organisation Email</label>
+								<label for="o_company_email" class="lang control-label" data-lang="c_company_email">org email</label>
 								<input type="text" id="o_company_email" class="form-control" tabindex="4"><br/>
 							
 							</div>
@@ -325,16 +325,16 @@
  							<div class="panel panel-default">
    							<div class="panel-heading" role="tab" id="publishingOptions">
 								<h4 class="panel-title">
-					       			<a data-toggle="collapse" data-parent="#show_publishing_params" href="#collapsePublishingOptions" aria-expanded="true" aria-controls="collapseLayers">
-					         				Report Publishing Options
+					       			<a data-toggle="collapse" data-parent="#show_publishing_params" href="#collapsePublishingOptions" aria-expanded="true" aria-controls="collapseLayers">		
+					         			<span class="lang" data-lang="u_det_o_rep">report options</span>
 					       			</a>
 				     			</h4>
    							</div>
 			    			<div id="collapsePublishingOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      					
 					
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="3" /> Email</label></div>
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="4" /> Facebook</label></div>
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="5" /> Twitter</label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="email" class="puboption" tabindex="3" /> <span  class="lang" data-lang="c_email">email</span></label></div>
+								<!-- <div class="checkbox"><label><input type="checkbox" name="puboption" value="facebook" class="puboption" tabindex="4" /> Facebook</label></div> -->
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="twitter" class="puboption" tabindex="5" /> <span class="lang" data-lang="c_twitter">twitter</span></label></div>
 							</div>
 								
 						</div>
@@ -345,14 +345,14 @@
    							<div class="panel-heading" role="tab" id="fieldtaskOptions">
 								<h4 class="panel-title">
 					       			<a data-toggle="collapse" data-parent="#show_fieldtask_params" href="#collapseFieldtaskOptions" aria-expanded="true" aria-controls="collapseLayers">
-					         				FieldTask options
+					         			<span class="lang" data-lang="u_det_o_ft">ft options</span>
 					       			</a>
 				     			</h4>
    							</div>
 			    			<div id="collapseFieldtaskOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      								
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="6"/> Delete submitted results from the phone</label></div>
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="7"/> Send location data on path of user</label></div>
-									<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_sync_incomplete" class="puboption" tabindex="8"/> Send incomplete surveys to the server</label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_delete_submitted" class="puboption" tabindex="6"/> <span class="lang" data-lang="u_ft_del">del</span></label></div>
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_send_trail" class="puboption" tabindex="7"/> <span class="lang" data-lang="u_ft_ld">send trail</span></label></div>
+								<!--  <div class="checkbox"><label><input type="checkbox" name="puboption" value="ft_sync_incomplete" class="puboption" tabindex="8"/> Send incomplete surveys to the server</label></div> -->
 							</div>
 								
 						</div>
@@ -363,7 +363,7 @@
    							<div class="panel-heading" role="tab" id="emailOptions">
 								<h4 class="panel-title">
 					       			<a data-toggle="collapse" data-parent="#show_email_params" href="#collapseEmailOptions" aria-expanded="true" aria-controls="collapseLayers">
-					         				Email Options
+					         			<span class="lang" data-lang="u_det_o_email">email options</span>
 					       			</a>
 				     			</h4>
    							</div>
@@ -399,12 +399,12 @@
    							<div class="panel-heading" role="tab" id="otherOptions">
 								<h4 class="panel-title">
 					       			<a data-toggle="collapse" data-parent="#show_fieldtask_params" href="#collapseOtherOptions" aria-expanded="true" aria-controls="collapseLayers">
-					         				Other options
+					         			<span class="lang" data-lang="u_det_o_other">other options</span>
 					       			</a>
 				     			</h4>
    							</div>
 			    			<div id="collapseOtherOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">      								
-								<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="8"/> Allow editing of results</label></div> 
+								<div class="checkbox"><label><input type="checkbox" name="puboption" value="can_edit" class="puboption" tabindex="8"/> <span class="lang" data-lang="u_other_edit">results editing</span></label></div> 
 							</div>
 								
 						</div>

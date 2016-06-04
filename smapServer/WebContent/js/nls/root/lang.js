@@ -52,11 +52,16 @@ define({
 	"c_forwarded": "Forwarded",
 	"c_name": "Name",
 	"c_company_name": "Company Name",
+	"c_company_addr": "Company Address",
+	"c_company_phone": "Company Phone",
+	"c_company_email": "Company Email",
 	"c_type": "Type",
 	"c_file": "File",
 	"c_host": "Host",
 	"c_user": "User",
+	"c_projects": "Projects",
 	"c_email": "Email",
+	"c_twitter": "Twitter",
 	"c_lang": "Language",
 	"c_langs": "Languages",
 	"c_orientation": "Orientation",
@@ -176,6 +181,7 @@ define({
 	"c_calc": "Calculations",
 	"c_trans": "Translate",
 	"c_org": "Organisation",
+	"c_orgs": "Organisations",
 	
 	// File Types
 	"ft": "File Type",
@@ -423,6 +429,32 @@ define({
 	// Logout
 	"lo_back": "Back",
 	"lo_out": "You are logged out of ",
-	"lo_lo": "Logged Out"
+	"lo_lo": "Logged Out",
+	
+	// Users
+	"u_show_u": "Show users with security group",
+	"u_show_p": "Show users in project",
+	"u_add": "Add User",
+	"u_del": "Delete User",
+	"u_mv": "Move To Organisation",
+	"u_add_p": "Add Project",
+	"u_del_p": "Delete Project",
+	"u_add_o": "Add Organisation",
+	"u_del_o": "Delete Organisation",
+	"u_det": "User Details",
+	"u_ident": "Ident (lowercase, no spaces or an email address)",
+	"u_email": "Send email to new user",
+	"u_set_p": "Specify password",
+	"u_sg": "Security Groups",
+	"u_det_p": "Project Details",
+	"u_det_o": "Organisation Details",
+	"u_det_o_rep": "Report Publishing Options",
+	"u_det_o_ft": "FieldTask Options",
+	"u_ft_del": "Delete submitted results from the phone",
+	"u_ft_ld": "Send location data on path of user",
+	"u_det_o_email": "Email Options",
+	"u_det_o_other": "Other Options",
+	"u_other_edit": "Allow editing of results"
+				
 		
 });
