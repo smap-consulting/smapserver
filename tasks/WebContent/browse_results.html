@@ -20,7 +20,11 @@
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/version.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script data-main="js/browse_results" src="/js/libs/require.js"></script>
+<script>
+	var isBrowseResults = true,
+		isManagedForms = false;
+</script>
+<script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
 </head>
 <body class="mini-navbar">
@@ -106,7 +110,7 @@
 					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
 						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
 						<div class="col-sm-8">
-							<select class="survey_list form-control" id="survey_name"></select>
+							<select class="survey_select form-control" id="survey_name"></select>
 						</div>
 					</form>	
 				</div>

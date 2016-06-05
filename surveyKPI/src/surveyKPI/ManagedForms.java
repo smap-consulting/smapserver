@@ -161,7 +161,9 @@ public class ManagedForms extends Application {
 			/*
 			 * Add the data processing columns and configuration
 			 */
-			getDataProcessingConfig(dpId, columns);
+			if(dpId > 0) {
+				getDataProcessingConfig(dpId, columns);
+			}
 			
 			response = Response.ok(gson.toJson(columns)).build();
 		

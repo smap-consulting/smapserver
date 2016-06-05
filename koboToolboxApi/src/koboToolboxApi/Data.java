@@ -134,7 +134,7 @@ public class Data extends Application {
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
 			@QueryParam("mgmt") boolean mgmt,
-			@QueryParam("sort") String sort,		// Column Humn Name to sort on
+			@QueryParam("sort") String sort,		// Column Human Name to sort on
 			@QueryParam("dirn") String dirn			// Sort direction, asc || desc
 			) { 
 		
@@ -187,7 +187,7 @@ public class Data extends Application {
 					GeneralUtilityMethods.addManagementColumns(columns);
 				}
 				
-				for(int i = 0; i < columns.size(); i ++) {
+				for(int i = 0; i < columns.size(); i++) {
 					Column c = columns.get(i);
 					if(i > 0) {
 						columnSelect.append(",");

@@ -16,269 +16,36 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-/*
- * Purpose: Manage the panels that display graphs, maps etc of results data
- */
 
-var gUserLocale = navigator.language;
-if (Modernizr.localstorage) {
-	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
-} 
-
-"use strict";
-requirejs.config({
-    baseUrl: 'js/libs',
-    locale: gUserLocale,
-    waitSeconds: 0,
-    paths: {
-     	app: '../app',
-     	i18n: '../../../../js/libs/i18n',
-     	async: '../../../../js/libs/async',
-     	localise: '../../../../js/app/localise',
-    	jquery: '../../../../js/libs/jquery-2.1.1',
-    	modernizr: '../../../../js/libs/modernizr',
-    	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals',
-    	bootstrap: '../../../../js/libs/bootstrap.min',
-    	crf: '../../../../js/libs/commonReportFunctions',
-    	lang_location: '../../../../js',
-    	file_input: '../../../../js/libs/bootstrap.file-input',
-    	mapbox_app: '../../../../js/app/mapbox_app',
-    	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
-    	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
-    	inspinia: '../../../../js/libs/wb/inspinia',
-    	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
-    	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
-    	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
-    	crf: '../../../../js/libs/commonReportFunctions',
-    },
-    shim: {
-
-    	'common': ['jquery'],
-    	'datetimepicker': ['moment'],
-    	'bootstrap': ['jquery'],
-    	'app/plugins': ['jquery'],
-    	'crf': ['jquery'],
-    	'file_input': ['jquery'],
-    	'inspinia': ['jquery'],
-    	'metismenu': ['jquery'],
-    	'icheck': ['jquery'],
-    	'slimscroll': ['jquery'],
-    	'crf': ['jquery']
-	
-    	}
-    });
-
-require([
-         'jquery',
-         'bootstrap',
-         'common', 
-         'localise', 
-         'globals',
-         'inspinia',
-         'metismenu',
-         'slimscroll',
-         'pace',
-         'datetimepicker',
-         'icheck',
-         'crf'
-         
-         ], function($, 
-        		 bootstrap, 
-        		 common, 
-        		 localise, 
-        		 globals) {
-	
-	var cache = {
+window.gTasks = {
+		cache: {
 			surveyConfig: {},
 			managedData: {},
 			surveyList: {}
 		},
-		gSelectedSurveyIndex = undefined,
-		gUpdate = [],
-		gCurrentIndex,
-		gPriKey,
-		gSort,
-		gDirn;
-	
-	 $(document).ready(function() {
-
-		var i,
-			params,
-			pArray = [],
-			param = [],
-			openingNew = false,
-			dont_get_current_survey = true,
-			bs = isBusinessServer();
-			
-		localise.setlang();		// Localise HTML
-		
-		// Get the parameters and show a management survey if required
-		params = location.search.substr(location.search.indexOf("?") + 1)
-		pArray = params.split("&");
-		dont_get_current_survey = false;
-		for (i = 0; i < pArray.length; i++) {
-			param = pArray[i].split("=");
-			if ( param[0] === "id" ) {
-				dont_get_current_survey = true;		// Use the passed in survey id
-				globals.gCurrentSurvey = param[1];
-				saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
-			} else if ( param[0] === "new" ) {
-				dont_get_current_survey = true;		// Don't set the current survey from the users defaults
-				globals.gCurrentSurvey = -1;
-				// TODO display list of 
-			}
-		}
-		
-		// Get the user details
-		globals.gIsAdministrator = false;
-		getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
-
-		enableUserProfileBS();										// Enable user profile button	
-		
-		// Set change function on projects
-		$('#project_name').change(function() {
-			projectChanged();
-	 	 });
-		
-		// Set change function on survey
-		$('#survey_name').change(function() {
-			gSelectedSurveyIndex = $(this).val();
-			
-			globals.gCurrentSurvey = cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].id;
+		gSelectedSurveyIndex: undefined,
+		gUpdate: [],
+		gCurrentIndex: undefined,
+		gPriKey: undefined,
+		gSort: undefined,
+		gDirn: undefined
+	}
+	 
+	 /*
+	  * Function called when the current survey is changed
+	  */
+	 function surveyChanged() {
+			globals.gCurrentSurvey = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].id;
 			
 			if(globals.gCurrentSurvey > 0) {
 				 getManagedData(globals.gCurrentSurvey);
 				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
+				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
+			 } else {
+				 // No managed surveys in this project
+				 $('#trackingTable').empty();
 			 }
-		});
-		
-		/*
-		 * Set up dialog to edit a record
-		 */
-		$('#editRecord').on('show.bs.modal', function (event) {
-			var index = $(event.relatedTarget).data("index"),
-				record = cache.managedData[globals.gCurrentSurvey][index],
-				config = cache.surveyConfig[globals.gCurrentSurvey],
-				$editForm = $('#editRecordForm'),
-				$surveyForm = $('#surveyForm'),
-				h = [],
-				idx = -1,
-				m = [],
-				cnt = -1,
-				i,
-				configItem,
-				first = true;
-			
-			gCurrentIndex = index;
-			gPriKey = record["prikey"];
-			
-			// Clear the update array
-			gUpdate = [];
-			$('#saveRecord').prop("disabled", true);
-			
-			for(i = 0; i < config.length; i++) {
-				configItem = config[i];
-				
-				if(configItem.mgmt) {
-					h[++idx] = getEditMarkup(configItem, i, first, record);
-				} else {
-					m[++cnt] = getEditMarkup(configItem, i, first, record);
-				}
-				if(!configItem.readonly) {
-					first = false;
-				}
-			}
-			
-			$editForm.html(h.join(''));
-			$surveyForm.html(m.join(''));
-			
-			// Set up date fields
-			$editForm.find('.date').datetimepicker({
-				locale: gUserLocale || 'en',
-				useCurrent: false,
-				showTodayButton: true
-			});
-			
-			// Respond to changes in the data by creating an update object
-			$editForm.find('.form-control').keyup(function() {
-				dataChanged($(this));
-			});
-			$editForm.find('.date').on("dp.change", function() {
-				dataChanged($(this).find('input'));
-			});
-			$editForm.find('select').change(function() {
-				dataChanged($(this));
-			});
-			
-			// Set focus to first editable data item
-			$editForm.find('[autofocus]').focus();
-			
-			
-		});
-		
-		$('#saveRecord').click(function(){
-			 saveString = JSON.stringify(gUpdate);
-			 addHourglass();
-			 $.ajax({
-				 type: "POST",
-					  dataType: 'text',
-					  contentType: "application/json",
-					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id,
-					  data: { settings: saveString },
-					  success: function(data, status) {
-						  removeHourglass();
-						  getManagedData(globals.gCurrentSurvey);
-					  }, error: function(data, status) {
-						  removeHourglass();
-						  alert(data.responseText);
-					  }
-				});
-		});
-		
-		// Apply changes to the table columns that are shown
-		$('#applyTableSort').click(function(){
-			
-			var tableColumns = [],
-				tc,
-				$this;
-			
-			$('input', '#tab-settings-content').each(function(){
-				$this = $(this);
-				tc = {};
-				tc.name = $this.val();
-				tc.hide = !$this.is(':checked');
-				tc.include = true;
-				tableColumns.push(tc);
-			});
-			
-			 saveString = JSON.stringify(tableColumns);
-			 
-			 addHourglass();
-			 $.ajax({
-				 type: "POST",
-					  dataType: 'text',
-					  contentType: "application/json",
-					  url: "/surveyKPI/managed/updatecols/" + globals.gCurrentSurvey,
-					  data: { settings: saveString },
-					  success: function(data, status) {
-						  removeHourglass();
-						  $('#right-sidebar').removeClass("sidebar-open");
-						  refreshData();
-					  }, error: function(data, status) {
-						  removeHourglass();
-						  alert(data.responseText);
-					  }
-				});
-		});
-		
-		// Refresh menu
-		$('#m_refresh').click(function (){
-			refreshData();
-		});
-		
-     });
+	 }
 	 
 	 /*
 	  * Function called when the current project is changed
@@ -328,13 +95,13 @@ require([
 	  */
 	 function refreshData() {
 		 
-		 // Clear cache
-		 cache.surveyConfig = {};
-		 cache.managedData = {};
-		 cache.surveyList = {};
+		 // Clear gTasks.cache
+		 gTasks.cache.surveyConfig = {};
+		 gTasks.cache.managedData = {};
+		 gTasks.cache.surveyList = {};
 		 
 		 // Get the list of available surveys
-		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
+		 loadManagedSurveys(globals.gCurrentProject, surveyChanged);
 		 
 	 }
 	 
@@ -346,8 +113,8 @@ require([
 		 var 
 			itemIndex = $this.data("item"),
 			value = $this.val(),
-			record = cache.managedData[globals.gCurrentSurvey][gCurrentIndex],
-			config = cache.surveyConfig[globals.gCurrentSurvey],
+			record = gTasks.cache.managedData[globals.gCurrentSurvey][gTasks.gCurrentIndex],
+			config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
 			currentValue,
 			name = config[itemIndex].name,
 			i,
@@ -361,36 +128,36 @@ require([
 		if(currentValue !== value) {
 			// Add new value to array, or update existing
 			foundExistingUpdate = false;
-			for(i = 0; i < gUpdate.length; i++) {
-				if(gUpdate[i].name === name) {
+			for(i = 0; i < gTasks.gUpdate.length; i++) {
+				if(gTasks.gUpdate[i].name === name) {
 					foundExistingUpdate = true;
-					gUpdate[i].value = value;
+					gTasks.gUpdate[i].value = value;
 					break;
 				}
 			}
 			
 			if(!foundExistingUpdate) {
 				// Add new value
-				gUpdate.push({
+				gTasks.gUpdate.push({
 					name: name,
 					value: value,
 					currentValue: currentValue,
-					prikey: gPriKey
+					prikey: gTasks.gPriKey
 				});
 			}
 			
 		} else {
 			// Delete value from array of updates
-			for(i = 0; i < gUpdate.length; i++) {
-				if(gUpdate[i].name === name) {
-					gUpdate.splice(i, 1);
+			for(i = 0; i < gTasks.gUpdate.length; i++) {
+				if(gTasks.gUpdate[i].name === name) {
+					gTasks.gUpdate.splice(i, 1);
 					break;
 				}
 			}
 		}
 		console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
 		
-		if(gUpdate.length > 0) {
+		if(gTasks.gUpdate.length > 0) {
 			$('#saveRecord').prop("disabled", false);
 		} else {
 			$('#saveRecord').prop("disabled", true);
@@ -398,28 +165,21 @@ require([
 	 }
 	 
 	 /*
-	  * List of surveys has finished loading
-	  */
-	 function managedSurveysLoaded() {
-		 if(globals.gCurrentSurvey > 0 && cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id) {
-			 getManagedData(globals.gCurrentSurvey);
-			 getSurveyConfig(globals.gCurrentSurvey, cache.surveyList[globals.gCurrentProject][gSelectedSurveyIndex].managed_id);
-		 } else {
-			 // No managed surveys in this project
-			 $('#trackingTable').empty();
-		 }
-	 }
-	 
-	 /*
 	  * Get the tracking data for the specified survey
 	  */
 	 function getManagedData(sId, sort, dirn) {
 		 
-		 var url = '/api/v1/data/' + sId + "?mgmt=true";
+		 var url = '/api/v1/data/' + sId;
 		 
-		 if(sort) {
-			 url += "&sort=" + sort + "&dirn=" + dirn;
+		 if(isManagedForms) {
+			 url += "?mgmt=true";
+		 } else{
+			 url += "?mgmt=false";
 		 }
+		 
+		 if(sort) { 
+			 url += "&sort=" + sort + "&dirn=" + dirn;
+		 } 
 		 
 		 addHourglass();
 		 $.ajax({
@@ -428,8 +188,8 @@ require([
 			 dataType: 'json',
 			 success: function(data) {
 				 removeHourglass();
-				 cache.managedData[sId] = data;
-				 if(cache.surveyConfig[sId]) {
+				 gTasks.cache.managedData[sId] = data;
+				 if(gTasks.cache.surveyConfig[sId]) {
 					 showManagedData(sId);
 				 }
 			 },
@@ -450,8 +210,8 @@ require([
 	 function showManagedData(sId) {
 		 
 		 var x = 1,
-		 	managed = cache.managedData[sId],
-		 	columns = cache.surveyConfig[sId],
+		 	managed = gTasks.cache.managedData[sId],
+		 	columns = gTasks.cache.surveyConfig[sId],
 		 
 		 	h = [],
 		 	idx = -1,
@@ -473,9 +233,9 @@ require([
 			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
 			 
 			 if(headItem.include && !headItem.hide) {
-				 if(gSort && headItem.humanName === gSort.trim()) {
+				 if(gTasks.gSort && headItem.humanName === gTasks.gSort.trim()) {
 					 h[++idx] = '<th class="sort-';
-					 h[++idx] = gDirn;
+					 h[++idx] = gTasks.gDirn;
 					 h[++idx] = '">';
 				 } else {
 					 h[++idx] = '<th>';
@@ -534,20 +294,20 @@ require([
 			 var	$this = $(this), 
 			 		html = $this.html();	// Use to look for existing sort tags
 			 
-			 gSort = $this.text();
+			 gTasks.gSort = $this.text();
 			 
 			 if($this.find('i').length > 0) {
-				 if(gDirn === "asc") {
-					 gDirn = "desc";
+				 if(gTasks.gDirn === "asc") {
+					 gTasks.gDirn = "desc";
 				 } else {
-					 gDirn = "asc";
+					 gTasks.gDirn = "asc";
 				 }
 			 } else {
-				 gDirn = "asc";
+				 gTasks.gDirn = "asc";
 			 }
 			 
 			 // Update table
-			 getManagedData(globals.gCurrentSurvey, gSort, gDirn);
+			 getManagedData(globals.gCurrentSurvey, gTasks.gSort, gTasks.gDirn);
 		 });
 			
 		 // Set checkboxes in column sort section of settings
@@ -697,12 +457,12 @@ require([
 	 				
 	 				removeHourglass();
 	 				
-	 				cache.surveyList[globals.gCurrentProject] = data;
-	 				gSelectedSurveyIndex = undefined;
+	 				gTasks.cache.surveyList[globals.gCurrentProject] = data;
+	 				gTasks.gSelectedSurveyIndex = undefined;
 	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(item.managed_id > 0) {
+	 					if(item.managed_id > 0 || isBrowseResults) {
 	 						h[++idx] = '<option value="';
 	 						h[++idx] = i;
 	 						h[++idx] = '">';
@@ -712,10 +472,11 @@ require([
 	 						if(firstSurvey) {
 	 							firstSurveyId = item.id;
 	 							firstSurveyIndex = i;
+	 							firstSurvey = false;
 	 						}
 	 						
 	 						if(item.id === globals.gCurrentSurvey) {
-		 						gSelectedSurveyIndex = i;
+		 						gTasks.gSelectedSurveyIndex = i;
 		 					}
 	 						
 	 					}
@@ -724,11 +485,10 @@ require([
 	 				
 	 				$elemSurveys.empty().html(h.join(''));
 	 				
-	 				if(!gSelectedSurveyIndex && firstSurveyId) {
+	 				if(!gTasks.gSelectedSurveyIndex && firstSurveyId) {
  		 				globals.gCurrentSurvey = firstSurveyId;
- 		 				saveCurrentProject(-1, globals.gCurrentSurvey);
- 		 				gSelectedSurveyIndex = firstSurveyIndex;
- 		 			} else if(gSelectedSurveyIndex && firstSurveyId) {
+ 		 				gTasks.gSelectedSurveyIndex = firstSurveyIndex;
+ 		 			} else if(gTasks.gSelectedSurveyIndex && firstSurveyId) {
  		 				$elemSurveys.val(globals.gCurrentSurvey);
  		 			}
 	 				
@@ -754,7 +514,7 @@ require([
 	  */
 	 function getSurveyConfig(sId, managed_id) {
 		 
-		 if(!cache.surveyConfig[sId]) {
+		 if(!gTasks.cache.surveyConfig[sId]) {
 			 var url = '/surveyKPI/managed/config/' + sId + "/" + managed_id;
 			 
 			 addHourglass();
@@ -764,8 +524,8 @@ require([
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
-					 cache.surveyConfig[sId] = data;
-					 if(cache.managedData[sId]) {
+					 gTasks.cache.surveyConfig[sId] = data;
+					 if(gTasks.cache.managedData[sId]) {
 						 showManagedData(sId);
 					 }
 				 },
@@ -779,15 +539,11 @@ require([
 				 }
 			 });
 		 } else {
-			 if(cache.managedData[sId]) {
+			 if(gTasks.cache.managedData[sId]) {
 				 showManagedData(sId);
 			 }
 		 }
 		 
 		 
 	 }
-	 
-
-
-});
 

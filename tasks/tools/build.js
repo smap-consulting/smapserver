@@ -46,9 +46,6 @@
             name: '../managed_forms'
         },
         {
-            name: '../browse_results'
-        },
-        {
             name: '../manage'
         }
 
