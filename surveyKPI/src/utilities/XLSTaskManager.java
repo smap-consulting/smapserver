@@ -506,7 +506,6 @@ public class XLSTaskManager {
 		cols.add(new Column(localisation, colNumber++, "to"));
 		cols.add(new Column(localisation, colNumber++, "guidance"));
 		cols.add(new Column(localisation, colNumber++, "repeat"));
-		cols.add(new Column(localisation, colNumber++, "duration"));
 		cols.add(new Column(localisation, colNumber++, "email"));
 		cols.add(new Column(localisation, colNumber++, "address"));
 		cols.add(new Column(localisation, colNumber++, "lon"));
