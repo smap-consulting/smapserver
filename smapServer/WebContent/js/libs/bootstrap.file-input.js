@@ -24,11 +24,12 @@ $.fn.bootstrapFileInput = function() {
     }
 
     // Set the word to be displayed on the button
-    var buttonWord = 'Browse';
+    var buttonWord = localise.set["ar_af"];
+    //var buttonWord = 'Browse';
 
-    if (typeof $elem.attr('title') != 'undefined') {
-      buttonWord = $elem.attr('title');
-    }
+    //if (typeof $elem.attr('title') != 'undefined') {
+    //  buttonWord = $elem.attr('title');
+    //}
 
     var className = '';
 

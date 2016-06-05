@@ -91,6 +91,7 @@ define({
 	"c_blocked": "Blocked",
 	"c_graph": "Graph",
 	"c_map": "Map",
+	"c_maps": "Maps",
 	"c_map_layers": "Map Layers",	
 	"c_table": "Table",
 	"c_tables": "Tables",
@@ -457,7 +458,15 @@ define({
 	"u_ft_ld": "Send location data on path of user",
 	"u_det_o_email": "Email Options",
 	"u_det_o_other": "Other Options",
-	"u_other_edit": "Allow editing of results"
+	"u_other_edit": "Allow editing of results",
+	
+	// Shared Resources
+	"sr_res": "Images Video Audio and CSV Files",
+	"sr_nfc": "NFC Tags",
+	"ar_af": "Add Files",
+	"sr_g": "Group",
+	"sr_fn": "File Name",
+	"sr_m_ph": "xxEnter a name for your map"
 				
 		
 });

@@ -50,7 +50,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	      </button>
 	      <a href="#" class="navbar-brand">
 	      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-	     		Shared Resources
+	     	<span class="lang" data-lang="m_resources">resources</span>
 	      </a>
 	    </div>
 		<nav class="collapse navbar-collapse" role="navigation">
@@ -88,9 +88,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 <div class="container">
     <ul class="nav nav-pills tab_controls" role="tablist">
-        <li id="mediaTab" role="presentation" class="active"><a href="#">Images Video Audio and CSV Files</a></li>
-        <li id="mapTab" role="presentation"><a href="#">Maps</a></li>
-        <li id="nfcTab" class="bus_only" role="presentation" style="display:none;"><a href="#">NFC Tags</a></li>  <!-- Hidden unless business server -->
+        <li id="mediaTab" role="presentation" class="active"><a href="#" class="lang" data-lang="sr_res">images</a></li>
+        <li id="mapTab" role="presentation"><a href="#" class="lang" data-lang="c_maps">maps</a></li>
+        <li id="nfcTab" class="bus_only" role="presentation" style="display:none;"><a href="#" class="lang" data-lang="sr_nfc">tags</a></li>  <!-- Hidden unless business server -->
     </ul>
     
     <div id="mediaPanel" >
@@ -110,11 +110,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	                
 	                		<button type="button" id="submitFiles" class="btn btn-primary">
 	                    		<i class="glyphicon glyphicon-upload"></i>
-	                    		<span>Start upload</span>
+	                    		<span class="lang" data-lang="c_upload">upload</span>
 	                		</button>
 	                		<button type="reset" class="btn btn-warning cancel">
 	                    		<i class="glyphicon glyphicon-ban-circle"></i>
-	                    		<span>Cancel upload</span>
+	                    		<span class="lang" data-lang="c_cancel">cancel</span>
 	                		</button>
 	                		
 	                		<!-- The global file processing state -->
@@ -155,9 +155,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 			    </div>
 			   
 				<!-- The container for the uploaded Survey files -->
-				<div id="orgPanel" class="col-lg-10">
-			    	<h4>Organisation</h4>
-							    
+				<div id="orgPanel" class="col-lg-10">							    
 					<div class="table-responsive">
 			   			<table role="presentation" class="table table-striped col-md-10">
 			   				<tbody id="filesOrg">
@@ -172,7 +170,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<div id="mapPanel" style="display:none;">
 		<div class="container">
 			<div class = "well">	
-				<a id="addMap" type="button" class="btn btn-default" aria-label="Add Map">Add</a>
+				<a id="addMap" type="button" class="btn btn-default lang" data-lang="msg_add_map" aria-label="Add Map">add</a>
 				<div class="table-responsive">
 					<div id="map_list"></div>
 				</div>
@@ -228,16 +226,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		   
 			<!-- The container for the uploaded Survey files -->
 			<div id="nfcListPanel" class="col-lg-10">
-		    	<h4>File Name</h4>
+		    	<h4 class="lang" data-lang="sr_fn">file</h4>
 						    
 				<div class="table-responsive">
 		   			<table role="presentation" class="table table-striped col-md-10">
 		   				<thead>
 		   					<tr>
-		   						<th>Type</th>
-		   						<th>Group</th>
+		   						<th class="lang" data-lang="c_type">type</th>
+		   						<th class="lang" data-lang="sr_g">group</th>
 		   						<th>UID</th>
-		   						<th>Name</th>
+		   						<th class="lang" data-lang="c_name">name</th>
 		   					</tr>
 		   				</thead>
 		   				<tbody id="nfcList">
@@ -255,16 +253,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
    		<div class="modal-content">
     			<div class="modal-header">
       				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-      				<h4 class="modal-title" id="addMapLabel">Map</h4>
+      				<h4 class="modal-title lang" id="addMapLabel" data-lang="c_map">Map</h4>
     			</div>
     			
 		    <div class="modal-body">
 				<form id="map_edit_form" class="form-horizontal" role="form">
 					<div class="form-group">
-						<label class="lang col-sm-2 control-label" data-lang="c_name" for="map_name">Name</label>
+						<label class="lang col-sm-2 control-label" data-lang="c_name" for="map_name">name</label>
 						<div class="col-sm-10">
 							<input type="text" id="map_name" class="form-control" 
-								placeholder="Enter a name for your map" 
+								placeholder="map name" 
 								required>
 						</div>
 					</div>
