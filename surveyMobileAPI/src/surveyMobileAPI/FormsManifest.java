@@ -78,7 +78,10 @@ public class FormsManifest {
 	// Respond with XML no matter what is requested
 	@GET
 	@Produces(MediaType.TEXT_XML)
-	public String getManifest(@QueryParam("key") String key, @Context HttpServletRequest request, @Context HttpServletResponse resp) throws IOException {
+	public String getManifest(
+			@QueryParam("key") String key, 
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse resp) throws IOException {
 
 		String host = request.getServerName();
 		int portNumber = request.getLocalPort();
@@ -148,25 +151,13 @@ public class FormsManifest {
 
 					if(fis != null)	{
 						String md5 = DigestUtils.md5Hex( fis );
-						// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
-						//if(files.get(md5) == null) {
-						//	files.put(md5, md5);
-							String fullUrl = protocol + host + m.url;
-	
-							// Get the filename
-							//int idx = filelocn.lastIndexOf('/');
-							//String filename;
-							//if(idx > 0) {
-							//	filename = filelocn.substring(idx + 1);
-							//} else {
-							//	filename = filelocn;
-							//}
-							responseStr.append("<mediaFile>");
-							responseStr.append("<filename>" + m.fileName + "</filename>\n");
-							responseStr.append("<hash>md5:" + md5 + "</hash>\n");
-							responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
-							responseStr.append("</mediaFile>");
-				//		}
+						String fullUrl = protocol + host + m.url;
+
+						responseStr.append("<mediaFile>");
+						responseStr.append("<filename>" + m.fileName + "</filename>\n");
+						responseStr.append("<hash>md5:" + md5 + "</hash>\n");
+						responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
+						responseStr.append("</mediaFile>");
 					}
 				} else {
 					log.info("Error: manifest with null file path");
