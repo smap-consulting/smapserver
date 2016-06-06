@@ -151,11 +151,37 @@ define([
 				
 				h[++idx] = '<div class="question-controls">';
 					h[++idx] = '<div class="row">';
-						h[++idx] = '<div class="col-md-6"></div>';
+						h[++idx] = '<div class="col-md-6">';
+							h[++idx] = '<h4>';
+								h[++idx] = localise.set["ed_c_s"];
+							h[++idx] = '</h4>';
+							h[++idx] = '<label class="radio-inline">';
+								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="list">';
+								h[++idx] = '<span>';
+								h[++idx] = localise.set["ed_cl"];	// Choice List
+								h[++idx] = '</span>';
+							h[++idx] = '</label>';
+							h[++idx] = '<label class="radio-inline">';
+								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="csv">';
+								h[++idx] = '<span>';
+								h[++idx] = localise.set["ed_csv"];
+								h[++idx] = '</span>';
+							h[++idx] = '</label>';
+							h[++idx] = '<label class="radio-inline">';
+								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="linked">';
+								h[++idx] = '<span class="lang" data-lang="ed_ls">';
+								h[++idx] = localise.set["ed_ls"];
+								h[++idx] = '</span>';
+							h[++idx] = '</label>';
+							
+						h[++idx] = '</div>';
 						
 						// A control to set option lists
 						h[++idx] = '<div class="col-md-6">';
-							h[++idx] = '<label>Choice List: </label>';
+							h[++idx] = '<label>';
+								h[++idx] = localise.set["ed_cl"];
+								h[++idx] = ':';
+							h[++idx] = '</label>';
 							h[++idx] = '<div class="input-group">';
 								h[++idx] = '<select class="form-control option-lists">';
 								h[++idx] = getOptionLists();

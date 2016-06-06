@@ -669,7 +669,7 @@ public class SurveyManager {
 				q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(8), true);
 				q.seq = rsGetQuestions.getInt(9);
 				q.defaultanswer = rsGetQuestions.getString(10);
-				q.appearance = rsGetQuestions.getString(11);
+				q.appearance = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(11), true);
 				
 				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(12), true);
 				q.constraint_msg = rsGetQuestions.getString(13);
@@ -1558,7 +1558,7 @@ public class SurveyManager {
 					
 					// Convert from $ syntax to paths
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
-							|| ci.property.prop.equals("calculation")) {
+							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
 						ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
 						ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
 						

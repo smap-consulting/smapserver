@@ -408,9 +408,10 @@ define({
 	"ed_qt": "Question Text",
 	"ed_ct": "Choice Text",
 	"ed_qh": "Question Hint",
-	"ed_ap": "Appearance",
+	"ed_cl": "Choice List",
+	"ed_appearance": "Appearance",
 	"ed_con": "Constraint",
-	"ed_con_mesg": "Constraint Message",
+	"ed_con_msg": "Constraint Message",
 	"ed_rel": "Relevant",
 	"ed_req": "Required",
 	"ed_ap": "Auto play",
@@ -418,10 +419,11 @@ define({
 	"ed_ls_add": "Add link",
 	"ed_l": "Linked",
 	"ed_nl": "Not Linked",
-	
 	"ed_r_msg": "Required Text Message",
 	"ed_o_o_g": "Only one geometry question can be added to a form",
 	"ed_hrk": "Unique Key",
+	"ed_csv": "CSV File",
+	"ed_c_s": "Source of Choices",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

@@ -270,14 +270,13 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(9, source );
 				pstmtInsertQuestion.setString(10,  calculation);
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
-				pstmtInsertQuestion.setString(12, q.appearance);
+				String appearance = GeneralUtilityMethods.convertAllxlsNames(q.appearance, sId, sd, false);
+				pstmtInsertQuestion.setString(12, appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
 				pstmtInsertQuestion.setString(14, q.path);
 				pstmtInsertQuestion.setBoolean(15, readonly);
-				
 				String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd, false);
 				pstmtInsertQuestion.setString(16, relevant);
-				
 				String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
 				pstmtInsertQuestion.setString(17, constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
