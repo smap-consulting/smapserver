@@ -55,7 +55,9 @@ $(document).ready(function() {
 	
 	var bs = isBusinessServer();
 	localise.setlang();		// Localise HTML
-	$('#map_name').attr("placeholder", localise.set["sr_m_ph"])
+	$('#map_name').attr("placeholder", localise.set["sr_m_ph"]);
+	$('#map_description').attr("placeholder", localise.set["sr_m_d"]);
+	$('#mapid').attr("placeholder", localise.set["sr_m_mb"]);
 	
 	// Get the user details
 	globals.gIsAdministrator = false;

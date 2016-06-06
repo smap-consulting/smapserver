@@ -466,7 +466,9 @@ define({
 	"ar_af": "Add Files",
 	"sr_g": "Group",
 	"sr_fn": "File Name",
-	"sr_m_ph": "xxEnter a name for your map"
+	"sr_m_ph": "Enter a name for your map",
+	"sr_m_d": "Enter a description for this map (optional)",
+	"sr_m_mb": "For Mapbox this identifies the map, for example: mapbox.light"
 				
 		
 });
