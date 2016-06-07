@@ -64,7 +64,7 @@ $(document).ready(function() {
 	globals.gCurrentSurvey = undefined;
 	getLoggedInUser(undefined, false, false, undefined, false, true);
 	
-	getFilesFromServer('/surveyKPI/upload/media', undefined, refreshMediaView);		// Get files available to the entire organisation
+	getFilesFromServer('/surveyKPI/upload/media', undefined, refreshMediaViewManage);		// Get files available to the entire organisation
 	
 	// Set up the tabs
 	if(bs) {
@@ -110,7 +110,7 @@ $(document).ready(function() {
     // Respond to file upload
     $('#submitFiles').click( function() {
     	if(!$('#submitFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaView, undefined);
+    		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaViewManage, undefined);
     	}
     });
     

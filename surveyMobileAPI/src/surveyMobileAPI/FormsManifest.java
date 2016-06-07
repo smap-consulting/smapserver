@@ -22,6 +22,7 @@ package surveyMobileAPI;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -138,30 +139,35 @@ public class FormsManifest {
 
 			
 			for( ManifestValue m : manifestList) {
-					
-				if(m.filePath != null) {
-					FileInputStream fis = null;
-					
-					log.info("Media file:" + m.filePath);
-					try {
-						fis = new FileInputStream( new File(m.filePath) );
-					} catch (Exception e) {
-						System.out.println(e.getMessage());
-					}
-
-					if(fis != null)	{
-						String md5 = DigestUtils.md5Hex( fis );
-						String fullUrl = protocol + host + m.url;
-
-						responseStr.append("<mediaFile>");
-						responseStr.append("<filename>" + m.fileName + "</filename>\n");
-						responseStr.append("<hash>md5:" + md5 + "</hash>\n");
-						responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
-						responseStr.append("</mediaFile>");
-					}
+				
+				String md5 = "";
+				
+				if(m.type.equals("linked")) {
+					log.info("Linked file:" + m.fileName);
 				} else {
-					log.info("Error: manifest with null file path");
+					// Get the MD5 hash
+					if(m.filePath != null) {
+						FileInputStream fis = null;
+						log.info("CSV or Media file:" + m.filePath);
+						try {
+							fis = new FileInputStream( new File(m.filePath) );
+						} catch (Exception e) {
+							System.out.println(e.getMessage());
+						}
+	
+						if(fis != null)	{
+							md5 = "md5:" + DigestUtils.md5Hex( fis );
+						}
+					}
 				}
+				String fullUrl = protocol + host + m.url;
+
+				responseStr.append("<mediaFile>");
+				responseStr.append("<filename>" + m.fileName + "</filename>\n");
+				responseStr.append("<hash>" + md5 + "</hash>\n");
+				responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
+				responseStr.append("</mediaFile>");
+					
 			}
 			responseStr.append("</manifest>\n");
 		} catch (Exception e) {

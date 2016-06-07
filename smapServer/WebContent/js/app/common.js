@@ -632,6 +632,14 @@ function progressFn(e) {
 }
 
 /*
+ * Refresh the media view and then set the mode to manage
+ */
+function refreshMediaViewManage(data, sId) {
+	refreshMediaView(data, sId);
+	$('.mediaManage').show();
+	$('.mediaSelect').hide();
+}
+/*
  * Refresh the view of any attached media if the available media items has changed
  */
 function refreshMediaView(data, sId) {
@@ -726,7 +734,7 @@ function refreshMediaView(data, sId) {
 	
 	}	
 	
-	// If this is the organisational view we can refresh the list of chocies for selecting vector maps
+	// If this is the organisational view we can refresh the list of choices for selecting vector maps
 	if(!sId) {
 		refreshVectorSelects(data);
 	}
@@ -839,7 +847,7 @@ function delete_media(url, sId) {
 		success: function(data) {
 			removeHourglass();
 			var surveyId = sId;
-			refreshMediaView(data, surveyId);
+			refreshMediaViewManage(data, surveyId);
 	
 		},
 		error: function(xhr, textStatus, err) {

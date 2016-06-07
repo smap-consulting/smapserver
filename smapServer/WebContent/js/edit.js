@@ -438,7 +438,7 @@ $(document).ready(function() {
      */
     $('#submitFiles').click( function() {
        	if(!$('#submitFiles').hasClass('disabled')) {
-       		uploadFiles(gUrl, "fileupload", refreshMediaView, globals.gCurrentSurvey);
+       		uploadFiles(gUrl, "fileupload", refreshMediaViewManage, globals.gCurrentSurvey);
        	}
     });
     

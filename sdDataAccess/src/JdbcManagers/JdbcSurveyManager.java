@@ -44,9 +44,10 @@ public class JdbcSurveyManager {
 			+ "ident,"
 			+ "version,"
 			+ "manifest,"
+			+ "manifest_params,"
 			+ "instance_name,"
 			+ "loaded_from_xls) "
-			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	// Update
 	PreparedStatement pstmtUpdate = null;
@@ -67,6 +68,7 @@ public class JdbcSurveyManager {
 			+ "ident,"
 			+ "version,"
 			+ "manifest,"
+			+ "manifest_params,"
 			+ "instance_name,"
 			+ "deleted,"
 			+ "hrk "
@@ -101,8 +103,9 @@ public class JdbcSurveyManager {
 		pstmt.setString(6, s.getIdent());
 		pstmt.setInt(7, s.getVersion());
 		pstmt.setString(8, s.getManifest());
-		pstmt.setString(9, s.getInstanceName());
-		pstmt.setBoolean(10, s.getLoadedFromXls());
+		pstmt.setString(9, s.getManifestParams());
+		pstmt.setString(10, s.getInstanceName());
+		pstmt.setBoolean(11, s.getLoadedFromXls());
 		pstmt.executeUpdate();
 					
 		ResultSet rs = pstmt.getGeneratedKeys();
@@ -190,9 +193,10 @@ public class JdbcSurveyManager {
 			s.setIdent(rs.getString(7));
 			s.setVersion(rs.getInt(8));
 			s.setManifest(rs.getString(9));
-			s.setInstanceName(rs.getString(10));
-			s.setDeleted(rs.getBoolean(11));
-			s.setHrk(rs.getString(12));
+			s.setManifestParams(rs.getString(10));
+			s.setInstanceName(rs.getString(11));
+			s.setDeleted(rs.getBoolean(12));
+			s.setHrk(rs.getString(13));
 		}
 		return s;
 	}

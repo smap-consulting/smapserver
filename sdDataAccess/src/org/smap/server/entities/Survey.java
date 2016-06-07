@@ -53,6 +53,8 @@ public class Survey implements Serializable {
 	
 	private String manifest;
 	
+	private String manifestParams;
+	
 	private String instanceName;
 	
 	private String surveyClass;
@@ -110,8 +112,12 @@ public class Survey implements Serializable {
 		return version;
 	}
 	
-	public String getManifest() {
+	public String getManifest() {			// deprecated
 		return manifest;
+	}
+	
+	public String getManifestParams() {
+		return manifestParams;
 	}
 	
 	public String getInstanceName() {
@@ -177,6 +183,10 @@ public class Survey implements Serializable {
 	
 	public void setManifest(String v) {
 		manifest = v;
+	}
+	
+	public void setManifestParams(String v) {
+		manifestParams = v;
 	}
 	
 	public void setInstanceName(String v) {

@@ -113,14 +113,7 @@ public class Authorise {
 			}
  			// Close the connection as throwing an exception will end the service call
 			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isAuthorised", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -184,14 +177,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Survey validation failed for: " + user + " survey was: " + sId);
  			
-			try {
-				if (conn != null) {		// Close connection as errors thrown here should not be caught
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isValidSurvey", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -247,14 +233,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Survey validation failed for: " + user + " task group was: " + tgId);
  			
-			try {
-				if (conn != null) {		// Close connection as errors thrown here should not be caught
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isValidTaskGroup", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -314,14 +293,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Question validation failed for question: " + qId + " survey was: " + sId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isValidQuestion", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -373,14 +345,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Survey validation failed for block check: " + isBlocked + " survey was: " + sId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isBlocked", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -431,14 +396,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Survey validation failed for can load tasks: survey was: " + sId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("canLoadTasks", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -490,14 +448,57 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Project validation failed for: " + user + " project was: " + pId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
+ 			SDDataSource.closeConnection("isValidProject", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
 			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is a member of the supplied organisation
+	 */
+	public boolean isValidOrganisation(Connection conn, String user, int oId) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+
+		String sql = "select count(*) from users u " +
+				" where u.o_id = ?" +
+				" and u.ident = ?;";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, oId);
+			pstmt.setString(2, user);
+			log.info("IsValidOrganisation: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Security: Project validation failed for: " + user + " organisation was: " + oId);
+ 			
+ 			SDDataSource.closeConnection("isValidOrganisation", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -555,14 +556,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Task validation failed for: " + user + " survey was: " + tId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isValidTask", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -618,14 +612,7 @@ public class Authorise {
  		if(count == 0) {
  			log.info("Assignment validation failed for: " + user + " survey was: " + aId);
  			
-			try {
-				if (conn != null) {
-					conn.close();
-					conn = null;
-				}
-			} catch (SQLException e3) {
-				log.log(Level.SEVERE,"Failed to close connection", e3);
-			}
+ 			SDDataSource.closeConnection("isValidAssignment", conn);
 			
 			if(sqlError) {
 				throw new ServerException();
