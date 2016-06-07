@@ -119,11 +119,16 @@ public class TranslationManager {
 				for(int i = 0; i < manifestList.size(); i++) {
 					
 					ManifestValue m = new ManifestValue();
-					m.sId = surveyId;
-					m.type = "csv";
-					
 					m.fileName = manifestList.get(i);
-					UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
+					m.sId = surveyId;
+					
+					if(m.fileName.endsWith(".csv")) {
+						m.type = "csv";
+						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
+					} else {
+						m.type = "linked";
+						m.url = "/surveyKPI/getLinked/" + surveyIdent + "/" + m.fileName;
+					}
 					
 					manifests.add(m);
 				}
@@ -153,12 +158,11 @@ public class TranslationManager {
 		
 		boolean hasManifest = false;
 		
-		/*
-		 * Test for a question level manifest
-		 */
+		// Test for a question level manifest
 		String sqlQuestionLevel = "select count(*) " +
 				manifestQuerySql;
 		
+		// Test for a survey level manifest
 		String sqlSurveyLevel = "select count(*) from survey where s_id = ? and manifest is not null";
 		
 		PreparedStatement pstmtQuestionLevel = null;

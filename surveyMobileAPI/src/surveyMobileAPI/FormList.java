@@ -89,20 +89,6 @@ public class FormList extends Application {
 		
 		return getFormList(request, userId, true);
 	}
-	
-	// Respond with json
-	/*
-	 * Disabled as fieldTask gets JSON and errors
-	 *
-	@Produces(MediaType.APPLICATION_JSON) 
-	@GET
-	public Response getFormListJSON(@Context HttpServletRequest request,
-			@QueryParam("user") String userId) throws IOException {
-
-		
-		return getFormList(request,userId, false);
-	}
-	*/
  
 	/*
 	 * Get the form list

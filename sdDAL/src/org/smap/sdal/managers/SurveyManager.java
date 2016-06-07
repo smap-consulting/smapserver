@@ -1692,8 +1692,10 @@ public class SurveyManager {
 						// Update the survey manifest if this question references CSV files
 						if(ci.property.prop.equals("calculation")) {
 							updateSurveyManifest(sd, sId, null, ci.property.newVal);
+							removeUnusedSurveyManifests(sd, sId);
 						} else if(ci.property.prop.equals("appearance")) {
 							updateSurveyManifest(sd, sId, ci.property.newVal, null);
+							removeUnusedSurveyManifests(sd, sId);
 						}
 						
 						/*
@@ -2410,15 +2412,16 @@ public class SurveyManager {
 	public void updateSurveyManifest(Connection sd, int sId, String appearance, String calculation) throws Exception {
 		
 		String manifest = null;
+		String manifestParams = null;
 		boolean changed = false;
 		QuestionManager qm = new QuestionManager();
 		
 		PreparedStatement pstmtGet = null;
-		String sqlGet = "select manifest from survey "
+		String sqlGet = "select manifest, manifest_params from survey "
 				+ "where s_id = ?; ";
 		
 		PreparedStatement pstmtUpdate = null;
-		String sqlUpdate = "update survey set manifest = ? "
+		String sqlUpdate = "update survey set manifest = ?, manifest_params = ? "
 				+ "where s_id = ?;";	
 		
 		try {
@@ -2428,19 +2431,22 @@ public class SurveyManager {
 			ResultSet rs = pstmtGet.executeQuery();
 			if(rs.next()) {
 				manifest = rs.getString(1);
+				manifestParams = rs.getString(2);
 			}
 			
 			if(appearance != null) {
-				ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest);
-				manifest = mi.manifest;
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest, manifestParams);
+				manifest = mi.manifest;		// Deprecate
+				manifestParams = mi.manifestParams;
 				if(mi.changed) {
 					changed = true;
 				}
 			}
 			
 			if(calculation != null) {
-				ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculation, manifest);
-				manifest = mi.manifest;
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculation, manifest, manifestParams);
+				manifest = mi.manifest;		// Deprecate
+				manifestParams = mi.manifestParams;
 				if(mi.changed) {
 					changed = true;
 				}
@@ -2450,7 +2456,8 @@ public class SurveyManager {
 			if(changed) {
 				pstmtUpdate = sd.prepareStatement(sqlUpdate);
 				pstmtUpdate.setString(1, manifest);
-				pstmtUpdate.setInt(2,sId);
+				pstmtUpdate.setString(2, manifestParams);
+				pstmtUpdate.setInt(3,sId);
 				log.info("Updating manifest:" + pstmtUpdate.toString());
 				pstmtUpdate.executeUpdate();
 			}
@@ -2467,4 +2474,36 @@ public class SurveyManager {
 		
 	}
 	
+	/*
+	 * Clean up the survey manifests removing any that are no longer used
+	 */
+	private void removeUnusedSurveyManifests(Connection sd, int sId) throws SQLException, Exception {
+		
+		String sql = "select appearance, calculate from question "
+				+ "where f_id in (select f_id from form where s_id = ?) "
+				+ "and (appearance is not null or calculate is not null);";
+		PreparedStatement pstmt = null;
+		
+		String sqlClear = "update survey set manifest = null, manifest_params = null where s_id = ?;";
+		PreparedStatement pstmtClear = null;
+		
+		try {
+			pstmtClear = sd.prepareStatement(sqlClear);
+			pstmtClear.setInt(1, sId);
+			log.info("Cleaning up manifest: " + pstmtClear.toString());
+			pstmtClear.executeUpdate();
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			log.info("Leaning up manifest. Getting questions that may affect manifest: " + pstmt.toString());
+			
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				updateSurveyManifest(sd, sId, rs.getString("appearance"), rs.getString("calculate"));
+			}
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+			if(pstmtClear != null) try {pstmtClear.close();} catch(Exception e) {}
+		}
+	}
 }

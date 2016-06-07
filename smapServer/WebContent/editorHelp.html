@@ -170,6 +170,45 @@
 	   		</div>
 	   		
 	   		<div class="bs-docs-section">
+	   			<h1 id="linking_surveys" class="page-header">
+	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Linking Surveys</a>
+	   			</h1>
+	   			<p>Forms can be linked for analysis.  For example if you have a form that collects data on assets and another form that 
+	   			collects information on faults with these assets, then if they are linked, you can view the asset details while reviewing a fault, or view the 
+	   			faults while reviewing an asset.</p>
+	   			
+	   			<h2>Setting up linked surveys</h2>
+	   			<p>To allow linking to a form specify a "Unique Key" in the form settings.  This will cause a unique value to
+	   			to be created for each record in the form. In a second form you can then select a question that will store
+	   			this unique key.  To do this select the question property of "Linked Survey", enable the link and specify the
+	   			name of the linked survey.</p>
+	   			
+	  			<h2>Filling in the key question</h2>
+	   			<p>In our example, when you are filling in the details of a fault you will need to specify the unique key of the
+	   			asset. You can do this in the following ways. How this is done will depend on the type of the question that
+	   			stores the unique key.
+	   			<ul>
+	   				<li>Text question.  Simply write in the key.  Presumably a printout of assets and their keys will have been 
+	   				made available.  Or perhaps the key will be written on the asset.</li>
+	   				<li>Barcode question.  Similar to the text approach except that the key can be enter more reliably by swiping
+	   				with a barcode</li>
+	   				<li>Select the asset using a select_one type question</li> 
+	   			</ul>
+	   			
+	   			<h2>Selecting the asset using select_one question</h2>
+	   			
+	   			<h2>Security</h2>
+	   			<p>To link forms you will need to be a member of both of the projects containing the forms.</p>
+	   			<p>To add a select question to a form that uses data from another form to get its unique key then you
+	   			need to be a member of both of the projects containing the forms.</p>
+	   			
+	   			
+	   		</div>
+	   		
+	   		<div class="bs-docs-section">
 	   			<h1 id="errors" class="page-header">
 	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
 	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
@@ -729,6 +768,7 @@
 	  					<a href="#layout">Layout</a>
 	  					<a href="#adding_question">Adding questions and choices</a>
 	  					<a href="#question_properties">Question labels, Constraints and other properties</a>
+	  					<a href="#linking_surveys">Linking Surveys</a>
 	  					<a href="#errors">Validation</a>
 	  					<a href="#testing">Trying out your survey</a>
 	  					<a href="#publishing">Publishing and un-publishing your survey</a>

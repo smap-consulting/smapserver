@@ -33,6 +33,7 @@ import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
+import org.smap.sdal.model.ManifestParams;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Result;
@@ -2586,11 +2587,14 @@ public class GeneralUtilityMethods {
 	/*
 	 * Add to a survey level manifest String, a manifest from an appearance attribute
 	 */
-	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest) {
+	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest, String inputManifestParams) {
 		
 		ManifestInfo mi = new ManifestInfo();
+		ArrayList<String> refQuestions = null;
+		String manifestType = null;
 		
 		mi.manifest = inputManifest;
+		mi.manifestParams = inputManifestParams;
 		mi.changed = false;
 		
 		// Check to see if this appearance references a manifest file
@@ -2608,25 +2612,20 @@ public class GeneralUtilityMethods {
 					if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
 						String filename = criteria[0].trim();
 						filename = filename.substring(1, filename.length() -1);
-						filename += ".csv";
-						log.info("We have found a manifest link to " + filename);
 						
-						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-						
-						ArrayList<String> mArray = null;
-						if(inputManifest == null) {
-							mArray = new ArrayList<String>();
+						if(filename.startsWith("linked_s")) {	// Linked survey
+							log.info("We have found a manifest link to " + filename);
+							refQuestions = getRefQuestions(criteria);
+							manifestType = "linked";
+							System.out.println("RefQuestions: " + refQuestions.toString());
 						} else {
-							Type type = new TypeToken<ArrayList<String>>(){}.getType();
-							mArray = gson.fromJson(inputManifest, type);	
+							filename += ".csv";
+							manifestType = "csv";
+							log.info("We have found a manifest file " + filename);
 						}
-						if(!mArray.contains(filename)) {
-							mArray.add(filename);
-							mi.changed = true;
-							mi.filename = filename;
-						}
-	
-						mi.manifest = gson.toJson(mArray);
+						
+						updateManifest(mi, filename, refQuestions, manifestType);
+
 					}
 				}
 			}
@@ -2638,11 +2637,14 @@ public class GeneralUtilityMethods {
 	/*
 	 * Add a survey level manifest such as a csv file from an calculate attribute
 	 */
-	public static ManifestInfo addManifestFromCalculate(String calculate, String inputManifest) {
+	public static ManifestInfo addManifestFromCalculate(String calculate, String inputManifest, String inputManifestParams) {
 		
 		ManifestInfo mi = new ManifestInfo();
+		ArrayList<String> refQuestions = null;
+		String manifestType = null;
 		
 		mi.manifest = inputManifest;
+		mi.manifestParams = inputManifestParams;
 		mi.changed = false;
 		
 		// Check to see if this appearance references a manifest file
@@ -2665,25 +2667,19 @@ public class GeneralUtilityMethods {
 						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
 							String filename = criteria[0].trim();
 							filename = filename.substring(1, filename.length() -1);
-							filename += ".csv";
-							log.info("We have found a manifest link to " + filename);
 							
-							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-							
-							ArrayList<String> mArray = null;
-							if(inputManifest == null) {
-								mArray = new ArrayList<String>();
+							if(filename.startsWith("linked_s")) {	// Linked survey
+								log.info("We have found a manifest link to " + filename);
+								refQuestions = getRefQuestions(criteria);
+								manifestType = "linked";
+								System.out.println("RefQuestions: " + refQuestions.toString());
 							} else {
-								Type type = new TypeToken<ArrayList<String>>(){}.getType();
-								mArray = gson.fromJson(inputManifest, type);	
+								filename += ".csv";
+								manifestType = "csv";
+								log.info("We have found a manifest file " + filename);
 							}
-							if(!mArray.contains(filename)) {
-								mArray.add(filename);
-								mi.changed = true;
-								mi.filename = filename;
-							}
-		
-							mi.manifest = gson.toJson(mArray);
+							
+							updateManifest(mi, filename, refQuestions, manifestType);
 						}
 					}
 					idx1 = calculate.indexOf("pulldata(", idx2);
@@ -2693,6 +2689,107 @@ public class GeneralUtilityMethods {
 		
 		return mi;
 			
+	}
+	
+	/*
+	 * Update the manifest
+	 */
+	private static void updateManifest(ManifestInfo mi, String filename, ArrayList<String> refQuestions, String manifestType) {
+		
+		String inputManifest = mi.manifest;
+		String inputManifestParams = mi.manifestParams;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		
+		/*
+		 * The following code is deprecated but retained temporarily as existing survey
+		 *  definitions will use this old way of defining manifests
+		 */
+		ArrayList<String> mArray = null;
+		if(inputManifest == null) {
+			mArray = new ArrayList<String>();
+		} else {
+			Type type = new TypeToken<ArrayList<String>>(){}.getType();
+			mArray = gson.fromJson(inputManifest, type);	
+		}
+		if(!mArray.contains(filename)) {
+			mArray.add(filename);
+			mi.changed = true;
+			mi.filename = filename;
+		}
+
+		mi.manifest = gson.toJson(mArray);
+		
+		/*
+		 * New code for updating the manifest
+		 */
+		ArrayList<ManifestParams> mManifestArray = null;
+		if(inputManifestParams == null) {
+			mManifestArray = new ArrayList<ManifestParams>();
+		} else {
+			Type type = new TypeToken<ArrayList<ManifestParams>>(){}.getType();
+			mManifestArray = gson.fromJson(inputManifestParams, type);	
+		}
+		boolean hasName = false;
+		boolean hasParam = false;
+		for(ManifestParams mp : mManifestArray) {
+			if(mp.name != null && mp.name.equals(filename)) {
+				hasName = true;
+				for(String newParam : refQuestions) {
+					hasParam = false;
+					for(String param : mp.params) {
+						if(param.equals(newParam)) {
+							hasParam = true;
+							break;
+						}
+					}
+					if(!hasParam) {
+						mp.params.add(newParam);
+						mi.changed = true;
+					}
+				}
+			}
+		}
+		if(!hasName) {
+			ManifestParams newMP = new ManifestParams();
+			newMP.name = filename;
+			newMP.type = manifestType;
+			newMP.params = refQuestions;
+			mi.changed = true;
+			mManifestArray.add(newMP);
+		}
+		
+
+		mi.manifestParams = gson.toJson(mManifestArray);
+	}
+	
+	/*
+	 * Get the questions referenced by a search or pulldata function in a linked survey
+	 */
+	private static ArrayList<String> getRefQuestions(String [] params) {
+		ArrayList<String> refQuestions = new ArrayList<String> ();
+		String param = null;
+		
+		/*
+		 * The number of parameters can vary from 1 to 6
+		 * params[0] is the primary function, either "search" or "pulldata"
+		 * params[1] is the matching function, ie 'matches'
+		 * params[2] is a question name  (Get this one)
+		 * params[3] is a value for the question in param[2]
+		 * params[4] is the filter column name (Get this one)
+		 * params[5] is the filter value
+		 * 
+		 */
+		if(params.length > 2) {
+			param = params[2].trim();
+			param = param.substring(1, param.length() -1);		// Remove quotes
+			refQuestions.add(param);
+		}
+		if(params.length > 4) {
+			param = params[4].trim();
+			param = param.substring(1, param.length() -1);		// Remove quotes
+			refQuestions.add(param);
+		}
+		return refQuestions;
 	}
 
 	/*
