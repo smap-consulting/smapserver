@@ -344,7 +344,6 @@ CREATE TABLE survey (
 	class text,
 	model text,										-- JSON model of the survey for thingsat
 	manifest text,									-- JSON set of manifest information for the survey
-	manifest_params,									-- JSON parameters for manifest
 	instance_name text,								-- The rule for naming a survey instance form its data
 	last_updated_time DATE,
 	managed_id integer,								-- Identifier of configuration for managing records

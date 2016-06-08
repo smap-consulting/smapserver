@@ -1386,9 +1386,8 @@ public class SurveyTemplate {
 	 */
 	public void addManifestFromAppearance(String appearance) {
 		
-		ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, survey.getManifest(), survey.getManifestParams());
+		ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, survey.getManifest());
 		survey.setManifest(mi.manifest);
-		survey.setManifestParams(mi.manifestParams);
 	}
 	
 	/*
@@ -1396,9 +1395,8 @@ public class SurveyTemplate {
 	 */
 	public void addManifestFromCalculate(String calculate) {
 		
-		ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculate, survey.getManifest(), survey.getManifestParams());
+		ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculate, survey.getManifest());
 		survey.setManifest(mi.manifest);
-		survey.setManifestParams(mi.manifestParams);
 			
 	}
 	

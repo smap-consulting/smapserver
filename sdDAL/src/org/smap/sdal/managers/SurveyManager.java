@@ -2417,16 +2417,15 @@ public class SurveyManager {
 	public void updateSurveyManifest(Connection sd, int sId, String appearance, String calculation) throws Exception {
 		
 		String manifest = null;
-		String manifestParams = null;
 		boolean changed = false;
 		QuestionManager qm = new QuestionManager();
 		
 		PreparedStatement pstmtGet = null;
-		String sqlGet = "select manifest, manifest_params from survey "
+		String sqlGet = "select manifest from survey "
 				+ "where s_id = ?; ";
 		
 		PreparedStatement pstmtUpdate = null;
-		String sqlUpdate = "update survey set manifest = ?, manifest_params = ? "
+		String sqlUpdate = "update survey set manifest = ? "
 				+ "where s_id = ?;";	
 		
 		try {
@@ -2436,22 +2435,19 @@ public class SurveyManager {
 			ResultSet rs = pstmtGet.executeQuery();
 			if(rs.next()) {
 				manifest = rs.getString(1);
-				manifestParams = rs.getString(2);
 			}
 			
 			if(appearance != null) {
-				ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest, manifestParams);
-				manifest = mi.manifest;		// Deprecate
-				manifestParams = mi.manifestParams;
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromAppearance(appearance, manifest);
+				manifest = mi.manifest;
 				if(mi.changed) {
 					changed = true;
 				}
 			}
 			
 			if(calculation != null) {
-				ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculation, manifest, manifestParams);
-				manifest = mi.manifest;		// Deprecate
-				manifestParams = mi.manifestParams;
+				ManifestInfo mi = GeneralUtilityMethods.addManifestFromCalculate(calculation, manifest);
+				manifest = mi.manifest;
 				if(mi.changed) {
 					changed = true;
 				}
@@ -2461,8 +2457,7 @@ public class SurveyManager {
 			if(changed) {
 				pstmtUpdate = sd.prepareStatement(sqlUpdate);
 				pstmtUpdate.setString(1, manifest);
-				pstmtUpdate.setString(2, manifestParams);
-				pstmtUpdate.setInt(3,sId);
+				pstmtUpdate.setInt(2,sId);
 				log.info("Updating manifest:" + pstmtUpdate.toString());
 				pstmtUpdate.executeUpdate();
 			}
@@ -2489,7 +2484,7 @@ public class SurveyManager {
 				+ "and (appearance is not null or calculate is not null);";
 		PreparedStatement pstmt = null;
 		
-		String sqlClear = "update survey set manifest = null, manifest_params = null where s_id = ?;";
+		String sqlClear = "update survey set manifest = null where s_id = ?;";
 		PreparedStatement pstmtClear = null;
 		
 		try {

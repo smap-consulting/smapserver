@@ -33,7 +33,6 @@ import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
-import org.smap.sdal.model.ManifestParams;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.PropertyChange;
 import org.smap.sdal.model.Result;
@@ -2652,14 +2651,13 @@ public class GeneralUtilityMethods {
 	/*
 	 * Add to a survey level manifest String, a manifest from an appearance attribute
 	 */
-	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest, String inputManifestParams) {
+	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest) {
 		
 		ManifestInfo mi = new ManifestInfo();
 		ArrayList<String> refQuestions = null;
 		String manifestType = null;
 		
 		mi.manifest = inputManifest;
-		mi.manifestParams = inputManifestParams;
 		mi.changed = false;
 		
 		// Check to see if this appearance references a manifest file
@@ -2702,14 +2700,13 @@ public class GeneralUtilityMethods {
 	/*
 	 * Add a survey level manifest such as a csv file from an calculate attribute
 	 */
-	public static ManifestInfo addManifestFromCalculate(String calculate, String inputManifest, String inputManifestParams) {
+	public static ManifestInfo addManifestFromCalculate(String calculate, String inputManifest) {
 		
 		ManifestInfo mi = new ManifestInfo();
 		ArrayList<String> refQuestions = null;
 		String manifestType = null;
 		
 		mi.manifest = inputManifest;
-		mi.manifestParams = inputManifestParams;
 		mi.changed = false;
 		
 		// Check to see if this appearance references a manifest file
@@ -2762,7 +2759,6 @@ public class GeneralUtilityMethods {
 	private static void updateManifest(ManifestInfo mi, String filename, ArrayList<String> refQuestions, String manifestType) {
 		
 		String inputManifest = mi.manifest;
-		String inputManifestParams = mi.manifestParams;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		
 		/*
@@ -2784,47 +2780,6 @@ public class GeneralUtilityMethods {
 
 		mi.manifest = gson.toJson(mArray);
 		
-		/*
-		 * New code for updating the manifest
-		 */
-		ArrayList<ManifestParams> mManifestArray = null;
-		if(inputManifestParams == null) {
-			mManifestArray = new ArrayList<ManifestParams>();
-		} else {
-			Type type = new TypeToken<ArrayList<ManifestParams>>(){}.getType();
-			mManifestArray = gson.fromJson(inputManifestParams, type);	
-		}
-		boolean hasName = false;
-		boolean hasParam = false;
-		for(ManifestParams mp : mManifestArray) {
-			if(mp.name != null && mp.name.equals(filename)) {
-				hasName = true;
-				for(String newParam : refQuestions) {
-					hasParam = false;
-					for(String param : mp.params) {
-						if(param.equals(newParam)) {
-							hasParam = true;
-							break;
-						}
-					}
-					if(!hasParam) {
-						mp.params.add(newParam);
-						mi.changed = true;
-					}
-				}
-			}
-		}
-		if(!hasName) {
-			ManifestParams newMP = new ManifestParams();
-			newMP.name = filename;
-			newMP.type = manifestType;
-			newMP.params = refQuestions;
-			mi.changed = true;
-			mManifestArray.add(newMP);
-		}
-		
-
-		mi.manifestParams = gson.toJson(mManifestArray);
 	}
 	
 	/*
