@@ -305,7 +305,6 @@ public class UserSvc extends Application {
 		String sigPath = null;
 		String userFolderPath = null;
 		String sigFolderPath = null;
-		String sigUrl = null;
 		String settings = null;
 		String user = null;
 		
@@ -365,9 +364,7 @@ public class UserSvc extends Application {
 						
 						userFolderPath = basePath + "/media/users/" +  userId;
 						sigFolderPath = userFolderPath + "/sig";
-						sigPath = sigFolderPath + "/" + fileName;
-						sigUrl = "/media/users/" +  userId + "/sig/" + fileName;
-												
+						sigPath = sigFolderPath + "/" + fileName;				
 						// 1. Create the users folder if it does not exist
 						File folder = new File(basePath + "/media/users/");
 						FileUtils.forceMkdir(folder);
@@ -432,7 +429,7 @@ public class UserSvc extends Application {
 			if(sigPath == null) {
 				pstmt.setString(3, ident);
 			} else {
-				pstmt.setString(3, sigUrl);
+				pstmt.setString(3, fileName);
 				pstmt.setString(4, ident);
 			}
 			
@@ -441,7 +438,7 @@ public class UserSvc extends Application {
 			pstmt.executeUpdate();
 			
 			// Set the updated signature and return it in the user id 
-			u.signature = sigUrl;
+			u.signature = "/surveyKPI/file/" + fileName + "/users?type=sig";
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(u);
 			

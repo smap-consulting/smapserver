@@ -647,7 +647,7 @@ define([
 					for(i = 0; i < survey.forms[property.formIndex].questions[property.itemIndex].labels.length; i++) {
 						survey.forms[property.formIndex].questions[property.itemIndex].labels[i][property.propType] = property.newVal;
 						survey.forms[property.formIndex].questions[property.itemIndex].labels[i][property.propType + "Url"] = 
-							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType, property.isSurveyLevel);
+							_getUrl(property.newVal, false, property.propType, property.isSurveyLevel, survey.id);
 					}
 				}
 			} else if(property.type === "option") {	// Change to an option
@@ -662,7 +662,7 @@ define([
 					for(i = 0; i < survey.optionLists[property.optionList].options[property.itemIndex].labels.length; i++) {
 						survey.optionLists[property.optionList].options[property.itemIndex].labels[i][property.propType] = property.newVal;
 						survey.optionLists[property.optionList].options[property.itemIndex].labels[i][property.propType + "Url"] = 
-							_getUrl(survey.o_id, survey.ident, property.newVal, false, property.propType);
+							_getUrl(property.newVal, false, property.propType, property.isSurveyLevel, survey.id);
 					}
 				}
 			} else if(property.type === "optionlist") {	// Change to an optionlist
@@ -927,23 +927,23 @@ define([
 				
 				newMarkup = markup.addMedia("Image", 
 						change.property.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'image', change.property.isSurveyLevel), 
-						_getUrl(survey.o_id, survey.ident, change.property.newVal, true, 'image', change.property.isSurveyLevel)
+						_getUrl(change.property.newVal, false, 'image', change.property.isSurveyLevel, survey.id), 
+						_getUrl(change.property.newVal, true, 'image', change.property.isSurveyLevel, survey.id)
 						);
 				
 			} else if(change.property.propType === "video") {
 				
 				newMarkup = markup.addMedia("Video", 
 						change.property.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'video', change.property.isSurveyLevel), 
-						_getUrl(survey.o_id, survey.ident, change.property.newVal, true, 'video', change.property.isSurveyLevel)
+						_getUrl(change.property.newVal, false, 'video', change.property.isSurveyLevel, survey.id), 
+						_getUrl(change.property.newVal, true, 'video', change.property.isSurveyLevel, survey.id)
 						);
 				
 			} else if(change.property.propType === "audio") {
 				
 				newMarkup = markup.addMedia("Audio", 
 						change.property.newVal, 
-						_getUrl(survey.o_id, survey.ident, change.property.newVal, false, 'audio', change.property.isSurveyLevel), 
+						_getUrl(change.property.newVal, false, 'audio', change.property.isSurveyLevel, survey.id), 
 						undefined
 						);	
 	
@@ -1129,35 +1129,34 @@ define([
 	/*
 	 * Media functions
 	 */
-	function _getUrl(o_id, s_ident, newVal, thumbs, type, isSurveyLevel) {
-		var url = "/media/",
+	function _getUrl(newVal, thumbs, type, isSurveyLevel, sId) {
+		var url = "/surveyKPI/file/",
 			filebase,
 			ext;
 		
 		if(newVal) {
-			if(isSurveyLevel) {
-				url += s_ident;
-				url += "/";
-				if(thumbs) {
-					url += "thumbs/"; 
-				}
-			} else {
-				url += "organisation/";
-				url += o_id;
-				url += "/";
-				if(thumbs) {
-					url += "thumbs/"; 
-				}
+			
+			// Videos and other derived thumbnails will have type jpg
+			if(thumbs && type !== "image") {			
+				index = newVal.lastIndexOf('.');
+				filebase = url.substr(0, index);
+				newVal = filebase + ".jpg";		
 			}
 			
 			url += newVal;
-
-			// Videos and other derived thumbnails will have type jpg
-			if(thumbs && type !== "image") {			
-				index = url.lastIndexOf('.');
-				filebase = url.substr(0, index);
-				url = filebase + ".jpg";		
+			
+			if(isSurveyLevel) {
+				url += "/survey/"
+				url += sId;	
+			} else {
+				url += "/organisation";
 			}
+			
+			if(thumbs) {
+				url += "?thumbs=true"; 
+			}
+			
+
 		} else {
 			url = undefined;
 		}

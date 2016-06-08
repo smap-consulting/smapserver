@@ -51,6 +51,7 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.PDFManager;
 
 /*
+ * Authorises the user and then
  * Downloads a file
  */
 
@@ -58,6 +59,7 @@ import org.smap.sdal.managers.PDFManager;
 public class GetFile extends Application {
 	
 	Authorise a = null;
+	Authorise aOrg = new Authorise(null, Authorise.ORG);
 	
 	private static Logger log =
 			 Logger.getLogger(GetFile.class.getName());
@@ -71,13 +73,14 @@ public class GetFile extends Application {
 	}
 	
 	@GET
-	@Path("/organisation/{oId}")
+	@Path("/organisation")
 	@Produces("application/x-download")
 	public Response getOrganisationFile (
 			@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("filename") String filename,
-			@PathParam("oId") int oId) throws Exception {
+			@QueryParam("settings") boolean settings,
+			@QueryParam("org") int requestedOrgId) throws Exception {
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -86,28 +89,143 @@ public class GetFile extends Application {
 		    throw new Exception("Can't find PostgreSQL JDBC Driver");
 		}
 		
-		log.info("Get File: " + filename + " for organisation: " + oId);
+		int oId = 0;
+		Response r = null;
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("getFile");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		a.isValidOrganisation(connectionSD, request.getRemoteUser(), oId);
+		try {		
+			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+		} catch(Exception e) {
+			// ignore error
+		}
+		if(requestedOrgId > 0 && requestedOrgId != oId) {
+			aOrg.isAuthorised(connectionSD, request.getRemoteUser());	// Must be org admin to work on another organisations data
+			oId = requestedOrgId;
+		}
+		// End Authorisation 
+		
+		log.info("Get File: " + filename + " for organisation: " + oId);
+		try {
+			String basepath = GeneralUtilityMethods.getBasePath(request);
+			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
+			System.out.println("Getting file: " + filepath);
+			getFile(response, filepath, filename);
+			
+			r = Response.ok("").build();
+			
+		}  catch (Exception e) {
+			log.info("Error getting file:" + e.getMessage());
+			r = Response.serverError().build();
+		} finally {	
+			SDDataSource.closeConnection("getFile", connectionSD);	
+		}
+		
+		return r;
+	}
+	
+	@GET
+	@Path("/users")
+	@Produces("application/x-download")
+	public Response getUsersFile (
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("filename") String filename,
+			@QueryParam("type") String type) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+		
+		int uId = 0;
+		Response r = null;
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		a.isAuthorised(connectionSD, request.getRemoteUser());		
+		try {		
+			uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
+		} catch(Exception e) {
+			// ignore error
+		}
+		// End Authorisation 
+		
+		// Only allow valid categories of files
+		if(type != null) {
+			if(!type.equals("sig")) {
+				type = null;
+			}
+		}
+		
+		log.info("Get File: " + filename + " for user: " + uId);
+		try {
+			String basepath = GeneralUtilityMethods.getBasePath(request);
+			String filepath = basepath + "/media/" + uId + "/" + (type != null ? (type + "/") : "") + filename;
+			log.info("Getting user file: " + filepath);
+			getFile(response, filepath, filename);
+			
+			r = Response.ok("").build();
+			
+		}  catch (Exception e) {
+			log.info("Error getting file:" + e.getMessage());
+			r = Response.serverError().build();
+		} finally {	
+			SDDataSource.closeConnection("getFile", connectionSD);	
+		}
+		
+		return r;
+	}
+	
+	@GET
+	@Path("/survey/{sId}")
+	@Produces("application/x-download")
+	public Response getSurveyFile (
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("filename") String filename,
+			@PathParam("sId") int sId,
+			@QueryParam("linked") boolean linked) throws Exception {
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+		}
+		
+		log.info("Get File: " + filename + " for survey: " + sId);
+		
+		Response r = null;
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation 
 		
 		try {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
-			String filepath = basepath + "/media/organisation/" + oId + "/" + filename;
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
+			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
 			System.out.println("Getting file: " + filepath);
 			getFile(response, filepath, filename);
 			
+			r = Response.ok("").build();
+			
 		}  catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
-			throw new Exception("Exception: " + e.getMessage());
+			log.info("Error getting file:" + e.getMessage());
+			r = Response.serverError().build();
 		} finally {	
 			SDDataSource.closeConnection("getFile", connectionSD);	
 		}
-		return Response.ok("").build();
+		
+		return r;
 	}
+	
 	
 	private void getFile(HttpServletResponse response, String filepath, String filename) throws IOException {
 		

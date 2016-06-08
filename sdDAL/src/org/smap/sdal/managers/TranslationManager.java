@@ -93,7 +93,7 @@ public class TranslationManager {
 					// Get file name from value (Just for legacy, new media should be stored as the file name only)
 					int idx = m.value.lastIndexOf('/');	
 					m.fileName = m.value.substring(idx + 1);					
-					UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);		// Url will be null if file does not exist
+					UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);		// Url will be null if file does not exist
 					
 					// Make sure we have not already added this file (Happens with multiple languages referencing the same file)
 					if(files.get(m.fileName) == null) {
@@ -124,10 +124,10 @@ public class TranslationManager {
 					
 					if(m.fileName.endsWith(".csv")) {
 						m.type = "csv";
-						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId);
+						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
 					} else {
 						m.type = "linked";
-						m.url = "/surveyKPI/getLinked/" + surveyIdent + "/" + m.fileName;
+						m.url = "/surveyKPI/file/" + m.fileName + "/survey/" + surveyId + "?linked=true";
 					}
 					
 					manifests.add(m);

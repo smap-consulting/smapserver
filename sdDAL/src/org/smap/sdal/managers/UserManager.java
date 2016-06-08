@@ -106,7 +106,16 @@ public class UserManager {
 				user.ident = ident;
 				user.name = resultSet.getString("name");
 				user.settings = resultSet.getString("settings");
-				user.signature = resultSet.getString("signature");
+				String sigFile = resultSet.getString("signature");
+				
+				if(sigFile != null) {
+					sigFile= sigFile.trim();
+					if(sigFile.startsWith("/")) {	// Old versions of smap stored a URL rather than the file name, get the file name if this is the case
+						int idx = sigFile.lastIndexOf("/");
+						sigFile = sigFile.substring(idx + 1);
+					}
+					user.signature = "/surveyKPI/file/" + sigFile + "/users?type=sig";
+				}
 				user.language = resultSet.getString("language");
 				user.email = resultSet.getString("email");
 				user.current_project_id = resultSet.getInt("current_project_id");

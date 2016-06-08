@@ -594,7 +594,7 @@ public class UtilityMethodsEmail {
 							l.text = GeneralUtilityMethods.convertAllEmbeddedOutput(v, true);
 						} else if(basePath != null && oId > 0) {
 							ManifestValue manifest = new ManifestValue();
-							getFileUrl(manifest, s.ident, v, basePath, oId);
+							getFileUrl(manifest, s.ident, v, basePath, oId, s.id);
 							log.info("Url: " + manifest.url + " : " + v);
 							if(t.equals("image")) {
 								l.image = v;
@@ -745,39 +745,42 @@ public class UtilityMethodsEmail {
 	/*
 	 * Get the partial (URL) of the file and its file path or null if the file does not exist
 	 */
-	public static void getFileUrl(ManifestValue manifest, String sIdent, String fileName, String basePath, int oId) {
+	public static void getFileUrl(ManifestValue manifest, String sIdent, String fileName, String basePath, int oId, int sId) {
 		
+		String path = null;
+		String thumbsPath = null;
 		String url = null;
 		String thumbsUrl = null;
 		File file = null;
 		File thumb = null;
 		
 		// First try the survey level
-		url = "/media/" + sIdent + "/" + fileName;	
-		log.info("Info: Getting file url for file: " + basePath + url);
-		thumbsUrl = "/media/" + sIdent + "/thumbs/" + fileName;	
-		file = new File(basePath + url);
+		path = basePath + "/media/" + sIdent + "/" + fileName;	
+		thumbsPath = basePath + "/media/" + sIdent + "/thumbs/" + fileName;	
+		log.info("Info: Getting file url for file: " + path);
+		
+		file = new File(path);
 		if(file.exists()) {
-			manifest.url = url;
-			manifest.filePath = basePath + url;
+			manifest.url = "/surveyKPI/file/" + fileName + "/survey/" + sId;
+			manifest.filePath = path;
 			
-			thumb = new File(basePath + thumbsUrl);
+			thumb = new File(thumbsPath);
 			if(thumb.exists()) {
-				manifest.thumbsUrl = thumbsUrl;
+				manifest.thumbsUrl = manifest.url + "?thumbs=true";
 			}
 		} else {
 		
 			// Second try the organisation level
-			url = "/media/organisation/" + oId + "/" + fileName;
-			thumbsUrl = "/media/organisation/" + oId + "/thumbs/" + fileName;
-			file = new File(basePath + url);
+			path = basePath + "/media/organisation/" + oId + "/" + fileName;
+			thumbsPath = basePath + "/media/organisation/" + oId + "/thumbs/" + fileName;
+			file = new File(path);
 			if(file.exists()) {
-				manifest.url = url;
-				manifest.filePath = basePath + url;
+				manifest.url = "/surveyKPI/file/" + fileName + "/organisation";
+				manifest.filePath = path;
 				
-				thumb = new File(basePath + thumbsUrl);
+				thumb = new File(thumbsPath);
 				if(thumb.exists()) {
-					manifest.thumbsUrl = thumbsUrl;
+					manifest.thumbsUrl = manifest.url + "?thumbs=true";
 				}
 			}		
 		}

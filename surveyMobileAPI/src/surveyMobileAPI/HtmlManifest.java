@@ -188,7 +188,7 @@ public class HtmlManifest extends Application{
 			ArrayList<String> media = getMedia(connectionSD, survey.id);
 			
 			for(int i = 0; i < media.size(); i++) {
-				manifest.append("/media/" + media.get(i) + "\n");
+				manifest.append("/media/" + media.get(i) + "\n");		// TODO this is wrong needs to call getFileURL
 			}			
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception", e);

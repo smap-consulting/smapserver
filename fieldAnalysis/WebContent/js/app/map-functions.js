@@ -682,7 +682,7 @@ function addSharedMaps(map, sharedMaps) {
 					    numZoomLevels: layer.zoom
 					}));
 			} else if(layer.type === "vector") {
-				layerUrl = "/media/organisation/1/" + layer.config.vectorData;
+				layerUrl = "/surveyKPI/file/" + layer.config.vectorData + "/organisation";
 				var vectorLayer = new OpenLayers.Layer.Vector(layer.name + ".", {
 					projection: "EPSG:4326",
 		            strategies: [new OpenLayers.Strategy.Fixed()],
