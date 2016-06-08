@@ -25,8 +25,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -211,7 +214,12 @@ public class GetFile extends Application {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
-			System.out.println("Getting file: " + filepath);
+			System.out.println("Getting file: " + filepath + " linked is: " + linked);
+			
+			if(linked) {
+				// Create file if it is out of date
+				createLinkedFile(connectionSD, sId, filename, filepath);
+			}
 			getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
@@ -227,6 +235,9 @@ public class GetFile extends Application {
 	}
 	
 	
+	/*
+	 * Add the file to the response stream
+	 */
 	private void getFile(HttpServletResponse response, String filepath, String filename) throws IOException {
 		
 		File f = new File(filepath);
@@ -242,6 +253,76 @@ public class GetFile extends Application {
 			responseOutputStream.write(bytes);
 		}
 		fis.close();
+	}
+	
+	/*
+	 * Create the linked file
+	 */
+	private void createLinkedFile(Connection sd, int sId, String filename, String filepath) {
+		
+		ResultSet rs = null;
+		
+		String sqlAppearance = "select q_id, appearance from question "
+				+ "where f_id in (select f_id from form where s_id = ?) "
+				+ "and appearance is not null;";
+		PreparedStatement pstmtAppearance = null;
+		
+		String sqlCalculate = "select q_id, calculate from question "
+				+ "where f_id in (select f_id from form where s_id = ?) "
+				+ "and calculate is not null;";
+		PreparedStatement pstmtCalculate = null;
+		
+		try {
+			
+			/*
+			 * Get the columns from the linked file
+			 */
+			ArrayList<String> uniqueColumns = new ArrayList<String> ();
+			
+			// Get columns from appearance
+			pstmtAppearance = sd.prepareStatement(sqlAppearance);
+			pstmtAppearance.setInt(1, sId);
+			rs = pstmtAppearance.executeQuery();
+			while(rs.next()) {
+				System.out.println("Appearance: " + rs.getString(2));
+				int qId = rs.getInt(1);
+				String appearance = rs.getString(2);
+				ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true);
+				if(columns != null) {
+					for (String col : columns) {
+						if(!uniqueColumns.contains(col)) {
+							uniqueColumns.add(col);
+						}
+					}
+				}
+			}
+			
+			// Get columns from calculate
+			pstmtCalculate = sd.prepareStatement(sqlCalculate);
+			pstmtCalculate.setInt(1, sId);
+			rs = pstmtCalculate.executeQuery();
+			while(rs.next()) {
+				System.out.println("Calculate: " + rs.getString(2));
+				int qId = rs.getInt(1);
+				String calculate = rs.getString(2);
+				ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false);
+				if(columns != null) {
+					for (String col : columns) {
+						if(!uniqueColumns.contains(col)) {
+							uniqueColumns.add(col);
+						}
+					}
+				}
+			}
+			
+			
+			System.out.println("Unique columns: " + uniqueColumns.toString());
+		} catch (Exception e) {
+			
+		} finally {
+			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
+			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
+		}
 	}
 
 }

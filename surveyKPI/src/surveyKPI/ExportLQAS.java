@@ -110,7 +110,7 @@ public class ExportLQAS extends Application {
 		try {
 			
 			// Get the survey details
-			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, false, false);
+			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, false, false, true);
 			
 			/*
 			 * Get the LQAS definition to apply to this survey

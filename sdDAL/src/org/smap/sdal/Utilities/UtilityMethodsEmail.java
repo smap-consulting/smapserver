@@ -749,8 +749,6 @@ public class UtilityMethodsEmail {
 		
 		String path = null;
 		String thumbsPath = null;
-		String url = null;
-		String thumbsUrl = null;
 		File file = null;
 		File thumb = null;
 		

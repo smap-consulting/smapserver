@@ -178,7 +178,15 @@ public class Surveys extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, 
+					true, 
+					basePath, 
+					null, 
+					false, 
+					false, 
+					true, 
+					true,
+					false);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -247,7 +255,7 @@ public class Surveys extends Application {
 		SurveyManager sm = new SurveyManager();
 		try {
 			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
-			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, false);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(survey);
@@ -320,7 +328,7 @@ public class Surveys extends Application {
 			// Update the languages
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
 			GeneralUtilityMethods.setMediaForLanguages(sd, sId, languageList);	// Cope with media being duplicated across all languages
-			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true);
+			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, false);
 			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();

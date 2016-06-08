@@ -172,7 +172,8 @@ public class SurveyManager {
 			boolean getResults,	// Set to true to get results, if set and instanceId is null then blank data will be added
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
-			boolean getSoftDeleted				// Set to true to get soft deleted questions
+			boolean getSoftDeleted,				// Set to true to get soft deleted questions
+			boolean getExternalOptions			// Set to true to get options added from an external CSV file
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -224,7 +225,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions);			// Add forms, questions, options
+				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions, getExternalOptions);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -513,7 +514,9 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s, String basePath, String user, boolean getPropertyTypeQuestions) throws Exception {
+	private void populateSurvey(Connection sd, Survey s, String basePath, String user, 
+			boolean getPropertyTypeQuestions,
+			boolean getExternalOptions) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -585,6 +588,7 @@ public class SurveyManager {
 				+ "o.published "
 				+ "from option o "
 				+ "where o.l_id = ? "
+				+ "and o.externalfile = ? "
 				+ "order by o.seq";
 		PreparedStatement pstmtGetOptions = sd.prepareStatement(sqlGetOptions);
 		
@@ -779,6 +783,7 @@ public class SurveyManager {
 			optionList.options = new ArrayList<Option> ();
 				
 			pstmtGetOptions.setInt(1, listId);
+			pstmtGetOptions.setBoolean(2, getExternalOptions);
 			log.info("SQL Get options: " + pstmtGetOptions.toString());
 			rsGetOptions = pstmtGetOptions.executeQuery();
 				

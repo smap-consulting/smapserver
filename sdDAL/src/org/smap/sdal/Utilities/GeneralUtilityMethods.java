@@ -2585,6 +2585,71 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get manifest parameters from appearance
+	 */
+	public static ArrayList<String> getManifestParams(Connection sd, int qId, String property, String filename, boolean isAppearance) throws SQLException {
+		ArrayList<String> params = null;
+		
+		String sql = "select ovalue from option o, question q "
+				+ "where o.l_id = q.l_id "
+				+ "and o.externalfile = false "
+				+ "and q.q_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+		
+			// Check to see if this appearance references a manifest file
+			if(property != null && (property.contains("search(") || property.contains("pulldata("))) {
+				// Yes it references a manifest
+				
+				int idx1 = property.indexOf('(');
+				int idx2 = property.indexOf(')');
+				if(idx1 > 0 && idx2 > idx1) {
+					String criteriaString = property.substring(idx1 + 1, idx2);
+					
+					String criteria [] = criteriaString.split(",");
+					if(criteria.length > 0) {
+						
+						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+							String appFilename = criteria[0].trim();
+							appFilename = appFilename.substring(1, appFilename.length() -1);
+							
+							if(filename.equals(appFilename)) {	// We want this one
+								log.info("We have found a manifest link to " + filename);
+								
+								if(isAppearance) {
+									
+									params = getRefQuestionsSearch(criteria);
+									
+									// Need to get columns from choices
+									pstmt.setInt(1, qId);
+									log.info("Getting search columns from choices: " + pstmt.toString());
+									ResultSet rs = pstmt.executeQuery();
+									while(rs.next()) {
+										if(params == null) {
+											params = new ArrayList<String> ();
+										}
+										params.add(rs.getString(1));
+									}
+								} else {
+									params = getRefQuestionsPulldata(criteria);
+								}
+							
+							} 
+	
+						}
+					}
+				}
+			} 
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+		
+		return params;
+	}
+	
+	/*
 	 * Add to a survey level manifest String, a manifest from an appearance attribute
 	 */
 	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest, String inputManifestParams) {
@@ -2615,7 +2680,7 @@ public class GeneralUtilityMethods {
 						
 						if(filename.startsWith("linked_s")) {	// Linked survey
 							log.info("We have found a manifest link to " + filename);
-							refQuestions = getRefQuestions(criteria);
+							refQuestions = getRefQuestionsSearch(criteria);
 							manifestType = "linked";
 							System.out.println("RefQuestions: " + refQuestions.toString());
 						} else {
@@ -2670,7 +2735,7 @@ public class GeneralUtilityMethods {
 							
 							if(filename.startsWith("linked_s")) {	// Linked survey
 								log.info("We have found a manifest link to " + filename);
-								refQuestions = getRefQuestions(criteria);
+								refQuestions = getRefQuestionsSearch(criteria);
 								manifestType = "linked";
 								System.out.println("RefQuestions: " + refQuestions.toString());
 							} else {
@@ -2763,15 +2828,15 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get the questions referenced by a search or pulldata function in a linked survey
+	 * Get the questions referenced by a search function in a linked survey
 	 */
-	private static ArrayList<String> getRefQuestions(String [] params) {
+	private static ArrayList<String> getRefQuestionsSearch(String [] params) {
 		ArrayList<String> refQuestions = new ArrayList<String> ();
 		String param = null;
 		
 		/*
 		 * The number of parameters can vary from 1 to 6
-		 * params[0] is the primary function, either "search" or "pulldata"
+		 * params[0] is the primary function: "search" 
 		 * params[1] is the matching function, ie 'matches'
 		 * params[2] is a question name  (Get this one)
 		 * params[3] is a value for the question in param[2]
@@ -2786,6 +2851,34 @@ public class GeneralUtilityMethods {
 		}
 		if(params.length > 4) {
 			param = params[4].trim();
+			param = param.substring(1, param.length() -1);		// Remove quotes
+			refQuestions.add(param);
+		}
+		return refQuestions;
+	}
+	
+	/*
+	 * Get the questions referenced by a pulldata function in a linked survey
+	 */
+	private static ArrayList<String> getRefQuestionsPulldata(String [] params) {
+		ArrayList<String> refQuestions = new ArrayList<String> ();
+		String param = null;
+		
+		/*
+		 * The number of parameters are 4
+		 * params[0] is the primary function "pulldata"
+		 * params[1] is the data column (Get this one)
+		 * params[2] is the key column  (Get this one)
+		 * params[3] is the key value
+		 * 
+		 */
+		if(params.length > 1) {
+			param = params[1].trim();
+			param = param.substring(1, param.length() -1);		// Remove quotes
+			refQuestions.add(param);
+		}
+		if(params.length > 2) {
+			param = params[2].trim();
 			param = param.substring(1, param.length() -1);		// Remove quotes
 			refQuestions.add(param);
 		}
