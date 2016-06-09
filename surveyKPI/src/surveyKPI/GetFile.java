@@ -223,6 +223,7 @@ public class GetFile extends Application {
 				cRel = ResultsDataSource.getConnection("getFile");
 				ExternalFileManager efm = new ExternalFileManager();
 				efm.createLinkedFile(connectionSD, cRel, sId, filename, filepath);
+				filepath = filepath + ".csv";
 			}
 			getFile(response, filepath, filename);
 			

@@ -244,10 +244,13 @@ public class ExternalFileManager {
 			tabs.append(table);
 			
 			// update where statement
-			if(parentId > 0) {
-				if(where.length() > 0) {
-					where.append(",");
-				}
+			if(where.length() > 0) {
+				where.append(" and ");
+			}
+			if(parentId == 0) {
+				where.append(table);
+				where.append("._bad = 'false'");
+			} else {
 				where.append(table);
 				where.append(".parkey = ");
 				where.append(parentTable);
