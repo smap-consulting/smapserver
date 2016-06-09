@@ -1771,6 +1771,15 @@ function utcTime(localTime) {
 
 function downloadFile(url, filename, mime) {
 
+	// prevent caching
+	var urlComp = url.split("?");
+	if(urlComp.length > 1) {
+		url += "&";
+	} else {
+		url += "?";
+	}
+	url += "_nocache=" + new Date().getTime();
+	
 	var xhr = new XMLHttpRequest();
 	xhr.open('GET', url, true);
 	xhr.responseType = 'blob';

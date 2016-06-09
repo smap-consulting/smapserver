@@ -4,7 +4,7 @@
     waitSeconds: 0,
     wrapShim: false,
     baseUrl: 'js/libs',
-    optimize: 'none',
+    //optimize: 'none',
     paths: {
     	jquery: 'jquery-2.1.1',
     	jquery_ui: 'empty:',

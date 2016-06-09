@@ -1,0 +1,19 @@
+Unless otherwise noted, all files in this repository are under the Apache 2.0 license described at http://www.apache.org/licenses/LICENSE-2.0. Copyright is held by Nafundi. 
+
+The software in this repository uses these libraries:
+
+commons-codec-1.5.jar (Apache 2.0)
+commons-io-2.4.jar (Apache 2.0)
+commons-lang-2.6.jar (Apache 2.0)
+commons-logging-1.1.jar (Apache 2.0)
+jatl-0.2.2.jar (Apache 2.0)
+javarosa-libraries.jar (Apache 2.0)
+log4j-1.2.13.jar (Apache 2.0)
+xml-apis-xerces-2.9.1.jar (Apache 2.0)
+
+core-renderer.jar (LGPL)
+iText-2.0.8.jar (MPL)
+kxml2-2.3.0.jar (BSD)
+
+jsr173_1.0_api.jar (Sun Microsystems)
+jtidy-r938.jar (World Wide Web Consortium)

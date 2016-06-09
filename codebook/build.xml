@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<project default="package" name="taskforce-codebook">
+    <property name="appName" value="LINKS Codebook v1.1" />
+
+    <target description="set classpath and make needed directories" name="init">
+        <path id="classpath">
+            <fileset dir="libs/" includes="*.jar"/>
+        </path>
+        <mkdir dir="bin/"/>
+        <mkdir dir="dist/"/>
+    </target>
+    <target description="delete dist and bin directories" name="clean">
+        <delete dir="dist/"/>
+        <delete dir="bin/"/>
+    </target>
+    <target depends="clean,init" description="compile the source" name="compile">
+        <javac classpathref="classpath" debug="true" debuglevel="lines,source" destdir="bin/" source="1.5" srcdir="src/" target="1.5"/>
+    </target>
+    <target depends="compile" description="package source and binary into jar" name="package">
+        <jar destfile="dist/${appName}.jar">
+            <fileset dir="res"/>
+            <fileset dir="bin/" includes="**/*.class"/>
+            <zipfileset excludes="**/*.RSA, **/*.SF, **/*.DSA" src="libs/iText-2.0.8.jar"/>
+            <zipfileset src="libs/commons-codec-1.5.jar"/>
+            <zipfileset src="libs/commons-io-2.4.jar"/>
+            <zipfileset src="libs/commons-lang-2.6.jar"/>
+            <zipfileset src="libs/commons-logging-1.1.jar"/>
+            <zipfileset src="libs/core-renderer.jar"/>
+            <zipfileset src="libs/jatl-0.2.2.jar"/>
+            <zipfileset src="libs/javarosa-libraries.jar"/>
+            <zipfileset src="libs/jsr173_1.0_api.jar"/>
+            <zipfileset src="libs/jtidy-r938.jar"/>
+            <zipfileset src="libs/kxml2-2.3.0.jar"/>
+            <zipfileset src="libs/log4j-1.2.13.jar"/>
+            <zipfileset src="libs/xml-apis-xerces-2.9.1.jar"/>
+            <manifest>
+                <attribute name="Main-Class" value="com.nafundi.taskforce.codebook.ui.Main"/>
+            </manifest>
+        </jar>
+        <chmod file="dist/${appName}.jar" perm="+x"/>
+    </target>
+</project>
