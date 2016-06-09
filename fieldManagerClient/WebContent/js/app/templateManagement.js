@@ -193,7 +193,7 @@ $(document).ready(function() {
 			$('#download_orientation_div').hide();
 		}
 	});
-	$('#download_language_div, #download_orientation_div').hide();
+	
 	
 	$('#fwd_rem_survey').change(function(){
 		remoteSurveyChanged();
@@ -528,6 +528,8 @@ function completeSurveyList() {
 		} else {
 			$('#dtorigxls').hide();
 		}
+		$('form', '#download_template')[0].reset();
+		$('#download_language_div, #download_orientation_div').hide();
 		$('#download_template').modal('show');
 	});
 	

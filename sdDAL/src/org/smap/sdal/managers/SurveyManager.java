@@ -2116,10 +2116,12 @@ public class SurveyManager {
     	 * Hack: Remove questions that have not been published.
     	 * This code should be modified to reuse the function to get columns used by results export
     	 */
-    	for(int i = questions.size() - 1; i >= 0; i--) {
-    		if(!questions.get(i).published) {
-    			questions.remove(i);
-    		}
+    	if(!generateDummyValues) {
+	    	for(int i = questions.size() - 1; i >= 0; i--) {
+	    		if(!questions.get(i).published) {
+	    			questions.remove(i);
+	    		}
+	    	}
     	}
     	
     	try {
@@ -2394,7 +2396,6 @@ public class SurveyManager {
     					}
 					} else {
 						log.severe("Invalid value for geopoint: " + value);
-						value = null;
 					}
 				} 
 
@@ -2409,6 +2410,8 @@ public class SurveyManager {
 			index++;
 			
 		}
+		
+		System.out.println("Record size: " + record.size());
     }
     
 	/*
