@@ -216,7 +216,7 @@ public class GetFile extends Application {
 			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
 			System.out.println("Getting file: " + filepath + " linked is: " + linked);
 			
-			if(linked) {
+			if(linked && filename.indexOf('_') > 0) {
 				// Create file if it is out of date
 				createLinkedFile(connectionSD, sId, filename, filepath);
 			}
@@ -315,13 +315,97 @@ public class GetFile extends Application {
 				}
 			}
 			
-			
 			System.out.println("Unique columns: " + uniqueColumns.toString());
+			
+			// Get the survey ident that is going to provide the CSV data
+			int idx = filename.indexOf('_');
+			String sIdent = filename.substring(idx + 1);
+			String sql = getSql(sd, sIdent, uniqueColumns);
+			
+			System.out.println("SQL: " + sql);
+			
+
 		} catch (Exception e) {
 			
 		} finally {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
+		}
+	}
+	
+	/*
+	 * Get the SQL to retrieve dynamic CSV data
+	 */
+	private String getSql(Connection sd, String sIdent, ArrayList<String> qnames) throws SQLException  {
+		
+		StringBuffer sql = new StringBuffer("select distinct ");
+		StringBuffer where = new StringBuffer("");
+		StringBuffer tabs = new StringBuffer("");
+		int sId = 0;
+		
+		ResultSet rs = null;
+		String sqlGetCol = "select column_name from question "
+				+ "where qname = ? "
+				+ "and f_id in (select f_id from form where s_id = ?)";
+		PreparedStatement pstmtGetCol = null;
+		
+		String sqlGetTable = "select f_id, table_name from form "
+				+ "where s_id = ? "
+				+ "and parentform = ?";
+		PreparedStatement pstmtGetTable = null;
+		
+		try {
+			// 1. Get the survey id
+			sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+			
+			// 2. Add the columns
+			pstmtGetCol = sd.prepareStatement(sqlGetCol);
+			pstmtGetCol.setInt(2,  sId);
+			
+			for(int i = 0; i < qnames.size(); i++) {
+				String name = qnames.get(i);
+				pstmtGetCol.setString(1, name);
+				rs = pstmtGetCol.executeQuery();
+				if(rs.next()) {
+					if(i > 0) {
+						sql.append(",");
+					}
+					sql.append(rs.getString(1));
+					sql.append(" as ");
+					sql.append(name);
+				}
+			}
+			
+			// 3. Add the tables
+			sql.append(" from ");
+			pstmtGetTable = sd.prepareStatement(sqlGetTable);
+			pstmtGetTable.setInt(1,  sId);
+			getTables(pstmtGetTable, 0, tabs, where);
+			sql.append(tabs);
+			sql.append(where);
+			
+		} finally {
+			if(pstmtGetCol != null) try {pstmtGetCol.close();} catch(Exception e) {}
+			if(pstmtGetTable != null) try {pstmtGetTable.close();} catch(Exception e) {}
+		}
+		return sql.toString();
+	}
+	
+	/*
+	 * Get table details
+	 */
+	private void getTables(PreparedStatement pstmt, int parent, StringBuffer tabs, StringBuffer where) throws SQLException {
+		ResultSet rs = null;
+		pstmt.setInt(2, parent);
+		rs = pstmt.executeQuery();
+		while(rs.next()) {
+			int fId = rs.getInt(1);
+			String table = rs.getString(2);
+			
+			if(tabs.length() > 0) {
+				tabs.append(",");
+			}
+			tabs.append(table);
 		}
 	}
 

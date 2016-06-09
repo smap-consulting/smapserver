@@ -655,6 +655,40 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the survey id from the ident
+	 */
+	static public int getSurveyId(
+			Connection sd, 
+			String sIdent) throws SQLException {
+		
+		int sId = 0;
+		
+		String sql = "select s_id " +
+				" from survey " +
+				" where ident = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, sIdent);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				sId = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return sId;
+	}
+	
+	/*
 	 * Get the survey name from the id
 	 */
 	static public String getSurveyName(
