@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="res"/>
+	<classpathentry kind="lib" path="libs/commons-codec-1.5.jar"/>
+	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="libs/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="libs/commons-logging-1.1.jar"/>
+	<classpathentry kind="lib" path="libs/core-renderer.jar"/>
+	<classpathentry kind="lib" path="libs/iText-2.0.8.jar"/>
+	<classpathentry kind="lib" path="libs/jatl-0.2.2.jar"/>
+	<classpathentry kind="lib" path="libs/javarosa-libraries.jar"/>
+	<classpathentry kind="lib" path="libs/jsr173_1.0_api.jar"/>
+	<classpathentry kind="lib" path="libs/jtidy-r938.jar"/>
+	<classpathentry kind="lib" path="libs/kxml2-2.3.0.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="libs/xml-apis-xerces-2.9.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
