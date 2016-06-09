@@ -107,6 +107,7 @@ sudo mkdir $filelocn/templates/xls
 sudo mkdir $filelocn/uploadedSurveys
 sudo mkdir $filelocn/misc
 sudo mkdir $filelocn/temp
+sudo mkdir $filelocn/bin
 
 sudo chown -R tomcat7 $filelocn
 sudo chmod -R 0777 $filelocn/attachments

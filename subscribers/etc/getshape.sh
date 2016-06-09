@@ -57,5 +57,17 @@ EOF
 	zip -rj $4.zip $4/$2.csv
 fi
 
+if [ "$5" = "csvnozip" ]
+then
+        echo "csv extract without zip"
+        rm $4.csv
+        PGPASSWORD=ws1234;export PGPASSWORD
+
+        psql $1 -U ws << EOF > $4.csv
+COPY ($3) TO STDOUT WITH CSV HEADER
+EOF
+
+fi
+
 
 

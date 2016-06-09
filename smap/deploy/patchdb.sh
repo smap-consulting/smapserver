@@ -172,6 +172,14 @@ then
 	echo "no patches for 16.03"
 fi
 
+# version 16.06
+if [ $version -lt "160601" ]
+then
+echo "Applying patches for version 16.06"
+sudo mkdir /smap/bin
+sudo chown -R tomcat7 /smap/bin
+fi
+
 #####################################################################################
 # All versions
 # Copy the new apache configuration files
@@ -185,6 +193,5 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
 
 # update version reference
-new_version="160501"
+new_version="160601"
 echo "$new_version" > ~/smap_version
-echo "update server set version = '$new_version'" | sudo -u postgres psql -d survey_definitions

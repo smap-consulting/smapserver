@@ -69,15 +69,24 @@ chmod -R o-rwx /var/www/smap
 #
 service subscribers stop
 service subscribers_fwd stop
+
+# old smap bin
 cp $deploy_from/subscribers.jar /usr/bin/smap
 cp $deploy_from/codebook.jar /usr/bin/smap
 cp -r $deploy_from/subscribers/default /usr/bin/smap
 cp -r $deploy_from/subscribers/etc/* /usr/bin/smap
 cp -r $deploy_from/resources /usr/bin/smap
 cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
-
-
 chmod +x /usr/bin/smap/*.sh
+
+# new smap bin
+cp $deploy_from/subscribers.jar /smap/bin
+cp $deploy_from/codebook.jar /smap/bin
+cp -r $deploy_from/subscribers/default /smap/bin
+cp -r $deploy_from/subscribers/etc/* /smap/bin
+cp -r $deploy_from/resources /smap/bin
+cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
+chmod +x /smap/bin/*.sh
 
 cd /var/log/subscribers
 rm *.log_old

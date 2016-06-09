@@ -330,7 +330,7 @@ public class ExportSurveyMisc extends Application {
 					 * Export the data (not just shape files)
 					 */
 					int code = 0;
-					Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/getshape.sh " + 
+					Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/getshape.sh " + 
 							database_name + " " +
 							sqlDesc.target_table + " " +
 							"\"" + sqlDesc.sql + "\" " +
