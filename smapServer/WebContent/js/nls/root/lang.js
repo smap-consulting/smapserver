@@ -287,6 +287,7 @@ define({
 	"msg_u_nt": "No nfc tags found",
 	"msg_csv": "Only CSV files and Zip files containing CSV and media files are allowed",
 	"msg_inv_email": "Not a valid email address",
+	"msg_cs": "Click to filter or sort on this column",
 	
 	// Editor
 	"e_b_e": "Base on existing form",

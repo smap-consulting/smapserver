@@ -233,14 +233,20 @@ window.gTasks = {
 			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
 			 
 			 if(headItem.include && !headItem.hide) {
+				
+				 h[++idx] = '<th data-toggle="tooltip" title="';
+				 h[++idx] = localise.set["msg_cs"];
+				 h[++idx] = '"';
+				 
 				 if(gTasks.gSort && headItem.humanName === gTasks.gSort.trim()) {
-					 h[++idx] = '<th class="sort-';
+					 h[++idx] = ' class="sort-';
 					 h[++idx] = gTasks.gDirn;
-					 h[++idx] = '">';
-				 } else {
-					 h[++idx] = '<th>';
 				 }
+				 h[++idx] = '">';
+				 
+				 h[++idx] = '<span class="ch">';
 				 h[++idx] = headItem.humanName;
+				 h[++idx] = '</span>';
 				 h[++idx] = '</th>';
 			 }
 		 }
@@ -290,7 +296,28 @@ window.gTasks = {
 		 });
 		 
 		 // Respond to sort requests
-		 $table.find('th').click(function(){
+		 $table.find('th i').click(function(){
+			 var	$this = $(this), 
+			 		html = $this.html();	// Use to look for existing sort tags
+			 
+			 gTasks.gSort = $this.text();
+			 
+			 if($this.find('i').length > 0) {
+				 if(gTasks.gDirn === "asc") {
+					 gTasks.gDirn = "desc";
+				 } else {
+					 gTasks.gDirn = "asc";
+				 }
+			 } else {
+				 gTasks.gDirn = "asc";
+			 }
+			 
+			 // Update table
+			 getManagedData(globals.gCurrentSurvey, gTasks.gSort, gTasks.gDirn);
+		 });
+		 
+		 // Respond to filter requests
+		 $table.find('th .ch').click(function(){
 			 var	$this = $(this), 
 			 		html = $this.html();	// Use to look for existing sort tags
 			 
