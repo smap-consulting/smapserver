@@ -30,7 +30,7 @@ window.gTasks = {
 		gSort: undefined,
 		gDirn: undefined
 	}
-	 
+
 	 /*
 	  * Function called when the current survey is changed
 	  */
@@ -227,6 +227,7 @@ window.gTasks = {
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
+		 h[++idx] = '<th></th>';				// Select
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
 			 
@@ -257,8 +258,19 @@ window.gTasks = {
 		 // Add body
 		 h[++idx] = '<tbody>';
 		 for(j = 0; j < managed.length; j++) {
-			 record = managed[j];
+			 
 			 h[++idx] = '<tr>';
+			 
+			 //Add radio button to select row
+			 h[++idx] = '<td><input type=';
+				h[++idx] = '"radio"';
+				h[++idx] = 'name="taskgroup"';
+				h[++idx] = ' class="taskgroup" value="';
+				h[++idx] = j;
+				h[++idx] = '"';
+			 h[++idx] = '></td>';
+					
+			 record = managed[j];
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
 				
@@ -284,6 +296,12 @@ window.gTasks = {
 		 	
 		 $table.html(h.join(''));
 		 $('#tab-settings-content').html(hColSort.join(''));
+		 
+		 // Add select radio button
+		 $('input', $table).iCheck({
+			    checkboxClass: 'icheckbox_square-green',
+			    radioClass: 'iradio_square-green'
+			});
 		 
 		 // Add sort icon
 		 $table.find('th.sort-asc').each(function() {
@@ -321,6 +339,8 @@ window.gTasks = {
 			 var	$this = $(this), 
 			 		html = $this.html();	// Use to look for existing sort tags
 			 
+			 $('#filterColumn').modal("show");
+			 /*
 			 gTasks.gSort = $this.text();
 			 
 			 if($this.find('i').length > 0) {
@@ -335,6 +355,7 @@ window.gTasks = {
 			 
 			 // Update table
 			 getManagedData(globals.gCurrentSurvey, gTasks.gSort, gTasks.gDirn);
+			 */
 		 });
 			
 		 // Set checkboxes in column sort section of settings
@@ -342,6 +363,7 @@ window.gTasks = {
 			 checkboxClass: 'icheckbox_square-green',
 			 radioClass: 'iradio_square-green'
 		 });
+		 
 
 	 }
 	 

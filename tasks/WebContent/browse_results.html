@@ -76,6 +76,20 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
+	            
+	           		<li class="dropdown">
+	                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+	                        <span class="lang" data-lang="t_action">Action</span>
+	                    </a>
+	                    <ul class="dropdown-menu dropdown-alerts">
+	                        <li>	
+	                            <a type="button" class="btn" href="#" id="getRelated">
+	                                <span class="lang" data-lang="mf_gr">get related</span>
+	                            </a>
+	                        </li>
+	                    </ul>
+                	</li>   
+                	
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
@@ -211,6 +225,37 @@
 		</div>
 	</div>
 </div>
+
+<!-- Modal to set filters on a column -->
+<div id="filterColumn" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog custom-modal-width">
+		<div class="modal-content">
+			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+   			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+
+						<form id="surveyForm" role="form" class="form-horizontal">
+					
+						</form>
+					</div>
+					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
+
+						<form id="editRecordForm" role="form" class="form-horizontal">
+					
+						</form>
+						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+					</div>
+				</div>
+			</div>
+				
+		</div>
+	</div>
+</div>
+
 
 
 

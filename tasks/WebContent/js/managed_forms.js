@@ -262,6 +262,17 @@ require([
 			refreshData();
 		});
 		
+		/*
+		 * Set up the action menu functions
+		 */
+		$('#getRelated').click( function () {
+			// 1. Get the related surveys
+			
+			// 2. Hide results other than this primary result
+			
+			// 3. Show related surves
+		});
+		
      });	 
 
 
