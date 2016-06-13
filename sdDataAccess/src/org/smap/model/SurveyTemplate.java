@@ -684,13 +684,13 @@ public class SurveyTemplate {
 				questionsInForm = new HashMap<String, String> ();
 				forms.put(fName, questionsInForm);
 			}
-			String existingQuestion = questionsInForm.get(qName);
+			String existingQuestion = questionsInForm.get(qName.trim().toLowerCase());
 			if(existingQuestion != null) {
 				badNames.add(qName);
 				badNames.add(existingQuestion);
 				System.out.println("Duplicate Question:" + qName + " in form:" + fName);
 			} else {
-				questionsInForm.put(qName, qName);
+				questionsInForm.put(qName.trim().toLowerCase(), qName);
 			}
 			
 		}
