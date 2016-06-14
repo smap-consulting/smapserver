@@ -619,9 +619,9 @@ define([
 			     * Add the select question for the linked survey
 			     */
 			    h[++idx] = '<div class="col-xs-6">';	// Start select column
-			    h[++idx] = '<div ';
+			    h[++idx] = '<div';
 			    if(!question[selProperty]) {
-			    	h[++idx] = 'style="display:none;';
+			    	h[++idx] = ' style="display:none;"';
 			    }
 			    h[++idx] = '>';
 				h[++idx] = '<div class="form-group">';

@@ -570,6 +570,71 @@ public class ManagedForms extends Application {
 	}
 	
 	/*
+	 * Get data connected to the passed in record
+	 */
+	@GET
+	@Path("/connected/{sId}/{prikey}")
+	@Produces("application/json")
+	public Response getConnnected(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@PathParam("prikey") int prikey) { 
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		// End Authorisation
+
+		Response response = null;
+		
+		// SQL to get default settings for this user and survey
+		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
+		PreparedStatement pstmt = null;
+		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
+		ResultSet rs = null;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		try {
+
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
+			
+			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+					sd,
+					cResults,
+					0,
+					f.id,
+					f.tableName,
+					false,	// Don't include Read only
+					true,	// Include parent key
+					true,	// Include "bad"
+					true	// Include instanceId
+					);		
+			
+	
+			
+			response = Response.ok(gson.toJson(columns)).build();
+		
+				
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			
+			SDDataSource.closeConnection("surveyKPI-QuestionsInForm", sd);
+			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
+		}
+
+
+		return response;
+	}
+
+	
+	/*
 	 * Identify any columns that should be dropped
 	 */
 	private boolean keepThis(String name) {

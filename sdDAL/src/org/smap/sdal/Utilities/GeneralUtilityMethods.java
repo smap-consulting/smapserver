@@ -802,7 +802,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get the survey human readable key survey id
+	 * Get the survey human readable key using the survey id
 	 */
 	static public String getHrk(
 			Connection sd, 
