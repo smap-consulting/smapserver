@@ -36,8 +36,10 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Link;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
 
@@ -573,47 +575,29 @@ public class ManagedForms extends Application {
 	 * Get data connected to the passed in record
 	 */
 	@GET
-	@Path("/connected/{sId}/{prikey}")
+	@Path("/connected/{sId}/{fId}/{prikey}")
 	@Produces("application/json")
-	public Response getConnnected(@Context HttpServletRequest request,
+	public Response getLinks(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
-			@PathParam("prikey") int prikey) { 
+			@PathParam("fId") int fId,
+			@PathParam("prikey") int prikey,
+			@QueryParam("hrk") String hrk) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		Connection sd = SDDataSource.getConnection("surveyKPI-ManagedForms-getLinks");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 
 		Response response = null;
 		
-		// SQL to get default settings for this user and survey
-		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
-		PreparedStatement pstmt = null;
-		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
-		ResultSet rs = null;
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-ManagedForms-getLinks");
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-
-			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			
-			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
-					sd,
-					cResults,
-					0,
-					f.id,
-					f.tableName,
-					false,	// Don't include Read only
-					true,	// Include parent key
-					true,	// Include "bad"
-					true	// Include instanceId
-					);		
-			
-	
-			
-			response = Response.ok(gson.toJson(columns)).build();
+			LinkageManager lm = new LinkageManager();
+			ArrayList<Link> links = lm.getSurveyLinks(sd, cResults, sId, fId, prikey, hrk);
+			response = Response.ok(gson.toJson(links)).build();
 		
 				
 		} catch (SQLException e) {
@@ -623,10 +607,9 @@ public class ManagedForms extends Application {
 			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			
-			SDDataSource.closeConnection("surveyKPI-QuestionsInForm", sd);
-			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
+			SDDataSource.closeConnection("surveyKPI-ManagedForms-getLinks", sd);
+			ResultsDataSource.closeConnection("surveyKPI-ManagedForms-getLinks", cResults);
 		}
 
 
