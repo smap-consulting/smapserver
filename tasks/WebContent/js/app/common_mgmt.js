@@ -169,45 +169,52 @@ window.gTasks = {
 	  */
 	 function getManagedData(sId, sort, dirn) {
 		 
-		 var url = '/api/v1/data/' + sId;
-		 
-		 if(isManagedForms) {
-			 url += "?mgmt=true";
-		 } else{
-			 url += "?mgmt=false";
-		 }
-		 
-		 if(sort) { 
-			 url += "&sort=" + sort + "&dirn=" + dirn;
-		 } 
-		 
-		 addHourglass();
-		 $.ajax({
-			 url: url,
-			 cache: false,
-			 dataType: 'json',
-			 success: function(data) {
-				 removeHourglass();
-				 gTasks.cache.managedData[sId] = data;
-				 if(gTasks.cache.surveyConfig[sId]) {
-					 showManagedData(sId);
-				 }
-			 },
-			 error: function(xhr, textStatus, err) {
-				 removeHourglass();
-				 if(xhr.readyState == 0 || xhr.status == 0) {
-					 return;  // Not an error
-				 } else {
-						alert("Error failed to get data from survey:" + sId);
-				 }
+		 if(!gTasks.cache.managedData[sId]) {
+			 var url = '/api/v1/data/' + sId;
+			 
+			 if(isManagedForms) {
+				 url += "?mgmt=true";
+			 } else{
+				 url += "?mgmt=false";
 			 }
-		 });
+			 
+			 if(sort) { 
+				 url += "&sort=" + sort + "&dirn=" + dirn;
+			 } 
+			 
+			 addHourglass();
+			 $.ajax({
+				 url: url,
+				 cache: false,
+				 dataType: 'json',
+				 success: function(data) {
+					 removeHourglass();
+					 gTasks.cache.managedData[sId] = data;
+					 if(gTasks.cache.surveyConfig[sId]) {
+						 showManagedData(sId, '#trackingTable', undefined);
+					 }
+				 },
+				 error: function(xhr, textStatus, err) {
+					 removeHourglass();
+					 if(xhr.readyState == 0 || xhr.status == 0) {
+						 return;  // Not an error
+					 } else {
+							alert("Error failed to get data from survey:" + sId);
+					 }
+				 }
+			 });
+		 } else {
+			 if(gTasks.cache.surveyConfig[sId]) {
+				 showManagedData(sId, '#trackingTable', undefined);
+			 }
+		 }
 	 }
 	 
 	 /*
 	  * Show the survey data along with the management columns
+	  * If prikey is specified then only show that record
 	  */
-	 function showManagedData(sId) {
+	 function showManagedData(sId, tableElem, masterRecord) {
 		 
 		 var x = 1,
 		 	managed = gTasks.cache.managedData[sId],
@@ -216,7 +223,7 @@ window.gTasks = {
 		 	h = [],
 		 	idx = -1,
 		 	i,j,
-		 	$table = $('#trackingTable'),
+		 	$table = $(tableElem),
 		 	doneFirst = false,
 		 	headItem,
 		 	hColSort = [],
@@ -227,7 +234,9 @@ window.gTasks = {
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
-		 h[++idx] = '<th></th>';				// Select
+		 if(typeof masterRecord === "undefined") {
+			 h[++idx] = '<th></th>';				// Select
+		 }
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
 			 
@@ -259,37 +268,41 @@ window.gTasks = {
 		 h[++idx] = '<tbody>';
 		 for(j = 0; j < managed.length; j++) {
 			 
-			 h[++idx] = '<tr>';
-			 
-			 //Add radio button to select row
-			 h[++idx] = '<td><input type=';
-				h[++idx] = '"radio"';
-				h[++idx] = 'name="taskgroup"';
-				h[++idx] = ' class="taskgroup" value="';
-				h[++idx] = j;
-				h[++idx] = '"';
-			 h[++idx] = '></td>';
-					
-			 record = managed[j];
-			 for(i = 0; i < columns.length; i++) {
-				 headItem = columns[i];
-				
-				 if(headItem.include && !headItem.hide) {
-					 h[++idx] = getHighlightedCell(record[headItem.humanName], headItem.markup);
-						 
-					 if(headItem.readonly || !headItem.inline) {
-						 h[++idx] = addAnchors(record[headItem.humanName]);
-					 } else {
-						 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
-					 }
-					 h[++idx] = '</td>';
+			 if(typeof masterRecord === "undefined" || masterRecord == j) {
+				 h[++idx] = '<tr>';
+				 
+				 //Add radio button to select row
+				 if(typeof masterRecord === "undefined") {
+					 h[++idx] = '<td><input type=';
+						h[++idx] = '"radio"';
+						h[++idx] = 'name="taskgroup"';
+						h[++idx] = ' class="taskgroup" value="';
+						h[++idx] = j;
+						h[++idx] = '"';
+					 h[++idx] = '></td>';
 				 }
-					 
+						
+				 record = managed[j];
+				 for(i = 0; i < columns.length; i++) {
+					 headItem = columns[i];
+					
+					 if(headItem.include && !headItem.hide) {
+						 h[++idx] = getHighlightedCell(record[headItem.humanName], headItem.markup);
+							 
+						 if(headItem.readonly || !headItem.inline) {
+							 h[++idx] = addAnchors(record[headItem.humanName]);
+						 } else {
+							 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
+						 }
+						 h[++idx] = '</td>';
+					 }
+						 
+				 }
+				 h[++idx] = '<td><a data-toggle="modal" href="#editRecord" data-index="';
+				 h[++idx] = j;
+				 h[++idx] = '"><i class="fa fa-edit text-navy"></i></a></td>';
+				 h[++idx] = '</tr>';
 			 }
-			 h[++idx] = '<td><a data-toggle="modal" href="#editRecord" data-index="';
-			 h[++idx] = j;
-			 h[++idx] = '"><i class="fa fa-edit text-navy"></i></a></td>';
-			 h[++idx] = '</tr>';
 			 
 		 }
 		 h[++idx] = '</tbody>';
@@ -575,7 +588,7 @@ window.gTasks = {
 					 removeHourglass();
 					 gTasks.cache.surveyConfig[sId] = data;
 					 if(gTasks.cache.managedData[sId]) {
-						 showManagedData(sId);
+						 showManagedData(sId, '#trackingTable', undefined);
 					 }
 				 },
 				 error: function(xhr, textStatus, err) {
@@ -589,10 +602,91 @@ window.gTasks = {
 			 });
 		 } else {
 			 if(gTasks.cache.managedData[sId]) {
-				 showManagedData(sId);
+				 showManagedData(sId, '#trackingTable', undefined);
 			 }
 		 }
+	 }
+	 
+	 /*
+	  * Get the currently selcted recoord
+	  */
+	 function getSelectedRecord() {
+	 	
+	 	var record,
+	 		idx;
+	 	
+	 	$('input[type=radio]:checked', '#trackingTable').each(function() {
+	 		idx = $(this).val();
+	 	});
+	 	
+	 	return idx;
+	 }
+	 
+	 /*
+	  * Get data related to the currently selected record
+	  */
+	 function getRelatedData(sId, masterRecord) {
+		 var record = gTasks.cache.managedData[sId][masterRecord];
 		 
+		 var url = '/surveyKPI/managed/connected/' + sId + '/0/' + record.prikey;
 		 
+		 $('#relatedData').empty();
+		 addHourglass();
+		 $.ajax({
+			 url: url,
+			 cache: false,
+			 dataType: 'json',
+			 success: function(data) {
+				 removeHourglass();
+				 
+				 var i;
+				 
+				 for(i = 0; i < data.length; i++) {
+					 showRelated(i, data[i]);
+				 }
+				 
+				 
+			 },
+			 error: function(xhr, textStatus, err) {
+				 removeHourglass();
+				 if(xhr.readyState == 0 || xhr.status == 0) {
+					 return;  // Not an error
+				 } else {
+						alert("Error failed to get related data:" + sId);
+				 }
+			 }
+		 });
+	
+	 }
+	 
+	 /*
+	  * Show a related data item
+	  */
+	 function showRelated(itemIndex, item) {
+		 var h = [];
+		 	idx = -1;
+		 
+		 h[++idx] = '<div class="row">'
+			 h[++idx] = '<div class="col-lg-12">';
+             	h[++idx] = '<div class="ibox float-e-margins">';
+             		h[++idx] = '<div class="ibox-title">';
+             			h[++idx] = '<h5>';
+             			h[++idx] = '</h5>'; 
+             		h[++idx] = '</div>';
+             		h[++idx] = '<div class="ibox-content">';
+                 		h[++idx] = '<div class="row">';
+	                 		h[++idx] = '<div class="col-lg-12">';
+	                 			h[++idx] = '<table id="relTable';
+	                 				h[++idx] = itemIndex;
+	                 				h[++idx] = '" class="table table-striped table-responsive toggle-arrow-tiny" data-page-size="8">';
+	                 			h[++idx] = '</table>';
+	                 		h[++idx] = '</div>';
+	                 	h[++idx] = '</div>';
+	                 h[++idx] = '</div>';
+	            h[++idx] = '</div>';
+	        h[++idx] = '</div>';
+	    h[++idx] = '</div>';
+	    
+	    $('#relatedData').append(h.join(""));
 	 }
 

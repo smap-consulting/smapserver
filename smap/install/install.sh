@@ -229,8 +229,8 @@ sudo cp subscribers.sh /usr/bin/smap
 sudo chmod -R 777 /var/log/subscribers
 sudo chmod -R +x /var/log/subscribers
 chmod +x /usr/bin/smap/subscribers.sh
-sudo mkdir /usr/bin/smap/resources
-sudo mkdir /usr/bin/smap/resources/css
+sudo mkdir /smap/bin/resources
+sudo mkdir /smap/bin/resources/css
 
 
 echo '##### 13. Set up deployment script'

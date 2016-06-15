@@ -78,6 +78,12 @@ public class LinkageManager {
 		
 		try {
 
+			// If the passed in form id was 0 then use the top level form
+			if(fId == 0) {
+				Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+				fId = f.id;
+			}
+			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, fId);
 			pstmt.setInt(2, sId);

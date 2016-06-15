@@ -75,7 +75,7 @@ cp $deploy_from/subscribers.jar /usr/bin/smap
 cp $deploy_from/codebook.jar /usr/bin/smap
 cp -r $deploy_from/subscribers/default /usr/bin/smap
 cp -r $deploy_from/subscribers/etc/* /usr/bin/smap
-cp -r $deploy_from/resources /usr/bin/smap
+cp -r $deploy_from/resources /smap/bin
 cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
 chmod +x /usr/bin/smap/*.sh
 

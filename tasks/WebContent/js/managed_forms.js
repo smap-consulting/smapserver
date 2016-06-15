@@ -266,11 +266,16 @@ require([
 		 * Set up the action menu functions
 		 */
 		$('#getRelated').click( function () {
-			// 1. Get the related surveys
 			
-			// 2. Hide results other than this primary result
+			var masterRecord = getSelectedRecord();
 			
-			// 3. Show related surves
+			if(typeof masterRecord != "undefined") {
+				// 1. Hide results other than this primary result
+				showManagedData(globals.gCurrentSurvey, '#trackingTable', masterRecord);
+				
+				// 2. Get related surveys and show it
+				getRelatedData(globals.gCurrentSurvey, masterRecord);
+			}
 		});
 		
      });	 

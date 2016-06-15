@@ -177,6 +177,8 @@ if [ $version -lt "160601" ]
 then
 echo "Applying patches for version 16.06"
 sudo mkdir /smap/bin
+sudo mkdir /smap/bin/resources
+sudo mkdir /smap/bin/resources/css
 sudo chown -R tomcat7 /smap/bin
 fi
 
