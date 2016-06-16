@@ -625,7 +625,7 @@ window.gTasks = {
 	 /*
 	  * Get data related to the currently selected record
 	  */
-	 function getRelatedData(sId, masterRecord) {
+	 function getRelatedList(sId, masterRecord) {
 		 var record = gTasks.cache.managedData[sId][masterRecord];
 		 
 		 var url = '/surveyKPI/managed/connected/' + sId + '/0/' + record.prikey;
@@ -663,8 +663,9 @@ window.gTasks = {
 	  * Show a related data item
 	  */
 	 function showRelated(itemIndex, item) {
-		 var h = [];
-		 	idx = -1;
+		 var h = [],
+		 	idx = -1,
+		 	tableId = "relTable" + itemIndex;
 		 
 		 h[++idx] = '<div class="row">'
 			 h[++idx] = '<div class="col-lg-12">';
@@ -676,8 +677,8 @@ window.gTasks = {
              		h[++idx] = '<div class="ibox-content">';
                  		h[++idx] = '<div class="row">';
 	                 		h[++idx] = '<div class="col-lg-12">';
-	                 			h[++idx] = '<table id="relTable';
-	                 				h[++idx] = itemIndex;
+	                 			h[++idx] = '<table id="';
+	                 				h[++idx] = tableId;
 	                 				h[++idx] = '" class="table table-striped table-responsive toggle-arrow-tiny" data-page-size="8">';
 	                 			h[++idx] = '</table>';
 	                 		h[++idx] = '</div>';
@@ -688,5 +689,35 @@ window.gTasks = {
 	    h[++idx] = '</div>';
 	    
 	    $('#relatedData').append(h.join(""));
+	    getRelatedTable(tableId, item)
 	 }
 
+	 function getRelatedTable(tableId, item) {
+		 
+		 var url,
+		 	managed = isManagedForms ? "true" : "false";
+		 
+		 var url = "/api/v1/data/" + globals.gCurrentSurvey + "?mgmt=" + managed + "&form=" + item.fId + "&parkey=" + item.parkey;
+		 
+		 addHourglass();
+		 $.ajax({
+			 url: url,
+			 cache: false,
+			 dataType: 'json',
+			 success: function(data) {
+				 removeHourglass();
+				 showManagedData(globals.gCurrentSurvey, '#' + tableId, undefined)
+				
+				 
+				 
+			 },
+			 error: function(xhr, textStatus, err) {
+				 removeHourglass();
+				 if(xhr.readyState == 0 || xhr.status == 0) {
+					 return;  // Not an error
+				 } else {
+						alert("Error failed to get table of related data:" + url);
+				 }
+			 }
+		 });
+	 }

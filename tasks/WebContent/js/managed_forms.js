@@ -274,7 +274,7 @@ require([
 				showManagedData(globals.gCurrentSurvey, '#trackingTable', masterRecord);
 				
 				// 2. Get related surveys and show it
-				getRelatedData(globals.gCurrentSurvey, masterRecord);
+				getRelatedList(globals.gCurrentSurvey, masterRecord);
 			}
 		});
 		
