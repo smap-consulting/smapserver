@@ -1434,6 +1434,7 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateLabelRef = null;
 		PreparedStatement pstmtUpdateHintRef = null;
 		PreparedStatement pstmtUpdateTranslations = null;
+		PreparedStatement pstmtUpdateQuestion = null;
 		
 		try {
 		
@@ -1607,6 +1608,22 @@ public class SurveyManager {
 								
 								log.info("Update name of list : " + pstmtListname.toString());
 								count = pstmtListname.executeUpdate();
+								
+								/*
+								 * Update any questions that have (remembered) this list name but the list id is null
+								 */
+								String sqlUpdateQuestion = "update question set l_id = ? "
+										+ "where f_id in (select f_id from form where s_id = ?) "
+										+ "and l_id is null "
+										+ "and list_name = ?";
+								
+								pstmtUpdateQuestion = sd.prepareStatement(sqlUpdateQuestion);
+								pstmtUpdateQuestion.setInt(1, ci.property.l_id);
+								pstmtUpdateQuestion.setInt(2, sId);
+								pstmtUpdateQuestion.setString(3, ci.property.newVal);
+								log.info("SQL: Update any matching questions: " + pstmtUpdateQuestion.toString());
+								pstmtUpdateQuestion.executeUpdate();
+								
 							} else {
 								count = 1;		// Report as success
 								ci.property.newVal = originalNewValue;	// Restore the original new value for logging
@@ -1850,6 +1867,7 @@ public class SurveyManager {
 			try {if (pstmtUpdateLabelRef != null) {pstmtUpdateLabelRef.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateHintRef != null) {pstmtUpdateHintRef.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateQuestion != null) {pstmtUpdateQuestion.close();}} catch (SQLException e) {}
 		
 		}
 	

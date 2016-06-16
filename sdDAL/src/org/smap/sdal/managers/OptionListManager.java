@@ -48,15 +48,25 @@ public class OptionListManager {
 			 Logger.getLogger(OptionListManager.class.getName());
 
 	public void add(Connection sd, int sId, String name) throws SQLException {
-		GeneralUtilityMethods.getListId(sd, sId, name);
+		GeneralUtilityMethods.getListId(sd, sId, name);		// Creates the list if it does not exist
 	}
 	
 	public void delete(Connection sd, int sId, String name) {
 		String sql = "delete from listname where s_id = ? and name = ?";
+		String sqlClearListIds = "update question set l_id = null, list_name = ? "
+				+ "where l_id in (select l_id from listname where s_id = ? and name = ?);";
 		
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtClear = null;
 		
 		try {
+			
+			pstmtClear = sd.prepareStatement(sqlClearListIds);		// Remember the deleted list name in case a new list of the same name is later added
+			pstmtClear.setString(1, name);
+			pstmtClear.setInt(2, sId);
+			pstmtClear.setString(3, name);
+			log.info("Clear list id: " + pstmtClear.toString());
+			pstmtClear.executeUpdate();
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
@@ -64,12 +74,12 @@ public class OptionListManager {
 			
 			log.info("Delete list name: " + pstmt.toString());
 			pstmt.executeUpdate();
-	
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e){}
+			if(pstmtClear != null) try{pstmtClear.close();}catch(Exception e){}
 		}
 	}
 
