@@ -293,12 +293,20 @@ public class SurveyTemplate {
 			l.put(id, types);
 		}
 		
+		if(value.startsWith("jr://")) {
+			int idx = value.lastIndexOf('/');
+			if(idx > -1) {
+				value = value.substring(idx + 1);
+			}
+		}
 		Translation t = new Translation();
 		t.setLanguage(lCode);
 		t.setTextId(id);
 		t.setType(type);
 		t.setValue(value);
 		types.put(type, t);
+		
+		System.out.println("iText value: " + value);
 	}
 	
 	public void addDummyTranslation(String id, String value) {

@@ -199,6 +199,15 @@ public class XLSFormManager {
 			} else if(type == COL_CHOICE_LABEL) {				
 				value = o.labels.get(labelIndex).text;	
 				
+			} else if(type == COL_IMAGE) {				
+				value = o.labels.get(labelIndex).image;	
+				
+			} else if(type == COL_VIDEO) {				
+				value = o.labels.get(labelIndex).video;	
+				
+			} else if(type == COL_AUDIO) {				
+				value = o.labels.get(labelIndex).audio;	
+				
 			} else {
 				System.out.println("Unknown option type: " + type);
 			}
@@ -510,8 +519,8 @@ public class XLSFormManager {
 			cols.add(new Column(colNumber++, "image::" + language.name, Column.COL_IMAGE, 0, "image"));
 			cols.add(new Column(colNumber++, "video::" + language.name, Column.COL_VIDEO, 0, "video"));
 			cols.add(new Column(colNumber++, "audio::" + language.name, Column.COL_AUDIO, 0, "audio"));
-		labelIndex++;
-	}
+			labelIndex++;
+		}
 		return cols;
 	}
 	
@@ -531,6 +540,13 @@ public class XLSFormManager {
 		int labelIndex = 0;
 		for(Language language : survey.languages) {
 			cols.add(new Column(colNumber++, "label::" + language.name, Column.COL_CHOICE_LABEL, labelIndex++, "choice_label"));
+		}
+		
+		// Add media
+		for(Language language : survey.languages) {
+			cols.add(new Column(colNumber++, "image::" + language.name, Column.COL_IMAGE, 0, "image"));
+			cols.add(new Column(colNumber++, "video::" + language.name, Column.COL_VIDEO, 0, "video"));
+			cols.add(new Column(colNumber++, "audio::" + language.name, Column.COL_AUDIO, 0, "audio"));
 		}
 		
 		return cols;
