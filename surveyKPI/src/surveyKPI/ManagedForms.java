@@ -38,6 +38,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.model.Column;
+import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.TableColumn;
@@ -616,6 +617,169 @@ public class ManagedForms extends Application {
 		return response;
 	}
 
+	
+	/*
+	 * Get the filterable data associated with a column in a results table
+	 */
+	@GET
+	@Path("/filters/{sId}/{fId}/{colname}")
+	@Produces("application/json")
+	public Response getFilter(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@PathParam("fId") int fId,
+			@PathParam("colname") String colname) { 
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		// End Authorisation
+
+		Response response = null;
+		Filter filter = new Filter();
+		String tableName = null;
+		int count = 0;
+		final int MAX_VALUES = 10;
+		
+		colname = colname.replace("'", "''");	// Escape apostrophes
+		
+		// SQL to get the column type
+		String sqlColType = "select data_type from information_schema.columns "
+				+ "where table_name = ? "
+				+ "and column_name = ?"; 
+		PreparedStatement pstmtGetColType = null;
+		
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtGetMin = null;
+		PreparedStatement pstmtGetMax = null;
+		PreparedStatement pstmtGetVals = null;
+		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-filters");
+		ResultSet rs = null;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		try {
+
+			// If the form id was not provided assume the top level form for the survey is required
+			Form f = null;
+			if(fId <= 0) {
+				f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
+			} else {
+				f = GeneralUtilityMethods.getForm(sd, sId, fId);
+			}
+			fId = f.id;
+			tableName = f.tableName;
+			
+			String sqlGetMax = "select max(" + colname + ") from " + tableName; 	// SQL to get max value
+			String sqlGetMin = "select min(" + colname + ") from " + tableName; 	// SQL to get min value
+			
+			String sqlGetVals = "select distinct(" + colname + ") from " + tableName + 
+					" order by " + colname + " asc"; 	// SQL to get distinct values
+			
+			/*
+			 * Get the column type
+			 */
+			pstmtGetColType = cResults.prepareStatement(sqlColType);
+			pstmtGetColType.setString(1, tableName);
+			pstmtGetColType.setString(2, colname);
+			rs = pstmtGetColType.executeQuery();
+			if(!rs.next()) {
+				throw new Exception("Unknown table " + tableName + " or column " + colname);
+			} else {
+				filter.qType = rs.getString(1);
+			}
+			rs.close();
+			
+			/*
+			 * Get the count of distinct data values
+			 */
+			String sql = "select count(distinct " + colname + ") as n from " + tableName;
+			pstmt = cResults.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				count = rs.getInt(1);
+				System.out.println("There are " + count + " distinct values");
+			}
+			rs.close();
+			
+			/*
+			 * Get the range of valid values or a list of valid values
+			 */
+			pstmtGetMin = cResults.prepareStatement(sqlGetMin);
+			pstmtGetMax = cResults.prepareStatement(sqlGetMax);
+			
+			if(filter.qType.equals("integer")) {
+			
+				if(count > MAX_VALUES) {
+					
+					filter.range = true;
+					
+					rs = pstmtGetMin.executeQuery();
+					if(rs.next()) {
+						filter.iMin = rs.getInt(1);
+					}
+					rs.close();
+					
+					rs = pstmtGetMax.executeQuery();
+					if(rs.next()) {
+						filter.iMax = rs.getInt(1);
+					}
+					rs.close();
+				} else {
+					pstmtGetVals = cResults.prepareStatement(sqlGetVals);
+						
+					rs = pstmtGetVals.executeQuery();
+					filter.iValues = new ArrayList<Integer> ();
+					while(rs.next()) {
+						filter.iValues.add(rs.getInt(1));
+					}
+					rs.close();
+						
+				}
+			} else if(filter.qType.equals("text")) {
+				filter.search = true;
+			} else if(filter.qType.startsWith("timestamp")) {
+				filter.range = true;
+				
+				rs = pstmtGetMin.executeQuery();
+				if(rs.next()) {
+					filter.tMin = rs.getTimestamp(1);
+				}
+				rs.close();
+				
+				rs = pstmtGetMax.executeQuery();
+				if(rs.next()) {
+					filter.tMax = rs.getTimestamp(1);
+				}
+				System.out.println("Max: " + filter.tMax);
+				rs.close();
+				
+			} else {
+				filter.search = true;
+			}
+			
+			response = Response.ok(gson.toJson(filter)).build();
+		
+				
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetColType != null) {pstmtGetColType.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetMin != null) {pstmtGetMin.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetMax != null) {pstmtGetMax.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetVals != null) {pstmtGetVals.close();	}} catch (SQLException e) {	}
+			
+			SDDataSource.closeConnection("surveyKPI-QuestionsInForm", sd);
+			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
+		}
+
+
+		return response;
+	}
 	
 	/*
 	 * Identify any columns that should be dropped

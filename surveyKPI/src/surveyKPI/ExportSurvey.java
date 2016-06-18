@@ -793,7 +793,6 @@ public class ExportSurvey extends Application {
 			}
 			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
-			//rsMetaData = resultSet.getMetaData();
 			
 			while (resultSet.next()) {
 

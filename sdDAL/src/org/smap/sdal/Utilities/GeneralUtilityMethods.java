@@ -3041,6 +3041,44 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the details of the provided form Id
+	 */
+	public static Form getForm(Connection sd, int sId, int fId) throws SQLException {
+		
+		Form f = new Form ();
+		
+		String sql = "select  "
+				+ "f_id,"
+				+ "table_name "
+				+ "from form "
+				+ "where s_id = ? "
+				+ "and f_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  sId);
+			pstmt.setInt(2,  fId);
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				f.id = rs.getInt("f_id");
+				f.tableName = rs.getString("table_name");
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return f;
+		
+	}
+	
+	/*
 	 * Convert a location in well known text into latitude
 	 */
 	public static String wktToLatLng(String location, String axis) {
