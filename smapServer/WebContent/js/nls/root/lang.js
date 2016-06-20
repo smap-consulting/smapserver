@@ -36,6 +36,7 @@ define({
 	"m_task_m": "Task Management",
 	"m_user_profile": "User Profile",
 	"m_login": "Login",
+	"m_logs": "Logs",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",

@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.Column;
 
 import utilities.QuestionInfo;
@@ -71,12 +72,7 @@ public class Items extends Application {
 	private static Logger log =
 			 Logger.getLogger(Items.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
+	LogManager lm = new LogManager();		// Application log
 	
 	/*
 	 * JSON
@@ -153,7 +149,8 @@ public class Items extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		log.info("Filter: " + sFilter);
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "View Results");
+	
 		
 		Tables tables = new Tables(sId);
 		

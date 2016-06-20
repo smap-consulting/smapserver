@@ -138,8 +138,9 @@ public class ExternalFileManager {
 			code = proc.waitFor();
 			
             log.info("Process exitValue: " + code);
-			pstmtGetData = cRel.prepareStatement(sql);
-			
+            
+			pstmtGetData = cRel.prepareStatement(sql);	
+			log.info("Getting linked manifest: " + pstmtGetData.toString());
 			rs = pstmtGetData.executeQuery();
 			
 				
@@ -188,16 +189,21 @@ public class ExternalFileManager {
 			
 			for(int i = 0; i < qnames.size(); i++) {
 				String name = qnames.get(i);
+				String colName = null;
 				pstmtGetCol.setString(1, name);
 				rs = pstmtGetCol.executeQuery();
 				if(rs.next()) {
-					if(i > 0) {
-						sql.append(",");
-					}
-					sql.append(rs.getString(1));
-					sql.append(" as ");
-					sql.append(name);
+					colName = rs.getString(1);
+				} else {
+					colName = name;		// For columns that are not questions such as _hrk, _device
 				}
+				if(i > 0) {
+					sql.append(",");
+				}
+				sql.append(colName);
+				sql.append(" as ");
+				sql.append(name);
+				
 			}
 			
 			// 3. Add the tables

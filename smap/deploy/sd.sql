@@ -506,3 +506,17 @@ alter table tasks add column repeat_count integer default 0;
 alter table survey add column hrk text;
 alter table question add column linked_survey int default 0;
 alter table question add column list_name text;
+
+-- Log table
+CREATE SEQUENCE log_seq START 1;
+ALTER SEQUENCE log_seq OWNER TO ws;
+
+create TABLE log (
+	id integer DEFAULT NEXTVAL('log_seq') CONSTRAINT pk_log PRIMARY KEY,
+	log_time TIMESTAMP WITH TIME ZONE,
+	s_id integer,
+	user_ident text,
+	event text,
+	note text
+	);
+ALTER TABLE log OWNER TO ws;

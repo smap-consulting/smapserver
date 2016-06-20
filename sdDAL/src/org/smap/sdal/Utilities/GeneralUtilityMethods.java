@@ -1841,6 +1841,15 @@ public class GeneralUtilityMethods {
 		c.qType = "";
 		columnList.add(c);
 		
+		// Add HRK if it has been specified
+		if(GeneralUtilityMethods.columnType(cResults, table_name, "_hrk") != null) {
+			c = new Column();
+			c.name = "_hrk";
+			c.humanName = "Key";
+			c.qType = "";
+			columnList.add(c);
+		}
+		
 		if(includeParentKey) {
 			c = new Column();
 			c.name = "parkey";
@@ -1865,7 +1874,7 @@ public class GeneralUtilityMethods {
 		
 		// For the top level form add default columns that are not in the question list
 		if(formParent == 0) {
-
+			
 			c = new Column();
 			c.name = "_user";
 			c.humanName = "User";
@@ -1874,7 +1883,6 @@ public class GeneralUtilityMethods {
 			
 			if(GeneralUtilityMethods.columnType(cResults, table_name, "_survey_notes") != null) {
 				uptodateTable = true;		// This is the latest meta column that was added
-				
 			}
 			
 			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
@@ -2623,11 +2631,13 @@ public class GeneralUtilityMethods {
 	public static ArrayList<String> getManifestParams(Connection sd, int qId, String property, String filename, boolean isAppearance) throws SQLException {
 		ArrayList<String> params = null;
 		
-		String sql = "select ovalue from option o, question q "
-				+ "where o.l_id = q.l_id "
-				+ "and o.externalfile = false "
-				+ "and q.q_id = ?;";
 		PreparedStatement pstmt = null;
+		String sql = "SELECT o.ovalue, t.value " +
+				"from option o, translation t, question q " +  		
+				"where o.label_id = t.text_id " +
+				"and o.l_id = q.l_id " +
+				"and q.q_id = ? " +
+				"and externalfile ='false';";
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
@@ -2664,6 +2674,7 @@ public class GeneralUtilityMethods {
 											params = new ArrayList<String> ();
 										}
 										params.add(rs.getString(1));
+										params.add(rs.getString(2));
 									}
 								} else {
 									params = getRefQuestionsPulldata(criteria);
@@ -2795,10 +2806,6 @@ public class GeneralUtilityMethods {
 		String inputManifest = mi.manifest;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		
-		/*
-		 * The following code is deprecated but retained temporarily as existing survey
-		 *  definitions will use this old way of defining manifests
-		 */
 		ArrayList<String> mArray = null;
 		if(inputManifest == null) {
 			mArray = new ArrayList<String>();

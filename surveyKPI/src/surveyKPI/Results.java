@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -88,12 +89,7 @@ public class Results extends Application {
 	private static Logger log =
 			 Logger.getLogger(Results.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Results.class);
-		return s;
-	}
+	LogManager lm = new LogManager();		// Application log
 	
 	private class RecordValues {
 		public String key;
@@ -249,6 +245,8 @@ public class Results extends Application {
 			}
 			q.add(aQ);
 			tables.add(aQ.getTableName(), aQ.getFId(),  aQ.getParentFId());			
+			
+			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "View results for question " + aQ.getName());
 			
 			 // Get the filter
 			Filter filter = null;

@@ -30,6 +30,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.Column;
 
 /*
@@ -57,16 +58,8 @@ public class ExportSurvey extends Application {
 	private static Logger log =
 			 Logger.getLogger(ExportSurvey.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
+	LogManager lm = new LogManager();		// Application log
 
-
-	
-	
 	private class RecordDesc {
 		String prikey;
 		String parkey;
@@ -184,8 +177,7 @@ public class ExportSurvey extends Application {
 		
 		// Set defaults
 		format = "xls";	// Default to XLS
-
-		
+	
 		log.info("New export, format:" + format + " flat:" + flat + " split:" + split_locn + 
 				" forms:" + include_forms + " filename: " + filename + ", merge select: " + merge_select_multiple);
 		
@@ -194,6 +186,8 @@ public class ExportSurvey extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
+		
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to XLS");
 		
 		String escapedFileName = null;
 		try {

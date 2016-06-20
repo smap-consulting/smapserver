@@ -152,6 +152,7 @@ define([
 				h[++idx] = '<div class="question-controls">';
 					h[++idx] = '<div class="row">';
 						h[++idx] = '<div class="col-md-6">';
+						/*
 							h[++idx] = '<h4>';
 								h[++idx] = localise.set["ed_c_s"];
 							h[++idx] = '</h4>';
@@ -173,7 +174,7 @@ define([
 								h[++idx] = localise.set["ed_ls"];
 								h[++idx] = '</span>';
 							h[++idx] = '</label>';
-							
+						*/	
 						h[++idx] = '</div>';
 						
 						// A control to set option lists
