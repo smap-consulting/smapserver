@@ -304,6 +304,8 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
+		updateSettingsData();		
+		
 		$('#settingsModal').modal('show');
 	});
 
@@ -651,8 +653,6 @@ function surveyDetailsDone() {
 		bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
 				"survey on the form management page.");
 	}
-	
-	updateSettingsData();		// Update edit view
 	
 	refreshForm();
 	

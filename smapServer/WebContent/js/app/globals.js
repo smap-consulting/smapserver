@@ -456,7 +456,7 @@ define(function() {
 		// Save the settings for the survey
 		this.save_settings = function() {
 			
-			var settings = JSON.stringify(this.getSettings());
+			var settings = JSON.stringify(this.getSettings(true));
 			$('#pdfSettings').val(settings);
 	    	var f = document.forms.namedItem("pdftemplate");
 	    	var formData = new FormData(f);
@@ -664,7 +664,7 @@ define(function() {
 		/*
 		 * Functions for managing settings
 		 */
-		this.getSettings = function() {
+		this.getSettings = function(save) {
 			var current =  this.createSettingsObject(
 				$('#set_survey_name').val(),
 				$('#set_instance_name').val(),
@@ -676,13 +676,15 @@ define(function() {
 			);
 			
 			// Update the model to reflect the current values
-			this.survey.displayName = current.displayName;
-			this.survey.instanceNameDefn = current.instanceNameDefn;
-			this.survey.surveyClass = current.surveyClass;
-			this.survey.p_id = current.p_id;
-			this.survey.def_lang = current.def_lang;
-			this.survey.task_file = current.task_file;
-			this.survey.hrk = current.hrk;
+			if(save) {
+				this.survey.displayName = current.displayName;
+				this.survey.instanceNameDefn = current.instanceNameDefn;
+				this.survey.surveyClass = current.surveyClass;
+				this.survey.p_id = current.p_id;
+				this.survey.def_lang = current.def_lang;
+				this.survey.task_file = current.task_file;
+				this.survey.hrk = current.hrk;
+			}
 			
 			return current;
 		} 
@@ -722,7 +724,7 @@ define(function() {
 		}
 		
 		this.settingsChange = function() {
-			var current = globals.model.getSettings();
+			var current = globals.model.getSettings(false);
 			
 			if(JSON.stringify(current) !== globals.model.savedSettings || globals.model.forceSettingsChange) {
 				$('#save_settings').prop("disabled", false);
