@@ -85,6 +85,7 @@ public class SurveyResults extends Application {
 				Connection connectionRel = null; 
 				PreparedStatement pstmt = null;
 				PreparedStatement pstmtUnPublish = null;
+				PreparedStatement pstmtUnPublishOption = null;
 				PreparedStatement pstmtRemoveChangeHistory = null;
 				PreparedStatement pstmtRemoveChangeset = null;
 				PreparedStatement pstmtGetSoftDeletedQuestions = null;
@@ -96,6 +97,9 @@ public class SurveyResults extends Application {
 					
 					String sqlUnPublish = "update question set published = 'false' where f_id in (select f_id from form where s_id = ?);";
 					pstmtUnPublish = connectionSD.prepareStatement(sqlUnPublish);
+					
+					String sqlUnPublishOption = "update option set published = 'false' where l_id in (select l_id from listname where s_id = ?);";
+					pstmtUnPublishOption = connectionSD.prepareStatement(sqlUnPublishOption);
 					
 					String sqlRemoveChangeHistory = "delete from change_history where s_id = ?;";
 					pstmtRemoveChangeHistory = connectionRel.prepareStatement(sqlRemoveChangeHistory);
@@ -130,12 +134,20 @@ public class SurveyResults extends Application {
 						
 						try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
 						stmtRel = connectionRel.createStatement();
-						stmtRel.executeUpdate(sql);
+						try {
+							stmtRel.executeUpdate(sql);
+						} catch (Exception e) {
+							// Ignore errors
+						}
 						log.info("userevent: " + request.getRemoteUser() + " : delete results : " + tableName + " in survey : "+ sId); 
 					}
 					
 					pstmtUnPublish.setInt(1, sId);			// Mark questions as un-published
 					pstmtUnPublish.executeUpdate();
+					
+					pstmtUnPublishOption.setInt(1, sId);			// Mark options as un-published
+					log.info("Marking options as unpublished: " + pstmtUnPublishOption.toString());
+					pstmtUnPublishOption.executeUpdate();
 					
 					pstmtRemoveChangeHistory.setInt(1, sId);
 					pstmtRemoveChangeHistory.executeUpdate();
@@ -171,6 +183,7 @@ public class SurveyResults extends Application {
 				} finally {
 					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					try {if (pstmtUnPublish != null) {pstmtUnPublish.close();}} catch (SQLException e) {}
+					try {if (pstmtUnPublishOption != null) {pstmtUnPublishOption.close();}} catch (SQLException e) {}
 					try {if (stmtRel != null) {stmtRel.close();}} catch (SQLException e) {}
 					try {if (pstmtRemoveChangeHistory != null) {pstmtRemoveChangeHistory.close();}} catch (SQLException e) {}
 					try {if (pstmtGetSoftDeletedQuestions != null) {pstmtGetSoftDeletedQuestions.close();}} catch (SQLException e) {}
