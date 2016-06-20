@@ -68,13 +68,24 @@ public class LinkageManager {
 	private static Logger log =
 			 Logger.getLogger(LinkageManager.class.getName());
 
-	public ArrayList<Link> getSurveyLinks(Connection sd, Connection cRel, int sId, int fId, int prikey, String hrk) throws SQLException {
+	public ArrayList<Link> getSurveyLinks(Connection sd, Connection cRel, int sId, int fId, int prikey) throws SQLException {
 		ArrayList<Link> links = new ArrayList<Link> ();
 		
-		// SQL to get default settings for this user and survey
 		ResultSet rs = null;
+		ResultSet rsHrk = null;
+		
+		// SQL to get default settings for child forms
 		String sql = "select f_id from form where parentform = ? and s_id = ?";
 		PreparedStatement pstmt = null;
+		
+		// SQL to get linked forms
+		String sqlLinked = "select linked_survey, f_id, column_name from question "
+				+ "where linked_survey > 0 "
+				+ "and f_id = ? "
+				+ "and f_id in (select f_id from form where s_id = ?)";
+		PreparedStatement pstmtLinked = null;
+		
+		PreparedStatement pstmtGetHrk = null;
 		
 		try {
 
@@ -84,10 +95,11 @@ public class LinkageManager {
 				fId = f.id;
 			}
 			
+			// Get the child forms
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, fId);
 			pstmt.setInt(2, sId);
-			log.info("Links:  Getting child forms" + pstmt.toString());
+			log.info("Links:  Getting child forms: " + pstmt.toString());
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				Link l = new Link();
@@ -97,9 +109,46 @@ public class LinkageManager {
 				
 				links.add(l);
 			}
+			rs.close();
+			
+			// Get the linked forms
+			pstmtLinked = sd.prepareStatement(sqlLinked);
+			pstmtLinked.setInt(1, fId);
+			pstmtLinked.setInt(2, sId);
+			log.info("Links:  Getting linked forms: " + pstmtLinked.toString());
+			rs = pstmtLinked.executeQuery();
+			while(rs.next()) {
+				int linkedSId = rs.getInt(1);
+				int valueFId = rs.getInt(2);
+				String valueColName = rs.getString(3);
+				
+				String hrk = null;
+				Form valueForm = GeneralUtilityMethods.getForm(sd, sId, valueFId);
+				Form f = GeneralUtilityMethods.getTopLevelForm(sd, linkedSId);
+	
+				// SQL to get the HRK value
+				String sqlGetHrk = "select " + valueColName + " from " + valueForm.tableName + " where prikey = ?;";
+				pstmtGetHrk = cRel.prepareStatement(sqlGetHrk);
+				pstmtGetHrk.setInt(1,prikey);
+				log.info("Getting Hrk: " + pstmtGetHrk.toString());
+				rsHrk = pstmtGetHrk.executeQuery();
+				if(rsHrk.next()) {
+					hrk = rsHrk.getString(1);
+				}
+				
+				Link l = new Link();
+				l.type = "link";
+				l.fId = f.id;
+				l.sId = linkedSId;
+				l.hrk = hrk;
+				
+				links.add(l);
+			}
 		
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtLinked != null) {pstmtLinked.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetHrk != null) {pstmtGetHrk.close();	}} catch (SQLException e) {	}
 		}
 
 		return links;

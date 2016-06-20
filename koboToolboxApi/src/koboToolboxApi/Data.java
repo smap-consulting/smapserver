@@ -137,7 +137,8 @@ public class Data extends Application {
 			@QueryParam("sort") String sort,			// Column Human Name to sort on
 			@QueryParam("dirn") String dirn,			// Sort direction, asc || desc
 			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
-			@QueryParam("parkey") int parkey			// Parent key (optional, use to get records that correspond to a single parent record)
+			@QueryParam("parkey") int parkey,			// Parent key (optional, use to get records that correspond to a single parent record)
+			@QueryParam("hrk") String hrk				// Unique key (optional, use to restrict records to a specific hrk)
 			) { 
 		
 		Response response = null;
@@ -227,6 +228,9 @@ public class Data extends Application {
 				if(parkey > 0) {
 					sqlSelect = " and parkey = ?";
 				}
+				if(hrk != null) {
+					sqlSelect = " and _hrk = ?";
+				}
 				
 				String sqlGetDataOrder = null;
 				if(sort != null) {
@@ -242,9 +246,13 @@ public class Data extends Application {
 				}
 				
 				pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
-				pstmtGetData.setInt(1, start);
+				int paramCount = 1;
+				pstmtGetData.setInt(paramCount++, start);
 				if(parkey > 0) {
-					pstmtGetData.setInt(2, parkey);
+					pstmtGetData.setInt(paramCount++, parkey);
+				}
+				if(hrk != null) {
+					pstmtGetData.setString(paramCount++, hrk);
 				}
 				
 				log.info("Get data: " + pstmtGetData.toString());

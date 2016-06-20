@@ -697,7 +697,13 @@ window.gTasks = {
 		 var url,
 		 	managed = isManagedForms ? "true" : "false";
 		 
-		 var url = "/api/v1/data/" + globals.gCurrentSurvey + "?mgmt=" + managed + "&form=" + item.fId + "&parkey=" + item.parkey;
+		 var url = "/api/v1/data/";
+		 
+		 if(item.type === "child") {
+			 url += globals.gCurrentSurvey + "?mgmt=" + managed + "&form=" + item.fId + "&parkey=" + item.parkey;
+		 } else if(item.type === "link") {
+			 url += item.sId + "?mgmt=" + managed + "&form=" + item.fId + "&hrk=" + item.hrk;
+		 }
 		 
 		 addHourglass();
 		 $.ajax({

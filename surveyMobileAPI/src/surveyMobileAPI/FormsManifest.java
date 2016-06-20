@@ -144,6 +144,7 @@ public class FormsManifest {
 				
 				if(m.type.equals("linked")) {
 					log.info("Linked file:" + m.fileName);
+					m.fileName += ".csv";
 					md5 = "100";
 				} else {
 					// Get the MD5 hash

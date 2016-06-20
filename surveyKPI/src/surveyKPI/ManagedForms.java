@@ -581,8 +581,7 @@ public class ManagedForms extends Application {
 	public Response getLinks(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@PathParam("fId") int fId,
-			@PathParam("prikey") int prikey,
-			@QueryParam("hrk") String hrk) { 
+			@PathParam("prikey") int prikey) { 
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ManagedForms-getLinks");
@@ -597,7 +596,7 @@ public class ManagedForms extends Application {
 		try {
 			
 			LinkageManager lm = new LinkageManager();
-			ArrayList<Link> links = lm.getSurveyLinks(sd, cResults, sId, fId, prikey, hrk);
+			ArrayList<Link> links = lm.getSurveyLinks(sd, cResults, sId, fId, prikey);
 			response = Response.ok(gson.toJson(links)).build();
 		
 				

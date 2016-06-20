@@ -1783,7 +1783,6 @@ public class GeneralUtilityMethods {
 			pstmt.setString(1,  tableName);
 			pstmt.setString(2,  columnName);
 			
-			System.out.println("column type: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				type = rs.getString(1);
