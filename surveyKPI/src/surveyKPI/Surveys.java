@@ -257,7 +257,7 @@ public class Surveys extends Application {
 			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
 			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, false);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
 			
@@ -322,7 +322,7 @@ public class Surveys extends Application {
 			 */
 			System.out.println("Lnaguage String: " + languages);
 			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			ArrayList<Language> languageList = gson.fromJson(languages, type);
 			
 			// Update the languages
