@@ -764,6 +764,8 @@ function respondToEvents($context) {
 			} else {
 				newVal = undefined;
 			}
+		} else if(prop === "readonly") {
+			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
 		}
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
