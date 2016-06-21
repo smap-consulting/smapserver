@@ -188,6 +188,8 @@ define({
 	"c_org": "Organisation",
 	"c_orgs": "Organisations",
 	"c_all_s": "All Surveys",
+	"c_event": "Event",
+	"c_note": "Note",
 	
 	// File Types
 	"ft": "File Type",

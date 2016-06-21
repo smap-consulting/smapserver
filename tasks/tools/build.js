@@ -47,6 +47,9 @@
         },
         {
             name: '../manage'
+        },
+        {
+            name: '../log'
         }
 
     ]
