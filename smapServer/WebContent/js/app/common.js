@@ -1339,6 +1339,7 @@ function isBusinessServer() {
 			hostname !== 'app.kontrolid.com' &&
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0 &&
+			hostname.indexOf('reachnettechnologies.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
