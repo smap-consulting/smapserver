@@ -758,6 +758,8 @@ function respondToEvents($context) {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
 		} else if (prop === "autoplay") {
 			newVal = $this.val();
+		} else if(prop === "readonly") {
+			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
 		}
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 

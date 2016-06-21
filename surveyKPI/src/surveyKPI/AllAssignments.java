@@ -1112,7 +1112,7 @@ public class AllAssignments extends Application {
 			}
 			
 			log.info("Content Type: " + contentType);
-			if(contentType.equals("application/zip")) {
+			if(contentType.contains("zip")) {
 				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
 				File zipFolder = new File(zipFolderPath);
 				if(!zipFolder.exists()) {

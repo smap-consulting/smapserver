@@ -535,6 +535,32 @@ define([
 			    
 				h[++idx] ='</div>';		// End Row
 				
+			} else if(selProperty === "readonly" && type === "question") {		// Add a boolean type
+				
+				h[++idx] = '<div class="row">';
+				
+				h[++idx] = '<div class="col-sm-6">';
+			    h[++idx] = '<button type="button" class="btn labelButton ';
+			    if(question[selProperty]) {
+			    	h[++idx] = 'prop_yes" ';
+			    } else {
+			    	h[++idx] = 'prop_no" ';
+			    }
+			    h[++idx] = ' data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon ';
+				if(question[selProperty]) {
+			    	h[++idx] = 'glyphicon-ok-sign"> Yes';
+			    } else {
+			    	h[++idx] = 'glyphicon-remove-sign"> No';
+			    }
+			    h[++idx] = '</span></button>';
+			    h[++idx] = '</div>';
+			   
+			    
+				h[++idx] ='</div>';		// End Row
+				
 			} else if(selProperty === "autoplay" && type === "question") {		// Add a radio buttons to select autoplay status
 				
 				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection" data-toggle="buttons-radio">';
