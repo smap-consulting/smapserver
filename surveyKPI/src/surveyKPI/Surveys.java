@@ -187,7 +187,7 @@ public class Surveys extends Application {
 					true, 
 					true,
 					false);
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
 			

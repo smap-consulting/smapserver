@@ -319,7 +319,7 @@ public class SurveyManager {
 			} else {
 				pstmt.setString(3, null);
 			}
-			pstmt.setBoolean(4,  existing);
+			pstmt.setBoolean(4,  sharedResults);
 			
 			log.info("Create new survey: " + pstmt.toString());
 			pstmt.execute();

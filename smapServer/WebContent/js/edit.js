@@ -30,6 +30,7 @@ require.config({
     	jquery: 'jquery-2.1.1',
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
+    	moment: '../../../../js/libs/moment-with-locales.min',
     	lang_location: '..'
 
     },
@@ -57,7 +58,8 @@ require([
          'app/question',
          'app/optionlist',
          'app/editorMarkup',
-         'app/changeset'], 
+         'app/changeset',
+         'moment'], 
 		function(
 				$, 
 				common, 
@@ -71,7 +73,8 @@ require([
 				question,
 				optionlist,
 				markup,
-				changeset) {
+				changeset,
+				moment) {
 
 
 var	gMode = "survey",
@@ -94,6 +97,7 @@ var gNewVal,
 	gNewVal,
 	gIsSurveyLevel;
 
+window.moment = moment;
 
 'use strict';
 
@@ -312,6 +316,21 @@ $(document).ready(function() {
 
 	$('#save_settings').off().click(function() {	// Save settings to the database
 		globals.model.save_settings();
+	});
+	
+	
+	$('#m_info').off().click(function() {	// Show the info dialog
+		
+		// Close any drop downmenus
+		$('.dropdown-toggle').parent().removeClass("open");
+		$('.navbar-collapse').removeClass("in");
+		
+		$('#i_ident').val(globals.model.survey.ident);		
+		$('#i_created').val(localTime(globals.model.survey.created));		
+		$('#i_based_on').val(globals.model.survey.basedOn);		
+		$('#i_shared').prop('checked', globals.model.survey.sharedTable);	
+		
+		$('#infoModal').modal('show');
 	});
 	
 	/*
@@ -1417,6 +1436,7 @@ function updateSettingsData() {
 	$('#set_style').val(globals.model.survey.surveyClass);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 	$('#set_hrk').val(globals.model.survey.hrk);
+	$('#task_file').prop('checked', globals.model.survey.task_file);
 }
 
 

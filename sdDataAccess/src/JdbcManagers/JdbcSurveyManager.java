@@ -45,8 +45,9 @@ public class JdbcSurveyManager {
 			+ "version,"
 			+ "manifest,"
 			+ "instance_name,"
-			+ "loaded_from_xls) "
-			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+			+ "loaded_from_xls,"
+			+ "created) "
+			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 	
 	// Update
 	PreparedStatement pstmtUpdate = null;

@@ -37,6 +37,7 @@ define({
 	"m_user_profile": "User Profile",
 	"m_login": "Login",
 	"m_logs": "Logs",
+	"m_info": "Info",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -427,6 +428,10 @@ define({
 	"ed_hrk": "Unique Key",
 	"ed_csv": "CSV File",
 	"ed_c_s": "Source of Choices",
+	"ed_i_c": "Created",
+	"ed_st": "Shared Table",
+	"ed_ld": "Allow Loading data from file",
+	"ed_i_bo": "Based On",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
