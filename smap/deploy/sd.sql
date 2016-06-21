@@ -520,3 +520,8 @@ create TABLE log (
 	note text
 	);
 ALTER TABLE log OWNER TO ws;
+
+-- Information on survey creation
+alter table survey add column based_on text;
+alter table survey add column shared_table boolean default false;
+alter table survey add column created timestamp with time zone;

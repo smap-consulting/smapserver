@@ -180,7 +180,7 @@ public class SurveyManager {
 		ResultSet resultSet = null;
 		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id, " +
 				" s.def_lang, s.task_file, u.o_id, s.class," +
-				" s.instance_name, s.hrk " +
+				" s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, loaded_from_xls " +
 				" from survey s, users u, user_project up, project p" +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
@@ -215,6 +215,10 @@ public class SurveyManager {
 				s.surveyClass = resultSet.getString(12);
 				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(13), true);
 				s.hrk = resultSet.getString(14);
+				s.basedOn = resultSet.getString(15);
+				s.sharedTable = resultSet.getBoolean(16);
+				s.created = resultSet.getTimestamp(17);
+				s.loadedFromXLS = resultSet.getBoolean(18);
 				
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
@@ -270,9 +274,11 @@ public class SurveyManager {
 		int fId;
 		String ident = null;
 		String tablename = null;
+		String existingSurvey = null;
+		String existingForm = null;
 		
-		String sql1 = "insert into survey ( s_id, display_name, deleted, p_id, version, last_updated_time)" +
-				" values (nextval('s_seq'), ?, 'false', ?, 1, now());";
+		String sql1 = "insert into survey ( s_id, display_name, deleted, p_id, version, last_updated_time, based_on, shared_table, created)" +
+				" values (nextval('s_seq'), ?, 'false', ?, 1, now(), ?, ?, now());";
 		
 		String sql2 = "update survey set name = ?, ident = ? where s_id = ?;";
 	
@@ -284,14 +290,36 @@ public class SurveyManager {
 		
 		PreparedStatement pstmt = null;
 		
+		String sqlGetSource = "select s.display_name, f.name from survey s, form f "
+				+ "where f.s_id = s.s_id "
+				+ "and s.s_id = ? "
+				+ "and f.f_id = ?";
+		PreparedStatement pstmtGetSource = null;
+		
 		try {
 			
+			if(existing) {
+				pstmtGetSource = sd.prepareStatement(sqlGetSource);
+				pstmtGetSource.setInt(1, existingSurveyId);
+				pstmtGetSource.setInt(2, existingFormId);
+				ResultSet rsGetSource = pstmtGetSource.executeQuery();
+				if(rsGetSource.next()) {
+					existingSurvey = rsGetSource.getString(1);
+					existingForm = rsGetSource.getString(2);
+				}
+			}
 			sd.setAutoCommit(false);
 			
 			// 1 Create basic survey
 			pstmt = sd.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS);		
 			pstmt.setString(1, name);
 			pstmt.setInt(2, projectId);
+			if(existing) {
+				pstmt.setString(3, existingSurvey + " :: " + existingForm);
+			} else {
+				pstmt.setString(3, null);
+			}
+			pstmt.setBoolean(4,  existing);
 			
 			log.info("Create new survey: " + pstmt.toString());
 			pstmt.execute();
@@ -441,6 +469,7 @@ public class SurveyManager {
 		} finally {
 			
 			if(pstmt != null) try {pstmt.close();} catch(Exception e){};
+			if(pstmtGetSource != null) try {pstmtGetSource.close();} catch(Exception e){};
 		}
 		
 		return sId;

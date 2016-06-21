@@ -1,5 +1,6 @@
 package org.smap.sdal.model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,9 @@ public class Survey {
 	public boolean loadedFromXLS;
 	public String hrk;
 	public ArrayList<LinkedSurvey> linkedSurveys = new ArrayList<LinkedSurvey> ();
+	public String basedOn;
+	public boolean sharedTable;
+	public Timestamp created;
 
 	
 	// Getters

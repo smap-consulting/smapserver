@@ -364,7 +364,10 @@ CREATE TABLE survey (
 	last_updated_time DATE,
 	managed_id integer,								-- Identifier of configuration for managing records
 	loaded_from_xls boolean default false,			-- Set true if the survey was initially loaded from an XLS Form
-	hrk text										-- human readable key
+	hrk text,										-- human readable key
+	based_on text,									-- Survey and form this survey was based on
+	shared_table boolean default false,				-- True if this survey shares its table
+	created timestamp with time zone				-- Date / Time the survey was created
 	);
 ALTER TABLE survey OWNER TO ws;
 DROP INDEX IF EXISTS SurveyDisplayName;
