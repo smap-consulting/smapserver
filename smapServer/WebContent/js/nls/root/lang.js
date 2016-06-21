@@ -418,6 +418,7 @@ define({
 	"ed_req": "Required",
 	"ed_ap": "Auto play",
 	"ed_ls": "Linked Survey",
+	"ed_ro": "Read Only",
 	"ed_ls_add": "Add link",
 	"ed_l": "Linked",
 	"ed_nl": "Not Linked",
