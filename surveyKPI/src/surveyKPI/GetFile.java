@@ -204,7 +204,7 @@ public class GetFile extends Application {
 		log.info("Get File: " + filename + " for survey: " + sId);
 		
 		Response r = null;
-		Connection cRel = null;
+
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("getFile");	
@@ -218,13 +218,6 @@ public class GetFile extends Application {
 			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
 			System.out.println("Getting file: " + filepath + " linked is: " + linked);
 			
-			if(linked && filename.indexOf('_') > 0) {
-				// Create file if it is out of date
-				cRel = ResultsDataSource.getConnection("getFile");
-				ExternalFileManager efm = new ExternalFileManager();
-				efm.createLinkedFile(connectionSD, cRel, sId, filename, filepath);
-				filepath = filepath + ".csv";
-			}
 			getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
@@ -234,7 +227,6 @@ public class GetFile extends Application {
 			r = Response.serverError().build();
 		} finally {	
 			SDDataSource.closeConnection("getFile", connectionSD);	
-			ResultsDataSource.closeConnection("getFile", cRel);	
 		}
 		
 		return r;

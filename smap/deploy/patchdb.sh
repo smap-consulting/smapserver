@@ -157,7 +157,7 @@ fi
 # version 16.01
 if [ $version -lt "1601" ]
 then
-	echo "no patches for 16.01"
+	java -jar version1/patchcomplete.jar apply survey_definitions results
 fi
 
 # version 16.02

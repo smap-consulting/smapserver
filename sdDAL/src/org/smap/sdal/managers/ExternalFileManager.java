@@ -114,15 +114,12 @@ public class ExternalFileManager {
 				}
 			}
 			
-			System.out.println("Unique columns: " + uniqueColumns.toString());
-			
 			// 3. Get the survey ident that is going to provide the CSV data
 			int idx = filename.indexOf('_');
 			String sIdent = filename.substring(idx + 1);
 			
 			// 4. Get the sql
-			String sql = getSql(sd, sIdent, uniqueColumns);	
-			
+			String sql = getSql(sd, sIdent, uniqueColumns);		
 			
 			// 5. Create the file
 			int code = 0;

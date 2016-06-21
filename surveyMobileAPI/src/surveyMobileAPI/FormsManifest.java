@@ -43,7 +43,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ExternalFileManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ManifestValue;
@@ -110,6 +113,7 @@ public class FormsManifest {
 			protocol = "http://";
 		}
 
+		Connection cRel = null;
 		PreparedStatement pstmt = null;
 		try {
 			if(key == null) {
@@ -138,30 +142,41 @@ public class FormsManifest {
 					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
 			
+			boolean incrementVersion = false;
 			for( ManifestValue m : manifestList) {
 				
+				String oldMd5 = "";
 				String md5 = "";
+				String filepath = null;
 				
 				if(m.type.equals("linked")) {
 					log.info("Linked file:" + m.fileName);
+					
+					// Create file (TODO) if it is out of date
+					cRel = ResultsDataSource.getConnection("getFile");
+					ExternalFileManager efm = new ExternalFileManager();
+					String basepath = GeneralUtilityMethods.getBasePath(request);
+					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, survey.id);
+					filepath = basepath + "/media/" + sIdent+ "/" + m.fileName;
+					
+					oldMd5 = getMd5(filepath);
+					efm.createLinkedFile(connectionSD, cRel, survey.id, m.fileName, filepath);
+					
+					filepath += ".csv";
 					m.fileName += ".csv";
-					md5 = "100";
 				} else {
-					// Get the MD5 hash
-					if(m.filePath != null) {
-						FileInputStream fis = null;
-						log.info("CSV or Media file:" + m.filePath);
-						try {
-							fis = new FileInputStream( new File(m.filePath) );
-						} catch (Exception e) {
-							System.out.println(e.getMessage());
-						}
-	
-						if(fis != null)	{
-							md5 = "md5:" + DigestUtils.md5Hex( fis );
-						}
+					filepath = m.filePath;
+				}
+				// Get the MD5 hash
+				md5 = getMd5(filepath);
+
+				// Update the version if the md5 has changed
+				if(m.type.equals("linked")) {
+					if(!md5.equals(oldMd5)) {
+						incrementVersion = true;
 					}
 				}
+				
 				String fullUrl = protocol + host + m.url;
 
 				responseStr.append("<mediaFile>");
@@ -172,6 +187,15 @@ public class FormsManifest {
 					
 			}
 			responseStr.append("</manifest>\n");
+			
+			// Increment the survey version if its manifests have changed
+			if(incrementVersion) {
+				String sql = "update survey set version = version + 1 where s_id = ?";
+				pstmt = connectionSD.prepareStatement(sql);
+				pstmt.setInt(1, survey.id);
+				pstmt.executeUpdate();
+			
+			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
@@ -179,9 +203,30 @@ public class FormsManifest {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyMobileAPI-FormsManifest", connectionSD);
+			ResultsDataSource.closeConnection("surveyMobileAPI-FormsManifest", cRel);	
 		}		
 
 		return responseStr.toString();
+	}
+	
+	private String getMd5(String filepath) {
+		String md5 = "";
+		
+		if(filepath != null) {
+			FileInputStream fis = null;
+			log.info("CSV or Media file:" + filepath);
+			try {
+				fis = new FileInputStream( new File(filepath) );
+				
+				if(fis != null)	{
+					md5 = "md5:" + DigestUtils.md5Hex( fis );
+				}
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+
+		}
+		return md5;
 	}
 
 }
