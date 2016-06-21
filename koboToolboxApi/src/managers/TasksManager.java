@@ -77,9 +77,11 @@ public class TasksManager {
 		
 		
 		String sql = "select u.name as user, t.title as title, t.schedule_at as scheduled, a.status as status "
-				+ "from users u, tasks t, assignments a "
+				+ "from users u, tasks t, assignments a, project p "
 				+ "where u.id = a.assignee "
 				+ "and t.id = a.task_id "
+				+ "and t.p_id = p.id "
+				+ "and p.o_id = ? "
 				+ "order by a.id desc limit ?;";
 		
 		PreparedStatement pstmt = null;
@@ -89,7 +91,8 @@ public class TasksManager {
 			ArrayList<Task> tasks = new ArrayList<Task>();
 			
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, limit);
+			pstmt.setInt(1, orgId);
+			pstmt.setInt(2, limit);
 			log.info("get individual tasks: " + pstmt.toString());	
 			ResultSet rs = pstmt.executeQuery();
 			
