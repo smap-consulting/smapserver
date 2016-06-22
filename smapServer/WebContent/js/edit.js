@@ -304,6 +304,8 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
+		updateSettingsData();		
+		
 		$('#settingsModal').modal('show');
 	});
 
@@ -651,8 +653,6 @@ function surveyDetailsDone() {
 		bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
 				"survey on the form management page.");
 	}
-	
-	updateSettingsData();		// Update edit view
 	
 	refreshForm();
 	
@@ -1381,6 +1381,7 @@ function updateSettingsData() {
 	$('#set_style').val(globals.model.survey.surveyClass);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 	$('#set_hrk').val(globals.model.survey.hrk);
+	$('#task_file').prop('checked', globals.model.survey.task_file);
 }
 
 

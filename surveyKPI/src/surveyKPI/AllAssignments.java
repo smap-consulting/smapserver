@@ -1041,6 +1041,8 @@ public class AllAssignments extends Application {
 		String tableName = null;
 		boolean clear_existing = false;
 		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
+		SimpleDateFormat dateFormatDate = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		try {
@@ -1337,13 +1339,17 @@ public class AllAssignments extends Application {
 									try { dVal = Double.parseDouble(value);} catch (Exception e) {}
 									pstmtInsert.setDouble(index++, dVal);
 								} else if(col.type.equals("date")) {
-									Date dateVal = Date.valueOf(value); 
+									Date dateVal = null;
+									try {
+										dateVal = Date.valueOf(value); 
+									} catch (Exception e) {
+										log.info("Error parsing date: " + col.columnName + " : " + value + " : " + e.getMessage());
+									}
 									pstmtInsert.setDate(index++, dateVal);
 								} else if(col.type.equals("dateTime")) {
-									SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 									Timestamp tsVal = null;
 									try {
-										java.util.Date uDate = dateFormat.parse(value);
+										java.util.Date uDate = dateFormatDT.parse(value);
 										tsVal = new Timestamp(uDate.getTime());
 									} catch (Exception e) {
 										log.info("Error parsing datetime: " + value + " : " + e.getMessage());

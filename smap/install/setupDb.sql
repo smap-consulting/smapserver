@@ -633,7 +633,7 @@ CREATE TABLE public.tasks (
 	geo_type text,
 	update_id text,
 	repeat boolean,
-	integer repeat_count default 0,
+	repeat_count integer default 0,
 	email text,
 	guidance text,
 	p_id integer REFERENCES project(id),
