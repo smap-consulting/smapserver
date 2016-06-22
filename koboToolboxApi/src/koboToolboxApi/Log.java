@@ -118,29 +118,35 @@ public class Log extends Application {
 		ResultSet rs = null;
 
 		if(dirn == null) {
-			dirn = "asc";
+			dirn = "desc";
 		} else {
 			dirn = dirn.replace("'", "''");
 		}
 		if(sort == null) {
 			sort = "id";
 		}
+		if(dirn.equals("desc") && start == 0) {
+			start = Integer.MAX_VALUE;
+		}
 		
 		try {
-
-			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
-				
+	
 			String sql = "select l.id, l.log_time, l.s_id, s.display_name, l.user_ident, l.event, l.note "
 					+ "from log l "
 					+ "left outer join survey s "
-					+ "on s.s_id = l.s_id "
-					+ "where l.id > ? ";
+					+ "on s.s_id = l.s_id ";
 			
-			String sqlSelect = "";
-			if(sId == 0) {
-				sqlSelect = "and l.s_id in (select s_id from survey s, user_project up where s.p_id = up.p_id and u_id = ?) ";
+			String sqlSelect = "where ";
+			if(dirn.equals("asc")) {
+				sqlSelect += "l.id > ? ";
 			} else {
-				sqlSelect = "and l.s_id = ? ";
+				sqlSelect += "l.id < ? ";
+			}
+			
+			if(sId == 0) {
+				sqlSelect += "and l.s_id in (select s_id from survey s, user_project up where s.p_id = up.p_id and u_id = ?) ";
+			} else {
+				sqlSelect += "and l.s_id = ? ";
 			}
 				
 			String sqlOrder = "order by l." + sort + " " + dirn;

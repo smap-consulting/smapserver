@@ -65,10 +65,7 @@ requirejs.config({
     	'bootbox': ['bootstrap'],
     	'crf': ['jquery'],
     	'file_input': ['jquery'],
-    	'mapbox_app' : ['jquery', 'mapbox'],
-    	'mapbox': {
-            exports: 'L'
-        },
+ 
         
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
@@ -108,6 +105,82 @@ require([
         		 bootbox, 
         		 crf, 
         		 moment) {
+	
+	window.moment = moment;
+	
+	$(document).ready(function() {
+		
+		$('#m_refresh').click(function(e) {	// Add refresh action
+			refreshLogData();
+		}); 
+		
+		refreshLogData();
+	});
 
+	/*
+	 * Get the log data
+	 */
+	function refreshLogData() {
+		addHourglass();
+		$.ajax({
+			url: "http://localhost/api/v1/log/" + 
+					0 
+					,
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				removeHourglass();
+				showLogData(data);
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Failed to get log data");
+				}
+			}
+		});
+	}
+	
+	/*
+	 * Show the log data
+	 */
+	function showLogData(data) {
+		var tab = [],
+			idx = -1,
+			i;
+		
+		for(i = 0; i < data.length; i++) {
+			tab[++idx] = '<tr>';
+			
+			tab[++idx] = '<td>';
+				tab[++idx] = data[i].id;	
+			tab[++idx] = '</td>';	
+		
+			tab[++idx] = '<td>';
+				tab[++idx] = localTime(data[i].log_time);	
+			tab[++idx] = '</td>';		
+	
+			tab[++idx] = '<td>';			// Survey name
+				tab[++idx] = data[i].sName;		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';
+				tab[++idx] = data[i].userIdent;		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';
+				tab[++idx] = data[i].event;		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '<td>';
+				tab[++idx] = data[i].note;		
+			tab[++idx] = '</td>';
+			
+			tab[++idx] = '</tr>';
+		}
+		$('#log_table_body').empty().html(tab.join(""));
+	}
 });
 
