@@ -38,6 +38,9 @@ requirejs.config({
     	modernizr: '../../../../js/libs/modernizr',
     	moment: '../../../../js/libs/moment-with-locales.min',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
+    	datatables: '../../../../js/libs/DataTables/datatables',
+    	'datatables.net': '../../../../js/libs/DataTables/DataTables/js/datatables.net',
+    	'datatables.net-bs': '../../../../js/libs/DataTables/DataTables/js/datatables.bootstrap',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
     	bootstrap: '../../../../js/libs/bootstrap.min',
@@ -65,15 +68,15 @@ requirejs.config({
     	'bootbox': ['bootstrap'],
     	'crf': ['jquery'],
     	'file_input': ['jquery'],
+    	'datatables': ['jquery', 'bootstrap'],
  
         
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
     	'slimscroll': ['jquery'],
     	'peity': ['jquery'],
-    	'icheck': ['jquery'],
-    	'calendar': ['jquery_ui'],
-    	'jquery_ui': ['jquery']
+    	'icheck': ['jquery']
+
 	
     	}
     });
@@ -88,14 +91,14 @@ require([
          'crf',
          'moment',
          'datetimepicker',
+         'datatables.net-bs',
          'file_input',     
          'inspinia',
          'metismenu',
          'slimscroll',
          'pace',
          'peity',
-         'icheck',
-         'jquery_ui'
+         'icheck'
          
          ], function($, 
         		 bootstrap, 
@@ -104,83 +107,69 @@ require([
         		 globals, 
         		 bootbox, 
         		 crf, 
-        		 moment) {
+        		 moment,
+        		 datetimepicker,
+        		 datatables) {
 	
 	window.moment = moment;
+	var table,
+		searchDone = false;
 	
 	$(document).ready(function() {
 		
+		table = $('#log_table').DataTable({
+			 "processing": true,
+		     //"serverSide": true,
+		     "ajax": "http://localhost/api/v1/log/dt",
+		     "columns": [
+		                 { "data": "id" },
+		                 { "data": "log_time" },
+		                 { "data": "sName" },
+		                 { "data": "userIdent" },
+		                 { "data": "event" },
+		                 { "data": "note" }
+		             ],
+		      "order": [[ 0, "desc" ]]
+		});
+		
 		$('#m_refresh').click(function(e) {	// Add refresh action
-			refreshLogData();
+			searchDone = false;
+			table.ajax.reload();
 		}); 
 		
-		refreshLogData();
+
+		// Get the search data for the survey column
+	    var select = $('<select class="form-control"/>')
+	        .appendTo(
+	            table.column(2).footer()
+	        )
+	        .on( 'change', function () {
+	            table
+	                .column( 2 )
+	                .search( $(this).val() )
+	                .draw();
+	        } );
+	
+	    table.on( 'draw', function () {
+	    	if(!searchDone) {
+	    		
+	    		searchDone = true;
+	    		
+		    	table
+			        .column( 2 )
+			        .cache('search')
+			        .sort()
+			        .unique()
+			        .each( function ( d ) {
+			            select.append( $('<option value="'+d+'">'+d+'</option>') );
+			        } );
+	    	}
+	    } );
+	   
+			
+		
 	});
 
-	/*
-	 * Get the log data
-	 */
-	function refreshLogData() {
-		addHourglass();
-		$.ajax({
-			url: "http://localhost/api/v1/log/" + 
-					0 
-					,
-			cache: false,
-			dataType: 'json',
-			success: function(data) {
-				removeHourglass();
-				showLogData(data);
-			},
-			error: function(xhr, textStatus, err) {
-				removeHourglass();
-				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					alert("Failed to get log data");
-				}
-			}
-		});
-	}
-	
-	/*
-	 * Show the log data
-	 */
-	function showLogData(data) {
-		var tab = [],
-			idx = -1,
-			i;
-		
-		for(i = 0; i < data.length; i++) {
-			tab[++idx] = '<tr>';
-			
-			tab[++idx] = '<td>';
-				tab[++idx] = data[i].id;	
-			tab[++idx] = '</td>';	
-		
-			tab[++idx] = '<td>';
-				tab[++idx] = localTime(data[i].log_time);	
-			tab[++idx] = '</td>';		
-	
-			tab[++idx] = '<td>';			// Survey name
-				tab[++idx] = data[i].sName;		
-			tab[++idx] = '</td>';
-			
-			tab[++idx] = '<td>';
-				tab[++idx] = data[i].userIdent;		
-			tab[++idx] = '</td>';
-			
-			tab[++idx] = '<td>';
-				tab[++idx] = data[i].event;		
-			tab[++idx] = '</td>';
-			
-			tab[++idx] = '<td>';
-				tab[++idx] = data[i].note;		
-			tab[++idx] = '</td>';
-			
-			tab[++idx] = '</tr>';
-		}
-		$('#log_table_body').empty().html(tab.join(""));
-	}
+
 });
 

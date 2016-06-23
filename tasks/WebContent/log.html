@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
--->
+
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title class="lang" data-lang="m_assign">tasks</title>
+	<title class="lang" data-lang="m_logs">Logs</title>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
@@ -20,12 +17,14 @@
 	
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
-    	
+    
+    <link rel="stylesheet" type="text/css" href="/js/libs/DataTables/datatables.min.css"/>
+    
     <link rel="stylesheet" href="/css/smap-wb.css" type="text/css">
     <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
 
 <script> if (!window.console) console = {log: function() {}}; </script>
-
+ 
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script data-main="js/log" src="/js/libs/require.js"></script>
@@ -79,7 +78,7 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
-	            	  		       
+	           		<li><a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a></li>		       
 	            </ul>
 
         	</nav>
@@ -141,8 +140,24 @@
 		                                      	<th class="lang" data-lang="c_note">note</th>
 		                                    </tr>
 		                                    </thead>
-		                                    <tbody id="log_table_body">
-		                                    </tbody>
+		                                    <tfoot>
+		                                    
+		                                     <tr>
+		                                    	<th></th>	<!-- id -->
+		                                    	<th></th>
+		                                    	<th></th>
+		                                    	<th></th>
+		                                    	<th></th>
+		                                    	<th></th>
+		                                    	<!--  
+		                                        <th class="lang" data-lang="c_date">date</th>
+		                                        <th class="lang" data-lang="c_survey">survey</th>
+		                                        <th class="lang" data-lang="c_user">user</th>
+		                                        <th class="lang" data-lang="c_event">event</th>
+		                                      	<th class="lang" data-lang="c_note">note</th>
+		                                      	-->
+		                                    </tr>
+		                                    </tfoot>
 		                                </table>
 		                            </div>
 		                    	</div>
@@ -153,6 +168,7 @@
 			</div>
 		</div>
 	</div>
+</div>
 
 
 <img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">

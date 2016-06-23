@@ -18,16 +18,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import managers.DataManager;
-import model.DataEndPoint;
 import model.LogItem;
+import model.LogItemDt;
+import model.LogsDt;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,19 +43,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.Column;
-import org.smap.sdal.model.Survey;
-
-import utils.Utils;
 
 /*
  * Provides access to collected data
@@ -202,29 +189,149 @@ public class Log extends Application {
 		
 	}
 	
+	
 	/*
-	 * Convert the human name for the sort column into sql
+	 * DataTables API version 1 /log
+	 * Get log entries
 	 */
-	private String getSortColumn(ArrayList<Column> columns, String sort) {
-		String col = "prikey";	// default to prikey
-		System.out.println("Getting sort column: " + sort + "x");
-		sort = sort.trim();
-		for(int i = 0; i < columns.size(); i++) {
-			System.out.println("        x" + columns.get(i).humanName + "x");
-			if(columns.get(i).humanName.equals(sort)) {
-				Column c = columns.get(i);
+	@GET
+	@Path("/dt")
+	@Produces("application/json")
+	public Response getDataTableRecords(@Context HttpServletRequest request,
+			@QueryParam("draw") int draw,
+			@QueryParam("start") int start,
+			@QueryParam("length") int length,
+			@QueryParam("mgmt") boolean mgmt,
+			@QueryParam("sort") String sort,			// Column Name to sort on
+			@QueryParam("dirn") String dirn				// Sort direction, asc || desc
+			) { 
+		
+		Response response = null;
+		String user = request.getRemoteUser();
+		LogsDt logs = new LogsDt();
+		logs.draw = draw;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("koboToolboxApi - get log records");
+		a.isAuthorised(sd, request.getRemoteUser());
+		//if(sId > 0) {
+		//	a.isValidSurvey(sd, user, sId, false);
+		//}
+		// End Authorisation
+		
+		
+		String sqlTotal = "select count(*) from log where o_id = ?";
+		PreparedStatement pstmtTotal = null;
+		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 
-				if(c.isCalculate()) {
-					col = c.calculation;
-				} else {
-					col = c.name;
-				}
-				break;
-			}
+		if(dirn == null) {
+			dirn = "desc";
+		} else {
+			dirn = dirn.replace("'", "''");
 		}
-		return col;
+		if(sort == null) {
+			sort = "id";
+		}
+		if(dirn.equals("desc") && start == 0) {
+			start = Integer.MAX_VALUE;
+		}
+		
+		try {
+	
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+			
+			/*
+			 * Get total available for this user
+			 */
+			int uId = GeneralUtilityMethods.getUserId(sd, user);
+			
+			pstmtTotal = sd.prepareStatement(sqlTotal);
+			pstmtTotal.setInt(1, uId);
+			rs = pstmtTotal.executeQuery();
+			if(rs.next()) {
+				logs.recordsTotal = rs.getInt(1);
+				logs.recordsFiltered = rs.getInt(1);
+			}
+			rs.close();
+			
+			// Get the data
+			String sql = "select l.id, l.log_time, l.s_id, s.display_name, l.user_ident, l.event, l.note "
+					+ "from log l "
+					+ "left outer join survey s "
+					+ "on s.s_id = l.s_id ";
+			
+			String sqlSelect = "where ";
+			if(dirn.equals("asc")) {
+				sqlSelect += "l.id > ? ";
+			} else {
+				sqlSelect += "l.id < ? ";
+			}
+			
+			//if(sId == 0) {
+				sqlSelect += "and l.o_id = ? ";
+			//} else {
+			//	sqlSelect += "and l.s_id = ? ";
+			//}
+				
+			String sqlOrder = "order by l." + sort + " " + dirn;
+			
+			pstmt = sd.prepareStatement(sql + sqlSelect + sqlOrder);
+			int paramCount = 1;
+			pstmt.setInt(paramCount++, start);	
+			//if(sId == 0) {
+				pstmt.setInt(paramCount++, uId);
+			//} else {
+			//	pstmt.setInt(paramCount++, sId);
+			//}
+			log.info("Get data: " + pstmt.toString());
+			rs = pstmt.executeQuery();
+				
+			int index = 0;	
+			while (rs.next()) {
+					
+				if(length > 0 && index >= length) {
+					break;
+				}
+				index++;
+					
+				LogItemDt li = new LogItemDt();
+
+				li.id = rs.getInt("id");
+				li.log_time = rs.getTimestamp("log_time");
+				li.sId = rs.getInt("s_id");
+				String displayName = rs.getString("display_name");
+				if(displayName != null) {
+					li.sName = displayName;
+				} else {
+					li.sName = li.sId + " (erased)";
+				}
+				li.userIdent = rs.getString("user_ident");
+				li.event = rs.getString("event");
+				li.note = rs.getString("note");
+						
+				logs.data.add(li);
+			}
+						
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			response = Response.ok(gson.toJson(logs)).build();
+			
+	
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			response = Response.serverError().build();
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtTotal != null) {pstmtTotal.close();	}} catch (SQLException e) {	}
+					
+			SDDataSource.closeConnection("koboToolboxApi - get log records", sd);
+		}
+		
+		return response;
+		
 	}
-	
-	
+
 }
 

@@ -71,19 +71,22 @@ public class LogManager {
 		String sql = "insert into log ("
 				+ "log_time,"
 				+ "s_id,"
+				+ "o_id,"
 				+ "user_ident,"
 				+ "event,"
-				+ "note) values (now(), ?, ?, ?, ?);";
+				+ "note) values (now(), ?, ?, ?, ?, ?);";
 
 		PreparedStatement pstmt = null;
 		
 		try {
 			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, uIdent);
 			pstmt = sd.prepareStatement(sql);	
 			pstmt.setInt(1, sId);
-			pstmt.setString(2, uIdent);
-			pstmt.setString(3,  event);
-			pstmt.setString(4,  note);
+			pstmt.setInt(2, oId);
+			pstmt.setString(3, uIdent);
+			pstmt.setString(4,  event);
+			pstmt.setString(5,  note);
 			
 			pstmt.executeUpdate();
 			
