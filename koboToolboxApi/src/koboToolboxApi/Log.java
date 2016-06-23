@@ -115,6 +115,9 @@ public class Log extends Application {
 		if(dirn.equals("desc") && start == 0) {
 			start = Integer.MAX_VALUE;
 		}
+		if(limit == 0) {		// Only allow a maximum of 10,000 logs to be returned
+			limit = 10000;
+		}
 		
 		try {
 	

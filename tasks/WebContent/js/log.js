@@ -133,42 +133,49 @@ require([
 		});
 		
 		$('#m_refresh').click(function(e) {	// Add refresh action
-			searchDone = false;
 			table.ajax.reload();
 		}); 
 		
-
-		// Get the search data for the survey column
-	    var select = $('<select class="form-control"/>')
-	        .appendTo(
-	            table.column(2).footer()
-	        )
-	        .on( 'change', function () {
-	            table
-	                .column( 2 )
-	                .search( $(this).val() )
-	                .draw();
-	        } );
-	
 	    table.on( 'draw', function () {
+	    	
 	    	if(!searchDone) {
 	    		
 	    		searchDone = true;
 	    		
-		    	table
-			        .column( 2 )
-			        .cache('search')
-			        .sort()
-			        .unique()
-			        .each( function ( d ) {
-			            select.append( $('<option value="'+d+'">'+d+'</option>') );
-			        } );
+	    		table.columns().flatten().each( function ( colIdx ) {
+	    			if(colIdx == 2 || colIdx == 3 || colIdx == 4) {
+		    		    var select = $('<select class="form-control"/>')
+		    		        .appendTo(
+		    		            table.column(colIdx).footer()
+		    		        )
+		    		        .on( 'change', function () {
+		    		            table
+		    		                .column( colIdx )
+		    		                .search( $(this).val() )
+		    		                .draw();
+		    		        } );
+		    		
+		    		    select.append( $('<option value=""></option>') );
+		    		    
+				    	table
+					        .column( colIdx )
+					        .cache('search')
+					        .sort()
+					        .unique()
+					        .each( function ( d ) {
+					            select.append( $('<option value="'+d+'">'+d+'</option>') );
+					        } );
+	    			}
+		    		
+	    		});
 	    	}
 	    } );
+
 	   
 			
 		
 	});
+	
 
 
 });
