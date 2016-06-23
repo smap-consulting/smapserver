@@ -1384,7 +1384,7 @@ public class AllAssignments extends Application {
 								pstmtInsert.setString(index++, lat);
 								
 							}
-							log.info("Inserting row: " + pstmtInsert.toString());
+							//log.info("Inserting row: " + pstmtInsert.toString());
 							pstmtInsert.executeUpdate();
 							
 					    }
@@ -1401,17 +1401,17 @@ public class AllAssignments extends Application {
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { results.rollback();} catch (Exception ex){}
 			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this form. You need to enable loading tasks for this form in the form settings in the editor page.").build();
 			
 		} catch (NotFoundException e) {
 			log.log(Level.SEVERE,"", e);
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { results.rollback();} catch (Exception ex){}
 			throw new NotFoundException();
 			
 		} catch (Exception e) {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { results.rollback();} catch (Exception ex){}
 			log.log(Level.SEVERE,"", e);
 			
 		} finally {

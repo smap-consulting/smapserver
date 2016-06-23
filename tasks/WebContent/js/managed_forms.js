@@ -45,6 +45,9 @@ requirejs.config({
     	file_input: '../../../../js/libs/bootstrap.file-input',
     	mapbox_app: '../../../../js/app/mapbox_app',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
+       	datatables: '../../../../js/libs/DataTables/datatables',
+    	'datatables.net': '../../../../js/libs/DataTables/DataTables/js/datatables.net',
+    	'datatables.net-bs': '../../../../js/libs/DataTables/DataTables/js/datatables.bootstrap',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
@@ -65,6 +68,7 @@ requirejs.config({
     	'icheck': ['jquery'],
     	'slimscroll': ['jquery'],
     	'crf': ['jquery'],
+       	'datatables': ['jquery', 'bootstrap'],
     	'app/common_mgmt': ['jquery']
 	
     	}
@@ -76,6 +80,7 @@ require([
          'common', 
          'localise', 
          'globals',
+         'datatables.net-bs',
          'inspinia',
          'metismenu',
          'slimscroll',
@@ -89,7 +94,8 @@ require([
         		 bootstrap, 
         		 common, 
         		 localise, 
-        		 globals) {
+        		 globals,
+        		 datatables) {
 
 	
 	 $(document).ready(function() {
@@ -213,7 +219,8 @@ require([
 					  data: { settings: saveString },
 					  success: function(data, status) {
 						  removeHourglass();
-						  getManagedData(globals.gCurrentSurvey);
+						  globals.gMainTable.ajax.reload();
+						  //getManagedData(globals.gCurrentSurvey);
 					  }, error: function(data, status) {
 						  removeHourglass();
 						  alert(data.responseText);

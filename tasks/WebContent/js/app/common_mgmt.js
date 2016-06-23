@@ -38,7 +38,7 @@ window.gTasks = {
 			globals.gCurrentSurvey = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].id;
 			
 			if(globals.gCurrentSurvey > 0) {
-				 getManagedData(globals.gCurrentSurvey);
+				// getManagedData(globals.gCurrentSurvey);
 				 saveCurrentProject(-1, globals.gCurrentSurvey);
 				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
 			 } else {
@@ -166,7 +166,7 @@ window.gTasks = {
 	 
 	 /*
 	  * Get the tracking data for the specified survey
-	  */
+	  *
 	 function getManagedData(sId, sort, dirn) {
 		 
 		 if(!gTasks.cache.managedData[sId]) {
@@ -209,11 +209,12 @@ window.gTasks = {
 			 }
 		 }
 	 }
+	 */
 	 
 	 /*
 	  * Show the survey data along with the management columns
 	  * If prikey is specified then only show that record
-	  */
+	  *
 	 function showManagedData(sId, tableElem, masterRecord) {
 		 
 		 var x = 1,
@@ -353,24 +354,98 @@ window.gTasks = {
 			 		html = $this.html();	// Use to look for existing sort tags
 			 
 			 $('#filterColumn').modal("show");
-			 /*
-			 gTasks.gSort = $this.text();
-			 
-			 if($this.find('i').length > 0) {
-				 if(gTasks.gDirn === "asc") {
-					 gTasks.gDirn = "desc";
-				 } else {
-					 gTasks.gDirn = "asc";
-				 }
-			 } else {
-				 gTasks.gDirn = "asc";
-			 }
-			 
-			 // Update table
-			 getManagedData(globals.gCurrentSurvey, gTasks.gSort, gTasks.gDirn);
-			 */
+			
 		 });
 			
+		 // Set checkboxes in column sort section of settings
+		 $('input', '#tab-settings-content').iCheck({
+			 checkboxClass: 'icheckbox_square-green',
+			 radioClass: 'iradio_square-green'
+		 });
+		 
+
+	 }
+	 */
+	 
+	 /*
+	  * Show the survey data along with the management columns
+	  * If prikey is specified then only show that record
+	  */
+	 function showManagedData(sId, tableElem, masterRecord) {
+		 
+		 var x = 1,
+		 	columns = gTasks.cache.surveyConfig[sId],
+		 	shownColumns = [],
+		 
+		 	h = [],
+		 	idx = -1,
+		 	i,j,
+		 	$table = $(tableElem),
+		 	doneFirst = false,
+		 	headItem,
+		 	hColSort = [],
+		 	hColSortIdx = -1;
+		 
+		 $('#survey_title').html($('#survey_name option:selected').text());
+		 	
+		 // Add head
+		 h[++idx] = '<thead>';
+		 h[++idx] = '<tr>';
+		 if(typeof masterRecord === "undefined") {
+			 h[++idx] = '<th></th>';				// Select
+		 }
+		 for(i = 0; i < columns.length; i++) {
+			 headItem = columns[i];
+			 
+			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
+			 
+			 if(headItem.include && !headItem.hide) {
+				
+				 h[++idx] = '<th>';
+				 h[++idx] = '<span class="ch">';
+				 h[++idx] = headItem.humanName;
+				 h[++idx] = '</span>';
+				 h[++idx] = '</th>';
+				 
+				 shownColumns.push({
+					 "data": headItem.humanName
+				 });
+			 }
+		 }
+		 h[++idx] = '<th>Action</th>';
+		 h[++idx] = '</tr>';
+		 h[++idx] = '</thead>';
+		 	
+		 $table.html(h.join(''));
+
+		 /*
+		  * Apply data tables
+		  */
+		 var url = '/api/v1/data/' + sId;
+		 if(isManagedForms) {
+			 url += "?mgmt=true";
+		 } else{
+			 url += "?mgmt=false";
+		 }
+		 url += "&format=dt";
+		 
+		 globals.gMainTable = $table.DataTable({
+			 "processing": true,
+		     "ajax": url,
+		     "columns":shownColumns
+		});
+		 
+		 // Add select radio button
+		 $('input', $table).iCheck({
+			    checkboxClass: 'icheckbox_square-green',
+			    radioClass: 'iradio_square-green'
+			});
+		 
+		 /*
+		  * Settings
+		  */
+		 $('#tab-settings-content').html(hColSort.join(''));
+		 
 		 // Set checkboxes in column sort section of settings
 		 $('input', '#tab-settings-content').iCheck({
 			 checkboxClass: 'icheckbox_square-green',
@@ -587,9 +662,7 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gTasks.cache.surveyConfig[sId] = data;
-					 if(gTasks.cache.managedData[sId]) {
-						 showManagedData(sId, '#trackingTable', undefined);
-					 }
+					 showManagedData(sId, '#trackingTable', undefined);
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();
@@ -601,9 +674,7 @@ window.gTasks = {
 				 }
 			 });
 		 } else {
-			 if(gTasks.cache.managedData[sId]) {
-				 showManagedData(sId, '#trackingTable', undefined);
-			 }
+			 showManagedData(sId, '#trackingTable', undefined);
 		 }
 	 }
 	 

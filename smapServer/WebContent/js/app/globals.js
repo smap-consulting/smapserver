@@ -75,6 +75,8 @@ define(function() {
 		gMaxOptionList: 0,
 		gLatestOptionList: undefined,	// Hack to record the last option list name added
 		
+		gMainTable: undefined,			// Data tables
+		
 		model: new Model()
 
 	}

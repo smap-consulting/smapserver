@@ -141,7 +141,8 @@ public class Data extends Application {
 			@QueryParam("dirn") String dirn,			// Sort direction, asc || desc
 			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
 			@QueryParam("parkey") int parkey,			// Parent key (optional, use to get records that correspond to a single parent record)
-			@QueryParam("hrk") String hrk				// Unique key (optional, use to restrict records to a specific hrk)
+			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
+			@QueryParam("format") String format			// dt for datatables otherwise assume kobo
 			) { 
 		
 		Response response = null;
@@ -314,8 +315,13 @@ public class Data extends Application {
 					ja.put(jr);
 				}
 						
-
-				response = Response.ok(ja.toString()).build();
+				if(format != null && format.equals("dt")) {
+					JSONObject dt  = new JSONObject();
+					dt.put("data", ja);
+					response = Response.ok(dt.toString()).build();
+				} else {
+					response = Response.ok(ja.toString()).build();
+				}
 			} else {
 				response = Response.ok("{msg: No data}").build();
 			}
