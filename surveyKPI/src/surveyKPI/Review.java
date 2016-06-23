@@ -36,7 +36,7 @@ import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -60,15 +60,10 @@ public class Review extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
+	LogManager lm = new LogManager();		// Application log
+	
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Review.class);
-		return s;
-	}
 	
 	private class InvalidUndoException extends Exception {
 		public InvalidUndoException(String msg) {
@@ -179,7 +174,9 @@ public class Review extends Application {
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
-					
+		
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Review of text data");
+		
 		try {
 			dConnection = ResultsDataSource.getConnection("surveyKPI-Review");
 
@@ -505,7 +502,9 @@ public class Review extends Application {
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
-				
+		
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Audit changes to text data");
+		
 		Connection dConnection = ResultsDataSource.getConnection("surveyKPI-Audit");
 		
 		try {

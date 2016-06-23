@@ -42,6 +42,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
 import org.smap.server.utilities.GetXForm;
@@ -60,15 +61,7 @@ public class InstanceXML extends Application{
 	private static Logger log =
 			 Logger.getLogger(InstanceXML.class.getName());
 	
-	
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(InstanceXML.class);
-		return s;
-	}
-
+	LogManager lm = new LogManager();		// Application log
 
 	/*
 	 * Parameters
@@ -115,6 +108,9 @@ public class InstanceXML extends Application{
 		a.isAuthorised(connectionSD, user);
 		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
 		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
+		
+		lm.writeLog(connectionSD, survey.id, request.getRemoteUser(), "view", "Get results instance: priKey=" + priKey + " key=" + key + " keyval=" + keyval);
+		
 		SDDataSource.closeConnection(connectionString, connectionSD);
 		// End Authorisation
 		 

@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -40,15 +39,9 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 
 import utilities.XLSFormManager;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.itextpdf.tool.xml.ElementList;
-import com.itextpdf.tool.xml.parser.XMLParser;
 
 /*
  * Creates an XLS Form from the survey definition

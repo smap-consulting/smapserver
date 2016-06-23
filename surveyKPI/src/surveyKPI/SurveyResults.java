@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 
 import java.sql.*;
@@ -50,14 +51,7 @@ public class SurveyResults extends Application {
 	private static Logger log =
 			 Logger.getLogger(Results.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(SurveyResults.class);
-		return s;
-	}
-
-	
+	LogManager lm = new LogManager();		// Application log
 
 		@DELETE
 		public Response deleteSurveyResults(@Context HttpServletRequest request,
@@ -76,6 +70,8 @@ public class SurveyResults extends Application {
 			Connection connectionSD = SDDataSource.getConnection("surveyKPI-SurveyResults");
 			a.isAuthorised(connectionSD, request.getRemoteUser());
 			// End Authorisation
+			
+			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete results");
 			
 			ArrayList<String> tables = new ArrayList<String> ();
 			// Escape any quotes

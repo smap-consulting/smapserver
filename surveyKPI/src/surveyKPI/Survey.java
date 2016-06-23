@@ -41,6 +41,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.server.utilities.GetXForm;
 
 import java.io.BufferedWriter;
@@ -84,6 +85,8 @@ public class Survey extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
@@ -621,6 +624,7 @@ public class Survey extends Application {
 			if(count == 0) {
 				log.info("Error: Failed to update blocked status");
 			} else {
+				lm.writeLog(connectionSD, sId, request.getRemoteUser(), "block", set ? " : block survey : " : " : unblock survey : ");
 				log.info("userevent: " + request.getRemoteUser() + (set ? " : block survey : " : " : unblock survey : ") + sId);
 			}
 			
@@ -986,6 +990,7 @@ public class Survey extends Application {
 							pstmt.execute();
 						}
 
+						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete survey and results");
 						log.info("userevent: " + request.getRemoteUser() + " : hard delete survey : " + sId);
 				
 					} else {

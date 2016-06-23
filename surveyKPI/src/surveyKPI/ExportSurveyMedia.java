@@ -54,6 +54,7 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
@@ -75,6 +76,8 @@ public class ExportSurveyMedia extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyMedia.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
@@ -122,6 +125,8 @@ public class ExportSurveyMedia extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export Media from a survey");
+		
 		String escapedFileName = null;
 		try {
 			escapedFileName = URLDecoder.decode(filename, "UTF-8");

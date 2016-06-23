@@ -40,6 +40,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.SqlDesc;
 
 import com.google.gson.Gson;
@@ -52,6 +53,8 @@ import com.google.gson.Gson;
 public class ExportSurveyThingsat extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyThingsat.class.getName());
@@ -101,6 +104,8 @@ public class ExportSurveyThingsat extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as Neo4J");
+		
 		String escapedFileName = null;
 		try {
 			escapedFileName = URLDecoder.decode(filename, "UTF-8");

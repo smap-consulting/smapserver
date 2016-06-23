@@ -44,6 +44,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -55,6 +56,8 @@ import org.w3c.dom.Element;
 public class ExportSurveyOSM extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyOSM.class.getName());
@@ -157,6 +160,8 @@ public class ExportSurveyOSM extends Application {
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as OSM");
+		
 		String escapedFileName = null;
 		try {
 			escapedFileName = URLDecoder.decode(filename, "UTF-8");

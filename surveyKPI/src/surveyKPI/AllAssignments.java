@@ -43,6 +43,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Features;
@@ -83,11 +84,12 @@ import java.util.zip.ZipInputStream;
 @Path("/assignments")
 public class AllAssignments extends Application {
 
-
 	Authorise a = null;;
 	
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	// Tell class loader about the root classes.  
 	public Set<Class<?>> getClasses() {
@@ -365,6 +367,10 @@ public class AllAssignments extends Application {
 		}
 		// End Authorisation
 
+		if(sId > 0) {
+			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "create tasks", "Create tasks from survey data");
+		}
+		
 		Connection connectionRel = null; 
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtInsert = null;
@@ -1098,6 +1104,8 @@ public class AllAssignments extends Application {
 				fId = rs.getInt(1);
 				tableName = rs.getString(2);
 			}
+			
+			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "import data", "Import data from a file");
 			
 			// Prepare the statement to get the column names in the survey that are to be updated
 			pstmtGetCol = connectionSD.prepareStatement(sqlGetCol);

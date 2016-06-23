@@ -40,6 +40,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFManager;
 
 /*
@@ -58,15 +59,14 @@ public class CreatePDF extends Application {
 	private static Logger log =
 			 Logger.getLogger(CreatePDF.class.getName());
 	
+	LogManager lm = new LogManager();		// Application log
+	
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Items.class);
 		return s;
 	}
-	
-	//public static Font WingDings = null;
-	//public static Font defaultFont = null;
 
 	
 	@GET
@@ -93,6 +93,8 @@ public class CreatePDF extends Application {
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation 
+		
+		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Create PDF for instance: " + instanceId);
 		
 		Connection cResults = ResultsDataSource.getConnection("createPDF");
 		

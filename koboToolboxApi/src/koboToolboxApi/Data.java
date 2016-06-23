@@ -53,6 +53,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Survey;
@@ -70,6 +71,8 @@ public class Data extends Application {
 	private static Logger log =
 			 Logger.getLogger(Data.class.getName());
 
+	LogManager lm = new LogManager();		// Application log
+	
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
@@ -148,6 +151,8 @@ public class Data extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
+		
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "API get data. Hrk: " + hrk);
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records");
 		

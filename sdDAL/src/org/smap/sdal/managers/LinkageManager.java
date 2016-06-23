@@ -19,49 +19,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.managers;
 
-import java.io.File;
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.Response;
-
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
-import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.ChangeElement;
-import org.smap.sdal.model.ChangeItem;
-import org.smap.sdal.model.ChangeLog;
-import org.smap.sdal.model.ChangeResponse;
-import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Language;
 import org.smap.sdal.model.Link;
-import org.smap.sdal.model.LinkedSurvey;
-import org.smap.sdal.model.ManifestInfo;
-import org.smap.sdal.model.Option;
-import org.smap.sdal.model.OptionList;
-import org.smap.sdal.model.PropertyChange;
-import org.smap.sdal.model.Question;
-import org.smap.sdal.model.Result;
-import org.smap.sdal.model.ServerSideCalculate;
-import org.smap.sdal.model.Survey;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 public class LinkageManager {
 	

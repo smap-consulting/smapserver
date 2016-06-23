@@ -40,6 +40,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.LQAS;
@@ -69,6 +70,8 @@ public class ExportLQAS extends Application {
 	private static Logger log =
 			 Logger.getLogger(ExportLQAS.class.getName());
 
+	LogManager lm = new LogManager();		// Application log
+	
 	/*
 	 * Assume:
 	 *  1) LQAS surveys only have one form and this form is the one that has the "lot" question in it
@@ -95,6 +98,8 @@ public class ExportLQAS extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());		
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation 
+		
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to LQAS");
 		
 		SurveyManager sm = new SurveyManager();
 		org.smap.sdal.model.Survey survey = null;
