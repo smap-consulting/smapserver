@@ -982,7 +982,7 @@ public class AllAssignments extends Application {
 	 */
 	@POST
 	@Path("/load")
-	public Response loadTasksFromFile(@Context HttpServletRequest request) { 
+	public Response loadResultsFromFile(@Context HttpServletRequest request) { 
 
 		Response response = null;
 		
@@ -995,9 +995,7 @@ public class AllAssignments extends Application {
 		    return response;
 		}
 		
-		log.info("Load tasks from file");
-		
-		String userName = request.getRemoteUser();	
+		log.info("Load results from file");
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
@@ -1159,7 +1157,8 @@ public class AllAssignments extends Application {
 				}
 				zis.close();
 			} else if(!contentType.equals("text/csv")) {
-				throw new Exception("only csv");
+				// throw new Exception("only csv");
+				log.info("Potential Error: loading results from file with content type: " + contentType);
 			}
 			
 			/*
@@ -1393,18 +1392,25 @@ public class AllAssignments extends Application {
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { results.rollback();} catch (Exception ex){}
 			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this form. You need to enable loading tasks for this form in the form settings in the editor page.").build();
 			
 		} catch (NotFoundException e) {
 			log.log(Level.SEVERE,"", e);
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { results.rollback();} catch (Exception ex){}
 			throw new NotFoundException();
 			
 		} catch (Exception e) {
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-			try { results.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-			log.log(Level.SEVERE,"", e);
+			String msg = e.getMessage();
+			if(msg != null && msg.startsWith("org.postgresql.util.PSQLException: Zero bytes")) {
+				msg = "Invalid file format. Only zip and csv files accepted";
+				log.info("Error: " + msg + " : " + e.getMessage());
+			} else {
+				log.log(Level.SEVERE,"", e);
+			}
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
+			try { results.rollback();} catch (Exception ex){}
+			
 			
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
