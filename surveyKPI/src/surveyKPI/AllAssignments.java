@@ -988,7 +988,7 @@ public class AllAssignments extends Application {
 	 */
 	@POST
 	@Path("/load")
-	public Response loadTasksFromFile(@Context HttpServletRequest request) { 
+	public Response loadResultsFromFile(@Context HttpServletRequest request) { 
 
 		Response response = null;
 		
@@ -1001,9 +1001,7 @@ public class AllAssignments extends Application {
 		    return response;
 		}
 		
-		log.info("Load tasks from file");
-		
-		String userName = request.getRemoteUser();	
+		log.info("Load results from file");
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
@@ -1167,7 +1165,8 @@ public class AllAssignments extends Application {
 				}
 				zis.close();
 			} else if(!contentType.equals("text/csv")) {
-				throw new Exception("only csv");
+				// throw new Exception("only csv");
+				log.info("Potential Error: loading results from file with content type: " + contentType);
 			}
 			
 			/*
@@ -1410,9 +1409,16 @@ public class AllAssignments extends Application {
 			throw new NotFoundException();
 			
 		} catch (Exception e) {
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			String msg = e.getMessage();
+			if(msg != null && msg.startsWith("org.postgresql.util.PSQLException: Zero bytes")) {
+				msg = "Invalid file format. Only zip and csv files accepted";
+				log.info("Error: " + msg + " : " + e.getMessage());
+			} else {
+				log.log(Level.SEVERE,"", e);
+			}
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
 			try { results.rollback();} catch (Exception ex){}
-			log.log(Level.SEVERE,"", e);
+			
 			
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}

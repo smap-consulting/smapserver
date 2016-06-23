@@ -194,7 +194,7 @@ function importData() {
 			  if(msg && msg === "only csv") {
 				  msg = localise.set["t_efnl"] + " " + localise.set["msg_csv"];
 			  } else {
-				  msg = localise.set["t_fl"] + " " + xhr.responseText;
+				  msg = localise.set["t_efnl"] + " " + xhr.responseText;
 			  }
 			  removeHourglass(); 
 			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(msg);
