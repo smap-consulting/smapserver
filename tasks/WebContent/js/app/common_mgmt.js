@@ -391,9 +391,9 @@ window.gTasks = {
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
-		 if(typeof masterRecord === "undefined") {
-			 h[++idx] = '<th></th>';				// Select
-		 }
+		 //if(typeof masterRecord === "undefined") {
+		//	 h[++idx] = '<th></th>';				// Select
+		 //}
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
 			 
@@ -412,9 +412,9 @@ window.gTasks = {
 				 });
 			 }
 		 }
-		 h[++idx] = '<th>Action</th>';
-		 h[++idx] = '</tr>';
-		 h[++idx] = '</thead>';
+		 //h[++idx] = '<th>Action</th>';
+		 //h[++idx] = '</tr>';
+		 //h[++idx] = '</thead>';
 		 	
 		 $table.html(h.join(''));
 
@@ -430,9 +430,10 @@ window.gTasks = {
 		 url += "&format=dt";
 		 
 		 globals.gMainTable = $table.DataTable({
-			 "processing": true,
-		     "ajax": url,
-		     "columns":shownColumns
+			 processing: true,
+			 select: true,
+		     ajax: url,
+		     columns: shownColumns
 		});
 		 
 		 // Add select radio button

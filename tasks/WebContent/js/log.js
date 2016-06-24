@@ -112,8 +112,7 @@ require([
         		 datatables) {
 	
 	window.moment = moment;
-	var table,
-		searchDone = false;
+	var table;
 	
 	$(document).ready(function() {
 		
@@ -136,39 +135,35 @@ require([
 			table.ajax.reload();
 		}); 
 		
-	    table.on( 'draw', function () {
+	    table.on( 'init.dt', function () {
+	    		
+    		table.columns().flatten().each( function ( colIdx ) {
+    			if(colIdx == 2 || colIdx == 3 || colIdx == 4) {
+	    		    var select = $('<select class="form-control"/>')
+	    		        .appendTo(
+	    		            table.column(colIdx).footer()
+	    		        )
+	    		        .on( 'change', function () {
+	    		            table
+	    		                .column( colIdx )
+	    		                .search( $(this).val() )
+	    		                .draw();
+	    		        } );
+	    		
+	    		    select.append( $('<option value=""></option>') );
+	    		    
+			    	table
+				        .column( colIdx )
+				        .cache('search')
+				        .sort()
+				        .unique()
+				        .each( function ( d ) {
+				            select.append( $('<option value="'+d+'">'+d+'</option>') );
+				        } );
+    			}
+	    		
+    		});
 	    	
-	    	if(!searchDone) {
-	    		
-	    		searchDone = true;
-	    		
-	    		table.columns().flatten().each( function ( colIdx ) {
-	    			if(colIdx == 2 || colIdx == 3 || colIdx == 4) {
-		    		    var select = $('<select class="form-control"/>')
-		    		        .appendTo(
-		    		            table.column(colIdx).footer()
-		    		        )
-		    		        .on( 'change', function () {
-		    		            table
-		    		                .column( colIdx )
-		    		                .search( $(this).val() )
-		    		                .draw();
-		    		        } );
-		    		
-		    		    select.append( $('<option value=""></option>') );
-		    		    
-				    	table
-					        .column( colIdx )
-					        .cache('search')
-					        .sort()
-					        .unique()
-					        .each( function ( d ) {
-					            select.append( $('<option value="'+d+'">'+d+'</option>') );
-					        } );
-	    			}
-		    		
-	    		});
-	    	}
 	    } );
 
 	   
