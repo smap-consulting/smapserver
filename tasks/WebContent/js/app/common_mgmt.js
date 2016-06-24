@@ -434,13 +434,19 @@ window.gTasks = {
 			 select: true,
 		     ajax: url,
 		     columns: shownColumns
-		});
+		 });
+		 
+		 globals.gMainTable
+	        .on( 'select', function ( e, dt, type, indexes ) {
+	            var rowData = globals.gMainTable.rows( indexes ).data().toArray();
+	            alert(JSON.stringify( rowData ));
+	        } );
 		 
 		 // Add select radio button
-		 $('input', $table).iCheck({
-			    checkboxClass: 'icheckbox_square-green',
-			    radioClass: 'iradio_square-green'
-			});
+		 //$('input', $table).iCheck({
+		//	    checkboxClass: 'icheckbox_square-green',
+		//	    radioClass: 'iradio_square-green'
+		//	});
 		 
 		 /*
 		  * Settings

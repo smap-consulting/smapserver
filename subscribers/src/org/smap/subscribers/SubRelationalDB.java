@@ -373,6 +373,7 @@ public class SubRelationalDB extends Subscriber {
 		Connection cResults = null;
 		Connection cMeta = null;
 		PreparedStatement pstmtHrk = null;
+		PreparedStatement pstmtAddHrk = null;
 		
 		System.out.println("UploadTime: " + uploadTime.toGMTString());
 		try {
@@ -448,6 +449,14 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			if(hasHrk) {
 				String topLevelTable = GeneralUtilityMethods.getMainResultsTable(cMeta, cResults, sId);
+				if(!GeneralUtilityMethods.hasColumn(cResults, topLevelTable, "_hrk")) {
+					// This should not be needed as the _hrk column should be in the table if an hrk has been specified for the survey
+					log.info("Error:  _hrk being created for table " + topLevelTable + " this column should already be there");
+					String sqlAddHrk = "alter table " + topLevelTable + " add column _hrk text;";
+					pstmtAddHrk = cResults.prepareStatement(sqlAddHrk);
+					pstmtAddHrk.executeUpdate();
+				}
+				
 				String sql = "update " + topLevelTable + " set _hrk = "
 						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta)
 						+ " || '-' || prikey "
@@ -604,7 +613,6 @@ public class SubRelationalDB extends Subscriber {
 					boolean hasUploadTime = GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
 					boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");
 					boolean hasSurveyNotes = GeneralUtilityMethods.hasColumn(cRel, tableName, "_survey_notes");
-					boolean hasHrk = GeneralUtilityMethods.hasColumn(cRel, tableName, "_hrk");
 					sql = "INSERT INTO " + tableName + " (parkey";
 					if(parent_key == 0) {
 						sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
@@ -712,7 +720,7 @@ public class SubRelationalDB extends Subscriber {
 		 */		
 		String tableName = element.getTableName();
 		PreparedStatement pstmt = null;
-		
+		PreparedStatement pstmtAddHrk = null;
 		PreparedStatement pstmtHrk = null;
 		
 		try {
@@ -751,6 +759,13 @@ public class SubRelationalDB extends Subscriber {
 						// Set the hrk of the new record to the hrk of the old record
 						// This can only be done for one old record, possibly there is never more than 1
 						if(hasHrk && i == 0) {
+							if(!GeneralUtilityMethods.hasColumn(cRel, tableName, "_hrk")) {
+								// This should not be needed as the _hrk column should be in the table if an hrk has been specified for the survey
+								log.info("Error:  _hrk being created for table " + tableName + " this column should already be there");
+								String sqlAddHrk = "alter table " + tableName + " add column _hrk text;";
+								pstmtAddHrk = cRel.prepareStatement(sqlAddHrk);
+								pstmtAddHrk.executeUpdate();
+							}
 							String sqlHrk = "update " + tableName + " set _hrk = (select t2._hrk from "
 									+ tableName
 									+ " t2 where t2.prikey = ?) "
