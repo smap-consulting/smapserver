@@ -150,8 +150,9 @@ require([
 		 * Set up dialog to edit a record
 		 */
 		$('#editRecord').on('show.bs.modal', function (event) {
-			var index = $(event.relatedTarget).data("index"),
-				record = gTasks.cache.managedData[globals.gCurrentSurvey][index],
+			var // index = $(event.relatedTarget).data("index"),
+				//record = gTasks.cache.managedData[globals.gCurrentSurvey][index],
+				record = gTasks.gSelectedRecord,
 				config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
 				$editForm = $('#editRecordForm'),
 				$surveyForm = $('#surveyForm'),
@@ -163,7 +164,7 @@ require([
 				configItem,
 				first = true;
 			
-			gTasks.gCurrentIndex = index;
+			//gTasks.gCurrentIndex = index;
 			gTasks.gPriKey = record["prikey"];
 			
 			// Clear the update array

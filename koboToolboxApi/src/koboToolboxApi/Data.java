@@ -245,7 +245,7 @@ public class Data extends Application {
 				} else {
 					// Set default sort order
 					if(mgmt) {
-						sqlGetDataOrder = " order by prikey desc;";
+						sqlGetDataOrder = " order by prikey desc limit 10000";
 					} else {
 						sqlGetDataOrder = " order by prikey asc;";
 					}

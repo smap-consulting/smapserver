@@ -23,6 +23,7 @@ window.gTasks = {
 			managedData: {},
 			surveyList: {}
 		},
+		gSelectedRecord: undefined,
 		gSelectedSurveyIndex: undefined,
 		gUpdate: [],
 		gCurrentIndex: undefined,
@@ -113,7 +114,7 @@ window.gTasks = {
 		 var 
 			itemIndex = $this.data("item"),
 			value = $this.val(),
-			record = gTasks.cache.managedData[globals.gCurrentSurvey][gTasks.gCurrentIndex],
+			record = gTasks.gSelectedRecord,
 			config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
 			currentValue,
 			name = config[itemIndex].name,
@@ -380,6 +381,7 @@ window.gTasks = {
 		 	h = [],
 		 	idx = -1,
 		 	i,j,
+		 	colIdx = 0,
 		 	$table = $(tableElem),
 		 	doneFirst = false,
 		 	headItem,
@@ -410,6 +412,11 @@ window.gTasks = {
 				 shownColumns.push({
 					 "data": headItem.humanName
 				 });
+				 
+				 if(headItem.markup) {
+					 headItem.colIdx = colIdx;
+				 }
+				 colIdx++;
 			 }
 		 }
 		 //h[++idx] = '<th>Action</th>';
@@ -429,18 +436,55 @@ window.gTasks = {
 		 }
 		 url += "&format=dt";
 		 
+		 if(globals.gMainTable) {
+			 globals.gMainTable.destroy();
+		 }
 		 globals.gMainTable = $table.DataTable({
 			 processing: true,
 			 select: true,
 		     ajax: url,
-		     columns: shownColumns
+		     columns: shownColumns,
+		     order: [[ 0, "desc" ]],
+		     columnDefs: [ {
+		    	 	targets: "_all",
+		    	 	render: function ( data, type, full, meta ) {
+		    	 		return addAnchors(data);
+		    	 	}
+		     } ]
 		 });
 		 
 		 globals.gMainTable
 	        .on( 'select', function ( e, dt, type, indexes ) {
 	            var rowData = globals.gMainTable.rows( indexes ).data().toArray();
-	            alert(JSON.stringify( rowData ));
+	            if(isManagedForms) {
+	            	gTasks.gSelectedRecord = rowData[0];
+	            	$('#editRecord').modal("show");
+	            }
+	            //alert(JSON.stringify( rowData ));
 	        } );
+		 
+		 // Highlight data conditionally
+		 globals.gMainTable.on( 'draw', function () {
+			 
+			 columns = gTasks.cache.surveyConfig[sId];
+	 
+			 for(i = 0; i < columns.length; i++) {
+				 headItem = columns[i];
+				 if(headItem.markup) {
+					 $( globals.gMainTable.column( headItem.colIdx ).nodes() ).each(function(index) {
+						 var $this = $(this),
+						 	v = $this.text();
+						 
+					 	for(j = 0; j < headItem.markup.length; j++) {
+						 	if(headItem.markup[j].value == v) {
+						 		 $this.addClass( headItem.markup[j].classes );
+						 	}
+					 	}
+						
+					 });
+				 }
+			 }
+		 });
 		 
 		 // Add select radio button
 		 //$('input', $table).iCheck({
@@ -704,7 +748,7 @@ window.gTasks = {
 	  * Get data related to the currently selected record
 	  */
 	 function getRelatedList(sId, masterRecord) {
-		 var record = gTasks.cache.managedData[sId][masterRecord];
+		 record = gTasks.gSelectedRecord;
 		 
 		 var url = '/surveyKPI/managed/connected/' + sId + '/0/' + record.prikey;
 		 
