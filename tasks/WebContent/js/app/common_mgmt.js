@@ -377,9 +377,12 @@ window.gTasks = {
 		 var x = 1,
 		 	columns = gTasks.cache.surveyConfig[sId],
 		 	shownColumns = [],
+		 	hiddenColumns = [],
 		 
 		 	h = [],
 		 	idx = -1,
+		 	hfoot = [],
+		 	foot_idx = -1,
 		 	i,j,
 		 	colIdx = 0,
 		 	$table = $(tableElem),
@@ -401,29 +404,31 @@ window.gTasks = {
 			 
 			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
 			 
-			 if(headItem.include && !headItem.hide) {
-				
-				 h[++idx] = '<th>';
-				 h[++idx] = '<span class="ch">';
-				 h[++idx] = headItem.humanName;
-				 h[++idx] = '</span>';
-				 h[++idx] = '</th>';
-				 
-				 shownColumns.push({
-					 "data": headItem.humanName
-				 });
-				 
-				 if(headItem.markup) {
-					 headItem.colIdx = colIdx;
-				 }
-				 colIdx++;
+			 shownColumns.push({
+				 "data": headItem.humanName
+			 });
+			 h[++idx] = '<th>';
+			 h[++idx] = '<span class="ch">';
+			 h[++idx] = headItem.humanName;
+			 h[++idx] = '</span>';
+			 h[++idx] = '</th>';
+			 hfoot[++foot_idx] = '<th></th>';
+			 headItem.colIdx = colIdx;
+			 colIdx++;
+			 
+			 if(headItem.hide) {
+				 hiddenColumns.push(i);
 			 }
 		 }
-		 //h[++idx] = '<th>Action</th>';
-		 //h[++idx] = '</tr>';
-		 //h[++idx] = '</thead>';
-		 	
-		 $table.html(h.join(''));
+		 h[++idx] = '</tr>';
+		 h[++idx] = '</thead>';
+		 h[++idx] = '<tfoot>';
+		 h[++idx] = '<tr>';
+		 h[++idx] = hfoot.join('');
+		 h[++idx] = '</tr>';
+		 h[++idx] = '</tfoot>';
+	
+		 $table.empty().html(h.join(''));
 
 		 /*
 		  * Apply data tables
@@ -439,6 +444,8 @@ window.gTasks = {
 		 if(globals.gMainTable) {
 			 globals.gMainTable.destroy();
 		 }
+		 
+		 // Add anchors
 		 globals.gMainTable = $table.DataTable({
 			 processing: true,
 			 select: true,
@@ -449,10 +456,16 @@ window.gTasks = {
 		    	 	targets: "_all",
 		    	 	render: function ( data, type, full, meta ) {
 		    	 		return addAnchors(data);
-		    	 	}
-		     } ]
+		    	 	}	 	
+		     	},
+		     	{
+		     		visible: false,  
+		     		"targets": hiddenColumns 
+		     	},
+		     ]
 		 });
 		 
+		 // Respond to selection of a row
 		 globals.gMainTable
 	        .on( 'select', function ( e, dt, type, indexes ) {
 	            var rowData = globals.gMainTable.rows( indexes ).data().toArray();
@@ -485,6 +498,38 @@ window.gTasks = {
 				 }
 			 }
 		 });
+		 
+		 // Add filters
+		 globals.gMainTable.on( 'init.dt', function () {
+			 columns = gTasks.cache.surveyConfig[sId];
+			 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
+				 if(columns[colIdx].filter) {
+					 var select = $('<select class="form-control"/>')
+					 		.appendTo(
+					 				globals.gMainTable.column(colIdx).footer()
+		    		        )
+		    		        .on( 'change', function () {
+		    		        	globals.gMainTable
+		    		                .column( colIdx )
+		    		                .search( $(this).val() )
+		    		                .draw();
+		    		        } );
+		    		
+		    		    select.append( $('<option value=""></option>') );
+		    		    
+		    		    globals.gMainTable
+					        .column( colIdx )
+					        .cache('search')
+					        .sort()
+					        .unique()
+					        .each( function ( d ) {
+					            select.append( $('<option value="'+d+'">'+d+'</option>') );
+					        } );
+	    			}
+		    		
+	    		});
+		    	
+		    } );
 		 
 		 // Add select radio button
 		 //$('input', $table).iCheck({
@@ -848,4 +893,22 @@ window.gTasks = {
 				 }
 			 }
 		 });
+	 }
+	 
+	 function updateVisibleColumns(cols) {
+		 var i,
+		 	hiddenColumns = [],
+		 	visibleColumns = [];
+		 
+		 for(i = 0; i < cols.length; i++) {
+			 if(cols[i].hide) {
+				 hiddenColumns.push(i + 1);	// Add 1 to allow for the "Record" column
+			 } else {
+				 visibleColumns.push(i + 1);	// Add 1 to allow for the "Record" column
+			 }
+		 }
+		 
+		 globals.gMainTable.columns( hiddenColumns ).visible(false, false);
+		 globals.gMainTable.columns( visibleColumns ).visible(true, false);
+		 globals.gMainTable.columns.adjust().draw( false ); // adjust column sizing and redraw
 	 }

@@ -231,7 +231,7 @@ require([
 				});
 		});
 		
-		// Apply changes to the table columns that are shown
+		// Save changes to the table columns that are shown
 		$('#applyTableSort').click(function(){
 			
 			var tableColumns = [],
@@ -259,7 +259,7 @@ require([
 					  success: function(data, status) {
 						  removeHourglass();
 						  $('#right-sidebar').removeClass("sidebar-open");
-						  refreshData();
+						  updateVisibleColumns(tableColumns);
 					  }, error: function(data, status) {
 						  removeHourglass();
 						  alert(data.responseText);

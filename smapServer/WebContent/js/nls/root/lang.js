@@ -438,7 +438,7 @@ define({
 	// Managed Forms
 	"mf_fd": "Form Data",
 	"mf_md": "Management Data",
-	"mf_sc": "Sortable Columns",
+	"mf_sc": "Visible Columns",
 	"mf_sc_i": "Select the columns that you want to see in the table then press the 'Apply' button. You can then sort on these columns",
 	"mf_st": "Submission Tracking",
 	"mf_gr": "Get related",

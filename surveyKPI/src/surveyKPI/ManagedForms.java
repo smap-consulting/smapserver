@@ -148,6 +148,7 @@ public class ManagedForms extends Application {
 				if(keepThis(c.name)) {
 					TableColumn tc = new TableColumn(c.name, c.humanName);
 					tc.hide = hideDefault(c.humanName);
+					tc.filter = filterDefault(c.qType);
 					for(int j = 0; j < configColumns.size(); j++) {
 						TableColumn tcConfig = configColumns.get(j);
 						if(tcConfig.name.equals(tc.name)) {
@@ -157,7 +158,9 @@ public class ManagedForms extends Application {
 						}
 					}
 					
-					columns.add(tc);
+					if(tc.include) {
+						columns.add(tc);
+					}
 				}
 			}
 			
@@ -824,6 +827,20 @@ public class ManagedForms extends Application {
 		return hide;
 	}
 	
+	/*
+	 * Set a default filter value
+	 */
+	private boolean filterDefault(String type) {
+		boolean filter = false;
+		
+		if(type.equals("select1") 
+				) {
+			filter = true;
+		}
+		
+		return filter;
+	}
+	
 	private void addProcessing(TableColumn tc) {
 		String name = tc.name;
 		tc.mgmt = true;
@@ -848,6 +865,7 @@ public class ManagedForms extends Application {
 			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
 			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
 			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
+			tc.filter = true;
 		} else if(name.equals("_mgmt_action_taken")) {
 			tc.hide = false;
 			tc.readonly = false;
