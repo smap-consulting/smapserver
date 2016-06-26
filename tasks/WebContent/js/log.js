@@ -117,10 +117,9 @@ require([
 	$(document).ready(function() {
 		
 		table = $('#log_table').DataTable({
-			 "processing": true,
-		     //"serverSide": true,
-		     "ajax": "http://localhost/api/v1/log/dt",
-		     "columns": [
+			 processing: true,
+		     ajax: "http://localhost/api/v1/log/dt",
+		     columns: [
 		                 { "data": "id" },
 		                 { "data": "log_time" },
 		                 { "data": "sName" },
@@ -128,7 +127,14 @@ require([
 		                 { "data": "event" },
 		                 { "data": "note" }
 		             ],
-		      "order": [[ 0, "desc" ]]
+		      order: [[ 0, "desc" ]],
+		      columnDefs: [ {
+		    	 	targets: [1],
+		    	 	render: function ( data, type, full, meta ) {
+		    	 		return localTime(data);
+		    	 	}	 	
+		      	}
+		     ],
 		});
 		
 		$('#m_refresh').click(function(e) {	// Add refresh action

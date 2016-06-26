@@ -852,6 +852,7 @@ public class Survey extends Application {
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
 					pstmt.executeUpdate();
+					lm.writeLog(connectionSD, sId, request.getRemoteUser(), "restore", "Restore survey ");
 					log.info("userevent: " + request.getRemoteUser() + " : un delete survey : " + sId);
 				
 				} else {
@@ -990,7 +991,7 @@ public class Survey extends Application {
 							pstmt.execute();
 						}
 
-						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete survey and results");
+						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete survey " + surveyDisplayName + " and its results");
 						log.info("userevent: " + request.getRemoteUser() + " : hard delete survey : " + sId);
 				
 					} else {
@@ -1026,6 +1027,7 @@ public class Survey extends Application {
 						log.info("Soft delete survey: " + pstmt.toString());
 						pstmt.executeUpdate();
 						
+						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Soft Delete survey " + surveyDisplayName);
 						log.info("userevent: " + request.getRemoteUser() + " : soft delete survey : " + sId);
 						
 						// Rename files

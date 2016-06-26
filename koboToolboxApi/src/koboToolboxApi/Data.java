@@ -153,7 +153,7 @@ public class Data extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "API get data. Hrk: " + hrk);
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Managed Forms or the API. " + (hrk == null ? "" : "Hrk: " + hrk));
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records");
 		

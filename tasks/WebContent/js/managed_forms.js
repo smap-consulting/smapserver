@@ -153,7 +153,7 @@ require([
 			var // index = $(event.relatedTarget).data("index"),
 				//record = gTasks.cache.managedData[globals.gCurrentSurvey][index],
 				record = gTasks.gSelectedRecord,
-				config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
+				columns = gTasks.cache.surveyConfig[globals.gCurrentSurvey].columns,
 				$editForm = $('#editRecordForm'),
 				$surveyForm = $('#surveyForm'),
 				h = [],
@@ -171,8 +171,8 @@ require([
 			gTasks.gUpdate = [];
 			$('#saveRecord').prop("disabled", true);
 			
-			for(i = 0; i < config.length; i++) {
-				configItem = config[i];
+			for(i = 0; i < columns.length; i++) {
+				configItem = columns[i];
 				
 				if(configItem.mgmt) {
 					h[++idx] = getEditMarkup(configItem, i, first, record);
