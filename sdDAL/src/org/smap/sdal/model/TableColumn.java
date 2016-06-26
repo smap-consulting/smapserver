@@ -12,6 +12,7 @@ public class TableColumn {
 	public boolean hide;		// Only show on expand
 	public boolean mgmt = false;
 	public boolean filter = false;
+	public String filterValue;
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management

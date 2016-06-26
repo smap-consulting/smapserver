@@ -223,7 +223,6 @@ require([
 					  success: function(data, status) {
 						  removeHourglass();
 						  globals.gMainTable.ajax.reload();
-						  //getManagedData(globals.gCurrentSurvey);
 					  }, error: function(data, status) {
 						  removeHourglass();
 						  alert(data.responseText);
@@ -235,6 +234,7 @@ require([
 		$('#applyTableSort').click(function(){
 			
 			var tableColumns = [],
+				config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
 				tc,
 				$this;
 			
@@ -247,24 +247,10 @@ require([
 				tableColumns.push(tc);
 			});
 			
-			 saveString = JSON.stringify(tableColumns);
-			 
-			 addHourglass();
-			 $.ajax({
-				 type: "POST",
-					  dataType: 'text',
-					  contentType: "application/json",
-					  url: "/surveyKPI/managed/updatecols/" + globals.gCurrentSurvey,
-					  data: { settings: saveString },
-					  success: function(data, status) {
-						  removeHourglass();
-						  $('#right-sidebar').removeClass("sidebar-open");
-						  updateVisibleColumns(tableColumns);
-					  }, error: function(data, status) {
-						  removeHourglass();
-						  alert(data.responseText);
-					  }
-				});
+			config.columns = tableColumns;
+			updateVisibleColumns(tableColumns);
+			saveConfig(config);
+	
 		});
 		
 		// Refresh menu

@@ -121,7 +121,7 @@ window.gTasks = {
 			i,
 			foundExistingUpdate;
 		
-		currentValue = record[config[itemIndex].humanName];
+		currentValue = record[config.columns[itemIndex].humanName];
 		if(typeof currentValue === "undefined") {
 			currentValue = "";
 		}
@@ -166,216 +166,13 @@ window.gTasks = {
 	 }
 	 
 	 /*
-	  * Get the tracking data for the specified survey
-	  *
-	 function getManagedData(sId, sort, dirn) {
-		 
-		 if(!gTasks.cache.managedData[sId]) {
-			 var url = '/api/v1/data/' + sId;
-			 
-			 if(isManagedForms) {
-				 url += "?mgmt=true";
-			 } else{
-				 url += "?mgmt=false";
-			 }
-			 
-			 if(sort) { 
-				 url += "&sort=" + sort + "&dirn=" + dirn;
-			 } 
-			 
-			 addHourglass();
-			 $.ajax({
-				 url: url,
-				 cache: false,
-				 dataType: 'json',
-				 success: function(data) {
-					 removeHourglass();
-					 gTasks.cache.managedData[sId] = data;
-					 if(gTasks.cache.surveyConfig[sId]) {
-						 showManagedData(sId, '#trackingTable', undefined);
-					 }
-				 },
-				 error: function(xhr, textStatus, err) {
-					 removeHourglass();
-					 if(xhr.readyState == 0 || xhr.status == 0) {
-						 return;  // Not an error
-					 } else {
-							alert("Error failed to get data from survey:" + sId);
-					 }
-				 }
-			 });
-		 } else {
-			 if(gTasks.cache.surveyConfig[sId]) {
-				 showManagedData(sId, '#trackingTable', undefined);
-			 }
-		 }
-	 }
-	 */
-	 
-	 /*
-	  * Show the survey data along with the management columns
-	  * If prikey is specified then only show that record
-	  *
-	 function showManagedData(sId, tableElem, masterRecord) {
-		 
-		 var x = 1,
-		 	managed = gTasks.cache.managedData[sId],
-		 	columns = gTasks.cache.surveyConfig[sId],
-		 
-		 	h = [],
-		 	idx = -1,
-		 	i,j,
-		 	$table = $(tableElem),
-		 	doneFirst = false,
-		 	headItem,
-		 	hColSort = [],
-		 	hColSortIdx = -1;
-		 
-		 $('#survey_title').html($('#survey_name option:selected').text());
-		 	
-		 // Add head
-		 h[++idx] = '<thead>';
-		 h[++idx] = '<tr>';
-		 if(typeof masterRecord === "undefined") {
-			 h[++idx] = '<th></th>';				// Select
-		 }
-		 for(i = 0; i < columns.length; i++) {
-			 headItem = columns[i];
-			 
-			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
-			 
-			 if(headItem.include && !headItem.hide) {
-				
-				 h[++idx] = '<th data-toggle="tooltip" title="';
-				 h[++idx] = localise.set["msg_cs"];
-				 h[++idx] = '"';
-				 
-				 if(gTasks.gSort && headItem.humanName === gTasks.gSort.trim()) {
-					 h[++idx] = ' class="sort-';
-					 h[++idx] = gTasks.gDirn;
-				 }
-				 h[++idx] = '">';
-				 
-				 h[++idx] = '<span class="ch">';
-				 h[++idx] = headItem.humanName;
-				 h[++idx] = '</span>';
-				 h[++idx] = '</th>';
-			 }
-		 }
-		 h[++idx] = '<th>Action</th>';
-		 h[++idx] = '</tr>';
-		 h[++idx] = '</thead>';
-		 
-		 // Add body
-		 h[++idx] = '<tbody>';
-		 for(j = 0; j < managed.length; j++) {
-			 
-			 if(typeof masterRecord === "undefined" || masterRecord == j) {
-				 h[++idx] = '<tr>';
-				 
-				 //Add radio button to select row
-				 if(typeof masterRecord === "undefined") {
-					 h[++idx] = '<td><input type=';
-						h[++idx] = '"radio"';
-						h[++idx] = 'name="taskgroup"';
-						h[++idx] = ' class="taskgroup" value="';
-						h[++idx] = j;
-						h[++idx] = '"';
-					 h[++idx] = '></td>';
-				 }
-						
-				 record = managed[j];
-				 for(i = 0; i < columns.length; i++) {
-					 headItem = columns[i];
-					
-					 if(headItem.include && !headItem.hide) {
-						 h[++idx] = getHighlightedCell(record[headItem.humanName], headItem.markup);
-							 
-						 if(headItem.readonly || !headItem.inline) {
-							 h[++idx] = addAnchors(record[headItem.humanName]);
-						 } else {
-							 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
-						 }
-						 h[++idx] = '</td>';
-					 }
-						 
-				 }
-				 h[++idx] = '<td><a data-toggle="modal" href="#editRecord" data-index="';
-				 h[++idx] = j;
-				 h[++idx] = '"><i class="fa fa-edit text-navy"></i></a></td>';
-				 h[++idx] = '</tr>';
-			 }
-			 
-		 }
-		 h[++idx] = '</tbody>';
-		 	
-		 $table.html(h.join(''));
-		 $('#tab-settings-content').html(hColSort.join(''));
-		 
-		 // Add select radio button
-		 $('input', $table).iCheck({
-			    checkboxClass: 'icheckbox_square-green',
-			    radioClass: 'iradio_square-green'
-			});
-		 
-		 // Add sort icon
-		 $table.find('th.sort-asc').each(function() {
-			 var $this = $(this);
-			 $this.html($this.text() + ' <i class="fa fa-sort-up"></i>');
-		 });
-		 $table.find('th.sort-desc').each(function() {
-			 var $this = $(this);
-			 $this.html($this.text() + ' <i class="fa fa-sort-down"></i>');
-		 });
-		 
-		 // Respond to sort requests
-		 $table.find('th i').click(function(){
-			 var	$this = $(this), 
-			 		html = $this.html();	// Use to look for existing sort tags
-			 
-			 gTasks.gSort = $this.text();
-			 
-			 if($this.find('i').length > 0) {
-				 if(gTasks.gDirn === "asc") {
-					 gTasks.gDirn = "desc";
-				 } else {
-					 gTasks.gDirn = "asc";
-				 }
-			 } else {
-				 gTasks.gDirn = "asc";
-			 }
-			 
-			 // Update table
-			 getManagedData(globals.gCurrentSurvey, gTasks.gSort, gTasks.gDirn);
-		 });
-		 
-		 // Respond to filter requests
-		 $table.find('th .ch').click(function(){
-			 var	$this = $(this), 
-			 		html = $this.html();	// Use to look for existing sort tags
-			 
-			 $('#filterColumn').modal("show");
-			
-		 });
-			
-		 // Set checkboxes in column sort section of settings
-		 $('input', '#tab-settings-content').iCheck({
-			 checkboxClass: 'icheckbox_square-green',
-			 radioClass: 'iradio_square-green'
-		 });
-		 
-
-	 }
-	 */
-	 
-	 /*
 	  * Show the survey data along with the management columns
 	  * If prikey is specified then only show that record
 	  */
 	 function showManagedData(sId, tableElem, masterRecord) {
 		 
 		 var x = 1,
-		 	columns = gTasks.cache.surveyConfig[sId],
+		 	columns = gTasks.cache.surveyConfig[sId].columns,
 		 	shownColumns = [],
 		 	hiddenColumns = [],
 		 
@@ -479,7 +276,7 @@ window.gTasks = {
 		 // Highlight data conditionally
 		 globals.gMainTable.on( 'draw', function () {
 			 
-			 columns = gTasks.cache.surveyConfig[sId];
+			 columns = gTasks.cache.surveyConfig[sId].columns;
 	 
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
@@ -501,7 +298,7 @@ window.gTasks = {
 		 
 		 // Add filters
 		 globals.gMainTable.on( 'init.dt', function () {
-			 columns = gTasks.cache.surveyConfig[sId];
+			 columns = gTasks.cache.surveyConfig[sId].columns;
 			 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
 				 if(columns[colIdx].filter) {
 					 var select = $('<select class="form-control"/>')
@@ -513,6 +310,7 @@ window.gTasks = {
 		    		                .column( colIdx )
 		    		                .search( $(this).val() )
 		    		                .draw();
+		    		        	saveFilter(colIdx, $(this).val());
 		    		        } );
 		    		
 		    		    select.append( $('<option value=""></option>') );
@@ -525,17 +323,16 @@ window.gTasks = {
 					        .each( function ( d ) {
 					            select.append( $('<option value="'+d+'">'+d+'</option>') );
 					        } );
+		    		    
+		    		    // Set current value
+		    		    if(columns[colIdx].filterValue) {
+		    		    	select.val(columns[colIdx].filterValue).trigger('change');
+		    		    }
 	    			}
 		    		
 	    		});
 		    	
 		    } );
-		 
-		 // Add select radio button
-		 //$('input', $table).iCheck({
-		//	    checkboxClass: 'icheckbox_square-green',
-		//	    radioClass: 'iradio_square-green'
-		//	});
 		 
 		 /*
 		  * Settings
@@ -578,28 +375,6 @@ window.gTasks = {
 		}
 		return h.join('');
 	}
-	
-	/*
-	 * Get the markup for the data cell
-	 */
-	 function getHighlightedCell(value, markup) {
-		 var elem = undefined,
-		 	i;
-		 
-		 if(value && markup && markup.length > 0) {
-			 for(i = 0; i < markup.length; i++) {
-				 if(value === markup[i].value) {
-					 elem = '<td class="' + markup[i].classes + '">';
-					 break;
-				 }
-			 }
-		 }
-		 if(!elem) {
-			 elem = '<td>';
-		 }
-		 
-		 return elem;
-	 }
 	 
 	/*
 	 * Add the markup for an editable column
@@ -911,4 +686,51 @@ window.gTasks = {
 		 globals.gMainTable.columns( hiddenColumns ).visible(false, false);
 		 globals.gMainTable.columns( visibleColumns ).visible(true, false);
 		 globals.gMainTable.columns.adjust().draw( false ); // adjust column sizing and redraw
+	 }
+	 
+	 /*
+	  * Save a filter setting
+	  */
+	 function saveFilter(column, value) {
+		 
+		var
+			config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
+			i;
+		
+		if(value == '') {
+			value = undefined;
+		}
+		
+		for(i = 0; i < config.columns.length; i++) {
+			if(config.columns[i].colIdx == column) {
+				config.columns[i].filterValue = value;
+				break;
+			}
+		}
+		
+		saveConfig(config);
+	 }
+	 /*
+	  * Update the saved configuration
+	  */
+	 function saveConfig() {
+		var config = gTasks.cache.surveyConfig[globals.gCurrentSurvey];
+		
+		saveString = JSON.stringify(config);
+		 
+		 addHourglass();
+		 $.ajax({
+			 type: "POST",
+				  dataType: 'text',
+				  contentType: "application/json",
+				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey,
+				  data: { settings: saveString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  $('#right-sidebar').removeClass("sidebar-open");
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  alert(data.responseText);
+				  }
+			});
 	 }

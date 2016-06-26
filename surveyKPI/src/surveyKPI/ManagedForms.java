@@ -41,6 +41,7 @@ import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
+import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
 
@@ -84,8 +85,8 @@ public class ManagedForms extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-		ArrayList<TableColumn> configColumns = null;
+		ManagedFormConfig mfc = new ManagedFormConfig();
+		ManagedFormConfig savedConfig = null;
 
 		Response response = null;
 		
@@ -126,16 +127,16 @@ public class ManagedForms extends Application {
 					String config = rs.getString("settings");
 				
 					if(config != null) {
-						Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();	
-						configColumns = gson.fromJson(config, type);
+						Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
+						savedConfig = gson.fromJson(config, type);
 					} else {
-						configColumns = new ArrayList<TableColumn> ();
+						savedConfig = new ManagedFormConfig ();
 					}
 				} else {
-					configColumns = new ArrayList<TableColumn> ();
+					savedConfig = new ManagedFormConfig ();
 				}
 			} else {
-				configColumns = new ArrayList<TableColumn> ();
+				savedConfig = new ManagedFormConfig ();
 			}
 			
 			/*
@@ -149,17 +150,19 @@ public class ManagedForms extends Application {
 					TableColumn tc = new TableColumn(c.name, c.humanName);
 					tc.hide = hideDefault(c.humanName);
 					tc.filter = filterDefault(c.qType);
-					for(int j = 0; j < configColumns.size(); j++) {
-						TableColumn tcConfig = configColumns.get(j);
+					for(int j = 0; j < savedConfig.columns.size(); j++) {
+						TableColumn tcConfig = savedConfig.columns.get(j);
 						if(tcConfig.name.equals(tc.name)) {
 							tc.include = tcConfig.include;
 							tc.hide = tcConfig.hide;
+							tc.filterValue = tcConfig.filterValue;
+							System.out.println("Setting filter value: " + tc.name + " :" + tc.filterValue);
 							break;
 						}
 					}
 					
 					if(tc.include) {
-						columns.add(tc);
+						mfc.columns.add(tc);
 					}
 				}
 			}
@@ -168,10 +171,10 @@ public class ManagedForms extends Application {
 			 * Add the data processing columns and configuration
 			 */
 			if(dpId > 0) {
-				getDataProcessingConfig(dpId, columns);
+				getDataProcessingConfig(dpId, mfc.columns, savedConfig.columns);
 			}
 			
-			response = Response.ok(gson.toJson(columns)).build();
+			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
 		} catch (SQLException e) {
@@ -257,7 +260,7 @@ public class ManagedForms extends Application {
 			
 			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			getDataProcessingConfig(am.manageId, columns);
+			getDataProcessingConfig(am.manageId, columns, null);
 			
 			for(int i = 0; i < columns.size(); i++) {
 				TableColumn tc = columns.get(i);
@@ -394,7 +397,7 @@ public class ManagedForms extends Application {
 			 * Get the data processing columns
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			getDataProcessingConfig(dpId, columns);
+			getDataProcessingConfig(dpId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -509,8 +512,8 @@ public class ManagedForms extends Application {
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
-	@Path("/updatecols/{sId}")
-	public Response updateTableColumns(
+	@Path("/config/{sId}")
+	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@FormParam("settings") String settings
@@ -888,7 +891,7 @@ public class ManagedForms extends Application {
 	/*
 	 * Add the data processing columns
 	 */
-	private void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns) {
+	private void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) {
 		
 		/*
 		 * Manually create this (TODO retrieve from database)
@@ -899,7 +902,21 @@ public class ManagedForms extends Application {
 			Column c = columns.get(i);
 			TableColumn tc = new TableColumn(c.name, c.humanName);
 			tc.hide = hideDefault(c.name);
+
 			addProcessing(tc);
+			if(configColumns != null) {
+				for(int j = 0; j < configColumns.size(); j++) {
+					TableColumn tcConfig = configColumns.get(j);
+					if(tcConfig.name.equals(tc.name)) {
+						tc.include = tcConfig.include;
+						tc.hide = tcConfig.hide;
+						tc.filterValue = tcConfig.filterValue;
+						System.out.println("Setting filter value: " + tc.name + " :" + tc.filterValue);
+						break;
+					}
+				}
+			}
+			
 			formColumns.add(tc);
 		}
 		
