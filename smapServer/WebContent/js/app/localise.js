@@ -44,9 +44,9 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 			}
 			
 			// Set RTL
-			if(gUserLocale && gUserLocale === "ar") {
-				$('html').attr("dir", "rtl").attr("lang", "ar");
-			}
+			//if(gUserLocale && gUserLocale === "ar") {
+			//	$('html').attr("dir", "rtl").attr("lang", "ar");
+			//	}
 		},
 		set: lang,
 		dt: function() {

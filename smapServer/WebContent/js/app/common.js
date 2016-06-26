@@ -306,8 +306,8 @@ function addLanguageOptions($elem, current) {
 		i,
 		languages = [
 		             {
-			            	locale: "ar",
-			            	name: "Arabic"
+			            locale: "ar",
+			            name: "Arabic"
 			         },
 		             {
 		            	locale: "en",
@@ -318,9 +318,9 @@ function addLanguageOptions($elem, current) {
 			            name: "French"
 			         },
 			         {
-				         	locale: "hi",
-				            name: "Hindi"
-						 },
+				         locale: "hi",
+				         name: "Hindi"
+					 },
 			         {
 			         	locale: "pt",
 			            name: "Portugese"
@@ -335,7 +335,7 @@ function addLanguageOptions($elem, current) {
 		h[++idx] = '<option value="';
 		h[++idx] = languages[i].locale;
 		h[++idx] = '">';
-		h[++idx] = languages[i].name;
+		h[++idx] = localise.set[languages[i].locale];
 		h[++idx] = '</option>';
 	}
 	$elem.html(h.join(''));
