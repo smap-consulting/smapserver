@@ -259,7 +259,10 @@ window.gTasks = {
 		     		visible: false,  
 		     		"targets": hiddenColumns 
 		     	},
-		     ]
+		     ],
+		     language: {
+		            url: localise.dt()
+		        }
 		 });
 		 
 		 // Respond to selection of a row

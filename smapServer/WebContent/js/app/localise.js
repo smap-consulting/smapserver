@@ -18,7 +18,18 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 	
+	var dtLangFiles = {
+			en: "",
+			es: "/js/libs/DataTables.i18n/es.json",
+			ar: "/js/libs/DataTables.i18n/ar.json",
+			fr: "/js/libs/DataTables.i18n/fr.json",
+			pt: "/js/libs/DataTables.i18n/pt.json",
+			hi: "/js/libs/DataTables.i18n/hi.json"
+	}
+	
 	window.localise = {	// Set global while migrating app to AMD
+		
+		
 		setlang: function () {
 			
 			$(".lang").each(function(index) {
@@ -37,7 +48,10 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 				$('html').attr("dir", "rtl").attr("lang", "ar");
 			}
 		},
-		set: lang
+		set: lang,
+		dt: function() {
+			return dtLangFiles[gUserLocale];
+		}
 	}
 	
 	return localise;
