@@ -412,8 +412,8 @@ public class TaskManager {
 			int oId) throws SQLException {
 		
 	
-		String sqlTruncate = "truncate table locations;";
-		PreparedStatement pstmtTruncate = null;
+		String sqlDelete = "delete from locations where o_id = ?;";
+		PreparedStatement pstmtDelete = null;
 		
 		String sql = "insert into locations (o_id, locn_group, locn_type, uid, name) values (?, ?, ?, ?, ?);";
 		PreparedStatement pstmt = null;
@@ -423,8 +423,9 @@ public class TaskManager {
 			sd.setAutoCommit(false);
 			
 			// Remove existing data
-			pstmtTruncate = sd.prepareStatement(sqlTruncate);
-			pstmtTruncate.executeUpdate();
+			pstmtDelete = sd.prepareStatement(sqlDelete);
+			pstmtDelete.setInt(1, oId);
+			pstmtDelete.executeUpdate();
 			
 			// Add new data
 			pstmt = sd.prepareStatement(sql);	
@@ -447,7 +448,7 @@ public class TaskManager {
 		} finally {
 			sd.setAutoCommit(true);
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
-			try {if (pstmtTruncate != null) {pstmtTruncate.close();} } catch (SQLException e) {	}
+			try {if (pstmtDelete != null) {pstmtDelete.close();} } catch (SQLException e) {	}
 		}
 	
 		

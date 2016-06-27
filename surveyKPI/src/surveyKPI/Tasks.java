@@ -52,6 +52,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MiscPDFManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
@@ -77,12 +78,7 @@ public class Tasks extends Application {
 	private static Logger log =
 			 Logger.getLogger(Tasks.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
+	LogManager lm = new LogManager();		// Application log
 
 	public Tasks() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
@@ -307,7 +303,7 @@ public class Tasks extends Application {
 					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
 					TaskManager tm = new TaskManager();
 					tm.saveLocations(sd, locations, oId);
-					
+					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", locations.size() + " locations / NFC tags uploaded from file " + fileName);
 					// Return tags to calling program
 					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(locations);

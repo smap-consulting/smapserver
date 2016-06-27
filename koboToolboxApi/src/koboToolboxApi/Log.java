@@ -308,7 +308,11 @@ public class Log extends Application {
 				if(displayName != null) {
 					li.sName = displayName;
 				} else {
-					li.sName = li.sId + " (erased)";
+					if(li.sId > 0) {
+						li.sName = li.sId + " (erased)";
+					} else {
+						li.sName = "";
+					}
 				}
 				li.userIdent = rs.getString("user_ident");
 				li.event = rs.getString("event");

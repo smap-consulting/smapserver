@@ -55,10 +55,6 @@ public class LogManager {
 	private static Logger log =
 			 Logger.getLogger(LogManager.class.getName());
 	
-	private class LogItem {
-		
-	}
-	
 	/*
 	 * Get the current task groups
 	 */
@@ -89,8 +85,7 @@ public class LogManager {
 			pstmt.setString(5,  note);
 			
 			pstmt.executeUpdate();
-			
-			System.out.println("Logged it");
+
 
 		} catch(Exception e) {
 			log.log(Level.SEVERE, "SQL Error", e);
