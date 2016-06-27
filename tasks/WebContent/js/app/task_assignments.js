@@ -1188,8 +1188,8 @@ function editTask(isNew, task, taskFeature) {
 
 	$('#nfc_select').val(task.location_trigger);
 	if(task.update_id && task.update_id.length > 0) {
-		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id) + 
-				' ' + getInitialDataUrl(task.form_id, task.update_id));
+		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id)); 
+				// ' ' + getInitialDataUrl(task.form_id, task.update_id));
 	}
 	
 	$('#task_properties').modal("show"); 
