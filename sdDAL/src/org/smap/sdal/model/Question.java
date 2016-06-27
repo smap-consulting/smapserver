@@ -64,7 +64,8 @@ public class Question {
 	public Collection<Option> getValidChoices(Survey s) {
 		
 		ArrayList<Option> externalChoices = new ArrayList<Option> ();
-		ArrayList<Option> choiceArray = s.optionLists.get(list_name).options;
+		OptionList ol = s.optionLists.get(list_name);
+		ArrayList<Option> choiceArray = ol.options;
 		boolean external = false;
 		for(int i = 0; i < choiceArray.size(); i++) {
 			if(choiceArray.get(i).externalFile) {

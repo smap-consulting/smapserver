@@ -590,7 +590,7 @@ public class SurveyManager {
 				+ "order by q.seq asc;";
 		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
 
-		// SQL to get the choice lists in this survey
+		// SQL to get the sub forms in this survey
 		ResultSet rsGetRepeatValue = null;
 		String sqlGetRepeatValue = "select repeats "
 				+ "from form "
