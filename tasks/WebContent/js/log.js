@@ -118,7 +118,7 @@ require([
 		
 		table = $('#log_table').DataTable({
 			 processing: true,
-		     ajax: "http://localhost/api/v1/log/dt",
+		     ajax: "/api/v1/log/dt",
 		     columns: [
 		                 { "data": "id" },
 		                 { "data": "log_time" },

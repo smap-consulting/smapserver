@@ -265,11 +265,19 @@ window.gTasks = {
 						 				globals.gMainTable.column(colIdx).footer()
 			    		        )
 			    		        .on( 'change', function () {
-			    		        	globals.gMainTable
-			    		                .column( colIdx )
-			    		                .search( $(this).val() )
+			    		        	var val =  $(this).val();
+			    		        	if(val == '') {
+			    		        		globals.gMainTable
+			    		                	.column( colIdx )
+			    		                	.search( val )
 			    		                .draw();
-			    		        	saveFilter(colIdx, $(this).val());
+			    		        	} else {
+				    		        	globals.gMainTable
+				    		                .column( colIdx )
+				    		                .search( "^" + $(this).val() + "$", true, false, false )
+				    		                .draw();
+			    		        	}
+			    		        	saveFilter(colIdx, val);
 			    		        } );
 			    		
 			    		    select.append( $('<option value=""></option>') );

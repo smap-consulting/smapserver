@@ -170,6 +170,7 @@ public class Data extends Application {
 		String table_name = null;
 		int parentform = 0;
 		ResultSet rs = null;
+		JSONArray ja = new JSONArray();
 
 		if(sort != null && dirn == null) {
 			dirn = "asc";
@@ -265,7 +266,6 @@ public class Data extends Application {
 				rs = pstmtGetData.executeQuery();
 				
 				int index = 0;
-				JSONArray ja = new JSONArray();
 				while (rs.next()) {
 					
 					if(limit > 0 && index >= limit) {
@@ -315,15 +315,14 @@ public class Data extends Application {
 					ja.put(jr);
 				}
 						
-				if(format != null && format.equals("dt")) {
-					JSONObject dt  = new JSONObject();
-					dt.put("data", ja);
-					response = Response.ok(dt.toString()).build();
-				} else {
-					response = Response.ok(ja.toString()).build();
-				}
+			} 
+			
+			if(format != null && format.equals("dt")) {
+				JSONObject dt  = new JSONObject();
+				dt.put("data", ja);
+				response = Response.ok(dt.toString()).build();
 			} else {
-				response = Response.ok("{msg: No data}").build();
+				response = Response.ok(ja.toString()).build();
 			}
 			
 			

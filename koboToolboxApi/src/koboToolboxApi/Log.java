@@ -72,126 +72,6 @@ public class Log extends Application {
 		a = new Authorise(authorisations, null);
 	}
 	
-	/*
-	 * KoboToolBox API version 1 /log
-	 * Get log entries
-	 */
-	@GET
-	@Produces("application/json")
-	@Path("/{sId}")
-	public Response getDataRecords(@Context HttpServletRequest request,
-			@PathParam("sId") int sId,
-			@QueryParam("start") int start,
-			@QueryParam("limit") int limit,
-			@QueryParam("mgmt") boolean mgmt,
-			@QueryParam("sort") String sort,			// Column Name to sort on
-			@QueryParam("dirn") String dirn				// Sort direction, asc || desc
-			) { 
-		
-		Response response = null;
-		String user = request.getRemoteUser();
-		ArrayList<LogItem> logItems = new ArrayList<LogItem> ();
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("koboToolboxApi - get log records");
-		a.isAuthorised(sd, request.getRemoteUser());
-		if(sId > 0) {
-			a.isValidSurvey(sd, user, sId, false);
-		}
-		// End Authorisation
-		
-		
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		if(dirn == null) {
-			dirn = "desc";
-		} else {
-			dirn = dirn.replace("'", "''");
-		}
-		if(sort == null) {
-			sort = "id";
-		}
-		if(dirn.equals("desc") && start == 0) {
-			start = Integer.MAX_VALUE;
-		}
-		if(limit == 0) {		// Only allow a maximum of 10,000 logs to be returned
-			limit = 10000;
-		}
-		
-		try {
-	
-			String sql = "select l.id, l.log_time, l.s_id, s.display_name, l.user_ident, l.event, l.note "
-					+ "from log l "
-					+ "left outer join survey s "
-					+ "on s.s_id = l.s_id ";
-			
-			String sqlSelect = "where ";
-			if(dirn.equals("asc")) {
-				sqlSelect += "l.id > ? ";
-			} else {
-				sqlSelect += "l.id < ? ";
-			}
-			
-			if(sId == 0) {
-				sqlSelect += "and l.s_id in (select s_id from survey s, user_project up where s.p_id = up.p_id and u_id = ?) ";
-			} else {
-				sqlSelect += "and l.s_id = ? ";
-			}
-				
-			String sqlOrder = "order by l." + sort + " " + dirn;
-			
-			pstmt = sd.prepareStatement(sql + sqlSelect + sqlOrder);
-			int paramCount = 1;
-			pstmt.setInt(paramCount++, start);	
-			if(sId == 0) {
-				int uId = GeneralUtilityMethods.getUserId(sd, user);
-				pstmt.setInt(paramCount++, uId);
-			} else {
-				pstmt.setInt(paramCount++, sId);
-			}
-			log.info("Get data: " + pstmt.toString());
-			rs = pstmt.executeQuery();
-				
-			int index = 0;	
-			while (rs.next()) {
-					
-				if(limit > 0 && index >= limit) {
-					break;
-				}
-				index++;
-					
-				LogItem li = new LogItem();
-
-				li.id = rs.getInt("id");
-				li.log_time = rs.getTimestamp("log_time");
-				li.sId = rs.getInt("s_id");
-				li.sName = rs.getString("display_name");
-				li.userIdent = rs.getString("user_ident");
-				li.event = rs.getString("event");
-				li.note = rs.getString("note");
-						
-				logItems.add(li);
-			}
-						
-			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-			response = Response.ok(gson.toJson(logItems)).build();
-			
-	
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
-			response = Response.serverError().build();
-		} finally {
-			
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-					
-			SDDataSource.closeConnection("koboToolboxApi - get log records", sd);
-		}
-		
-		return response;
-		
-	}
-	
 	
 	/*
 	 * DataTables API version 1 /log
@@ -246,12 +126,10 @@ public class Log extends Application {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 			
 			/*
-			 * Get total available for this user
+			 * Get total log entries
 			 */
-			int uId = GeneralUtilityMethods.getUserId(sd, user);
-			
 			pstmtTotal = sd.prepareStatement(sqlTotal);
-			pstmtTotal.setInt(1, uId);
+			pstmtTotal.setInt(1, oId);
 			rs = pstmtTotal.executeQuery();
 			if(rs.next()) {
 				logs.recordsTotal = rs.getInt(1);
@@ -272,22 +150,15 @@ public class Log extends Application {
 				sqlSelect += "l.id < ? ";
 			}
 			
-			//if(sId == 0) {
-				sqlSelect += "and l.o_id = ? ";
-			//} else {
-			//	sqlSelect += "and l.s_id = ? ";
-			//}
-				
+			sqlSelect += "and l.o_id = ? ";
+			
 			String sqlOrder = "order by l." + sort + " " + dirn;
 			
 			pstmt = sd.prepareStatement(sql + sqlSelect + sqlOrder);
 			int paramCount = 1;
 			pstmt.setInt(paramCount++, start);	
-			//if(sId == 0) {
-				pstmt.setInt(paramCount++, uId);
-			//} else {
-			//	pstmt.setInt(paramCount++, sId);
-			//}
+			pstmt.setInt(paramCount++, oId);
+			
 			log.info("Get data: " + pstmt.toString());
 			rs = pstmt.executeQuery();
 				
