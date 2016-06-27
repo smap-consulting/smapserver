@@ -53,9 +53,6 @@ $(document).ready(function() {
 	globals.gRegions = undefined;
 	
 	localise.setlang();		// Localise HTML
-	if(typeof getVersion === "function") {
-		getVersion();			// Update if the version on the server has changed
-	}
 	
 	$("#side-menu").metisMenu();
 	
@@ -1157,8 +1154,8 @@ function editTask(isNew, task, taskFeature) {
 
 	$('#nfc_select').val(task.location_trigger);
 	if(task.update_id && task.update_id.length > 0) {
-		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id) + 
-				' ' + getInitialDataUrl(task.form_id, task.update_id));
+		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id)); 
+				//' ' + getInitialDataUrl(task.form_id, task.update_id));
 	}
 	
 	$('#task_properties').modal("show"); 

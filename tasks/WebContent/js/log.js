@@ -116,6 +116,10 @@ require([
 	
 	$(document).ready(function() {
 		
+		localise.setlang();		// Localise HTML
+		
+		getLoggedInUser(undefined, false, true, undefined);
+		
 		table = $('#log_table').DataTable({
 			 processing: true,
 		     ajax: "/api/v1/log/dt",

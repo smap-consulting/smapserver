@@ -1837,7 +1837,7 @@ public class GeneralUtilityMethods {
 		
 		Column c = new Column();
 		c.name = "prikey";
-		c.humanName = "Record";
+		c.humanName = "prikey";
 		c.qType = "";
 		columnList.add(c);
 		

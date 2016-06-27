@@ -166,7 +166,7 @@ require([
 				first = true;
 			
 			//gTasks.gCurrentIndex = index;
-			gTasks.gPriKey = record["Record"];
+			gTasks.gPriKey = record["prikey"];
 			
 			// Clear the update array
 			gTasks.gUpdate = [];

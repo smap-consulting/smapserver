@@ -719,7 +719,11 @@ public class ExportSurvey extends Application {
 			} else if(columnName.equals("_s_id")) {
 				String displayName = surveyNames.get(out);
 				if(displayName == null) {
-					displayName = GeneralUtilityMethods.getSurveyName(con, Integer.parseInt(out));
+					try {
+						displayName = GeneralUtilityMethods.getSurveyName(con, Integer.parseInt(out));
+					} catch (Exception e) {
+						displayName = "";
+					}
 					surveyNames.put(out, displayName);
 				}
 				out = "<td>" + displayName + "</td>"; 

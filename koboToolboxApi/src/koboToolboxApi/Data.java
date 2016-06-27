@@ -230,7 +230,8 @@ public class Data extends Application {
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
 				
 				String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
-						+ " where prikey >= ?";
+						+ " where prikey >= ? "
+						+ "and _bad = 'false'";
 				String sqlSelect = "";
 				if(parkey > 0) {
 					sqlSelect = " and parkey = ?";
