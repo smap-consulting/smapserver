@@ -54,6 +54,7 @@ define(function() {
 		gPendingUpdates: [],
 		gCurrentTaskGroup: undefined,
 		gTaskList: undefined,
+		gCurrentSurveyIndex: 0,
 		
 		// Editor
 		gExistingSurvey: false,		// Set true if modifying an existing survey

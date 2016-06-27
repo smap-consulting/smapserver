@@ -131,7 +131,7 @@ require([
 		
 		// Get the user details
 		globals.gIsAdministrator = false;
-		getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
+		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
 
 		enableUserProfileBS();										// Enable user profile button	
 		
@@ -143,6 +143,7 @@ require([
 		// Set change function on survey
 		$('#survey_name').change(function() {
 			gTasks.gSelectedSurveyIndex = $(this).val();
+			globals.gCurrentSurvey = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].id;
 			surveyChanged();
 		});
 		
@@ -153,7 +154,7 @@ require([
 			var // index = $(event.relatedTarget).data("index"),
 				//record = gTasks.cache.managedData[globals.gCurrentSurvey][index],
 				record = gTasks.gSelectedRecord,
-				columns = gTasks.cache.surveyConfig[globals.gCurrentSurvey].columns,
+				columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 				$editForm = $('#editRecordForm'),
 				$surveyForm = $('#surveyForm'),
 				h = [],
@@ -165,7 +166,7 @@ require([
 				first = true;
 			
 			//gTasks.gCurrentIndex = index;
-			gTasks.gPriKey = record["prikey"];
+			gTasks.gPriKey = record["Record"];
 			
 			// Clear the update array
 			gTasks.gUpdate = [];
@@ -234,7 +235,7 @@ require([
 		$('#applyTableSort').click(function(){
 			
 			var tableColumns = [],
-				config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
+				config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
 				tc,
 				$this;
 			

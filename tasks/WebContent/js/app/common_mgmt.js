@@ -36,12 +36,15 @@ window.gTasks = {
 	  * Function called when the current survey is changed
 	  */
 	 function surveyChanged() {
-			globals.gCurrentSurvey = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].id;
 			
 			if(globals.gCurrentSurvey > 0) {
 				// getManagedData(globals.gCurrentSurvey);
 				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
+				 if(isManagedForms) {
+					 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
+				 } else {
+					 getSurveyConfig(globals.gCurrentSurvey, 0);
+				 }
 			 } else {
 				 // No managed surveys in this project
 				 $('#trackingTable').empty();
@@ -55,8 +58,8 @@ window.gTasks = {
 
 	 	globals.gCurrentProject = $('#project_name option:selected').val();
 	 	globals.gCurrentSurvey = -1;
-	 	refreshData();
 	 	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+	 	refreshData();
 	 	
 	 }
 	 
@@ -115,13 +118,13 @@ window.gTasks = {
 			itemIndex = $this.data("item"),
 			value = $this.val(),
 			record = gTasks.gSelectedRecord,
-			config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
+			columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 			currentValue,
-			name = config[itemIndex].name,
+			name = columns[itemIndex].name,
 			i,
 			foundExistingUpdate;
 		
-		currentValue = record[config.columns[itemIndex].humanName];
+		currentValue = record[columns[itemIndex].humanName];
 		if(typeof currentValue === "undefined") {
 			currentValue = "";
 		}
@@ -172,10 +175,10 @@ window.gTasks = {
 	 function showManagedData(sId, tableElem, masterRecord) {
 		 
 		 var x = 1,
-		 	columns = gTasks.cache.surveyConfig[sId].columns,
+		 	columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 		 	shownColumns = [],
 		 	hiddenColumns = [],
-		 
+		 	visibleColumns = [],
 		 	h = [],
 		 	idx = -1,
 		 	hfoot = [],
@@ -189,7 +192,12 @@ window.gTasks = {
 		 	hColSortIdx = -1;
 		 
 		 $('#survey_title').html($('#survey_name option:selected').text());
-		 	
+		 
+		 
+		 if(globals.gMainTable) {
+			 globals.gMainTable.destroy();
+		 }
+		 
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
@@ -215,6 +223,8 @@ window.gTasks = {
 			 
 			 if(headItem.hide) {
 				 hiddenColumns.push(i);
+			 } else {
+				 visibleColumns.push(i);
 			 }
 		 }
 		 h[++idx] = '</tr>';
@@ -238,10 +248,6 @@ window.gTasks = {
 		 }
 		 url += "&format=dt";
 		 
-		 if(globals.gMainTable) {
-			 globals.gMainTable.destroy();
-		 }
-		 
 		 // Add anchors
 		 globals.gMainTable = $table.DataTable({
 			 processing: true,
@@ -249,6 +255,42 @@ window.gTasks = {
 		     ajax: url,
 		     columns: shownColumns,
 		     order: [[ 0, "desc" ]],
+		     initComplete: function(settings, json) {
+		    	 console.log("initComplete");
+				 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
+				 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
+					 if(columns[colIdx].filter) {
+						 var select = $('<select class="form-control"/>')
+						 		.appendTo(
+						 				globals.gMainTable.column(colIdx).footer()
+			    		        )
+			    		        .on( 'change', function () {
+			    		        	globals.gMainTable
+			    		                .column( colIdx )
+			    		                .search( $(this).val() )
+			    		                .draw();
+			    		        	saveFilter(colIdx, $(this).val());
+			    		        } );
+			    		
+			    		    select.append( $('<option value=""></option>') );
+			    		    
+			    		    globals.gMainTable
+						        .column( colIdx )
+						        .cache('search')
+						        .sort()
+						        .unique()
+						        .each( function ( d ) {
+						            select.append( $('<option value="'+d+'">'+d+'</option>') );
+						        } );
+			    		    
+			    		    // Set current value
+			    		    if(columns[colIdx].filterValue) {
+			    		    	select.val(columns[colIdx].filterValue).trigger('change');
+			    		    }
+		    			}
+			    		
+		    		});
+		    	  },
 		     columnDefs: [ {
 		    	 	targets: "_all",
 		    	 	render: function ( data, type, full, meta ) {
@@ -259,6 +301,10 @@ window.gTasks = {
 		     		visible: false,  
 		     		"targets": hiddenColumns 
 		     	},
+		     	{
+		     		visible: true,  
+		     		"targets": visibleColumns 
+		     	},
 		     ],
 		     language: {
 		            url: localise.dt()
@@ -267,7 +313,7 @@ window.gTasks = {
 		 
 		 // Respond to selection of a row
 		 globals.gMainTable
-	        .on( 'select', function ( e, dt, type, indexes ) {
+	        .off('select').on( 'select', function ( e, dt, type, indexes ) {
 	            var rowData = globals.gMainTable.rows( indexes ).data().toArray();
 	            if(isManagedForms) {
 	            	gTasks.gSelectedRecord = rowData[0];
@@ -277,9 +323,9 @@ window.gTasks = {
 	        } );
 		 
 		 // Highlight data conditionally
-		 globals.gMainTable.on( 'draw', function () {
+		 globals.gMainTable.off('draw').on( 'draw', function () {
 			 
-			 columns = gTasks.cache.surveyConfig[sId].columns;
+			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 	 
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
@@ -300,8 +346,10 @@ window.gTasks = {
 		 });
 		 
 		 // Add filters
+		 /*
 		 globals.gMainTable.on( 'init.dt', function () {
-			 columns = gTasks.cache.surveyConfig[sId].columns;
+			 console.log("init.dt");
+			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 			 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
 				 if(columns[colIdx].filter) {
 					 var select = $('<select class="form-control"/>')
@@ -336,6 +384,7 @@ window.gTasks = {
 	    		});
 		    	
 		    } );
+		    */
 		 
 		 /*
 		  * Settings
@@ -500,7 +549,7 @@ window.gTasks = {
  		 				globals.gCurrentSurvey = firstSurveyId;
  		 				gTasks.gSelectedSurveyIndex = firstSurveyIndex;
  		 			} else if(gTasks.gSelectedSurveyIndex && firstSurveyId) {
- 		 				$elemSurveys.val(globals.gCurrentSurvey);
+ 		 				$elemSurveys.val(gTasks.gSelectedSurveyIndex);
  		 			}
 	 				
 	 				if(typeof callback == "function") {
@@ -525,7 +574,7 @@ window.gTasks = {
 	  */
 	 function getSurveyConfig(sId, managed_id) {
 		 
-		 if(!gTasks.cache.surveyConfig[sId]) {
+		 if(!gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex]) {
 			 var url = '/surveyKPI/managed/config/' + sId + "/" + managed_id;
 			 
 			 addHourglass();
@@ -535,7 +584,7 @@ window.gTasks = {
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
-					 gTasks.cache.surveyConfig[sId] = data;
+					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
 					 showManagedData(sId, '#trackingTable', undefined);
 				 },
 				 error: function(xhr, textStatus, err) {
@@ -688,7 +737,8 @@ window.gTasks = {
 		 
 		 globals.gMainTable.columns( hiddenColumns ).visible(false, false);
 		 globals.gMainTable.columns( visibleColumns ).visible(true, false);
-		 globals.gMainTable.columns.adjust().draw( false ); // adjust column sizing and redraw
+		 $('#trackingTable').width('auto');
+		 globals.gMainTable.columns.adjust().draw(); // adjust column sizing and redraw
 	 }
 	 
 	 /*
@@ -697,7 +747,7 @@ window.gTasks = {
 	 function saveFilter(column, value) {
 		 
 		var
-			config = gTasks.cache.surveyConfig[globals.gCurrentSurvey],
+			config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
 			i;
 		
 		if(value == '') {
@@ -717,7 +767,7 @@ window.gTasks = {
 	  * Update the saved configuration
 	  */
 	 function saveConfig() {
-		var config = gTasks.cache.surveyConfig[globals.gCurrentSurvey];
+		var config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex];
 		
 		saveString = JSON.stringify(config);
 		 

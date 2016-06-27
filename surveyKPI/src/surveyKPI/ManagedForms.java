@@ -117,27 +117,24 @@ public class ManagedForms extends Application {
 			/*
 			 * Get the columns to show for this survey and management function
 			 */
-			if(dpId > 0) {
-				pstmt = sd.prepareStatement(sql);	 
-				pstmt.setInt(1,  uId);
-				pstmt.setInt(2,  sId);
-	
-				rs = pstmt.executeQuery();
-				if(rs.next()) {
-					String config = rs.getString("settings");
-				
-					if(config != null) {
-						Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
-						savedConfig = gson.fromJson(config, type);
-					} else {
-						savedConfig = new ManagedFormConfig ();
-					}
+			pstmt = sd.prepareStatement(sql);	 
+			pstmt.setInt(1,  uId);
+			pstmt.setInt(2,  sId);
+
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String config = rs.getString("settings");
+			
+				if(config != null) {
+					Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
+					savedConfig = gson.fromJson(config, type);
 				} else {
 					savedConfig = new ManagedFormConfig ();
 				}
 			} else {
 				savedConfig = new ManagedFormConfig ();
 			}
+			
 			
 			/*
 			 * Add any configuration settings
@@ -156,7 +153,6 @@ public class ManagedForms extends Application {
 							tc.include = tcConfig.include;
 							tc.hide = tcConfig.hide;
 							tc.filterValue = tcConfig.filterValue;
-							System.out.println("Setting filter value: " + tc.name + " :" + tc.filterValue);
 							break;
 						}
 					}
@@ -911,7 +907,6 @@ public class ManagedForms extends Application {
 						tc.include = tcConfig.include;
 						tc.hide = tcConfig.hide;
 						tc.filterValue = tcConfig.filterValue;
-						System.out.println("Setting filter value: " + tc.name + " :" + tc.filterValue);
 						break;
 					}
 				}
