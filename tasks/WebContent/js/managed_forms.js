@@ -234,22 +234,17 @@ require([
 		// Save changes to the table columns that are shown
 		$('#applyTableSort').click(function(){
 			
-			var tableColumns = [],
+			var 
 				config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
-				tc,
 				$this;
 			
-			$('input', '#tab-settings-content').each(function(){
+			$('input', '#tab-settings-content').each(function(index){
 				$this = $(this);
-				tc = {};
-				tc.name = $this.val();
-				tc.hide = !$this.is(':checked');
-				tc.include = true;
-				tableColumns.push(tc);
+				config.columns[index + 1].hide = !$this.is(':checked');		// Ignore prikey
+				
 			});
 			
-			config.columns = tableColumns;
-			updateVisibleColumns(tableColumns);
+			updateVisibleColumns(config.columns);
 			saveConfig(config);
 	
 		});

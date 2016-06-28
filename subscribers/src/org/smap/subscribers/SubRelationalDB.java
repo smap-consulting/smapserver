@@ -539,7 +539,6 @@ public class SubRelationalDB extends Subscriber {
 
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtHrk = null;
 		
 		try {
 			/*
@@ -698,7 +697,6 @@ public class SubRelationalDB extends Subscriber {
 			}
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
-			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {}
 		}
 		
 		return keys;
@@ -798,16 +796,13 @@ public class SubRelationalDB extends Subscriber {
 		 */		
 		String tableName = element.getTableName();
 		
-		// Check that the new record is not bad
-		String sql = "select _bad, prikey from " + tableName + " where instanceid = ?;";
-		boolean isGood = false;
+		String sql = "select prikey from " + tableName + " where instanceid = ?;";
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		pstmt = connection.prepareStatement(sql);
 		pstmt.setString(1, instanceId);
 		ResultSet rs = pstmt.executeQuery();
 		if(rs.next()) {
-			isGood = !rs.getBoolean(1);
-			key = rs.getString(2);
+			key = rs.getString(1);
 		}
 		pstmt.close();
 		

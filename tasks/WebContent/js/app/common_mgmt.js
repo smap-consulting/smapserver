@@ -737,9 +737,9 @@ window.gTasks = {
 		 
 		 for(i = 0; i < cols.length; i++) {
 			 if(cols[i].hide) {
-				 hiddenColumns.push(i + 1);	// Add 1 to allow for the "Record" column
+				 hiddenColumns.push(i);	
 			 } else {
-				 visibleColumns.push(i + 1);	// Add 1 to allow for the "Record" column
+				 visibleColumns.push(i);
 			 }
 		 }
 		 
