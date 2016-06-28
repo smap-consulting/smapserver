@@ -173,7 +173,7 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
-			boolean getExternalOptions			// Set to true to get options added from an external CSV file
+			String getExternalOptions			// external || internal || real (get external if they exist else get internal)
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -545,7 +545,7 @@ public class SurveyManager {
 	 */
 	private void populateSurvey(Connection sd, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
-			boolean getExternalOptions) throws Exception {
+			String getExternalOptions) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -810,9 +810,18 @@ public class SurveyManager {
 			
 			OptionList optionList = new OptionList ();
 			optionList.options = new ArrayList<Option> ();
-				
+			
+			boolean external = false;
+			if(getExternalOptions.equals("external")) {
+				external = true;
+			} else if(getExternalOptions.equals("internal")) {
+				external = false;
+			} else if(getExternalOptions.equals("real")) {
+				external = GeneralUtilityMethods.listHasExternalChoices(sd, listId);
+			}
+			
 			pstmtGetOptions.setInt(1, listId);
-			pstmtGetOptions.setBoolean(2, getExternalOptions);
+			pstmtGetOptions.setBoolean(2, external);
 			log.info("SQL Get options: " + pstmtGetOptions.toString());
 			rsGetOptions = pstmtGetOptions.executeQuery();
 				

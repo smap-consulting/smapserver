@@ -2486,6 +2486,35 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Check to see if there are any choices from an external file for a question
+	 */
+	public static boolean listHasExternalChoices(Connection sd, int listId) throws SQLException {
+		
+		boolean external = false;
+		String sql = "select count(*) from option o where o.l_id = ? and o.externalfile = 'true';";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, listId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				if(rs.getInt(1) > 0) {
+					external = true;
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return external;
+	}
+	
+	/*
 	 * Re-sequence options starting from 0
 	 */
 	public static void cleanOptionSequences(Connection sd, int listId) throws SQLException {
