@@ -59,11 +59,11 @@ public class QuestionInfo {
 	public QuestionInfo(int surveyId, 
 			int questionId, 
 			Connection connection, 
-			boolean isGeom, 
+			boolean isGeomDeprecated, 
 			String lang, 
 			String urlprefix) throws SQLException {	
 		
-		this.isGeom = isGeom;
+		//this.isGeom = isGeom;			Don't rely on isGeom parameter
 		this.urlprefix = urlprefix;
 		qId = questionId;
 		sId = surveyId;
@@ -115,7 +115,9 @@ public class QuestionInfo {
 					if(idx > 0) {
 						columnName = columnName.substring(0, idx);
 					}
-					
+					isGeom = true;
+				} else if(qType.equals("geopoint") || qType.equals("geoshape") || qType.equals("geotrace")) {
+					isGeom = true;
 				}
 				
 				/*
