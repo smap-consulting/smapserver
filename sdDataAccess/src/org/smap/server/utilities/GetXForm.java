@@ -300,7 +300,7 @@ public class GetXForm {
      *  and it would be inefficient to download the iText for disabled questions
      */
     public void enableTranslationElements(Connection sd, Form f) throws SQLException {
-       	if(firstForm != null) {
+       	if(firstForm != null && f != null) {
    
        	   	HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = template.getTranslations();
        	   	Collection<HashMap<String, HashMap<String, Translation>>> c = translations.values();
