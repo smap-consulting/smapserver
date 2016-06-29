@@ -101,7 +101,7 @@ public class Results extends Application {
 	static long MS_IN_DAY = 86400000;
 	static long MS_IN_WEEK = 86400000 * 7;
 	
-	// Return results for a question
+	// Return results for a question in geoJson
 	@GET
 	@Produces("application/json")
 	public Response getResults(@Context HttpServletRequest request,
@@ -114,7 +114,8 @@ public class Results extends Application {
 			@QueryParam("qId") int qId,				// Question
 			@QueryParam("qId_is_calc") boolean qId_is_calc,	// Server Side Calculate Question
 			@QueryParam("lang") String lang,		// Language
-			@QueryParam("geoTable") String geoTable,	// Name of external geo-table to get  geometries from
+			@QueryParam("geoTable") String geoTable,		// Name of external geo-table to get  geometries from
+			@QueryParam("geomname") boolean geomname,	// If true return the name of the geometry instead of geojson
 			@QueryParam("rId") int rId,				// Restrict results to a single record
 			@QueryParam("startDate") Date startDate,
 			@QueryParam("endDate") Date endDate,
@@ -500,7 +501,7 @@ public class Results extends Application {
 						JSONArray prikeys = new JSONArray();
 						featuresArray.put(feature);
 							
-						if(hasGeo && theGeom != null) {
+						if(hasGeo && theGeom != null && !geomname) {
 							JSONObject jg = new JSONObject(theGeom);
 							feature.put("geometry", jg);
 						}
