@@ -852,7 +852,7 @@ public class AllAssignments extends Application {
 				String msg = "The survey results do not have coordinates " + as.source_survey_name;
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
 			} else if(e.getMessage() != null && e.getMessage().contains("does not exist")) {
-				response = Response.ok().build();	// No problem
+				response = Response.ok("{\"tg_id\": 0}").build();	// No problem
 			} else {
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"", e);
