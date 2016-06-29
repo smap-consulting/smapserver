@@ -125,7 +125,8 @@ public class Results2 extends Application {
 			@QueryParam("rId") int rId,				// Restrict results to a single record
 			@QueryParam("startDate") Date startDate,
 			@QueryParam("endDate") Date endDate,
-			@QueryParam("filter") String sFilter
+			@QueryParam("filter") String sFilter,
+			@QueryParam("prikeys") boolean	showPrikeys	// Set true to get the primary keys with each record of data
 			) { 
 	
 		Response response = null;
@@ -179,6 +180,9 @@ public class Results2 extends Application {
 		}
 		if(groupArray.size() > 0) {
 			hasGroup = true;
+		}
+		if(groupArray.size() > 1) {
+			geomname = true;			// Don't return geometries if there is more than one group by as the same large polygons may be returned multiple times
 		}
 		
 		if(group_t != null) {
@@ -513,7 +517,9 @@ public class Results2 extends Application {
 							if(newGroupValue != null && newGroupValue.trim().length() > 0) {
 								combinedGroupIdent += newGroupValue;
 							}					
-						} else if(group.getType().equals("string") || group.getType().equals("int") || group.getType().equals("calculate")) {
+						} else if(group.getType().equals("string") || group.getType().equals("int") 
+								|| group.getType().equals("calculate")
+								|| group.getType().equals("date")) {
 							newGroupValue = resultSet.getString(group.getColumnName());
 							if(newGroupValue != null  && newGroupValue.trim().length() > 0) {
 								combinedGroupIdent += newGroupValue;
@@ -564,7 +570,9 @@ public class Results2 extends Application {
 							featureProps.put("timeIdx", timeIdx);
 							maxTimeIdx = timeIdx;
 						}
-						featureProps.put("prikeys", prikeys);
+						if(showPrikeys) {
+							featureProps.put("prikeys", prikeys);
+						}
 							
 						String groupName = null;
 						String groupLabel = null;
@@ -611,9 +619,11 @@ public class Results2 extends Application {
 					groupInfo.incRecordCount();
 					ArrayList<RecordValues> values = new ArrayList<RecordValues> ();
 
-					// Add the primary key		
-					JSONArray prikeys = (JSONArray) groupInfo.featureProps.get("prikeys");
-					prikeys.put(resultSet.getString("prikey"));
+					// Add the primary key
+					if(showPrikeys) {
+						JSONArray prikeys = (JSONArray) groupInfo.featureProps.get("prikeys");
+						prikeys.put(resultSet.getString("prikey"));
+					}
 					
 					
 					if(!aQ.isGeom()) {	// Ignore external geometry tables
