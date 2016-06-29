@@ -32,6 +32,7 @@ import org.smap.model.CascadeInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.model.Results;
 import org.smap.sdal.Utilities.ApplicationException;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.server.entities.Form;
@@ -1300,7 +1301,13 @@ public class GetXForm {
     		boolean isFirstSubForm,
     		boolean simplifyMedia) throws SQLException {
 	
-		List<List<Results>> results = getResults(form, id, parentId, cResults, sd, template, simplifyMedia);  // Add the child elements
+    	List<List<Results>> results = null;
+    	if(GeneralUtilityMethods.tableExists(cResults, form.getTableName())) {
+    		results = getResults(form, id, parentId, cResults, sd, template, simplifyMedia);  // Add the child elements
+    	} else {
+    		results = new ArrayList<List<Results>> ();		// Create an empty list
+    	}
+    	
     	boolean generatedTemplate = false;
 		// For each record returned from the database add a form element
     	for(int i = 0; i < results.size(); i++) {
@@ -1402,7 +1409,6 @@ public class GetXForm {
     	 *  Select questions are retrieved using a separate query as there are multiple 
     	 *  columns per question
     	 */
-    	
     	String sql = "select prikey";
     	List<Question> questions = form.getQuestions(sd);
     	for(Question q : questions) {
