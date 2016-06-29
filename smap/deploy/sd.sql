@@ -87,9 +87,9 @@ create TABLE regions (
 	);
 ALTER TABLE regions OWNER TO ws;
 
-INSERT into regions (o_id, table_name, region_name, geometry_column)
-	SELECT DISTINCT 1, f_table_name, f_table_name, f_geometry_column FROM geometry_columns 
-	WHERE type='MULTIPOLYGON' or type='POLYGON';
+-- INSERT into regions (o_id, table_name, region_name, geometry_column)
+--	SELECT DISTINCT 1, f_table_name, f_table_name, f_geometry_column FROM geometry_columns 
+--	WHERE type='MULTIPOLYGON' or type='POLYGON';
 	
 -- Upgrade to:  14.08 from 14.05 =======
 
