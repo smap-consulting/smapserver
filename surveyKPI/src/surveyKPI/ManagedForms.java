@@ -152,6 +152,7 @@ public class ManagedForms extends Application {
 						if(tcConfig.name.equals(tc.name)) {
 							tc.include = tcConfig.include;
 							tc.hide = tcConfig.hide;
+							tc.barcode = tcConfig.barcode;
 							tc.filterValue = tcConfig.filterValue;
 							break;
 						}
@@ -906,6 +907,7 @@ public class ManagedForms extends Application {
 					if(tcConfig.name.equals(tc.name)) {
 						tc.include = tcConfig.include;
 						tc.hide = tcConfig.hide;
+						tc.barcode = tcConfig.barcode;
 						tc.filterValue = tcConfig.filterValue;
 						break;
 					}

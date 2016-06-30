@@ -10,6 +10,7 @@ public class TableColumn {
 	public String humanName;
 	public boolean include;		// Include in the table
 	public boolean hide;		// Only show on expand
+	public boolean barcode;		// Show as barcode
 	public boolean mgmt = false;
 	public boolean filter = false;
 	public String filterValue;

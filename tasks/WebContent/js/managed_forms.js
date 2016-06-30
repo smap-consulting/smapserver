@@ -55,6 +55,8 @@ requirejs.config({
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
     	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
     	crf: '../../../../js/libs/commonReportFunctions',
+    	qrcode: '../../../../js/libs/jquery-qrcode-0.14.0.min'
+    	
     },
     shim: {
 
@@ -70,7 +72,8 @@ requirejs.config({
     	'slimscroll': ['jquery'],
     	'crf': ['jquery'],
        	'datatables': ['jquery', 'bootstrap'],
-    	'app/common_mgmt': ['jquery']
+    	'app/common_mgmt': ['jquery'],
+    	'qrcode': ['jquery']
 	
     	}
     });
@@ -90,7 +93,8 @@ require([
          'datetimepicker',
          'icheck',
          'crf',
-         'app/common_mgmt'
+         'app/common_mgmt',
+         'qrcode'
          
          ], function($, 
         		 bootstrap, 
@@ -233,7 +237,7 @@ require([
 		});
 		
 		// Save changes to the table columns that are shown
-		$('#applyTableSort').click(function(){
+		$('#applyColumns').click(function(){
 			
 			var 
 				config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
@@ -246,6 +250,23 @@ require([
 			});
 			
 			updateVisibleColumns(config.columns);
+			saveConfig(config);
+	
+		});
+		
+		// Save changes to the barcodes that are shown
+		$('#applyBarcodes').click(function(){
+			
+			var 
+				config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
+				$this;
+			
+			$('input', '#tab-barcode-content').each(function(index){
+				$this = $(this);
+				config.columns[index + 1].barcode = $this.is(':checked');		// Ignore prikey
+				
+			});
+			globals.gMainTable.ajax.reload(); // redraw
 			saveConfig(config);
 	
 		});

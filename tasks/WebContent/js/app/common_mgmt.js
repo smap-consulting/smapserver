@@ -248,7 +248,7 @@ window.gTasks = {
 		 }
 		 url += "&format=dt";
 		 
-		 // Add anchors
+		 // Create data table
 		 globals.gMainTable = $table.DataTable({
 			 processing: true,
 			 select: true,
@@ -330,13 +330,15 @@ window.gTasks = {
 	            //alert(JSON.stringify( rowData ));
 	        } );
 		 
-		 // Highlight data conditionally
+		 // Highlight data conditionally, set barcodes
 		 globals.gMainTable.off('draw').on( 'draw', function () {
 			 
 			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 	 
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
+				 
+				 // Highlighting
 				 if(headItem.markup) {
 					 $( globals.gMainTable.column( headItem.colIdx ).nodes() ).each(function(index) {
 						 var $this = $(this),
@@ -347,6 +349,20 @@ window.gTasks = {
 						 		 $this.addClass( headItem.markup[j].classes );
 						 	}
 					 	}
+						
+					 });
+				 }
+				 
+				 // Barcode
+				 if(headItem.barcode) {
+					 $( globals.gMainTable.column( headItem.colIdx ).nodes() ).each(function(index) {
+						 var $this = $(this),
+						 	opt = {
+							 render: 'div',
+							 text: $this.text()
+						 }
+
+						$this.qrcode(opt);
 						
 					 });
 				 }
@@ -371,7 +387,7 @@ window.gTasks = {
 			 }
 		 });
 		 $('input', '#tab-barcode-content').each(function(index){
-			 if(!columns[index+1].barcode) {
+			 if(columns[index+1].barcode) {
 				 $(this).iCheck('check');
 			 }
 		 });

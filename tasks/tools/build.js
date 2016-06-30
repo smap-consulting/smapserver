@@ -22,6 +22,7 @@
 	'datatables.net-bs': '../../../../smapServer/WebContent/js/libs/DataTables/DataTables/js/dataTables.bootstrap',
 	'datatables.select': '../../../../smapServer/WebContent/js/libs/DataTables/Select/js/dataTables.select.min',
 	bootstrap: '../../../../smapServer/WebContent/js/libs/bootstrap.min',
+	qrcode: '../../../../smapServer/WebContent/js/libs/jquery-qrcode-0.14.0.min',
     	bootstrapfileinput: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	bootbox: '../../../../smapServer/WebContent/js/libs/bootbox.min',
 	file_input: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
