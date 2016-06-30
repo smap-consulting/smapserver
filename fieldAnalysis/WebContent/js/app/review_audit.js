@@ -104,6 +104,7 @@ function enableReversal() {
 				        		$.ajax({
 				        			  type: "POST",
 				        			  dataType: 'text',
+				        			  cache: false,
 				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/undo/" + gChangeset,
 				        			  success: function(data, status) {
 				        				  removeHourglass();

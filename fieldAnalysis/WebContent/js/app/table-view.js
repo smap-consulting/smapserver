@@ -254,6 +254,7 @@ function deleteAllTables(sId) {
 			$.ajax({
 				type : 'Delete',
 				url : deleteSurveyDataURL(sId),
+				cache: false,
 				success : function(response) {
 					removeHourglass();
 					refreshAnalysisData();
@@ -385,6 +386,7 @@ function toggleBad($elem, fId, pKey, value, sId, theView) {
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
+		  cache: false,
 		  contentType: "application/json",
 		  data: { value: toBeBad, sId: sId, reason: reason},
 		  url: toggleBadURL(fId, pKey),

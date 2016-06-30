@@ -129,6 +129,7 @@ function populateFormList(fn) {
  	$.ajax({
 		url: "/surveyKPI/ssc/" + sId + "/" + fn + "/forms",
 		dataType: 'json',
+		cache: false,
 		success: function(data) {
 			removeHourglass();
 			console.log("Forms");
@@ -169,6 +170,7 @@ function saveSurvey() {
 	$.ajax({
 		  type: "POST",
 		  url: "/surveyKPI/survey/" + sId + "/rename",
+		  cache: false,
 		  data: { 
 			  name: sName,
 			  def_lang: sDefLang
@@ -195,6 +197,7 @@ function saveSSC() {
 	$.ajax({
 		  type: "POST",
 		  url: "/surveyKPI/ssc/" + sId + "/" + fn + "/add",
+		  cache: false,
 		  data: { 
 			  form: form,
 			  name: name,

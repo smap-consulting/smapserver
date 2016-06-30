@@ -161,6 +161,7 @@ function saveNotification() {
 		$.ajax({
 			  type: "POST",
 			  dataType: 'text',
+			  cache: false,
 			  async: false,
 			  url: url,
 			  data: { notification: notificationString },
@@ -350,6 +351,7 @@ function delete_notification(id) {
 	$.ajax({
 		  type: "DELETE",
 		  async: false,
+		  cache: false,
 		  url: "/surveyKPI/notifications/" + id,
 		  success: function(data, status) {
 			  removeHourglass();
@@ -428,6 +430,7 @@ function getRemoteSurveys() {
 	$.ajax({
 		  type: "POST",
 		  async: true,
+		  cache: false,
 		  url: "/surveyKPI/notifications/getRemoteSurveys",
 		  data: { remote: remoteString },
 		  success: function(data, status) {

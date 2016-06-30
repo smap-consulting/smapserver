@@ -73,6 +73,7 @@ $(document).ready(function() {
 		
 			$.ajax({
 				  type: "POST",
+				  cache: false,
     			  dataType: 'text',
 				  url: "/surveyKPI/survey/" + sId + "/remove_media",
 				  data: { qId: qId, oId: oId, text_id: text_id },

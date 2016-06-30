@@ -118,6 +118,7 @@ define([
 	 	$.ajax({
 			url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + fn + "/forms",
 			dataType: 'json',
+			cache: false,
 			success: function(data) {
 				removeHourglass();
 				console.log("Forms");

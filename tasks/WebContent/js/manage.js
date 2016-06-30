@@ -137,6 +137,7 @@ require([
 			 $.ajax({
 				 type: "POST",
 					  dataType: 'text',
+					  cache: false,
 					  contentType: "application/json",
 					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gManageId,
 					  data: { settings: saveString },
@@ -466,6 +467,7 @@ require([
 		 $.ajax({
 			 type: "POST",
 				  dataType: 'text',
+				  cache: false,
 				  contentType: "application/json",
 				  url: "/surveyKPI/managed/add",
 				  data: { settings: saveString },

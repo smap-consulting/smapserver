@@ -219,6 +219,7 @@ require([
 				 type: "POST",
 					  dataType: 'text',
 					  contentType: "application/json",
+					  cache: false,
 					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id,
 					  data: { settings: saveString },
 					  success: function(data, status) {
@@ -238,7 +239,7 @@ require([
 				config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
 				$this;
 			
-			$('input', '#tab-settings-content').each(function(index){
+			$('input', '#tab-columns-content').each(function(index){
 				$this = $(this);
 				config.columns[index + 1].hide = !$this.is(':checked');		// Ignore prikey
 				

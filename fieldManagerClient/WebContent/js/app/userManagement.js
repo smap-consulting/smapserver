@@ -262,6 +262,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  contentType: "application/json",
+			  cache: false,
 			  url: "/surveyKPI/projectList",
 			  data: { projects: projectString },
 			  success: function(data, status) {
@@ -1354,6 +1355,7 @@ function moveToOrganisations (orgId, users, projects) {
 		  type: "POST",
 		  contentType: "application/json",
 		  async: false,
+		  cache: false,
 		  url: "/surveyKPI/organisationList/setOrganisation",
 		  data: { 
 			  orgId: orgId,

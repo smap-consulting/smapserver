@@ -352,58 +352,31 @@ window.gTasks = {
 				 }
 			 }
 		 });
-		 
-		 // Add filters
-		 /*
-		 globals.gMainTable.on( 'init.dt', function () {
-			 console.log("init.dt");
-			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
-			 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
-				 if(columns[colIdx].filter) {
-					 var select = $('<select class="form-control"/>')
-					 		.appendTo(
-					 				globals.gMainTable.column(colIdx).footer()
-		    		        )
-		    		        .on( 'change', function () {
-		    		        	globals.gMainTable
-		    		                .column( colIdx )
-		    		                .search( $(this).val() )
-		    		                .draw();
-		    		        	saveFilter(colIdx, $(this).val());
-		    		        } );
-		    		
-		    		    select.append( $('<option value=""></option>') );
-		    		    
-		    		    globals.gMainTable
-					        .column( colIdx )
-					        .cache('search')
-					        .sort()
-					        .unique()
-					        .each( function ( d ) {
-					            select.append( $('<option value="'+d+'">'+d+'</option>') );
-					        } );
-		    		    
-		    		    // Set current value
-		    		    if(columns[colIdx].filterValue) {
-		    		    	select.val(columns[colIdx].filterValue).trigger('change');
-		    		    }
-	    			}
-		    		
-	    		});
-		    	
-		    } );
-		    */
+		
 		 
 		 /*
 		  * Settings
 		  */
-		 $('#tab-settings-content').html(hColSort.join(''));
+		 $('#tab-columns-content, #tab-barcode-content').html(hColSort.join(''));
 		 
 		 // Set checkboxes in column sort section of settings
-		 $('input', '#tab-settings-content').iCheck({
+		 
+		 $('input', '#tab-columns-content,#tab-barcode-content').iCheck({
 			 checkboxClass: 'icheckbox_square-green',
 			 radioClass: 'iradio_square-green'
 		 });
+		 $('input', '#tab-columns-content').each(function(index){
+			 if(!columns[index+1].hide) {
+				 $(this).iCheck('check');
+			 }
+		 });
+		 $('input', '#tab-barcode-content').each(function(index){
+			 if(!columns[index+1].barcode) {
+				 $(this).iCheck('check');
+			 }
+		 });
+		 
+		
 		 
 
 	 }
@@ -426,9 +399,9 @@ window.gTasks = {
 			h[++idx] = ' class="columnSelect" value="';
 			h[++idx] = item.name;
 			h[++idx] = '"';
-			if(!item.hide) {
-				h[++idx] = ' checked';
-			}
+			//if(!item.hide) {
+			//	h[++idx] = ' checked';
+			//}
 			h[++idx] = '>';
 			h[++idx] = '</div>';
 			h[++idx] = '</div>';
@@ -782,7 +755,8 @@ window.gTasks = {
 		 addHourglass();
 		 $.ajax({
 			 type: "POST",
-				  dataType: 'text',
+			 dataType: 'text',
+			 cache: false,
 				  contentType: "application/json",
 				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey,
 				  data: { settings: saveString },

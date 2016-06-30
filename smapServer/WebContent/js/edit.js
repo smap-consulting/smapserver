@@ -343,6 +343,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  url: "/surveyKPI/surveys/save_languages/" + gSId,
+			  cache: false,
 			  data: { languages: languagesString },
 				success: function(data) {
 					removeHourglass();
@@ -575,6 +576,7 @@ function setAllRequired(required) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
+		  cache: false,
 		  url: "/surveyKPI/surveys/set_required/" + gSId + "/" + (required ? "true" : "false"),
 			success: function(data) {
 				removeHourglass();
@@ -1647,6 +1649,7 @@ function getSurveyForms(sId, callback) {
 		addHourglass();
 	 	$.ajax({
 			url: url,
+			cache: false,
 			dataType: 'json',
 			success: function(data) {
 				removeHourglass();

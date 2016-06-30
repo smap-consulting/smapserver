@@ -198,6 +198,7 @@ $(document).ready(function() {
     		$.ajax({
     			  type: "POST",
     			  dataType: 'text',
+    			  cache: false,
 				  contentType: "application/json",
     			  url: "/surveyKPI/regions",
     			  data: { settings: regionString },
@@ -262,6 +263,7 @@ $(document).ready(function() {
 		        				$.ajax({
 		        					url: "/surveyKPI/regions/" + $(this).val(),
 		        					type: "DELETE",
+		        					cache: false,
 		        					success: function(data) {
 		        						--count;
 		        						if(allCalled && count == 0) {

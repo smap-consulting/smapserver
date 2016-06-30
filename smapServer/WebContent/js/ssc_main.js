@@ -159,6 +159,7 @@ function saveSSC() {
 	$.ajax({
 		  type: "POST",
 		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + fn + "/add",
+		  cache: false,
 		  data: { 
 			  form: form,
 			  name: name,
@@ -186,6 +187,7 @@ function deleteSSC(idx) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
+		  cache: false,
 		  url: "/surveyKPI/ssc/" + globals.gCurrentSurvey + "/" + ssc.fn + "/delete/" + ssc.id,
 		  success: function(data, status) {
 			  removeHourglass();

@@ -119,6 +119,7 @@ function getSurveyMetaReport(sId, data) {
 	 	$.ajax({
 			url: url,
 			dataType: 'json',
+			cache: false,
 			success: function(surveyMeta) {
 				removeHourglass();
 				globals.gSelector.addSurvey(sId, surveyMeta);
@@ -166,6 +167,7 @@ function saveReport() {
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
+		  cache: false,
 		  contentType: "application/json",
 		  url: url,
 		  data: { report: reportString },

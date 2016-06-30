@@ -45,6 +45,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			        		$.ajax({
 			        			  type: "POST",
 			        			  dataType: 'text',
+			        			  cache: false,
 			        			  async: false,
 			        			  url: "/surveyKPI/survey/" + local_sId + "/model",
 			        			  data: { model: graphString },

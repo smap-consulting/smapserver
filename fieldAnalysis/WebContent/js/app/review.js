@@ -230,6 +230,7 @@ function enableTextUpdate() {
 				        		$.ajax({
 				        			  type: "POST",
 				        			  dataType: 'text',
+				        			  cache: false,
 				        			  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
 				        			  data: { updates: updateString },
 				        			  success: function(data, status) {
@@ -539,6 +540,7 @@ function saveTargetResults() {
 			$.ajax({
 				  type: "POST",
     			  dataType: 'text',
+    			  cache: false,
 				  url: "/surveyKPI/review/" + globals.gCurrentSurvey,
 				  data: { updates: updateString },
 				  success: function(data, status) {

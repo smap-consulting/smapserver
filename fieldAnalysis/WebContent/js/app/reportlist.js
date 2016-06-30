@@ -361,6 +361,7 @@ function reportDelete(ident) {
 		
 		$.ajax({
 			type : 'Delete',
+			cache: false,
 			url : "/surveyKPI/reports/report/" + globals.gCurrentProject + "/" + ident,
 			error : function() {
 				alert("Error: Failed to delete");
@@ -436,6 +437,7 @@ function authStatusChange(response) {
 	$.ajax({		// TODO handle paging, however a lot of groups should be returned in first page, may never be necessary
 		type : 'get',
 		dataType: 'json',
+		cache: false,
 		url : "https://graph.facebook.com/me/groups?access_token=" + gAccessToken,
 		error : function(xhr, textStatus, err) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
@@ -526,6 +528,7 @@ function enableFacebookDialog() {
 		        			$.ajax({
 		        				type : 'post',
 		        				url : url,
+		        				cache: false,
 		        				data : {
 		        				    link: gData[gIndex].smap.report_url,
 		        				    name: gData[gIndex].title,

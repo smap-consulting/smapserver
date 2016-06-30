@@ -122,6 +122,7 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "POST",
+			  cache: false,
 			  url: "/surveyKPI/onetimelogon",
 			  data: { passwordDetails: pdString },
 			  success: function(data, status) {
@@ -144,6 +145,7 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "GET",
+			  cache: false,
 			  url: "/surveyKPI/onetimelogon/" + email,
 			  success: function(data, status) {
 				  removeHourglass();

@@ -90,6 +90,7 @@ $(document).ready(function() {
 		addHourglass();
     	$.ajax({
 			  type: "POST",
+			  cache: false,
 			  url: "/surveyKPI/register",
 			  data: { registrationDetails: regString },
 			  success: function(data, status) {

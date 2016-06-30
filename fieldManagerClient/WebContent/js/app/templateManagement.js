@@ -684,6 +684,7 @@ function executeDelete(template, delTables, hard) {
 	$.ajax({
 		type : 'DELETE',
 		url : delURL,
+		cache: false,
 		error : function() {
 			removeHourglass();
 			alert(localise.set["msg_err_del"]);
@@ -710,6 +711,7 @@ function executeUnDelete(template) {
 	$.ajax({
 		type : 'DELETE',
 		url : url,
+		cache: false,
 		error : function() {
 			removeHourglass();
 			alert(localise.set["msg_err_res"]);
@@ -731,6 +733,7 @@ function executeBlock(template, set) {
 	$.ajax({
 		type : 'POST',
 		url : blockURL,
+		cache: false,
 		error : function() {
 			removeHourglass();
 			alert(localise.set["msg_err_block"]);

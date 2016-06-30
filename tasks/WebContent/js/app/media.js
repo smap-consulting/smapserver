@@ -74,6 +74,7 @@ $(document).ready(function() {
 			$.ajax({
 				  type: "POST",
 				  url: "/surveyKPI/survey/" + sId + "/remove_media",
+				  cache: false,
 				  data: { qId: qId, oId: oId, text_id: text_id },
 				  success: function(data, status) {
 					  removeHourglass();

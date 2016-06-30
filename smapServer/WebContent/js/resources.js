@@ -234,6 +234,7 @@ function saveMap() {
 	$.ajax({
 		  type: "POST",
 		  async: false,
+		  cache: false,
 		  url: url,
 		  contentType: "application/json",
 		  data: { map: mapString },

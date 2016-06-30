@@ -301,6 +301,7 @@ $(document).ready(function() {
 			$.ajax({
 				  type: "POST",
 				  contentType: "application/json",
+				  cache: false,
 				  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 				  data: { settings: assignString },
 				  success: function(data, status) {
@@ -353,6 +354,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  contentType: "application/json",
+			  cache: false,
 			  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
 			  data: { settings: assignString },
 			  success: function(data, status) {
@@ -732,6 +734,7 @@ function saveData(data) {
 
 	$.ajax({
 		  type: "POST",
+		  cache: false,
 		  contentType: "application/json",
 		  url: "/surveyKPI/assignments",
 		  data: { settings: assignString },
@@ -752,6 +755,7 @@ function deleteData(data) {
 	$.ajax({
 		  type: "DELETE",
 		  contentType: "application/json",
+		  cache: false,
 		  url: "/surveyKPI/assignments",
 		  data: { settings: deleteString },
 		  success: function(data, status) {
@@ -935,6 +939,7 @@ function refreshTableAssignments(tasks) {
 					addHourglass();
 					$.ajax({
 						  type: "DELETE",
+						  cache: false,
 						  url: "/surveyKPI/assignments/" + tg_id,
 						  success: function(data, status) {
 							  removeHourglass();

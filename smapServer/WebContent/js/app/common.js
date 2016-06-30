@@ -168,6 +168,7 @@ function saveCurrentProject(projectId, surveyId, taskGroupId) {
 			  type: "POST",
 			  contentType: "application/json",
 			  url: "/surveyKPI/user",
+			  cache: false,
 			  data: { user: userString },
 			  success: function(data, status) {
 				  removeHourglass();
@@ -498,6 +499,7 @@ function saveCurrentUser(user) {
 	addHourglass();
 	$.ajax({
 		  type: "POST",
+		  cache: false,
 		  contentType: "application/json",
 		  url: "/surveyKPI/user",
 		  data: { user: userString },
@@ -1278,6 +1280,7 @@ function createNewSurvey(name, existing, existing_survey, existing_form, shared_
 	$.ajax({
 		type: "POST",
 		url: url,
+		cache: false,
 		dataType: 'json',
 		data: { 
 			existing: existing,

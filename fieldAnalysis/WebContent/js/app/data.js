@@ -127,6 +127,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 	  	function getAsyncGroupMeta(aUrl, asId, aqId, alanguage) {
 	  	 	$.ajax({
 	  			url: aUrl,
+	  			cache: false,
 	  			dataType: 'json',
 	  			success: function(data) {
 	  				gMetaInProgress--;

@@ -151,28 +151,40 @@
        <div id="right-sidebar">
             <div class="sidebar-container">
 
-                <ul class="nav nav-tabs navs-3">
+                <ul class="nav nav-tabs navs-2">
 
                     <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-sort-amount-desc"></i></a></li>
+                    <li><a data-toggle="tab" href="#tab-2"><i class="fa fa-barcode"></i></a></li>
                  
                 </ul>
 
                 <div class="tab-content">
-
                     <div id="tab-1" class="tab-pane active">
-
                         <div class="sidebar-title">
                             <h3> <span class="lang" data-lang="mf_sc">sort</span></h3>
                             <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_sc_i"></span></small>
                         </div>
 
-						<div id="tab-settings-content"></div>
+						<div id="tab-columns-content"></div>
 
                         <div class="sidebar-content">
                            <button id="applyTableSort" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
   
                         </div>
+                    </div>
+              
+                    <div id="tab-2" class="tab-pane">
+                        <div class="sidebar-title">
+                            <h3> <span class="lang" data-lang="mf_bc">barcodes</span></h3>
+                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
+                        </div>
 
+						<div id="tab-barcode-content"></div>
+
+                        <div class="sidebar-content">
+                           <button id="applyBarcodes" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
+  
+                        </div>
                     </div>
                 </div>
 

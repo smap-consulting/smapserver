@@ -181,6 +181,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  dataType: 'text',
+			  cache: false,
 			  contentType: "application/json",
 			  url: url,
 			  data: { tasks: baString },
@@ -262,6 +263,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  dataType: 'text',
+			  cache: false,
 			  contentType: "application/json",
 			  url: url,
 			  data: { task: tfString },
@@ -368,6 +370,7 @@ $(document).ready(function() {
 			$.ajax({
 				  type: "POST",
 				  url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
+				  cache: false,
 				  data: { settings: assignString },
 				  dataType: 'json',
 				  success: function(data, status) {
@@ -454,6 +457,7 @@ $(document).ready(function() {
 				$.ajax({
 					  type: "POST",
 					  dataType: 'text',
+					  cache: false,
 					  contentType: "application/json",
 					  url: url,
 					  data: { tasks: baString },
@@ -783,6 +787,7 @@ function setAddressOptions() {
 	 	$.ajax({
 			url: "/surveyKPI/survey/" + sId + "/getMeta",
 			dataType: 'json',
+			cache: false,
 			success: function(data) {
 				
 				addHourglass();
@@ -910,6 +915,7 @@ function saveData(data) {
 
 	$.ajax({
 		  type: "POST",
+		  cache: false,
 		  url: "/surveyKPI/assignments",
 		  data: { settings: assignString },
 		  success: function(data, status) {
@@ -1573,6 +1579,7 @@ function updateWhen(taskFeature, revertFunc, idx) {
 	$.ajax({
 		  type: "POST",
 		  dataType: 'text',
+		  cache: false,
 		  contentType: "application/json",
 		  url: url,
 		  data: { task: tfString },
