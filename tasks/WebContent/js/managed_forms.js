@@ -293,6 +293,31 @@ require([
 		});
 		
      });	 
+	 
+	 /*
+	  * Respond to a request to generate a file
+	  */
+	 $('.genfile').click( function() {
+		 var url = "/surveyKPI/tables/pdf",
+		 	$this = $(this),
+		 	filename,
+		 	mime,
+		 	data = {
+			 data: getTableData(globals.gMainTable)
+		 }
+		 
+		 
+		 
+		 if($this.hasClass("xls")) {
+			 filename = "displayName" + ".xlsx"
+			 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		 } else {
+			 filename = "displayName" + ".pdf"
+			 mime= "application/pdf";
+		 }
+		 
+		 generateFile(url, filename, mime, data); 
+	 });
 
 
 });

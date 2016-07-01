@@ -51,7 +51,6 @@ public class Tables extends Application {
 	LogManager lm = new LogManager();		// Application log
 
 	@POST
-	@Consumes("application/json")
 	@Path("/pdf")
 	public Response setManaged(
 			@Context HttpServletRequest request, 

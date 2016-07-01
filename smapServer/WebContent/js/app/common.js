@@ -1814,19 +1814,13 @@ function downloadFile(url, filename, mime) {
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, mime) {
+function generateFile(url, filename, mime, data) {
 
-	// prevent caching
-	var urlComp = url.split("?");
-	if(urlComp.length > 1) {
-		url += "&";
-	} else {
-		url += "?";
-	}
-	url += "_nocache=" + new Date().getTime();
+	var payload = "settings=" + JSON.stringify(data);
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', url, true);
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.responseType = 'blob';
 	 
 	xhr.onload = function(e) {
@@ -1848,7 +1842,30 @@ function generateFile(url, filename, mime) {
 		  }
 	};
 	 
-	xhr.send();
+	xhr.send(payload);
+	
+}
+
+/*
+ * Get the currently selected rows of datatable data as a json array
+ */
+function getTableData(table) {
+	
+	var rows = table.rows({
+	    	order:  'current',  // 'current', 'applied', 'index',  'original'
+	    	page:   'all',      // 'all',     'current'
+	    	search: 'applied',     // 'none',    'applied', 'removed'
+		}).data();
+	
+	var data = [],
+		i;
+	
+	for(i = 0; i < rows.length; i++) {
+		data.push(rows[i]);
+	}
+	
+	return data;
+	
 	
 }
 
