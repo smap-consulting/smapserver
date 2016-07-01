@@ -1809,6 +1809,47 @@ function downloadFile(url, filename, mime) {
 }
 
 /*
+ * Post data to be converted into a file
+ */
+function generateFile(url, filename, mime) {
+
+	// prevent caching
+	var urlComp = url.split("?");
+	if(urlComp.length > 1) {
+		url += "&";
+	} else {
+		url += "?";
+	}
+	url += "_nocache=" + new Date().getTime();
+	
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST', url, true);
+	xhr.responseType = 'blob';
+	 
+	xhr.onload = function(e) {
+		if (this.status == 200) {
+		    // get binary data as a response
+			var blob = new Blob([this.response], { type: mime });
+			var downloadUrl = URL.createObjectURL(blob);
+			var a = document.createElement("a");
+			a.href = downloadUrl;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+		    setTimeout(function(){
+		        document.body.removeChild(a);
+		        window.URL.revokeObjectURL(url);  
+		    }, 100);  
+		  } else {
+			  alert("Error: Download Failed");
+		  }
+	};
+	 
+	xhr.send();
+	
+}
+
+/*
  * Prevent the menu bar from extending over two lines
  */
 // From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
