@@ -711,18 +711,30 @@ define([
 					endName = name + "_groupEnd";
 					form = survey.forms[sourceForm];
 					
-					
-					for(i = oldLocation + 1; i < form.qSeq.length; i++) {
+					/*
+					 * Get the questions to move
+					 */
+					var groupMembers = [];
+					for(i = oldLocation; i < form.qSeq.length; i++) {
 						
-						moveQuestion(survey, form.questions[form.qSeq[i]],
+						groupMembers.push(form.qSeq[i]);
+						if(form.questions[form.qSeq[i]].name.toLowerCase() === endName.toLowerCase()) {
+							break;
+						}
+					}
+
+					/*
+					 * Move the group members
+					 */
+					for(i = 0; i < groupMembers.length; i++) {
+						
+						moveQuestion(survey, form.questions[groupMembers[i]],
 								targetForm,
 								++newLocation,
 								sourceForm,
 								++oldLocation);
 						
-						if(form.questions[form.qSeq[i]].name === endName) {
-							break;
-						}
+						console.log("Moved group member: " + form.questions[form.qSeq[i]].name.toLowerCase());
 					}
 					
 				}
