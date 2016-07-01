@@ -367,16 +367,16 @@ public class QuestionManager {
 				questionsInGroup = getQuestionsInGroup(sd, q);
 				for(Question groupQuestion : questionsInGroup) {
 					newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
-					moveAQuestion(sd, sId, groupQuestion, newPath);
+					moveAQuestion(sd, sId, groupQuestion, newPath, true);
 				}
 			} else if(q.type.equals("end group")) {
 
 				newPath = newPath.substring(0, newPath.indexOf("_groupEnd"));		// Remove the "groupEnd" to get the path of the group
 				updatePathOfQuestionsBetween(sd, q, newPath);
 				
-				moveAQuestion(sd, sId, q, newPath);
+				moveAQuestion(sd, sId, q, newPath, false);
 			} else {	
-				moveAQuestion(sd, sId, q, newPath);
+				moveAQuestion(sd, sId, q, newPath, false);
 			}
 		}
 	}
@@ -596,7 +596,7 @@ public class QuestionManager {
 	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
 	 *  question creation
 	 */
-	public void moveAQuestion(Connection sd, int sId, Question q, String path ) throws Exception {
+	public void moveAQuestion(Connection sd, int sId, Question q, String path, boolean ignoreExistingSeq ) throws Exception {
 		
 		PreparedStatement pstmtMoveWithin = null;
 		String sqlMoveWithin = "update question set "
@@ -605,6 +605,14 @@ public class QuestionManager {
 					+ "where f_id = ? "
 					+ "and qname = ? "
 					+ "and seq = ?;";
+		
+		PreparedStatement pstmtMoveWithinIgnoreExistingSeq = null;
+		String sqlMoveWithinIgnoreExistingSeq = "update question set "
+						+ "seq = ?, "
+						+ "path= ? "
+					+ "where f_id = ? "
+					+ "and qname = ?;";
+
 		
 		PreparedStatement pstmtMovedBack = null;
 		String sqlMovedBack = "update question set seq = seq + 1 where f_id = ? and seq >= ? and seq < ?;";
@@ -673,8 +681,6 @@ public class QuestionManager {
 			 * Now move the question within its new form
 			 */
 			
-			pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
-			
 			// Update sequence numbers of other question
 			if(q.seq > q.sourceSeq) { // Moved forward in list
 				
@@ -697,14 +703,27 @@ public class QuestionManager {
 			}
 			
 			// Move the question
-			pstmtMoveWithin.setInt(1, q.seq );
-			pstmtMoveWithin.setString(2, path );
-			pstmtMoveWithin.setInt(3, q.fId );
-			pstmtMoveWithin.setString(4, q.name);
-			pstmtMoveWithin.setInt(5, q.sourceSeq );
+			int count = 0;
+			if(ignoreExistingSeq) {
+				pstmtMoveWithinIgnoreExistingSeq = sd.prepareStatement(sqlMoveWithinIgnoreExistingSeq);
+				pstmtMoveWithinIgnoreExistingSeq.setInt(1, q.seq );
+				pstmtMoveWithinIgnoreExistingSeq.setString(2, path );
+				pstmtMoveWithinIgnoreExistingSeq.setInt(3, q.fId );
+				pstmtMoveWithinIgnoreExistingSeq.setString(4, q.name);
 			
-			log.info("Move question within same list: " + pstmtMoveWithin.toString());
-			int count = pstmtMoveWithin.executeUpdate();
+				log.info("Move question within same list: " + pstmtMoveWithinIgnoreExistingSeq.toString());
+				count = pstmtMoveWithinIgnoreExistingSeq.executeUpdate();
+			} else {
+				pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
+				pstmtMoveWithin.setInt(1, q.seq );
+				pstmtMoveWithin.setString(2, path );
+				pstmtMoveWithin.setInt(3, q.fId );
+				pstmtMoveWithin.setString(4, q.name);
+				pstmtMoveWithin.setInt(5, q.sourceSeq );
+			
+				log.info("Move question within same list: " + pstmtMoveWithin.toString());
+				count = pstmtMoveWithin.executeUpdate();
+			}
 			if(count == 0) {
 				String msg = "Warning: question " + q.name + " was not moved. It may already have been moved by someone else";
 				log.info(msg);
@@ -720,6 +739,7 @@ public class QuestionManager {
 			throw e;
 		} finally {
 			try {if (pstmtMoveWithin != null) {pstmtMoveWithin.close();}} catch (SQLException e) {}
+			try {if (pstmtMoveWithinIgnoreExistingSeq != null) {pstmtMoveWithinIgnoreExistingSeq.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedBack != null) {pstmtMovedBack.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedToAnotherForm != null) {pstmtMovedToAnotherForm.close();}} catch (SQLException e) {}
