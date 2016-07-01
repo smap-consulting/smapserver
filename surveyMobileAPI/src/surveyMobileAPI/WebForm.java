@@ -203,7 +203,7 @@ public class WebForm extends Application{
 			throw new JsonAuthorisationException();
 		}
 		
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false);
+		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false);
 	}
 	
 	// Respond with HTML
@@ -227,7 +227,10 @@ public class WebForm extends Application{
 		log.info("Requesting " + type);
 		
 		System.out.println();
-		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, request.getRemoteUser(), false);
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
+				request.getRemoteUser(), 
+				false,
+				true);
 	}
 	
 	
@@ -242,7 +245,8 @@ public class WebForm extends Application{
 			int assignmentId,
 			String callback,
 			String user,
-			boolean simplifyMedia) {
+			boolean simplifyMedia,
+			boolean isWebForm) {
 		
 		Response response = null;
 		JsonResponse jr = null;
@@ -335,7 +339,11 @@ public class WebForm extends Application{
 			String instanceStrToEditId = null;
 			if(datakey != null && datakeyvalue != null) {
 				xForm = new GetXForm();
-				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0, simplifyMedia);
+				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, 
+						datakeyvalue, 
+						0, 
+						simplifyMedia,
+						isWebForm);
 				instanceStrToEditId = xForm.getInstanceId();
 			}
 			
@@ -920,7 +928,9 @@ public class WebForm extends Application{
 			
 			System.out.println("Getting instance data");
 			xForm = new GetXForm();
-			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, simplifyMedia);
+			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, 
+					simplifyMedia,
+					false);
 			
 			SurveyData sd = new SurveyData();
     		sd.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");

@@ -100,7 +100,7 @@ public class GetXForm {
     		Element parent;
         	parent = populateRoot(outputXML);
         	populateHead(sd,outputXML, b, parent, isWebForms);
-        	populateBody(sd, outputXML, parent);
+        	populateBody(sd, outputXML, parent, isWebForms);
 
     		// Write the survey to a string and return it to the calling program
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -184,7 +184,7 @@ public class GetXForm {
     	}
     	// Add forms to bind elements
     	if(firstForm != null) {		
-    		populateForm(sd, outputDoc, modelElement, BIND, firstForm);
+    		populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
     	}
 
     	
@@ -382,7 +382,7 @@ public class GetXForm {
     		if(!isWebForms) {
     			formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
     		}
-    		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm); 	// Process the top level form
+    		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm, isWebForms); 	// Process the top level form
     		parent.appendChild(formElement);   		
     	}
     }
@@ -399,7 +399,8 @@ public class GetXForm {
 
  
     
-    public void populateBody(Connection sd, Document outputDoc, Element parent) throws SQLException {
+    public void populateBody(Connection sd, Document outputDoc, Element parent,
+    		boolean isWebForms) throws SQLException {
     	Element bodyElement = outputDoc.createElement("h:body");
     	
     	log.info("Populate body:" + bodyElement.toString());
@@ -413,7 +414,7 @@ public class GetXForm {
     		gSurveyClass = surveyClass;
     	}
        	if(firstForm != null) {
-    		populateForm(sd, outputDoc, bodyElement, BODY, firstForm); 		// Process the top level form
+    		populateForm(sd, outputDoc, bodyElement, BODY, firstForm, isWebForms); 		// Process the top level form
     	}
     	
     	parent.appendChild(bodyElement);
@@ -428,7 +429,10 @@ public class GetXForm {
      * @param f
      * @param parentXPath
      */
-    public void populateForm(Connection sd, Document outputDoc, Element parentElement, int location, Form f) throws SQLException {
+    public void populateForm(Connection sd, Document outputDoc, Element parentElement, 
+    		int location, 
+    		Form f,
+    		boolean isWebForms) throws SQLException {
 
     	Element currentParent = parentElement;
        	Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
@@ -462,7 +466,7 @@ public class GetXForm {
     				
     				Element formElement_template = outputDoc.createElement(subForm.getName());
     				formElement_template.setAttribute("jr:template", "");
-    				populateForm(sd, outputDoc, formElement_template, INSTANCE, subForm);	
+    				populateForm(sd, outputDoc, formElement_template, INSTANCE, subForm, isWebForms);	
     				currentParent.appendChild(formElement_template);
     				
     			} else if(qType.equals("begin group")) {
@@ -499,7 +503,7 @@ public class GetXForm {
        				
 					// Process sub form
        				Form subForm = template.getSubForm(f,q);
-    				populateForm(sd, outputDoc, currentParent, BIND, subForm);
+    				populateForm(sd, outputDoc, currentParent, BIND, subForm, isWebForms);
     				if(subForm.getRepeats() != null) {
     					// Add the calculation for repeat count
     					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), true);
@@ -547,7 +551,7 @@ public class GetXForm {
     				}
     				groupElement.appendChild(repeatElement);
     				   				
-    				populateForm(sd, outputDoc, repeatElement, BODY, subForm);
+    				populateForm(sd, outputDoc, repeatElement, BODY, subForm, isWebForms);
 
     			} else {	// Add question to output
     				if(q.isVisible()) {
@@ -585,17 +589,19 @@ public class GetXForm {
      * Populate a repeating group
      */
     public void createRepeatingGroup(Connection sd, Document outputXML, Element parent, Form subF, int location, 
-    		String parentXPath, Question parentQuestion) throws SQLException {
+    		String parentXPath, 
+    		Question parentQuestion,
+    		boolean isWebForms) throws SQLException {
 
 		if(location == INSTANCE) {
 			
 			Element subFormParent = outputXML.createElement(parentQuestion.getName());
-			populateForm(sd, outputXML, subFormParent, location, subF);
+			populateForm(sd, outputXML, subFormParent, location, subF, isWebForms);
 			parent.appendChild(subFormParent);
 			
 		} else if(location == BIND) {
 			
-			populateForm(sd, outputXML, parent, location, subF);
+			populateForm(sd, outputXML, parent, location, subF, isWebForms);
 			
 		} else {		// BODY
 			
@@ -612,7 +618,7 @@ public class GetXForm {
 			repeatElement.setAttribute("nodeset", subF.getPath());
 			subFormParent.appendChild(repeatElement);
 			
-			populateForm(sd, outputXML, repeatElement, location, subF);
+			populateForm(sd, outputXML, repeatElement, location, subF, isWebForms);
 			parent.appendChild(subFormParent);
 			
 		}
@@ -974,7 +980,8 @@ public class GetXForm {
     public String getInstance(int sId, String templateName, SurveyTemplate template, String key, 
     		String keyval, 
     		int priKey,
-    		boolean simplifyMedia) throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
+    		boolean simplifyMedia,
+    		boolean isWebForms) throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
     	String instanceXML = null;
     	
     	Connection cResults = null;
@@ -1032,7 +1039,9 @@ public class GetXForm {
 			if(priKey > 0) {
 				hasData = true;
 				populateForm(outputXML, firstForm, priKey, -1, cResults, sd, template, 
-						null, sId, templateName, false, simplifyMedia);    
+						null, sId, templateName, false, 
+						simplifyMedia,
+						isWebForms);    
 			} else if(key != null && keyval != null)  {
 				// Create a blank form containing only the key values
 				hasData = true;
@@ -1299,7 +1308,8 @@ public class GetXForm {
     		int sId,
     		String survey_ident,
     		boolean isFirstSubForm,
-    		boolean simplifyMedia) throws SQLException {
+    		boolean simplifyMedia,
+    		boolean isWebForms) throws SQLException {
 	
     	List<List<Results>> results = null;
     	if(GeneralUtilityMethods.tableExists(cResults, form.getTableName())) {
@@ -1332,7 +1342,8 @@ public class GetXForm {
     						Integer.parseInt(priKey.value), cResults, sd, template, 
     						currentParent, sId, survey_ident, 
     						needTemplate,
-    						simplifyMedia);
+    						simplifyMedia,
+    						isWebForms);
     			} else if (item.begin_group) { 
     				Element childElement = null;
     				childElement = outputDoc.createElement(item.name);
@@ -1361,7 +1372,12 @@ public class GetXForm {
     				// Create the question element
         			Element childElement = null;
     				childElement = outputDoc.createElement(item.name);
-    				childElement.setTextContent(item.value);
+    				// Escape any single quotes if this is called by webforms as the output is stored as a string with single quotes around it
+    				String escValue = item.value;
+    				if(isWebForms) {
+    					escValue = item.value.replace("'", "\\\'");
+    				}
+    				childElement.setTextContent(escValue);
         			currentParent.appendChild(childElement);
     			}
 
