@@ -83,6 +83,7 @@ define({
 	"c_done": "Done",
 	"c_cancel": "Cancel",
 	"c_save": "Save",
+	"c_saved": "Saved",
 	"c_submit": "Submit",
 	"c_submitted": "Submitted",
 	"c_test": "Test",
@@ -190,6 +191,7 @@ define({
 	"c_all_s": "All Surveys",
 	"c_event": "Event",
 	"c_note": "Note",
+	"c_server": "Server",
 	
 	// File Types
 	"ft": "File Type",
@@ -323,6 +325,7 @@ define({
 	"t_assigned": "Assigned",
 	"t_fl": "File Loaded",
 	"t_efnl": "Error file not loaded",
+	"t_ens": "Error not saved",
 	"t_add_tasks": "Click on the map where you want to add new tasks. When finished click on 'Save Tasks' button",
 	"t_add_task": "Add Task",
 	"t_edit_task": "Edit Task",
@@ -472,6 +475,8 @@ define({
 	"u_det_o_email": "Email Options",
 	"u_det_o_other": "Other Options",
 	"u_other_edit": "Allow editing of results",
+	"u_mb_k": "Mapbox Key",
+	"u_g_k": "Google Maps Key",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",

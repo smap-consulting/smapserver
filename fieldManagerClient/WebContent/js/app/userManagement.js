@@ -81,6 +81,7 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').hide();
 		$('#organisationPanel').hide();
+		$('#serverPanel').hide();
 		$('#userPanel').show();
     })
     $('#projectsTab a').click(function (e) {
@@ -89,6 +90,7 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').show();
 		$('#organisationPanel').hide();
+		$('#serverPanel').hide();
 		$('#userPanel').hide();
     })
     $('#organisationTab a').click(function (e) {
@@ -97,6 +99,16 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').hide();
 		$('#organisationPanel').show();
+		$('#serverPanel').hide();
+		$('#userPanel').hide();
+    })
+    $('#serverTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').hide();
+		$('#organisationPanel').hide();
+		$('#serverPanel').show();
 		$('#userPanel').hide();
     })
     
@@ -216,6 +228,11 @@ $(document).ready(function() {
  		
     });
   
+    // Function to save a users details
+    $('#saveServer').click(function(e) {
+    	writeServerDetails();
+    });
+    
 	/* 
 	 * Set focus to first element on opening modals
 	 */
@@ -778,12 +795,36 @@ function writeUserDetails(userList, $dialog) {
 
 
 /*
- * Update the server with the project details
+ * Update the server with the server config
  */
-function writeOrganisationDetails(organisationList) {
+function writeServerDetails() {
 
-
-
+	var url = "/surveyKPI/server",
+		serverString,
+		server = {	
+			google_key: $('#google_key').val()
+		};
+	
+	var serverString = JSON.stringify(server);
+	
+	$('#org_alert').hide();
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  data: { settings: serverString },
+		  cache: false,
+		  contentType: "application/json",
+		  url: url,
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#org_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["c_saved"]);
+		  },
+		  error: function(xhr, textStatus, err) {
+			  removeHourglass(); 
+			  $('#org_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_ens"] + xhr.responseText);
+			 
+		  }
+	});
 }
 
 /*

@@ -75,6 +75,7 @@
         <li id="usersTab" role="presentation" class="active"><a href="#" class="lang" data-lang="m_user">users</a></li>
         <li id="projectsTab" role="presentation"><a href="#" class="lang" data-lang="c_projects">projects</a></li>
         <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_orgs">orgs</a></li>
+        <li id="serverTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_server">server</a></li>
     </ul>
 	
 	
@@ -138,6 +139,31 @@
 		<div id="organisation_table"></div>
 		<button id="create_organisation" class="btn btn-success lang" data-lang="u_add_o">Add Organisation</button>
 		<button class="btn btn-danger" id="delete_organisation lang" data-lang="u_del_o">Delete Organisation</button>
+	</div>
+	
+	<!-- The container for the server details -->
+    <div id="serverPanel" style="display:none;">
+
+		<div class="well">
+			<div class="container">
+				<form role="form" class="form-horizontal" id="server_form">
+					<div class="form-group">
+						<label for="mapbox_key" data-lang="u_mb_k" class="lang control-label col-sm-4">mapbox</label>
+						<div class="col-sm-6">
+							<input type="text" id="mapbox_key" required class="form-control">
+						</div>
+						
+					</div>
+					<div class="form-group">
+						<label for="google_key" data-lang="u_g_k" class="lang control-label col-sm-4">google</label>
+						<div class="col-sm-6">
+							<input type="text" id="google_key" required class="form-control">
+						</div>
+					</div>
+				</form>	
+			</div>
+		</div>
+		<button id="saveServer" class="btn btn-success lang" data-lang="c_save">save</button>
 	</div>
 	
 	
