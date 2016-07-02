@@ -94,21 +94,16 @@ function initializeMap() {
 	// Add layers
 	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
 	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
-	if(typeof google != 'undefined') {
-		map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
-		map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
-		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 18}));
+	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
+		addGoogleMapLayers(map);
+	} else {
+		getGoogleMapApi(addGoogleMapLayers, map);
 	}
 	
 	// Map Controls
 	map.addControl(new OpenLayers.Control.Zoom());
 	map.addControl(new OpenLayers.Control.Scale());
 	map.addControl(new OpenLayers.Control.LayerSwitcher());
-	
-	//map.addControl(new OpenLayers.Control.PanZoomBar());
-	//map.addControl(new OpenLayers.Control.Scale());
-	//map.addControl(new OpenLayers.Control.LayerSwitcher());	
-	
 
 	
 }

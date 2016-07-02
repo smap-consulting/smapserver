@@ -92,10 +92,10 @@ function initializeMap(idx){
 	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 20}));
 	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	
-	if(typeof google != 'undefined' && typeof google.maps != 'undefined' && typeof google.maps.MapTypeId != 'undefined') {
-		map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 22}));
-		map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 22}));
-		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
+	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
+		addGoogleMapLayers(map);
+	} else {
+		getGoogleMapApi(addGoogleMapLayers, map);
 	}
 	
 	// Add additional maps specified in the shared resources page

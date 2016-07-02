@@ -56,10 +56,10 @@ function initializeMap(){
 		
 		// Add layers
 		map.addLayer(new OpenLayers.Layer.XYZ("OSM", "https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
-		if(typeof google != 'undefined') {
-			map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
-			map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
-			map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 18}));
+		if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
+			addGoogleMapLayers(map);
+		} else {
+			getGoogleMapApi(addGoogleMapLayers, map);
 		}
 		
 		// Map Controls

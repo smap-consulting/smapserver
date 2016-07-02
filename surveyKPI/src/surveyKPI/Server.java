@@ -44,6 +44,7 @@ public class Server extends Application {
 		int email_port;
 		String version;
 		String mapbox_default;
+		String google_key;
 	}
 	
 	@GET
@@ -65,7 +66,8 @@ public class Server extends Application {
 				+ "email_password,"
 				+ "email_port,"
 				+ "version,"
-				+ "mapbox_default "
+				+ "mapbox_default,"
+				+ "google_key "
 				+ "from server;";
 		PreparedStatement pstmt = null;
 		ServerData data = new ServerData();
@@ -80,6 +82,7 @@ public class Server extends Application {
 				data.email_port = rs.getInt("email_port");
 				data.version = rs.getString("version");
 				data.mapbox_default = rs.getString("mapbox_default");
+				data.google_key = rs.getString("google_key");
 			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(data);
