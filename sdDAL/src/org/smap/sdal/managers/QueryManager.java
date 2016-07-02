@@ -1,0 +1,319 @@
+package org.smap.sdal.managers;
+
+import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ws.rs.core.Response;
+
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
+import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.AssignFromSurvey;
+import org.smap.sdal.model.Assignment;
+import org.smap.sdal.model.Column;
+import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Location;
+import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableColumnMarkup;
+import org.smap.sdal.model.Task;
+import org.smap.sdal.model.TaskAssignment;
+import org.smap.sdal.model.TaskBulkAction;
+import org.smap.sdal.model.TaskFeature;
+import org.smap.sdal.model.TaskGroup;
+import org.smap.sdal.model.TaskListGeoJson;
+import org.smap.sdal.model.TaskProperties;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+
+/*****************************************************************************
+
+This file is part of SMAP.
+
+SMAP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SMAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
+
+ ******************************************************************************/
+
+/*
+ * Manage the log table
+ */
+public class QueryManager {
+	
+	private static Logger log =
+			 Logger.getLogger(QueryManager.class.getName());
+	
+	/*
+	 * Get the current task groups
+	 */
+	public ManagedFormConfig getColumns(
+			Connection sd, 
+			Connection cResults,
+			int sId,
+			int managedId,
+			String uIdent) throws SQLException, Exception  {
+		
+		ManagedFormConfig mfc = new ManagedFormConfig();
+		ManagedFormConfig savedConfig = null;
+
+		Response response = null;
+		
+		// SQL to get default settings for this user and survey
+		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
+		PreparedStatement pstmt = null;
+		
+		ResultSet rs = null;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		try {
+
+			int uId = GeneralUtilityMethods.getUserId(sd, uIdent);	// Get user id
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
+			
+			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+					sd,
+					cResults,
+					0,
+					f.id,
+					f.tableName,
+					false,	// Don't include Read only
+					true,	// Include parent key
+					true,	// Include "bad"
+					true	// Include instanceId
+					);		
+			
+			/*
+			 * Get the columns to show for this survey and management function
+			 */
+			pstmt = sd.prepareStatement(sql);	 
+			pstmt.setInt(1,  uId);
+			pstmt.setInt(2,  sId);
+
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String config = rs.getString("settings");
+			
+				if(config != null) {
+					Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
+					savedConfig = gson.fromJson(config, type);
+				} else {
+					savedConfig = new ManagedFormConfig ();
+				}
+			} else {
+				savedConfig = new ManagedFormConfig ();
+			}
+			
+			
+			/*
+			 * Add any configuration settings
+			 * Order the config according to the current survey definition and
+			 * Add any new columns that may have been added to the survey since the configuration was created
+			 */			
+			for(int i = 0; i < columnList.size(); i++) {
+				Column c = columnList.get(i);
+				if(keepThis(c.name)) {
+					TableColumn tc = new TableColumn(c.name, c.humanName);
+					tc.hide = hideDefault(c.humanName);
+					tc.filter = filterDefault(c.qType);
+					for(int j = 0; j < savedConfig.columns.size(); j++) {
+						TableColumn tcConfig = savedConfig.columns.get(j);
+						if(tcConfig.name.equals(tc.name)) {
+							tc.include = tcConfig.include;
+							tc.hide = tcConfig.hide;
+							tc.barcode = tcConfig.barcode;
+							tc.filterValue = tcConfig.filterValue;
+							break;
+						}
+					}
+					
+					if(tc.include) {
+						mfc.columns.add(tc);
+					}
+				}
+			}
+			
+			/*
+			 * Add the data processing columns and configuration
+			 */
+			if(managedId > 0) {
+				getDataProcessingConfig(managedId, mfc.columns, savedConfig.columns);
+			}
+		
+				
+		} catch (SQLException e) {
+		    throw e;			
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return mfc;
+
+	}
+	
+	/*
+	 * Get the managed columns
+	 */
+	public void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) {
+		
+		/*
+		 * Manually create this (TODO retrieve from database)
+		 */
+		ArrayList<Column> columns = new ArrayList<Column> ();
+		GeneralUtilityMethods.addManagementColumns(columns);
+		for(int i = 0; i < columns.size(); i++) {
+			Column c = columns.get(i);
+			TableColumn tc = new TableColumn(c.name, c.humanName);
+			tc.hide = hideDefault(c.name);
+
+			addProcessing(tc);
+			if(configColumns != null) {
+				for(int j = 0; j < configColumns.size(); j++) {
+					TableColumn tcConfig = configColumns.get(j);
+					if(tcConfig.name.equals(tc.name)) {
+						tc.include = tcConfig.include;
+						tc.hide = tcConfig.hide;
+						tc.barcode = tcConfig.barcode;
+						tc.filterValue = tcConfig.filterValue;
+						break;
+					}
+				}
+			}
+			
+			formColumns.add(tc);
+		}
+		
+	}
+	
+	/*
+	 * Identify any columns that should be dropped
+	 */
+	private boolean keepThis(String name) {
+		boolean keep = true;
+		
+		if(name.equals("_s_id") ||
+				name.equals("parkey") ||
+				name.equals("_version") ||
+				name.equals("_complete") ||
+				name.equals("_location_trigger") ||
+				name.equals("_device") ||
+				name.equals("_bad") ||
+				name.equals("_bad_reason") ||
+				name.equals("instanceid")
+				) {
+			keep = false;
+		}
+		return keep;
+	}
+	
+	
+	
+	/*
+	 * Set a default hide value
+	 */
+	private boolean hideDefault(String name) {
+		boolean hide = false;
+		
+		if(name.equals("_s_id") ||
+				name.equals("User") ||
+				name.equals("Upload Time") ||
+				name.equals("Survey Notes") ||
+				name.equals("_start") ||
+				name.equals("decision_date") ||
+				name.equals("programme") ||
+				name.equals("project") ||
+				name.equals("instanceName") ||
+				name.equals("_end") 
+				) {
+			hide = true;
+		}
+		
+		return hide;
+	}
+	
+
+	
+	/*
+	 * Set a default filter value
+	 */
+	private boolean filterDefault(String type) {
+		boolean filter = false;
+		
+		if(type.equals("select1") 
+				) {
+			filter = true;
+		}
+		
+		return filter;
+	}
+	
+	
+	private void addProcessing(TableColumn tc) {
+		String name = tc.name;
+		tc.mgmt = true;
+		if(name.equals("_mgmt_responsible")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
+		} else if(name.equals("_mgmt_action_deadline")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "date";
+		} else if(name.equals("_mgmt_action_date")) {
+			tc.hide = true;
+			tc.readonly = false;
+			tc.type = "date";
+		} else if(name.equals("_mgmt_response_status")) {
+			tc.hide = false;
+			tc.readonly = true;
+			tc.type = "calculate";
+			tc.markup = new ArrayList<TableColumnMarkup> ();
+			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
+			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
+			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
+			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
+			tc.filter = true;
+		} else if(name.equals("_mgmt_action_taken")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
+		} else if(name.equals("_mgmt_address_recommendation")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "select_one";
+			tc.choices = new ArrayList<String> ();
+			tc.choices.add("Yes");
+			tc.choices.add("No, needs further work");		
+		} else if(name.equals("_mgmt_comment")) {
+			tc.hide = false;
+			tc.readonly = false;
+			tc.type = "text";
+		}
+	}
+	
+}
+
+

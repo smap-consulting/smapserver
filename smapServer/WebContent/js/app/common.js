@@ -1814,9 +1814,12 @@ function downloadFile(url, filename, mime) {
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, mime, data) {
+function generateFile(url, filename, format, mime, data, sId, managedId) {
 
-	var payload = "settings=" + JSON.stringify(data);
+	var payload = "data=" + JSON.stringify(data);
+	payload += "&sId=" + sId;
+	payload += "&managedId=" + managedId;
+	payload += "&format=" + format;
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', url, true);
@@ -1848,8 +1851,10 @@ function generateFile(url, filename, mime, data) {
 
 /*
  * Get the currently selected rows of datatable data as a json array
+ * Also convert the JSON object into an array of Key values pairs. This allows easy converion
+ * to a java object on the server
  */
-function getTableData(table) {
+function getTableData(table, columns) {
 	
 	var rows = table.rows({
 	    	order:  'current',  // 'current', 'applied', 'index',  'original'
@@ -1858,10 +1863,19 @@ function getTableData(table) {
 		}).data();
 	
 	var data = [],
-		i;
+		cols = [],
+		i, j;
 	
 	for(i = 0; i < rows.length; i++) {
-		data.push(rows[i]);
+		cols = [];
+		for(j = 0; j < columns.length; j++) {
+			var k = columns[j].humanName;
+			cols.push({
+				k: k,
+				v: rows[i][k]
+			})
+		}
+		data.push(cols);
 	}
 	
 	return data;

@@ -92,10 +92,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Manage the table that stores details on the forwarding of data onto other systems
  */
-public class PDFManager {
+public class PDFSurveyManager {
 	
 	private static Logger log =
-			 Logger.getLogger(PDFManager.class.getName());
+			 Logger.getLogger(PDFSurveyManager.class.getName());
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;

@@ -176,6 +176,11 @@ public class Data extends Application {
 			dirn = "asc";
 		}
 		
+		boolean isDt = false;
+		if(format != null && format.equals("dt")) {
+			isDt = true;
+		}
+		
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
@@ -305,8 +310,11 @@ public class Data extends Application {
 								value = "";
 							}
 							
-							if(name != null) {
-								jr.put(Utils.translateToKobo(name), value);
+							if(name != null ) {
+								if(!isDt) {
+									name = Utils.translateToKobo(name);
+								}
+								jr.put(name, value);
 							}
 						}
 						
@@ -318,7 +326,7 @@ public class Data extends Application {
 						
 			} 
 			
-			if(format != null && format.equals("dt")) {
+			if(isDt) {
 				JSONObject dt  = new JSONObject();
 				dt.put("data", ja);
 				response = Response.ok(dt.toString()).build();

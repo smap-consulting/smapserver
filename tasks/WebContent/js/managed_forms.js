@@ -298,25 +298,33 @@ require([
 	  * Respond to a request to generate a file
 	  */
 	 $('.genfile').click( function() {
-		 var url = "/surveyKPI/tables/pdf",
+		 var url = "/surveyKPI/tables/generate",
 		 	$this = $(this),
 		 	filename,
 		 	mime,
-		 	data = {
-			 data: getTableData(globals.gMainTable)
-		 }
+			data,
+		 	manageId;
 		 
 		 
-		 
+		 data = getTableData(globals.gMainTable, 
+				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns)
+				 
 		 if($this.hasClass("xls")) {
 			 filename = "displayName" + ".xlsx"
 			 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+			 format = "xlsx";
 		 } else {
 			 filename = "displayName" + ".pdf"
 			 mime= "application/pdf";
+			 format = "pdf";
 		 }
 		 
-		 generateFile(url, filename, mime, data); 
+		 if(isBrowseResults) {
+			 managedId = 0;
+		 } else {
+			 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
+		 }
+		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId); 
 	 });
 
 

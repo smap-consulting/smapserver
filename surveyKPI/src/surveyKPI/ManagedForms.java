@@ -37,6 +37,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LinkageManager;
+import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
@@ -77,100 +78,21 @@ public class ManagedForms extends Application {
 	@Produces("application/json")
 	public Response getConfig(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
-			@PathParam("dpId") int dpId) { 
+			@PathParam("dpId") int managedId) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		Connection sd = SDDataSource.getConnection("surveyKPI-GetConfig");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
-		ManagedFormConfig mfc = new ManagedFormConfig();
-		ManagedFormConfig savedConfig = null;
-
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
 		Response response = null;
-		
-		// SQL to get default settings for this user and survey
-		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
-		PreparedStatement pstmt = null;
-		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-QuestionsInForm");
-		ResultSet rs = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-
-			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			
-			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
-					sd,
-					cResults,
-					0,
-					f.id,
-					f.tableName,
-					false,	// Don't include Read only
-					true,	// Include parent key
-					true,	// Include "bad"
-					true	// Include instanceId
-					);		
-			
-			/*
-			 * Get the columns to show for this survey and management function
-			 */
-			pstmt = sd.prepareStatement(sql);	 
-			pstmt.setInt(1,  uId);
-			pstmt.setInt(2,  sId);
-
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				String config = rs.getString("settings");
-			
-				if(config != null) {
-					Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
-					savedConfig = gson.fromJson(config, type);
-				} else {
-					savedConfig = new ManagedFormConfig ();
-				}
-			} else {
-				savedConfig = new ManagedFormConfig ();
-			}
-			
-			
-			/*
-			 * Add any configuration settings
-			 * Order the config according to the current survey definition and
-			 * Add any new columns that may have been added to the survey since the configuration was created
-			 */			
-			for(int i = 0; i < columnList.size(); i++) {
-				Column c = columnList.get(i);
-				if(keepThis(c.name)) {
-					TableColumn tc = new TableColumn(c.name, c.humanName);
-					tc.hide = hideDefault(c.humanName);
-					tc.filter = filterDefault(c.qType);
-					for(int j = 0; j < savedConfig.columns.size(); j++) {
-						TableColumn tcConfig = savedConfig.columns.get(j);
-						if(tcConfig.name.equals(tc.name)) {
-							tc.include = tcConfig.include;
-							tc.hide = tcConfig.hide;
-							tc.barcode = tcConfig.barcode;
-							tc.filterValue = tcConfig.filterValue;
-							break;
-						}
-					}
-					
-					if(tc.include) {
-						mfc.columns.add(tc);
-					}
-				}
-			}
-			
-			/*
-			 * Add the data processing columns and configuration
-			 */
-			if(dpId > 0) {
-				getDataProcessingConfig(dpId, mfc.columns, savedConfig.columns);
-			}
-			
+			QueryManager qm = new QueryManager();
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
 			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
@@ -181,10 +103,8 @@ public class ManagedForms extends Application {
 			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			
-			SDDataSource.closeConnection("surveyKPI-QuestionsInForm", sd);
-			ResultsDataSource.closeConnection("surveyKPI-QuestionsInForm", cResults);
+			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
+			ResultsDataSource.closeConnection("surveyKPI-GetConfig", cResults);
 		}
 
 
@@ -257,7 +177,8 @@ public class ManagedForms extends Application {
 			
 			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			getDataProcessingConfig(am.manageId, columns, null);
+			QueryManager qm = new QueryManager();
+			qm.getDataProcessingConfig(am.manageId, columns, null);
 			
 			for(int i = 0; i < columns.size(); i++) {
 				TableColumn tc = columns.get(i);
@@ -394,7 +315,8 @@ public class ManagedForms extends Application {
 			 * Get the data processing columns
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			getDataProcessingConfig(dpId, columns, null);
+			QueryManager qm = new QueryManager();
+			qm.getDataProcessingConfig(dpId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -782,142 +704,10 @@ public class ManagedForms extends Application {
 
 		return response;
 	}
-	
-	/*
-	 * Identify any columns that should be dropped
-	 */
-	private boolean keepThis(String name) {
-		boolean keep = true;
-		
-		if(name.equals("_s_id") ||
-				name.equals("parkey") ||
-				name.equals("_version") ||
-				name.equals("_complete") ||
-				name.equals("_location_trigger") ||
-				name.equals("_device") ||
-				name.equals("_bad") ||
-				name.equals("_bad_reason") ||
-				name.equals("instanceid")
-				) {
-			keep = false;
-		}
-		return keep;
-	}
-	
-	/*
-	 * Set a default hide value
-	 */
-	private boolean hideDefault(String name) {
-		boolean hide = false;
-		
-		if(name.equals("_s_id") ||
-				name.equals("User") ||
-				name.equals("Upload Time") ||
-				name.equals("Survey Notes") ||
-				name.equals("_start") ||
-				name.equals("decision_date") ||
-				name.equals("programme") ||
-				name.equals("project") ||
-				name.equals("instanceName") ||
-				name.equals("_end") 
-				) {
-			hide = true;
-		}
-		
-		return hide;
-	}
-	
-	/*
-	 * Set a default filter value
-	 */
-	private boolean filterDefault(String type) {
-		boolean filter = false;
-		
-		if(type.equals("select1") 
-				) {
-			filter = true;
-		}
-		
-		return filter;
-	}
-	
-	private void addProcessing(TableColumn tc) {
-		String name = tc.name;
-		tc.mgmt = true;
-		if(name.equals("_mgmt_responsible")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_action_deadline")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_action_date")) {
-			tc.hide = true;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_response_status")) {
-			tc.hide = false;
-			tc.readonly = true;
-			tc.type = "calculate";
-			tc.markup = new ArrayList<TableColumnMarkup> ();
-			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
-			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
-			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
-			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
-			tc.filter = true;
-		} else if(name.equals("_mgmt_action_taken")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_address_recommendation")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "select_one";
-			tc.choices = new ArrayList<String> ();
-			tc.choices.add("Yes");
-			tc.choices.add("No, needs further work");		
-		} else if(name.equals("_mgmt_comment")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		}
-	}
-	
-	
-	/*
-	 * Add the data processing columns
-	 */
-	private void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) {
-		
-		/*
-		 * Manually create this (TODO retrieve from database)
-		 */
-		ArrayList<Column> columns = new ArrayList<Column> ();
-		GeneralUtilityMethods.addManagementColumns(columns);
-		for(int i = 0; i < columns.size(); i++) {
-			Column c = columns.get(i);
-			TableColumn tc = new TableColumn(c.name, c.humanName);
-			tc.hide = hideDefault(c.name);
 
-			addProcessing(tc);
-			if(configColumns != null) {
-				for(int j = 0; j < configColumns.size(); j++) {
-					TableColumn tcConfig = configColumns.get(j);
-					if(tcConfig.name.equals(tc.name)) {
-						tc.include = tcConfig.include;
-						tc.hide = tcConfig.hide;
-						tc.barcode = tcConfig.barcode;
-						tc.filterValue = tcConfig.filterValue;
-						break;
-					}
-				}
-			}
-			
-			formColumns.add(tc);
-		}
-		
-	}
+	
+
+	
 
 }
 

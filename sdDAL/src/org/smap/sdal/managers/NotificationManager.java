@@ -366,7 +366,7 @@ public class NotificationManager {
 					} catch (Exception e) {
 						log.log(Level.SEVERE, "Error creating temporary PDF file", e);
 					}
-					PDFManager pm = new PDFManager();
+					PDFSurveyManager pm = new PDFSurveyManager();
 					
 					// Split orientation from nd.attach
 					boolean landscape = false;

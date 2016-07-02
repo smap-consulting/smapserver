@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletResponse;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.managers.PDFManager.PageSizer;
+import org.smap.sdal.managers.PDFSurveyManager.PageSizer;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;

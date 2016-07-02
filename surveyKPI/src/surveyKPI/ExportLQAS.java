@@ -41,7 +41,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.PDFManager;
+import org.smap.sdal.managers.PDFSurveyManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;

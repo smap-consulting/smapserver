@@ -359,6 +359,7 @@ window.gTasks = {
 						 var $this = $(this),
 						 	opt = {
 							 render: 'div',
+							 size: 100,
 							 text: $this.text()
 						 }
 

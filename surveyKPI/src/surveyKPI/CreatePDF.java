@@ -41,7 +41,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.PDFManager;
+import org.smap.sdal.managers.PDFSurveyManager;
 
 /*
  * Creates a PDF
@@ -102,7 +102,7 @@ public class CreatePDF extends Application {
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		try {
-			PDFManager pm = new PDFManager();  
+			PDFSurveyManager pm = new PDFSurveyManager();  
 			
 			
 			pm.createPdf(
