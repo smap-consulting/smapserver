@@ -89,6 +89,7 @@ public class Server extends Application {
 			pstmt = sd.prepareStatement(sql);
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
+				data.smtp_host = rs.getString("smtp_host");
 				data.email_domain = rs.getString("email_domain");
 				data.email_user = rs.getString("email_user");
 				data.email_password = rs.getString("email_password");
@@ -141,20 +142,23 @@ public class Server extends Application {
 		
 		ServerData data = new Gson().fromJson(settings, ServerData.class);
 		
+		System.out.println("mb:" + data.mapbox_default);
 		String sqlDel = "truncate table server;";
 		PreparedStatement pstmtDel = null;
 		
-		String sql = "select smtp_host,"
+		String sql = "insert into server ("
+				+ "smtp_host,"
 				+ "email_domain,"
 				+ "email_user,"
 				+ "email_password,"
 				+ "email_port,"
-				+ "version,"
 				+ "mapbox_default,"
-				+ "google_key "
-				+ "from server;";
+				+ "google_key) "
+				+ "values(?,?,?,?,?,?,?);";
 		
 		PreparedStatement pstmt = null;
+
+
 
 		try {
 			
@@ -165,6 +169,14 @@ public class Server extends Application {
 			
 			// Add the updated data
 			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, data.smtp_host);
+			pstmt.setString(2, data.email_domain);
+			pstmt.setString(3, data.email_user);
+			pstmt.setString(4, data.email_password);
+			pstmt.setInt(5, data.email_port);
+			pstmt.setString(6, data.mapbox_default);
+			pstmt.setString(7, data.google_key);
+			pstmt.executeUpdate();
 			
 			sd.setAutoCommit(true);
 				

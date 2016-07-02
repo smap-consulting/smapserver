@@ -477,6 +477,12 @@ define({
 	"u_other_edit": "Allow editing of results",
 	"u_mb_k": "Mapbox Key",
 	"u_g_k": "Google Maps Key",
+	"u_smtp": "Smtp Host",
+	"u_e_dom": "Email Domain",
+	"u_e_nm": "Email user name",
+	"u_e_p": "Email password",
+	"u_e_port": "Email Server port",
+	"u_h_e": "Email to get Help",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",

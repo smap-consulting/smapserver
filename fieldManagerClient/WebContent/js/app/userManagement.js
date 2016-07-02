@@ -546,6 +546,7 @@ function getProjects() {
 
 /*
  * Get the list of available organisations from the server
+ * Get the server details
  */
 function getOrganisations() {
 
@@ -571,6 +572,41 @@ function getOrganisations() {
 			}
 		}
 	});	
+	
+	
+	// Get the server details
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/server",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			updateServerData(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of organisations: " + err);
+			}
+		}
+	});	
+}
+
+/*
+ * Populate the server tab
+ */
+function updateServerData(data) {
+	$('#mapbox_key').val(data.mapbox_default);
+	$('#google_key').val(data.google_key);
+	$('#s_smtp_host').val(data.smtp_host);
+	$('#s_email_domain').val(data.email_domain);
+	$('#s_email_user').val(data.email_user);
+	$('#s_email_password').val(data.email_password);
+	$('#s_email_port').val(data.email_port);
+	
 }
 
 /*
@@ -802,7 +838,13 @@ function writeServerDetails() {
 	var url = "/surveyKPI/server",
 		serverString,
 		server = {	
-			google_key: $('#google_key').val()
+			mapbox_default: $('#mapbox_key').val(),
+			google_key: $('#google_key').val(),
+			smtp_host: $('#s_smtp_host').val(),
+			email_domain: $('#s_email_domain').val(),
+			email_user: $('#s_email_user').val(),
+			email_password: $('#s_email_password').val(),
+			email_port: $('#s_email_port').val()
 		};
 	
 	var serverString = JSON.stringify(server);
@@ -1235,6 +1277,8 @@ function getGroups() {
 		}
 	});	
 }
+
+
 
 /*
  * Update the group table with the current group list
