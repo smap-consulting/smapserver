@@ -1853,45 +1853,80 @@ function generateFile(url, filename, mime) {
  * Get google map api
  */
 function getGoogleMapApi(callback, map) {
-	if(typeof google === "undefined" || typeof google.maps === "undefined") {
+	
+	console.log("getGoogleMapApi");
+	
+	if(!window.smapLoadedGMaps && !window.smapGMapsLoading) {
+		console.log("about to call server");
+		
+		window.smapGMapsLoading = true;
+		
+		window.smapGMapsToLoad = [];
+		window.smapGMapsToLoad.push({
+			fn: callback,
+			locn: map
+		});
+		
 		addHourglass();
 		$.ajax({
 			url: '/surveyKPI/server',
 			cache: false,
 			success: function(data) {
+				
+				var callingMap = map;
+				
 				removeHourglass();
-				console.log("Retrieved map keys");
-				if(typeof google === "undefined" || typeof google.maps === "undefined") {
-					var gElement = document.createElement('script');
-					var key = "";
-					if(data.google_key) {
-						key = "?key=" + data.google_key;
-					}
-				    //gElement.src = "//maps.google.com/maps/api/js?v=3.6&amp";
-				    gElement.src = "https://maps.googleapis.com/maps/api/js" + key;
-				    if(typeof callback === "function") {
-				    	gElement.onload = onLoad;
-				    } 
-				    document.getElementsByTagName('head')[0].appendChild(gElement);
-				    
-				    function onLoad() {
-				    	 console.log("Google map loaded");
-				    	 callback(map);
-				    }
-				   
-				} 
+				console.log("Retrieved map keys from server");
+
+				var gElement = document.createElement('script');
+				var key = "";
+				if(data.google_key) {
+					key = "?key=" + data.google_key;
+				}
+			    //gElement.src = "//maps.google.com/maps/api/js?v=3.6&amp";
+			    gElement.src = "https://maps.googleapis.com/maps/api/js" + key;
+			    if(typeof callback === "function") {
+			    	gElement.onload = onLoad;
+			    } 
+			    document.getElementsByTagName('head')[0].appendChild(gElement);
+			    
+			    function onLoad() {
+			    	
+			    	var i;
+			    	
+			    	window.smapGMapsLoading = false;
+					window.smapLoadedGMaps = true;
+			    	
+			    	console.log("Google map loaded");
+			    	
+			    	for(i = 0; i < window.smapGMapsToLoad.length; i++) {
+			    		console.log("map callback");
+			    		window.smapGMapsToLoad[i].fn(window.smapGMapsToLoad[i].locn);
+			    	}
+			    	delete window.smapGMapsToLoad;
+			    }
+
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
-					alert("Error: Failed to get google map api: " + err);
+					alert("Error: Failed to get server data: " + err);
 				}
 			}
 		});	
 		
-	} 
+	} else if(window.smapLoadedGMaps) {
+		console.log("Already loaded calling map callback");
+		callback(map);
+	} else {
+		console.log("Adding callback to queue");
+		window.smapGMapsToLoad.push({
+			fn: callback,
+			locn: map
+		});
+	}
 }
 
 /*
