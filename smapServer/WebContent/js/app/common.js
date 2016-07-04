@@ -1353,14 +1353,13 @@ function isBusinessServer() {
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
+			hostname.indexOf('datacollect.icanreach.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
-		$('.public_only').show();
 	} else {
 		bs = true
 		$('.public_only').hide();
-		$('.bus_only').show();
 	}
 	return bs;
 }
@@ -1881,6 +1880,95 @@ function getTableData(table, columns) {
 	return data;
 	
 	
+}
+
+/*
+ * Get google map api
+ */
+function getGoogleMapApi(callback, map) {
+	
+	console.log("getGoogleMapApi");
+	
+	if(!window.smapLoadedGMaps && !window.smapGMapsLoading) {
+		console.log("about to call server");
+		
+		window.smapGMapsLoading = true;
+		
+		window.smapGMapsToLoad = [];
+		window.smapGMapsToLoad.push({
+			fn: callback,
+			locn: map
+		});
+		
+		addHourglass();
+		$.ajax({
+			url: '/surveyKPI/server',
+			cache: false,
+			success: function(data) {
+				
+				var callingMap = map;
+				
+				removeHourglass();
+				console.log("Retrieved map keys from server");
+
+				var gElement = document.createElement('script');
+				var key = "";
+				if(data.google_key) {
+					key = "?key=" + data.google_key;
+				}
+			    //gElement.src = "//maps.google.com/maps/api/js?v=3.6&amp";
+			    gElement.src = "https://maps.googleapis.com/maps/api/js" + key;
+			    if(typeof callback === "function") {
+			    	gElement.onload = onLoad;
+			    } 
+			    document.getElementsByTagName('head')[0].appendChild(gElement);
+			    
+			    function onLoad() {
+			    	
+			    	var i;
+			    	
+			    	window.smapGMapsLoading = false;
+					window.smapLoadedGMaps = true;
+			    	
+			    	console.log("Google map loaded");
+			    	
+			    	for(i = 0; i < window.smapGMapsToLoad.length; i++) {
+			    		console.log("map callback");
+			    		window.smapGMapsToLoad[i].fn(window.smapGMapsToLoad[i].locn);
+			    	}
+			    	delete window.smapGMapsToLoad;
+			    }
+
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Error: Failed to get server data: " + err);
+				}
+			}
+		});	
+		
+	} else if(window.smapLoadedGMaps) {
+		console.log("Already loaded calling map callback");
+		callback(map);
+	} else {
+		console.log("Adding callback to queue");
+		window.smapGMapsToLoad.push({
+			fn: callback,
+			locn: map
+		});
+	}
+}
+
+/*
+ * Add google layers to a map
+ */
+function addGoogleMapLayers(map) {
+	map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 22}));
+	map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 22}));
+	map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
 }
 
 /*

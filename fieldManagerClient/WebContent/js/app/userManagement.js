@@ -81,6 +81,7 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').hide();
 		$('#organisationPanel').hide();
+		$('#serverPanel').hide();
 		$('#userPanel').show();
     })
     $('#projectsTab a').click(function (e) {
@@ -89,6 +90,7 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').show();
 		$('#organisationPanel').hide();
+		$('#serverPanel').hide();
 		$('#userPanel').hide();
     })
     $('#organisationTab a').click(function (e) {
@@ -97,6 +99,16 @@ $(document).ready(function() {
     		  	  
 		$('#projectPanel').hide();
 		$('#organisationPanel').show();
+		$('#serverPanel').hide();
+		$('#userPanel').hide();
+    })
+    $('#serverTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').hide();
+		$('#organisationPanel').hide();
+		$('#serverPanel').show();
 		$('#userPanel').hide();
     })
     
@@ -216,6 +228,11 @@ $(document).ready(function() {
  		
     });
   
+    // Function to save a users details
+    $('#saveServer').click(function(e) {
+    	writeServerDetails();
+    });
+    
 	/* 
 	 * Set focus to first element on opening modals
 	 */
@@ -530,6 +547,7 @@ function getProjects() {
 
 /*
  * Get the list of available organisations from the server
+ * Get the server details
  */
 function getOrganisations() {
 
@@ -555,6 +573,41 @@ function getOrganisations() {
 			}
 		}
 	});	
+	
+	
+	// Get the server details
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/server",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			updateServerData(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of organisations: " + err);
+			}
+		}
+	});	
+}
+
+/*
+ * Populate the server tab
+ */
+function updateServerData(data) {
+	$('#mapbox_key').val(data.mapbox_default);
+	$('#google_key').val(data.google_key);
+	$('#s_smtp_host').val(data.smtp_host);
+	$('#s_email_domain').val(data.email_domain);
+	$('#s_email_user').val(data.email_user);
+	$('#s_email_password').val(data.email_password);
+	$('#s_email_port').val(data.email_port);
+	
 }
 
 /*
@@ -779,12 +832,42 @@ function writeUserDetails(userList, $dialog) {
 
 
 /*
- * Update the server with the project details
+ * Update the server with the server config
  */
-function writeOrganisationDetails(organisationList) {
+function writeServerDetails() {
 
-
-
+	var url = "/surveyKPI/server",
+		serverString,
+		server = {	
+			mapbox_default: $('#mapbox_key').val(),
+			google_key: $('#google_key').val(),
+			smtp_host: $('#s_smtp_host').val(),
+			email_domain: $('#s_email_domain').val(),
+			email_user: $('#s_email_user').val(),
+			email_password: $('#s_email_password').val(),
+			email_port: $('#s_email_port').val()
+		};
+	
+	var serverString = JSON.stringify(server);
+	
+	$('#org_alert').hide();
+	addHourglass();
+	$.ajax({
+		  type: "POST",
+		  data: { settings: serverString },
+		  cache: false,
+		  contentType: "application/json",
+		  url: url,
+		  success: function(data, status) {
+			  removeHourglass();
+			  $('#org_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["c_saved"]);
+		  },
+		  error: function(xhr, textStatus, err) {
+			  removeHourglass(); 
+			  $('#org_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["t_ens"] + xhr.responseText);
+			 
+		  }
+	});
 }
 
 /*
@@ -1195,6 +1278,8 @@ function getGroups() {
 		}
 	});	
 }
+
+
 
 /*
  * Update the group table with the current group list

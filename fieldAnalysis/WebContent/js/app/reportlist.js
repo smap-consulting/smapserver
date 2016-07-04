@@ -703,10 +703,10 @@ function initializeReportsMap() {
 	 
 	// Add layers
 	gMap.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18}));
-	if(typeof google != 'undefined') {
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 18}));
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 18}));
-		gMap.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 18}));
+	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
+		addGoogleMapLayers(gMap);
+	} else {
+		getGoogleMapApi(addGoogleMapLayers, gMap);
 	}
 	
 	// Map Controls
