@@ -54,6 +54,7 @@ import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
@@ -79,10 +80,12 @@ public class XLSReportsManager {
 	private class Column {
 		String name;
 		String human_name;
-		int colNumber;
+		int dataIndex;
+		int colIndex;
 		
-		public Column(ResourceBundle localisation, int col, String n) {
-			colNumber = col;
+		public Column(ResourceBundle localisation, int dataIndex, String n, int colIndex) {
+			this.dataIndex = dataIndex;
+			this.colIndex = colIndex;
 			name = n;
 			//human_name = localisation.getString(n);
 			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
@@ -92,6 +95,14 @@ public class XLSReportsManager {
 		public int getWidth() {
 			int width = 256 * 20;		// 20 characters is default
 			return width;
+		}
+		
+		public int getDataIndex() {
+			return dataIndex;
+		}
+		
+		public int getColIndex() {
+			return colIndex;
 		}
 		
 		// Get a value for this column from the provided properties object
@@ -140,18 +151,6 @@ public class XLSReportsManager {
 			return value;
 		}
 	
-		// Get a date value for this column from the provided properties object
-		public Timestamp getDateValue(TaskProperties props) {
-			Timestamp value = null;
-			
-			if(name.equals("from")) {
-				value = props.from;
-			} else if(name.equals("to")) {
-				value = props.to;
-			} 
-			
-			return value;
-		}
 	}
 
 	public XLSReportsManager() {
@@ -175,15 +174,15 @@ public class XLSReportsManager {
 			ResourceBundle localisation, 
 			String tz) throws IOException {
 		
-		Sheet taskListSheet = wb.createSheet("tasks");
+		Sheet dataSheet = wb.createSheet("data");
 		Sheet taskSettingsSheet = wb.createSheet("settings");
 		//taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
 		Map<String, CellStyle> styles = createStyles(wb);
 
-		ArrayList<Column> cols = getColumnList(localisation);
-		//createHeader(cols, taskListSheet, styles);	
-		//processDataListForXLS(tl, taskListSheet, taskSettingsSheet, styles, cols, tz);
+		ArrayList<Column> cols = getColumnList(mfc, dArray, localisation);
+		createHeader(cols, dataSheet, styles);	
+		processDataListForXLS(dArray, dataSheet, taskSettingsSheet, styles, cols, tz);
 		
 		System.out.println("Writing XLS");
 		wb.write(outputStream);
@@ -192,46 +191,50 @@ public class XLSReportsManager {
 	
 	
 	/*
-	 * Get the columns for the settings sheet
+	 * Get the columns for the data sheet
 	 */
-	private ArrayList<Column> getColumnList(ResourceBundle localisation) {
+	private ArrayList<Column> getColumnList(ManagedFormConfig mfc, 
+			ArrayList<ArrayList<KeyValue>> dArray, 
+			ResourceBundle localisation) {
 		
 		ArrayList<Column> cols = new ArrayList<Column> ();
+		ArrayList<KeyValue> record = null;
 		
-		int colNumber = 0;
+		if(dArray.size() > 0) {
+			 record = dArray.get(0);
+		}
+		
+		int colIndex = 0;
+		for(int i = 0; i < mfc.columns.size(); i++) {
+			TableColumn tc = mfc.columns.get(i);
+			if(!tc.hide && tc.include) {
+				int dataIndex = -1;
+				if(record != null) {
+					dataIndex = getDataIndex(record, tc.humanName);
+				}
+				cols.add(new Column(localisation, dataIndex, tc.humanName, colIndex++));
+			}
+		}
 	
-		cols.add(new Column(localisation, colNumber++, "form"));
-		cols.add(new Column(localisation, colNumber++, "name"));
-		cols.add(new Column(localisation, colNumber++, "status"));
-		cols.add(new Column(localisation, colNumber++, "assignee_ident"));
-		cols.add(new Column(localisation, colNumber++, "location_trigger"));
-		cols.add(new Column(localisation, colNumber++, "from"));
-		cols.add(new Column(localisation, colNumber++, "to"));
-		cols.add(new Column(localisation, colNumber++, "guidance"));
-		cols.add(new Column(localisation, colNumber++, "repeat"));
-		cols.add(new Column(localisation, colNumber++, "email"));
-		cols.add(new Column(localisation, colNumber++, "address"));
-		cols.add(new Column(localisation, colNumber++, "lon"));
-		cols.add(new Column(localisation, colNumber++, "lat"));
-		
 		
 		return cols;
 	}
 	
 	/*
-	 * Get the columns for the settings sheet
+	 * Get the index into the data set for a column
 	 */
-	private ArrayList<Column> getLocationColumnList(ResourceBundle localisation) {
+	private int getDataIndex(ArrayList<KeyValue> record, String name) {
+		int idx = -1;
 		
-		ArrayList<Column> cols = new ArrayList<Column> ();
-		
-		int colNumber = 0;
-	
-		cols.add(new Column(localisation, colNumber++, "UID"));
-		cols.add(new Column(localisation, colNumber++, "tagName"));
-		
-		return cols;
+		for(int i = 0; i < record.size(); i++) {
+			if(record.get(i).k.equals(name)) {
+				idx = i;
+				break;
+			}
+		}
+		return idx;
 	}
+	
 	
 	/*
      * create a library of cell styles
@@ -256,6 +259,7 @@ public class XLSReportsManager {
 	 * Create a header row and set column widths
 	 */
 	private void createHeader(ArrayList<Column> cols, Sheet sheet, Map<String, CellStyle> styles) {
+		
 		// Set column widths
 		for(int i = 0; i < cols.size(); i++) {
 			sheet.setColumnWidth(i, cols.get(i).getWidth());
@@ -276,7 +280,7 @@ public class XLSReportsManager {
 	 * Convert a task list array to XLS
 	 */
 	private void processDataListForXLS(
-			TaskListGeoJson tl, 
+			ArrayList<ArrayList<KeyValue>> dArray, 
 			Sheet sheet,
 			Sheet settingsSheet,
 			Map<String, CellStyle> styles,
@@ -290,41 +294,16 @@ public class XLSReportsManager {
 		
 		styleTimestamp.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
 		
-		for(TaskFeature feature : tl.features)  {
-			
-			TaskProperties props = feature.properties;
-			
-			/*
-			for(int i = 0; i < dArray.size(); i++) {
-				ArrayList<KeyValue> record = dArray.get(i);
-				for(int j = 0; j < record.size(); j++) {
-					KeyValue col = record.get(j);
-
-				}
-			}
-			*/
+		for(int index = 0; index < dArray.size(); index++) {
 			
 			Row row = sheet.createRow(rowNumber++);
-			for(int i = 0; i < cols.size(); i++) {
-				Column col = cols.get(i);			
-				Cell cell = row.createCell(i);
-
-				if(col.name.equals("from") || col.name.equals("to")) {
-					cell.setCellStyle(styleTimestamp);
-					
-					if(col.getDateValue(props) != null) {
-						LocalDateTime gmtDate = col.getDateValue(props).toLocalDateTime();
-						ZonedDateTime gmtZoned = ZonedDateTime.of(gmtDate, gmtZoneId);
-						ZonedDateTime localZoned = gmtZoned.withZoneSameInstant(timeZoneId);
-						LocalDateTime localDate = localZoned.toLocalDateTime();
-						Timestamp ts2 = Timestamp.valueOf(localDate);
-						cell.setCellValue(ts2);
-					}
-
-				} else {
-					cell.setCellStyle(styles.get("default"));	
-					cell.setCellValue(col.getValue(props));
-				}
+			ArrayList<KeyValue> record = dArray.get(index);
+			for(Column col : cols) {
+				Cell cell = row.createCell(col.colIndex);
+				String value = record.get(col.dataIndex).v;
+				
+				cell.setCellStyle(styles.get("default"));	
+				cell.setCellValue(value);
 	        }	
 		}
 		
@@ -336,32 +315,6 @@ public class XLSReportsManager {
 		k.setCellValue("Time Zone:");
 		v = settingsRow.createCell(1);
 		v.setCellValue(tz);
-	}
-	
-	/*
-	 * add a location to XLS
-	 */
-	private void addLocation(
-			
-		Location l, 
-		Sheet sheet,
-		Map<String, CellStyle> styles,
-		Map<String, Integer> rowMap) throws IOException {
-		
-		int groupRow = rowMap.get(l.group);
-		
-		Row row = sheet.createRow(groupRow++);
-		rowMap.put(l.group, groupRow);
-		
-		Cell cell = row.createCell(0);
-		cell.setCellStyle(styles.get("default"));	
-		cell.setCellValue(l.uid);
-	    
-		cell = row.createCell(1);
-		cell.setCellStyle(styles.get("default"));	
-		cell.setCellValue(l.name);
-
-	
 	}
 
 }
