@@ -41,6 +41,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.PDFTableManager;
 import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.KeyValue;
@@ -112,6 +113,19 @@ public class TableReports extends Application {
 			if(isXLS) {
 				XLSReportsManager xm = new XLSReportsManager(format);
 				xm.createXLSReportsFile(response.getOutputStream(), dArray, mfc, localisation, tz);
+			} else if(isPdf) {
+				String basePath = GeneralUtilityMethods.getBasePath(request);
+				PDFTableManager pm = new PDFTableManager();
+				pm.createPdf(
+						sd,
+						response.getOutputStream(), 
+						dArray, 
+						mfc, 
+						localisation, 
+						tz, false,	 // TBD set landscape and paper size from client
+						request.getRemoteUser(),
+						basePath);
+						
 			}
 			
 		

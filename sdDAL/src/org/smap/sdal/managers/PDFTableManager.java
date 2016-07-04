@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -21,7 +23,9 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.PdfPageSizer;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Label;
+import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
@@ -44,10 +48,14 @@ import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -64,6 +72,7 @@ import com.itextpdf.tool.xml.pipeline.css.CssResolverPipeline;
 import com.itextpdf.tool.xml.pipeline.end.ElementHandlerPipeline;
 import com.itextpdf.tool.xml.pipeline.html.HtmlPipeline;
 import com.itextpdf.tool.xml.pipeline.html.HtmlPipelineContext;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.Selector.Matcher;
 
 /*****************************************************************************
 
@@ -87,10 +96,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Manage the table that stores details on the forwarding of data onto other systems
  */
-public class PDFSurveyManager {
+public class PDFTableManager {
 	
 	private static Logger log =
-			 Logger.getLogger(PDFSurveyManager.class.getName());
+			 Logger.getLogger(PDFTableManager.class.getName());
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
@@ -114,110 +123,7 @@ public class PDFSurveyManager {
 	int marginTop_2 = 50;
 	int marginBottom_2 = 100;
 	
-	/*
-	 * Class to write headers and footers on each page
-	 *
-	class PageSizer extends PdfPageEventHelper {
-		int pagenumber = 0;
-		User user = null;
-		String title;
-		String project;
-		String basePath;
-		
-		public PageSizer(String title, String project, User user, String basePath) {
-			super();
-			
-			this.title = title;
-			this.project = project;
-			this.user = user;
-			this.basePath = basePath;
-			
-		}
-		
-		public void onStartPage(PdfWriter writer, Document document) {
-			pagenumber++;
 
-			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
-			
-			//if(pageNumber > 1) {
-			//	writer.setCropBoxSize(new Rectangle(marginLeft, marginRight, marginTop_2, marginBottom_2));
-			//}
-		}
-		public void onEndPage(PdfWriter writer, Document document) {
-			
-			Rectangle pageRect = writer.getPageSize();
-			
-			// Write header on first page only
-			if(pagenumber == 1) {
-				
-				// Add Title
-				Font titleFont = new Font();
-				titleFont.setSize(18);
-				Phrase titlePhrase = new Phrase();
-				titlePhrase.setFont(titleFont);
-				titlePhrase.add(title);
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_CENTER, titlePhrase, 
-						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getTop() - 100, 0);
-				
-				// Add Project
-				Phrase projectPhrase = new Phrase();
-				Font projectFont = new Font();
-				projectFont.setSize(14);
-				projectPhrase.setFont(projectFont);
-				projectPhrase.add("Project: " +  project);
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_LEFT, projectPhrase, 
-						pageRect.getLeft() + marginLeft, pageRect.getTop() - 120, 0);
-				
-				
-				if(user != null) {
-					// Show the logo
-					String fileName = null;
-					try {
-						fileName = basePath + File.separator + "media" + File.separator +
-							"organisation" + File.separator + user.o_id + File.separator +
-							"settings" + File.separator + "bannerLogo";
-	
-							Image img = Image.getInstance(fileName);
-							img.scaleToFit(200, 50);
-							float w = img.getScaledWidth();
-							img.setAbsolutePosition(
-						            pageRect.getRight() - (marginRight + w),
-						            pageRect.getTop() - 75);
-						        document.add(img);
-							
-					} catch (Exception e) {
-						log.info("Error: Failed to add image " + fileName + " to pdf");
-					}
-				}
-			}
-			
-			// Footer is always written
-			if(user != null) {
-				// Add organisation
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_CENTER, new Phrase(user.company_name), 
-						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getBottom() + 80, 0);
-				// Add organisation address
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_CENTER, new Phrase(user.company_address), 
-						(pageRect.getLeft() + pageRect.getRight()) /2, pageRect.getBottom() + 65, 0);
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_CENTER, new Phrase(user.company_phone), 
-						(pageRect.getLeft() + pageRect.getRight()) /4, pageRect.getBottom() + 50, 0);
-				ColumnText.showTextAligned(writer.getDirectContent(), 
-						Element.ALIGN_CENTER, new Phrase(user.company_email), 
-						(pageRect.getLeft() + pageRect.getRight()) * 3 / 4, pageRect.getBottom() + 50, 0);
-			}
-			
-			// Add page number
-			ColumnText.showTextAligned(writer.getDirectContent(), 
-					Element.ALIGN_CENTER, new Phrase(String.format("page %d", pagenumber)), 
-					pageRect.getRight() - 100, pageRect.getBottom() + 25, 0);
-		}
-	}
-	*/
 	
 	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
@@ -232,35 +138,24 @@ public class PDFSurveyManager {
 	 * Call this function to create a PDF
 	 * Return a suggested name for the PDF file derived from the results
 	 */
-	public String createPdf(
-			Connection connectionSD,
-			Connection cResults,
-			OutputStream outputStream,
-			String basePath, 
+	public void createPdf(
+			Connection sd,
+			OutputStream outputStream, 
+			ArrayList<ArrayList<KeyValue>> dArray, 
+			ManagedFormConfig mfc,
+			ResourceBundle localisation, 
+			String tz,
+			boolean landscape,
 			String remoteUser,
-			String language, 
-			int sId, 
-			String instanceId,
-			String filename,
-			boolean landscape,					// Set true if landscape
-			HttpServletResponse response) {
-		
-		if(language != null) {
-			language = language.replace("'", "''");	// Escape apostrophes
-		} else {
-			language = "none";
-		}
-		
-		org.smap.sdal.model.Survey survey = null;
-		User user = null;
-		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
-		
-	
-		SurveyManager sm = new SurveyManager();
-		UserManager um = new UserManager();
-		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
+			String basePath
+			) {
 
+		User user = null;
+		UserManager um = new UserManager();
+		
 		try {
+			
+			user = um.getByIdent(sd, remoteUser);
 			
 			// Get fonts and embed them
 			String os = System.getProperty("os.name");
@@ -279,148 +174,40 @@ public class PDFSurveyManager {
 				    BaseFont.EMBEDDED, 12); 
 			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
-			
+
+				
 			/*
-			 * Get the results and details of the user that submitted the survey
+			 * Create a PDF without the stationary
+			 */				
+			PdfWriter writer = null;
+				
+			/*
+			 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
+			 * Else just create the document directly in a single pass
 			 */
-			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true, generateBlank, true, false, "real");
-			log.info("User Ident who submitted the survey: " + survey.instance.user);
-			String userName = survey.instance.user;
-			if(userName == null) {
-				userName = remoteUser;
-			}
-			if(userName != null) {
-				user = um.getByIdent(connectionSD, userName);
-			}
+			Parser parser = getXMLParser();
 			
-			
-			// If a filename was not specified then get one from the survey data
-			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
-			// If the PDF is to be returned in an http response then the header is set now before writing to the output stream
-			log.info("Filename passed to createPDF is: " + filename);
-			if(filename == null) {
-				filename = survey.getInstanceName() + ".pdf";
+			// Step 1 - Create the underlying document as a byte array
+			Document document = null;
+			if(landscape) {
+				document = new Document(PageSize.A4.rotate());
 			} else {
-				if(!filename.endsWith(".pdf")) {
-					filename += ".pdf";
-				}
+				document = new Document(PageSize.A4);
 			}
+			document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
+			writer = PdfWriter.getInstance(document, outputStream);
+				
+			writer.setInitialLeading(12);	
+			writer.setPageEvent(new PdfPageSizer("Results", "Project", 
+					user, basePath, marginLeft, marginRight, marginTop_2, marginBottom_2)); 
+			document.open();
+				
+			document.newPage();
 			
-			// If the PDF is to be returned in an http response then set the file name now
-			if(response != null) {
-				log.info("Setting filename to: " + filename);
-				GeneralUtilityMethods.setFilenameInResponse(filename, response);
-			}
-			
-			/*
-			 * Get a template for the PDF report if it exists
-			 * The template name will be the same as the XLS form name but with an extension of pdf
-			 */
-			File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, survey.displayName, survey.p_id);
-			
-			/*
-			 * Get dependencies between Display Items, for example if a question result should be added to another
-			 *  question's results
-			 */
-			GlobalVariables gv = new GlobalVariables();
-			if(!generateBlank) {
-				for(int i = 0; i < survey.instance.results.size(); i++) {
-					getDependencies(gv, survey.instance.results.get(i), survey, i);	
-				}
-			}
-			
-			
-			if(templateFile.exists()) {
+			processResults(parser, document, dArray, mfc);		
+
+			document.close();
 				
-				log.info("PDF Template Exists");
-				String templateName = templateFile.getAbsolutePath();
-				
-				PdfReader reader = new PdfReader(templateName);
-				PdfStamper stamper = new PdfStamper(reader, outputStream);
-				int languageIdx = getLanguageIdx(survey, language);
-				for(int i = 0; i < survey.instance.results.size(); i++) {
-					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
-				}
-				if(user != null) {
-					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
-				}
-				stamper.setFormFlattening(true);
-				stamper.close();
-			} else {
-				log.info("++++No template exists creating a pdf file programmatically");
-				
-				/*
-				 * Create a PDF without the stationary
-				 */				
-				
-				PdfWriter writer = null;
-				
-				/*
-				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
-				 * Else just create the document directly in a single pass
-				 */
-				Parser parser = getXMLParser();
-				
-				// Step 1 - Create the underlying document as a byte array
-				Document document = null;
-				if(landscape) {
-					document = new Document(PageSize.A4.rotate());
-				} else {
-					document = new Document(PageSize.A4);
-				}
-				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
-				writer = PdfWriter.getInstance(document, outputStream);
-				
-				writer.setInitialLeading(12);	
-				
-				writer.setPageEvent(new PdfPageSizer(survey.displayName, survey.pName, 
-						user, basePath, marginLeft, marginRight, marginTop_2, marginBottom_2)); 
-				document.open();
-				
-				int languageIdx = getLanguageIdx(survey, language);
-				
-				// If this form has data maintain a list of parent records to lookup ${values}
-				ArrayList<ArrayList<Result>> parentRecords = null;
-				if(!generateBlank) {
-					parentRecords = new ArrayList<ArrayList<Result>> ();
-				}
-				
-				for(int i = 0; i < survey.instance.results.size(); i++) {
-					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
-							languageIdx,
-							generateBlank,
-							0,
-							i,
-							repIndexes,
-							gv,
-							false,
-							parentRecords);		
-				}
-				
-				fillNonTemplateUserDetails(document, user, basePath);
-				
-				// Add appendix
-				if(gv.hasAppendix) {
-					document.newPage();
-					document.add(new Paragraph("Appendix", fontbold));
-					
-					for(int i = 0; i < survey.instance.results.size(); i++) {
-						processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
-								languageIdx,
-								generateBlank,
-								0,
-								i,
-								repIndexes,
-								gv,
-								true, 
-								parentRecords);		
-					}
-				}
-				
-				document.close();
-				
-			}
-			
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "SQL Error", e);
@@ -429,236 +216,15 @@ public class PDFSurveyManager {
 			log.log(Level.SEVERE, "Exception", e);
 			
 		}
-		
-		return filename;
 	
 	}
 	
-	/*
-	 * Get dependencies between question
-	 */
-	private void getDependencies(GlobalVariables gv,
-			ArrayList<Result> record,
-			org.smap.sdal.model.Survey survey,
-			int recNumber) {
-		
-		System.out.println("++++ Set dependencies for record: " + record.size() + " : " + recNumber);
-		for(int j = 0; j < record.size(); j++) {
-			Result r = record.get(j);
-			if(r.type.equals("form")) {
-				for(int k = 0; k < r.subForm.size(); k++) {
-					getDependencies(gv, r.subForm.get(k), survey, k);
-				}
-			} else {
-				
-				if(r.appearance != null && r.appearance.contains("pdfaddto")) {
-					String name = getReferencedQuestion(r.appearance);
-					if(name != null) {
-						String refKey = r.fIdx + "_" + recNumber + "_" + name; 
-						ArrayList<String> deps = gv.addToList.get(refKey);
-						
-						System.out.println("GV: add reference " + refKey );
-						if(deps == null) {
-							deps = new ArrayList<String> ();
-							gv.addToList.put(refKey, deps);
-						}
-						deps.add(r.value);
-					}
-				}
-			}
-		}
-	}
-	
-	private String getReferencedQuestion(String app) {
-		String name = null;
-		
-		String [] appValues = app.split(" ");
-		for(int i = 0; i < appValues.length; i++) {
-			if(appValues[i].startsWith("pdfaddto")) {
-				int idx = appValues[i].indexOf('_');
-				if(idx > -1) {
-					name = appValues[i].substring(idx + 1);
-				}
-				break;
-			}
-		}
-		
-		return name;
-	}
-	
-	
-	/*
-	 * Get the index in the language array for the provided language
-	 */
-	private int getLanguageIdx(org.smap.sdal.model.Survey survey, String language) {
-		int idx = 0;
-		
-		if(survey != null && survey.languages != null) {
-			for(int i = 0; i < survey.languages.size(); i++) {
-				if(survey.languages.get(i).equals(language)) {
-					idx = i;
-					break;
-				}
-			}
-		}
-		return idx;
-	}
-	
-	
-	/*
-	 * Fill the template with data from the survey
-	 */
-	private void fillTemplate(
-			AcroFields pdfForm, 
-			ArrayList<Result> record, 
-			String basePath,
-			String formName,
-			int repeatIndex,
-			org.smap.sdal.model.Survey survey,
-			int languageIdx) throws IOException, DocumentException {
-		try {
-			
-			boolean status = false;
-			String value = "";
-			for(Result r : record) {
-				
-				boolean hideLabel = false;
-				String fieldName = getFieldName(formName, repeatIndex, r.name);
-				
-				if(r.type.equals("form")) {
-					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
-					} 
-				} else if(r.type.equals("select1")) {
-					for(Result c : r.choices) {
-						if(c.isSet) {
-							// value = c.name;
-							if(c.name.equals("other")) {
-								hideLabel = true;
-							}
-							
-							Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
-							Label label = option.labels.get(languageIdx);
-							value = GeneralUtilityMethods.unesc(label.text);
-							
-							break;
-						}
-					}
-				} else if(r.type.equals("select")) {
-					value = "";		// Going to append multiple selections to value
-					for(Result c : r.choices) {
-						if(c.isSet) {
-							// value = c.name;
-							if(!c.name.equals("other")) {
-							
-								Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
-								Label label = option.labels.get(languageIdx);
-								if(value.length() > 0) {
-									value += ", ";
-								}
-								value += GeneralUtilityMethods.unesc(label.text);
-							}
-						}
-					}
-				} else if(r.type.equals("image")) {
-					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
-					if(ad != null) {
-						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
-						ad.setProportionalIcon(true);
-						try {
-							ad.setImage(Image.getInstance(basePath + "/" + r.value));
-						} catch (Exception e) {
-							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
-						}
-						pdfForm.replacePushbuttonField(fieldName, ad.getField());
-						log.info("Adding image to: " + fieldName);
-					} else {
-						//log.info("Picture field: " + fieldName + " not found");
-					}
-				} else {
-					value = r.value;
-				}
-	
-				if(value != null && !value.equals("") && !r.type.equals("image")) {
-					status = pdfForm.setField(fieldName, value);			
-					log.info("Set field: " + status + " : " + fieldName + " : " + value);
-					if(hideLabel) {
-						pdfForm.removeField(fieldName);
-					}
-							
-				} else {
-					//log.info("Skipping field: " + status + " : " + fieldName + " : " + value);
-				}
-				
-				if(value == null || value.trim().equals("")) {
-					pdfForm.removeField(fieldName);
-				}
-				
-			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error filling template", e);
-		}
-	}
-	
-	private String getFieldName(String formName, int index, String qName) {
-		String name = null;
-		
-		if(formName == null || formName.equals("")) {
-			name = qName;
-		} else {
-			name = formName + "[" + index + "]." + qName;
-		}
-		return name;
-	}
 	
 	private class UserSettings {
 		String title;
 		String license;
 	}
 	
-	/*
-	 * Fill the template with data from the survey
-	 */
-	private static void fillTemplateUserDetails(AcroFields pdfForm, User user, String basePath) throws IOException, DocumentException {
-		try {
-					
-			pdfForm.setField("user_name", user.name);
-			pdfForm.setField("user_company", user.company_name);
-
-			/*
-			 * User configurable data TODO This should be an array of key value pairs
-			 * As interim use a hard coded class to hold the data
-			 */
-			String settings = user.settings;
-			Type type = new TypeToken<UserSettings>(){}.getType();
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			UserSettings us = gson.fromJson(settings, type);
-			
-			if(us != null) {
-				pdfForm.setField("user_title", us.title);
-				pdfForm.setField("user_license", us.license);
-				
-				PushbuttonField ad = pdfForm.getNewPushbuttonFromField("user_signature");
-				if(ad != null) {
-					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
-					ad.setProportionalIcon(true);
-					try {
-						ad.setImage(Image.getInstance(basePath + "/" + user.signature));
-					} catch (Exception e) {
-						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
-					}
-					pdfForm.replacePushbuttonField("user_signature", ad.getField());
-				} else {
-					//log.info("Picture field: user_signature not found");
-				}
-			}
-				
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error filling template", e);
-		}
-	}
-	
-
 	
 	/*
 	 * Get an XML Parser
@@ -697,104 +263,33 @@ public class PDFSurveyManager {
 	}
 	
 	/*
-	 * Process the form
-	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
-	 *  can be applied to showing the form on the screen and generating the PDF
+	 * Process the results and write to a table
 	 */
-	private void processForm(
+	private void processResults(
 			Parser parser,
 			Document document,  
-			ArrayList<Result> record,
-			org.smap.sdal.model.Survey survey,
-			String basePath,
-			int languageIdx,
-			boolean generateBlank,
-			int depth,
-			int length,
-			int[] repIndexes,
-			GlobalVariables gv,
-			boolean appendix,
-			ArrayList<ArrayList<Result>> parentRecords) throws DocumentException, IOException {
+			ArrayList<ArrayList<KeyValue>> dArray, 
+			ManagedFormConfig mfc) throws DocumentException, IOException {
 		
-		// Check that the depth of repeats hasn't exceeded the maximum
-		if(depth > repIndexes.length - 1) {
-			depth = repIndexes.length - 1;	
-		}
-		
-		boolean firstQuestion = true;
-		for(int j = 0; j < record.size(); j++) {
-			Result r = record.get(j);
-			if(r.type.equals("form")) {
-				
-				firstQuestion = true;			// Make sure there is a gap when we return from the sub form
-				// If this is a blank template check to see the number of times we should repeat this sub form
-				if(generateBlank) {
-					int blankRepeats = getBlankRepeats(r.appearance);
-					for(int k = 0; k < blankRepeats; k++) {
-						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
-								generateBlank, 
-								depth + 1,
-								k,
-								repIndexes,
-								gv,
-								appendix,
-								null);
-					}
-				} else {
-					for(int k = 0; k < r.subForm.size(); k++) {
-						// Maintain array list of parent records in order to look up ${values}
-						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
-						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
-								generateBlank, 
-								depth + 1,
-								k,
-								repIndexes,
-								gv,
-								appendix,
-								parentRecords);
-					} 
-				}
-			} else if(r.qIdx >= 0) {
-				// Process the question
-				
-				Form form = survey.forms.get(r.fIdx);
-				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-				//Label label = question.labels.get(languageIdx);
+	
+		for(int index = 0; index < dArray.size(); index++) {
 			
-				if(includeResult(r, question, appendix, gv)) {
-					if(question.type.equals("begin group")) {
-						//groupWidth = processGroup(parser, document, question, label);
-						if(question.isNewPage()) {
-							document.newPage();
-						}
-					} else if(question.type.equals("end group")) {
-						//ignore
-					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
+			ArrayList<KeyValue> record = dArray.get(index);
+			
+			for(int j = 0; j < record.size(); j++) {
+			
+				Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
+				PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
-						newTable.setWidthPercentage(100);
-
-				        
-						// Add a gap if this is the first question of the record
-						// or the previous row was at a different depth
-						if(firstQuestion) {
-							newTable.setSpacingBefore(5);
-						}
-						firstQuestion = false;
+				newTable.setWidthPercentage(100);
 						
-						// Start a new page if the first question needs to be on a new page
-						if(row.items.get(0).isNewPage) {
-							document.newPage();
-						}
-						document.add(newTable);
-						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
-					}
+				// Start a new page if the first question needs to be on a new page
+				if(row.items.get(0).isNewPage) {
+					document.newPage();
 				}
-				
-			}
+				document.add(newTable);
+				j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
+			}		
 		}
 		
 		return;
