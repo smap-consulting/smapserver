@@ -57,7 +57,7 @@ public class JdbcUploadEventManager {
 			+ "assignment_id,"
 			+ "survey_notes,"
 			+ "location_trigger) "
-			+ "values (nextval('ue_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+			+ "values (nextval('ue_seq'), now(), ?, ?, ?, ?, ?, ?, ?, ?, ?"
 			+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 			+ ", ?);";
 	
@@ -104,27 +104,26 @@ public class JdbcUploadEventManager {
 	 * Write the upload event to the database
 	 */
 	public void write(UploadEvent ue) throws SQLException {
-		pstmt.setTimestamp(1, new Timestamp(ue.getUploadTime().getTime()));
-		pstmt.setString(2, ue.getUserName());
-		pstmt.setString(3, ue.getFileName());
-		pstmt.setString(4,  ue.getSurveyName());
-		pstmt.setString(5, ue.getImei());
-		pstmt.setString(6, ue.getStatus());
-		pstmt.setString(7, ue.getReason());
-		pstmt.setString(8, ue.getLocation());
-		pstmt.setString(9, ue.getServerName());
-		pstmt.setInt(10, ue.getSurveyId());
-		pstmt.setInt(11,  ue.getProjectId());
-		pstmt.setString(12, ue.getFormStatus());
-		pstmt.setString(13, ue.getFilePath());
-		pstmt.setString(14, ue.getOrigSurveyIdent());
-		pstmt.setString(15,  ue.getUpdateId());
-		pstmt.setString(16,  ue.getIdent());
-		pstmt.setBoolean(17, ue.getIncomplete());
-		pstmt.setString(18, ue.getInstanceId());
-		pstmt.setInt(19, ue.getAssignmentId());
-		pstmt.setString(20, ue.getSurveyNotes());
-		pstmt.setString(21, ue.getLocationTrigger());
+		pstmt.setString(1, ue.getUserName());
+		pstmt.setString(2, ue.getFileName());
+		pstmt.setString(3,  ue.getSurveyName());
+		pstmt.setString(4, ue.getImei());
+		pstmt.setString(5, ue.getStatus());
+		pstmt.setString(6, ue.getReason());
+		pstmt.setString(7, ue.getLocation());
+		pstmt.setString(8, ue.getServerName());
+		pstmt.setInt(9, ue.getSurveyId());
+		pstmt.setInt(10,  ue.getProjectId());
+		pstmt.setString(11, ue.getFormStatus());
+		pstmt.setString(12, ue.getFilePath());
+		pstmt.setString(13, ue.getOrigSurveyIdent());
+		pstmt.setString(14,  ue.getUpdateId());
+		pstmt.setString(15,  ue.getIdent());
+		pstmt.setBoolean(16, ue.getIncomplete());
+		pstmt.setString(17, ue.getInstanceId());
+		pstmt.setInt(18, ue.getAssignmentId());
+		pstmt.setString(19, ue.getSurveyNotes());
+		pstmt.setString(20, ue.getLocationTrigger());
 	
 		pstmt.executeUpdate();
 	}

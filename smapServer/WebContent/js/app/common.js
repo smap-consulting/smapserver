@@ -1350,14 +1350,13 @@ function isBusinessServer() {
 			hostname !== 'kontrolid.smap.com.au' &&
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
+			hostname.indexOf('datacollect.icanreach.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
-		$('.public_only').show();
 	} else {
 		bs = true
 		$('.public_only').hide();
-		$('.bus_only').show();
 	}
 	return bs;
 }
