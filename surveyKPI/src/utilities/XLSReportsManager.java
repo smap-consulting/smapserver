@@ -96,61 +96,6 @@ public class XLSReportsManager {
 			int width = 256 * 20;		// 20 characters is default
 			return width;
 		}
-		
-		public int getDataIndex() {
-			return dataIndex;
-		}
-		
-		public int getColIndex() {
-			return colIndex;
-		}
-		
-		// Get a value for this column from the provided properties object
-		public String getValue(TaskProperties props) {
-			String value = null;
-			
-			if(name.equals("form")) {
-				value = props.form_name;
-			} else if(name.equals("name")) {
-				value = props.name;
-			} else if(name.equals("status")) {
-				value = props.status;
-			} else if(name.equals("assignee_ident")) {
-				value = props.assignee_ident;
-			} else if(name.equals("location_trigger")) {
-				value = props.location_trigger;
-			} else if(name.equals("from")) {
-				if(props.from == null) {
-					value = null;
-				} else {
-					value = String.valueOf(props.from);
-				}
-			} else if(name.equals("to")) {
-				if(props.to == null) {
-					value = null;
-				} else {
-					value = String.valueOf(props.to);
-				}
-			} else if(name.equals("guidance")) {
-				value = props.guidance;		
-			} else if(name.equals("repeat")) {
-				value = String.valueOf(props.repeat);
-			} else if(name.equals("email")) {
-				value = props.email;
-			} else if(name.equals("lon")) {
-				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
-			} else if(name.equals("lat")) {
-				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lat"));
-			} else if(name.equals("address")) {
-				value = props.address;
-			}
-			
-			if(value == null) {
-				value = "";
-			}
-			return value;
-		}
-	
 	}
 
 	public XLSReportsManager() {

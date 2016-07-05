@@ -92,7 +92,6 @@ public class TableReports extends Application {
 		boolean isXLS = format.toLowerCase().equals("xls") || format.toLowerCase().equals("xlsx");
 		boolean isPdf = format.toLowerCase().equals("pdf");
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		
 		String tz = "GMT";
 		try {

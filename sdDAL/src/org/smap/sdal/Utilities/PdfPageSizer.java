@@ -1,18 +1,28 @@
 package org.smap.sdal.Utilities;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.managers.PDFTableManager;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.User;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
+import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.pdf.ColumnText;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
 
@@ -29,11 +39,15 @@ public class PdfPageSizer extends PdfPageEventHelper {
 	int marginRight;
 	int marginTop_2;
 	int marginBottom_2;
+	ArrayList<String> tableHeader;
 	
 	private static Logger log =
 			 Logger.getLogger(PDFTableManager.class.getName());
 	
+	Font font = new Font(FontFamily.HELVETICA, 10);
+	
 	public PdfPageSizer(String title, String project, User user, String basePath,
+			ArrayList<String> tableHeader,
 			int marginLeft,
 			int marginRight,
 			int marginTop_2,
@@ -49,6 +63,7 @@ public class PdfPageSizer extends PdfPageEventHelper {
 		this.marginRight = marginRight;
 		this.marginTop_2 = marginTop_2;
 		this.marginBottom_2 = marginBottom_2;
+		this.tableHeader = tableHeader;
 		
 	}
 	
@@ -56,10 +71,39 @@ public class PdfPageSizer extends PdfPageEventHelper {
 		pagenumber++;
 
 		document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
+		if(tableHeader != null) {
+			PdfPTable table = new PdfPTable(tableHeader.size());	
+			for(String h : tableHeader) {
+				
+				PdfPCell cell = new PdfPCell();
+				cell.setBorderColor(BaseColor.LIGHT_GRAY);
+				cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+			 
+				// Set the content of the value cell
+				try {
+					Paragraph para = new Paragraph("", font);
+					para.add(new Chunk(GeneralUtilityMethods.unesc(h), font));
+					cell.addElement(para);
+					//updateValueCell(valueCell, kv.v, basePath);
+				} catch (Exception e) {
+					log.log(Level.SEVERE, "Exception", e);
+				}
+				
+				cell.setBorderColor(BaseColor.LIGHT_GRAY);
+				
+				table.addCell(cell);
+
+			}
+			try {
+				table.setWidthPercentage(100);
+				document.add(table);
+			} catch (DocumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
 		
-		//if(pageNumber > 1) {
-		//	writer.setCropBoxSize(new Rectangle(marginLeft, marginRight, marginTop_2, marginBottom_2));
-		//}
 	}
 	public void onEndPage(PdfWriter writer, Document document) {
 		
