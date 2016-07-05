@@ -57,6 +57,7 @@ echo '##### 1. Update Ubuntu'
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo sysctl -w kernel.shmmax=67068800		# 64MB of shared memory
+sudo apt-get install ntp
 
 echo '##### 2. Install Apache' 
 # Note install pre-fork as mod-php is not compatable with mpm-worker
