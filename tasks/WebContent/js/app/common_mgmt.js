@@ -374,7 +374,7 @@ window.gTasks = {
 		 /*
 		  * Settings
 		  */
-		 $('#tab-columns-content, #tab-barcode-content').html(hColSort.join(''));
+		 $('#tab-columns-content, #tab-barcode-content, #tab-filter-content').html(hColSort.join(''));
 		 
 		 // Set checkboxes in column sort section of settings
 		 

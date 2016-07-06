@@ -15,6 +15,7 @@
     <link href="/css/wb/style.css" rel="stylesheet">
     
     <link rel="stylesheet" type="text/css" href="/js/libs/DataTables/datatables.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
     <link href="/css/smap-wb.css" rel="stylesheet">
 
@@ -79,10 +80,23 @@
         		
 	            <ul class="nav navbar-top-links navbar-right">
 	            
-                	
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
+               
+                	<li class="dropdown">
+                    	<a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                        	<span class="lang" data-lang="br_sd"></span> <i class="fa fa-filter"></i>  <span id="filter-count" class="label"></span>
+                    	</a>
+                    	<ul class="dropdown-menu dropdown-tasks">
+	      					 <li>
+	      					 	<input id="similarSet" type="checkbox" checked 
+		        					data-onstyle="success" data-offstyle="primary">
+		        			</li>
+
+                    	</ul>
+                	</li>
+                	
                 	<li>
                     	<a class="right-sidebar-toggle">
                         	<i class="fa fa-cog"></i>

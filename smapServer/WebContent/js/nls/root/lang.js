@@ -297,10 +297,6 @@ define({
 	"msg_inv_email": "Not a valid email address",
 	"msg_cs": "Click to filter or sort on this column",
 	
-	// Editor
-	"e_b_e": "Base on existing form",
-	"e_s_r": "Store results in shared table",
-	
 	// Tasks
 	"t_complete": "Show Completed Tasks",
 	"t_show": "Show tasks for:",
@@ -415,6 +411,8 @@ define({
 	"wf_sig": "Signature",
 	
 	// Editor
+	"e_b_e": "Base on existing form",
+	"e_s_r": "Store results in shared table",
 	"ed_qt": "Question Text",
 	"ed_ct": "Choice Text",
 	"ed_qh": "Question Hint",
@@ -488,6 +486,9 @@ define({
 	"u_e_p": "Email password",
 	"u_e_port": "Email Server port",
 	"u_h_e": "Email to get Help",
+	
+	// Browse Results
+	"br_sd": "Similar Results",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",

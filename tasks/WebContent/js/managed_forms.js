@@ -41,6 +41,7 @@ requirejs.config({
     	globals: '../../../../js/app/globals',
     	bootstrap: '../../../../js/libs/bootstrap.min',
     	crf: '../../../../js/libs/commonReportFunctions',
+    	toggle: 'bootstrap-toggle.min',
     	lang_location: '../../../../js',
     	file_input: '../../../../js/libs/bootstrap.file-input',
     	mapbox_app: '../../../../js/app/mapbox_app',
@@ -73,7 +74,8 @@ requirejs.config({
     	'crf': ['jquery'],
        	'datatables': ['jquery', 'bootstrap'],
     	'app/common_mgmt': ['jquery'],
-    	'qrcode': ['jquery']
+    	'qrcode': ['jquery'],
+       	'toggle': ['bootstrap.min']
 	
     	}
     });
@@ -94,7 +96,8 @@ require([
          'icheck',
          'crf',
          'app/common_mgmt',
-         'qrcode'
+         'qrcode',
+         'toggle'
          
          ], function($, 
         		 bootstrap, 
@@ -326,6 +329,12 @@ require([
 		 }
 		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId); 
 	 });
+	 
+	 /*
+	  * Set up the similar records filter
+	  */
+		// Set up view type toggle
+		$('#similarSet').attr("data-on", localise.set["c_yes"]).attr("data-off", localise.set["c_no"]).bootstrapToggle();
 
 
 });
