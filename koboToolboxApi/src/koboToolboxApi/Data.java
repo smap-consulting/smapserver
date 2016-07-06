@@ -355,6 +355,294 @@ public class Data extends Application {
 	}
 	
 	/*
+	 * Get similar records for an individual survey in JSON format
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/similar/{sId}/{select}")
+	public Response getSimilarDataRecords(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@PathParam("select") String select,			// comma separated list of qname::function
+														//  where function is lowercase || 
+			@QueryParam("start") int start,
+			@QueryParam("limit") int limit,
+			@QueryParam("mgmt") boolean mgmt,
+			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
+			@QueryParam("format") String format			// dt for datatables otherwise assume kobo
+			) { 
+		
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		// End Authorisation
+		
+		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get similar data records");
+
+		String sqlGetMainForm = "select f_id, table_name from form where s_id = ? and parentform = 0;";
+		PreparedStatement pstmtGetMainForm = null;
+		
+		String sqlGetForm = "select parentform, table_name from form where s_id = ? and f_id = ?;";
+		PreparedStatement pstmtGetForm = null;
+		
+		PreparedStatement pstmtGetSimilar = null;
+		PreparedStatement pstmtGetData = null;
+		
+		StringBuffer columnSelect = new StringBuffer();
+		StringBuffer similarWhere = new StringBuffer();
+		ArrayList<String> groupTypes = new ArrayList<String> ();
+		int groupColumns = 0;
+		String table_name = null;
+		int parentform = 0;
+		ResultSet rs = null;
+		JSONArray ja = new JSONArray();
+		
+		boolean isDt = false;
+		if(format != null && format.equals("dt")) {
+			isDt = true;
+		}
+		
+		try {
+
+			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
+			
+			if(fId == 0) {
+				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
+				pstmtGetMainForm.setInt(1,sId);
+				
+				log.info("Getting main form: " + pstmtGetMainForm.toString() );
+				rs = pstmtGetMainForm.executeQuery();
+				if(rs.next()) {
+					fId = rs.getInt(1);
+					table_name = rs.getString(2);
+				}
+			} else {
+				pstmtGetForm = sd.prepareStatement(sqlGetForm);
+				pstmtGetForm.setInt(1,sId);
+				pstmtGetForm.setInt(2,fId);
+				
+				log.info("Getting specific form: " + pstmtGetForm.toString() );
+				rs = pstmtGetForm.executeQuery();
+				if(rs.next()) {
+					parentform = rs.getInt(1);
+					table_name = rs.getString(2);
+				}
+			}
+				
+			ArrayList<Column> columns = GeneralUtilityMethods.getColumnsInForm(
+					sd,
+					cResults,
+					parentform,
+					fId,
+					table_name,
+					false,
+					false,		// Don't include parent key
+					false,		// Don't include "bad" columns
+					true		// include instance id
+					);
+			
+			if(mgmt) {
+				GeneralUtilityMethods.addManagementColumns(columns);
+			}
+			
+			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
+				
+				/*
+				 * 1. Prepare the data query minus the where clause that is created to select similar rows
+				 */
+				for(int i = 0; i < columns.size(); i++) {
+					Column c = columns.get(i);
+					if(i > 0) {
+						columnSelect.append(",");
+					}
+					columnSelect.append(c.getSqlSelect(urlprefix));
+				}
+				
+					
+				String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
+						+ " where prikey >= ? "
+						+ "and _bad = 'false' ";
+				String sqlSelect = "";
+				
+				String sqlGetDataOrder = null;
+				
+				// Set default sort order
+				if(mgmt) {
+					sqlGetDataOrder = " order by prikey desc limit 10000";
+				} else {
+					sqlGetDataOrder = " order by prikey asc;";
+				}
+				
+				/*
+				 * 1. Find the groups of similar records
+				 */
+				columnSelect = new StringBuffer();
+				String [] selectPairs = select.split(",");
+				for(int i = 0; i < selectPairs.length; i++) {
+					String [] aSelect = selectPairs[i].split("::");
+					if(aSelect.length > 1) {
+						System.out.println("Pair: " + aSelect[0] + " : " + aSelect[1]);
+						for(int j = 0; j < columns.size(); j++) {
+							//System.out.println("name: " + columns.get(j).name);
+							if(columns.get(j).name.equals(aSelect[0])) {
+								Column c = columns.get(j);
+								
+								if( groupColumns > 0) {
+									columnSelect.append(",");
+								}
+								similarWhere.append(" and ");
+								
+								if(aSelect[1].equals("lower")) {
+									String s = "lower(" + c.getSqlSelect(urlprefix) + ")";
+									columnSelect.append(s);
+									similarWhere.append(s + " = ?");
+								} else {
+									String s = c.getSqlSelect(urlprefix);
+									columnSelect.append(s);
+									similarWhere.append(s + " = ?");
+								}
+								groupColumns++;
+								groupTypes.add(c.qType);
+								break;
+							}
+						}
+					}
+				}
+			
+				String sqlGetSimilar = "select count(*), " + columnSelect.toString()
+						+ " from " + table_name
+						+ " where prikey >= ? "
+						+ "and _bad = 'false'";
+				String sqlGroup = " group by " + columnSelect.toString();
+				String sqlHaving = " having count(*) > 1 ";
+			
+				
+				pstmtGetSimilar = cResults.prepareStatement(sqlGetSimilar + sqlGroup + sqlHaving);
+				pstmtGetSimilar.setInt(1, start);
+				System.out.println("Get Similar: " + pstmtGetSimilar.toString());
+				rs = pstmtGetSimilar.executeQuery();
+				
+				/*
+				 * For each grouping of similar records get the individual records
+				 */
+				while(rs.next()) {
+
+					
+					/*
+					 * 3. Get the data that make up these similar records
+					 */
+					String groupKey = "";
+					pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + similarWhere.toString() 
+						+ sqlGetDataOrder);
+					int paramCount = 1;
+					pstmtGetData.setInt(paramCount++, start);
+					for(int i = 0; i < groupColumns; i++) {
+						String gType = groupTypes.get(i);
+						log.info("Adding group type: " + gType);
+						if(gType.equals("int")) {
+							pstmtGetData.setInt(paramCount++, rs.getInt(i + 2));	
+						} else { 
+							pstmtGetData.setString(paramCount++, rs.getString(i + 2));
+						}
+						if(i > 0) {
+							groupKey += "::";
+						}
+						groupKey += rs.getString(i + 2);
+					}
+					log.info("Get data: " + pstmtGetData.toString());
+					ResultSet rsD = pstmtGetData.executeQuery();
+					
+					int index = 0;
+					while (rsD.next()) {
+						
+						if(limit > 0 && index >= limit) {
+							break;
+						}
+						index++;
+						
+						JSONObject jr = new JSONObject();
+						jr.put("_group", groupKey);
+						for(int i = 0; i < columns.size(); i++) {	
+							
+							Column c = columns.get(i);
+							String name = null;
+							String value = null;
+							
+							if(c.isGeometry()) {							
+								// Add Geometry (assume one geometry type per table)
+								String geomValue = rsD.getString(i + 1);	
+								name = "_geolocation";
+								JSONArray coords = null;
+								if(geomValue != null) {
+									JSONObject jg = new JSONObject(geomValue);									
+									coords = jg.getJSONArray("coordinates");
+								} else {
+									coords = new JSONArray();
+								}
+								jr.put(name, coords);
+					
+							} else {
+								
+								//String name = rsMetaData.getColumnName(i);	
+								name = c.humanName;
+								value = rsD.getString(i + 1);	
+								
+								if(value == null) {
+									value = "";
+								}
+								
+								if(name != null ) {
+									if(!isDt) {
+										name = Utils.translateToKobo(name);
+									}
+									jr.put(name, value);
+								}
+							}
+							
+					
+						}
+							
+						ja.put(jr);
+					}
+					rsD.close();
+				}
+			
+				rs.close();
+			}
+
+			
+			if(isDt) {
+				JSONObject dt  = new JSONObject();
+				dt.put("data", ja);
+				response = Response.ok(dt.toString()).build();
+			} else {
+				response = Response.ok(ja.toString()).build();
+			}
+			
+			
+			
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			response = Response.serverError().build();
+		} finally {
+			
+			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetSimilar != null) {pstmtGetSimilar.close();	}} catch (SQLException e) {	}
+			
+			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
+			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
+		}
+		
+		return response;
+		
+	}
+	
+	/*
 	 * Convert the human name for the sort column into sql
 	 */
 	private String getSortColumn(ArrayList<Column> columns, String sort) {
