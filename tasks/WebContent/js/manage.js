@@ -476,7 +476,7 @@ require([
 					  refreshData();
 				  }, error: function(data, status) {
 					  removeHourglass();
-					  alert("Error: Failed to create managed service");
+					  alert(localise.set["msg_err_cr"]);
 				  }
 			});
 	 }

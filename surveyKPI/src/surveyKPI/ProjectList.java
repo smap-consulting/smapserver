@@ -33,7 +33,9 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.ProjectManager;
+import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 
 import com.google.gson.Gson;
@@ -44,6 +46,8 @@ import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -307,8 +311,8 @@ public class ProjectList extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ProjectList");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		// End Authorisation
-		
+		// End Authorisation			
+					
 		Type type = new TypeToken<ArrayList<Project>>(){}.getType();		
 		ArrayList<Project> pArray = new Gson().fromJson(projects, type);
 		
@@ -318,6 +322,11 @@ public class ProjectList extends Application {
 			int o_id;
 			ResultSet resultSet = null;
 			connectionSD.setAutoCommit(false);
+			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, null, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			/*
 			 * Get the organisation
@@ -351,10 +360,12 @@ public class ProjectList extends Application {
 						int count = resultSet.getInt(1);
 						if(count > 0) {
 							System.out.println("Count:" + count);
-							throw new Exception("Error: Project " + p.id + " has undeleted surveys. Hint: You need to erase " +
-									"all surveys from a project before it can be deleted. Try selecting" +
-									" \"Show deleted surveys\" on the template management screen for the project that you" +
-									" have finished with. Then erase those deleted surveys.");
+							String msg = localisation.getString("msg_undel_proj").replace("%s1", String.valueOf(p.id));
+							throw new Exception(msg);
+							//throw new Exception("Error: Project " + p.id + " has undeleted surveys. Hint: You need to erase " +
+							//		"all surveys from a project before it can be deleted. Try selecting" +
+							//		" \"Show deleted surveys\" on the template management screen for the project that you" +
+							//		" have finished with. Then erase those deleted surveys.");
 						}
 					} else {
 						throw new Exception("Error getting survey count");

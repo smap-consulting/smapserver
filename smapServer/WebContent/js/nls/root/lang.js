@@ -112,7 +112,8 @@ define({
 	"c_to": "To",
 	"c_properties": "Properties",
 	"c_question": "Question",
-	"c_questions": "Questionsxx",
+	"c_questions": "Questions",
+	"c_choices": "Choices",
 	"c_include": "Include",
 	"c_unique": "Unique",
 	"c_survey": "Survey",
@@ -265,6 +266,7 @@ define({
 	"msg_sel_media": "Select Media Question:",
 	"msg_err_save": "Error: Save failed: ",
 	"msg_err_del": "Error: Delete failed: ",
+	"msg_err_cr": "Error: Create failed: ",
 	"msg_err_upd": "Error: Update failed: ",
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
@@ -437,6 +439,7 @@ define({
 	"ed_st": "Shared Table",
 	"ed_ld": "Allow Loading data from file",
 	"ed_i_bo": "Based On",
+	"ed_tlf": "Top Level Form",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

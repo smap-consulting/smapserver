@@ -266,6 +266,9 @@ $(document).ready(function() {
 		updateLanguageView();
 	});
 	
+	// Set up view type toggle
+	$('#viewType').attr("data-on", localise.set["c_questions"]).attr("data-off", localise.set["c_choices"]).bootstrapToggle();
+
 	// Add menu functions
 	$('#m_media').off().click(function() {	// MEDIA
 		// Set up media dialog to manage loading and deleting of media
@@ -1683,7 +1686,11 @@ function addForms(data) {
 		h[++idx] = '<option value="';
 		h[++idx] = forms[i].f_id;
 		h[++idx] = '">';
-		h[++idx] = forms[i].form;
+		if(forms[i].form === "main") {
+			h[++idx] = localise.set["ed_tlf"];
+		} else {
+			h[++idx] = forms[i].form;
+		}
 		h[++idx] = '</option>';	
 	}
 	$('#form_name').html(h.join(""));

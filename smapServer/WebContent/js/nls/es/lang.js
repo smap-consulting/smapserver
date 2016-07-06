@@ -108,7 +108,7 @@ define(
     "c_to": "A",
     "c_properties": "Propiedades",
     "c_question": "Pregunta",
-    "c_questions": "Preguntasxx",
+    "c_questions": "Preguntas",
     "c_include": "Incluir",
     "c_unique": "Unico",
     "c_survey": "Formulario",
