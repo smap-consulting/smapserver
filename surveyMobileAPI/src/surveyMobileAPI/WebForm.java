@@ -60,9 +60,11 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ManifestValue;
+import org.smap.sdal.model.ServerData;
 import org.smap.sdal.model.Survey;
 import org.smap.server.utilities.GetXForm;
 
@@ -292,16 +294,19 @@ public class WebForm extends Application{
 
 		
 		StringBuffer outputString = new StringBuffer();
+		ServerData serverData = null;
 		
 		// Generate the web form
 		try {	    
 
 			/*
 			 * Get the media manifest so we can set the url's of media files used the form
+			 * Also gert the google api key
 			 */
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			requester = "surveyMobileAPI-getWebForm2";
 			TranslationManager translationMgr = new TranslationManager();	
+			ServerManager sm = new ServerManager();
 			Connection connectionSD = SDDataSource.getConnection(requester);
 			List<ManifestValue> manifestList = null;
 			try {
@@ -311,18 +316,13 @@ public class WebForm extends Application{
 						survey.id, 
 						basePath, 
 						formIdent);
+				
+				serverData = sm.getServer(connectionSD);
+				
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 			} finally {
-				try {
-	            	if (connectionSD != null) {
-	            		connectionSD.close();
-	            		connectionSD = null;
-	            	}
-	            	log.info("   Release sd connection: " + requester);
-	            } catch (SQLException e) {
-	            	log.log(Level.SEVERE, "Failed to close connection", e);
-	            }
+				SDDataSource.closeConnection("surveyKPI-Dashboard", connectionSD);
 			}
 			
 			// Get the XML of the Form
@@ -417,7 +417,8 @@ public class WebForm extends Application{
     					assignmentId, 
     					survey.surveyClass, 
     					orgId, 
-    					accessKey));
+    					accessKey,
+    					serverData));
     		}
     		
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
@@ -444,7 +445,8 @@ public class WebForm extends Application{
 			int assignmentId,
 			String surveyClass,
 			int orgId,
-			String accessKey) 
+			String accessKey,
+			ServerData serverData) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -458,7 +460,9 @@ public class WebForm extends Application{
 		}
 		output.append(">\n");
 				
-		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, accessKey));
+		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, 
+				accessKey,
+				serverData));
 		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass));
 
 		output.append("</html>\n");			
@@ -474,7 +478,8 @@ public class WebForm extends Application{
 			String dataToEditId, 
 			int assignmentId,
 			String surveyClass,
-			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			String accessKey,
+			ServerData serverData) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		
 		StringBuffer output = new StringBuffer();
 
@@ -512,6 +517,17 @@ public class WebForm extends Application{
 		output.append("<![endif]-->\n");
 			
 		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
+		// Add the google API key
+		output.append("<script>");
+			output.append("window.smapConfig = {};");
+				if(serverData.google_key != null) {
+					output.append("window.smapConfig.googleApiKey=\"");
+					output.append(serverData.google_key);
+					output.append("\";");
+				}
+		output.append("</script>");
+		
+		// Webforms script
 		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
 		
 		output.append("</head>\n");
