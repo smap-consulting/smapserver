@@ -1,4 +1,5 @@
 
+CREATE EXTENSION fuzzystrmatch;
 
 DROP TABLE IF EXISTS days;
 CREATE TABLE days (

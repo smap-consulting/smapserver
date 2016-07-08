@@ -44,3 +44,6 @@ ALTER TABLE change_history OWNER TO ws;
 -- Upgrade to:  15.11 from 15.10 =======
 alter table change_history add column question_column_name text;
 alter table change_history add column option_column_name text;
+
+--Upgrade to: 16.07 from 16.06 ===========
+CREATE EXTENSION fuzzystrmatch;

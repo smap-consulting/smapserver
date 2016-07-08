@@ -330,11 +330,13 @@ require([
 		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId); 
 	 });
 	 
-	 /*
-	  * Set up the similar records filter
-	  */
-		// Set up view type toggle
-		$('#similarSet').attr("data-on", localise.set["c_yes"]).attr("data-off", localise.set["c_no"]).bootstrapToggle();
+
+	 // Respond to duplicate reports menu
+	 if(isDuplicates) {
+		 $('#duplicateSearch').click(function(){
+			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
+		 });
+	 }
 
 
 });

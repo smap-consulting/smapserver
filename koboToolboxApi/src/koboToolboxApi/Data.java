@@ -137,6 +137,7 @@ public class Data extends Application {
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
 			@QueryParam("mgmt") boolean mgmt,
+			@QueryParam("group") boolean group,			// If set include a dummy group value in the response, used by duplicate query
 			@QueryParam("sort") String sort,			// Column Human Name to sort on
 			@QueryParam("dirn") String dirn,			// Sort direction, asc || desc
 			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
@@ -280,7 +281,9 @@ public class Data extends Application {
 					index++;
 					
 					JSONObject jr = new JSONObject();
-
+					if(group) {
+						jr.put("_group", "");				// _group for duplicate queries
+					}
 					for(int i = 0; i < columns.size(); i++) {	
 						
 						Column c = columns.get(i);
@@ -363,7 +366,7 @@ public class Data extends Application {
 	public Response getSimilarDataRecords(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@PathParam("select") String select,			// comma separated list of qname::function
-														//  where function is lowercase || 
+														//  where function is none || lower
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
 			@QueryParam("mgmt") boolean mgmt,
@@ -488,14 +491,22 @@ public class Data extends Application {
 							//System.out.println("name: " + columns.get(j).name);
 							if(columns.get(j).name.equals(aSelect[0])) {
 								Column c = columns.get(j);
+								boolean stringFnApplies = false;
+								
+								if(c.qType.equals("string") || c.qType.equals("select1")
+										|| c.qType.equals("barcode")) {
+									stringFnApplies = true;
+								}
 								
 								if( groupColumns > 0) {
 									columnSelect.append(",");
 								}
 								similarWhere.append(" and ");
 								
-								if(aSelect[1].equals("lower")) {
-									String s = "lower(" + c.getSqlSelect(urlprefix) + ")";
+								if(stringFnApplies 
+										&& (aSelect[1].equals("lower") 
+										|| aSelect[1].equals("soundex"))) {
+									String s = aSelect[1] +"(" + c.getSqlSelect(urlprefix) + ")";
 									columnSelect.append(s);
 									similarWhere.append(s + " = ?");
 								} else {
@@ -511,6 +522,10 @@ public class Data extends Application {
 					}
 				}
 			
+				if(columnSelect.length() == 0) {
+					throw new Exception("No Matching Columns");
+				}
+				
 				String sqlGetSimilar = "select count(*), " + columnSelect.toString()
 						+ " from " + table_name
 						+ " where prikey >= ? "

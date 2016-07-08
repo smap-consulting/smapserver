@@ -170,7 +170,7 @@ window.gTasks = {
 	 
 	 /*
 	  * Show the survey data along with the management columns
-	  * If prikey is specified then only show that record
+	  * If masterRecord is specified then only show that record
 	  */
 	 function showManagedData(sId, tableElem, masterRecord) {
 		 
@@ -189,6 +189,7 @@ window.gTasks = {
 		 	doneFirst = false,
 		 	headItem,
 		 	hColSort = [],
+		 	hDups = [],
 		 	hColSortIdx = -1;
 		 
 		 $('#survey_title').html($('#survey_name option:selected').text());
@@ -204,10 +205,12 @@ window.gTasks = {
 		 //if(typeof masterRecord === "undefined") {
 		//	 h[++idx] = '<th></th>';				// Select
 		 //}
+		 
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
 			 
 			 hColSort[hColSortIdx++] = addToColumnSort(headItem);
+			 hDups[hColSortIdx++] = addToDuplicateReportSelect(headItem);
 			 
 			 shownColumns.push({
 				 "data": headItem.humanName
@@ -240,12 +243,20 @@ window.gTasks = {
 		 /*
 		  * Apply data tables
 		  */
-		 var url = '/api/v1/data/' + sId;
+		 var url = '/api/v1/data/';	 
+		 url += sId;
+		 
 		 if(isManagedForms) {
 			 url += "?mgmt=true";
 		 } else{
 			 url += "?mgmt=false";
 		 }
+		 
+		 if(isDuplicates) {
+			 url += "&group=true";
+		 }
+		 
+		 
 		 url += "&format=dt";
 		 
 		 // Create data table
@@ -333,6 +344,23 @@ window.gTasks = {
 		 // Highlight data conditionally, set barcodes
 		 globals.gMainTable.off('draw').on( 'draw', function () {
 			 
+			 if(isDuplicates) {
+				 
+				 var rows = globals.gMainTable.rows( {page:'current'} ).nodes();
+		         var last=null;
+		 
+		         globals.gMainTable.column(0, {page:'current'} ).data().each( function ( group, i ) {
+		                if ( last !== group ) {
+		                    $(rows).eq( i ).before(
+		                        '<tr class="group"><td colspan="5">' + group + '</td></tr>'
+		                    );
+		 
+		                    last = group;
+		                }
+		            } );
+			 }
+	            
+	            
 			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 	 
 			 for(i = 0; i < columns.length; i++) {
@@ -374,7 +402,7 @@ window.gTasks = {
 		 /*
 		  * Settings
 		  */
-		 $('#tab-columns-content, #tab-barcode-content, #tab-filter-content').html(hColSort.join(''));
+		 $('#tab-columns-content, #tab-barcode-content').html(hColSort.join(''));
 		 
 		 // Set checkboxes in column sort section of settings
 		 
@@ -393,11 +421,51 @@ window.gTasks = {
 			 }
 		 });
 		 
-		
-		 
+		/*
+		 * Duplicates modal
+		 */
+		 $('#duplicateSelect').html(hDups.join(''));
+		 $('input', '#duplicateSelect').iCheck({
+			 checkboxClass: 'icheckbox_square-green',
+			 radioClass: 'iradio_square-green'
+		 });
 
 	 }
 	 
+	 /*
+	  * Show duplicates data
+	  */
+	 function showDuplicateData(sId, tableElem) {
+		 
+		 var url = '/api/v1/data/similar/' + sId + '/' + getSearchCriteria() + "?format=dt";
+		 globals.gMainTable.ajax.url( url ).load();
+	
+	 }
+	 
+	/*
+	 * Get the search criteria for a duplicate search
+	 */
+	function getSearchCriteria() {
+		var criteria = "";
+		
+		$('input', '#duplicateSelect').each(function(index){
+			var $this = $(this),
+				fn;
+			
+			if($this.is(':checked')) {
+				if(criteria.length > 0) {
+					criteria += ',';
+				}
+				fn = $this.closest('.row').find('select').val();
+				criteria += $this.val() + '::' + fn;
+			}
+			
+			
+		});
+		
+		return criteria;
+	}
+	
 	/*
 	 * Add the column to the settings
 	 */
@@ -422,6 +490,55 @@ window.gTasks = {
 			h[++idx] = '>';
 			h[++idx] = '</div>';
 			h[++idx] = '</div>';
+		}
+		return h.join('');
+	}
+	
+	/*
+	 * Add the column to the select list for duplicate searches
+	 */
+	function addToDuplicateReportSelect(item) {
+		var h = [],
+			idx = -1;
+		
+		if(item.include) {
+			h[++idx] = '<div class="row">';
+				h[++idx] = '<div class="setings-item">';
+				
+					h[++idx] = '<div class="col-sm-1">';
+						h[++idx] = '<input type="checkbox" name="columnSelect"';
+						h[++idx] = ' class="columnSelect" value="';
+						h[++idx] = item.name;
+						h[++idx] = '"';	
+						h[++idx] = '>';
+					h[++idx] = '</div>';
+					
+					h[++idx] = '<div class="col-sm-4">';
+						h[++idx] = '<span>';
+							h[++idx] = item.humanName;
+						h[++idx] = '</span>';
+					h[++idx] = '</div>';
+				
+					
+					
+					h[++idx] = '<div class= "col-sm-4">';
+						h[++idx] = '<select>';
+							h[++idx] = '<option value="exact">';
+								h[++idx] = localise.set["br_exact"];
+							h[++idx] = '</option>';
+							h[++idx] = '<option value="lower">';
+								h[++idx] = localise.set["br_ci"];
+							h[++idx] = '</option>';
+								h[++idx] = '<option value="soundex">';
+							h[++idx] = localise.set["br_sdx"];
+						h[++idx] = '</option>';
+						h[++idx] = '</select>';
+					h[++idx] = '</div>';
+						
+							
+				h[++idx] = '</div>';	// Settings item
+			h[++idx] = '</div>';		// Row
+				
 		}
 		return h.join('');
 	}
@@ -520,7 +637,7 @@ window.gTasks = {
 	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(item.managed_id > 0 || isBrowseResults) {
+	 					if(item.managed_id > 0 || isBrowseResults || isDuplicates) {
 	 						h[++idx] = '<option value="';
 	 						h[++idx] = i;
 	 						h[++idx] = '">';
@@ -583,6 +700,16 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
+					 
+					 // Add a config item for the group value if this is a duplicates search
+					 if(isDuplicates) {
+						 data.columns.unshift({
+							hide: true,
+							include: true,
+						 	name: "_group",
+						 	humanName: "_group"
+						 });
+					 }
 					 showManagedData(sId, '#trackingTable', undefined);
 				 },
 				 error: function(xhr, textStatus, err) {

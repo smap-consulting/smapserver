@@ -24,8 +24,9 @@
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script>
-	var isBrowseResults = true,
-		isManagedForms = false;
+var isBrowseResults = true,
+	isManagedForms = false,
+	isDuplicates = false;
 </script>
 <script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
@@ -52,6 +53,7 @@
 		          </ul>
 		        </li> 
 
+			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
 			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
 			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
@@ -83,20 +85,6 @@
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
-               
-                	<li class="dropdown">
-                    	<a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
-                        	<span class="lang" data-lang="br_sd"></span> <i class="fa fa-filter"></i>  <span id="filter-count" class="label"></span>
-                    	</a>
-                    	<ul class="dropdown-menu dropdown-tasks">
-	      					 <li>
-	      					 	<input id="similarSet" type="checkbox" checked 
-		        					data-onstyle="success" data-offstyle="primary">
-		        			</li>
-
-                    	</ul>
-                	</li>
-                	
                 	<li>
                     	<a class="right-sidebar-toggle">
                         	<i class="fa fa-cog"></i>
@@ -247,38 +235,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- Modal to set filters on a column -->
-<div id="filterColumn" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-   			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
-
-						<form id="surveyForm" role="form" class="form-horizontal">
-					
-						</form>
-					</div>
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
-
-						<form id="editRecordForm" role="form" class="form-horizontal">
-					
-						</form>
-						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-					</div>
-				</div>
-			</div>
-				
-		</div>
-	</div>
-</div>
-
-
 
 
 <!-- Modal to allow the user to edit their own details -->

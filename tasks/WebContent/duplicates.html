@@ -4,7 +4,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title>Managed Forms</title>
+	<title>Browse Results</title>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
@@ -13,8 +13,9 @@
 
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
-    <link href="/js/libs/DataTables/datatables.min.css" rel="stylesheet" >
-    <link href="/js/libs/DataTables/Select/css/select.bootstrap.min.css" rel="stylesheet" >
+    
+    <link rel="stylesheet" type="text/css" href="/js/libs/DataTables/datatables.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
     <link href="/css/smap-wb.css" rel="stylesheet">
 
@@ -24,8 +25,8 @@
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script>
 	var isBrowseResults = false,
-		isManagedForms = true,
-		isDuplicates = false;
+		isManagedForms = false,
+		isDuplicates = true;
 </script>
 <script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
@@ -38,10 +39,6 @@
 		<div class="sidebar-collapse">
 	    	<ul class="nav metismenu" id="side-menu">
 				
-				<li>
-         			<a id="username" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-							<i class="glyphicon glyphicon-user" aria-hidden="true"></i> <span class="lang" data-lang="m_user_profile"></span></a>
-				</li>
 		      	<li>
 		          <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
 		          <ul class="nav nav-second-level animated fadeInRight m-t-xs">
@@ -56,10 +53,10 @@
 		          </ul>
 		        </li> 
 
-			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
+			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
 			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
 			<li id="m_br" class="restrict_role admin_role analyst_role manage_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>    
-			<li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
+			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
 	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -85,7 +82,6 @@
         		
 	            <ul class="nav navbar-top-links navbar-right">
 	            
-	          
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
@@ -102,27 +98,42 @@
         
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="col-sm-2">
-            	<h2 class="lang" data-lang="m_mf">manage</h2>   
-            </div>
-            <div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
-						</div>
-					</form>	
-				</div>
-        	</div>
-        	<div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-						<div class="col-sm-8">
-							<select class="survey_select form-control" id="survey_name"></select>
-						</div>
-					</form>	
+	        <div class="row">
+	        	<div class="col-sm-2">
+	            	<h2 class="lang" data-lang="mon_dup">dups</h2>   
+	            </div>
+	            <div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+							<div class="col-sm-8">
+								<select class="project_list form-control" id="project_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        	<div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
+							<div class="col-sm-8">
+								<select class="survey_select form-control" id="survey_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        </div>
+	        <div class="row">
+	        	<div class="col-sm-12">
+	        		<p class="lang" data-lang="br_cc">Cols</p>
+	        	</div>
+			</div>
+			<div class="row">
+				<div id="duplicateSelect"></div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<button id="duplicateSearch" type="button" class="btn btn-primary lang" data-lang="br_s">search</button>
 				</div>
         	</div>
         </div>
@@ -135,9 +146,12 @@
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
                     	<div class="ibox-title">
-                            <h5 id="survey_title"></h5>
-
-                           
+                            <h5 id="survey_title"></h5> 
+                            <div class="ibox-tools">
+                                <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
+                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>   
+                            </div>
+                            
                         </div>
                         <div class="ibox-content">
                         	<div class="row">
@@ -153,21 +167,21 @@
              	</div>
         	</div>
         </div>
+        <div id="relatedData"></div>
     </div>
 
        <div id="right-sidebar">
             <div class="sidebar-container">
 
-                <ul class="nav nav-tabs navs-3">
+                <ul class="nav nav-tabs navs-2">
 
                     <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-sort-amount-desc"></i></a></li>
+                    <li><a data-toggle="tab" href="#tab-2"><i class="fa fa-qrcode"></i></a></li>
                  
                 </ul>
 
                 <div class="tab-content">
-
                     <div id="tab-1" class="tab-pane active">
-
                         <div class="sidebar-title">
                             <h3> <span class="lang" data-lang="mf_sc">sort</span></h3>
                             <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_sc_i"></span></small>
@@ -177,9 +191,21 @@
 
                         <div class="sidebar-content">
                            <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
+                        </div>
+                    </div>
+              
+                    <div id="tab-2" class="tab-pane">
+                        <div class="sidebar-title">
+                            <h3> <span class="lang" data-lang="mf_qr">qr</span></h3>
+                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
                         </div>
 
+						<div id="tab-barcode-content"></div>
+
+                        <div class="sidebar-content">
+                           <button id="applyBarcodes" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
+  
+                        </div>
                     </div>
                 </div>
 
@@ -224,7 +250,25 @@
 	</div>
 </div>
 
-
+<!-- Modal to set filters on a column -->
+<div id="duplicateReport" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog custom-modal-width">
+		<div class="modal-content">
+			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+   			</div>
+			<div class="modal-body">
+			
+				
+			
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+				<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+			
+			</div>
+				
+		</div>
+	</div>
+</div>
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

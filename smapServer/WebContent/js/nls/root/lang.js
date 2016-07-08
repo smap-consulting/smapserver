@@ -193,6 +193,7 @@ define({
 	"c_event": "Event",
 	"c_note": "Note",
 	"c_server": "Server",
+	"c_cols": "Columns",
 	
 	// File Types
 	"ft": "File Type",
@@ -488,7 +489,12 @@ define({
 	"u_h_e": "Email to get Help",
 	
 	// Browse Results
-	"br_sd": "Similar Results",
+	"br_ci": "Case Insensitive",
+	"br_exact": "Exact Match",
+	"br_cc": "Select the columns that you want to test for similarities in the data. For each column that you want to test " +
+			"you can select a function to broaden the range of values that will match.",
+	"br_s": "Search",
+	"br_sdx": "Soundex",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",
