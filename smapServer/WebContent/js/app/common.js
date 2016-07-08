@@ -1346,8 +1346,7 @@ function isBusinessServer() {
 	
 	if(hostname !== 'localhost' &&
 			hostname.indexOf('.smap.com.au') < 0 &&
-			hostname !== 'app.kontrolid.com' &&
-			hostname !== 'kontrolid.smap.com.au' &&
+			hostname !== 'app.kontrolid.com' &
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
 			hostname.indexOf('datacollect.icanreach.com') < 0 &&
