@@ -32,6 +32,9 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ServerManager;
+import org.smap.sdal.model.ServerData;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -49,16 +52,6 @@ public class Server extends Application {
 	private static Logger log =
 			 Logger.getLogger(Server.class.getName());
 	
-	private class ServerData {
-		String smtp_host;
-		String email_domain;
-		String email_user;
-		String email_password;
-		int email_port;
-		String version;
-		String mapbox_default;
-		String google_key;
-	}
 	
 	@GET
 	@Produces("application/json")
@@ -73,31 +66,12 @@ public class Server extends Application {
 		
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("SurveyKPI - version");
-		String sql = "select smtp_host,"
-				+ "email_domain,"
-				+ "email_user,"
-				+ "email_password,"
-				+ "email_port,"
-				+ "version,"
-				+ "mapbox_default,"
-				+ "google_key "
-				+ "from server;";
-		PreparedStatement pstmt = null;
-		ServerData data = new ServerData();
 
 		try {
-			pstmt = sd.prepareStatement(sql);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				data.smtp_host = rs.getString("smtp_host");
-				data.email_domain = rs.getString("email_domain");
-				data.email_user = rs.getString("email_user");
-				data.email_password = rs.getString("email_password");
-				data.email_port = rs.getInt("email_port");
-				data.version = rs.getString("version");
-				data.mapbox_default = rs.getString("mapbox_default");
-				data.google_key = rs.getString("google_key");
-			}
+			
+			ServerManager sm = new ServerManager();
+			ServerData data = sm.getServer(sd);
+			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(data);
 			response = Response.ok(resp).build();
@@ -107,8 +81,6 @@ public class Server extends Application {
 			log.log(Level.SEVERE, "Exception", e);
 			response = Response.serverError().build();
 		} finally {
-			
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("SurveyKPI - version", sd);
 			

@@ -1374,7 +1374,7 @@ public class GetXForm {
     				childElement = outputDoc.createElement(item.name);
     				// Escape any single quotes if this is called by webforms as the output is stored as a string with single quotes around it
     				String escValue = item.value;
-    				if(isWebForms) {
+    				if(isWebForms && item.value != null) {
     					escValue = item.value.replace("'", "\\\'");
     				}
     				childElement.setTextContent(escValue);
