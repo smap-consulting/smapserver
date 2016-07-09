@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFManager;
+import org.smap.sdal.managers.SpssManager;
 
 /*
  * Creates a PDF template
@@ -51,13 +52,13 @@ import org.smap.sdal.managers.PDFManager;
  *   .hint - Hints
  */
 
-@Path("/pdf/{sId}")
-public class CreatePDF extends Application {
+@Path("/spss/{sId}")
+public class CreateSPSS extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
-			 Logger.getLogger(CreatePDF.class.getName());
+			 Logger.getLogger(CreateSPSS.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
 	
@@ -71,63 +72,45 @@ public class CreatePDF extends Application {
 	
 	@GET
 	@Produces("application/x-download")
-	public Response getPDFService (@Context HttpServletRequest request, 
-			@Context HttpServletResponse response,
+	public Response getSpssService (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@QueryParam("instance") String instanceId,
 			@QueryParam("language") String language,
-			@QueryParam("landscape") boolean landscape,
 			@QueryParam("filename") String filename) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
 		
-		log.info("Create PDF from survey:" + sId + " for record: " + instanceId);
+		log.info("Create SPS from survey:" + sId);
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("createPDF");	
+		Connection connectionSD = SDDataSource.getConnection("createSPS");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation 
-		
-		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Create PDF for instance: " + instanceId);
-		
-		Connection cResults = ResultsDataSource.getConnection("createPDF");
+	
 		
 		// Get the base path
-		String basePath = GeneralUtilityMethods.getBasePath(request);
+		Response response = null;
 		
 		try {
-			PDFManager pm = new PDFManager();  
+			SpssManager spssm = new SpssManager();  
 			
 			
-			pm.createPdf(
+			String sps = spssm.createSPS(
 					connectionSD,
-					cResults,
-					response.getOutputStream(),
-					basePath, 
 					request.getRemoteUser(),
 					"none", 
 					sId, 
-					instanceId,
 					filename,
-					landscape,
 					response);
 			
+			response = Response.ok(sps).build();
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			throw new Exception("Exception: " + e.getMessage());
+			response = Response.serverError().entity(e.getMessage()).build();	
 		} finally {
 			
-			SDDataSource.closeConnection("createPDF", connectionSD);	
-			ResultsDataSource.closeConnection("createPDF", cResults);
+			SDDataSource.closeConnection("createSPS", connectionSD);	
 			
 		}
-		return Response.ok("").build();
+		return response;
 	}
 	
 

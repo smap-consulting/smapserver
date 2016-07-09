@@ -200,6 +200,7 @@ define({
 	"ft_xml": "XML Form",
 	"ft_codebook": "Codebook",
 	"ft_pdf": "PDF Template",
+	"ft_spss": "SPS File (SPSS)",
 	
 	// Template Management
 	"tm_s_del": "Show deleted forms",
