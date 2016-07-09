@@ -25,6 +25,8 @@ import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
+import org.smap.sdal.model.OptionList;
+import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
 import org.smap.sdal.model.User;
@@ -113,16 +115,6 @@ public class SpssManager {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
 	}
-	
-	
-	private class GlobalVariables {																// Level descended in form hierarchy
-		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
-		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
-		boolean hasAppendix = false;
-		
-		// Map of questions that need to have the results of another question appended to their results in a pdf report
-		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
-	}
 
 	/*
 	 * Call this function to create a PDF
@@ -132,9 +124,7 @@ public class SpssManager {
 			Connection connectionSD, 
 			String remoteUser,
 			String language, 
-			int sId, 
-			String filename,
-			Response response) {
+			int sId) throws Exception {
 		
 		if(language != null) {
 			language = language.replace("'", "''");	// Escape apostrophes
@@ -143,97 +133,150 @@ public class SpssManager {
 		}
 		
 		org.smap.sdal.model.Survey survey = null;
-		
-	
 		SurveyManager sm = new SurveyManager();
-		UserManager um = new UserManager();
-
 		StringBuffer sps = new StringBuffer();
 		
 		try {
 			
-			sps.append("VARIABLE LABELS");
-			
-			if(language != null) {
-				return sps.toString();
-			}
+
 		
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, true, false, true, false, "real");
-			log.info("User Ident who submitted the survey: " + survey.instance.user);
-			String userName = survey.instance.user;
-			if(userName == null) {
-				userName = remoteUser;
-			}
-			
-			
-			
-			// If a filename was not specified then get one from the survey data
-			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
-			// If the PDF is to be returned in an http response then the header is set now before writing to the output stream
-			log.info("Filename passed to createPDF is: " + filename);
-			if(filename == null) {
-				filename = survey.getInstanceName() + ".pdf";
-			} else {
-				if(!filename.endsWith(".pdf")) {
-					filename += ".pdf";
-				}
-			}
-			
-		
-			/*
-			 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
-			 * Else just create the document directly in a single pass
-			 */
-			Parser parser = getXMLParser();
-			
-			// Step 1 - Create the underlying document as a byte array
-			Document document = null;
-			document = new Document(PageSize.A4);
-			
-			
-			document.open();
-			
+			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real");
 			int languageIdx = getLanguageIdx(survey, language);
 			
-			// If this form has data maintain a list of parent records to lookup ${values}
-			ArrayList<ArrayList<Result>> parentRecords = null;
-			
-			
-			for(int i = 0; i < survey.instance.results.size(); i++) {
-				processForm(parser, document, survey.instance.results.get(i), survey, null, 
-						languageIdx,
-						false,
-						0,
-						i,
-						null,
-						null,
-						false,
-						parentRecords);		
-			}
-			
-			
-			
-			document.close();
+			/*
+			 * Add the variable labels
+			 */
+			sps.append("VARIABLE LABELS\n");
+			for(int i = 0; i < survey.forms.size(); i++) {
+				Form f = survey.forms.get(i);
 				
+				for(int j = 0; j < f.questions.size(); j++) {
+					Question q = f.questions.get(j);
+					System.out.println(" " + q.name + " : " + q.type);
+					String label = q.labels.get(languageIdx).text;
+					if(label != null && !q.type.equals("end group")) {
+						if(q.type.equals("select")) {
+							addSelectVariables(sps, q, label, languageIdx, survey.optionLists);
+						} else {
+							sps.append(" ");
+							sps.append(q.columnName);
+							addSpaces(sps, 10 - q.columnName.length());
+							sps.append("'");
+							sps.append(label);
+							sps.append("'\n");
+						}
+					}
+				}
+			}	
+			sps.append(".");
 			
-			
-			
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
+			// Add the value labels
+			sps.append("\n");
+			sps.append("VALUE LABELS\n");
+			for(int i = 0; i < survey.forms.size(); i++) {
+				Form f = survey.forms.get(i);
+				
+				for(int j = 0; j < f.questions.size(); j++) {
+					Question q = f.questions.get(j);
+						
+					if(q.type.equals("select1")) {
+						sps.append(" ");
+						sps.append(q.columnName);
+						sps.append("\n");
+						
+						addSelect1Values(sps, q, languageIdx, survey.optionLists);
+						
+					} else if(q.type.equals("select")) {
+						
+						
+						addSelectValues(sps, q, languageIdx, survey.optionLists);
+					}
+				}
+			}	
 			
 		}  catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
+			log.log(Level.SEVERE, "Exception", e);	
+			throw e;
+		} finally {
 			
 		}
 		
-		return filename;
+		return sps.toString();
 	
 	}
 	
+	private void addSelectVariables(StringBuffer sps, Question q, String qLabel, int languageIdx, HashMap<String, OptionList> lists) {
+		ArrayList<Option> options = lists.get(q.list_name).options;
+		
+		for(Option o : options) {
+			String optionName = q.columnName + "__" + o.columnName;
+			String label = o.labels.get(languageIdx).text;
+			if(label != null) {
+				sps.append(" ");
+				sps.append(optionName);
+				addSpaces(sps, 10 - optionName.length());
+				sps.append("'");
+				sps.append(qLabel);
+				sps.append(" - ");
+				sps.append(label);
+				sps.append("'\n");
+			}
+		}
+		
+	}
+	
+	private void addSelect1Values(StringBuffer sps, Question q, int languageIdx, HashMap<String, OptionList> lists) {
+		
+		ArrayList<Option> options = lists.get(q.list_name).options;
+		
+		for(int i = 0; i < options.size(); i++) {
+			Option o = options.get(i);
+			String optionName = o.columnName;
+			String label = o.labels.get(languageIdx).text;
+			if(label != null) {
+				sps.append("     ");
+				sps.append(optionName);
+				addSpaces(sps, 10 - optionName.length());
+				sps.append("'");
+				sps.append(label);
+				sps.append("'");
+				if(i == options.size() - 1) {
+					sps.append("  /");
+				}
+				sps.append("\n");
+			}
+		}
+		
+	}
+	
+private void addSelectValues(StringBuffer sps, Question q, int languageIdx, HashMap<String, OptionList> lists) {
+		
+	ArrayList<Option> options = lists.get(q.list_name).options;
+		
+		for(Option o : options) {
+			String optionName = q.columnName + "__" + o.columnName;
+			
+			sps.append(" ");
+			sps.append(optionName);
+			sps.append("\n");
+			
+			sps.append("     1         'yes'\n");
+			sps.append("     0         'no'  /\n");
+		}
+		
+	}
 
+	private void addSpaces(StringBuffer sb, int length) {
+		if(length < 2) {
+			length = 2;			// Add a minimum of 2 spaces
+		}
+		for(int i = 0; i < length; i ++) {
+			sb.append(" ");
+		}
+	}
 
 	
 	
@@ -267,472 +310,10 @@ public class SpssManager {
 
 
 	
-	/*
-	 * Get an XML Parser
-	 */
-	private Parser getXMLParser() {
-		
-		Parser parser = new Parser();
-		
-        // CSS
-		 CSSResolver cssResolver = new StyleAttrCSSResolver();
-		 try {
-			 CssFile cssFile = XMLWorkerHelper.getCSS( new FileInputStream(DEFAULT_CSS));
-		     cssResolver.addCss(cssFile);
-		 } catch(Exception e) {
-			 log.log(Level.SEVERE, "Failed to get CSS file", e);
-			 cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
-		 }
- 
-        // HTML
-        HtmlPipelineContext htmlContext = new HtmlPipelineContext(null);
-        htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
-        htmlContext.autoBookmark(false);
- 
-        // Pipelines
-        parser.elements = new ElementList();
-        ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
-        HtmlPipeline html = new HtmlPipeline(htmlContext, end);
-        CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
- 
-        // XML Worker
-        XMLWorker worker = new XMLWorker(css, true);        
-        parser.xmlParser = new XMLParser(worker);
-        
-        return parser;
-		
-	}
-	
-	/*
-	 * Process the form
-	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
-	 *  can be applied to showing the form on the screen and generating the PDF
-	 */
-	private void processForm(
-			Parser parser,
-			Document document,  
-			ArrayList<Result> record,
-			org.smap.sdal.model.Survey survey,
-			String basePath,
-			int languageIdx,
-			boolean generateBlank,
-			int depth,
-			int length,
-			int[] repIndexes,
-			GlobalVariables gv,
-			boolean appendix,
-			ArrayList<ArrayList<Result>> parentRecords) throws DocumentException, IOException {
-		
-		// Check that the depth of repeats hasn't exceeded the maximum
-		if(depth > repIndexes.length - 1) {
-			depth = repIndexes.length - 1;	
-		}
-		
-		boolean firstQuestion = true;
-		for(int j = 0; j < record.size(); j++) {
-			Result r = record.get(j);
-			if(r.type.equals("form")) {
-				
-				firstQuestion = true;			// Make sure there is a gap when we return from the sub form
-				// If this is a blank template check to see the number of times we should repeat this sub form
-				if(generateBlank) {
-					int blankRepeats = getBlankRepeats(r.appearance);
-					for(int k = 0; k < blankRepeats; k++) {
-						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
-								generateBlank, 
-								depth + 1,
-								k,
-								repIndexes,
-								gv,
-								appendix,
-								null);
-					}
-				} else {
-					for(int k = 0; k < r.subForm.size(); k++) {
-						// Maintain array list of parent records in order to look up ${values}
-						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
-						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
-								generateBlank, 
-								depth + 1,
-								k,
-								repIndexes,
-								gv,
-								appendix,
-								parentRecords);
-					} 
-				}
-			} else if(r.qIdx >= 0) {
-				// Process the question
-				
-				Form form = survey.forms.get(r.fIdx);
-				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-				//Label label = question.labels.get(languageIdx);
-			
-				if(includeResult(r, question, appendix, gv)) {
-					if(question.type.equals("begin group")) {
-						//groupWidth = processGroup(parser, document, question, label);
-						if(question.isNewPage()) {
-							document.newPage();
-						}
-					} else if(question.type.equals("end group")) {
-						//ignore
-					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
-						
-						newTable.setWidthPercentage(100);
 
-				        
-						// Add a gap if this is the first question of the record
-						// or the previous row was at a different depth
-						if(firstQuestion) {
-							newTable.setSpacingBefore(5);
-						}
-						firstQuestion = false;
-						
-						// Start a new page if the first question needs to be on a new page
-						if(row.items.get(0).isNewPage) {
-							document.newPage();
-						}
-						document.add(newTable);
-						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
-					}
-				}
-				
-			}
-		}
-		
-		return;
-	}
 	
 
-	/*
-	 * Make a decision as to whether this result should be included in the PDF
-	 */
-	private boolean includeResult(Result r, org.smap.sdal.model.Question question, 
-			boolean appendix,
-			GlobalVariables gv) {
-		
-		boolean include = true;
-		boolean inMeta = question.inMeta;
 
-		// Don't include the question if it has been marked as not to be included
-		if(question.appearance != null) {
-			if(question.appearance.contains("pdfno")) {
-				include = false;
-			} else {
-				boolean appendixQuestion = question.appearance.contains("pdfapp");
-				if(appendixQuestion) {
-					gv.hasAppendix = true;
-				}
-				if(appendix && !appendixQuestion || (!appendix && appendixQuestion) ) {
-					include = false;
-				}
-			}
-		} else {
-			// Questions without appearance should not appear in the appendix
-			if(appendix) {
-				include = false;
-			}
-		}
-		
-		// Check appendix status
-		
-		
-		if(include) {
-			if(r.name == null) {
-				include = false;
-			} else if(r.name.startsWith("meta") && r.type.equals("begin group")){
-				include = false;
-			} else if(inMeta) {
-				include = false;
-			} else if(r.name.startsWith("meta_group")) {
-				include = false;
-			} else if(r.name.startsWith("_")) {
-				// Don't include questions that start with "_",  these are only added to the letter head
-				include = false;
-			} 
-		}
-		
-		
-		return include;
-	}
-	
-	
-	/*
-	 * Add the table row to the document
-	 */
-	PdfPTable processRow(Parser parser, Row row, String basePath,
-			boolean generateBlank,
-			int depth,
-			int[] repIndexes,
-			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
-
-		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
-		
-		// Add the cells to record repeat indexes
-		for(int i = 0; i < depth; i++) {
-			
-			PdfPCell c = new PdfPCell();
-			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
-			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
-			table.addCell(c);
-
-			
-		}
-		
-		int spanCount = NUMBER_TABLE_COLS;
-		int numberItems = row.items.size();
-		for(DisplayItem di : row.items) {
-			//di.debug();
-			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			
-			// Make sure the last cell extends to the end of the table
-			if(numberItems == 1) {
-				di.width = spanCount;
-			}
-			cell.setColspan(di.width);
-			int spaceBefore = row.spaceBefore();
-			if(spaceBefore > 0) {
-				table.setSpacingBefore(spaceBefore);
-			}
-			table.addCell(cell);
-			
-			numberItems--;
-			spanCount -= di.width;
-		}
-		return table;
-	}
-	
-	/*
-	 * Add a row of questions
-	 * Each row is created as a table
-	 * converts questions and results to display items
-	 * As many display items are added as will fit in the current groupWidth
-	 * If the total width of the display items does not add up to the groupWidth then the last item
-	 *  will be extended so that the total is equal to the group width
-	 */
-	private Row prepareRow(
-			ArrayList<Result> record, 
-			org.smap.sdal.model.Survey survey, 
-			int offset,
-			int languageIdx,
-			GlobalVariables gv,
-			int recNumber,
-			boolean appendix,
-			ArrayList<ArrayList<Result>> parentRecords) {
-		
-		Row row = new Row();
-		row.groupWidth = gv.cols.length;
-		
-		for(int i = offset; i < record.size(); i++) {
-			Result r = record.get(i);
-			
-			Form form = survey.forms.get(r.fIdx);
-			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-			Label label = question.labels.get(languageIdx);
-			
-			boolean isNewPage = question.isNewPage();
-			
-			if(i == offset) {
-				// First question of row - update the number of columns
-				int [] updateCols = question.updateCols(gv.cols);
-				if(updateCols != null) {
-					gv.cols = updateCols;			// Can only update the number of columns with the first question of the row
-				}
-				
-				includeQuestion(row.items, gv, i, label, question, offset, survey, languageIdx, r, isNewPage, 
-						recNumber,
-						record,
-						parentRecords);
-			} else if(i - offset < gv.cols.length) {
-				// 2nd or later questions in the row
-				int [] updateCols = question.updateCols(gv.cols);		// Returns null if the number of columns has not changed
-				
-				
-				if(updateCols == null || isNewPage) {
-					if(includeResult(r, question, appendix, gv)) {
-						includeQuestion(row.items, 
-								gv, 
-								i, 
-								label, 
-								question, 
-								offset, 
-								survey, 
-								languageIdx, 
-								r, 
-								isNewPage, 
-								recNumber,
-								record,
-								parentRecords);
-					}
-				} else {
-					// If the question updated the number of columns then we will need to start a new row
-					break;
-				}
-		
-			
-			} else {
-				break;
-			}
-			
-			
-		}
-		return row;
-	}
-	
-	/*
-	 * Include question in the row
-	 */
-	private void includeQuestion(ArrayList<DisplayItem> items, GlobalVariables gv, int colIdx, Label label, 
-			org.smap.sdal.model.Question question,
-			int offset,
-			org.smap.sdal.model.Survey survey,
-			int languageIdx,
-			Result r,
-			boolean isNewPage,
-			int recNumber,
-			ArrayList<Result> record,
-			ArrayList<ArrayList<Result>> parentRecords) {
-		
-		int [] cols = gv.cols;
-		DisplayItem di = new DisplayItem();
-		di.width = cols[colIdx-offset];
-		di.text = label.text == null ? "" : label.text;
-		di.text = lookupReferenceValue(di.text, record, parentRecords);
-		
-		di.hint = label.hint ==  null ? "" : label.hint;
-		di.hint = lookupReferenceValue(di.hint, record, parentRecords);
-		
-		di.type = question.type;
-		di.name = question.name;
-		di.value = r.value;
-		di.isNewPage = isNewPage;
-		di.choices = convertChoiceListToDisplayItems(
-				survey, 
-				question,
-				r.choices, 
-				languageIdx);
-		setQuestionFormats(question.appearance, di);
-		di.fIdx = r.fIdx;
-		di.rec_number = recNumber;
-		items.add(di);
-	}
-	
-	/*
-	 * Where a label incudes a reference value such as ${name} then these need to be converted to the actual value
-	 */
-	private String lookupReferenceValue(String input, ArrayList<Result> record,ArrayList<ArrayList<Result>> parentRecords) {
-		
-		StringBuffer newValue = new StringBuffer("");
-		String v;
-		
-		// Return if we are generating a blank template
-		if(parentRecords == null) {
-			return input;
-		}
-		
-		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
-		java.util.regex.Matcher matcher = pattern.matcher(input);
-		int start = 0;
-		while (matcher.find()) {
-			
-			String matched = matcher.group();
-			String qname = matched.substring(2, matched.length() - 1);
-			
-			// Add any text before the match
-			int startOfGroup = matcher.start();
-			newValue.append(input.substring(start, startOfGroup));
-			
-			// Add the matched value after lookup
-			// First check in the current record
-			v = lookupInRecord(qname, record);
-			
-			// If not found try each of the parent records starting from the closest
-			if(v == null) {
-				for(ArrayList<Result> p : parentRecords) {
-					v = lookupInRecord(qname, p);
-					if(v != null) {
-						break;
-					}
-				}
-			}
-			
-			// Still null!  well maybe this ${..} pattern was just meant to be
-			if(v == null) {
-				v = matcher.group();
-			}
-			newValue.append(v);
-			
-			// Reset the start
-			start = matcher.end();
-
-		}
-		
-		// Get the remainder of the string
-		if(start < input.length()) {
-			newValue.append(input.substring(start));		
-		}
-		
-		return newValue.toString();
-	}
-	
-	/*
-	 * Lookup the value of a question in a record
-	 */
-	private String lookupInRecord(String name, ArrayList<Result> record) {
-		String value = null;
-		
-		for(Result r : record) {
-			if(r.name.equals(name)) {
-				System.out.println("Found matching question: " + r.value);
-				if(r.type.startsWith("select")) {
-					value = "";
-					for(Result rc : r.choices) {
-						if(rc.isSet) {
-							if(value.length() > 0) {
-								value += ",";
-							}
-							value += rc.name;
-						}
-					}
-				} else {
-					value = r.value;
-				}
-				break;
-			}
-		}
-		
-		return value;
-		
-	}
-	
-	/*
-	 * Get the number of blank repeats to generate
-	 */
-	int getBlankRepeats(String appearance) {
-		int repeats = 1;
-		
-		if(appearance != null) {
-			String [] appValues = appearance.split(" ");
-			if(appearance != null) {
-				for(int i = 0; i < appValues.length; i++) {
-					if(appValues[i].startsWith("pdfrepeat")) {
-						String [] parts = appValues[i].split("_");
-						if(parts.length >= 2) {
-							repeats = Integer.valueOf(parts[1]);
-						}
-						break;
-					}
-				}
-			}
-		}
-					
-		return repeats;
-	}
 	/*
 	 * Set the attributes for this question from keys set in the appearance column
 	 */
@@ -863,220 +444,7 @@ public class SpssManager {
 		return diList;
 	}
 	
-	/*
-	 * Add the question label, hint, and any media
-	 */
-	private PdfPTable addDisplayItem(Parser parser, DisplayItem di, 
-			String basePath,
-			boolean generateBlank,
-			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
-		
-		PdfPCell labelCell = new PdfPCell();
-		PdfPCell valueCell = new PdfPCell();
-		labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
-		valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
-		
-		PdfPTable tItem = null;
-		 
-		// Add label
-		StringBuffer html = new StringBuffer();
-		html.append("<span class='label");
-		if(di.labelbold) {
-			html.append(" lbold");
-		}
-		html.append("'>");
-		
-		String textValue = "";
-		if(di.text != null && di.text.trim().length() > 0) {
-			textValue = di.text;
-		} else {
-			textValue = di.name;
-		}
-		textValue = textValue.trim();
-		if(textValue.charAt(textValue.length() - 1) != ':') {
-			textValue += ":";
-		}
-		
-		if(di.labelcaps) {
-			textValue = textValue.toUpperCase();
-		}
-		html.append(GeneralUtilityMethods.unesc(textValue));
-		html.append("</span>");
-		
-		// Only include hints if we are generating a blank template
-		if(generateBlank) {
-			html.append("<span class='hint'>");
-			if(di.hint != null) {
-				html.append(GeneralUtilityMethods.unesc(di.hint));
-			html.append("</span>");
-			}
-		}
-		
-		parser.elements.clear();
-		parser.xmlParser.parse(new StringReader(html.toString()));
-		for(Element element : parser.elements) {
-			labelCell.addElement(element);
-		}
-		
-		// Set the content of the value cell
-		try {
-			updateValueCell(valueCell, di, generateBlank, basePath, gv);
-		} catch (Exception e) {
-			log.info("Error updating value cell, continuing: " + basePath + " : " + di.value);
-			log.log(Level.SEVERE, "Exception", e);
-		}
-		
-		int widthValue = 5;
-		if(di.widthLabel == 10) {
-			widthValue = 1;	// Label and value in 1 column
-			di.widthLabel = 1;
-			tItem = new PdfPTable(1); 
-		} else {
-			// Label and value in 2 columns
-			widthValue = 10 - di.widthLabel;
-			tItem = new PdfPTable(10);
-		}
-		// Format label cell
-		labelCell.setColspan(di.widthLabel);
-		if(di.labelbg != null) {
-			labelCell.setBackgroundColor(di.labelbg);
-		}
-		
-		// Format value cell
-		valueCell.setColspan(widthValue);
-		if(di.valueHeight > -1.0) {
-			valueCell.setMinimumHeight((float)di.valueHeight);
-		}
-		if(di.valuebg != null) {
-			valueCell.setBackgroundColor(di.valuebg);
-		}
-		
-		tItem.addCell(labelCell);
-		tItem.addCell(valueCell);
-		return tItem;
-	}
-	
-	/*
-	 * Set the contents of the value cell
-	 */
-	private void updateValueCell(PdfPCell valueCell, DisplayItem di, boolean generateBlank, 
-			String basePath,
-			GlobalVariables gv
-			) throws BadElementException, MalformedURLException, IOException {
-		
-		// Questions that append their values to this question
-		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
-		
-		if(di.type.startsWith("select")) {
-			processSelect(valueCell, di, generateBlank, gv);
-		} else if (di.type.equals("image")) {
-			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
-				try {
-					Image img = Image.getInstance(basePath + "/" + di.value);
-					valueCell.addElement(img);
-				} catch(Exception e) {
-					log.info("Error: image " + basePath + "/" + di.value + " not found: " + e.getMessage());
-				}
 
-			} else {
-				// TODO add empty image
-			}
-			
-		} else {
-			// Todo process other question types
-			if(di.value == null || di.value.trim().length() == 0) {
-				di.value = " ";	// Need a space to show a blank row
-			}
-			
-			valueCell.addElement(getPara(di.value, di, gv, deps));
-
-		}
-		
-
-	}
-	
-	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps) {
-		
-		boolean hasContent = false;
-		Paragraph para = new Paragraph("", font);
-
-		if(value != null && value.trim().length() > 0) {
-			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
-			hasContent = true;
-		}
-		
-		// Add dependencies
-
-		if(deps != null) {
-			for(String n : deps) {
-				if(n != null && n.trim().length() > 0) {
-					if(hasContent) {
-						para.add(new Chunk(",", font));
-					}
-					para.add(new Chunk(n, font));
-				}
-				
-			}
-		}
-		return para;
-	}
-	
-	private void processSelect(PdfPCell cell, DisplayItem di,
-			boolean generateBlank,
-			GlobalVariables gv) {
-
-		// If generating blank template
-		List list = new List();
-		list.setAutoindent(false);
-		list.setSymbolIndent(24);
-		
-		String stringValue = null;
-		
-		boolean isSelectMultiple = di.type.equals("select") ? true : false;
-		
-		// Questions that append their values to this question
-		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
-		
-		/*
-		 * Add the value of this question unless
-		 *   The form is not blank and the value is "other" and their are 1 or more dependent questions
-		 *   In this case we assume that its only the values of the dependent questions that are needed
-		 */
-		if(generateBlank) {
-			for(DisplayItem aChoice : di.choices) {
-				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), font);
-			
-				if(isSelectMultiple) {
-					if(aChoice.isSet) {
-						item.setListSymbol(new Chunk("\uf046", Symbols)); 
-						list.add(item);	
-					} else {
-					
-						item.setListSymbol(new Chunk("\uf096", Symbols)); 
-						list.add(item);
-					}
-				
-				} else {
-					if(aChoice.isSet) {
-						item.setListSymbol(new Chunk("\uf111", Symbols)); 
-						list.add(item);
-
-					} else {
-						//item.setListSymbol(new Chunk("\241", Symbols)); 
-						item.setListSymbol(new Chunk("\uf10c", Symbols)); 
-						list.add(item);
-					}
-				}
-			}
-			
-			cell.addElement(list);
-			
-		} else {
-			stringValue = getSelectValue(isSelectMultiple, di, deps);
-			cell.addElement(getPara(stringValue, di, gv, deps));
-		}
-
-	}
 	
 	/*
 	 * Get the value of a select question

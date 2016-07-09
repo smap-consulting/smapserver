@@ -139,9 +139,7 @@ $(document).ready(function() {
 		language = $('#download_language option:selected').val();
 		orientation = $("input[name='orientation']:checked", "#download_template").val();
 
-		if(type === "spss") {
-			docURL = "/surveyKPI/spss/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;
-		} else if(type === "pdf") {
+		if(type === "pdf") {
 			docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?filename=" + gSelectedTemplateName + "&language=" + language;
 			if(orientation === "landscape") {
 				docURL += "&landscape=true";

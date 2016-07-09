@@ -91,15 +91,11 @@ public class CreateSPSS extends Application {
 		
 		try {
 			SpssManager spssm = new SpssManager();  
-			
-			
 			String sps = spssm.createSPS(
 					connectionSD,
 					request.getRemoteUser(),
-					"none", 
-					sId, 
-					filename,
-					response);
+					language,
+					sId);
 			
 			response = Response.ok(sps).build();
 		}  catch (Exception e) {
