@@ -111,10 +111,10 @@ define([
 							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
 						}
 						
-						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
-						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_question" data-id="';
+						h[++idx] = '<button tabindex="-1" class="btn btn-default delete_question" data-id="';
 						h[++idx] = questionId;
-						h[++idx]='"></span>';
+						h[++idx] = '">';
+						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon"></span>';
 						h[++idx]='</button>';
 					 
 					h[++idx] = '</div>';

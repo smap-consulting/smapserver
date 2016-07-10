@@ -1369,6 +1369,8 @@ function isSelfRegistrationServer() {
 	
 	if(hostname !== 'localhost' &&
 			hostname !== 'sg.smap.com.au' &&
+			hostname.indexOf('reachnettechnologies.com') < 0 &&
+			hostname.indexOf('datacollect.icanreach.com') < 0 &&
 			hostname !== 'app.kontrolid.com') {
 		sr = false;
 	}
