@@ -401,7 +401,7 @@ public class QueryGenerator {
 				 */
 				if(sqlDesc.geometry_type != null && type.equals("geometry") && (format.equals("vrt") || format.equals("csv") || format.equals("stata") || format.equals("thingsat"))) {
 					//colBuf.append("ST_AsText(");
-					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata")) ) {		// Split location into Lon, Lat
+					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata") || format.equals("spss")) ) {		// Split location into Lon, Lat
 						colBuf.append("ST_Y(" + tName + "." + name + ") as lat, ST_X(" + tName + "." + name + ") as lon");
 						sqlDesc.colNames.add(new ColDesc("lat", type, qType, label, null, false));
 						sqlDesc.colNames.add(new ColDesc("lon", type, qType, label, null, false));

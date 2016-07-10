@@ -165,7 +165,7 @@ public class SpssManager {
 							sps.append(q.columnName);
 							addSpaces(sps, 10 - q.columnName.length());
 							sps.append("'");
-							sps.append(label);
+							sps.append(spssVariable(label));
 							sps.append("'\n");
 						}
 					}
@@ -196,6 +196,7 @@ public class SpssManager {
 					}
 				}
 			}	
+			sps.append(".");
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);	
@@ -219,7 +220,7 @@ public class SpssManager {
 				sps.append(optionName);
 				addSpaces(sps, 10 - optionName.length());
 				sps.append("'");
-				sps.append(qLabel);
+				sps.append(spssVariable(qLabel));
 				sps.append(" - ");
 				sps.append(label);
 				sps.append("'\n");
@@ -241,7 +242,7 @@ public class SpssManager {
 				sps.append(optionName);
 				addSpaces(sps, 10 - optionName.length());
 				sps.append("'");
-				sps.append(label);
+				sps.append(spssVariable(label));
 				sps.append("'");
 				if(i == options.size() - 1) {
 					sps.append("  /");
@@ -278,7 +279,18 @@ private void addSelectValues(StringBuffer sps, Question q, int languageIdx, Hash
 		}
 	}
 
-	
+	/*
+	 * Fix up any invalid characters in SPSS variables
+	 */
+	private String spssVariable(String in) {
+		
+		String out = in;
+		
+		// Escape quotes
+		out = out.replaceAll("'", "''");
+		
+		return out;
+	}
 	
 	/*
 	 * Get the index in the language array for the provided language
