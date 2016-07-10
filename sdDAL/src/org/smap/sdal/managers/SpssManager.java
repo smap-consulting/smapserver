@@ -203,19 +203,25 @@ public class SpssManager {
 		
 	}
 	
-private void addSelectValues(StringBuffer sps, Question q, int languageIdx, HashMap<String, OptionList> lists) {
+	private void addSelectValues(StringBuffer sps, Question q, int languageIdx, HashMap<String, OptionList> lists) {
 		
-	ArrayList<Option> options = lists.get(q.list_name).options;
+		ArrayList<Option> options = lists.get(q.list_name).options;
 		
+		boolean hasLabel = false;
 		for(Option o : options) {
 			String optionName = q.columnName + "__" + o.columnName;
-			
+		
+			if(hasLabel) {
+				sps.append("\n");
+			}
+			hasLabel = true;
+				
 			sps.append(" ");
 			sps.append(optionName);
 			sps.append("\n");
 			
 			sps.append("     1         'yes'\n");
-			sps.append("     0         'no'  /\n");
+			sps.append("     0         'no'  /");
 		}
 		
 	}
