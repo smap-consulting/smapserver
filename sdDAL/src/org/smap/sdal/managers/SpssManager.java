@@ -154,17 +154,22 @@ public class SpssManager {
 	private void addSelectVariables(StringBuffer sps, Question q, String qLabel, int languageIdx, HashMap<String, OptionList> lists) {
 		ArrayList<Option> options = lists.get(q.list_name).options;
 		
+		boolean hasVariable = false;
 		for(Option o : options) {
 			String optionName = q.columnName + "__" + o.columnName;
 			String label = o.labels.get(languageIdx).text;
 			if(label != null) {
+				if(hasVariable) {
+					sps.append("'\n");
+				}
+				hasVariable = true;
 				sps.append(" ");
 				sps.append(optionName);
 				addSpaces(sps, 10 - optionName.length());
 				sps.append("'");
 				String combinedLabel = label + " - " + qLabel;
 				sps.append(spssVariable(combinedLabel));
-				sps.append("'\n");
+				
 			}
 		}
 		
