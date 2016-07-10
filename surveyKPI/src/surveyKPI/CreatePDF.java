@@ -111,7 +111,7 @@ public class CreatePDF extends Application {
 					response.getOutputStream(),
 					basePath, 
 					request.getRemoteUser(),
-					"none", 
+					language, 
 					sId, 
 					instanceId,
 					filename,

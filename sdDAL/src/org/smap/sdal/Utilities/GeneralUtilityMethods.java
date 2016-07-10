@@ -3149,5 +3149,22 @@ public class GeneralUtilityMethods {
 	
 	}
 	
+	/*
+	 * Get the index in the language array for the provided language
+	 */
+	public static int getLanguageIdx(org.smap.sdal.model.Survey survey, String language) {
+		int idx = 0;
+		
+		if(survey != null && survey.languages != null) {
+			for(int i = 0; i < survey.languages.size(); i++) {
+				if(survey.languages.get(i).name.equals(language)) {
+					idx = i;
+					break;
+				}
+			}
+		}
+		return idx;
+	}
+	
 
 }

@@ -341,7 +341,7 @@ public class PDFManager {
 				
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
-				int languageIdx = getLanguageIdx(survey, language);
+				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
 				}
@@ -382,7 +382,7 @@ public class PDFManager {
 						user, basePath)); 
 				document.open();
 				
-				int languageIdx = getLanguageIdx(survey, language);
+				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				
 				// If this form has data maintain a list of parent records to lookup ${values}
 				ArrayList<ArrayList<Result>> parentRecords = null;
@@ -489,24 +489,6 @@ public class PDFManager {
 		}
 		
 		return name;
-	}
-	
-	
-	/*
-	 * Get the index in the language array for the provided language
-	 */
-	private int getLanguageIdx(org.smap.sdal.model.Survey survey, String language) {
-		int idx = 0;
-		
-		if(survey != null && survey.languages != null) {
-			for(int i = 0; i < survey.languages.size(); i++) {
-				if(survey.languages.get(i).equals(language)) {
-					idx = i;
-					break;
-				}
-			}
-		}
-		return idx;
 	}
 	
 	
