@@ -254,6 +254,7 @@ public class GeneralUtilityMethods {
 				!host.equals("localhost") &&
 				!host.startsWith("10.0") &&
 				!host.endsWith(".reachnettechnologies.com") &&
+				!host.endsWith(".datacollect.icanreach.com") &&
 				!host.endsWith(".kontrolid.com") &&
 				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
@@ -269,6 +270,8 @@ public class GeneralUtilityMethods {
 		
 		if(!host.equals("sg.smap.com.au") &&
 				!host.equals("localhost") &&
+				!host.endsWith(".reachnettechnologies.com") &&
+				!host.endsWith(".datacollect.icanreach.com") &&
 				!host.equals("app.kontrolid.com")) {
 			
 			log.info("Self registration check failed: " + host);
