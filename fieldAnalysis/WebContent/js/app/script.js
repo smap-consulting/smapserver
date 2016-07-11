@@ -88,6 +88,7 @@ $(document).ready(function() {
 		        				|| format === "kml" 
 		        				|| format === "vrt" 
 		        				|| format === "csv" 
+		        				|| format === "spss"
 		        				|| format === "stata") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
@@ -207,7 +208,7 @@ $(document).ready(function() {
 		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showshape,.showro,.showlang').show();
-		} else if(format === "stata") {
+		} else if(format === "stata" || format === "spss") {
 			$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		} else if(format === "thingsat") {

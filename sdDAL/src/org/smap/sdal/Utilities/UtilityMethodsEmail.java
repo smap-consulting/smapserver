@@ -620,7 +620,7 @@ public class UtilityMethodsEmail {
 					pstmt.setString(2, s.languages.get(i).name);
 					pstmt.setString(3, hint_id);
 					
-					log.info("Get hint: " + pstmt.toString());
+					//log.info("Get hint: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					
 					if(resultSet.next()) {

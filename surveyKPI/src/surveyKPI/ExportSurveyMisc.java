@@ -54,6 +54,7 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.SpssManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
@@ -82,6 +83,7 @@ public class ExportSurveyMisc extends Application {
 	 *    c) csv file
 	 *    d) kml file
 	 *    e) stata file
+	 *    f) spss file
 	 * Not just shape exports.  All of these formats are exported via a single SQL query that
 	 *  writes the result to a file that is zipped and then downloaded.
 	 * For all of these formats the SQL is created from the passed in form and includes
@@ -162,8 +164,8 @@ public class ExportSurveyMisc extends Application {
 				if(language == null) {
 					language = "none";
 				}
-				if(format.equals("stata") && language.equals("none")) {
-					// A language should be set for stata exports, use the default
+				if((format.equals("stata") || format.equals("spss")) && language.equals("none")) {
+					// A language should be set for stata / spss exports, use the default
 					String sqlDefLang = "select def_lang from survey where s_id = ?; ";
 					pstmtDefLang = connectionSD.prepareStatement(sqlDefLang);
 					pstmtDefLang.setInt(1, sId);
@@ -322,18 +324,44 @@ public class ExportSurveyMisc extends Application {
 						
 						w.close();	
 
+					} else if(format.equals("spss")) {
+						/*
+						 * Create an SPSS "sps" file 
+						 */
+						System.out.println("Writing spss sps file: " + filepath + "/" + sqlDesc.target_table + ".sps");
+
+						// Create the file
+						FileUtils.forceMkdir(new File(filepath));
+						File f = new File(filepath, sqlDesc.target_table + ".sps");
+						PrintWriter w = new PrintWriter(f);
+								
+						SpssManager spssm = new SpssManager();  
+						String sps = spssm.createSPS(
+								connectionSD,
+								request.getRemoteUser(),
+								language,
+								sId);
+						
+						w.print(sps);
+						w.close();	
+
 					}
+				
 					
 					/*
-					 * Export the data (not just shape files)
+					 * Export the data 
 					 */
 					int code = 0;
+					String modifiedFormat = format;
+					if(format.equals("spss")) {
+						modifiedFormat = "stata";		// hAck to generate a zip file with a csv file
+					}
 					Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/getshape.sh " + 
 							database_name + " " +
 							sqlDesc.target_table + " " +
 							"\"" + sqlDesc.sql + "\" " +
         					filepath + 
-        					" " + format +
+        					" " + modifiedFormat +
         					" >> /var/log/tomcat7/survey.log 2>&1"});
 					code = proc.waitFor();
 					
