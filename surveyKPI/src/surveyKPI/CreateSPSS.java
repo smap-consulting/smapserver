@@ -19,14 +19,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,11 +35,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.PDFManager;
 import org.smap.sdal.managers.SpssManager;
 
 /*

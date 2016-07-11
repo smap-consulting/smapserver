@@ -194,6 +194,8 @@ define({
 	"c_note": "Note",
 	"c_server": "Server",
 	"c_cols": "Columns",
+	"c_add": "Add",
+	"c_create": "Create",
 	
 	// File Types
 	"ft": "File Type",
@@ -213,6 +215,7 @@ define({
 	"tm_c_xls": "Using the Spreadsheet editor",
 	"tm_g_temp": "Download Template",
 	"tm_g_new": "Create new Form",
+	"tm_g_open": "Open a Form",
 	"tm_g_temp_i1": "Download a template to create a new form on your personal computer. When you have finished, upload it to the server by clicking on the upload button below. You will first need to select the XLS file containing the form you have created and give it a name.",
 	"tm_g_temp_i3": "Reference Guide",
 	"tm_ul_f": "Upload the spreadsheet",
@@ -298,6 +301,11 @@ define({
 	"msg_csv": "Only CSV files and Zip files containing CSV and media files are allowed",
 	"msg_inv_email": "Not a valid email address",
 	"msg_cs": "Click to filter or sort on this column",
+	"msg_nrf": "No results forwarded to another server",
+	"msg_saf": "Select a form to view the users that have downloaded that form",
+	"msg_nf": "No forms",
+	"msg_ns": "No Submissions",
+	"msg_us": "Unknown Source",
 	
 	// Tasks
 	"t_complete": "Show Completed Tasks",
@@ -513,7 +521,14 @@ define({
 	"fr": "French",
 	"hi": "Hindi",
 	"pt": "Portuguese",
-	"es": "Spanish"
+	"es": "Spanish",
+	
+	// Notifications
+	"n_wf": "Web Form",
+	"n_pdfp": "PDF (Portrait)",
+	"n_pdfl": "PDF (Landscape)",
+	"n_eq": "Email Question"
+	
 
 	 		
 		

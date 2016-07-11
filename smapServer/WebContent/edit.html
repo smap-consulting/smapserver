@@ -515,7 +515,7 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="editLanguageLabel">Languages</h4>
+     			<h4 class="modal-title lang" data-lang="c_langs" id="editLanguageLabel">lang</h4>
    			</div>
    			
    			<div class="modal-body">
@@ -524,7 +524,7 @@
 						<div class="table-responsive">
 							<div id="language_edit_list"></div>
 						</div>
-						<a id="addLanguage" type="button" class="btn btn-default" aria-label="Add Language">Add</a>
+						<a id="addLanguage" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Language">add</a>
 					</div>
 					<div class="col-md-12 text-center">
 						<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
@@ -533,7 +533,7 @@
 			</div>
 			
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
         		<button id="editLanguageSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
       		</div>
 		</div>

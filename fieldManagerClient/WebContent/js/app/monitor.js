@@ -518,15 +518,15 @@ function refreshTable(data, showType) {
 	if(typeof features === "undefined" || features.length === 0) {
 		var msg;
 		if(showSource === "forms" && sId == "_all") {
-			msg = "<h1>Select a form to view the users that have downloaded that form</h1>";
+			msg = "<h1>" + localise.set["msg_saf"] + "</h1>";
 		} else if(showSource === "forms" ) {
-			msg = "<h1>No Forms</h1>";
+			msg = "<h1>" + localise.set["msg_nf"] + "</h1>";
 		} else if(showSource === "uploaded") {
-			msg = "<h1>No Submissions</h1>";
+			msg = "<h1>" + localise.set["msg_ns"] + "</h1>";
 		} else if(isForwarded) {
-			msg = "<h1>No results forwarded to another server</h1>";
+			msg = "<h1>" + localise.set["msg_nrf"] + "</h1>";
 		} else {
-			msg = "<h1>Error: unknown source</h1>";
+			msg = "<h1>" + localise.set["msg_us"] + "</h1>";
 		}
 		$msg.html(msg);
 		return;

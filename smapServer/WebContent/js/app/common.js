@@ -1326,14 +1326,14 @@ function openForm(type) {
 	if(type === "new") {
 		$('.existing_form').hide();
 		$('.new_form').show();
-		$('#openSurveyLabel').html("New Form");
-		$('#get_form').html("Create");
+		$('#openSurveyLabel').html(localise.set["tm_g_new"]);
+		$('#get_form').html(localise.set["c_create"]);
 		globals.gExistingSurvey = false; 
 	} else {
 		$('.existing_form').show();
 		$('.new_form').hide();
-		$('#openSurveyLabel').html("Open Form");
-		$('#get_form').html("Open");
+		$('#openSurveyLabel').html(localise.set["tm_g_open"]);
+		$('#get_form').html(localise.set["m_open"]);
 		globals.gExistingSurvey = true; 
 	}
 	$('#openFormModal').modal('show');

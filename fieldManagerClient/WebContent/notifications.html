@@ -51,7 +51,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
       </button>
       <a href="#" class="navbar-brand">
       	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-     	<span class="lang" data-lang="m_notify" >Notify</span>
+     	<span class="lang" data-lang="m_notify" >notify</span>
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
@@ -103,7 +103,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		</div>
 	</div>
 	<div class = "well">	
-		<a id="addNotification" type="button" class="btn btn-default" aria-label="Add Notification">Add</a>
+		<a id="addNotification" type="button" class="btn btn-default lang" aria-label="Add Notification" data-lang="c_add">add</a>
 		<div class="table-responsive">
 			<div id="notification_list"></div>
 		</div>
@@ -120,7 +120,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
    		<div class="modal-content">
     			<div class="modal-header">
       				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-      				<h4 class="modal-title" id="addNotificationLabel">Add Notification</h4>
+      				<h4 class="modal-title lang" id="addNotificationLabel" data-lang="msg_add_notification">add</h4>
     			</div>
     			
 		    <div class="modal-body">
@@ -129,13 +129,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<label class="lang col-sm-2 control-label" data-lang="c_target" for="target">Target</label>
 						<div class="col-sm-10">
 							<select class="form-control" id="target">
-								<option value="email">Email</option>
-								<option value="forward">Forward to another server</option>
+								<option value="email" class="lang" data-lang="c_email">email</option>
+								<option value="forward" class="lang" data-lang="c_forward">forward</option>
 							</select>
 						</div>
 					</div>
 					<div class="form-group">
-						<label for="survey" class="col-sm-2 control-label">Survey: </label>
+						<label for="survey" class="lang col-sm-2 control-label" data-lang="c_survey">survey</label>
 						<div class="col-sm-10">
 							<select id="survey" class="survey_select form-control"></select>
 						</div>
@@ -176,9 +176,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 							<label class="lang col-sm-2 control-label" data-lang="c_attach" for="attach">Attach</label>
 							<div class="col-sm-10">
 								<select class="form-control" id="email_attach">
-									<option value="webform">Web Form</option>
-									<option value="pdf">PDF (Portrait)</option>
-									<option value="pdf_landscape">PDF (Landscape)</option>
+									<option value="webform" class="lang" data-lang="n_wf">web form</option>
+									<option value="pdf" class="lang" data-lang="n_pdfp">pdf p</option>
+									<option value="pdf_landscape" class="lang" data-lang="n_pdfl">pdf l</option>
 								</select>
 							</div>
 						</div>
@@ -189,25 +189,25 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 							</div>
 						</div>
 						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Question that will contain the email addresses to use">
-							<label for="question_email" class="col-sm-2 control-label">Email Question</label>
+							<label for="question_email" class="col-sm-2 control-label lang" data-lang="n_eq">email question</label>
 							<div class="col-sm-10">
 								<select class="selected_question form-control" id="email_question"></select>
 							</div>
 						</div>
 						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Name of the sender (optional). Will be added to the email domain to create the from address. For example if you specify the name as 'joe' and the email domain is example.com then the email will be shown as coming from joe@example.com">
-							<label for="from_email" data-lang="c_from" class="lang col-sm-2 control-label">From</label>
+							<label for="from_email" data-lang="c_from" class="lang col-sm-2 control-label">from</label>
 							<div class="col-sm-10">
 								<input type="email" placeholder="name of email sender" id="from_email" placeholder="from name" class="form-control">
 							</div>
 						</div>
 						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Subject for the email (optional)">
-							<label for="email_subject" data-lang="c_subject" class="lang col-sm-2 control-label">Subject</label>
+							<label for="email_subject" data-lang="c_subject" class="lang col-sm-2 control-label">subject</label>
 							<div class="col-sm-10">
 								<input type="text" placeholder="Email subject" id="email_subject" class="form-control">
 							</div>
 						</div>
 						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Email content.">
-							<label for="email_content" data-lang="c_content" class="lang col-sm-2 control-label">Content</label>
+							<label for="email_content" data-lang="c_content" class="lang col-sm-2 control-label">content</label>
 							<div class="col-sm-10">
 								<textarea id="email_content" class="labelProp form-control" placeholder="Email content"></textarea>
 							</div>
@@ -219,14 +219,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<div class="checkbox">
 							<label>
 								<input type="checkbox" id="nt_enabled" name="nt_enabled"
-									value="nt_enabled" checked="checked"><span data-lang="c_enabled" class="lang">Enabled</span>
+									value="nt_enabled" checked="checked"><span data-lang="c_enabled" class="lang">enabled</span>
 							</label>
 						</div>
 					</div>
 				</form>
 				<div class="modal-footer">
-                	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                	<button id="saveNotification" type="button" class="btn btn-primary">Save</button>
+                	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+                	<button id="saveNotification" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
         		</div>
 			</div>
 		</div>
