@@ -1086,57 +1086,59 @@ public class SubRelationalDB extends Subscriber {
 		uuid = uuid.replace("'", "''");	// Escape apostrophes
 		System.out.println("checkDuplicates: " + tableName + " : " + uuid);
 		
-		try {
-
-			String colTest1 = "select column_name from information_schema.columns " +
-					"where table_name = '" + tableName + "' and column_name = '_instanceid'";
-			String sql1 = "select prikey from " + tableName + " where _instanceid = '" + uuid + "' " +
-					"order by prikey asc;";
-			
-			pstmt = cResults.prepareStatement(colTest1);
-			// Check for duplicates with the old _instanceid
-			ResultSet res = pstmt.executeQuery();
-			if(res.next()) {
-				// Has _instanceid
-				System.out.println("Has _instanceid");
-				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-				pstmt = cResults.prepareStatement(sql1);
-				res = pstmt.executeQuery();
-				while(res.next()) {
-					duplicateKeys.add(res.getInt(1));
+		if(uuid != null && uuid.trim().length() > 0) {
+			try {
+	
+				String colTest1 = "select column_name from information_schema.columns " +
+						"where table_name = '" + tableName + "' and column_name = '_instanceid'";
+				String sql1 = "select prikey from " + tableName + " where _instanceid = '" + uuid + "' " +
+						"order by prikey asc;";
+				
+				pstmt = cResults.prepareStatement(colTest1);
+				// Check for duplicates with the old _instanceid
+				ResultSet res = pstmt.executeQuery();
+				if(res.next()) {
+					// Has _instanceid
+					System.out.println("Has _instanceid");
+					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+					pstmt = cResults.prepareStatement(sql1);
+					res = pstmt.executeQuery();
+					while(res.next()) {
+						duplicateKeys.add(res.getInt(1));
+					}
 				}
-			}
-			
-
-			String colTest2 = "select column_name from information_schema.columns " +
-					"where table_name = '" + tableName + "' and column_name = 'instanceid'";
-			String sql2 = "select prikey from " + tableName + " where instanceid = '" + uuid + "' " +
-					"order by prikey asc;";
-			
-			// Check for duplicates with the new instanceid
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			pstmt = cResults.prepareStatement(colTest2);
-			res = pstmt.executeQuery();
-			if(res.next()) {
-				// Has instanceid
-				System.out.println("Has instanceid");
+				
+	
+				String colTest2 = "select column_name from information_schema.columns " +
+						"where table_name = '" + tableName + "' and column_name = 'instanceid'";
+				String sql2 = "select prikey from " + tableName + " where instanceid = '" + uuid + "' " +
+						"order by prikey asc;";
+				
+				// Check for duplicates with the new instanceid
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-				pstmt = cResults.prepareStatement(sql2);
+				pstmt = cResults.prepareStatement(colTest2);
 				res = pstmt.executeQuery();
-				while(res.next()) {
-					duplicateKeys.add(res.getInt(1));
+				if(res.next()) {
+					// Has instanceid
+					System.out.println("Has instanceid");
+					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+					pstmt = cResults.prepareStatement(sql2);
+					res = pstmt.executeQuery();
+					while(res.next()) {
+						duplicateKeys.add(res.getInt(1));
+					}
 				}
+	
+				
+				if(duplicateKeys.size() > 0) {
+					System.out.println("Submission has " + duplicateKeys.size() + " duplicates for uuid: " + uuid);
+				} 
+				
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			} finally {
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			}
-
-			
-			if(duplicateKeys.size() > 0) {
-				System.out.println("Submission has " + duplicateKeys.size() + " duplicates for uuid: " + uuid);
-			} 
-			
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		
 		return duplicateKeys;
