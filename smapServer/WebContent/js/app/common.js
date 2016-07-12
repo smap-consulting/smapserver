@@ -1972,6 +1972,11 @@ function addGoogleMapLayers(map) {
 	map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
 }
 
+function remoteSurveyChanged() {
+	$('#fwd_rem_survey_id').val($('#fwd_rem_survey :selected').val());
+	$('#fwd_rem_survey_nm').val($('#fwd_rem_survey :selected').text());
+}
+
 /*
  * Prevent the menu bar from extending over two lines
  */

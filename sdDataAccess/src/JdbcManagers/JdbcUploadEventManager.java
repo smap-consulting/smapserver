@@ -90,7 +90,10 @@ public class JdbcUploadEventManager {
 				+ "and ue.s_id is not null "
 				+ "and ue.incomplete = 'false' "
 				+ "and not exists (select se.se_id from subscriber_event se "
-					+ "where se.subscriber = ? and se.ue_id = ue.ue_id); ";
+					+ "where se.subscriber = ? and se.ue_id = ue.ue_id)";
+	
+	PreparedStatement pstmtFailedForward = null;
+	String sqlForwardFilter = " and ue.s_id = ?";
 	
 	/*
 	 * Constructor
@@ -98,6 +101,7 @@ public class JdbcUploadEventManager {
 	public JdbcUploadEventManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql);
 		pstmtFailed = sd.prepareStatement(sqlGet);
+		pstmtFailedForward = sd.prepareStatement(sqlGet + sqlForwardFilter);
 	}
 	
 	/*
@@ -137,18 +141,25 @@ public class JdbcUploadEventManager {
 		return getUploadEventList(pstmtFailed);
 	}
 	
+	public List<UploadEvent> getFailedForward(String subscriber, int sId) throws SQLException {
+		pstmtFailedForward.setString(1, subscriber);
+		pstmtFailedForward.setInt(2, sId);
+		return getUploadEventList(pstmtFailedForward);
+	}
+	
 	/*
 	 * Close prepared statements
 	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtFailed != null) {pstmtFailed.close();}} catch(Exception e) {};
+		try {if(pstmtFailedForward != null) {pstmtFailedForward.close();}} catch(Exception e) {};
 	}
 	
 	private List <UploadEvent> getUploadEventList(PreparedStatement pstmt) throws SQLException {
 		ArrayList <UploadEvent> ueList = new ArrayList<UploadEvent> ();
 		
-		ResultSet rs = pstmtFailed.executeQuery();
+		ResultSet rs = pstmt.executeQuery();
 		while(rs.next()) {
 			UploadEvent ue = new UploadEvent();
 			ue.setId(rs.getInt(1));

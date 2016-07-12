@@ -133,7 +133,13 @@ public class SubscriberBatch {
 						
 						List<UploadEvent> uel = null;
 						
-						uel = uem.getFailed(s.getSubscriberName());
+						if(subscriberType.equals("upload")) {
+							uel = uem.getFailed(s.getSubscriberName());		// Get pending jobs
+						} else if(subscriberType.equals("forward")) {
+							uel = uem.getFailedForward(s.getSubscriberName(), s.getSurveyId());		// Get pending jobs 
+						}
+						
+						
 						//uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
 						
 									

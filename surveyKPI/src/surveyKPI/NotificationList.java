@@ -248,6 +248,8 @@ public class NotificationList extends Application {
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"Authorisation Exception", e);
 			response = Response.status(500).entity("Unauthorised").build();	// Don't return a status of 401 as it will log the user out of their local server
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
 		}
 		
 		return response;

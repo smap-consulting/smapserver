@@ -431,6 +431,7 @@ function getRemoteSurveys() {
 		  type: "POST",
 		  async: true,
 		  cache: false,
+		  dataType: "json",
 		  url: "/surveyKPI/notifications/getRemoteSurveys",
 		  data: { remote: remoteString },
 		  success: function(data, status) {

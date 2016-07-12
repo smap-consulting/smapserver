@@ -328,11 +328,6 @@ function msgToText(msg) {
 	return msgtext;
 }
 
-function remoteSurveyChanged() {
-	$('#fwd_rem_survey_id').val($('#fwd_rem_survey :selected').val());
-	$('#fwd_rem_survey_nm').val($('#fwd_rem_survey :selected').text());
-}
-
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys
