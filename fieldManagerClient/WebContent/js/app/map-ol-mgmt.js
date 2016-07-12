@@ -55,7 +55,8 @@ function initializeMap(){
 		map = new OpenLayers.Map("map", mapOptions);  	
 		
 		// Add layers
-		map.addLayer(new OpenLayers.Layer.XYZ("OSM", "https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
+		//map.addLayer(new OpenLayers.Layer.XYZ("OSM", "https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
+		map.addLayer(new OpenLayers.Layer.OSM());
 		if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
 			addGoogleMapLayers(map);
 		} else {
