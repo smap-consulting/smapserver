@@ -247,6 +247,9 @@ function updateUserDetails(data, getOrganisationsFn) {
 			if(groups[i].name === "org admin") {
 				globals.gIsOrgAdministrator = true;
 			}
+			if(groups[i].name === "security") {
+				globals.gIsSecurityAdministrator = true;
+			}
 			if(groups[i].name === "analyst") {
 				globals.gIsAnalyst = true;
 			}

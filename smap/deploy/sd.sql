@@ -528,3 +528,17 @@ alter table survey add column shared_table boolean default false;
 alter table survey add column created timestamp with time zone;
 
 alter table server add column google_key text;
+
+-- Upgrade to 16.07 from 16.06
+CREATE SEQUENCE restricted_project_seq START 1;
+ALTER SEQUENCE restricted_project_seq OWNER TO ws;
+
+create TABLE restricted_project (
+	id integer DEFAULT NEXTVAL('restricted_project_seq') CONSTRAINT pk_restricted_project PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	p_id integer REFERENCES project(id) ON DELETE CASCADE
+	);
+ALTER TABLE restricted_project OWNER TO ws;
+
+insert into groups(id,name) values(6,'security');
+insert into user_group (u_id, g_id) select u_id, 6 from user_group where g_id = 4;

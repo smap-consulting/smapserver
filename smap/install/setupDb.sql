@@ -275,6 +275,18 @@ create TABLE user_project (
 	);
 ALTER TABLE user_project OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS restricted_project_seq CASCADE;
+CREATE SEQUENCE restricted_project_seq START 1;
+ALTER SEQUENCE restricted_project_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS restricted_project CASCADE;
+create TABLE restricted_project (
+	id INTEGER DEFAULT NEXTVAL('restricted_project_seq') CONSTRAINT pk_restricted_project PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE
+	);
+ALTER TABLE restricted_project OWNER TO ws;
+
 -- Create an administrator and set up defaul values
 insert into organisation(id, name, allow_email, allow_facebook, allow_twitter) values(1, 'Smap', 'true', 'true', 'true');
 
@@ -286,12 +298,14 @@ insert into groups(id,name) values(2,'analyst');
 insert into groups(id,name) values(3,'enum');
 insert into groups(id,name) values(4,'org admin');
 insert into groups(id,name) values(5,'manage');
+insert into groups(id,name) values(6,'security');
 
 insert into user_group (u_id, g_id) values (1, 1);
 insert into user_group (u_id, g_id) values (1, 2);
 insert into user_group (u_id, g_id) values (1, 3);
 insert into user_group (u_id, g_id) values (1, 4);
 insert into user_group (u_id, g_id) values (1, 5);
+insert into user_group (u_id, g_id) values (1, 6);
 
 insert into project (id, o_id, name) values (1, 1, 'A project');
 

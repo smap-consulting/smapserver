@@ -37,6 +37,8 @@ public class Authorise {
 	public static String ANALYST = "analyst";
 	public static String ADMIN = "admin";
 	public static String ORG = "org admin";
+	public static String MANAGE = "manage";
+	public static String SECURITY = "security";
 	
 	//private String requiredGroup;
 	ArrayList<String> permittedGroups; 
@@ -141,13 +143,13 @@ public class Authorise {
 		 * 2) Make sure survey is in a project that the user has access to
 		 */
 
-		String sql = "select count(*) from survey s, users u, user_project up, project p " +
-				" where u.id = up.u_id" +
-				" and p.id = up.p_id" +
-				" and s.p_id = up.p_id" +
-				" and s.s_id = ? " +
-				" and u.ident = ? " +
-				" and s.deleted = ?;"; 
+		String sql = "select count(*) from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and s.s_id = ? "
+				+ "and u.ident = ? "
+				+ "and s.deleted = ?";
 		
 		try {
 			pstmt = conn.prepareStatement(sql);

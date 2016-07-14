@@ -33,6 +33,7 @@ define(function() {
 		gIsAnalyst: false,
 		gIsManage: false,
 		gIsOrgAdministrator: false,
+		gIsSecurityAdministrator: false,
 		gSendTrail: false,
 		gViewIdx: 0,
 		gSelector: new Selector(),

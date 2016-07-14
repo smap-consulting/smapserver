@@ -47,6 +47,7 @@ import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
+import org.smap.sdal.model.RestrictedUser;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
 
@@ -72,6 +73,7 @@ public class UserList extends Application {
 	
 	Authorise a = null;
 	Authorise aUpdate = null;
+	Authorise aSM = null;
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());
@@ -95,6 +97,11 @@ public class UserList extends Application {
 		authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ADMIN);
 		aUpdate = new Authorise(authorisations, null);
+		
+		// Only allow security administrators to view or update the restricted users
+		authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.SECURITY);
+		aSM = new Authorise(authorisations, null);
 		
 	}
 
@@ -382,6 +389,95 @@ public class UserList extends Application {
 				user.ident = resultSet.getString("ident");
 				user.name = resultSet.getString("name");
 				user.email = resultSet.getString("email");
+				users.add(user);
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+					
+				
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Get the users who are restricted from accessing a specific project
+	 */
+	@Path("/{projectId}/restricted")
+	@GET
+	@Produces("application/json")
+	public Response getRestrictedUsersForProject(
+			@Context HttpServletRequest request,
+			@PathParam("projectId") int projectId
+			) { 
+
+		Response response = null;
+		
+		log.info("restricted userList for project: " + projectId);
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
+		aSM.isAuthorised(connectionSD, request.getRemoteUser());
+		aSM.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		// End Authorisation
+		
+		/*
+		 * 
+		 */	
+		PreparedStatement pstmt = null;
+		ArrayList<RestrictedUser> users = new ArrayList<RestrictedUser> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			int o_id  = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			
+			/*
+			 * Get the users for this project
+			 */
+			sql = "SELECT u.id as id, "
+					+ "rp.u_id as restricted_id, "
+					+ "u.ident as ident, "
+					+ "u.name as name "
+					+ "from users u "
+					+ "left outer join restricted_project rp "
+					+ "on u.id = rp.u_id "
+					+ "and rp.p_id = ? "	
+					+ "where u.o_id = ? "
+					+ "order by u.ident";
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, projectId);
+			pstmt.setInt(2, o_id);
+			log.info("Get restricted users for project: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			RestrictedUser user = null;
+			while(resultSet.next()) {
+				user = new RestrictedUser();
+				user.id = resultSet.getInt("id");
+				user.restricted = (resultSet.getInt("restricted_id") != 0);
+				user.ident = resultSet.getString("ident");
+				user.name = resultSet.getString("name");
 				users.add(user);
 			}
 			

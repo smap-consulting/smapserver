@@ -628,7 +628,7 @@ function openUserDialog(existing, userIndex) {
 	h = [];
 	idx = -1;
 	for(i = 0; i < gGroups.length; i++) {
-		if(gGroups[i].id !== 4 || globals.gIsOrgAdministrator) {
+		if((gGroups[i].id !== 4 || globals.gIsOrgAdministrator) && (gGroups[i].id !== 6 || globals.gIsSecurityAdministrator)) {
 			h[++idx] = '<div class="checkbox"><label>';
 			h[++idx] = '<input type="checkbox" id="'; 
 			h[++idx] = 'user_groups_cb' + i;
@@ -728,9 +728,60 @@ function openProjectDialog(existing, projectIndex) {
 		$('#p_desc').val(globals.gProjectList[projectIndex].desc);
 		$('#p_tasks_only').prop('checked', globals.gProjectList[projectIndex].tasks_only);
 	}
+	
+	if(globals.gIsSecurityAdministrator) {
+		$('.restricted_users').show();
+		addRestrictedUsers(".restricted_users_list", globals.gProjectList[projectIndex].id)
+	} else {
+		$('.restricted_users').hide();
+	}
+	
 	$('#create_project_popup').modal("show");
 }
 
+function addRestrictedUsers(elem, pId) {
+	
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/userList/" + pId + "/restricted",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			
+			var h = [],
+			idx = -1,
+			$elem = $(elem);
+
+			for(i = 0; i < data.length; i++) {
+				h[++idx] = '<div class="col-sm-10 col-sm-offset-2">';
+				h[++idx] = '<div class="checkbox"><label>';
+				h[++idx] = '<input type="checkbox" id="'; 
+				h[++idx] = 'user_projects_cb' + i;
+				h[++idx] = '" name="';
+				h[++idx] = 'user_projects_cb';
+				h[++idx] = '" value="';
+				h[++idx] = data[i].id + '"';
+				
+				h[++idx] = '/>';
+				h[++idx] = data[i].name;
+				h[++idx] = '</label></div>';
+				h[++idx] = '</div>';
+			}
+			$elem.empty().append(h.join(''));
+			
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of users: " + err);
+			}
+		}
+	});	
+	
+}
 /*
  * Show the organisation dialog
  */
@@ -1292,7 +1343,7 @@ function updateGroupTable() {
 	
 	h[++idx] = '<option value="All">All</option>';
 	for(i = 0; i < gGroups.length; i++) {
-		if(gGroups[i].name !== 'org admin' || globals.gIsOrgAdministrator) {
+		if((gGroups[i].id !== 4 || globals.gIsOrgAdministrator) && (gGroups[i].id !== 6 || globals.gIsSecurityAdministrator)) {
 			h[++idx] = '<option value="';
 			h[++idx] = gGroups[i].name;
 			h[++idx] = '">';
