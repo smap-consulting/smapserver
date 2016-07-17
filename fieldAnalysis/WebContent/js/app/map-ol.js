@@ -89,7 +89,8 @@ function initializeMap(idx){
 	  }
 	
 	// Add layers
-	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 20}));
+	//map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 20}));
+	map.addLayer(new OpenLayers.Layer.OSM());
 	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	
 	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {

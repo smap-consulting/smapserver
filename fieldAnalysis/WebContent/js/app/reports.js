@@ -221,7 +221,8 @@ function initialiseReportMap(bounds) {
 	}
 	
 	reportMap = new OpenLayers.Map("report_map", mapOptions); 
-	reportMap.addLayer(new OpenLayers.Layer.XYZ("OSM", "http://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
+	//reportMap.addLayer(new OpenLayers.Layer.XYZ("OSM", "http://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png"));
+	reportMap.addLayer(new OpenLayers.Layer.OSM());
 	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
 		addGoogleMapLayers(reportMap);
 	} else {

@@ -935,7 +935,7 @@ public class GeneralUtilityMethods {
 			pstmt = sd.prepareStatement(sqlGetQuestionId);
 			pstmt.setInt(1, formId);
 			pstmt.setString(2, qName);
-			System.out.println("SQL get question id: " + pstmt.toString());
+			log.info("SQL get question id: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				qId = rs.getInt(1);	
@@ -945,9 +945,11 @@ public class GeneralUtilityMethods {
 				pstmt = sd.prepareStatement(sqlGetQuestionIdFromSurvey);
 				pstmt.setString(1, qName);
 				pstmt.setInt(2, sId);
+				log.info("Getting question id without the form id: " + pstmt.toString());
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
 					qId = rs.getInt(1);
+					log.info("Found qId: " + qId);
 				} else {
 					throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
 				}
@@ -955,6 +957,7 @@ public class GeneralUtilityMethods {
 				// If there is more than one question with the same name then use the qId in the change item
 				// This will work for existing questions and this question was presumably added from xlsForm
 				if(rs.next()) {
+					log.info("setting question id to changeQId: " + changeQId);
 					qId = changeQId;
 				}
 			}

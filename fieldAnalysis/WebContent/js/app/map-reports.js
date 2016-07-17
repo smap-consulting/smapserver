@@ -92,7 +92,8 @@ function initializeMap() {
 	               "https://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
 	 
 	// Add layers
-	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
+	//map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18, attribution: "(c) OpenStreetMap contributors"}));
+	map.addLayer(new OpenLayers.Layer.OSM());
 	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
 		addGoogleMapLayers(map);

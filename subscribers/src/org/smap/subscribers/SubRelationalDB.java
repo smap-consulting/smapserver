@@ -439,7 +439,13 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Existing key:" + existingKey);
 					ArrayList<Integer> existingKeys = new ArrayList<Integer>();
 					existingKeys.add(Integer.parseInt(existingKey));
-					replaceExistingRecord(cResults, cMeta, topElement,existingKeys , keys.newKey, hasHrk);		// Mark the existing record as being replaced
+					replaceExistingRecord(cResults, 
+							cMeta, 
+							topElement,
+							existingKeys , 
+							keys.newKey, 
+							hasHrk,
+							sId);		// Mark the existing record as being replaced
 				}
 				
 			}
@@ -711,7 +717,8 @@ public class SubRelationalDB extends Subscriber {
 			IE element, 
 			ArrayList<Integer> existingKeys, 
 			long newKey,
-			boolean hasHrk) throws SQLException, Exception {
+			boolean hasHrk,
+			int sId) throws SQLException, Exception {
 
 		/*
 		 * Set the record as bad with the reason being that it has been replaced
@@ -735,24 +742,23 @@ public class SubRelationalDB extends Subscriber {
 			pstmt.close();
 			
 			if(isGood) {
-				// Get the survey id and form id for this table
+				// Get the form id for this table
 				String bad_reason = "Replaced by " + newKey;
-				int s_id;
 				int f_id;
-				sql = "select f.s_id, f.f_id from form f where f.table_name = ?;";
+				sql = "select f.f_id from form f where f.table_name = ? and f.s_id = ?;";
 	
 				pstmt = cMeta.prepareStatement(sql);
 				pstmt.setString(1, tableName);
+				pstmt.setInt(2, sId);
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
-					s_id = rs.getInt(1);
-					f_id = rs.getInt(2);
+					f_id = rs.getInt(1);
 					
 					// Mark the records replaced
 					for(int i = 0; i < existingKeys.size(); i++) {	
 						int dupKey = existingKeys.get(i);
 						org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, 
-								true, bad_reason, dupKey, s_id, f_id, true, false);
+								true, bad_reason, dupKey, sId, f_id, true, false);
 						
 						// Set the hrk of the new record to the hrk of the old record
 						// This can only be done for one old record, possibly there is never more than 1
@@ -1086,57 +1092,59 @@ public class SubRelationalDB extends Subscriber {
 		uuid = uuid.replace("'", "''");	// Escape apostrophes
 		System.out.println("checkDuplicates: " + tableName + " : " + uuid);
 		
-		try {
-
-			String colTest1 = "select column_name from information_schema.columns " +
-					"where table_name = '" + tableName + "' and column_name = '_instanceid'";
-			String sql1 = "select prikey from " + tableName + " where _instanceid = '" + uuid + "' " +
-					"order by prikey asc;";
-			
-			pstmt = cResults.prepareStatement(colTest1);
-			// Check for duplicates with the old _instanceid
-			ResultSet res = pstmt.executeQuery();
-			if(res.next()) {
-				// Has _instanceid
-				System.out.println("Has _instanceid");
-				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-				pstmt = cResults.prepareStatement(sql1);
-				res = pstmt.executeQuery();
-				while(res.next()) {
-					duplicateKeys.add(res.getInt(1));
+		if(uuid != null && uuid.trim().length() > 0) {
+			try {
+	
+				String colTest1 = "select column_name from information_schema.columns " +
+						"where table_name = '" + tableName + "' and column_name = '_instanceid'";
+				String sql1 = "select prikey from " + tableName + " where _instanceid = '" + uuid + "' " +
+						"order by prikey asc;";
+				
+				pstmt = cResults.prepareStatement(colTest1);
+				// Check for duplicates with the old _instanceid
+				ResultSet res = pstmt.executeQuery();
+				if(res.next()) {
+					// Has _instanceid
+					System.out.println("Has _instanceid");
+					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+					pstmt = cResults.prepareStatement(sql1);
+					res = pstmt.executeQuery();
+					while(res.next()) {
+						duplicateKeys.add(res.getInt(1));
+					}
 				}
-			}
-			
-
-			String colTest2 = "select column_name from information_schema.columns " +
-					"where table_name = '" + tableName + "' and column_name = 'instanceid'";
-			String sql2 = "select prikey from " + tableName + " where instanceid = '" + uuid + "' " +
-					"order by prikey asc;";
-			
-			// Check for duplicates with the new instanceid
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			pstmt = cResults.prepareStatement(colTest2);
-			res = pstmt.executeQuery();
-			if(res.next()) {
-				// Has instanceid
-				System.out.println("Has instanceid");
+				
+	
+				String colTest2 = "select column_name from information_schema.columns " +
+						"where table_name = '" + tableName + "' and column_name = 'instanceid'";
+				String sql2 = "select prikey from " + tableName + " where instanceid = '" + uuid + "' " +
+						"order by prikey asc;";
+				
+				// Check for duplicates with the new instanceid
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-				pstmt = cResults.prepareStatement(sql2);
+				pstmt = cResults.prepareStatement(colTest2);
 				res = pstmt.executeQuery();
-				while(res.next()) {
-					duplicateKeys.add(res.getInt(1));
+				if(res.next()) {
+					// Has instanceid
+					System.out.println("Has instanceid");
+					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+					pstmt = cResults.prepareStatement(sql2);
+					res = pstmt.executeQuery();
+					while(res.next()) {
+						duplicateKeys.add(res.getInt(1));
+					}
 				}
+	
+				
+				if(duplicateKeys.size() > 0) {
+					System.out.println("Submission has " + duplicateKeys.size() + " duplicates for uuid: " + uuid);
+				} 
+				
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			} finally {
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			}
-
-			
-			if(duplicateKeys.size() > 0) {
-				System.out.println("Submission has " + duplicateKeys.size() + " duplicates for uuid: " + uuid);
-			} 
-			
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		
 		return duplicateKeys;

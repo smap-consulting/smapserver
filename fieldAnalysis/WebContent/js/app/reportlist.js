@@ -702,7 +702,8 @@ function initializeReportsMap() {
                  "https://otile4-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
 	 
 	// Add layers
-	gMap.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18}));
+	//gMap.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 18}));
+	gMap.addLayer(new OpenLayers.Layer.OSM());
 	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
 		addGoogleMapLayers(gMap);
 	} else {
