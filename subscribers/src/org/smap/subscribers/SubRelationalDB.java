@@ -439,7 +439,13 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Existing key:" + existingKey);
 					ArrayList<Integer> existingKeys = new ArrayList<Integer>();
 					existingKeys.add(Integer.parseInt(existingKey));
-					replaceExistingRecord(cResults, cMeta, topElement,existingKeys , keys.newKey, hasHrk);		// Mark the existing record as being replaced
+					replaceExistingRecord(cResults, 
+							cMeta, 
+							topElement,
+							existingKeys , 
+							keys.newKey, 
+							hasHrk,
+							sId);		// Mark the existing record as being replaced
 				}
 				
 			}
@@ -711,7 +717,8 @@ public class SubRelationalDB extends Subscriber {
 			IE element, 
 			ArrayList<Integer> existingKeys, 
 			long newKey,
-			boolean hasHrk) throws SQLException, Exception {
+			boolean hasHrk,
+			int sId) throws SQLException, Exception {
 
 		/*
 		 * Set the record as bad with the reason being that it has been replaced
@@ -735,24 +742,23 @@ public class SubRelationalDB extends Subscriber {
 			pstmt.close();
 			
 			if(isGood) {
-				// Get the survey id and form id for this table
+				// Get the form id for this table
 				String bad_reason = "Replaced by " + newKey;
-				int s_id;
 				int f_id;
-				sql = "select f.s_id, f.f_id from form f where f.table_name = ?;";
+				sql = "select f.f_id from form f where f.table_name = ? and f.s_id = ?;";
 	
 				pstmt = cMeta.prepareStatement(sql);
 				pstmt.setString(1, tableName);
+				pstmt.setInt(2, sId);
 				rs = pstmt.executeQuery();
 				if(rs.next()) {
-					s_id = rs.getInt(1);
-					f_id = rs.getInt(2);
+					f_id = rs.getInt(1);
 					
 					// Mark the records replaced
 					for(int i = 0; i < existingKeys.size(); i++) {	
 						int dupKey = existingKeys.get(i);
 						org.smap.sdal.Utilities.UtilityMethodsEmail.markRecord(cRel, cMeta, tableName, 
-								true, bad_reason, dupKey, s_id, f_id, true, false);
+								true, bad_reason, dupKey, sId, f_id, true, false);
 						
 						// Set the hrk of the new record to the hrk of the old record
 						// This can only be done for one old record, possibly there is never more than 1
