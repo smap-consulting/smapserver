@@ -477,6 +477,70 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Return true if the user has the security role
+	 */
+	static public boolean hasSecurityRole(Connection sd, String user) throws SQLException {
+		boolean securityRole = false;
+		
+		String sqlGetOrgId = "select count(*) "
+				+ "from users u, user_group ug "
+				+ "where u.ident = ? "
+				+ "and u.id = ug.u_id "
+				+ "and ug.g_id = 6";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetOrgId);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				securityRole = (rs.getInt(1) > 0);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return securityRole;
+	}
+	
+	/*
+	 * Return true if the user has the organisational administrator role
+	 */
+	static public boolean isOrgUser(Connection con, String ident) {
+		 
+		String sql = "SELECT count(*) " +
+				" FROM users u, user_group ug " +  
+				" WHERE u.id = ug.u_id " +
+				" AND ug.g_id = 4 " +
+				" AND u.ident = ?; ";				
+		
+		boolean isOrg = false;
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			if(resultSet.next()) {
+				isOrg = (resultSet.getInt(1) > 0);	
+			}
+		} catch(Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return isOrg;
+		
+	}
+	
+	/*
 	 * Get the organisation id for the user
 	 */
 	static public int getOrganisationId(

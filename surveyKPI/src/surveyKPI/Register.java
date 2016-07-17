@@ -177,9 +177,12 @@ public class Register extends Application {
 			for(int i = 1; i <=3; i++) {
 				u.groups.add(new UserGroup(i, "group"));
 			}
+			// Add security manager group
+			u.groups.add(new UserGroup(6, "group"));
 			
 			int u_id = um.createUser(sd, u, o_id,
 					false,
+					true,
 					request.getRemoteUser(),
 					request.getServerName(),
 					rd.admin_name,

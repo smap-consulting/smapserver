@@ -149,7 +149,7 @@ public class UserList extends Application {
 			String sql = null;
 			int o_id;
 			ResultSet resultSet = null;
-			boolean isOrgUser = isOrgUser(connectionSD, request.getRemoteUser());
+			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			
 			/*
 			 * Get the organisation
@@ -436,7 +436,8 @@ public class UserList extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
 		aSM.isAuthorised(connectionSD, request.getRemoteUser());
-		aSM.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		aSM.projectInUsersOrganisation(connectionSD, request.getRemoteUser(), projectId);
+		
 		// End Authorisation
 		
 		/*
@@ -455,13 +456,13 @@ public class UserList extends Application {
 			 * Get the users for this project
 			 */
 			sql = "SELECT u.id as id, "
-					+ "rp.u_id as restricted_id, "
+					+ "up.restricted as restricted, "
 					+ "u.ident as ident, "
 					+ "u.name as name "
 					+ "from users u "
-					+ "left outer join restricted_project rp "
-					+ "on u.id = rp.u_id "
-					+ "and rp.p_id = ? "	
+					+ "left outer join user_project up "
+					+ "on u.id = up.u_id "
+					+ "and up.p_id = ? "	
 					+ "where u.o_id = ? "
 					+ "order by u.ident";
 			
@@ -475,7 +476,7 @@ public class UserList extends Application {
 			while(resultSet.next()) {
 				user = new RestrictedUser();
 				user.id = resultSet.getInt("id");
-				user.restricted = (resultSet.getInt("restricted_id") != 0);
+				user.restricted = resultSet.getBoolean("restricted");
 				user.ident = resultSet.getString("ident");
 				user.name = resultSet.getString("name");
 				users.add(user);
@@ -536,7 +537,8 @@ public class UserList extends Application {
 			int o_id;
 			String adminName = null;
 			ResultSet resultSet = null;
-			boolean isOrgUser = isOrgUser(connectionSD, request.getRemoteUser());
+			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
 			connectionSD.setAutoCommit(false);
 			
@@ -569,6 +571,7 @@ public class UserList extends Application {
 						String serverName = request.getServerName();
 						um.createUser(connectionSD, u, o_id,
 								isOrgUser,
+								isSecurityManager,
 								request.getRemoteUser(),
 								request.getServerName(),
 								adminName,
@@ -579,6 +582,7 @@ public class UserList extends Application {
 						// Existing user
 						um.updateUser(connectionSD, u, o_id,
 								isOrgUser,
+								isSecurityManager,
 								request.getRemoteUser(),
 								request.getServerName(),
 								adminName);
@@ -616,37 +620,6 @@ public class UserList extends Application {
 		}
 		
 		return response;
-	}
-	
-	private boolean isOrgUser(Connection con, String ident) {
-		 
-		String sql = "SELECT count(*) " +
-				" FROM users u, user_group ug " +  
-				" WHERE u.id = ug.u_id " +
-				" AND ug.g_id = 4 " +
-				" AND u.ident = ?; ";				
-		
-		boolean isOrg = false;
-		PreparedStatement pstmt = null;
-		try {
-			pstmt = con.prepareStatement(sql);
-			pstmt.setString(1, ident);
-			log.info("SQL: " + sql + ":" + ident);
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			if(resultSet.next()) {
-				if(resultSet.getInt(1) == 1) {
-					isOrg = true;
-				}
-			}
-		} catch(Exception e) {
-			log.log(Level.SEVERE,"Error", e);
-		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-		}
-		
-		return isOrg;
-		
 	}
 	
 

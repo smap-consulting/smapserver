@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.ProjectManager;
@@ -59,6 +60,7 @@ import java.util.logging.Logger;
 public class ProjectList extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ADMIN);
+	Authorise aSM = new Authorise(null, Authorise.SECURITY);
 
 	private static Logger log =
 			 Logger.getLogger(ProjectList.class.getName());
@@ -97,34 +99,33 @@ public class ProjectList extends Application {
 		ArrayList<Project> projects = new ArrayList<Project> ();
 		
 		try {
-			String sql = null;
-			int o_id;
+			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			boolean securityRole = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
+			int uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
 			ResultSet resultSet = null;
 			
-			/*
-			 * Get the organisation
-			 */
-			sql = "SELECT u.o_id " +
-					" FROM users u " +  
-					" WHERE u.ident = ?;";				
-						
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setString(1, request.getRemoteUser());
-			log.info("SQL: " + sql + ":" + request.getRemoteUser());
-			resultSet = pstmt.executeQuery();
-			
-			if(resultSet.next()) {
-				o_id = resultSet.getInt(1);
+			if(o_id > 0) {	
 				
-				sql = "select id, name, description, tasks_only, changed_by, changed_ts " +
-						" from project " + 
-						" where o_id = ? " +
-						" order by name ASC;";				
+				String sql = null;
+				if (securityRole) {
+					sql = "select id, name, description, tasks_only, changed_by, changed_ts "
+						+ "from project "
+						+ "where o_id = ? "
+						+ "order by name ASC;";	
+				} else {
+					sql = "select p.id, p.name, p.description, p.tasks_only, p.changed_by, p.changed_ts "
+							+ "from project p "
+							+ "where p.o_id = ? "
+							+ "and p.id not in (select p_id from user_project where u_id = ? and restricted = true) "
+							+ "order by p.name ASC;";	
+				}
 					
-				if(pstmt != null) try {pstmt.close();} catch (Exception e) {};
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o_id);
-
+				if(!securityRole) {
+					pstmt.setInt(2, uId);
+				}
+				
 				log.info("Get project list: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 				while(resultSet.next()) {
@@ -170,7 +171,6 @@ public class ProjectList extends Application {
 	public Response updateProject(@Context HttpServletRequest request, @FormParam("projects") String projects) { 
 		
 		Response response = null;
-		System.out.println("Project List:" + projects);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -190,6 +190,9 @@ public class ProjectList extends Application {
 		ArrayList<Project> pArray = new Gson().fromJson(projects, type);
 		
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtDelRestricted = null;
+		PreparedStatement pstmtInsertRestricted = null;
+		PreparedStatement pstmtUpdateRestricted = null;
 		try {	
 			String sql = null;
 			int o_id;
@@ -205,7 +208,6 @@ public class ProjectList extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, user);
-			log.info("SQL: " + sql + ":" + user);
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
@@ -236,7 +238,7 @@ public class ProjectList extends Application {
 						pstmt = connectionSD.prepareStatement(sql);
 						pstmt.setInt(1, p.id);
 						pstmt.setInt(2, o_id);
-						log.info("SQL: " + sql + ":" + p.id + ":" + o_id);
+						log.info("SQL: " + pstmt.toString());
 						resultSet = pstmt.executeQuery();
 						
 						if(resultSet.next()) {
@@ -259,7 +261,57 @@ public class ProjectList extends Application {
 							
 							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();
-			
+							
+							/*
+							 * Update the restricted users
+							 */
+							if(p.applyRestrictions) {
+								
+								aSM.isAuthorised(connectionSD, request.getRemoteUser());
+								connectionSD.setAutoCommit(false);
+								
+								// Delete existing restrictions
+								String sqlDelRestricted = "update user_project "
+										+ "set restricted = 'false' "
+										+ "where p_id = ?;";
+								pstmtDelRestricted = connectionSD.prepareStatement(sqlDelRestricted);
+								pstmtDelRestricted.setInt(1, p.id);
+								System.out.println("Remove restricted: " + pstmtDelRestricted.toString());
+								pstmtDelRestricted.executeUpdate();
+								
+								if(p.restrictUsers != null && p.restrictUsers.size() > 0) {
+									
+									
+									String sqlUpdateRestricted = "update user_project "
+											+ "set restricted = 'true' "
+											+ "where p_id = ? "
+											+ "and u_id = ?";
+									
+									String sqlInsertRestricted = "insert into user_project "
+											+ "(u_id,p_id, restricted) "
+											+ "values(?, ?, 'true')";
+							
+									pstmtUpdateRestricted = connectionSD.prepareStatement(sqlUpdateRestricted);
+									pstmtUpdateRestricted.setInt(1, p.id);
+									
+									pstmtInsertRestricted = connectionSD.prepareStatement(sqlInsertRestricted);
+									pstmtInsertRestricted.setInt(1,  p.id);
+									
+									for(i = 0; i < p.restrictUsers.size(); i++) {
+										
+										pstmtUpdateRestricted.setInt(2, p.restrictUsers.get(i));
+										System.out.println("Update restricted user: " + pstmtUpdateRestricted.toString());
+										int count = pstmtUpdateRestricted.executeUpdate();
+										if(count == 0) {
+											pstmtInsertRestricted.setInt(2, p.restrictUsers.get(i));
+											System.out.println("Insert restricted user: " + pstmtInsertRestricted.toString());
+											pstmtInsertRestricted.executeUpdate();
+										}
+									}
+									try {connectionSD.setAutoCommit(true);} catch (Exception ex) {}
+								}
+							}
+				
 						}
 					}
 				}
@@ -272,6 +324,7 @@ public class ProjectList extends Application {
 				
 		} catch (SQLException e) {
 			try {connectionSD.rollback();} catch (Exception ex) {}
+			try {connectionSD.setAutoCommit(true);} catch (Exception ex) {}
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			if(state.startsWith("23")) {
@@ -283,6 +336,8 @@ public class ProjectList extends Application {
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtDelRestricted != null) {pstmtDelRestricted.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateRestricted != null) {pstmtUpdateRestricted.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}
@@ -298,7 +353,6 @@ public class ProjectList extends Application {
 	public Response delProject(@Context HttpServletRequest request, @FormParam("projects") String projects) { 
 		
 		Response response = null;
-		System.out.println("Project List:" + projects);
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -337,7 +391,6 @@ public class ProjectList extends Application {
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
-			log.info("Get the organisation: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);

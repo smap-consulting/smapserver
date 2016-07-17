@@ -220,6 +220,7 @@ public class UserManager {
 			User u, 
 			int o_id, 
 			boolean isOrgUser, 
+			boolean isSecurityManager,
 			String userIdent,
 			String serverName,
 			String adminName,
@@ -246,7 +247,7 @@ public class UserManager {
 			ResultSet rs = pstmt.getGeneratedKeys();
 			if (rs.next()){
 			    u_id = rs.getInt(1);
-			    insertUserGroupsProjects(sd, u, u_id, isOrgUser);
+			    insertUserGroupsProjects(sd, u, u_id, isOrgUser, isSecurityManager);
 			}
 			
 			// Send a notification email to the user
@@ -299,6 +300,7 @@ public class UserManager {
 			User u, 
 			int o_id, 
 			boolean isOrgUser, 
+			boolean isSecurityManager,
 			String userIdent,
 			String serverName,
 			String adminName) throws Exception {
@@ -321,26 +323,6 @@ public class UserManager {
 			ResultSet resultSet = pstmt.executeQuery();
 		
 			if(resultSet.next()) {
-				
-				// Delete existing user groups
-				if(isOrgUser) {
-					sql = "delete from user_group where u_id = ?;";
-				} else {
-					sql = "delete from user_group where u_id = ? and g_id != 4;";		// Cannot change super user group
-				}
-				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = sd.prepareStatement(sql);
-				pstmt.setInt(1, u.id);
-				log.info("SQL: " + pstmt.toString());
-				pstmt.executeUpdate();
-				
-				// Delete existing user projects
-				sql = "delete from user_project where u_id = ?;";
-				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = sd.prepareStatement(sql);
-				pstmt.setInt(1, u.id);
-				log.info("SQL: " + pstmt.toString());
-				pstmt.executeUpdate();
 				
 				// update existing user
 				String pwdString = null;
@@ -384,7 +366,7 @@ public class UserManager {
 				pstmt.executeUpdate();
 			
 				// Update the groups and projects
-				insertUserGroupsProjects(sd, u, u.id, isOrgUser);
+				insertUserGroupsProjects(sd, u, u.id, isOrgUser, isSecurityManager);
 	
 			} else {
 				throw new Exception("Invalid user");
@@ -396,34 +378,90 @@ public class UserManager {
 	}
 
 
-	private void insertUserGroupsProjects(Connection conn, User u, int u_id, boolean isOrgUser) throws SQLException {
+	private void insertUserGroupsProjects(Connection sd, User u, int u_id, boolean isOrgUser, 
+			boolean isSecurityManager) throws SQLException {
 
 		String sql;
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtInsertUserGroup = null;
+		PreparedStatement pstmtUpdateProjectGroup = null;
+		PreparedStatement pstmtInsertProjectGroup = null;
 		
 		log.info("Update groups and projects user id:" + u_id);
 		
-		for(int j = 0; j < u.groups.size(); j++) {
-			UserGroup g = u.groups.get(j);
-			if(g.id != 4 || isOrgUser) {
-				sql = "insert into user_group (u_id, g_id) values (?, ?);";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setInt(1, u_id);
-				pstmt.setInt(2, g.id);
-				log.info("SQL: " + pstmt.toString());
-				pstmt.executeUpdate();
-			}
-		}
+		// Delete existing user groups
+		try {
+			sd.setAutoCommit(false);
 			
-		for(int j = 0; j < u.projects.size(); j++) {
-			Project p = u.projects.get(j);
-			sql = "insert into user_project (u_id, p_id) values (?, ?);";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, u_id);
-			pstmt.setInt(2, p.id);
+			String sqlInsertUserGroup = "insert into user_group (u_id, g_id) values (?, ?);";
+			pstmtInsertUserGroup = sd.prepareStatement(sqlInsertUserGroup);
+			pstmtInsertUserGroup.setInt(1, u_id);
+			
+			String sqlUpdateProjectGroup = "update user_project set allocated = true "
+					+ "where u_id = ? "
+					+ "and p_id = ?";
+			pstmtUpdateProjectGroup = sd.prepareStatement(sqlUpdateProjectGroup);
+			pstmtUpdateProjectGroup.setInt(1, u_id);
+			
+			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id, allocated) values (?, ?, true);";
+			pstmtInsertProjectGroup = sd.prepareStatement(sqlInsertProjectGroup);
+			pstmtInsertProjectGroup.setInt(1, u_id);
+			/*
+			 * Update user groups
+			 */
+			if(isOrgUser) {
+				sql = "delete from user_group where u_id = ?;";
+			} else if(isSecurityManager) {
+				sql = "delete from user_group where u_id = ? and g_id != 4;";					// Cannot change super user group
+			} else {
+				sql = "delete from user_group where u_id = ? and g_id != 4 and g_id != 6;";		// Cannot change super user group, or security manager
+			}
+					
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, u.id);
 			log.info("SQL: " + pstmt.toString());
 			pstmt.executeUpdate();
+			
+			for(int j = 0; j < u.groups.size(); j++) {
+				UserGroup g = u.groups.get(j);
+				if(g.id != 4 || isOrgUser) {	
+					pstmtInsertUserGroup.setInt(2, g.id);
+					pstmtInsertUserGroup.executeUpdate();
+				}
+			}
+			
+			sd.commit();	// Commit changes to user group
+			
+			// Mark existing projects as un-allocated
+			sql = "update user_project set allocated = false where u_id = ?;";
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, u.id);
+			log.info("SQL: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			for(int j = 0; j < u.projects.size(); j++) {
+				Project p = u.projects.get(j);
+				
+				pstmtUpdateProjectGroup.setInt(2, p.id);
+				int count = pstmtUpdateProjectGroup.executeUpdate();
+				
+				if(count == 0) {
+					pstmtInsertProjectGroup.setInt(2, p.id);
+					pstmtInsertProjectGroup.executeUpdate();
+				}
+			}
+			
+		} catch (Exception e) {
+			try{sd.rollback();} catch(Exception ex) {}
+		} finally {
+			sd.setAutoCommit(true);
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertUserGroup != null) {pstmtInsertUserGroup.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateProjectGroup != null) {pstmtUpdateProjectGroup.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertProjectGroup != null) {pstmtInsertProjectGroup.close();}} catch (SQLException e) {}
 		}
+		
 	}
 	
 }

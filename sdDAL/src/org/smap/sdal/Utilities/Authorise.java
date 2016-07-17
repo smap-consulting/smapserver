@@ -463,6 +463,59 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this project
+	 */
+	public boolean projectInUsersOrganisation(Connection conn, String user, int pId) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+
+		String sql = "select count(*) from project p " +
+				" where p.id = ? " +
+				" and p.o_id = ?;";
+		
+		
+		
+		try {
+			int oId = GeneralUtilityMethods.getOrganisationId(conn, user);
+			
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, pId);
+			pstmt.setInt(2, oId);
+			log.info("IsProjectInUsersOrganisation: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Project in organisation validation failed for: " + user + " project was: " + pId);
+ 			
+ 			SDDataSource.closeConnection("isValidProject", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is a member of the supplied organisation
 	 */
 	public boolean isValidOrganisation(Connection conn, String user, int oId) {

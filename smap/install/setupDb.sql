@@ -271,21 +271,11 @@ DROP TABLE IF EXISTS user_project CASCADE;
 create TABLE user_project (
 	id INTEGER DEFAULT NEXTVAL('user_project_seq') CONSTRAINT pk_user_project PRIMARY KEY,
 	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE
+	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE,
+	restricted boolean default false,
+	allocated boolean default false
 	);
 ALTER TABLE user_project OWNER TO ws;
-
-DROP SEQUENCE IF EXISTS restricted_project_seq CASCADE;
-CREATE SEQUENCE restricted_project_seq START 1;
-ALTER SEQUENCE restricted_project_seq OWNER TO ws;
-
-DROP TABLE IF EXISTS restricted_project CASCADE;
-create TABLE restricted_project (
-	id INTEGER DEFAULT NEXTVAL('restricted_project_seq') CONSTRAINT pk_restricted_project PRIMARY KEY,
-	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE
-	);
-ALTER TABLE restricted_project OWNER TO ws;
 
 -- Create an administrator and set up defaul values
 insert into organisation(id, name, allow_email, allow_facebook, allow_twitter) values(1, 'Smap', 'true', 'true', 'true');

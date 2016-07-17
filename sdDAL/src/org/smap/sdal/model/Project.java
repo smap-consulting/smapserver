@@ -1,5 +1,7 @@
 package org.smap.sdal.model;
 
+import java.util.ArrayList;
+
 /*
 This file is part of SMAP.
 
@@ -25,4 +27,6 @@ public class Project {
 	public boolean tasks_only;
 	public String changed_by;
 	public String changed_ts;
+	public boolean applyRestrictions;
+	public ArrayList<Integer> restrictUsers;
 }

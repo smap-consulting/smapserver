@@ -271,6 +271,19 @@ $(document).ready(function() {
 		project.name = $('#p_name').val();
 		project.desc = $('#p_desc').val();
 		project.tasks_only = $('#p_tasks_only').is(':checked');
+		if(globals.gIsSecurityAdministrator) {
+			project.applyRestrictions = true;
+			project.restrictUsers = [];
+			$('input', '.restricted_users_list').each(function() {
+				var $this = $(this),
+					isChecked = $this.is(':checked');
+				
+				if(!isChecked) {
+					project.restrictUsers.push($this.val());
+				}
+				
+			});
+		}
 	  		
 		projectList[0] = project;
 		var projectString = JSON.stringify(projectList);
@@ -762,6 +775,10 @@ function addRestrictedUsers(elem, pId) {
 				h[++idx] = 'user_projects_cb';
 				h[++idx] = '" value="';
 				h[++idx] = data[i].id + '"';
+				
+				if(!data[i].restricted) {
+					h[++idx] = ' checked="checked"';
+				}
 				
 				h[++idx] = '/>';
 				h[++idx] = data[i].name;

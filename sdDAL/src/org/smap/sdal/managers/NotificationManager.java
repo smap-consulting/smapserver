@@ -218,6 +218,8 @@ public class NotificationManager {
 				" from forward f, survey s, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and s.p_id = up.p_id" +
 				" and s.s_id = f.s_id" +
 				" and u.ident = ? " +
