@@ -146,6 +146,8 @@ public class Authorise {
 		String sql = "select count(*) from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
+				+ "and up.restricted = false "
+				+ "and up.allocated = true "
 				+ "and s.p_id = up.p_id "
 				+ "and s.s_id = ? "
 				+ "and u.ident = ? "
@@ -204,6 +206,8 @@ public class Authorise {
 		String sql = "select count(*) from task_group tg, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and tg.p_id = up.p_id" +
 				" and tg.tg_id = ? " +
 				" and u.ident = ?;";
@@ -422,6 +426,8 @@ public class Authorise {
 		String sql = "select count(*) from users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and p.id = ? " +
 				" and u.ident = ?;";
 		
@@ -577,6 +583,8 @@ public class Authorise {
 		String sql = "select count(*) from tasks t, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and p.id = t.p_id " +
 				" and t.id = ? " +
 				" and u.ident = ?;";
@@ -635,6 +643,8 @@ public class Authorise {
 		String sql = "select count(*) from assignments a, tasks t, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and p.id = t.p_id " +
 				" and t.id = a.task_id " +
 				" and a.id = ? " +

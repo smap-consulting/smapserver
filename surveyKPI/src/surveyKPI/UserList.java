@@ -178,7 +178,9 @@ public class UserList extends Application {
 						"groups.name as group_name, " +
 						"project.name as project_name, " +
 						"groups.id as group_id, " +
-						"project.id as project_id " +
+						"project.id as project_id, " +
+						"user_project.allocated as allocated, " +
+						"user_project.restricted as restricted " +
 						// Disable all_time its too slow
 						//"(select count (*) from upload_event ue, subscriber_event se " +
 						//	"where ue.ue_id = se.ue_id " + 
@@ -229,6 +231,10 @@ public class UserList extends Application {
 					String project_name = resultSet.getString("project_name");
 					int group_id = resultSet.getInt("group_id");
 					int project_id = resultSet.getInt("project_id");
+					boolean allocated = resultSet.getBoolean("allocated");
+					boolean restricted = resultSet.getBoolean("restricted");
+					
+					System.out.println(ident + " : " + project_name);
 					if(current_user == null || !current_user.equals(ident)) {
 						
 						// New user
@@ -250,15 +256,17 @@ public class UserList extends Application {
 							user.groups.add(group);
 						}
 						
-						Project project = new Project();
-						project.name = project_name;
-						project.id = project_id;
-						user.projects.add(project);
+						if(allocated && !restricted) {
+							Project project = new Project();
+							project.name = project_name;
+							project.id = project_id;
+							user.projects.add(project);
+						}
 						
 						users.add(user);
 						current_user = ident;
 						current_group = group.name;
-						current_project = project.name;
+						current_project = project_name;
 					
 					} else {
 						if(current_group != null && !current_group.equals(group_name)) {
@@ -275,11 +283,13 @@ public class UserList extends Application {
 						if(current_project != null && !current_project.equals(project_name)) {
 						
 							// new project
-							Project project = new Project();
-							project.name = project_name;
-							project.id = project_id;
-							user.projects.add(project);
-							current_project = project.name;
+							if(allocated && !restricted) {
+								Project project = new Project();
+								project.name = project_name;
+								project.id = project_id;
+								user.projects.add(project);
+							}
+							current_project = project_name;
 						}
 					}
 				}
@@ -371,6 +381,8 @@ public class UserList extends Application {
 					"u.email as email " +
 					"from users u, user_project up " +			
 					"where u.id = up.u_id " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					"and up.p_id = ? " +
 					"and u.o_id = ? " +
 					"order by u.ident";

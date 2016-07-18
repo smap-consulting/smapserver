@@ -171,11 +171,14 @@ public class UserManager {
 					" from project p, user_project up " +
 					" where p.id = up.p_id " +
 					" and up.u_id = ? " +
+					" and up.restricted = false " +
+					" and up.allocated = true " +
 					" order by p.name;";
 
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, user.id);
+			
 			log.info("SQL: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			

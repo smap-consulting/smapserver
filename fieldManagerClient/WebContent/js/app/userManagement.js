@@ -131,6 +131,7 @@ $(document).ready(function() {
 		var userList = [],
 			user = {},
 			error = false,
+			securityManagerChecked,
 			validIdent = new RegExp('^[a-z0-9_]+$'),
 			validEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
 			validEmail2 = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm,
@@ -216,9 +217,19 @@ $(document).ready(function() {
 		
 		user.groups = [];
 		user.projects = [];
+		securityManagerChecked = false;
 		$('#user_groups').find('input:checked').each(function(index) {
-			user.groups[index] = {id: $(this).val()};
+			var val = $(this).val();
+			user.groups[index] = {id: val};
+			if(val == 6) {		// Security Management
+				securityManagerChecked = true;
+			}
 		});
+		if(globals.gIsOrgAdministrator && globals.gLoggedInUser.ident == user.ident) {
+			// Update security manager setting straight away if the user is updating their own settings
+			// as this affects ongoing use of the user management page
+			globals.gIsSecurityAdministrator = securityManagerChecked;
+		}
 		$('#user_projects').find('input:checked').each(function(index) {
 			user.projects[index] = {id: $(this).val()};
 	
@@ -641,7 +652,8 @@ function openUserDialog(existing, userIndex) {
 	h = [];
 	idx = -1;
 	for(i = 0; i < gGroups.length; i++) {
-		if((gGroups[i].id !== 4 || globals.gIsOrgAdministrator) && (gGroups[i].id !== 6 || globals.gIsSecurityAdministrator)) {
+		if((gGroups[i].id !== 4 || globals.gIsOrgAdministrator) && 
+				(gGroups[i].id !== 6 || globals.gIsOrgAdministrator || globals.gIsSecurityAdministrator)) {
 			h[++idx] = '<div class="checkbox"><label>';
 			h[++idx] = '<input type="checkbox" id="'; 
 			h[++idx] = 'user_groups_cb' + i;

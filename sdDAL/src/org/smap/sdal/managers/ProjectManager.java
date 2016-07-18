@@ -53,7 +53,7 @@ public class ProjectManager {
 
 	/*
 	 * Get the details of a project
-	 */
+	 *
 	public Project getById(
 			String user,
 			int pId
@@ -75,7 +75,7 @@ public class ProjectManager {
 			pstmt.setString(1, user);
 			pstmt.setInt(2, pId);
 
-			log.info(sql + " : " + user + " : " + pId);
+			log.info(pstmt.toString());
 			resultSet = pstmt.executeQuery();
 
 			if (resultSet.next()) {								
@@ -96,6 +96,7 @@ public class ProjectManager {
 		return p;
 		
 	}
+	*/
 
 	/*
 	 * Create a new project
@@ -114,6 +115,7 @@ public class ProjectManager {
 		PreparedStatement pstmt = null;
 		try {
 		
+			sd.setAutoCommit(false);
 			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			pstmt.setString(1, p.name);
 			pstmt.setString(2, p.desc);
@@ -127,20 +129,25 @@ public class ProjectManager {
 			}
 			pstmt.close();
 		
-		if(p_id > 0) {
-			// Add the user to the new project by default
-			sql = "insert into user_project (u_id, p_id) " +
-					" values (?, ?);";
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, u_id);
-			pstmt.setInt(2, p_id);
-			log.info("Add the user to the project " + pstmt.toString());
-			pstmt.executeUpdate();
-			pstmt.close();
-		}
+			if(p_id > 0) {
+				// Add the user to the new project by default
+				sql = "insert into user_project (u_id, p_id, restricted, allocated) " +
+						" values (?, ?, ?, ?);";
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u_id);
+				pstmt.setInt(2, p_id);
+				pstmt.setBoolean(3, false);
+				pstmt.setBoolean(4, true);
+				log.info("Add the user to the project " + pstmt.toString());
+				pstmt.executeUpdate();
+				pstmt.close();
+			}
+			sd.commit();
+		} catch (SQLException e) {
+			try {sd.rollback();} catch(Exception ex) {};
 		} finally {		
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
-			
+			try {sd.setAutoCommit(true);} catch(Exception e) {};
 		}
 	}
 	

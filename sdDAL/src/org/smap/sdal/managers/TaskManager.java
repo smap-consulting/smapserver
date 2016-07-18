@@ -815,6 +815,8 @@ public class TaskManager {
 		String sqlGetAssigneeId = "select u.id from users u, user_project up "
 				+ "where u.ident = ? "
 				+ "and u.id = up.u_id "
+				+ "and up.restricted = false "
+				+ "and up.allocated = true "
 				+ "and up.p_id = ?";
 		PreparedStatement pstmtGetAssigneeId = sd.prepareStatement(sqlGetAssigneeId);
 		

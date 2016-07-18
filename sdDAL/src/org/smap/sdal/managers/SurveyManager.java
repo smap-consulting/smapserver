@@ -80,6 +80,8 @@ public class SurveyManager {
 				" and p.id = up.p_id" +
 				" and s.p_id = up.p_id" +
 				" and p.o_id = u.o_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and u.ident = ? ";
 		
 		// only return surveys in the users organisation unit + assigned project id 
@@ -185,6 +187,8 @@ public class SurveyManager {
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
 				" and s.p_id = up.p_id" +
+				" and up.restricted = false " +
+				" and up.allocated = true " +
 				" and u.ident = ? " +
 				" and s.s_id = ?; ";
 	
@@ -498,7 +502,7 @@ public class SurveyManager {
 		
 		ResultSet resultSet = null;
 		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident" +
-				" from survey s, users u, user_project up, project p, question q, form f " +
+				" from survey s, users u, project p, question q, form f " +
 				" where s.s_id = f.s_id " +
 				" and f.f_id = q.f_id " +
 				" and q.appearance like '%search(''" + csvRoot + "''%' " +

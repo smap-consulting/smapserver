@@ -148,6 +148,8 @@ public class EventList extends Application {
 						"inner join users u " +
 						"on up.u_id = u.id " +
 						"where u.ident = ? " +
+						"and up.restricted = false " +
+						"and up.allocated = true " +
 						subscriberSelect +
 						projSelect +
 						filter +
@@ -177,7 +179,9 @@ public class EventList extends Application {
 						"on up.u_id = u.id " +
 						"where u.ident = ? " +
 						"and ue.s_id = ? " +
-						"AND up.p_id = ? " +
+						"and up.p_id = ? " +
+						"and up.restricted = false " +
+						"and up.allocated = true " +
 						subscriberSelect +
 						filter +
 						" ORDER BY ue.ue_id desc;";
@@ -717,8 +721,10 @@ public class EventList extends Application {
 					"on ue.p_id = up.p_id " +
 					"inner join users u " +
 					"on up.u_id = u.id " +
-					"WHERE u.ident = ? " +
-					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"where u.ident = ? " +
+					"and ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					subscriberSelect +
 					selectStatus +
 					projSelect +
@@ -752,10 +758,12 @@ public class EventList extends Application {
 					"on ue.p_id = up.p_id " +
 					"inner join users u " +
 					"on up.u_id = u.id " +
-					"WHERE u.ident = ? " +
-					"AND ue.s_id = ? " +
-					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
-					"AND up.p_id = ? " +
+					"where u.ident = ? " +
+					"and ue.s_id = ? " +
+					"and ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"and up.p_id = ? " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -782,10 +790,12 @@ public class EventList extends Application {
 					"on ue.p_id = up.p_id " +
 					"inner join users u " +
 					"on up.u_id = u.id " +
-					"WHERE u.ident = ? " +
-					"AND ue.s_id = ? " +
-					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
-					"AND up.p_id = ? " +
+					"where u.ident = ? " +
+					"and ue.s_id = ? " +
+					"and ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"and up.p_id = ? " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -811,10 +821,12 @@ public class EventList extends Application {
 					"on ue.p_id = up.p_id " +
 					"inner join users u " +
 					"on up.u_id = u.id " +
-					"WHERE u.ident = ? " +
-					"AND ue.s_id = ? " +
-					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
-					"AND up.p_id = ? " +
+					"where u.ident = ? " +
+					"and ue.s_id = ? " +
+					"and ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"and up.p_id = ? " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -839,10 +851,12 @@ public class EventList extends Application {
 					"on ue.p_id = up.p_id " +
 					"inner join users u " +
 					"on up.u_id = u.id " +
-					"WHERE u.ident = ? " +
-					"AND ue.s_id = ? " +
-					"AND ue.s_id in (select s_id from survey where deleted = 'false') " +
-					"AND up.p_id = ? " +
+					"where u.ident = ? " +
+					"and ue.s_id = ? " +
+					"and ue.s_id in (select s_id from survey where deleted = 'false') " +
+					"and up.p_id = ? " +
+					"and up.restricted = false " +
+					"and up.allocated = true " +
 					subscriberSelect +
 					selectStatus +
 					" GROUP BY " + aggregate +
@@ -1008,6 +1022,8 @@ public class EventList extends Application {
 			if(sId == -1) {
 				sql = "select u.ident, u.name, fd.device_id, fd.form_ident, fd.form_version " +
 						"from users u inner join user_project up on u.id = up.u_id " +
+						"and up.restricted = false " +
+						"and up.allocated = true " +
 						"inner join project p on up.p_id = p.id and p.id = ? " +
 						"left outer join form_downloads fd on fd.u_id = u.id " +
 						"and fd.form_ident in (select ident from survey where p_id = ?) " +
@@ -1015,6 +1031,8 @@ public class EventList extends Application {
 			} else {
 				sql = "select u.ident, u.name, fd.device_id, fd.form_ident, fd.form_version " +
 						"from users u inner join user_project up on u.id = up.u_id " +
+						"and up.restricted = false " +
+						"and up.allocated = true " +
 						"inner join project p on up.p_id = p.id and p.id = ? " +
 						"left outer join form_downloads fd on fd.u_id = u.id " +
 						"and fd.form_ident = ? " +
