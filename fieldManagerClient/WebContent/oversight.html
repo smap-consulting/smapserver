@@ -33,9 +33,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
 	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-	<script data-main="js/templatemanagement_main" src="/js/libs/require.js"></script>
+	<script data-main="js/oversight_main" src="/js/libs/require.js"></script>
 
-	<title>Manage Forms</title>  
+	<title>Oversight</title>  
 
 </head>
 <body>
@@ -51,7 +51,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
       </button>
       <a href="#" class="navbar-brand">
       	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-     	<span class="lang" data-lang="m_tm" >Forms</span>
+     	<span class="lang" data-lang="m_os" >os</span>
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
@@ -67,12 +67,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
             <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>
             <li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/log.html"><span class="nav-label lang" data-lang="m_manage">manage</span><span class="glyphicon glyphicon-briefcase pull-right"></span></a></li>
           </ul>
-        </li>       
+        </li> 
+        <li id="m_tm" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>      
 		<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
 		<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
 		<li id="m_assign_pub" class="restrict_role analyst_role public_only"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
 		<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
-		<li id="m_os" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_os" href="/fieldManager/oversight.html">oversight</a></li>
 		<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -105,18 +105,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	   		<div class = "well">
 
 				<div class="selected_templates">
-					<div class="restrict_role admin_role analyst_role" style="display:none">
-						<input id="show_deleted" type="checkbox" name="show_deleted" 
-							value="show_deleted"/> <span class="lang" data-lang="tm_s_del">Show deleted forms</span><br/> 
-					</div>
 					<div id="surveys">
-						<h3 class="lang" data-lang="c_forms">Forms</h3>
+						<h3 class="lang" data-lang="os_d">os defn</h3>
 						<div id="survey_table"></div>
 					</div>
 					<div id="tem_controls">
-						<button id="delete_survey" data-lang="tm_d_forms" class="btn btn-warning restrict_role admin_role analyst_role lang">Delete Forms</button>
-						<button id="un_delete_survey" data-lang="tm_r_forms" class="btn btn-success restrict_role admin_role analyst_role lang">Restore Forms</button>
-						<button id="erase_survey" data-lang="tm_e_forms" class="btn btn-danger restrict_role admin_role analyst_role lang">Erase Forms</button>
+						<button id="delete_survey" data-lang="c_del" class="btn btn-warning restrict_role admin_role analyst_role lang">del os defn</button>
 					</div>
 				</div>
 
@@ -127,27 +121,21 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 			<div id="content" class="selected_templates">
 				<div>
 	
-					<h3 class="lang" data-lang="tm_c_form">Create a Form</h3> <h3>(Beta)</h3>
-					
-					<a class="btn btn-success lang alist" type="button" data-lang="tm_g_new" href="/edit.html?new=true">New</a>
-					<div class="alist"><a data-lang="m_help" class="lang" href="/editorHelp.html" target="_blank"></a></div>
-					<div style="clear: both;">&nbsp;</div>
-					
 					<div class="spreadsheet_editor">
-						<h3 class="lang" data-lang="tm_c_xls">Using Spreadsheet</h3> <h3 class="lang" data-lang="c_rec">recommended</h3>
+						<h3 class="lang" data-lang="c_imp_xls">import</h3>
 						
-						<a class="btn btn-primary lang alist" type="button" data-lang="tm_g_temp" href="blankform.xls">Download Template</a>
+						<a class="btn btn-primary lang alist" type="button" data-lang="os_download" href="oversight.xls">download</a>
 						<div class="alist"><a data-lang="m_help" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvdHREdEJTWEVmLTQ/edit" target="_blank"></a></div>
 						<div class="alist"><a data-lang="tm_g_temp_i3" class="lang" href="https://docs.google.com/file/d/0B5_SmpWlQYxvWlBoWkdiT3FrY1U/edit" target="_blank"></a></div> 
 						<div style="clear: both;">&nbsp;</div>
-						<p data-lang="tm_g_temp_i1" class="lang"></p>
+						<p data-lang="os_1" class="lang"></p>
 						
 			
 						<div class="col-md-12 text-center">
 							<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 						</div>
 						<br>
-						<h4 data-lang="tm_ul_f" class="lang">Upload a Form</h4>
+						<h4 data-lang="tm_ul_f" class="lang">upload</h4>
 						<div id="up_alert" style="display:none; word-wrap:break-word;" class="alert alert-success" role="alert"></div>
 						<div id="up_warnings" style="display:none;" class="alert alert-warning" role="alert"></div>
 						<form role="form" id="uploadForm" name="uploadForm" accept-charset="utf-8" 
@@ -166,7 +154,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 					
 							</fieldset>
 						</form>
-						<button	class="btn btn-primary lang" data-lang="tm_up" id="submitFile" value="Upload File" >Upload</button>
+						<button	class="btn btn-primary lang" data-lang="os_up" id="submitFile" value="Upload File" >Upload</button>
 					</div>
 				</div>
 			</div>
@@ -283,7 +271,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 </div>
 
 <script>
-	setCustomTemplateMgmt();
+	setCustomOversight();
 </script>
 
 </body>

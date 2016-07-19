@@ -68,6 +68,10 @@ DROP SEQUENCE IF EXISTS sc_seq CASCADE;
 CREATE SEQUENCE sc_seq START 1;
 ALTER SEQUENCE sc_seq OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS oversight_seq CASCADE;
+CREATE SEQUENCE oversight_seq START 2;
+ALTER SEQUENCE oversight_seq OWNER TO ws;
+
 -- User management
 DROP SEQUENCE IF EXISTS project_seq CASCADE;
 CREATE SEQUENCE project_seq START 10;
@@ -87,7 +91,7 @@ create TABLE log (
 	id integer DEFAULT NEXTVAL('log_seq') CONSTRAINT pk_log PRIMARY KEY,
 	log_time TIMESTAMP WITH TIME ZONE,
 	s_id integer,
-	o_id integer,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	user_ident text,
 	event text,
 	note text
@@ -394,6 +398,14 @@ CREATE TABLE survey_change (
 	updated_time TIMESTAMP WITH TIME ZONE		-- Time and date of change
 	);
 ALTER TABLE survey_change OWNER TO ws;
+
+DROP TABLE IF EXISTS oversight CASCADE;
+CREATE TABLE oversight (
+	id integer DEFAULT NEXTVAL('oversight_seq') CONSTRAINT pk_oversight PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	definition text								-- Oversight definition as json object
+	);
+ALTER TABLE oversight OWNER TO ws;
 
 -- table name is used by "results databases" to store result data for this form
 DROP TABLE IF EXISTS form CASCADE;

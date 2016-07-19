@@ -38,6 +38,7 @@ define({
 	"m_login": "Login",
 	"m_logs": "Logs",
 	"m_info": "Info",
+	"m_os": "Oversight",
 	
 	// Smap Server
 	"ss_welcome": "Welcome to Smap Server Version:",
@@ -196,6 +197,7 @@ define({
 	"c_cols": "Columns",
 	"c_add": "Add",
 	"c_create": "Create",
+	"c_imp_xls": "Import Spreadsheet",
 	
 	// File Types
 	"ft": "File Type",
@@ -516,6 +518,7 @@ define({
 	"sr_m_ph": "Enter a name for your map",
 	"sr_m_d": "Enter a description for this map (optional)",
 	"sr_m_mb": "For Mapbox this identifies the map, for example: mapbox.light",
+	"sr_cr": "Custom Reports",
 	
 	// languages
 	"ar": "Arabic",
@@ -530,6 +533,9 @@ define({
 	"n_pdfp": "PDF (Portrait)",
 	"n_pdfl": "PDF (Landscape)",
 	"n_eq": "Email Question"
+	
+
+
 	
 
 	 		

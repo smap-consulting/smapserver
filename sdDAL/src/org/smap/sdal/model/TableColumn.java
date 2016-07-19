@@ -14,6 +14,7 @@ public class TableColumn {
 	public boolean mgmt = false;
 	public boolean filter = false;
 	public String filterValue;
+	public String calculation;	// Server only
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management
@@ -28,5 +29,9 @@ public class TableColumn {
 		hide = false;
 		
 		readonly = true;
+	}
+	public TableColumn() {
+		include = true;
+		hide = false;
 	}
 }

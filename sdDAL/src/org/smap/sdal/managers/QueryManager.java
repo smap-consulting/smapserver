@@ -78,8 +78,6 @@ public class QueryManager {
 		
 		ManagedFormConfig mfc = new ManagedFormConfig();
 		ManagedFormConfig savedConfig = null;
-
-		Response response = null;
 		
 		// SQL to get default settings for this user and survey
 		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";

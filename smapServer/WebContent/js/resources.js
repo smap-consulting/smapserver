@@ -77,9 +77,10 @@ $(document).ready(function() {
 		$('#mapPanel').hide();
 	   	$('#nfcPanel').hide();
 		$('#mediaPanel').show();
+		$('#crPanel').hide();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
-    })
+    });
     $('#mapTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
@@ -87,14 +88,27 @@ $(document).ready(function() {
 		$('#mapPanel').show();
 	   	$('#nfcPanel').hide();
 		$('#mediaPanel').hide();
+		$('#crPanel').hide();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
-    })
+    });
     $('#nfcTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
     	
     	$('#nfcPanel').show();
+		$('#mapPanel').hide();
+		$('#mediaPanel').hide();
+		$('#osPanel').hide();
+		
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
+    });
+    $('#crTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    	
+    	$('#crPanel').show();
+    	$('#nfcPanel').hide();
 		$('#mapPanel').hide();
 		$('#mediaPanel').hide();
 		
@@ -111,6 +125,13 @@ $(document).ready(function() {
     $('#submitFiles').click( function() {
     	if(!$('#submitFiles').hasClass('disabled')) {
     		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaViewManage, undefined);
+    	}
+    });
+    
+    // Respond to custom report upload
+    $('#submitCustomReport').click( function() {
+    	if(!$('#submitCustomReport').hasClass('disabled')) {
+    		uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
     	}
     });
     
@@ -448,5 +469,50 @@ function refreshLocationView(tags) {
 	}
 }
 
+/*
+ * Show the Custom Reports
+ */
+function refreshCustomReportView(reports) {
+	
+	var i,
+		survey = globals.model.survey,
+		$element,
+		h = [],
+		idx = -1;
+
+	if(tags) {
+
+		$element = $('#nfcList');
+		
+		h[++idx] = '<tr>';
+		
+		for(i = 0; i < tags.length; i++){
+			h[++idx] = '<tr>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].type;
+			h[++idx] = '</td>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].group;
+			h[++idx] = '</td>';
+			
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].uid;
+			h[++idx] = '</td>';
+		
+			h[++idx] = '<td>';
+			h[++idx] = tags[i].name;
+			h[++idx] = '</td>';
+			
+			
+			h[++idx] = '</tr>';
+			
+		}
+		
+	
+		$element.html(h.join(""));
+	}
+}
 });
 

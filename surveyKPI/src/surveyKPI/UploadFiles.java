@@ -31,6 +31,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import model.MediaResponse;
+import utilities.XLSCustomReportsManager;
+import utilities.XLSTaskManager;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -42,11 +44,16 @@ import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.Column;
+import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -68,6 +75,8 @@ public class UploadFiles extends Application {
 	// Allow analysts and admin to upload resources for the whole organisation
 	Authorise surveyLevelAuth = null;
 	Authorise orgLevelAuth = null;
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	public UploadFiles() {
 		
@@ -382,6 +391,120 @@ public class UploadFiles extends Application {
 		}
 		
 		return response;		
+	}
+	
+	@POST
+	@Produces("application/json")
+	@Path("/customreport")
+	public Response sendCustomReport(
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		Response response = null;
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+
+		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+	
+		Connection sd = null; 
+
+		try {
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+			String fileName = null;
+			FileItem fileItem = null;
+			String filetype = null;
+
+			while(itr.hasNext()) {
+				
+				FileItem item = (FileItem) itr.next();
+				// Get form parameters	
+				if(item.isFormField()) {
+					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
+					
+				} else if(!item.isFormField()) {
+					// Handle Uploaded files.
+					log.info("Field Name = "+item.getFieldName()+
+						", File Name = "+item.getName()+
+						", Content type = "+item.getContentType()+
+						", File Size = "+item.getSize());
+					
+					fileName = item.getName();
+					fileItem = item;
+					
+					if(fileName.endsWith("xlsx")) {
+						filetype = "xlsx";
+					} else if(fileName.endsWith("xls")) {
+						filetype = "xls";
+					} else {
+						log.info("unknown file type for item: " + fileName);
+						continue;	
+					}
+	
+					break;
+						
+				}
+			}
+			
+			if(fileName != null) {
+				// Authorisation - Access
+				sd = SDDataSource.getConnection("Tasks-LocationUpload");
+				orgLevelAuth.isAuthorised(sd, request.getRemoteUser());
+				// End authorisation
+				
+				// Process xls file
+				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
+				ArrayList<TableColumn> config = xcr.getCustomReport(filetype, fileItem.getInputStream());
+				
+				/*
+				 * Only save configuration if we found some columns, otherwise its likely to be an error
+				 * An alternate mechanism is available to delete all locations
+				 */
+				if(config.size() > 0) {
+					
+					// Save configuration to the database
+					/*
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
+					TaskManager tm = new TaskManager();
+					tm.saveLocations(sd, locations, oId);
+					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", locations.size() + " oversight definition uploaded from file " + fileName);
+					// Return tags to calling program
+					 * */
+					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					String resp = gson.toJson(config);
+				
+					response = Response.ok(resp).build();
+					
+				} else {
+					response = Response.serverError().entity("no report columns found").build();
+				}
+			} else {
+				response = Response.serverError().entity("no file found").build();
+			}
+			
+			
+		} catch(FileUploadException ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} catch(Exception ex) {
+			System.out.println("Exception");
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+	
+			SDDataSource.closeConnection("Tasks-LocationUpload", sd);
+			
+		}
+		
+		return response;
+		
 	}
 	
 	/*

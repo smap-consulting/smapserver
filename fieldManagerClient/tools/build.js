@@ -32,6 +32,9 @@
             name: '../templatemanagement_main',
         },
         {
+            name: '../oversight_main',
+        },
+        {
             name: '../usermanagement_main',
         },
         {

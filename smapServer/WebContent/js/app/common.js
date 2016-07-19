@@ -601,8 +601,8 @@ function uploadFiles(url, formName, callback, sId) {
 			removeHourglass();
 			$('#submitFiles').removeClass('disabled');
 			var surveyId = sId;
+	       	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html(localise.set["c_success"]);
         	callback(data, surveyId);
-        	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html(localise.set["c_success"]);
         	document.forms.namedItem(formName).reset();
         	
         },
@@ -616,7 +616,7 @@ function uploadFiles(url, formName, callback, sId) {
 				if(msg && msg.indexOf("no tags") >= 0) {
 					msg = localise.set["msg_u_nt"];
 				} else {
-					msg = localise.set["msg_u_f"];
+					msg = localise.set["msg_u_f"] + " : " + msg;
 				}
 				document.forms.namedItem(formName).reset();
 				$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(msg);
@@ -1646,9 +1646,39 @@ function getChangeDescription(change) {
 }
 
 /*
- * Getthe shared locations from the server
+ * Get the shared locations from the server
  */
 function getLocations(callback) {
+
+	var url="/surveyKPI/tasks/locations";
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			if(typeof callback === "function") {
+				callback(data);
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of locations: " + err);
+			}
+		}
+	});	
+	
+}
+
+/*
+ * Get the custom reports from the server
+ */
+function getCustomReports(callback) {
 
 	var url="/surveyKPI/tasks/locations";
 	
