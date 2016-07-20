@@ -2425,7 +2425,6 @@ public class GeneralUtilityMethods {
 			
 			String matched = matcher.group();
 			String qname = matched.substring(2, matched.length() - 1);
-			System.out.println("Matched: " + qname);
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();

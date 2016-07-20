@@ -53,8 +53,10 @@ import org.smap.sdal.model.Option;
 import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Result;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableColumnMarkup;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
@@ -111,9 +113,7 @@ public class XLSCustomReportsManager {
         Row row = null;
         int lastRowNum = 0;
         HashMap<String, Integer> header = null;
-        String sv= null;
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
-		String tz = "GMT";
+ 
         
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook(inputStream);
@@ -137,7 +137,6 @@ public class XLSCustomReportsManager {
                     	String k = c.getStringCellValue();
                     	if(k != null && k.trim().toLowerCase().equals("time zone:")) {
                     		c = row.getCell(1);
-                    		tz = c.getStringCellValue();
                     		break;
                     	}
                     }
@@ -151,6 +150,7 @@ public class XLSCustomReportsManager {
 			lastRowNum = sheet.getLastRowNum();
 			boolean needHeader = true;
 			TableColumn currentCol = null;
+			boolean processingConditions = false;
 			
             for(int j = 0; j <= lastRowNum; j++) {
                 
@@ -165,9 +165,17 @@ public class XLSCustomReportsManager {
                 		needHeader = false;
                 	} else {
                 		String rowType = getColumn(row, "row type", header, lastCellNum, null);
-                		System.out.println("New row: " + rowType);
                 		
                 		if(rowType != null) {
+                			System.out.println("New row: " + rowType);
+                			
+                			// Close of any condition type calculations
+                			if(processingConditions && !rowType.equals("condition")) {
+                				processingConditions = false;
+                				currentCol.calculation.add("END");
+                			}
+                			
+                			// Process the row
 	                		if(rowType.equals("column")) {
 	                			currentCol = new TableColumn();
 	                			defn.add(currentCol);
@@ -240,7 +248,7 @@ public class XLSCustomReportsManager {
 		                			if(calculation != null) {
 		                				calculation = calculation.trim();
 		                				if(calculation.equals("condition")) {
-		                					currentCol.calculation = calculation;
+		                					// Calculation set by condition rows
 		                				} else {
 		                					throw new Exception("Unknown calculation " + calculation + " on row: " + (j + 1));
 		                				}
@@ -264,18 +272,45 @@ public class XLSCustomReportsManager {
 	                			}
 	                			
 	                		} else if(rowType.equals("condition")) {
-	                			if(currentCol != null && currentCol.type.equals("calculate") &&
-	                					currentCol.calculation != null && currentCol.calculation.equals("condition")) {
+	                			
+	                			if(currentCol != null && currentCol.type.equals("calculate")) {
+	                				
+	                				processingConditions = true;
 	                				
 	                				String condition = getColumn(row, "condition", header, lastCellNum, null);
 	                				String value = getColumn(row, "value", header, lastCellNum, null);
-	                				String color = getColumn(row, "color", header, lastCellNum, null);
 	                				
-	                				// TODO Create condition entry
+	                				if(condition == null) {
+	                					throw new Exception("Missing \"condition\" on row: " + (j + 1));
+	                				} else {
+	                					if(currentCol.calculation == null) {
+	                						currentCol.calculation = new SqlFrag();
+	                						currentCol.calculation.add("CASE");
+	                					}
+	                					if(condition.toLowerCase().trim().equals("all")) {
+	                						currentCol.calculation.add("ELSE");
+	                						currentCol.calculation.addText(value);
+	                					} else {
+	                						currentCol.calculation.add("WHEN");
+	                						currentCol.calculation.addRaw(condition);
+	                						currentCol.calculation.add("THEN");
+	                						currentCol.calculation.addText(value);
+	                					}
+	                				}
 	                				
+	                				// Add condtional clour
+	                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
+	                				if(appearance != null) {
+	                					if(currentCol.markup == null) {
+	                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
+	                					}
+	                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
+	                					
+	                				} 
+	
 	                			} else {
 	                				throw new Exception("Unexpected \"condition\" on row: " + (j + 1));
-	                			}
+	                			} 
 	                			
 	                		}
                 		}	
@@ -293,6 +328,27 @@ public class XLSCustomReportsManager {
 	}
 	
 
+	/*
+	 * Convert a user appearance to jquery classes
+	 */
+	private String getMarkup(String app) {
+		StringBuffer markup = new StringBuffer("");
+		String [] apps = app.split(" ");
+		
+		for(int i = 0; i < apps.length; i++) {
+			if(apps[i].equals("red")) {
+				markup.append(" bg-danger");
+			} else if(apps[i].equals("green")) {
+				markup.append(" bg-success");
+			} else if(apps[i].equals("blue")) {
+				markup.append(" bg-info");
+			} else if(apps[i].equals("yellow")) {
+				markup.append(" bg-warning");
+			}
+		}
+		
+		return markup.toString().trim();
+	}
 
 	
 	/*
@@ -336,7 +392,6 @@ public class XLSCustomReportsManager {
 			if(idx <= lastCellNum) {
 				Cell c = row.getCell(idx);
 				if(c != null) {
-					log.info("Get column: " + name);
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
 						if (HSSFDateUtil.isCellDateFormatted(c)) {
 							dateValue = c.getDateCellValue();
