@@ -78,7 +78,6 @@ public class SqlFrag {
 	public void addRaw(String in) throws Exception {
 		
 		ArrayList<Param> tempParams = new ArrayList<Param> ();
-		ArrayList<String> tempColumns = new ArrayList<String> ();
 		
 		/*
 		 * Get the text parameters
@@ -156,7 +155,16 @@ public class SqlFrag {
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
 			out = token.substring(2, token.length() - 1);
-			columns.add(out);
+			boolean columnNameCaptured = false;
+			for(int i = 0; i < columns.size(); i++) {
+				if(columns.get(i).equals(out)) {
+					columnNameCaptured = true;
+					break;
+				}
+			}
+			if(!columnNameCaptured) {
+				columns.add(out);
+			}
 		} else if (token.equals(">") ||
 				token.equals("<") ||
 				token.equals("<=") ||

@@ -44,6 +44,7 @@ import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
@@ -418,6 +419,7 @@ public class UploadFiles extends Application {
 			List<?> items = uploadHandler.parseRequest(request);
 			Iterator<?> itr = items.iterator();
 			String fileName = null;
+			String reportName = null;
 			FileItem fileItem = null;
 			String filetype = null;
 
@@ -437,6 +439,10 @@ public class UploadFiles extends Application {
 					
 					fileName = item.getName();
 					fileItem = item;
+					int idx = fileName.lastIndexOf('.');
+					if(idx > 0) {
+						reportName = fileName.substring(0, idx);
+					}
 					
 					if(fileName.endsWith("xlsx")) {
 						filetype = "xlsx";
@@ -464,19 +470,17 @@ public class UploadFiles extends Application {
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error
-				 * An alternate mechanism is available to delete all locations
 				 */
 				if(config.size() > 0) {
 					
 					// Save configuration to the database
-					/*
 					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
-					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
-					TaskManager tm = new TaskManager();
-					tm.saveLocations(sd, locations, oId);
-					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", locations.size() + " oversight definition uploaded from file " + fileName);
-					// Return tags to calling program
-					 * */
+					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
+					CustomReportsManager rm = new CustomReportsManager();
+					rm.save(sd, reportName, config, oId);
+					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
+					
+					// Return custom report list			 
 					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(config);
 				

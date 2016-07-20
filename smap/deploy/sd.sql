@@ -539,12 +539,14 @@ insert into groups(id,name) values(6,'security');
 insert into user_group (u_id, g_id) select u_id, 6 from user_group where g_id = 4;
 
 
-CREATE SEQUENCE oversight_seq START 2;
-ALTER SEQUENCE oversight_seq OWNER TO ws;
+CREATE SEQUENCE custom_report_seq START 2;
+ALTER SEQUENCE custom_report_seq OWNER TO ws;
 
-CREATE TABLE oversight (
-	id integer DEFAULT NEXTVAL('oversight_seq') CONSTRAINT pk_oversight PRIMARY KEY,
+CREATE TABLE custom_report (
+	id integer DEFAULT NEXTVAL('custom_report_seq') CONSTRAINT pk_custom_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	definition text								-- Oversight definition as json object
+	name text,
+	config text								-- custom report configuration as json object
 	);
-ALTER TABLE oversight OWNER TO ws;
+ALTER TABLE custom_report OWNER TO ws;
+CREATE UNIQUE INDEX custom_report_name ON custom_report(o_id, name);

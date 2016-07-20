@@ -68,9 +68,9 @@ DROP SEQUENCE IF EXISTS sc_seq CASCADE;
 CREATE SEQUENCE sc_seq START 1;
 ALTER SEQUENCE sc_seq OWNER TO ws;
 
-DROP SEQUENCE IF EXISTS oversight_seq CASCADE;
-CREATE SEQUENCE oversight_seq START 2;
-ALTER SEQUENCE oversight_seq OWNER TO ws;
+DROP SEQUENCE IF EXISTS custom_report_seq CASCADE;
+CREATE SEQUENCE custom_report_seq START 2;
+ALTER SEQUENCE custom_report_seq OWNER TO ws;
 
 -- User management
 DROP SEQUENCE IF EXISTS project_seq CASCADE;
@@ -399,13 +399,15 @@ CREATE TABLE survey_change (
 	);
 ALTER TABLE survey_change OWNER TO ws;
 
-DROP TABLE IF EXISTS oversight CASCADE;
-CREATE TABLE oversight (
-	id integer DEFAULT NEXTVAL('oversight_seq') CONSTRAINT pk_oversight PRIMARY KEY,
+DROP TABLE IF EXISTS custom_report CASCADE;
+CREATE TABLE custom_report (
+	id integer DEFAULT NEXTVAL('custom_report_seq') CONSTRAINT pk_custom_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	definition text								-- Oversight definition as json object
+	name, text,
+	config text								-- Custom report configuration as json object
 	);
-ALTER TABLE oversight OWNER TO ws;
+ALTER TABLE custom_report OWNER TO ws;
+CREATE UNIQUE INDEX custom_report_name ON custom_report(o_id, name);
 
 -- table name is used by "results databases" to store result data for this form
 DROP TABLE IF EXISTS form CASCADE;
