@@ -155,7 +155,9 @@ require([
 		 * Create new managed surveys
 		 */
 		$('#managedSurveyCreate').click(function(){
-			createManagedSurvey($('#newManagedSurvey').val(), 1);	// TODO remove hard coding of managed survey defn (current set to 1)
+			createManagedSurvey(
+					$('#newManagedSurvey').val(), 
+					$('#newOversightForm').val());	
 		});
      });
 	 
@@ -178,6 +180,7 @@ require([
 	  * Called after the user details have been retrieved
 	  */
 	 function getSurveyList() {
+		 loadOversightForms();
 		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
 	 }
 	 
@@ -326,6 +329,56 @@ require([
 	} 
 	
 	/*
+	 * Get a list of the available oversight forms that can be added to a survey
+	 */
+	function loadOversightForms() {
+		addHourglass();
+
+		var url="/surveyKPI/custom_reports?type=oversight";
+		
+ 		$.ajax({
+ 			url: url,
+ 			dataType: 'json',
+ 			cache: false,
+ 			success: function(data) {
+ 				
+ 				var h = [],
+ 					idx = -1,
+ 					i;
+ 				
+ 				removeHourglass();
+ 				
+ 				if(data.length === 0) {
+ 					$('.selectmanaged').hide();
+ 					$('.no_oversight').show();
+ 				} else {
+ 					$('.no_oversight').hide();
+ 					$('.selectmanaged').show();
+ 					
+ 					for(i = 0; i < data.length; i++) {
+ 						h[++idx] = '<option value="';
+ 						h[++idx] = data[i].id;
+ 						h[++idx] = '">';
+ 						h[++idx] = data[i].name;
+ 						h[++idx] = '</option>';
+ 					}
+ 					$('#newOversightForm').empty().html(h.join(''));
+ 				}
+ 				
+ 			},
+ 			error: function(xhr, textStatus, err) {
+ 				
+ 				removeHourglass();
+ 				if(xhr.readyState == 0 || xhr.status == 0) {
+ 		              return;  // Not an error
+ 				} else {
+ 					alert("Error: Failed to get list of oversight forms: " + err);
+ 				}
+ 			}
+ 		});	
+	}
+	
+	/*
 	 * Get surveys and update the survey lists on this page
 	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
 	 *   applied to the survey
@@ -397,7 +450,7 @@ require([
 	 				if(xhr.readyState == 0 || xhr.status == 0) {
 	 		              return;  // Not an error
 	 				} else {
-	 					console.log("Error: Failed to get list of surveys: " + err);
+	 					alert("Error: Failed to get list of surveys: " + err);
 	 				}
 	 			}
 	 		});	

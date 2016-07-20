@@ -16,6 +16,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.NameId;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.Task;
 import org.smap.sdal.model.TaskAssignment;
@@ -56,9 +57,16 @@ public class CustomReportsManager {
 	private static Logger log =
 			 Logger.getLogger(CustomReportsManager.class.getName());
 	
-	public void save(Connection sd, String reportName, ArrayList<TableColumn> config, int oId) throws Exception {
+	/*
+	 * Save a report to the database
+	 */
+	public void save(Connection sd, 
+			String reportName, 
+			ArrayList<TableColumn> config, 
+			int oId,
+			String type) throws Exception {
 		
-		String sql = "insert into custom_report (o_id, name, config) values (?, ?, ?);";
+		String sql = "insert into custom_report (o_id, name, config, type) values (?, ?, ?, ?);";
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -70,6 +78,7 @@ public class CustomReportsManager {
 			pstmt.setInt(1, oId);
 			pstmt.setString(2, reportName);
 			pstmt.setString(3, configString);
+			pstmt.setString(4,  type);
 			
 			log.info(pstmt.toString());
 			pstmt.executeUpdate();
@@ -79,6 +88,47 @@ public class CustomReportsManager {
 		} finally {
 			try {pstmt.close();} catch(Exception e) {};
 		}
+	}
+	
+	public ArrayList<NameId> getList(Connection sd, int oId, String type) throws SQLException {
+		
+		ArrayList<NameId> reports = new ArrayList<NameId> ();
+		
+		String sql1 = "select id, name from custom_report where o_id = ? ";
+		String sql2 = "and type = ? ";
+		String sql3 = "order by name asc";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			if(type != null) {
+				pstmt = sd.prepareStatement(sql1 + sql2 + sql3);
+			} else {
+				pstmt = sd.prepareStatement(sql1 + sql3);
+			}
+			
+			pstmt.setInt(1, oId);
+			if(type != null) {
+				pstmt.setString(2, type);
+			}
+			
+			log.info(pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			while(rs.next()) {
+				NameId item = new NameId();
+				item.id = rs.getInt(1);
+				item.name = rs.getString(2);
+				reports.add(item);
+			}
+			
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return reports;
+		
 	}
 
 }

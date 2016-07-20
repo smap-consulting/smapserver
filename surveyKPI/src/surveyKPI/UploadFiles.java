@@ -477,7 +477,7 @@ public class UploadFiles extends Application {
 					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
 					CustomReportsManager rm = new CustomReportsManager();
-					rm.save(sd, reportName, config, oId);
+					rm.save(sd, reportName, config, oId, "oversight");
 					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
 					
 					// Return custom report list			 
@@ -498,9 +498,12 @@ public class UploadFiles extends Application {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
-			System.out.println("Exception");
+			String msg = ex.getMessage();
+			if(msg.contains("duplicate")) {
+				msg = "A report with this name already exists";
+			}
 			log.log(Level.SEVERE,ex.getMessage(), ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
+			response = Response.serverError().entity(msg).build();
 		} finally {
 	
 			SDDataSource.closeConnection("Tasks-LocationUpload", sd);

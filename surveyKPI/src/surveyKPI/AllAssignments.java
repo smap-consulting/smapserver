@@ -91,13 +91,6 @@ public class AllAssignments extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	// Tell class loader about the root classes.  
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(AllAssignments.class);
-		return s;
-	}
-	
 	public AllAssignments() {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	

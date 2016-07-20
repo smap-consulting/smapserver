@@ -546,6 +546,7 @@ CREATE TABLE custom_report (
 	id integer DEFAULT NEXTVAL('custom_report_seq') CONSTRAINT pk_custom_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,
+	type text,								-- oversight || lqas
 	config text								-- custom report configuration as json object
 	);
 ALTER TABLE custom_report OWNER TO ws;
