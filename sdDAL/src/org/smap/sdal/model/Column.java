@@ -1,5 +1,6 @@
 package org.smap.sdal.model;
 
+/*
 public class Column {
 	public int qId;
 	public String question_name;
@@ -35,9 +36,7 @@ public class Column {
 		return isAttachment;
 	}
 	
-	/*
-	 * Get the sql to select this column from the database
-	 */
+
 	public String getSqlSelect(String urlprefix) {
 		String selName = null;
 		
@@ -54,3 +53,4 @@ public class Column {
 	}
 	
 }
+*/

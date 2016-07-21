@@ -43,7 +43,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.model.Column;
+import org.smap.sdal.model.TableColumn;
 
 import utilities.QuestionInfo;
 import utilities.Tables;
@@ -212,7 +212,7 @@ public class Items extends Application {
 				}
 	
 				
-				ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+				ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 						sd,
 						connection,
 						parent,
@@ -230,20 +230,20 @@ public class Items extends Application {
 				JSONArray columns = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
 				
-				for(Column c : columnList) {
+				for(TableColumn c : columnList) {
 					if(newColIdx > 0) {
 						cols.append(",");
 					}
-					if(bGeom && c.qType.equals("geopoint") || c.qType.equals("geopolygon") 
-							|| c.qType.equals("geolinestring") || c.qType.equals("geotrace")
-							|| c.qType.equals("geoshape")) {
+					if(bGeom && c.type.equals("geopoint") || c.type.equals("geopolygon") 
+							|| c.type.equals("geolinestring") || c.type.equals("geotrace")
+							|| c.type.equals("geoshape")) {
 						
 						geomIdx = newColIdx;
 						cols.append("ST_AsGeoJSON(" + c.name + ") ");
 						
 						newColIdx++;
 					
-					} else if(c.qType.equals("image") || c.qType.equals("audio") || c.qType.equals("video")) {
+					} else if(c.type.equals("image") || c.type.equals("audio") || c.type.equals("video")) {
 							cols.append("'" + urlprefix + "' || " + c.name + " as " + c.name);
 				
 					} else if(c.name.equals("prikey") || c.name.equals("parkey") 

@@ -52,9 +52,9 @@ class Param {
 }
 
 public class SqlFrag {
-	StringBuffer sql = new StringBuffer("");
-	ArrayList<Param> params = new ArrayList<Param> ();
-	ArrayList<String> columns = new ArrayList<String> ();
+	public StringBuffer sql = new StringBuffer("");
+	public ArrayList<Param> params = new ArrayList<Param> ();
+	public ArrayList<String> columns = new ArrayList<String> ();
 
 	public void add(String in) {
 		if(sql.length() > 0) {

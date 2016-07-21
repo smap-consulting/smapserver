@@ -53,10 +53,11 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TableColumn;
 
 import utils.Utils;
 
@@ -158,6 +159,9 @@ public class Data extends Application {
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records");
 		
+		String sqlGetManagedId = "select managed_id from survey where s_id = ?";
+		PreparedStatement pstmtGetManagedId = null;
+		
 		String sqlGetMainForm = "select f_id, table_name from form where s_id = ? and parentform = 0;";
 		PreparedStatement pstmtGetMainForm = null;
 		
@@ -170,6 +174,7 @@ public class Data extends Application {
 		StringBuffer columnSelect = new StringBuffer();
 		String table_name = null;
 		int parentform = 0;
+		int managedId = 0;
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
 
@@ -185,6 +190,17 @@ public class Data extends Application {
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
+			
+			// Get the managed Id
+			if(mgmt) {
+				pstmtGetManagedId = sd.prepareStatement(sqlGetManagedId);
+				pstmtGetManagedId.setInt(1, sId);
+				rs = pstmtGetManagedId.executeQuery();
+				if(rs.next()) {
+					managedId = rs.getInt(1);
+				}
+				rs.close();
+			}
 			
 			if(fId == 0) {
 				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
@@ -209,7 +225,7 @@ public class Data extends Application {
 				}
 			}
 				
-			ArrayList<Column> columns = GeneralUtilityMethods.getColumnsInForm(
+			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
 					parentform,
@@ -222,11 +238,14 @@ public class Data extends Application {
 					);
 			
 			if(mgmt) {
-				GeneralUtilityMethods.addManagementColumns(columns);
+				CustomReportsManager crm = new CustomReportsManager ();
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				columns.addAll(managedColumns);
+				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
 			
 			for(int i = 0; i < columns.size(); i++) {
-				Column c = columns.get(i);
+				TableColumn c = columns.get(i);
 				if(i > 0) {
 					columnSelect.append(",");
 				}
@@ -286,7 +305,7 @@ public class Data extends Application {
 					}
 					for(int i = 0; i < columns.size(); i++) {	
 						
-						Column c = columns.get(i);
+						TableColumn c = columns.get(i);
 						String name = null;
 						String value = null;
 						
@@ -348,6 +367,7 @@ public class Data extends Application {
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
 			
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
 			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
@@ -390,8 +410,12 @@ public class Data extends Application {
 		String sqlGetForm = "select parentform, table_name from form where s_id = ? and f_id = ?;";
 		PreparedStatement pstmtGetForm = null;
 		
+		String sqlGetManagedId = "select managed_id from survey where s_id = ?";
+		PreparedStatement pstmtGetManagedId = null;
+		
 		PreparedStatement pstmtGetSimilar = null;
 		PreparedStatement pstmtGetData = null;
+
 		
 		StringBuffer columnSelect = new StringBuffer();
 		StringBuffer similarWhere = new StringBuffer();
@@ -399,6 +423,7 @@ public class Data extends Application {
 		int groupColumns = 0;
 		String table_name = null;
 		int parentform = 0;
+		int managedId = 0;
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
 		
@@ -410,6 +435,17 @@ public class Data extends Application {
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
+			
+			// Get the managed Id
+			if(mgmt) {
+				pstmtGetManagedId = sd.prepareStatement(sqlGetManagedId);
+				pstmtGetManagedId.setInt(1, sId);
+				rs = pstmtGetManagedId.executeQuery();
+				if(rs.next()) {
+					managedId = rs.getInt(1);
+				}
+				rs.close();
+			}
 			
 			if(fId == 0) {
 				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
@@ -434,7 +470,7 @@ public class Data extends Application {
 				}
 			}
 				
-			ArrayList<Column> columns = GeneralUtilityMethods.getColumnsInForm(
+			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
 					parentform,
@@ -447,7 +483,10 @@ public class Data extends Application {
 					);
 			
 			if(mgmt) {
-				GeneralUtilityMethods.addManagementColumns(columns);
+				CustomReportsManager crm = new CustomReportsManager ();
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				columns.addAll(managedColumns);
+				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
 			
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
@@ -456,7 +495,7 @@ public class Data extends Application {
 				 * 1. Prepare the data query minus the where clause that is created to select similar rows
 				 */
 				for(int i = 0; i < columns.size(); i++) {
-					Column c = columns.get(i);
+					TableColumn c = columns.get(i);
 					if(i > 0) {
 						columnSelect.append(",");
 					}
@@ -490,11 +529,11 @@ public class Data extends Application {
 						for(int j = 0; j < columns.size(); j++) {
 							//System.out.println("name: " + columns.get(j).name);
 							if(columns.get(j).name.equals(aSelect[0])) {
-								Column c = columns.get(j);
+								TableColumn c = columns.get(j);
 								boolean stringFnApplies = false;
 								
-								if(c.qType.equals("string") || c.qType.equals("select1")
-										|| c.qType.equals("barcode")) {
+								if(c.type.equals("string") || c.type.equals("select1")
+										|| c.type.equals("barcode")) {
 									stringFnApplies = true;
 								}
 								
@@ -515,7 +554,7 @@ public class Data extends Application {
 									similarWhere.append(s + " = ?");
 								}
 								groupColumns++;
-								groupTypes.add(c.qType);
+								groupTypes.add(c.type);
 								break;
 							}
 						}
@@ -581,7 +620,7 @@ public class Data extends Application {
 						jr.put("_group", groupKey);
 						for(int i = 0; i < columns.size(); i++) {	
 							
-							Column c = columns.get(i);
+							TableColumn c = columns.get(i);
 							String name = null;
 							String value = null;
 							
@@ -648,6 +687,7 @@ public class Data extends Application {
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetSimilar != null) {pstmtGetSimilar.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
 			
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
 			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
@@ -660,15 +700,15 @@ public class Data extends Application {
 	/*
 	 * Convert the human name for the sort column into sql
 	 */
-	private String getSortColumn(ArrayList<Column> columns, String sort) {
+	private String getSortColumn(ArrayList<TableColumn> columns, String sort) {
 		String col = "prikey";	// default to prikey
 		sort = sort.trim();
 		for(int i = 0; i < columns.size(); i++) {
 			if(columns.get(i).humanName.equals(sort)) {
-				Column c = columns.get(i);
+				TableColumn c = columns.get(i);
 
 				if(c.isCalculate()) {
-					col = c.calculation;
+					col = c.calculation.sql.toString();
 				} else {
 					col = c.name;
 				}

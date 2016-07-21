@@ -26,7 +26,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -38,21 +37,17 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.QueryManager;
-import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.TableColumn;
-import org.smap.sdal.model.TableColumnMarkup;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.sql.*;
-import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,6 +79,9 @@ public class ManagedForms extends Application {
 		Connection sd = SDDataSource.getConnection("surveyKPI-GetConfig");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		if(managedId > 0) {
+			a.isValidCustomReport(sd, request.getRemoteUser(), managedId);
+		}
 		// End Authorisation
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
@@ -178,7 +176,7 @@ public class ManagedForms extends Application {
 			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			QueryManager qm = new QueryManager();
-			qm.getDataProcessingConfig(am.manageId, columns, null);
+			qm.getDataProcessingConfig(sd, am.manageId, columns, null);
 			
 			for(int i = 0; i < columns.size(); i++) {
 				TableColumn tc = columns.get(i);
@@ -316,7 +314,7 @@ public class ManagedForms extends Application {
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			QueryManager qm = new QueryManager();
-			qm.getDataProcessingConfig(dpId, columns, null);
+			qm.getDataProcessingConfig(sd,dpId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

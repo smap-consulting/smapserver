@@ -20,7 +20,6 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.ManagedFormConfig;
@@ -90,7 +89,7 @@ public class QueryManager {
 			int uId = GeneralUtilityMethods.getUserId(sd, uIdent);	// Get user id
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			
-			ArrayList<Column> columnList = GeneralUtilityMethods.getColumnsInForm(
+			ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
 					0,
@@ -130,11 +129,11 @@ public class QueryManager {
 			 * Add any new columns that may have been added to the survey since the configuration was created
 			 */			
 			for(int i = 0; i < columnList.size(); i++) {
-				Column c = columnList.get(i);
+				TableColumn c = columnList.get(i);
 				if(keepThis(c.name)) {
 					TableColumn tc = new TableColumn(c.name, c.humanName);
 					tc.hide = hideDefault(c.humanName);
-					tc.filter = filterDefault(c.qType);
+					tc.filter = filterDefault(c.type);
 					for(int j = 0; j < savedConfig.columns.size(); j++) {
 						TableColumn tcConfig = savedConfig.columns.get(j);
 						if(tcConfig.name.equals(tc.name)) {
@@ -156,7 +155,7 @@ public class QueryManager {
 			 * Add the data processing columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(managedId, mfc.columns, savedConfig.columns);
+				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns);
 			}
 		
 				
@@ -175,19 +174,23 @@ public class QueryManager {
 	/*
 	 * Get the managed columns
 	 */
-	public void getDataProcessingConfig(int dpId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) {
+	public void getDataProcessingConfig(Connection sd, int crId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) throws Exception {
 		
 		/*
 		 * Manually create this (TODO retrieve from database)
 		 */
-		ArrayList<Column> columns = new ArrayList<Column> ();
-		GeneralUtilityMethods.addManagementColumns(columns);
-		for(int i = 0; i < columns.size(); i++) {
-			Column c = columns.get(i);
-			TableColumn tc = new TableColumn(c.name, c.humanName);
-			tc.hide = hideDefault(c.name);
+		//ArrayList<Column> columns = new ArrayList<Column> ();
+		//GeneralUtilityMethods.addManagementColumns(columns);
+		CustomReportsManager crm = new CustomReportsManager ();
+		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
+		for(int i = 0; i < managedColumns.size(); i++) {
+			//Column c = columns.get(i);
+			//TableColumn tc = new TableColumn(c.name, c.humanName);
+			TableColumn tc = managedColumns.get(i);
+			//tc.hide = hideDefault(c.name);
 
-			addProcessing(tc);
+			//addProcessing(tc);
+			
 			if(configColumns != null) {
 				for(int j = 0; j < configColumns.size(); j++) {
 					TableColumn tcConfig = configColumns.get(j);

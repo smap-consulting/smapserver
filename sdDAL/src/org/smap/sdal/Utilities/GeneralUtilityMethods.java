@@ -24,18 +24,14 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
-import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
-import org.smap.sdal.model.PropertyChange;
-import org.smap.sdal.model.Result;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -1873,7 +1869,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return a list of results columns for a form
 	 */
-	public static ArrayList<Column> getColumnsInForm(Connection sd, 
+	public static ArrayList<TableColumn> getColumnsInForm(Connection sd, 
 			Connection cResults, 
 			int formParent,
 			int f_id,
@@ -1883,8 +1879,8 @@ public class GeneralUtilityMethods {
 			boolean includeBad,
 			boolean includeInstanceId) throws SQLException {
 		
-		ArrayList<Column> columnList = new ArrayList<Column>();
-		ArrayList<Column> realQuestions = new ArrayList<Column> ();	// Temporary array so that all property questions can be added first
+		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
+		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
 		boolean uptodateTable = false;	// Set true if the results table has the latest meta data columns
 		
 		// SQL to get the questions
@@ -1905,50 +1901,50 @@ public class GeneralUtilityMethods {
 				+ "order by o.seq;";
 		PreparedStatement pstmtSelectMultiple = sd.prepareStatement(sqlSelectMultiple);
 		
-		Column c = new Column();
+		TableColumn c = new TableColumn();
 		c.name = "prikey";
 		c.humanName = "prikey";
-		c.qType = "";
+		c.type = "";
 		columnList.add(c);
 		
 		// Add HRK if it has been specified
 		if(GeneralUtilityMethods.columnType(cResults, table_name, "_hrk") != null) {
-			c = new Column();
+			c = new TableColumn();
 			c.name = "_hrk";
 			c.humanName = "Key";
-			c.qType = "";
+			c.type = "";
 			columnList.add(c);
 		}
 		
 		if(includeParentKey) {
-			c = new Column();
+			c = new TableColumn();
 			c.name = "parkey";
 			c.humanName = "parkey";
-			c.qType = "";
+			c.type = "";
 			columnList.add(c);
 		}
 		
 		if(includeBad) {
-			c = new Column();
+			c = new TableColumn();
 			c.name = "_bad";
 			c.humanName = "_bad";
-			c.qType = "";
+			c.type = "";
 			columnList.add(c);
 			
-			c = new Column();
+			c = new TableColumn();
 			c.name = "_bad_reason";
 			c.humanName = "_bad_reason";
-			c.qType = "";
+			c.type = "";
 			columnList.add(c);
 		}
 		
 		// For the top level form add default columns that are not in the question list
 		if(formParent == 0) {
 			
-			c = new Column();
+			c = new TableColumn();
 			c.name = "_user";
 			c.humanName = "User";
-			c.qType = "";
+			c.type = "";
 			columnList.add(c);
 			
 			if(GeneralUtilityMethods.columnType(cResults, table_name, "_survey_notes") != null) {
@@ -1958,55 +1954,55 @@ public class GeneralUtilityMethods {
 			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
 				
 				
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_upload_time";
 				c.humanName = "Upload Time";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 				
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_s_id";
 				c.humanName = "Survey Name";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 			}
 			
 			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_version") != null) {
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_version";
 				c.humanName = "Version";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 			}
 			
 			if(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_complete") != null) {
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_complete";
 				c.humanName = "Complete";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 			}
 			
 			if(includeInstanceId && 
 					(uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null)) {
-				c = new Column();
+				c = new TableColumn();
 				c.name = "instanceid";
 				c.humanName = "instanceid";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 			}
 			
 			if(uptodateTable) {
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_survey_notes";
 				c.humanName = "Survey Notes";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 				
-				c = new Column();
+				c = new TableColumn();
 				c.name = "_location_trigger";
 				c.humanName = "Location Trigger";
-				c.qType = "";
+				c.type = "";
 				columnList.add(c);
 			}
 			
@@ -2060,25 +2056,25 @@ public class GeneralUtilityMethods {
 						if(uniqueColumns.get(uk) == null) {
 							uniqueColumns.put(uk, uk);
 						
-							c = new Column();
+							c = new TableColumn();
 							c.name = question_column_name + "__" + rsMultiples.getString(1);
 							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
-							c.question_name = question_column_name;
+							c.name = question_column_name;
 							c.option_name = rsMultiples.getString(1);
 							c.qId = qId;
-							c.qType = qType;
-							c.ro = ro;
+							c.type = qType;
+							c.readonly = ro;
 							realQuestions.add(c);
 						}
 					}
 				} else {
-					c = new Column();
+					c = new TableColumn();
 					c.name = question_column_name;
-					c.question_name = question_column_name;
+					c.name = question_column_name;
 					c.humanName = question_human_name;
 					c.qId = qId;
-					c.qType = qType;
-					c.ro = ro;
+					c.type = qType;
+					c.readonly = ro;
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name, path)) {
 						columnList.add(c);
 					} else {
@@ -2100,7 +2096,7 @@ public class GeneralUtilityMethods {
 	
 	/*
 	 * Add the management columns for the survey
-	 */
+	 *
 	public static void addManagementColumns(ArrayList<Column> columnList) {
 		// TODO check that these exist
 		// TODO Possibly the columns should vary with survey
@@ -2157,6 +2153,7 @@ public class GeneralUtilityMethods {
 		columnList.add(c);
 		
 	}
+	*/
 	
 	/*
 	 * Return true if this question is a property type question like deviceid

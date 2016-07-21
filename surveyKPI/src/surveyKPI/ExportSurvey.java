@@ -6,12 +6,9 @@ import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,7 +28,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.model.Column;
+import org.smap.sdal.model.TableColumn;
 
 /*
  * Provides a survey level export of a survey as an XLS file
@@ -78,7 +75,7 @@ public class ExportSurvey extends Application {
 		Boolean flat = false;					// Set to true if this forms data should be flattened so it appears on a single line
 		ArrayList<RecordDesc> records = null;
 		ArrayList<FormDesc> children = null;
-		ArrayList<Column> columnList = null;
+		ArrayList<TableColumn> columnList = null;
 		
 		@SuppressWarnings("unused")
 		public void debugForm() {
@@ -373,7 +370,7 @@ public class ExportSurvey extends Application {
 				 *  2) The columns that contain the data to be shown
 				 */
 				for(FormDesc f : formList) {
-					Column c;
+					TableColumn c;
 					int parentId = 0;
 					if(f.parent != null) {
 						parentId = Integer.parseInt(f.parent);
@@ -396,8 +393,8 @@ public class ExportSurvey extends Application {
 
 							c = f.columnList.get(j);
 							String name = c.name;
-							String qType = c.qType;
-							boolean ro = c.ro;
+							String qType = c.type;
+							boolean ro = c.readonly;
 							String humanName = c.humanName;
 							
 							boolean isAttachment = false;
@@ -415,7 +412,7 @@ public class ExportSurvey extends Application {
 
 							if(qType.equals("select")) {
 								isSelectMultiple = true;
-								selectMultipleQuestionName = c.question_name;
+								selectMultipleQuestionName = c.name;
 								optionName = c.option_name;
 							}
 											
@@ -809,10 +806,10 @@ public class ExportSurvey extends Application {
 				String multipleChoiceValue = null;
 				for(int i = 1; i < f.columnList.size(); i++) {
 					
-					Column c = f.columnList.get(i);
+					TableColumn c = f.columnList.get(i);
 
 					String columnName = c.name;
-					String columnType = c.qType;
+					String columnType = c.type;
 					String value = resultSet.getString(i + 1);
 					
 					if(value == null) {

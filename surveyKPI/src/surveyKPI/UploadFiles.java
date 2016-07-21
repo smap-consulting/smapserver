@@ -32,8 +32,6 @@ import javax.ws.rs.core.Response;
 
 import model.MediaResponse;
 import utilities.XLSCustomReportsManager;
-import utilities.XLSTaskManager;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -48,11 +46,7 @@ import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.managers.TaskManager;
-import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
-import org.smap.sdal.model.Column;
-import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 

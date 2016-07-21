@@ -1,34 +1,18 @@
 package org.smap.sdal.managers;
 
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.TimeZone;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.model.AssignFromSurvey;
-import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Location;
 import org.smap.sdal.model.NameId;
 import org.smap.sdal.model.TableColumn;
-import org.smap.sdal.model.Task;
-import org.smap.sdal.model.TaskAssignment;
-import org.smap.sdal.model.TaskBulkAction;
-import org.smap.sdal.model.TaskFeature;
-import org.smap.sdal.model.TaskGroup;
-import org.smap.sdal.model.TaskListGeoJson;
-import org.smap.sdal.model.TaskProperties;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 
 /*****************************************************************************
 
@@ -129,6 +113,42 @@ public class CustomReportsManager {
 		
 		return reports;
 		
+	}
+	
+	/*
+	 * Get a report from the database
+	 */
+	public ArrayList<TableColumn> get(Connection sd, int crId) throws Exception {
+		
+		ArrayList<TableColumn> config = null;
+		String sql = "select config from custom_report where id = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, crId);
+			
+			log.info(pstmt.toString());
+			pstmt.executeQuery();
+			
+			String configString = null;
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				configString = rs.getString(1);
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();
+				config = gson.fromJson(configString, type);
+			}
+			
+			
+		} catch (SQLException e) {
+			throw(new Exception(e.getMessage()));
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return config;
 	}
 
 }

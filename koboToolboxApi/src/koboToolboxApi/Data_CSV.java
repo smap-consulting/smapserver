@@ -52,9 +52,9 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.Column;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TableColumn;
 
 /*
  * Returns data for the passed in table name
@@ -182,7 +182,7 @@ public class Data_CSV extends Application {
 				int fId = rs.getInt(1);
 				String table_name = rs.getString(2);
 				
-				ArrayList<Column> columns = GeneralUtilityMethods.getColumnsInForm(
+				ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 						sd,
 						cResults,
 						0,			// parent form
@@ -195,7 +195,7 @@ public class Data_CSV extends Application {
 						);
 				
 				for(int i = 0; i < columns.size(); i ++) {
-					Column c = columns.get(i);
+					TableColumn c = columns.get(i);
 					if(i > 0) {
 						columnSelect.append(",");
 						columnHeadings.append(",");
@@ -229,7 +229,7 @@ public class Data_CSV extends Application {
 						record = new StringBuffer();
 						
 						for(int i = 0; i < columns.size(); i++) {
-							Column c = columns.get(i);
+							TableColumn c = columns.get(i);
 							if(i > 0) {
 								record.append(",");
 							}

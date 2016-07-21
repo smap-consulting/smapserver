@@ -194,6 +194,66 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this custom report
+	 */
+	public boolean isValidCustomReport(Connection conn, String user, int crId)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey has not been soft deleted and exists or alternately 
+		 *    that it has been soft deleted and exists
+		 * 2) Make sure survey is in a project that the user has access to
+		 */
+
+		String sql = "select count(*) from custom_report cr, users u "
+				+ "where cr.o_id = u.o_id "
+				+ "and cr.id = ? "
+				+ "and u.ident = ? ";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, crId);
+			pstmt.setString(2, user);
+			
+			log.info("IsValidCustomReport: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " custom report was: " + crId);
+ 			
+ 			SDDataSource.closeConnection("isValidSurvey", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular task group
 	 */
 	public boolean isValidTaskGroup(Connection conn, String user, int tgId, boolean isDeleted)
