@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,6 +48,7 @@ import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.ReportItem;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
@@ -395,8 +397,11 @@ public class UploadFiles extends Application {
 			@Context HttpServletRequest request
 			) throws IOException {
 		
+		String reportName = null;
+		
 		Response response = null;
 		
+		System.out.println("Clled");
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 		
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
@@ -413,9 +418,9 @@ public class UploadFiles extends Application {
 			List<?> items = uploadHandler.parseRequest(request);
 			Iterator<?> itr = items.iterator();
 			String fileName = null;
-			String reportName = null;
 			FileItem fileItem = null;
 			String filetype = null;
+			String fieldName = null;
 
 			while(itr.hasNext()) {
 				
@@ -423,7 +428,10 @@ public class UploadFiles extends Application {
 				// Get form parameters	
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
-					
+					fieldName = item.getFieldName();
+					if(fieldName.equals("name")) {
+						reportName = item.getString();
+					}
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
 					log.info("Field Name = "+item.getFieldName()+
@@ -431,24 +439,23 @@ public class UploadFiles extends Application {
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
 					
-					fileName = item.getName();
-					fileItem = item;
-					int idx = fileName.lastIndexOf('.');
-					if(idx > 0) {
-						reportName = fileName.substring(0, idx);
-					}
-					
-					if(fileName.endsWith("xlsx")) {
-						filetype = "xlsx";
-					} else if(fileName.endsWith("xls")) {
-						filetype = "xls";
-					} else {
-						log.info("unknown file type for item: " + fileName);
-						continue;	
-					}
-	
-					break;
+					fieldName = item.getFieldName();
+					if(fieldName.equals("filename")) {
+						fileName = item.getName();
+						fileItem = item;
+						int idx = fileName.lastIndexOf('.');
+						if(reportName == null && idx > 0) {
+							reportName = fileName.substring(0, idx);
+						}
 						
+						if(fileName.endsWith("xlsx")) {
+							filetype = "xlsx";
+						} else if(fileName.endsWith("xls")) {
+							filetype = "xls";
+						} else {
+							log.info("unknown file type for item: " + fileName);
+						}
+					}	
 				}
 			}
 			
@@ -470,13 +477,14 @@ public class UploadFiles extends Application {
 					// Save configuration to the database
 					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
-					CustomReportsManager rm = new CustomReportsManager();
-					rm.save(sd, reportName, config, oId, "oversight");
+					CustomReportsManager crm = new CustomReportsManager();
+					crm.save(sd, reportName, config, oId, "oversight");
 					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
 					
+					ArrayList<ReportItem> reportsList = crm.getCustomReports(sd, oId);
 					// Return custom report list			 
 					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-					String resp = gson.toJson(config);
+					String resp = gson.toJson(reportsList);
 				
 					response = Response.ok(resp).build();
 					

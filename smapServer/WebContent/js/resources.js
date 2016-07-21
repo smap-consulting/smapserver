@@ -130,9 +130,7 @@ $(document).ready(function() {
     
     // Respond to custom report upload
     $('#submitCustomReport').click( function() {
-    	if(!$('#submitCustomReport').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
-    	}
+    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
     });
     
     // Respond to nfc upload
@@ -179,6 +177,14 @@ $(document).ready(function() {
     $('.vector-data-inputs').bootstrapFileInput();
     $('.vector-style-inputs').bootstrapFileInput();
     
+    /*
+     * Set up reports tab
+     */
+	$('#addReport').click(function(){
+		$('.panel_msg').hide();
+		$('#addReportPopup').modal("show");
+	});
+	
 	enableUserProfileBS();
 });
 
@@ -480,31 +486,25 @@ function refreshCustomReportView(reports) {
 		h = [],
 		idx = -1;
 
-	if(tags) {
+	$('.panel_msg').show();
+	$('#addReportPopup').modal("hide");
+	
+	if(reports) {
 
-		$element = $('#nfcList');
+		$element = $('#reportList');
 		
 		h[++idx] = '<tr>';
 		
-		for(i = 0; i < tags.length; i++){
+		for(i = 0; i < reports.length; i++){
 			h[++idx] = '<tr>';
 			
 			h[++idx] = '<td>';
-			h[++idx] = tags[i].type;
+			h[++idx] = reports[i].name;
 			h[++idx] = '</td>';
 			
 			h[++idx] = '<td>';
-			h[++idx] = tags[i].group;
+			h[++idx] = reports[i].type;
 			h[++idx] = '</td>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].uid;
-			h[++idx] = '</td>';
-		
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].name;
-			h[++idx] = '</td>';
-			
 			
 			h[++idx] = '</tr>';
 			

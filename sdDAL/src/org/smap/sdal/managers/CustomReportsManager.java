@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.smap.sdal.model.NameId;
+import org.smap.sdal.model.ReportItem;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -74,6 +75,9 @@ public class CustomReportsManager {
 		}
 	}
 	
+	/*
+	 * get a list of reports for a select list
+	 */
 	public ArrayList<NameId> getList(Connection sd, int oId, String type) throws SQLException {
 		
 		ArrayList<NameId> reports = new ArrayList<NameId> ();
@@ -102,6 +106,40 @@ public class CustomReportsManager {
 			
 			while(rs.next()) {
 				NameId item = new NameId();
+				item.id = rs.getInt(1);
+				item.name = rs.getString(2);
+				reports.add(item);
+			}
+			
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return reports;
+		
+	}
+	
+	/*
+	 * Get a list of reports with full details
+	 */
+	public ArrayList<ReportItem> getCustomReports(Connection sd, int oId) throws SQLException {
+		
+		ArrayList<ReportItem> reports = new ArrayList<ReportItem> ();
+		
+		String sql = "select id, name, type from custom_report where o_id = ? "
+				+ "order by name asc";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			
+			pstmt.setInt(1, oId);
+			ResultSet rs = pstmt.executeQuery();
+			
+			while(rs.next()) {
+				ReportItem item = new ReportItem();
 				item.id = rs.getInt(1);
 				item.name = rs.getString(2);
 				reports.add(item);

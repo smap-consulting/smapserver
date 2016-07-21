@@ -74,7 +74,6 @@ $(document).ready(function() {
     	
     	$('#up_alert, #up_warnings').hide();
     	e.preventDefault();
-    	console.log("Sending form");
     	var sId = $('#survey_id').val();
     	var f = document.forms.namedItem("uploadForm");
     	var formData = new FormData(f);
