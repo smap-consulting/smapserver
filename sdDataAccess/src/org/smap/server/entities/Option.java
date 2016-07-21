@@ -147,7 +147,7 @@ public class Option implements Serializable{
 	
 	public void setValue(String v) {
 		value = v;
-		this.column_name = GeneralUtilityMethods.cleanName(v, false);
+		this.column_name = GeneralUtilityMethods.cleanName(v, false, false);
 	}
 	
 	public void setColumnName(String v) {

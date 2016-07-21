@@ -1423,7 +1423,7 @@ public class SurveyManager {
 					pstmtOptionInsert.setInt(2, maxSeq);
 					pstmtOptionInsert.setString(3, text_id);
 					pstmtOptionInsert.setString(4, ci.option.value);
-					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false) );
+					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false, false) );
 					
 					log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
 					count = pstmtOptionInsert.executeUpdate();
@@ -1796,7 +1796,7 @@ public class SurveyManager {
 							// 2. Update column name
 							pstmtUpdateColumnName = sd.prepareStatement(sqlUpdateColumnName);
 							pstmtUpdateColumnName.setString(1, 
-									GeneralUtilityMethods.cleanName(ci.property.newVal, true));
+									GeneralUtilityMethods.cleanName(ci.property.newVal, true, true));
 							pstmtUpdateColumnName.setInt(2, ci.property.qId);
 							pstmtUpdateColumnName.executeUpdate();
 							

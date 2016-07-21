@@ -339,7 +339,7 @@ public class Question implements Serializable {
 	
 	public void setName(String name) {
 		this.name = name;
-		this.column_name = GeneralUtilityMethods.cleanName(name, true);
+		this.column_name = GeneralUtilityMethods.cleanName(name, true, true);
 	}
 	
 	public void setColumnName(String v) {	// Override column name

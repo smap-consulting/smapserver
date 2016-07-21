@@ -152,7 +152,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Remove any characters from the name that will prevent it being used as a database column name
 	 */
-	static public String cleanName(String in, boolean isQuestion) {
+	static public String cleanName(String in, boolean isQuestion, boolean removeSqlReserved) {
 		
 		String out = in.trim().toLowerCase();
 
@@ -160,12 +160,14 @@ public class GeneralUtilityMethods {
 		out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x");	// Remove special characters ;
 	
 		/*
-		 * Rename legacy fields that are the same as postgres / sql reserved words
+		 * Rename fields that are the same as postgres / sql reserved words
 		 */
-		for(int i = 0; i < reservedSQL.length; i++) {
-			if(out.equals(reservedSQL[i])) {
-				out = "__" + out;
-				break;
+		if(removeSqlReserved) {
+			for(int i = 0; i < reservedSQL.length; i++) {
+				if(out.equals(reservedSQL[i])) {
+					out = "__" + out;
+					break;
+				}
 			}
 		}
 		
@@ -1996,6 +1998,9 @@ public class GeneralUtilityMethods {
 						if(uniqueColumns.get(uk) == null) {
 							uniqueColumns.put(uk, uk);
 						
+							if(question_column_name.startsWith("why")) {
+								System.out.println(question_column_name + " : " + rsMultiples.getString(1));
+							}
 							c = new Column();
 							c.name = question_column_name + "__" + rsMultiples.getString(1);
 							c.humanName = question_human_name + " - " + rsMultiples.getString(2);

@@ -1679,7 +1679,7 @@ function setLocationList(locns) {
 	i;
 	
 	if(locns && locns.length) {
-		h[++idx] = '<option value = "-1">';
+		h[++idx] = '<option value = "">';
 		h[++idx] = localise.set["c_none"];
 		h[++idx] = '</option>';
 		for(i = 0; i < locns.length; i++) {
