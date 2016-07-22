@@ -385,11 +385,10 @@ require([
 	 */	
 	 function loadManagedSurveys(projectId, callback) {
 	 	
-	 	var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
+	 	var url="/surveyKPI/managed/surveys/" + projectId,
 	 		$elemNonTracking = $('.nonTrackingSurveys'),
-	 		$elemTracking = $('#surveyTable').find('tbody');
+	 		$elemTracking = $('#surveyTable');
 
-	 	
 		gIsManageId = undefined;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
@@ -410,19 +409,34 @@ require([
 	 					firstSurvey = -1;
 	 				
 	 				removeHourglass();
+	 				
+	 				hT[++idxT] = '<table class="table">';
+	 				hT[++idxT] = '<thead>';
+	 				hT[++idxT] = '<tr>';
+	 				hT[++idxT] = '<th>' + localise.set["c_form"], + '</th>';
+	 				hT[++idxT] = '<th>' + localise.set["mf_of"] + '</th>';
+	 				hT[++idxT] = '<th></th>';
+	 				hT[++idxT] = '</tr>';
+	 				hT[++idxT] = '</thead>';
+	 				hT[++idxT] = '<tbody class="table-striped">';
+	 				
+	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(item.managed_id === 0) {
+	 					if(!item.managed) {
 	 						hNT[++idxNT] = '<option value="';
-	 						hNT[++idxNT] = item.id;
+	 						hNT[++idxNT] = item.sId;
 	 						hNT[++idxNT] = '">';
-	 						hNT[++idxNT] = item.displayName;
+	 						hNT[++idxNT] = item.surveyName;
 	 						hNT[++idxNT] = '</option>';
 	 					} else {
 	 						hT[++idxT] = '<tr>';
-	 							hT[++idxT] = '<th data-toggle="true">';
-	 							hT[++idxT] = item.displayName;
-	 							hT[++idxT] = '</th>';
+	 							hT[++idxT] = '<td data-toggle="true">';
+	 							hT[++idxT] = item.surveyName;
+	 							hT[++idxT] = '</td>';
+	 							hT[++idxT] = '<td>';
+	 							hT[++idxT] = item.oversightName;
+	 							hT[++idxT] = '</td>';
 	 						hT[++idxT] = '</tr>';
 	 					}
 	 					
@@ -437,6 +451,9 @@ require([
 	 					}
 	 				}
 
+	 				hT[++idxT] = '</tbody>';
+	 				hT[++idxT] = '</table>';
+	 				
 	 				$elemNonTracking.empty().html(hNT.join(''));
 	 				$elemTracking.empty().html(hT.join(''));
 	 				

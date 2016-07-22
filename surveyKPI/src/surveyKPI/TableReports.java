@@ -42,7 +42,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
-import org.smap.sdal.managers.QueryManager;
+import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.ManagedFormConfig;
@@ -102,7 +102,7 @@ public class TableReports extends Application {
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			// Get columns
-			QueryManager qm = new QueryManager();
+			ManagedFormsManager qm = new ManagedFormsManager();
 			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
 			
 			// Convert data to an array

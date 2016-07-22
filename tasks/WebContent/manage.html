@@ -113,6 +113,7 @@
                                 </a>
                             </div>
                         </div>
+                        <div class="panel_msg msg alert alert-success" role="alert"></div>
                         <div class="ibox-content">
                         	<div class="tabs-container">
 				            	<ul class="nav nav-tabs">       
@@ -122,17 +123,16 @@
 								<div class="tab-content">
 									<div id="managed-view" class="tab-pane active">
 				                		<div class="panel-body">
-				                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i> <span class="lang" data-lang="c_add">add</span></a>
-				                        	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
-				                                <thead>
-				                                <tr>
-				                               		<th data-toggle="true">Name</th>
-				                               		<th>Edit</th>
-				                                </tr>
-				                                </thead>
-				                                <tbody>
-				                                </tbody>
-				                        	</table>
+				                		
+												<div class = "well">	
+													<a data-toggle="modal" class="btn btn-default" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i> <span class="lang" data-lang="c_add">add</span></a>
+												
+													<div class="table-responsive">
+														<div id ="surveyTable"></div>
+															
+													</div>
+												</div>
+											
 				                        </div>
 				        			</div>
 				        			

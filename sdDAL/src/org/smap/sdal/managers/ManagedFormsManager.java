@@ -20,9 +20,11 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
+import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
 import org.smap.sdal.model.Task;
@@ -60,13 +62,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Manage the log table
  */
-public class QueryManager {
+public class ManagedFormsManager {
 	
 	private static Logger log =
-			 Logger.getLogger(QueryManager.class.getName());
+			 Logger.getLogger(ManagedFormsManager.class.getName());
 	
 	/*
-	 * Get the current task groups
+	 * Get the current columns
 	 */
 	public ManagedFormConfig getColumns(
 			Connection sd, 
@@ -210,6 +212,49 @@ public class QueryManager {
 	}
 	
 	/*
+	 * Get a list of the surveys in a project and their management status
+	 */
+	public ArrayList<ManagedFormItem> getManagedForms(Connection sd, int pId) throws SQLException {
+		
+		ArrayList<ManagedFormItem> items = new ArrayList<ManagedFormItem> ();
+		
+		String sql = "select s.s_id, s.managed_id, s.display_name, cr.name "
+				+ "from survey s "
+				+ "left outer join custom_report cr "
+				+ "on s.managed_id = cr.id "
+				+ "where s.p_id = ? "
+				+ "and s.deleted = false "
+				+ "order by s.display_name";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			
+			pstmt.setInt(1, pId);
+			
+			log.info(pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			
+			while(rs.next()) {
+				ManagedFormItem item = new ManagedFormItem();
+				item.sId = rs.getInt(1);
+				item.managedId = rs.getInt(2);
+				item.surveyName = rs.getString(3);
+				item.oversightName = rs.getString(4);
+				item.managed = (item.managedId > 0);
+				items.add(item);
+			}
+			
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return items;
+	}
+	
+	/*
 	 * Identify any columns that should be dropped
 	 */
 	private boolean keepThis(String name) {
@@ -271,7 +316,7 @@ public class QueryManager {
 		return filter;
 	}
 	
-	
+	/*
 	private void addProcessing(TableColumn tc) {
 		String name = tc.name;
 		tc.mgmt = true;
@@ -314,6 +359,7 @@ public class QueryManager {
 			tc.type = "text";
 		}
 	}
+	*/
 	
 }
 

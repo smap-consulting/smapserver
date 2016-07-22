@@ -36,11 +36,12 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LinkageManager;
-import org.smap.sdal.managers.QueryManager;
+import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -89,7 +90,7 @@ public class ManagedForms extends Application {
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 			
-			QueryManager qm = new QueryManager();
+			ManagedFormsManager qm = new ManagedFormsManager();
 			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
 			response = Response.ok(gson.toJson(mfc)).build();
 		
@@ -109,6 +110,41 @@ public class ManagedForms extends Application {
 		return response;
 	}
 
+	/*
+	 * Return the surveys in the project along with their management information
+	 */
+	@GET
+	@Path("/surveys/{pId}")
+	@Produces("application/json")
+	public Response getSurveys(@Context HttpServletRequest request,
+			@PathParam("pId") int pId) { 
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-GetSurveys");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), pId);
+		// End Authorisation
+		
+		Response response = null;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		try {
+			
+			ManagedFormsManager mf = new ManagedFormsManager();
+			ArrayList<ManagedFormItem> items = mf.getManagedForms(sd, pId);
+			response = Response.ok(gson.toJson(items)).build();
+		
+				
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();			
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
+		}
+
+
+		return response;
+	}
+	
 	/*
 	 * Make a survey managed
 	 */
@@ -175,7 +211,7 @@ public class ManagedForms extends Application {
 			
 			// 3.  Add the data processing columns to the results table
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			QueryManager qm = new QueryManager();
+			ManagedFormsManager qm = new ManagedFormsManager();
 			qm.getDataProcessingConfig(sd, am.manageId, columns, null);
 			
 			for(int i = 0; i < columns.size(); i++) {
@@ -192,22 +228,25 @@ public class ManagedForms extends Application {
 					} else {
 						type = tc.type;
 					}
-					sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
-					if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
 					
-					pstmtAdd = cResults.prepareStatement(sqlAdd);
-					log.info("Adding management column: " + pstmtAdd.toString());
-					try {
-						pstmtAdd.executeUpdate();
-					} catch (Exception e) {
-						String msg = e.getMessage();
-						if(msg.contains("already exists")) {
-							log.info("Management column already exists");
-						} else {
-							throw e;
+					if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
+						sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
+						if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
+						
+						pstmtAdd = cResults.prepareStatement(sqlAdd);
+						log.info("Adding management column: " + pstmtAdd.toString());
+						try {
+							pstmtAdd.executeUpdate();
+						} catch (Exception e) {
+							String msg = e.getMessage();
+							if(msg.contains("already exists")) {
+								log.info("Management column already exists");
+							} else {
+								throw e;
+							}
+						} finally {
+							pstmtAdd.close();
 						}
-					} finally {
-						pstmtAdd.close();
 					}
 				} else {
 					log.info("Error: managed column not added as type was null: " + tc.name);
@@ -313,7 +352,7 @@ public class ManagedForms extends Application {
 			 * Get the data processing columns
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			QueryManager qm = new QueryManager();
+			ManagedFormsManager qm = new ManagedFormsManager();
 			qm.getDataProcessingConfig(sd,dpId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form

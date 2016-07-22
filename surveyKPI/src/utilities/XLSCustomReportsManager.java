@@ -158,9 +158,8 @@ public class XLSCustomReportsManager {
 	                			// Get data type
 	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
 	                			if(dataType != null) {
-	                				if(dataType.equals("text")) {
-	                					dataType = "string";
-	                				} else if(!dataType.equals("date") &&
+	                				if(!dataType.equals("text") &&
+	                						!dataType.equals("date") &&
 	                						!dataType.equals("calculate") &&
 	                						!dataType.equals("select_one")){
 	                					throw new Exception("Invalid data type: " + dataType + " on row: " + (j + 1));
