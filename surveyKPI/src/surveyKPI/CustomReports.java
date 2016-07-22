@@ -19,21 +19,29 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
+import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.NameId;
+import org.smap.sdal.model.CustomReportItem;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -76,7 +84,7 @@ public class CustomReports extends Application {
 		try {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			CustomReportsManager crm = new CustomReportsManager();
-			ArrayList<NameId> reports = crm.getList(sd, oId, type);
+			ArrayList<CustomReportItem> reports = crm.getList(sd, oId, type);
 			response = Response.ok(gson.toJson(reports)).build();
 		
 				
@@ -95,6 +103,52 @@ public class CustomReports extends Application {
 	}
 
 
+	@Path("/{id}")
+	@DELETE
+	public Response deleteCustomReport(@Context HttpServletRequest request,
+			@PathParam("id") int id) { 
+		
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
+		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-CustomReports");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation
+		
+		try {
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			CustomReportsManager crm = new CustomReportsManager();
+			crm.delete(sd, oId, id);
+			
+			response = Response.ok().build();
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"SQL Exception", e);
+		    response = Response.serverError().entity("SQL Error").build();
+		} catch (AuthorisationException e) {
+			log.info("Authorisation Exception");
+		    response = Response.serverError().entity("Not authorised").build();
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			
+			SDDataSource.closeConnection("surveyKPI-Survey", sd);
+			
+		}
+
+		return response;
+
+	}
 	
 
 }

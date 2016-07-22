@@ -114,17 +114,34 @@
                             </div>
                         </div>
                         <div class="ibox-content">
-                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i> <span class="lang" data-lang="c_add">add</span></a>
-                        	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
-                                <thead>
-                                <tr>
-                               		<th data-toggle="true">Name</th>
-                               		<th>Edit</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                        	</table>
+                        	<div class="tabs-container">
+				            	<ul class="nav nav-tabs">       
+				                    <li class="active"><a data-toggle="tab" href="#managed-view"> <i class="fa fa-list"></i></a></li>
+				                    <li class=""><a data-toggle="tab" href="#reports-view"><i class="fa fa-globe"></i></a></li>
+				                </ul>
+								<div class="tab-content">
+									<div id="managed-view" class="tab-pane active">
+				                		<div class="panel-body">
+				                        	<a data-toggle="modal" class="btn btn-success" href="#addManagedSurvey"><i class="glyphicon glyphicon-plus"></i> <span class="lang" data-lang="c_add">add</span></a>
+				                        	<table id="surveyTable" class="footable table table-stripped toggle-arrow-tiny">
+				                                <thead>
+				                                <tr>
+				                               		<th data-toggle="true">Name</th>
+				                               		<th>Edit</th>
+				                                </tr>
+				                                </thead>
+				                                <tbody>
+				                                </tbody>
+				                        	</table>
+				                        </div>
+				        			</div>
+				        			
+				        			<div id="reports-view" class="tab-pane">
+				                		<div class="panel-body">
+				                		</div>
+				                	</div>
+				        		</div>
+				        	</div>
                         </div>
 					</div>
 				</div>

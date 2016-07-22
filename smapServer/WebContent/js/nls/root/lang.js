@@ -264,6 +264,8 @@ define({
 	"msg_val_rh": "You must select a remote host",
 	"msg_val_u_id": "You must specify a user id",
 	"msg_val_pass": "You must specify a password",
+	"msg_val_nm": "Name is required",
+	"msg_val_file": "A file must be selected",
 	"msg_val_let": "Name must start with a letter or underscore",
 	"msg_add_notification": "Add Notification",
 	"msg_edit_notification": "Edit Notification",

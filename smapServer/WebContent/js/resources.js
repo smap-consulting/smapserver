@@ -49,7 +49,8 @@ require([
 
 	var gMaps,
 		gMapVersion,
-		gMapId;
+		gMapId,
+		gReports;
 	
 $(document).ready(function() {
 	
@@ -130,6 +131,18 @@ $(document).ready(function() {
     
     // Respond to custom report upload
     $('#submitCustomReport').click( function() {
+    	var reportName = $('#report_name').val(),
+    		fileName = $('#report_file').val();
+    	
+    	if(!reportName || reportName.trim().length == 0) {
+    		$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_val_nm"]);
+    		return false;
+    	}
+    	if(!fileName || fileName.trim().length == 0) {
+    		$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_val_file"]);
+    		return false;
+    	}
+    	
     	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
     });
     
@@ -182,7 +195,36 @@ $(document).ready(function() {
      */
 	$('#addReport').click(function(){
 		$('.panel_msg').hide();
+		document.forms.namedItem("crupload").reset();
 		$('#addReportPopup').modal("show");
+	});
+	getReports();
+	
+	// On change of report name, hide any previous results
+	$('#templateName').keydown(function(){
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
+	});
+
+	// Change function on file selected
+	$('#report_file').change(function(){
+		var reportName = $('#report_name').val(),
+			$this = $(this),
+			fileName = $this[0].files[0].name,
+			newReportName;
+		
+		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
+		
+		if(reportName && reportName.trim().length > 0) {
+			// ignore - leave user specified name
+		} else {
+			var lastDot = fileName.lastIndexOf(".");
+		    if (lastDot === -1) {
+		    	newReportName = fileName;
+		    } else {
+		    	newReportName = fileName.substr(0, lastDot);
+		    }
+			$('#report_name').val(newReportName);
+		}
 	});
 	
 	enableUserProfileBS();
@@ -284,7 +326,7 @@ function saveMap() {
 }	
 
 /*
- * The the shared maps from the server
+ * Get the shared maps from the server
  */
 function getMaps() {
 
@@ -430,6 +472,55 @@ function delete_map(id) {
 }
 
 /*
+ * Get the shared reports from the server
+ */
+function getReports() {
+
+	var url="/surveyKPI/custom_reports";
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			gReports = data;
+			refreshCustomReportView(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of reports: " + err);
+			}
+		}
+	});	
+
+}
+
+function deleteCustomReport(id) {
+	addHourglass();
+	$.ajax({
+		  type: "DELETE",
+		  url: "/surveyKPI/custom_reports/" + id,
+		  success: function(data, status) {
+			  removeHourglass();
+			  getReports();
+		  },
+		  error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert(localise.set["msg_err_del"] + xhr.responseText);
+				}
+			}
+	});
+}
+
+/*
  * Show the NFC tags
  */
 function refreshLocationView(tags) {
@@ -475,44 +566,76 @@ function refreshLocationView(tags) {
 	}
 }
 
+
 /*
  * Show the Custom Reports
  */
-function refreshCustomReportView(reports) {
+function refreshCustomReportView(data) {
 	
-	var i,
-		survey = globals.model.survey,
-		$element,
+	var $selector = $('#cr_list'),
+		i, 
 		h = [],
 		idx = -1;
 
 	$('.panel_msg').show();
 	$('#addReportPopup').modal("hide");
 	
-	if(reports) {
-
-		$element = $('#reportList');
-		
+	data = data || [];
+	gReports = data;
+	
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_type"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+	
+	for(i = 0; i < data.length; i++) {
+	
 		h[++idx] = '<tr>';
 		
-		for(i = 0; i < reports.length; i++){
-			h[++idx] = '<tr>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = reports[i].name;
-			h[++idx] = '</td>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = reports[i].type;
-			h[++idx] = '</td>';
-			
-			h[++idx] = '</tr>';
-			
-		}
-		
+		// name
+		h[++idx] = '<td>';
+		h[++idx] = data[i].name;
+		h[++idx] = '</td>';
 	
-		$element.html(h.join(""));
+		// type
+		h[++idx] = '<td>';
+		h[++idx] = data[i].type;
+		h[++idx] = '</td>';
+		
+
+		
+		// actions
+		h[++idx] = '<td>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm rm_cr danger">';
+		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '</td>';
+		// end actions
+		
+		h[++idx] = '</tr>';
 	}
+	
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+	
+	$selector.empty().append(h.join(''));
+	
+	$(".rm_cr", $selector).click(function(){
+		var idx = $(this).data("idx");
+		if(confirm(localise.set["msg_confirm_del"] + " " + gReports[idx].name)) {
+			deleteCustomReport(gReports[idx].id);
+		}
+	});
+	
+	
 }
+
 });
 

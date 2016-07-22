@@ -22,7 +22,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-public class ReportItem {
+public class CustomReportItem {
 	public int id;
 	public String name;
 	public String type;

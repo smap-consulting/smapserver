@@ -249,21 +249,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
     </div>
     
     <div id="crPanel" style="display:none;">
+    
+    <div class="container">
+		
     	<div class="container">
     		<div class="panel_msg upload_file_msg alert alert-success mediaManage" role="alert"></div>
 			<div class = "well">	
 				<a id="addReport" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Report">add</a>
 				<div class="table-responsive">
-					<table>
-						<thead>
-		   					<tr>
-		   						<th class="lang" data-lang="c_name">name</th>
-		   						<th class="lang" data-lang="c_type">type</th>
-		   					</tr>
-		   				</thead>
-		   				<tbody id="reportList">
-		   				</tbody>
-		   			</table>
+					<div id = "cr_list"></div>
+						
 				</div>
 			</div>
 		</div>
@@ -362,10 +357,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
     			</div>
     			
 		    <div class="modal-body">
-		    	<div class="panel_msg upload_file_msg alert alert-success mediaManage" role="alert"></div>
+		    	<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
 				<form id="report_edit_form" class="form-horizontal" role="form" enctype="multipart/form-data" name="crupload">
 					<div class="form-group">
-						<label class="lang col-sm-2 control-label" data-lang="c_name" for="map_name">name</label>
+						<label class="lang col-sm-2 control-label" data-lang="c_name" for="report_name">name</label>
 						<div class="col-sm-10">
 							<input type="text" id="report_name" name="name" class="form-control" 
 								placeholder="report name" 

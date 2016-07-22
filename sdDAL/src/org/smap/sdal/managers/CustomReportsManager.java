@@ -6,10 +6,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.ws.rs.core.Response;
+
 import org.smap.sdal.model.NameId;
-import org.smap.sdal.model.ReportItem;
+import org.smap.sdal.Utilities.AuthorisationException;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -78,11 +84,11 @@ public class CustomReportsManager {
 	/*
 	 * get a list of reports for a select list
 	 */
-	public ArrayList<NameId> getList(Connection sd, int oId, String type) throws SQLException {
+	public ArrayList<CustomReportItem> getList(Connection sd, int oId, String type) throws SQLException {
 		
-		ArrayList<NameId> reports = new ArrayList<NameId> ();
+		ArrayList<CustomReportItem> reports = new ArrayList<CustomReportItem> ();
 		
-		String sql1 = "select id, name from custom_report where o_id = ? ";
+		String sql1 = "select id, name, type from custom_report where o_id = ? ";
 		String sql2 = "and type = ? ";
 		String sql3 = "order by name asc";
 		
@@ -105,9 +111,10 @@ public class CustomReportsManager {
 			ResultSet rs = pstmt.executeQuery();
 			
 			while(rs.next()) {
-				NameId item = new NameId();
+				CustomReportItem item = new CustomReportItem();
 				item.id = rs.getInt(1);
 				item.name = rs.getString(2);
+				item.type = rs.getString(3);
 				reports.add(item);
 			}
 			
@@ -119,40 +126,7 @@ public class CustomReportsManager {
 		
 	}
 	
-	/*
-	 * Get a list of reports with full details
-	 */
-	public ArrayList<ReportItem> getCustomReports(Connection sd, int oId) throws SQLException {
-		
-		ArrayList<ReportItem> reports = new ArrayList<ReportItem> ();
-		
-		String sql = "select id, name, type from custom_report where o_id = ? "
-				+ "order by name asc";
-		
-		PreparedStatement pstmt = null;
-		
-		try {
-			
-			pstmt = sd.prepareStatement(sql);
-			
-			pstmt.setInt(1, oId);
-			ResultSet rs = pstmt.executeQuery();
-			
-			while(rs.next()) {
-				ReportItem item = new ReportItem();
-				item.id = rs.getInt(1);
-				item.name = rs.getString(2);
-				reports.add(item);
-			}
-			
-		} finally {
-			try {pstmt.close();} catch(Exception e) {};
-		}
-		
-		return reports;
-		
-	}
-	
+
 	/*
 	 * Get a report from the database
 	 */
@@ -187,6 +161,53 @@ public class CustomReportsManager {
 		}
 		
 		return config;
+	}
+	
+	/*
+	 * Delete a report
+	 */
+	public void delete(Connection sd, int oId, int id) throws Exception {
+		
+		String sqlManaged = "select s.s_id, s.display_name "
+				+ "from survey s, project p "
+				+ "where s.managed_id = ? "
+				+ "and s.p_id = p.id "
+				+ "and p.o_id = ?";
+		PreparedStatement pstmtManaged = null;
+		
+		String sql = "delete from custom_report "
+				+ "where id = ? "
+				+ "and o_id = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			ResultSet resultSet = null;
+
+			pstmtManaged = sd.prepareStatement(sqlManaged);	
+			pstmtManaged.setInt(1, id);	
+			pstmtManaged.setInt(2, oId);	
+			log.info("Delete report, check managed: " + pstmtManaged.toString());
+
+			resultSet = pstmtManaged.executeQuery();
+			if(resultSet.next()) {
+				throw new Exception("Report is used by: " + resultSet.getString(2) + " unlink it before deleting");
+			}
+			resultSet.close();
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);	
+			pstmt.setInt(2, oId);	
+			log.info("Delete report: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+
+		} finally {
+			
+			try {if (pstmtManaged != null) {pstmtManaged.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+		}
 	}
 
 }

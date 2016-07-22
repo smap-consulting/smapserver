@@ -48,7 +48,7 @@ import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeSet;
-import org.smap.sdal.model.ReportItem;
+import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
@@ -481,7 +481,7 @@ public class UploadFiles extends Application {
 					crm.save(sd, reportName, config, oId, "oversight");
 					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
 					
-					ArrayList<ReportItem> reportsList = crm.getCustomReports(sd, oId);
+					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, null);
 					// Return custom report list			 
 					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(reportsList);
