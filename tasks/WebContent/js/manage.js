@@ -170,6 +170,32 @@ require([
 					gSelectedSurvey, 
 					$('#newOversightForm').val());	
 		});
+		
+		/*
+		 * Respond to adding report
+		 */
+		$('#addReport').click(function(){
+			$('.panel_msg').hide();
+			document.forms.namedItem("crupload").reset();
+			$('#addReportPopup').modal("show");
+		});
+		
+		// Respond to custom report upload
+	    $('#submitCustomReport').click( function() {
+	    	var reportName = $('#report_name').val(),
+	    		fileName = $('#report_file').val();
+	    	
+	    	if(!reportName || reportName.trim().length == 0) {
+	    		$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_val_nm"]);
+	    		return false;
+	    	}
+	    	if(!fileName || fileName.trim().length == 0) {
+	    		$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_val_file"]);
+	    		return false;
+	    	}
+	    	
+	    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
+	    });
      });
 	 
 	 /*
@@ -191,7 +217,7 @@ require([
 	  * Called after the user details have been retrieved
 	  */
 	 function getSurveyList() {
-		 loadOversightForms();
+		 getReports(showReportList, refreshCustomReportView, "oversight");
 		 loadManagedSurveys(globals.gCurrentProject, managedSurveysLoaded);
 	 }
 	 
@@ -338,59 +364,6 @@ require([
 		
 		return h.join('');
 	} 
-	
-	/*
-	 * Get a list of the available oversight forms that can be added to a survey
-	 */
-	function loadOversightForms() {
-		addHourglass();
-
-		var url="/surveyKPI/custom_reports?type=oversight";
-		
- 		$.ajax({
- 			url: url,
- 			dataType: 'json',
- 			cache: false,
- 			success: function(data) {
- 				
- 				var h = [],
- 					idx = -1,
- 					i;
- 				
- 				removeHourglass();
- 				
- 				if(data.length === 0) {
- 					$('.selectmanaged').hide();
- 					$('.no_oversight').show();
- 				} else {
- 					$('.no_oversight').hide();
- 					$('.selectmanaged').show();
- 					
- 					h[++idx] = '<option value="0">';
- 					h[++idx] = localise.set["c_none"];
- 					h[++idx] = '</option>';
- 					for(i = 0; i < data.length; i++) {
- 						h[++idx] = '<option value="';
- 						h[++idx] = data[i].id;
- 						h[++idx] = '">';
- 						h[++idx] = data[i].name;
- 						h[++idx] = '</option>';
- 					}
- 					$('.oversightForms').empty().html(h.join(''));
- 				}
- 				
- 			},
- 			error: function(xhr, textStatus, err) {
- 				
- 				removeHourglass();
- 				if(xhr.readyState == 0 || xhr.status == 0) {
- 		              return;  // Not an error
- 				} else {
- 					alert("Error: Failed to get list of oversight forms: " + err);
- 				}
- 			}
- 		});	
-	}
 	
 	/*
 	 * Get surveys and update the survey lists on this page

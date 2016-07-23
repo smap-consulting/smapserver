@@ -138,6 +138,13 @@
 				        			
 				        			<div id="reports-view" class="tab-pane">
 				                		<div class="panel-body">
+											<div class = "well">	
+												<a id="addReport" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Report">add</a>
+												<div class="table-responsive">
+													<div id = "cr_list"></div>
+														
+												</div>
+											</div>
 				                		</div>
 				                	</div>
 				        		</div>
@@ -184,7 +191,7 @@
 							
 							<label class="lang col-sm-4 control-label" data-lang="mf_of" for="newOversightForm">of</label>
 							<div class="col-sm-8">
-								<select class="oversightForms form-control" id="newOversightForm"></select>
+								<select class="customReportList form-control" id="newOversightForm"></select>
 							</div>
 						</form>
 					</div>
@@ -211,7 +218,7 @@
 						<form id="changeSurveyForm" role="form">
 							<label class="lang col-sm-4 control-label" data-lang="mf_of" for="newOversightForm">of</label>
 							<div class="col-sm-8">
-								<select class="oversightForms form-control" id="changeOversightForm"></select>
+								<select class="customReportList form-control" id="changeOversightForm"></select>
 							</div>
 						</form>
 					</div>
@@ -225,6 +232,47 @@
 	</div>
 </div>
 
+<!-- Popup to allow the user to add a report -->
+<div id="addReportPopup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addReportLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+    			<div class="modal-header">
+      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+      				<h4 class="modal-title lang" id="addReportLabel" data-lang="sr_cr">reports</h4>
+    			</div>
+    			
+		    <div class="modal-body">
+		    	<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
+				<form id="report_edit_form" class="form-horizontal" role="form" enctype="multipart/form-data" name="crupload">
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_name" for="report_name">name</label>
+						<div class="col-sm-10">
+							<input type="text" id="report_name" name="name" class="form-control" 
+								placeholder="report name" 
+								required>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-sm-2 control-label lang" data-lang="c_file" for="report_file"></label> 
+						<div class="col-sm-10">
+							<input accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+								type="file" class="form-control" name="filename" id="report_file" required/>
+						</div>
+					</div>
+					
+					<input type="hidden" name="type" value="oversight">
+					<input type="hidden" name="returntype" value="oversight">
+					
+				</form>
+				<div class="modal-footer">
+                	<button type="button" class="btn btn-default lang" data-lang="c_close" data-dismiss="modal">Close</button>
+                	<button id="submitCustomReport" type="button" class="btn btn-primary lang" data-lang="c_upload">Upload</button>
+        		</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

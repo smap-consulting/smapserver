@@ -576,7 +576,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
  * Upload files to the server
  * Writes status to   .upload_file_msg
  */
-function uploadFiles(url, formName, callback, sId) {
+function uploadFiles(url, formName, callback, param) {
    	
 	var f = document.forms.namedItem(formName),
 		formData = new FormData(f);
@@ -600,9 +600,9 @@ function uploadFiles(url, formName, callback, sId) {
         success: function(data) {
 			removeHourglass();
 			$('#submitFiles').removeClass('disabled');
-			var surveyId = sId;
+			var callbackParam = param;
 	       	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html(localise.set["c_success"]);
-        	callback(data, surveyId);
+        	callback(data, callbackParam);
         	document.forms.namedItem(formName).reset();
         	
         },
@@ -2008,6 +2008,166 @@ function addGoogleMapLayers(map) {
 function remoteSurveyChanged() {
 	$('#fwd_rem_survey_id').val($('#fwd_rem_survey :selected').val());
 	$('#fwd_rem_survey_nm').val($('#fwd_rem_survey :selected').text());
+}
+
+/*
+ * Get a list of custom reports
+ */
+function getReports(callback1, callback2, type) {
+
+	var url="/surveyKPI/custom_reports";
+	
+	if(type) {
+		url += "?type=" + type;
+	}
+	
+	addHourglass();
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.gReports = data;
+			if(typeof callback1 === "function") {
+				callback1(data);
+			}
+			if(typeof callback2 === "function") {
+				callback2(data);
+			}
+				
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of reports: " + err);
+			}
+		}
+	});	
+
+}
+
+/*
+ * Allow the user to pick a report
+ */
+function showReportList(data) {
+	var h = [],
+		idx = -1,
+		i;
+	
+	removeHourglass();
+	
+	if(data.length === 0) {
+		
+		// Enable / disable elements specifically for managed forms
+		$('.selectmanaged').hide();
+		$('.no_oversight').show();
+	} else {
+		$('.no_oversight').hide();
+		$('.selectmanaged').show();
+		
+		h[++idx] = '<option value="0">';
+		h[++idx] = localise.set["c_none"];
+		h[++idx] = '</option>';
+		for(i = 0; i < data.length; i++) {
+			h[++idx] = '<option value="';
+			h[++idx] = data[i].id;
+			h[++idx] = '">';
+			h[++idx] = data[i].name;
+			h[++idx] = '</option>';
+		}
+		$('.customReportList').empty().html(h.join(''));
+	}
+}
+
+/*
+ * Show the Custom Reports in a table
+ */
+function refreshCustomReportView(data) {
+	
+	var $selector = $('#cr_list'),
+		i, 
+		h = [],
+		idx = -1;
+
+	$('.panel_msg').show();
+	$('#addReportPopup').modal("hide");
+	
+	data = data || [];
+	globals.gReports = data;
+	
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
+	h[++idx] = '<th>' + localise.set["c_type"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+	
+	for(i = 0; i < data.length; i++) {
+	
+		h[++idx] = '<tr>';
+		
+		// name
+		h[++idx] = '<td>';
+		h[++idx] = data[i].name;
+		h[++idx] = '</td>';
+	
+		// type
+		h[++idx] = '<td>';
+		h[++idx] = data[i].type;
+		h[++idx] = '</td>';
+
+		// actions
+		h[++idx] = '<td>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm rm_cr danger">';
+		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '</td>';
+		// end actions
+		
+		h[++idx] = '</tr>';
+	}
+	
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+	
+	$selector.empty().append(h.join(''));
+	
+	$(".rm_cr", $selector).click(function(){
+		var idx = $(this).data("idx");
+		if(confirm(localise.set["msg_confirm_del"] + " " + globals.gReports[idx].name)) {
+			deleteCustomReport(globals.gReports[idx].id);
+		}
+	});
+	
+	
+}
+
+function deleteCustomReport(id) {
+	addHourglass();
+	$.ajax({
+		  type: "DELETE",
+		  url: "/surveyKPI/custom_reports/" + id,
+		  success: function(data, status) {
+			  removeHourglass();
+			  getReports(refreshCustomReportView, undefined, undefined);
+		  },
+		  error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert(localise.set["msg_err_del"] + xhr.responseText);
+				}
+			}
+	});
 }
 
 /*

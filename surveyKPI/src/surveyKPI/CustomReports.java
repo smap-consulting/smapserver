@@ -28,15 +28,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
-import org.smap.sdal.managers.NotificationManager;
-import org.smap.sdal.model.NameId;
 import org.smap.sdal.model.CustomReportItem;
 
 import com.google.gson.Gson;

@@ -397,11 +397,8 @@ public class UploadFiles extends Application {
 			@Context HttpServletRequest request
 			) throws IOException {
 		
-		String reportName = null;
-		
 		Response response = null;
 		
-		System.out.println("Clled");
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 		
 		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
@@ -421,6 +418,9 @@ public class UploadFiles extends Application {
 			FileItem fileItem = null;
 			String filetype = null;
 			String fieldName = null;
+			String reportName = null;
+			String reportType = null;
+			String returnType = null;
 
 			while(itr.hasNext()) {
 				
@@ -431,6 +431,10 @@ public class UploadFiles extends Application {
 					fieldName = item.getFieldName();
 					if(fieldName.equals("name")) {
 						reportName = item.getString();
+					} else if(fieldName.equals("type")) {
+						reportType = item.getString();
+					} else if(fieldName.equals("returntype")) {
+						returnType = item.getString();
 					}
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
@@ -478,10 +482,10 @@ public class UploadFiles extends Application {
 					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
 					CustomReportsManager crm = new CustomReportsManager();
-					crm.save(sd, reportName, config, oId, "oversight");
+					crm.save(sd, reportName, config, oId, reportType);
 					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
 					
-					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, null);
+					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, returnType);
 					// Return custom report list			 
 					Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					String resp = gson.toJson(reportsList);

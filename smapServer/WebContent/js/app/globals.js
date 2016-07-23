@@ -79,6 +79,8 @@ define(function() {
 		
 		gMainTable: undefined,			// Data tables
 		
+		gReports: undefined,			// reports
+		
 		model: new Model()
 
 	}

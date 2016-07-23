@@ -251,6 +251,7 @@ define({
 	"a_mb": "Marked Bad",
 	"a_cm": "Cluster Members",
 	"a_dv": "Show Details",
+	"a_rd": "Report Definition",
 	
 	
 	// Messages

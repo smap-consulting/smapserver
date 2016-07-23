@@ -49,8 +49,7 @@ require([
 
 	var gMaps,
 		gMapVersion,
-		gMapId,
-		gReports;
+		gMapId;
 	
 $(document).ready(function() {
 	
@@ -198,7 +197,7 @@ $(document).ready(function() {
 		document.forms.namedItem("crupload").reset();
 		$('#addReportPopup').modal("show");
 	});
-	getReports();
+	getReports(refreshCustomReportView, undefined, undefined);
 	
 	// On change of report name, hide any previous results
 	$('#templateName').keydown(function(){
@@ -472,55 +471,6 @@ function delete_map(id) {
 }
 
 /*
- * Get the shared reports from the server
- */
-function getReports() {
-
-	var url="/surveyKPI/custom_reports";
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			gReports = data;
-			refreshCustomReportView(data);
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				console.log("Error: Failed to get list of reports: " + err);
-			}
-		}
-	});	
-
-}
-
-function deleteCustomReport(id) {
-	addHourglass();
-	$.ajax({
-		  type: "DELETE",
-		  url: "/surveyKPI/custom_reports/" + id,
-		  success: function(data, status) {
-			  removeHourglass();
-			  getReports();
-		  },
-		  error: function(xhr, textStatus, err) {
-				removeHourglass();
-				if(xhr.readyState == 0 || xhr.status == 0) {
-		              return;  // Not an error
-				} else {
-					alert(localise.set["msg_err_del"] + xhr.responseText);
-				}
-			}
-	});
-}
-
-/*
  * Show the NFC tags
  */
 function refreshLocationView(tags) {
@@ -564,77 +514,6 @@ function refreshLocationView(tags) {
 	
 		$element.html(h.join(""));
 	}
-}
-
-
-/*
- * Show the Custom Reports
- */
-function refreshCustomReportView(data) {
-	
-	var $selector = $('#cr_list'),
-		i, 
-		h = [],
-		idx = -1;
-
-	$('.panel_msg').show();
-	$('#addReportPopup').modal("hide");
-	
-	data = data || [];
-	gReports = data;
-	
-	h[++idx] = '<table class="table">';
-	h[++idx] = '<thead>';
-	h[++idx] = '<tr>';
-	h[++idx] = '<th>' + localise.set["c_name"], + '</th>';
-	h[++idx] = '<th>' + localise.set["c_type"] + '</th>';
-	h[++idx] = '</tr>';
-	h[++idx] = '</thead>';
-	h[++idx] = '<tbody class="table-striped">';
-	
-	for(i = 0; i < data.length; i++) {
-	
-		h[++idx] = '<tr>';
-		
-		// name
-		h[++idx] = '<td>';
-		h[++idx] = data[i].name;
-		h[++idx] = '</td>';
-	
-		// type
-		h[++idx] = '<td>';
-		h[++idx] = data[i].type;
-		h[++idx] = '</td>';
-		
-
-		
-		// actions
-		h[++idx] = '<td>';
-		
-		h[++idx] = '<button type="button" data-idx="';
-		h[++idx] = i;
-		h[++idx] = '" class="btn btn-default btn-sm rm_cr danger">';
-		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
-		
-		h[++idx] = '</td>';
-		// end actions
-		
-		h[++idx] = '</tr>';
-	}
-	
-	h[++idx] = '</tbody>';
-	h[++idx] = '</table>';
-	
-	$selector.empty().append(h.join(''));
-	
-	$(".rm_cr", $selector).click(function(){
-		var idx = $(this).data("idx");
-		if(confirm(localise.set["msg_confirm_del"] + " " + gReports[idx].name)) {
-			deleteCustomReport(gReports[idx].id);
-		}
-	});
-	
-	
 }
 
 });

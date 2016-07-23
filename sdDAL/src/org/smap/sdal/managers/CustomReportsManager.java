@@ -190,8 +190,17 @@ public class CustomReportsManager {
 			log.info("Delete report, check managed: " + pstmtManaged.toString());
 
 			resultSet = pstmtManaged.executeQuery();
-			if(resultSet.next()) {
-				throw new Exception("Report is used by: " + resultSet.getString(2) + " unlink it before deleting");
+			boolean inUse = false;
+			String formsUsingReport = "";
+			while(resultSet.next()) {
+				inUse = true;
+				if(formsUsingReport.length() > 0) {
+					formsUsingReport += ", ";
+				}
+				formsUsingReport += resultSet.getString(2);
+			}
+			if(inUse) {
+				throw new Exception("Report is used by: " +  formsUsingReport + " unlink it before deleting");
 			}
 			resultSet.close();
 			

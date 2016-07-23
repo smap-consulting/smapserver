@@ -224,6 +224,8 @@ $(document).ready(function() {
 		} else if(format === "lqas") {
 			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
 			$('.showlqas').show();
+			getReports(showReportList, undefined, "lqas");
+			
 		} else {
 			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 			$('.showxls,.showspreadsheet,.showro,.showlang').show();
