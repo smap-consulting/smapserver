@@ -198,25 +198,33 @@
 	</div>
 </div>
 
-<!-- Modal to edit the configuration of a managed survey -->
-<div id="editSurveyConfig" class="modal fade" aria-hidden="true">
+<!-- Modal to change the managed survey -->
+<div id="changeManagedSurvey" class="modal fade" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-body">
 				<div class="row">
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b">Select Form</h3>
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b">Select Form</h3>
 
-						
-					</div>
-					<div class="col-sm-6"><h4>Questions</h4>
-						<p>Select the questions you want to include and those that you want to be always visible.</p>
-						
+						<p class="lang" data-lang="mf_sel"></p>
+
+						<form id="changeSurveyForm" role="form">
+							<label class="lang col-sm-4 control-label" data-lang="mf_of" for="newOversightForm">of</label>
+							<div class="col-sm-8">
+								<select class="oversightForms form-control" id="changeOversightForm"></select>
+							</div>
+						</form>
 					</div>
 				</div>
 			</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+					<button id="managedSurveyChange" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
 		</div>
 	</div>
 </div>
+
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

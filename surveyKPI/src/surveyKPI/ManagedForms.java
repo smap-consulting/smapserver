@@ -175,18 +175,18 @@ public class ManagedForms extends Application {
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		AddManaged am = gson.fromJson(settings, AddManaged.class);
 		
-		String sql = "update survey set managed_id = ? where s_id = ?;";
-		PreparedStatement pstmt = null;
-		
-		String sqlAdd = null;
-		PreparedStatement pstmtAdd = null;
-		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), am.sId, false);
 		// End Authorisation
 
+		String sql = "update survey set managed_id = ? where s_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		String sqlAdd = null;
+		PreparedStatement pstmtAdd = null;
+		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
 		
 		try {
@@ -194,9 +194,11 @@ public class ManagedForms extends Application {
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
 			
 			// 1. Create results tables if they do not exist
-			TableManager tm = new TableManager();
-			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-			tm.createTable(cResults, sd, f.tableName, sIdent, am.sId);
+			if(am.manageId > 0) {
+				TableManager tm = new TableManager();
+				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+				tm.createTable(cResults, sd, f.tableName, sIdent, am.sId);
+			}
 			
 			
 			sd.setAutoCommit(false);
@@ -210,46 +212,48 @@ public class ManagedForms extends Application {
 			pstmt.executeUpdate();
 			
 			// 3.  Add the data processing columns to the results table
-			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, am.manageId, columns, null);
-			
-			for(int i = 0; i < columns.size(); i++) {
-				TableColumn tc = columns.get(i);
-				if(tc.type != null) {
-					
-					if(tc.type.equals("calculate")) {
-						continue;		// Calculated types are not stored in the database
-					}
-					
-					String type;
-					if(tc.type.equals("select_one")) {
-						type = "text";
-					} else {
-						type = tc.type;
-					}
-					
-					if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
-						sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
-						if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
+			if(am.manageId > 0) {
+				ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+				ManagedFormsManager qm = new ManagedFormsManager();
+				qm.getDataProcessingConfig(sd, am.manageId, columns, null);
+				
+				for(int i = 0; i < columns.size(); i++) {
+					TableColumn tc = columns.get(i);
+					if(tc.type != null) {
 						
-						pstmtAdd = cResults.prepareStatement(sqlAdd);
-						log.info("Adding management column: " + pstmtAdd.toString());
-						try {
-							pstmtAdd.executeUpdate();
-						} catch (Exception e) {
-							String msg = e.getMessage();
-							if(msg.contains("already exists")) {
-								log.info("Management column already exists");
-							} else {
-								throw e;
-							}
-						} finally {
-							pstmtAdd.close();
+						if(tc.type.equals("calculate")) {
+							continue;		// Calculated types are not stored in the database
 						}
+						
+						String type;
+						if(tc.type.equals("select_one")) {
+							type = "text";
+						} else {
+							type = tc.type;
+						}
+						
+						if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
+							sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
+							if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
+							
+							pstmtAdd = cResults.prepareStatement(sqlAdd);
+							log.info("Adding management column: " + pstmtAdd.toString());
+							try {
+								pstmtAdd.executeUpdate();
+							} catch (Exception e) {
+								String msg = e.getMessage();
+								if(msg.contains("already exists")) {
+									log.info("Management column already exists");
+								} else {
+									throw e;
+								}
+							} finally {
+								pstmtAdd.close();
+							}
+						}
+					} else {
+						log.info("Error: managed column not added as type was null: " + tc.name);
 					}
-				} else {
-					log.info("Error: managed column not added as type was null: " + tc.name);
 				}
 			}
 			

@@ -94,7 +94,9 @@ require([
 		gManageId = undefined,
 		gUpdate = [],
 		gCurrentIndex,
-		gPriKey;
+		gPriKey,
+		gManagedForms,
+		gSelectedSurvey;
 	
 	 $(document).ready(function() {
 
@@ -157,6 +159,15 @@ require([
 		$('#managedSurveyCreate').click(function(){
 			createManagedSurvey(
 					$('#newManagedSurvey').val(), 
+					$('#newOversightForm').val());	
+		});
+		
+		/*
+		 * Change the oversight form associated with a managed survey
+		 */
+		$('#managedSurveyChange').click(function(){
+			createManagedSurvey(
+					gSelectedSurvey, 
 					$('#newOversightForm').val());	
 		});
      });
@@ -355,6 +366,9 @@ require([
  					$('.no_oversight').hide();
  					$('.selectmanaged').show();
  					
+ 					h[++idx] = '<option value="0">';
+ 					h[++idx] = localise.set["c_none"];
+ 					h[++idx] = '</option>';
  					for(i = 0; i < data.length; i++) {
  						h[++idx] = '<option value="';
  						h[++idx] = data[i].id;
@@ -362,7 +376,7 @@ require([
  						h[++idx] = data[i].name;
  						h[++idx] = '</option>';
  					}
- 					$('#newOversightForm').empty().html(h.join(''));
+ 					$('.oversightForms').empty().html(h.join(''));
  				}
  				
  			},
@@ -410,6 +424,8 @@ require([
 	 				
 	 				removeHourglass();
 	 				
+	 				gManagedForms = data;
+	 				
 	 				hT[++idxT] = '<table class="table">';
 	 				hT[++idxT] = '<thead>';
 	 				hT[++idxT] = '<tr>';
@@ -431,12 +447,23 @@ require([
 	 						hNT[++idxNT] = '</option>';
 	 					} else {
 	 						hT[++idxT] = '<tr>';
-	 							hT[++idxT] = '<td data-toggle="true">';
+	 							hT[++idxT] = '<td>';
 	 							hT[++idxT] = item.surveyName;
 	 							hT[++idxT] = '</td>';
 	 							hT[++idxT] = '<td>';
 	 							hT[++idxT] = item.oversightName;
 	 							hT[++idxT] = '</td>';
+	 							
+	 							// actions
+	 			 				hT[++idxT] = '<td>';
+	 			 				
+	 			 				hT[++idxT] = '<button type="button" data-idx="';
+	 			 				hT[++idxT] = i;
+	 			 				hT[++idxT] = '" class="btn btn-default btn-sm edit_link btn-info">';
+	 			 				hT[++idxT] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
+	 			 				
+	 			 				hT[++idxT] = '</td>';
+	 			 				// end actions
 	 						hT[++idxT] = '</tr>';
 	 					}
 	 					
@@ -456,6 +483,11 @@ require([
 	 				
 	 				$elemNonTracking.empty().html(hNT.join(''));
 	 				$elemTracking.empty().html(hT.join(''));
+	 				
+	 				$(".edit_link", $elemTracking).click(function(){
+	 					var idx = $(this).data("idx");
+	 					editManagedForm(idx);
+	 				});
 	 				
 	 				if(typeof callback == "function") {
 	 					callback();
@@ -484,6 +516,15 @@ require([
 	 	}
 	 }
 	
+	 /*
+	  * Edit the link between a form and an oversight form
+	  */
+	 function editManagedForm(idx) {
+		 $('#changeOversightForm').val(gManagedForms[idx].managedId);
+		 gSelectedSurvey = gManagedForms[idx].sId;
+		 $('#changeManagedSurvey').modal("show");
+	 }
+	 
 	 /*
 	  * Get the columns for a survey
 	  */
