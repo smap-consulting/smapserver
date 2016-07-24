@@ -561,25 +561,27 @@ public class TaskManager {
 				"geo_type, ";
 				
 		String insertSql2 =	
-				"initial_data," +
-				"update_id," +
-				"address," +
-				"schedule_at," +
-				"location_trigger) " +
-			"values (" +
-				"?, " + 
-				"?, " + 
-				"'xform', " +
-				"?, " +
-				"?, " +
-				"?, " +
-				"?, " +	
-				"ST_GeomFromText(?, 4326), " +
-				"?, " +
-				"?, " +
-				"?," +
-				"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
-				"?);";	
+				"initial_data,"
+				+ "update_id,"
+				+ "address,"
+				+ "schedule_at,"
+				+ "location_trigger,"
+				+ "guidance"
+			+ "values ("
+				+ "?, " 
+				+ "?, " 
+				+ "'xform', "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "	
+				+ "ST_GeomFromText(?, 4326), "
+				+ "?, "
+				+ "?, "
+				+ "?,"
+				+ "now() + interval '7 days',"  // Schedule for 1 week (TODO allow user to set)
+				+ "?. "
+				+ "?);";	
 		
 		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
 		
@@ -650,6 +652,7 @@ public class TaskManager {
 			pstmt.setString(9, targetInstanceId);
 			pstmt.setString(10, tid.address);
 			pstmt.setString(11, tid.locationTrigger);
+			pstmt.setString(12, tid.address);	// Write the address into guidance
 			
 			System.out.println("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -781,28 +784,30 @@ public class TaskManager {
 				"geo_type, ";
 				
 		String insertSql2 =	
-				"initial_data," +
-				"update_id," +
-				"address," +
-				"schedule_at," +
-				"schedule_finish," +
-				"location_trigger,"
-				+ "repeat) " +
-			"values (" +
-				"?, " + 
-				"?, " + 
-				"'xform', " +
-				"?, " +
-				"?, " +
-				"?, " +
-				"?, " +	
-				"ST_GeomFromText(?, 4326), " +
-				"?, " +
-				"?, " +
-				"?," +
-				"?," + 
-				"?," + 
-				"?,"
+				"initial_data,"
+				+ "update_id,"
+				+ "address,"
+				+ "schedule_at,"
+				+ "schedule_finish,"
+				+ "location_trigger,"
+				+ "repeat,"
+				+ "guidance) "
+			+ "values ("
+				+ "?, "
+				+ "?, "
+				+ "'xform', "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "	
+				+ "ST_GeomFromText(?, 4326), "
+				+ "?, "
+				+ "?, "
+				+ "?,"
+				+ "?,"
+				+ "?,"
+				+ "?,"
+				+ "?,"
 				+ "?);";	
 		PreparedStatement pstmt = null;
 		
@@ -932,6 +937,7 @@ public class TaskManager {
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
 			pstmt.setBoolean(14, tf.properties.repeat);
+			pstmt.setString(15, tf.properties.guidance);
 			
 			log.info("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();

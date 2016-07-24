@@ -295,6 +295,7 @@ define({
 	"msg_csv": "Only CSV files and Zip files containing CSV and media files are allowed",
 	"msg_inv_email": "Not a valid email address",
 	"msg_cs": "Click to filter or sort on this column",
+	"msg_tg_ns": "Task group not selected",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -338,6 +339,7 @@ define({
 	"t_id": "Initial Data",
 	"t_n_s": "Tasks without start time",
 	"t_drag": "Drag a task and drop onto calendar",
+	"t_g": "Guidance",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
