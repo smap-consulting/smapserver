@@ -39,6 +39,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Geometry;
+import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.Task;
@@ -47,13 +48,16 @@ import org.smap.sdal.model.TaskLocation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
+import model.Settings;
 import taskModel.FieldTaskSettings;
 import taskModel.FormLocator;
 import taskModel.PointEntry;
 import taskModel.TaskCompletionInfo;
 import taskModel.TaskResponse;
 
+import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -72,11 +76,14 @@ public class MyAssignments extends Application {
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
 	
-	// Tell class loader about the root classes.  
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(MyAssignments.class);
-		return s;
+	class KeyValue {
+		String name;
+		String value;
+		
+		public KeyValue(String k, String v) {
+			name = k;
+			value = v;
+		}
 	}
 
 	/*
@@ -220,6 +227,7 @@ public class MyAssignments extends Application {
 					"a.status as assignment_status," +
 					"a.id as assignment_id, " +
 					"t.address as address, " +
+					"t.guidance as guidance, " +
 					"t.geo_type as geo_type " +
 					"from tasks t, assignments a, users u, survey s, user_project up, project p " +
 					"where t.id = a.task_id " +
@@ -271,8 +279,12 @@ public class MyAssignments extends Application {
 				ta.task.update_id = resultSet.getString("update_id");
 				ta.task.scheduled_at = resultSet.getTimestamp("schedule_at");
 				ta.task.location_trigger = resultSet.getString("location_trigger");
+				if(ta.task.location_trigger != null && ta.task.location_trigger.trim().length() == 0) {
+					ta.task.location_trigger = null;
+				}
 				ta.task.repeat = resultSet.getBoolean("repeat");
 				ta.task.address = resultSet.getString("address");
+				ta.task.address = addKeyValuePair(ta.task.address, "guidance", resultSet.getString("guidance"));	// Address stored as json key value pairs
 				
 				ta.assignment.assignment_id = resultSet.getInt("assignment_id");
 				ta.assignment.assignment_status = resultSet.getString("assignment_status");
@@ -439,6 +451,37 @@ public class MyAssignments extends Application {
 		}
 
 		return response;
+	}
+	
+	/*
+	 * Add a key value pair to an array of key value pairs stored as json
+	 */
+	String addKeyValuePair(String jIn, String name, String value) {
+		
+		System.out.println("Adding value: " + value);
+		String jOut = null;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
+		Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();
+		
+		ArrayList<KeyValue> kvArray = null;
+		
+		// 1. Get the current array
+		if(jIn != null && jIn.trim().length() > 0) {
+			kvArray = new Gson().fromJson(jIn, type);
+		} else {
+			kvArray = new ArrayList<KeyValue> ();
+		}
+
+		// 2. Add the new kv pair
+		if(value != null && value.trim().length() > 0 ) {
+			KeyValue newKV = new KeyValue(name, value);
+			
+			kvArray.add(newKV);
+		}
+		
+		// 3. Return the updated list
+		jOut = gson.toJson(kvArray);
+		return jOut;
 	}
 	
 	/*

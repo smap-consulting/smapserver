@@ -132,15 +132,19 @@ $(document).ready(function() {
 			tzParam = "",
 			url;
 		
-		if(tz) {
-			tzParam = "?tz=" + tz;
+		if(globals.gCurrentTaskGroup) {
+			if(tz) {
+				tzParam = "?tz=" + tz;
+			}
+			
+			url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + tzParam,
+				name = $('#taskgroup option:selected').text();
+			
+			downloadFile(url, name + ".xlsx", 
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		} else {
+			alert(localise.set["msg_tg_ns"]);
 		}
-		
-		url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + tzParam,
-			name = $('#taskgroup option:selected').text();
-		
-		downloadFile(url, name + ".xlsx", 
-			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	});
 	
 	$('#m_import_xls').click(function () {	// Import from XLS
@@ -232,6 +236,7 @@ $(document).ready(function() {
 			taskFeature.properties.to = utcTime(toDate.format("YYYY-MM-DD HH:mm"));
 		}
 		taskFeature.properties.location_trigger = $('#nfc_select').val();
+		taskFeature.properties.guidance = $('#tp_guidance').val();
 		
 		/*
 		 * Convert the geoJson geometry into a WKT location for update
@@ -1159,6 +1164,7 @@ function editTask(isNew, task, taskFeature) {
 	} 
 
 	$('#nfc_select').val(task.location_trigger);
+	$('#tp_guidance').val(task.guidance);
 	if(task.update_id && task.update_id.length > 0) {
 		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id)); 
 				//' ' + getInitialDataUrl(task.form_id, task.update_id));

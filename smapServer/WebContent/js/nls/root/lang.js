@@ -311,6 +311,11 @@ define({
 	"msg_nf": "No forms",
 	"msg_ns": "No Submissions",
 	"msg_us": "Unknown Source",
+	"msg_tg_ns": "Task group not selected",
+	
+	// Editor
+	"e_b_e": "Base on existing form",
+	"e_s_r": "Store results in shared table",
 	
 	// Tasks
 	"t_complete": "Show Completed Tasks",
@@ -350,6 +355,7 @@ define({
 	"t_id": "Initial Data",
 	"t_n_s": "Tasks without start time",
 	"t_drag": "Drag a task and drop onto calendar",
+	"t_g": "Guidance",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",

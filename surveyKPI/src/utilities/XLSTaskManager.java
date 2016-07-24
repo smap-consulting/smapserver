@@ -242,6 +242,7 @@ public class XLSTaskManager {
                 			tp.assignee_ident = getColumn(row, "assignee_ident", header, lastCellNum, null);
                 			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
                 					getColumn(row, "lat", header, lastCellNum, "0") + ")";
+                			tp.guidance = getColumn(row, "guidance", header, lastCellNum, null);
                 			
                 			// Get from value
                 			tp.from = getGmtDate(row, "from", header, lastCellNum, timeZoneId, gmtZoneId);
@@ -445,7 +446,6 @@ public class XLSTaskManager {
 			if(idx <= lastCellNum) {
 				Cell c = row.getCell(idx);
 				if(c != null) {
-					log.info("Get column: " + name);
 					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
 						if (HSSFDateUtil.isCellDateFormatted(c)) {
 							dateValue = c.getDateCellValue();
