@@ -114,7 +114,6 @@ public class PDFSurveyManager {
 	int marginTop_2 = 50;
 	int marginBottom_2 = 100;
 	
-	
 	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
@@ -447,7 +446,8 @@ public class PDFSurveyManager {
 						try {
 							ad.setImage(Image.getInstance(basePath + "/" + r.value));
 						} catch (Exception e) {
-							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
+							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf: " + e.getMessage());
+							log.log(Level.SEVERE, "Image error detail", e);
 						}
 						pdfForm.replacePushbuttonField(fieldName, ad.getField());
 						log.info("Adding image to: " + fieldName);
@@ -1274,7 +1274,8 @@ public class PDFSurveyManager {
 					Image img = Image.getInstance(basePath + "/" + di.value);
 					valueCell.addElement(img);
 				} catch(Exception e) {
-					log.info("Error: image " + basePath + "/" + di.value + " not found: " + e.getMessage());
+					log.info("Error: image " + basePath + "/" + di.value + " not added: " + e.getMessage());
+					log.log(Level.SEVERE, "Adding image to pdf", e);
 				}
 
 			} else {
@@ -1441,7 +1442,7 @@ public class PDFSurveyManager {
 				    document.add(img);
 					
 			} catch (Exception e) {
-				log.info("Error: Failed to add image " + fileName + " to pdf");
+				log.info("Error: Failed to add signature (non template) " + fileName + " to pdf: " + e.getMessage());
 			}
 		}
 		addValue(document, user.name, indent);
