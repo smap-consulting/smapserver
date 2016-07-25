@@ -193,7 +193,7 @@ public class PDFManager {
 						        document.add(img);
 							
 					} catch (Exception e) {
-						log.info("Error: Failed to add image " + fileName + " to pdf");
+						log.info("Error: Failed to add logo " + fileName + " to pdf: " + e.getMessage());
 					}
 				}
 			}
@@ -555,7 +555,8 @@ public class PDFManager {
 						try {
 							ad.setImage(Image.getInstance(basePath + "/" + r.value));
 						} catch (Exception e) {
-							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf");
+							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf: " + e.getMessage());
+							log.log(Level.SEVERE, "Image error detail", e);
 						}
 						pdfForm.replacePushbuttonField(fieldName, ad.getField());
 						log.info("Adding image to: " + fieldName);
@@ -1382,7 +1383,8 @@ public class PDFManager {
 					Image img = Image.getInstance(basePath + "/" + di.value);
 					valueCell.addElement(img);
 				} catch(Exception e) {
-					log.info("Error: image " + basePath + "/" + di.value + " not found: " + e.getMessage());
+					log.info("Error: image " + basePath + "/" + di.value + " not added: " + e.getMessage());
+					log.log(Level.SEVERE, "Adding image to pdf", e);
 				}
 
 			} else {
@@ -1549,7 +1551,7 @@ public class PDFManager {
 				    document.add(img);
 					
 			} catch (Exception e) {
-				log.info("Error: Failed to add image " + fileName + " to pdf");
+				log.info("Error: Failed to add signature (non template) " + fileName + " to pdf: " + e.getMessage());
 			}
 		}
 		addValue(document, user.name, indent);
