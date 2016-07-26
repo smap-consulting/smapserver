@@ -977,7 +977,7 @@ public class SurveyTemplate {
 						return 1;
 				}
 			});
-	
+			
 			qm  = new JdbcQuestionManager(sd);
 			for (Question q : questionList) {
 				Form f = getForm(q.getFormRef());
