@@ -41,12 +41,13 @@ public class SurveyTemplate {
 	// The model data
 	int surveyId;
 	private HashMap<String, Question> questions = new HashMap<String, Question>();
+	private HashMap<String, String> questionPaths = new HashMap<String, String>();
 	private HashMap<String, Option> options = new HashMap<String, Option>();
 	private HashMap<String, Option> cascade_options = new HashMap<String, Option>();
 	private ArrayList<CascadeInstance> cascadeInstances = new ArrayList<CascadeInstance> ();
 	private HashMap<String, Form> forms = new HashMap<String, Form>();
 	private HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = 
-		new HashMap<String, HashMap<String, HashMap<String, Translation>>>();
+			new HashMap<String, HashMap<String, HashMap<String, Translation>>>();
 	private Vector<Translation> dummyTranslations = new Vector<Translation>();
 	private HashMap<String, String> defaults = new HashMap<String, String>();
 	private Survey survey = null;
@@ -100,6 +101,10 @@ public class SurveyTemplate {
 	
 	public String getHrk() {
 		return survey.getHrk();
+	}
+	
+	public HashMap<String, String> getQuestionPaths() {
+		return questionPaths;
 	}
 	
 	public void setNextOptionSeq(int seq) {
@@ -188,7 +193,7 @@ public class SurveyTemplate {
 	public void createForm(String formRef, String formName) {
 		Form f = new Form();
 		f.setName(formName);
-		f.setPath(formRef);
+		//f.setPath(formRef);     rmpath
 		forms.put(formRef, f);
 	}
 
@@ -306,7 +311,6 @@ public class SurveyTemplate {
 		t.setValue(value);
 		types.put(type, t);
 		
-		System.out.println("iText value: " + value);
 	}
 	
 	public void addDummyTranslation(String id, String value) {
@@ -336,7 +340,7 @@ public class SurveyTemplate {
 		Question q = new Question();
 		q.setName(questionName);
 		//q.setReference(questionRef);
-		q.setPath(questionRef);
+		//q.setPath(questionRef);		path - no longer need to save path
 		q.setSeq(-1);	// Default to -1 until actual sequence is known
 		questions.put(questionRef, q);
 	}
@@ -507,7 +511,7 @@ public class SurveyTemplate {
 	/*
 	 * Method to print out the model for debug purposes
 	 */
-	public void printModel() {
+	public void printModel() throws Exception {
 
 		Collection c = null;
 		Iterator itr = null;
@@ -544,7 +548,7 @@ public class SurveyTemplate {
 			System.out.println("	Mandatory: " + q.isMandatory());
 			System.out.println("	Default: " + q.getDefaultAnswer());
 			System.out.println("	QuestionId: " + q.getQTextId());
-			System.out.println("	Relevance: " + q.getRelevant());
+			System.out.println("	Relevance: " + q.getRelevant(true, questionPaths));
 			System.out.println("	Question Sequence: " + q.getSeq());
 		}
 
@@ -765,7 +769,7 @@ public class SurveyTemplate {
 	 *  	a) read only mandatory questions
 	 *  	b) constraints that don't have a "."
 	 */
-	public ArrayList <String> manReadQuestions() {
+	public ArrayList <String> manReadQuestions() throws Exception {
 		
 		HashMap <String, HashMap<String, String>> forms = new HashMap <String, HashMap<String, String>> ();
 		ArrayList<String> badNames = new ArrayList<String> ();
@@ -776,8 +780,8 @@ public class SurveyTemplate {
 			String qType = q.getType();
 			boolean man = q.isMandatory();
 			boolean ro = q.isReadOnly() || (qType != null && qType.equals("note"));
-			String relevance = q.getRelevant();
-			String constraint = q.getConstraint();
+			String relevance = q.getRelevant(true, questionPaths);
+			String constraint = q.getConstraint(true, questionPaths);
 		
 			// Check for mandatory and readonly
 			if(man && ro && relevance == null) {
@@ -923,7 +927,8 @@ public class SurveyTemplate {
 			if(!alreadyHas_instancename) {
 				Question q = new Question();	// Instance Name
 				q.setName("instanceName");
-				q.setPath("/main/meta/instanceName");
+				//q.setPath("/main/meta/instanceName");		path
+				q.setRelativePath("/main/meta/instanceName");		// path
 				q.setSeq(-1);
 				q.setVisible(false);
 				q.setSource("user");
@@ -995,7 +1000,7 @@ public class SurveyTemplate {
 					if(f == null) {
 						// Still no form then allocate this question to the top level form
 						f = getForm(firstFormRef);
-						q.setPath(f.getPath() + "/" + q.getName()); 
+						//q.setPath(f.getPath() + "/" + q.getName());   path change - no longer save path
 					}
 	
 	
@@ -1025,7 +1030,7 @@ public class SurveyTemplate {
 				if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
 					String rRef = f.getRepeatsRef().trim();
 					Question qRef = questions.get(rRef);
-					f.setRepeats(qRef.getCalculate());
+					f.setRepeats(qRef.getCalculate(true, questionPaths));
 				}
 				fm.update(f);
 			}
@@ -1241,8 +1246,22 @@ public class SurveyTemplate {
 			fm = new JdbcFormManager(sd);
 			//List <Form> formList = fPersist.getBySurvey(survey);
 			List <Form> formList = fm.getBySurveyId(survey.getId());
+			
+			/*
+			 * Get questions
+			 */
+			qm = new JdbcQuestionManager(sd);
+			//List <Question> qList = qPersist.getBySurvey(survey);
+			List <Question> qList = qm.getBySurveyId(survey.getId(), formList);
+			
+			/*
+			 * Set the path of each form based using
+			 *  1. The forms position in the tree of forms
+			 *  2. the relative paths from its parent question (set when questions are read in)
+			 */
 			for(int i= 0; i < formList.size(); i++) {
-				String ref = formList.get(i).getPath();
+				String ref = formList.get(i).getPath(formList);
+				System.out.println("Form references: " + ref + " : " + formList.get(i).getName());
 				if(ref != null) {
 					forms.put(ref, formList.get(i));
 				}
@@ -1252,19 +1271,19 @@ public class SurveyTemplate {
 			}
 			
 			/*
-			 * Get questions
+			 * Post processing of question list
 			 */
-			qm = new JdbcQuestionManager(sd);
-			//List <Question> qList = qPersist.getBySurvey(survey);
-			List <Question> qList = qm.getBySurveyId(survey.getId());
 			for(int i= 0; i < qList.size(); i++) {
 				Question q = qList.get(i);
 				int f_id = q.getFormId();
-				String formRef = getFormById(f_id).getPath();
+				String formRef = getFormById(f_id).getPath(formList);
+				q.setFormRef(formRef);
 				String qRef = q.getPath();
 				if(qRef != null) {
-					q.setFormRef(formRef);
+					
+					System.out.println("Name: " + q.getName() + " ref: " + qRef);
 					questions.put(qRef, q);
+					questionPaths.put(q.getName(), qRef);
 					
 					boolean cascade = false;
 					String cascadeInstanceId = q.getCascadeInstance();
@@ -1434,9 +1453,9 @@ public class SurveyTemplate {
 		 * Extend the forms
 		 */
 		for(Form f : formList) {
-			instance.setForm(f.getPath(), f.getTableName(), f.getType());
-			List <Question> questionList = f.getQuestions(sd);
-			extendQuestions(sd, instance, questionList, f.getPath(), useExternalChoices);
+			instance.setForm(f.getPath(formList), f.getTableName(), f.getType());
+			List <Question> questionList = f.getQuestions(sd, f.getPath(null));
+			extendQuestions(sd, instance, questionList, f.getPath(formList), useExternalChoices);
 		}
 	}
 	
@@ -1508,7 +1527,7 @@ public class SurveyTemplate {
 				if(q.getType().equals("select")) {
 					
 					// Check to see if this appearance references a manifest file
-					String appearance = q.getAppearance();
+					String appearance = q.getAppearance(false, null);
 					if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
 						// Yes it references a manifest
 						

@@ -20,6 +20,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.util.HashMap;
+
+import org.smap.server.utilities.UtilityMethods;
 
 public class Translation implements Serializable{
 	
@@ -84,8 +87,8 @@ public class Translation implements Serializable{
 	}
 	
 	// Return the value embedded in markup
-	public String getValueXML() {
-		return "<t>" + value + "</t>";
+	public String getValueXML(HashMap<String, String> questionPaths) throws Exception {
+		return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths) + "</t>";
 	}
 	
 	public boolean getEnabled() {

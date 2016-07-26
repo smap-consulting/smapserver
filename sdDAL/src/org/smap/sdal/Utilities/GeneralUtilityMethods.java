@@ -914,7 +914,8 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get the question path from the question name
 	 * This assumes that all names in the survey are unique
-	 */
+	 * rmpath
+	 *
 	static public String getQuestionPath(
 			Connection sd, 
 			int sId,
@@ -949,6 +950,7 @@ public class GeneralUtilityMethods {
 		
 		return path;
 	}
+	*/
 	
 	/*
 	 * Get the column name from the question name
@@ -2279,69 +2281,6 @@ public class GeneralUtilityMethods {
 			}
 		}
 		return name;
-	}
-	
-	/*
-	 * Convert names in xls format ${ } to xPath
-	 */
-	public static String convertAllxlsNames(String input, int sId, Connection sd, boolean forLabel) throws SQLException {
-		
-		if(input == null) {
-			return input;
-		}
-		
-		
-		StringBuffer output = new StringBuffer("");
-		
-		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
-		java.util.regex.Matcher matcher = pattern.matcher(input);
-		int start = 0;
-		while (matcher.find()) {
-			
-			String matched = matcher.group();
-			String qname = matched.substring(2, matched.length() - 1);
-			
-			// Add any text before the match
-			int startOfGroup = matcher.start();
-			output.append(input.substring(start, startOfGroup));
-			
-			// If for a label, add the wrapping html
-			if(forLabel) {
-				output.append("<output value=\"");
-			}
-			
-			// Make sure there is a space before the match
-			if(output.length() > 0 && output.charAt(output.length() - 1) != ' ') {
-				output.append(' ');
-			}
-			
-			// Add the question path
-			output.append(getQuestionPath(sd, sId, qname));
-
-			
-			// If for a label close the wrapping html
-			if(forLabel) {
-				output.append(" \"/>");
-			}
-			
-			// Reset the start
-			start = matcher.end();
-
-			// Make sure there is a space after the match or its the end of the string
-			if(start < input.length()) {
-				if(input.charAt(start) != ' ') {
-					output.append(' ');
-				}
-			}
-						
-		}
-		
-		// Get the remainder of the string
-		if(start < input.length()) {
-			output.append(input.substring(start));		
-		}
-		
-		return output.toString().trim();
 	}
 	
 	/*

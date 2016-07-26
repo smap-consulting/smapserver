@@ -691,7 +691,8 @@ public class UtilityMethodsEmail {
 				if(l.text != null ) {
 					pstmt.setString(3, path + ":label");
 					pstmt.setString(4, "none");
-					pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.text, sId, sd, true));
+					//pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.text, sId, sd, true));
+					pstmt.setString(5, l.text);		// rmpath
 					log.info("Set text label: " + pstmt.toString());
 					pstmt.executeUpdate();
 				}
@@ -700,7 +701,8 @@ public class UtilityMethodsEmail {
 				if(l.hint != null) {
 					pstmt.setString(3, path + ":hint");
 					pstmt.setString(4, "none");
-					pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.hint, sId, sd, true));
+					//pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.hint, sId, sd, true));
+					pstmt.setString(5, l.hint);		// rmpath
 					log.info("Set hint label: " + pstmt.toString());
 					pstmt.executeUpdate();
 				}

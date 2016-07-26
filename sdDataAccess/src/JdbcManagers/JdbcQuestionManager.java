@@ -26,12 +26,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
 import org.smap.server.utilities.GetXForm;
+import org.w3c.dom.Element;
 
 public class JdbcQuestionManager {
 
@@ -125,7 +127,7 @@ public class JdbcQuestionManager {
 	/*
 	 * Write to the database
 	 */
-	public void write(Question q) throws SQLException {
+	public void write(Question q) throws Exception {
 		pstmt.setInt(1, q.getFormId());
 		pstmt.setInt(2, q.getSeq());
 		pstmt.setString(3, q.getName());
@@ -140,12 +142,12 @@ public class JdbcQuestionManager {
 		pstmt.setString(12, q.getSourceParam());	
 		pstmt.setBoolean(13, q.isReadOnly());
 		pstmt.setBoolean(14, q.isMandatory());
-		pstmt.setString(15, q.getRelevant());
-		pstmt.setString(16, q.getCalculate());
-		pstmt.setString(17, q.getConstraint());
+		pstmt.setString(15, q.getRelevant(false, null));
+		pstmt.setString(16, q.getCalculate(false, null));
+		pstmt.setString(17, q.getConstraint(false, null));
 		pstmt.setString(18, q.getConstraintMsg());
 		pstmt.setString(19, q.getRequiredMsg());
-		pstmt.setString(20, q.getAppearance());
+		pstmt.setString(20, q.getAppearance(false, null));
 		pstmt.setString(21, q.getPath());
 		pstmt.setString(22, q.getNodeset());
 		pstmt.setString(23, q.getNodesetValue());
@@ -169,9 +171,9 @@ public class JdbcQuestionManager {
 	/*
 	 * Get a list of questions in the passed in survey
 	 */
-	public List <Question> getBySurveyId(int sId) throws SQLException {
+	public List <Question> getBySurveyId(int sId, List <Form> forms) throws SQLException {
 		pstmtGetBySurveyId.setInt(1, sId);
-		return getQuestionList(pstmtGetBySurveyId);
+		return getQuestionList(pstmtGetBySurveyId, forms);
 	}
 	
 	/*
@@ -179,7 +181,7 @@ public class JdbcQuestionManager {
 	 */
 	public List <Question> getByFormId(int fId) throws SQLException {
 		pstmtGetByFormId.setInt(1, fId);
-		return getQuestionList(pstmtGetByFormId);
+		return getQuestionList(pstmtGetByFormId, null);
 	}
 	
 	/*
@@ -191,9 +193,12 @@ public class JdbcQuestionManager {
 		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
 	}
 	
-	private List<Question> getQuestionList(PreparedStatement pstmtGet) throws SQLException {
+	private List<Question> getQuestionList(PreparedStatement pstmtGet, 
+			List <Form> forms) throws SQLException {
 		
 		ArrayList <Question> questions = new ArrayList<Question> ();
+		Stack<String> paths = new Stack<String>();
+		String currentPath = "";
 		
 		log.info("Get question list: " + pstmtGet.toString());
 		ResultSet rs = pstmtGet.executeQuery();
@@ -220,7 +225,7 @@ public class JdbcQuestionManager {
 			q.setConstraintMsg(rs.getString(19));
 			q.setRequiredMsg(rs.getString(20));
 			q.setAppearance(rs.getString(21));
-			q.setPath(rs.getString(22));
+			//q.setPath(rs.getString(22));				// Don't get path from database
 			q.setNodeset(rs.getString(23));
 			q.setNodesetValue(rs.getString(24));
 			q.setNodesetLabel(rs.getString(25));
@@ -230,6 +235,29 @@ public class JdbcQuestionManager {
 			q.setListId(rs.getInt(29));
 			q.setAutoPlay(rs.getString(30));
 		
+			/*
+			 * Set the relative path
+			 */
+			q.setRelativePath(currentPath + "/" + q.getName());
+			if(q.getType().equals("begin group")) {
+				paths.push(currentPath);
+				currentPath = q.getRelativePath();
+			} else if(q.getType().equals("end group")) {
+				currentPath = paths.pop();
+			}
+			
+			/*
+			 * If this question marks the start of a sub form then set the relative path of the subform
+			 */
+			if(forms != null && q.getType().equals("begin repeat")) {
+				for(Form f : forms) {
+					if(f.getParentQuestionId() == q.getId()) {
+						System.out.println("Setting relative path: " + f.getName() + " : " + q.getRelativePath());
+						f.setRelativePath(q.getRelativePath());
+					}
+				}
+			}
+			
 			questions.add(q);
 		}
 		return questions;

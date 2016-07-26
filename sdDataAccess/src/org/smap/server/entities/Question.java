@@ -27,10 +27,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.server.utilities.UtilityMethods;
+
 import JdbcManagers.JdbcOptionManager;
 
 /*
@@ -91,7 +94,9 @@ public class Question implements Serializable {
 	
 	private String appearance;
 	
-	private String path;	// Xpath to this question
+	//private String path;	// Xpath to this question
+	
+	private String relativePath;	// Path within the form
 	
 	private String nodeset;	// Nodeset for cascading selects
 	
@@ -210,16 +215,33 @@ public class Question implements Serializable {
 		return mandatory;
 	}
 
-	public String getRelevant() {
-		return relevant;
+	public String getRelevant(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		String v = relevant;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		return v;
 	}
 	
-	public String getCalculate() {
-		return calculate;
+	public String getCalculate(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		String v = calculate;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		
+		return v;
 	}
 	
-	public String getConstraint() {
-		return constraint;
+	public String getConstraint(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		String v = constraint;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		
+		return v;
 	}
 	
 	public String getConstraintMsg() {
@@ -230,8 +252,15 @@ public class Question implements Serializable {
 		return required_msg;
 	}
 	
-	public String getAppearance() {
-		return appearance;
+	public String getAppearance(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		
+		String v = appearance;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		
+		return v;
 	}
 	
 	public boolean getEnabled() {		// deprecate
@@ -239,11 +268,12 @@ public class Question implements Serializable {
 	}
 	
 	public String getPath() {
-
-		String tPath = null;
-		tPath = path;
 		
-		return tPath;
+		return formRef + relativePath;
+	}
+	
+	public String getRelativePath() {
+		return relativePath;
 	}
 	
 	public String getNodeset() {
@@ -438,8 +468,15 @@ public class Question implements Serializable {
 		return qGroupBeginRef;
 	}
 	
-	public void setPath(String v) {
-		path = v;
+	//public void setPath(String v) {
+	//	path = v;
+	//}
+	
+	/*
+	 * Path within a form
+	 */
+	public void setRelativePath(String v) {
+		relativePath = v;
 	}
 
 	public void setNodeset(String v) {
@@ -603,4 +640,5 @@ public class Question implements Serializable {
 			}
 			return choices;
 	 }
+	 
 }

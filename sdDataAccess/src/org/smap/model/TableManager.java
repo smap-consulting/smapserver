@@ -286,10 +286,10 @@ public class TableManager {
 		}		
 	}
 	
-	private void writeTableStructure(Form form, Connection sd, Connection cResults, boolean hasHrk) throws SQLException {
+	private void writeTableStructure(Form form, Connection sd, Connection cResults, boolean hasHrk) throws Exception {
 		
 		String tableName = form.getTableName();
-		List<Question> columns = form.getQuestions(sd);
+		List<Question> columns = form.getQuestions(sd, form.getPath(null));
 		String sql = null;	
 		List <GeometryColumn> geoms = new ArrayList<GeometryColumn> ();
 
@@ -319,7 +319,7 @@ public class TableManager {
 							
 			for(Question q : columns) {
 				
-				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance());
+				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance(false, null));
 				
 				String source = q.getSource();
 				

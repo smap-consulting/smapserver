@@ -1,11 +1,16 @@
 package org.smap.server.utilities;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.smap.model.IE;
 import org.smap.server.entities.Option;
+import org.smap.server.entities.Question;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -116,6 +121,77 @@ public class UtilityMethods {
 					return 1;
 			}
 		});
+	}
+	
+	/*
+	 * Convert names in xls format ${ } to xPath
+	 */
+	public static String convertAllxlsNames(
+			String input, 
+			boolean forLabel,
+			HashMap<String, String> questionPaths) throws Exception {
+		
+		if(input == null) {
+			return input;
+		}
+		
+		
+		StringBuffer output = new StringBuffer("");
+		
+		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			String qname = matched.substring(2, matched.length() - 1);
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			output.append(input.substring(start, startOfGroup));
+			
+			// If for a label, add the wrapping html
+			if(forLabel) {
+				output.append("<output value=\"");
+			}
+			
+			// Make sure there is a space before the match
+			if(output.length() > 0 && output.charAt(output.length() - 1) != ' ') {
+				output.append(' ');
+			}
+			
+			// Add the question path
+			String qPath = questionPaths.get(qname);
+			if(qPath == null) {
+				throw new Exception("Question path not found for question: " + qname);
+			}
+			output.append(qPath);
+			//output.append(getQuestionPath(sd, sId, qname));
+
+			
+			// If for a label close the wrapping html
+			if(forLabel) {
+				output.append(" \"/>");
+			}
+			
+			// Reset the start
+			start = matcher.end();
+
+			// Make sure there is a space after the match or its the end of the string
+			if(start < input.length()) {
+				if(input.charAt(start) != ' ') {
+					output.append(' ');
+				}
+			}
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			output.append(input.substring(start));		
+		}
+		
+		return output.toString().trim();
 	}
 	
 }

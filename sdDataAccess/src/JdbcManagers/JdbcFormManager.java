@@ -89,7 +89,8 @@ public class JdbcFormManager {
 		pstmt.setInt(4, f.getParentForm());
 		pstmt.setInt(5, f.getParentQuestionId());
 		pstmt.setString(6, f.getRepeats());
-		pstmt.setString(7, f.getPath());
+		//pstmt.setString(7, f.getPath());  rmpath
+		pstmt.setString(7, "path in database deprecated");
 		pstmt.executeUpdate();
 		
 		ResultSet rs = pstmt.getGeneratedKeys();
@@ -143,7 +144,7 @@ public class JdbcFormManager {
 			f.setParentForm(rs.getInt(5));
 			f.setParentQuestionId(rs.getInt(6));
 			f.setRepeats(rs.getString(7));
-			f.setPath(rs.getString(8));
+			// f.setPath(rs.getString(8));   rmpath
 			
 			forms.add(f);
 		}
