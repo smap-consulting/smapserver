@@ -82,13 +82,13 @@ public class JdbcFormManager {
 	/*
 	 * Write a new form to the database
 	 */
-	public void write(Form f) throws SQLException {
+	public void write(Form f) throws Exception {
 		pstmt.setInt(1, f.getSurveyId());
 		pstmt.setString(2, f.getName());
 		pstmt.setString(3, f.getTableName());
 		pstmt.setInt(4, f.getParentForm());
 		pstmt.setInt(5, f.getParentQuestionId());
-		pstmt.setString(6, f.getRepeats());
+		pstmt.setString(6, f.getRepeats(false, null));
 		//pstmt.setString(7, f.getPath());  rmpath
 		pstmt.setString(7, "path in database deprecated");
 		pstmt.executeUpdate();
@@ -102,10 +102,10 @@ public class JdbcFormManager {
 	/*
 	 * Update a form
 	 */
-	public void update(Form f) throws SQLException {
+	public void update(Form f) throws Exception {
 		pstmtUpdate.setInt(1, f.getParentForm());
 		pstmtUpdate.setInt(2, f.getParentQuestionId());
-		pstmtUpdate.setString(3, f.getRepeats());
+		pstmtUpdate.setString(3, f.getRepeats(false, null));
 		pstmtUpdate.setInt(4, f.getId());
 		pstmtUpdate.executeUpdate();
 	}

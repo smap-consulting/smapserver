@@ -148,7 +148,7 @@ public class JdbcQuestionManager {
 		pstmt.setString(18, q.getConstraintMsg());
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));
-		pstmt.setString(21, q.getPath());
+		pstmt.setString(21, "not used");		// path deprecated
 		pstmt.setString(22, q.getNodeset());
 		pstmt.setString(23, q.getNodesetValue());
 		pstmt.setString(24, q.getNodesetLabel());

@@ -459,9 +459,10 @@ public class GetXForm {
     				
     				Form subForm = template.getSubForm(f,q);
     				
-    				if(subForm.getRepeats() != null) {
+    				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
-    					questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
+    					//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
+    					questionElement = outputDoc.createElement(q.getName() + "_count");
     					currentParent.appendChild(questionElement);
     				}
     				
@@ -485,7 +486,8 @@ public class GetXForm {
 
     			} else {
     					
-      				questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()));
+      				//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()));
+    				questionElement = outputDoc.createElement(q.getName());
     				if(q.getDefaultAnswer() != null) {
     					questionElement.setTextContent(q.getDefaultAnswer());
     				}
@@ -505,7 +507,7 @@ public class GetXForm {
 					// Process sub form
        				Form subForm = template.getSubForm(f,q);
     				populateForm(sd, outputDoc, currentParent, BIND, subForm, isWebForms);
-    				if(subForm.getRepeats() != null) {
+    				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
     					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), true);
     					currentParent.appendChild(questionElement);
@@ -544,9 +546,10 @@ public class GetXForm {
     				
     				Element repeatElement = outputDoc.createElement("repeat");
     				repeatElement.setAttribute("nodeset", subForm.getPath(null));
-    				String repeats = subForm.getRepeats();
+    				String repeats = subForm.getRepeats(true, template.getQuestionPaths());
     				if(repeats != null) {		// Add the path to the repeat count question
-    					String repeatCountPath = q.getPath() + "_count";
+    					//String repeatCountPath = q.getPath() + "_count";
+    					String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";
     					repeatElement.setAttribute("jr:count", repeatCountPath);
     					repeatElement.setAttribute("jr:noAddRemove", "true()");
     				}
@@ -698,7 +701,7 @@ public class GetXForm {
 			}
 		} else if(q.getType().equals("begin repeat") && count) {
 			Form subForm = template.getSubForm(f,q);
-			String repeats = subForm.getRepeats();
+			String repeats = subForm.getRepeats(true, template.getQuestionPaths());
 			if(repeats != null) {		// Add the path to the repeat count question
 				calculate = repeats;
 			}
@@ -1481,7 +1484,7 @@ public class GetXForm {
     			
     			String qName = q.getName();
 				String qType = q.getType(); 
-				String qPath = q.getPath();
+				//String qPath = q.getPath();
 				String qSource = q.getSource();
 				
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
@@ -1537,7 +1540,8 @@ public class GetXForm {
 						}
 	    			}
 			    	
-	        		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
+	        		//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
+	        		record.add(new Results(qName, null, optValue, false, false, false, null));
 				
 	    		} else if(qType.equals("image") || qType.equals("audio") || qType.equals("video") ) {		// Get the file name
 	    			
@@ -1558,7 +1562,8 @@ public class GetXForm {
 	    			if(simplifyMedia) {
 	    				value = filename;
 	    			}
-	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
+	    			//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
+	    			record.add(new Results(qName, null, value, false, false, false, filename));
 	    			
 	    			if(q.isPublished()) {
 	    				index++;
@@ -1592,7 +1597,8 @@ public class GetXForm {
     					value="";
     				}
 
-            		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
+            		//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
+            		record.add(new Results(qName, null, value, false, false, false, null));
 
             		if(q.isPublished()) {
 	    				index++;

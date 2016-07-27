@@ -94,7 +94,7 @@ public class Question implements Serializable {
 	
 	private String appearance;
 	
-	//private String path;	// Xpath to this question
+	private String path = null;	// Xpath to this question (use only when loading from xform)
 	
 	private String relativePath;	// Path within the form
 	
@@ -269,7 +269,11 @@ public class Question implements Serializable {
 	
 	public String getPath() {
 		
-		return formRef + relativePath;
+		if(path != null) {
+			return path;		// set by xForm
+		} else {
+			return formRef + relativePath;	// Loaded from database
+		}
 	}
 	
 	public String getRelativePath() {
@@ -468,9 +472,10 @@ public class Question implements Serializable {
 		return qGroupBeginRef;
 	}
 	
-	//public void setPath(String v) {
-	//	path = v;
-	//}
+	// use only when loading from xform
+	public void setPath(String v) {
+		path = v;
+	}
 	
 	/*
 	 * Path within a form

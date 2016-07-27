@@ -283,7 +283,7 @@ public class SurveyManager {
 		String sql2 = "update survey set name = ?, ident = ? where s_id = ?;";
 	
 		String sql3 = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
-				" values (nextval('f_seq'), ?, 'main', ?, 0, 'false', '/main');";
+				" values (nextval('f_seq'), ?, 'main', ?, 0, null, '/main');";
 		
 		String sql4 = "insert into question (q_id, f_id, qtype, qname, path, column_name, seq, visible, source, source_param, calculate) "
 				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, 'false', ?, ?, ?);";

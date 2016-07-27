@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
+import org.smap.server.utilities.UtilityMethods;
+
 import JdbcManagers.JdbcQuestionManager;
 
 /*
@@ -142,8 +144,16 @@ public class Form implements Serializable {
 		return repeatsRef;
 	}
 	
-	public String getRepeats() {
-		return repeats;
+	public String getRepeats(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		
+		String v = repeats;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		
+		return v;
+
 	}
 
 	public boolean hasParent() {

@@ -340,7 +340,7 @@ public class SurveyTemplate {
 		Question q = new Question();
 		q.setName(questionName);
 		//q.setReference(questionRef);
-		//q.setPath(questionRef);		path - no longer need to save path
+		q.setPath(questionRef);		// Store path when loaded from xForm
 		q.setSeq(-1);	// Default to -1 until actual sequence is known
 		questions.put(questionRef, q);
 	}
@@ -868,13 +868,12 @@ public class SurveyTemplate {
 					} 
 				}
 	
-				if(q.getName().equals("_instanceid") ||
-						q.getPath().endsWith("/meta/instanceID")) {
+				if(q.getName().trim().toLowerCase().equals("_instanceid") ||
+						q.getName().trim().equals("instanceID")) {
 						alreadyHas_instanceid = true;
 				} else if(q.getName().equals("_task_key")) {
 						alreadyHas_task_key = true;
-				} else if(q.getName().toLowerCase().equals("instancename") || 
-						q.getPath().toLowerCase().trim().endsWith("/meta/instancename") ) {
+				} else if(q.getName().toLowerCase().equals("instancename")) {
 						alreadyHas_instancename = true;
 				}
 	
@@ -927,8 +926,7 @@ public class SurveyTemplate {
 			if(!alreadyHas_instancename) {
 				Question q = new Question();	// Instance Name
 				q.setName("instanceName");
-				//q.setPath("/main/meta/instanceName");		path
-				q.setRelativePath("/main/meta/instanceName");		// path
+				q.setPath("/main/meta/instanceName");	
 				q.setSeq(-1);
 				q.setVisible(false);
 				q.setSource("user");
@@ -952,21 +950,30 @@ public class SurveyTemplate {
 			 * Set the sequence number of any questions that have the default sequence "-1" but
 			 * need to be placed within a non repeat group
 			 */
+			System.out.println("===================================");
 			for (Question q : questionList) {
 				if(q.getSeq() == -1) {
 					String ref = q.getPath();
+					//String ref = questionPaths.get(q.getName());
 					String group = UtilityMethods.getGroupFromPath(ref);
-					for(Question q2 : questionList) {
-						
-						if(q2.getPath() != null) {
-							if(q2.getPath().equals(group)) {
-								q.setSeq(q2.getSeq() + 1);
-	
+					System.out.println("qref: " + ref + " : " + group);
+					if(group != null) {
+						for(Question q2 : questionList) {
+							
+							//String q2Path = questionPaths.get(q2.getName());
+							String q2Path = q2.getPath();
+							System.out.println("           " + q2.getName() + " : " + q2Path + " : " + q2.getSeq());
+							if(q2Path != null) {
+								if(q2Path.endsWith(group)) {
+									q.setSeq(q2.getSeq() + 1);
+		
+								}
 							}
 						}
 					}
 				}
 			}
+			System.out.println("===================================");
 			
 			/*
 			 * Sort the list by sequence
@@ -1030,7 +1037,7 @@ public class SurveyTemplate {
 				if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
 					String rRef = f.getRepeatsRef().trim();
 					Question qRef = questions.get(rRef);
-					f.setRepeats(qRef.getCalculate(true, questionPaths));
+					f.setRepeats(qRef.getCalculate(false, null));
 				}
 				fm.update(f);
 			}
@@ -1454,7 +1461,7 @@ public class SurveyTemplate {
 		 */
 		for(Form f : formList) {
 			instance.setForm(f.getPath(formList), f.getTableName(), f.getType());
-			List <Question> questionList = f.getQuestions(sd, f.getPath(null));
+			List <Question> questionList = f.getQuestions(sd, f.getPath(formList));
 			extendQuestions(sd, instance, questionList, f.getPath(formList), useExternalChoices);
 		}
 	}
@@ -1469,8 +1476,8 @@ public class SurveyTemplate {
 		
 		for(Question q : questionList) {
 			
-			String questionPath = q.getPath();
-			
+			//String questionPath = q.getPath();
+			String questionPath = questionPaths.get(q.getName());
 			// Set the question type for "begin group" questions
 			if(q.getType() != null && q.getType().equals("begin group")) {
 				

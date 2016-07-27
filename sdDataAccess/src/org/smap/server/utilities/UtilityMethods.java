@@ -27,8 +27,17 @@ public class UtilityMethods {
 	
 	public static String getGroupFromPath(String path) {
 		if(path != null) {
-			int startIdx = path.lastIndexOf('/');
-			return path.substring(0, startIdx);
+			int startIdx = 0;
+			if(path.startsWith("/main")) {
+				startIdx = 5;
+			}
+			
+			int endIdx = path.lastIndexOf('/');
+			if(endIdx > startIdx) {
+				return path.substring(startIdx, endIdx);
+			} else {
+				return null;
+			}
 		} else {
 			return null;
 		}

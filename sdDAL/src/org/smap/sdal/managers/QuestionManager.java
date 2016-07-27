@@ -243,10 +243,10 @@ public class QuestionManager {
 				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 				String calculation = null;
-				if(!q.type.equals("begin repeat") && !q.type.equals("geopolygon") && !q.type.equals("geolinestring")) {
+				//if(!q.type.equals("begin repeat") && !q.type.equals("geopolygon") && !q.type.equals("geolinestring")) {
 					// calculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
 					// rmpath  names are now converted before creation of an xlsForm
-				}
+				//}
 			
 				// Assume that every question has a label, however hints are optional (to reduce size of form)
 				String infotextId = null;
@@ -302,10 +302,10 @@ public class QuestionManager {
 					int qId = rs.getInt(1);
 					
 					// The calculation holds the repeat value
-					String convertedCalculation = null;
-					if(q.calculation != null && q.calculation.trim().length() > 0) {
-						//convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-					}
+					//String convertedCalculation = null;
+					//if(q.calculation != null && q.calculation.trim().length() > 0) {
+						//convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false); rm paths
+					//}
 					
 					// Create the sub form
 					String tableName = "s" + sId + "_" + columnName;
@@ -317,7 +317,7 @@ public class QuestionManager {
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
-					pstmtForm.setString(7, convertedCalculation);
+					pstmtForm.setString(7, q.calculation);
 					pstmtForm.setString(8, q.path);
 					pstmtForm.setInt(9, q.childFormIndex);
 					
