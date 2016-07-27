@@ -22,7 +22,10 @@ package org.smap.server.entities;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+
+import org.smap.server.utilities.UtilityMethods;
 
 import JdbcManagers.JdbcQuestionManager;
 
@@ -49,6 +52,8 @@ public class Form implements Serializable {
 	private String repeats = null;
 	
 	private String path = null;	// Xpath of this form
+	
+	private String relativePath = null;	// Relative path to this form within its parent form
 	
 	// Other attributes
 	private List<Question> questions = null;
@@ -104,7 +109,8 @@ public class Form implements Serializable {
 		return parentform;
 	}
 	
-	public List<Question> getQuestions(Connection sd) throws SQLException {
+	public List<Question> getQuestions(Connection sd, String formPath) throws SQLException {
+		
 		if(questions == null) {
 			//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
 			//QuestionManager qm = new QuestionManager(pc);
@@ -138,16 +144,36 @@ public class Form implements Serializable {
 		return repeatsRef;
 	}
 	
-	public String getRepeats() {
-		return repeats;
+	public String getRepeats(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		
+		String v = repeats;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+		}
+		
+		return v;
+
 	}
 
 	public boolean hasParent() {
 		return parentform != 0;
 	}
 	
-	public String getPath() {
+	public String getPath(List <Form> forms) {
+		
+		if(path == null && forms != null) {
+			path = calculateFormPath(getName(), this, forms);
+		}
 		return path;
+	}
+	
+	private String getRelativePath() {
+		String v = "";
+		if(relativePath != null) {
+			v = relativePath;
+		}
+		return v;
 	}
 
 	public void setId(int value) {
@@ -195,7 +221,34 @@ public class Form implements Serializable {
 		this.questions = questions;
 	}
 	
-	public void setPath(String v) {
-		path = v;
+	// public void setPath(String v) {	rmpath
+	//	path = v;
+	//}
+	
+	public void setRelativePath(String v) {			// Path to this form within its parent form
+		relativePath = v;
+	}
+	
+	private String calculateFormPath(String name, Form currentForm, List <Form> forms) {
+		String path = null;
+		Form parentForm = null;
+		
+		if(forms != null) {
+			if(currentForm.getParentForm() != 0) {
+				for(Form f : forms) {
+					if(currentForm.getParentForm()  == f.getId()) {
+						parentForm = f;
+						break;
+					}
+				}
+				path = calculateFormPath(parentForm.getName(), parentForm, forms) + currentForm.getRelativePath();
+			} else {
+				path = "/main" ;
+			}
+		} else {
+			path = "/main";
+		}
+		
+		return path;
 	}
 }

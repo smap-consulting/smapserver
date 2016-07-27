@@ -49,6 +49,7 @@ public class PutXForm {
 		template.setBasePath(basePath);
 		processElement(rootElement);   	   		
     		
+		
     	return template;
  
     }
@@ -528,7 +529,7 @@ public class PutXForm {
     	q.setVisible(true);		// As this question is in the body of the form then set it to visible
     	  		
     	q.setFormRef(formRef);    	// Set the reference of the form containing this question 	
-    	q.setPath(questionRef);    	// Set the XForm Path   	   	
+    	//q.setPath(questionRef);    	// Set the XForm Path   rmpath (no longer required)	   	
     	//q.setSeq(template.getNextQuestionSeq());    	// Set the sequence number of the question
     	
     	q.setDefaultAnswer(template.getDefault(questionRef));    	// Set the default answer if it exists
@@ -890,7 +891,7 @@ public class PutXForm {
 					if(!questionName.equals("#text") /*&& !questionName.equals("instanceID") WFP */) {
 			    		template.createQuestion(questionRef, questionName);
 				    	Question q = template.getQuestion(questionRef);
-				    	q.setPath(questionRef);
+				    	//q.setPath(questionRef);  rmpath (no longer required)
 				    	q.setSeq(template.getNextQuestionSeq());    	// Set the sequence number of the question 
 					}
 			    	// Set the default value

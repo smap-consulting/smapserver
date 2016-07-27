@@ -147,7 +147,7 @@ public class GetXForm {
      * @param outputXML
      */
     public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, 
-    		Element parent, boolean isWebForms) throws SQLException {
+    		Element parent, boolean isWebForms) throws Exception {
 
     	Survey s = template.getSurvey();
     	
@@ -264,7 +264,8 @@ public class GetXForm {
 						} else {
 							// The text could be an xml fragment
 							try {
-								xfragDoc = builder.parse(new InputSource(new StringReader(trans.getValueXML())));
+								xfragDoc = builder.parse(new InputSource(
+										new StringReader(trans.getValueXML(template.getQuestionPaths()))));
 								Element rootFrag = xfragDoc.getDocumentElement();
 								addXmlFrag(outputDoc, valueElement, rootFrag);
 							} catch (Exception e) {
@@ -307,7 +308,7 @@ public class GetXForm {
        	   	Collection<HashMap<String, HashMap<String, Translation>>> c = translations.values();
 
        	   	
-	    	List <Question> questions = f.getQuestions(sd);		
+	    	List <Question> questions = f.getQuestions(sd, f.getPath(null));		
 	    	for(Question q : questions) {
 	    		
 	    		if(q.getEnabled()) {
@@ -373,7 +374,7 @@ public class GetXForm {
     /*
      * Populate the Instance element starting with the top level form
      */
-    public void populateInstance(Connection sd, Document outputDoc, Element parent, boolean isWebForms) throws SQLException {
+    public void populateInstance(Connection sd, Document outputDoc, Element parent, boolean isWebForms) throws Exception {
     	
     	if(firstForm != null) {
     		Element formElement = outputDoc.createElement(firstForm.getName());
@@ -400,7 +401,7 @@ public class GetXForm {
  
     
     public void populateBody(Connection sd, Document outputDoc, Element parent,
-    		boolean isWebForms) throws SQLException {
+    		boolean isWebForms) throws Exception {
     	Element bodyElement = outputDoc.createElement("h:body");
     	
     	log.info("Populate body:" + bodyElement.toString());
@@ -432,7 +433,7 @@ public class GetXForm {
     public void populateForm(Connection sd, Document outputDoc, Element parentElement, 
     		int location, 
     		Form f,
-    		boolean isWebForms) throws SQLException {
+    		boolean isWebForms) throws Exception {
 
     	Element currentParent = parentElement;
        	Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
@@ -442,7 +443,7 @@ public class GetXForm {
 		/*
 		 * Add the questions from the template
 		 */
-    	List <Question> questions = f.getQuestions(sd);		
+    	List <Question> questions = f.getQuestions(sd, f.getPath(null));		
     	for(Question q : questions) {
     		
     		// Skip questions that are not enabled
@@ -458,9 +459,10 @@ public class GetXForm {
     				
     				Form subForm = template.getSubForm(f,q);
     				
-    				if(subForm.getRepeats() != null) {
+    				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
-    					questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
+    					//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
+    					questionElement = outputDoc.createElement(q.getName() + "_count");
     					currentParent.appendChild(questionElement);
     				}
     				
@@ -483,8 +485,9 @@ public class GetXForm {
     				currentParent = elementStack.pop();
 
     			} else {
-    						
-      				questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()));
+    					
+      				//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()));
+    				questionElement = outputDoc.createElement(q.getName());
     				if(q.getDefaultAnswer() != null) {
     					questionElement.setTextContent(q.getDefaultAnswer());
     				}
@@ -498,28 +501,28 @@ public class GetXForm {
        			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
     				
        				// Apply bind for repeat question
-       				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);
+       				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), false);
 					currentParent.appendChild(questionElement);
        				
 					// Process sub form
        				Form subForm = template.getSubForm(f,q);
     				populateForm(sd, outputDoc, currentParent, BIND, subForm, isWebForms);
-    				if(subForm.getRepeats() != null) {
+    				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
-    					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), true);
+    					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), true);
     					currentParent.appendChild(questionElement);
     				}
     				
     			} else if (q.getType().equals("begin group")) {
     				
-    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);
+    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), false);
 					currentParent.appendChild(questionElement);
 					
     			} else if(q.getType().equals("end group")) { 
     				
     			} else {
     			
-    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(), false);					
+    				questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), false);					
     				currentParent.appendChild(questionElement);
     				
     			}   						
@@ -542,10 +545,11 @@ public class GetXForm {
     				groupElement.appendChild(labelElement);
     				
     				Element repeatElement = outputDoc.createElement("repeat");
-    				repeatElement.setAttribute("nodeset", subForm.getPath());
-    				String repeats = subForm.getRepeats();
+    				repeatElement.setAttribute("nodeset", subForm.getPath(null));
+    				String repeats = subForm.getRepeats(true, template.getQuestionPaths());
     				if(repeats != null) {		// Add the path to the repeat count question
-    					String repeatCountPath = q.getPath() + "_count";
+    					//String repeatCountPath = q.getPath() + "_count";
+    					String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";
     					repeatElement.setAttribute("jr:count", repeatCountPath);
     					repeatElement.setAttribute("jr:noAddRemove", "true()");
     				}
@@ -556,7 +560,7 @@ public class GetXForm {
     			} else {	// Add question to output
     				if(q.isVisible()) {
     					
-    					questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath());	
+    					questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath(null));	
     					currentParent.appendChild(questionElement);
 
     				}
@@ -591,7 +595,7 @@ public class GetXForm {
     public void createRepeatingGroup(Connection sd, Document outputXML, Element parent, Form subF, int location, 
     		String parentXPath, 
     		Question parentQuestion,
-    		boolean isWebForms) throws SQLException {
+    		boolean isWebForms) throws Exception {
 
 		if(location == INSTANCE) {
 			
@@ -606,7 +610,7 @@ public class GetXForm {
 		} else {		// BODY
 			
 			Element subFormParent = outputXML.createElement("group");  
-			subFormParent.setAttribute("ref", subF.getPath());
+			subFormParent.setAttribute("ref", subF.getPath(null));
 			
 			// TODO Sets the repeat label to the parent question 
 			Element labelElement = outputXML.createElement("label");
@@ -615,7 +619,7 @@ public class GetXForm {
 			subFormParent.appendChild(labelElement);
 			
 			Element repeatElement = outputXML.createElement("repeat");  
-			repeatElement.setAttribute("nodeset", subF.getPath());
+			repeatElement.setAttribute("nodeset", subF.getPath(null));
 			subFormParent.appendChild(repeatElement);
 			
 			populateForm(sd, outputXML, repeatElement, location, subF, isWebForms);
@@ -629,7 +633,7 @@ public class GetXForm {
     /*
      * Populate the question element if this is part of the XForm bind
      */
-    public Element populateBindQuestion(Document outputXML, Form f, Question q, String parentXPath, boolean count) {
+    public Element populateBindQuestion(Document outputXML, Form f, Question q, String parentXPath, boolean count) throws Exception {
 
 		Element questionElement = outputXML.createElement("bind");
 		
@@ -645,7 +649,8 @@ public class GetXForm {
 		}
 		
 		// Add reference
-		String reference = q.getPath();	
+		//String reference = q.getPath();	
+		String reference = template.getQuestionPaths().get(q.getName());
 		if(q.getType().equals("begin repeat") && count) {
 			reference += "_count";					// Reference is to the calculate question for this form
 		}
@@ -669,13 +674,13 @@ public class GetXForm {
 			}
 			
 			// Add relevant
-			String relevant = q.getRelevant();
+			String relevant = q.getRelevant(true, template.getQuestionPaths());
 			if(relevant != null && relevant.trim().length() > 0 ) {
 				questionElement.setAttribute("relevant", relevant);
 			}
 			
 			// Add constraint
-			String constraint = q.getConstraint();
+			String constraint = q.getConstraint(true, template.getQuestionPaths());
 			if(constraint != null && constraint.trim().length() > 0 ) {
 				questionElement.setAttribute("constraint", constraint);
 			}
@@ -690,18 +695,18 @@ public class GetXForm {
 		// Add calculate
 		String calculate = null;
 		if(q.getName().equals("instanceName")) {
-			calculate = template.getSurvey().getInstanceName();
+			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths());
 			if(calculate == null) {
-				calculate = q.getCalculate();	// Allow for legacy forms that were loaded before the instance name was set in the survey table
+				calculate = q.getCalculate(true, template.getQuestionPaths());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}
 		} else if(q.getType().equals("begin repeat") && count) {
 			Form subForm = template.getSubForm(f,q);
-			String repeats = subForm.getRepeats();
+			String repeats = subForm.getRepeats(true, template.getQuestionPaths());
 			if(repeats != null) {		// Add the path to the repeat count question
 				calculate = repeats;
 			}
 		} else  {
-			calculate = q.getCalculate();
+			calculate = q.getCalculate(true, template.getQuestionPaths());
 		}
 		if(calculate != null && calculate.trim().length() > 0 ) {
 			questionElement.setAttribute("calculate", calculate);
@@ -728,7 +733,7 @@ public class GetXForm {
      * @param f
      * @param q
      */
-    public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws SQLException {
+    public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
 
 		Element questionElement = null;
 		String type = q.getType();
@@ -763,12 +768,14 @@ public class GetXForm {
 		// Add the reference attribute
 		if(questionElement != null) {
 			// String reference = parentXPath + "/" + q.getName();
-			questionElement.setAttribute("ref", q.getPath());
+			String path = template.getQuestionPaths().get(q.getName());
+			System.out.println("xxxxx: " + path + " : " + q.getName());
+			questionElement.setAttribute("ref", path);
 		}
 		
 		// Add the appearance
 		if(questionElement != null) {
-			String appearance = q.getAppearance();
+			String appearance = q.getAppearance(true, template.getQuestionPaths());
 			if(appearance != null) {
 				questionElement.setAttribute("appearance", appearance);
 			}
@@ -1141,7 +1148,7 @@ public class GetXForm {
 		String keyColumnName = null;
 		
 		// Get the key type
-		List<Question> questions = firstForm.getQuestions(sd);
+		List<Question> questions = firstForm.getQuestions(sd, firstForm.getPath(null));
 		for(int i = 0; i < questions.size(); i++) {
 			Question q = questions.get(i);
 			if(q.getName().toLowerCase().trim().equals(key)) {
@@ -1213,7 +1220,7 @@ public class GetXForm {
 	
  		List<Results> record = new ArrayList<Results> ();
  		
-    	List<Question> questions = form.getQuestions(sd);
+    	List<Question> questions = form.getQuestions(sd, form.getPath(null));
 		for(Question q : questions) {
 			
 			String qName = q.getName();
@@ -1426,7 +1433,7 @@ public class GetXForm {
     	 *  columns per question
     	 */
     	String sql = "select prikey";
-    	List<Question> questions = form.getQuestions(sd);
+    	List<Question> questions = form.getQuestions(sd, form.getPath(null));
     	for(Question q : questions) {
     		String col = null;
     		
@@ -1477,7 +1484,7 @@ public class GetXForm {
     			
     			String qName = q.getName();
 				String qType = q.getType(); 
-				String qPath = q.getPath();
+				//String qPath = q.getPath();
 				String qSource = q.getSource();
 				
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {	
@@ -1533,7 +1540,8 @@ public class GetXForm {
 						}
 	    			}
 			    	
-	        		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
+	        		//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue, false, false, false, null));
+	        		record.add(new Results(qName, null, optValue, false, false, false, null));
 				
 	    		} else if(qType.equals("image") || qType.equals("audio") || qType.equals("video") ) {		// Get the file name
 	    			
@@ -1554,7 +1562,8 @@ public class GetXForm {
 	    			if(simplifyMedia) {
 	    				value = filename;
 	    			}
-	    			record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
+	    			//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, filename));
+	    			record.add(new Results(qName, null, value, false, false, false, filename));
 	    			
 	    			if(q.isPublished()) {
 	    				index++;
@@ -1588,7 +1597,8 @@ public class GetXForm {
     					value="";
     				}
 
-            		record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
+            		//record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value, false, false, false, null));
+            		record.add(new Results(qName, null, value, false, false, false, null));
 
             		if(q.isPublished()) {
 	    				index++;

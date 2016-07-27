@@ -546,6 +546,7 @@ public class SubRelationalDB extends Subscriber {
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
 		
+		System.out.println("Write table content: " + element.getName() + " : " + element.getType());
 		try {
 			/*
 			 * Write the Instance element to a table if it is a form type
@@ -613,7 +614,7 @@ public class SubRelationalDB extends Subscriber {
 				/*
 				 * Write the record
 				 */
-				if(columns.size() > 0) {
+				if(columns.size() > 0 || parent_key == 0) {
 					
 					boolean hasUploadTime = GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
 					boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");

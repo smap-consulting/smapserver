@@ -287,7 +287,7 @@ public class SurveyManager {
 		String sql2 = "update survey set name = ?, ident = ? where s_id = ?;";
 	
 		String sql3 = "insert into form ( f_id, s_id, name, table_name, parentform, repeats, path) " +
-				" values (nextval('f_seq'), ?, 'main', ?, 0, 'false', '/main');";
+				" values (nextval('f_seq'), ?, 'main', ?, 0, null, '/main');";
 		
 		String sql4 = "insert into question (q_id, f_id, qtype, qname, path, column_name, seq, visible, source, source_param, calculate) "
 				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, 'false', ?, ?, ?);";
@@ -1159,7 +1159,7 @@ public class SurveyManager {
 			
 			// Create prepared statements, one for the case where an existing value is being updated
 			String sqlLangOldVal = "update translation set value = ? " +
-					"where s_id = ? and language = ? and text_id = ? and type = ? and value = ?;";
+					"where s_id = ? and language = ? and text_id = ? and type = ?;";
 			pstmtLangOldVal = connectionSD.prepareStatement(sqlLangOldVal);
 		
 			String sqlLangNew = "insert into translation (value, s_id, language, text_id, type) values(?,?,?,?,?);";
@@ -1277,7 +1277,8 @@ public class SurveyManager {
 		
 		String transType = null;
 		
-		pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
+		//pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
+		pstmtLangOldVal.setString(1, ci.property.newVal);	// rmpath
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
 		pstmtLangOldVal.setString(4, text_id);
@@ -1287,18 +1288,13 @@ public class SurveyManager {
 			transType = ci.property.propType;
 		}
 		pstmtLangOldVal.setString(5,  transType);
-		pstmtLangOldVal.setString(6, GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, true));
-
+		//pstmtLangOldVal.setString(6, GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, true));
+		//pstmtLangOldVal.setString(6, ci.property.oldVal);	// rmpath
+		
 		log.info("Update question translation: " + pstmtLangOldVal.toString());
 		
 		int count = pstmtLangOldVal.executeUpdate();
-		if(count == 0) {
-			String msg = "Warning: label not updated to " + ci.property.newVal
-					+ " for language " + language 
-					+ ". It may have already been updated by someone else.";
-			log.info(msg);
-			throw new Exception(msg);		// No matching value assume it has already been modified
-		}
+		
 	}
 	
 	public void addLabel(Connection sd, 
@@ -1313,7 +1309,8 @@ public class SurveyManager {
 		
 		if(ci.property.newVal != null) {
 			
-			pstmtLangNew.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
+			// pstmtLangNew.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
+			pstmtLangNew.setString(1, ci.property.newVal);
 			pstmtLangNew.setInt(2, sId);
 			pstmtLangNew.setString(3, language);
 			pstmtLangNew.setString(4, text_id);
@@ -1523,8 +1520,8 @@ public class SurveyManager {
 						(ci.property.qType.equals("begin repeat") || ci.property.qType.equals("geopolygon") || ci.property.qType.equals("geolinestring")) && 
 						ci.property.prop.equals("calculation")) {
 					
-					String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-					String oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
+					//String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
+					//String oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
 					
 					String sqlUpdateRepeat = "update form set repeats = ? "
 							+ "where s_id = ? "
@@ -1532,10 +1529,10 @@ public class SurveyManager {
 							+ "and (trim(both from repeats) = ? or repeats is null);";
 					pstmtUpdateRepeat = sd.prepareStatement(sqlUpdateRepeat);
 					
-					pstmtUpdateRepeat.setString(1, newVal);
+					pstmtUpdateRepeat.setString(1, ci.property.newVal);
 					pstmtUpdateRepeat.setInt(2, sId);
 					pstmtUpdateRepeat.setInt(3, ci.property.qId);
-					pstmtUpdateRepeat.setString(4, oldVal);
+					pstmtUpdateRepeat.setString(4, ci.property.oldVal);
 					
 					log.info("Updating repeat count: " + pstmtUpdateRepeat.toString());
 					int count = pstmtUpdateRepeat.executeUpdate();
@@ -1607,8 +1604,8 @@ public class SurveyManager {
 					// Convert from $ syntax to paths
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
-						ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-						ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
+						//ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
+						//ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
 						
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
 							// The property must have referred to a question that no longer exists - just set to null
