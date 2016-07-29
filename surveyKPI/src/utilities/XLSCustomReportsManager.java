@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
@@ -50,20 +49,6 @@ public class XLSCustomReportsManager {
 	Workbook wb = null;
 	int rowNumber = 1;		// Heading row is 0
 	
-	private class XLSColumn {
-		String name;
-		String human_name;
-		int colNumber;
-		
-		public XLSColumn(ResourceBundle localisation, int col, String n) {
-			colNumber = col;
-			name = n;
-			//human_name = localisation.getString(n);
-			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
-		}
-		
-	
-	}
 
 	public XLSCustomReportsManager() {
 
