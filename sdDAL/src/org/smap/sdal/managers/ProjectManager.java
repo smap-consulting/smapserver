@@ -115,7 +115,6 @@ public class ProjectManager {
 		PreparedStatement pstmt = null;
 		try {
 		
-			sd.setAutoCommit(false);
 			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			pstmt.setString(1, p.name);
 			pstmt.setString(2, p.desc);
@@ -142,12 +141,8 @@ public class ProjectManager {
 				pstmt.executeUpdate();
 				pstmt.close();
 			}
-			sd.commit();
-		} catch (SQLException e) {
-			try {sd.rollback();} catch(Exception ex) {};
 		} finally {		
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
-			try {sd.setAutoCommit(true);} catch(Exception e) {};
 		}
 	}
 	

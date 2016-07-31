@@ -292,12 +292,12 @@
 	<div class="modal-dialog">
    		<div class="modal-content">
    			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<a type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></a>
      			<h4 class="modal-title lang" id="createProjectLabel" data-lang="u_det_p">project details</h4>
    			</div>
 		    <div class="modal-body">
 		     
-				<form class="form form-horizontal" role="form" id="project_create_form">	
+				<form class="form form-horizontal" onsubmit="return false;" role="form" id="project_create_form">	
 					<div class="form-group">
 						<label for="p_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
 						<div class="col-sm-10">
@@ -320,18 +320,18 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<div class="restricted_users bg-warning" style="display:none;">
-							<h4 class="lang" data-lang="u_rap">restricted</h4>
-							<p class="lang" data-lang="u_rap_d"></p>
-							<div class="restricted_users_list"></div>
+						<b class="lang" data-lang="u_rap" style="margin-left: 10px;"></b>
+						<div class="restricted_users bg-warning col-sm-12" style="display:none;">
+							<p class="lang col-sm-4 bg-warning" data-lang="u_rap_d"></p>
+							<div class="restricted_users_list col-sm-8 bg-danger"></div>
 						</div>
 					</div>
 				</form>	
 				
 			</div> 
 			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="projectSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+            	<button type="button" class="btn lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="projectSave" type="button" class="btn btn-primary lang btn-default" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

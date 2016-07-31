@@ -207,7 +207,7 @@ public class QuestionManager {
 				/*
 				 * Get the path of this question based on its position in the form
 				 */
-				q.path = getNewPath(sd, q, formPath);
+				//q.path = getNewPath(sd, q, formPath);
 				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 				// as the editor expects
@@ -248,25 +248,26 @@ public class QuestionManager {
 					// rmpath  names are now converted before creation of an xlsForm
 				//}
 			
-				// Assume that every question has a label, however hints are optional (to reduce size of form)
-				String infotextId = null;
-				for(Label l : q.labels) {
-					if(l.hint != null && l.hint.trim().length() > 0) {
-						infotextId = q.path + ":hint";
-					}
-				}
 				// Insert the question
 				if(columnName == null) {
 					columnName = GeneralUtilityMethods.cleanName(q.name, true, true);
 				}
 				
+				// Assume that every question has a label, however hints are optional (to reduce size of form)
+				String infotextId = null;
+				for(Label l : q.labels) {
+					if(l.hint != null && l.hint.trim().length() > 0) {
+						infotextId = "question_" + columnName + ":hint";
+					}
+				}
+
 				pstmtInsertQuestion.setInt(1, q.fId );
 				pstmtInsertQuestion.setInt(2, q.l_id);
 				pstmtInsertQuestion.setInt(3, q.seq );
 				pstmtInsertQuestion.setString(4, q.name );
 				pstmtInsertQuestion.setString(5, columnName);
 				pstmtInsertQuestion.setString(6, type );
-				pstmtInsertQuestion.setString(7, q.path + ":label" );
+				pstmtInsertQuestion.setString(7, "question_" + columnName + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, source );
 				pstmtInsertQuestion.setString(10,  calculation);
@@ -274,7 +275,7 @@ public class QuestionManager {
 				// String appearance = GeneralUtilityMethods.convertAllxlsNames(q.appearance, sId, sd, false);
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
-				pstmtInsertQuestion.setString(14, q.path);
+				pstmtInsertQuestion.setString(14, "No longer used");	// path
 				pstmtInsertQuestion.setBoolean(15, readonly);
 				//String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd, false);
 				pstmtInsertQuestion.setString(16, q.relevant);
@@ -287,8 +288,8 @@ public class QuestionManager {
 				pstmtInsertQuestion.executeUpdate();
 				
 				// Set the labels
-				if(q.path != null && q.path.trim().length() > 0) {
-					UtilityMethodsEmail.setLabels(sd, sId, q.path, q.labels, "");
+				if(q.name != null && q.name.trim().length() > 0) {
+					UtilityMethodsEmail.setLabels(sd, sId, "question_" + q.name, q.labels, "");
 				}
 				
 				// Update the survey manifest if this question references CSV files
@@ -313,12 +314,12 @@ public class QuestionManager {
 					pstmtForm = sd.prepareStatement(sqlForm);
 					pstmtForm.setInt(1, sId);
 					pstmtForm.setString(2, q.name);
-					pstmtForm.setString(3, q.path + ":label");
+					pstmtForm.setString(3, "question_" + q.columnName + ":label");
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
 					pstmtForm.setString(7, q.calculation);
-					pstmtForm.setString(8, q.path);
+					pstmtForm.setString(8, "No longer used");	// path
 					pstmtForm.setInt(9, q.childFormIndex);
 					
 					log.info("SQL: Insert new form: " + pstmtForm.toString());
@@ -349,35 +350,29 @@ public class QuestionManager {
 	 */
 	public void moveQuestions(Connection sd, int sId, ArrayList<Question> questions) throws Exception {
 		
-		String newGroupPath;
-		String oldGroupPath;
-		String newPath;
+		//String newGroupPath;
+		//String oldGroupPath;
+		//String newPath;
 		ArrayList<Question> questionsInGroup = null;
 		
 		
 		for(Question q : questions) {
 		
 			System.out.println("Move a question: " + q.name + " : " + q.type);
-			newPath = getNewPath(sd, q, null);
+			//newPath = getNewPath(sd, q, null);
 
 			if(q.type.equals("begin group")) {
-				oldGroupPath = q.path;
-				newGroupPath = newPath;
+				//oldGroupPath = q.path;
+				//newGroupPath = newPath;
 				
 				// Move every question in this group
-				questionsInGroup = getQuestionsInGroup(sd, q);
+				questionsInGroup = getQuestionsInGroup(sd, q, true);
 				for(Question groupQuestion : questionsInGroup) {
-					newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
-					moveAQuestion(sd, sId, groupQuestion, newPath, true);
+					//newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
+					moveAQuestion(sd, sId, groupQuestion, true);
 				}
-			} else if(q.type.equals("end group")) {
-
-				newPath = newPath.substring(0, newPath.indexOf("_groupEnd"));		// Remove the "groupEnd" to get the path of the group
-				updatePathOfQuestionsBetween(sd, q, newPath);
-				
-				moveAQuestion(sd, sId, q, newPath, false);
 			} else {	
-				moveAQuestion(sd, sId, q, newPath, false);
+				moveAQuestion(sd, sId, q, false);
 			}
 		}
 	}
@@ -385,13 +380,25 @@ public class QuestionManager {
 	/*
 	 * Get all the questions in a group
 	 */
-	private ArrayList<Question> getQuestionsInGroup(Connection sd, Question q) throws SQLException {
+	private ArrayList<Question> getQuestionsInGroup(Connection sd, Question q, boolean inclusive) throws Exception {
 		
 		ArrayList<Question> questions = new ArrayList<Question> ();
-		int seq;
+		int startSeq;
+		int endSeq;
+		int newSeq;
+		
+		String sqlGetSeq = "select seq from question where f_id = ? and qname = ?;";
+		PreparedStatement pstmtGetSeq = null;
 		
 		PreparedStatement pstmt = null;
-		String sql = "select qname, path, qType, seq from question q where f_id = ? and path like ? order by seq;";
+		String sqlInclusive = "select qname, path, qType, seq from question q where f_id = ? "
+				+ "and seq >= ? "
+				+ "and seq <= ? "
+				+ "order by seq asc;";
+		String sqlExclusive = "select qname, path, qType, seq from question q where f_id = ? "
+				+ "and seq > ? "
+				+ "and seq < ? "
+				+ "order by seq asc;";
 		
 		try {
 			
@@ -404,21 +411,49 @@ public class QuestionManager {
 			} else {
 				formId = q.sourceFormId;
 			}
-			pstmt = sd.prepareStatement(sql);
+			
+			pstmtGetSeq = sd.prepareStatement(sqlGetSeq);
+			
+			// Get start sequence
+			pstmtGetSeq.setInt(1, formId);
+			pstmtGetSeq.setString(2, q.name);
+			ResultSet rsSeq = pstmtGetSeq.executeQuery();
+			if(rsSeq.next()) {
+				startSeq = rsSeq.getInt(1);
+			} else {
+				throw new Exception("Start Sequence Not Found");
+			}
+			
+			// Get end sequence
+			rsSeq.close();
+			pstmtGetSeq.setString(2, q.name + "_groupEnd");
+			rsSeq = pstmtGetSeq.executeQuery();
+			if(rsSeq.next()) {
+				endSeq = rsSeq.getInt(1);
+			} else {
+				throw new Exception("End Sequence Not Found");
+			}
+			
+			if(inclusive) {
+				pstmt = sd.prepareStatement(sqlInclusive);
+			} else {
+				pstmt = sd.prepareStatement(sqlExclusive);
+			}
 			pstmt.setInt(1, formId);
-			pstmt.setString(2, q.path + '%');
+			pstmt.setInt(2, startSeq);
+			pstmt.setInt(3, endSeq);
 			
 			log.info("SQL Get questions in group: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
-			seq = q.seq;											// The target sequence
+			newSeq = q.seq;											// The target sequence
 			System.out.println("Getting questions from group");
 			while(rs.next()) {
 				
 				Question groupQuestion = new Question();
 				groupQuestion.sourceFormId = q.sourceFormId;
 				groupQuestion.fId = q.fId;
-				groupQuestion.seq = seq++;
+				groupQuestion.seq = newSeq++;
 				
 				groupQuestion.name = rs.getString(1);
 				groupQuestion.path =  rs.getString(2);
@@ -439,6 +474,7 @@ public class QuestionManager {
 		} 
 		finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtGetSeq != null) {pstmtGetSeq.close();}} catch (SQLException e) {}
 		}
 		
 		return questions;
@@ -447,7 +483,7 @@ public class QuestionManager {
 	
 	/*
 	 * Update the path of questions in a group
-	 */
+	 *
 	private void updatePathOfQuestionsBetween(Connection sd, Question q, String newBasePath) throws SQLException {
 		
 		int startSeq;
@@ -520,11 +556,11 @@ public class QuestionManager {
 		
 		return;
 		
-	}
-	
+	}	
+	*/
 	/*
 	 * Get the new path of a question being moved
-	 */
+	 *
 	private String getNewPath(Connection sd, Question q, String formPath) throws SQLException {
 		
 		String path = null;
@@ -533,14 +569,14 @@ public class QuestionManager {
 		PreparedStatement pstmtGetNewPath = null;
 		String sqlGetNewPath = "select path, qType from question q where f_id = ? and seq = ?;";
 		
-		/*
+		*
 		 * Get the new path from the question before where this question is being moved which is in q.seq
 		 * However if the question is being moved to the beginning of the form it will be the question after this
 		 * These two cases result in different calculations for the path when this related queston is a group
 		 *  When the related question is before the new question and it is a group then the new path extends the path of the group
 		 *  When the related question is after the new question and it is a group then the path of the new question is the same as that of the group
 		 *  When the related question is not a group then the new question gets the path of the related question
-		 */
+		 *
 		try {
 			int relatedSeq = q.seq;	
 			if(relatedSeq > 0) {
@@ -591,26 +627,25 @@ public class QuestionManager {
 		return path;
 		
 	}
+	*/
 	
 	/*
 	 * Move a question
 	 * This can only be called for questions that are already in the database as otherwise the move is merely added to the
 	 *  question creation
 	 */
-	public void moveAQuestion(Connection sd, int sId, Question q, String path, boolean ignoreExistingSeq ) throws Exception {
+	public void moveAQuestion(Connection sd, int sId, Question q, boolean ignoreExistingSeq ) throws Exception {
 		
 		PreparedStatement pstmtMoveWithin = null;
 		String sqlMoveWithin = "update question set "
-						+ "seq = ?, "
-						+ "path= ? "
+						+ "seq = ? "
 					+ "where f_id = ? "
 					+ "and qname = ? "
 					+ "and seq = ?;";
 		
 		PreparedStatement pstmtMoveWithinIgnoreExistingSeq = null;
 		String sqlMoveWithinIgnoreExistingSeq = "update question set "
-						+ "seq = ?, "
-						+ "path= ? "
+						+ "seq = ? "
 					+ "where f_id = ? "
 					+ "and qname = ?;";
 
@@ -708,19 +743,17 @@ public class QuestionManager {
 			if(ignoreExistingSeq) {
 				pstmtMoveWithinIgnoreExistingSeq = sd.prepareStatement(sqlMoveWithinIgnoreExistingSeq);
 				pstmtMoveWithinIgnoreExistingSeq.setInt(1, q.seq );
-				pstmtMoveWithinIgnoreExistingSeq.setString(2, path );
-				pstmtMoveWithinIgnoreExistingSeq.setInt(3, q.fId );
-				pstmtMoveWithinIgnoreExistingSeq.setString(4, q.name);
+				pstmtMoveWithinIgnoreExistingSeq.setInt(2, q.fId );
+				pstmtMoveWithinIgnoreExistingSeq.setString(3, q.name);
 			
 				log.info("Move question within same list: " + pstmtMoveWithinIgnoreExistingSeq.toString());
 				count = pstmtMoveWithinIgnoreExistingSeq.executeUpdate();
 			} else {
 				pstmtMoveWithin = sd.prepareStatement(sqlMoveWithin);
 				pstmtMoveWithin.setInt(1, q.seq );
-				pstmtMoveWithin.setString(2, path );
-				pstmtMoveWithin.setInt(3, q.fId );
-				pstmtMoveWithin.setString(4, q.name);
-				pstmtMoveWithin.setInt(5, q.sourceSeq );
+				pstmtMoveWithin.setInt(2, q.fId );
+				pstmtMoveWithin.setString(3, q.name);
+				pstmtMoveWithin.setInt(4, q.sourceSeq );
 			
 				log.info("Move question within same list: " + pstmtMoveWithin.toString());
 				count = pstmtMoveWithin.executeUpdate();
@@ -813,11 +846,13 @@ public class QuestionManager {
 					published = rs.getBoolean(3);
 				}
 				
+				System.out.println("============= " + q.name + " : " + qType + " : " + published + " : " + getGroupContents + " : " + force);
+				
 				/*
 				 * If the question is a group question then get its members
 				 */
 				if(qType.equals("begin group") && getGroupContents) {
-					groupContents = getQuestionsInGroup(sd, q);
+					groupContents = getQuestionsInGroup(sd, q, false);
 				}
 				
 				if(published && !force) {
@@ -1012,11 +1047,11 @@ public class QuestionManager {
 				log.info("Update sequences: " + pstmtUpdateSeq.toString());
 				pstmtUpdateSeq.executeUpdate();
 				
-				String path = "option_" + listId + "_" + o.value;
+				String transId = "option_" + listId + "_" + o.value;
 				// Insert the option
 				pstmtInsertOption.setInt(1, listId );
 				pstmtInsertOption.setInt(2, o.seq );
-				pstmtInsertOption.setString(3, path + ":label" );
+				pstmtInsertOption.setString(3, transId + ":label" );
 				pstmtInsertOption.setString(4, o.value );
 				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false, false) );
 				pstmtInsertOption.setString(6, gson.toJson(o.cascadeKeyValues));			
@@ -1025,8 +1060,8 @@ public class QuestionManager {
 				pstmtInsertOption.executeUpdate();
 				
 				// Set the labels 
-				if (updateLabels && path != null && path.trim().length() > 0) {
-					UtilityMethodsEmail.setLabels(sd, sId, path, o.labels, "");
+				if (updateLabels && transId != null && transId.trim().length() > 0) {
+					UtilityMethodsEmail.setLabels(sd, sId, transId, o.labels, "");
 				}
 			}
 			
@@ -1223,8 +1258,8 @@ public class QuestionManager {
 				+ "and ovalue = ?";
 		
 		// If the option value changes then its label id needs to be updated as this is derived from the option value
-		PreparedStatement pstmtGetOldPath = null;
-		String sqlGetOldPath = "select label_id from option where l_id = ? and ovalue = ?; ";
+		PreparedStatement pstmtGetOldLabelId = null;
+		String sqlGetOldLabelId = "select label_id from option where l_id = ? and ovalue = ?; ";
 		
 		PreparedStatement pstmtUpdateLabelId = null;
 		String sqlUpdateLabelId = "update translation t set text_id = ? where s_id = ? and text_id = ?; ";
@@ -1237,26 +1272,26 @@ public class QuestionManager {
 				int listId = GeneralUtilityMethods.getListId(sd, sId, p.optionList);		// Get the list id for this option
 				
 				if(property.equals("value")) {
-					String newPath = "option_" + listId + "_" + p.newVal + ":label";
-					String oldPath = null;
+					String newLabelId = "option_" + listId + "_" + p.newVal + ":label";
+					String oldLabelId = null;
 					
-					// Get the old path
-					pstmtGetOldPath = sd.prepareStatement(sqlGetOldPath);
-					pstmtGetOldPath.setInt(1, listId);
-					pstmtGetOldPath.setString(2, p.oldVal);
+					// Get the old labelId
+					pstmtGetOldLabelId = sd.prepareStatement(sqlGetOldLabelId);
+					pstmtGetOldLabelId.setInt(1, listId);
+					pstmtGetOldLabelId.setString(2, p.oldVal);
 					
-					log.info("Get old path: " + pstmtGetOldPath.toString());
-					ResultSet rs = pstmtGetOldPath.executeQuery();
+					log.info("Get old label id: " + pstmtGetOldLabelId.toString());
+					ResultSet rs = pstmtGetOldLabelId.executeQuery();
 					if(rs.next()) {
-						oldPath = rs.getString(1);
+						oldLabelId = rs.getString(1);
 					} else {
-						// Try to set the path from the passed in property, this will exist if this option has previously been saved to the database
-						oldPath = p.path;		// Probably the option has been dragged into a new list
+						// Try to set the labelId from the passed in path property, this will exist if this option has previously been saved to the database
+						oldLabelId = p.path;		// Probably the option has been dragged into a new list
 					}
 					
 					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
 					pstmtUpdateValue.setString(1, p.newVal);
-					pstmtUpdateValue.setString(2, newPath);
+					pstmtUpdateValue.setString(2, newLabelId);
 					pstmtUpdateValue.setInt(3, listId);
 					pstmtUpdateValue.setString(4, p.oldVal);
 					
@@ -1266,9 +1301,9 @@ public class QuestionManager {
 
 					// Update the label id
 					pstmtUpdateLabelId = sd.prepareStatement(sqlUpdateLabelId);
-					pstmtUpdateLabelId.setString(1, newPath);
+					pstmtUpdateLabelId.setString(1, newLabelId);
 					pstmtUpdateLabelId.setInt(2, sId);
-					pstmtUpdateLabelId.setString(3, oldPath);
+					pstmtUpdateLabelId.setString(3, oldLabelId);
 					
 					log.info("Update option label id: " + pstmtUpdateLabelId.toString());
 					pstmtUpdateLabelId.executeUpdate();
@@ -1303,7 +1338,7 @@ public class QuestionManager {
 			try {if (pstmtOtherProperties != null) {pstmtOtherProperties.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateValue != null) {pstmtUpdateValue.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateLabelId != null) {pstmtUpdateLabelId.close();}} catch (SQLException e) {}
-			try {if (pstmtGetOldPath != null) {pstmtGetOldPath.close();}} catch (SQLException e) {}
+			try {if (pstmtGetOldLabelId != null) {pstmtGetOldLabelId.close();}} catch (SQLException e) {}
 		}	
 		
 	}
@@ -1353,7 +1388,7 @@ public class QuestionManager {
 		
 		String tablename = null;
 		int fId;									// Id of the newly created form
-		String path = parentPath + "/" + formName;
+		//String path = parentPath + "/" + formName;
 		
 		String sqlGetTableName = "select table_name from form where f_id = ?;";
 		PreparedStatement pstmtGetTableName = sd.prepareStatement(sqlGetTableName);
@@ -1393,7 +1428,7 @@ public class QuestionManager {
 			pstmtCreateForm.setString(4,  tablename);
 			pstmtCreateForm.setInt(5,  parentFormId);
 			pstmtCreateForm.setInt(6,  parentQuestionId);
-			pstmtCreateForm.setString(7,  path);
+			pstmtCreateForm.setString(7,  "no longer used");	// path
 			pstmtCreateForm.setString(8,  repeats);
 		
 			log.info("Create new form: " + pstmtCreateForm.toString());

@@ -391,7 +391,7 @@ window.gTasks = {
 							 text: $this.text()
 						 }
 
-						$this.qrcode(opt);
+						$this.empty().qrcode(opt);
 						
 					 });
 				 }

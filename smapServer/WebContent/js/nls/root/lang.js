@@ -510,8 +510,8 @@ define({
 	"u_e_p": "Email password",
 	"u_e_port": "Email Server port",
 	"u_h_e": "Email to get Help",
-	"u_rap": "Restrict access to project",
-	"u_rap_d": "Select the users that can be assigned to this project",
+	"u_rap": "Restrict access",
+	"u_rap_d": "Administrators will be able to assign the selected users only to this project",
 	
 	// Browse Results
 	"br_ci": "Case Insensitive",

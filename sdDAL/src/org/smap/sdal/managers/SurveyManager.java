@@ -729,7 +729,7 @@ public class SurveyManager {
 				}
 				
 				// Set an indicator if this is a property type question (_device etc)
-				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name, q.path);
+				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name);
 				
 				// Discard property type questions if they have not been asked for
 				if(q.propertyType && !getPropertyTypeQuestions) {
@@ -1769,8 +1769,10 @@ public class SurveyManager {
 							String qTextId = null;
 							String infoTextId = null;
 							int fId = 0;
-							String currentPath = null;
-							String newPath = null;
+							//String currentPath = null;
+							//String newPath = null;
+							String newTextId = null;
+							String newHintId = null;
 							String sqlGetQuestionDetails = "select f_id, path, qtype, qtext_id, infotext_id from question where q_id = ?";
 							String sqlUpdateColumnName = "update question set column_name = ? where q_id = ?;";
 							String sqlUpdateLabelRef = "update question set qtext_id = ? where q_id = ?;";
@@ -1785,13 +1787,15 @@ public class SurveyManager {
 
 							if(rsPath.next()) {
 								fId = rsPath.getInt(1);
-								currentPath = rsPath.getString(2);
+								//currentPath = rsPath.getString(2);
 								qType = rsPath.getString(3);
 								qTextId = rsPath.getString(4);
 								infoTextId = rsPath.getString(5);
-								if(currentPath != null) {
-									newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + "/" + ci.property.newVal;
-								}
+								newTextId = "question_" + ci.property.newVal + ":label";
+								newHintId = "question_" + ci.property.newVal + ":hint";
+								//if(currentPath != null) {
+								//	newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + "/" + ci.property.newVal;
+								//}
 							}
 							
 							// 2. Update column name
@@ -1805,12 +1809,12 @@ public class SurveyManager {
 							pstmtUpdateTranslations = sd.prepareStatement(sqlUpdateTranslations);
 							if(qTextId != null) {
 								pstmtUpdateLabelRef = sd.prepareStatement(sqlUpdateLabelRef);
-								pstmtUpdateLabelRef.setString(1, newPath + ":label");
+								pstmtUpdateLabelRef.setString(1, newTextId);
 								pstmtUpdateLabelRef.setInt(2, ci.property.qId);
 								pstmtUpdateLabelRef.executeUpdate();		
 					
-								pstmtUpdateTranslations.setString(1, newPath + ":label");
-								pstmtUpdateTranslations.setString(2, currentPath + ":label");
+								pstmtUpdateTranslations.setString(1, newTextId);
+								pstmtUpdateTranslations.setString(2, qTextId);
 								pstmtUpdateTranslations.setInt(3, sId);
 								pstmtUpdateTranslations.executeUpdate();
 							}
@@ -1818,12 +1822,12 @@ public class SurveyManager {
 							// 4. Update reference to hint
 							if(infoTextId != null) {
 								pstmtUpdateHintRef = sd.prepareStatement(sqlUpdateHintRef);
-								pstmtUpdateHintRef.setString(1, newPath + ":hint");
+								pstmtUpdateHintRef.setString(1, newHintId);
 								pstmtUpdateHintRef.setInt(2, ci.property.qId);
 								pstmtUpdateHintRef.executeUpdate();
 								
-								pstmtUpdateTranslations.setString(1, newPath + ":hint");
-								pstmtUpdateTranslations.setString(2, currentPath + ":hint");
+								pstmtUpdateTranslations.setString(1, newHintId);
+								pstmtUpdateTranslations.setString(2, infoTextId);
 								pstmtUpdateTranslations.setInt(3, sId);
 								pstmtUpdateTranslations.executeUpdate();
 							}
@@ -1849,24 +1853,23 @@ public class SurveyManager {
 					
 								String sqlUpdateForm = "update form set name = ?, "
 										+ "table_name = ?, "
-										+ "path = replace(path, ?, ?) "
+										//+ "path = replace(path, ?, ?) "
 										+ "where s_id = ? "
 										+ "and name = ?;";
 								try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}
 								pstmtUpdateForm = sd.prepareStatement(sqlUpdateForm);
 								pstmtUpdateForm.setString(1,  ci.property.newVal);
 								pstmtUpdateForm.setString(2,  "s" + sId + "_" + ci.property.newVal);
-								pstmtUpdateForm.setString(3,  currentPath);
-								pstmtUpdateForm.setString(4,  newPath);
-								pstmtUpdateForm.setInt(5,  sId);
-								pstmtUpdateForm.setString(6,  ci.property.oldVal);
+								//pstmtUpdateForm.setString(3,  currentPath);
+								//pstmtUpdateForm.setString(4,  newPath);
+								pstmtUpdateForm.setInt(3,  sId);
+								pstmtUpdateForm.setString(4,  ci.property.oldVal);
 								
 								log.info("Updating form name: " + pstmtUpdateForm.toString());
 								pstmtUpdateForm.executeUpdate();
 							}
 							
-							log.info("Current Path to be updated: " + currentPath + " to : " + newPath);
-							
+							/*
 							if(currentPath != null && newPath != null) {
 								
 								// 7. Update all question paths with this path in them
@@ -1886,6 +1889,7 @@ public class SurveyManager {
 								
 
 							}
+							*/
 							
 						}
 						log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);

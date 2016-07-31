@@ -553,6 +553,7 @@ public class UserList extends Application {
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
 			connectionSD.setAutoCommit(false);
+			System.out.println("Auto commit false");
 			
 			/*
 			 * Get the organisation and name of the user making the request
@@ -580,7 +581,6 @@ public class UserList extends Application {
 					UserManager um = new UserManager();
 					if(u.id == -1) {
 						// New user
-						String serverName = request.getServerName();
 						um.createUser(connectionSD, u, o_id,
 								isOrgUser,
 								isSecurityManager,
@@ -626,6 +626,8 @@ public class UserList extends Application {
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			
+			System.out.println("Auto commit true");
+			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);

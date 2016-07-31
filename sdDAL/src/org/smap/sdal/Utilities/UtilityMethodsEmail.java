@@ -650,7 +650,7 @@ public class UtilityMethodsEmail {
 	 */
 	public static void setLabels(Connection sd,
 			int sId, 
-			String path, 
+			String textId, 
 			ArrayList<Label> labels,
 			String basePath) throws SQLException {
 		
@@ -689,7 +689,7 @@ public class UtilityMethodsEmail {
 				
 				// Update text
 				if(l.text != null ) {
-					pstmt.setString(3, path + ":label");
+					pstmt.setString(3, textId + ":label");
 					pstmt.setString(4, "none");
 					//pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.text, sId, sd, true));
 					pstmt.setString(5, l.text);		// rmpath
@@ -699,7 +699,7 @@ public class UtilityMethodsEmail {
 				
 				// Update hint
 				if(l.hint != null) {
-					pstmt.setString(3, path + ":hint");
+					pstmt.setString(3, textId + ":hint");
 					pstmt.setString(4, "none");
 					//pstmt.setString(5, GeneralUtilityMethods.convertAllxlsNames(l.hint, sId, sd, true));
 					pstmt.setString(5, l.hint);		// rmpath
@@ -709,7 +709,7 @@ public class UtilityMethodsEmail {
 				
 				// Update image
 				if(l.image != null) {
-					pstmt.setString(3, path + ":label");
+					pstmt.setString(3, textId + ":label");
 					pstmt.setString(4, "image");
 					pstmt.setString(5, l.image);
 					log.info("Set image label: " + pstmt.toString());
@@ -718,7 +718,7 @@ public class UtilityMethodsEmail {
 				
 				// Update video
 				if(l.video != null) {
-					pstmt.setString(3, path + ":label");
+					pstmt.setString(3, textId + ":label");
 					pstmt.setString(4, "video");
 					pstmt.setString(5, l.video);
 					log.info("Set video label: " + pstmt.toString());
@@ -727,7 +727,7 @@ public class UtilityMethodsEmail {
 				
 				// Update audio
 				if(l.audio != null) {
-					pstmt.setString(3, path + ":label");
+					pstmt.setString(3, textId + ":label");
 					pstmt.setString(4, "audio");
 					pstmt.setString(5, l.audio);
 					log.info("Set audio label: " + pstmt.toString());

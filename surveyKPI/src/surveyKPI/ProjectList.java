@@ -221,10 +221,7 @@ public class ProjectList extends Application {
 					if(p.id == -1) {
 						
 						// New project
-						connectionSD.setAutoCommit(false);	
 						pm.createProject(connectionSD, p, o_id, u_id, request.getRemoteUser());
-						connectionSD.commit();
-						connectionSD.setAutoCommit(true);
 						
 					} else {
 						// Existing project
@@ -270,48 +267,52 @@ public class ProjectList extends Application {
 								aSM.isAuthorised(connectionSD, request.getRemoteUser());
 								connectionSD.setAutoCommit(false);
 								
-								// Delete existing restrictions
-								String sqlDelRestricted = "update user_project "
-										+ "set restricted = 'false' "
-										+ "where p_id = ?;";
-								pstmtDelRestricted = connectionSD.prepareStatement(sqlDelRestricted);
-								pstmtDelRestricted.setInt(1, p.id);
-								System.out.println("Remove restricted: " + pstmtDelRestricted.toString());
-								pstmtDelRestricted.executeUpdate();
-								
-								if(p.restrictUsers != null && p.restrictUsers.size() > 0) {
+								try {
+									// Delete existing restrictions
+									String sqlDelRestricted = "update user_project "
+											+ "set restricted = 'false' "
+											+ "where p_id = ?;";
+									pstmtDelRestricted = connectionSD.prepareStatement(sqlDelRestricted);
+									pstmtDelRestricted.setInt(1, p.id);
+									System.out.println("Remove restricted: " + pstmtDelRestricted.toString());
+									pstmtDelRestricted.executeUpdate();
 									
-									
-									String sqlUpdateRestricted = "update user_project "
-											+ "set restricted = 'true' "
-											+ "where p_id = ? "
-											+ "and u_id = ?";
-									
-									String sqlInsertRestricted = "insert into user_project "
-											+ "(u_id,p_id, restricted) "
-											+ "values(?, ?, 'true')";
-							
-									pstmtUpdateRestricted = connectionSD.prepareStatement(sqlUpdateRestricted);
-									pstmtUpdateRestricted.setInt(1, p.id);
-									
-									pstmtInsertRestricted = connectionSD.prepareStatement(sqlInsertRestricted);
-									pstmtInsertRestricted.setInt(1,  p.id);
-									
-									for(i = 0; i < p.restrictUsers.size(); i++) {
+									if(p.restrictUsers != null && p.restrictUsers.size() > 0) {
 										
-										pstmtUpdateRestricted.setInt(2, p.restrictUsers.get(i));
-										System.out.println("Update restricted user: " + pstmtUpdateRestricted.toString());
-										int count = pstmtUpdateRestricted.executeUpdate();
-										if(count == 0) {
-											pstmtInsertRestricted.setInt(2, p.restrictUsers.get(i));
-											System.out.println("Insert restricted user: " + pstmtInsertRestricted.toString());
-											pstmtInsertRestricted.executeUpdate();
+										
+										String sqlUpdateRestricted = "update user_project "
+												+ "set restricted = 'true' "
+												+ "where p_id = ? "
+												+ "and u_id = ?";
+										
+										String sqlInsertRestricted = "insert into user_project "
+												+ "(u_id,p_id, restricted) "
+												+ "values(?, ?, 'true')";
+								
+										pstmtUpdateRestricted = connectionSD.prepareStatement(sqlUpdateRestricted);
+										pstmtUpdateRestricted.setInt(1, p.id);
+										
+										pstmtInsertRestricted = connectionSD.prepareStatement(sqlInsertRestricted);
+										pstmtInsertRestricted.setInt(1,  p.id);
+										
+										for(i = 0; i < p.restrictUsers.size(); i++) {
+											
+											pstmtUpdateRestricted.setInt(2, p.restrictUsers.get(i));
+											System.out.println("Update restricted user: " + pstmtUpdateRestricted.toString());
+											int count = pstmtUpdateRestricted.executeUpdate();
+											if(count == 0) {
+												pstmtInsertRestricted.setInt(2, p.restrictUsers.get(i));
+												System.out.println("Insert restricted user: " + pstmtInsertRestricted.toString());
+												pstmtInsertRestricted.executeUpdate();
+											}
 										}
 									}
+								} catch (Exception e) {
+									try {connectionSD.rollback();} catch(Exception ex) {}
+								} finally {
 									try {connectionSD.setAutoCommit(true);} catch (Exception ex) {}
 								}
 							}
-				
 						}
 					}
 				}
@@ -319,18 +320,16 @@ public class ProjectList extends Application {
 				response = Response.ok().build();
 			} else {
 				log.log(Level.SEVERE,"Error: No organisation");
-			    response = Response.serverError().build();
+			    response = Response.serverError().entity("No Organisation").build();
 			}
 				
 		} catch (SQLException e) {
-			try {connectionSD.rollback();} catch (Exception ex) {}
-			try {connectionSD.setAutoCommit(true);} catch (Exception ex) {}
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			if(state.startsWith("23")) {
-				response = Response.status(Status.CONFLICT).build();
+				response = Response.status(Status.CONFLICT).entity("Duplicate Project Name").build();
 			} else {
-				response = Response.serverError().build();
+				response = Response.serverError().entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"Error", e);
 			}
 		} finally {

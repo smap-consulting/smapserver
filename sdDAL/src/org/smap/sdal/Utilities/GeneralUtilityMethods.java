@@ -2079,7 +2079,7 @@ public class GeneralUtilityMethods {
 					c.qId = qId;
 					c.type = qType;
 					c.readonly = ro;
-					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name, path)) {
+					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						columnList.add(c);
 					} else {
 						realQuestions.add(c);
@@ -2162,7 +2162,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return true if this question is a property type question like deviceid
 	 */
-	public static boolean isPropertyType(String source_param, String name, String path) {
+	public static boolean isPropertyType(String source_param, String name) {
 		
 		boolean isProperty;
 		
@@ -2171,13 +2171,16 @@ public class GeneralUtilityMethods {
 			
 			isProperty = true;
 			
-		} else if(name != null & (name.equals("_instanceid") || name.equals("_task_key"))) {
+		} else if(name != null && (name.equals("_instanceid") 
+				|| name.equals("meta")
+				|| name.equals("instanceID")
+				|| name.equals("instanceName")
+				|| name.equals("meta_groupEnd")
+				|| name.equals("_task_key")
+				)) {
 			
 			isProperty = true;
 			
-		} else if(path != null && path.startsWith("/main/meta")) {
-			
-			isProperty = true;
 		} else {
 			isProperty = false;
 		}

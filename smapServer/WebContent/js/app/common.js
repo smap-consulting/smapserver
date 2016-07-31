@@ -77,6 +77,8 @@ function removePendingTask(taskId, source) {
 
 /*
  * Update the list of available projects
+ * Note when addAll is set to true the list is not used to change the default project
+ *   In this case the value of the list should not be set to the default project
  */
 function updateProjectList(addAll, projectId, callback) {
 
@@ -88,7 +90,7 @@ function updateProjectList(addAll, projectId, callback) {
 	
 	if(addAll) {
 		h[++idx] = '<option value="0">All</option>';
-		updateCurrentProject = false;
+		updateCurrentProject = false;		
 	}
 	for(i = 0; i < globals.gProjectList.length; i++) {
 		h[++idx] = '<option value="';
@@ -116,9 +118,11 @@ function updateProjectList(addAll, projectId, callback) {
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
 	}
 	
-	$projectSelect.val(globals.gCurrentProject);			// Set the initial project value
-	$('#projectId').val(globals.gCurrentProject);			// Set the project value for the hidden field in template upload
-
+	if(!addAll) {
+		$projectSelect.val(globals.gCurrentProject);			// Set the initial project value
+		$('#projectId').val(globals.gCurrentProject);			// Set the project value for the hidden field in template upload
+	}
+	
 	if(typeof callback !== "undefined") {
 		callback(globals.gCurrentProject);				// Call the callback with the correct current project
 	}

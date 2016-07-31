@@ -318,10 +318,7 @@ $(document).ready(function() {
 				  if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 				  } else {
-					  var msg = err.message;
-					  if(msg && msg.indexOf("Conflict") >= 0) {
-						  msg = "Duplicate project name";
-					  }
+					  var msg = xhr.responseText;
 					  alert("Error: Failed to save project details: " + msg);
 				  }
 			  }
@@ -754,9 +751,9 @@ function openProjectDialog(existing, projectIndex) {
 		$('#p_tasks_only').prop('checked', globals.gProjectList[projectIndex].tasks_only);
 	}
 	
-	if(globals.gIsSecurityAdministrator) {
-		$('.restricted_users').show();
-		addRestrictedUsers(".restricted_users_list", globals.gProjectList[projectIndex].id)
+	if(globals.gIsSecurityAdministrator && projectIndex >= 0) {
+		$('.restricted_users').show();	
+		addRestrictedUsers(".restricted_users_list", globals.gProjectList[projectIndex].id);
 	} else {
 		$('.restricted_users').hide();
 	}
