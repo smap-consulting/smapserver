@@ -48,7 +48,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 /*
- * Manage the table that stores details on tasks
+ * Manage creation of files
  */
 public class ExternalFileManager {
 	
@@ -56,9 +56,13 @@ public class ExternalFileManager {
 			 Logger.getLogger(ExternalFileManager.class.getName());
 	
 	/*
-	 * Create the linked file
+	 * Create a linked file
 	 */
-	public void createLinkedFile(Connection sd, Connection cRel, int sId, String filename, String filepath) throws Exception {
+	public void createLinkedFile(Connection sd, 
+			Connection cRel, 
+			int sId, 			// The survey that contains the manifest item
+			String filename, 
+			String filepath) throws Exception {
 		
 		ResultSet rs = null;
 		
@@ -72,73 +76,83 @@ public class ExternalFileManager {
 				+ "and calculate is not null;";
 		PreparedStatement pstmtCalculate = null;
 		
-		PreparedStatement pstmtGetData = null;
-		
+		String sqlVersion = "update survey set version = version + 1 where s_id = ?";
+		PreparedStatement pstmtVersion = null;
 		try {
 			
 			ArrayList<String> uniqueColumns = new ArrayList<String> ();
 			
-			// 1.Get columns from appearance
-			pstmtAppearance = sd.prepareStatement(sqlAppearance);
-			pstmtAppearance.setInt(1, sId);
-			rs = pstmtAppearance.executeQuery();
-			while(rs.next()) {
-				System.out.println("Appearance: " + rs.getString(2));
-				int qId = rs.getInt(1);
-				String appearance = rs.getString(2);
-				ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true);
-				if(columns != null) {
-					for (String col : columns) {
-						if(!uniqueColumns.contains(col)) {
-							uniqueColumns.add(col);
-						}
-					}
-				}
-			}
-			
-			// 2. Get columns from calculate
-			pstmtCalculate = sd.prepareStatement(sqlCalculate);
-			pstmtCalculate.setInt(1, sId);
-			rs = pstmtCalculate.executeQuery();
-			while(rs.next()) {
-				System.out.println("Calculate: " + rs.getString(2));
-				int qId = rs.getInt(1);
-				String calculate = rs.getString(2);
-				ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false);
-				if(columns != null) {
-					for (String col : columns) {
-						if(!uniqueColumns.contains(col)) {
-							uniqueColumns.add(col);
-						}
-					}
-				}
-			}
-			
-			// 3. Get the survey ident that is going to provide the CSV data
+			// 1. Get the survey ident that is going to provide the CSV data (That is the ident of the file being linked to)
 			int idx = filename.indexOf('_');
 			String sIdent = filename.substring(idx + 1);
+			int linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
-			// 4. Get the sql
-			String sql = getSql(sd, sIdent, uniqueColumns);		
+			// 2. Determine whether or not the file needs to be regenerated
+            boolean regenerate = regenerateFile(sd, cRel, linked_sId, sId);
 			
-			// 5. Create the file
-			int code = 0;
-			
-			String [] cmd = {"/bin/sh", "-c", "/smap/bin/getshape.sh "
-					+ "results linked "
-					+ "\"" + sql + "\" "
-					+ filepath
-					+ " csvnozip"
-					+ " >> /var/log/tomcat7/survey.log 2>&1"};
-			log.info("Getting linked data: " + cmd[2]);
-			Process proc = Runtime.getRuntime().exec(cmd);
-			code = proc.waitFor();
-			
-            log.info("Process exitValue: " + code);
+			// 3.Get columns from appearance
+            if(regenerate) {
+				pstmtAppearance = sd.prepareStatement(sqlAppearance);
+				pstmtAppearance.setInt(1, sId);
+				rs = pstmtAppearance.executeQuery();
+				while(rs.next()) {
+					System.out.println("Appearance: " + rs.getString(2));
+					int qId = rs.getInt(1);
+					String appearance = rs.getString(2);
+					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true);
+					if(columns != null) {
+						for (String col : columns) {
+							if(!uniqueColumns.contains(col)) {
+								uniqueColumns.add(col);
+							}
+						}
+					}
+				}
+				
+				// 4. Get columns from calculate
+				pstmtCalculate = sd.prepareStatement(sqlCalculate);
+				pstmtCalculate.setInt(1, sId);
+				rs = pstmtCalculate.executeQuery();
+				while(rs.next()) {
+					System.out.println("Calculate: " + rs.getString(2));
+					int qId = rs.getInt(1);
+					String calculate = rs.getString(2);
+					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false);
+					if(columns != null) {
+						for (String col : columns) {
+							if(!uniqueColumns.contains(col)) {
+								uniqueColumns.add(col);
+							}
+						}
+					}
+				}
+	
+				
+				// 5. Get the sql
+				String sql = getSql(sd, sIdent, uniqueColumns);		
+				
+				// 6. Create the file
+				int code = 0;
+				
+				String [] cmd = {"/bin/sh", "-c", "/smap/bin/getshape.sh "
+						+ "results linked "
+						+ "\"" + sql + "\" "
+						+ filepath
+						+ " csvnozip"
+						+ " >> /var/log/tomcat7/survey.log 2>&1"};
+				log.info("Getting linked data: " + cmd[2]);
+				Process proc = Runtime.getRuntime().exec(cmd);
+				code = proc.waitFor();
+				
+	            log.info("Process exitValue: " + code);
+	            
+				// Update the version of the linker file
+				pstmtVersion = sd.prepareStatement(sqlVersion);
+				pstmtVersion.setInt(1, sId);
+				pstmtVersion.executeUpdate();
+				
+            }
             
-			pstmtGetData = cRel.prepareStatement(sql);	
-			log.info("Getting linked manifest: " + pstmtGetData.toString());
-			rs = pstmtGetData.executeQuery();
 			
 				
 		} catch(Exception e) {
@@ -147,8 +161,118 @@ public class ExternalFileManager {
 		} finally {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
-			if(pstmtGetData != null) try{pstmtGetData.close();}catch(Exception e) {}
+			if(pstmtVersion != null) try{pstmtVersion.close();}catch(Exception e) {}
+
 		}
+	}
+	
+	/*
+	 * Return true if the file needs to be regenerated
+	 * If regeneration is required then also increment the version of the linking form so that it
+	 * will get the new version
+	 */
+	private boolean regenerateFile(Connection sd, 
+			Connection cRel,
+			int linked_sId, 
+			int linker_sId) throws SQLException {
+        
+		boolean regenerate = false;
+		
+		String sql = "select id, linked_table, number_records from linked_forms "
+				+ "where linked_s_id = ? "
+				+ "and linker_s_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		PreparedStatement pstmtCount = null;
+		
+		String sqlInsert = "insert into linked_forms "
+				+ "(Linked_s_id, linked_table, number_records,linker_s_id) "
+				+ "values(?, ?, ?, ?)";
+		PreparedStatement pstmtInsert = null;
+		
+		String sqlUpdate = "update linked_forms "
+				+ "set number_records = ? "
+				+ "where id = ?";
+		PreparedStatement pstmtUpdate = null;
+		
+		try {
+		// Get data on the link between the two surveys
+        
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, linked_sId);
+			pstmt.setInt(2, linker_sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				int id = rs.getInt(1);
+				String table = rs.getString(2);
+				int previousCount = rs.getInt(3);
+				
+				String sqlCount = "select count(*) from " + table;
+				int count = 0;
+				try {
+					pstmtCount = cRel.prepareStatement(sqlCount);
+					ResultSet rsCount = pstmtCount.executeQuery();
+					if(rsCount.next()) {
+						count = rsCount.getInt(1);
+					}
+				} catch(Exception e) {
+					// Table may not exist yet
+				}
+				
+				if(count != previousCount) {
+					regenerate = true;
+					
+					pstmtUpdate = sd.prepareStatement(sqlUpdate);
+					pstmtUpdate.setInt(1, count);
+					pstmtUpdate.setInt(2, id);
+					
+					log.info("Regenerate: " + pstmtUpdate.toString());
+					pstmtUpdate.executeUpdate();
+					
+				}
+				
+			} else {
+				// Create a new entry
+				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
+				String sqlCount = "select count(*) from " + table;
+				int count = 0;
+				try {
+					pstmtCount = cRel.prepareStatement(sqlCount);
+					log.info("Regenerate: " + pstmtCount.toString());
+					ResultSet rsCount = pstmtCount.executeQuery();
+					if(rsCount.next()) {
+						count = rsCount.getInt(1);
+					}
+				} catch(Exception e) {
+					// Table may not exist yet
+				}
+				
+				if(count > 0) {
+					regenerate = true;
+				}
+				
+				pstmtInsert = sd.prepareStatement(sqlInsert);
+				pstmtInsert.setInt(1, linked_sId);
+				pstmtInsert.setString(2, table);
+				pstmtInsert.setInt(3, count);
+				pstmtInsert.setInt(4, linker_sId);
+				
+				log.info("Regenerate: " + pstmtInsert.toString());
+				pstmtInsert.executeUpdate();
+				
+
+			}
+		} finally {
+			try {pstmt.close();} catch (Exception e) {};
+			try {pstmtCount.close();} catch (Exception e) {};
+			if(pstmtInsert != null) {try {pstmtInsert.close();} catch(Exception e) {}}
+			if(pstmtUpdate != null) {try {pstmtUpdate.close();} catch(Exception e) {}}
+		}
+		
+		
+		System.out.println("Result of regenerate question is: " + regenerate);
+        
+        return regenerate;
 	}
 	
 	/*

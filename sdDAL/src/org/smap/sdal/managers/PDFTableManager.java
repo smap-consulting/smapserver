@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.PdfPageSizer;
+import org.smap.sdal.Utilities.PdfUtilities;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Label;
@@ -102,11 +103,13 @@ public class PDFTableManager {
 		String human_name;
 		int dataIndex;
 		boolean barcode = false;
+		String type;
 		
-		public PdfColumn(ResourceBundle localisation, int dataIndex, String n, boolean barcode) {
+		public PdfColumn(ResourceBundle localisation, int dataIndex, String n, boolean barcode, String type) {
 			this.dataIndex = dataIndex;
 			this.human_name = n;		
 			this.barcode = barcode;	
+			this.type = type;
 		}
 		
 		// Return the width of this column
@@ -303,7 +306,7 @@ public class PDFTableManager {
 		
 		for(PdfColumn col : cols) {
 			
-			PdfPCell cell = addDisplayItem(parser, record.get(col.dataIndex), basePath, col.barcode);
+			PdfPCell cell = addDisplayItem(parser, record.get(col.dataIndex), basePath, col.barcode, col.type);
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			table.addCell(cell);
@@ -335,7 +338,7 @@ public class PDFTableManager {
 				if(record != null) {
 					dataIndex = getDataIndex(record, tc.humanName);
 				}
-				cols.add(new PdfColumn(localisation, dataIndex, tc.humanName, tc.barcode));
+				cols.add(new PdfColumn(localisation, dataIndex, tc.humanName, tc.barcode, tc.type));
 			}
 		}
 	
@@ -517,7 +520,8 @@ public class PDFTableManager {
 	private PdfPCell addDisplayItem(Parser parser, 
 			KeyValue kv, 
 			String basePath,
-			boolean barcode) throws BadElementException, MalformedURLException, IOException {
+			boolean barcode,
+			String type) throws BadElementException, MalformedURLException, IOException {
 		
 		PdfPCell valueCell = new PdfPCell();
 		valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
@@ -526,7 +530,10 @@ public class PDFTableManager {
 		// Set the content of the value cell
 		try {
 			System.out.println("Set cell: " + kv.v);
-			if(barcode) {
+			if(type != null && type.equals("image")) {
+				Image img = Image.getInstance(kv.v);
+				valueCell.addElement(img);
+			} else if(barcode) {
 				BarcodeQRCode qrcode = new BarcodeQRCode(kv.v.trim(), 1, 1, null);
 		         Image qrcodeImage = qrcode.getImage();
 		         qrcodeImage.setAbsolutePosition(10,500);

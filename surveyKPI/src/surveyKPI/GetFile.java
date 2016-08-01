@@ -38,6 +38,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -213,8 +214,8 @@ public class GetFile extends Application {
 			r = Response.ok("").build();
 			
 		}  catch (Exception e) {
-			log.info("Error getting file:" + e.getMessage());
-			r = Response.serverError().build();
+			log.log(Level.SEVERE, "Error getting file", e);
+			r = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
 		} finally {	
 			SDDataSource.closeConnection("getFile", connectionSD);	
 		}

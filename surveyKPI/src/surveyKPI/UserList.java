@@ -552,7 +552,6 @@ public class UserList extends Application {
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
-			connectionSD.setAutoCommit(false);
 			System.out.println("Auto commit false");
 			
 			/*
@@ -601,7 +600,6 @@ public class UserList extends Application {
 					}
 				}
 		
-				connectionSD.commit();
 				response = Response.ok().build();
 			} else {
 				log.log(Level.SEVERE,"Error: No organisation");
@@ -609,8 +607,6 @@ public class UserList extends Application {
 			}
 				
 		} catch (SQLException e) {
-			
-			try{connectionSD.rollback();} catch(Exception er) {log.log(Level.SEVERE,"Failed to rollback connection", er);}
 			
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
@@ -621,13 +617,10 @@ public class UserList extends Application {
 				log.log(Level.SEVERE,"Error", e);
 			}
 		} catch (Exception e) {
-			try{connectionSD.rollback();} catch(Exception er) {log.log(Level.SEVERE,"Failed to rollback connection", er);}
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			
-			System.out.println("Auto commit true");
-			try {connectionSD.setAutoCommit(true);} catch (Exception e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);

@@ -124,7 +124,7 @@ public class TranslationManager {
 						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
 					} else {
 						m.type = "linked";
-						m.url = "/surveyKPI/file/" + m.fileName + "/survey/" + surveyId + "?linked=true";
+						m.url = "/surveyKPI/file/" + m.fileName + ".csv/survey/" + surveyId + "?linked=true";
 					}
 					
 					manifests.add(m);
@@ -145,8 +145,65 @@ public class TranslationManager {
 		return manifests;
 	}
 	
+	
 	/*
-	 * Returns true if the user can access the survey and that survey has a manifest
+	 * Get the manifest items to linked forms
+	 */
+	public List<ManifestValue> getLinkedManifests(Connection sd, 
+			String user, 
+			int surveyId
+			)	throws SQLException {
+		
+		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
+		
+		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null; ";
+		PreparedStatement pstmtSurveyLevel = null;
+		
+		try {
+			
+			ResultSet rs = null;
+			
+			/*
+			 * Get Survey Level manifests from survey table
+			 */
+			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
+			pstmtSurveyLevel.setInt(1, surveyId);
+			log.info("SQL survey level manifests:" + pstmtSurveyLevel.toString());
+			
+			rs = pstmtSurveyLevel.executeQuery();
+			if(rs.next()) {
+				String manifestString = rs.getString(1);
+				Type type = new TypeToken<ArrayList<String>>(){}.getType();
+				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
+				
+				for(int i = 0; i < manifestList.size(); i++) {
+					
+					ManifestValue m = new ManifestValue();
+					m.fileName = manifestList.get(i);
+					m.sId = surveyId;
+					
+					if(!m.fileName.endsWith(".csv")) {
+						m.type = "linked";
+						manifests.add(m);
+					}
+				}
+			}
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
+		}
+		
+		log.info("Manifest length: " + manifests.size());
+		
+		return manifests;
+	}
+	
+	/*
+	 * Returns true if the user can access the survey and that survey has a survey level manifest
 	 */
 	public boolean hasManifest(Connection sd, 
 			String user, 

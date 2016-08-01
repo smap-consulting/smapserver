@@ -136,6 +136,7 @@ public class ManagedFormsManager {
 					TableColumn tc = new TableColumn(c.name, c.humanName);
 					tc.hide = hideDefault(c.humanName);
 					tc.filter = filterDefault(c.type);
+					tc.type = c.type;
 					for(int j = 0; j < savedConfig.columns.size(); j++) {
 						TableColumn tcConfig = savedConfig.columns.get(j);
 						if(tcConfig.name.equals(tc.name)) {

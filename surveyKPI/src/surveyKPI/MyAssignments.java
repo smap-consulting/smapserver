@@ -35,10 +35,13 @@ import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.JsonAuthorisationException;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ExternalFileManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Geometry;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Survey;
@@ -61,6 +64,7 @@ import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -202,6 +206,7 @@ public class MyAssignments extends Application {
 		PreparedStatement pstmtGeo = null;
 		PreparedStatement pstmt = null;
 		
+		Connection cRel = null;
 		
 		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName);
 		
@@ -358,6 +363,34 @@ public class MyAssignments extends Application {
 			while(resultSet.next()) {
 				int sId = resultSet.getInt("s_id");
 				
+				/*
+				 * For each form that has a manifest that links to another form
+				 *  generate the new CSV files if the linked data has changed
+				 */
+				List<ManifestValue> manifestList = translationMgr.
+						getLinkedManifests(connectionSD, request.getRemoteUser(), sId);
+				
+				for( ManifestValue m : manifestList) {
+					
+					String filepath = null;
+					
+					log.info("Linked file:" + m.fileName);
+					
+					// Create file 
+					cRel = ResultsDataSource.getConnection("getFile");
+					ExternalFileManager efm = new ExternalFileManager();
+					String basepath = GeneralUtilityMethods.getBasePath(request);
+					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
+					filepath = basepath + "/media/" + sIdent+ "/" + m.fileName;
+					
+					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath + ".csv");
+					
+					filepath += ".csv";
+					m.fileName += ".csv";
+				}
+				
+				
+				
 				FormLocator fl = new FormLocator();
 				fl.ident = resultSet.getString("ident");
 				fl.version = resultSet.getInt("version");
@@ -448,6 +481,7 @@ public class MyAssignments extends Application {
 			try {if (pstmt != null) {pstmt.close();} } catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
+			ResultsDataSource.closeConnection("surveyKPI-MyAssignments", cRel);	
 		}
 
 		return response;

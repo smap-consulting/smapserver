@@ -113,7 +113,6 @@ public class FormsManifest {
 			protocol = "http://";
 		}
 
-		Connection cRel = null;
 		PreparedStatement pstmt = null;
 		try {
 			if(key == null) {
@@ -141,41 +140,22 @@ public class FormsManifest {
 			List<ManifestValue> manifestList = translationMgr.
 					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
-			
-			boolean incrementVersion = false;
 			for( ManifestValue m : manifestList) {
-				
-				String oldMd5 = "";
-				String md5 = "";
+
 				String filepath = null;
+				String basepath = GeneralUtilityMethods.getBasePath(request);
+				String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, survey.id);
+				filepath = basepath + "/media/" + sIdent+ "/" + m.fileName;
 				
 				if(m.type.equals("linked")) {
-					log.info("Linked file:" + m.fileName);
-					
-					// Create file (TODO) if it is out of date
-					cRel = ResultsDataSource.getConnection("getFile");
-					ExternalFileManager efm = new ExternalFileManager();
-					String basepath = GeneralUtilityMethods.getBasePath(request);
-					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, survey.id);
-					filepath = basepath + "/media/" + sIdent+ "/" + m.fileName;
-					
-					oldMd5 = getMd5(filepath);
-					efm.createLinkedFile(connectionSD, cRel, survey.id, m.fileName, filepath);
-					
 					filepath += ".csv";
 					m.fileName += ".csv";
 				} else {
 					filepath = m.filePath;
 				}
+				
 				// Get the MD5 hash
-				md5 = getMd5(filepath);
-
-				// Update the version if the md5 has changed
-				if(m.type.equals("linked")) {
-					if(!md5.equals(oldMd5)) {
-						incrementVersion = true;
-					}
-				}
+				String md5 = getMd5(filepath);
 				
 				String fullUrl = protocol + host + m.url;
 
@@ -188,14 +168,6 @@ public class FormsManifest {
 			}
 			responseStr.append("</manifest>\n");
 			
-			// Increment the survey version if its manifests have changed
-			if(incrementVersion) {
-				String sql = "update survey set version = version + 1 where s_id = ?";
-				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setInt(1, survey.id);
-				pstmt.executeUpdate();
-			
-			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
@@ -203,7 +175,6 @@ public class FormsManifest {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyMobileAPI-FormsManifest", connectionSD);
-			ResultsDataSource.closeConnection("surveyMobileAPI-FormsManifest", cRel);	
 		}		
 
 		return responseStr.toString();

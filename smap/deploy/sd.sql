@@ -551,3 +551,16 @@ CREATE TABLE custom_report (
 	);
 ALTER TABLE custom_report OWNER TO ws;
 CREATE UNIQUE INDEX custom_report_name ON custom_report(o_id, name);
+
+-- Linked forms
+CREATE SEQUENCE linked_forms_seq START 1;
+ALTER TABLE linked_forms_seq OWNER TO ws;
+
+CREATE TABLE public.linked_forms (
+	id integer DEFAULT nextval('linked_forms_seq') NOT NULL PRIMARY KEY,
+	Linked_s_id integer,
+	linked_table text,
+	number_records integer,
+	linker_s_id integer
+);
+ALTER TABLE public.linked_forms OWNER TO ws;

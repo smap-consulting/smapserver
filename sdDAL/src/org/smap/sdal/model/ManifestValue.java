@@ -4,7 +4,7 @@ import java.io.File;
 
 /*
  * Form Class
- * Used for survey editing
+ * Stores details on a manifes item
  */
 public class ManifestValue {
 	public String value;
@@ -18,4 +18,5 @@ public class ManifestValue {
 	public int sId;
 	public int qId;
 	public int oId;
+	public int linkedRecords;	// The number of records in a linked form
 }

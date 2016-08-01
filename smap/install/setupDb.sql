@@ -777,3 +777,18 @@ CREATE TABLE public.log_report (
 	upload_time TIMESTAMP WITH TIME ZONE
 );
 ALTER TABLE public.log_report OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS linked_forms_seq CASCADE;
+CREATE SEQUENCE linked_forms_seq START 1;
+ALTER TABLE linked_forms_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.linked_forms CASCADE;
+CREATE TABLE public.linked_forms (
+	id integer DEFAULT nextval('linked_forms_seq') NOT NULL PRIMARY KEY,
+	Linked_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	linked_table text,
+	number_records integer,
+	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE
+);
+ALTER TABLE public.linked_forms OWNER TO ws;
+

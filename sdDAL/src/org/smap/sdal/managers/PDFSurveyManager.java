@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.PdfPageSizer;
+import org.smap.sdal.Utilities.PdfUtilities;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
@@ -439,21 +440,8 @@ public class PDFSurveyManager {
 						}
 					}
 				} else if(r.type.equals("image")) {
-					PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
-					if(ad != null) {
-						ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
-						ad.setProportionalIcon(true);
-						try {
-							ad.setImage(Image.getInstance(basePath + "/" + r.value));
-						} catch (Exception e) {
-							log.info("Error: Failed to add image " + basePath + "/" + r.value + " to pdf: " + e.getMessage());
-							log.log(Level.SEVERE, "Image error detail", e);
-						}
-						pdfForm.replacePushbuttonField(fieldName, ad.getField());
-						log.info("Adding image to: " + fieldName);
-					} else {
-						//log.info("Picture field: " + fieldName + " not found");
-					}
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, r.value);
+					
 				} else {
 					value = r.value;
 				}
