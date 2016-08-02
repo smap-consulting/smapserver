@@ -505,7 +505,7 @@ public class UploadFiles extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
 			String msg = ex.getMessage();
-			if(msg.contains("duplicate")) {
+			if(msg!= null && msg.contains("duplicate")) {
 				msg = "A report with this name already exists";
 			}
 			log.log(Level.SEVERE,ex.getMessage(), ex);

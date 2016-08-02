@@ -580,7 +580,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
  * Upload files to the server
  * Writes status to   .upload_file_msg
  */
-function uploadFiles(url, formName, callback, param) {
+function uploadFiles(url, formName, callback1, param, callback2) {
    	
 	var f = document.forms.namedItem(formName),
 		formData = new FormData(f);
@@ -604,9 +604,16 @@ function uploadFiles(url, formName, callback, param) {
         success: function(data) {
 			removeHourglass();
 			$('#submitFiles').removeClass('disabled');
-			var callbackParam = param;
+			var callbackParam = param,
+				cb1 = callback1,
+				cb2 = callback2;
 	       	$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html(localise.set["c_success"]);
-        	callback(data, callbackParam);
+        	if(typeof cb1 === "function") {
+        		cb1(data, callbackParam);
+        	}
+        	if(typeof cb2 === "function") {
+        		cb2(data);
+        	}
         	document.forms.namedItem(formName).reset();
         	
         },
@@ -2032,12 +2039,15 @@ function getReports(callback1, callback2, type) {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
+			var cb1 = callback1,
+				cb2 = callback2,
+				t = type;
 			globals.gReports = data;
-			if(typeof callback1 === "function") {
-				callback1(data);
+			if(typeof cb1 === "function") {
+				cb1(data, cb1, cb2, t);
 			}
-			if(typeof callback2 === "function") {
-				callback2(data);
+			if(typeof cb2 === "function") {
+				cb2(data, cb1, cb2, t);
 			}
 				
 		},
@@ -2066,7 +2076,7 @@ function showReportList(data) {
 	if(data.length === 0) {
 		
 		// Enable / disable elements specifically for managed forms
-		$('.selectmanaged').hide();
+		$('.selectmanaged').show();
 		$('.no_oversight').show();
 	} else {
 		$('.no_oversight').hide();
@@ -2089,7 +2099,7 @@ function showReportList(data) {
 /*
  * Show the Custom Reports in a table
  */
-function refreshCustomReportView(data) {
+function refreshCustomReportView(data, callback1, callback2, type) {
 	
 	var $selector = $('#cr_list'),
 		i, 
@@ -2147,21 +2157,24 @@ function refreshCustomReportView(data) {
 	$(".rm_cr", $selector).click(function(){
 		var idx = $(this).data("idx");
 		if(confirm(localise.set["msg_confirm_del"] + " " + globals.gReports[idx].name)) {
-			deleteCustomReport(globals.gReports[idx].id);
+			deleteCustomReport(globals.gReports[idx].id, callback1, callback2, type);
 		}
 	});
 	
 	
 }
 
-function deleteCustomReport(id) {
+function deleteCustomReport(id, callback1, callback2, type) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
 		  url: "/surveyKPI/custom_reports/" + id,
 		  success: function(data, status) {
 			  removeHourglass();
-			  getReports(refreshCustomReportView, undefined, undefined);
+			  var cb1 = callback1,
+			  	cb2 = callback2,
+			  	t = type;
+			  getReports(cb1, cb2, t);
 		  },
 		  error: function(xhr, textStatus, err) {
 				removeHourglass();

@@ -193,7 +193,7 @@ public class ManagedFormsManager {
 			//tc.hide = hideDefault(c.name);
 
 			//addProcessing(tc);
-			
+			tc.mgmt = true;
 			if(configColumns != null) {
 				for(int j = 0; j < configColumns.size(); j++) {
 					TableColumn tcConfig = configColumns.get(j);

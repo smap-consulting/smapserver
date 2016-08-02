@@ -470,8 +470,10 @@ define({
 	"mf_st": "Submission Tracking",
 	"mf_gr": "Get related",
 	"mf_of": "Oversight Form",
-	"mf_no": "There are no oversight forms. They can be added in the custom reports tab of ",
+	"mf_no": "There are no oversight forms. They can be added in the \"Available Oversight Forms\" tab",
 	"mf_sel": "Select the form that you want to manage and the oversight form that you want to manage it with.",
+	"mf_ao": "Available oversight forms",
+	"mf_mf": "Managed forms",
 	
 	// Logout
 	"lo_back": "Back",

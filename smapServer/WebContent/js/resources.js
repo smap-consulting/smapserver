@@ -124,7 +124,7 @@ $(document).ready(function() {
     // Respond to file upload
     $('#submitFiles').click( function() {
     	if(!$('#submitFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaViewManage, undefined);
+    		uploadFiles('/surveyKPI/upload/media', "fileupload", refreshMediaViewManage, undefined, undefined);
     	}
     });
     
@@ -142,13 +142,13 @@ $(document).ready(function() {
     		return false;
     	}
     	
-    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
+    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined, undefined);
     });
     
     // Respond to nfc upload
     $('#submitNfcFiles').click( function() {
     	if(!$('#submitNfcFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/tasks/locations/upload', "nfcupload", refreshLocationView, undefined);
+    		uploadFiles('/surveyKPI/tasks/locations/upload', "nfcupload", refreshLocationView, undefined, undefined);
     	}
     });
     

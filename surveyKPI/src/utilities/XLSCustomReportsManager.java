@@ -85,7 +85,7 @@ public class XLSCustomReportsManager {
 		 * Get the task sheet settings
 		 */
 		settingsSheet = wb.getSheet("settings");
-		if(settingsSheet.getPhysicalNumberOfRows() > 0) {
+		if(settingsSheet != null && settingsSheet.getPhysicalNumberOfRows() > 0) {
 			int lastSettingsRow = settingsSheet.getLastRowNum();
 			for(int j = 0; j <= lastSettingsRow; j++) {
 				row = settingsSheet.getRow(j);
@@ -163,9 +163,7 @@ public class XLSCustomReportsManager {
 	                					throw new Exception("Invalid name: " + colName + " on row: " + (j + 1));
 	                				} else if(colName.length() > 60) {
 	                					throw new Exception("Name is too long (must be <= 60): " + colName + " on row: " + (j + 1));
-	                				} else if(colName.charAt(0) != '_') {
-	                					throw new Exception("Name nust start with _ : " + colName + " on row: " + (j + 1));
-	                				}
+	                				} 
 	                				currentCol.name = colName;
 	                			} else {
 	                				throw new Exception("Missing name on row: " + (j + 1));

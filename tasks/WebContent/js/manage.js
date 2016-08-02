@@ -194,8 +194,30 @@ require([
 	    		return false;
 	    	}
 	    	
-	    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined);
+	    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined, showReportList);
 	    });
+	    
+		// Change function on file selected
+		$('#report_file').change(function(){
+			var reportName = $('#report_name').val(),
+				$this = $(this),
+				fileName = $this[0].files[0].name,
+				newReportName;
+			
+			$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
+			
+			if(reportName && reportName.trim().length > 0) {
+				// ignore - leave user specified name
+			} else {
+				var lastDot = fileName.lastIndexOf(".");
+			    if (lastDot === -1) {
+			    	newReportName = fileName;
+			    } else {
+			    	newReportName = fileName.substr(0, lastDot);
+			    }
+				$('#report_name').val(newReportName);
+			}
+		});
      });
 	 
 	 /*
