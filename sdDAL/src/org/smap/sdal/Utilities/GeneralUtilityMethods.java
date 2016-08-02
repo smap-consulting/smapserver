@@ -1830,6 +1830,7 @@ public class GeneralUtilityMethods {
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
+				+ "and soft_deleted = 'false' "
 				+ "order by seq";
 		PreparedStatement pstmtQuestions = sd.prepareStatement(sqlQuestions);
 		
