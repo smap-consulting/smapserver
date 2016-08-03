@@ -44,6 +44,7 @@ import java.util.logging.Logger;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
@@ -75,6 +76,7 @@ public class XLSReportsManager {
 			 Logger.getLogger(SurveyInfo.class.getName());
 	
 	Workbook wb = null;
+	boolean isXLSX = false;
 	int rowNumber = 1;		// Heading row is 0
 	
 	private class Column {
@@ -82,10 +84,12 @@ public class XLSReportsManager {
 		String human_name;
 		int dataIndex;
 		int colIndex;
+		String type;
 		
-		public Column(ResourceBundle localisation, int dataIndex, String n, int colIndex) {
+		public Column(ResourceBundle localisation, int dataIndex, String n, String type, int colIndex) {
 			this.dataIndex = dataIndex;
 			this.colIndex = colIndex;
+			this.type = type;
 			name = n;
 			//human_name = localisation.getString(n);
 			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
@@ -105,8 +109,10 @@ public class XLSReportsManager {
 	public XLSReportsManager(String type) {
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook();
+			isXLSX = false;
 		} else {
 			wb = new XSSFWorkbook();
+			isXLSX = true;
 		}
 	}
 	
@@ -157,7 +163,7 @@ public class XLSReportsManager {
 				if(record != null) {
 					dataIndex = getDataIndex(record, tc.humanName);
 				}
-				cols.add(new Column(localisation, dataIndex, tc.humanName, colIndex++));
+				cols.add(new Column(localisation, dataIndex, tc.humanName, tc.type, colIndex++));
 			}
 		}
 	
@@ -185,7 +191,9 @@ public class XLSReportsManager {
      * create a library of cell styles
      */
     private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
+        
+    	Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
+		DataFormat format = wb.createDataFormat();
 
         CellStyle style = wb.createCellStyle();
         Font headerFont = wb.createFont();
@@ -197,7 +205,18 @@ public class XLSReportsManager {
         style.setWrapText(true);
         styles.put("default", style);
 
-        return styles;
+		style = wb.createCellStyle();
+		style.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
+		styles.put("datetime", style);
+        
+		style = wb.createCellStyle();
+		Font linkFont = wb.createFont();
+		linkFont.setUnderline(Font.U_SINGLE);
+	    linkFont.setColor(IndexedColors.BLUE.getIndex());
+	    style.setFont(linkFont);
+	    styles.put("link", style);
+	      
+		return styles;
     }
     
 	/*
@@ -231,13 +250,11 @@ public class XLSReportsManager {
 			Map<String, CellStyle> styles,
 			ArrayList<Column> cols,
 			String tz) throws IOException {
-		
-		DataFormat format = wb.createDataFormat();
-		CellStyle styleTimestamp = wb.createCellStyle();
+
 		ZoneId timeZoneId = ZoneId.of(tz);
-		ZoneId gmtZoneId = ZoneId.of("GMT");
+		ZoneId gmtZoneId = ZoneId.of("GMT");	
 		
-		styleTimestamp.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
+		CreationHelper createHelper = wb.getCreationHelper();
 		
 		for(int index = 0; index < dArray.size(); index++) {
 			
@@ -248,6 +265,21 @@ public class XLSReportsManager {
 				String value = record.get(col.dataIndex).v;
 				
 				cell.setCellStyle(styles.get("default"));	
+				
+				if(value != null && (value.startsWith("https://") || value.startsWith("http://"))) {
+					cell.setCellStyle(styles.get("link"));
+					if(isXLSX) {
+						XSSFHyperlink url = (XSSFHyperlink)createHelper.createHyperlink(Hyperlink.LINK_URL);
+						url.setAddress(value);
+						cell.setHyperlink(url);
+					} else {
+						HSSFHyperlink url = new HSSFHyperlink(HSSFHyperlink.LINK_URL);
+						url.setAddress(value);
+						cell.setHyperlink(url);
+					}
+					
+				}
+				
 				cell.setCellValue(value);
 	        }	
 		}
@@ -261,5 +293,7 @@ public class XLSReportsManager {
 		v = settingsRow.createCell(1);
 		v.setCellValue(tz);
 	}
+	
+	
 
 }

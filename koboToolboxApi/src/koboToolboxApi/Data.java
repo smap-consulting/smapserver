@@ -326,7 +326,15 @@ public class Data extends Application {
 							
 							//String name = rsMetaData.getColumnName(i);	
 							name = c.humanName;
-							value = rs.getString(i + 1);	
+								
+							
+							if(c.type != null && c.type.equals("decimal")) {
+								Double dValue = rs.getDouble(i + 1);
+								dValue = Math.round(dValue * 10000.0) / 10000.0; 
+								value = String.valueOf(dValue);
+							} else {
+								value = rs.getString(i + 1);
+							}
 							
 							if(value == null) {
 								value = "";
