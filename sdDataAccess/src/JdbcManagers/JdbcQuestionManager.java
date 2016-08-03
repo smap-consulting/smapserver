@@ -71,10 +71,11 @@ public class JdbcQuestionManager {
 			+ "column_name,"
 			+ "published,"
 			+ "l_id,"
-			+ "autoplay) "
+			+ "autoplay,"
+			+ "accuracy) "
 			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
 	PreparedStatement pstmtGetByFormId;
@@ -108,7 +109,8 @@ public class JdbcQuestionManager {
 			+ "column_name,"
 			+ "published,"
 			+ "l_id,"
-			+ "autoplay "
+			+ "autoplay,"
+			+ "accuracy "
 			+ "from question where soft_deleted = 'false' and ";
 	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
 			+ " order by f_id, seq";
@@ -157,6 +159,7 @@ public class JdbcQuestionManager {
 		pstmt.setBoolean(27, q.isPublished());
 		pstmt.setInt(28, q.getListId());
 		pstmt.setString(29, q.getAutoPlay());
+		pstmt.setString(30, q.getAccuracyThreshold());
 		
 		//log.info("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
@@ -234,6 +237,7 @@ public class JdbcQuestionManager {
 			q.setPublished(rs.getBoolean(28));
 			q.setListId(rs.getInt(29));
 			q.setAutoPlay(rs.getString(30));
+			q.setAccuracyThreshold(rs.getString(31));
 		
 			/*
 			 * Set the relative path

@@ -587,6 +587,7 @@ public class SurveyManager {
 				+ "q.path, "
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
+				+ "q.accuracy,"
 				+ "q.linked_survey "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
@@ -723,7 +724,8 @@ public class SurveyManager {
 				q.path = rsGetQuestions.getString(23);
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
-				q.linked_survey = rsGetQuestions.getInt(26);
+				q.accuracyThreshold = rsGetQuestions.getString(26);
+				q.linked_survey = rsGetQuestions.getInt(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}

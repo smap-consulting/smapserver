@@ -475,6 +475,7 @@ CREATE TABLE question (
 	soft_deleted boolean default false,	-- Set true if a question has been deleted and has also been published
 										-- If the question hasn't been published then it can be removed from the survey
 	autoplay text,
+	accuracy text,						-- gps accuracy at which a reading is automatically accepted
 	linked_survey int default 0						-- Id of a survey whose hrk is populated here
 	);
 ALTER TABLE question OWNER TO ws;

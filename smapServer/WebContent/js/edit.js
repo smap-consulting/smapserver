@@ -780,7 +780,7 @@ function respondToEvents($context) {
 		labelType = prop === "hint" ? "hint" : "text";
 		if(prop === "required") {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
-		} else if (prop === "autoplay") {
+		} else if (prop === "autoplay" || prop === "autoplay") {
 			newVal = $this.val();
 		} else if (prop === "linked_survey") {
 			if($this.hasClass("prop_no")) {

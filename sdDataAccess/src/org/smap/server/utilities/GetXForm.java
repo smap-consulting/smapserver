@@ -788,6 +788,14 @@ public class GetXForm {
 				questionElement.setAttribute("autoplay", autoplay);
 			}
 		}
+		
+		// Add the questionThreshold
+		if(questionElement != null) {
+			String accuracyThreshold = q.getAccuracyThreshold();
+			if(accuracyThreshold != null) {
+				questionElement.setAttribute("accuracyThreshold", accuracyThreshold);
+			}
+		}
 			
 		// Add the label
 		if(questionElement !=null) {

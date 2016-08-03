@@ -444,6 +444,7 @@ define({
 	"ed_rel": "Relevant",
 	"ed_req": "Required",
 	"ed_ap": "Auto play",
+	"ed_at": "GPS Accuracy Threshold",
 	"ed_ls": "Linked Survey",
 	"ed_ro": "Read Only",
 	"ed_ls_add": "Add link",

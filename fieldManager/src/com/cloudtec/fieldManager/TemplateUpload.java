@@ -350,9 +350,9 @@ public class TemplateUpload extends Application {
 			log.info("userevent: " + request.getRemoteUser() + " : create survey : " + displayName);
 			
 			// Return warnings only
-			if(warnings.size() > 0) {
-				return getErrorResponse(request,  null, null, warnings, serverName, projectName, displayName, fileName);
-			}
+			//if(warnings.size() > 0) {		// Ignore warnings they are not useful
+			//	return getErrorResponse(request,  null, null, warnings, serverName, projectName, displayName, fileName);
+			//}
 			
 			// Return OK with no messages
 			response = Response.ok("{}").build();	

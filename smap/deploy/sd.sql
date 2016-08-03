@@ -564,3 +564,5 @@ CREATE TABLE public.linked_forms (
 	linker_s_id integer
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
+
+alter table question add column accuracy text;

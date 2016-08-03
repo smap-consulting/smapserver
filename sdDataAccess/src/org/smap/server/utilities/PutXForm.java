@@ -583,6 +583,14 @@ public class PutXForm {
 			autoplay = autoplayNode.getNodeValue();
 			q.setAutoPlay(autoplay);
 		}
+		
+    	// Set the gps threshold
+		Node gpsThresholdNode = nm.getNamedItem("accuracyThreshold");	
+		String accuracyThreshold = null;
+		if(gpsThresholdNode != null) {
+			accuracyThreshold = gpsThresholdNode.getNodeValue();
+			q.setAccuracyThreshold(accuracyThreshold);
+		}
     	
     	if(eName.equals("group")) {
     		setGroupLabel(questionRef, n);	// Get the label for this group
