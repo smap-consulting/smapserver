@@ -1858,12 +1858,18 @@ function downloadFile(url, filename, mime) {
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, format, mime, data, sId, managedId) {
+function generateFile(url, filename, format, mime, data, sId, managedId, title, project) {
 
 	var payload = "data=" + JSON.stringify(data);
 	payload += "&sId=" + sId;
 	payload += "&managedId=" + managedId;
 	payload += "&format=" + format;
+	if(title) {
+		payload += "&title=" + title;
+	}
+	if(project) {
+		payload += "&project=" + project;
+	}
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', url, true);

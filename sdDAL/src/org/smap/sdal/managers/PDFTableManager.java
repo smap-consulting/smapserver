@@ -150,7 +150,9 @@ public class PDFTableManager {
 			String tz,
 			boolean landscape,
 			String remoteUser,
-			String basePath
+			String basePath,
+			String title,
+			String project
 			) {
 
 		User user = null;
@@ -206,7 +208,7 @@ public class PDFTableManager {
 			writer = PdfWriter.getInstance(document, outputStream);
 				
 			writer.setInitialLeading(12);	
-			writer.setPageEvent(new PdfPageSizer("Results", "Project", 
+			writer.setPageEvent(new PdfPageSizer(title, project, 
 					user, basePath, 
 					tableHeader,
 					marginLeft, marginRight, marginTop_2, marginBottom_2)); 

@@ -306,7 +306,9 @@ require([
 		 	filename,
 		 	mime,
 			data,
-		 	manageId;
+		 	manageId,
+		 	title = $('#survey_name').text(),
+		 	project = $('#project_name').text();
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
@@ -327,7 +329,7 @@ require([
 		 } else {
 			 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
 		 }
-		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId); 
+		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
 	 });
 	 
 

@@ -80,7 +80,9 @@ public class TableReports extends Application {
 			@FormParam("data") String data,
 			@FormParam("sId") int sId,
 			@FormParam("managedId") int managedId,
-			@FormParam("format") String format
+			@FormParam("format") String format,
+			@FormParam("title") String title,
+			@FormParam("project") String project
 			) throws Exception { 
 		
 		// Authorisation - Access
@@ -91,6 +93,12 @@ public class TableReports extends Application {
 		
 		boolean isXLS = format.toLowerCase().equals("xls") || format.toLowerCase().equals("xlsx");
 		boolean isPdf = format.toLowerCase().equals("pdf");
+		if(title == null) {
+			title = "Results";
+		}
+		if(project == null) {
+			project = "Project";
+		}
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
 		
 		String tz = "GMT";
@@ -123,7 +131,9 @@ public class TableReports extends Application {
 						localisation, 
 						tz, false,	 // TBD set landscape and paper size from client
 						request.getRemoteUser(),
-						basePath);
+						basePath,
+						title,
+						project);
 						
 			}
 			
