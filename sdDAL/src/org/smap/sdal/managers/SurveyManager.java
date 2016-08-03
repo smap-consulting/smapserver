@@ -724,7 +724,7 @@ public class SurveyManager {
 				q.path = rsGetQuestions.getString(23);
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
-				q.accuracyThreshold = rsGetQuestions.getString(26);
+				q.accuracy = rsGetQuestions.getString(26);
 				q.linked_survey = rsGetQuestions.getInt(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";

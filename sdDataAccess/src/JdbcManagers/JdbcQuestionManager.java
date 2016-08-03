@@ -159,7 +159,7 @@ public class JdbcQuestionManager {
 		pstmt.setBoolean(27, q.isPublished());
 		pstmt.setInt(28, q.getListId());
 		pstmt.setString(29, q.getAutoPlay());
-		pstmt.setString(30, q.getAccuracyThreshold());
+		pstmt.setString(30, q.getAccuracy());
 		
 		//log.info("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
@@ -237,7 +237,7 @@ public class JdbcQuestionManager {
 			q.setPublished(rs.getBoolean(28));
 			q.setListId(rs.getInt(29));
 			q.setAutoPlay(rs.getString(30));
-			q.setAccuracyThreshold(rs.getString(31));
+			q.setAccuracy(rs.getString(31));
 		
 			/*
 			 * Set the relative path

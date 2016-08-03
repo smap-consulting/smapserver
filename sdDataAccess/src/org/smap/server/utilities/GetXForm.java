@@ -791,9 +791,9 @@ public class GetXForm {
 		
 		// Add the questionThreshold
 		if(questionElement != null) {
-			String accuracyThreshold = q.getAccuracyThreshold();
-			if(accuracyThreshold != null) {
-				questionElement.setAttribute("accuracyThreshold", accuracyThreshold);
+			String accuracy = q.getAccuracy();
+			if(accuracy != null) {
+				questionElement.setAttribute("accuracyThreshold", accuracy);
 			}
 		}
 			

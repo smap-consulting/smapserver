@@ -184,7 +184,7 @@ public class XLSFormManager {
 				value = q.autoplay;		
 				
 			} else if(type == COL_ACCURACY) {				
-				value = q.accuracyThreshold;		
+				value = q.accuracy;		
 				
 			} else if(type == COL_REQUIRED) {				
 				value = q.required ? "yes" : "no";		

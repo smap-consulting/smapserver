@@ -586,10 +586,10 @@ public class PutXForm {
 		
     	// Set the gps threshold
 		Node gpsThresholdNode = nm.getNamedItem("accuracyThreshold");	
-		String accuracyThreshold = null;
+		String accuracy = null;
 		if(gpsThresholdNode != null) {
-			accuracyThreshold = gpsThresholdNode.getNodeValue();
-			q.setAccuracyThreshold(accuracyThreshold);
+			accuracy = gpsThresholdNode.getNodeValue();
+			q.setAccuracy(accuracy);
 		}
     	
     	if(eName.equals("group")) {
