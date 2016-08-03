@@ -310,6 +310,7 @@ window.gTasks = {
 			    		
 		    		});
 		    	  },
+		    	  
 		     columnDefs: [ {
 		    	 	targets: "_all",
 		    	 	render: function ( data, type, full, meta ) {
@@ -396,6 +397,7 @@ window.gTasks = {
 					 });
 				 }
 			 }
+			 
 		 });
 		
 		 

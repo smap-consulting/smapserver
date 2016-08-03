@@ -219,8 +219,20 @@ public class XLSCustomReportsManager {
 	                				if(value != null) {
 	                					if(currentCol.choices == null) {
 	                						currentCol.choices = new ArrayList<String> ();
+	                						currentCol.choices.add("");		// Add the not selected choice automatically as this has to be the default
 	                					}
 	                					currentCol.choices.add(value);
+	                					currentCol.filter = true;
+	                					
+	                					// Add conditional color
+		                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
+		                				if(appearance != null) {
+		                					if(currentCol.markup == null) {
+		                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
+		                					}
+		                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
+		                					
+		                				} 
 	                				} else {
 	                					throw new Exception("Missing value on row: " + (j + 1));
 	                				}
@@ -255,7 +267,7 @@ public class XLSCustomReportsManager {
 	                					}
 	                				}
 	                				
-	                				// Add condtional clour
+	                				// Add conditional color
 	                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
 	                				if(appearance != null) {
 	                					if(currentCol.markup == null) {
@@ -286,7 +298,7 @@ public class XLSCustomReportsManager {
 	
 
 	/*
-	 * Convert a user appearance to jquery classes
+	 * Convert an appearance to jquery classes
 	 */
 	private String getMarkup(String app) {
 		StringBuffer markup = new StringBuffer("");
