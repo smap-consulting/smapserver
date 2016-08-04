@@ -184,96 +184,34 @@ public class ManagedForms extends Application {
 		String sql = "update survey set managed_id = ? where s_id = ?;";
 		PreparedStatement pstmt = null;
 		
-		String sqlAdd = null;
-		PreparedStatement pstmtAdd = null;
-		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
 		
 		try {
 
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
+			TableManager tm = new TableManager();
 			
-			// 1. Create results tables if they do not exist
-			if(am.manageId > 0) {
-				TableManager tm = new TableManager();
-				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-				tm.createTable(cResults, sd, f.tableName, sIdent, am.sId);
-			}
-			
-			
-			sd.setAutoCommit(false);
-			cResults.setAutoCommit(false);
-			
-			// 2. Add the management id to the survey record
+			// 1. Add the management id to the survey record
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, am.manageId);
 			pstmt.setInt(2, am.sId);
 			log.info("Adding managed survey: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
-			// 3.  Add the data processing columns to the results table
+			// 2. Create results tables if they do not exist
 			if(am.manageId > 0) {
-				ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-				ManagedFormsManager qm = new ManagedFormsManager();
-				qm.getDataProcessingConfig(sd, am.manageId, columns, null);
-				
-				for(int i = 0; i < columns.size(); i++) {
-					TableColumn tc = columns.get(i);
-					if(tc.type != null) {
-						
-						if(tc.type.equals("calculate")) {
-							continue;		// Calculated types are not stored in the database
-						}
-						
-						String type;
-						if(tc.type.equals("select_one")) {
-							type = "text";
-						} else {
-							type = tc.type;
-						}
-						
-						if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
-							sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
-							if(pstmtAdd != null) try{pstmtAdd.close();} catch(Exception e) {}
-							
-							pstmtAdd = cResults.prepareStatement(sqlAdd);
-							log.info("Adding management column: " + pstmtAdd.toString());
-							try {
-								pstmtAdd.executeUpdate();
-							} catch (Exception e) {
-								String msg = e.getMessage();
-								if(msg.contains("already exists")) {
-									log.info("Management column already exists");
-								} else {
-									throw e;
-								}
-							} finally {
-								pstmtAdd.close();
-							}
-						}
-					} else {
-						log.info("Error: managed column not added as type was null: " + tc.name);
-					}
-				}
+				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+				tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
 			}
-			
-			sd.commit();
-			cResults.commit();
 			
 			response = Response.ok().build();
 				
 		} catch (Exception e) {
-			try{cResults.rollback();} catch(Exception ex) {}
-			try{sd.rollback();} catch(Exception ex) {}
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			
-			try{cResults.setAutoCommit(true);} catch(Exception e){};
-			try{sd.setAutoCommit(true);} catch(Exception e){};
-			
 			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
-			try {if (pstmtAdd != null) {pstmtAdd.close();}} catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);	
 			ResultsDataSource.closeConnection("surveyKPI-Add Managed Forms", cResults);

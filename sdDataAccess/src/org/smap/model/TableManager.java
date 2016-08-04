@@ -12,6 +12,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.model.TableColumn;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -65,7 +67,9 @@ public class TableManager {
 	/*
 	 * Create the table if it does not already exit in the database
 	 */
-	public boolean createTable(Connection cResults, Connection sd, String tableName, String sName, int sId) throws SQLException {
+	public boolean createTable(Connection cResults, Connection sd, String tableName, String sName, 
+			int sId,
+			int managedId) throws Exception {
 		boolean tableCreated = false;
 		String sql = "select count(*) from information_schema.tables where table_name =?;";
 		
@@ -100,7 +104,85 @@ public class TableManager {
 			markAllChangesApplied(sd, sId);
 		}
 		
+		if(tableCreated || managedId > 0) {
+			addManagementColumns(cResults, sd, sId, managedId);
+		}
+		
 		return tableCreated;
+	}
+	
+	public void addManagementColumns(Connection cResults, Connection sd, int sId, int managedId) throws Exception {
+		
+		String sql = "select managed_id from survey where s_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		/*
+		 * Get the managed Id if it is not already known
+		 */
+		if(managedId == 0) {
+			try {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1,  sId);
+				ResultSet rs = pstmt.executeQuery();
+				if(rs.next()) {
+					managedId = rs.getInt(1);
+				}
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+			}
+		}
+		
+		/*
+		 * Add the columns if this survey is managed
+		 */
+		if(managedId > 0) {
+			String sqlAdd = null;
+			PreparedStatement pstmtAdd = null;
+			
+			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+			ManagedFormsManager qm = new ManagedFormsManager();
+			qm.getDataProcessingConfig(sd, managedId, columns, null);
+			
+			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
+			
+			for(int i = 0; i < columns.size(); i++) {
+				TableColumn tc = columns.get(i);
+				if(tc.type != null) {
+					
+					if(tc.type.equals("calculate")) {
+						continue;		// Calculated types are not stored in the database
+					}
+					
+					String type;
+					if(tc.type.equals("select_one")) {
+						type = "text";
+					} else {
+						type = tc.type;
+					}
+					
+					if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
+						sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
+						
+						pstmtAdd = cResults.prepareStatement(sqlAdd);
+						log.info("Adding management column: " + pstmtAdd.toString());
+						try {
+							pstmtAdd.executeUpdate();
+						} catch (Exception e) {
+							String msg = e.getMessage();
+							if(msg.contains("already exists")) {
+								log.info("Management column already exists");
+							} else {
+								throw e;
+							}
+						} finally {
+							try {if (pstmtAdd != null) {pstmtAdd.close();}} catch (Exception e) {}
+						}
+					}
+				} else {
+					log.info("Error: managed column not added as type was null: " + tc.name);
+				}
+			}
+		}
 	}
 	
 	/*

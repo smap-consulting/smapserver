@@ -425,7 +425,6 @@ public class SubRelationalDB extends Subscriber {
 				//}
 			} else {
 				// Check to see this submission was set to update an existing record with new data
-				System.out.println("Check for existing key");
 				
 				String existingKey = null;
 				if(updateId != null) {
@@ -546,7 +545,6 @@ public class SubRelationalDB extends Subscriber {
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
 		
-		System.out.println("Write table content: " + element.getName() + " : " + element.getType());
 		try {
 			/*
 			 * Write the Instance element to a table if it is a form type
@@ -571,7 +569,7 @@ public class SubRelationalDB extends Subscriber {
 				keys.duplicateKeys = new ArrayList<Integer>();
 				TableManager tm = new TableManager();
 				if(parent_key == 0) {	// top level survey has a parent key of 0
-					boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName, sId);
+					boolean tableCreated = tm.createTable(cRel, cMeta, tableName, sName, sId, 0);
 					boolean tableChanged = false;
 					boolean tablePublished = false;
 					keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
