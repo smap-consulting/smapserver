@@ -502,7 +502,7 @@ public class Items extends Application {
 			} catch (SQLException e) {
 			    log.info("Did not get items for table - " + tName + ", Message=" + e.getMessage());
 				String msg = e.getMessage();
-				if(!msg.contains("does not exist")) {	// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
+				if(!msg.contains("does not exist") || msg.contains("column")) {	// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
 					log.log(Level.SEVERE,"SQL Error", e);
 				}
 			} catch (JSONException e) {

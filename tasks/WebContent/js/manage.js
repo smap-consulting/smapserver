@@ -168,7 +168,7 @@ require([
 		$('#managedSurveyChange').click(function(){
 			createManagedSurvey(
 					gSelectedSurvey, 
-					$('#newOversightForm').val());	
+					$('#changeOversightForm').val());	
 		});
 		
 		/*

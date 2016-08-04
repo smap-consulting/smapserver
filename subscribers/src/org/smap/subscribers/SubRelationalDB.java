@@ -1125,7 +1125,6 @@ public class SubRelationalDB extends Subscriber {
 				res = pstmt.executeQuery();
 				if(res.next()) {
 					// Has instanceid
-					System.out.println("Has instanceid");
 					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 					pstmt = cResults.prepareStatement(sql2);
 					res = pstmt.executeQuery();

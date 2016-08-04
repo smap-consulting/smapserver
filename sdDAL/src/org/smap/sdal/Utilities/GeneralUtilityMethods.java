@@ -2064,7 +2064,6 @@ public class GeneralUtilityMethods {
 							c = new TableColumn();
 							c.name = question_column_name + "__" + rsMultiples.getString(1);
 							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
-							c.name = question_column_name;
 							c.option_name = rsMultiples.getString(1);
 							c.qId = qId;
 							c.type = qType;
@@ -2074,7 +2073,6 @@ public class GeneralUtilityMethods {
 					}
 				} else {
 					c = new TableColumn();
-					c.name = question_column_name;
 					c.name = question_column_name;
 					c.humanName = question_human_name;
 					c.qId = qId;

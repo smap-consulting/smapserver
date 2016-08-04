@@ -664,7 +664,6 @@ public class UtilityMethodsEmail {
 			 * Get the languages
 			 */
 			languages = GeneralUtilityMethods.getLanguages(sd, sId);
-			log.info("Adding labels for: " + languages.toString());
 			
 			String sql = "insert into translation (s_id, language, text_id, type, value) " +
 					"values (?, ?, ?, ?, ?)";
@@ -679,13 +678,6 @@ public class UtilityMethodsEmail {
 				// Set common values
 				pstmt.setInt(1, sId);
 				pstmt.setString(2, languages.get(i).name);
-				
-				System.out.println("$$$$ language: " + languages.get(i));
-				System.out.println("     text: " + l.text);
-				System.out.println("     hint: " + l.hint);
-				System.out.println("     image: " + l.image);
-				System.out.println("     video: " + l.video);
-				System.out.println("     audio: " + l.audio);
 				
 				// Update text
 				if(l.text != null ) {
