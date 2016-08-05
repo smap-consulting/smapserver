@@ -159,7 +159,7 @@ public class GetFile extends Application {
 		log.info("Get File: " + filename + " for user: " + uId);
 		try {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
-			String filepath = basepath + "/media/" + uId + "/" + (type != null ? (type + "/") : "") + filename;
+			String filepath = basepath + "/media/users/" + uId + "/" + (type != null ? (type + "/") : "") + filename;
 			log.info("Getting user file: " + filepath);
 			getFile(response, filepath, filename);
 			
