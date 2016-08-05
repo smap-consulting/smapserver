@@ -3175,5 +3175,22 @@ public class GeneralUtilityMethods {
 		return idx;
 	}
 	
+	/*
+	 * Return true if the language should be rendered Right to Left
+	 * Based on: http://stackoverflow.com/questions/15107313/how-to-determine-a-string-is-english-or-arabic
+	 */
+	public static boolean isRtlLanguage(String s) {
+		
+		// Check a maximum of 10 characters
+		int len = (s.length() > 10) ? 10 : s.length();
+	    for (int i = 0; i < len;) {
+	        int c = s.codePointAt(i);
+	        if (c >= 0x0600 && c <= 0x06E0)
+	            return true;
+	        i += Character.charCount(c);            
+	    }
+	    return false;
+	  
+	}
 
 }

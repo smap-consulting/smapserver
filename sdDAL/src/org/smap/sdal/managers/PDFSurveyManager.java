@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -45,6 +46,7 @@ import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -55,9 +57,12 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.PushbuttonField;
 import com.itextpdf.tool.xml.ElementList;
 import com.itextpdf.tool.xml.XMLWorker;
+import com.itextpdf.tool.xml.XMLWorkerFontProvider;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 import com.itextpdf.tool.xml.css.CssFile;
 import com.itextpdf.tool.xml.css.StyleAttrCSSResolver;
+import com.itextpdf.tool.xml.html.CssAppliers;
+import com.itextpdf.tool.xml.html.CssAppliersImpl;
 import com.itextpdf.tool.xml.html.Tags;
 import com.itextpdf.tool.xml.parser.XMLParser;
 import com.itextpdf.tool.xml.pipeline.css.CSSResolver;
@@ -95,6 +100,7 @@ public class PDFSurveyManager {
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
+	public static Font arabicFont = null;
 	private static final String DEFAULT_CSS = "/smap/bin/resources/css/default_pdf.css";
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
@@ -165,6 +171,7 @@ public class PDFSurveyManager {
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
 				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
+				FontFactory.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", "arabic");
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
@@ -174,6 +181,8 @@ public class PDFSurveyManager {
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
 			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			arabicFont = FontFactory.getFont("arabic", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
 			/*
@@ -545,19 +554,39 @@ public class PDFSurveyManager {
 			 cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
 		 }
  
-        // HTML
-        HtmlPipelineContext htmlContext = new HtmlPipelineContext(null);
-        htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
-        htmlContext.autoBookmark(false);
+
  
         // Pipelines
         parser.elements = new ElementList();
         ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
-        HtmlPipeline html = new HtmlPipeline(htmlContext, end);
-        CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
+ 
+
  
         // XML Worker
-        XMLWorker worker = new XMLWorker(css, true);        
+
+        XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
+        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+        //fontProvider.register("/Users/ibrahimbakhsh/Library/Fonts/trado.otf", BaseFont.IDENTITY_H);
+        //fontProvider.register("/Users/ibrahimbakhsh/Library/Fonts/tahoma.ttf", BaseFont.IDENTITY_H);
+      
+        /*
+        System.out.println("Fonts present in " + fontProvider.getClass().getName());
+        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
+        for (String font : registeredFonts)
+            System.out.println(font);
+        */
+        
+        CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
+        
+        // HTML
+        HtmlPipelineContext htmlContext = new HtmlPipelineContext(cssAppliers);
+        htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
+        htmlContext.autoBookmark(false);
+        HtmlPipeline html = new HtmlPipeline(htmlContext, end);
+        CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
+        
+        XMLWorker worker = new XMLWorker(css, true);  
         parser.xmlParser = new XMLParser(worker);
         
         return parser;
@@ -762,7 +791,6 @@ public class PDFSurveyManager {
 		
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
-			
 			PdfPCell c = new PdfPCell();
 			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
@@ -775,7 +803,9 @@ public class PDFSurveyManager {
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 			//di.debug();
-			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
+			PdfPCell cell = new PdfPCell();
+			cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
+			//PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			// Make sure the last cell extends to the end of the table
@@ -1201,8 +1231,18 @@ public class PDFSurveyManager {
 		}
 		
 		parser.elements.clear();
+		System.out.println("HTML: " + html.toString());
 		parser.xmlParser.parse(new StringReader(html.toString()));
 		for(Element element : parser.elements) {
+			if(textValue != null && textValue.length() > 0) {
+				if(GeneralUtilityMethods.isRtlLanguage(textValue)) {
+					labelCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+				}
+			} else if(di.hint != null && di.hint.length() > 0) {
+				if(GeneralUtilityMethods.isRtlLanguage(textValue)) {
+					labelCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+				}
+			}
 			labelCell.addElement(element);
 		}
 		
@@ -1275,8 +1315,13 @@ public class PDFSurveyManager {
 			// Todo process other question types
 			if(di.value == null || di.value.trim().length() == 0) {
 				di.value = " ";	// Need a space to show a blank row
+			} else {
+				if(di.value != null && di.value.length() > 0) {
+					if(GeneralUtilityMethods.isRtlLanguage(di.value)) {
+						valueCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+					}
+				}
 			}
-			
 			valueCell.addElement(getPara(di.value, di, gv, deps));
 
 		}
@@ -1287,10 +1332,20 @@ public class PDFSurveyManager {
 	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps) {
 		
 		boolean hasContent = false;
+		Font f = null;
+		boolean isRtl = false;
+		
 		Paragraph para = new Paragraph("", font);
 
 		if(value != null && value.trim().length() > 0) {
-			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
+			if(GeneralUtilityMethods.isRtlLanguage(value)) {
+				f = arabicFont;
+				isRtl = true;
+				
+			} else {
+				f= font;
+			}
+			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			hasContent = true;
 		}
 		
@@ -1302,7 +1357,15 @@ public class PDFSurveyManager {
 					if(hasContent) {
 						para.add(new Chunk(",", font));
 					}
-					para.add(new Chunk(n, font));
+					
+					if(GeneralUtilityMethods.isRtlLanguage(n)) {
+						f = arabicFont;
+						isRtl = true;
+						
+					} else {
+						f= font;
+					}
+					para.add(new Chunk(n, f));
 				}
 				
 			}
@@ -1314,6 +1377,9 @@ public class PDFSurveyManager {
 			boolean generateBlank,
 			GlobalVariables gv) {
 
+		Font f = null;
+		boolean isRtl = false;
+		
 		// If generating blank template
 		List list = new List();
 		list.setAutoindent(false);
@@ -1333,7 +1399,14 @@ public class PDFSurveyManager {
 		 */
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
-				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), font);
+				if(GeneralUtilityMethods.isRtlLanguage(aChoice.text)) {
+					f = arabicFont;
+					isRtl = true;
+					
+				} else {
+					f= font;
+				}
+				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), f);
 			
 				if(isSelectMultiple) {
 					if(aChoice.isSet) {
@@ -1358,10 +1431,16 @@ public class PDFSurveyManager {
 				}
 			}
 			
+			if(isRtl) {
+				cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+			}
 			cell.addElement(list);
 			
 		} else {
 			stringValue = getSelectValue(isSelectMultiple, di, deps);
+			if(GeneralUtilityMethods.isRtlLanguage(stringValue)) {
+				cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+			}
 			cell.addElement(getPara(stringValue, di, gv, deps));
 		}
 
@@ -1374,7 +1453,6 @@ public class PDFSurveyManager {
 		StringBuffer sb = new StringBuffer("");
 		
 		for(DisplayItem aChoice : di.choices) {
-			ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text));
 			
 			if(isSelectMultiple) {
 				if(aChoice.isSet) {
@@ -1446,26 +1524,21 @@ public class PDFSurveyManager {
 	}
 	
 	/*
-	 * Format a key value pair into a paragraph
-	 */
-	private void addKeyValuePair(Document document, String key, String value) throws DocumentException {
-		Paragraph para = new Paragraph("", font);
-		
-		para.add(new Chunk(GeneralUtilityMethods.unesc(key), fontbold));
-		para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
-		
-		document.add(para);
-	}
-	
-	/*
 	 * Format a single value into a paragraph
 	 */
 	private void addValue(Document document, String value, float indent) throws DocumentException {
 		
+		Font f = null;
+		
 		if(value != null && value.trim().length() > 0) {
-			Paragraph para = new Paragraph("", font);	
+			if(GeneralUtilityMethods.isRtlLanguage(value)) {
+				f = arabicFont;		
+			} else {
+				f= font;
+			}
+			Paragraph para = new Paragraph("", f);	
 			para.setIndentationLeft(indent);
-			para.add(new Chunk(GeneralUtilityMethods.unesc(value), font));
+			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			document.add(para);
 		}
 	}
