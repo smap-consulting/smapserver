@@ -631,7 +631,8 @@ public class PDFManager {
 					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 					ad.setProportionalIcon(true);
 					try {
-						ad.setImage(Image.getInstance(basePath + "/" + user.signature));
+						String filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
+						ad.setImage(Image.getInstance(filename));
 					} catch (Exception e) {
 						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
 					}
@@ -1542,13 +1543,15 @@ public class PDFManager {
 		if(user.signature != null && user.signature.trim().length() > 0) {
 			String fileName = null;
 			try {
-				fileName = basePath + File.separator + user.signature;
-
-					Image img = Image.getInstance(fileName);
-					img.scaleToFit(200, 50);
-					img.setIndentationLeft(indent);
+				//fileName = basePath + user.signature;
+				
+				fileName = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
+				
+				Image img = Image.getInstance(fileName);
+				img.scaleToFit(200, 50);
+				img.setIndentationLeft(indent);
 					
-				    document.add(img);
+				document.add(img);
 					
 			} catch (Exception e) {
 				log.info("Error: Failed to add signature (non template) " + fileName + " to pdf: " + e.getMessage());

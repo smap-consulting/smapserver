@@ -114,7 +114,7 @@ public class UserManager {
 						int idx = sigFile.lastIndexOf("/");
 						sigFile = sigFile.substring(idx + 1);
 					}
-					user.signature = "/surveyKPI/file/" + sigFile + "/users?type=sig";
+					user.signature = sigFile;
 				}
 				user.language = resultSet.getString("language");
 				user.email = resultSet.getString("email");
