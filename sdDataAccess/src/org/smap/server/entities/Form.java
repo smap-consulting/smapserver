@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.utilities.UtilityMethods;
 
 import JdbcManagers.JdbcQuestionManager;
@@ -182,7 +183,7 @@ public class Form implements Serializable {
 	
 	public void setSurveyId(int value) {
 		this.s_id = value;
-		table_name = "s" + s_id + "_" + name;
+		table_name = "s" + s_id + "_" + GeneralUtilityMethods.cleanName(name, true, false);
 	}
 	
 	public void setName(String name) {

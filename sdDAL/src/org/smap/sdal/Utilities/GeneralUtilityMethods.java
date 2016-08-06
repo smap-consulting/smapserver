@@ -150,34 +150,38 @@ public class GeneralUtilityMethods {
 	 */
 	static public String cleanName(String in, boolean isQuestion, boolean removeSqlReserved) {
 		
-		String out = in.trim().toLowerCase();
-
-		out = out.replace(" ", "");	// Remove spaces
-		out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x");	// Remove special characters ;
+		String out = null;
+		
+		if(in != null) {
+			out = in.trim().toLowerCase();
 	
-		/*
-		 * Rename fields that are the same as postgres / sql reserved words
-		 */
-		if(removeSqlReserved) {
-			for(int i = 0; i < reservedSQL.length; i++) {
-				if(out.equals(reservedSQL[i])) {
-					out = "__" + out;
-					break;
+			out = out.replace(" ", "");	// Remove spaces
+			out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x");	// Remove special characters ;
+		
+			/*
+			 * Rename fields that are the same as postgres / sql reserved words
+			 */
+			if(removeSqlReserved) {
+				for(int i = 0; i < reservedSQL.length; i++) {
+					if(out.equals(reservedSQL[i])) {
+						out = "__" + out;
+						break;
+					}
 				}
 			}
-		}
-		
-		// If the name exceeds the max length then truncate to max size and add random characters to the end of the name
-		int maxlength = isQuestion ? (LENGTH_QUESTION_NAME - LENGTH_QUESTION_RAND) : (LENGTH_OPTION_NAME - LENGTH_OPTION_RAND);
-		int randLength = isQuestion ? LENGTH_QUESTION_RAND : LENGTH_OPTION_RAND;
-		
-		if(out.length() >= maxlength) {
-			out = out.substring(0, maxlength);
 			
-			String rand  = String.valueOf(UUID.randomUUID());
-			rand = rand.substring(0, randLength);
+			// If the name exceeds the max length then truncate to max size and add random characters to the end of the name
+			int maxlength = isQuestion ? (LENGTH_QUESTION_NAME - LENGTH_QUESTION_RAND) : (LENGTH_OPTION_NAME - LENGTH_OPTION_RAND);
+			int randLength = isQuestion ? LENGTH_QUESTION_RAND : LENGTH_OPTION_RAND;
 			
-			out += rand;
+			if(out.length() >= maxlength) {
+				out = out.substring(0, maxlength);
+				
+				String rand  = String.valueOf(UUID.randomUUID());
+				rand = rand.substring(0, randLength);
+				
+				out += rand;
+			}
 		}
 		
 		return out;
