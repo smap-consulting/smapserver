@@ -198,6 +198,16 @@ public class XLSCustomReportsManager {
 	                				}
 	                			}
 	                			
+	                			// Get filter state
+	                			String filter = getColumn(row, "filter", header, lastCellNum, null);
+	                			currentCol.filter = false;
+	                			if(filter != null) {
+	                				filter = filter.toLowerCase().trim();
+	                				if(filter.equals("yes") || filter.equals("true")) {
+	                					currentCol.filter = true;
+	                				}
+	                			}
+	                			
 	                			// Get calculation state
 	                			if(currentCol.type.equals("calculate")) {
 		                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);

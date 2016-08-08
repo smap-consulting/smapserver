@@ -1851,7 +1851,10 @@ function downloadFile(url, filename, mime) {
 		  }
 	};
 	 
-	xhr.send();
+	Pace.restart();
+	Pace.track(function() {
+		xhr.send();
+	});
 	
 }
 
@@ -1877,7 +1880,6 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 	xhr.responseType = 'blob';
 	 
 	xhr.onload = function(e) {
-		removeHourglass();
 		if (this.status == 200) {
 		    // get binary data as a response
 			var blob = new Blob([this.response], { type: mime });
@@ -1896,7 +1898,7 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 		  }
 	};
 	
-	addHourglass();
+	Pace.restart();
 	xhr.send(payload);
 	
 }
