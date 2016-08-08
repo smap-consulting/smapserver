@@ -531,7 +531,6 @@ public class PDFTableManager {
 		 
 		// Set the content of the value cell
 		try {
-			System.out.println("Set cell: " + kv.v);
 			if(type != null && type.equals("image")) {
 				Image img = Image.getInstance(kv.v);
 				valueCell.addElement(img);

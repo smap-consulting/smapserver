@@ -1877,6 +1877,7 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 	xhr.responseType = 'blob';
 	 
 	xhr.onload = function(e) {
+		removeHourglass();
 		if (this.status == 200) {
 		    // get binary data as a response
 			var blob = new Blob([this.response], { type: mime });
@@ -1894,7 +1895,8 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 			  alert("Error: Download Failed");
 		  }
 	};
-	 
+	
+	addHourglass();
 	xhr.send(payload);
 	
 }
