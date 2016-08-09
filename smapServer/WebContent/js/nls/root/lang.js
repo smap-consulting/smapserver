@@ -519,8 +519,7 @@ define({
 	// Browse Results
 	"br_ci": "Case Insensitive",
 	"br_exact": "Exact Match",
-	"br_cc": "Select the columns that you want to test for similarities in the data. For each column that you want to test " +
-			"you can select a function to broaden the range of values that will match.",
+	"br_cc": "Select the columns that you want to test for similarities in the data. For each column that you want to test you can select a function to broaden the range of values that will match.",
 	"br_s": "Search",
 	"br_sdx": "Soundex",
 	
