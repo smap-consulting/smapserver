@@ -345,12 +345,12 @@ public class ManagedForms extends Application {
 				}
 				sqlUpdate += "where "
 						+ "prikey = ? "
-						+ "and " + u.name;
+						+ "and (" + u.name;
 				
 				if(u.currentValue == null) {
 					sqlUpdate += " is null;";
 				} else {
-					sqlUpdate += " = ?;";
+					sqlUpdate += " = ? or " + u.name + " is null)";
 				}
 						
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
@@ -363,6 +363,12 @@ public class ManagedForms extends Application {
 					} else if(columnType.equals("date")) {
 						java.util.Date inputDate = dateFormat.parse(u.value);
 						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+					} else if(columnType.equals("integer")) {
+						int inputInt = Integer.parseInt(u.value);
+						pstmtUpdate.setInt(paramCount++, inputInt);
+					} else if(columnType.equals("decimal")) {
+						double inputDouble = Double.parseDouble(u.value);
+						pstmtUpdate.setDouble(paramCount++, inputDouble);
 					} else {
 						log.info("Warning: unknown type: " + columnType + " value: " + u.value);
 						pstmtUpdate.setString(paramCount++, u.value);
@@ -375,16 +381,26 @@ public class ManagedForms extends Application {
 					} else if(columnType.equals("date")) {
 						java.util.Date inputDate = dateFormat.parse(u.currentValue);
 						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+					} else if(columnType.equals("integer")) {
+						int inputInt = Integer.parseInt(u.currentValue);
+						pstmtUpdate.setInt(paramCount++, inputInt);
+					} else if(columnType.equals("decimal")) {
+						double inputDouble = Double.parseDouble(u.currentValue);
+						pstmtUpdate.setDouble(paramCount++, inputDouble);
+					} else {
+						pstmtUpdate.setString(paramCount++, u.currentValue);	// Default
+					}
+					
+					log.info("Updating managed survey: " + pstmtUpdate.toString());
+					count = pstmtUpdate.executeUpdate();
+					if(count == 0) {
+						throw new Exception("Update failed: "
+								+ "Try refreshing your view of the data as someone may already "
+								+ "have updated this record.");
 					}
 				} 
 				
-				log.info("Updating managed survey: " + pstmtUpdate.toString());
-				count = pstmtUpdate.executeUpdate();
-				if(count == 0) {
-					throw new Exception("Update failed: "
-							+ "Try refreshing your view of the data as someone may already "
-							+ "have updated this record.");
-				}
+
 				
 			}
 			cResults.commit();

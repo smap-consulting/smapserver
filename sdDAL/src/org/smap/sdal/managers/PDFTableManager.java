@@ -308,10 +308,12 @@ public class PDFTableManager {
 		
 		for(PdfColumn col : cols) {
 			
-			PdfPCell cell = addDisplayItem(parser, record.get(col.dataIndex), basePath, col.barcode, col.type);
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			
-			table.addCell(cell);
+			if(col.dataIndex >= 0) {
+				PdfPCell cell = addDisplayItem(parser, record.get(col.dataIndex), basePath, col.barcode, col.type);
+				cell.setBorderColor(BaseColor.LIGHT_GRAY);
+				
+				table.addCell(cell);
+			}
 
 		}
 		return table;

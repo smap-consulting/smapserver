@@ -146,6 +146,8 @@ public class XLSCustomReportsManager {
 	                				if(!dataType.equals("text") &&
 	                						!dataType.equals("date") &&
 	                						!dataType.equals("calculate") &&
+	                						!dataType.equals("decimal") &&
+	                						!dataType.equals("integer") &&
 	                						!dataType.equals("select_one")){
 	                					throw new Exception("Invalid data type: " + dataType + " on row: " + (j + 1));
 	                				}

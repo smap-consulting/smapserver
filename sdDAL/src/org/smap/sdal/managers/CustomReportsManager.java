@@ -172,6 +172,7 @@ public class CustomReportsManager {
 				+ "from survey s, project p "
 				+ "where s.managed_id = ? "
 				+ "and s.p_id = p.id "
+				+ "and s.deleted = false "
 				+ "and p.o_id = ?";
 		PreparedStatement pstmtManaged = null;
 		

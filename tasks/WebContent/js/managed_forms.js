@@ -306,7 +306,7 @@ require([
 		 	filename,
 		 	mime,
 			data,
-		 	manageId,
+		 	managedId,
 		 	title = $('#survey_name').text(),
 		 	project = $('#project_name').text();
 		 
@@ -324,7 +324,7 @@ require([
 			 format = "pdf";
 		 }
 		 
-		 if(isBrowseResults) {
+		 if(isBrowseResults || isDuplicates) {
 			 managedId = 0;
 		 } else {
 			 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;

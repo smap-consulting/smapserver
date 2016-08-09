@@ -553,8 +553,16 @@ window.gTasks = {
 			idx = -1,
 			i;
 		
-		if(column.type === "text") {
-			h[++idx] = ' <input type="text" class="form-control editable" value="';
+		if(column.type === "text" || column.type === "decimal" || column.type === "integer") {
+			h[++idx] = ' <input type="';
+			if(column.type === "text") {
+				h[++idx] = "text";
+			} else if(column.type === "decimal") {
+				h[++idx] = "number";
+			} else if(column.type === "integer") {
+				h[++idx] = "number";
+			}
+			h[++idx] = '" class="form-control editable" value="';
 			h[++idx] = value;
 			h[++idx] = '" data-item="';
 			h[++idx] = itemIndex;
