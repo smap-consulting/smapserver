@@ -75,12 +75,16 @@ public class SqlFrag {
 		sql.append("'");
 	}
 	
+	/*
+	 * Add an SQL expression
+	 */
 	public void addRaw(String in) throws Exception {
 		
 		ArrayList<Param> tempParams = new ArrayList<Param> ();
 		
 		/*
-		 * Get the text parameters
+		 * Get the text parameters and the sql fragments
+		 * Text parameters can include spaces, use single quotes to locate them
 		 */
 		int idx1 = -1,
 			idx2 = -1,
@@ -107,7 +111,7 @@ public class SqlFrag {
 				tempParams.add(p);
 				addedChars = idx2 + 1;							// Skip over quote
 			} else {
-				throw new Exception("Missing matching parameter in: " + in);
+				throw new Exception("Missing matching quotation in: " + in);
 			}
 			
 			start = idx2 + 1;
@@ -122,6 +126,7 @@ public class SqlFrag {
 		
 		/*
 		 * Tokenize the remainder of the SQL
+		 * These can be split using white space
 		 */
 		for(int i = 0; i < tempParams.size(); i++) {
 			Param p = tempParams.get(i);
@@ -129,6 +134,7 @@ public class SqlFrag {
 				String [] token = p.sValue.split(" ");
 				for(int j = 0; j < token.length; j++) {
 					String s = sqlToken(token[j]);
+					System.out.println("+++++++++ SQL Token: " + s);
 					if(s.length() > 0) {
 						sql.append(" " + s + " ");
 					}

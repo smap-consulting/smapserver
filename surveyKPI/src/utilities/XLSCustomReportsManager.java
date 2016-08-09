@@ -218,6 +218,8 @@ public class XLSCustomReportsManager {
 		                				calculation = calculation.trim();
 		                				if(calculation.equals("condition")) {
 		                					// Calculation set by condition rows
+		                				} else if(calculation.equals("expression")) {
+		                					// Calculation is in the condition column
 		                				} else {
 		                					throw new Exception("Unknown calculation " + calculation + " on row: " + (j + 1));
 		                				}
