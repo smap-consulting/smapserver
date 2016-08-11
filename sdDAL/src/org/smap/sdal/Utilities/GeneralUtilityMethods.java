@@ -1885,7 +1885,8 @@ public class GeneralUtilityMethods {
 			boolean includeRO,
 			boolean includeParentKey,
 			boolean includeBad,
-			boolean includeInstanceId) throws SQLException {
+			boolean includeInstanceId,
+			boolean includeOtherMeta) throws SQLException {
 		
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
@@ -1914,10 +1915,12 @@ public class GeneralUtilityMethods {
 		c.name = "prikey";
 		c.humanName = "prikey";
 		c.type = "";
-		columnList.add(c);
+		if(includeOtherMeta) {
+			columnList.add(c);
+		}
 		
 		// Add HRK if it has been specified
-		if(GeneralUtilityMethods.columnType(cResults, table_name, "_hrk") != null) {
+		if(includeOtherMeta && GeneralUtilityMethods.columnType(cResults, table_name, "_hrk") != null) {
 			c = new TableColumn();
 			c.name = "_hrk";
 			c.humanName = "Key";
@@ -1948,7 +1951,7 @@ public class GeneralUtilityMethods {
 		}
 		
 		// For the top level form add default columns that are not in the question list
-		if(formParent == 0) {
+		if(includeOtherMeta && formParent == 0) {
 			
 			c = new TableColumn();
 			c.name = "_user";

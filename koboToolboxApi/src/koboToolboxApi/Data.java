@@ -234,7 +234,8 @@ public class Data extends Application {
 					false,
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
-					true		// include instance id
+					true,		// include instance id
+					true		// include other meta data
 					);
 			
 			if(mgmt) {
@@ -502,7 +503,8 @@ public class Data extends Application {
 					false,
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
-					true		// include instance id
+					true,		// include instance id
+					true		// Include other meta data
 					);
 			
 			if(mgmt) {

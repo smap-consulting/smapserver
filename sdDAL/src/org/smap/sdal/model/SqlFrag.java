@@ -1,6 +1,8 @@
 package org.smap.sdal.model;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /*
  * Form Class
@@ -56,6 +58,10 @@ public class SqlFrag {
 	public ArrayList<Param> params = new ArrayList<Param> ();
 	public ArrayList<String> columns = new ArrayList<String> ();
 
+	private static Logger log =
+			 Logger.getLogger(SqlFrag.class.getName());
+	
+	
 	public void add(String in) {
 		if(sql.length() > 0) {
 			sql.append(" ");
@@ -191,10 +197,19 @@ public class SqlFrag {
 		} else if (token.equals("all")) {
 			out = "";
 		} else if (token.length() > 0) {
-			out = "?";
-			Param px = new Param();
-			px.addNonTextParam(token);
-			params.add(px);
+			// Non text parameter, accept decimal or integer
+			try {
+				if(token.indexOf('.') >= 0) {
+					Double dValue = Double.parseDouble(token);
+					out = dValue.toString();
+				} else {
+					Integer iValue = Integer.parseInt(token);
+					out = iValue.toString();
+				}
+			}catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
+			}
+			
 		}
 		return out;
 	}
