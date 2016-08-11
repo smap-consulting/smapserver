@@ -220,6 +220,9 @@ public class XLSCustomReportsManager {
 		                					// Calculation set by condition rows
 		                				} else if(calculation.equals("expression")) {
 		                					// Calculation is in the condition column
+		                					String condition = getColumn(row, "condition", header, lastCellNum, null);
+		                					currentCol.calculation = new SqlFrag();
+		                					currentCol.calculation.addRaw(condition);
 		                				} else {
 		                					throw new Exception("Unknown calculation " + calculation + " on row: " + (j + 1));
 		                				}

@@ -131,9 +131,10 @@ public class SqlFrag {
 		for(int i = 0; i < tempParams.size(); i++) {
 			Param p = tempParams.get(i);
 			if(p.type.equals("sql")) {
-				String [] token = p.sValue.split(" ");
+				String [] token = p.sValue.split("[\\s]");  // Split on white space
 				for(int j = 0; j < token.length; j++) {
 					String s = sqlToken(token[j]);
+					
 					System.out.println("+++++++++ SQL Token: " + s);
 					if(s.length() > 0) {
 						sql.append(" " + s + " ");
@@ -176,6 +177,12 @@ public class SqlFrag {
 				token.equals("<=") ||
 				token.equals(">=") ||
 				token.equals("=") || 
+				token.equals("-") ||
+				token.equals("+") ||
+				token.equals("*") ||
+				token.equals("/") ||
+				token.equals(")") ||
+				token.equals("(") ||
 				token.equals("and") || 
 				token.equals("now()")) {
 			out = token;
