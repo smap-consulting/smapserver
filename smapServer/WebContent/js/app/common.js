@@ -629,7 +629,6 @@ function uploadFiles(url, formName, callback1, param, callback2) {
 				} else {
 					msg = localise.set["msg_u_f"] + " : " + msg;
 				}
-				document.forms.namedItem(formName).reset();
 				$('.upload_file_msg').removeClass('alert-success').addClass('alert-danger').html(msg);
 
 			}

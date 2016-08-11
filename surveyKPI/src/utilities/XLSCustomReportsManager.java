@@ -35,6 +35,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
@@ -161,11 +162,13 @@ public class XLSCustomReportsManager {
 	                			if(colName != null) {
 	                				colName = colName.trim().toLowerCase();
 	                				String modColName = colName.replaceAll("[^a-z0-9_]", "");
+	                				modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
 	                				if(colName.length() != modColName.length()) {
 	                					throw new Exception("Invalid name: " + colName + " on row: " + (j + 1));
 	                				} else if(colName.length() > 60) {
 	                					throw new Exception("Name is too long (must be <= 60): " + colName + " on row: " + (j + 1));
-	                				} 
+	                				}
+	                				
 	                				currentCol.name = colName;
 	                			} else {
 	                				throw new Exception("Missing name on row: " + (j + 1));
@@ -218,6 +221,11 @@ public class XLSCustomReportsManager {
 		                				calculation = calculation.trim();
 		                				if(calculation.equals("condition")) {
 		                					// Calculation set by condition rows
+		                				} else if(calculation.equals("expression")) {
+		                					// Calculation is in the condition column
+		                					String condition = getColumn(row, "condition", header, lastCellNum, null);
+		                					currentCol.calculation = new SqlFrag();
+		                					currentCol.calculation.addRaw(condition);
 		                				} else {
 		                					throw new Exception("Unknown calculation " + calculation + " on row: " + (j + 1));
 		                				}

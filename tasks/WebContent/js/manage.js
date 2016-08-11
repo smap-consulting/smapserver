@@ -395,7 +395,7 @@ require([
 	 function loadManagedSurveys(projectId, callback) {
 	 	
 	 	var url="/surveyKPI/managed/surveys/" + projectId,
-	 		$elemNonTracking = $('.nonTrackingSurveys'),
+	 		//$elemNonTracking = $('.nonTrackingSurveys'),
 	 		$elemTracking = $('#surveyTable');
 
 		gIsManageId = undefined;
@@ -434,33 +434,27 @@ require([
 	 				
 	 				for(i = 0; i < data.length; i++) {
 	 					item = data[i];
-	 					if(!item.managed) {
-	 						hNT[++idxNT] = '<option value="';
-	 						hNT[++idxNT] = item.sId;
-	 						hNT[++idxNT] = '">';
-	 						hNT[++idxNT] = item.surveyName;
-	 						hNT[++idxNT] = '</option>';
-	 					} else {
-	 						hT[++idxT] = '<tr>';
-	 							hT[++idxT] = '<td>';
-	 							hT[++idxT] = item.surveyName;
-	 							hT[++idxT] = '</td>';
-	 							hT[++idxT] = '<td>';
-	 							hT[++idxT] = item.oversightName;
-	 							hT[++idxT] = '</td>';
-	 							
-	 							// actions
-	 			 				hT[++idxT] = '<td>';
-	 			 				
-	 			 				hT[++idxT] = '<button type="button" data-idx="';
-	 			 				hT[++idxT] = i;
-	 			 				hT[++idxT] = '" class="btn btn-default btn-sm edit_link btn-info">';
-	 			 				hT[++idxT] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
-	 			 				
-	 			 				hT[++idxT] = '</td>';
-	 			 				// end actions
-	 						hT[++idxT] = '</tr>';
-	 					}
+
+ 						hT[++idxT] = '<tr>';
+ 							hT[++idxT] = '<td>';
+ 							hT[++idxT] = item.surveyName;
+ 							hT[++idxT] = '</td>';
+ 							hT[++idxT] = '<td>';
+ 							hT[++idxT] = item.oversightName;
+ 							hT[++idxT] = '</td>';
+ 							
+ 							// actions
+ 			 				hT[++idxT] = '<td>';
+ 			 				
+ 			 				hT[++idxT] = '<button type="button" data-idx="';
+ 			 				hT[++idxT] = i;
+ 			 				hT[++idxT] = '" class="btn btn-default btn-sm edit_link btn-info">';
+ 			 				hT[++idxT] = '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>';
+ 			 				
+ 			 				hT[++idxT] = '</td>';
+ 			 				// end actions
+ 						hT[++idxT] = '</tr>';
+	 					
 	 					
 	 					if(i == 0) {
 	 						if(globals.gCurrentSurvey <= 0) {
@@ -476,7 +470,7 @@ require([
 	 				hT[++idxT] = '</tbody>';
 	 				hT[++idxT] = '</table>';
 	 				
-	 				$elemNonTracking.empty().html(hNT.join(''));
+	 				//$elemNonTracking.empty().html(hNT.join(''));
 	 				$elemTracking.empty().html(hT.join(''));
 	 				
 	 				$(".edit_link", $elemTracking).click(function(){
@@ -582,7 +576,7 @@ require([
 					  refreshData();
 				  }, error: function(data, status) {
 					  removeHourglass();
-					  alert(localise.set["msg_err_cr"]);
+					  alert(localise.set["msg_err_cr"] + " " + data.responseText);
 				  }
 			});
 	 }

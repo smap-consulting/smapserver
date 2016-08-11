@@ -234,7 +234,8 @@ public class Data extends Application {
 					false,
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
-					true		// include instance id
+					true,		// include instance id
+					true		// include other meta data
 					);
 			
 			if(mgmt) {
@@ -327,11 +328,26 @@ public class Data extends Application {
 							//String name = rsMetaData.getColumnName(i);	
 							name = c.humanName;
 								
-							
+							System.out.println("Type: " + c.type + " : " + rs.getString(i + 1));
 							if(c.type != null && c.type.equals("decimal")) {
 								Double dValue = rs.getDouble(i + 1);
 								dValue = Math.round(dValue * 10000.0) / 10000.0; 
 								value = String.valueOf(dValue);
+							} else if(c.type != null && c.type.equals("calculate")) {
+								// This calculation may be a decimal - give it a go
+								String v = rs.getString(i + 1);
+								if(v != null && v.indexOf('.') > -1) {
+									try {
+										Double dValue = rs.getDouble(i + 1);
+										dValue = Math.round(dValue * 10000.0) / 10000.0; 
+										value = String.valueOf(dValue);
+									} catch(Exception e) {
+										value = rs.getString(i + 1);	// Assume text
+									}
+								} else {
+									value = rs.getString(i + 1);	// Assume text
+								}
+								
 							} else {
 								value = rs.getString(i + 1);
 							}
@@ -487,7 +503,8 @@ public class Data extends Application {
 					false,
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
-					true		// include instance id
+					true,		// include instance id
+					true		// Include other meta data
 					);
 			
 			if(mgmt) {

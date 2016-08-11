@@ -191,14 +191,20 @@ public class ManagedForms extends Application {
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
 			TableManager tm = new TableManager();
 			
-			// 1. Add the management id to the survey record
+			// 1. Check that the managed form is compatible with the survey
+			String compatibleMsg = compatibleManagedForm(sd, am.sId, am.manageId);
+			if(compatibleMsg != null) {
+				throw new Exception("This managed form is not compatible with the survey. " + compatibleMsg);
+			}
+			
+			// 2. Add the management id to the survey record
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, am.manageId);
 			pstmt.setInt(2, am.sId);
 			log.info("Adding managed survey: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
-			// 2. Create results tables if they do not exist
+			// 3. Create results tables if they do not exist
 			if(am.manageId > 0) {
 				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
 				tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
@@ -218,6 +224,85 @@ public class ManagedForms extends Application {
 		}
 		
 		return response;
+	}
+	
+	/*
+	 * Verify that
+	 *  1. columns in the managed form are not also in the form that is being attached to
+	 *  2. Calculations in the managed form refer to questions in either the managed form or the form
+	 *     we are attaching to
+	 */
+	private String compatibleManagedForm(Connection sd, int sId, int managedId) {
+		
+		StringBuffer compatibleMsg = new StringBuffer("");
+			
+		if(managedId > 0 && sId > 0) {
+			String sql = null;
+			PreparedStatement pstmt = null;
+				
+			try {
+				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
+				ManagedFormsManager qm = new ManagedFormsManager();
+				qm.getDataProcessingConfig(sd, managedId, managedColumns, null);
+					
+				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
+				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, null, 0, f.id, null, false, false, false, false, 
+						false	// Don't include other meta data
+						);
+				
+				for(TableColumn mc : managedColumns) {
+					if(mc.type != null && !mc.type.equals("calculate")) {
+						for(TableColumn fc : formColumns) {
+							if(mc.name.equals(fc.name)) {
+								compatibleMsg.append("The form being attached to already has column name " + mc.name + " from the oversight form. ");
+								break;
+							}
+						}
+					} else if(mc.type.equals("calculate")) {
+						
+						for(int i = 0; i < mc.calculation.columns.size(); i++) {
+							String refColumn = mc.calculation.columns.get(i);
+							boolean referenceExists = false;
+							
+							// Check to see if the referenced column is in the managed form
+							for(TableColumn mc2 : managedColumns) {
+								if(refColumn.equals(mc2.name)) {
+									referenceExists = true;
+									break;
+								}
+							}
+							
+							// Check to see if the referenced column is in the form that is being attached to
+							if(!referenceExists) {
+								for(TableColumn fc2 : formColumns) {
+									if(refColumn.equals(fc2.name)) {
+										referenceExists = true;
+										break;
+									}
+								}
+							}
+							
+							// Report the missing reference
+							if(!referenceExists) {
+								compatibleMsg.append("Column " + refColumn + " is not in the form being attached to. ");
+							}
+						}
+						
+						
+					}
+					
+				}
+			} catch (Exception e) {
+				compatibleMsg.append(e.getMessage());
+			}
+		}
+		
+		if(compatibleMsg.length() == 0) {
+			return null;
+		} else {
+			return compatibleMsg.toString();
+		}
+
 	}
 	
 	/*

@@ -384,7 +384,8 @@ public class ExportSurvey extends Application {
 							exp_ro,
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
-							false		// Don't include instance id
+							false,		// Don't include instance id
+							true		// Include other meta data
 							);
 						
 							

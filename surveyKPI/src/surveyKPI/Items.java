@@ -221,7 +221,8 @@ public class Items extends Application {
 						false,	// Don't include Read only
 						true,	// Include parent key
 						true,	// Include "bad"
-						true	// Include instanceId
+						true,	// Include instanceId
+						true	// Include other meta data
 						);		
 				
 				// Construct a new query that retrieves a geometry object as geoJson
