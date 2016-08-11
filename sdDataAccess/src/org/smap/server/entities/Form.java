@@ -183,7 +183,7 @@ public class Form implements Serializable {
 	
 	public void setSurveyId(int value) {
 		this.s_id = value;
-		table_name = "s" + s_id + "_" + GeneralUtilityMethods.cleanName(name, true, false);
+		table_name = "s" + s_id + "_" + GeneralUtilityMethods.cleanName(name, true, false, false);
 	}
 	
 	public void setName(String name) {

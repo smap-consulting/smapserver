@@ -48,6 +48,29 @@ public class GeneralUtilityMethods {
 	private static int LENGTH_OPTION_NAME = 16;  
 	private static int LENGTH_OPTION_RAND = 3;
 	
+	private static String [] smapMeta = new String [] {
+		"_hrk",
+		"instanceid",
+		"_instanceid",
+		"_start",
+		"_end",
+		"_device",
+		"prikey",
+		"parkey",
+		"_bad",
+		"_bad_reason",
+		"_user",
+		"_survey_notes",
+		"_upload_time",
+		"_s_id",
+		"_version",
+		"_complete",
+		"_location_trigger",
+		"_modified",
+		"_task_key",
+		"_task_replace"
+	};
+	
 	private static String [] reservedSQL = new String [] {
 		"all",
 		"analyse",
@@ -148,7 +171,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Remove any characters from the name that will prevent it being used as a database column name
 	 */
-	static public String cleanName(String in, boolean isQuestion, boolean removeSqlReserved) {
+	static public String cleanName(String in, boolean isQuestion, boolean removeSqlReserved, boolean removeSmapMeta) {
 		
 		String out = null;
 		
@@ -164,6 +187,18 @@ public class GeneralUtilityMethods {
 			if(removeSqlReserved) {
 				for(int i = 0; i < reservedSQL.length; i++) {
 					if(out.equals(reservedSQL[i])) {
+						out = "__" + out;
+						break;
+					}
+				}
+			}
+			
+			/*
+			 * Rename fields that are the same as a Smap reserved word
+			 */
+			if(removeSmapMeta) {
+				for(int i = 0; i < smapMeta.length; i++) {
+					if(out.equals(smapMeta[i])) {
 						out = "__" + out;
 						break;
 					}
@@ -186,8 +221,6 @@ public class GeneralUtilityMethods {
 		
 		return out;
 	}
-	
-	
 	
 	/*
 	 * Escape characters reserved for HTML

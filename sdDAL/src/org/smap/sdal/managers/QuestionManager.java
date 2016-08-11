@@ -250,7 +250,7 @@ public class QuestionManager {
 			
 				// Insert the question
 				if(columnName == null) {
-					columnName = GeneralUtilityMethods.cleanName(q.name, true, true);
+					columnName = GeneralUtilityMethods.cleanName(q.name, true, true, true);
 				}
 				
 				// Assume that every question has a label, however hints are optional (to reduce size of form)
@@ -1053,7 +1053,7 @@ public class QuestionManager {
 				pstmtInsertOption.setInt(2, o.seq );
 				pstmtInsertOption.setString(3, transId + ":label" );
 				pstmtInsertOption.setString(4, o.value );
-				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false, false) );
+				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false, false, false) );
 				pstmtInsertOption.setString(6, gson.toJson(o.cascadeKeyValues));			
 				
 				log.info("Insert option: " + pstmtInsertOption.toString());
@@ -1419,7 +1419,7 @@ public class QuestionManager {
 					throw new Exception("Could not get table name of existing form");
 				}
 			} else {
-				tablename = "s" + sId + "_" + GeneralUtilityMethods.cleanName(formName, true, false);
+				tablename = "s" + sId + "_" + GeneralUtilityMethods.cleanName(formName, true, false, false);
 			}
 			
 			pstmtCreateForm.setInt(1,  sId);
