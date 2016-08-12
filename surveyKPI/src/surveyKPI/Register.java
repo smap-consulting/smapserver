@@ -242,7 +242,7 @@ public class Register extends Application {
 	}
 	
 	/*
-	 * COnvert registation details into a text string suitable for email
+	 * Convert registration details into a text string suitable for email
 	 */
 	private String getRegistrationMsg(RegistrationDetails rd, String server) {
 		

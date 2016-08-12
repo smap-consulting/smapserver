@@ -1,6 +1,7 @@
 package org.smap.sdal.model;
 
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +21,7 @@ class Param {
 		sValue = v;
 	}
 	
+	/*
 	void addNonTextParam(String v) throws Exception {
 		boolean done = false;
 		if(v.indexOf('.') > -1) {
@@ -40,9 +42,10 @@ class Param {
 			}
 		}
 		if(!done) {
-			throw new Exception("Unknown token: " + v);
+			throw new Exception("Unrecognised number: " + v);
 		}
 	}
+	*/
 	
 	String debug() {
 		if(type.equals("text") || type.equals("sql")) {
@@ -84,7 +87,7 @@ public class SqlFrag {
 	/*
 	 * Add an SQL expression
 	 */
-	public void addRaw(String in) throws Exception {
+	public void addRaw(String in, ResourceBundle localisation) throws Exception {
 		
 		ArrayList<Param> tempParams = new ArrayList<Param> ();
 		
@@ -117,7 +120,7 @@ public class SqlFrag {
 				tempParams.add(p);
 				addedChars = idx2 + 1;							// Skip over quote
 			} else {
-				throw new Exception("Missing matching quotation in: " + in);
+				throw new Exception(localisation.getString("mf_mq") + ": " + in);
 			}
 			
 			start = idx2 + 1;
@@ -141,7 +144,6 @@ public class SqlFrag {
 				for(int j = 0; j < token.length; j++) {
 					String s = sqlToken(token[j]);
 					
-					System.out.println("+++++++++ SQL Token: " + s);
 					if(s.length() > 0) {
 						sql.append(" " + s + " ");
 					}

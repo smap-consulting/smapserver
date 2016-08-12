@@ -2108,7 +2108,7 @@ function showReportList(data) {
 /*
  * Show the Custom Reports in a table
  */
-function refreshCustomReportView(data, callback1, callback2, type) {
+function refreshCustomReportView(data, type) {
 	
 	var $selector = $('#cr_list'),
 		i, 
@@ -2166,24 +2166,23 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 	$(".rm_cr", $selector).click(function(){
 		var idx = $(this).data("idx");
 		if(confirm(localise.set["msg_confirm_del"] + " " + globals.gReports[idx].name)) {
-			deleteCustomReport(globals.gReports[idx].id, callback1, callback2, type);
+			deleteCustomReport(globals.gReports[idx].id, type);
 		}
 	});
 	
 	
 }
 
-function deleteCustomReport(id, callback1, callback2, type) {
+function deleteCustomReport(id, type) {
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
 		  url: "/surveyKPI/custom_reports/" + id,
 		  success: function(data, status) {
 			  removeHourglass();
-			  var cb1 = callback1,
-			  	cb2 = callback2,
-			  	t = type;
-			  getReports(cb1, cb2, t);
+			  var t = type;
+			  console.log("delete: " + t + " : " + type);
+			  getReports(refreshCustomReportView, showReportList, t);
 		  },
 		  error: function(xhr, textStatus, err) {
 				removeHourglass();

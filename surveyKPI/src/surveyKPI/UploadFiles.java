@@ -62,6 +62,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -463,15 +465,20 @@ public class UploadFiles extends Application {
 				}
 			}
 			
+			// Authorisation - Access
+			sd = SDDataSource.getConnection("Tasks-LocationUpload");
+			orgLevelAuth.isAuthorised(sd, request.getRemoteUser());
+			// End authorisation
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			if(fileName != null) {
-				// Authorisation - Access
-				sd = SDDataSource.getConnection("Tasks-LocationUpload");
-				orgLevelAuth.isAuthorised(sd, request.getRemoteUser());
-				// End authorisation
 				
 				// Process xls file
 				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
-				ArrayList<TableColumn> config = xcr.getCustomReport(filetype, fileItem.getInputStream());
+				ArrayList<TableColumn> config = xcr.getCustomReport(filetype, fileItem.getInputStream(), localisation);
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error
@@ -493,10 +500,11 @@ public class UploadFiles extends Application {
 					response = Response.ok(resp).build();
 					
 				} else {
-					response = Response.serverError().entity("no report columns found").build();
+					response = Response.serverError().entity(localisation.getString("mf_nrc")).build();
 				}
 			} else {
-				response = Response.serverError().entity("no file found").build();
+				// This error shouldn't happen therefore no translation specified
+				response = Response.serverError().entity("no file specified").build();
 			}
 			
 			
@@ -508,7 +516,7 @@ public class UploadFiles extends Application {
 			if(msg!= null && msg.contains("duplicate")) {
 				msg = "A report with this name already exists";
 			}
-			log.log(Level.SEVERE,ex.getMessage(), ex);
+			log.info(ex.getMessage());
 			response = Response.serverError().entity(msg).build();
 		} finally {
 	

@@ -125,7 +125,7 @@
 			<fieldset class="ui-widget-content">
 				<legend class="ui-widget-header ui-corner-all lang" data-lang="a_exp_leg2">Output format:</legend>
 				<select id="exportformat">
-					<option value="xls">XLS</option>
+					<option value="xls">Excel</option>
 					<option value="csv">CSV</option>
 					<option value="osm">OSM</option>
 					<option value="shape">Shape File</option>
@@ -142,7 +142,13 @@
 					<input type="checkbox" id="exportReadOnly"/><br/>
 				</div>
 				<div class="showspreadsheet">
-					<div class="showxls">
+					<label for="export_xlstype" class="lang" data-lang="c_xlstype">xls</label><br/>
+					<select id="export_xlstype">
+						<option value="xls">XLS</option>
+						<option value="xlsx">XLSX</option>
+						<option value="xlsx">HTML</option>
+					</select>
+					<div class="showxls">	
 						<label for="splitlocn" class="lang" data-lang="a_exp_split">Split lat / lon:</label>	
 						<input type="checkbox" id="splitlocn"/><br/>
 					</div>

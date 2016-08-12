@@ -286,7 +286,7 @@ public class UserManager {
 							serverName,
 							localisation);
 				} else {
-					throw new Exception("Email not enabled - set passwords directly");
+					throw new Exception(localisation.getString("email_ne2"));
 				}
 			}
 		}  finally {		

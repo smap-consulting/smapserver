@@ -198,6 +198,7 @@ define({
 	"c_add": "Add",
 	"c_create": "Create",
 	"c_imp_xls": "Import Spreadsheet",
+	"c_xlstype": "Excel Format",
 	
 	// File Types
 	"ft": "File Type",

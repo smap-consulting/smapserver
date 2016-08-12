@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import org.apache.poi.xssf.usermodel.*;
@@ -66,7 +67,7 @@ public class XLSCustomReportsManager {
 	/*
 	 * Create an customer report definition from an XLS file
 	 */
-	public ArrayList<TableColumn> getCustomReport(String type, InputStream inputStream) throws Exception {
+	public ArrayList<TableColumn> getCustomReport(String type, InputStream inputStream, ResourceBundle localisation) throws Exception {
 		
 		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
 		Sheet sheet = null;
@@ -150,11 +151,12 @@ public class XLSCustomReportsManager {
 	                						!dataType.equals("decimal") &&
 	                						!dataType.equals("integer") &&
 	                						!dataType.equals("select_one")){
-	                					throw new Exception("Invalid data type: " + dataType + " on row: " + (j + 1));
+	                					throw new Exception(localisation.getString("mf_idt") + ": " + dataType + 
+	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                				}
 	                				currentCol.type = dataType;
 	                			} else {
-	                				throw new Exception("Missing data type on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
 	                			// Get column name
@@ -164,14 +166,17 @@ public class XLSCustomReportsManager {
 	                				String modColName = colName.replaceAll("[^a-z0-9_]", "");
 	                				modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
 	                				if(colName.length() != modColName.length()) {
-	                					throw new Exception("Invalid name: " + colName + " on row: " + (j + 1));
+	                					throw new Exception(localisation.getString("mf_in") +
+	                							": " + colName + " " + localisation.getString("mf_or") + ": " + (j + 1));
 	                				} else if(colName.length() > 60) {
-	                					throw new Exception("Name is too long (must be <= 60): " + colName + " on row: " + (j + 1));
+	                					throw new Exception(localisation.getString("mf_ntl") + ": " + colName + 
+	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                				}
 	                				
 	                				currentCol.name = colName;
 	                			} else {
-	                				throw new Exception("Missing name on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_mn") + 
+	                						localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
 	                			// Get display name
@@ -180,7 +185,8 @@ public class XLSCustomReportsManager {
 	              	
 	                				currentCol.humanName = dispName;
 	                			} else {
-	                				throw new Exception("Missing display name on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_mdn") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
 	                			// Get hide state
@@ -213,24 +219,23 @@ public class XLSCustomReportsManager {
 	                				}
 	                			}
 	                			
+	                			System.out.println("type: " + currentCol.type);
 	                			// Get calculation state
 	                			if(currentCol.type.equals("calculate")) {
 		                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);
 		                			
-		                			if(calculation != null) {
+		                			if(calculation != null && calculation.length() > 0) {
+		                				System.out.println("Calculation:" + calculation);
 		                				calculation = calculation.trim();
 		                				if(calculation.equals("condition")) {
 		                					// Calculation set by condition rows
-		                				} else if(calculation.equals("expression")) {
-		                					// Calculation is in the condition column
-		                					String condition = getColumn(row, "condition", header, lastCellNum, null);
+		                				} else if(calculation.length() > 0) {
 		                					currentCol.calculation = new SqlFrag();
-		                					currentCol.calculation.addRaw(condition);
-		                				} else {
-		                					throw new Exception("Unknown calculation " + calculation + " on row: " + (j + 1));
-		                				}
+		                					currentCol.calculation.addRaw(calculation, localisation);
+		                				} 
 		                			} else {
-		                				throw new Exception("Missing calculation on row: " + (j + 1));
+		                				throw new Exception(localisation.getString("mf_mc") + 
+		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 		                			}
 	                			}
 	                		} else if(rowType.equals("choice")) {
@@ -281,7 +286,7 @@ public class XLSCustomReportsManager {
 	                						currentCol.calculation.addText(value);
 	                					} else {
 	                						currentCol.calculation.add("WHEN");
-	                						currentCol.calculation.addRaw(condition);
+	                						currentCol.calculation.addRaw(condition, localisation);
 	                						currentCol.calculation.add("THEN");
 	                						currentCol.calculation.addText(value);
 	                					}
@@ -301,6 +306,9 @@ public class XLSCustomReportsManager {
 	                				throw new Exception("Unexpected \"condition\" on row: " + (j + 1));
 	                			} 
 	                			
+	                		} else {
+	                			throw new Exception(localisation.getString("mf_ur") + 
+	                					" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                		}
                 		}	
                 		
