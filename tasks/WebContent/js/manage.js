@@ -129,7 +129,7 @@ require([
 		
 		// Get the user details
 		globals.gIsAdministrator = false;
-		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
+		getLoggedInUser(refreshManagementData, false, true, undefined, false, dont_get_current_survey);
 
 		enableUserProfileBS();	
 		
@@ -152,6 +152,14 @@ require([
 					  }
 				});
 		});
+		
+		// Set change function on projects
+		$('#project_name').change(function() {
+			globals.gCurrentProject = $('#project_name option:selected').val();
+		 	globals.gCurrentSurvey = -1;
+		 	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+			refreshManagementData();
+	 	 });
 		
 		/*
 		 * Create new managed surveys
@@ -194,7 +202,7 @@ require([
 	    		return false;
 	    	}
 	    	
-	    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined, showReportList);
+	    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, "oversight", showReportList);
 	    });
 	    
 		// Change function on file selected
@@ -223,7 +231,7 @@ require([
 	 /*
 	  * Refresh the data used in this page
 	  */
-	 function refreshData() {
+	 function refreshManagementData() {
 		 
 		 // Clear cache
 		 cache.surveyConfig = {};
@@ -573,7 +581,7 @@ require([
 				  data: { settings: saveString },
 				  success: function(data, status) {
 					  removeHourglass();
-					  refreshData();
+					  refreshManagementData();
 				  }, error: function(data, status) {
 					  removeHourglass();
 					  alert(localise.set["msg_err_cr"] + " " + data.responseText);

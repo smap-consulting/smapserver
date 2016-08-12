@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -166,9 +167,9 @@ public class CustomReportsManager {
 	/*
 	 * Delete a report
 	 */
-	public void delete(Connection sd, int oId, int id) throws Exception {
+	public void delete(Connection sd, int oId, int id, ResourceBundle localisation) throws Exception {
 		
-		String sqlManaged = "select s.s_id, s.display_name "
+		String sqlManaged = "select s.s_id, s.display_name, p.name "
 				+ "from survey s, project p "
 				+ "where s.managed_id = ? "
 				+ "and s.p_id = p.id "
@@ -198,10 +199,12 @@ public class CustomReportsManager {
 				if(formsUsingReport.length() > 0) {
 					formsUsingReport += ", ";
 				}
-				formsUsingReport += resultSet.getString(2);
+				formsUsingReport += "\"" + resultSet.getString(2) + "\" ";
+				formsUsingReport += localisation.getString("mf_ip") + " \"" + resultSet.getString(3) + "\"";
 			}
 			if(inUse) {
-				throw new Exception("Report is used by: " +  formsUsingReport + " unlink it before deleting");
+				throw new Exception(localisation.getString("mf_riu") + ": " +  formsUsingReport + 
+						". " + localisation.getString("mf_ul"));
 			}
 			resultSet.close();
 			

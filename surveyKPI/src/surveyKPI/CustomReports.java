@@ -40,6 +40,8 @@ import com.google.gson.GsonBuilder;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -121,9 +123,13 @@ public class CustomReports extends Application {
 		
 		try {
 			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			CustomReportsManager crm = new CustomReportsManager();
-			crm.delete(sd, oId, id);
+			crm.delete(sd, oId, id, localisation);
 			
 			response = Response.ok().build();
 			
@@ -134,7 +140,7 @@ public class CustomReports extends Application {
 			log.info("Authorisation Exception");
 		    response = Response.serverError().entity("Not authorised").build();
 		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error", e);
+			log.info(e.getMessage());
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			

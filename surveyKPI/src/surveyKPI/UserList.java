@@ -50,6 +50,7 @@ import org.smap.sdal.model.Project;
 import org.smap.sdal.model.RestrictedUser;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
+import org.smap.server.utilities.UtilityMethods;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -540,14 +541,11 @@ public class UserList extends Application {
 		PreparedStatement pstmt = null;
 		try {	
 			
-			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, null, request.getRemoteUser());
-			Locale locale = new Locale(organisation.locale);
-			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-			
+			ResourceBundle localisation = null;
 			String sql = null;
 			int o_id;
 			String adminName = null;
+			String language;	// Language spoken by user
 			ResultSet resultSet = null;
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
@@ -557,7 +555,7 @@ public class UserList extends Application {
 			/*
 			 * Get the organisation and name of the user making the request
 			 */
-			sql = "SELECT u.o_id, u.name " +
+			sql = "SELECT u.o_id, u.name, u.language " +
 					" FROM users u " +  
 					" WHERE u.ident = ?;";				
 						
@@ -568,6 +566,13 @@ public class UserList extends Application {
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
 				adminName = resultSet.getString(2);
+				language = resultSet.getString(3);
+				
+				// Set locale
+				if(language == null) {
+					language = "en";
+				}
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", new Locale(language));
 				
 				for(int i = 0; i < uArray.size(); i++) {
 					User u = uArray.get(i);

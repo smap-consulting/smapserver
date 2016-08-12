@@ -512,6 +512,38 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Return the users language
+	 */
+	static public String getUserLanguage(Connection sd, String user) throws SQLException {
+		
+		String language = "en";		// Default to english
+		
+		String sql = "select language "
+				+ "from users u "
+				+ "where u.ident = ?";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				language = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return language;
+	}
+	
+	/*
 	 * Return true if the user has the security role
 	 */
 	static public boolean hasSecurityRole(Connection sd, String user) throws SQLException {
