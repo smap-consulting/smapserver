@@ -28,6 +28,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+
+import org.omg.CORBA.UserException;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -139,8 +142,11 @@ public class CustomReports extends Application {
 		} catch (AuthorisationException e) {
 			log.info("Authorisation Exception");
 		    response = Response.serverError().entity("Not authorised").build();
+		} catch (ApplicationException e) {
+			log.info("Application exception: " + e.getMessage());
+		    response = Response.serverError().entity(e.getMessage()).build();
 		} catch (Exception e) {
-			log.info(e.getMessage());
+			log.log(Level.SEVERE,"SQL Exception", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			

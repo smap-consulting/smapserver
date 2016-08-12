@@ -328,7 +328,6 @@ public class Data extends Application {
 							//String name = rsMetaData.getColumnName(i);	
 							name = c.humanName;
 								
-							System.out.println("Type: " + c.type + " : " + rs.getString(i + 1));
 							if(c.type != null && c.type.equals("decimal")) {
 								Double dValue = rs.getDouble(i + 1);
 								dValue = Math.round(dValue * 10000.0) / 10000.0; 
@@ -385,7 +384,7 @@ public class Data extends Application {
 			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			response = Response.serverError().build();
+			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}

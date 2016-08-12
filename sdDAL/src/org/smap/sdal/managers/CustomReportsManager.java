@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.model.NameId;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -203,8 +204,8 @@ public class CustomReportsManager {
 				formsUsingReport += localisation.getString("mf_ip") + " \"" + resultSet.getString(3) + "\"";
 			}
 			if(inUse) {
-				throw new Exception(localisation.getString("mf_riu") + ": " +  formsUsingReport + 
-						". " + localisation.getString("mf_ul"));
+				throw new ApplicationException(localisation.getString("mf_riu") + ": " +  formsUsingReport + 
+						". " + localisation.getString("mf_ul"));		// Report is in use
 			}
 			resultSet.close();
 			

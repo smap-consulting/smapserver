@@ -259,6 +259,8 @@ window.gTasks = {
 		 
 		 url += "&format=dt";
 		 
+		 $.fn.dataTable.ext.errMode = 'none';
+		 
 		 // Create data table
 		 globals.gMainTable = $table.DataTable({
 			 processing: true,
@@ -330,6 +332,11 @@ window.gTasks = {
 		            url: localise.dt()
 		        }
 		 });
+		 
+		 // Respond to an error
+		 globals.gMainTable.on( 'error.dt', function ( e, settings, techNote, message ) {
+		        alert( 'An error has been reported by DataTables: ', message );
+		    } );
 		 
 		 // Respond to selection of a row
 		 globals.gMainTable

@@ -516,7 +516,7 @@ public class GeneralUtilityMethods {
 	 */
 	static public String getUserLanguage(Connection sd, String user) throws SQLException {
 		
-		String language = "en";		// Default to english
+		String language = null;		
 		
 		String sql = "select language "
 				+ "from users u "
@@ -540,6 +540,9 @@ public class GeneralUtilityMethods {
 			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 		}
 		
+		if(language == null || language.trim().length() == 0) {
+			language = "en";	// Default to english
+		}
 		return language;
 	}
 	
