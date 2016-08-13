@@ -129,7 +129,7 @@ public class XLSCustomReportsManager {
                 		String rowType = getColumn(row, "row type", header, lastCellNum, null);
                 		
                 		if(rowType != null) {
-                			System.out.println("New row: " + rowType);
+                			rowType = rowType.trim().toLowerCase();
                 			
                 			// Close of any condition type calculations
                 			if(processingConditions && !rowType.equals("condition")) {

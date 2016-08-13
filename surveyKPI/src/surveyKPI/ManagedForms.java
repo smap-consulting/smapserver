@@ -52,6 +52,8 @@ import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -188,13 +190,17 @@ public class ManagedForms extends Application {
 		
 		try {
 
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
 			TableManager tm = new TableManager();
 			
 			// 1. Check that the managed form is compatible with the survey
-			String compatibleMsg = compatibleManagedForm(sd, am.sId, am.manageId);
+			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, am.manageId);
 			if(compatibleMsg != null) {
-				throw new Exception("This managed form is not compatible with the survey. " + compatibleMsg);
+				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 			}
 			
 			// 2. Add the management id to the survey record
@@ -232,13 +238,11 @@ public class ManagedForms extends Application {
 	 *  2. Calculations in the managed form refer to questions in either the managed form or the form
 	 *     we are attaching to
 	 */
-	private String compatibleManagedForm(Connection sd, int sId, int managedId) {
+	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, int managedId) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 			
 		if(managedId > 0 && sId > 0) {
-			String sql = null;
-			PreparedStatement pstmt = null;
 				
 			try {
 				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
@@ -284,7 +288,8 @@ public class ManagedForms extends Application {
 							
 							// Report the missing reference
 							if(!referenceExists) {
-								compatibleMsg.append("Column " + refColumn + " is not in the form being attached to. ");
+								compatibleMsg.append(localisation.getString("mf_col") + " " + 
+										refColumn + " " + localisation.getString("mf_cninc"));
 							}
 						}
 						
@@ -360,6 +365,10 @@ public class ManagedForms extends Application {
 		
 		try {
 
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			/*
 			 * Verify that the survey is managed by the provided data processing id and get
 			 */
@@ -372,7 +381,7 @@ public class ManagedForms extends Application {
 				count = rs.getInt(1);
 			}
 			if(count == 0) {
-				throw new Exception("Cannot update this survey. Check it is not blocked or deleted");
+				throw new Exception(localisation.getString("mf_blocked"));
 			}
 			
 			/*
@@ -433,11 +442,12 @@ public class ManagedForms extends Application {
 						+ "and (" + u.name;
 				
 				if(u.currentValue == null) {
-					sqlUpdate += " is null;";
+					sqlUpdate += " is null);";
 				} else {
 					sqlUpdate += " = ? or " + u.name + " is null)";
 				}
-						
+				
+				try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
 				
 				// Set the parameters
@@ -475,15 +485,15 @@ public class ManagedForms extends Application {
 					} else {
 						pstmtUpdate.setString(paramCount++, u.currentValue);	// Default
 					}
-					
-					log.info("Updating managed survey: " + pstmtUpdate.toString());
-					count = pstmtUpdate.executeUpdate();
-					if(count == 0) {
-						throw new Exception("Update failed: "
-								+ "Try refreshing your view of the data as someone may already "
-								+ "have updated this record.");
-					}
 				} 
+				
+				log.info("Updating managed survey: " + pstmtUpdate.toString());
+				count = pstmtUpdate.executeUpdate();
+				if(count == 0) {
+					throw new Exception("Update failed: "
+							+ "Try refreshing your view of the data as someone may already "
+							+ "have updated this record.");
+				}
 				
 
 				
@@ -500,6 +510,7 @@ public class ManagedForms extends Application {
 			try{cResults.setAutoCommit(true);} catch(Exception ex) {}
 			
 			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 			ResultsDataSource.closeConnection("surveyKPI-Update Managed Forms", cResults);
