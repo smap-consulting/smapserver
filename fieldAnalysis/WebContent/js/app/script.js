@@ -67,6 +67,7 @@ $(document).ready(function() {
 			        		format = $('#exportformat').val(),
 			        		mediaQuestion = $('#export_media_question').val(),
 			        		split_locn = $('#splitlocn:checked').prop("checked"),
+			        		xlstype = $('#export_xlstype').val(),
 			        		merge_select_multiple = $('#mergeSelectMultiple:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		sources = $('#sources').prop("checked"),
@@ -142,7 +143,8 @@ $(document).ready(function() {
 		        				alert("At least one form must be selected");
 			        			return(false);
 		        			}
-		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, forms, exportReadOnly, merge_select_multiple);
+		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, 
+		        					forms, exportReadOnly, merge_select_multiple, xlstype);
 		        		}
 		        		
 		        		if(format === "lqas") {
@@ -855,9 +857,14 @@ function cleanFileName(filename) {
 /*
  * Web service handler for exporting an entire survey to CSV
  */
-function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple) {
+function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple, xlstype) {
 
-	var url = "/surveyKPI/exportSurvey/";
+	var url;
+	if(xlstype === "html") {
+		url = "/surveyKPI/exportSurvey/";
+	} else {
+		url = "/surveyKPI/exportxls/";
+	}
 	
 	filename = cleanFileName(filename);	
 	
@@ -881,6 +888,9 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
 	
+	if(xlstype != "html") {
+		url += "&filetype=" + xlstype;
+	}
 	return encodeURI(url);
 }
 

@@ -73,10 +73,12 @@ public class XLSResultsManager {
 	private class Column {
 		String name;
 		String label;
+		String humanName;
 		
-		Column(String n, String l) {
+		Column(String n, String l, String h) {
 			name = n;
 			label = l;
+			humanName = h;
 		}
 	}
 	
@@ -273,7 +275,7 @@ public class XLSResultsManager {
 					
 
 				if(topForm.visible) {
-					cols.add(new Column("prikey", ""));
+					cols.add(new Column("prikey", "", "Record"));
 				}
 				
 				/*
@@ -506,7 +508,7 @@ public class XLSResultsManager {
             if(label) {
             	cell.setCellValue(col.label);
             } else {
-            	cell.setCellValue(col.name);
+            	cell.setCellValue(col.humanName);
             }
         }
 	}
@@ -672,10 +674,10 @@ public class XLSResultsManager {
 		}
 		
 		if(split_locn && qType != null && qType.equals("geopoint")) {
-			cols.add(new Column("Latitude", "Latitude"));
-			cols.add(new Column("Longitude", "Longitude"));
+			cols.add(new Column("Latitude", "Latitude", "Latitude"));
+			cols.add(new Column("Longitude", "Longitude", "Longitude"));
 		} else {
-			cols.add(new Column(colName, label));
+			cols.add(new Column(colName, label, human_name));
 		}
 		
 	}
