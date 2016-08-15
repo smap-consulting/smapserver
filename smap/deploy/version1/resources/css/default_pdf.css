@@ -1,18 +1,22 @@
 .label {
-	font-size: 10px;	
+	font-size: 14px;	
 }
 
 .lbold {
 	font-weight: bold;
-	font-size: 10px;	
+	font-size: 14px;	
 }
 
 .hint {
 	font-style: italic;
-	font-size: 10px;
+	font-size: 14px;
 	color: blue;
 }
 
 group {
 	color: #ce4f07
+}
+
+* { 
+	font-family: Arial, "noto naskh arabic",  sans-serif; 
 }
