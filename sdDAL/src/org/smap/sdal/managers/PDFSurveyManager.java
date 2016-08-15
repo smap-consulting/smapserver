@@ -176,6 +176,7 @@ public class PDFSurveyManager {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
 				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
+				FontFactory.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", "arabic");
 			}
 			
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
@@ -560,16 +561,19 @@ public class PDFSurveyManager {
         parser.elements = new ElementList();
         ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
  
-
- 
-        // XML Worker
-
+        String os = System.getProperty("os.name");
+		log.info("Operating System:" + os);
+		
         XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
-        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
-        //fontProvider.register("/Users/ibrahimbakhsh/Library/Fonts/trado.otf", BaseFont.IDENTITY_H);
-        //fontProvider.register("/Users/ibrahimbakhsh/Library/Fonts/tahoma.ttf", BaseFont.IDENTITY_H);
-      
+		if(os.startsWith("Mac")) {
+	        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+		} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
+			// Linux / Unix
+			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+		}
+ 
         /*
         System.out.println("Fonts present in " + fontProvider.getClass().getName());
         Set<String> registeredFonts = fontProvider.getRegisteredFonts();
@@ -1231,7 +1235,6 @@ public class PDFSurveyManager {
 		}
 		
 		parser.elements.clear();
-		System.out.println("HTML: " + html.toString());
 		parser.xmlParser.parse(new StringReader(html.toString()));
 		for(Element element : parser.elements) {
 			if(textValue != null && textValue.length() > 0) {
