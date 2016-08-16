@@ -212,6 +212,7 @@ public class Data extends Application {
 					fId = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
+				rs.close();
 			} else {
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
 				pstmtGetForm.setInt(1,sId);
@@ -223,6 +224,7 @@ public class Data extends Application {
 					parentform = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
+				rs.close();
 			}
 				
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
@@ -241,6 +243,7 @@ public class Data extends Application {
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				removeDuplicateColumns(columns, managedColumns);
 				columns.addAll(managedColumns);
 				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
@@ -740,6 +743,22 @@ public class Data extends Application {
 			}
 		}
 		return col;
+	}
+	
+	/*
+	 * Remove columns from the main table if there is a managed column with the same name.
+	 * When this happens the managed column takes precedence allowing the user to update the collected data.
+	 * 
+	 */
+	private void removeDuplicateColumns(ArrayList<TableColumn> formColumns, ArrayList<TableColumn> managedColumns) {
+		for(TableColumn mc : managedColumns) {
+			for(TableColumn fc : formColumns) {
+				if(mc.name.equals(fc.name)) {
+					fc.include = false;
+					break;
+				}
+			}
+		}
 	}
 	
 	

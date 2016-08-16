@@ -379,7 +379,7 @@ public class Question implements Serializable {
 	
 	public void setName(String name) {
 		this.name = name;
-		this.column_name = GeneralUtilityMethods.cleanName(name, true, true, true);
+		this.column_name = GeneralUtilityMethods.cleanName(name, true, true, false);	// Do not remove smap meta names as they are added through this mechanism
 	}
 	
 	public void setColumnName(String v) {	// Override column name

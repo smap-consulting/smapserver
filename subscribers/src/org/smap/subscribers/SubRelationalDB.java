@@ -1227,7 +1227,7 @@ public class SubRelationalDB extends Subscriber {
 						|| (ci.action.equals("move") && 
 								ci.question != null && 
 								ci.question.formIndex != ci.question.sourceFormIndex)
-						|| (ci.action.equals("update") && ci.property != null && ci.property.prop.equals("name"))) {
+						|| (ci.action.equals("update") && ci.property != null && ci.property.prop != null && ci.property.prop.equals("name"))) {
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID

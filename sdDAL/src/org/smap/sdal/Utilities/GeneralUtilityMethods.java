@@ -289,7 +289,7 @@ public class GeneralUtilityMethods {
 				!host.equals("localhost") &&
 				!host.startsWith("10.0") &&
 				!host.endsWith("reachnettechnologies.com") &&
-				!host.endsWith("datacollect.icanreach.com") &&
+				!host.endsWith(".icanreach.com") &&
 				!host.endsWith(".kontrolid.com") &&
 				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
@@ -2241,7 +2241,13 @@ public class GeneralUtilityMethods {
 		boolean isProperty;
 		
 		if(source_param != null && 
-				(source_param.equals("deviceid") || source_param.equals("start") || source_param.equals("end"))) {
+				(source_param.equals("deviceid") 
+						|| source_param.equals("phonenumber")
+						|| source_param.equals("simserial")
+						|| source_param.equals("subscriberid")
+						|| source_param.equals("today")
+						|| source_param.equals("start") 
+						|| source_param.equals("end"))) {
 			
 			isProperty = true;
 			

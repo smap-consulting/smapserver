@@ -132,6 +132,8 @@ public class XLSFormManager {
 					value = "select_one " + q.list_name;
 				} else if(q.type.equals("select")) {
 					value = "select_multiple " + q.list_name;
+				} else if(q.propertyType && q.source_param != null) {
+					value = q.source_param;
 				} else {
 					value = q.type;		// Everything else
 				}
@@ -492,6 +494,13 @@ public class XLSFormManager {
 			row = false;
 		} else if(q.type.equals("note") && !q.visible && (q.calculation == null || q.calculation.trim().length() == 0)) {
 			row = false;		// Loading a survey from an xml file may result in an instanceName not in a meta group which should not be included in the XLS
+		} else if((q.name.equals("_instanceid") 
+				|| q.name.equals("meta")
+				|| q.name.equals("instanceID")
+				|| q.name.equals("instanceName")
+				|| q.name.equals("meta_groupEnd")
+				)) {
+			row = false;
 		}
 		
 		return row;

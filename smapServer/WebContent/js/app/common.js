@@ -1365,7 +1365,7 @@ function isBusinessServer() {
 			hostname !== 'app.kontrolid.com' &
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
-			hostname.indexOf('datacollect.icanreach.com') < 0 &&
+			hostname.indexOf('.icanreach.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
