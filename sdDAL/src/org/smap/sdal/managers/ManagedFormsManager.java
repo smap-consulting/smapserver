@@ -160,17 +160,11 @@ public class ManagedFormsManager {
 		/*
 		 * Manually create this (TODO retrieve from database)
 		 */
-		//ArrayList<Column> columns = new ArrayList<Column> ();
-		//GeneralUtilityMethods.addManagementColumns(columns);
 		CustomReportsManager crm = new CustomReportsManager ();
 		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
 		for(int i = 0; i < managedColumns.size(); i++) {
-			//Column c = columns.get(i);
-			//TableColumn tc = new TableColumn(c.name, c.humanName);
 			TableColumn tc = managedColumns.get(i);
-			//tc.hide = hideDefault(c.name);
 
-			//addProcessing(tc);
 			tc.mgmt = true;
 			if(configColumns != null) {
 				for(int j = 0; j < configColumns.size(); j++) {
@@ -185,6 +179,16 @@ public class ManagedFormsManager {
 				}
 			}
 			
+			// remove columns from the data form that are in the configuration form
+			for(int j = 0; i < formColumns.size(); j++) {
+				TableColumn fc = formColumns.get(j);
+				if(fc.name.equals(tc.name)) {
+					formColumns.remove(j);
+					break;
+				}
+			}
+			
+			// Add the managent column to the array of columns
 			formColumns.add(tc);
 		}
 		

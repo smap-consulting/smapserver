@@ -243,9 +243,7 @@ public class Data extends Application {
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
-				removeDuplicateColumns(columns, managedColumns);
 				columns.addAll(managedColumns);
-				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
 			
 			for(int i = 0; i < columns.size(); i++) {
@@ -743,22 +741,6 @@ public class Data extends Application {
 			}
 		}
 		return col;
-	}
-	
-	/*
-	 * Remove columns from the main table if there is a managed column with the same name.
-	 * When this happens the managed column takes precedence allowing the user to update the collected data.
-	 * 
-	 */
-	private void removeDuplicateColumns(ArrayList<TableColumn> formColumns, ArrayList<TableColumn> managedColumns) {
-		for(TableColumn mc : managedColumns) {
-			for(TableColumn fc : formColumns) {
-				if(mc.name.equals(fc.name)) {
-					fc.include = false;
-					break;
-				}
-			}
-		}
 	}
 	
 	
