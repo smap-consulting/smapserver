@@ -303,7 +303,7 @@ insert into user_group (u_id, g_id) values (1, 6);
 
 insert into project (id, o_id, name) values (1, 1, 'A project');
 
-insert into user_project (u_id, p_id) values (1 , 1);
+insert into user_project (u_id, p_id, restricted, allocated) values (1 , 1, false, true);
 
 -- Monitoring tables
 DROP TABLE IF EXISTS upload_event CASCADE;

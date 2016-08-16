@@ -166,7 +166,11 @@ public class TemplateUpload extends Application {
 						log.info("Template: " + projectId);
 						
 						// Authorisation - Access
-						a.isValidProject(sd, request.getRemoteUser(), projectId);
+						if(projectId < 0) {
+							throw new Exception("No project selected");
+						} else {
+							a.isValidProject(sd, request.getRemoteUser(), projectId);
+						}
 						// End Authorisation
 						
 						// Get the project name

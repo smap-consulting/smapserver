@@ -32,6 +32,10 @@ public class AuthorisationException extends WebApplicationException {
 	        this("Authorisation Error", "Smap");
 	}
 	
+	public AuthorisationException(String msg) {
+        this("Authorisation Error: " + msg, "Smap");
+	}
+	
 	public AuthorisationException(String message, String system) {
 	        super(Response.status(Status.UNAUTHORIZED).header(HttpHeaders.WWW_AUTHENTICATE, system)
 	                .entity(message).build());
