@@ -48,6 +48,7 @@ import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.RestrictedUser;
+import org.smap.sdal.model.Role;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
 import org.smap.server.utilities.UtilityMethods;
@@ -67,7 +68,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
- * Returns a list of all users that are in the same organisaiton as the user making the request
+ * Returns a list of all users that are in the same organisation as the user making the request
  */
 @Path("/userList")
 public class UserList extends Application {
@@ -497,6 +498,89 @@ public class UserList extends Application {
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+					
+				
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Get the user roles in the organisation
+	 */
+	@Path("/roles")
+	@GET
+	@Produces("application/json")
+	public Response getRoles(
+			@Context HttpServletRequest request
+			) { 
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
+		aSM.isAuthorised(connectionSD, request.getRemoteUser());
+		// End Authorisation
+		
+		/*
+		 * 
+		 */	
+		PreparedStatement pstmt = null;
+		ArrayList<Role> roles = new ArrayList<Role> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			int o_id  = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			
+			/*
+			 * Get the users for this project
+			 */
+			sql = "SELECT ur.id as id, "
+					+ "ur.name as name, "
+					+ "ur.description as desc,"
+					+ "ur.changed_by as changed_by,"
+					+ "ur.changed_ts as changed_ts "
+					+ "from user_roles ur "
+					+ "where ur.o_id = ? "
+					+ "order by ur.name";
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, o_id);
+			log.info("Get user roles: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			Role role = null;
+			while(resultSet.next()) {
+				role = new Role();
+				role.id = resultSet.getInt("id");
+				role.name = resultSet.getString("name");
+				role.desc = resultSet.getString("desc");
+				role.changed_by = resultSet.getString("changed_by");
+				role.changed_ts = resultSet.getString("changed_ts");
+				roles.add(role);
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
 					
 				

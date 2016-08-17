@@ -199,6 +199,8 @@ define({
 	"c_create": "Create",
 	"c_imp_xls": "Import Spreadsheet",
 	"c_xlstype": "Excel Format",
+	"c_user_roles": "User Roles",
+	"c_id": "Id",
 	
 	// File Types
 	"ft": "File Type",
@@ -492,6 +494,8 @@ define({
 	"u_del_p": "Delete Project",
 	"u_add_o": "Add Organisation",
 	"u_del_o": "Delete Organisation",
+	"u_add_r": "Add Role",
+	"u_del_r": "Delete Role",
 	"u_det": "User Details",
 	"u_ident": "Ident (lowercase, no spaces or an email address)",
 	"u_email": "Send email to new user",
@@ -516,6 +520,8 @@ define({
 	"u_h_e": "Email to get Help",
 	"u_rap": "Restrict access",
 	"u_rap_d": "Administrators will be able to assign the selected users only to this project",
+	"u_chg": "Changed by",
+	"u_usage": "Usage Report",
 	
 	// Browse Results
 	"br_ci": "Case Insensitive",

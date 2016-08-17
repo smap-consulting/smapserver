@@ -793,3 +793,20 @@ CREATE TABLE public.linked_forms (
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS user_roles_seq CASCADE;
+CREATE SEQUENCE user_roles_seq START 1;
+ALTER TABLE user_roles_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.user_roles CASCADE;
+CREATE TABLE public.user_roles (
+	id integer DEFAULT nextval('user_roles_seq') NOT NULL PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	name text,
+	description text,
+	changed_by text,
+	changed_ts TIMESTAMP WITH TIME ZONE
+);
+ALTER TABLE public.user_roles OWNER TO ws;
+CREATE UNIQUE INDEX user_role_name_index ON public.user_roles(o_id, name);
+

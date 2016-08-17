@@ -23,6 +23,7 @@ define(function() {
 	window.globals = {
 	
 		gProjectList: undefined,
+		gUserRoles: undefined,
 		gCurrentProject: 0,
 		gCurrentSurvey: 0,
 		gCurrentLayer: undefined,

@@ -74,6 +74,7 @@
     <ul class="nav nav-pills" role="tablist">
         <li id="usersTab" role="presentation" class="active"><a href="#" class="lang" data-lang="m_user">users</a></li>
         <li id="projectsTab" role="presentation"><a href="#" class="lang" data-lang="c_projects">projects</a></li>
+        <li id="userRolesTab" role="presentation"><a href="#" class="lang" data-lang="c_user_roles">roles</a></li>
         <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_orgs">orgs</a></li>
         <li id="serverTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_server">server</a></li>
     </ul>
@@ -130,6 +131,18 @@
 		<button class="btn btn-success lang" id="create_project" data-lang="u_add_p">Add Project</button>
 		<button class="btn btn-danger lang" id="delete_project" data-lang="u_del_p">Delete Project</button>
 		<button class="btn btn-warning restrict_role org_role move_to_org lang" data-lang="u_mv">move</button>
+
+	</div>
+	
+	<!-- The container for the list of user roles -->
+    <div id="userRolesPanel" style="display:none;">
+
+
+
+		<div id="user_roles_table"></div>
+
+		<button class="btn btn-success lang" id="create_user_role" data-lang="u_add_r">Add Role</button>
+		<button class="btn btn-danger lang" id="delete_user_role" data-lang="u_del_r">Delete Role</button>
 
 	</div>
 	

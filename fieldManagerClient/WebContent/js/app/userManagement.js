@@ -39,6 +39,7 @@ $(document).ready(function() {
 	getUsers();
 	getGroups();
 	getProjects();
+	getUserRoles();
 	getLoggedInUser(undefined, false, false, getOrganisations);
 	
 	// Add change event on group and project filter
@@ -78,7 +79,8 @@ $(document).ready(function() {
     $('#usersTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
-    		  	  
+    		 
+		$('#userRolesPanel').hide();
 		$('#projectPanel').hide();
 		$('#organisationPanel').hide();
 		$('#serverPanel').hide();
@@ -92,6 +94,7 @@ $(document).ready(function() {
 		$('#organisationPanel').hide();
 		$('#serverPanel').hide();
 		$('#userPanel').hide();
+		$('#userRolesPanel').hide();
     })
     $('#organisationTab a').click(function (e) {
     	e.preventDefault();
@@ -101,7 +104,8 @@ $(document).ready(function() {
 		$('#organisationPanel').show();
 		$('#serverPanel').hide();
 		$('#userPanel').hide();
-    })
+		$('#userRolesPanel').hide();
+    });
     $('#serverTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
@@ -110,6 +114,17 @@ $(document).ready(function() {
 		$('#organisationPanel').hide();
 		$('#serverPanel').show();
 		$('#userPanel').hide();
+		$('#userRolesPanel').hide();
+    });
+    $('#userRolesTab a').click(function (e) {
+    	e.preventDefault();
+    	$(this).tab('show');
+    		  	  
+		$('#projectPanel').hide();
+		$('#organisationPanel').hide();
+		$('#serverPanel').hide();
+		$('#userPanel').hide();
+		$('#userRolesPanel').show();
     })
     
     // Style the upload buttons
@@ -565,6 +580,30 @@ function getProjects() {
 	});	
 }
 
+/*
+ * Get the list of available projects from the server
+ */
+function getUserRoles() {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/userList/roles",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.gUserRoles = data;
+			updateUserRolesTable();
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of projects: " + err);
+			}
+		}
+	});	
+}
 
 /*
  * Get the list of available organisations from the server
@@ -1083,16 +1122,24 @@ function updateProjectTable() {
 		idx = -1;
 	
 	h[++idx] = '<table class="table table-striped">';
-	h[++idx] = '<thead>';
+	h[++idx] = '<colgroup>';
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<col style="width:auto;">';
 	h[++idx] = '<col style="width:160px;">';	
 	h[++idx] = '<col style="width:auto;">';
+	h[++idx] = '</colgroup>';
+	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th></th>';
-	h[++idx] = '<th>Project Id</th>';
-	h[++idx] = '<th>Name</th>';
-	h[++idx] = '<th>Changed By</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_id"];	// Project Id
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_name"];	// Name
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["u_chg"];	// Changed by
+	h[++idx] = '</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
@@ -1151,6 +1198,73 @@ function updateProjectTable() {
 }
 
 /*
+ * Update the user role table with the latest list of user roles
+ */
+function updateUserRolesTable() {
+
+
+	var $tab = $('#user_roles_table'),
+		i, role,
+		h = [],
+		idx = -1;
+	
+	h[++idx] = '<table class="table table-striped">';
+	h[++idx] = '<colgroup>';
+	h[++idx] = '<col style="width:auto;">';
+	h[++idx] = '<col style="width:auto;">';
+	h[++idx] = '<col style="width:160px;">';	
+	h[++idx] = '<col style="width:auto;">';
+	h[++idx] = '</colgroup>';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th></th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_id"];	// Id
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_name"];	// Name
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["u_chg"];	// Changed by
+	h[++idx] = '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody>';
+
+
+	for(i = 0; i < globals.gUserRoles.length; i++) {
+		role = globals.gUserRoles[i];
+		
+		h[++idx] = '<tr>';
+		h[++idx] = '<td class="control_td"><input type="checkbox" name="controls" value="';
+		h[++idx] = i;
+		h[++idx] = '"></td>';
+		h[++idx] = '<td>';
+		h[++idx] = role.id;
+		h[++idx] = '</td>';
+		h[++idx] = '<td class="user_edit_td"><button class="btn btn-default role_edit" style="width:100%;" value="';
+		h[++idx] = i;
+		h[++idx] = '">';
+		h[++idx] = role.name;
+		h[++idx] = '</button></td>';
+		h[++idx] = '<td>';
+		h[++idx] = role.changed_by;
+		h[++idx] = '</td>';
+		
+		h[++idx] = '</tr>';
+	}	
+	
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+	
+	$tab.empty().append(h.join(''));
+	$('.role_edit', $tab).click(function() {
+		openRoleDialog(true, $(this).val());
+	});
+
+}
+
+/*
  * Update the organisation table with the latest organisation data
  */
 function updateOrganisationTable() {
@@ -1168,11 +1282,19 @@ function updateOrganisationTable() {
 	h[++idx] = '<thead>';
 	h[++idx] = '<tr>';
 	h[++idx] = '<th></th>';
-	h[++idx] = '<th>Organisation Id</th>';
-	h[++idx] = '<th>Name</th>';
-	h[++idx] = '<th>Changed By</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_id"];	// Id
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["c_name"];	// Name
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = localise.set["u_chg"];	// Changed by
+	h[++idx] = '</th>';
 	if(bs) {
-		h[++idx] = '<th>Usage Report</th>';
+		h[++idx] = '<th>';
+		h[++idx] = localise.set["u_usage"];	// Changed by
+		h[++idx] = '</th>';
 	}
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
