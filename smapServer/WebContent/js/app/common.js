@@ -279,6 +279,9 @@ function updateUserDetails(data, getOrganisationsFn) {
 	} 
 	if(globals.gIsManage) {
 		$('.manage_role').show();
+	}
+	if(globals.gIsSecurityAdministrator) {
+		$('.security_role').show();
 	} 
 	if(globals.gIsOrgAdministrator) {
 		$('.org_role').show();
