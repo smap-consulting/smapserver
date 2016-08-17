@@ -234,8 +234,7 @@ public class ManagedForms extends Application {
 	
 	/*
 	 * Verify that
-	 *  1. columns in the managed form are not also in the form that is being attached to
-	 *  2. Calculations in the managed form refer to questions in either the managed form or the form
+	 *  1. Calculations in the managed form refer to questions in either the managed form or the form
 	 *     we are attaching to
 	 */
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, int managedId) {
@@ -255,6 +254,8 @@ public class ManagedForms extends Application {
 						);
 				
 				for(TableColumn mc : managedColumns) {
+					/*
+					 * Allow names from management form to override data form
 					if(mc.type != null && !mc.type.equals("calculate")) {
 						for(TableColumn fc : formColumns) {
 							if(mc.name.equals(fc.name)) {
@@ -262,7 +263,8 @@ public class ManagedForms extends Application {
 								break;
 							}
 						}
-					} else if(mc.type.equals("calculate")) {
+					}*/ 
+					if(mc.type.equals("calculate")) {
 						
 						for(int i = 0; i < mc.calculation.columns.size(); i++) {
 							String refColumn = mc.calculation.columns.get(i);
