@@ -564,22 +564,25 @@ public class PDFSurveyManager {
         String os = System.getProperty("os.name");
 		log.info("Operating System:" + os);
 		
+		
         XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
 		if(os.startsWith("Mac")) {
 	        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+	        FontFactory.register("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H);
 	        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
 		} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 			// Linux / Unix
 			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+			FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", BaseFont.IDENTITY_H);
 		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
 		}
  
-        /*
+		/*
         System.out.println("Fonts present in " + fontProvider.getClass().getName());
         Set<String> registeredFonts = fontProvider.getRegisteredFonts();
         for (String font : registeredFonts)
             System.out.println(font);
-        */
+ 		*/
         
         CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
         
