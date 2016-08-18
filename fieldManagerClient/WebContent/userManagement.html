@@ -74,7 +74,7 @@
     <ul class="nav nav-pills" role="tablist">
         <li id="usersTab" role="presentation" class="active"><a href="#" class="lang" data-lang="m_user">users</a></li>
         <li id="projectsTab" role="presentation"><a href="#" class="lang" data-lang="c_projects">projects</a></li>
-        <li id="userRolesTab" class="restrict_role org_role security_role" role="presentation"><a href="#" class="lang" data-lang="c_user_roles">roles</a></li>
+        <li id="roleTab" class="restrict_role org_role security_role" role="presentation"><a href="#" class="lang" data-lang="c_roles">roles</a></li>
         <li id="organisationTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_orgs">orgs</a></li>
         <li id="serverTab" role="presentation" class="restrict_role org_role"><a href="#" class="lang" data-lang="c_server">server</a></li>
     </ul>
@@ -134,15 +134,15 @@
 
 	</div>
 	
-	<!-- The container for the list of user roles -->
-    <div id="userRolesPanel" style="display:none;">
+	<!-- The container for the list of roles -->
+    <div id="rolesPanel" style="display:none;">
 
 
 
-		<div id="user_roles_table"></div>
+		<div id="role_table"></div>
 
 		<button class="btn btn-success lang" id="create_user_role" data-lang="u_add_r">Add Role</button>
-		<button class="btn btn-danger lang" id="delete_user_role" data-lang="u_del_r">Delete Role</button>
+		<button class="btn btn-danger lang" id="delete_role" data-lang="u_del_r">Delete Role</button>
 
 	</div>
 	
@@ -345,6 +345,42 @@
 			<div class="modal-footer">
             	<button type="button" class="btn lang" data-dismiss="modal" data-lang="c_close">Close</button>
             	<button id="projectSave" type="button" class="btn btn-primary lang btn-default" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to allow the user to edit a user role details -->
+<div id="create_role_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createUserRoleLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<a type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></a>
+     			<h4 class="modal-title lang" id="createProjectLabel" data-lang="u_det_ur">details</h4>
+   			</div>
+		    <div class="modal-body">
+		     
+				<form class="form form-horizontal" onsubmit="return false;" role="form" id="role_create_form">	
+					<div class="form-group">
+						<label for="ur_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
+						<div class="col-sm-10">
+							<input type="text" id="ur_name" class="form-control" required tabindex="1"><br/>
+						</div> 
+					</div>
+					<div class="form-group">
+						<label for="ur_desc" data-lang="c_desc" class="lang col-sm-2 control-label">Desc</label>
+						<div class="col-sm-10">
+							<textarea type="text" id="ur_desc" class="form-control" tabindex="2"></textarea>
+							<br/>
+						</div> 
+					</div>
+					
+				</form>	
+				
+			</div> 
+			<div class="modal-footer">
+            	<button type="button" class="btn lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="roleSave" type="button" class="btn btn-primary lang btn-default" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

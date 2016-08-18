@@ -43,6 +43,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
+import org.smap.sdal.managers.ProjectManager;
+import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
@@ -236,7 +238,6 @@ public class UserList extends Application {
 					boolean allocated = resultSet.getBoolean("allocated");
 					boolean restricted = resultSet.getBoolean("restricted");
 					
-					System.out.println(ident + " : " + project_name);
 					if(current_user == null || !current_user.equals(ident)) {
 						
 						// New user
@@ -515,7 +516,7 @@ public class UserList extends Application {
 	}
 	
 	/*
-	 * Get the user roles in the organisation
+	 * Get the roles in the organisation
 	 */
 	@Path("/roles")
 	@GET
@@ -535,67 +536,134 @@ public class UserList extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		aSM.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		aSM.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
-		/*
-		 * 
-		 */	
-		PreparedStatement pstmt = null;
-		ArrayList<Role> roles = new ArrayList<Role> ();
-		
+		RoleManager rm = new RoleManager();
 		try {
-			String sql = null;
-			ResultSet resultSet = null;
+			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
-			int o_id  = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
-			
-			/*
-			 * Get the users for this project
-			 */
-			sql = "SELECT ur.id as id, "
-					+ "ur.name as name, "
-					+ "ur.description as desc,"
-					+ "ur.changed_by as changed_by,"
-					+ "ur.changed_ts as changed_ts "
-					+ "from user_roles ur "
-					+ "where ur.o_id = ? "
-					+ "order by ur.name";
-			
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, o_id);
-			log.info("Get user roles: " + pstmt.toString());
-			resultSet = pstmt.executeQuery();
-							
-			Role role = null;
-			while(resultSet.next()) {
-				role = new Role();
-				role.id = resultSet.getInt("id");
-				role.name = resultSet.getString("name");
-				role.desc = resultSet.getString("desc");
-				role.changed_by = resultSet.getString("changed_by");
-				role.changed_ts = resultSet.getString("changed_ts");
-				roles.add(role);
-			}
-			
+			ArrayList<Role> roles = rm.getRoles(sd, o_id);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
-					
-				
 		} catch (Exception e) {
 			
-			log.log(Level.SEVERE,"Error: ", e);
 			response = Response.serverError().entity(e.getMessage()).build();
-		    
+			log.log(Level.SEVERE,"Error", e);
+
 		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+			
+			SDDataSource.closeConnection("surveyKPI-roleList", sd);
 		}
 
 		return response;
 	}
+	
+	/*
+	 * Update the role details
+	 */
+	@Path("/roles")
+	@POST
+	@Consumes("application/json")
+	public Response updateRoles(@Context HttpServletRequest request, @FormParam("roles") String roles) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-RoleList");
+		aSM.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation
+		
+		Type type = new TypeToken<ArrayList<Role>>(){}.getType();		
+		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
+		
+		try {	
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
+			RoleManager rm = new RoleManager();
+			
+			for(int i = 0; i < rArray.size(); i++) {
+				Role r = rArray.get(i);
+				
+				if(r.id == -1) {
+					
+					// New role
+					rm.createRole(sd, r, o_id, request.getRemoteUser());
+					
+				} else {
+					// Existing role
+					rm.updateRole(sd, r, o_id, request.getRemoteUser());
+			
+				}
+			
+				response = Response.ok().build();
+			}
+				
+		} catch (Exception e) {
+			
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Delete roles
+	 */
+	@Path("/roles")
+	@DELETE
+	@Consumes("application/json")
+	public Response delRole(@Context HttpServletRequest request, @FormParam("roles") String roles) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-userList - delete roles");
+		aSM.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation			
+					
+		Type type = new TypeToken<ArrayList<Role>>(){}.getType();		
+		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
+		
+		RoleManager rm = new RoleManager();
+		
+		try {	
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			rm.deleteRoles(sd, rArray, o_id);
+			response = Response.ok().build();			
+		}  catch (Exception ex) {
+			log.log(Level.SEVERE, ex.getMessage());
+			response = Response.serverError().entity(ex.getMessage()).build();
+			
+		} finally {			
+			SDDataSource.closeConnection("surveyKPI-userList - delete roles", sd);
+		}
+		
+		return response;
+	}
+	
 	
 	/*
 	 * Update the settings or create new user
@@ -633,8 +701,6 @@ public class UserList extends Application {
 			ResultSet resultSet = null;
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
-			
-			System.out.println("Auto commit false");
 			
 			/*
 			 * Get the organisation and name of the user making the request

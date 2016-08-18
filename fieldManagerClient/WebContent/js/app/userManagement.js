@@ -28,6 +28,7 @@ var gUsers,
 	gControlProjectCount,	// Number of projects that have been set - used to enable / disable control buttons
 	gControlOrganisationCount,
 	gCurrentProjectIndex,	// Set while editing a projects details
+	gCurrentRoleIndex,	// Set while editing a user role details
 	gCurrentOrganisationIndex,
 	gCurrentUserIndex,		// Set while editing a users details
 	gOrgId;
@@ -39,7 +40,7 @@ $(document).ready(function() {
 	getUsers();
 	getGroups();
 	getProjects();
-	getUserRoles();
+	getRoles();
 	getLoggedInUser(undefined, false, false, getOrganisations);
 	
 	// Add change event on group and project filter
@@ -65,6 +66,13 @@ $(document).ready(function() {
 		deleteProjects();
 	});
 	
+	$('#create_user_role').click(function () {
+		openRoleDialog(false, -1);
+	});
+	$('#delete_role').click(function () {
+		deleteRoles();
+	});
+	
 	$('#create_organisation').click(function () {
 		openOrganisationDialog(false, -1);
 	});
@@ -80,7 +88,7 @@ $(document).ready(function() {
     	e.preventDefault();
     	$(this).tab('show');
     		 
-		$('#userRolesPanel').hide();
+		$('#rolesPanel').hide();
 		$('#projectPanel').hide();
 		$('#organisationPanel').hide();
 		$('#serverPanel').hide();
@@ -94,7 +102,7 @@ $(document).ready(function() {
 		$('#organisationPanel').hide();
 		$('#serverPanel').hide();
 		$('#userPanel').hide();
-		$('#userRolesPanel').hide();
+		$('#rolesPanel').hide();
     })
     $('#organisationTab a').click(function (e) {
     	e.preventDefault();
@@ -104,7 +112,7 @@ $(document).ready(function() {
 		$('#organisationPanel').show();
 		$('#serverPanel').hide();
 		$('#userPanel').hide();
-		$('#userRolesPanel').hide();
+		$('#rolesPanel').hide();
     });
     $('#serverTab a').click(function (e) {
     	e.preventDefault();
@@ -114,9 +122,9 @@ $(document).ready(function() {
 		$('#organisationPanel').hide();
 		$('#serverPanel').show();
 		$('#userPanel').hide();
-		$('#userRolesPanel').hide();
+		$('#rolesPanel').hide();
     });
-    $('#userRolesTab a').click(function (e) {
+    $('#roleTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
     		  	  
@@ -124,7 +132,7 @@ $(document).ready(function() {
 		$('#organisationPanel').hide();
 		$('#serverPanel').hide();
 		$('#userPanel').hide();
-		$('#userRolesPanel').show();
+		$('#rolesPanel').show();
     })
     
     // Style the upload buttons
@@ -334,7 +342,53 @@ $(document).ready(function() {
 			              return;  // Not an error
 				  } else {
 					  var msg = xhr.responseText;
-					  alert("Error: Failed to save project details: " + msg);
+					  alert(localise.set["msg_err_upd"] + msg);
+				  }
+			  }
+		});   		
+
+    });
+    
+    /*
+     * Save a role details
+     */
+    $('#roleSave').click(function(){
+		var roleList = [],
+			role = {},
+			error = false;
+	
+		if(gCurrentRoleIndex === -1) {
+			role.id = -1;
+		} else {
+			role.id = globals.gRoleList[gCurrentRoleIndex].id;
+		}
+	
+		role.name = $('#ur_name').val();
+		role.desc = $('#ur_desc').val();
+	  		
+		roleList[0] = role;
+		var roleString = JSON.stringify(roleList);
+	
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  contentType: "application/json",
+			  cache: false,
+			  url: "/surveyKPI/userList/roles",
+			  data: { roles: roleString },
+			  success: function(data, status) {
+				  removeHourglass();
+				  getRoles();
+				  $('#create_role_popup').modal("hide");
+			  },
+			  error: function(xhr, textStatus, err) {
+				  removeHourglass();
+	
+				  if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+				  } else {
+					  var msg = xhr.responseText;
+					  alert(localise.set["msg_err_upd"] + msg);
 				  }
 			  }
 		});   		
@@ -450,7 +504,7 @@ $(document).ready(function() {
 					  if(err.indexOf("Conflict") >= 0) {
     						msg = "Duplicate organisation name";
 					  }
-					  alert("Error organisation details not saved: " + msg);
+					  alert(localise.set["msg_err_upd"] + msg);
 				  }
 			  }
 		});
@@ -581,9 +635,9 @@ function getProjects() {
 }
 
 /*
- * Get the list of available projects from the server
+ * Get the list of available roles from the server
  */
-function getUserRoles() {
+function getRoles() {
 	addHourglass();
 	$.ajax({
 		url: "/surveyKPI/userList/roles",
@@ -591,8 +645,8 @@ function getUserRoles() {
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			globals.gUserRoles = data;
-			updateUserRolesTable();
+			globals.gRoleList = data;
+			updateRoleTable();
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
@@ -800,6 +854,22 @@ function openProjectDialog(existing, projectIndex) {
 	$('#create_project_popup').modal("show");
 }
 
+/*
+ * Show the user role dialog
+ */
+function openRoleDialog(existing, roleIndex) {
+	
+	gCurrentRoleIndex = roleIndex;
+	
+	$('#role_create_form')[0].reset();
+	if(existing) {
+		$('#ur_name').val(globals.gRoleList[roleIndex].name);
+		$('#ur_desc').val(globals.gRoleList[roleIndex].desc);
+	}
+	
+	$('#create_role_popup').modal("show");
+}
+
 function addRestrictedUsers(elem, pId) {
 	
 	addHourglass();
@@ -913,7 +983,6 @@ function writeUserDetails(userList, $dialog) {
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
-		  async: false,
 		  url: "/surveyKPI/userList",
 		  data: { users: userString },
 		  success: function(data, status) {
@@ -1198,12 +1267,12 @@ function updateProjectTable() {
 }
 
 /*
- * Update the user role table with the latest list of user roles
+ * Update the user role table with the latest list of roles
  */
-function updateUserRolesTable() {
+function updateRoleTable() {
 
 
-	var $tab = $('#user_roles_table'),
+	var $tab = $('#role_table'),
 		i, role,
 		h = [],
 		idx = -1;
@@ -1232,8 +1301,8 @@ function updateUserRolesTable() {
 	h[++idx] = '<tbody>';
 
 
-	for(i = 0; i < globals.gUserRoles.length; i++) {
-		role = globals.gUserRoles[i];
+	for(i = 0; i < globals.gRoleList.length; i++) {
+		role = globals.gRoleList[i];
 		
 		h[++idx] = '<tr>';
 		h[++idx] = '<td class="control_td"><input type="checkbox" name="controls" value="';
@@ -1526,14 +1595,13 @@ function deleteUsers () {
 		$.ajax({
 			  type: "DELETE",
 			  contentType: "application/json",
-			  async: false,
 			  url: "/surveyKPI/userList",
 			  data: { users: JSON.stringify(users) },
 			  success: function(data, status) {
 				  removeHourglass();
 				  getUsers();
 			  }, error: function(data, status) {
-				  var msg = "Error users not deleted";
+				  var msg = localise.set["msg_err_del"];
 				 removeHourglass();
 				 if(typeof data != "undefined" && typeof data.responseText != "undefined" ) {
 					 msg = data.responseText;
@@ -1569,7 +1637,6 @@ function deleteProjects () {
 		$.ajax({
 			  type: "DELETE",
 			  contentType: "application/json",
-			  async: false,
 			  url: "/surveyKPI/projectList",
 			  data: { projects: JSON.stringify(projects) },
 			  success: function(data, status) {
@@ -1580,13 +1647,55 @@ function deleteProjects () {
 				  if(data && data.responseText) {
 					  alert(data.responseText);
 				  } else {
-					  alert("Error: projects not deleted");
+					  alert(localise.set["msg_err_del"]);
 				  }
 			  }
 		});
 	}
 }
 	
+/*
+ * Delete the roles
+ */
+function deleteRoles () {
+	
+	var roles = [],
+		decision = false,
+		h = [],
+		i = -1,
+		roleIdx,
+		$dialog;
+	
+	$('#role_table').find('input:checked').each(function(index) {
+		roleIdx = $(this).val();
+		roles[index] = {id: globals.gRoleList[roleIdx].id};
+		h[++i] = globals.gRoleList[roleIdx].name;
+	});
+
+	
+	decision = confirm(localise.set["msg_del_roles"] + "\n" + h.join());
+	if (decision === true) {
+		addHourglass();
+		$.ajax({
+			  type: "DELETE",
+			  contentType: "application/json",
+			  url: "/surveyKPI/userList/roles",
+			  data: { roles: JSON.stringify(roles) },
+			  success: function(data, status) {
+				  removeHourglass();
+				  getRoles();
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  if(data && data.responseText) {
+					  alert(data.responseText);
+				  } else {
+					  alert(localise.set["msg_err_del"]);
+				  }
+			  }
+		});
+	}
+}
+
 /*
  * Delete the selected organisations
  */
@@ -1611,7 +1720,6 @@ function deleteOrganisations () {
 		$.ajax({
 			  type: "DELETE",
 			  contentType: "application/json",
-			  async: false,
 			  url: "/surveyKPI/organisationList",
 			  data: { organisations: JSON.stringify(organisations) },
 			  success: function(data, status) {
@@ -1622,7 +1730,7 @@ function deleteOrganisations () {
 				  if(data && data.responseText) {
 					  alert(data.responseText);
 				  } else {
-					  alert("Error: organisations not deleted");
+					  alert(localise.set["msg_err_del"]);
 				  }
 			  }
 		});
@@ -1638,7 +1746,6 @@ function moveToOrganisations (orgId, users, projects) {
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
-		  async: false,
 		  cache: false,
 		  url: "/surveyKPI/organisationList/setOrganisation",
 		  data: { 

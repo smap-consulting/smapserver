@@ -22,6 +22,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 public class Role {
 	public int id;
+	public int oId;
 	public String name;
 	public String desc;
 	public String changed_by;

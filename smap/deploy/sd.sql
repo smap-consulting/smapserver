@@ -568,17 +568,16 @@ ALTER TABLE public.linked_forms OWNER TO ws;
 alter table question add column accuracy text;
 
 -- Upgrade to 16.08 from 16.07
-CREATE SEQUENCE user_roles_seq START 1;
-ALTER TABLE user_roles_seq OWNER TO ws;
+CREATE SEQUENCE role_seq START 1;
+ALTER TABLE role_seq OWNER TO ws;
 
-CREATE TABLE public.user_roles (
-	id integer DEFAULT nextval('user_roles_seq') NOT NULL PRIMARY KEY,
+CREATE TABLE public.role (
+	id integer DEFAULT nextval('role_seq') NOT NULL PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	name text,
 	description text,
 	changed_by text,
 	changed_ts TIMESTAMP WITH TIME ZONE
 );
-ALTER TABLE public.user_roles OWNER TO ws;
-CREATE UNIQUE INDEX user_role_name_index ON public.user_roles(o_id, name);
+ALTER TABLE public.role OWNER TO ws;
+CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);

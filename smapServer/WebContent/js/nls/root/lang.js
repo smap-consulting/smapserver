@@ -199,7 +199,7 @@ define({
 	"c_create": "Create",
 	"c_imp_xls": "Import Spreadsheet",
 	"c_xlstype": "Excel Format",
-	"c_user_roles": "User Roles",
+	"c_roles": "Roles",
 	"c_id": "Id",
 	
 	// File Types
@@ -299,6 +299,7 @@ define({
 	"msg_del_rep": "Are you sure you want to delete this report?",
 	"msg_del_users": "Are you sure you want to delete these users?",
 	"msg_del_projects": "Are you sure you want to delete these projects?",
+	"msg_del_roles": "Are you sure you want to delete these roles?",
 	"msg_del_orgs": "Are you sure you want to delete these organisations?",
 	"msg_del_q": "Are you sure you want to delete this question?",
 	"msg_del_cl": "Are you sure you want to delete this choice list?",
@@ -502,6 +503,7 @@ define({
 	"u_set_p": "Specify password",
 	"u_sg": "Security Groups",
 	"u_det_p": "Project Details",
+	"u_det_ur": "User Role Details",
 	"u_det_o": "Organisation Details",
 	"u_det_o_rep": "Report Publishing Options",
 	"u_det_o_ft": "FieldTask Options",
