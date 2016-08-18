@@ -58,6 +58,10 @@ function setCustomMonitor() {
 	// Menus
 }
 
+function setCustomManage() {
+	// Menus
+}
+
 function setCustomRegister() {
 }
 

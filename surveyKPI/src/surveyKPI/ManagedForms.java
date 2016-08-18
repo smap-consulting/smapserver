@@ -425,12 +425,12 @@ public class ManagedForms extends Application {
 				}
 				
 				// 2. Apply the update
-				if(u.value != null && u.value.trim().length() == 0) {
-					u.value = null;
-				}
-				if(u.currentValue != null && u.currentValue.trim().length() == 0) {
-					u.currentValue = null;
-				}
+				//if(u.value != null && u.value.trim().length() == 0) {
+				//	u.value = null;
+				//}
+				//if(u.currentValue != null && u.currentValue.trim().length() == 0) {
+				//	u.currentValue = null;
+				//}
 				
 				String sqlUpdate = "update " + f.tableName;
 				
@@ -440,14 +440,15 @@ public class ManagedForms extends Application {
 					sqlUpdate += " set " + u.name + " = ? ";		
 				}
 				sqlUpdate += "where "
-						+ "prikey = ? "
-						+ "and (" + u.name;
+						+ "prikey = ? ";
+						//+ "and (" + u.name;
 				
-				if(u.currentValue == null) {
-					sqlUpdate += " is null);";
-				} else {
-					sqlUpdate += " = ? or " + u.name + " is null)";
-				}
+	
+				//if(u.currentValue == null) {
+				//	sqlUpdate += " is null);";
+				//} else {
+				//	sqlUpdate += " = ? or " + u.name + " is null)";
+				//}
 				
 				try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
@@ -472,6 +473,9 @@ public class ManagedForms extends Application {
 					}
 				}
 				pstmtUpdate.setInt(paramCount++, u.prikey);
+				/*
+				 * Disable this integrity check
+				 * There are currently too many false errors
 				if(u.currentValue != null) {
 					if(columnType.equals("text") || columnType.equals("select_one")) {
 						pstmtUpdate.setString(paramCount++, u.currentValue);
@@ -488,6 +492,7 @@ public class ManagedForms extends Application {
 						pstmtUpdate.setString(paramCount++, u.currentValue);	// Default
 					}
 				} 
+				*/
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
 				count = pstmtUpdate.executeUpdate();

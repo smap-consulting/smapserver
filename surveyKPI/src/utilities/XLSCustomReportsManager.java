@@ -317,6 +317,12 @@ public class XLSCustomReportsManager {
                 }
                 
             }
+            
+        	// Close of any condition type calculations
+			if(processingConditions ) {
+				processingConditions = false;
+				currentCol.calculation.add("END");
+			}
 		}
 	
 		return defn;

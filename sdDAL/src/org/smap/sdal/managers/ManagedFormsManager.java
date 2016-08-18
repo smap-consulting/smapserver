@@ -180,7 +180,7 @@ public class ManagedFormsManager {
 			}
 			
 			// remove columns from the data form that are in the configuration form
-			for(int j = 0; i < formColumns.size(); j++) {
+			for(int j = 0; j < formColumns.size(); j++) {
 				TableColumn fc = formColumns.get(j);
 				if(fc.name.equals(tc.name)) {
 					formColumns.remove(j);
@@ -188,7 +188,7 @@ public class ManagedFormsManager {
 				}
 			}
 			
-			// Add the managent column to the array of columns
+			// Add the management column to the array of columns
 			formColumns.add(tc);
 		}
 		
