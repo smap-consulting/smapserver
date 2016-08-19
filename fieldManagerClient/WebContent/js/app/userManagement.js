@@ -368,6 +368,11 @@ $(document).ready(function() {
 		role.name = $('#ur_name').val();
 		role.desc = $('#ur_desc').val();
 	  		
+		if(role.name.indexOf(',') >= 0) {
+			alert(localise.set["msg_err_nc"]);
+			return -1;
+		}
+		
 		roleList[0] = role;
 		var roleString = JSON.stringify(roleList);
 	

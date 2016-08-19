@@ -225,7 +225,6 @@ public class XLSCustomReportsManager {
 		                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);
 		                			
 		                			if(calculation != null && calculation.length() > 0) {
-		                				System.out.println("Calculation:" + calculation);
 		                				calculation = calculation.trim();
 		                				if(calculation.equals("condition")) {
 		                					// Calculation set by condition rows
@@ -259,10 +258,41 @@ public class XLSCustomReportsManager {
 		                					
 		                				} 
 	                				} else {
-	                					throw new Exception("Missing value on row: " + (j + 1));
+	                					throw new Exception(localisation.getString("mf_mv") + 
+		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                				}
 	                			} else {
-	                				throw new Exception("Unexpected \"choice\" on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_un_c") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+	                		} else if(rowType.equals("user_role")) {
+	                			if(currentCol != null && currentCol.type.equals("select_one")) {
+	                				String value = getColumn(row, "value", header, lastCellNum, null);
+	                				if(value != null) {
+	                					if(currentCol.choices == null) {
+	                						currentCol.choices = new ArrayList<String> ();
+	                						currentCol.choices.add("");		// Add the not selected choice automatically as this has to be the default
+	                					}
+	                					currentCol.choices.add(value);
+	                					currentCol.filter = true;
+	                					
+	                					// Add conditional color
+		                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
+		                				if(appearance != null) {
+		                					if(currentCol.markup == null) {
+		                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
+		                					}
+		                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
+		                					
+		                				} 
+	                				} else {
+	                					throw new Exception(localisation.getString("mf_mv") + 
+		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				}
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_un_u") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
 	                		} else if(rowType.equals("condition")) {
