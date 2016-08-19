@@ -45,6 +45,7 @@ public class User {
 	public String company_email;
 	public ArrayList<UserGroup> groups;
 	public ArrayList<Project> projects;
+	public ArrayList<Role> roles;
 	public boolean keepProjects;
 	public boolean sendEmail;
 	public int this_month;

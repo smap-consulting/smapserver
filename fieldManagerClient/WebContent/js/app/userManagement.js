@@ -40,8 +40,7 @@ $(document).ready(function() {
 	getUsers();
 	getGroups();
 	getProjects();
-	getRoles();
-	getLoggedInUser(undefined, false, false, getOrganisations);
+	getLoggedInUser(userKnown, false, false, getOrganisations);
 	
 	// Add change event on group and project filter
 	$('#group_name, #project_name').change(function() {
@@ -240,6 +239,7 @@ $(document).ready(function() {
 		
 		user.groups = [];
 		user.projects = [];
+		user.roles= [];
 		securityManagerChecked = false;
 		$('#user_groups').find('input:checked').each(function(index) {
 			var val = $(this).val();
@@ -255,7 +255,9 @@ $(document).ready(function() {
 		}
 		$('#user_projects').find('input:checked').each(function(index) {
 			user.projects[index] = {id: $(this).val()};
-	
+		});
+		$('#user_roles').find('input:checked').each(function(index) {
+			user.roles[index] = {id: $(this).val()};
 		});
 		userList[0] = user;
 		writeUserDetails(userList, $('#create_user_popup'));	// Save the user details to the database
@@ -608,6 +610,13 @@ $(document).ready(function() {
 	
 });
 
+
+function userKnown() {
+	if(globals.gIsOrgAdministrator || globals.gIsSecurityAdministrator) {
+		getRoles();
+	}
+}
+
 /*
  * Get the list of available projects from the server
  */
@@ -653,7 +662,7 @@ function getRoles() {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to get list of projects: " + err);
+				alert(localise.set["msg_err_get_r"] + " " + err);
 			}
 		}
 	});	
@@ -728,12 +737,16 @@ function updateServerData(data) {
  * Show the user dialog
  */
 function openUserDialog(existing, userIndex) {
+    'use strict';
 	var i,
 		$user_groups = $('#user_groups'),
 		$user_projects = $('#user_projects'),
+		$user_roles = $('#user_roles'),
 		h,
 		idx,
-		filter_group, filter_project;
+		filter_group, 
+		filter_project,
+		filter_role;
 	
 	gCurrentUserIndex = userIndex;
 	
@@ -766,6 +779,7 @@ function openUserDialog(existing, userIndex) {
 	}
 	$user_groups.empty().append(h.join(''));
 
+	// Add projects
 	filter_project = $('#project_name').val();
 	h = [];
 	idx = -1;
@@ -790,6 +804,32 @@ function openUserDialog(existing, userIndex) {
 		h[++idx] = '</label></div>';
 	}
 	$user_projects.empty().append(h.join(''));
+	
+	// Add roles
+	if(globals.gRoleList) {
+		filter_role = $('#role_name').val();
+		h = [];
+		idx = -1;
+		for(i = 0; i < globals.gRoleList.length; i++) {
+			h[++idx] = '<div class="checkbox"><label>';
+			h[++idx] = '<input type="checkbox"';
+			h[++idx] = ' name="user_roles_cb"';
+			h[++idx] = ' value="';
+			h[++idx] = globals.gRoleList[i].id + '"';
+			if(filter_role === globals.gRoleList[i].name) {
+				h[++idx] = ' checked="checked"';
+			} else if(existing) {
+		
+				if(hasId(gUsers[userIndex].roles, globals.gRoleList[i].id)) {
+					h[++idx] = ' checked="checked"';
+				}
+			}
+			h[++idx] = '/>';
+			h[++idx] = globals.gRoleList[i].name;
+			h[++idx] = '</label></div>';
+		}
+		$user_roles.empty().append(h.join(''));
+	}
 	
 	$('#user_create_form')[0].reset();
 	if(!existing) {
@@ -1469,9 +1509,11 @@ function hasName(itemList, item) {
 //Return true if the item with the id is in the list
 function hasId(itemList, item) {
 	var i;
-	for(i = 0; i < itemList.length; i++) {
-		if(itemList[i].id === item) {
-			return true;
+	if(itemList) {
+		for(i = 0; i < itemList.length; i++) {
+			if(itemList[i].id === item) {
+				return true;
+			}
 		}
 	}
 	return false;

@@ -284,6 +284,7 @@ define({
 	"msg_err_res": "Error: Restore failed: ",
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
+	"msg_err_get_r": "Error: Get roles failed",
 	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
 	"msg_no_edit_rep": "You cannot edit a record that has been replaced by another record",

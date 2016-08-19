@@ -581,3 +581,13 @@ CREATE TABLE public.role (
 );
 ALTER TABLE public.role OWNER TO ws;
 CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
+
+CREATE SEQUENCE user_role_seq START 1;
+ALTER SEQUENCE user_role_seq OWNER TO ws;
+
+create TABLE user_role (
+	id INTEGER DEFAULT NEXTVAL('user_role_seq') CONSTRAINT pk_user_role PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	r_id INTEGER REFERENCES role(id) ON DELETE CASCADE
+	);
+ALTER TABLE user_role OWNER TO ws;
