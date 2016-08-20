@@ -301,7 +301,7 @@ public class WebForm extends Application{
 
 			/*
 			 * Get the media manifest so we can set the url's of media files used the form
-			 * Also gert the google api key
+			 * Also get the google api key
 			 */
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			requester = "surveyMobileAPI-getWebForm2";
@@ -402,7 +402,7 @@ public class WebForm extends Application{
     			jr.surveyData.surveyClass = xForm.getSurveyClass();
     			
     			jr.main = addMain(request, formXML, instanceStrToEditId, 
-    					orgId, true, surveyClass).toString();
+    					orgId, true, surveyClass, serverData).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -632,7 +632,7 @@ public class WebForm extends Application{
 		output.append("<body class='clearfix edit'>");
 
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -646,10 +646,11 @@ public class WebForm extends Application{
 			String dataToEditId, 
 			int orgId, 
 			boolean minimal,
-			String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			String surveyClass,
+			ServerData serverData) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
-		output.append(openMain(orgId, minimal));
+		output.append(openMain(orgId, minimal, serverData));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
@@ -835,10 +836,18 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer openMain(int orgId, boolean minimal) {
+	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div class='main'>\n");
+			
+			// Add the google api key
+			if(serverData != null) {
+				output.append("<div id='googleApiKey' style='display:none;'>");
+				output.append(serverData.google_key);
+				output.append("</div>");
+			}
+			
 			output.append("<article class='paper'>\n");
 			if(!minimal) {
 				output.append("<header class='form-header clearfix'>\n");
