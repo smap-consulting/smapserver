@@ -64,27 +64,27 @@ import java.util.logging.Logger;
 @Path("/surveys")
 public class Surveys extends Application {
 
-	Authorise a = null;
-	Authorise aDel = null;
+	Authorise aGet = null;
+	Authorise aUpdate = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Surveys.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Surveys.class);
-		return s;
-	}
+
 	
 	public Surveys() {
 		
-		ArrayList<String> authorisations = new ArrayList<String> ();	
-		authorisations.add(Authorise.ANALYST);
-		authorisations.add(Authorise.ADMIN);
-		authorisations.add(Authorise.ENUM);
-		a = new Authorise(authorisations, null);
-		aDel = new Authorise(authorisations, null);
+		ArrayList<String> authorisations1 = new ArrayList<String> ();
+		ArrayList<String> authorisations2 = new ArrayList<String> ();
+		
+		authorisations1.add(Authorise.ANALYST);
+		authorisations1.add(Authorise.ADMIN);
+		authorisations1.add(Authorise.ENUM);
+		
+		authorisations2.add(Authorise.ANALYST);
+		authorisations2.add(Authorise.ADMIN);
+		
+		aGet = new Authorise(authorisations1, null);
+		aUpdate = new Authorise(authorisations2, null);
 		
 	}
 
@@ -107,11 +107,11 @@ public class Surveys extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");
 		if(getDeleted) {
-			aDel.isAuthorised(connectionSD, request.getRemoteUser());
+			aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		} else {
-			a.isAuthorised(connectionSD, request.getRemoteUser());
+			aGet.isAuthorised(connectionSD, request.getRemoteUser());
 		}
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		aGet.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 		// End Authorisation
 		
 		ArrayList<org.smap.sdal.model.Survey> surveys = null;
@@ -164,9 +164,8 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		org.smap.sdal.model.Survey survey = null;
@@ -235,10 +234,10 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 		if(existing) {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), existingSurveyId, false);	// Validate that the user can access the existing survey
+			aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), existingSurveyId, false);	// Validate that the user can access the existing survey
 		}
 		// End Authorisation
 		
@@ -308,8 +307,8 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
-		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isAuthorised(sd, request.getRemoteUser());
+		aUpdate.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		SurveyManager sm = new SurveyManager();
@@ -374,8 +373,8 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");		
-		a.isAuthorised(connectionSD, request.getRemoteUser());	
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());	
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		
@@ -386,7 +385,7 @@ public class Surveys extends Application {
 					if(!ci.property.type.equals("option") 
 							&& !ci.property.type.equals("optionlist")) {
 						log.info("Validating question for type: " + ci.property.type);
-						a.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
+						aUpdate.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
 					}
 				}
 			}
@@ -442,8 +441,8 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		FileItem pdfItem = null;
@@ -669,8 +668,8 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		// End Authorisation
 		
 				

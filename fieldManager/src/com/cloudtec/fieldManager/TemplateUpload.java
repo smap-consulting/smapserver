@@ -117,6 +117,7 @@ public class TemplateUpload extends Application {
 	@Produces("application/json")
 	public Response  formUpload(@Context HttpServletRequest request) {
  
+		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();
 		String displayName = null;
 		int projectId = -1;
@@ -138,6 +139,7 @@ public class TemplateUpload extends Application {
 		
 		JdbcSurveyManager sm = null;
 		Connection sd = SDDataSource.getConnection("fieldManager-Template Upload");
+		
 		try {
 		
 			/*
@@ -169,6 +171,7 @@ public class TemplateUpload extends Application {
 						if(projectId < 0) {
 							throw new Exception("No project selected");
 						} else {
+							a.isAuthorised(sd, request.getRemoteUser());
 							a.isValidProject(sd, request.getRemoteUser(), projectId);
 						}
 						// End Authorisation
