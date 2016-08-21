@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -94,7 +95,12 @@ public class ManagedFormsManager {
 			
 				if(config != null) {
 					Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
-					savedConfig = gson.fromJson(config, type);
+					try {
+						savedConfig = gson.fromJson(config, type);
+					} catch (Exception e) {
+						log.log(Level.SEVERE, e.getMessage());
+						savedConfig = new ManagedFormConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
+					}
 				} else {
 					savedConfig = new ManagedFormConfig ();
 				}
