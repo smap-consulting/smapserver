@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.InputStream;
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
 
 
@@ -37,6 +38,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
@@ -67,7 +69,7 @@ public class XLSCustomReportsManager {
 	/*
 	 * Create an customer report definition from an XLS file
 	 */
-	public ArrayList<TableColumn> getCustomReport(String type, InputStream inputStream, ResourceBundle localisation) throws Exception {
+	public ArrayList<TableColumn> getCustomReport(Connection sd, int oId, String type, InputStream inputStream, ResourceBundle localisation) throws Exception {
 		
 		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
 		Sheet sheet = null;
@@ -239,13 +241,19 @@ public class XLSCustomReportsManager {
 	                			}
 	                		} else if(rowType.equals("choice")) {
 	                			if(currentCol != null && currentCol.type.equals("select_one")) {
-	                				String value = getColumn(row, "value", header, lastCellNum, null);
-	                				if(value != null) {
+	                				String name = getColumn(row, "name", header, lastCellNum, null);
+	                				String dispName = getColumn(row, "display name", header, lastCellNum, null);
+	                				if(name == null) {
+	                					name = getColumn(row, "value", header, lastCellNum, null);	// Legacy implementation
+	                					dispName = name;
+	                				}
+
+	                				if(name != null && dispName != null) {
 	                					if(currentCol.choices == null) {
-	                						currentCol.choices = new ArrayList<String> ();
-	                						currentCol.choices.add("");		// Add the not selected choice automatically as this has to be the default
+	                						currentCol.choices = new ArrayList<KeyValue> ();
+	                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
 	                					}
-	                					currentCol.choices.add(value);
+	                					currentCol.choices.add(new KeyValue(name, dispName));
 	                					currentCol.filter = true;
 	                					
 	                					// Add conditional color
@@ -254,7 +262,7 @@ public class XLSCustomReportsManager {
 		                					if(currentCol.markup == null) {
 		                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
 		                					}
-		                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
+		                					currentCol.markup.add(new TableColumnMarkup(name, getMarkup(appearance)));
 		                					
 		                				} 
 	                				} else {
@@ -268,26 +276,19 @@ public class XLSCustomReportsManager {
 	                			
 	                		} else if(rowType.equals("user_role")) {
 	                			if(currentCol != null && currentCol.type.equals("select_one")) {
-	                				String value = getColumn(row, "value", header, lastCellNum, null);
-	                				if(value != null) {
+	                				String role = getColumn(row, "name", header, lastCellNum, null);
+	                				if(role != null) {
 	                					if(currentCol.choices == null) {
-	                						currentCol.choices = new ArrayList<String> ();
-	                						currentCol.choices.add("");		// Add the not selected choice automatically as this has to be the default
+	                						currentCol.choices = new ArrayList<KeyValue> ();
+	                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
 	                					}
-	                					currentCol.choices.add(value);
+	                					
+	                					// Get the users that have this role
+	                					currentCol.choices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, role));
 	                					currentCol.filter = true;
 	                					
-	                					// Add conditional color
-		                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
-		                				if(appearance != null) {
-		                					if(currentCol.markup == null) {
-		                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
-		                					}
-		                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
-		                					
-		                				} 
 	                				} else {
-	                					throw new Exception(localisation.getString("mf_mv") + 
+	                					throw new Exception(localisation.getString("mf_mv_o") + 
 		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                				}
 	                			} else {

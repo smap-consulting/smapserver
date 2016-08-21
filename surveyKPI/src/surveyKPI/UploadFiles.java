@@ -474,11 +474,13 @@ public class UploadFiles extends Application {
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
 			if(fileName != null) {
 				
 				// Process xls file
 				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
-				ArrayList<TableColumn> config = xcr.getCustomReport(filetype, fileItem.getInputStream(), localisation);
+				ArrayList<TableColumn> config = xcr.getCustomReport(sd, oId, filetype, fileItem.getInputStream(), localisation);
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error
@@ -486,7 +488,6 @@ public class UploadFiles extends Application {
 				if(config.size() > 0) {
 					
 					// Save configuration to the database
-					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
 					CustomReportsManager crm = new CustomReportsManager();
 					crm.save(sd, reportName, config, oId, reportType);
