@@ -889,12 +889,15 @@ function openProjectDialog(existing, projectIndex) {
 		$('#p_tasks_only').prop('checked', globals.gProjectList[projectIndex].tasks_only);
 	}
 	
+	/*
 	if(globals.gIsSecurityAdministrator && projectIndex >= 0) {
 		$('.restricted_users').show();	
 		addRestrictedUsers(".restricted_users_list", globals.gProjectList[projectIndex].id);
 	} else {
 		$('.restricted_users').hide();
 	}
+	*/
+	$('.restricted_users').hide();
 	
 	$('#create_project_popup').modal("show");
 }
@@ -915,6 +918,7 @@ function openRoleDialog(existing, roleIndex) {
 	$('#create_role_popup').modal("show");
 }
 
+/*
 function addRestrictedUsers(elem, pId) {
 	
 	addHourglass();
@@ -962,6 +966,7 @@ function addRestrictedUsers(elem, pId) {
 	});	
 	
 }
+*/
 /*
  * Show the organisation dialog
  */
