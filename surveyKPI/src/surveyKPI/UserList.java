@@ -95,16 +95,21 @@ public class UserList extends Application {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.SECURITY);
+		authorisations.add(Authorise.ORG);
 		a = new Authorise(authorisations, null);
 		
-		// Only allow administrators to update user list
+		// Only allow administrators, org administrators and security managers to update user list
 		authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.SECURITY);
+		authorisations.add(Authorise.ORG);
 		aUpdate = new Authorise(authorisations, null);
 		
-		// Only allow security administrators to view or update the restricted users
+		// Only allow security administrators and organisational administrators to view or update the roles
 		authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.SECURITY);
+		authorisations.add(Authorise.ORG);
 		aSM = new Authorise(authorisations, null);
 		
 	}
@@ -154,6 +159,7 @@ public class UserList extends Application {
 			int o_id;
 			ResultSet resultSet = null;
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
 			/*
 			 * Get the organisation
@@ -180,8 +186,10 @@ public class UserList extends Application {
 						"users.name as name, " +
 						"users.email as email, " +
 						"groups.name as group_name, " +
+						"role.name as role_name, " +
 						"project.name as project_name, " +
 						"groups.id as group_id, " +
+						"role.id as role_id, " +
 						"project.id as project_id, " +
 						"user_project.allocated as allocated, " +
 						"user_project.restricted as restricted " +
@@ -208,6 +216,8 @@ public class UserList extends Application {
 						"from users " +
 						"left outer join user_group on user_group.u_id = users.id " +
 						"left outer join groups on groups.id = user_group.g_id " +
+						"left outer join user_role on user_role.u_id = users.id " +
+						"left outer join role on role.id = user_role.r_id " +
 						"left outer join user_project on user_project.u_id = users.id " +
 						"left outer join project on project.id = user_project.p_id " +
 						"where users.o_id = ? " + 
@@ -225,6 +235,7 @@ public class UserList extends Application {
 				
 				String current_user = null;
 				String current_group = null;
+				String current_role = null;
 				String current_project = null;
 				User user = null;
 				while(resultSet.next()) {
@@ -232,8 +243,10 @@ public class UserList extends Application {
 					int id = resultSet.getInt("id");
 					String ident = resultSet.getString("ident");
 					String group_name = resultSet.getString("group_name");
+					String role_name = resultSet.getString("role_name");
 					String project_name = resultSet.getString("project_name");
 					int group_id = resultSet.getInt("group_id");
+					int role_id = resultSet.getInt("role_id");
 					int project_id = resultSet.getInt("project_id");
 					boolean allocated = resultSet.getBoolean("allocated");
 					boolean restricted = resultSet.getBoolean("restricted");
@@ -247,6 +260,7 @@ public class UserList extends Application {
 						user.name = resultSet.getString("name");
 						user.email = resultSet.getString("email");
 						user.groups = new ArrayList<UserGroup> ();
+						user.roles = new ArrayList<Role> ();
 						user.projects = new ArrayList<Project> ();
 						//user.this_month = resultSet.getInt("this_month");
 						//user.last_month = resultSet.getInt("last_month");
@@ -257,6 +271,13 @@ public class UserList extends Application {
 						group.id = group_id;
 						if(group_id != 4 || isOrgUser) {
 							user.groups.add(group);
+						}
+						
+						if(isOrgUser || isSecurityManager) {
+							Role role = new Role();
+							role.name = role_name;
+							role.id = role_id;
+							user.roles.add(role);
 						}
 						
 						if(allocated && !restricted) {
@@ -277,10 +298,21 @@ public class UserList extends Application {
 							// new group
 							UserGroup group = new UserGroup();
 							group.name = group_name;
-							if(group_id != 4 || isOrgUser) {
+							if(group_id != 4 || isOrgUser || (group_id == 6 && isSecurityManager)) {
 								user.groups.add(group);
 							}
 							current_group = group.name;
+						}
+						
+						if(current_role != null && !current_role.equals(role_name)) {
+							
+							// new role
+							if(isOrgUser || isSecurityManager) {
+								Role role = new Role();
+								role.name = role_name;
+								user.roles.add(role);
+								current_role = role.name;
+							}
 						}
 						
 						if(current_project != null && !current_project.equals(project_name)) {
@@ -538,6 +570,7 @@ public class UserList extends Application {
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
 		aSM.isAuthorised(sd, request.getRemoteUser());
+		
 		// End Authorisation
 		
 		RoleManager rm = new RoleManager();

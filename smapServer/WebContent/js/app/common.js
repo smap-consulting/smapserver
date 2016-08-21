@@ -2111,7 +2111,7 @@ function showReportList(data) {
 /*
  * Show the Custom Reports in a table
  */
-function refreshCustomReportView(data, type) {
+function refreshCustomReportView(data, callback1, callback2, type) {
 	
 	var $selector = $('#cr_list'),
 		i, 

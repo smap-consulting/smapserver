@@ -21,6 +21,7 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
+import org.smap.sdal.model.Role;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
 
@@ -190,7 +191,33 @@ public class UserManager {
 				project.id = resultSet.getInt("id");
 				project.name = resultSet.getString("name");
 				user.projects.add(project);
-			}				
+			}		
+			
+			/*
+			 * Get the roles that the user belongs to
+			 */
+			sql = "SELECT r.id as id, r.name as name " +
+					" from role r, user_role ur " +
+					" where r.id = ur.r_id " +
+					" and ur.u_id = ? " +
+					" order by r.name;";
+
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, user.id);
+			
+			log.info("SQL: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			
+			while(resultSet.next()) {
+				if(user.roles == null) {
+					user.roles = new ArrayList<Role> ();
+				}
+				Role role = new Role();
+				role.id = resultSet.getInt("id");
+				role.name = resultSet.getString("name");
+				user.roles.add(role);
+			}		
 				
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error", e);
@@ -368,7 +395,7 @@ public class UserManager {
 				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 			
-				// Update the groups and projects
+				// Update the groups, projects and roles
 				insertUserGroupsProjects(sd, u, u.id, isOrgUser, isSecurityManager);
 	
 			} else {
@@ -387,6 +414,7 @@ public class UserManager {
 		String sql;
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtInsertUserGroup = null;
+		PreparedStatement pstmtInsertUserRole = null;
 		PreparedStatement pstmtUpdateProjectGroup = null;
 		PreparedStatement pstmtInsertProjectGroup = null;
 		
@@ -394,11 +422,14 @@ public class UserManager {
 		
 		// Delete existing user groups
 		try {
-			sd.setAutoCommit(false);
 			
 			String sqlInsertUserGroup = "insert into user_group (u_id, g_id) values (?, ?);";
 			pstmtInsertUserGroup = sd.prepareStatement(sqlInsertUserGroup);
 			pstmtInsertUserGroup.setInt(1, u_id);
+			
+			String sqlInsertUserRole = "insert into user_role (u_id, r_id) values (?, ?);";
+			pstmtInsertUserRole = sd.prepareStatement(sqlInsertUserRole);
+			pstmtInsertUserRole.setInt(1, u_id);
 			
 			String sqlUpdateProjectGroup = "update user_project set allocated = true "
 					+ "where u_id = ? "
@@ -409,9 +440,11 @@ public class UserManager {
 			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id, allocated) values (?, ?, true);";
 			pstmtInsertProjectGroup = sd.prepareStatement(sqlInsertProjectGroup);
 			pstmtInsertProjectGroup.setInt(1, u_id);
+			
 			/*
 			 * Update user groups
 			 */
+			sd.setAutoCommit(false);
 			if(isOrgUser) {
 				sql = "delete from user_group where u_id = ?;";
 			} else if(isSecurityManager) {
@@ -434,6 +467,28 @@ public class UserManager {
 			}
 			
 			sd.commit();	// Commit changes to user group
+			
+			/*
+			 * Update user roles
+			 */
+			if(isOrgUser || isSecurityManager) {
+				sql = "delete from user_role where u_id = ?;";
+
+			
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				for(int j = 0; j < u.roles.size(); j++) {
+					Role r = u.roles.get(j);
+					pstmtInsertUserRole.setInt(2, r.id);
+					pstmtInsertUserRole.executeUpdate();
+				}
+			
+				sd.commit();	// Commit changes to user roles
+			}
 			
 			// Mark existing projects as un-allocated
 			sql = "update user_project set allocated = false where u_id = ?;";
@@ -461,6 +516,7 @@ public class UserManager {
 			sd.setAutoCommit(true);
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertUserGroup != null) {pstmtInsertUserGroup.close();}} catch (SQLException e) {}
+			try {if (pstmtInsertUserRole != null) {pstmtInsertUserRole.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateProjectGroup != null) {pstmtUpdateProjectGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertProjectGroup != null) {pstmtInsertProjectGroup.close();}} catch (SQLException e) {}
 		}

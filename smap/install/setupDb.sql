@@ -281,6 +281,18 @@ create TABLE user_project (
 	);
 ALTER TABLE user_project OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS user_role_seq CASCADE;
+CREATE SEQUENCE user_role_seq START 1;
+ALTER SEQUENCE user_role_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS user_role CASCADE;
+create TABLE user_role (
+	id INTEGER DEFAULT NEXTVAL('user_role_seq') CONSTRAINT pk_user_role PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	r_id INTEGER REFERENCES role(id) ON DELETE CASCADE
+	);
+ALTER TABLE user_role OWNER TO ws;
+
 -- Create an administrator and set up defaul values
 insert into organisation(id, name, allow_email, allow_facebook, allow_twitter) values(1, 'Smap', 'true', 'true', 'true');
 

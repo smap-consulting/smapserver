@@ -599,13 +599,13 @@ window.gTasks = {
 			if(column.choices) {
 				for(i = 0; i < column.choices.length; i++) {
 					h[++idx] = '<option';
-					if(column.choices[i] === value) {
+					if(column.choices[i].k === value) {
 						h[++idx] =' selected="selected"'
 					}
 					h[++idx] = ' value="';
-					h[++idx] = column.choices[i];
+					h[++idx] = column.choices[i].k;
 					h[++idx] = '">'
-					h[++idx] = column.choices[i];
+					h[++idx] = column.choices[i].v;
 					h[++idx] = '</option>';
 				}
 			}

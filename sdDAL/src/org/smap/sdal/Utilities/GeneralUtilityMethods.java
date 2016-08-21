@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
@@ -3271,6 +3272,43 @@ public class GeneralUtilityMethods {
 	        i += Character.charCount(c);            
 	    }
 	    return false;
+	  
+	}
+	
+	/*
+	 * Get a list of users with a specific role
+	 */
+	public static ArrayList<KeyValue> getUsersWithRole(Connection sd, int oId, String role) throws SQLException {
+		
+		ArrayList<KeyValue> users = new ArrayList<KeyValue> ();
+		
+		String sql = "select u.ident, u.name "
+				+ "from users u, user_role ur, role r "
+				+ "where u.id = ur.u_id "
+				+ "and ur.r_id = r.id "
+				+ "and r.o_id = u.o_id "
+				+ "and u.o_id = ? "
+				+ "and r.name = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  oId);
+			pstmt.setString(2,  role);
+			
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				users.add(new KeyValue(rs.getString(1), rs.getString(2)));
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return users;
 	  
 	}
 
