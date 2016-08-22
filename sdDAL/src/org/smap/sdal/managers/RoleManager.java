@@ -265,23 +265,23 @@ public class RoleManager {
 					+ "set enabled = ? "
 					+ "where id = ? "
 					+ "and s_id = ?";
-					
-			ResultSet resultSet = null;
 			
 			if(linkId > 0) {
 				pstmt = sd.prepareStatement(sqlExisting);
+				pstmt.setBoolean(1, enabled);
+				pstmt.setInt(2, linkId);
+				pstmt.setInt(3, sId);
 			} else {
 				pstmt = sd.prepareStatement(sqlNew);
+				pstmt.setInt(1, sId);
+				pstmt.setInt(2, rId);
+				pstmt.setBoolean(3, enabled);	
 			}
-			
 			
 			log.info("Get update survey roles: " + pstmt.toString());
 			pstmt.executeUpdate();
 							
-		
-			
-
-					    
+			    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}

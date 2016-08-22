@@ -194,6 +194,64 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this particular survey
+	 */
+	public boolean isValidRole(Connection conn, String user, int rId)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the role is in the users organisation
+		 */
+
+		String sql = "select count(*) from role r, users u "
+				+ "where u.o_id = r.o_id "
+				+ "and u.ident = ? "
+				+ "and r.id = ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user);
+			pstmt.setInt(2, rId);
+			
+			log.info("IsValidRole: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " role was: " + rId);
+ 			
+ 			SDDataSource.closeConnection("isValidRole", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this custom report
 	 */
 	public boolean isValidCustomReport(Connection conn, String user, int crId)

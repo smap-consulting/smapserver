@@ -178,6 +178,8 @@ function refreshView() {
 		gRoles[idx].enabled = !gRoles[idx].enabled;
 		
 		updateRole(idx);
+		
+		setInfoMsg();
 	});
 	
 	if(hasEnabledRole) {
@@ -186,6 +188,22 @@ function refreshView() {
 		$('#roles_alert').html(localise.set["msg_no_roles"]);
 	}
 	
+}
+
+function setInfoMsg() {
+	var i,
+		hasEnabledRole = false;
+	
+	for(i = 0; i < gRoles.length; i++) {
+		if(gRoles[i].enabled) {
+			hasEnabledRole = true;
+		}
+	}
+	if(hasEnabledRole) {
+		$('#roles_alert').html(localise.set["msg_has_roles"]);
+	} else {
+		$('#roles_alert').html(localise.set["msg_no_roles"]);
+	}
 }
 
 function updateRole(idx) {

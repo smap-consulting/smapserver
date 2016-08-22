@@ -315,13 +315,15 @@ public class Roles extends Application {
 		    return response;
 		}
 		
+		Role role = new Gson().fromJson(roleString, Role.class);
+		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
 		aSM.isAuthorised(sd, request.getRemoteUser());
 		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
-		
-		Role role = new Gson().fromJson(roleString, Role.class);
+
 		
 		System.out.println("Updating role: " + role.name + " : " + role.id + " : " + role.linkid);
 		
