@@ -220,6 +220,7 @@ function updateRole(idx) {
 			  },
 		  success: function(data, status) {
 			  removeHourglass();
+			  gRoles[idx].linkid = data.linkid;
 		  }, error: function(data, status) {
 			  removeHourglass();
 			  if(data && data.responseText) {
