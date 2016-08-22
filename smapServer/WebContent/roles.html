@@ -6,7 +6,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<title>Form Builder</title>
+	<title>Roles</title>
 	
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
@@ -16,7 +16,7 @@
     
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
-    <script data-main="js/changes" src="js/libs/require.js"></script>
+    <script data-main="js/survey_roles" src="js/libs/require.js"></script>
 </head>
 <body>
 
@@ -31,7 +31,7 @@
       </button>
       <a href="#" class="navbar-brand">
       	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-     	  <span class="lang" data-lang="c_changes">changes</span>
+     	  <span class="lang" data-lang="c_roles">roles</span>
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
@@ -43,7 +43,7 @@
             <li><a class="lang" data-lang="m_home" href="/index.html?loggedin=yes">Home</a></li>
             <li class="disabled restrict_role admin_role analyst_role"><a href="#"><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></span></a></li>
             <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
-            <li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
+            <li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >webforms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
             <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>
             <li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/log.html"><span class="nav-label lang" data-lang="m_manage">manage</span><span class="glyphicon glyphicon-briefcase pull-right"></span></a></li>
           </ul>
@@ -72,50 +72,18 @@
 
   </div>
 </header>
-	
-	      
-	    
-	
-	
-	<div class="uno" id="main_page">
-	
-		
-		<!-- List of changes to the current survey -->
-		<div id="changes">
-		</div>
-
-
-	<!-- Modals -->
-	<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
-		<div class="modal-dialog">
-	   		<div class="modal-content">
-	   			<div class="modal-header">
-	     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-	     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
-	   			</div>
-			     <div class="modal-body">
-			  		<form role="form" class="form-horizontal">
-			  			<div class="form-group">
-							<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
-							<div class="col-sm-10">
-								<select id="project_name" class="project_list form-control"></select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">Form</label>
-							<select id="survey_name" class="survey_select form-control"></select>
-						</div>
-					</form>
-				</div>
-			</div>
-	
-			<div class="modal-footer">
-	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-	            <button id="get_form" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="m_open">Open</button>
-	        </div>
+  
+<div class="container">
+  	<div class = "well">	
+  		<div id="roles_alert"  class="alert alert-info" role="alert"></div>
+		<div class="table-responsive">
+			<div id="role_table"></div>
 		</div>
 	</div>
-	
+	<div class="col-md-12 text-center">
+		<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+	</div>
+</div>
 	
 <!-- Popup to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
@@ -180,6 +148,35 @@
             	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
             	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
         	</div>
+		</div>
+	</div>
+</div>
+
+<div id="add_role_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addRoleLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     				<h4 class="modal-title" id="addRoleLabel"></h4>
+   			</div>
+   			
+		    <div class="modal-body">
+				<form id="role_edit_form" class="form-horizontal" role="form">
+					<div class="form-group">
+						<label class="lang col-sm-2 control-label" data-lang="c_av_role" for="availableRoles">av roles</label>
+						<div class="col-sm-10">
+							<select class="form-control" id="availableRoles">
+							</select>
+						</div>
+					</div>
+			
+				</form>
+			</div>
+			<div class="modal-footer">
+               	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+               	<button id="saveRole" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
+       		</div>
+		
 		</div>
 	</div>
 </div>

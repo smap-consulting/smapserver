@@ -381,11 +381,11 @@ $(document).ready(function() {
 			  type: "POST",
 			  contentType: "application/json",
 			  cache: false,
-			  url: "/surveyKPI/userList/roles",
+			  url: "/surveyKPI/role/roles",
 			  data: { roles: roleString },
 			  success: function(data, status) {
 				  removeHourglass();
-				  getRoles();
+				  getRoles(updateRoleTable);
 				  $('#create_role_popup').modal("hide");
 			  },
 			  error: function(xhr, textStatus, err) {
@@ -618,7 +618,7 @@ $(document).ready(function() {
 
 function userKnown() {
 	if(globals.gIsOrgAdministrator || globals.gIsSecurityAdministrator) {
-		getRoles();
+		getRoles(updateRoleTable);
 	}
 }
 
@@ -643,31 +643,6 @@ function getProjects() {
 	              return;  // Not an error
 			} else {
 				alert("Error: Failed to get list of projects: " + err);
-			}
-		}
-	});	
-}
-
-/*
- * Get the list of available roles from the server
- */
-function getRoles() {
-	addHourglass();
-	$.ajax({
-		url: "/surveyKPI/userList/roles",
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			globals.gRoleList = data;
-			updateRoleTable();
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert(localise.set["msg_err_get_r"] + " " + err);
 			}
 		}
 	});	
@@ -1731,11 +1706,11 @@ function deleteRoles () {
 		$.ajax({
 			  type: "DELETE",
 			  contentType: "application/json",
-			  url: "/surveyKPI/userList/roles",
+			  url: "/surveyKPI/role/roles",
 			  data: { roles: JSON.stringify(roles) },
 			  success: function(data, status) {
 				  removeHourglass();
-				  getRoles();
+				  getRoles(updateRoleTable);
 			  }, error: function(data, status) {
 				  removeHourglass();
 				  if(data && data.responseText) {

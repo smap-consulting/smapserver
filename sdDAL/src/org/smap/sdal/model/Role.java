@@ -25,6 +25,10 @@ public class Role {
 	public int oId;
 	public String name;
 	public String desc;
+	public boolean enabled;
+	public int linkid;
+	// Column Restriction
+	// Row Restriction
 	public String changed_by;
 	public String changed_ts;
 }

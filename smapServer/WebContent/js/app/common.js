@@ -2199,6 +2199,33 @@ function deleteCustomReport(id, type) {
 }
 
 /*
+ * Get the list of available roles from the server
+ */
+function getRoles(callback) {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/role/roles",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			globals.gRoleList = data;
+			if(typeof callback === "function") {
+				callback();
+			}
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert(localise.set["msg_err_get_r"] + " " + err);
+			}
+		}
+	});	
+}
+
+/*
  * Prevent the menu bar from extending over two lines
  */
 // From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse

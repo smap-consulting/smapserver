@@ -591,3 +591,16 @@ create TABLE user_role (
 	r_id INTEGER REFERENCES role(id) ON DELETE CASCADE
 	);
 ALTER TABLE user_role OWNER TO ws;
+
+CREATE SEQUENCE survey_role_seq START 1;
+ALTER SEQUENCE survey_role_seq OWNER TO ws;
+
+create TABLE survey_role (
+	id integer DEFAULT NEXTVAL('survey_role_seq') CONSTRAINT pk_survey_role PRIMARY KEY,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	r_id integer REFERENCES role(id) ON DELETE CASCADE,
+	enabled boolean,
+	column_restriction text,
+	row_restriction text
+	);
+ALTER TABLE survey_role OWNER TO ws;

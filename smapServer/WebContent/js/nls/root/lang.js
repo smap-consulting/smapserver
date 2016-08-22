@@ -200,6 +200,8 @@ define({
 	"c_imp_xls": "Import Spreadsheet",
 	"c_xlstype": "Excel Format",
 	"c_roles": "Roles",
+	"c_role": "Role",
+	"c_av_role": "Available Roles",
 	"c_id": "Id",
 	
 	// File Types
@@ -318,6 +320,8 @@ define({
 	"msg_ns": "No Submissions",
 	"msg_us": "Unknown Source",
 	"msg_tg_ns": "Task group not selected",
+	"msg_no_roles": "There are no enabled roles. Hence there are no restrictions on access",
+	"msg_has_roles": "Only users who have one of the following enabled roles are allowed access",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -498,6 +502,7 @@ define({
 	"u_add_o": "Add Organisation",
 	"u_del_o": "Delete Organisation",
 	"u_add_r": "Add Role",
+	"u_edit_r": "Edit Role",
 	"u_del_r": "Delete Role",
 	"u_det": "User Details",
 	"u_ident": "Ident (lowercase, no spaces or an email address)",

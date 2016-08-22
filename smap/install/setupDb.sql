@@ -821,3 +821,17 @@ CREATE TABLE public.role (
 ALTER TABLE public.role OWNER TO ws;
 CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
 
+DROP SEQUENCE IF EXISTS survey_role_seq CASCADE;
+CREATE SEQUENCE survey_role_seq START 1;
+ALTER SEQUENCE survey_role_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS survey_role CASCADE;
+create TABLE survey_role (
+	id integer DEFAULT NEXTVAL('survey_role_seq') CONSTRAINT pk_survey_role PRIMARY KEY,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	r_id integer REFERENCES role(id) ON DELETE CASCADE,
+	enabled boolean,
+	column_restriction text,
+	row_restriction text
+	);
+ALTER TABLE survey_role OWNER TO ws;

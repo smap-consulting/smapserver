@@ -209,5 +209,82 @@ public class RoleManager {
 
 	}
 	
+	/*
+	 * Get roles associated with a survey
+	 */
+	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id) throws SQLException {
+		PreparedStatement pstmt = null;
+		ArrayList<Role> roles = new ArrayList<Role> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			sql = "SELECT r.id as id, r.name as name, sr.enabled, sr.id as linkid " +
+					" from role r "
+					+ "left outer join survey_role sr " +
+					" on r.id = sr.r_id " +
+					" and sr.s_id = ? " +
+					" order by r.name asc";
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, s_id);
+			log.info("Get survey roles: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			Role role = null;
+			while(resultSet.next()) {		
+				role = new Role();
+				role.linkid = resultSet.getInt("linkid");
+				role.id = resultSet.getInt("id");
+				role.name = resultSet.getString("name");
+				role.enabled = resultSet.getBoolean("enabled");
+				
+				roles.add(role);
+			}
+			
+
+					    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return roles;
+	}
+	
+	/*
+	 * Update a survey link
+	 */
+	public void updateSurveyLink(Connection sd, int sId, int rId, int linkId, boolean enabled) throws SQLException {
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			String sqlNew = "insert into survey_role (s_id, r_id, enabled) values (?, ?, ?)";
+			String sqlExisting = "update survey_role "
+					+ "set enabled = ? "
+					+ "where id = ? "
+					+ "and s_id = ?";
+					
+			ResultSet resultSet = null;
+			
+			if(linkId > 0) {
+				pstmt = sd.prepareStatement(sqlExisting);
+			} else {
+				pstmt = sd.prepareStatement(sqlNew);
+			}
+			
+			
+			log.info("Get update survey roles: " + pstmt.toString());
+			pstmt.executeUpdate();
+							
+		
+			
+
+					    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+	}
 
 }

@@ -200,7 +200,7 @@ public class UserManager {
 					" from role r, user_role ur " +
 					" where r.id = ur.r_id " +
 					" and ur.u_id = ? " +
-					" order by r.name;";
+					" order by r.name asc";
 
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = connectionSD.prepareStatement(sql);
