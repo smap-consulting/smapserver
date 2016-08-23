@@ -295,13 +295,14 @@ public class Roles extends Application {
 	/*
 	 * Update a survey role
 	 */
-	@Path("/survey/{sId}")
+	@Path("/survey/{sId}/{property}")
 	@POST
 	@Consumes("application/json")
 	@Produces("application/json")
 	public Response updateSurveyRoles(
 			@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
+			@PathParam("property") String property,
 			@FormParam("role") String roleString
 			) { 
 
@@ -329,8 +330,12 @@ public class Roles extends Application {
 		
 		RoleManager rm = new RoleManager();
 		try {
-	
-			role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
+			
+			if(property.equals("enabled")) {
+				role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
+			} else if(property.equals("row_filter")) {
+				
+			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(role);
 			response = Response.ok(resp).build();
@@ -340,7 +345,6 @@ public class Roles extends Application {
 			log.log(Level.SEVERE,"Error", e);
 
 		} finally {
-			
 			SDDataSource.closeConnection("surveyKPI-roleList", sd);
 		}
 

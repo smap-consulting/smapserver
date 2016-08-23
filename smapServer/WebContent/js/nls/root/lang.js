@@ -201,7 +201,6 @@ define({
 	"c_xlstype": "Excel Format",
 	"c_roles": "Roles",
 	"c_role": "Role",
-	"c_av_role": "Available Roles",
 	"c_id": "Id",
 	
 	// File Types
@@ -562,11 +561,11 @@ define({
 	"n_wf": "Web Form",
 	"n_pdfp": "PDF (Portrait)",
 	"n_pdfl": "PDF (Landscape)",
-	"n_eq": "Email Question"
+	"n_eq": "Email Question",
 	
-
-
-	
+	// Roles
+	"ro_fr": "Filter rows",
+	"ro_fr_rule": "Rows to be shown"
 
 	 		
 		

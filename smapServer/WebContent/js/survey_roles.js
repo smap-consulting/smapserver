@@ -50,7 +50,8 @@ require([
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
-var	gRoles;
+var	gRoles,
+	gIdx;
 
 $(document).ready(function() {
 	
@@ -65,6 +66,13 @@ $(document).ready(function() {
 	globals.gIsAdministrator = false;
 	getLoggedInUser(getSurveyRoles, false, true, undefined, false, false);
 	getRoles
+	
+	// Save a row filter
+	$('#saveRowFilter').click(function(){
+		gRoles[gIdx].row_filter = $('#filter_row_content').text();
+		updateRole(gIdx);
+	});
+	
 	enableUserProfileBS();
 	
 });
@@ -120,6 +128,9 @@ function refreshView() {
 		h[++idx] = '<th>';
 			h[++idx] = localise.set["c_enabled"];
 		h[++idx] = '</th>';
+		h[++idx] = '<th>';
+			h[++idx] = localise.set["ro_fr"];
+		h[++idx] = '</th>';
 		h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	
@@ -154,6 +165,17 @@ function refreshView() {
 				h[++idx] = localise.set["c_yes"];
 				h[++idx] = '</button>';
 				h[++idx] = '</div>';
+			h[++idx] = '<td>';
+				h[++idx] = '<button class="btn btn-xs row_filter';
+				if(!gRoles[i].enabled) {
+					h[++idx] = ' disabled';
+				}
+				if(gRoles[i].restrict_row) {
+					h[++idx] = ' btn-success';
+				}
+				h[++idx] = '">';
+				h[++idx] = '<i class="glyphicon glyphicon-filter"></i>';
+				h[++idx] = '</button>';
 			h[++idx] = '</td>';
 		h[++idx] = '</tr>';
 		
@@ -176,10 +198,21 @@ function refreshView() {
 		
 		idx = $this.data("idx");
 		gRoles[idx].enabled = !gRoles[idx].enabled;
-		
 		updateRole(idx);
 		
+		$this.closest('tr').find('.row_filter').toggleClass("disabled");
+		
 		setInfoMsg();
+	});
+	
+	// Row filtering logic
+	$('.row_filter', $element).click(function() {
+		var $this = $(this);
+		
+		if(!$this.hasClass("disabled")) {
+			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			$('#row_filter_popup').modal("show");
+		}
 	});
 	
 	if(hasEnabledRole) {

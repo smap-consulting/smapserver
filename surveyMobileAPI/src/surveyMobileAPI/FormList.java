@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.JAXB;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
@@ -72,13 +73,6 @@ public class FormList extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(FormList.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(FormList.class);
-		return s;
-	}
 	
 	
 	// Respond with XML 
@@ -122,7 +116,8 @@ public class FormList extends Application {
 		
 		try {
 			SurveyManager sm = new SurveyManager();
-			surveys = sm.getSurveys(connectionSD, pstmt, user, false, false, 0);
+			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			surveys = sm.getSurveys(connectionSD, pstmt, user, false, false, 0, superUser);
 			
 			// Determine whether or not a manifest identifying media files exists for this survey
 			TranslationManager translationMgr = new TranslationManager();

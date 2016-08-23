@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import koboToolboxApi.Data_CSV;
 import model.DataEndPoint;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
 
@@ -34,7 +35,8 @@ public class DataManager {
 		PreparedStatement pstmt = null;
 		SurveyManager sm = new SurveyManager();
 		try {
-			surveys = sm.getSurveys(sd, pstmt, request.getRemoteUser(), false, true, 0);
+			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+			surveys = sm.getSurveys(sd, pstmt, request.getRemoteUser(), false, true, 0, superUser);
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}

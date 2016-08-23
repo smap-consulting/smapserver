@@ -29,6 +29,7 @@ public class Role {
 	public int linkid;
 	// Column Restriction
 	// Row Restriction
+	public String rowFilter;
 	public String changed_by;
 	public String changed_ts;
 }

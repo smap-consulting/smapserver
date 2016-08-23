@@ -152,21 +152,22 @@
 	</div>
 </div>
 
-<div id="add_role_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addRoleLabel" aria-hidden="true">
+<div id="row_filter_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addRowFilterLabel" aria-hidden="true">
 	<div class="modal-dialog">
    		<div class="modal-content">
    			<div class="modal-header">
      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     				<h4 class="modal-title" id="addRoleLabel"></h4>
+     				<h4 class="modal-title" id="addRowFilterLabel"></h4>
    			</div>
    			
 		    <div class="modal-body">
-				<form id="role_edit_form" class="form-horizontal" role="form">
+				<form id="role_filter_row_form" class="form-horizontal" role="form">
 					<div class="form-group">
-						<label class="lang col-sm-2 control-label" data-lang="c_av_role" for="availableRoles">av roles</label>
-						<div class="col-sm-10">
-							<select class="form-control" id="availableRoles">
-							</select>
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Row Filter">
+							<label for="filter_row_content" data-lang="ro_fr_rule" class="lang col-sm-2 control-label">filter</label>
+							<div class="col-sm-10">
+								<textarea id="filter_row_content" class="labelProp form-control"></textarea>
+							</div>
 						</div>
 					</div>
 			
@@ -174,7 +175,7 @@
 			</div>
 			<div class="modal-footer">
                	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
-               	<button id="saveRole" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
+               	<button id="saveRowFilter" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
        		</div>
 		
 		</div>
