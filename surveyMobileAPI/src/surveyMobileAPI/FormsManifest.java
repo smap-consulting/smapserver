@@ -154,16 +154,22 @@ public class FormsManifest {
 					filepath = m.filePath;
 				}
 				
-				// Get the MD5 hash
-				String md5 = getMd5(filepath);
-				
-				String fullUrl = protocol + host + m.url;
-
-				responseStr.append("<mediaFile>");
-				responseStr.append("<filename>" + m.fileName + "</filename>\n");
-				responseStr.append("<hash>" + md5 + "</hash>\n");
-				responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
-				responseStr.append("</mediaFile>");
+				// Check that the file exists
+				if(filepath != null) {
+					File f = new File(filepath);
+					if(f.exists()) {
+						// Get the MD5 hash
+						String md5 = getMd5(filepath);
+						
+						String fullUrl = protocol + host + m.url;
+		
+						responseStr.append("<mediaFile>\n");
+						responseStr.append("<filename>" + m.fileName + "</filename>\n");
+						responseStr.append("<hash>" + md5 + "</hash>\n");
+						responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
+						responseStr.append("</mediaFile>");
+					}
+				}
 					
 			}
 			responseStr.append("</manifest>\n");
