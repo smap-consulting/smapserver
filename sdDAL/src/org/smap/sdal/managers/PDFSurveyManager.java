@@ -189,7 +189,9 @@ public class PDFSurveyManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, instanceId, true, generateBlank, true, false, "real");
+			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
+			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
+					instanceId, true, generateBlank, true, false, "real", superUser);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {

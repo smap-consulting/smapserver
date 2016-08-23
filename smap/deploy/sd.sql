@@ -604,3 +604,4 @@ create TABLE survey_role (
 	row_restriction text
 	);
 ALTER TABLE survey_role OWNER TO ws;
+CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);

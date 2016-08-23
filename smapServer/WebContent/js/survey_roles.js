@@ -208,7 +208,6 @@ function setInfoMsg() {
 
 function updateRole(idx) {
 	
-	console.log("idx: " + idx);
 	addHourglass();
 	$.ajax({
 		  type: "POST",

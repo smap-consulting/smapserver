@@ -20,7 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,9 +31,7 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,22 +39,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Language;
-import org.smap.sdal.model.Option;
-import org.smap.sdal.model.OptionList;
-import org.smap.sdal.model.Question;
-import org.smap.sdal.model.Result;
-import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
-import org.w3c.dom.Element;
-
 import surveyKPI.ExportSurveyXls;
 
 public class XLSResultsManager {
@@ -68,6 +56,7 @@ public class XLSResultsManager {
 	LogManager lm = new LogManager();		// Application log
 	
 	Workbook wb = null;
+	boolean isXLSX = false;
 	int rowIndex = 0;		// Heading row is 0
 
 	private class Column {
@@ -165,8 +154,10 @@ public class XLSResultsManager {
 	public XLSResultsManager(String type) {
 		if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook();
+			isXLSX = false;
 		} else {
 			wb = new XSSFWorkbook();
+			isXLSX = true;
 		}
 	}
 	
@@ -520,15 +511,32 @@ public class XLSResultsManager {
 			ArrayList<String> record, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles) {
-				
-		// Create survey sheet header row
+		
+		CreationHelper createHelper = wb.getCreationHelper();
+		
 		Row row = sheet.createRow(rowIndex++);
 		CellStyle style = styles.get("default");
 		for(int i = 0; i < record.size(); i++) {
 			String v = record.get(i);
 			
             Cell cell = row.createCell(i);
-            cell.setCellStyle(style);
+            
+            if(v != null && (v.startsWith("https://") || v.startsWith("http://"))) {
+				cell.setCellStyle(styles.get("link"));
+				if(isXLSX) {
+					XSSFHyperlink url = (XSSFHyperlink)createHelper.createHyperlink(Hyperlink.LINK_URL);
+					url.setAddress(v);
+					cell.setHyperlink(url);
+				} else {
+					HSSFHyperlink url = new HSSFHyperlink(HSSFHyperlink.LINK_URL);
+					url.setAddress(v);
+					cell.setHyperlink(url);
+				}
+				
+			} else {
+				cell.setCellStyle(style);
+			}
+            
             cell.setCellValue(v);
 
         }
@@ -551,6 +559,13 @@ public class XLSResultsManager {
         style = wb.createCellStyle();
         style.setWrapText(true);
         styles.put("default", style);
+        
+		style = wb.createCellStyle();
+		Font linkFont = wb.createFont();
+		linkFont.setUnderline(Font.U_SINGLE);
+	    linkFont.setColor(IndexedColors.BLUE.getIndex());
+	    style.setFont(linkFont);
+	    styles.put("link", style);
         
 
         return styles;
@@ -715,20 +730,16 @@ public class XLSResultsManager {
 		} else if(value.startsWith("POINT")) {
 			String coords [] = getLonLat(value);
 			if(coords.length > 1) {
-				out.add("<a href=\"http://www.openstreetmap.org/?mlat=" +
+				out.add("http://www.openstreetmap.org/?mlat=" +
 						coords[1] +
 						"&mlon=" +
 						coords[0] +
 						"&zoom=14\">" +
-						value + "</a>");
+						value);
 			
 			} else {
 				out.add(value);
 			}
-		} else if(value.startsWith("http")) {
-			out.add("<a href=\"" + value + "\">" + out + "</a>");
-		} else if(value.startsWith("//")) {
-			out.add("<a href=\"https:" + value + "\">https:" + value + "</a>");
 		} else if(columnName.equals("_device")) {
 			out.add(value);				
 		} else if(columnName.equals("_complete")) {
@@ -890,7 +901,8 @@ public class XLSResultsManager {
 				if(f.parkey == null || f.parkey.equals("0")) {
 					
 					//f.printRecords(4, true);
-					appendToOutput(con, new ArrayList<String> (), formList.get(0), formList, 0, null, resultsSheet, styles);
+					appendToOutput(con, new ArrayList<String> (), 
+							formList.get(0), formList, 0, null, resultsSheet, styles);
 					
 				}
 			}

@@ -67,46 +67,57 @@ public class SurveyManager {
 			String user, 
 			boolean getDeleted, 
 			boolean getBlocked,
-			int projectId			// Set to 0 to get all surveys regardless of project
+			int projectId,			// Set to 0 to get all surveys regardless of project
+			boolean superUser
 			) throws SQLException {
 		
 		ArrayList<Survey> surveys = new ArrayList<Survey>();	// Results of request
 		
 		ResultSet resultSet = null;
-		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, "
-				+ "s.ident, s.managed_id, s.version, s.loaded_from_xls " +
-				" from survey s, users u, user_project up, project p" +
-				" where u.id = up.u_id" +
-				" and p.id = up.p_id" +
-				" and s.p_id = up.p_id" +
-				" and p.o_id = u.o_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
-				" and u.ident = ? ";
+		StringBuffer sql = new StringBuffer("");
+		sql.append("select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, "
+				+ "s.ident, s.managed_id, s.version, s.loaded_from_xls "
+				+ "from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and p.o_id = u.o_id "
+				+ "and up.restricted = false "
+				+ "and up.allocated = true "
+				+ "and u.ident = ? ");
+			
+		if(!superUser) {
+			// Add RBAC
+			sql.append(GeneralUtilityMethods.getSurveyRBAC());
+		}
 		
 		// only return surveys in the users organisation unit + assigned project id 
 		// If a specific valid project id was passed then restrict surveys to that project as well
 		
 		if(projectId != 0) {
-			sql += "and s.p_id = ? ";
+			sql.append("and s.p_id = ? ");
 		}
 		if(!getDeleted) {
-			sql += "and s.deleted = 'false'";
+			sql.append("and s.deleted = 'false'");
 		} 
 		if(!getBlocked) {
-			sql += "and s.blocked = 'false'";
+			sql.append("and s.blocked = 'false'");
 		}
-		sql += "order BY s.display_name;";
+		sql.append("order BY s.display_name;");
 	
-		pstmt = sd.prepareStatement(sql);	 			
-		pstmt.setString(1, user);
+		pstmt = sd.prepareStatement(sql.toString());	
+		int idx = 1;
+		pstmt.setString(idx++, user);
+		if(!superUser) {
+			pstmt.setString(idx++, user);	// Second user entry for RBAC
+		}
 		if(projectId != 0) {
-			pstmt.setInt(2, projectId);
+			pstmt.setInt(idx++, projectId);
 		}
 		log.info("Get surveys: " + pstmt.toString());
 		resultSet = pstmt.executeQuery();
 
-		while (resultSet.next()) {								
+		while (resultSet.next()) {						
 
 			Survey s = new Survey();
 			s.setId(resultSet.getInt(1));
@@ -175,12 +186,14 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
-			String getExternalOptions			// external || internal || real (get external if they exist else get internal)
+			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
+			boolean superUser
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id, " +
+		StringBuffer sql = new StringBuffer();
+		sql.append("select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id, " +
 				" s.def_lang, s.task_file, u.o_id, s.class," +
 				" s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, loaded_from_xls " +
 				" from survey s, users u, user_project up, project p" +
@@ -190,14 +203,23 @@ public class SurveyManager {
 				" and up.restricted = false " +
 				" and up.allocated = true " +
 				" and u.ident = ? " +
-				" and s.s_id = ?; ";
+				" and s.s_id = ? ");
+		
+		if(!superUser) {
+			// Add RBAC
+			sql.append(GeneralUtilityMethods.getSurveyRBAC());
+		}
 	
+		
 		PreparedStatement pstmt = null;
 		
 		try {
-			pstmt = sd.prepareStatement(sql);	 			
+			pstmt = sd.prepareStatement(sql.toString());	 			
 			pstmt.setString(1, user);
 			pstmt.setInt(2, sId);
+			if(!superUser) {
+				pstmt.setString(3, user);		// RBAC check
+			}
 	
 			log.info("Get Survey info: " + pstmt.toString());
 			

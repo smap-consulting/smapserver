@@ -330,10 +330,9 @@ public class Roles extends Application {
 		RoleManager rm = new RoleManager();
 		try {
 	
-			rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
-			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId);
+			role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(roles);
+			String resp = gson.toJson(role);
 			response = Response.ok(resp).build();
 		} catch (Exception e) {
 			

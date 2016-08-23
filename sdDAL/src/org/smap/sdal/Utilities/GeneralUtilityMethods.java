@@ -612,6 +612,39 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Return true if the user is a security user
+	 */
+	static public boolean isSuperUser(Connection sd, String user) throws SQLException {
+		boolean superUser = false;
+		
+		String sqlGetOrgId = "select count(*) "
+				+ "from users u, user_group ug "
+				+ "where u.ident = ? "
+				+ "and u.id = ug.u_id "
+				+ "and (ug.g_id = 6 or ug.g_id = 4)";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetOrgId);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				superUser = (rs.getInt(1) > 0);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return superUser;
+	}
+	
+	/*
 	 * Get the organisation id for the user
 	 */
 	static public int getOrganisationId(
@@ -3310,6 +3343,15 @@ public class GeneralUtilityMethods {
 		
 		return users;
 	  
+	}
+	
+	/*
+	 * Return the SQL that does survey level Role Based Access Control
+	 */
+	public static String getSurveyRBAC() {
+		return "and ((s.s_id not in (select s_id from survey_role where enabled = true)) or "	// No roles on survey
+				+ "(s.s_id in (select s_id from users u, user_role ur, survey_role sr where u.ident = ? and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) "		// User also has role	
+				+ ") ";
 	}
 
 }

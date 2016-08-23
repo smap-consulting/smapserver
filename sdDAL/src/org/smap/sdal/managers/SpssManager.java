@@ -46,7 +46,7 @@ public class SpssManager {
 			 Logger.getLogger(SpssManager.class.getName());
 	
 	/*
-	 * Call this function to create a PDF
+	 * Call this function to create am SPSS variables file
 	 * Return a suggested name for the PDF file derived from the results
 	 */
 	public String createSPS(
@@ -72,7 +72,8 @@ public class SpssManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real");
+			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
+			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real", superUser);
 			int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 			
 			System.out.println("Language: " + language + " : " + languageIdx) ;

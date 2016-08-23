@@ -255,9 +255,10 @@ public class RoleManager {
 	/*
 	 * Update a survey link
 	 */
-	public void updateSurveyLink(Connection sd, int sId, int rId, int linkId, boolean enabled) throws SQLException {
+	public int updateSurveyLink(Connection sd, int sId, int rId, int linkId, boolean enabled) throws SQLException {
 		
 		PreparedStatement pstmt = null;
+		int newLinkId = linkId;
 		
 		try {
 			String sqlNew = "insert into survey_role (s_id, r_id, enabled) values (?, ?, ?)";
@@ -272,7 +273,7 @@ public class RoleManager {
 				pstmt.setInt(2, linkId);
 				pstmt.setInt(3, sId);
 			} else {
-				pstmt = sd.prepareStatement(sqlNew);
+				pstmt = sd.prepareStatement(sqlNew, Statement.RETURN_GENERATED_KEYS);
 				pstmt.setInt(1, sId);
 				pstmt.setInt(2, rId);
 				pstmt.setBoolean(3, enabled);	
@@ -280,11 +281,19 @@ public class RoleManager {
 			
 			log.info("Get update survey roles: " + pstmt.toString());
 			pstmt.executeUpdate();
-							
+			
+			if(linkId == 0) {
+				ResultSet rs = pstmt.getGeneratedKeys();
+				if(rs.next()) {
+					newLinkId = rs.getInt(1);
+				} 
+			}
 			    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
+		
+		return newLinkId;
 	}
 
 }
