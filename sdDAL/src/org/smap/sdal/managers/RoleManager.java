@@ -1,6 +1,5 @@
 package org.smap.sdal.managers;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,24 +7,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.fileupload.FileItem;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.MediaInfo;
-import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.Organisation;
-import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Role;
-import org.smap.sdal.model.User;
-import org.smap.sdal.model.UserGroup;
+import org.smap.sdal.model.SqlFrag;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -220,7 +206,11 @@ public class RoleManager {
 			String sql = null;
 			ResultSet resultSet = null;
 			
-			sql = "SELECT r.id as id, r.name as name, sr.enabled, sr.id as linkid " +
+			sql = "SELECT r.id as id, "
+					+ "r.name as name, "
+					+ "sr.enabled, "
+					+ "sr.id as linkid,"
+					+ "sr.row_filter" +
 					" from role r "
 					+ "left outer join survey_role sr " +
 					" on r.id = sr.r_id " +
@@ -233,12 +223,21 @@ public class RoleManager {
 			resultSet = pstmt.executeQuery();
 							
 			Role role = null;
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			while(resultSet.next()) {		
 				role = new Role();
 				role.linkid = resultSet.getInt("linkid");
 				role.id = resultSet.getInt("id");
 				role.name = resultSet.getString("name");
 				role.enabled = resultSet.getBoolean("enabled");
+				
+				String sqlFragString = resultSet.getString("row_filter");
+				if(sqlFragString != null) {
+					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
+					if(sq.sql != null) {
+						role.row_filter = sq.sql.toString();
+					}
+				}
 				
 				roles.add(role);
 			}
@@ -294,6 +293,53 @@ public class RoleManager {
 		}
 		
 		return newLinkId;
+	}
+	
+	/*
+	 * Update the row filter in a survey link
+	 */
+	public void updateSurveyRoleRowFilter(Connection sd, int sId, 
+			Role role, ResourceBundle localisation) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		
+		SqlFrag sq = new SqlFrag();
+		sq.addRaw(role.row_filter, localisation);
+		StringBuilder bad = new StringBuilder();
+		for(int i = 0; i < sq.columns.size(); i++) {
+			if(!GeneralUtilityMethods.surveyHasQuestion(sd, sId, sq.columns.get(i))) {
+				if(bad.length() > 0) {
+					bad.append(", ");
+				}
+				bad.append(sq.columns.get(i));
+			}
+		}
+		if(bad.length() > 0) {
+			throw new Exception(localisation.getString("r_mc") + " " + bad);
+		}
+		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		String configString = gson.toJson(sq);
+		
+		try {
+			String sql = "update survey_role "
+					+ "set row_filter = ? "
+					+ "where id = ? "
+					+ "and s_id = ?";
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, configString);
+			pstmt.setInt(2, role.linkid);
+			pstmt.setInt(3, sId);
+			
+			log.info("Update survey roles: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+			    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
 	}
 
 }

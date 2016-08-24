@@ -37,9 +37,7 @@ $(document).ready(function() {
 	
 	// Add change function on language select
 	$('#settings_language').change(function() {	
-		var surveyId = $('#settings_survey option:selected').val();
- 	 	var language = $('#settings_language option:selected').val();
- 	 	languageChangeEvent(surveyId, language);
+ 	 	languageChangeEvent();
  	 });
 	
 	// Add change function on question select
@@ -352,7 +350,7 @@ function surveyChangeEvent(sId) {
 	}
 	
 	if(!languages) {
-		getLanguageList(sId, undefined, false, undefined, setGroupList);		// Retrieve the languages and questions for the default language
+		getLanguageList(sId, languageChangeEvent, false, undefined, setGroupList);		// Retrieve the languages and questions for the default language
 	} else {
 		setSurveyViewLanguages(languages, undefined, '#settings_language', false);
 		setSurveyViewLanguages(languages, undefined, '#export_language', true);
@@ -380,8 +378,10 @@ function surveyChangeEvent(sId) {
 
 
 //Selected language has changed
-function languageChangeEvent(sId, language) {
+function languageChangeEvent() {
 	
+	var sId = $('#settings_survey option:selected').val();
+	var language = $('#settings_language option:selected').val();
 	var qList = globals.gSelector.getSurveyQuestions(sId, language);
 	
 	var setGroupList = false;

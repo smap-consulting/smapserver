@@ -3353,5 +3353,38 @@ public class GeneralUtilityMethods {
 				+ "(s.s_id in (select s_id from users u, user_role ur, survey_role sr where u.ident = ? and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) "		// User also has role	
 				+ ") ";
 	}
+	
+	/*
+	 * Return true if the question name is in the survey
+	 */
+	public static boolean surveyHasQuestion(Connection sd, int sId, String name) throws SQLException {
+		
+		boolean hasQuestion = false;
+		
+		String sql = "select count(*) from question q "
+				+ "where q.f_id in (select f_id from form where s_id = ?) "
+				+ "and q.qname = ? ";
+				
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  sId);
+			pstmt.setString(2,  name);
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				hasQuestion = (rs.getInt(1) > 0);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return hasQuestion;
+	}
 
 }

@@ -31,7 +31,7 @@
       </button>
       <a href="#" class="navbar-brand">
       	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-     	  <span class="lang" data-lang="c_roles">roles</span>
+     	  <span class="lang" data-lang="c_s_roles">roles</span>
       </a>
     </div>
 	<nav class="collapse navbar-collapse" role="navigation">
@@ -74,7 +74,29 @@
 </header>
   
 <div class="container">
-  	<div class = "well">	
+	<div class="row">	   	
+	   	<div class="col-md-6 col-xs-12" id="sidebar">
+				<form role="form" class="form-horizontal">
+					<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
+					<div class="col-sm-8">
+						<select class="project_list form-control" id="project_name"></select>
+					</div>
+				</form>	
+		</div>
+		<div class="col-md-6 col-xs-12" id="sidebar">
+			<div id="filters">
+				<form role="form" class="form-horizontal">
+					<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">Select Project</label>
+					<div class="col-sm-8">
+						<select class="survey_select form-control" id="survey_name"></select>
+					</div>
+				</form>	
+			</div>
+		</div>
+	</div>
+	
+  	<div class = "well">
+  		<h4><span class="lang" data-lang="c_survey"></span>: <span  id="survey_name_disp"></span></h4>	
   		<div id="roles_alert"  class="alert alert-info" role="alert"></div>
 		<div class="table-responsive">
 			<div id="role_table"></div>
@@ -161,18 +183,25 @@
    			</div>
    			
 		    <div class="modal-body">
-				<form id="role_filter_row_form" class="form-horizontal" role="form">
-					<div class="form-group">
-						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Row Filter">
+					<form id="role_filter_row_form" class="form-horizontal" role="form">
+						<div class="form-group" data-toggle="tooltip" title="Row Filter">
 							<label for="filter_row_content" data-lang="ro_fr_rule" class="lang col-sm-2 control-label">filter</label>
 							<div class="col-sm-10">
 								<textarea id="filter_row_content" class="labelProp form-control"></textarea>
 							</div>
 						</div>
-					</div>
-			
-				</form>
-			</div>
+						
+						<div class="form-group">
+							<label for="filter_row_aq" data-lang="ro_aq" class="lang col-sm-2 control-label">aq</label>
+							<div class="col-sm-8">
+								<select id="filter_row_aq" class="labelProp form-control"></select>
+							</div>
+							<div class="col-sm-2">
+								<button id="filter_row_aq_insert" type="button" class="btn btn-info lang" data-lang="c_insert">insert</button>
+							</div>
+						</div>
+					</form>
+				</div>
 			<div class="modal-footer">
                	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
                	<button id="saveRowFilter" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>

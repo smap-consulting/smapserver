@@ -324,17 +324,20 @@ public class Roles extends Application {
 		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
-
 		
 		System.out.println("Updating role: " + role.name + " : " + role.id + " : " + role.linkid);
 		
 		RoleManager rm = new RoleManager();
 		try {
 			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			if(property.equals("enabled")) {
 				role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
 			} else if(property.equals("row_filter")) {
-				
+				rm.updateSurveyRoleRowFilter(sd, sId, role, localisation);
 			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(role);

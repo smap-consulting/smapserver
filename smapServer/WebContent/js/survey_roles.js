@@ -50,7 +50,8 @@ require([
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
 
-var	gRoles,
+var	gCache = {},
+	gRoles,
 	gIdx;
 
 $(document).ready(function() {
@@ -62,20 +63,90 @@ $(document).ready(function() {
 	
 	localise.setlang();		// Localise HTML
 
+	// Get the parameters and start editing a survey if one was passed as a parameter
+	params = location.search.substr(location.search.indexOf("?") + 1)
+	pArray = params.split("&");
+	dont_get_current_survey = false;
+	for (i = 0; i < pArray.length; i++) {
+		param = pArray[i].split("=");
+		if ( param[0] === "id" ) {
+			dont_get_current_survey = true;		// USe the passed in survey id
+			globals.gCurrentSurvey = param[1];
+			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+		} 
+	}
+	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(getSurveyRoles, false, true, undefined, false, false);
-	getRoles
+	getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
 	
 	// Save a row filter
-	$('#saveRowFilter').click(function(){
-		gRoles[gIdx].row_filter = $('#filter_row_content').text();
-		updateRole(gIdx);
+	$('#saveRowFilter').click(function() {
+		gRoles[gIdx].row_filter = $('#filter_row_content').val();
+		updateRole(gIdx, "row_filter", $('#row_filter_popup'));
+	});
+	
+	$('#project_name').change(function() {
+		projectChanged();
+ 	 });
+	
+	// Set change function on survey
+	$('#survey_name').change(function() {
+		globals.gCurrentSurvey = $(this).val();
+		surveyChanged();
+	});
+	
+	$('#filter_row_aq_insert').click(function() {
+		var current = $('#filter_row_content').val();
+		$('#filter_row_content').val(current
+				+ (current.length > 0 ? " " : "")
+				+ "${"
+				+ $('#filter_row_aq option:selected').val()
+				+ "}");
 	});
 	
 	enableUserProfileBS();
 	
 });
+
+function projectChanged() {
+	loadSurveys(globals.gCurrentProject, undefined, false, false, surveyChanged);			// Get surveys
+}
+
+function surveyChanged() {
+	gRoles = undefined;
+	$('#survey_name_disp').html($('#survey_name option:selected').text());
+	getSurveyRoles();
+	
+	if(!gCache[globals.gCurrentSurvey]) {
+		getSurveyQuestions(globals.gCurrentSurvey);
+	} else {
+		refreshQuestionSelect(gCache[qId]);
+	}
+	
+}
+
+function getSurveyQuestions(qId) {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/questionList/" + qId + "/none",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			gCache[qId] = data;
+			refreshQuestionSelect(gCache[qId]);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert(localise.set["msg_err_get_q"] + ": " + err);
+			}
+		}
+	});	
+}
 
 function getSurveyRoles() {
 	
@@ -104,7 +175,25 @@ function getSurveyRoles() {
 	}
 }
 
-
+/*
+ * Update the select options in the question select control
+ */
+function refreshQuestionSelect(questions) {
+	var h =[],
+		idx = -1,
+		i,
+		$element = $('#filter_row_aq');
+	
+	for(i = 0; i < questions.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = questions[i].name;
+		h[++idx] = '">';
+		h[++idx] = questions[i].name;
+		h[++idx] = '</option>';
+	}
+	$element.empty().append(h.join(''));
+	
+}
 
 
 /*
@@ -198,7 +287,7 @@ function refreshView() {
 		
 		idx = $this.data("idx");
 		gRoles[idx].enabled = !gRoles[idx].enabled;
-		updateRole(idx);
+		updateRole(idx, "enabled", undefined);
 		
 		$this.closest('tr').find('.row_filter').toggleClass("disabled");
 		
@@ -239,20 +328,26 @@ function setInfoMsg() {
 	}
 }
 
-function updateRole(idx) {
+/*
+ * Enable or disable a role
+ */
+function updateRole(idx, property, $popup) {
 	
 	addHourglass();
 	$.ajax({
 		  type: "POST",
 		  contentType: "application/json",
 		  cache: false,
-		  url: "/surveyKPI/role/survey/" + globals.gCurrentSurvey,
+		  url: "/surveyKPI/role/survey/" + globals.gCurrentSurvey + "/" + property,
 		  data: { 
 			  role: JSON.stringify(gRoles[idx])
 			  },
 		  success: function(data, status) {
 			  removeHourglass();
 			  gRoles[idx].linkid = data.linkid;
+			  if($popup) {
+				  $popup.modal("hide");
+			  }
 		  }, error: function(data, status) {
 			  removeHourglass();
 			  if(data && data.responseText) {

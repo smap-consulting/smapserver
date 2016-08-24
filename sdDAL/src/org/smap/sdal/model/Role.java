@@ -28,8 +28,7 @@ public class Role {
 	public boolean enabled;
 	public int linkid;
 	// Column Restriction
-	// Row Restriction
-	public String rowFilter;
+	public String row_filter;			// String row filter sent to client
 	public String changed_by;
 	public String changed_ts;
 }

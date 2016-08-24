@@ -69,7 +69,8 @@ public class XLSCustomReportsManager {
 	/*
 	 * Create an customer report definition from an XLS file
 	 */
-	public ArrayList<TableColumn> getCustomReport(Connection sd, int oId, String type, InputStream inputStream, ResourceBundle localisation) throws Exception {
+	public ArrayList<TableColumn> getCustomReport(Connection sd, int oId, String type, 
+			InputStream inputStream, ResourceBundle localisation) throws Exception {
 		
 		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
 		Sheet sheet = null;

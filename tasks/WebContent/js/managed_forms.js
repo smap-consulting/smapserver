@@ -315,11 +315,11 @@ require([
 				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns)
 				 
 		 if($this.hasClass("xls")) {
-			 filename = "displayName" + ".xlsx"
+			 filename = title + ".xlsx"
 			 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 			 format = "xlsx";
 		 } else {
-			 filename = "displayName" + ".pdf"
+			 filename = title + ".pdf"
 			 mime= "application/pdf";
 			 format = "pdf";
 		 }

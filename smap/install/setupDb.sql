@@ -831,8 +831,8 @@ create TABLE survey_role (
 	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
 	r_id integer REFERENCES role(id) ON DELETE CASCADE,
 	enabled boolean,
-	column_restriction text,
-	row_restriction text
+	column_filter text,
+	row_filter text
 	);
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);

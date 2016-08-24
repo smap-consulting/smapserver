@@ -200,8 +200,10 @@ define({
 	"c_imp_xls": "Import Spreadsheet",
 	"c_xlstype": "Excel Format",
 	"c_roles": "Roles",
+	"c_s_roles": "Survey Roles",
 	"c_role": "Role",
 	"c_id": "Id",
+	"c_insert": "Insert",
 	
 	// File Types
 	"ft": "File Type",
@@ -286,6 +288,7 @@ define({
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
 	"msg_err_get_r": "Error: Get roles failed",
+	"msg_err_get_q": "Error: Get questions failed",
 	"msg_err_nc": "Name cannot include a comma",
 	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
@@ -565,7 +568,8 @@ define({
 	
 	// Roles
 	"ro_fr": "Filter rows",
-	"ro_fr_rule": "Rows to be shown"
+	"ro_fr_rule": "Rows to be shown",
+	"ro_aq": "Available Questions"
 
 	 		
 		

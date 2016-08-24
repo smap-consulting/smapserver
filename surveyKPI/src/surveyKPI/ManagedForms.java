@@ -254,16 +254,7 @@ public class ManagedForms extends Application {
 						);
 				
 				for(TableColumn mc : managedColumns) {
-					/*
-					 * Allow names from management form to override data form
-					if(mc.type != null && !mc.type.equals("calculate")) {
-						for(TableColumn fc : formColumns) {
-							if(mc.name.equals(fc.name)) {
-								compatibleMsg.append("The form being attached to already has column name " + mc.name + " from the oversight form. ");
-								break;
-							}
-						}
-					}*/ 
+					
 					if(mc.type.equals("calculate")) {
 						
 						for(int i = 0; i < mc.calculation.columns.size(); i++) {
