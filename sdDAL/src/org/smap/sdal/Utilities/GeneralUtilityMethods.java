@@ -861,6 +861,39 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the survey id from the form id
+	 */
+	static public int getSurveyIdForm(
+			Connection sd, 
+			int fId) throws SQLException {
+		
+		int sId = 0;
+		
+		String sql = "select f.s_id from form f " + 
+				" where f.f_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, fId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				sId = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return sId;
+	}
+	
+	/*
 	 * Get the survey name from the id
 	 */
 	static public String getSurveyName(
@@ -1010,8 +1043,6 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get the question id using the form id and question name
 	 * Used by the editor to get the question id of a newly created question
-	 * 
-	 * 
 	 */
 	static public int getQuestionId(
 			Connection sd, 
@@ -1076,47 +1107,6 @@ public class GeneralUtilityMethods {
 		return qId;
 	}
 	
-	
-	/*
-	 * Get the question path from the question name
-	 * This assumes that all names in the survey are unique
-	 * rmpath
-	 *
-	static public String getQuestionPath(
-			Connection sd, 
-			int sId,
-			String qName) throws SQLException {
-		
-		String path = null;
-		
-		String sqlGetQuestionPath = "select q.path " +
-				" from question q, form f" +
-				" where q.f_id = f.f_id " +
-				" and f.s_id = ? " +
-				" and q.qname = ?;";
-		
-		PreparedStatement pstmt = null;
-		
-		try {
-		
-			pstmt = sd.prepareStatement(sqlGetQuestionPath);
-			pstmt.setInt(1, sId);
-			pstmt.setString(2, qName);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				path = rs.getString(1);	
-			}
-			
-		} catch(SQLException e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
-		}
-		
-		return path;
-	}
-	*/
 	
 	/*
 	 * Get the column name from the question name
@@ -2607,6 +2597,39 @@ public class GeneralUtilityMethods {
 		}	
 		
 		return external;
+	}
+	
+	/*
+	 * Convert a question name to a question id
+	 */
+	public static int getQuestionIdFromName(Connection sd, int sId, String name) throws SQLException {
+		
+		boolean external = false;
+		String sql = "select q_id "
+				+ "from question q "
+				+ "where q.qname = ? "
+				+ "and q.f_id in (select f_id from form where s_id = ?)";
+		
+		int qId = 0;
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, name);
+			pstmt.setInt(2, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				qId = rs.getInt(1);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return qId;
 	}
 	
 	/*

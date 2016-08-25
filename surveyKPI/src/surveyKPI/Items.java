@@ -43,6 +43,9 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.SqlFragParam;
 import org.smap.sdal.model.TableColumn;
 
 import utilities.QuestionInfo;
@@ -56,6 +59,8 @@ import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -124,33 +129,20 @@ public class Items extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Items");
-		a.isAuthorised(sd, request.getRemoteUser());
-		// Get the survey id
-		String sql = "select s.s_id, s.ident FROM form f, survey s " + 
-				" where s.s_id = f.s_id " +
-				" and f.f_id = ?;";
 		int sId = 0;
-
 		try {
-			PreparedStatement pstmtAuth = sd.prepareStatement(sql);
-			pstmtAuth.setInt(1, fId);
-			log.info("Authorisation: " + pstmtAuth.toString());
-			
-			ResultSet tableSet = pstmtAuth.executeQuery();
-	
-			if(tableSet.next()) {
-				sId = tableSet.getInt(1);
-			}
+			sId = GeneralUtilityMethods.getSurveyIdForm(sd, fId);
 		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error in Authorisation", e);
+			
 		}
+		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "View Results");
 	
-		
 		Tables tables = new Tables(sId);
+		boolean hasRbacRowFilter = false;
 		
 		if(fId > 0) {
 			
@@ -164,6 +156,10 @@ public class Items extends Application {
 			String formName = null;
 			 
 			try {
+				
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 				
 				// Connect to the results database
 				connection = ResultsDataSource.getConnection("surveyKPI-Items");	
@@ -193,7 +189,7 @@ public class Items extends Application {
 				jTotals.put("start_key", start_key);
 				
 				// Get the number of records
-				sql = "SELECT count(*) FROM " + tName + ";";
+				String sql = "SELECT count(*) FROM " + tName + ";";
 				log.info("Get the number of records: " + sql);	
 				pstmt = connection.prepareStatement(sql);	 			
 				ResultSet resultSet = pstmt.executeQuery();
@@ -331,6 +327,34 @@ public class Items extends Application {
 				}
 				
 				/*
+				 * Add row filtering performed by RBAC
+				 */
+				RoleManager rm = new RoleManager();
+				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser(), localisation);
+				String rfString = "";
+				if(rfArray.size() > 0) {
+					for(SqlFrag rf : rfArray) {
+						if(rf.columns.size() > 0) {
+							for(int i = 0; i < rf.columns.size(); i++) {
+								int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
+								QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
+								tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+							}
+							if(rfString.length() > 0) {
+								rfString += " or";
+							}
+							rfString += " (" + rf.sql.toString() + ")";
+							hasRbacRowFilter = true;
+						}
+					}
+					if(sqlFilter.length() > 0) {
+						sqlFilter += " and " + "(" + rfString + ")";
+					} else {
+						sqlFilter = "(" + rfString + ")";
+					}
+				}
+				
+				/*
 				 * Get the date question used to set start and end date
 				 */
 				// Get date column information
@@ -389,7 +413,28 @@ public class Items extends Application {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql2.toString());
 				
+				/*
+				 * Set prepared statement values
+				 */
 				int attribIdx = 1;
+				
+				// RBAC row filter
+				if(hasRbacRowFilter) {
+					for(SqlFrag rf : rfArray) {
+						for(int i = 0; i < rf.params.size(); i++) {
+							SqlFragParam p = rf.params.get(i);
+							if(p.type.equals("text")) {
+								pstmt.setString(attribIdx++, p.sValue);
+							} else if(p.type.equals("integer")) {
+								pstmt.setInt(attribIdx++,  p.iValue);
+							} else if(p.type.equals("double")) {
+								pstmt.setDouble(attribIdx++,  p.dValue);
+							}
+						}
+					}
+				}
+				
+				// dates
 				if(dateId != 0) {
 					if(startDate != null) {
 						pstmt.setDate(attribIdx++, startDate);
@@ -399,6 +444,7 @@ public class Items extends Application {
 					}
 				}
 				
+				// Request the data
 				log.info("Get Item Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
 	
@@ -477,7 +523,23 @@ public class Items extends Application {
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = connection.prepareStatement(sql);	
 				
+				// Apply the parameters again
 				attribIdx = 1;
+				// RBAC row filter
+				if(hasRbacRowFilter) {
+					for(SqlFrag rf : rfArray) {
+						for(int i = 0; i < rf.params.size(); i++) {
+							SqlFragParam p = rf.params.get(i);
+							if(p.type.equals("text")) {
+								pstmt.setString(attribIdx++, p.sValue);
+							} else if(p.type.equals("integer")) {
+								pstmt.setInt(attribIdx++,  p.iValue);
+							} else if(p.type.equals("double")) {
+								pstmt.setDouble(attribIdx++,  p.dValue);
+							}
+						}
+					}
+				}
 				if(dateId != 0) {
 					if(startDate != null) {
 						pstmt.setDate(attribIdx++, startDate);

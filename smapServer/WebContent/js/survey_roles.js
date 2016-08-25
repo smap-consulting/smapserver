@@ -300,6 +300,7 @@ function refreshView() {
 		
 		if(!$this.hasClass("disabled")) {
 			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			$('#filter_row_content').val(gRoles[gIdx].row_filter);
 			$('#row_filter_popup').modal("show");
 		}
 	});

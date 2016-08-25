@@ -107,7 +107,7 @@ public class UserList extends Application {
 		
 	}
 
-	
+	/*
 	@GET
 	@Produces("application/json")
 	public Response getUsers(
@@ -140,10 +140,7 @@ public class UserList extends Application {
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
-		
-		/*
-		 * 
-		 */	
+	
 		PreparedStatement pstmt = null;
 		ArrayList<User> users = new ArrayList<User> ();
 		
@@ -154,9 +151,7 @@ public class UserList extends Application {
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
-			/*
-			 * Get the organisation
-			 */
+		
 			sql = "SELECT u.o_id " +
 					" FROM users u " +  
 					" WHERE u.ident = ?;";				
@@ -168,12 +163,7 @@ public class UserList extends Application {
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
 				
-				/*
-				 * Get the users, groups and projects for this organisation
-				 * Do this in one outer join query rather than running separate group and project queries for 
-				 *  each user. This is to reduce the need for potentially a large number of queries if
-				 *  an organisation had a large number of users
-				 */
+			
 				sql = "SELECT users.id as id," +
 						"users.ident as ident, " +
 						"users.name as name, " +
@@ -266,11 +256,16 @@ public class UserList extends Application {
 							user.groups.add(group);
 						}
 						
+						System.out.println("User: " + ident);
+						System.out.println("role: " + role_name);
+						
 						if(isOrgUser || isSecurityManager) {
-							Role role = new Role();
-							role.name = role_name;
-							role.id = role_id;
-							user.roles.add(role);
+							if(role_name != null) {
+								Role role = new Role();
+								role.name = role_name;
+								role.id = role_id;
+								user.roles.add(role);
+							}
 						}
 						
 						if(allocated && !restricted) {
@@ -284,6 +279,7 @@ public class UserList extends Application {
 						current_user = ident;
 						current_group = group.name;
 						current_project = project_name;
+						current_role = role_name;
 					
 					} else {
 						if(current_group != null && !current_group.equals(group_name)) {
@@ -299,6 +295,7 @@ public class UserList extends Application {
 						
 						if(current_role != null && !current_role.equals(role_name)) {
 							
+							System.out.println("role: " + role_name);
 							// new role
 							if(isOrgUser || isSecurityManager) {
 								Role role = new Role();
@@ -344,6 +341,160 @@ public class UserList extends Application {
 
 		return response;
 	}
+	*/
+	
+	@GET
+	@Produces("application/json")
+	public Response getUsers(
+			@Context HttpServletRequest request,
+			@QueryParam("month") int month,			// 1 - 12
+			@QueryParam("year") int year
+			) { 
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
+		a.isAuthorised(connectionSD, request.getRemoteUser());
+		// End Authorisation
+		
+		String sql = "select id,"
+				+ "ident, "
+				+ "name, "
+				+ "email "
+				+ "from users "
+				+ "where users.o_id = ? "
+				+ "order by ident asc";
+		PreparedStatement pstmt = null;
+		
+		String sqlGroups = "select g.id,"
+				+ "g.name "
+				+ "from groups g,"
+				+ "user_group ug "
+				+ "where ug.u_id = ? "
+				+ "and ug.g_id = g.id "
+				+ "order by g.id asc";
+		PreparedStatement pstmtGroups = null;
+		
+		String sqlProjects = "select p.id,"
+				+ "p.name "
+				+ "from project p,"
+				+ "user_project up "
+				+ "where up.u_id = ? "
+				+ "and up.p_id = p.id "
+				+ "order by p.name asc";
+		PreparedStatement pstmtProjects = null;
+		
+		String sqlRoles = "select r.id,"
+				+ "r.name "
+				+ "from role r,"
+				+ "user_role ur "
+				+ "where ur.u_id = ? "
+				+ "and ur.r_id = r.id "
+				+ "order by r.name asc";
+		PreparedStatement pstmtRoles = null;
+				
+		ArrayList<User> users = new ArrayList<User> ();
+		
+		try {
+			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			ResultSet rs = null;
+
+			pstmtGroups = connectionSD.prepareStatement(sqlGroups);
+			ResultSet rsGroups = null;
+			
+			pstmtProjects = connectionSD.prepareStatement(sqlProjects);
+			ResultSet rsProjects = null;
+			
+			pstmtRoles = connectionSD.prepareStatement(sqlRoles);
+			ResultSet rsRoles = null;
+			
+			pstmt.setInt(1, o_id);
+			log.info("Get user list: " + pstmt.toString());
+			rs = pstmt.executeQuery();
+			while(rs.next()) {
+				User user = new User();
+				
+				user.id = rs.getInt("id");
+				user.ident = rs.getString("ident");
+				user.name = rs.getString("name");
+				user.email = rs.getString("email");
+				
+				// Groups
+				if(rsGroups != null) try {rsGroups.close();} catch(Exception e) {};
+				pstmtGroups.setInt(1, user.id);
+				rsGroups = pstmtGroups.executeQuery();
+				user.groups = new ArrayList<UserGroup> ();
+				while(rsGroups.next()) {
+					UserGroup ug = new UserGroup();
+					ug.id = rsGroups.getInt("id");
+					ug.name = rsGroups.getString("name");
+					user.groups.add(ug);
+				}
+				
+				// Projects
+				if(rsProjects != null) try {rsProjects.close();} catch(Exception e) {};
+				pstmtProjects.setInt(1, user.id);
+				rsProjects = pstmtProjects.executeQuery();
+				user.projects = new ArrayList<Project> ();
+				while(rsProjects.next()) {
+					Project p = new Project();
+					p.id = rsProjects.getInt("id");
+					p.name = rsProjects.getString("name");
+					user.projects.add(p);
+				}
+				
+				// Roles
+				if(isOrgUser || isSecurityManager) {
+					if(rsRoles != null) try {rsRoles.close();} catch(Exception e) {};
+					pstmtRoles.setInt(1, user.id);
+					rsRoles = pstmtRoles.executeQuery();
+					user.roles = new ArrayList<Role> ();
+					while(rsRoles.next()) {
+						Role r = new Role();
+						r.id = rsRoles.getInt("id");
+						r.name = rsRoles.getString("name");
+						user.roles.add(r);
+					}
+				}
+				
+				users.add(user);
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+						
+			
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGroups != null) {pstmtGroups.close();	}} catch (SQLException e) {	}
+			try {if (pstmtProjects != null) {pstmtProjects.close();	}} catch (SQLException e) {	}
+			try {if (pstmtRoles != null) {pstmtRoles.close();	}} catch (SQLException e) {	}
+			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+		}
+
+		return response;
+	}
+
+	
 	
 	/*
 	 * Get the users who have access to a specific project
@@ -452,7 +603,7 @@ public class UserList extends Application {
 	
 	/*
 	 * Get the users who are restricted from accessing a specific project
-	 */
+	 *
 	@Path("/{projectId}/restricted")
 	@GET
 	@Produces("application/json")
@@ -480,9 +631,6 @@ public class UserList extends Application {
 		
 		// End Authorisation
 		
-		/*
-		 * 
-		 */	
 		PreparedStatement pstmt = null;
 		ArrayList<RestrictedUser> users = new ArrayList<RestrictedUser> ();
 		
@@ -492,9 +640,7 @@ public class UserList extends Application {
 			
 			int o_id  = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
 			
-			/*
-			 * Get the users for this project
-			 */
+			
 			sql = "SELECT u.id as id, "
 					+ "up.restricted as restricted, "
 					+ "u.ident as ident, "
@@ -539,7 +685,7 @@ public class UserList extends Application {
 
 		return response;
 	}
-	
+	*/
 	
 	/*
 	 * Update the settings or create new user

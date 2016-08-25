@@ -173,7 +173,6 @@ public class OrganisationList extends Application {
 	
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(organisations);
-			log.info("response: " + resp);
 			response = Response.ok(resp).build();
 			
 				

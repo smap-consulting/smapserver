@@ -235,7 +235,7 @@ public class RoleManager {
 				if(sqlFragString != null) {
 					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
 					if(sq.sql != null) {
-						role.row_filter = sq.sql.toString();
+						role.row_filter = sq.raw.toString();
 					}
 				}
 				
@@ -340,6 +340,46 @@ public class RoleManager {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 		
+	}
+	
+	/*
+	 * Get the sql for a survey role filter for a specific user and survey
+	 * A user can have multiple roles as can a survey hence an array of roles is returned
+	 */
+	public ArrayList<SqlFrag> getSurveyRowFilter(Connection sd, int sId, String user, ResourceBundle localisation) throws SQLException {
+		
+		PreparedStatement pstmt = null;
+		ArrayList<SqlFrag> rfArray = new ArrayList<SqlFrag> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			sql = "SELECT sr.row_filter "
+					+ "from survey_role sr, user_role ur, users u "
+					+ "where sr.s_id = ? "
+					+ "and sr.r_id = ur.r_id "
+					+ "and ur.u_id = u.id "
+					+ "and u.ident = ?";
+							
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, user);
+			log.info("Get surveyRowFilter: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			while(resultSet.next()) {		
+				String sqlFragString = resultSet.getString("row_filter");
+				if(sqlFragString != null) {
+					rfArray.add(gson.fromJson(sqlFragString, SqlFrag.class));
+				}		
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return rfArray;
 	}
 
 }

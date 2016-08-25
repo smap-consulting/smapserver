@@ -484,6 +484,7 @@ public class UserManager {
 				for(int j = 0; j < u.roles.size(); j++) {
 					Role r = u.roles.get(j);
 					pstmtInsertUserRole.setInt(2, r.id);
+					log.info("Insert user role: " + pstmtInsertUserRole.toString());
 					pstmtInsertUserRole.executeUpdate();
 				}
 			

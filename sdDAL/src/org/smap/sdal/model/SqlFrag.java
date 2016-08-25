@@ -5,60 +5,18 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+
 /*
  * Form Class
  * Used for survey editing
  * If the param type is sql then this is an intermediate stage where the parameter still needs to be tokenized
  */
-class Param {
-	String type;		// text || sql || integer || double
-	String sValue;		// text || sql
-	int iValue;			// integer
-	double dValue;		// double
-	
-	void addTextParam(String v) {
-		type = "text";
-		sValue = v;
-	}
-	
-	/*
-	void addNonTextParam(String v) throws Exception {
-		boolean done = false;
-		if(v.indexOf('.') > -1) {
-			try {
-				dValue = Double.parseDouble(v);
-				type = "double";
-				done = true;
-			} catch (Exception e) {
-				// Ignore
-			}
-		} else {
-			try {
-				iValue = Integer.parseInt(v);
-				type = "integer";
-				done = true;
-			} catch (Exception e) {
-				// Ignore
-			}
-		}
-		if(!done) {
-			throw new Exception("Unrecognised number: " + v);
-		}
-	}
-	*/
-	
-	String debug() {
-		if(type.equals("text") || type.equals("sql")) {
-			return type + " : " + sValue;
-		} else {
-			return "";
-		}
-	}
-}
 
 public class SqlFrag {
+	public StringBuffer raw = new StringBuffer("");
 	public StringBuffer sql = new StringBuffer("");
-	public ArrayList<Param> params = new ArrayList<Param> ();
+	public ArrayList<SqlFragParam> params = new ArrayList<SqlFragParam> ();
 	public ArrayList<String> columns = new ArrayList<String> ();
 
 	private static Logger log =
@@ -89,7 +47,9 @@ public class SqlFrag {
 	 */
 	public void addRaw(String in, ResourceBundle localisation) throws Exception {
 		
-		ArrayList<Param> tempParams = new ArrayList<Param> ();
+		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
+		
+		raw.append(in);
 		
 		/*
 		 * Get the text parameters and the sql fragments
@@ -104,7 +64,7 @@ public class SqlFrag {
 			
 			// Add the sql fragment
 			if(idx1 > 0) {
-				Param p = new Param();
+				SqlFragParam p = new SqlFragParam();
 				p.type = "sql";
 				p.sValue = in.substring(start, idx1);
 				tempParams.add(p);
@@ -114,7 +74,7 @@ public class SqlFrag {
 			// Add the text fragment
 			idx2 = in.indexOf('\'', idx1 + 1);
 			if(idx2 > -1) {
-				Param p = new Param();
+				SqlFragParam p = new SqlFragParam();
 				p.type = "text";
 				p.sValue = in.substring(idx1 + 1, idx2);	// Remove quotation marks
 				tempParams.add(p);
@@ -127,7 +87,7 @@ public class SqlFrag {
 			idx1 = in.indexOf('\'', idx2 + 1);		
 		}
 		if(addedChars < in.length()) {
-			Param p = new Param();
+			SqlFragParam p = new SqlFragParam();
 			p.type = "sql";
 			p.sValue = in.substring(addedChars);
 			tempParams.add(p);
@@ -138,7 +98,7 @@ public class SqlFrag {
 		 * These can be split using white space
 		 */
 		for(int i = 0; i < tempParams.size(); i++) {
-			Param p = tempParams.get(i);
+			SqlFragParam p = tempParams.get(i);
 			if(p.type.equals("sql")) {
 				String [] token = p.sValue.split("[\\s]");  // Split on white space
 				for(int j = 0; j < token.length; j++) {
@@ -149,7 +109,7 @@ public class SqlFrag {
 					}
 				}
 			} else if(p.type.equals("text")) {
-				Param px = new Param();
+				SqlFragParam px = new SqlFragParam();
 				px.addTextParam(p.sValue);
 				params.add(px);
 				sql.append(" ? ");
@@ -169,16 +129,17 @@ public class SqlFrag {
 		
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
-			out = token.substring(2, token.length() - 1);
+			String name = token.substring(2, token.length() - 1);
 			boolean columnNameCaptured = false;
+			out = GeneralUtilityMethods.cleanName(name, true, true, true);
 			for(int i = 0; i < columns.size(); i++) {
-				if(columns.get(i).equals(out)) {
+				if(columns.get(i).equals(name)) {
 					columnNameCaptured = true;
 					break;
 				}
 			}
 			if(!columnNameCaptured) {
-				columns.add(out);
+				columns.add(name);
 			}
 		} else if (token.equals(">") ||
 				token.equals("<") ||
