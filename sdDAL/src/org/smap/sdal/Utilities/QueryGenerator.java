@@ -182,6 +182,9 @@ public class QueryGenerator {
 		shpSqlBuf.append(" where ");
 		shpSqlBuf.append(sqlDesc.tables.get(0));
 		shpSqlBuf.append("._bad='false'");
+		if(format.equals("shape") && sqlDesc.geometry_type != null) {
+			shpSqlBuf.append(" and the_geom is not null");
+		}
 		if(numTables > 1) {
 			for(int i = 0; i < numTables - 1; i++) {
 				

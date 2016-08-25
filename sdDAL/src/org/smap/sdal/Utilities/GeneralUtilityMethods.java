@@ -2141,6 +2141,7 @@ public class GeneralUtilityMethods {
 							c.name = question_column_name + "__" + rsMultiples.getString(1);
 							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
 							c.option_name = rsMultiples.getString(1);
+							c.question_name = question_human_name;
 							c.qId = qId;
 							c.type = qType;
 							c.readonly = ro;
