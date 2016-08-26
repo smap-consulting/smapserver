@@ -51,6 +51,11 @@ define([
 			idx = -1,
 			questionId = "question" + formIndex + "_" + qIndex;
 		
+		// Support the legacy geopolygon and geolinestring types
+		if(question.type === "geopolygon" || question.type === "geolinestring") {
+			question.type = "begin repeat";
+		}
+		
 		globals.gHasItems = true;
 		if(!update) {					// Only increment maxQuestion if a new question is being added
 			form.maxQuestion++;

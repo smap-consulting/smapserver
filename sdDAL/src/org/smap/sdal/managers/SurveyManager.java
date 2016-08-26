@@ -1854,8 +1854,7 @@ public class SurveyManager {
 							if(qType != null && (qType.equals("begin repeat") || qType.equals("geopolygon") || qType.equals("geolinestring"))){
 					
 								String sqlUpdateForm = "update form set name = ?, "
-										+ "table_name = ?, "
-										//+ "path = replace(path, ?, ?) "
+										+ "table_name = ? "
 										+ "where s_id = ? "
 										+ "and name = ?;";
 								try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}

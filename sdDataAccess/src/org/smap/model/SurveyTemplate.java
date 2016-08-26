@@ -1283,7 +1283,14 @@ public class SurveyTemplate {
 			for(int i= 0; i < qList.size(); i++) {
 				Question q = qList.get(i);
 				int f_id = q.getFormId();
-				String formRef = getFormById(f_id).getPath(formList);
+				Form f = getFormById(f_id);
+				String formRef = null;
+				if(f != null) {
+					formRef = getFormById(f_id).getPath(formList);
+				} else {
+					System.out.println("Form not found for f_id = " + f_id);
+				}
+				
 				q.setFormRef(formRef);
 				String qRef = q.getPath();
 				if(qRef != null) {
