@@ -307,8 +307,8 @@ require([
 		 	mime,
 			data,
 		 	managedId,
-		 	title = $('#survey_name').text(),
-		 	project = $('#project_name').text();
+		 	title = $('#survey_name option:selected').text(),
+		 	project = $('#project_name option:selected').text();
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
