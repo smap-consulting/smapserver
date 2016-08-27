@@ -253,10 +253,9 @@ public class JdbcQuestionManager {
 			/*
 			 * If this question marks the start of a sub form then set the relative path of the subform
 			 */
-			if(forms != null && q.getType().equals("begin repeat")) {
+			if(forms != null && (q.getType().equals("begin repeat") || q.getType().equals("geopolygon") || q.getType().equals("geolinestring"))) {
 				for(Form f : forms) {
 					if(f.getParentQuestionId() == q.getId()) {
-						System.out.println("Setting relative path: " + f.getName() + " : " + q.getRelativePath());
 						f.setRelativePath(q.getRelativePath());
 					}
 				}

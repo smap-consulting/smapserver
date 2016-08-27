@@ -322,11 +322,13 @@ public class PutXForm {
 		    	    	if(newFormName.startsWith("geopolygon")) {
 		    	    		lastGroupQuestion.setSource("user");
 		    	    		lastGroupQuestion.setType("geopolygon");
-		    	    		lastGroupQuestion.setName("the_geom");	// Geometry types are always called "the_geom"
+		    	    		//lastGroupQuestion.setName("the_geom");	// Geometry types are always called "the_geom"
+		    	    		lastGroupQuestion.setColumnName("the_geom");
 		    	    	} else if(newFormName.startsWith("geolinestring")) {
 		    	    		lastGroupQuestion.setSource("user");
 		    	    		lastGroupQuestion.setType("geolinestring");
-		    	    		lastGroupQuestion.setName("the_geom");	// Geometry types are always called "the_geom"
+		    	    		//lastGroupQuestion.setName("the_geom");	// Geometry types are always called "the_geom"
+		    	    		lastGroupQuestion.setColumnName("the_geom");
 		    	    	}
 		    	    	
 		    	    	// set last group question as the parent of the repeating form

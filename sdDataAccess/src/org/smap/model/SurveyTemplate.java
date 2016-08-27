@@ -1297,7 +1297,12 @@ public class SurveyTemplate {
 					
 					System.out.println("Name: " + q.getName() + " ref: " + qRef);
 					questions.put(qRef, q);
-					questionPaths.put(q.getName(), qRef);
+					String qName = q.getName();
+					if(qName.equals("the_geom")) {
+						questionPaths.put(f_id + qName, qRef);		// Geometries should be the only questions with a non unique name
+					} else {
+						questionPaths.put(qName, qRef);
+					}
 					
 					boolean cascade = false;
 					String cascadeInstanceId = q.getCascadeInstance();
@@ -1484,7 +1489,13 @@ public class SurveyTemplate {
 		for(Question q : questionList) {
 			
 			//String questionPath = q.getPath();
-			String questionPath = questionPaths.get(q.getName());
+			String qName = q.getName();
+			String questionPath = null;
+			if(qName.equals("the_geom")) {
+				questionPath = questionPaths.get(q.getFormId() + qName);
+			} else {
+				questionPath = questionPaths.get(q.getName());
+			}
 			// Set the question type for "begin group" questions
 			if(q.getType() != null && q.getType().equals("begin group")) {
 				
