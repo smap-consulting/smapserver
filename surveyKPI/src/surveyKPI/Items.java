@@ -227,6 +227,7 @@ public class Items extends Application {
 				
 				// Construct a new query that retrieves a geometry object as geoJson
 				StringBuffer cols = new StringBuffer("");
+				String geomType = null;
 				int newColIdx = 0;
 				JSONArray columns = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
@@ -241,7 +242,7 @@ public class Items extends Application {
 						
 						geomIdx = newColIdx;
 						cols.append("ST_AsGeoJSON(" + c.name + ") ");
-						
+						geomType = c.type;
 						newColIdx++;
 					
 					} else if(c.type.equals("image") || c.type.equals("audio") || c.type.equals("video")) {
@@ -256,7 +257,6 @@ public class Items extends Application {
 						
 					}
 					
-					
 					colNames.add(c.humanName);
 					columns.put(c.humanName);
 					newColIdx++;
@@ -265,7 +265,7 @@ public class Items extends Application {
 				/*
 				 * Add the server side calculations
 				 */
-				String sqlSSC = "select ssc.name, ssc.function from ssc ssc, form f " +
+				String sqlSSC = "select ssc.name, ssc.function, ssc.units from ssc ssc, form f " +
 						" where f.f_id = ssc.f_id " +
 						" and f.table_name = ? " +
 						" order by ssc.id;";
@@ -276,23 +276,38 @@ public class Items extends Application {
 				while(resultSet.next()) {
 					String sscName = resultSet.getString(1);
 					String sscFn = resultSet.getString(2);
+					String sscUnits = resultSet.getString(3);
 
-					if(sscFn.equals("area")) {
-						String colName = sscName + " (sqm)";
-						if(newColIdx != 0 ) {cols.append(",");}
-						cols.append("ST_Area(geography(the_geom), true) as \"" + colName + "\"");
-						columns.put(colName);
-						newColIdx++;
-						sscList.add(colName);
-					} else if (sscFn.equals("length")) {
-						String colName = sscName + " (m)";
-						if(newColIdx != 0 ) {cols.append(",");}
-						cols.append("ST_Length(geography(the_geom), true) as \"" + colName +"\"");
-						columns.put(colName);
-						newColIdx++;
-						sscList.add(colName);
-					} else {
-						log.info("Invalid SSC function: " + sscFn);
+					if(geomType != null) {
+						if(sscFn.equals("area")) {
+							String colName = sscName + " (" + sscUnits + ")";
+							if(newColIdx != 0 ) {cols.append(",");}
+							cols.append("ST_Area(geography(the_geom), true)");
+							if(sscUnits.equals("hectares")) {
+								cols.append(" / 10000");
+							}
+							cols.append(" as \"" + colName + "\"");
+							columns.put(colName);
+							newColIdx++;
+							sscList.add(colName);
+						} else if (sscFn.equals("length")) {
+							String colName = sscName + " (" + sscUnits + ")";
+							if(newColIdx != 0 ) {cols.append(",");}
+							if(geomType.equals("geopolygon") || geomType.equals("geoshape")) {
+								cols.append("ST_Length(geography(the_geom), true)");
+							} else {
+								cols.append("ST_Length(geography(the_geom), true)");
+							}
+							if(sscUnits.equals("km")) {
+								cols.append(" / 1000");
+							}
+							cols.append(" as \"" + colName + "\"");
+							columns.put(colName);
+							newColIdx++;
+							sscList.add(colName);
+						} else {
+							log.info("Invalid SSC function: " + sscFn);
+						}
 					}
 
 				}

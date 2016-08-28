@@ -248,7 +248,7 @@ public class ExportSurvey extends Application {
 			try {
 				
 				// Prepare statement to get server side includes
-				String sqlSSC = "select ssc.name, ssc.function, ssc.type from ssc ssc, form f " +
+				String sqlSSC = "select ssc.name, ssc.function, ssc.type, ssc.units from ssc ssc, form f " +
 						" where f.f_id = ssc.f_id " +
 						" and f.table_name = ? " +
 						" order by ssc.id;";
@@ -372,6 +372,7 @@ public class ExportSurvey extends Application {
 				for(FormDesc f : formList) {
 					TableColumn c;
 					int parentId = 0;
+					String geomType = null;
 					if(f.parent != null) {
 						parentId = Integer.parseInt(f.parent);
 					}
@@ -458,6 +459,7 @@ public class ExportSurvey extends Application {
 								String selName = null;
 								if(c.isGeometry()) {
 									selName = "ST_AsTEXT(" + name + ") ";
+									geomType = c.type;
 								} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 									selName = "timezone('UTC', " + name + ") as " + name;	
 								} else {
@@ -488,19 +490,13 @@ public class ExportSurvey extends Application {
 						while(resultSet.next()) {
 							String sscName = resultSet.getString(1);
 							String sscFn = resultSet.getString(2);
-							String sscType = resultSet.getString(2);
+							String sscType = resultSet.getString(3);
+							String sscUnits = resultSet.getString(4);
 							if(sscType == null) {
 								sscType = "decimal";
 							}
 
-							String colName = sscName;
-							if(sscFn.equals("area")) {
-								colName = sscName + " (sqm)";
-							} else if (sscFn.equals("length")) {
-								colName = sscName + " (m)";
-							} else {
-								log.info("Invalid SSC function: " + sscFn);
-							}
+							String colName = sscName + " (" + sscUnits + ")";
 							
 							if(f.maxRepeats > 1) {	// Columns need to be repeated horizontally
 								colName += "_" + (k + 1);
@@ -513,16 +509,31 @@ public class ExportSurvey extends Application {
 								}
 							}
 							
-							
 							// Set the sql selection text for this column (Only need to do this once, not for every repeating record)
 							if(k == 0) {
 								
 								String selName = null;
 								
 								if(sscFn.equals("area")) {
-									selName= "ST_Area(geography(the_geom), true) as " + sscName;
+									
+									selName = "ST_Area(geography(the_geom), true)";
+									if(sscUnits.equals("hectares")) {
+										selName += " / 10000";
+									}
+									selName += " as \"" + colName + "\"";
+									
 								} else if (sscFn.equals("length")) {
-									selName= "ST_Length(geography(the_geom), true) as " + sscName;
+									
+									if(geomType.equals("geopolygon") || geomType.equals("geoshape")) {
+										selName = "ST_Length(geography(the_geom), true)";
+									} else {
+										selName = "ST_Length(geography(the_geom), true)";
+									}
+									if(sscUnits.equals("km")) {
+										selName += " / 1000";
+									}
+									selName += " as \"" + colName + "\"";
+									
 								} else {
 									selName= sscName;
 								}
@@ -532,6 +543,13 @@ public class ExportSurvey extends Application {
 								} else {
 									f.columns += "," + selName;
 								}
+								
+								TableColumn tc = new TableColumn();
+								tc.name = selName;
+								tc.humanName = selName;
+								tc.type = sscType;
+								f.columnList.add(tc);
+								
 								f.columnCount++;
 							}
 

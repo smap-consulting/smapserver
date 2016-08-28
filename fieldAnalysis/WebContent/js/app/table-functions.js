@@ -241,7 +241,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 						// Grouped but no aggregating function. Show as an array
 						for(j = 0; j < groups[i].properties[key].length; j++) {
 							val = groups[i].properties[key][j];
-							if(key === "the_geom") {
+							if(key === "the_geom" || key.indexOf("geopolygon") === 0 || key.indexOf("geolinestring")) {
 								// Get the value from the geometry
 								if(typeof groups[i].geometry !== "undefined" && 
 										typeof groups[i].geometry.coordinates != "undefined") {
@@ -258,7 +258,8 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 						}
 					} else {
 						val = groups[i].properties[key];
-						if(key === "the_geom" && typeof groups[i].geometry !== "undefined") {
+						if((key === "the_geom" || key.indexOf("geopolygon") === 0 || key.indexOf("geolinestring") === 0) 
+								&& typeof groups[i].geometry !== "undefined") {
 							// Get the value from the geometry
 							val = groups[i].geometry.type + '[' + groups[i].geometry.coordinates + ']';
 						} else if(key === "_bad") {
