@@ -240,6 +240,7 @@ public class QuestionManager {
 				String source = q.source;
 				if(type.equals("geopolygon") || type.equals("geolinestring")) {
 					source = "user";
+					columnName = "the_geom";
 				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
 				String calculation = null;

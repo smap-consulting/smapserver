@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class TableColumn {
 	public String name;
 	public int qId;
+	public String question_name;
 	public String option_name;
 	public String humanName;
 	public boolean include;		// Include in the table

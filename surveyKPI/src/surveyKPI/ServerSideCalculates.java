@@ -115,7 +115,7 @@ public class ServerSideCalculates extends Application {
 			pstmt = connectionSD.prepareStatement(sql);	
 			
 			pstmt.setInt(1, sId);
-			System.out.println("sql: " + sql + " : " + sId);
+			log.info("Sql get forms for area or length: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {	
 				Form f = new Form();

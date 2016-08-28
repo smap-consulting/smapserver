@@ -55,12 +55,13 @@ $(document).ready(function() {
 		pArray = [],
 		param = [];
 	
+	localise.setlang();		// Localise HTML
+	
 	// Get the user details
 	globals.gIsAdministrator = false;
 	dont_get_current_survey = false;		// The current survey was not passed in the parameters
 	getLoggedInUser(getSurveyList, false, true, undefined, false, dont_get_current_survey);
 	
-
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
 		openForm("existing");

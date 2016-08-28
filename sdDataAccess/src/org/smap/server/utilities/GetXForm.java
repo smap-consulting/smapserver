@@ -644,13 +644,14 @@ public class GetXForm {
 		} else if(type.equals("begin repeat") && count) {
 			type = "string";		// For a calculate
 		}
-		if(!type.equals("begin group") && !type.equals("begin repeat")) {
+		if(!type.equals("begin group") && !type.equals("begin repeat") && !type.equals("geopolygon") && !type.equals("geolinestring")) {
 			questionElement.setAttribute("type", type);
 		}
 		
 		// Add reference
-		//String reference = q.getPath();	
-		String reference = template.getQuestionPaths().get(q.getName());
+		//String reference = q.getPath();
+		String reference = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
+		//String reference = template.getQuestionPaths().get(q.getName());
 		if(q.getType().equals("begin repeat") && count) {
 			reference += "_count";					// Reference is to the calculate question for this form
 		}
@@ -768,8 +769,8 @@ public class GetXForm {
 		// Add the reference attribute
 		if(questionElement != null) {
 			// String reference = parentXPath + "/" + q.getName();
-			String path = template.getQuestionPaths().get(q.getName());
-			System.out.println("xxxxx: " + path + " : " + q.getName());
+			String path = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
+			//String path = template.getQuestionPaths().get(q.getName());
 			questionElement.setAttribute("ref", path);
 		}
 		
@@ -1618,6 +1619,20 @@ public class GetXForm {
     	}   	
     	
 		return output;
+    }
+    
+    /*
+     * Get the question reference
+     * This adds the form id to geometry questions since these questions do not have unique names and
+     * the path is found through f_id + qname
+     */
+    private String getQuestionReference(HashMap<String, String> paths, int fId, String qName) {
+    	String key = qName;
+    	
+    	if(key.equals("the_geom")) {
+    		key = fId + key;
+    	}
+    	return paths.get(key);
     }
     
 }
