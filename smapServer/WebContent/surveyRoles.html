@@ -211,5 +211,40 @@
 		</div>
 	</div>
 </div>
+
+<div id="column_filter_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addcolumnFilterLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     				<h4 class="modal-title" id="addColumnFilterLabel"></h4>
+   			</div>
+   			
+		    <div class="modal-body">
+		    	<div class="alert alert-info lang" data-lang="ro_fr_i" role="alert"></div>
+				<form id="role_filter_column_form" class="form-horizontal" role="form">
+					<div class="form-group" data-toggle="tooltip" title="Column Filter">
+						<label for="filter_column_content" data-lang="ro_fr_rule" class="lang col-sm-2 control-label">filter</label>
+						<div class="col-sm-10">
+							<textarea id="filter_column_content" class="labelProp form-control"></textarea>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="filter_column_aq" data-lang="ro_aq" class="lang col-sm-2 control-label">aq</label>
+						<div class="col-sm-8">
+							<select id="filter_column_aq" class="labelProp form-control"></select>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+               	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+               	<button id="saveRowFilter" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
+       		</div>
+		
+		</div>
+	</div>
+</div>
 </body>
 </html>

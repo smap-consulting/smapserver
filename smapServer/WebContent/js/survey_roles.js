@@ -86,6 +86,12 @@ $(document).ready(function() {
 		updateRole(gIdx, "row_filter", $('#row_filter_popup'));
 	});
 	
+	// Save a column filter
+	$('#saveColumnFilter').click(function() {
+		//gRoles[gIdx].row_filter = $('#filter_row_content').val();
+		//updateRole(gIdx, "row_filter", $('#row_filter_popup'));
+	});
+	
 	$('#project_name').change(function() {
 		projectChanged();
  	 });
@@ -126,16 +132,16 @@ function surveyChanged() {
 	
 }
 
-function getSurveyQuestions(qId) {
+function getSurveyQuestions(sId) {
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/questionList/" + qId + "/none",
+		url: "/surveyKPI/questionList/" + sId + "/none/new",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
 			removeHourglass();
-			gCache[qId] = data;
-			refreshQuestionSelect(gCache[qId]);
+			gCache[sId] = data;
+			refreshQuestionSelect(gCache[sId]);
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
@@ -220,6 +226,9 @@ function refreshView() {
 		h[++idx] = '<th>';
 			h[++idx] = localise.set["ro_fr"];
 		h[++idx] = '</th>';
+		h[++idx] = '<th>';
+			h[++idx] = localise.set["ro_fc"];
+		h[++idx] = '</th>';
 		h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	
@@ -266,6 +275,18 @@ function refreshView() {
 				h[++idx] = '<i class="glyphicon glyphicon-filter"></i>';
 				h[++idx] = '</button>';
 			h[++idx] = '</td>';
+			h[++idx] = '<td>';
+				h[++idx] = '<button class="btn btn-xs column_filter';
+				if(!gRoles[i].enabled) {
+					h[++idx] = ' disabled';
+				}
+				if(gRoles[i].restrict_row) {
+					h[++idx] = ' btn-success';
+				}
+				h[++idx] = '">';
+				h[++idx] = '<i class="glyphicon glyphicon-filter"></i>';
+				h[++idx] = '</button>';
+			h[++idx] = '</td>';
 		h[++idx] = '</tr>';
 		
 		if(gRoles[i].enabled) {
@@ -289,7 +310,7 @@ function refreshView() {
 		gRoles[idx].enabled = !gRoles[idx].enabled;
 		updateRole(idx, "enabled", undefined);
 		
-		$this.closest('tr').find('.row_filter').toggleClass("disabled");
+		$this.closest('tr').find('.row_filter, .column_filter').toggleClass("disabled");
 		
 		setInfoMsg();
 	});
@@ -302,6 +323,16 @@ function refreshView() {
 			gIdx = $this.closest('tr').find('.btn-group').data("idx");
 			$('#filter_row_content').val(gRoles[gIdx].row_filter);
 			$('#row_filter_popup').modal("show");
+		}
+	});
+	
+	// Column filtering logic
+	$('.column_filter', $element).click(function() {
+		var $this = $(this);
+		
+		if(!$this.hasClass("disabled")) {
+			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			$('#column_filter_popup').modal("show");
 		}
 	});
 	

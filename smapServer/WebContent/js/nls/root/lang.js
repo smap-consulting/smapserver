@@ -568,6 +568,7 @@ define({
 	
 	// Roles
 	"ro_fr": "Filter rows",
+	"ro_fc": "Filter columns",
 	"ro_fr_rule": "Rows to be shown",
 	"ro_aq": "Available Questions",
 	"ro_fr_i": "Enter a rule that determines which rows will be shown for this role. Enclose question names in ${...}. Enclose text in single quotes.<br/>Example 1: ${region} = 'northern'<br/>Example 2: ${age} > 16"
