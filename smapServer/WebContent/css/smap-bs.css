@@ -510,6 +510,9 @@ textarea {
 	background-color: #ffffcc;
 }
 
+div > input.colgroup {
+	padding-right: 5px;
+}
 
 /* Tasks */
 .task_group_name {
@@ -598,5 +601,7 @@ td.completed, td.submitted {
 	font-size: 1.5em;
 	font-weight: bold;
 }
+
+
 
 

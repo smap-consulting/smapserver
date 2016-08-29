@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,10 +12,13 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Role;
+import org.smap.sdal.model.RoleColumnFilter;
 import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*****************************************************************************
 
@@ -210,12 +214,13 @@ public class RoleManager {
 					+ "r.name as name, "
 					+ "sr.enabled, "
 					+ "sr.id as linkid,"
-					+ "sr.row_filter" +
-					" from role r "
-					+ "left outer join survey_role sr " +
-					" on r.id = sr.r_id " +
-					" and sr.s_id = ? " +
-					" order by r.name asc";
+					+ "sr.row_filter,"
+					+ "sr.column_filter"
+					+ " from role r "
+					+ "left outer join survey_role sr "
+					+ " on r.id = sr.r_id "
+					+ " and sr.s_id = ? "
+					+ " order by r.name asc";
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, s_id);
@@ -224,6 +229,7 @@ public class RoleManager {
 							
 			Role role = null;
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			Type colFilterType = new TypeToken<ArrayList<RoleColumnFilter>>(){}.getType();
 			while(resultSet.next()) {		
 				role = new Role();
 				role.linkid = resultSet.getInt("linkid");
@@ -237,6 +243,11 @@ public class RoleManager {
 					if(sq.sql != null) {
 						role.row_filter = sq.raw.toString();
 					}
+				}
+				
+				String colFilter = resultSet.getString("column_filter");
+				if(colFilter != null) {
+					role.column_filter = gson.fromJson(colFilter, colFilterType);
 				}
 				
 				roles.add(role);
@@ -343,10 +354,42 @@ public class RoleManager {
 	}
 	
 	/*
+	 * Update the column filter in a survey link
+	 */
+	public void updateSurveyRoleColumnFilter(Connection sd, int sId, 
+			Role role, ResourceBundle localisation) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		String configString = gson.toJson(role.column_filter);
+		
+		try {
+			String sql = "update survey_role "
+					+ "set column_filter = ? "
+					+ "where id = ? "
+					+ "and s_id = ?";
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, configString);
+			pstmt.setInt(2, role.linkid);
+			pstmt.setInt(3, sId);
+			
+			log.info("Update survey roles: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+			    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+	}
+	
+	/*
 	 * Get the sql for a survey role filter for a specific user and survey
 	 * A user can have multiple roles as can a survey hence an array of roles is returned
 	 */
-	public ArrayList<SqlFrag> getSurveyRowFilter(Connection sd, int sId, String user, ResourceBundle localisation) throws SQLException {
+	public ArrayList<SqlFrag> getSurveyRowFilter(Connection sd, int sId, String user) throws SQLException {
 		
 		PreparedStatement pstmt = null;
 		ArrayList<SqlFrag> rfArray = new ArrayList<SqlFrag> ();
@@ -380,6 +423,49 @@ public class RoleManager {
 		}
 		
 		return rfArray;
+	}
+	
+	/*
+	 * Get the sql for a survey role filter for a specific user and survey
+	 * A user can have multiple roles as can a survey hence an array of roles is returned
+	 */
+	public ArrayList<RoleColumnFilter> getSurveyColumnFilter(Connection sd, int sId, String user) throws SQLException {
+		
+		PreparedStatement pstmt = null;
+		ArrayList<RoleColumnFilter> cfArray = new ArrayList<RoleColumnFilter> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			sql = "SELECT sr.column_filter "
+					+ "from survey_role sr, user_role ur, users u "
+					+ "where sr.s_id = ? "
+					+ "and sr.r_id = ur.r_id "
+					+ "and ur.u_id = u.id "
+					+ "and u.ident = ?";
+							
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, user);
+			log.info("Get surveyColumnFilter: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			Type cfArrayType = new TypeToken<ArrayList<RoleColumnFilter>>(){}.getType();
+			
+			while(resultSet.next()) {		
+				String sqlFragString = resultSet.getString("column_filter");
+				if(sqlFragString != null) {
+					ArrayList<RoleColumnFilter> cols = gson.fromJson(sqlFragString, cfArrayType);
+					cfArray.addAll(cols);
+				}		
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return cfArray;
 	}
 
 }

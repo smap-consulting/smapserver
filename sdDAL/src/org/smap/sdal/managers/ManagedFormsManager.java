@@ -72,6 +72,8 @@ public class ManagedFormsManager {
 			ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
+					sId,
+					uIdent,
 					0,
 					f.id,
 					f.tableName,

@@ -211,6 +211,8 @@ public class Items extends Application {
 				ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 						sd,
 						connection,
+						sId,
+						request.getRemoteUser(),
 						parent,
 						fId,
 						tName,
@@ -345,7 +347,7 @@ public class Items extends Application {
 				 * Add row filtering performed by RBAC
 				 */
 				RoleManager rm = new RoleManager();
-				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser(), localisation);
+				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
 				String rfString = "";
 				if(rfArray.size() > 0) {
 					for(SqlFrag rf : rfArray) {

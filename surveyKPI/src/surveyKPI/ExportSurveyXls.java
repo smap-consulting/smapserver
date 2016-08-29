@@ -146,6 +146,7 @@ public class ExportSurveyXls extends Application {
 		
 			xr.createXLS(sd, 
 					connectionResults,
+					request.getRemoteUser(),
 					sId, inc_id, 
 					inc_flat, 
 					exp_ro, 

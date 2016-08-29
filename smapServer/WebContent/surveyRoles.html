@@ -14,6 +14,8 @@
 	<!--  <link rel="stylesheet" href="/css/app.css" /> -->
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
+    <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
+        
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
     <script data-main="js/survey_roles" src="js/libs/require.js"></script>
@@ -222,25 +224,11 @@
    			
 		    <div class="modal-body">
 		    	<div class="alert alert-info lang" data-lang="ro_fr_i" role="alert"></div>
-				<form id="role_filter_column_form" class="form-horizontal" role="form">
-					<div class="form-group" data-toggle="tooltip" title="Column Filter">
-						<label for="filter_column_content" data-lang="ro_fr_rule" class="lang col-sm-2 control-label">filter</label>
-						<div class="col-sm-10">
-							<textarea id="filter_column_content" class="labelProp form-control"></textarea>
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label for="filter_column_aq" data-lang="ro_aq" class="lang col-sm-2 control-label">aq</label>
-						<div class="col-sm-8">
-							<select id="filter_column_aq" class="labelProp form-control"></select>
-						</div>
-					</div>
-				</form>
+				<div id="column_select"></div>
 			</div>
 			<div class="modal-footer">
                	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
-               	<button id="saveRowFilter" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
+               	<button id="saveColumnFilter" type="button" class="btn btn-primary lang" data-lang="c_save">save</button>
        		</div>
 		
 		</div>

@@ -166,6 +166,7 @@ public class XLSResultsManager {
 	public void createXLS(
 			Connection sd, 
 			Connection connectionResults,
+			String user,
 			int sId,
 			int [] inc_id,
 			boolean [] inc_flat,
@@ -284,6 +285,8 @@ public class XLSResultsManager {
 					f.columnList = GeneralUtilityMethods.getColumnsInForm(
 							sd,
 							connectionResults,
+							sId,
+							user,
 							parentId,
 							Integer.parseInt(f.f_id),
 							f.table_name,

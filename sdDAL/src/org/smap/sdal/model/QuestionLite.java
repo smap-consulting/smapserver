@@ -15,7 +15,4 @@ public class QuestionLite {
 	public int f_id;
 	public boolean is_ssc;
 	
-	// Properties for Role Based Access
-	public String access;
-	
 }

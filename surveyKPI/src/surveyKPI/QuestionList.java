@@ -124,7 +124,8 @@ public class QuestionList extends Application {
 					" AND t.type = 'none' " + 
 					" AND f.s_id = t.s_id " +
 					" WHERE f.s_id = ? " +
-					" AND q.source is not null";
+					" AND q.source is not null "
+					+ "and q.soft_deleted = false ";
 			
 			if(exc_read_only) {
 				sqlro = " AND q.readonly = 'false' ";
@@ -239,6 +240,7 @@ public class QuestionList extends Application {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtSSC = null;
 		try {
+			StringBuffer combinedSql = new StringBuffer("");
 			String sql = null;
 			String sql1 = null;
 			String sqlro = null;
@@ -250,34 +252,39 @@ public class QuestionList extends Application {
 				language = GeneralUtilityMethods.getDefaultLanguage(connectionSD, sId);
 			}
 			
-			sql1 = "SELECT q.q_id, q.qtype, t.value, q.qname " +
-					" FROM form f " +
-					" INNER JOIN question q " +
-					" ON f.f_id = q.f_id " +
-					" LEFT OUTER JOIN translation t " +
-					" ON q.qtext_id = t.text_id " +
-					" AND t.language = ? " +
-					" AND t.type = 'none' " + 
-					" AND f.s_id = t.s_id " +
-					" WHERE f.s_id = ? " +
-					" AND q.source is not null";
+			sql1 = "select q.q_id, q.qtype, t.value, q.qname "
+					+ "from form f "
+					+ "inner join question q "
+					+ "on f.f_id = q.f_id "
+					+ "left outer join translation t "
+					+ "on q.qtext_id = t.text_id "
+					+ "and t.language = ? "
+					+ "and t.type = 'none' " 
+					+ "and f.s_id = t.s_id "
+					+ "where f.s_id = ? "
+					+ "and q.source is not null "
+					+ "and q.soft_deleted = false ";
+								
 			
 			if(exc_read_only) {
-				sqlro = " AND q.readonly = 'false' ";
+				sqlro = " and q.readonly = 'false' ";
 			} else {
 				sqlro = "";
 			}
 			
 			if(single_type != null) {
-				sqlst = " AND q.qtype = ? ";
+				sqlst = " and q.qtype = ? ";
 			} else {
 				sqlst = "";
 			}
 			
-			sqlEnd = " ORDER BY f.table_name, q.seq;";
+			sqlEnd = " order by q.q_id asc;";		// Order required for Role Column Merge in survey_roles.js
 			
-			
-			sql = sql1 + sqlro  + sqlst + sqlEnd;	
+			combinedSql.append(sql1);
+			combinedSql.append(sqlro);
+			combinedSql.append(sqlst);
+			combinedSql.append(sqlEnd);
+			sql = combinedSql.toString();	
 			
 			pstmt = connectionSD.prepareStatement(sql);	 
 			pstmt.setString(1,  language);

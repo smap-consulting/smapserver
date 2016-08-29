@@ -198,7 +198,7 @@ public class ManagedForms extends Application {
 			TableManager tm = new TableManager();
 			
 			// 1. Check that the managed form is compatible with the survey
-			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, am.manageId);
+			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, am.manageId, request.getRemoteUser());
 			if(compatibleMsg != null) {
 				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 			}
@@ -237,7 +237,9 @@ public class ManagedForms extends Application {
 	 *  1. Calculations in the managed form refer to questions in either the managed form or the form
 	 *     we are attaching to
 	 */
-	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, int managedId) {
+	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
+			int managedId,
+			String user) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 			
@@ -249,7 +251,17 @@ public class ManagedForms extends Application {
 				qm.getDataProcessingConfig(sd, managedId, managedColumns, null);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
-				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, null, 0, f.id, null, false, false, false, false, 
+				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, 
+						null,
+						sId,
+						user,
+						0,
+						f.id, 
+						null, 
+						false, 
+						false, 
+						false, 
+						false, 
 						false	// Don't include other meta data
 						);
 				

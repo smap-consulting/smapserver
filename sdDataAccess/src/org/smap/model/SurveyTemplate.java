@@ -1268,7 +1268,6 @@ public class SurveyTemplate {
 			 */
 			for(int i= 0; i < formList.size(); i++) {
 				String ref = formList.get(i).getPath(formList);
-				System.out.println("Form references: " + ref + " : " + formList.get(i).getName());
 				if(ref != null) {
 					forms.put(ref, formList.get(i));
 				}
@@ -1295,7 +1294,6 @@ public class SurveyTemplate {
 				String qRef = q.getPath();
 				if(qRef != null) {
 					
-					System.out.println("Name: " + q.getName() + " ref: " + qRef);
 					questions.put(qRef, q);
 					String qName = q.getName();
 					if(qName.equals("the_geom")) {

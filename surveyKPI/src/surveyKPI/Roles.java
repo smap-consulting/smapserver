@@ -325,8 +325,6 @@ public class Roles extends Application {
 		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
 		
-		System.out.println("Updating role: " + role.name + " : " + role.id + " : " + role.linkid);
-		
 		RoleManager rm = new RoleManager();
 		try {
 			
@@ -338,6 +336,8 @@ public class Roles extends Application {
 				role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
 			} else if(property.equals("row_filter")) {
 				rm.updateSurveyRoleRowFilter(sd, sId, role, localisation);
+			} else if(property.equals("column_filter")) {
+				rm.updateSurveyRoleColumnFilter(sd, sId, role, localisation);
 			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(role);

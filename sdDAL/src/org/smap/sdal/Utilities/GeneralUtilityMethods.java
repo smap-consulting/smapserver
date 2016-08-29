@@ -17,6 +17,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,12 +27,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
+import org.smap.sdal.model.RoleColumnFilter;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
@@ -1969,8 +1973,11 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return a list of results columns for a form
 	 */
-	public static ArrayList<TableColumn> getColumnsInForm(Connection sd, 
+	public static ArrayList<TableColumn> getColumnsInForm(
+			Connection sd, 
 			Connection cResults, 
+			int sId,
+			String user,
 			int formParent,
 			int f_id,
 			String table_name,
@@ -1984,14 +1991,36 @@ public class GeneralUtilityMethods {
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
 		boolean uptodateTable = false;	// Set true if the results table has the latest meta data columns
 		
+		// Get column restrictions for RBAC
+		StringBuffer colList = new StringBuffer("");
+		if(sId > 0) {
+			System.out.println("Get column restrictions for survey: " + sId);
+			RoleManager rm = new RoleManager();
+			ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
+			System.out.println("Number of column fikters: " + rcfArray.size());
+			if(rcfArray.size() > 0) {
+				colList.append(" and q_id in (");
+				for(int i = 0; i < rcfArray.size(); i++) {
+					RoleColumnFilter rcf = rcfArray.get(i);
+					if(i > 0) {
+						colList.append(",");
+					}
+					colList.append(rcf.id);
+				}
+				colList.append(")");
+			}
+		}
+		
 		// SQL to get the questions
-		String sqlQuestions = "select qname, qtype, column_name, q_id, readonly, source_param, path "
+		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, path "
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
-				+ "and soft_deleted = 'false' "
-				+ "order by seq";
-		PreparedStatement pstmtQuestions = sd.prepareStatement(sqlQuestions);
+				+ "and soft_deleted = 'false' ";
+		
+		String sqlQuestion2 = colList.toString();
+		String sqlQuestion3 = "order by seq";
+		PreparedStatement pstmtQuestions = sd.prepareStatement(sqlQuestion1 + sqlQuestion2 + sqlQuestion3);
 		
 		// Get column names for select multiple questions
 		String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq "

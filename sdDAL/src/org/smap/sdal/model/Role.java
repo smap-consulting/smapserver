@@ -27,8 +27,8 @@ public class Role {
 	public String desc;
 	public boolean enabled;
 	public int linkid;
-	public ArrayList<Question> column_filter;	// Columns that are allowed to be seen by people with this role
-	public String row_filter;					// String row filter sent to client
+	public ArrayList<RoleColumnFilter> column_filter;	// Columns that are allowed to be seen by people with this role
+	public String row_filter;							// String row filter sent to client
 	public String changed_by;
 	public String changed_ts;
 }

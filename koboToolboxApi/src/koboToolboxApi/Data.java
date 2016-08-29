@@ -230,6 +230,8 @@ public class Data extends Application {
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
+					sId,
+					request.getRemoteUser(),
 					parentform,
 					fId,
 					table_name,
@@ -497,6 +499,8 @@ public class Data extends Application {
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
+					sId,
+					request.getRemoteUser(),
 					parentform,
 					fId,
 					table_name,

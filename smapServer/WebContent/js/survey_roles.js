@@ -29,12 +29,14 @@ require.config({
     paths: {
     	app: '../app',
     	jquery: 'jquery-2.1.1',
-    	lang_location: '..'
+    	lang_location: '..',
+    	icheck: './wb/plugins/iCheck/icheck.min',
     },
     shim: {
     	'app/common': ['jquery'],
         'bootstrap.min': ['jquery'],
-        'jquery.autosize.min': ['jquery']
+        'jquery.autosize.min': ['jquery'],
+      	'icheck': ['jquery']
     }
 });
 
@@ -46,6 +48,7 @@ require([
          'app/localise',
          'app/ssc',
          'app/globals',
+         'icheck',
          'jquery.autosize.min'], 
 		function($, common, bootstrap, modernizr, lang, ssc, globals) {
 
@@ -88,8 +91,24 @@ $(document).ready(function() {
 	
 	// Save a column filter
 	$('#saveColumnFilter').click(function() {
-		//gRoles[gIdx].row_filter = $('#filter_row_content').val();
-		//updateRole(gIdx, "row_filter", $('#row_filter_popup'));
+		var $this,
+			question,
+			column
+		
+		gRoles[gIdx].column_filter = [];
+		$('input', '#column_select').each(function(index){
+			$this = $(this);
+			question = gCache[globals.gCurrentSurvey][$this.val()];
+			
+			if($this.is(':checked')) {
+				column = {
+					id: question.id
+				};
+				gRoles[gIdx].column_filter.push(column);
+			}
+			
+		});
+		updateRole(gIdx, "column_filter", $('#column_filter_popup'));
 	});
 	
 	$('#project_name').change(function() {
@@ -127,7 +146,7 @@ function surveyChanged() {
 	if(!gCache[globals.gCurrentSurvey]) {
 		getSurveyQuestions(globals.gCurrentSurvey);
 	} else {
-		refreshQuestionSelect(gCache[qId]);
+		refreshQuestionSelect(gCache[globals.gCurrentSurvey]);
 	}
 	
 }
@@ -332,6 +351,7 @@ function refreshView() {
 		
 		if(!$this.hasClass("disabled")) {
 			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			refreshColumnSelect(gCache[globals.gCurrentSurvey], gRoles[gIdx].column_filter);
 			$('#column_filter_popup').modal("show");
 		}
 	});
@@ -342,6 +362,65 @@ function refreshView() {
 		$('#roles_alert').html(localise.set["msg_no_roles"]);
 	}
 	
+}
+
+/*
+ * Update the table table that shows enabled columns for this role
+ * Filter columns are assumed to be in the same order as questions
+ */
+function refreshColumnSelect(questions, filter_columns) {
+	
+	var h =[],
+	idx = -1,
+	i, j,
+	$element = $('#column_select');
+
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<th>';
+		h[++idx] = localise.set["c_question"];
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+	h[++idx] = '</th>';
+	h[++idx] = '<th>';
+		h[++idx] = localise.set["c_enabled"];
+	h[++idx] = '</th>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody>';
+	
+	j = 0;
+	for(i = 0; i < questions.length; i++) {
+		h[++idx] = '<tr>';
+		h[++idx] = '<td>';
+			h[++idx] = questions[i].name;
+		h[++idx] = '</td>';
+		h[++idx] = '<td>';
+			h[++idx] = questions[i].q;
+			h[++idx] = '</td>';
+		h[++idx] = '<td><span class="colgroup"><input type="checkbox" name="colgroup" value="';
+		h[++idx] = i;
+		h[++idx] = '"';
+		
+		// See if this question has been included in the filter columns
+		while(j < filter_columns.length && filter_columns[j].id <= questions[i].id) {
+			if(filter_columns[j].id ==  questions[i].id) {
+				h[++idx] = ' checked';
+			}
+			j++;
+		}
+		
+		h[++idx] = '></span></td>';
+		h[++idx] = '</tr>';
+	}
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+	
+	$element.empty().append(h.join(''));
+	
+	$('input', $element).iCheck({
+	    checkboxClass: 'icheckbox_square-green',
+	    radioClass: 'iradio_square-green'
+	});
 }
 
 function setInfoMsg() {
@@ -361,7 +440,7 @@ function setInfoMsg() {
 }
 
 /*
- * Enable or disable a role
+ * Update a role
  */
 function updateRole(idx, property, $popup) {
 	

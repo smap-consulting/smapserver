@@ -185,6 +185,8 @@ public class Data_CSV extends Application {
 				ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 						sd,
 						cResults,
+						sId,
+						request.getRemoteUser(),
 						0,			// parent form
 						fId,
 						table_name,
