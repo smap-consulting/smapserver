@@ -9,9 +9,6 @@ CATALINA_HOME=/usr/share/tomcat7
 postgresDriverLocation="http://jdbc.postgresql.org/download"				# Postgres jdbc driver
 #postgresDriver="postgresql-9.2-1002.jdbc4.jar"								# Postgres jdbc driver
 postgresDriver="postgresql-9.3-1102.jdbc41.jar"								# Postgres jdbc driver
-PGV=9.3																		# Postgres version
-#PGSV=2.1																	# Postgis version
-pg_conf="/etc/postgresql/$PGV/main/postgresql.conf"							# Postgres config
 sd="survey_definitions"														# Postgres config survey definitions db name
 results="results"															# Postgres config results db name
 tc_server_xml="/etc/tomcat7/server.xml"										# Tomcat config
@@ -22,7 +19,8 @@ a_config_conf="/etc/apache2/apache2.conf"									# Apache config
 a_config_prefork_conf="/etc/apache2/mods-available/mpm_prefork.conf"		# Apache 2.4 config
 a_default_xml="/etc/apache2/sites-available/default"						# Apache config
 a_default_ssl_xml="/etc/apache2/sites-available/default-ssl"				# Apache config
-upstart_dir="/etc/init"														# Subscriber config
+upstart_dir="/etc/init"														# Subscriber config for Ubuntu 14.04
+service_dir="/etc/systemd/system"											# Subscriber config for Ubuntu 16.04
 
 echo "Setting up your server to run Smap"
 echo "If you have already installed Smap and just want to upgrade you need to run deploy.sh and not this script"
@@ -34,24 +32,15 @@ case $choice in
         n|N) break;;
         y|Y)
 
-
-#echo '##### 0. Get repository for postgis 2.1'
-#
-# The following lines are taken from http://wiki.postgresql.org/wiki/Apt
-# If there are errors you should manually install postgres and postgis
-#CODENAME=$(lsb_release -cs 2>/dev/null)
-#echo "Writing /etc/apt/sources.list.d/pgdg.list ..."
-#sudo tee -a /etc/apt/sources.list.d/pgdg.list <<EOF
-#deb http://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main
-#EOF
-#wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-
 echo '##### 0. check configuration'
 # Set flag if this is apache2.4
 a24=`sudo apachectl -version | grep -c "2\.4"`
 if [ $a24 -eq 0 ]; then	
 	echo "%%%%%% Warning: Apache configuration files for Apache 2.4 will be installed. You may need to change these for your version of Apache web server"
 fi
+
+# Set flag for ubuntu 16.04
+u1604=`lsb_release -r | grep -c "16\.04"`
 
 echo '##### 1. Update Ubuntu'
 sudo apt-get update
@@ -89,12 +78,22 @@ sudo cp misc_files/tomcat-jdbc.jar $CATALINA_HOME/lib/		# Add file missing from 
 
 echo '##### 5. Install Postgres / Postgis'
 
-#sudo apt-get install language-pack-en-base -y
+# Install Postgres for Ubuntu 16.04
+if [ $u1604 -eq 1 ]; then
+PGV=9.5
+sudo apt-get install postgresql postgresql-contrib postgis postgresql-$PGV-postgis-2.2 -y
+fi
+
+# Install Postgres for Ubuntu 14.04
+if [ $u1604 -eq 0 ]; then
+PGV=9.3
 sudo apt-get install postgresql postgresql-contrib postgis postgresql-$PGV-postgis-2.1 -y
-#sudo apt-get install postgresql-$PGV-postgis-scripts -y
-sudo apt-get install postgresql-server-dev-$PGV -y
+sudo apt-get install postgresql-server-dev-9.3 -y
 sudo apt-get install build-essential libxml2-dev -y
 sudo apt-get install libgeos-dev libpq-dev libbz2-dev -y
+fi
+
+pg_conf="/etc/postgresql/$PGV/main/postgresql.conf"
 
 echo '##### 6. Create folders for files'
 sudo mkdir $filelocn
@@ -163,8 +162,17 @@ then
 	./apacheConfig.sh
 
 	echo '# copy subscriber upstart files'
-	sudo cp config_files/subscribers.conf $upstart_dir
-	sudo cp config_files/subscribers_fwd.conf $upstart_dir
+	if [ $u1604 -eq 1 ]; then
+		sudo cp config_files/subscribers.service $service_dir
+		sudo chmod 664 $service_dir/subscribers.service
+		sudo cp config_files/subscribers_fwd.service $service_dir
+		sudo chmod 664 $service_dir/subscribers_fwd.service
+	fi
+	
+	if [ $u1604 -eq 0 ]; then
+		sudo cp config_files/subscribers.conf $upstart_dir
+		sudo cp config_files/subscribers_fwd.conf $upstart_dir
+	fi
 
 	echo '# update bu.sh file'
 	sudo cp bu.sh ~postgres/bu.sh
@@ -192,8 +200,6 @@ then
 echo 'survey_definitions table does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $sd
 echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $sd 
-#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $sd
-#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $sd
 echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $sd
 sudo -u postgres psql -f setupDb.sql -d $sd
 else
@@ -207,8 +213,6 @@ then
 echo 'results table does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $results
 echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $results
-#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/postgis.sql -q -d $results
-#sudo -u postgres psql -f /usr/share/postgresql/$PGV/contrib/postgis-$PGSV/spatial_ref_sys.sql -q -d $results
 sudo -u postgres echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $results
 sudo -u postgres psql -f resultsDb.sql -d $results
 
@@ -247,10 +251,8 @@ sudo apt-get install imagemagick -y
 sudo apt-get install ffmpeg -y  --force-yes
 sudo apt-get install flvtool2 -y --force-yes
 
-echo '##### 15. Install PHP'
-sudo apt-get install php5-json -y
-sudo apt-get install libpcre3-dev -y
-sudo apt-get install php5 php5-pgsql libapache2-mod-php5 -y
+echo '##### 15. PHP Install Skipped'
+
 
 echo '##### 16. Install Python for xls form translations'
 sudo apt-get install python-dev -y

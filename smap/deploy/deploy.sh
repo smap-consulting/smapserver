@@ -1,5 +1,6 @@
 #!/bin/sh
 deploy_from="version1"
+u1604=`lsb_release -r | grep -c "16\.04"`
 
 service apache2 stop
 service tomcat7 stop
@@ -67,8 +68,14 @@ chown -R www-data:www-data /var/www/smap
 chmod -R o-rwx /var/www/smap
 
 #
+if [ $u1604 -eq 0 ]; then
 service subscribers stop
 service subscribers_fwd stop
+fi
+if [ $u1604 -eq 1 ]; then
+systemctl stop subscribers
+systemctl stop subscribers_fwd
+fi
 
 # old smap bin
 cp $deploy_from/subscribers.jar /usr/bin/smap
@@ -108,8 +115,15 @@ fi
 # Delete temporary files
 sudo rm -rf /smap/temp/*
 
+if [ $u1604 -eq 0 ]; then
 service subscribers start
 service subscribers_fwd start
+fi
+if [ $u1604 -eq 1 ]; then
+systemctl start subscribers
+systemctl start subscribers_fwd
+fi
+
 #
 service postgresql start
 service tomcat7 start
