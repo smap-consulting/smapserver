@@ -547,7 +547,6 @@ public class Data extends Application {
 				CustomReportsManager crm = new CustomReportsManager ();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
 				columns.addAll(managedColumns);
-				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
 			
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
