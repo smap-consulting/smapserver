@@ -351,6 +351,9 @@ function refreshView() {
 		
 		if(!$this.hasClass("disabled")) {
 			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			if(!gRoles[gIdx].column_filter) {
+				gRoles[gIdx].column_filter = [];
+			}
 			refreshColumnSelect(gCache[globals.gCurrentSurvey], gRoles[gIdx].column_filter);
 			$('#column_filter_popup').modal("show");
 		}
@@ -365,7 +368,7 @@ function refreshView() {
 }
 
 /*
- * Update the table table that shows enabled columns for this role
+ * Update the table that shows enabled columns for this role
  * Filter columns are assumed to be in the same order as questions
  */
 function refreshColumnSelect(questions, filter_columns) {
