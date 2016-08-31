@@ -55,7 +55,9 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
@@ -175,6 +177,7 @@ public class Data extends Application {
 		String table_name = null;
 		int parentform = 0;
 		int managedId = 0;
+		boolean hasRbacFilter = false;
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
 
@@ -257,32 +260,58 @@ public class Data extends Application {
 			}
 			
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
+				StringBuffer sqlGetData = new StringBuffer("");
+				sqlGetData.append("select ");
+				sqlGetData.append(columnSelect);
+				sqlGetData.append(" from ");
+				sqlGetData.append(table_name);
+				sqlGetData.append(" where prikey >= ? ");
+				sqlGetData.append("and _bad = 'false'");
 				
-				String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
-						+ " where prikey >= ? "
-						+ "and _bad = 'false'";
-				String sqlSelect = "";
+				// Add row selection clause
+				StringBuffer sqlSelect = new StringBuffer("");
 				if(parkey > 0) {
-					sqlSelect = " and parkey = ?";
+					sqlSelect.append(" and parkey = ?");
 				}
 				if(hrk != null) {
-					sqlSelect = " and _hrk = ?";
+					sqlSelect.append(" and _hrk = ?");
 				}
 				
-				String sqlGetDataOrder = null;
-				if(sort != null) {
-					// User has requested a specific sort order
-					sqlGetDataOrder = " order by " + getSortColumn(columns, sort) + " " + dirn + ";";
-				} else {
-					// Set default sort order
-					if(mgmt) {
-						sqlGetDataOrder = " order by prikey desc limit 10000";
-					} else {
-						sqlGetDataOrder = " order by prikey asc;";
+				// RBAC filter
+				RoleManager rm = new RoleManager();
+				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
+				if(rfArray.size() > 0) {
+					String rFilter = rm.convertSqlFragsToSql(rfArray);
+					if(rFilter.length() > 0) {
+						sqlSelect.append(" and ");
+						sqlSelect.append(rFilter);
+						hasRbacFilter = true;
 					}
 				}
 				
-				pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
+				StringBuffer sqlGetDataOrder = new StringBuffer("");
+				if(sort != null) {
+					// User has requested a specific sort order
+					sqlGetDataOrder.append(" order by "); 
+					sqlGetDataOrder.append(getSortColumn(columns, sort));
+					sqlGetDataOrder.append(" ");
+					sqlGetDataOrder.append(dirn);
+				} else {
+					// Set default sort order
+					if(mgmt) {
+						sqlGetDataOrder.append(" order by prikey desc limit 10000");
+					} else {
+						sqlGetDataOrder.append(" order by prikey asc;");
+					}
+				}
+				
+				// Prepare statement
+				StringBuffer sql = sqlGetData;
+				sql.append(sqlSelect);
+				sql.append(sqlGetDataOrder);
+				pstmtGetData = cResults.prepareStatement(sql.toString());
+				
+				// Set parameters
 				int paramCount = 1;
 				pstmtGetData.setInt(paramCount++, start);
 				if(parkey > 0) {
@@ -290,6 +319,9 @@ public class Data extends Application {
 				}
 				if(hrk != null) {
 					pstmtGetData.setString(paramCount++, hrk);
+				}
+				if(hasRbacFilter) {
+					paramCount = rm.setPstmtParameters(pstmtGetData, rfArray, paramCount);
 				}
 				
 				log.info("Get data: " + pstmtGetData.toString());
@@ -554,9 +586,7 @@ public class Data extends Application {
 				for(int i = 0; i < selectPairs.length; i++) {
 					String [] aSelect = selectPairs[i].split("::");
 					if(aSelect.length > 1) {
-						System.out.println("Pair: " + aSelect[0] + " : " + aSelect[1]);
 						for(int j = 0; j < columns.size(); j++) {
-							//System.out.println("name: " + columns.get(j).name);
 							if(columns.get(j).name.equals(aSelect[0])) {
 								TableColumn c = columns.get(j);
 								boolean stringFnApplies = false;
@@ -604,7 +634,6 @@ public class Data extends Application {
 				
 				pstmtGetSimilar = cResults.prepareStatement(sqlGetSimilar + sqlGroup + sqlHaving);
 				pstmtGetSimilar.setInt(1, start);
-				System.out.println("Get Similar: " + pstmtGetSimilar.toString());
 				rs = pstmtGetSimilar.executeQuery();
 				
 				/*

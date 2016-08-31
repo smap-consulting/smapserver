@@ -14,7 +14,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Role;
 import org.smap.sdal.model.RoleColumnFilter;
 import org.smap.sdal.model.SqlFrag;
-import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.SqlFragParam;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -423,6 +423,50 @@ public class RoleManager {
 		}
 		
 		return rfArray;
+	}
+	
+	/*
+	 * Convert an array of sql fragments into raw SQL
+	 */
+	public String convertSqlFragsToSql(ArrayList<SqlFrag> rfArray) {
+		StringBuffer rfString = new StringBuffer("");
+		StringBuffer sqlFilter = new StringBuffer("");
+		if(rfArray.size() > 0) {
+			for(SqlFrag rf : rfArray) {
+				if(rf.columns.size() > 0) {
+					if(rfString.length() > 0) {
+						rfString.append(" or");
+					}
+					rfString.append(" (");
+					rfString.append(rf.sql.toString());
+					rfString.append(")");
+				}
+			}
+			sqlFilter.append("(");
+			sqlFilter.append(rfString);
+			sqlFilter.append(")");
+		}
+		return sqlFilter.toString();
+	}
+	
+	/*
+	 * Set the parameters for a prepared statement
+	 */
+	public int setPstmtParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
+		int attribIdx = index;
+		for(SqlFrag rf : rfArray) {
+			for(int i = 0; i < rf.params.size(); i++) {
+				SqlFragParam p = rf.params.get(i);
+				if(p.type.equals("text")) {
+					pstmt.setString(attribIdx++, p.sValue);
+				} else if(p.type.equals("integer")) {
+					pstmt.setInt(attribIdx++,  p.iValue);
+				} else if(p.type.equals("double")) {
+					pstmt.setDouble(attribIdx++,  p.dValue);
+				}
+			}
+		}
+		return attribIdx;
 	}
 	
 	/*
