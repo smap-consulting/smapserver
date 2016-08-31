@@ -369,7 +369,7 @@ public class XLSFormManager {
 			} 
 			
 				
-			if(!inMeta && !q.name.equals("meta_groupEnd")) {
+			if(!inMeta && !q.name.equals("meta_groupEnd") && !q.soft_deleted) {
 				
 				if(isRow(q)) {
 					Row row = surveySheet.createRow(rowNumberSurvey++);
