@@ -154,7 +154,7 @@ function surveyChanged() {
 function getSurveyQuestions(sId) {
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/questionList/" + sId + "/none/new",
+		url: "/surveyKPI/questionList/" + sId + "/none/new/topform",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
