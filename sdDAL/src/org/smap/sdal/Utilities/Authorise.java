@@ -40,6 +40,13 @@ public class Authorise {
 	public static String MANAGE = "manage";
 	public static String SECURITY = "security";
 	
+	public static int ADMIN_ID = 1;
+	public static int ANALYST_ID = 2;
+	public static int ENUM_ID = 3;
+	public static int ORG_ID = 4;
+	public static int MANAGE_ID = 5;
+	public static int SECURITY_ID = 6;
+	
 	//private String requiredGroup;
 	ArrayList<String> permittedGroups; 
 	
@@ -57,7 +64,7 @@ public class Authorise {
 	}
 	
 	/*
-	 * Check to see if the user has the role required to upload any survey
+	 * Check to see if the user has the rights to perform the requested action
 	 */
 	public boolean isAuthorised(Connection conn, String user) {
 		ResultSet resultSet = null;
@@ -115,6 +122,56 @@ public class Authorise {
 			}
  			// Close the connection as throwing an exception will end the service call
 			
+ 			SDDataSource.closeConnection("isAuthorised", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Check to make sure the user is a valid temporary user
+	 */
+	public boolean isValidTemporaryUser(Connection conn, String user) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		String sql = "select count(*) from users u " +
+				" where u.ident = ? " +
+				" and u.temporary = true";
+		
+		try {
+			pstmt = conn.prepareStatement(sql); 	
+			pstmt.setString(1, user);
+
+			log.info("is temporary user: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"SQL Error during authorisation", e);
+			sqlError = true;
+		} finally {		
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+		// Check to see if the user was authorised to access this service
+ 		if(count == 0 || sqlError) {
+ 			log.info("Authorisation failed for: " + user + " needs to be a temporary user");
  			SDDataSource.closeConnection("isAuthorised", conn);
 			
 			if(sqlError) {

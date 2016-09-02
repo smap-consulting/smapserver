@@ -564,7 +564,7 @@ public class Tasks extends Application {
 				if(tgClear) {
 					tm.deleteTasksInTaskGroup(sd, tgId);
 				}
-				tm.writeTaskList(sd, tl, pId, tgId, request.getServerName(), true, oId);
+				tm.writeTaskList(sd, tl, pId, tgId, request.getScheme() + "://" + request.getServerName(), true, oId);
 				
 				/*
 				 * Get the tasks out of the database

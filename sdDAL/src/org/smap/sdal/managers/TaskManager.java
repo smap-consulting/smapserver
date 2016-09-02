@@ -11,14 +11,20 @@ import java.util.Calendar;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import javax.ws.rs.core.Request;
+
+import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Location;
+import org.smap.sdal.model.Project;
 import org.smap.sdal.model.TaskBulkAction;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
+import org.smap.sdal.model.User;
+import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
@@ -349,14 +355,14 @@ public class TaskManager {
 			TaskListGeoJson tl,
 			int pId,
 			int tgId,
-			String hostname,
+			String urlPrefix,
 			boolean updateResources,
 			int oId) throws Exception {
 		
 		ArrayList<TaskFeature> features = tl.features;
 		for(int i = 0; i < features.size(); i++) {
 			TaskFeature tf = features.get(i);
-				writeTask(sd, pId, tgId, tf, hostname, updateResources, oId);
+				writeTask(sd, pId, tgId, tf, urlPrefix, updateResources, oId);
 		}
 	
 	}
@@ -762,14 +768,11 @@ public class TaskManager {
 	 * Create a new task
 	 */
 	public void writeTask(Connection sd, int pId, int tgId, 
-			TaskFeature tf, 
-			String hostname,
+			TaskFeature tf,
+			String urlPrefix,
 			boolean updateResources,
 			int oId	
 			) throws Exception {
-		
-		String sqlTempUser = "insert into users (ident, o_id, email, name) values (?, ?, ?, ?) ";
-		PreparedStatement pstmtTempUser = null;
 		
 		String insertSql1 = "insert into tasks (" +
 				"p_id, " +
@@ -858,19 +861,23 @@ public class TaskManager {
 			 */
 			String tempUserId = null;
 			if(tf.properties.generate_user) {
+				UserManager um = new UserManager();
 				tempUserId = "u" + String.valueOf(UUID.randomUUID());
-				pstmtTempUser = sd.prepareStatement(sqlTempUser, Statement.RETURN_GENERATED_KEYS);
-				pstmtTempUser.setString(1, tempUserId);
-				pstmtTempUser.setInt(2, oId);
-				pstmtTempUser.setString(3, tf.properties.email);
-				pstmtTempUser.setString(4, tf.properties.assignee_name);
+				User u = new User();
+				u.ident = tempUserId;
+				u.email = tf.properties.email;
+				u.name = tf.properties.assignee_name;
 				
-				log.info("Create temporary user: " + pstmtTempUser.toString());
-				pstmtTempUser.executeUpdate();
-				ResultSet generatedKeys = pstmtTempUser.getGeneratedKeys();
-				if(generatedKeys.next()) {
-					tf.properties.assignee = generatedKeys.getInt(1);
-				} 
+				// Only allow access to the project used by this task
+				u.projects = new ArrayList<Project> ();
+				Project p = new Project();
+				p.id = pId;
+				u.projects.add(p);
+				
+				// Only allow enum access
+				u.groups = new ArrayList<UserGroup> ();
+				u.groups.add(new UserGroup(Authorise.ENUM_ID, Authorise.ENUM));
+				tf.properties.assignee = um.createTemporaryUser(sd, u, oId);
 				
 			} else if(tf.properties.assignee <= 0 && tf.properties.assignee_ident != null && tf.properties.assignee_ident.trim().length() > 0) {
 				 
@@ -888,9 +895,13 @@ public class TaskManager {
 			
 			
 			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, tf.properties.form_id);
-			String formUrl = "http://" + hostname + "/formXML?key=" + targetSurveyIdent;
+			String formUrl = null;
 			if(tf.properties.generate_user) {
-				formUrl += "&id=" + tempUserId;		// Add the temporary logon
+
+				formUrl = urlPrefix + "/formXML/id/" + tempUserId + 
+						"?key=" + targetSurveyIdent;
+			} else {
+				formUrl = urlPrefix + "/formXML?key=" + targetSurveyIdent;
 			}
 			String geoType = null;
 			String sql = null;
@@ -1009,7 +1020,6 @@ public class TaskManager {
 			if(pstmtGetAssigneeId != null) try {pstmtGetAssigneeId.close(); } catch(SQLException e) {};
 			if(pstmtHasLocationTrigger != null) try {pstmtHasLocationTrigger.close(); } catch(SQLException e) {};
 			if(pstmtUpdateLocationTrigger != null) try {pstmtUpdateLocationTrigger.close(); } catch(SQLException e) {};
-			if(pstmtTempUser != null) try {pstmtTempUser.close(); } catch(SQLException e) {};
 		}
 		
 	}
@@ -1018,6 +1028,12 @@ public class TaskManager {
 	 * Apply an action to multiple tasks
 	 */
 	public void applyBulkAction(Connection sd, int pId, TaskBulkAction action) throws Exception {
+		
+		String sqlUsers = "delete from users where temporary = true and id in "
+				+ "(select a.assignee from assignments a, tasks t "
+				+ "where a.task_id = t.id "
+				+ "and t.p_id = ? "
+				+ "and a.task_id in (";  
 		
 		String deleteSql = "delete from tasks where p_id = ? and id in (";
 		String assignSql = "update assignments set assignee = ? "
@@ -1034,6 +1050,7 @@ public class TaskManager {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtGetUnassigned = null;
 		PreparedStatement pstmtCreateAssignments = null;
+		PreparedStatement pstmtDelTempUsers = null;
 		
 		try {
 
@@ -1050,11 +1067,18 @@ public class TaskManager {
 			whereSql += ")";
 			
 			if(action.action.equals("delete")) {
+				
+				// Delete temporary users
+				pstmtDelTempUsers = sd.prepareStatement(sqlUsers + whereSql + ")");
+				pstmtDelTempUsers.setInt(1, pId);
+				log.info("Del temp users created for tasks to be deleted: " + pstmtDelTempUsers.toString());
+				pstmtDelTempUsers.executeUpdate();
+				
 				pstmt = sd.prepareStatement(deleteSql + whereSql);
 				pstmt.setInt(1, pId);
 			} else if(action.action.equals("assign")) {
 				
-				// Get tasks that have not had an assignemnt created
+				// Get tasks that have not had an assignment created
 				pstmtGetUnassigned = sd.prepareStatement(sqlGetUnassigned + whereSql);
 				pstmtCreateAssignments = sd.prepareCall(sqlCreateAssignments);
 				log.info("Getting unassigned tasks: " + pstmtGetUnassigned.toString());
@@ -1079,6 +1103,7 @@ public class TaskManager {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
 			if(pstmtGetUnassigned != null) try {pstmtGetUnassigned.close(); } catch(SQLException e) {};
 			if(pstmtCreateAssignments != null) try {pstmtCreateAssignments.close(); } catch(SQLException e) {};	
+			if(pstmtDelTempUsers != null) try {pstmtDelTempUsers.close(); } catch(SQLException e) {};	
 		}
 		
 	}
@@ -1115,8 +1140,9 @@ public class TaskManager {
 	 */
 	public void deleteTasksInTaskGroup(Connection sd, int tgId) throws SQLException {
 		
-		String sqlUsers = "delete from users where temporary = true and task_id in "
-				+ "(select id from tasks where tg_id = ?)"; 
+		String sqlUsers = "delete from users where temporary = true and id in "
+				+ "(select assignee from assignments where task_id in "
+				+ "(select id from tasks where tg_id = ?))"; 
 		PreparedStatement pstmtUsers = null;
 		
 		String sql = "delete from tasks where tg_id = ?"; 
@@ -1149,13 +1175,24 @@ public class TaskManager {
 	 */
 	public void deleteTask(Connection sd, int tId, int pId) throws SQLException {
 		
-		String sqlUsers = "delete from users where temporary = true and task_id = ?; "; 
+		String sqlUsers = "delete from users where temporary = true and id in "
+				+ "(select assignee from assignments a, tasks t where a.task_id = ? "
+				+ "and a.task_id = t.id "
+				+ "and t.p_id = ?)"; 
 		PreparedStatement pstmtUsers = null;
 		
-		String sql = "delete from tasks where id = ? and p_id = ?; "; 
+		String sql = "delete from tasks where id = ? and p_id = ?"; 
 		PreparedStatement pstmt = null;
 		
 		try {
+			
+			// Delete any temporary users created for this task
+			pstmtUsers = sd.prepareStatement(sqlUsers);
+			pstmtUsers.setInt(1, tId);
+			pstmtUsers.setInt(2, pId);
+			
+			log.info("Delete temporary user: " + pstmtUsers.toString());
+			pstmtUsers.executeUpdate();
 			
 			// Delete the task
 			pstmt = sd.prepareStatement(sql);
@@ -1163,19 +1200,7 @@ public class TaskManager {
 			pstmt.setInt(2, pId);
 		
 			log.info("Delete task: " + pstmt.toString());
-			int count = pstmt.executeUpdate();
-			
-			if(count == 1) {
-				// Delete any temporary users created for this task
-				// Only complete the delete if a task was found in the specified project (security check)
-				pstmtUsers = sd.prepareStatement(sqlUsers);
-				pstmtUsers.setInt(1, tId);
-				
-				log.info("Delete temporary user: " + pstmtUsers.toString());
-				pstmtUsers.executeUpdate();
-			}
-			
-
+			pstmt.executeUpdate();
 				
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};

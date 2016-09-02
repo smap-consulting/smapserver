@@ -319,12 +319,12 @@ sudo apt-get install gdal-bin -y
 sudo apt-get install ttf-dejavu -y
 
 # Add a file containing the version number
-echo "1601" > ~/smap_version
+echo "1608" > ~/smap_version
 
 echo '##### 21. Deploy Smap'
 cd ../deploy
 chmod +x deploy.sh
-sudo ./deploy.sh $mysql_password
+sudo ./deploy.sh
 cd ../install
 
 esac

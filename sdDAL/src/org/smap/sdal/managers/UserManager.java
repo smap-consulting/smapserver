@@ -324,6 +324,40 @@ public class UserManager {
 	}
 	
 	/*
+	 * Create a new temporary user
+	 */
+	public int createTemporaryUser(Connection sd, 
+			User u, 
+			int o_id) throws Exception {
+		
+		int u_id = -1;
+		String sql = "insert into users (ident, o_id, email, name, temporary) values (?, ?, ?, ?, true) ";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setString(1, u.ident);
+			pstmt.setInt(2, o_id);
+			pstmt.setString(3, u.email);
+			pstmt.setString(4, u.name);
+			log.info("SQL: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if (rs.next()){
+			    u_id = rs.getInt(1);
+			    insertUserGroupsProjects(sd, u, u_id, false, false);
+			}
+			
+		}  finally {		
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			
+		}
+		return u_id;
+	}
+	
+	/*
 	 * Update a users details
 	 */
 	public void updateUser(Connection sd, 

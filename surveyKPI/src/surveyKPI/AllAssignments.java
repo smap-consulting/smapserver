@@ -44,6 +44,7 @@ import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Features;
@@ -1726,7 +1727,8 @@ public class AllAssignments extends Application {
 
 		try {
 			
-			
+			TaskManager tm = new TaskManager();
+			tm.deleteTasksInTaskGroup(connectionSD, tg_id);		// Note can't rely on cascading delete as temporary users need to be deleted
 			String deleteSQL = "delete from task_group where tg_id = ?; "; 
 			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
 			
