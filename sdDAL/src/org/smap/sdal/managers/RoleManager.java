@@ -450,9 +450,9 @@ public class RoleManager {
 	}
 	
 	/*
-	 * Set the parameters for a prepared statement
+	 * Set the parameters for RBAC statement
 	 */
-	public int setPstmtParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
+	public int setRbacParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
 		int attribIdx = index;
 		for(SqlFrag rf : rfArray) {
 			for(int i = 0; i < rf.params.size(); i++) {

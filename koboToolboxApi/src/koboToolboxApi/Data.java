@@ -321,7 +321,7 @@ public class Data extends Application {
 					pstmtGetData.setString(paramCount++, hrk);
 				}
 				if(hasRbacFilter) {
-					paramCount = rm.setPstmtParameters(pstmtGetData, rfArray, paramCount);
+					paramCount = rm.setRbacParameters(pstmtGetData, rfArray, paramCount);
 				}
 				
 				log.info("Get data: " + pstmtGetData.toString());
