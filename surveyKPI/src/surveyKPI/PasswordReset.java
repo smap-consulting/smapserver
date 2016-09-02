@@ -208,7 +208,7 @@ public class PasswordReset extends Application {
 			
 			connectionSD.setAutoCommit(false);
 			
-			// Get the user ident just for logging, also check that there is an valid onetime token
+			// Get the user ident just for logging, also check that there is a valid onetime token
 			String sql = "select ident, name from users where one_time_password = ? and one_time_password_expiry > timestamp 'now'"; 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, pd.onetime);

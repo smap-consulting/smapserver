@@ -101,6 +101,8 @@ public class XLSTaskManager {
 				value = props.status;
 			} else if(name.equals("assignee_ident")) {
 				value = props.assignee_ident;
+			} else if(name.equals("generated_user_name")) {
+				value = props.assignee_name;
 			} else if(name.equals("location_trigger")) {
 				value = props.location_trigger;
 			} else if(name.equals("from")) {
@@ -121,6 +123,8 @@ public class XLSTaskManager {
 				value = String.valueOf(props.repeat);
 			} else if(name.equals("email")) {
 				value = props.email;
+			} else if(name.equals("url")) {
+				value = props.url;
 			} else if(name.equals("lon")) {
 				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
 			} else if(name.equals("lat")) {
@@ -164,7 +168,7 @@ public class XLSTaskManager {
 	/*
 	 * Create a task list from an XLS file
 	 */
-	public TaskListGeoJson getXLSTaskList(String type, InputStream inputStream) throws IOException {
+	public TaskListGeoJson getXLSTaskList(String type, InputStream inputStream, ResourceBundle localisation) throws Exception {
 		
 		Sheet sheet = null;
 		Sheet settingsSheet = null;
@@ -232,33 +236,44 @@ public class XLSTaskManager {
                 		TaskProperties tp = new TaskProperties();
                 		tf.properties = tp;
 
-                		
-                		try {
-                			tp.id = 0;
-                			tp.form_name = getColumn(row, "form", header, lastCellNum, null);
-                			tp.name = getColumn(row, "name", header, lastCellNum, "");
-                			tp.status = getColumn(row, "status", header, lastCellNum, "new");
-                			tp.location_trigger = getColumn(row, "location_trigger", header, lastCellNum, null);
-                			tp.assignee_ident = getColumn(row, "assignee_ident", header, lastCellNum, null);
-                			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
-                					getColumn(row, "lat", header, lastCellNum, "0") + ")";
-                			tp.guidance = getColumn(row, "guidance", header, lastCellNum, null);
-                			
-                			// Get from value
-                			tp.from = getGmtDate(row, "from", header, lastCellNum, timeZoneId, gmtZoneId);
-                			tp.to = getGmtDate(row, "to", header, lastCellNum, timeZoneId, gmtZoneId);
-                			
-                			String repValue = getColumn(row, "repeat", header, lastCellNum, null);
-                			if(repValue != null && repValue.equals("true")) {
-                				tp.repeat = true;
-                			} else {
-                				tp.repeat = false;
-                			}
-                		    
-                			tl.features.add(tf);
-                		} catch (Exception e) {
-                			log.log(Level.SEVERE, e.getMessage(), e);
-                		}
+            			tp.id = 0;
+            			tp.form_name = getColumn(row, "form", header, lastCellNum, null);
+            			if(tp.form_name == null || tp.form_name.trim().length() == 0) {
+            				continue;	// No form no task
+            			}
+            			tp.name = getColumn(row, "name", header, lastCellNum, "");
+            			tp.status = getColumn(row, "status", header, lastCellNum, "new");
+            			tp.location_trigger = getColumn(row, "location_trigger", header, lastCellNum, null);
+            			tp.assignee_ident = getColumn(row, "assignee_ident", header, lastCellNum, null);
+            			if(tp.assignee_ident == null || tp.assignee_ident.trim().length() == 0) {
+            				String genUser = getColumn(row, "generate_user", header, lastCellNum, null);
+            				if(genUser != null && genUser.trim().toLowerCase().equals("yes")) {
+            					tp.generate_user = true;
+            					tp.assignee_name = getColumn(row, "generated_user_name", header, lastCellNum, null);
+            					if(tp.assignee_name == null || tp.assignee_name.trim().length() == 0) {
+            						throw new Exception(localisation.getString("t_no_user_name"));
+            					}
+            				} else {
+            					throw new Exception(localisation.getString("t_no_user"));
+            				}
+            			}
+            			tp.location = "POINT(" + getColumn(row, "lon", header, lastCellNum, "0") + " " + 
+            					getColumn(row, "lat", header, lastCellNum, "0") + ")";
+            			tp.guidance = getColumn(row, "guidance", header, lastCellNum, null);
+            			
+            			// Get from value
+            			tp.from = getGmtDate(row, "from", header, lastCellNum, timeZoneId, gmtZoneId);
+            			tp.to = getGmtDate(row, "to", header, lastCellNum, timeZoneId, gmtZoneId);
+            			
+            			String repValue = getColumn(row, "repeat", header, lastCellNum, null);
+            			if(repValue != null && repValue.equals("true")) {
+            				tp.repeat = true;
+            			} else {
+            				tp.repeat = false;
+            			}
+            		    
+            			tl.features.add(tf);
+                	
                 	}
                 	
                 }
@@ -519,12 +534,15 @@ public class XLSTaskManager {
 		cols.add(new Column(localisation, colNumber++, "name"));
 		cols.add(new Column(localisation, colNumber++, "status"));
 		cols.add(new Column(localisation, colNumber++, "assignee_ident"));
+		cols.add(new Column(localisation, colNumber++, "generate_user"));
+		cols.add(new Column(localisation, colNumber++, "generated_user_name"));
+		cols.add(new Column(localisation, colNumber++, "email"));
 		cols.add(new Column(localisation, colNumber++, "location_trigger"));
 		cols.add(new Column(localisation, colNumber++, "from"));
 		cols.add(new Column(localisation, colNumber++, "to"));
 		cols.add(new Column(localisation, colNumber++, "guidance"));
 		cols.add(new Column(localisation, colNumber++, "repeat"));
-		cols.add(new Column(localisation, colNumber++, "email"));
+		cols.add(new Column(localisation, colNumber++, "url"));
 		cols.add(new Column(localisation, colNumber++, "address"));
 		cols.add(new Column(localisation, colNumber++, "lon"));
 		cols.add(new Column(localisation, colNumber++, "lat"));

@@ -495,6 +495,12 @@ public class Tasks extends Application {
 		FileItem file = null;
 
 		try {
+			
+			sd = SDDataSource.getConnection("Tasks-TaskUpload");
+			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			/*
 			 * Parse the request
 			 */
@@ -509,7 +515,11 @@ public class Tasks extends Application {
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					if(item.getFieldName().equals("tg")) {
-						tgId = Integer.valueOf(item.getString());
+						try {
+							tgId = Integer.valueOf(item.getString());
+						} catch (Exception e) {
+							throw new Exception(localisation.getString("t_notg"));
+						}
 					} else if(item.getFieldName().equals("tg_clear")) {
 						tgClear = Boolean.valueOf(item.getString());
 					}
@@ -537,7 +547,6 @@ public class Tasks extends Application {
 	
 			if(file != null && tgId > 0) {
 				// Authorisation - Access
-				sd = SDDataSource.getConnection("Tasks-TaskUpload");
 				a.isAuthorised(sd, request.getRemoteUser());
 				a.isValidProject(sd, request.getRemoteUser(), pId);
 				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
@@ -547,7 +556,7 @@ public class Tasks extends Application {
 				
 				// Process xls file
 				XLSTaskManager xf = new XLSTaskManager();
-				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream());
+				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream(), localisation);
 				
 				// Save tasks to the database
 				TaskManager tm = new TaskManager();
@@ -625,12 +634,14 @@ public class Tasks extends Application {
 		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
+		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
 		TaskManager tm = new TaskManager();
 		
 		try {
-			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, oId);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {

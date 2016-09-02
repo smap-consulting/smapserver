@@ -205,6 +205,7 @@ DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
 	id INTEGER DEFAULT NEXTVAL('users_seq') CONSTRAINT pk_users PRIMARY KEY,
 	ident text,
+	temporary boolean,			-- If true will not show in user management page
 	password text,
 	realm text,
 	name text,
