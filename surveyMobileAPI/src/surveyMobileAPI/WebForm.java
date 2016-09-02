@@ -921,8 +921,10 @@ public class WebForm extends Application{
 		} else {
 			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
 		}
-		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
-		output.append("<a class='next-page' href='#'>Next</span></a>\n");
+		if(surveyClass !=null && surveyClass.contains("pages")) {
+			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
+			output.append("<a class='next-page' href='#'>Next</span></a>\n");
+		}
 		output.append("</div>\n");	// main controls
 		
 		if(surveyClass !=null && surveyClass.contains("pages")) {
