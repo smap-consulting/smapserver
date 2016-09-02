@@ -606,4 +606,5 @@ create TABLE survey_role (
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
 
-alter table users add column temporary boolean;
+alter table users add column temporary boolean default false;
+update users set temporary = false where temporary is null;

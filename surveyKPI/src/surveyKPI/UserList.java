@@ -372,6 +372,7 @@ public class UserList extends Application {
 				+ "email "
 				+ "from users "
 				+ "where users.o_id = ? "
+				+ "and users.temporary is not true "
 				+ "order by ident asc";
 		PreparedStatement pstmt = null;
 		
