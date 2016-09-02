@@ -205,7 +205,8 @@ public class WebForm extends Application{
 			throw new JsonAuthorisationException();
 		}
 		
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false);
+		return getWebform(request, "json", formIdent, datakey, 
+				datakeyvalue, assignmentId, callback, user, false, false, false);
 	}
 	
 	// Respond with HTML
@@ -232,6 +233,40 @@ public class WebForm extends Application{
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				request.getRemoteUser(), 
 				false,
+				true,
+				false);
+	}
+	
+	/*
+	 * Respond with HTML
+	 * Temporary User
+	 */
+	// 
+	@GET
+	@Path("/id/{temp_user}/{ident}")
+	@Produces(MediaType.TEXT_HTML)
+	public Response getFormHTMLTemporaryUser(@Context HttpServletRequest request,
+			@PathParam("ident") String formIdent,
+			@PathParam("temp_user") String tempUser,
+			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
+			@QueryParam("datakeyvalue") String datakeyvalue,
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("callback") String callback
+			) throws IOException {
+		
+		String type = "html";
+		if(callback != null) {
+			// I guess they really want JSONP
+			type = "json";
+			
+		} 
+		log.info("Requesting " + type);
+		
+		System.out.println("Tempuser: " + tempUser);
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
+				tempUser, 
+				false,
+				true,
 				true);
 	}
 	
@@ -248,7 +283,8 @@ public class WebForm extends Application{
 			String callback,
 			String user,
 			boolean simplifyMedia,
-			boolean isWebForm) {
+			boolean isWebForm,
+			boolean isTemporaryUser) {
 		
 		Response response = null;
 		JsonResponse jr = null;
@@ -269,6 +305,9 @@ public class WebForm extends Application{
 		// Authorisation 
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection(requester);
+			if(isTemporaryUser) {
+				a.isValidTemporaryUser(connectionSD, user);
+			}
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key

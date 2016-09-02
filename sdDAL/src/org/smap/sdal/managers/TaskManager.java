@@ -895,13 +895,13 @@ public class TaskManager {
 			
 			
 			String targetSurveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, tf.properties.form_id);
-			String formUrl = null;
+			String webformUrl = null;
 			if(tf.properties.generate_user) {
 
-				formUrl = urlPrefix + "/formXML/id/" + tempUserId + 
-						"?key=" + targetSurveyIdent;
+				webformUrl = urlPrefix + "/webForm/id/" + tempUserId + 
+						"/" + targetSurveyIdent;
 			} else {
-				formUrl = urlPrefix + "/formXML?key=" + targetSurveyIdent;
+				webformUrl = urlPrefix + "/webForm/" + targetSurveyIdent;
 			}
 			String geoType = null;
 			String sql = null;
@@ -944,7 +944,7 @@ public class TaskManager {
 			pstmt.setInt(2,  tgId);
 			pstmt.setString(3,  tf.properties.name);
 			pstmt.setInt(4, tf.properties.form_id);
-			pstmt.setString(5, formUrl);
+			pstmt.setString(5, webformUrl);
 			pstmt.setString(6, geoType);
 			pstmt.setString(7, location);
 			pstmt.setString(8, initial_data_url);	
