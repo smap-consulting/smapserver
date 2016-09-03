@@ -44,6 +44,7 @@ $(document).ready(function() {
 	/*
 	 * Export Dialog
 	 */	
+	setExportControls();
 	$('#export').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
@@ -198,40 +199,7 @@ $(document).ready(function() {
 	 * Change event on export format select
 	 */
 	$('#exportformat').change(function(){
-		var format = $('#exportformat').val();
-		
-		// Make sure the export button is enabled as export to things at may have disabled it
-		$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
-		
-		$('').hide();		// Hide the thingsat model by default
-		if(format === "osm") {
-			$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas').hide();
-			$('.showosm,.showro,.showlang').show();
-		} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-			$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-			$('.showshape,.showro,.showlang').show();
-		} else if(format === "stata" || format === "spss") {
-			$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-			$('.showshape,.showspreadsheet,.showro,.showlang').show();
-		} else if(format === "thingsat") {
-			$('.showxls,.showosm, .showmedia, .showlqas').hide();
-			$('.showshape,.showspreadsheet,.showro,.showlang').show();
-			showModel();			// Show the thingsat model
-		} else if(format === "trail") {
-			$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas').hide();
-			$('.showshape,.showspreadsheet').show();
-		} else if(format === "media") {
-			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
-			$('.showspreadsheet,.showmedia, .showlang').show();
-		} else if(format === "lqas") {
-			$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
-			$('.showlqas').show();
-			getReports(showReportList, undefined, "lqas");
-			
-		} else {
-			$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-			$('.showxls,.showspreadsheet,.showro,.showlang').show();
-		}
+		setExportControls();
 	});
 	
 	/*
@@ -347,6 +315,42 @@ $(window).load(function() {
 	}
  	
 });
+
+function setExportControls() {
+	var format = $('#exportformat').val();
+	
+	// Make sure the export button is enabled as export to things at may have disabled it
+	$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
+	
+	if(format === "osm") {
+		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas').hide();
+		$('.showosm,.showro,.showlang').show();
+	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
+		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showshape,.showro,.showlang').show();
+	} else if(format === "stata" || format === "spss") {
+		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+	} else if(format === "thingsat") {
+		$('.showxls,.showosm, .showmedia, .showlqas').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+		showModel();			// Show the thingsat model
+	} else if(format === "trail") {
+		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showshape,.showspreadsheet').show();
+	} else if(format === "media") {
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
+		$('.showspreadsheet,.showmedia, .showlang').show();
+	} else if(format === "lqas") {
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
+		$('.showlqas').show();
+		getReports(showReportList, undefined, "lqas");
+		
+	} else {
+		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showxls,.showspreadsheet,.showro,.showlang').show();
+	}
+}
 
 /*
  * Add the pick list for media export

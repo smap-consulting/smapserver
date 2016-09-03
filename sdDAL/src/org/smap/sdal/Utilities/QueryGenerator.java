@@ -30,9 +30,12 @@ import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
 
+import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
+import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.TableColumn;
 
 /*
  * Create a query to retrieve results data
@@ -42,7 +45,8 @@ public class QueryGenerator {
 	private static Logger log =
 			 Logger.getLogger(QueryGenerator.class.getName());
 
-	public static SqlDesc gen(Connection connectionSD, 
+	public static SqlDesc gen(
+			Connection connectionSD, 
 			Connection connectionResults, 
 			int sId, 
 			int fId, 
@@ -56,7 +60,9 @@ public class QueryGenerator {
 			boolean add_record_uuid,
 			boolean add_record_suid,
 			String hostname,
-			ArrayList<String> requiredColumns) throws Exception {
+			ArrayList<String> requiredColumns,
+			ArrayList<String> namedQuestions,
+			String user) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
 		
@@ -129,7 +135,8 @@ public class QueryGenerator {
 			/*
 			 * Create an object describing the sql query recursively from the target table
 			 */
-			getSqlDesc(sqlDesc, sId,
+			getSqlDesc(
+					sqlDesc, sId,
 					sqlDesc.target_table,
 					parentForm,
 					0, 
@@ -148,7 +155,11 @@ public class QueryGenerator {
 					labelListMap,
 					connectionSD, 
 					connectionResults,
-					requiredColumns);
+					requiredColumns,
+					namedQuestions,
+					user,
+					fId
+					);
 		} catch (Exception e) {
 			throw new Exception(e.getMessage()); 
 		} finally {
@@ -196,8 +207,31 @@ public class QueryGenerator {
 				shpSqlBuf.append(".parkey");
 			}
 		}
-		//shpSqlBuf.append(";");
-		sqlDesc.sql = shpSqlBuf.toString();
+		// Add Rbac Row Filer
+		boolean hasRbacFilter = false;
+		RoleManager rm = new RoleManager();
+		ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(connectionSD, sId, user);
+		if(rfArray.size() > 0) {
+			String rFilter = rm.convertSqlFragsToSql(rfArray);
+			if(rFilter.length() > 0) {
+				shpSqlBuf.append(" and ");
+				shpSqlBuf.append(rFilter);
+				hasRbacFilter = true;
+			}
+		}
+		
+		/*
+		 * Prepare the sql string
+		 * Add the parameters to the prepared statement
+		 * Convert back to sql
+		 */
+		PreparedStatement pstmtConvert = connectionResults.prepareStatement(shpSqlBuf.toString());
+		int paramCount = 1;
+		if(hasRbacFilter) {
+			paramCount = rm.setRbacParameters(pstmtConvert, rfArray, paramCount);
+		}
+		
+		sqlDesc.sql = pstmtConvert.toString();
 		
 		log.info("Generated SQL: " + shpSqlBuf);
 		
@@ -210,7 +244,8 @@ public class QueryGenerator {
 	 *  The order of fields is from highest form to lowest form
 	 * 
 	 */
-	private  static void getSqlDesc(SqlDesc sqlDesc, 
+	private  static void getSqlDesc(
+			SqlDesc sqlDesc, 
 			int sId, 
 			String tName, 
 			int parentForm, 
@@ -230,7 +265,10 @@ public class QueryGenerator {
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			Connection connectionSD,
 			Connection connectionResults,
-			ArrayList<String> requiredColumns) throws SQLException {
+			ArrayList<String> requiredColumns,
+			ArrayList<String> namedQuestions,
+			String user,
+			int fId) throws SQLException {
 		
 		int colLimit = 10000;
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
@@ -246,7 +284,10 @@ public class QueryGenerator {
 	
 				String nextTableName = resultSet.getString("table_name");
 				int nextParentForm = resultSet.getInt("parentform");
-				getSqlDesc(sqlDesc, sId, nextTableName, nextParentForm, 
+				getSqlDesc(sqlDesc, 
+						sId, 
+						nextTableName, 
+						nextParentForm, 
 						level + 1,
 						language,
 						format,
@@ -263,21 +304,44 @@ public class QueryGenerator {
 						labelListMap,
 						connectionSD,
 						connectionResults,
-						requiredColumns);
+						requiredColumns,
+						namedQuestions,
+						user,
+						parentForm);
 			}
 		}
-			
+		
+		// - start collecting column data from meta info
+		/*
 		String sql = "SELECT * FROM " + tName + " LIMIT 1;";
 		
 		try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
 		pstmtCols = connectionResults.prepareStatement(sql);	 			
 		ResultSet resultSet = pstmtCols.executeQuery();
 		ResultSetMetaData rsMetaData = resultSet.getMetaData();
+		*/
+		// - End collecting column data from meta info
+
+		
+		ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
+				connectionSD,
+				connectionResults,
+				sId,
+				user,
+				parentForm,
+				fId,
+				tName,
+				exp_ro,
+				false,		// Don't include parent key
+				false,		// Don't include "bad" columns
+				false,		// Don't include instance id
+				true		// Include other meta data
+				);
 		
 		StringBuffer colBuf = new StringBuffer();
 		int idx = 0;
-		
-		for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+		//for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+		for(TableColumn col : cols) {
 			
 			String name = null;
 			String type = null;
@@ -289,8 +353,10 @@ public class QueryGenerator {
 			ArrayList<OptionDesc> optionListLabels = null;
 			int qId = 0;
 			
-			name = rsMetaData.getColumnName(i);
-			type = rsMetaData.getColumnTypeName(i);
+			//name = rsMetaData.getColumnName(i);
+			//type = rsMetaData.getColumnTypeName(i);
+			name = col.name;
+			type = col.type;
 			
 			if(name.equals("parkey") ||	name.equals("_bad") ||	name.equals("_bad_reason")
 					||	name.equals("_task_key") ||	name.equals("_task_replace") ||	name.equals("_modified")
@@ -337,10 +403,15 @@ public class QueryGenerator {
 				for(int j = 0; j < requiredColumns.size(); j++) {
 					if(requiredColumns.get(j).equals(name)) {
 						wantThisOne = true;
+						for(String namedQ : namedQuestions) {
+							if(namedQ.equals(name)) {
+								sqlDesc.availableColumns.add(name);
+							}
+						}
 						break;
 					} else if(name.equals("prikey") && requiredColumns.get(j).equals("_prikey_lowest")
 							&& sqlDesc.gotPriKey == false && level == 0) {
-						wantThisOne = true;
+						wantThisOne = true;	// Don't include in the available columns list as prikey as processed separately
 						break;
 					}
 				}

@@ -1994,10 +1994,8 @@ public class GeneralUtilityMethods {
 		// Get column restrictions for RBAC
 		StringBuffer colList = new StringBuffer("");
 		if(sId > 0) {
-			System.out.println("Get column restrictions for survey: " + sId);
 			RoleManager rm = new RoleManager();
 			ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
-			System.out.println("Number of column fikters: " + rcfArray.size());
 			if(rcfArray.size() > 0) {
 				colList.append(" and q_id in (");
 				for(int i = 0; i < rcfArray.size(); i++) {
@@ -2159,7 +2157,7 @@ public class GeneralUtilityMethods {
 				int qId = rsQuestions.getInt(4);
 				boolean ro = rsQuestions.getBoolean(5);
 				String source_param = rsQuestions.getString(6);
-				String path = rsQuestions.getString(7);
+				//String path = rsQuestions.getString(7);
 				
 				String cName = question_column_name.trim().toLowerCase();
 				if(cName.equals("parkey") ||	cName.equals("_bad") ||	cName.equals("_bad_reason")

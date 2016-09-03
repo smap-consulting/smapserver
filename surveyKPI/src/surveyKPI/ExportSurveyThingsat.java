@@ -49,7 +49,7 @@ import com.google.gson.Gson;
  * Various types of export related to a survey
  *    
  */
-@Path("/exportSurveyThingsat/{sId}/{filename}")
+@Path("/deprected/exportSurveyThingsat/{sId}/{filename}")
 public class ExportSurveyThingsat extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -164,7 +164,9 @@ public class ExportSurveyThingsat extends Application {
 					false,
 					true,
 					request.getServerName().toLowerCase(),
-					null);
+					null,
+					null,
+					request.getRemoteUser());
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

@@ -391,8 +391,9 @@ public class QuestionList extends Application {
 					+"from question q "
 					+ "left outer join translation t "
 					+ "on q.qtext_id = t.text_id "
+					+ "and t.s_id = ? " 
 					+ "and t.language = ? "
-					+ "and t.type = 'none' " 
+					+ "and t.type = 'none' "
 					+ "where q.f_id = ? "
 					+ "and q.source is not null "
 					+ "and q.soft_deleted = false ";
@@ -412,10 +413,11 @@ public class QuestionList extends Application {
 			sql = combinedSql.toString();	
 			
 			pstmt = sd.prepareStatement(sql);	 
-			pstmt.setString(1,  language);
-			pstmt.setInt(2,  f.id);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2,  language);
+			pstmt.setInt(3,  f.id);
 
-			log.info("Get questions: " + pstmt.toString());
+			log.info("Get questions for top level form: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			while(resultSet.next()) {
 				QuestionLite q = new QuestionLite();

@@ -200,7 +200,9 @@ public class ExportSurveyMedia extends Application {
 						false,
 						false,
 						null,
-						requiredColumns);
+						requiredColumns,
+						namedQuestions,
+						request.getRemoteUser());
 					
 				System.out.println("Generated SQL:" + sqlDesc.sql);
 				
@@ -224,8 +226,8 @@ public class ExportSurveyMedia extends Application {
 					 * Get the target name
 					 */
 					String mediafilename = "";
-					for(int k = 0; k < namedQuestions.size(); k++) {
-						String v = rs.getString(namedQuestions.get(k));
+					for(int k = 0; k < sqlDesc.availableColumns.size(); k++) {
+						String v = rs.getString(sqlDesc.availableColumns.get(k));
 						if(v != null) {
 							if(mediafilename.trim().length() > 0) {
 								mediafilename += "_";
@@ -279,7 +281,7 @@ public class ExportSurveyMedia extends Application {
 				int code = 0;
 				//Process proc = Runtime.getRuntime().exec(new String [] {"/usr/bin/zip -rj ",filePath + ".zip ",filePath});
 				
-				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/getshape.sh " + 
+				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/getshape.sh " + 
 							database_name + " " +
 							sqlDesc.target_table + " " +
 							"\"" + sqlDesc.sql + "\" " +
