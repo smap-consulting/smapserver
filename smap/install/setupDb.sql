@@ -281,6 +281,22 @@ create TABLE user_project (
 	);
 ALTER TABLE user_project OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS role_seq CASCADE;
+CREATE SEQUENCE role_seq START 1;
+ALTER TABLE role_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.role CASCADE;
+CREATE TABLE public.role (
+	id integer DEFAULT nextval('role_seq') NOT NULL PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	description text,
+	changed_by text,
+	changed_ts TIMESTAMP WITH TIME ZONE
+);
+ALTER TABLE public.role OWNER TO ws;
+CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
+
 DROP SEQUENCE IF EXISTS user_role_seq CASCADE;
 CREATE SEQUENCE user_role_seq START 1;
 ALTER SEQUENCE user_role_seq OWNER TO ws;
@@ -805,19 +821,4 @@ CREATE TABLE public.linked_forms (
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 
-DROP SEQUENCE IF EXISTS role_seq CASCADE;
-CREATE SEQUENCE role_seq START 1;
-ALTER TABLE role_seq OWNER TO ws;
-
-DROP TABLE IF EXISTS public.role CASCADE;
-CREATE TABLE public.role (
-	id integer DEFAULT nextval('role_seq') NOT NULL PRIMARY KEY,
-	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	name text,
-	description text,
-	changed_by text,
-	changed_ts TIMESTAMP WITH TIME ZONE
-);
-ALTER TABLE public.role OWNER TO ws;
-CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
 
