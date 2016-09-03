@@ -184,15 +184,16 @@ public class Upload extends Application {
 		
 		SDDataSource.closeConnection("surveyMobileAPI-Upload", connectionSD);
 		
-		if(user == null) {
-			log.info("Error: Attempting to upload results: user not found");
-			throw new AuthorisationException();
-		} 
-		
 		// End Authorisation
 
 		// Extract the data
 		try {
+			
+			if(user == null) {
+				log.info("Error: Attempting to upload results: user not found");
+				throw new AuthorisationException();
+			} 
+			
 			log.info("Upload Started ================= " + instanceId + " ==============");
 			log.info("Url:" + request.getRequestURI());
 			XFormData xForm = new XFormData();

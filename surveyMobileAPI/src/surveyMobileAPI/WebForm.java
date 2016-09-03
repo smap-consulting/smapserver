@@ -29,6 +29,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -301,6 +303,7 @@ public class WebForm extends Application{
 		int orgId = 0;
 		String accessKey = null;
 		String requester = "surveyMobileAPI-getWebForm";
+		ResourceBundle localisation = null;
 		
 		// Authorisation 
 		if(user != null) {
@@ -321,6 +324,10 @@ public class WebForm extends Application{
     		try {
     			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
     			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
+    			
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
     		} catch (Exception e) {
     			log.log(Level.SEVERE, "WebForm", e);
     		} finally {
@@ -441,7 +448,7 @@ public class WebForm extends Application{
     			jr.surveyData.surveyClass = xForm.getSurveyClass();
     			
     			jr.main = addMain(request, formXML, instanceStrToEditId, 
-    					orgId, true, surveyClass, serverData).toString();
+    					orgId, true, surveyClass, serverData, localisation).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -457,7 +464,8 @@ public class WebForm extends Application{
     					survey.surveyClass, 
     					orgId, 
     					accessKey,
-    					serverData));
+    					serverData,
+    					localisation));
     		}
     		
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
@@ -485,7 +493,8 @@ public class WebForm extends Application{
 			String surveyClass,
 			int orgId,
 			String accessKey,
-			ServerData serverData) 
+			ServerData serverData,
+			ResourceBundle localisation) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -502,7 +511,7 @@ public class WebForm extends Application{
 		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, 
 				accessKey,
 				serverData));
-		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass));
+		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation));
 
 		output.append("</html>\n");			
 		return output;
@@ -665,13 +674,13 @@ public class WebForm extends Application{
 	private StringBuffer addBody(HttpServletRequest request, String formXML, 
 			String dataToEditId, 
 			int orgId,
-			String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			String surveyClass,
+			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
-
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -686,10 +695,11 @@ public class WebForm extends Application{
 			int orgId, 
 			boolean minimal,
 			String surveyClass,
-			ServerData serverData) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			ServerData serverData,
+			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
-		output.append(openMain(orgId, minimal, serverData));
+		output.append(openMain(orgId, minimal, serverData, localisation));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
@@ -875,7 +885,7 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData) {
+	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData, ResourceBundle localisation) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div class='main'>\n");
@@ -898,9 +908,12 @@ public class WebForm extends Application{
 					output.append("<div class='form-progress'></div>\n");
 
 					output.append("<span class='logo-wrapper'>\n");
+						output.append(addNoScriptWarning(localisation));
+						output.append("<script>");
 						output.append("<img class='banner_logo' src='/media/organisation/");
 						output.append(orgId);
 						output.append("/settings/bannerLogo' onerror=\"if(this.src.indexOf('smap_logo.png') < 0) this.src='/images/smap_logo.png';\" alt='logo'>\n");
+						output.append("</script>");
 					output.append("</span>\n");
 
 				output.append("</header>\n");
@@ -1018,6 +1031,19 @@ public class WebForm extends Application{
 		} 
 				
 		return response;
+	}
+	
+	private String addNoScriptWarning(ResourceBundle localisation) {
+		StringBuffer output = new StringBuffer();
+		output.append("<noscript>");
+			output.append("<div>");
+			output.append("<span style=\"color:red\">");
+				output.append(localisation.getString("wf_njs"));
+			output.append("</span>");
+			output.append("</div>");
+		output.append("</noscript>");
+		
+		return output.toString();
 	}
 
 }

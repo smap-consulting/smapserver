@@ -1175,10 +1175,10 @@ public class GeneralUtilityMethods {
 				" values (?, ?, ?, timestamp 'now' + interval '" + interval + "');";		
 		PreparedStatement pstmtAddKey = null;
 		
-		String sqlGetKey = "select access_key from dynamic_users where u_id = ?;";	
+		String sqlGetKey = "select access_key from dynamic_users where u_id = ? "
+				+ "and expiry > now() + interval ' 2 days'";	// Get a new key if less than 2 days before old one expires
 		PreparedStatement pstmtGetKey = null;
 		
-		log.info("GetAccessKey");
 		try {
 		
 			/*
