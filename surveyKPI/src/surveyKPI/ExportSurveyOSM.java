@@ -41,10 +41,12 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.model.TableColumn;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -127,8 +129,6 @@ public class ExportSurveyOSM extends Application {
 			@QueryParam("language") String language) {
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
-		System.out.println("urlprefix: " + urlprefix);
-		System.out.println("Including read only: " + exp_ro);
 		
 		Response response = null;
 		ResponseBuilder builder = Response.ok();
@@ -149,7 +149,6 @@ public class ExportSurveyOSM extends Application {
 		    }
 		}
 		
-		System.out.println("New OSM export, ways:" + waylist );
 		if(waylist != null) {
 			wayArray = waylist.split(",");
 		}
@@ -174,7 +173,6 @@ public class ExportSurveyOSM extends Application {
 		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
 		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
 
-		System.out.println("Escaped file name:" + escapedFileName);
 		builder.header("Content-Disposition", "attachment; filename=\"" + escapedFileName + ".osm\"");
 		
 		if(language != null) {
@@ -182,7 +180,6 @@ public class ExportSurveyOSM extends Application {
 		} else {
 			language = "none";
 		}
-		System.out.println("Language:" + language);
 
 		if(sId != 0) {
 			
@@ -255,6 +252,7 @@ public class ExportSurveyOSM extends Application {
 				for(FormDesc f : formList) {
 
 					// Get the column names
+					/*
 					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
 					
 					if(pstmt2 != null) {pstmt2.close();};
@@ -262,10 +260,29 @@ public class ExportSurveyOSM extends Application {
 					if(resultSet2 != null) {resultSet2.close();};
 					resultSet2 = pstmt2.executeQuery();
 					ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
+					*/
 					
-					for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
-						String name = rsMetaData2.getColumnName(j);
-						String type = rsMetaData2.getColumnTypeName(j);
+					ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
+							connectionSD,
+							connectionResults,
+							sId,
+							request.getRemoteUser(),
+							f.parent,
+							f.f_id,
+							f.table_name,
+							exp_ro,
+							false,		// Don't include parent key
+							false,		// Don't include "bad" columns
+							false,		// Don't include instance id
+							true		// Include other meta data
+							);
+					
+					for(TableColumn col : cols) {
+					//for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
+						//String name = rsMetaData2.getColumnName(j);
+						//String type = rsMetaData2.getColumnTypeName(j);
+						String name = col.name;
+						String qType = col.type;
 						
 						// Ignore the following columns
 						if(name.equals("parkey") ||	name.startsWith("_")) {
@@ -274,26 +291,30 @@ public class ExportSurveyOSM extends Application {
 							
 						// Set the sql selection text for this column 			
 						String selName = null;
-						if(type.equals("geometry")) {
+						if(qType.equals("geopoint") || qType.equals("geoshape") 
+								|| qType.equals("geotrace")
+								|| qType.equals("geolinestring")
+								|| qType.equals("geopolygon")) {
 							selName = "ST_AsTEXT(" + name + ") ";
-						} else if(type.equals("timestamptz")) {	// Return all timestamps at UTC with no time zone
+						//} else if(type.equals("timestamptz")) {	// Return all timestamps at UTC with no time zone
+						} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 							selName = "timezone('UTC', " + name + ") as " + name;	
 						} else {
 							// Get the question type
-							pstmtQType.setString(1, f.table_name);
-							pstmtQType.setString(2, name);
-							ResultSet rsType = pstmtQType.executeQuery();
+							//pstmtQType.setString(1, f.table_name);
+							//pstmtQType.setString(2, name);
+							//ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
-							if(rsType.next()) {
-								String qType = rsType.getString(1);
-								boolean ro = rsType.getBoolean(2);
-								if(!exp_ro && ro) {
-									continue;			// Drop read only columns if they are not selected to be exported				
-								}
+							//if(rsType.next()) {
+								//String qType = rsType.getString(1);
+								//boolean ro = rsType.getBoolean(2);
+								//if(!exp_ro && ro) {
+								//	continue;			// Drop read only columns if they are not selected to be exported				
+								//}
 								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
 									isAttachment = true;
 								}
-							}
+							//}
 							if(isAttachment) {
 								selName = "'" + urlprefix + "' || " + name + " as " + name;
 							} else {
@@ -456,7 +477,6 @@ public class ExportSurveyOSM extends Application {
 			resultSet = pstmt.executeQuery();
 			rsMetaData = resultSet.getMetaData();
 			
-			System.out.println("getNodes: " + sql);
 			while (resultSet.next()) {
 				String prikey = resultSet.getString(1);				
 				

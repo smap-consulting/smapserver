@@ -229,9 +229,9 @@ public class QuestionList extends Application {
 		Response response = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionList");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		// End Authorisation
 		
 		ArrayList<QuestionLite> questions = new ArrayList<QuestionLite> ();
@@ -239,6 +239,8 @@ public class QuestionList extends Application {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtSSC = null;
 		try {
+			Form tf = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+			
 			StringBuffer combinedSql = new StringBuffer("");
 			String sql = null;
 			String sql1 = null;
@@ -248,10 +250,10 @@ public class QuestionList extends Application {
 			ResultSet resultSet = null;
 
 			if(language.equals("none")) {
-				language = GeneralUtilityMethods.getDefaultLanguage(connectionSD, sId);
+				language = GeneralUtilityMethods.getDefaultLanguage(sd, sId);
 			}
 			
-			sql1 = "select q.q_id, q.qtype, t.value, q.qname "
+			sql1 = "select q.q_id, q.qtype, t.value, q.qname, q.f_id "
 					+ "from form f "
 					+ "inner join question q "
 					+ "on f.f_id = q.f_id "
@@ -285,7 +287,7 @@ public class QuestionList extends Application {
 			combinedSql.append(sqlEnd);
 			sql = combinedSql.toString();	
 			
-			pstmt = connectionSD.prepareStatement(sql);	 
+			pstmt = sd.prepareStatement(sql);	 
 			pstmt.setString(1,  language);
 			pstmt.setInt(2,  sId);
 			if(single_type != null) {
@@ -301,6 +303,8 @@ public class QuestionList extends Application {
 				q.type = resultSet.getString(2);
 				q.q = resultSet.getString(3);
 				q.name = resultSet.getString(4);
+				q.f_id = resultSet.getInt(5);
+				q.toplevel = (q.f_id == tf.id);
 				questions.add(q);			
 			}
 			
@@ -311,7 +315,7 @@ public class QuestionList extends Application {
 				String sqlSSC = "select id, name, function, f_id from ssc " +
 						" where s_id = ? " + 
 						" order by id;";
-				pstmtSSC = connectionSD.prepareStatement(sqlSSC);	
+				pstmtSSC = sd.prepareStatement(sqlSSC);	
 				pstmtSSC.setInt(1, sId);
 				resultSet = pstmtSSC.executeQuery();
 				while(resultSet.next()) {
@@ -337,7 +341,7 @@ public class QuestionList extends Application {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
-			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-QuestionList", sd);
 		}
 
 
