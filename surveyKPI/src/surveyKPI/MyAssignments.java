@@ -238,8 +238,6 @@ public class MyAssignments extends Application {
 					"where t.id = a.task_id " +
 					"and t.form_id = s.s_id " +
 					"and u.id = up.u_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and s.p_id = up.p_id " +
 					"and s.p_id = p.id " +
 					"and s.deleted = 'false' " +
@@ -342,8 +340,6 @@ public class MyAssignments extends Application {
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and p.id = up.p_id " +
 					"and s.deleted = 'false' " +
 					"and s.blocked = 'false'" +
@@ -435,8 +431,6 @@ public class MyAssignments extends Application {
 					" from users u, user_project up, project p " + 
 					"where u.id = up.u_id " +
 					"and p.id = up.p_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and u.ident = ? " +
 					"and p.o_id = ? " +
 					"order by name ASC;";	

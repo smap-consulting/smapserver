@@ -145,8 +145,6 @@ public class UserTrail extends Application {
 					"where up.p_id = ? " + 	
 					"and up.u_id = ut.u_id " +
 					"and up.u_id = u.id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and ut.event_time >= ? " +
 					"and ut.event_time < ? " +
 					"and ut.u_id = ? " +
@@ -243,8 +241,6 @@ public class UserTrail extends Application {
 					"where up.p_id = ? " + 	
 					"and up.u_id = t.u_id " +
 					"and up.u_id = u.id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and t.completion_time >= ? " +
 					"and t.completion_time < ? " +
 					"and t.u_id = ? " +

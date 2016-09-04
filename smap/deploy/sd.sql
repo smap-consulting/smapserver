@@ -530,10 +530,6 @@ alter table survey add column created timestamp with time zone;
 alter table server add column google_key text;
 
 -- Upgrade to 16.07 from 16.06
-alter table user_project add column restricted boolean default false;
-alter table user_project add column allocated boolean;
-update user_project set allocated = true where allocated is null;
-alter table user_project alter column allocated set default false;
 
 insert into groups(id,name) values(6,'security');
 insert into user_group (u_id, g_id) select u_id, 6 from user_group where g_id = 4;

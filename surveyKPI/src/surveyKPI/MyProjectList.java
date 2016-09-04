@@ -92,8 +92,6 @@ public class MyProjectList extends Application {
 					" and u.id = up.u_id " + 
 					" and p.id = up.p_id " +
 					" and p.o_id = u.o_id " +
-					" and up.restricted = false " +
-					" and up.allocated = true " +
 					" order by name ASC;";				
 						
 			pstmt = connectionSD.prepareStatement(sql);

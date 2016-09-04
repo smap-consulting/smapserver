@@ -109,7 +109,6 @@ public class ProjectList extends Application {
 					sql = "select p.id, p.name, p.description, p.tasks_only, p.changed_by, p.changed_ts "
 							+ "from project p "
 							+ "where p.o_id = ? "
-							+ "and p.id not in (select p_id from user_project where u_id = ? and restricted = true) "
 							+ "order by p.name ASC;";	
 				}
 					
@@ -183,9 +182,6 @@ public class ProjectList extends Application {
 		ArrayList<Project> pArray = new Gson().fromJson(projects, type);
 		
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtDelRestricted = null;
-		PreparedStatement pstmtInsertRestricted = null;
-		PreparedStatement pstmtUpdateRestricted = null;
 		try {	
 			String sql = null;
 			int o_id;
@@ -251,61 +247,6 @@ public class ProjectList extends Application {
 							
 							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();
-							
-							/*
-							 * Update the restricted users
-							 */
-							if(p.applyRestrictions) {
-								
-								aSM.isAuthorised(connectionSD, request.getRemoteUser());
-								connectionSD.setAutoCommit(false);
-								
-								try {
-									// Delete existing restrictions
-									String sqlDelRestricted = "update user_project "
-											+ "set restricted = 'false' "
-											+ "where p_id = ?;";
-									pstmtDelRestricted = connectionSD.prepareStatement(sqlDelRestricted);
-									pstmtDelRestricted.setInt(1, p.id);
-									System.out.println("Remove restricted: " + pstmtDelRestricted.toString());
-									pstmtDelRestricted.executeUpdate();
-									
-									if(p.restrictUsers != null && p.restrictUsers.size() > 0) {
-										
-										
-										String sqlUpdateRestricted = "update user_project "
-												+ "set restricted = 'true' "
-												+ "where p_id = ? "
-												+ "and u_id = ?";
-										
-										String sqlInsertRestricted = "insert into user_project "
-												+ "(u_id,p_id, restricted) "
-												+ "values(?, ?, 'true')";
-								
-										pstmtUpdateRestricted = connectionSD.prepareStatement(sqlUpdateRestricted);
-										pstmtUpdateRestricted.setInt(1, p.id);
-										
-										pstmtInsertRestricted = connectionSD.prepareStatement(sqlInsertRestricted);
-										pstmtInsertRestricted.setInt(1,  p.id);
-										
-										for(i = 0; i < p.restrictUsers.size(); i++) {
-											
-											pstmtUpdateRestricted.setInt(2, p.restrictUsers.get(i));
-											System.out.println("Update restricted user: " + pstmtUpdateRestricted.toString());
-											int count = pstmtUpdateRestricted.executeUpdate();
-											if(count == 0) {
-												pstmtInsertRestricted.setInt(2, p.restrictUsers.get(i));
-												System.out.println("Insert restricted user: " + pstmtInsertRestricted.toString());
-												pstmtInsertRestricted.executeUpdate();
-											}
-										}
-									}
-								} catch (Exception e) {
-									try {connectionSD.rollback();} catch(Exception ex) {}
-								} finally {
-									try {connectionSD.setAutoCommit(true);} catch (Exception ex) {}
-								}
-							}
 						}
 					}
 				}
@@ -328,8 +269,6 @@ public class ProjectList extends Application {
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtDelRestricted != null) {pstmtDelRestricted.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdateRestricted != null) {pstmtUpdateRestricted.close();}} catch (SQLException e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
 		}

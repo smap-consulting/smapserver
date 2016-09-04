@@ -27,6 +27,5 @@ public class Project {
 	public boolean tasks_only;
 	public String changed_by;
 	public String changed_ts;
-	public boolean applyRestrictions;
 	public ArrayList<Integer> restrictUsers;
 }

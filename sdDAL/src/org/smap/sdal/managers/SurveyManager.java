@@ -82,8 +82,6 @@ public class SurveyManager {
 				+ "and p.id = up.p_id "
 				+ "and s.p_id = up.p_id "
 				+ "and p.o_id = u.o_id "
-				+ "and up.restricted = false "
-				+ "and up.allocated = true "
 				+ "and u.ident = ? ");
 			
 		if(!superUser) {
@@ -200,8 +198,6 @@ public class SurveyManager {
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
 				" and s.p_id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and u.ident = ? " +
 				" and s.s_id = ? ");
 		

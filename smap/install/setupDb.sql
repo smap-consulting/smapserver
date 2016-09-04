@@ -276,9 +276,7 @@ DROP TABLE IF EXISTS user_project CASCADE;
 create TABLE user_project (
 	id INTEGER DEFAULT NEXTVAL('user_project_seq') CONSTRAINT pk_user_project PRIMARY KEY,
 	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE,
-	restricted boolean default false,
-	allocated boolean default false
+	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE
 	);
 ALTER TABLE user_project OWNER TO ws;
 
@@ -332,7 +330,7 @@ insert into user_group (u_id, g_id) values (1, 6);
 
 insert into project (id, o_id, name) values (1, 1, 'A project');
 
-insert into user_project (u_id, p_id, restricted, allocated) values (1 , 1, false, true);
+insert into user_project (u_id, p_id) values (1 , 1);
 
 -- Monitoring tables
 DROP TABLE IF EXISTS upload_event CASCADE;

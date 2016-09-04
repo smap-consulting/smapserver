@@ -130,13 +130,11 @@ public class ProjectManager {
 		
 			if(p_id > 0) {
 				// Add the user to the new project by default
-				sql = "insert into user_project (u_id, p_id, restricted, allocated) " +
-						" values (?, ?, ?, ?);";
+				sql = "insert into user_project (u_id, p_id) " +
+						" values (?, ?);";
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, u_id);
 				pstmt.setInt(2, p_id);
-				pstmt.setBoolean(3, false);
-				pstmt.setBoolean(4, true);
 				log.info("Add the user to the project " + pstmt.toString());
 				pstmt.executeUpdate();
 				pstmt.close();

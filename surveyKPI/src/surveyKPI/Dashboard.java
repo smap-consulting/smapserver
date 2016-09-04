@@ -125,8 +125,6 @@ public class Dashboard extends Application {
 					"d.ds_filter as filter " +
 					" from dashboard_settings d, users u, user_project up, survey s " +
 					" where u.id = up.u_id " +
-					" and up.restricted = false " +
-					" and up.allocated = true " +
 					" and up.p_id = ? " +
 					" and s.p_id = up.p_id " +
 					" and s.s_id = d.ds_s_id " +
