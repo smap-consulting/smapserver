@@ -199,9 +199,7 @@ public class XLSResultsManager {
 			PreparedStatement pstmt2 = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
-			
 
-			
 			try {
 				
 				if(embedImages) {
@@ -224,9 +222,7 @@ public class XLSResultsManager {
 				
 				HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
-				FormDesc topForm = null;
-							
-				
+				FormDesc topForm = null;	
 				
 				/*
 				 * Get the tables / forms in this survey 
@@ -548,8 +544,11 @@ public class XLSResultsManager {
 		
 		CreationHelper createHelper = wb.getCreationHelper();
 		
+		
 		Row row = sheet.createRow(rowIndex++);
-		row.setHeight((short) 1000);
+		if(embedImages) {
+			row.setHeight((short) 1000);
+		}
 		CellStyle style = styles.get("default");
 		for(int i = 0; i < record.size(); i++) {
 			String v = record.get(i);
@@ -558,7 +557,6 @@ public class XLSResultsManager {
             
             if(v != null && (v.startsWith("https://") || v.startsWith("http://"))) {
             	
-            	System.out.println("Embed Images: " + embedImages);
             	if(embedImages) {
             		if(v.endsWith(".jpg") || v.endsWith(".png")) {
             			int idx = v.indexOf("attachments");
@@ -567,19 +565,21 @@ public class XLSResultsManager {
             				String fileName = v.substring(idxName);
 	            			String stem = basePath + "/" + v.substring(idx, idxName);
 	            			String imageName = stem + "/thumbs" + fileName + ".jpg";
-	            			System.out.println("Filename: " + imageName);
 	            			try {
 				            	InputStream inputStream = new FileInputStream(imageName);
 				            	byte[] imageBytes = IOUtils.toByteArray(inputStream);
 				            	int pictureureIdx = wb.addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
 				            	inputStream.close();
-				            	Drawing drawing = sheet.createDrawingPatriarch();
+				            	
 				            	ClientAnchor anchor = createHelper.createClientAnchor();
 				            	anchor.setCol1(i);
 				            	anchor.setRow1(rowIndex - 1);
-				            	sheet.setColumnWidth(i, 20 * 256);
+				            	anchor.setCol2(i + 1);
+				            	anchor.setRow2(rowIndex);
+				            	//sheet.setColumnWidth(i, 20 * 256);
+				            	Drawing drawing = sheet.createDrawingPatriarch();
 				            	Picture pict = drawing.createPicture(anchor, pictureureIdx);
-				            	pict.resize();
+				            	//pict.resize();
 	            			} catch (Exception e) {
 	            				log.info("Error: Missing image file: " + imageName);
 	            			}
@@ -597,16 +597,12 @@ public class XLSResultsManager {
 					url.setAddress(v);
 					cell.setHyperlink(url);
 				}
-            	
-
 				
 			} else {
 				cell.setCellStyle(style);
 			}
             
-            //if(!isImage || !embedImages) {
-            	cell.setCellValue(v);
-            //}
+            cell.setCellValue(v);
 
         }
 	}

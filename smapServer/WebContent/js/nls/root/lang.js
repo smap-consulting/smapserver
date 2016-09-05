@@ -325,6 +325,11 @@ define({
 	"msg_tg_ns": "Task group not selected",
 	"msg_no_roles": "There are no enabled roles. Hence there are no restrictions on access",
 	"msg_has_roles": "Only users who have one of the following enabled roles are allowed access",
+	"msg_one_f": "At least one form must be selected",
+	"msg_one_f2": "A form must be selected",
+	"msg_embed": "The excel type must be xls or xlsx to embed images",
+	"msg_pss": "Please select a survey",
+	"msg_nm": "No images, video, audio found",
 	
 	// Editor
 	"e_b_e": "Base on existing form",

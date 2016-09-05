@@ -77,7 +77,7 @@ $(document).ready(function() {
 			        		name_questions = [];
 		        			
 		        		if(sId == "-1") {
-		        			alert("Please select a survey");
+		        			alert(localise.set["msg_pss"]);
 		        			return(false);
 		        		}
 	        			
@@ -97,7 +97,7 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			if(forms.length === 0) {
-		        				alert("A form must be selected");
+		        				alert(localise.set["msg_one_f2"]);
 			        			return(false);
 		        			}		
 		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly, language);
@@ -107,7 +107,7 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			if(forms.length === 0) {
-		        				alert("A form must be selected");
+		        				alert(localise.set["msg_one_f2"]);
 			        			return(false);
 		        			}		
 		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language);
@@ -116,7 +116,7 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			if(forms.length === 0) {
-		        				alert("A form must be selected");
+		        				alert(localise.set["msg_one_f2"]);
 			        			return(false);
 		        			}		
 		        			var traceFormat = "shape";	// Todo add gpx
@@ -142,8 +142,13 @@ $(document).ready(function() {
 		        			    }).get();
 		        			
 		        			if(forms.length === 0) {
-		        				alert("At least one form must be selected");
+		        				alert(localise.set["msg_one_f"]);
 			        			return(false);
+		        			} else {
+		        				if(embedImages === true && xlstype === "html") {
+			        				alert(localise.set["msg_embed"]);
+				        			return(false);
+			        			}
 		        			}
 		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, 
 		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages);
@@ -235,7 +240,7 @@ $(document).ready(function() {
 			var sMeta = globals.gSelector.getSurvey(sId);
 			
 			if(forms.length === 0) {
-				alert("A form must be selected");
+				alert(localise.set["msg_one_f2"]);
 				return(false);
 			}
 			
@@ -307,7 +312,7 @@ $(window).load(function() {
 					  setReport(gReport);
 					  gReportIdent = undefined;
 				  }, error: function(data, status) {
-					  alert("Failed to load report");
+					  alert(localise.set("c_error"));
 					  gReportIdent = undefined;
 				  }
 			});
@@ -402,7 +407,7 @@ function addMediaPickList() {
 		}
 		
 		if(idx === -1 && format === "media") {
-			alert("No images, video, audio found");
+			alert(localise.set["msg_nm"]);
 		}
 		$('#export_media_question').html(h.join(''));
 		$('.mediaselect').html(h2.join(''));
