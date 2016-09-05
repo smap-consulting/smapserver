@@ -70,6 +70,7 @@ $(document).ready(function() {
 			        		split_locn = $('#splitlocn:checked').prop("checked"),
 			        		xlstype = $('#export_xlstype').val(),
 			        		merge_select_multiple = $('#mergeSelectMultiple:checked').prop("checked"),
+			        		embedImages = $('#embedImages:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		sources = $('#sources').prop("checked"),
 			        		forms = [],
@@ -145,7 +146,7 @@ $(document).ready(function() {
 			        			return(false);
 		        			}
 		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, 
-		        					forms, exportReadOnly, merge_select_multiple, xlstype);
+		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages);
 		        		}
 		        		
 		        		if(format === "lqas") {
@@ -861,7 +862,7 @@ function cleanFileName(filename) {
 /*
  * Web service handler for exporting an entire survey to CSV
  */
-function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple, xlstype) {
+function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple, xlstype, embedImages) {
 
 	var url;
 	if(xlstype === "html") {
@@ -891,6 +892,7 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	}
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
+	url += "&embedimages=" + embedImages;
 	
 	if(xlstype != "html") {
 		url += "&filetype=" + xlstype;

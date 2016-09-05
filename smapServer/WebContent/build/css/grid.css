@@ -3015,9 +3015,8 @@ h4 + .or-repeat, .question.or-appearance-list-nolabel ~ .note + .or-repeat, .que
 
 .question, .note, .trigger {
   /*IE10*/
-  display: -ms-flexbox;
-  display: -webkit-flex;
-  display: flex;
+    /* display: -webkit-flex;  Smap - safari issue */
+    /* display: flex; Smap - safari issue */
   -webkit-flex-wrap: no-wrap;
   -ms-flex-wrap: no-wrap;
   -moz-flex-wrap: no-wrap;

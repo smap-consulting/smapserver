@@ -102,6 +102,7 @@ public class ExportSurveyOSM extends Application {
 		boolean isWay = false;
 		boolean isPolygon = false;
 		ArrayList<FormDesc> children = null;
+		ArrayList<TableColumn> cols = null;
 		
 		public void print() {
 			System.out.println("========= ");
@@ -186,17 +187,9 @@ public class ExportSurveyOSM extends Application {
 			Connection connectionResults = null;
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmt2 = null;
-			PreparedStatement pstmtQType = null;
 
 			try {
  
-				// Prepare the statement to get the question type and readonly attribute
-				String sqlQType = "select q.qtype, q.readonly from question q, form f " +
-						" where q.f_id = f.f_id " +
-						" and f.table_name = ? " +
-						" and q.qname = ?;";
-				pstmtQType = connectionSD.prepareStatement(sqlQType);
-				
 				HashMap<Integer, FormDesc> forms = new HashMap<Integer, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;
@@ -205,12 +198,9 @@ public class ExportSurveyOSM extends Application {
 				connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
 				
 				/*
-				 * Get the array of tables 
+				 * Get the tables in this survey
 				 */
-				String sql = null;
-				ResultSet resultSet2 = null;
-			
-				sql = "SELECT f_id, table_name, parentform, name FROM form" +
+				String sql = "SELECT f_id, table_name, parentform, name FROM form" +
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
 
@@ -250,19 +240,8 @@ public class ExportSurveyOSM extends Application {
 								
 
 				for(FormDesc f : formList) {
-
-					// Get the column names
-					/*
-					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
 					
-					if(pstmt2 != null) {pstmt2.close();};
-					pstmt2 = connectionResults.prepareStatement(sql);
-					if(resultSet2 != null) {resultSet2.close();};
-					resultSet2 = pstmt2.executeQuery();
-					ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
-					*/
-					
-					ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
+					f.cols = GeneralUtilityMethods.getColumnsInForm(
 							connectionSD,
 							connectionResults,
 							sId,
@@ -277,10 +256,7 @@ public class ExportSurveyOSM extends Application {
 							true		// Include other meta data
 							);
 					
-					for(TableColumn col : cols) {
-					//for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
-						//String name = rsMetaData2.getColumnName(j);
-						//String type = rsMetaData2.getColumnTypeName(j);
+					for(TableColumn col : f.cols) {
 						String name = col.name;
 						String qType = col.type;
 						
@@ -295,26 +271,14 @@ public class ExportSurveyOSM extends Application {
 								|| qType.equals("geotrace")
 								|| qType.equals("geolinestring")
 								|| qType.equals("geopolygon")) {
-							selName = "ST_AsTEXT(" + name + ") ";
-						//} else if(type.equals("timestamptz")) {	// Return all timestamps at UTC with no time zone
+							selName = "ST_AsTEXT(" + name + ") as the_geom ";
 						} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 							selName = "timezone('UTC', " + name + ") as " + name;	
 						} else {
-							// Get the question type
-							//pstmtQType.setString(1, f.table_name);
-							//pstmtQType.setString(2, name);
-							//ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
-							//if(rsType.next()) {
-								//String qType = rsType.getString(1);
-								//boolean ro = rsType.getBoolean(2);
-								//if(!exp_ro && ro) {
-								//	continue;			// Drop read only columns if they are not selected to be exported				
-								//}
 								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
 									isAttachment = true;
 								}
-							//}
 							if(isAttachment) {
 								selName = "'" + urlprefix + "' || " + name + " as " + name;
 							} else {
@@ -367,7 +331,6 @@ public class ExportSurveyOSM extends Application {
 			} finally {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
-				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 
 				SDDataSource.closeConnection("surveyKPI-ExportSurveyOSM", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
@@ -455,7 +418,7 @@ public class ExportSurveyOSM extends Application {
 		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
-		ResultSetMetaData rsMetaData = null;
+		//ResultSetMetaData rsMetaData = null;
 		
 		//f.print();
 		/*
@@ -474,8 +437,8 @@ public class ExportSurveyOSM extends Application {
 			if(f.parkey != null) {
 				pstmt.setInt(1, Integer.parseInt(f.parkey));
 			}
+			log.info("Getting node data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
-			rsMetaData = resultSet.getMetaData();
 			
 			while (resultSet.next()) {
 				String prikey = resultSet.getString(1);				
@@ -484,10 +447,13 @@ public class ExportSurveyOSM extends Application {
 				ArrayList<Tag> tags = new ArrayList<Tag>();
 				String lon = null;
 				String lat = null;
-				for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
-											
-					String key = rsMetaData.getColumnName(i);
-					String value = resultSet.getString(i);
+				for(TableColumn col : f.cols) {
+					
+					String key = col.name;
+					if(key.equals("parkey") ||	key.startsWith("_")) {
+						continue;
+					}
+					String value = resultSet.getString(key);
 					
 					if(value != null && value.startsWith("POINT")) {	// Get the location
 						String coords [] = getLonLat(value);

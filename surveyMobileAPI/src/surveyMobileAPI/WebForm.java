@@ -909,11 +909,9 @@ public class WebForm extends Application{
 
 					output.append("<span class='logo-wrapper'>\n");
 						output.append(addNoScriptWarning(localisation));
-						output.append("<script>");
 						output.append("<img class='banner_logo' src='/media/organisation/");
 						output.append(orgId);
 						output.append("/settings/bannerLogo' onerror=\"if(this.src.indexOf('smap_logo.png') < 0) this.src='/images/smap_logo.png';\" alt='logo'>\n");
-						output.append("</script>");
 					output.append("</span>\n");
 
 				output.append("</header>\n");

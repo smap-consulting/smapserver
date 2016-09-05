@@ -1,5 +1,8 @@
 package utilities;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 /*
 This file is part of SMAP.
 
@@ -19,6 +22,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -58,11 +63,13 @@ public class XLSResultsManager {
 	Workbook wb = null;
 	boolean isXLSX = false;
 	int rowIndex = 0;		// Heading row is 0
+	String basePath = null;
 
 	private class Column {
 		String name;
 		String label;
 		String humanName;
+		boolean isImage;
 		
 		Column(String n, String l, String h) {
 			name = n;
@@ -175,7 +182,8 @@ public class XLSResultsManager {
 			String language,
 			boolean split_locn,
 			HttpServletRequest request,
-			OutputStream outputStream) throws IOException {
+			OutputStream outputStream,
+			boolean embedImages) throws IOException {
 		
 		Sheet resultsSheet = wb.createSheet("survey");
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
@@ -195,6 +203,10 @@ public class XLSResultsManager {
 
 			
 			try {
+				
+				if(embedImages) {
+					basePath = GeneralUtilityMethods.getBasePath(request);
+				}
 				
 				// Prepare statement to get server side includes
 				String sqlSSC = "select ssc.name, ssc.function, ssc.type, ssc.units from ssc ssc, form f " +
@@ -479,7 +491,8 @@ public class XLSResultsManager {
 				getData(sd, connectionResults, formList, topForm, split_locn, merge_select_multiple, selMultChoiceNames,
 						cols,
 						resultsSheet,
-						styles);
+						styles,
+						embedImages);
 	
 			
 			} catch (SQLException e) {
@@ -492,8 +505,6 @@ public class XLSResultsManager {
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 				
-				SDDataSource.closeConnection("surveyKPI-ExportSurvey", sd);
-				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}
 		
@@ -532,11 +543,13 @@ public class XLSResultsManager {
 	private void closeRecord(
 			ArrayList<String> record, 
 			Sheet sheet, 
-			Map<String, CellStyle> styles) {
+			Map<String, CellStyle> styles,
+			boolean embedImages) throws IOException {
 		
 		CreationHelper createHelper = wb.getCreationHelper();
 		
 		Row row = sheet.createRow(rowIndex++);
+		row.setHeight((short) 1000);
 		CellStyle style = styles.get("default");
 		for(int i = 0; i < record.size(); i++) {
 			String v = record.get(i);
@@ -544,6 +557,36 @@ public class XLSResultsManager {
             Cell cell = row.createCell(i);
             
             if(v != null && (v.startsWith("https://") || v.startsWith("http://"))) {
+            	
+            	System.out.println("Embed Images: " + embedImages);
+            	if(embedImages) {
+            		if(v.endsWith(".jpg") || v.endsWith(".png")) {
+            			int idx = v.indexOf("attachments");
+            			int idxName = v.lastIndexOf('/');
+            			if(idx > 0 && idxName > 0) {
+            				String fileName = v.substring(idxName);
+	            			String stem = basePath + "/" + v.substring(idx, idxName);
+	            			String imageName = stem + "/thumbs" + fileName + ".jpg";
+	            			System.out.println("Filename: " + imageName);
+	            			try {
+				            	InputStream inputStream = new FileInputStream(imageName);
+				            	byte[] imageBytes = IOUtils.toByteArray(inputStream);
+				            	int pictureureIdx = wb.addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+				            	inputStream.close();
+				            	Drawing drawing = sheet.createDrawingPatriarch();
+				            	ClientAnchor anchor = createHelper.createClientAnchor();
+				            	anchor.setCol1(i);
+				            	anchor.setRow1(rowIndex - 1);
+				            	sheet.setColumnWidth(i, 20 * 256);
+				            	Picture pict = drawing.createPicture(anchor, pictureureIdx);
+				            	pict.resize();
+	            			} catch (Exception e) {
+	            				log.info("Error: Missing image file: " + imageName);
+	            			}
+            			}
+            		}
+            	} 
+            	
 				cell.setCellStyle(styles.get("link"));
 				if(isXLSX) {
 					XSSFHyperlink url = (XSSFHyperlink)createHelper.createHyperlink(Hyperlink.LINK_URL);
@@ -554,12 +597,16 @@ public class XLSResultsManager {
 					url.setAddress(v);
 					cell.setHyperlink(url);
 				}
+            	
+
 				
 			} else {
 				cell.setCellStyle(style);
 			}
             
-            cell.setCellValue(v);
+            //if(!isImage || !embedImages) {
+            	cell.setCellValue(v);
+            //}
 
         }
 	}
@@ -714,7 +761,12 @@ public class XLSResultsManager {
 			cols.add(new Column("Latitude", "Latitude", "Latitude"));
 			cols.add(new Column("Longitude", "Longitude", "Longitude"));
 		} else {
-			cols.add(new Column(colName, label, human_name));
+			Column col = new Column(colName, label, human_name);
+			if(qType.equals("image")) {
+				col.isImage = true;
+			}
+			cols.add(col);
+			
 		}
 		
 	}
@@ -809,7 +861,8 @@ public class XLSResultsManager {
 			HashMap<String, String> choiceNames,
 			ArrayList<Column> cols, 
 			Sheet resultsSheet, 
-			Map<String, CellStyle> styles) {
+			Map<String, CellStyle> styles,
+			boolean embedImages) {
 		
 		String sql = null;
 		PreparedStatement pstmt = null;
@@ -910,7 +963,7 @@ public class XLSResultsManager {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
 						getData(con, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
-								cols, resultsSheet, styles);
+								cols, resultsSheet, styles, embedImages);
 					}
 				}
 				
@@ -924,7 +977,7 @@ public class XLSResultsManager {
 					
 					//f.printRecords(4, true);
 					appendToOutput(con, new ArrayList<String> (), 
-							formList.get(0), formList, 0, null, resultsSheet, styles);
+							formList.get(0), formList, 0, null, resultsSheet, styles, embedImages);
 					
 				}
 			}
@@ -951,8 +1004,9 @@ public class XLSResultsManager {
 			FormDesc f, ArrayList<FormDesc> formList, int index, 
 			String parent,
 			Sheet resultsSheet, 
-			Map<String, CellStyle> styles
-			) throws NumberFormatException, SQLException {
+			Map<String, CellStyle> styles,
+			boolean embedImages
+			) throws NumberFormatException, SQLException, IOException {
 
 		int number_records = 0;
 		if(f.records != null) {
@@ -980,9 +1034,9 @@ public class XLSResultsManager {
 
 				if(index < formList.size() - 1) {
 					appendToOutput(sd,  newRec , formList.get(index + 1), 
-							formList, index + 1, null, resultsSheet, styles);
+							formList, index + 1, null, resultsSheet, styles, embedImages);
 				} else {
-					closeRecord(newRec, resultsSheet, styles);
+					closeRecord(newRec, resultsSheet, styles, embedImages);
 				}
 				
 			} else {
@@ -1003,9 +1057,9 @@ public class XLSResultsManager {
 						FormDesc nextForm = formList.get(index + 1);
 						String filter = null;
 						
-						appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+						appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 					} else {
-						closeRecord(in, resultsSheet, styles);
+						closeRecord(in, resultsSheet, styles, embedImages);
 					}
 				} else {
 					/*
@@ -1037,9 +1091,9 @@ public class XLSResultsManager {
 								if(nextForm.parent.equals(f.f_id)) {
 									filter = rd.prikey;
 								}
-								appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+								appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 							} else {
-								closeRecord(newRec, resultsSheet, styles);
+								closeRecord(newRec, resultsSheet, styles, embedImages);
 							} 
 						} else {
 							/*
@@ -1065,14 +1119,14 @@ public class XLSResultsManager {
 									FormDesc nextForm = formList.get(index + 1);
 									String filter = null;
 									
-									appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+									appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 								} else {
 									/*
 									 * Add the record if there are no matching records for this form
 									 * This means that if a child form was not completed the main form will still be shown (outer join)
 									 */
 									if(!hasMatchingRecord) {
-										closeRecord(in, resultsSheet, styles);
+										closeRecord(in, resultsSheet, styles, embedImages);
 									}
 								}
 							}
@@ -1085,9 +1139,9 @@ public class XLSResultsManager {
 			// Proceed with any lower level forms
 			if(index < formList.size() - 1) {
 				appendToOutput(sd,  in , formList.get(index + 1), 
-						formList, index + 1, null, resultsSheet, styles);
+						formList, index + 1, null, resultsSheet, styles, embedImages);
 			} else {
-				closeRecord(in, resultsSheet, styles);
+				closeRecord(in, resultsSheet, styles, embedImages);
 			}
 		}
 		

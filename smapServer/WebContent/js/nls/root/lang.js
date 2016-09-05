@@ -258,6 +258,7 @@ define({
 	"a_cm": "Cluster Members",
 	"a_dv": "Show Details",
 	"a_rd": "Report Definition",
+	"a_embed": "Embed Images in Excel File",
 	
 	
 	// Messages

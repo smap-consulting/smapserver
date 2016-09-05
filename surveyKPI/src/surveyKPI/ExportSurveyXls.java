@@ -66,6 +66,7 @@ public class ExportSurveyXls extends Application {
 			@QueryParam("merge_select_multiple") boolean merge_select_multiple,
 			@QueryParam("language") String language,
 			@QueryParam("exp_ro") boolean exp_ro,
+			@QueryParam("embedimages") boolean embedImages,
 			@QueryParam("forms") String include_forms,
 			@QueryParam("filetype") String filetype,
 			
@@ -154,7 +155,8 @@ public class ExportSurveyXls extends Application {
 					language, 
 					split_locn,
 					request,
-					response.getOutputStream());
+					response.getOutputStream(),
+					embedImages);
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 			try {
@@ -165,8 +167,8 @@ public class ExportSurveyXls extends Application {
 			}
 		} finally {
 			
-			SDDataSource.closeConnection("createPDF", sd);	
-			ResultsDataSource.closeConnection("createPDF", connectionResults);
+			SDDataSource.closeConnection("createXLS", sd);	
+			ResultsDataSource.closeConnection("createXLS", connectionResults);
 			
 		}
 		return Response.ok("").build();
