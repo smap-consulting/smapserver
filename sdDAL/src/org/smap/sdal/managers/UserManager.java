@@ -447,7 +447,6 @@ public class UserManager {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtInsertUserGroup = null;
 		PreparedStatement pstmtInsertUserRole = null;
-		PreparedStatement pstmtUpdateProjectGroup = null;
 		PreparedStatement pstmtInsertProjectGroup = null;
 		
 		log.info("Update groups and projects user id:" + u_id);
@@ -463,13 +462,7 @@ public class UserManager {
 			pstmtInsertUserRole = sd.prepareStatement(sqlInsertUserRole);
 			pstmtInsertUserRole.setInt(1, u_id);
 			
-			String sqlUpdateProjectGroup = "update user_project set allocated = true "
-					+ "where u_id = ? "
-					+ "and p_id = ?";
-			pstmtUpdateProjectGroup = sd.prepareStatement(sqlUpdateProjectGroup);
-			pstmtUpdateProjectGroup.setInt(1, u_id);
-			
-			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id, allocated) values (?, ?, true);";
+			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id) values (?, ?);";
 			pstmtInsertProjectGroup = sd.prepareStatement(sqlInsertProjectGroup);
 			pstmtInsertProjectGroup.setInt(1, u_id);
 			
@@ -523,8 +516,8 @@ public class UserManager {
 				sd.commit();	// Commit changes to user roles
 			}
 			
-			// Mark existing projects as un-allocated
-			sql = "update user_project set allocated = false where u_id = ?;";
+			// Delete existing user projects
+			sql = "delete from user_project where u_id = ?;";
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, u.id);
@@ -534,13 +527,9 @@ public class UserManager {
 			for(int j = 0; j < u.projects.size(); j++) {
 				Project p = u.projects.get(j);
 				
-				pstmtUpdateProjectGroup.setInt(2, p.id);
-				int count = pstmtUpdateProjectGroup.executeUpdate();
+				pstmtInsertProjectGroup.setInt(2, p.id);
+				pstmtInsertProjectGroup.executeUpdate();
 				
-				if(count == 0) {
-					pstmtInsertProjectGroup.setInt(2, p.id);
-					pstmtInsertProjectGroup.executeUpdate();
-				}
 			}
 			
 		} catch (Exception e) {
@@ -550,7 +539,6 @@ public class UserManager {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertUserGroup != null) {pstmtInsertUserGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertUserRole != null) {pstmtInsertUserRole.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdateProjectGroup != null) {pstmtUpdateProjectGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertProjectGroup != null) {pstmtInsertProjectGroup.close();}} catch (SQLException e) {}
 		}
 		
