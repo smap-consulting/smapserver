@@ -31,7 +31,7 @@ define({
 	"m_mf": "Managed Forms",
 	"m_br": "Browse Results",
 	"m_manage": "Manage",
-	"m_manage_dash": "Management Dashboard",
+	"m_dash": "Dashboard",
 	"m_s_m_f": "Setup Managed Forms",
 	"m_task_m": "Task Management",
 	"m_user_profile": "User Profile",

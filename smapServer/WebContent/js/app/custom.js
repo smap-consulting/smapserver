@@ -54,6 +54,10 @@ function setCustomDashboard() {
 	// Menus
 }
 
+function setCustomUserDashboard() {
+	// Menus
+}
+
 function setCustomMonitor() {
 	// Menus
 }
