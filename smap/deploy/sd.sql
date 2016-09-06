@@ -604,3 +604,18 @@ CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
 
 alter table users add column temporary boolean default false;
 update users set temporary = false where temporary is null;
+
+-- Upgrade to 16.09 from 16.08
+
+CREATE SEQUENCE alert_seq START 1;
+ALTER SEQUENCE alert_seq OWNER TO ws;
+
+create TABLE alert (
+	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
+	l_id integer REFERENCES log(id) ON DELETE CASCADE,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	status text,
+	updated_time TIMESTAMP WITH TIME ZONE,
+	url text
+);
+ALTER TABLE alert OWNER TO ws;
