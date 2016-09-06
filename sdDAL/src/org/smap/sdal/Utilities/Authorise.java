@@ -200,20 +200,30 @@ public class Authorise {
 		 * 2) Make sure survey is in a project that the user has access to
 		 */
 
-		String sql = "select count(*) from survey s, users u, user_project up, project p "
+		StringBuffer sql = new StringBuffer("select count(*) from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
 				+ "and s.p_id = up.p_id "
 				+ "and s.s_id = ? "
 				+ "and u.ident = ? "
-				+ "and s.deleted = ?";
+				+ "and s.deleted = ? ");
 		
-		try {
-			pstmt = conn.prepareStatement(sql);
+		try {		
+			boolean superUser = GeneralUtilityMethods.isSuperUser(conn, user);
+			
+			if(!superUser) {
+				// Add RBAC
+				sql.append(GeneralUtilityMethods.getSurveyRBAC());
+			}
+			
+			pstmt = conn.prepareStatement(sql.toString());
 			pstmt.setInt(1, sId);
 			pstmt.setString(2, user);
 			pstmt.setBoolean(3, isDeleted);
 			
+			if(!superUser) {
+				pstmt.setString(4, user);
+			}
 			log.info("IsValidSurvey: " + pstmt.toString());
 			
 			resultSet = pstmt.executeQuery();

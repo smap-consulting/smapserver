@@ -99,24 +99,13 @@ public class ProjectList extends Application {
 			
 			if(o_id > 0) {	
 				
-				String sql = null;
-				if (securityRole) {
-					sql = "select id, name, description, tasks_only, changed_by, changed_ts "
+				String sql = "select id, name, description, tasks_only, changed_by, changed_ts "
 						+ "from project "
 						+ "where o_id = ? "
 						+ "order by name ASC;";	
-				} else {
-					sql = "select p.id, p.name, p.description, p.tasks_only, p.changed_by, p.changed_ts "
-							+ "from project p "
-							+ "where p.o_id = ? "
-							+ "order by p.name ASC;";	
-				}
 					
 				pstmt = connectionSD.prepareStatement(sql);
 				pstmt.setInt(1, o_id);
-				if(!securityRole) {
-					pstmt.setInt(2, uId);
-				}
 				
 				log.info("Get project list: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
