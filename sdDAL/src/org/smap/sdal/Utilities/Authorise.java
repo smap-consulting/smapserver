@@ -317,9 +317,9 @@ public class Authorise {
 	}
 	
 	/*
-	 * Verify that the user is entitled to access this custom report
+	 * Verify that the user is entitled to access this managedForm
 	 */
-	public boolean isValidCustomReport(Connection conn, String user, int crId)
+	public boolean isValidManagedForm(Connection conn, String user, int crId)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;

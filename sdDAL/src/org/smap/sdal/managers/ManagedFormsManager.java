@@ -165,9 +165,6 @@ public class ManagedFormsManager {
 	 */
 	public void getDataProcessingConfig(Connection sd, int crId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) throws Exception {
 		
-		/*
-		 * Manually create this (TODO retrieve from database)
-		 */
 		CustomReportsManager crm = new CustomReportsManager ();
 		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
 		for(int i = 0; i < managedColumns.size(); i++) {

@@ -83,7 +83,7 @@ public class ManagedForms extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
 		if(managedId > 0) {
-			a.isValidCustomReport(sd, request.getRemoteUser(), managedId);
+			a.isValidManagedForm(sd, request.getRemoteUser(), managedId);
 		}
 		// End Authorisation
 		
