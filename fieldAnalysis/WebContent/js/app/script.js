@@ -154,9 +154,14 @@ $(document).ready(function() {
 		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages);
 		        		}
 		        		
-		        		if(format === "lqas") {
-		        			downloadFile(url, displayName + ".xlsx", 
-		        					"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		        		if(format === "lqas" || (format === "xls" && xlstype !== "html")) {
+		        			var mime;
+		        			if(xlstype === "xls") {
+		        				mime = "application/vnd.ms-excel";
+		        			} else {
+		        				mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		        			}
+		        			downloadFile(url, displayName + "." + xlstype, mime);
 		        		} else {
 		        			$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
 		        		}
