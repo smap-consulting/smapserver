@@ -15,6 +15,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.poi.ss.usermodel.Workbook;
 import org.smap.sdal.Utilities.Authorise;
@@ -83,6 +84,8 @@ public class ExportSurveyXls extends Application {
 		    	log.log(Level.SEVERE, "Exception", ex);
 		    }
 		}
+		
+		Response responseVal = null;
 		
 		// Set defaults
 	
@@ -157,25 +160,21 @@ public class ExportSurveyXls extends Application {
 					request,
 					response.getOutputStream(),
 					embedImages);
+			
+			responseVal = Response.ok("").build();
+			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			try {
-				throw new Exception("Exception: " + e.getMessage());
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+			responseVal = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} finally {
 			
 			SDDataSource.closeConnection("createXLS", sd);	
 			ResultsDataSource.closeConnection("createXLS", connectionResults);
 			
 		}
-		return Response.ok("").build();
 		
+		return responseVal;
 		
-	
-
 
 		
 	}

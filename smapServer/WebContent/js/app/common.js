@@ -1849,14 +1849,22 @@ function downloadFile(url, filename, mime) {
 		        window.URL.revokeObjectURL(url);  
 		    }, 100);  
 		  } else {
-			  alert("Error: Download Failed");
+			  alert("Error: Download Failed: " + this.statusText);
 		  }
 	};
+	
+	xhr.onerror = function(e) {
+		 alert("Error: Download Failed");
+	}
 	 
-	Pace.restart();
-	Pace.track(function() {
+	if(typeof Pace !== "undefined") {
+		Pace.restart();
+		Pace.track(function() {
+			xhr.send();
+		});
+	} else {
 		xhr.send();
-	});
+	}
 	
 }
 
@@ -1899,6 +1907,10 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 			  alert("Error: Download Failed");
 		  }
 	};
+	
+	xhr.onerror = function(e) {
+		 alert("Error: Upload Failed");
+	}
 	
 	Pace.restart();
 	xhr.send(payload);

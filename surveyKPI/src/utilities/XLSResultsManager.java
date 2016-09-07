@@ -99,14 +99,19 @@ public class XLSResultsManager {
 		ArrayList<TableColumn> columnList = null;
 		
 		@SuppressWarnings("unused")
-		public void debugForm() {
-			System.out.println("Form=============");
-			System.out.println("    f_id:" + f_id);
-			System.out.println("    parent:" + parent);
-			System.out.println("    table_name:" + table_name);
-			System.out.println("    maxRepeats:" + maxRepeats);
-			System.out.println("    visible:" + visible);
-			System.out.println("    flat:" + flat);
+		public void debugForm(String indent) {
+			System.out.println(indent + "Form=============");
+			System.out.println(indent + "    f_id:" + f_id);
+			System.out.println(indent + "    parent:" + parent);
+			System.out.println(indent + "    table_name:" + table_name);
+			System.out.println(indent + "    maxRepeats:" + maxRepeats);
+			System.out.println(indent + "    visible:" + visible);
+			System.out.println(indent + "    flat:" + flat);
+			if(children != null) {
+				for(int i = 0; i < children.size(); i++) {
+					children.get(i).debugForm("      ");
+				}
+			}
 			System.out.println("End Form=============");
 		}
 		
@@ -183,7 +188,7 @@ public class XLSResultsManager {
 			boolean split_locn,
 			HttpServletRequest request,
 			OutputStream outputStream,
-			boolean embedImages) throws IOException {
+			boolean embedImages) throws Exception {
 		
 		Sheet resultsSheet = wb.createSheet("survey");
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
@@ -272,7 +277,6 @@ public class XLSResultsManager {
 				 */
 				formList.add(topForm);		// The top level form
 				addChildren(topForm, forms, formList);
-					
 
 				if(topForm.visible) {
 					cols.add(new Column("prikey", "", "Record"));
@@ -491,10 +495,6 @@ public class XLSResultsManager {
 						embedImages);
 	
 			
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception", e);
 			} finally {
 				
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
@@ -768,7 +768,7 @@ public class XLSResultsManager {
 	}
 	
 	/*
-	 * Return the text formatted for html or csv
+	 * Return the text
 	 */
 	private ArrayList<String> getContent(Connection con, String value, boolean firstCol, String columnName,
 			String columnType, boolean split_locn) throws NumberFormatException, SQLException {
@@ -804,8 +804,7 @@ public class XLSResultsManager {
 						coords[1] +
 						"&mlon=" +
 						coords[0] +
-						"&zoom=14\">" +
-						value);
+						"&zoom=14");
 			
 			} else {
 				out.add(value);
@@ -858,7 +857,7 @@ public class XLSResultsManager {
 			ArrayList<Column> cols, 
 			Sheet resultsSheet, 
 			Map<String, CellStyle> styles,
-			boolean embedImages) {
+			boolean embedImages) throws Exception {
 		
 		String sql = null;
 		PreparedStatement pstmt = null;
@@ -885,7 +884,7 @@ public class XLSResultsManager {
 			resultSet = pstmt.executeQuery();
 			
 			while (resultSet.next()) {
-
+				
 				String prikey = resultSet.getString(1);
 				ArrayList<String> record = new ArrayList<String>();
 				
@@ -978,10 +977,6 @@ public class XLSResultsManager {
 				}
 			}
 			
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
 		} finally {
 			try{
 				if(resultSet != null) {resultSet.close();};
