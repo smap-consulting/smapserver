@@ -1522,6 +1522,12 @@ public class SubRelationalDB extends Subscriber {
 					pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
 					pstmtApplyGeometryChange.executeQuery();
 					
+					// Commit this change to the database
+					try {
+						cResults.commit();
+					} catch(Exception ex) {
+						
+					}
 			} else {
 				
 				String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
