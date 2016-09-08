@@ -148,7 +148,6 @@ public class Register extends Application {
 			o.company_name = rd.org_name;
 			o.website = rd.website;
 			
-			sd.setAutoCommit(false);
 			int o_id = om.createOrganisation(
 					sd, 
 					o, 
@@ -172,7 +171,7 @@ public class Register extends Application {
 			u.sendEmail = true;
 			u.projects = new ArrayList<Project> ();	// Empty list initially as no projects exist yet
 			
-			// Add first three groups as default for an adminstrator
+			// Add first three groups as default for an administrator
 			u.groups = new ArrayList<UserGroup> ();
 			for(int i = 1; i <=3; i++) {
 				u.groups.add(new UserGroup(i, "group"));
@@ -209,14 +208,10 @@ public class Register extends Application {
 				// Don't fail on this step
 			}
 			
-			sd.commit();
-			sd.setAutoCommit(true);
 			response = Response.ok().build();
 		
 				
 		} catch (SQLException e) {
-			try{sd.rollback();} catch(Exception ex) {}
-			try{sd.setAutoCommit(true);} catch(Exception ex) {}
 			
 			String state = e.getSQLState();
 			log.info("Register: sql state:" + state);
@@ -227,8 +222,6 @@ public class Register extends Application {
 				log.log(Level.SEVERE,"Error", e);
 			}
 		} catch(Exception e) {
-			try{sd.rollback();} catch(Exception ex) {}
-			try{sd.setAutoCommit(true);} catch(Exception ex) {}
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
 		} finally {
