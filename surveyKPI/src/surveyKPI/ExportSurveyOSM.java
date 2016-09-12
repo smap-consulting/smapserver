@@ -81,6 +81,18 @@ public class ExportSurveyOSM extends Application {
 		}
 	}
 	
+	private class LonLat {
+		public String lon;
+		public String lat;
+		public int id;
+		
+		LonLat(String lon, String lat, int id) {
+			this.lon = lon;
+			this.lat = lat;
+			this.id = id;
+		}
+	}
+	
 	private class Way {
 		ArrayList<String> nodes = null;
 		ArrayList<Tag> tags = null;
@@ -358,15 +370,27 @@ public class ExportSurveyOSM extends Application {
 	/*
 	 * Get the latitude, longitude from a WKT POINT
 	 */
-	private String [] getLonLat(String point) {
+	private ArrayList<LonLat> getLonLat(String value) {
 		String [] coords = null;
-		int idx1 = point.indexOf("(");
-		int idx2 = point.indexOf(")");
+		String [] pointArray = null;
+		ArrayList<LonLat> points = new ArrayList<LonLat> ();
+		
+		int idx1 = value.lastIndexOf("(");	// Polygons with two brackets supported (Multi Polygons TODO)
+		int idx2 = value.indexOf(")");
 		if(idx2 > idx1) {
-			String lonLat = point.substring(idx1 + 1, idx2);
-			coords = lonLat.split(" ");
+			String coordString = value.substring(idx1 + 1, idx2);
+			if(value.startsWith("POINT")) {
+				coords = coordString.split(" ");
+				points.add(new LonLat(coords[0], coords[1], idcounter--));
+			} else if(value.startsWith("POLYGON") || value.startsWith("LINESTRING")) {			
+				pointArray = coordString.split(",");
+				for(int i = 0; i < pointArray.length; i++) {
+					coords = pointArray[i].split(" ");
+					points.add(new LonLat(coords[0], coords[1], idcounter--));
+				}
+			}
 		}
-		return coords;
+		return points;
 	}
 
 	/*
@@ -418,7 +442,6 @@ public class ExportSurveyOSM extends Application {
 		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
-		//ResultSetMetaData rsMetaData = null;
 		
 		//f.print();
 		/*
@@ -441,60 +464,74 @@ public class ExportSurveyOSM extends Application {
 			resultSet = pstmt.executeQuery();
 			
 			while (resultSet.next()) {
+				ArrayList<LonLat> points = null;
 				String prikey = resultSet.getString(1);				
 				
 				// Add the tags to the output node
 				ArrayList<Tag> tags = new ArrayList<Tag>();
-				String lon = null;
-				String lat = null;
+				
 				for(TableColumn col : f.cols) {
 					
 					String key = col.name;
-					if(key.equals("parkey") ||	key.startsWith("_")) {
+					if(key.equals("prikey") ||
+							key.equals("instancename") ||	
+							key.equals("parkey") ||	
+							key.startsWith("_")) {
 						continue;
 					}
 					String value = resultSet.getString(key);
 					
-					if(value != null && value.startsWith("POINT")) {	// Get the location
-						String coords [] = getLonLat(value);
-						if(coords != null && coords.length > 1) {
-							lon = coords[0];
-							lat = coords[1];		
+					if(value != null) { 
+						if(key.equals("the_geom")) {  // Get the location
+							points = getLonLat(value);
+						} else if(!key.startsWith("_")) {	
+							tags.add(new Tag(key, value));
 						}
-					} else if(key.startsWith("_")) {
-						// Ignore default pre-loaded questions
-					} else if(key.equals("the_geom")) {		
-						// Ignore any other geometry types for the moment
-					} else if (value != null && !key.startsWith("_")) {	
-						tags.add(new Tag(key, value));
 					}
 					
 					
 				}
-				if(lon != null && lat != null) {	// Ignore records without location
-					populateNode(outputXML, rootElement, tags, lon, lat);
-					if(f.isWay) {								// Add node to way
+				if(points.size() > 0) {	// Ignore records without location
+					if(points.size() == 1) {
+						populateNode(outputXML, rootElement, tags, points);
+					} else {
+						populateNode(outputXML, rootElement, null, points);		// No node tags with polygons and lines
+					}
+					if(f.isWay || points.size() > 1) {			// Add nodes to way
 	
 						String wayId;							// Get the way identifier
-						if(f.parkey == null) {	
-							wayId = String.valueOf(f.f_id);
+						Way way = null;
+						if(points.size() == 1) {
+							if(f.parkey == null) {	
+								wayId = String.valueOf(f.f_id);
+							} else {
+								wayId = f.f_id + "_" + f.parkey;
+							}
+							way = ways.get(wayId);				// Get the way
+							if(way == null) {
+								way = new Way();
+								ways.put(wayId, way);
+							}
+							way.nodes.add(String.valueOf(points.get(0).id));	
 						} else {
-							wayId = f.f_id + "_" + f.parkey;
-						}
-						
-						Way way = ways.get(wayId);				// Get the way
-						if(way == null) {
+							wayId = String.valueOf(idcounter);
 							way = new Way();
 							ways.put(wayId, way);
+							for(int i = 0; i < points.size(); i++) {
+								way.nodes.add(String.valueOf(points.get(i).id));
+							}
 						}
 						
-						way.nodes.add(String.valueOf(idcounter));		
-						way.tags = f.tags;
-						if(f.isPolygon) {
+						
+						if(points.size() == 1) {
+							way.tags = f.tags;
+						} else {
+							way.tags = tags;
+						}
+						if(f.isPolygon) {		// Only required for polygons constructed from a subform of points (real polygons are already closed)
 							way.isPolygon = true;
 						}
 					}
-					idcounter--;
 				}
 								
 				// Process child tables
@@ -530,22 +567,26 @@ public class ExportSurveyOSM extends Application {
 	 * Populate the XML for a Node
 	 */
 	private void populateNode(Document outputXML, Element rootElement,  
-			ArrayList<Tag> tags, String lon, String lat) {
+			ArrayList<Tag> tags, ArrayList<LonLat> points) {
 		
-    	Element nodeElement = outputXML.createElement("node");
-    	String id = Integer.toString(idcounter);
-    	nodeElement.setAttribute("id", id);
-    	nodeElement.setAttribute("visible", "true");
-    	nodeElement.setAttribute("lat", lat);
-    	nodeElement.setAttribute("lon", lon);
-    	for(int i = 0; i < tags.size(); i++) {
-    		Element tagElement = outputXML.createElement("tag");
-    		Tag tag = tags.get(i);
-    		tagElement.setAttribute("k", translate(tag.key));
-    		tagElement.setAttribute("v", tag.value);
-    		nodeElement.appendChild(tagElement);
-    	}
-    	rootElement.appendChild(nodeElement);
+		for(LonLat ll : points) {
+	    	Element nodeElement = outputXML.createElement("node");
+	    	String id = Integer.toString(ll.id);
+	    	nodeElement.setAttribute("id", id);
+	    	nodeElement.setAttribute("visible", "true");
+	    	nodeElement.setAttribute("lat", ll.lat);
+	    	nodeElement.setAttribute("lon", ll.lon);
+	    	if(tags != null) {
+		    	for(int i = 0; i < tags.size(); i++) {
+		    		Element tagElement = outputXML.createElement("tag");
+		    		Tag tag = tags.get(i);
+		    		tagElement.setAttribute("k", translate(tag.key));
+		    		tagElement.setAttribute("v", tag.value);
+		    		nodeElement.appendChild(tagElement);
+		    	}
+	    	}
+	    	rootElement.appendChild(nodeElement);
+		}
 	}
 	
 	/*
