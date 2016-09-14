@@ -50,14 +50,6 @@ public class Modules extends Application {
 
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
-	// Tell class loader about the root classes.  
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Modules.class);
-		return s;
-	}
-
-	
 	/*
 	 * Return the list of modules in this survey
 	 */

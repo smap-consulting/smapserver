@@ -52,14 +52,6 @@ public class Languages extends Application {
 			 Logger.getLogger(Languages.class.getName());
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
-
-	// Tell class loader about the root classes.  
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Languages.class);
-		return s;
-	}
-
 	
 	/*
 	 * Return the list of languages in this survey

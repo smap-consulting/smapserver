@@ -60,14 +60,6 @@ public class QuestionList extends Application {
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(QuestionList.class);
-		return s;
-	}
-
-	
 	/*
 	 * Return a list of all questions in the survey
 	 * Deprecate.  This service has been replaced by the next one. It should be deleted however 

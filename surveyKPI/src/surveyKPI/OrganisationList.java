@@ -76,14 +76,6 @@ public class OrganisationList extends Application {
 	private static Logger log =
 			 Logger.getLogger(OrganisationList.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(OrganisationList.class);
-		return s;
-	}
-
-	
 	@GET
 	@Produces("application/json")
 	public Response getOrganisations(@Context HttpServletRequest request) { 

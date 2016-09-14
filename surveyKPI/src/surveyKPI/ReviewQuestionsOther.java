@@ -53,13 +53,6 @@ public class ReviewQuestionsOther extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReviewQuestionsOther.class);
-		return s;
-	}
-
 	ArrayList<Question> selectQuestions = new ArrayList<Question> ();
 	ArrayList<Question> textQuestions = new ArrayList<Question> ();
 	ArrayList<Question> questions = new ArrayList<Question> ();

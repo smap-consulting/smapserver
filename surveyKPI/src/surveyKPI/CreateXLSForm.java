@@ -55,13 +55,6 @@ public class CreateXLSForm extends Application {
 	private static Logger log =
 			 Logger.getLogger(CreateXLSForm.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	
 	@GET
 	@Produces("application/x-download")
 	public Response getXLSFormService (@Context HttpServletRequest request, 

@@ -60,13 +60,6 @@ public class Values extends Application {
 	private static Logger log =
 			 Logger.getLogger(Values.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Values.class);
-		return s;
-	}
-	
 	ArrayList<String> results = new ArrayList<String> ();
 	
 

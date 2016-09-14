@@ -45,13 +45,6 @@ public class OptionList extends Application {
 
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(OptionList.class);
-		return s;
-	}
-	
 	@GET
 	@Produces("application/json")
 	public String getOptions(@Context HttpServletRequest request,

@@ -56,13 +56,6 @@ public class ReviewResultsText extends Application {
 	private static Logger log =
 			 Logger.getLogger(ReviewResultsText.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReviewResultsText.class);
-		return s;
-	}
-	
 	private class Result {
 		int r_id;
 		String text;

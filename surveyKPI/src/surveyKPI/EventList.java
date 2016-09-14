@@ -51,13 +51,7 @@ public class EventList extends Application {
 	private static Logger log =
 			 Logger.getLogger(EventList.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(EventList.class);
-		return s;
-	}
-	
+
 	public EventList() {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	

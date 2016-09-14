@@ -57,14 +57,6 @@ public class CreateSPSS extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-
-	
 	@GET
 	@Produces("application/x-download")
 	public Response getSpssService (@Context HttpServletRequest request, 

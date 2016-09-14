@@ -89,13 +89,6 @@ public class UploadFiles extends Application {
 	private static Logger log =
 			 Logger.getLogger(UploadFiles.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(UploadFiles.class);
-		return s;
-	}
-
 			
 	@POST
 	@Produces("application/json")
