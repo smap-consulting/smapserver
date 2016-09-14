@@ -253,7 +253,8 @@ public class Roles extends Application {
 		RoleManager rm = new RoleManager();
 		try {
 	
-			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
