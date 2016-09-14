@@ -378,7 +378,7 @@ public class UserSvc extends Application {
 					    try { 	
 							FileUtils.deleteDirectory(folder);
 						} catch (IOException e) {
-							log.log(Level.SEVERE, "Error deleting signatre directory");
+							log.log(Level.SEVERE, "Error deleting signature directory");
 						}
 					    
 					    // 4. Create the signature folder
@@ -405,7 +405,7 @@ public class UserSvc extends Application {
 			String sql = null;
 			String ident = user;
 			
-			if(sigPath == null) {
+			if(sigPath == null && !u.delSig) {
 				// Do not update the signature
 				sql = "update users set " +
 						" name = ?, " + 
@@ -426,7 +426,7 @@ public class UserSvc extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, u.name);
 			pstmt.setString(2, u.settings);
-			if(sigPath == null) {
+			if(sigPath == null && !u.delSig) {
 				pstmt.setString(3, ident);
 			} else {
 				pstmt.setString(3, fileName);
@@ -438,7 +438,11 @@ public class UserSvc extends Application {
 			pstmt.executeUpdate();
 			
 			// Set the updated signature and return it in the user id 
-			u.signature = "/surveyKPI/file/" + fileName + "/users?type=sig";
+			if(fileName != null) {
+				u.signature = "/surveyKPI/file/" + fileName + "/users?type=sig";
+			} else if(u.delSig) {
+				u.signature = null;
+			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(u);
 			

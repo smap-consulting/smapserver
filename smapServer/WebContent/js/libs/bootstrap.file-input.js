@@ -93,7 +93,7 @@ $.fn.bootstrapFileInput = function() {
       		$target = $('.upload_file_msg');
      
       if ($this.prop('files') && $this.prop('files').length > 1) {
-    	  fileDesc = 'Selected: ';
+    	  fileDesc = '';
     	  for(i = 0; i < $this.prop('files').length; i++) {
     		  fileName = $this[0].files[i].name;
     		  fileName = fileName.substring(fileName.lastIndexOf('\\') + 1, fileName.length);
@@ -106,7 +106,7 @@ $.fn.bootstrapFileInput = function() {
       else {
     	fileName = $this.val();
         fileName = fileName.substring(fileName.lastIndexOf('\\') + 1, fileName.length);
-        fileDesc = 'Selected: ' + fileName;
+        fileDesc = fileName;
       }
 
       // Don't try to show the name if there is none
