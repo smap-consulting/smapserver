@@ -127,7 +127,7 @@ $(document).ready(function() {
 				+ (current.length > 0 ? " " : "")
 				+ "${"
 				+ $('#filter_row_aq option:selected').val()
-				+ "}");
+				+ "} ");
 	});
 	
 	enableUserProfileBS();

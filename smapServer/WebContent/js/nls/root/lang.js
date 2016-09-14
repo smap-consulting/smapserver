@@ -577,7 +577,7 @@ define({
 	"ro_fc": "Filter columns",
 	"ro_fr_rule": "Rows to be shown",
 	"ro_aq": "Available Questions",
-	"ro_fr_i": "Enter a rule that determines which rows will be shown for this role. Enclose question names in ${...}. Enclose text in single quotes.<br/>Example 1: ${region} = 'northern'<br/>Example 2: ${age} > 16. If no rule is specified then all rows will be shown.",
+	"ro_fr_i": "Enter a rule that determines which rows will be shown for this role. Enclose question names in ${...}. Enclose text in single quotes. Make sure there are spaces between the question names and operators such as =.<br/>Example 1: ${region} = 'northern'<br/>Example 2: ${age} > 16. If no rule is specified then all rows will be shown.",
 	"ro_fc_i": "Select the columns to show with this filter. If no columns are selected then all columns will be shown."
 
 	 		
