@@ -612,9 +612,9 @@ ALTER SEQUENCE alert_seq OWNER TO ws;
 
 create TABLE alert (
 	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
-	l_id integer REFERENCES log(id) ON DELETE CASCADE,
 	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	status text,
+	priority text,
 	updated_time TIMESTAMP WITH TIME ZONE,
 	url text
 );

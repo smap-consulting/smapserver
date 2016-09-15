@@ -93,7 +93,7 @@ create TABLE log (
 	s_id integer,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	user_ident text,
-	event text,
+	event text,	
 	note text
 	);
 ALTER TABLE log OWNER TO ws;

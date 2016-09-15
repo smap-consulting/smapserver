@@ -24,40 +24,49 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
-import lqas.LqasAppEntry;
+import org.smap.sdal.managers.FiretailManager;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-@Path("/antlr")
-public class AntlrTest extends Application {
+/*
+ * The FireTail module manages the interface between a Smap logged in user and the FireTail 
+ *  messaging module
+ */
+@Path("/firetail")
+public class Firetail extends Application {
 	
 	Authorise a = null;
 	
 	private static Logger log =
-			 Logger.getLogger(AntlrTest.class.getName());
+			 Logger.getLogger(Firetail.class.getName());
 	
-	public AntlrTest() {
+	public Firetail() {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
-		a = new Authorise(authorisations, null);
+		authorisations.add(Authorise.ENUM);
 		
+		a = new Authorise(authorisations, null);	
 	}
 
-	
-	// Respond with JSON 
+	/*
+	 * Get a list of messages
+	 */
 	@GET
 	@Produces("application/json")
-	@Path("/a")
-	public void getEvents(@Context HttpServletRequest request) {
+	public Response getMessages(@Context HttpServletRequest request) {
 
-		LqasAppEntry a = new LqasAppEntry();
-		a.getQuery("a = 5");
-
+		Response response = null;
+		
+		FiretailManager ftm = new FiretailManager();
+		ftm.getEvents();
+		
+		return response;
 	}
 
 
