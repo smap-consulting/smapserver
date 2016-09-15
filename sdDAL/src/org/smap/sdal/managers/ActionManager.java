@@ -2,6 +2,9 @@ package org.smap.sdal.managers;
 
 import java.util.logging.Logger;
 
+import org.smap.sdal.model.Action;
+import org.smap.sdal.model.TableColumn;
+
 /*****************************************************************************
 
 This file is part of SMAP.
@@ -24,13 +27,23 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Manage the table that stores details on the forwarding of data onto other systems
  */
-public class FiretailManager {
+public class ActionManager {
 	
 	private static Logger log =
-			 Logger.getLogger(FiretailManager.class.getName());
+			 Logger.getLogger(ActionManager.class.getName());
 	
 	public void getEvents() {
 		
+	}
+	
+	/*
+	 * Apply actions resulting fron a change to managed forms
+	 */
+	public void applyManagedFormActions(TableColumn tc) {
+		for(int i = 0; i < tc.actions.size(); i++) {
+			Action a = tc.actions.get(i);
+			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
+		}
 	}
 
 }

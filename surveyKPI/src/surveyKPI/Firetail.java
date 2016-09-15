@@ -27,7 +27,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.managers.FiretailManager;
+import org.smap.sdal.managers.ActionManager;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
@@ -63,7 +63,7 @@ public class Firetail extends Application {
 
 		Response response = null;
 		
-		FiretailManager ftm = new FiretailManager();
+		ActionManager ftm = new ActionManager();
 		ftm.getEvents();
 		
 		return response;

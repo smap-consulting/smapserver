@@ -35,6 +35,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.model.Filter;
@@ -412,28 +413,20 @@ public class ManagedForms extends Application {
 				
 				// 2. Confirm this is an editable managed column
 				boolean updateable = false;
-				String columnType = null;
+				TableColumn tc = null;
 				for(int j = 0; j < columns.size(); j++) {
-					TableColumn tc = columns.get(j);
-					if(tc.name.equals(u.name)) {
-						if(!tc.readonly) {
+					TableColumn xx = columns.get(j);
+					if(xx.name.equals(u.name)) {
+						if(!xx.readonly) {
 							updateable = true;
-							columnType = tc.type;
+							tc = xx;
 						}
 						break;
 					}
 				}
 				if(!updateable) {
-					throw new Exception("Update failed " + u.name + " is not updatable");
+					throw new Exception(u.name + " " + localisation.getString("mf_nu"));
 				}
-				
-				// 2. Apply the update
-				//if(u.value != null && u.value.trim().length() == 0) {
-				//	u.value = null;
-				//}
-				//if(u.currentValue != null && u.currentValue.trim().length() == 0) {
-				//	u.currentValue = null;
-				//}
 				
 				String sqlUpdate = "update " + f.tableName;
 				
@@ -444,14 +437,6 @@ public class ManagedForms extends Application {
 				}
 				sqlUpdate += "where "
 						+ "prikey = ? ";
-						//+ "and (" + u.name;
-				
-	
-				//if(u.currentValue == null) {
-				//	sqlUpdate += " is null);";
-				//} else {
-				//	sqlUpdate += " = ? or " + u.name + " is null)";
-				//}
 				
 				try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
@@ -459,43 +444,23 @@ public class ManagedForms extends Application {
 				// Set the parameters
 				int paramCount = 1;
 				if(u.value != null) {
-					if(columnType.equals("text") || columnType.equals("select_one")) {
+					if(tc.type.equals("text") || tc.type.equals("select_one")) {
 						pstmtUpdate.setString(paramCount++, u.value);
-					} else if(columnType.equals("date")) {
+					} else if(tc.type.equals("date")) {
 						java.util.Date inputDate = dateFormat.parse(u.value);
 						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
-					} else if(columnType.equals("integer")) {
+					} else if(tc.type.equals("integer")) {
 						int inputInt = Integer.parseInt(u.value);
 						pstmtUpdate.setInt(paramCount++, inputInt);
-					} else if(columnType.equals("decimal")) {
+					} else if(tc.type.equals("decimal")) {
 						double inputDouble = Double.parseDouble(u.value);
 						pstmtUpdate.setDouble(paramCount++, inputDouble);
 					} else {
-						log.info("Warning: unknown type: " + columnType + " value: " + u.value);
+						log.info("Warning: unknown type: " + tc.type + " value: " + u.value);
 						pstmtUpdate.setString(paramCount++, u.value);
 					}
 				}
 				pstmtUpdate.setInt(paramCount++, u.prikey);
-				/*
-				 * Disable this integrity check
-				 * There are currently too many false errors
-				if(u.currentValue != null) {
-					if(columnType.equals("text") || columnType.equals("select_one")) {
-						pstmtUpdate.setString(paramCount++, u.currentValue);
-					} else if(columnType.equals("date")) {
-						java.util.Date inputDate = dateFormat.parse(u.currentValue);
-						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
-					} else if(columnType.equals("integer")) {
-						int inputInt = Integer.parseInt(u.currentValue);
-						pstmtUpdate.setInt(paramCount++, inputInt);
-					} else if(columnType.equals("decimal")) {
-						double inputDouble = Double.parseDouble(u.currentValue);
-						pstmtUpdate.setDouble(paramCount++, inputDouble);
-					} else {
-						pstmtUpdate.setString(paramCount++, u.currentValue);	// Default
-					}
-				} 
-				*/
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
 				count = pstmtUpdate.executeUpdate();
@@ -503,6 +468,14 @@ public class ManagedForms extends Application {
 					throw new Exception("Update failed: "
 							+ "Try refreshing your view of the data as someone may already "
 							+ "have updated this record.");
+				}
+				
+				/*
+				 * Apply any required actions
+				 */
+				if(tc.actions != null && tc.actions.size() > 0) {
+					ActionManager am = new ActionManager();
+					am.applyManagedFormActions(tc);
 				}
 				
 

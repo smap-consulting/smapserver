@@ -38,6 +38,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.Action;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -222,7 +223,6 @@ public class XLSCustomReportsManager {
 	                				}
 	                			}
 	                			
-	                			System.out.println("type: " + currentCol.type);
 	                			// Get calculation state
 	                			if(currentCol.type.equals("calculate")) {
 		                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);
@@ -297,6 +297,44 @@ public class XLSCustomReportsManager {
 	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
+	                		} else if(rowType.equals("action")) {
+	                			if(currentCol != null) {
+	                				String action = getColumn(row, "action", header, lastCellNum, null);
+	                				if(action != null) {
+	                					if(action.equals("respond")) {
+		                					if(currentCol.actions == null) {
+		                						currentCol.actions = new ArrayList<Action> ();
+		                					}
+	                					} else {
+	                						throw new Exception(localisation.getString("mf_ia") + 
+			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                					}
+	                					
+	                					// Get the action details
+	                					Action todo = new Action(action);
+	                					todo.notify_type = getColumn(row, "notify type", header, lastCellNum, null);
+	                					todo.notify_person = getColumn(row, "notify person", header, lastCellNum, null);
+	                					
+	                					// Checks for a valid notification
+	                					if(action.equals("respond") && todo.notify_type == null) {
+	                						throw new Exception(localisation.getString("mf_mnt") + 
+			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                					} 
+	                					if(action.equals("respond") && todo.notify_person == null) {
+	                						throw new Exception(localisation.getString("mf_mnp") + 
+			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                					}
+	                					
+	                					currentCol.actions.add(todo);
+	                					
+	                				} else {
+	                					throw new Exception(localisation.getString("mf_mv_a") + 
+		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				}
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_un_a") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
 	                		} else if(rowType.equals("condition")) {
 	                			
 	                			if(currentCol != null && currentCol.type.equals("calculate")) {
