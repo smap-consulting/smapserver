@@ -1819,6 +1819,10 @@ function utcTime(localTime) {
 
 }
 
+function getUtcOffset() {
+	return moment().utcOffset();
+}
+
 function downloadFile(url, filename, mime) {
 
 	// prevent caching

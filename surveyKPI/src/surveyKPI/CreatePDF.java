@@ -77,7 +77,9 @@ public class CreatePDF extends Application {
 			@QueryParam("instance") String instanceId,
 			@QueryParam("language") String language,
 			@QueryParam("landscape") boolean landscape,
-			@QueryParam("filename") String filename) throws Exception {
+			@QueryParam("filename") String filename,
+			@QueryParam("utcOffset") int utcOffset		// Offset in minutes
+			) throws Exception {
 
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -116,7 +118,8 @@ public class CreatePDF extends Application {
 					instanceId,
 					filename,
 					landscape,
-					response);
+					response,
+					utcOffset);
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);

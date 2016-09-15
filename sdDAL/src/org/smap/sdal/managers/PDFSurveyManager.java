@@ -145,7 +145,8 @@ public class PDFSurveyManager {
 			String instanceId,
 			String filename,
 			boolean landscape,					// Set true if landscape
-			HttpServletResponse response) {
+			HttpServletResponse response,
+			int utcOffset) {
 		
 		if(language != null) {
 			language = language.replace("'", "''");	// Escape apostrophes

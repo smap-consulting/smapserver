@@ -386,7 +386,8 @@ public class NotificationManager {
 							instanceId,
 							null,
 							landscape,
-							null);
+							null,
+							0);
 					
 					logContent = filePath;
 					
