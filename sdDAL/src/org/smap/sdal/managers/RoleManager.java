@@ -404,6 +404,7 @@ public class RoleManager {
 					+ "from survey_role sr, user_role ur, users u "
 					+ "where sr.s_id = ? "
 					+ "and sr.r_id = ur.r_id "
+					+ "and sr.enabled = true "
 					+ "and ur.u_id = u.id "
 					+ "and u.ident = ?";
 							
@@ -487,6 +488,7 @@ public class RoleManager {
 			sql = "SELECT sr.column_filter "
 					+ "from survey_role sr, user_role ur, users u "
 					+ "where sr.s_id = ? "
+					+ "and sr.enabled = true "
 					+ "and sr.r_id = ur.r_id "
 					+ "and ur.u_id = u.id "
 					+ "and u.ident = ?";
