@@ -51,5 +51,6 @@ public class User {
 	public int this_month;
 	public int last_month;
 	public int all_time;
+	public boolean delSig;
 	
 }

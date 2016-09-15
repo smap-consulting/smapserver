@@ -18,6 +18,7 @@
         
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
+	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
     <script data-main="js/survey_roles" src="js/libs/require.js"></script>
 </head>
 <body>
@@ -57,12 +58,12 @@
           </ul>
         </li> 
  
- 		<li><a id="m_form" href="/edit.html">Form</a>
-		<li><a id="m_translate" href="translate.html">Translate</a>
-		<li><a id="m_calculations" href="/ssc.html">Calculations</a></li>
+ 		<li><a id="m_form" class="lang" data-lang="c_form" href="/edit.html">form</a>
+		<li><a id="m_translate" class="lang" data-lang="c_trans" href="translate.html">translate</a>
+		<li><a id="m_calculations" href="/ssc.html" class="lang" data-lang="c_calc">calculations</a></li>
            
                      
-		<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
+		<li id="m_help"><a class="lang" data-lang="m_help" href="/editorHelp.html" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
 			<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
@@ -234,5 +235,8 @@
 		</div>
 	</div>
 </div>
+<script>
+	setCustomEdit();
+</script>
 </body>
 </html>

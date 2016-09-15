@@ -202,7 +202,7 @@ public class RoleManager {
 	/*
 	 * Get roles associated with a survey
 	 */
-	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id) throws SQLException {
+	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id, int o_id) throws SQLException {
 		PreparedStatement pstmt = null;
 		ArrayList<Role> roles = new ArrayList<Role> ();
 		
@@ -215,15 +215,17 @@ public class RoleManager {
 					+ "sr.enabled, "
 					+ "sr.id as linkid,"
 					+ "sr.row_filter,"
-					+ "sr.column_filter"
-					+ " from role r "
+					+ "sr.column_filter "
+					+ "from role r "
 					+ "left outer join survey_role sr "
-					+ " on r.id = sr.r_id "
-					+ " and sr.s_id = ? "
-					+ " order by r.name asc";
+					+ "on r.id = sr.r_id "
+					+ "and sr.s_id = ? "
+					+ "where o_id = ? "
+					+ "order by r.name asc";
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, s_id);
+			pstmt.setInt(2, o_id);
 			log.info("Get survey roles: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 							
@@ -402,6 +404,7 @@ public class RoleManager {
 					+ "from survey_role sr, user_role ur, users u "
 					+ "where sr.s_id = ? "
 					+ "and sr.r_id = ur.r_id "
+					+ "and sr.enabled = true "
 					+ "and ur.u_id = u.id "
 					+ "and u.ident = ?";
 							
@@ -485,6 +488,7 @@ public class RoleManager {
 			sql = "SELECT sr.column_filter "
 					+ "from survey_role sr, user_role ur, users u "
 					+ "where sr.s_id = ? "
+					+ "and sr.enabled = true "
 					+ "and sr.r_id = ur.r_id "
 					+ "and ur.u_id = u.id "
 					+ "and u.ident = ?";

@@ -24,6 +24,8 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
+var gDelSig = false;
+
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
@@ -96,6 +98,7 @@ $(document).ready(function() {
 		userDetails.title = $('#my_title').val();
 		userDetails.license = $('#my_license').val();
 		user.settings = JSON.stringify(userDetails);
+		user.delSig = gDelSig;
 			
 		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		user.current_survey_id = 0;
@@ -107,6 +110,20 @@ $(document).ready(function() {
     	
 		saveUserDetails(formData);			// Save the updated user details to disk	 
 	});
+    
+    /*
+	 * Cancel the user details changes
+	 */
+	$('#userDetailsCancel').off().click(function() {
+		getLoggedInUser(projectSet, false, true, undefined);			// Just reload everything - The user settings page is one long hack!
+	});
+    
+    
+    $(('#del_my_sig')).off().click(function() {
+    	gDelSig = true;
+    	$('#my_signature').attr("src", "");
+    	$('.upload_file_msg').val("");
+    });
     
     $('.file-inputs').bootstrapFileInput();
     
@@ -136,11 +153,10 @@ function saveUserDetails(formData, key) {
 		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
-			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("User details saved");
-			  // Update the signature value
 			  var user = JSON.parse(data);
+			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("User details saved");
 			  $('#my_signature').attr("src", user.signature);
-			  // updateUserDetails(data, undefined);
+			  $('#my_signature_file').val(undefined);
 		  },
 		  error: function(xhr, textStatus, err) {
 			  var originalFormData = formData,
@@ -149,7 +165,7 @@ function saveUserDetails(formData, key) {
 			  removeHourglass(); 
 			  
 			  /*
-			   * If there is an error retry after gettign an authentication key
+			   * If there is an error retry after getting an authentication key
 			   * Safari on ios seems to return a status of 0 for a 401 error
 			   */
 			  if(!originalKey) {
@@ -192,7 +208,6 @@ function projectSet() {
 
 function getSurveysForList(projectId) {
 
-	//var url="/surveyKPI/surveys?projectId=" + projectId + "&blocked=false&deleted=false";
 	url="/surveyKPI/myassignments";
 	
 	addHourglass();
@@ -218,7 +233,6 @@ function getSurveysForList(projectId) {
 
 /*
  * Fill in the survey list
- * XXXX
  */
 function completeSurveyList(surveyList, filterProjectId) {
 	

@@ -110,7 +110,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		
 	<div id="userPanel" style="display:none;">
 		<div class="container">
-			<form role="form" class="form-horizontal" id="me_edit_form">
+		<div id="up_alert" style="display:none;" class="alert alert-success" role="alert"></div>
+			<form role="form" class="form-horizontal" id="me_edit_form" enctype="multipart/form-data" name="signaturesave">
 				<div class="form-group">
 					<label for="my_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
 					<div class="col-sm-10">
@@ -129,29 +130,38 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<input type="text" id="my_license" class="form-control">
 					</div>
 				</div>				
-			</form>	
+
+				<div class="form-group">
+					<label for="my_signature_file" data-lang="wf_sig" class="lang col-sm-2 control-label">sig</label>
+   					<div class="col-sm-10">
+	   					<div class="input-group form-control">
+	   						<span class="input-group-btn">
+	     						<input id="my_signature_file" name="files" title="Add" class="file-inputs" type="file" accept="image/png, image/jpeg, image/gif">
+	   						</span>
+	  					 	<input type="text" class="upload_file_msg">
+	  					 	<span class="input-group-btn">
+	  					 		<button id="del_my_sig" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>
+	  					 	</span>
+	 					</div>
+	 				</div>
+       			</div>     
+       			
+       			<div class="form-group">
+	       			<div class="col-sm-10 col-sm-offset-2">
+	       				<img id="my_signature" src="" width="300" height="200">
+	       			</div>
+       			</div>
+       			<input id="userSettings" type="hidden" name="settings" > 
+       			<div class="col-sm-5 col-sm-offset-2">
+       				<button id="userDetailsCancel" type="button" class="btn btn-default lang btn-block" data-dismiss="modal" data-lang="c_cancel">cancel</button>	
+       			</div>     	
+       			<div class="col-sm-5">
+       				<button id="userDetailsSave" type="button" class="btn btn-primary lang btn-block" data-dismiss="modal" data-lang="c_save">save</button>	
+       			</div>	
+			</form>
 			
-			<div class="container">
-				<form role="form" class="form-horizontal" enctype="multipart/form-data" name="signaturesave">
-	
-					<input id="userSettings" type="hidden" name="settings" >
-					<fieldset>	
-						<div class="form-group">
-	     					<div class="input-group">
-	     						<span class="input-group-btn">
-	       							<input name="files" title="Add" class="file-inputs" type="file" accept="image/png, image/jpeg, image/gif">
-	     						</span>
-	    					 	<input type="text" class="upload_file_msg form-control" placeholder="New Signature...">
-	   						</div>
-	        			</div>           			
-					</fieldset>
-				</form>
-			</div>
-			<div id="up_alert" style="display:none;" class="alert alert-success" role="alert"></div>
-			<button id="userDetailsSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-		</div>	
-		<label for="my_signature" class="lang col-sm-2 control-label" data-lang="wf_sig">signature</label>	
-		<img id="my_signature" src="" width="300" height="200">
+			
+		</div>
 
     </div>
     <div class="col-md-12 text-center">
