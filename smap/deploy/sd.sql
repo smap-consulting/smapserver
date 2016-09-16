@@ -617,7 +617,8 @@ create TABLE alert (
 	status text,
 	priority text,
 	updated_time TIMESTAMP WITH TIME ZONE,
-	link text
+	link text,
+	message text
 );
 ALTER TABLE alert OWNER TO ws;
 

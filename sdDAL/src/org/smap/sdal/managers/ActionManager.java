@@ -88,15 +88,18 @@ public class ActionManager {
 	}
 	
 	/*
-	 * Add an action into the action table
+	 * Create a temporary user to complete an action
+	 * Add an alert into the alerts table
 	 */
 	private void addAction(Connection sd, Action a, int oId) throws Exception {
 		
-		String sql = "insert into action "
-				+ "";
+		String sql = "insert into alert"
+				+ "(u_id, status, priority, updated_time, link, message) "
+				+ "values(?, ?, ?, now(), ?, ?)";
 		PreparedStatement pstmt = null;
 		
 		int uId = 0;
+		String link = null;
 		try {
 			
 			if(a.action.equals("respond")) {
@@ -111,14 +114,20 @@ public class ActionManager {
 				u.name = a.notify_person;
 				
 				uId = um.createTemporaryUser(sd, u, oId);
+				link = "/action/" + tempUserId;
 			}
 			
 			// TODO create action
 			
 			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  uId);			// User
+			pstmt.setString(2, "open");    	// Status: open || reject || complete
+			pstmt.setInt(3, 1);				// Priority
+			pstmt.setString(4,  link);		// Link for the user to click on to complete the action
+			pstmt.setString(5,  null);		// Message
 			
-			
-
+			log.info("Create alert: " + pstmt.toString());
+			pstmt.executeUpdate();
 					    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
@@ -127,13 +136,7 @@ public class ActionManager {
 		
 	}
 
-	/*
-	 * Create a response link for a user to follow up on an action
-	 */
-	private String createResponseLink() {
-		String link = "a link";
-		return link;
-	}
+
 }
 
 
