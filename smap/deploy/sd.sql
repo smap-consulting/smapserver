@@ -607,15 +607,15 @@ update users set temporary = false where temporary is null;
 
 -- Upgrade to 16.09 from 16.08
 
-CREATE SEQUENCE alert_seq START 1;
-ALTER SEQUENCE alert_seq OWNER TO ws;
+CREATE SEQUENCE action_seq START 1;
+ALTER SEQUENCE action_seq OWNER TO ws;
 
-create TABLE alert (
-	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
+create TABLE action (
+	id integer DEFAULT NEXTVAL('action_seq') CONSTRAINT pk_action PRIMARY KEY,
 	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	status text,
 	priority text,
 	updated_time TIMESTAMP WITH TIME ZONE,
-	url text
+	link text
 );
 ALTER TABLE alert OWNER TO ws;

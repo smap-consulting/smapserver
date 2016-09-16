@@ -375,6 +375,7 @@ public class ManagedForms extends Application {
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			/*
 			 * Verify that the survey is managed by the provided data processing id and get
 			 */
@@ -395,7 +396,7 @@ public class ManagedForms extends Application {
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd,dpId, columns, null);
+			qm.getDataProcessingConfig(sd, dpId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -475,7 +476,7 @@ public class ManagedForms extends Application {
 				 */
 				if(tc.actions != null && tc.actions.size() > 0) {
 					ActionManager am = new ActionManager();
-					am.applyManagedFormActions(tc);
+					am.applyManagedFormActions(sd, tc, oId);
 				}
 				
 

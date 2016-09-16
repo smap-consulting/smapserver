@@ -836,3 +836,18 @@ create TABLE survey_role (
 	);
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
+
+DROP SEQUENCE IF EXISTS action_seq CASCADE;
+CREATE SEQUENCE action_seq START 1;
+ALTER SEQUENCE action_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS action CASCADE;
+create TABLE action (
+	id integer DEFAULT NEXTVAL('action_seq') CONSTRAINT pk_action PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	status text,
+	priority text,
+	updated_time TIMESTAMP WITH TIME ZONE,
+	link text
+);
+ALTER TABLE action OWNER TO ws;
