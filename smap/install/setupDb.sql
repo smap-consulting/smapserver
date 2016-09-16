@@ -229,7 +229,8 @@ CREATE TABLE users (
 	one_time_password varchar(36),	-- For password reset
 	one_time_password_expiry timestamp with time zone,		-- Time and date one time password expires
 	password_reset boolean default false,	-- Set true if the user has reset their password
-	o_id integer REFERENCES organisation(id) ON DELETE CASCADE
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	action_details text				-- Details of a specific action the user can undertake
 	);
 CREATE UNIQUE INDEX idx_users_ident ON users(ident);
 ALTER TABLE users OWNER TO ws;
@@ -837,17 +838,17 @@ create TABLE survey_role (
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
 
-DROP SEQUENCE IF EXISTS action_seq CASCADE;
-CREATE SEQUENCE action_seq START 1;
-ALTER SEQUENCE action_seq OWNER TO ws;
+DROP SEQUENCE IF EXISTS alert_seq CASCADE;
+CREATE SEQUENCE alert_seq START 1;
+ALTER SEQUENCE alert_seq OWNER TO ws;
 
-DROP TABLE IF EXISTS action CASCADE;
-create TABLE action (
-	id integer DEFAULT NEXTVAL('action_seq') CONSTRAINT pk_action PRIMARY KEY,
+DROP TABLE IF EXISTS alert CASCADE;
+create TABLE alert (
+	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
 	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	status text,
 	priority text,
 	updated_time TIMESTAMP WITH TIME ZONE,
 	link text
 );
-ALTER TABLE action OWNER TO ws;
+ALTER TABLE alert OWNER TO ws;

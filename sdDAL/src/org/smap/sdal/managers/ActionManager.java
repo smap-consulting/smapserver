@@ -10,11 +10,14 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.model.Action;
+import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Role;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
+
+import com.google.gson.Gson;
 
 /*****************************************************************************
 
@@ -43,9 +46,6 @@ public class ActionManager {
 	private static Logger log =
 			 Logger.getLogger(ActionManager.class.getName());
 	
-	public void getEvents() {
-		
-	}
 	
 	/*
 	 * Apply actions resulting from a change to managed forms
@@ -57,6 +57,34 @@ public class ActionManager {
 			
 			addAction(sd, a, oId);
 		}
+	}
+	
+	/*
+	 * Get details of an action after a request from a temporary user
+	 */
+	public Action getAction(Connection sd, String userIdent) throws SQLException {
+		
+		Action a = null;
+		
+		String sql = "select action_details from user "
+				+ "where "
+				+ "temporary = true "
+				+ "and ident = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, userIdent);
+			ResultSet rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				a = new Gson().fromJson(rs.getString(1), Action.class);
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return a;
 	}
 	
 	/*
