@@ -192,7 +192,7 @@ public class PDFSurveyManager {
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, "real", superUser);
+					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -651,7 +651,7 @@ public class PDFSurveyManager {
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
 						// Maintain array list of parent records in order to look up ${values}
-						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
+						parentRecords.add(0, record);		// Push this record in at the beginning of the list as we want to search most recent first
 						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 
