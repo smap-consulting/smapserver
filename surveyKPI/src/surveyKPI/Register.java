@@ -183,6 +183,7 @@ public class Register extends Application {
 					false,
 					true,
 					request.getRemoteUser(),
+					request.getScheme(),
 					request.getServerName(),
 					rd.admin_name,
 					localisation);			 

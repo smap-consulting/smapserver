@@ -312,6 +312,7 @@ public class SubRelationalDB extends Subscriber {
 						pstmtNotificationLog, 
 						ueId, 
 						remoteUser, 
+						"https",
 						server,
 						gBasePath,
 						sId,

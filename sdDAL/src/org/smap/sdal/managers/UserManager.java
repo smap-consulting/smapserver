@@ -251,6 +251,7 @@ public class UserManager {
 			boolean isOrgUser, 
 			boolean isSecurityManager,
 			String userIdent,
+			String scheme,
 			String serverName,
 			String adminName,
 			ResourceBundle localisation) throws Exception {
@@ -309,6 +310,7 @@ public class UserManager {
 							null,
 							organisation.getAdminEmail(), 
 							emailServer,
+							scheme,
 							serverName,
 							localisation);
 				} else {

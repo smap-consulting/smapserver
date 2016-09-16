@@ -293,6 +293,7 @@ public class NotificationManager {
 			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
+			String scheme,
 			String serverName,
 			String basePath,
 			int sId,
@@ -485,6 +486,7 @@ public class NotificationManager {
 								filename,
 								organisation.getAdminEmail(), 
 								emailServer,
+								scheme,
 								serverName,
 								localisation);
 					} catch(Exception e) {
