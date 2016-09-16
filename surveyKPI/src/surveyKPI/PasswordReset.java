@@ -30,14 +30,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
-
-import org.smap.sdal.resources.*;
 
 import com.google.gson.Gson;
 
