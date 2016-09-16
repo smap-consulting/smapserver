@@ -25,7 +25,6 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
@@ -40,14 +39,10 @@ import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.OrganisationManager;
-import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.User;
-
-import model.MediaResponse;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -100,7 +95,6 @@ public class OrganisationList extends Application {
 		
 		try {
 			String sql = null;
-			int o_id;
 			ResultSet resultSet = null;
 			
 			/*

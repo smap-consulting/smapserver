@@ -185,7 +185,8 @@ public class SurveyManager {
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
-			boolean superUser
+			boolean superUser,
+			int utcOffset
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -256,7 +257,16 @@ public class SurveyManager {
 				if(getResults) {								// Add results
 					
 					Form ff = s.getFirstForm();
-					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s, generateDummyValues);
+					s.instance.results = getResults(ff, 
+							s.getFormIdx(ff.id), 
+							-1, 
+							0,	
+							cResults, 
+							instanceId, 
+							0, 
+							s, 
+							generateDummyValues,
+							utcOffset);
 					ArrayList<Result> topForm = s.instance.results.get(0);
 					// Get the user ident that submitted the survey
 					for(Result r : topForm) {
@@ -2174,7 +2184,8 @@ public class SurveyManager {
     		String instanceId,
     		int parentKey,
     		Survey s,
-    		boolean generateDummyValues) throws SQLException{
+    		boolean generateDummyValues,
+    		int utcOffset) throws SQLException{
  
     	ArrayList<ArrayList<Result>> output = new ArrayList<ArrayList<Result>> ();
     	
@@ -2183,6 +2194,9 @@ public class SurveyManager {
     	 *  Select questions are retrieved using a separate query as there are multiple 
     	 *  columns per question
     	 */
+    	String sqlUtcOffset = "set local timezone=" + utcOffset/60;
+    	PreparedStatement pstmtUtcOffset = null;
+    	
     	String sql = null;
     	boolean isTopLevel = false;
     	if(parentKey == 0) {
@@ -2214,6 +2228,10 @@ public class SurveyManager {
     		 * Get the result set of data if an instanceID was passed or if 
     		 * this request is for a child form and real data is required
     		 */
+    		if(utcOffset > 0) {
+    			pstmtUtcOffset = cResults.prepareStatement(sqlUtcOffset);
+    		}
+    		
     		if(instanceId != null || parentKey > 0) {
     			String instanceName = null;
 		    	for(Question q : questions) {
@@ -2255,7 +2273,13 @@ public class SurveyManager {
 		    		pstmt.setInt(1, parentKey);
 		    	}
 		    	log.info("Retrieving results: " + pstmt.toString());
+		    	cResults.setAutoCommit(false);
+		    	if(utcOffset > 0) {
+		    		log.info("Time zone: " + pstmtUtcOffset.toString());
+		    		pstmtUtcOffset.execute();
+		    	}
 		    	resultSet = pstmt.executeQuery();
+		    	cResults.setAutoCommit(true);
     		}
 			
     		if (resultSet != null) {
@@ -2286,7 +2310,8 @@ public class SurveyManager {
 		    				id,
 		    				pstmtSelect,
 		    				isTopLevel,
-		    				generateDummyValues);
+		    				generateDummyValues,
+		    				utcOffset);
 
 		    		output.add(record);
 		    	}
@@ -2317,15 +2342,18 @@ public class SurveyManager {
 	    				id,
 	    				pstmtSelect,
 	    				isTopLevel,
-	    				generateDummyValues);
+	    				generateDummyValues,
+	    				utcOffset);
 
 	    		output.add(record);
 	    	}
     	} catch (SQLException e) {
     		throw e;
     	} finally {
+    		try {cResults.setAutoCommit(true);} catch(Exception e) {};
     		if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
     		if(pstmtSelect != null) try {pstmtSelect.close();} catch(Exception e) {};
+    		if(pstmtUtcOffset != null) try {pstmtUtcOffset.close();} catch(Exception e) {};
     	}
     	
 		return output;
@@ -2348,7 +2376,8 @@ public class SurveyManager {
     		int id,
     		PreparedStatement pstmtSelect,
     		boolean isTopLevel,
-    		boolean generateDummyValues) throws SQLException {
+    		boolean generateDummyValues,
+    		int utcOffset) throws SQLException {
 		/*
 		 * Add data for the remaining questions (prikey and user have already been extracted)
 		 */
@@ -2381,7 +2410,8 @@ public class SurveyManager {
     			    		null,
     			    		newParentKey,
     			    		s,
-    			    		generateDummyValues);
+    			    		generateDummyValues,
+    			    		utcOffset);
 
             		record.add(nr);
     			}

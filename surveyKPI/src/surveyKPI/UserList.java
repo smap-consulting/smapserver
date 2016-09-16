@@ -422,6 +422,7 @@ public class UserList extends Application {
 								isOrgUser,
 								isSecurityManager,
 								request.getRemoteUser(),
+								request.getScheme(),
 								request.getServerName(),
 								adminName,
 								localisation);

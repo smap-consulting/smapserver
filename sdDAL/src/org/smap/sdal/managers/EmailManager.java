@@ -83,6 +83,7 @@ public class EmailManager {
 			String filename,
 			String adminEmail,
 			EmailServer emailServer,
+			String scheme,
 			String serverName,
 			ResourceBundle localisation) throws Exception  {
 		
@@ -165,14 +166,14 @@ public class EmailManager {
 			    
 			    // Add a link to the report if docURL is not null
 			    if(docURL != null) {
-			    	txtMessage.append("http://");
+			    	txtMessage.append(scheme + "://");
 				    txtMessage.append(serverName);
 				    txtMessage.append(docURL);
 			    }
 		    } else if(type.equals("reset")) {
 			    //txtMessage.append("Goto");
 		    	txtMessage.append(localisation.getString("c_goto"));
-			    txtMessage.append(" https://");
+			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
@@ -202,12 +203,12 @@ public class EmailManager {
 			    txtMessage.append(" ");
 			    txtMessage.append(localisation.getString("email_hga"));
 			    //txtMessage.append("has given you access to a Smap server with address");
-			    txtMessage.append(" https://");
+			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("\n");
 			    txtMessage.append(localisation.getString("email_sp"));
 			    //txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link");
-			    txtMessage.append(" https://");
+			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
@@ -228,7 +229,7 @@ public class EmailManager {
 		    } else if(type.equals("notify")) {
 		    	txtMessage.append(localisation.getString("email_ian"));
 			    //txtMessage.append("This email is a notification from");
-			    txtMessage.append(" https://");
+		    	txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append(". ");
 			    
@@ -238,7 +239,7 @@ public class EmailManager {
 			    txtMessage.append(".");	
 			    txtMessage.append("\n\n");
 			    if(docURL != null) {
-			    	txtMessage.append("http://");
+			    	txtMessage.append(scheme + "://");
 				    txtMessage.append(serverName);
 				    txtMessage.append(docURL);
 			    }

@@ -604,6 +604,7 @@ CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
 
 alter table users add column temporary boolean default false;
 update users set temporary = false where temporary is null;
+alter table organisation add column timezone text;
 
 -- Upgrade to 16.09 from 16.08
 

@@ -11,7 +11,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -46,7 +45,6 @@ import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -145,7 +143,8 @@ public class PDFSurveyManager {
 			String instanceId,
 			String filename,
 			boolean landscape,					// Set true if landscape
-			HttpServletResponse response) {
+			HttpServletResponse response,
+			int utcOffset) {
 		
 		if(language != null) {
 			language = language.replace("'", "''");	// Escape apostrophes
@@ -191,7 +190,7 @@ public class PDFSurveyManager {
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, "real", superUser);
+					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset);
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -650,7 +649,7 @@ public class PDFSurveyManager {
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
 						// Maintain array list of parent records in order to look up ${values}
-						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
+						parentRecords.add(0, record);		// Push this record in at the beginning of the list as we want to search most recent first
 						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 

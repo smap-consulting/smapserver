@@ -194,7 +194,8 @@ public class Surveys extends Application {
 					true, 
 					true,
 					"internal",
-					superUser);
+					superUser,
+					0);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -264,7 +265,8 @@ public class Surveys extends Application {
 		try {
 			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
 			// Get the survey details.  superUser set to true as this user just created the survey so they are effectively a super user for this survey and we can save a database call
-			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, "internal", true);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, 
+					basePath, null, false, false, true, true, "internal", true, 0);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
@@ -337,7 +339,8 @@ public class Surveys extends Application {
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
 			GeneralUtilityMethods.setMediaForLanguages(sd, sId, languageList);	// Cope with media being duplicated across all languages
 			// Get the survey details.  superUser set to true as this user just edited the survey so they are effectively a super user for this survey and we can save a databse call
-			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, "internal", true);
+			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, 
+					basePath, null, false, false, true, true, "internal", true, 0);
 			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();

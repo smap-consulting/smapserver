@@ -20,7 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.subscribers;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -32,33 +31,23 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.io.FileUtils;
 import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
-import org.smap.model.SurveyTemplate;
 import org.smap.model.TableManager;
-import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Survey;
-import org.smap.server.entities.Form;
-import org.smap.server.entities.Option;
-import org.smap.server.entities.Question;
 import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.exceptions.SQLInsertException;
 import org.smap.server.utilities.UtilityMethods;
@@ -312,6 +301,7 @@ public class SubRelationalDB extends Subscriber {
 						pstmtNotificationLog, 
 						ueId, 
 						remoteUser, 
+						"https",
 						server,
 						gBasePath,
 						sId,
