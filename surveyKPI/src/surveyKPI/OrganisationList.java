@@ -108,30 +108,32 @@ public class OrganisationList extends Application {
 			/*
 			 * Get the organisation
 			 */
-			sql = "select id, name, " +
-					" company_name, " +
-					" company_address, " +
-					" company_phone, " +
-					" company_email, " +
-					" allow_email, " +
-					" allow_facebook, " +
-					" allow_twitter, " +
-					" can_edit, " +
-					" ft_delete_submitted," +
-					" ft_send_trail," +
-					" ft_sync_incomplete," +
-					" changed_by, " +
-					" changed_ts," + 
-					" admin_email, " +
-					" smtp_host, " +
-					" email_domain, " +
-					" email_user, " +
-					" email_password, " +
-					" email_port, " +
-					" default_email_content, " +
-					" website " +
-					" from organisation " + 
-					" order by name ASC;";			
+			sql = "select id, name, "
+					+ "company_name, "
+					+ "company_address, "
+					+ "company_phone, "
+					+ "company_email, "
+					+ "allow_email, "
+					+ "allow_facebook, "
+					+ "allow_twitter, "
+					+ "can_edit, "
+					+ "ft_delete_submitted,"
+					+ "ft_send_trail,"
+					+ "ft_sync_incomplete,"
+					+ "changed_by, "
+					+ "changed_ts," 
+					+ "admin_email, "
+					+ "smtp_host, "
+					+ "email_domain, "
+					+ "email_user, "
+					+ "email_password, "
+					+ "email_port, "
+					+ "default_email_content, "
+					+ "website, "
+					+ "locale,"
+					+ "timezone "
+					+ "from organisation "
+					+ "order by name asc;";			
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			log.info("SQL: " + sql);
@@ -162,6 +164,14 @@ public class OrganisationList extends Application {
 				org.email_port = resultSet.getInt("email_port");
 				org.default_email_content = resultSet.getString("default_email_content");
 				org.website = resultSet.getString("website");
+				org.locale = resultSet.getString("locale");
+				if(org.locale == null) {
+					org.locale = "en";	// Default english
+				}
+				org.timeZone = resultSet.getString("timeZone");
+				if(org.timeZone == null) {
+					org.timeZone = "UTC";
+				}
 				organisations.add(org);
 			}
 	

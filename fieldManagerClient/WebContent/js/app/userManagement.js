@@ -42,6 +42,8 @@ $(document).ready(function() {
 	getProjects();
 	getLoggedInUser(userKnown, false, false, getOrganisations);
 	
+	getAvailableTimeZones($('#o_tz'), showTimeZones);
+	
 	// Add change event on group and project filter
 	$('#group_name, #project_name').change(function() {
 		var group=$('#group_name').val(), 
@@ -421,6 +423,8 @@ $(document).ready(function() {
 		organisation.email_password = $('#o_email_password').val();
 		organisation.email_port = parseInt($('#o_email_port').val());
 		organisation.default_email_content = $('#o_default_email_content').val();
+		organisation.locale = $('#o_language').val();
+		organisation.timeZone = $('#o_tz').val();
 	
 		if(typeof organisation.email_port !== "number") {
 			organisation.email_port = 0;
@@ -914,6 +918,8 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_sync_incomplete;
 			}
 		});
+		addLanguageOptions($('#o_language'), org.locale);
+		$('#o_tz').val(org.timeZone);
 		gOrgId = org.id;
 		setBannerLogo(org.id);
 

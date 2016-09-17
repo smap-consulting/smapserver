@@ -204,6 +204,7 @@ define({
 	"c_role": "Role",
 	"c_id": "Id",
 	"c_insert": "Insert",
+	"c_tz": "Time Zone",
 	
 	// File Types
 	"ft": "File Type",
