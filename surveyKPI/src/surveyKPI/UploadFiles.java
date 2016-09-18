@@ -72,8 +72,7 @@ import java.util.logging.Logger;
 public class UploadFiles extends Application {
 	
 	// Allow analysts and admin to upload resources for the whole organisation
-	Authorise surveyLevelAuth = null;
-	Authorise orgLevelAuth = null;
+	Authorise auth = null;
 	
 	LogManager lm = new LogManager();		// Application log
 	
@@ -82,8 +81,7 @@ public class UploadFiles extends Application {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
-		orgLevelAuth = new Authorise(authorisations, null);	
-		surveyLevelAuth = new Authorise(authorisations, null);
+		auth = new Authorise(authorisations, null);
 	}
 	
 	private static Logger log =
@@ -154,13 +152,11 @@ public class UploadFiles extends Application {
 					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
 	
 					// Authorisation - Access
+					auth.isAuthorised(connectionSD, request.getRemoteUser());
 					connectionSD = SDDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
 					if(sId > 0) {
-						surveyLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
-						surveyLevelAuth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
-					} else {
-						orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
-					}
+						auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+					} 
 					// End authorisation
 					
 					cResults = ResultsDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
@@ -240,7 +236,7 @@ public class UploadFiles extends Application {
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
-		orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+		auth.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation		
 
 		try {
@@ -285,7 +281,7 @@ public class UploadFiles extends Application {
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
-		orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+		auth.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation		
 
 		try {
@@ -339,10 +335,10 @@ public class UploadFiles extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
 		if(sId > 0) {
-			surveyLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
-			surveyLevelAuth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+			auth.isAuthorised(connectionSD, request.getRemoteUser());
+			auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
 		} else {
-			orgLevelAuth.isAuthorised(connectionSD, request.getRemoteUser());
+			auth.isAuthorised(connectionSD, request.getRemoteUser());
 		}
 		// End Authorisation		
 		
@@ -463,7 +459,7 @@ public class UploadFiles extends Application {
 			
 			// Authorisation - Access
 			sd = SDDataSource.getConnection("Tasks-LocationUpload");
-			orgLevelAuth.isAuthorised(sd, request.getRemoteUser());
+			auth.isAuthorised(sd, request.getRemoteUser());
 			// End authorisation
 			
 			// Get the users locale
