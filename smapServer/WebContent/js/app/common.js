@@ -216,7 +216,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 			  $('#me_edit_form')[0].reset();
 			  $('#reset_me_password_fields').show();
 			  $('#password_me_fields').hide();
-			  addLanguageOptions($('#me_language'), data.language);
+			  addLanguageOptions($('.language_select'), data.language);
 			  $('#me_name').val(data.name);
 			  $('#me_email').val(data.email);
 				
@@ -231,7 +231,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 			
 			$('#reset_me_password_fields').show();
 			$('#password_me_fields').hide();
-			addLanguageOptions($('#me_language'), data.language);
+			addLanguageOptions($('.language_select'), data.language);
 			$('#me_name').val(data.name);
 			$('#me_email').val(data.email);
 			
@@ -523,6 +523,46 @@ function saveCurrentUser(user) {
 	});
 }
 
+function getAvailableTimeZones($elem, callback) {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/utility/timezones",
+		contentType: "application/json",
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+		
+			if(typeof callback == "function") {
+				callback($elem, data);
+			}
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get available time zones: " + err);
+			}
+		}
+	});	
+}
+
+function showTimeZones($elem, timeZones) {
+	var h =[],
+		idx = -1,
+		i;
+	
+	for (i = 0; i < timeZones.length; i++) {
+		tz = timeZones[i];
+		h[++idx] = '<option value="';
+		h[++idx] = tz.id;
+		h[++idx] = '">';
+		h[++idx] = tz.offset;
+		h[++idx] = '</option>';
+	}
+	$elem.empty().html(h.join(''));
+}
 
 function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hideUserDetails, dontGetCurrentSurvey) {
 	addHourglass();
