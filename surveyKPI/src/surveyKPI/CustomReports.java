@@ -73,6 +73,7 @@ public class CustomReports extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getConfig(@Context HttpServletRequest request,
+			@QueryParam("negateType") boolean negateType,
 			@QueryParam("type") String type) { 
 		
 		// Authorisation - Access
@@ -85,7 +86,7 @@ public class CustomReports extends Application {
 		try {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			CustomReportsManager crm = new CustomReportsManager();
-			ArrayList<CustomReportItem> reports = crm.getList(sd, oId, type);
+			ArrayList<CustomReportItem> reports = crm.getList(sd, oId, type, negateType);
 			response = Response.ok(gson.toJson(reports)).build();
 		
 				

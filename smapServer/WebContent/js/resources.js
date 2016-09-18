@@ -142,7 +142,7 @@ $(document).ready(function() {
     		return false;
     	}
     	
-    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined, undefined);
+    	uploadFiles('/surveyKPI/upload/lqasreport', "crupload", refreshCustomReportView, undefined, undefined);
     });
     
     // Respond to nfc upload

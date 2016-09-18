@@ -51,6 +51,8 @@ import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
 import org.smap.sdal.model.LQASdataItem;
+import org.smap.sdal.model.LQASdataItemOld;
+import org.smap.sdal.model.LQASold;
 
 import surveyKPI.ExportLQAS;
 
@@ -75,7 +77,7 @@ public class XLS_LQAS_Manager {
 	
 	public void createLQASForm(Connection sd, Connection cResults, OutputStream outputStream, 
 			org.smap.sdal.model.Survey survey, 
-			LQAS lqas,
+			LQASold lqas,
 			boolean showSources) throws Exception {
 		
 		// Get the table name
@@ -99,7 +101,7 @@ public class XLS_LQAS_Manager {
 			 */
 			StringBuffer sbSql = new StringBuffer("select ");
 			boolean gotOne = false;
-			for(LQASdataItem dataItem : lqas.dataItems) {
+			for(LQASdataItemOld dataItem : lqas.dataItems) {
 				if(gotOne) {
 					sbSql.append(",");
 				}
@@ -168,7 +170,7 @@ public class XLS_LQAS_Manager {
 								
 								// Add the raw source columns
 								for(int j = 0; j < lqas.dataItems.size(); j++) {
-									LQASdataItem di = lqas.dataItems.get(j);
+									LQASdataItemOld di = lqas.dataItems.get(j);
 									if(di.ident.equals(item.sourceColumns[i])) {
 										if(di.sourceColumns != null) {
 											for(int k = 0; k < di.sourceColumns.length; k++) {
@@ -235,7 +237,7 @@ public class XLS_LQAS_Manager {
 					/*
 					 * Set the evaluation parameters
 					 */
-					for(LQASdataItem dataItem : lqas.dataItems) {
+					for(LQASdataItemOld dataItem : lqas.dataItems) {
 						String v = rs.getString(dataItem.ident);
 						if(dataItem.isString) {
 							eval.putVariable(dataItem.ident, "'" + v + "'");

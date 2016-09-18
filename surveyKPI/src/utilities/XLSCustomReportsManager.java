@@ -40,6 +40,9 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.KeyValue;
+import org.smap.sdal.model.LQAS;
+import org.smap.sdal.model.LQASGroup;
+import org.smap.sdal.model.LQASdataItem;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
@@ -400,6 +403,220 @@ public class XLSCustomReportsManager {
 		
 	}
 	
+	
+	/*
+	 * Create an customer report definition from an XLS file
+	 */
+	public LQAS getLQASReport(Connection sd, int oId, String type, 
+			InputStream inputStream, ResourceBundle localisation) throws Exception {
+		
+		LQAS lqas = null;
+		String lot = null;
+		
+		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
+		Sheet sheet = null;
+		Sheet settingsSheet = null;
+        Row row = null;
+        int lastRowNum = 0;
+        HashMap<String, Integer> header = null;
+ 
+        
+        System.out.println("Getting LQAS report");
+        
+		if(type != null && type.equals("xls")) {
+			wb = new HSSFWorkbook(inputStream);
+		} else {
+			wb = new XSSFWorkbook(inputStream);
+		}
+		
+		/*
+		 * Get the settings
+		 */
+		settingsSheet = wb.getSheet("settings");
+		if(settingsSheet != null && settingsSheet.getPhysicalNumberOfRows() > 0) {
+			int lastSettingsRow = settingsSheet.getLastRowNum();
+			for(int j = 0; j <= lastSettingsRow; j++) {
+				row = settingsSheet.getRow(j);
+                
+                if(row != null) {         	
+                    int lastCellNum = row.getLastCellNum();
+                    if(lastCellNum > 0) {
+                    	Cell c = row.getCell(0);
+                    	String k = c.getStringCellValue();
+                    	if(k != null && k.trim().toLowerCase().equals("lot")) {
+                    		c = row.getCell(1);
+                    		lot = c.getStringCellValue();
+                    	} 
+                    }
+                }
+			}
+		}
+		
+		if(lot != null) {
+			lqas = new LQAS(lot);
+		} else {
+			throw new Exception("Lot value not specified in settings");
+		}
+		
+		sheet = wb.getSheet("definition");
+		if(sheet.getPhysicalNumberOfRows() > 0) {
+			
+			lastRowNum = sheet.getLastRowNum();
+			boolean processingConditions = false;
+			boolean needHeader = true;
+			LQASGroup currentGroup = null;
+			LQASdataItem currentDataItem = null;
+			TableColumn tc = new TableColumn();
+
+			
+            for(int j = 0; j <= lastRowNum; j++) {
+                
+            	row = sheet.getRow(j);
+                
+                if(row != null) {
+                	
+                    int lastCellNum = row.getLastCellNum();
+                    
+                	if(needHeader) {
+                		header = getHeader(row, lastCellNum);
+                		needHeader = false;
+                	} else {
+                		String rowType = getColumn(row, "row type", header, lastCellNum, null);
+                		
+                		if(rowType != null) {
+                			rowType = rowType.trim().toLowerCase();
+                			String name = getColumn(row, "name", header, lastCellNum, null);
+                			
+                			// Close of any condition type calculations
+                			if(processingConditions && !rowType.equals("condition")) {
+                				processingConditions = false;
+                				currentDataItem.select.add("END");
+                			}
+                			
+                			// Process the row
+	                		if(rowType.equals("group")) {
+	                			String groupName = getColumn(row, "display name", header, lastCellNum, null);
+	                			currentGroup = new LQASGroup(groupName);
+	                		} else if(rowType.equals("data")) {
+	                	
+	                			SqlFrag select = null; 
+	                			String[] sources = null; 
+	              
+	                			
+
+	                			
+	                			// Get data type
+	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
+	                			if(dataType != null) {
+	                				if(!dataType.equals("text") &&
+	                						!dataType.equals("date") &&
+	                						!dataType.equals("calculate") &&
+	                						!dataType.equals("decimal") &&
+	                						!dataType.equals("integer") &&
+	                						!dataType.equals("select_one")){
+	                					throw new Exception(localisation.getString("mf_idt") + ": " + dataType + 
+	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				}
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+	                			// Get column name
+	                			String colName = getColumn(row, "name", header, lastCellNum, null);
+	                			if(colName != null) {
+	                				colName = colName.trim().toLowerCase();
+	                				String modColName = colName.replaceAll("[^a-z0-9_]", "");
+	                				modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
+	                				if(colName.length() != modColName.length()) {
+	                					throw new Exception(localisation.getString("mf_in") +
+	                							": " + colName + " " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				} else if(colName.length() > 60) {
+	                					throw new Exception(localisation.getString("mf_ntl") + ": " + colName + 
+	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				}
+	                				
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_mn") + 
+	                						localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+              			
+	                			
+	                			// Get calculation state
+		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
+	                			if(calculation != null && calculation.length() > 0) {
+	                				calculation = calculation.trim();
+	                				if(calculation.equals("condition")) {
+	                					// Calculation set by condition rows
+	                				} else if(calculation.length() > 0) {
+	                					select = new SqlFrag();
+	                					select.addRaw(calculation, localisation);
+	                				} 
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_mc") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+	                			currentDataItem = new LQASdataItem(name,  select, sources, dataType.equals("text"));
+	                			lqas.dataItems.add(currentDataItem);
+	                			
+	                			
+	                			
+	                		} else if(rowType.equals("condition")) {
+	                			
+	                			if(currentDataItem != null) {
+	                				
+	                				processingConditions = true;
+	                				
+	                				String condition = getColumn(row, "condition", header, lastCellNum, null);
+	                				String value = getColumn(row, "value", header, lastCellNum, null);
+	                				
+	                				if(condition == null) {
+	                					throw new Exception("Missing \"condition\" on row: " + (j + 1));
+	                				} else {
+	                					if(currentDataItem.select == null) {
+	                						currentDataItem.select = new SqlFrag();
+	                						currentDataItem.select.add("CASE");
+	                					}
+	                					if(condition.toLowerCase().trim().equals("all")) {
+	                						currentDataItem.select.add("ELSE");
+	                						currentDataItem.select.addText(value);
+	                					} else {
+	                						currentDataItem.select.add("WHEN");
+	                						currentDataItem.select.addRaw(condition, localisation);
+	                						currentDataItem.select.add("THEN");
+	                						currentDataItem.select.addText(value);
+	                					}
+	                				}
+	                				
+	                			
+	
+	                			} else {
+	                				throw new Exception("Unexpected \"condition\" on row: " + (j + 1));
+	                			} 
+	                			
+	                		} else {
+	                			throw new Exception(localisation.getString("mf_ur") + 
+	                					" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                		}
+                		}	
+                		
+                	}
+                
+	            	// Close of any condition type calculations
+	    			if(processingConditions ) {
+	    				processingConditions = false;
+	    				currentDataItem.select.add("END");
+	    			}
+                	
+                }
+                
+            }
+            
+		}
+		return lqas;
+		
+	}
 
 	/*
 	 * Convert an appearance to jquery classes

@@ -46,7 +46,8 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
-import org.smap.sdal.model.LQASdataItem;
+import org.smap.sdal.model.LQASdataItemOld;
+import org.smap.sdal.model.LQASold;
 
 import utilities.XLSFormManager;
 import utilities.XLS_LQAS_Manager;
@@ -122,57 +123,57 @@ public class ExportLQAS extends Application {
 			/*
 			 * Get the LQAS definition to apply to this survey
 			 */
-			//LQAS lqas = getLqasConfig();
-			LQAS lqas = new LQAS("sa");
+			LQAS lqasNew = getLqasConfig();
+			LQASold lqas = new LQASold("sa");
 			
 			// Add data items
-			lqas.dataItems.add(new LQASdataItem("head_gender", "head_gender", null, true));
-			lqas.dataItems.add(new LQASdataItem("head_age",  "head_age", null, true));
-			lqas.dataItems.add(new LQASdataItem("caregiver_gender","caregiver_gender", null, true));
-			lqas.dataItems.add(new LQASdataItem("caregiver_age","caregiver_age", null, true));
-			lqas.dataItems.add(new LQASdataItem("child_gender","child_gender", null, true));
-			lqas.dataItems.add(new LQASdataItem("breastfeed","breastfeed", null, true));
-			lqas.dataItems.add(new LQASdataItem("still_bf","still_bf", null, true));
-			lqas.dataItems.add(new LQASdataItem("vita_source", 
+			lqas.dataItems.add(new LQASdataItemOld("head_gender", "head_gender", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("head_age",  "head_age", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("caregiver_gender","caregiver_gender", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("caregiver_age","caregiver_age", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("child_gender","child_gender", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("breastfeed","breastfeed", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("still_bf","still_bf", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("vita_source", 
 					"cereal = '1' or leafy = '1' or vita_fruits = '1' or organ = '1' or flesh = '1' or egg = '1' or fish = '1'", 
 					new String[] {"cereal", "leafy", "vita_fruits", "organ", "flesh", "egg", "fish"}, true));
-			lqas.dataItems.add(new LQASdataItem("iron_source", 
+			lqas.dataItems.add(new LQASdataItemOld("iron_source", 
 					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or insect = '1'", 
 					new String[] {"organ", "flesh", "egg", "fish", "insect"}, true));
-			lqas.dataItems.add(new LQASdataItem("animal_source",  
+			lqas.dataItems.add(new LQASdataItemOld("animal_source",  
 					"organ = '1' or flesh = '1' or egg = '1' or fish = '1' or dairy = '1' or insect = '1'", 
 					new String[] {"organ", "flesh", "egg", "fish", "dairy", "insect"}, true));
 			
-			lqas.dataItems.add(new LQASdataItem("dairy_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("dairy_fg", 
 					"case when dairy = '1' then 1 else 0 end", 
 					new String[] {"dairy"}, false));
-			lqas.dataItems.add(new LQASdataItem("grains_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("grains_fg", 
 					"case when cereal = '1' or tubers = '1' then 1 else 0 end", 
 					new String[] {"cereal", "tubers"}, false));
-			lqas.dataItems.add(new LQASdataItem("vita_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("vita_fg", 
 					"case when vita = '1' or leafy = '1' or vita_fruits = '1' or insect = '1' then 1 else 0 end", 
 					new String[] {"vita", "leafy", "vita_fruits", "insect"}, false));
-			lqas.dataItems.add(new LQASdataItem("fruits_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("fruits_fg", 
 					"case when fruits = '1' then 1 else 0 end", 
 					new String[] {"fruits"}, false));
-			lqas.dataItems.add(new LQASdataItem("eggs_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("eggs_fg", 
 					"case when egg = '1' then 1 else 0 end",
 					new String[] {"egg"}, false));
-			lqas.dataItems.add(new LQASdataItem("meat_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("meat_fg", 
 					"case when organ = '1' or flesh='1' or fish = '1' or solid='1' then 1 else 0 end", 
 					new String[] {"organ", "flesh", "fish", "solid"}, false));
-			lqas.dataItems.add(new LQASdataItem("nuts_fg", 
+			lqas.dataItems.add(new LQASdataItemOld("nuts_fg", 
 					"case when nuts = '1' then 1 else 0 end",
 					new String[] {"nuts"}, false));
-			lqas.dataItems.add(new LQASdataItem("oil_fg",  
+			lqas.dataItems.add(new LQASdataItemOld("oil_fg",  
 					"case when oil = '1' then 1 else 0 end", 
 					new String[] {"oil"}, false));
 			
-			lqas.dataItems.add(new LQASdataItem("eat_times",  
+			lqas.dataItems.add(new LQASdataItemOld("eat_times",  
 					"eat_times", null, false));
 			
-			lqas.dataItems.add(new LQASdataItem("pregnant", "pregnant", null, true));
-			lqas.dataItems.add(new LQASdataItem("pregnant_avoid", "pregnant_avoid", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("pregnant", "pregnant", null, true));
+			lqas.dataItems.add(new LQASdataItemOld("pregnant_avoid", "pregnant_avoid", null, true));
 			
 			
 
@@ -237,7 +238,7 @@ public class ExportLQAS extends Application {
 		   	Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 			String json = gson.toJson(lqas);
 			System.out.println("json: " + json);
-			
+			System.out.println("Filename: " + survey.displayName + "." + filetype);
 			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);

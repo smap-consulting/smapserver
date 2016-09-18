@@ -42,6 +42,11 @@ $(document).ready(function() {
 	}); 
 
 	/*
+	 * Get the list of available custom reports
+	 */
+	getCustomReportList();
+	
+	/*
 	 * Export Dialog
 	 */	
 	setExportControls();
@@ -160,6 +165,9 @@ $(document).ready(function() {
 		        				mime = "application/vnd.ms-excel";
 		        			} else {
 		        				mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		        			}
+		        			if(format === "lqas") {
+		        				xlstype = "xlsx";
 		        			}
 		        			downloadFile(url, displayName + "." + xlstype, mime);
 		        		} else {
@@ -417,6 +425,51 @@ function addMediaPickList() {
 		$('#export_media_question').html(h.join(''));
 		$('.mediaselect').html(h2.join(''));
 	}
+
+}
+
+/*
+ * Get the list of available projects from the server
+ */
+function getCustomReportList() {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/custom_reports?type=oversight&negateType=true",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			addCustomReportList(data);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get list of custom reports: " + err);
+			}
+		}
+	});	
+}
+
+/*
+ * Add the Custom Report Configuration Select list
+ */
+function addCustomReportList(templates) {
+	
+	var i,
+		h = [],
+		idx = -1;
+	
+	for(i = 0; i < templates.length; i++) {
+		h[++idx] = '<option value="';
+		h[++idx] = templates[i].id;
+		h[++idx] = '">';
+		h[++idx] = templates[i].name;
+		h[++idx] = '</option>';
+	}
+	
+	$('#export_report_defn').html(h.join(''));
 
 }
 

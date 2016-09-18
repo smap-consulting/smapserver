@@ -55,7 +55,7 @@ public class CustomReportsManager {
 	 */
 	public void save(Connection sd, 
 			String reportName, 
-			ArrayList<TableColumn> config, 
+			String config, 
 			int oId,
 			String type) throws Exception {
 		
@@ -64,13 +64,10 @@ public class CustomReportsManager {
 		
 		try {
 			
-			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-			String configString = gson.toJson(config);
-
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, oId);
 			pstmt.setString(2, reportName);
-			pstmt.setString(3, configString);
+			pstmt.setString(3, config);
 			pstmt.setString(4,  type);
 			
 			log.info(pstmt.toString());
@@ -86,12 +83,14 @@ public class CustomReportsManager {
 	/*
 	 * get a list of reports for a select list
 	 */
-	public ArrayList<CustomReportItem> getList(Connection sd, int oId, String type) throws SQLException {
+	public ArrayList<CustomReportItem> getList(Connection sd, int oId, 
+			String type, boolean negateType) throws SQLException {
 		
 		ArrayList<CustomReportItem> reports = new ArrayList<CustomReportItem> ();
 		
 		String sql1 = "select id, name, type from custom_report where o_id = ? ";
 		String sql2 = "and type = ? ";
+		String sql2b = "and type != ? ";
 		String sql3 = "order by name asc";
 		
 		PreparedStatement pstmt = null;
@@ -99,7 +98,11 @@ public class CustomReportsManager {
 		try {
 			
 			if(type != null) {
-				pstmt = sd.prepareStatement(sql1 + sql2 + sql3);
+				if(negateType) {
+					pstmt = sd.prepareStatement(sql1 + sql2b + sql3);
+				} else {
+					pstmt = sd.prepareStatement(sql1 + sql2 + sql3);
+				}
 			} else {
 				pstmt = sd.prepareStatement(sql1 + sql3);
 			}
