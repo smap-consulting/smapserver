@@ -2228,7 +2228,7 @@ public class SurveyManager {
     		 * Get the result set of data if an instanceID was passed or if 
     		 * this request is for a child form and real data is required
     		 */
-    		if(utcOffset > 0) {
+    		if(utcOffset != 0) {
     			pstmtUtcOffset = cResults.prepareStatement(sqlUtcOffset);
     		}
     		
@@ -2274,7 +2274,7 @@ public class SurveyManager {
 		    	}
 		    	log.info("Retrieving results: " + pstmt.toString());
 		    	cResults.setAutoCommit(false);
-		    	if(utcOffset > 0) {
+		    	if(utcOffset != 0) {
 		    		log.info("Time zone: " + pstmtUtcOffset.toString());
 		    		pstmtUtcOffset.execute();
 		    	}
