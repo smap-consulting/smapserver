@@ -18,6 +18,7 @@ import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.CustomReportItem;
+import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -156,6 +157,41 @@ public class CustomReportsManager {
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 				Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();
 				config = gson.fromJson(configString, type);
+			}
+			
+			
+		} catch (SQLException e) {
+			throw(new Exception(e.getMessage()));
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return config;
+	}
+	
+	/*
+	 * Get a report from the database
+	 */
+	public LQAS getLQASReport(Connection sd, int crId) throws Exception {
+		
+		LQAS config = null;
+		String sql = "select config from custom_report where id = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, crId);
+			
+			log.info(pstmt.toString());
+			pstmt.executeQuery();
+			
+			String configString = null;
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				configString = rs.getString(1);
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();		
+				config = gson.fromJson(configString, LQAS.class);
 			}
 			
 			

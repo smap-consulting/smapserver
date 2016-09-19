@@ -197,7 +197,7 @@ $(document).ready(function() {
 		document.forms.namedItem("crupload").reset();
 		$('#addReportPopup').modal("show");
 	});
-	getReports(refreshCustomReportView, undefined, undefined);
+	getReports(refreshCustomReportView, undefined, "lqas");
 	
 	// On change of report name, hide any previous results
 	$('#templateName').keydown(function(){

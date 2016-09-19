@@ -1729,36 +1729,6 @@ function getLocations(callback) {
 }
 
 /*
- * Get the custom reports from the server
- */
-function getCustomReports(callback) {
-
-	var url="/surveyKPI/tasks/locations";
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			if(typeof callback === "function") {
-				callback(data);
-			}
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				console.log("Error: Failed to get list of locations: " + err);
-			}
-		}
-	});	
-	
-}
-
-/*
  * Add the locations (NFC tags or geofence) to any drop down lists that use them
  */
 function setLocationList(locns) {
@@ -2233,10 +2203,16 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 }
 
 function deleteCustomReport(id, type) {
+	
+	var url = "/surveyKPI/custom_reports/" + id;
+	if(type) {
+		url += "?type=" + type;
+	}
+	
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  url: "/surveyKPI/custom_reports/" + id,
+		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
 			  var t = type;

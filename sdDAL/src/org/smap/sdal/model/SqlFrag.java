@@ -152,6 +152,7 @@ public class SqlFrag {
 				token.equals("/") ||
 				token.equals(")") ||
 				token.equals("(") ||
+				token.equals("or") ||
 				token.equals("and") || 
 				token.equals("now()")) {
 			out = token;

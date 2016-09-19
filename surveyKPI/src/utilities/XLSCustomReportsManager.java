@@ -42,6 +42,7 @@ import org.smap.sdal.model.Action;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
+import org.smap.sdal.model.LQASItem;
 import org.smap.sdal.model.LQASdataItem;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -466,6 +467,7 @@ public class XLSCustomReportsManager {
 			boolean needHeader = true;
 			LQASGroup currentGroup = null;
 			LQASdataItem currentDataItem = null;
+			LQASItem currentItem = null;
 			TableColumn tc = new TableColumn();
 
 			
@@ -497,14 +499,12 @@ public class XLSCustomReportsManager {
 	                		if(rowType.equals("group")) {
 	                			String groupName = getColumn(row, "display name", header, lastCellNum, null);
 	                			currentGroup = new LQASGroup(groupName);
+	                			lqas.groups.add(currentGroup);
 	                		} else if(rowType.equals("data")) {
 	                	
 	                			SqlFrag select = null; 
 	                			String[] sources = null; 
-	              
-	                			
-
-	                			
+	          			
 	                			// Get data type
 	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
 	                			if(dataType != null) {
@@ -559,6 +559,49 @@ public class XLSCustomReportsManager {
 	                			
 	                			currentDataItem = new LQASdataItem(name,  select, sources, dataType.equals("text"));
 	                			lqas.dataItems.add(currentDataItem);
+	                			
+	                			
+	                			
+	                		} else if(rowType.equals("item")) {
+	                	
+	                			
+	                			String[] sources = null; 
+	                			
+	                			// Get data type
+	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
+	                			if(dataType != null) {
+	                				if(!dataType.equals("text") &&
+	                						!dataType.equals("date") &&
+	                						!dataType.equals("calculate") &&
+	                						!dataType.equals("decimal") &&
+	                						!dataType.equals("integer") &&
+	                						!dataType.equals("select_one")){
+	                					throw new Exception(localisation.getString("mf_idt") + ": " + dataType + 
+	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                				}
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+	                			String colName = getColumn(row, "name", header, lastCellNum, null);
+	                			String targetResponseText = getColumn(row, "target response text", header, lastCellNum, null);
+	                			String displayName = getColumn(row, "display name", header, lastCellNum, null);
+
+	                			// Get calculation 
+		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
+	                			if(calculation != null && calculation.length() > 0) {
+	                				calculation = calculation.trim();
+	                				if(calculation.equals("condition")) {
+	                					// Calculation set by condition rows
+	                				} else if(calculation.length() > 0) {
+	                				} 
+	                			} else {
+	                				throw new Exception(localisation.getString("mf_mc") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
+	                			}
+	                			
+	                			currentItem = new LQASItem(name,  displayName, calculation, targetResponseText,  null);
+	                			currentGroup.items.add(currentItem);
 	                			
 	                			
 	                			
@@ -617,7 +660,7 @@ public class XLSCustomReportsManager {
 		return lqas;
 		
 	}
-
+	
 	/*
 	 * Convert an appearance to jquery classes
 	 */

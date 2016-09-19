@@ -78,6 +78,7 @@ $(document).ready(function() {
 			        		embedImages = $('#embedImages:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		sources = $('#sources').prop("checked"),
+			        		exportReport = $('#export_report_defn').val(),
 			        		forms = [],
 			        		name_questions = [];
 		        			
@@ -138,7 +139,7 @@ $(document).ready(function() {
 		        		
 		        		} else if(format === "lqas") {
 		        			
-		        			url = exportSurveyLqasURL(sId, sources);
+		        			url = exportSurveyLqasURL(sId, sources, exportReport);
 		        		
 		        		} else {
 		        			// XLS export
@@ -983,11 +984,12 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 	return encodeURI(url);
 }
 
-function exportSurveyLqasURL (sId, sources) {
+function exportSurveyLqasURL (sId, sources, reportDefn) {
 
 	var url = "/surveyKPI/lqasExport/";
 
 	url += sId;
+	url += "/" + reportDefn;
 	
 	if(sources) {
 		url+="?sources=true";

@@ -633,8 +633,7 @@ public class UploadFiles extends Application {
 					CustomReportsManager crm = new CustomReportsManager();
 					crm.save(sd, reportName, configString, oId, reportType);
 					
-					
-					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, returnType, true);
+					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, "lqas", false);
 					// Return custom report list			 
 					String resp = gson.toJson(reportsList);
 				

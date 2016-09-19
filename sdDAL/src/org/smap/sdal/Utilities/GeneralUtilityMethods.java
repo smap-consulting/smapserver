@@ -3202,7 +3202,7 @@ public class GeneralUtilityMethods {
 			}
 			
 			if(count == 0) {
-				throw new Exception("Table containing data for " + column_name + " in survey " + sId + " not found");
+				throw new Exception("Table containing question \"" + column_name + "\" in survey " + sId + " not found. Check your LQAS template to see if this question name should be there.");
 			} else if (count > 1) {
 				throw new Exception("Duplicate " + column_name + " found in survey " + sId);
 			}
