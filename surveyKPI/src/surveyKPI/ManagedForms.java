@@ -329,11 +329,11 @@ public class ManagedForms extends Application {
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
-	@Path("/update/{sId}/{dpId}")
+	@Path("/update/{sId}/{managedId}")
 	public Response updateManagedRecord(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@PathParam("dpId") int dpId,
+			@PathParam("managedId") int managedId,
 			@FormParam("settings") String settings
 			) { 
 		
@@ -381,7 +381,7 @@ public class ManagedForms extends Application {
 			 */
 			pstmtCanUpdate = sd.prepareStatement(sqlCanUpdate);
 			pstmtCanUpdate.setInt(1, sId);
-			pstmtCanUpdate.setInt(2, dpId);
+			pstmtCanUpdate.setInt(2, managedId);
 			ResultSet rs = pstmtCanUpdate.executeQuery();
 			int count = 0;
 			if(rs.next()) {
@@ -396,7 +396,7 @@ public class ManagedForms extends Application {
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, dpId, columns, null);
+			qm.getDataProcessingConfig(sd, managedId, columns, null);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -476,7 +476,7 @@ public class ManagedForms extends Application {
 				 */
 				if(tc.actions != null && tc.actions.size() > 0) {
 					ActionManager am = new ActionManager();
-					am.applyManagedFormActions(sd, tc, oId);
+					am.applyManagedFormActions(sd, tc, oId, sId, managedId);
 				}
 				
 

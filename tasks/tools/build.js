@@ -52,6 +52,9 @@
             name: '../managed_forms'
         },
         {
+            name: '../action_forms'
+        },
+        {
             name: '../manage'
         },
         {

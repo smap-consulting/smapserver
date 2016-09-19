@@ -61,12 +61,15 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.NotFoundException;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
+import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Action;
+import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.ServerData;
 import org.smap.sdal.model.Survey;
@@ -92,15 +95,16 @@ public class ActionService extends Application{
 	 * Respond with JSON
 	 */
 	@GET
-	@Path("/action/{ident}")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{ident}")
+	@Produces(MediaType.TEXT_HTML)
 	public Response getInstanceJson(@Context HttpServletRequest request,
 			@PathParam("ident") String userIdent
 			) throws IOException {
 		
 		return getActionForm(request, userIdent);
 	}
-		
+	
+	
 	
 	/*
 	 * Get the response as either HTML or JSON
@@ -112,7 +116,6 @@ public class ActionService extends Application{
 		Response response = null;
 		StringBuffer outputString = new StringBuffer();
 		String requester = "surveyMobileAPI-getWebForm";
-		ResourceBundle localisation = null;
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -122,19 +125,23 @@ public class ActionService extends Application{
 
 
 		Connection sd = SDDataSource.getConnection(requester);
+		Connection cResults = ResultsDataSource.getConnection(requester);
 		
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			// 1. Get details on the action to be performed using the user credentials
 			ActionManager am = new ActionManager();
 			Action a = am.getAction(sd, userIdent);
 			
 			// 2. If temporary user does not exist then throw exception
 	    	if(a == null) {
-	        	throw new Exception("Not Found");
+	        	throw new Exception(localisation.getString("mf_adnf"));
 	        }
 		
 			// 3. Generate the form
-	    	outputString.append(addDocument(request, localisation, a));
+	    	outputString.append(addActionDocument(sd, cResults, request, localisation, a, userIdent));
 	    			
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
 		} catch (Exception e) {
@@ -150,22 +157,20 @@ public class ActionService extends Application{
 	/*
 	 * Add the HTML
 	 */
-	private StringBuffer addDocument(HttpServletRequest request, 
+	private StringBuffer addActionDocument(
+			Connection sd, 
+			Connection cResults, 
+			HttpServletRequest request, 
 			ResourceBundle localisation,
-			Action a) {
+			Action a,
+			String uIdent) throws SQLException, Exception {
 	
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<!DOCTYPE html>\n");
-		
-		output.append("<html lang='en'  class='no-js'>\n");
-		
-		/*		
-		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, 
-				accessKey,
-				serverData));
-		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation));
-		*/
+			
+		output.append(addHead(sd, cResults, request, a, uIdent));
+		output.append(addBody(request, localisation));
 		
 		output.append("</html>\n");			
 		return output;
@@ -174,442 +179,118 @@ public class ActionService extends Application{
 	/*
 	 * Add the head section
 	 */
-	private StringBuffer addHead(HttpServletRequest request, 
-			String formXML, 
-			String instanceXML, 
-			String dataToEditId, 
-			int assignmentId,
-			String surveyClass,
-			String accessKey,
-			ServerData serverData) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addHead(
+			Connection sd, 
+			Connection cResults, 
+			HttpServletRequest request, 
+			Action a,
+			String uIdent) throws SQLException, Exception {
 		
 		StringBuffer output = new StringBuffer();
 
 		// head
 		output.append("<head>\n");
-		output.append("<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
+		output.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+		output.append("<meta charset=\"utf-8\">\n");
 
-		//output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
-		output.append("<link type='text/css' href='/build/css/webform.css' media='all' rel='stylesheet' />\n");
-		//output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
-		if(surveyClass != null && surveyClass.trim().contains("theme-grid")) {
-			output.append("<link type='text/css' href='/build/css/grid.css' media='all' rel='stylesheet' />\n");
-			output.append("<link type='text/css' href='/build/css/grid-print.css' media='print' rel='stylesheet'/>\n");	
-		} else {
-			output.append("<link type='text/css' href='/build/css/default.css' media='all' rel='stylesheet' />\n");			
-			output.append("<link type='text/css' href='/build/css/formhub.css' media='all' rel='stylesheet' />\n");			
-			output.append("<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>\n");
-		}
-			
-		output.append("<link rel='shortcut icon' href='favicon.ico'>\n");
-		//	<!-- For third-generation iPad with high-resolution Retina display: -->
-		output.append("<link rel='apple-touch-icon-precomposed' sizes='144x144' href='images/fieldTask_144_144_min.png'>\n");
-		//	<!-- For iPhone with high-resolution Retina display: -->
-		output.append("<link rel='apple-touch-icon-precomposed' sizes='114x114' href='images/fieldTask_114_114_min.png'>\n");
-		//	<!-- For first- and second-generation iPad: -->
-		output.append("<link rel='apple-touch-icon-precomposed' sizes='72x72' href='images/fieldTask_72_72_min.png'>\n");
-		//	<!-- For non-Retina iPhone, iPod Touch, and Android 2.1+ devices: -->
-		output.append("<link rel='apple-touch-icon-precomposed' href='images/fieldTask_57_57_min.png'>\n");
-			
-		output.append("<meta charset='utf-8' />\n");
-		output.append("<meta name='viewport' content='width=device-width, initial-scale=1.0' />\n");
-		output.append("<meta name='apple-mobile-web-app-capable' content='yes' />\n");
-		output.append("<!--[if lt IE 10]>");
-	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
-		output.append("<![endif]-->\n");
-			
-		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
-		// Add the google API key
-		output.append("<script>");
-			output.append("window.smapConfig = {};");
-				if(serverData.google_key != null) {
-					output.append("window.smapConfig.googleApiKey=\"");
-					output.append(serverData.google_key);
-					output.append("\";");
-				}
-		output.append("</script>");
-		
-		// Webforms script
-		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
-		
-		output.append("</head>\n");
-		
-		return output;
-	}
-	
-	/*
-	 * Add the data
-	 */
-	private StringBuffer addData(HttpServletRequest request, 
-			String formXML, String instanceXML, 
-			String dataToEditId,
-			int assignmentId,
-			String accessKey) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
-		
-		StringBuffer output = new StringBuffer();
-		
-		output.append("<script type='text/javascript'>\n");
-		output.append("settings = {};\n");
-		
-		output.append("surveyData = {};\n");    
-		
-		// Data model
-		
-		output.append("surveyData.modelStr='");
-		output.append(getModelStr(request, formXML));
-		output.append("';\n");
-		
-		// Instance Data
-		if(instanceXML != null) {
-			output.append("surveyData.instanceStrToEdit='");			
-			output.append(instanceXML.replace("\n", "").replace("\r", ""));
-			output.append("';\n");
-		} 
-		
-		// Add identifier of existing record, use this as a key on results submission to update an existing record
-		if(dataToEditId == null) {
-			output.append("surveyData.instanceStrToEditId = undefined;\n");
-		} else {
-			output.append("surveyData.instanceStrToEditId='");
-			output.append(dataToEditId);
-			output.append("';\n");
-		}
-		
-		// Add the assignment id if this was set
-		if(assignmentId == 0) {
-			output.append("surveyData.assignmentId = undefined;\n");
-		} else {
-			output.append("surveyData.assignmentId='");
-			output.append(assignmentId);
-			output.append("';\n");
+		output.append("<title>Action Completion</title>\n");
 
-		}
-		
-		// Add access key for authentication
-		if(accessKey == null) {
-			output.append("surveyData.key = undefined;\n");
-		} else {
-			output.append("surveyData.key='");
-			output.append(accessKey);
-			output.append("';\n");
-		}
-		
-		output.append("</script>\n");
-		return output;
-	}
+	    output.append("<link href=\"/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/font-awesome/css/font-awesome.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/css/bootstrap-datetimepicker.min.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/css/wb/plugins/iCheck/custom.css\" rel=\"stylesheet\">\n");
+
+	    output.append("<link href=\"/css/wb/animate.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/css/wb/style.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/css/smap-wb.css\" rel=\"stylesheet\">\n");
+
+	    output.append("<script> if (!window.console) console = {log: function() {}}; </script>\n");
+
+	    output.append("<script src=\"/js/libs/modernizr.js\"></script>");
+	    output.append("<script src=\"/js/app/custom.js\"></script>\n");
 	
-	/*
-	 * Get the model string
-	 */
-	private StringBuffer getModelStr(HttpServletRequest request, String formXML) 
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
-		
-		StringBuffer output = new StringBuffer();
-		
-		String dataDoc=transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
-		
-		// We only want the model
-		int modelIdx = dataDoc.indexOf("<model>");
-		int rootIdx = dataDoc.lastIndexOf("</root>");
-		if(modelIdx >=0 && rootIdx >= 0) {
-			dataDoc = dataDoc.substring(modelIdx, rootIdx);
-		} else {
-			log.info("Error: Invalid model: " + dataDoc);
-		}
-		output.append(dataDoc.replace("\n", "").replace("\r", ""));
+	    output.append("<script data-main=\"/tasks/js/action_forms\" src=\"/js/libs/require.js\"></script>\n");
+	    output.append("<script>");
+	    output.append(getManagedConfig(sd, cResults, a.sId, a.managedId, uIdent));
+	    output.append("</script>");
+	    output.append("</head>\n");
 		
 		return output;
-		
 	}
 	
 	/*
 	 * Add the body
 	 */
-	private StringBuffer addBody(HttpServletRequest request, String formXML, 
-			String dataToEditId, 
-			int orgId,
-			String surveyClass,
-			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addBody(HttpServletRequest request, 
+			ResourceBundle localisation) {
 		StringBuffer output = new StringBuffer();
 		
-		output.append("<body class='clearfix edit'>");
-		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
-		output.append(getDialogs());
+		output.append("<body>\n");
+		output.append("<div id=\"wrapper\">");
+		output.append(addNoScriptWarning(localisation));
+		output.append(addMain(localisation));
 		
-		output.append("</body>");
+		output.append("</div>");
+		output.append("</body>\n");
 		return output;
 	}
 	
 	/*
-	 * Get the "Main" element of an enketo form
+	 * Get the "Main" element 
 	 */
-	private StringBuffer addMain(HttpServletRequest request, String formXML, 
-			String dataToEditId, 
-			int orgId, 
-			boolean minimal,
-			String surveyClass,
-			ServerData serverData,
-			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	private StringBuffer addMain(ResourceBundle localisation)  {
 		StringBuffer output = new StringBuffer();
 		
-		output.append(openMain(orgId, minimal, serverData, localisation));
-		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
-		if(!minimal) {
-			output.append(closeMain(dataToEditId, surveyClass));
-		}
-		
+		output.append("<div id=\"page-wrapper\" class=\"gray-bg\">");
+		output.append(getNavBar());
+		output.append(addHeaderRow());
+		output.append(addActionRow());
+		output.append("</div>");
 		return output;
 	}
 	
 	/*
-	 * Transform the XML defintion into HTML using enketo style sheets
+	 * Add a header row
 	 */
-	private String transform(HttpServletRequest request, String formXML, String xslt) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+	StringBuffer addHeaderRow() {
+		StringBuffer output = new StringBuffer();
 		
-		InputStream xmlStream = new ByteArrayInputStream(formXML.getBytes("UTF-8"));
-		StreamSource source = new StreamSource(xmlStream);
-		
-		StringWriter writer = new StringWriter();
-		StreamResult output = new StreamResult(writer);
-		
-		StreamSource styleSource = new StreamSource(request.getServletContext().getResourceAsStream(xslt));
-		
-		TransformerFactory tf = TransformerFactory.newInstance("org.apache.xalan.processor.TransformerFactoryImpl",null);
-		//tf.setAttribute(TransformerFactoryImpl.FEATURE_SOURCE_LOCATION, Boolean.TRUE);
-		tf.setAttribute(TransformerFactoryImpl.FEATURE_OPTIMIZE, Boolean.FALSE);
-		
-		Transformer transformer = tf.newTransformer(styleSource);
-    	//transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-    	transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-    	transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-    	
-    	
-
-    	transformer.transform(source, output);
-    	
-		
-		return writer.toString();
+        output.append("<div class=\"row wrapper border-bottom white-bg page-heading\">");
+    	output.append("<div class=\"col-sm-2\">");
+        	output.append("<h2 class=\"lang\" data-lang=\"m_mf\">manage</h2>");   
+        output.append("</div>");
+        output.append("</div>");
+    
+		return output;
 	}
-	
 	/*
-	 * Add some dialogs
+	 * Get the nav bar
 	 */
-	private StringBuffer getDialogs() {
-		StringBuffer output = new StringBuffer();
-		
-		output.append("<!-- Start Dialogs -->\n");
-		output.append("<div id='dialog-alert' class='modal fade' role='dialog' aria-labelledby='alert dialog' aria-hidden='true'  data-keyboard='true'>\n");	
-			output.append("<div class='modal-dialog'>\n");	
-				output.append("<div class='modal-content'>\n");	
-					output.append("<div class='modal-header'>\n");	
-						output.append("<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>\n");	
-						output.append("<h3></h3>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-body'>\n");	
-						output.append("<p class=''></p>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-footer'>\n");	
-						output.append("<span class='self-destruct-timer'></span>\n");	
-						output.append("<button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button>\n");	
-					output.append("</div>\n");	
-				output.append("</div>\n");	
-			output.append("</div>\n");	
-		output.append("</div>  <!-- end dialog-alert -->\n");	
-	
-		output.append("<div id='dialog-confirm' class='modal fade' role='dialog' aria-labelledby='confirmation dialog' aria-hidden='true'  data-keyboard='true'>\n");	
-			output.append("<div class='modal-dialog'>\n");	
-				output.append("<div class='modal-content'>\n");	
-					output.append("<div class='modal-header'>\n");	
-						output.append("<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>\n");	
-						output.append("<h3></h3>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-body'>\n");	
-						output.append("<p class='alert alert-danger'></p>\n");	
-						output.append("<p class='msg'></p>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-footer'>\n");	
-						output.append("<span class='self-destruct-timer'></span>\n");	
-						output.append("<button class='negative btn'>Close</button>\n");	
-						output.append("<button class='positive btn btn-primary'>Confirm</button>\n");	
-					output.append("</div>\n");	
-				output.append("</div>\n");	
-			output.append("</div>\n");	
-		output.append("</div>   <!-- end dialog-confirm -->\n");	
-	
-		output.append("<div id='dialog-save' class='modal fade' role='dialog' aria-labelledby='save dialog' aria-hidden='true' data-keyboard='true'>\n");	
-			output.append("<div class='modal-dialog'>\n");	
-				output.append("<div class='modal-content'>\n");	
-					output.append("<div class='modal-header'>\n");	
-						output.append("<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>\n");	
-						output.append("<h3></h3>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-body'>\n");	
-						output.append("<form onsubmit='return false;'>\n");	
-							output.append("<div class='alert alert-danger'></div>\n");	
-							output.append("<label>\n");	
-								output.append("<span>Record Name</span>\n");	
-								output.append("<span class='or-hint active'>This name allows you to easily find your draft record to finish it later. The record name will not be submitted to the server.</span>\n");	
-								output.append("<input name='record-name' type='text' required='required'/>\n");	
-							output.append("</label>\n");	
-						output.append("</form>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-footer'>\n");	
-						output.append("<button class='negative btn'>Close</button>\n");	
-						output.append("<button class='positive btn btn-primary'>Save &amp; Close</button>\n");	
-					output.append("</div>\n");	
-				output.append("</div>\n");	
-			output.append("</div>\n");	
-		output.append("</div> <!-- end dialog-save -->\n");	
-	
-		//used for Grid theme only
-		output.append("<div id='dialog-print' class='modal fade' role='dialog' aria-labelledby='print dialog' aria-hidden='true'  data-keyboard='true'>\n");	
-			output.append("<div class='modal-dialog'>\n");	
-				output.append("<div class='modal-content'>\n");	
-					output.append("<div class='modal-header'>\n");	
-						output.append("<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>\n");	
-						output.append("<h3 class='select-format'>Select Print Settings</h3>\n");	
-						output.append("<h3 class='progress'>Preparing...</h3>\n");	
-					output.append("</div>");	
-					output.append("<div class='modal-body'>\n");	
-						output.append("<section class='progress'>\n");	
-							output.append("<p>Working hard to prepare your optimized print view. Hold on!</p>\n");	
-							output.append("<progress></progress>\n");	
-						output.append("</section>\n");	
-						output.append("<section class='select-format'>\n");	
-							output.append("<p>To prepare an optimized print, please select the print settings below</p>\n");	
-							output.append("<form onsubmit='return false;'>\n");	
-								output.append("<fieldset>\n");	
-									output.append("<legend>Paper Size</legend>\n");	
-									output.append("<label>\n");	
-										output.append("<input name='format' type='radio' value='A4' required checked/>\n");	
-										output.append("<span>A4</span>\n");	
-									output.append("</label>\n");	
-									output.append("<label>\n");	
-										output.append("<input name='format' type='radio' value='letter' required/>\n");	
-										output.append("<span>Letter</span>\n");	
-									output.append("</label>\n");	
-								output.append("</fieldset>\n");	
-								output.append("<fieldset>\n");	
-									output.append("<legend>Paper Orientation</legend>\n");	
-									output.append("<label>\n");	
-										output.append("<input name='orientation' type='radio' value='portrait' required checked/>\n");	
-										output.append("<span>Portrait</span>\n");	
-									output.append("</label>\n");	
-									output.append("<label>\n");	
-										output.append("<input name='orientation' type='radio' value='landscape' required/>\n");	
-										output.append("<span>Landscape</span>\n");	
-									output.append("</label>\n");	
-								output.append("</fieldset>\n");	
-							output.append("</form>\n");	
-							output.append("<p class='alert alert-info'>Remember to set these same print settings in the browser's print menu afterwards!</p>\n");	
-						output.append("</section>\n");	
-					output.append("</div>\n");	
-					output.append("<div class='modal-footer'>\n");	
-						output.append("<button class='negative btn'>Close</button>\n");	
-						output.append("<button class='positive btn btn-primary'>Prepare</button>\n");	
-					output.append("</div>\n");	
-				output.append("</div>\n");	
-			output.append("</div>\n");	
-		output.append("</div> <!-- end dialog-print for grid -->\n");	
-		
-		return output;
-	}
-	
-	private StringBuffer getAside() {
+	StringBuffer getNavBar() {
 		
 		StringBuffer output = new StringBuffer();
-			
-		output.append("<div id='feedback-bar' class='alert alert-warning'>\n");		
-			output.append("<span class='glyphicon glyphicon-info-sign'></span>\n");	
-			output.append("<button class='close'>&times;</button>\n");	
-		output.append("</div>\n");	
-	
-		output.append("<aside class='side-slider'>\n");
-			output.append("<button type='button' class='close' data-dismiss='side-slider' aria-hidden='true'>×</button>\n");
-			output.append("<nav></nav>\n");
-			output.append("<div class='content'>\n");
-			output.append("</div>\n");
-		output.append("</aside>\n");
-
-		output.append("<button class='handle side-slider-toggle open'></button>\n");
-		output.append("<button class='handle side-slider-toggle close'></button>\n");
-		output.append("<div class='side-slider-toggle slider-overlay'></div>\n");
-	
-		return output;
+		
+		output.append("<div class=\"row border-bottom\">");
+		output.append("<nav class=\"navbar navbar-static-top\" role=\"navigation\" style=\"margin-bottom: 0\">");
+    		output.append("<div class=\"navbar-header\">");
+        		output.append("<a class=\"navbar-minimalize minimalize-styl-2 btn btn-primary\" href=\"#\"><i class=\"fa fa-bars\"></i></a>");
+        	output.append("</div>");	
+            output.append("<ul class=\"nav navbar-top-links navbar-right\">");       
+          		output.append("<li>");
+                	output.append("<a href=\"#\" id=\"m_refresh\"><span class=\"lang\" data-lang=\"m_refresh\">refresh</span></a>");
+            	output.append("</li>");
+            	output.append("<li>");
+            		output.append("<a class=\"right-sidebar-toggle\">");
+                    	output.append("<i class=\"fa fa-cog\"></i>");
+                    output.append("</a>");
+                output.append("</li>");  	
+            output.append("</ul>");
+        output.append("</nav>");
+        output.append("</div>");
+        
+        return output;
 	}
-	
-	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData, ResourceBundle localisation) {
-		StringBuffer output = new StringBuffer();
-		
-		output.append("<div class='main'>\n");
-			
-			// Add the google api key
-			if(serverData != null) {
-				output.append("<div id='googleApiKey' style='display:none;'>");
-				output.append(serverData.google_key);
-				output.append("</div>");
-			}
-			
-			output.append("<article class='paper'>\n");
-			if(!minimal) {
-				output.append("<header class='form-header clearfix'>\n");
-					output.append("<div class='offline-enabled'>\n");
-						output.append("<div title='Records Queued' class='queue-length side-slider-toggle'>0</div>\n");
-					output.append("</div>\n");
-					output.append("<button onclick='return false;' class='print' title='Print this Form'> </button>\n");
-					output.append("<span class='form-language-selector'><span>Choose Language</span></span>\n");
-					output.append("<div class='form-progress'></div>\n");
 
-					output.append("<span class='logo-wrapper'>\n");
-						output.append(addNoScriptWarning(localisation));
-						output.append("<img class='banner_logo' src='/media/organisation/");
-						output.append(orgId);
-						output.append("/settings/bannerLogo' onerror=\"if(this.src.indexOf('smap_logo.png') < 0) this.src='/images/smap_logo.png';\" alt='logo'>\n");
-					output.append("</span>\n");
-
-				output.append("</header>\n");
-			}
-		return output;
-	}
-	
-	private StringBuffer closeMain(String dataToEditId, String surveyClass) {
-		StringBuffer output = new StringBuffer();
-		
-		output.append("<section class='form-footer'>\n");
-		output.append("<div class='content'>\n");
-		output.append("<fieldset class='draft question'><div class='option-wrapper'><label class='select'><input class='ignore' type='checkbox' name='draft'/><span class='option-label'>Save as Draft</span></label></div></fieldset>\n");
-		
-		output.append("<div class='main-controls'>\n");
-		if(dataToEditId == null) {
-			output.append("<button id='submit-form' class='btn btn-primary btn-large' >Submit</button>\n");
-		} else {
-			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
-		}
-		if(surveyClass !=null && surveyClass.contains("pages")) {
-			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
-			output.append("<a class='next-page' href='#'>Next</span></a>\n");
-		}
-		output.append("</div>\n");	// main controls
-		
-		if(surveyClass !=null && surveyClass.contains("pages")) {
-			
-			output.append("<div class='jump-nav'>\n");
-			output.append("<a class='btn btn-default disabled first-page' href='#'>Return to Beginning</a>\n");
-			output.append("<a class='btn btn-default disabled last-page' href='#'>Go to End</a>\n");
-			output.append("</div>");
-		}
-				
-
-		output.append("</div>\n");	// content
-		output.append("</section> <!-- end form-footer -->\n");
-		
-		output.append("</article>\n");
-		output.append("</div> <!-- end main -->\n");
-
-		return output;
-	}
-	
 
 	
 	private String addNoScriptWarning(ResourceBundle localisation) {
@@ -624,6 +305,35 @@ public class ActionService extends Application{
 		
 		return output.toString();
 	}
+	
+	private StringBuffer getManagedConfig(Connection sd, Connection cResults, int sId, int managedId, String uIdent) throws SQLException, Exception {
+		StringBuffer output = new StringBuffer();
+		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		ManagedFormsManager qm = new ManagedFormsManager();
+		ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, uIdent);
+		output.append("var gSurveyConfig=");
+		output.append(gson.toJson(mfc));
+		output.append(";");
+		return output;
+	}
 
+	private StringBuffer addActionRow() {
+		StringBuffer output = new StringBuffer();
+		
+		output.append("<div class=\"row\">");
+			output.append("<div class=\"col-sm-6 b-r\"><h3 class=\"m-t-none m-b lang\" data-lang=\"mf_fd\">form data</h3>");
+				output.append("<form id=\"surveyForm\" role=\"form\" class=\"form-horizontal\"></form>");		
+			output.append("</div>");
+			output.append("<div class=\"col-sm-6 b-r\"><h3 class=\"m-t-none m-b lang\" data-lang=\"mf_md\">mgmt data</h3>");
+				output.append("<form id=\"editRecordForm\" role=\"form\" class=\"form-horizontal\"></form>");
+		
+				output.append("<button type=\"button\" class=\"btn btn-default lang\" data-dismiss=\"modal\" data-lang=\"c_close\">close</button>");
+				output.append("<button id=\"saveRecord\" type=\"button\" class=\"btn btn-primary lang\" data-dismiss=\"modal\" data-lang=\"c_save\">Save</button>");
+			output.append("</div>");
+		output.append("</div>");
+		
+		return output;
+	}
 }
 

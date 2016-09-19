@@ -332,7 +332,9 @@ public class UserManager {
 			int o_id) throws Exception {
 		
 		int u_id = -1;
-		String sql = "insert into users (ident, o_id, email, name, temporary) values (?, ?, ?, ?, true) ";
+		String sql = "insert into users "
+				+ "(ident, o_id, email, name, temporary, action_details) "
+				+ "values (?, ?, ?, ?, true, ?) ";
 		
 		PreparedStatement pstmt = null;
 		
@@ -342,6 +344,7 @@ public class UserManager {
 			pstmt.setInt(2, o_id);
 			pstmt.setString(3, u.email);
 			pstmt.setString(4, u.name);
+			pstmt.setString(5, u.action_details);
 			log.info("SQL: " + pstmt.toString());
 			pstmt.executeUpdate();
 			

@@ -18,6 +18,7 @@ import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /*****************************************************************************
 
@@ -50,9 +51,11 @@ public class ActionManager {
 	/*
 	 * Apply actions resulting from a change to managed forms
 	 */
-	public void applyManagedFormActions(Connection sd, TableColumn tc, int oId) throws Exception {
+	public void applyManagedFormActions(Connection sd, TableColumn tc, int oId, int sId, int managedId) throws Exception {
 		for(int i = 0; i < tc.actions.size(); i++) {
 			Action a = tc.actions.get(i);
+			a.sId = sId;
+			a.managedId = managedId;
 			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
 			addAction(sd, a, oId);
@@ -66,7 +69,7 @@ public class ActionManager {
 		
 		Action a = null;
 		
-		String sql = "select action_details from user "
+		String sql = "select action_details from users "
 				+ "where "
 				+ "temporary = true "
 				+ "and ident = ?";
@@ -75,6 +78,7 @@ public class ActionManager {
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, userIdent);
+			log.info("Get action details: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			
 			if(rs.next()) {
@@ -98,6 +102,8 @@ public class ActionManager {
 				+ "values(?, ?, ?, now(), ?, ?)";
 		PreparedStatement pstmt = null;
 		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		
 		int uId = 0;
 		String link = null;
 		try {
@@ -112,6 +118,7 @@ public class ActionManager {
 				User u = new User();
 				u.ident = tempUserId;
 				u.name = a.notify_person;
+				u.action_details = gson.toJson(a);
 				
 				uId = um.createTemporaryUser(sd, u, oId);
 				link = "/action/" + tempUserId;
@@ -124,7 +131,7 @@ public class ActionManager {
 			pstmt.setString(2, "open");    	// Status: open || reject || complete
 			pstmt.setInt(3, 1);				// Priority
 			pstmt.setString(4,  link);		// Link for the user to click on to complete the action
-			pstmt.setString(5,  null);		// Message
+			pstmt.setString(5,  null);		// Message TODO set for info type actions
 			
 			log.info("Create alert: " + pstmt.toString());
 			pstmt.executeUpdate();

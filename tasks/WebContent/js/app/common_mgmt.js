@@ -930,3 +930,58 @@ window.gTasks = {
 				  }
 			});
 	 }
+	 
+	 function showEditRecordForm(record, columns, $editForm, $surveyForm) {
+		var 
+			h = [],
+			idx = -1,
+			m = [],
+			cnt = -1,
+			i,
+			configItem,
+			first = true;
+		
+		//gTasks.gCurrentIndex = index;
+		gTasks.gPriKey = record["prikey"];
+		
+		// Clear the update array
+		gTasks.gUpdate = [];
+		$('#saveRecord').prop("disabled", true);
+		
+		for(i = 0; i < columns.length; i++) {
+			configItem = columns[i];
+			
+			if(configItem.mgmt) {
+				h[++idx] = getEditMarkup(configItem, i, first, record);
+			} else {
+				m[++cnt] = getEditMarkup(configItem, i, first, record);
+			}
+			if(!configItem.readonly) {
+				first = false;
+			}
+		}
+		
+		$editForm.html(h.join(''));
+		$surveyForm.html(m.join(''));
+		
+		// Set up date fields
+		$editForm.find('.date').datetimepicker({
+			locale: gUserLocale || 'en',
+			useCurrent: false,
+			showTodayButton: true
+		});
+		
+		// Respond to changes in the data by creating an update object
+		$editForm.find('.form-control').keyup(function() {
+			dataChanged($(this));
+		});
+		$editForm.find('.date').on("dp.change", function() {
+			dataChanged($(this).find('input'));
+		});
+		$editForm.find('select').change(function() {
+			dataChanged($(this));
+		});
+		
+		// Set focus to first editable data item
+		$editForm.find('[autofocus]').focus();
+	 }
