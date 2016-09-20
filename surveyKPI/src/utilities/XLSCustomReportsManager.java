@@ -377,7 +377,8 @@ public class XLSCustomReportsManager {
 	                				} 
 	
 	                			} else {
-	                				throw new Exception("Unexpected \"condition\" on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_uc") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			} 
 	                			
 	                		} else {
@@ -500,6 +501,7 @@ public class XLSCustomReportsManager {
 	                			String groupName = getColumn(row, "display name", header, lastCellNum, null);
 	                			currentGroup = new LQASGroup(groupName);
 	                			lqas.groups.add(currentGroup);
+	                		
 	                		} else if(rowType.equals("data")) {
 	                	
 	                			SqlFrag select = null; 
@@ -520,27 +522,6 @@ public class XLSCustomReportsManager {
 	                			} else {
 	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
-	                			
-	                			// Get column name
-	                			String colName = getColumn(row, "name", header, lastCellNum, null);
-	                			if(colName != null) {
-	                				colName = colName.trim().toLowerCase();
-	                				String modColName = colName.replaceAll("[^a-z0-9_]", "");
-	                				modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
-	                				if(colName.length() != modColName.length()) {
-	                					throw new Exception(localisation.getString("mf_in") +
-	                							": " + colName + " " + localisation.getString("mf_or") + ": " + (j + 1));
-	                				} else if(colName.length() > 60) {
-	                					throw new Exception(localisation.getString("mf_ntl") + ": " + colName + 
-	                							" " + localisation.getString("mf_or") + ": " + (j + 1));
-	                				}
-	                				
-	                			} else {
-	                				throw new Exception(localisation.getString("mf_mn") + 
-	                						localisation.getString("mf_or") + ": " + (j + 1));
-	                			}
-	                			
-              			
 	                			
 	                			// Get calculation state
 		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
@@ -583,7 +564,6 @@ public class XLSCustomReportsManager {
 	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
-	                			String colName = getColumn(row, "name", header, lastCellNum, null);
 	                			String targetResponseText = getColumn(row, "target response text", header, lastCellNum, null);
 	                			String displayName = getColumn(row, "display name", header, lastCellNum, null);
 
@@ -635,7 +615,8 @@ public class XLSCustomReportsManager {
 	                			
 	
 	                			} else {
-	                				throw new Exception("Unexpected \"condition\" on row: " + (j + 1));
+	                				throw new Exception(localisation.getString("mf_uc") + 
+	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			} 
 	                			
 	                		} else {
@@ -645,16 +626,16 @@ public class XLSCustomReportsManager {
                 		}	
                 		
                 	}
-                
-	            	// Close of any condition type calculations
-	    			if(processingConditions ) {
-	    				processingConditions = false;
-	    				currentDataItem.select.add("END");
-	    			}
+               
                 	
                 }
                 
             }
+        	// Close of any condition type calculations
+			if(processingConditions ) {
+				processingConditions = false;
+				currentDataItem.select.add("END");
+			}
             
 		}
 		return lqas;

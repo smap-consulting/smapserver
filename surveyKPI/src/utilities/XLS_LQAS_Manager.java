@@ -360,18 +360,16 @@ public class XLS_LQAS_Manager {
 			LQAS lqas,
 			boolean showSources) throws Exception {
 		
+		Sheet errorSheet = null;
+		int errorRow = 1;
+		
 		// Get the table name
 		String tableName = null;
 		boolean templateError = false;
 		try {
 			tableName = GeneralUtilityMethods.getTableForQuestion(sd, survey.id, lqas.lot);
 		} catch (Exception e) {
-			Sheet errorSheet = wb.createSheet("error");
-			Row r = errorSheet.createRow(1);
-			Cell c = r.createCell(1);
-			c.setCellValue("Error:");
-			c = r.createCell(2);
-			c.setCellValue(e.getMessage());
+			errorSheet = writeErrorToWorkSheet(errorSheet, e.getMessage(), errorRow++);
 			wb.write(outputStream);
 			outputStream.close();
 			templateError = true;
@@ -561,7 +559,13 @@ public class XLS_LQAS_Manager {
 							String value = null;
 							
 							if(!row.sourceRow) {
-								value = eval.evaluate(row.correctRespValue);
+								try {
+									value = eval.evaluate(row.correctRespValue);
+								} catch (Exception e) {
+									String msg = "Invalid expression: " + row.correctRespValue + " on row " + row.rowNum + " " + row.colName;
+									errorSheet = writeErrorToWorkSheet(errorSheet, msg, errorRow++);	
+									log.log(Level.SEVERE, msg, e);
+								}
 								if(value == null || value.trim().length() == 0) {
 									value = "X";
 								}
@@ -760,6 +764,19 @@ public class XLS_LQAS_Manager {
         style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         
         return style;
+    }
+    
+    private Sheet writeErrorToWorkSheet(Sheet errorSheet, String msg, int rowNumber) {
+		if(errorSheet == null) {
+			errorSheet = wb.createSheet("error");
+		}
+		Row r = errorSheet.createRow(rowNumber);
+		Cell c = r.createCell(1);
+		c.setCellValue("Error:");
+		c = r.createCell(2);
+		c.setCellValue(msg);
+		
+		return errorSheet;
     }
 
 }
