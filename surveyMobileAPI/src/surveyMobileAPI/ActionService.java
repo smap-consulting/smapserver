@@ -55,6 +55,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.xalan.processor.TransformerFactoryImpl;
+import org.codehaus.jettison.json.JSONArray;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
@@ -67,8 +68,10 @@ import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Action;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.ServerData;
@@ -210,8 +213,19 @@ public class ActionService extends Application{
 	    output.append("<script src=\"/js/app/custom.js\"></script>\n");
 	
 	    output.append("<script data-main=\"/tasks/js/action_forms\" src=\"/js/libs/require.js\"></script>\n");
+	    
 	    output.append("<script>");
-	    output.append(getManagedConfig(sd, cResults, a.sId, a.managedId, uIdent));
+	    
+		ManagedFormsManager mfm = new ManagedFormsManager();
+		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent);
+		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
+		Form f = GeneralUtilityMethods.getTopLevelForm(sd, a.sId);
+		
+	    output.append(getManagedConfig(mfc));
+	    output.append(getRecord(sd, cResults, mfc, a.sId, a.prikey,
+			urlprefix, 
+			request.getRemoteUser(),
+			f.tableName));
 	    output.append("</script>");
 	    output.append("</head>\n");
 		
@@ -306,15 +320,52 @@ public class ActionService extends Application{
 		return output.toString();
 	}
 	
-	private StringBuffer getManagedConfig(Connection sd, Connection cResults, int sId, int managedId, String uIdent) throws SQLException, Exception {
+	private StringBuffer getManagedConfig(ManagedFormConfig mfc) throws SQLException, Exception {
+		
 		StringBuffer output = new StringBuffer();
 		
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-		ManagedFormsManager qm = new ManagedFormsManager();
-		ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, uIdent);
+
 		output.append("var gSurveyConfig=");
 		output.append(gson.toJson(mfc));
-		output.append(";");
+		output.append(";\n");
+		return output;
+	}
+	
+	private StringBuffer getRecord(Connection sd, 
+			Connection cResults, 
+			ManagedFormConfig mfc, 
+			int sId, 
+			int prikey,
+			String urlprefix, 
+			String uIdent,
+			String tableName) throws SQLException, Exception {
+		
+		StringBuffer output = new StringBuffer();
+		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		TableDataManager tdm = new TableDataManager();
+		JSONArray ja = tdm.getData(
+				sd, 
+				cResults,
+				mfc.columns,
+				urlprefix,
+				sId,
+				tableName,
+				0,				// parkey
+				null,			// HRK
+				uIdent,
+				null,			// Sort
+				null,			// Sort direction
+				true,			// Management
+				false,			// group
+				true,
+				prikey,			
+				1);				// Number of records to return
+		
+		output.append("\nvar gRecord=");
+		output.append(ja.toString());
+		output.append(";\n");
 		return output;
 	}
 

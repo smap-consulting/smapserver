@@ -38,7 +38,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 /*
- * Manage the log table
+ * Managed Forms
  */
 public class ManagedFormsManager {
 	
@@ -303,51 +303,6 @@ public class ManagedFormsManager {
 		
 		return filter;
 	}
-	
-	/*
-	private void addProcessing(TableColumn tc) {
-		String name = tc.name;
-		tc.mgmt = true;
-		if(name.equals("_mgmt_responsible")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_action_deadline")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_action_date")) {
-			tc.hide = true;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_response_status")) {
-			tc.hide = false;
-			tc.readonly = true;
-			tc.type = "calculate";
-			tc.markup = new ArrayList<TableColumnMarkup> ();
-			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
-			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
-			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
-			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
-			tc.filter = true;
-		} else if(name.equals("_mgmt_action_taken")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_address_recommendation")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "select_one";
-			tc.choices = new ArrayList<String> ();
-			tc.choices.add("Yes");
-			tc.choices.add("No, needs further work");		
-		} else if(name.equals("_mgmt_comment")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		}
-	}
-	*/
 	
 }
 

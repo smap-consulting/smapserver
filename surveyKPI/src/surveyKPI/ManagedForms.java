@@ -476,7 +476,7 @@ public class ManagedForms extends Application {
 				 */
 				if(tc.actions != null && tc.actions.size() > 0) {
 					ActionManager am = new ActionManager();
-					am.applyManagedFormActions(sd, tc, oId, sId, managedId);
+					am.applyManagedFormActions(sd, tc, oId, sId, managedId, u.prikey);
 				}
 				
 

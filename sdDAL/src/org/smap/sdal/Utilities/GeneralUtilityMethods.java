@@ -3437,5 +3437,23 @@ public class GeneralUtilityMethods {
 		
 		return hasQuestion;
 	}
+	
+	/*
+	 * Translate a question name to the version used in Kobo
+	 */
+	public static String translateToKobo(String in) {
+		String out = in;
+		
+		if(in.equals("_end")) {
+			out = "end";
+		} else if(in.equals("_start")) {
+			out = "start";
+		} else if(in.equals("_device")) {
+			out = "deviceid";
+		} else if(in.equals("instanceid")) {
+			out = "uuid";
+		}
+		return out;
+	}
 
 }

@@ -931,6 +931,9 @@ window.gTasks = {
 			});
 	 }
 	 
+	 /*
+	  * Add html to show a form to edit a record
+	  */
 	 function showEditRecordForm(record, columns, $editForm, $surveyForm) {
 		var 
 			h = [],

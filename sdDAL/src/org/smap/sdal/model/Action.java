@@ -9,6 +9,7 @@ public class Action {
 	// Attributes specific to an action type
 	public int sId;
 	public int managedId;
+	public int prikey;
 	
 	public Action(String a) {
 		action = a;

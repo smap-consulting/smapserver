@@ -120,8 +120,7 @@ require([
 		var $editForm = $('#editRecordForm'),
 			$surveyForm = $('#surveyForm');
 		
-		record = {};
-		showEditRecordForm(record, gSurveyConfig.columns, $editForm, $surveyForm);
+		showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
 		
 		
 		$('#saveRecord').click(function(){

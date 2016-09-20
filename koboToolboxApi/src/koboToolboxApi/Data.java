@@ -57,11 +57,10 @@ import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
-
-import utils.Utils;
 
 /*
  * Provides access to collected data
@@ -171,15 +170,11 @@ public class Data extends Application {
 		PreparedStatement pstmtGetForm = null;
 		
 		
-		PreparedStatement pstmtGetData = null;
-		
-		StringBuffer columnSelect = new StringBuffer();
 		String table_name = null;
 		int parentform = 0;
 		int managedId = 0;
-		boolean hasRbacFilter = false;
 		ResultSet rs = null;
-		JSONArray ja = new JSONArray();
+
 
 		if(sort != null && dirn == null) {
 			dirn = "asc";
@@ -251,160 +246,24 @@ public class Data extends Application {
 				columns.addAll(managedColumns);
 			}
 			
-			for(int i = 0; i < columns.size(); i++) {
-				TableColumn c = columns.get(i);
-				if(i > 0) {
-					columnSelect.append(",");
-				}
-				columnSelect.append(c.getSqlSelect(urlprefix));
-			}
-			
-			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
-				StringBuffer sqlGetData = new StringBuffer("");
-				sqlGetData.append("select ");
-				sqlGetData.append(columnSelect);
-				sqlGetData.append(" from ");
-				sqlGetData.append(table_name);
-				sqlGetData.append(" where prikey >= ? ");
-				sqlGetData.append("and _bad = 'false'");
-				
-				// Add row selection clause
-				StringBuffer sqlSelect = new StringBuffer("");
-				if(parkey > 0) {
-					sqlSelect.append(" and parkey = ?");
-				}
-				if(hrk != null) {
-					sqlSelect.append(" and _hrk = ?");
-				}
-				
-				// RBAC filter
-				RoleManager rm = new RoleManager();
-				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
-				if(rfArray.size() > 0) {
-					String rFilter = rm.convertSqlFragsToSql(rfArray);
-					if(rFilter.length() > 0) {
-						sqlSelect.append(" and ");
-						sqlSelect.append(rFilter);
-						hasRbacFilter = true;
-					}
-				}
-				
-				StringBuffer sqlGetDataOrder = new StringBuffer("");
-				if(sort != null) {
-					// User has requested a specific sort order
-					sqlGetDataOrder.append(" order by "); 
-					sqlGetDataOrder.append(getSortColumn(columns, sort));
-					sqlGetDataOrder.append(" ");
-					sqlGetDataOrder.append(dirn);
-				} else {
-					// Set default sort order
-					if(mgmt) {
-						sqlGetDataOrder.append(" order by prikey desc limit 10000");
-					} else {
-						sqlGetDataOrder.append(" order by prikey asc;");
-					}
-				}
-				
-				// Prepare statement
-				StringBuffer sql = sqlGetData;
-				sql.append(sqlSelect);
-				sql.append(sqlGetDataOrder);
-				pstmtGetData = cResults.prepareStatement(sql.toString());
-				
-				// Set parameters
-				int paramCount = 1;
-				pstmtGetData.setInt(paramCount++, start);
-				if(parkey > 0) {
-					pstmtGetData.setInt(paramCount++, parkey);
-				}
-				if(hrk != null) {
-					pstmtGetData.setString(paramCount++, hrk);
-				}
-				if(hasRbacFilter) {
-					paramCount = rm.setRbacParameters(pstmtGetData, rfArray, paramCount);
-				}
-				
-				log.info("Get data: " + pstmtGetData.toString());
-				rs = pstmtGetData.executeQuery();
-				
-				int index = 0;
-				while (rs.next()) {
-					
-					if(limit > 0 && index >= limit) {
-						break;
-					}
-					index++;
-					
-					JSONObject jr = new JSONObject();
-					if(group) {
-						jr.put("_group", "");				// _group for duplicate queries
-					}
-					for(int i = 0; i < columns.size(); i++) {	
-						
-						TableColumn c = columns.get(i);
-						String name = null;
-						String value = null;
-						
-						if(c.isGeometry()) {							
-							// Add Geometry (assume one geometry type per table)
-							String geomValue = rs.getString(i + 1);	
-							name = "_geolocation";
-							JSONArray coords = null;
-							if(geomValue != null) {
-								JSONObject jg = new JSONObject(geomValue);									
-								coords = jg.getJSONArray("coordinates");
-							} else {
-								coords = new JSONArray();
-							}
-							jr.put(name, coords);
-				
-						} else {
-							
-							//String name = rsMetaData.getColumnName(i);	
-							name = c.humanName;
-								
-							if(c.type != null && c.type.equals("decimal")) {
-								Double dValue = rs.getDouble(i + 1);
-								dValue = Math.round(dValue * 10000.0) / 10000.0; 
-								value = String.valueOf(dValue);
-							} else if(c.type != null && c.type.equals("calculate")) {
-								// This calculation may be a decimal - give it a go
-								String v = rs.getString(i + 1);
-								if(v != null && v.indexOf('.') > -1) {
-									try {
-										Double dValue = rs.getDouble(i + 1);
-										dValue = Math.round(dValue * 10000.0) / 10000.0; 
-										value = String.valueOf(dValue);
-									} catch(Exception e) {
-										value = rs.getString(i + 1);	// Assume text
-									}
-								} else {
-									value = rs.getString(i + 1);	// Assume text
-								}
-								
-							} else {
-								value = rs.getString(i + 1);
-							}
-							
-							if(value == null) {
-								value = "";
-							}
-							
-							if(name != null ) {
-								if(!isDt) {
-									name = Utils.translateToKobo(name);
-								}
-								jr.put(name, value);
-							}
-						}
-						
-				
-					}
-						
-					ja.put(jr);
-				}
-						
-			} 
+			TableDataManager tdm = new TableDataManager();
+			JSONArray ja = tdm.getData(
+					sd, 
+					cResults,
+					columns,
+					urlprefix,
+					sId,
+					table_name,
+					parkey,
+					hrk,
+					request.getRemoteUser(),
+					sort,
+					dirn,
+					mgmt,
+					group,
+					isDt,
+					start,
+					limit);
 			
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
@@ -424,7 +283,6 @@ public class Data extends Application {
 			
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
 			
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
@@ -706,7 +564,7 @@ public class Data extends Application {
 								
 								if(name != null ) {
 									if(!isDt) {
-										name = Utils.translateToKobo(name);
+										name = GeneralUtilityMethods.translateToKobo(name);
 									}
 									jr.put(name, value);
 								}
@@ -752,27 +610,6 @@ public class Data extends Application {
 		
 		return response;
 		
-	}
-	
-	/*
-	 * Convert the human name for the sort column into sql
-	 */
-	private String getSortColumn(ArrayList<TableColumn> columns, String sort) {
-		String col = "prikey";	// default to prikey
-		sort = sort.trim();
-		for(int i = 0; i < columns.size(); i++) {
-			if(columns.get(i).humanName.equals(sort)) {
-				TableColumn c = columns.get(i);
-
-				if(c.isCalculate()) {
-					col = c.calculation.sql.toString();
-				} else {
-					col = c.name;
-				}
-				break;
-			}
-		}
-		return col;
 	}
 	
 	

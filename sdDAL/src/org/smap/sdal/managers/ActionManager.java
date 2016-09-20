@@ -51,11 +51,20 @@ public class ActionManager {
 	/*
 	 * Apply actions resulting from a change to managed forms
 	 */
-	public void applyManagedFormActions(Connection sd, TableColumn tc, int oId, int sId, int managedId) throws Exception {
+	public void applyManagedFormActions(Connection sd, 
+			TableColumn tc, 
+			int oId, 
+			int sId, 
+			int managedId,
+			int prikey) throws Exception {
+		
 		for(int i = 0; i < tc.actions.size(); i++) {
 			Action a = tc.actions.get(i);
+			
+			// Add the action specific settings
 			a.sId = sId;
 			a.managedId = managedId;
+			a.prikey = prikey;
 			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
 			addAction(sd, a, oId);
