@@ -5,10 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Project;
@@ -56,7 +58,8 @@ public class ActionManager {
 			int oId, 
 			int sId, 
 			int managedId,
-			int prikey) throws Exception {
+			int prikey,
+			ResourceBundle localisation) throws Exception {
 		
 		for(int i = 0; i < tc.actions.size(); i++) {
 			Action a = tc.actions.get(i);
@@ -67,7 +70,7 @@ public class ActionManager {
 			a.prikey = prikey;
 			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
-			addAction(sd, a, oId);
+			addAction(sd, a, oId, localisation);
 		}
 	}
 	
@@ -104,7 +107,7 @@ public class ActionManager {
 	 * Create a temporary user to complete an action
 	 * Add an alert into the alerts table
 	 */
-	private void addAction(Connection sd, Action a, int oId) throws Exception {
+	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation) throws Exception {
 		
 		String sql = "insert into alert"
 				+ "(u_id, status, priority, updated_time, link, message) "
@@ -113,7 +116,6 @@ public class ActionManager {
 		
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		
-		int uId = 0;
 		String link = null;
 		try {
 			
@@ -129,11 +131,25 @@ public class ActionManager {
 				u.name = a.notify_person;
 				u.action_details = gson.toJson(a);
 				
-				uId = um.createTemporaryUser(sd, u, oId);
+				um.createTemporaryUser(sd, u, oId);
 				link = "/action/" + tempUserId;
 			}
 			
-			// TODO create action
+			// Get the id of the user to notify
+			int uId = 0;
+			if(a.notify_type != null) {
+				if(a.notify_type.equals("ident")) {		// Only ident currently supported
+					uId = GeneralUtilityMethods.getUserId(sd, a.notify_person);
+				} else {
+					log.info("Info: User attempted to use a notify type other than ident");
+				}
+			}
+			if(uId == 0) {
+				throw new Exception(
+						localisation.getString("mf_u") + " " + 
+						a.notify_person + 
+						localisation.getString("mf_nf"));
+			}
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  uId);			// User
