@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.fileupload.FileItem;
 import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Alert;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
@@ -52,7 +53,16 @@ public class UserManager {
 	private static Logger log =
 			 Logger.getLogger(UserManager.class.getName());
 
+	// Alert status values
+	public final static int ALERT_OPEN = 1;
+	public final static int ALERT_DONE = 2;
+	public final static int ALERT_DELETED = 3;
 
+	// Alert priorities
+	public final static int PRI_LOW = 1;
+	public final static int PRI_MED = 2;
+	public final static int PRI_HIGH = 3;
+	
 	/*
 	 * Get the user details
 	 */
@@ -234,6 +244,79 @@ public class UserManager {
 		}
 		
 		return user;
+		
+	}
+	
+	
+	/*
+	 * Get alerts for a user
+	 */
+	public ArrayList<Alert> getAlertsByIdent(
+			Connection connectionSD,
+			String ident
+			) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		
+		ArrayList<Alert> alerts = new ArrayList<Alert> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;			
+				
+			/*
+			 * Get the user details
+			 */
+			sql = "SELECT "
+					+ "a.id as id, "
+					+ "a.status as status, "
+					+ "a.priority as priority, "
+					+ "a.updated_time as updated_time, "
+					+ "a.link as link, "
+					+ "a.message as message "
+					+ "from alert a, users u "
+					+ "where a.u_id = u.id "
+					+ "and u.ident = ? "
+					+ "and a.status != ? "
+					+ "order by a.updated_time asc";
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			pstmt.setInt(2, ALERT_DELETED);
+			
+			log.info("Get user details: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+		
+			while(resultSet.next()) {
+				Alert a = new Alert();
+				a.id = resultSet.getInt("id");
+				a.userIdent = ident;
+				a.status = resultSet.getInt("status");
+				a.priority = resultSet.getInt("priority");
+				a.link = resultSet.getString("link");
+				a.message = resultSet.getString("message");
+				
+				alerts.add(a);
+			}
+			
+		
+				
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+		    throw new Exception(e);
+		    
+		} finally {
+			try {
+				if (pstmt != null) {
+					pstmt.close();
+				}
+			} catch (SQLException e) {
+			
+			}
+
+		}
+		
+		return alerts;
 		
 	}
 	

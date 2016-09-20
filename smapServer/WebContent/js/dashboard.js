@@ -24,6 +24,8 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
+var gInterval;
+
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
@@ -47,13 +49,47 @@ require([
          'bootstrapfileinput'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 	
+
 	$(document).ready(function() {
 
 		globals.gIsAdministrator = false;
 		getLoggedInUser(undefined, false, true, undefined, false, false);
 		
+		getAlerts();
 		enableUserProfileBS();
 	});
+	
+	/*
+	 * Get 
+	 */
+	function getAlerts() {
+		addHourglass();
+		$.ajax({
+			url: "/surveyKPI/user/alerts",
+			dataType: 'json',
+			cache: false,
+			success: function(data) {
+				removeHourglass();
+				showAlerts(data);
+				console.log("There are: " + data.length + " alerts");
+				setTimeout(getAlerts, 60000);
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				clearInterval(gInterval);
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert(localise.set["msg_err_get_a"] + " " + err);
+				}
+			}
+		});	
+	}
+
+	function showAlerts() {
+		
+	}
+	
 });
 
 

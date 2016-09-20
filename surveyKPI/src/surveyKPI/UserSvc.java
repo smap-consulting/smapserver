@@ -39,6 +39,7 @@ import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.UserManager;
+import org.smap.sdal.model.Alert;
 import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
@@ -49,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -93,6 +95,47 @@ public class UserSvc extends Application {
 
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(user);
+			response = Response.ok(resp).build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			response = Response.serverError().build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-UserSvc", connectionSD);
+		}
+		
+
+		return response;
+	}
+	
+	/*
+	 * Get alerts assigned to a user
+	 */
+	@GET
+	@Path("/alerts")
+	@Produces("application/json")
+	public Response getMyAlerts(@Context HttpServletRequest request) { 
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Not required
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserSvc");
+		
+		UserManager um = new UserManager();
+		
+		try {
+			ArrayList<Alert> alerts = um.getAlertsByIdent(connectionSD, request.getRemoteUser());
+
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(alerts);
 			response = Response.ok(resp).build();
 			
 		} catch (Exception e) {
