@@ -485,7 +485,7 @@ public class ExportSurveyOSM extends Application {
 					
 					
 				}
-				if(points.size() > 0) {	// Ignore records without location
+				if(points != null && points.size() > 0) {	// Ignore records without location
 					if(points.size() == 1) {
 						populateNode(outputXML, rootElement, tags, points);
 					} else {
