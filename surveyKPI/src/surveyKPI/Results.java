@@ -315,7 +315,7 @@ public class Results extends Application {
 					pstmt.setDate(attribIdx++, startDate);
 				}
 				if(endDate != null) {
-					pstmt.setDate(attribIdx++, endDate);
+					pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 				}
 			}
 			ResultSet resultSet = pstmt.executeQuery();

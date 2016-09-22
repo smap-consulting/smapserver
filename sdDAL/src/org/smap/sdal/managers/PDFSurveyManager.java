@@ -350,7 +350,6 @@ public class PDFSurveyManager {
 			org.smap.sdal.model.Survey survey,
 			int recNumber) {
 		
-		System.out.println("++++ Set dependencies for record: " + record.size() + " : " + recNumber);
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
@@ -365,7 +364,6 @@ public class PDFSurveyManager {
 						String refKey = r.fIdx + "_" + recNumber + "_" + name; 
 						ArrayList<String> deps = gv.addToList.get(refKey);
 						
-						System.out.println("GV: add reference " + refKey );
 						if(deps == null) {
 							deps = new ArrayList<String> ();
 							gv.addToList.put(refKey, deps);
@@ -409,9 +407,10 @@ public class PDFSurveyManager {
 		try {
 			
 			boolean status = false;
-			String value = "";
+			
 			for(Result r : record) {
 				
+				String value = "";
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
@@ -450,8 +449,9 @@ public class PDFSurveyManager {
 							}
 						}
 					}
-				} else if(r.type.equals("image")) {
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, r.value);
+				} else if(r.value != null && r.type.equals("image")) {
+					value = r.value;
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
 					
 				} else {
 					value = r.value;
@@ -1014,7 +1014,6 @@ public class PDFSurveyManager {
 		
 		for(Result r : record) {
 			if(r.name.equals(name)) {
-				System.out.println("Found matching question: " + r.value);
 				if(r.type.startsWith("select")) {
 					value = "";
 					for(Result rc : r.choices) {

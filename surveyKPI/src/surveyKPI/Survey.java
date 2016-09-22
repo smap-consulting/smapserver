@@ -42,6 +42,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.TableColumn;
 import org.smap.server.utilities.GetXForm;
 
 import java.io.BufferedWriter;
@@ -308,6 +310,7 @@ public class Survey extends Application {
 			@PathParam("sId") int sId) { 
 		
 		Response response = null;
+		String topTableName = null;
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -359,33 +362,6 @@ public class Survey extends Application {
 			ResultSet resultSetBounds = null;
 			ArrayList<DateInfo> dateInfoList = new ArrayList<DateInfo> ();
 			JSONArray ja = null;
-
-			/*
-			 * Get Date columns available in this survey
-			 * The maximum and minimum value for these dates will be added when 
-			 * the results data for each table is checked
-			 */
-			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
-					"FROM form f, question q " + 
-					"where f.f_id = q.f_id " +
-					"AND (q.qtype='date' " +
-					"OR q.qtype='dateTime') " +
-					"AND f.s_id = ?; "; 	
-			
-			
-			log.info(sql);
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			resultSet = pstmt.executeQuery();
-			
-			while (resultSet.next()) {	
-				DateInfo di = new DateInfo();
-				di.qId = resultSet.getInt(1);
-				di.name = resultSet.getString(2);
-				di.fId = resultSet.getInt(3);
-				di.columnName = resultSet.getString(4);
-				dateInfoList.add(di);
-			}			
 			
 			/*
 			 * Get Forms and row counts in this survey
@@ -488,6 +464,7 @@ public class Survey extends Application {
 				jp.put("f_id", fId);
 				jp.put("p_id", p_id);
 				if(p_id == null || p_id.equals("0")) {
+					topTableName = tableName;
 					jo.put("top_table", tableName);
 				}
 				jp.put("geom_id", geom_id);
@@ -499,6 +476,42 @@ public class Survey extends Application {
 			/*
 			 * Add the date information
 			 */
+			/*
+			 * Get Date columns available in this survey
+			 * The maximum and minimum value for these dates will be added when 
+			 * the results data for each table is checked
+			 */
+			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
+					"FROM form f, question q " + 
+					"where f.f_id = q.f_id " +
+					"AND (q.qtype='date' " +
+					"OR q.qtype='dateTime') " +
+					"AND f.s_id = ?; "; 	
+			
+
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			log.info("Get dates: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			
+			while (resultSet.next()) {	
+				DateInfo di = new DateInfo();
+				di.qId = resultSet.getInt(1);
+				di.name = resultSet.getString(2);
+				di.fId = resultSet.getInt(3);
+				di.columnName = resultSet.getString(4);
+				dateInfoList.add(di);
+			}	
+			
+			if(GeneralUtilityMethods.columnType(connectionRel, topTableName, "_upload_time") != null) {
+				DateInfo di = new DateInfo();
+				
+				di.columnName = "_upload_time";
+				di.name = "Upload Time";
+				di.qId = SurveyManager.UPLOAD_TIME_ID;
+				dateInfoList.add(di);
+			}
+			
 			ja = new JSONArray();
 			for (int i = 0; i < dateInfoList.size(); i++) {
 				DateInfo di = dateInfoList.get(i);

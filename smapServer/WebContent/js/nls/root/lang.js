@@ -266,6 +266,7 @@ define({
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
 	"msg_reason": "Please provide a reason: ",
 	"msg_sel_survey": "You must select a survey",
+	"msg_sel_dates": "From date is greater than To date",
 	"msg_sel_q": "You must select a question to show on a graph",
 	"msg_val_prot": "Protocol (http:// or https://) must be specified with the hostname",
 	"msg_val_p": "A project must be selected for this form",

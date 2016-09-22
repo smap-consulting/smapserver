@@ -72,7 +72,7 @@ import java.util.logging.Logger;
  */
 
 
-@Path("/results2/{sId}")
+@Path("/deprecated/results2/{sId}")
 public class Results2 extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -344,7 +344,7 @@ public class Results2 extends Application {
 					pstmt.setDate(attribIdx++, startDate);
 				}
 				if(endDate != null) {
-					pstmt.setDate(attribIdx++, endDate);
+					pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 				}
 			}
 			ResultSet resultSet = pstmt.executeQuery();
