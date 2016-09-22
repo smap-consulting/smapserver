@@ -8,5 +8,6 @@ public class Alert {
 	public String link;
 	public String message;
 	public String updatedTime;
+	public int since;				// Seconds since the alert was raised
 	
 }

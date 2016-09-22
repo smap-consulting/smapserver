@@ -263,7 +263,8 @@ public class UserManager {
 					+ "a.priority as priority, "
 					+ "a.updated_time as updated_time, "
 					+ "a.link as link, "
-					+ "a.message as message "
+					+ "a.message as message, "
+					+ "extract(epoch from (now() - a.updated_time)) as since "
 					+ "from alert a, users u "
 					+ "where a.u_id = u.id "
 					+ "and u.ident = ? "
@@ -274,7 +275,7 @@ public class UserManager {
 			pstmt.setString(1, ident);
 			pstmt.setInt(2, ActionManager.ALERT_DELETED);
 			
-			log.info("Get user details: " + pstmt.toString());
+			log.info("Get alert details: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 		
 			while(resultSet.next()) {
@@ -286,6 +287,7 @@ public class UserManager {
 				a.link = resultSet.getString("link");
 				a.message = resultSet.getString("message");
 				a.updatedTime = resultSet.getString("updated_time");
+				a.since = resultSet.getInt("since");
 				
 				alerts.add(a);
 			}

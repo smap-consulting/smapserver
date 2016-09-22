@@ -116,7 +116,7 @@ require([
             	h[++idx] = ' fa-fw"></i>';
             	h[++idx] = a.message;
                 h[++idx] =  '<span class="pull-right text-muted small">';                 
-                h[++idx] = '4 minutes ago';
+                h[++idx] = getInterval(a.since);
                 h[++idx] = '</span>';
             h[++idx] = '<div>';
             if(a.link) {
@@ -125,6 +125,26 @@ require([
             h[++idx] = '</li>';
 		}
 		$('.dropdown-alerts').html(h.join(''));
+	}
+	
+	function getInterval(seconds) {
+		if(seconds < 2) {
+			return seconds + ' ' + localise.set["i_sec"];
+		} else if(seconds < 60) {
+			return seconds + ' ' + localise.set["i_secs"];
+		} else if(seconds < 120) {
+			return Math.floor(seconds/ 60) + ' ' + localise.set["i_min"];
+		} else if(seconds < 3600) {
+			return Math.floor(seconds/ 60) + ' ' + localise.set["i_mins"];
+		} else if(seconds < (3600 * 2)) {
+			return Math.floor(seconds/ (60 * 60)) + ' ' + localise.set["i_hour"];
+		} else if(seconds < (3600 * 24)) {
+			return Math.floor(seconds/ (60 * 60)) + ' ' + localise.set["i_hours"];
+		} else if(seconds < (3600 * 24 * 2)) {
+			return Math.floor(seconds/ (60 * 60 * 24)) + ' ' + localise.set["i_day"];
+		} else if(seconds < (3600 * 24)) {
+			return Math.floor(seconds/ (60 * 60 * 24)) + ' ' + localise.set["i_days"];
+		}
 	}
 	
 });
