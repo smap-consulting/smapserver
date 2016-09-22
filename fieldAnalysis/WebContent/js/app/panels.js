@@ -209,6 +209,11 @@ $(document).ready(function() {
 							view.toDate = undefined;
 						}
 						
+						if(view.toDate < view.fromDate) {
+							alert(localise.set["msg_sel_dates"]);
+		        			return false;
+						}
+						
 						if(newType === "map") {
 							view.groupQuestionId = gSurveyControlView.geometryQuestion;
 							view.groupQuestionText = "Location";

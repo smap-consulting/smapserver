@@ -63,6 +63,8 @@ public class SurveyManager {
 	private static Logger log =
 			 Logger.getLogger(SurveyManager.class.getName());
 
+	public static final int UPLOAD_TIME_ID = -100;		// Pseudo question id for upload time
+	
 	public ArrayList<Survey> getSurveys(Connection sd, PreparedStatement pstmt,
 			String user, 
 			boolean getDeleted, 

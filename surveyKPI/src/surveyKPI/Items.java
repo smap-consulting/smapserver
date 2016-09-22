@@ -58,6 +58,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -457,7 +458,7 @@ public class Items extends Application {
 						pstmt.setDate(attribIdx++, startDate);
 					}
 					if(endDate != null) {
-						pstmt.setDate(attribIdx++, endDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 					}
 				}
 				
@@ -562,7 +563,7 @@ public class Items extends Application {
 						pstmt.setDate(attribIdx++, startDate);
 					}
 					if(endDate != null) {
-						pstmt.setDate(attribIdx++, endDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 					}
 				}
 				
@@ -587,6 +588,8 @@ public class Items extends Application {
 				}
 			} catch (JSONException e) {
 				log.log(Level.SEVERE,"JSON Error", e);
+			} catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
 			} finally {
 				
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}

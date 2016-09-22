@@ -65,7 +65,7 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 				refreshData(view, "survey");
 			}
 		});
-	} {
+	} else {
 		$("#settings_date_question").empty();
 	}
 }

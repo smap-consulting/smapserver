@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -2088,7 +2089,7 @@ public class GeneralUtilityMethods {
 				c = new TableColumn();
 				c.name = "_upload_time";
 				c.humanName = "Upload Time";
-				c.type = "";
+				c.type = "dateTime";
 				columnList.add(c);
 				
 				c = new TableColumn();
@@ -3454,6 +3455,20 @@ public class GeneralUtilityMethods {
 			out = "uuid";
 		}
 		return out;
+
+	/*
+	 * Set the time on a java date to 23:59 and convert to a Timestamp
+	 */
+	// Set the time on a date to 23:59
+	public static Timestamp endOfDay(Date d) {
+		
+		Calendar cal=Calendar.getInstance();
+		cal.setTime(d);
+		cal.set(Calendar.HOUR_OF_DAY, 23);
+		cal.set(Calendar.MINUTE, 59);
+		Timestamp endOfDay= new Timestamp(cal.getTime().getTime());
+		
+		return endOfDay;
 	}
 
 }

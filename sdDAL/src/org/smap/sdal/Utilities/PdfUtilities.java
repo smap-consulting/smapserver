@@ -25,7 +25,6 @@ public class PdfUtilities {
 				ad.setImage(Image.getInstance(basePath + "/" + value));
 			} catch (Exception e) {
 				log.info("Error: Failed to add image " + basePath + "/" + value + " to pdf: " + e.getMessage());
-				log.log(Level.SEVERE, "Image error detail", e);
 			}
 			pdfForm.replacePushbuttonField(fieldName, ad.getField());
 			log.info("Adding image to: " + fieldName);
