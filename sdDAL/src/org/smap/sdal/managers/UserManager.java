@@ -52,16 +52,6 @@ public class UserManager {
 	
 	private static Logger log =
 			 Logger.getLogger(UserManager.class.getName());
-
-	// Alert status values
-	public final static int ALERT_OPEN = 1;
-	public final static int ALERT_DONE = 2;
-	public final static int ALERT_DELETED = 3;
-
-	// Alert priorities
-	public final static int PRI_LOW = 1;
-	public final static int PRI_MED = 2;
-	public final static int PRI_HIGH = 3;
 	
 	/*
 	 * Get the user details
@@ -282,7 +272,7 @@ public class UserManager {
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, ident);
-			pstmt.setInt(2, ALERT_DELETED);
+			pstmt.setInt(2, ActionManager.ALERT_DELETED);
 			
 			log.info("Get user details: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -295,6 +285,7 @@ public class UserManager {
 				a.priority = resultSet.getInt("priority");
 				a.link = resultSet.getString("link");
 				a.message = resultSet.getString("message");
+				a.updatedTime = resultSet.getString("updated_time");
 				
 				alerts.add(a);
 			}

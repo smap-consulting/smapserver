@@ -24,7 +24,7 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
-var gInterval;
+var gLastAlertTime;
 
 requirejs.config({
     baseUrl: 'js/libs',
@@ -71,12 +71,11 @@ require([
 			success: function(data) {
 				removeHourglass();
 				showAlerts(data);
-				console.log("There are: " + data.length + " alerts");
+				$('.alert_count').html(data.length);
 				setTimeout(getAlerts, 60000);
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
-				clearInterval(gInterval);
 				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
@@ -86,8 +85,46 @@ require([
 		});	
 	}
 
-	function showAlerts() {
-		
+	function showAlerts(alerts) {
+		var h = [],
+			idx = -1,
+			i,
+			a;
+	
+		/*
+		 * Check for a change in the alert list
+		 */
+		if(alerts.length > 0) {
+			if(alerts[0].updatedTime != gLastAlertTime) {
+				$('.alert_icon').addClass("text-danger");
+				$('#chime')[0].play();
+			}
+			gLastAlertTime = alerts[0].updatedTime;
+			// TODO save in user settings
+		}
+		for(i = 0; i < alerts.length; i++) {
+			a = alerts[i];
+			h[++idx] = '<li>';
+			if(alert.link) {
+				h[++idx] = '<a href="';
+				h[++idx] = a.link;
+				h[++idx] = '">';
+			}    
+            h[++idx] = '<div>';
+            	h[++idx] = '<i class="fa ';
+            	h[++idx] = 'fa-envelope';
+            	h[++idx] = ' fa-fw"></i>';
+            	h[++idx] = a.message;
+                h[++idx] =  '<span class="pull-right text-muted small">';                 
+                h[++idx] = '4 minutes ago';
+                h[++idx] = '</span>';
+            h[++idx] = '<div>';
+            if(a.link) {
+            	h[++idx] = '</a>';
+            }
+            h[++idx] = '</li>';
+		}
+		$('.dropdown-alerts').html(h.join(''));
 	}
 	
 });

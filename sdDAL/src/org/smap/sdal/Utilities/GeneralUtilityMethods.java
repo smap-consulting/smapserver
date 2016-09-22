@@ -3455,6 +3455,7 @@ public class GeneralUtilityMethods {
 			out = "uuid";
 		}
 		return out;
+	}
 
 	/*
 	 * Set the time on a java date to 23:59 and convert to a Timestamp

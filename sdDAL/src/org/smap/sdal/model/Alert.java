@@ -7,5 +7,6 @@ public class Alert {
 	public int priority;
 	public String link;
 	public String message;
+	public String updatedTime;
 	
 }

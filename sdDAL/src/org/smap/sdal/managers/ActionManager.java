@@ -21,6 +21,7 @@ import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.sun.xml.internal.ws.api.policy.AlternativeSelector;
 
 /*****************************************************************************
 
@@ -49,6 +50,15 @@ public class ActionManager {
 	private static Logger log =
 			 Logger.getLogger(ActionManager.class.getName());
 	
+	// Alert status values
+	public final static int ALERT_OPEN = 1;
+	public final static int ALERT_DONE = 2;
+	public final static int ALERT_DELETED = 3;
+
+	// Alert priorities
+	public final static int PRI_LOW = 1;
+	public final static int PRI_MED = 2;
+	public final static int PRI_HIGH = 3;
 	
 	/*
 	 * Apply actions resulting from a change to managed forms
@@ -70,7 +80,7 @@ public class ActionManager {
 			a.prikey = prikey;
 			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
-			addAction(sd, a, oId, localisation);
+			addAction(sd, a, oId, localisation, a.action, null);
 		}
 	}
 	
@@ -107,7 +117,9 @@ public class ActionManager {
 	 * Create a temporary user to complete an action
 	 * Add an alert into the alerts table
 	 */
-	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation) throws Exception {
+	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation, 
+			String action,
+			String msg) throws Exception {
 		
 		String sql = "insert into alert"
 				+ "(u_id, status, priority, updated_time, link, message) "
@@ -151,12 +163,15 @@ public class ActionManager {
 						localisation.getString("mf_nf"));
 			}
 			
+			if(action != null && msg == null) {
+				msg = localisation.getString("action_" + action);
+			}
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  uId);			// User
-			pstmt.setString(2, "open");    	// Status: open || reject || complete
-			pstmt.setInt(3, 1);				// Priority
+			pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
+			pstmt.setInt(3, PRI_LOW);				// Priority
 			pstmt.setString(4,  link);		// Link for the user to click on to complete the action
-			pstmt.setString(5,  null);		// Message TODO set for info type actions
+			pstmt.setString(5,  msg);		// Message TODO set for info type actions
 			
 			log.info("Create alert: " + pstmt.toString());
 			pstmt.executeUpdate();
