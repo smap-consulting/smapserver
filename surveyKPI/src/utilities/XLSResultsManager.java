@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.commons.io.IOUtils;
@@ -168,7 +169,7 @@ public class XLSResultsManager {
 			wb = new HSSFWorkbook();
 			isXLSX = false;
 		} else {
-			wb = new XSSFWorkbook();
+			wb = new SXSSFWorkbook(10);
 			isXLSX = true;
 		}
 	}
@@ -484,7 +485,7 @@ public class XLSResultsManager {
 					createHeader(cols, resultsSheet, styles, true);
 				} 
 				createHeader(cols, resultsSheet, styles, false);	// Add the names
-
+ 
 				/*
 				 * Add the data
 				 */
@@ -506,6 +507,11 @@ public class XLSResultsManager {
 		
 		wb.write(outputStream);
 		outputStream.close();
+		
+		// If XLSX then temporary streaming files need to be deleted
+		if(isXLSX) {
+			((SXSSFWorkbook) wb).dispose();
+		}
 	}
 	
 	/*
