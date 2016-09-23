@@ -105,7 +105,7 @@ require([
 		for(i = 0; i < alerts.length; i++) {
 			a = alerts[i];
 			h[++idx] = '<li>';
-			if(alert.link) {
+			if(a.link) {
 				h[++idx] = '<a href="';
 				h[++idx] = a.link;
 				h[++idx] = '">';
