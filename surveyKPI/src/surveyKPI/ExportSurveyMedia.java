@@ -1,9 +1,13 @@
 package surveyKPI;
 
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,10 +37,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.StreamingOutput;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -91,7 +98,7 @@ public class ExportSurveyMedia extends Application {
 	 * Export media in a zip file
 	 */
 	@GET
-	@Produces("application/x-download")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response exportMedia (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
@@ -179,11 +186,6 @@ public class ExportSurveyMedia extends Application {
 						}
 					}
 				}
-					
-				System.out.println("Media Question name: " + media_name);
-				for(int i = 0; i < namedQuestions.size(); i++) {
-					System.out.println("   Named questions: " + namedQuestions.get(i));
-				}
 			
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
@@ -203,8 +205,6 @@ public class ExportSurveyMedia extends Application {
 						requiredColumns,
 						namedQuestions,
 						request.getRemoteUser());
-					
-				System.out.println("Generated SQL:" + sqlDesc.sql);
 				
 				/*
 				 * 1. Create the target folder
@@ -220,6 +220,7 @@ public class ExportSurveyMedia extends Application {
 				 * 2. Copy files to the folder, renaming them as per the export request
 				 */
 				pstmtGetData = connectionResults.prepareStatement(sqlDesc.sql); 
+				log.info("Generated SQL:" + pstmtGetData.toString());
 				ResultSet rs = pstmtGetData.executeQuery();
 				while(rs.next()) {
 					/*
@@ -259,7 +260,6 @@ public class ExportSurveyMedia extends Application {
 							ext = source_file.substring(idx);
 						}
 						mediafilename = mediafilename + ext;
-						System.out.println("File is: " + mediafilename); 
 						
 						/*
 						 * Copy the file
@@ -294,18 +294,46 @@ public class ExportSurveyMedia extends Application {
 	            log.info("Process exitValue: " + code);
 	        		
 	            if(code == 0) {
+	            	
 	            	File file = new File(filePath + ".zip");
-		            byte [] fileData = new byte[(int)file.length()];
-		            DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		            dis.readFully(fileData);
-		            dis.close();
-		                
+	            	
+	            	/*
+	            	
+	            	//byte [] fileData = new byte[(int)file.length()];
+	            	//DataInputStream dis = new DataInputStream(new FileInputStream(file));
+		            //dis.readFully(fileData);
+		            //dis.close();
+		             
+	            	
+	            	final FileInputStream input = new FileInputStream(file);
+	            	
+	            	StreamingOutput stream = new StreamingOutput() {
+	                    @Override
+	                    public void write(OutputStream os) throws IOException, WebApplicationException {
+
+	                        int bytes;
+	                        while ((bytes = input.read()) != -1) {
+	                            os.write(bytes);
+	                        }
+	              
+	                        os.flush();
+	                        os.close();
+	                        input.close();
+	                    }
+	                };
+	            	
 		            builder.header("Content-type","application/zip");
 		            builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+		            builder.header("Content-Length", file.length());
 		              	
-		            builder.entity(fileData);
-							
+		            builder.entity(stream);
 					response = builder.build();
+					*/
+	            	builder = Response.ok(file);
+	            	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+			      
+	            	response = builder.build();
+		            
 				} else {
 	                log.info("Error exporting media files file");
 	                response = Response.serverError().entity("Error exporting media files").build();

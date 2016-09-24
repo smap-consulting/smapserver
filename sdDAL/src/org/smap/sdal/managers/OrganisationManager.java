@@ -41,7 +41,7 @@ public class OrganisationManager {
 			 Logger.getLogger(OrganisationManager.class.getName());
 
 	/*
-	 * Create a new organisation
+	 * Update a new organisation
 	 */
 	public void updateOrganisation(
 			Connection connectionSD,

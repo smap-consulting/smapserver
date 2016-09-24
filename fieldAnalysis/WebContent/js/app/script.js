@@ -125,6 +125,11 @@ $(document).ready(function() {
 		        		
 		        		} else if(format === "media") {
 		        			
+		        			// Validate
+		        			if(!mediaQuestion) {
+		        				alert(localise.set["msg_sel_media"]);
+			        			return(false);
+		        			}
 		        			name_questions = $(':checkbox:checked', '.mediaselect').map(function() {
 		        			      return this.value;
 		        			    }).get();
@@ -154,17 +159,29 @@ $(document).ready(function() {
 		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages);
 		        		}
 		        		
+		        		/*
 		        		if(format === "lqas" || (format === "xls" && xlstype !== "html")) {
-		        			var mime;
-		        			if(xlstype === "xls") {
-		        				mime = "application/vnd.ms-excel";
-		        			} else {
-		        				mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		        			var mime,
+		        				ext;
+		        			
+		        			if(format === "xls") {
+		        				if(xlstype === "xls") {
+			        				mime = "application/vnd.ms-excel";
+			        			} else if(xlstype === "xlsx") {
+			        				mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+			        			}
+		        				ext = xlstype;
+		        			} else if(format === "media") {
+		        				mime = "application/zip";
+		        				ext = "zip";
 		        			}
-		        			downloadFile(url, displayName + "." + xlstype, mime);
+		        			
+		        			downloadFile(url, displayName + "." + ext, mime);
+		        			
 		        		} else {
+		        		*/
 		        			$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
-		        		}
+		        		//}
 		        		$(this).dialog("close");
 		        	}
 		        }

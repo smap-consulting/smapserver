@@ -184,7 +184,6 @@ public class ExportSurveyMisc extends Application {
 						}
 					}
 				}
-				System.out.println("Language: " + language);
 
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 

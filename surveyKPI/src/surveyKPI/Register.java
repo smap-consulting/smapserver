@@ -103,7 +103,6 @@ public class Register extends Application {
 		try {
 			
 			// Localisation
-			//Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
 			String hostname = request.getServerName();
 			String loc_code = "en";
 			if(hostname.contains("kontrolid")) {
@@ -125,6 +124,7 @@ public class Register extends Application {
 			o.name = rd.org_name;
 			o.company_name = rd.org_name;
 			o.website = rd.website;
+			o.can_edit = true;
 			
 			int o_id = om.createOrganisation(
 					sd, 

@@ -2239,7 +2239,7 @@ public class SurveyManager {
 		    	for(Question q : questions) {
 		    		String col = null;
 		    				
-		    		if(s.getSubForm(form, q) == null) {
+		    		if(s.getSubForm(form, q) == null || q.name.startsWith("geopolygon_") || q.name.startsWith("geolinestring_")) {
 		    			// This question is not a place holder for a subform
 		    			if(q.source != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				    		String qType = q.type;
