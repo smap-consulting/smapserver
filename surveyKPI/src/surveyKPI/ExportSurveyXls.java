@@ -14,6 +14,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -59,7 +60,7 @@ public class ExportSurveyXls extends Application {
 	Workbook wb = null;
 	
 	@GET
-	@Produces("application/x-download")
+	//@Produces("application/x-download")
 	public Response exportSurvey (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
@@ -101,6 +102,7 @@ public class ExportSurveyXls extends Application {
 		Connection connectionResults = null;
 		
 		try {
+
 			lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to XLS");
 			
 			connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
@@ -142,7 +144,6 @@ public class ExportSurveyXls extends Application {
 				}
 			}
 			
-			
 			GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
 			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
 			
@@ -165,7 +166,10 @@ public class ExportSurveyXls extends Application {
 			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			responseVal = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			response.setHeader("Content-type",  "text/html; charset=UTF-8");
+			// Return an OK status so the message gets added to the web page
+			// Prepend the message with "Error: ", this will be removed by the client
+			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 		} finally {
 			
 			SDDataSource.closeConnection("createXLS", sd);	

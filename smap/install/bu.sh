@@ -13,6 +13,8 @@ pg_dump results -c > backups/results.sql
 
 # Get attachments
 cp -r /smap backups
+rm -rf backups/smap/temp
+rm -rf backups/smap/bin
 
 tar -zcf $file backups/*
 # Encrypt

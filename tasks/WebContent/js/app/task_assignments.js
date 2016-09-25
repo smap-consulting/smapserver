@@ -124,7 +124,8 @@ $(document).ready(function() {
 			name = $('#taskgroup option:selected').text();
 	
 		if(globals.gCurrentTaskGroup) {
-			downloadFile(url, name + ".pdf", "application/pdf");
+			downloadFile(url);
+			//downloadFile(url, name + ".pdf", "application/pdf");
 		} else {
 			alert(localise.set["msg_tg_ns"]);
 		}
@@ -143,8 +144,9 @@ $(document).ready(function() {
 			url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + tzParam,
 				name = $('#taskgroup option:selected').text();
 			
-			downloadFile(url, name + ".xlsx", 
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+				downloadFile(url);
+				//downloadFile(url, name + ".xlsx", 
+				//	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 		} else {
 			alert(localise.set["msg_tg_ns"]);
 		}

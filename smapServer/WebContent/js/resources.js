@@ -156,8 +156,9 @@ $(document).ready(function() {
     $('#downloadNfcFiles').click( function() {
     	if(!$('#downloadNfcFiles').hasClass('disabled')) {
 		
-		downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
-			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    		downloadFile('/surveyKPI/tasks/locations/download');
+    		//downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
+    			//	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     	}
     });
     
