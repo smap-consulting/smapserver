@@ -187,7 +187,8 @@ $(document).ready(function() {
 		        			downloadFile(url, displayName + "." + xlstype, mime);
 		        		} else {
 		        		*/
-		        			$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
+		        		downloadFile(url);
+		  
 		        		//}
 		        		$(this).dialog("close");
 		        	}
