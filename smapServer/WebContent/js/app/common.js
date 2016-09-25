@@ -1925,8 +1925,9 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 	xhr.onerror = function(e) {
 		 alert("Error: Upload Failed");
 	}
-	
-	Pace.restart();
+	if(Pace) {
+		Pace.restart();
+	}
 	xhr.send(payload);
 	
 }
