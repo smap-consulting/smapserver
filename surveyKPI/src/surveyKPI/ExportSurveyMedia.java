@@ -289,42 +289,8 @@ public class ExportSurveyMedia extends Application {
 	            if(code == 0) {
 	            	
 	            	File file = new File(filePath + ".zip");
-	            	
-	            	/*
-	            	
-	            	//byte [] fileData = new byte[(int)file.length()];
-	            	//DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		            //dis.readFully(fileData);
-		            //dis.close();
-		             
-	            	
-	            	final FileInputStream input = new FileInputStream(file);
-	            	
-	            	StreamingOutput stream = new StreamingOutput() {
-	                    @Override
-	                    public void write(OutputStream os) throws IOException, WebApplicationException {
-
-	                        int bytes;
-	                        while ((bytes = input.read()) != -1) {
-	                            os.write(bytes);
-	                        }
-	              
-	                        os.flush();
-	                        os.close();
-	                        input.close();
-	                    }
-	                };
-	            	
-		            builder.header("Content-type","application/zip");
-		            builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-		            builder.header("Content-Length", file.length());
-		              	
-		            builder.entity(stream);
-					response = builder.build();
-					*/
 	            	builder = Response.ok(file);
 	            	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-			      
 	            	response = builder.build();
 		            
 				} else {

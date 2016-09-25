@@ -370,20 +370,16 @@ public class ExportSurveyMisc extends Application {
 	        		
 	                if(code == 0) {
 	                	File file = new File(filepath + ".zip");
-		                byte [] fileData = new byte[(int)file.length()];
-		                DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		                dis.readFully(fileData);
-		                dis.close();
-		                
-		                builder.header("Content-type","application/zip");
-		              	if(format.equals("kml")) {
+	                	
+		            	builder = Response.ok(file);
+		            	if(format.equals("kml")) {
 		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".kmz\"");
 		              	} else {
 		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
 		              	}
-						builder.entity(fileData);
-							
-						response = builder.build();
+		            	builder.header("Content-type","application/zip");
+		            	response = builder.build();
+		            	
 	                } else {
 	                	log.info("Error exporting file");
 	                	response = Response.serverError().entity("Error exporting file").build();

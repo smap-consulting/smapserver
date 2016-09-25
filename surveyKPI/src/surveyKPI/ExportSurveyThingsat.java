@@ -176,20 +176,11 @@ public class ExportSurveyThingsat extends Application {
 			things.localLoad();
 			
 			File file = new File(filepath + ".zip");
-            byte [] fileData = new byte[(int)file.length()];
-            DataInputStream dis = new DataInputStream(new FileInputStream(file));
-            dis.readFully(fileData);
-            dis.close();
-            
-            builder.header("Content-type","application/zip");
-          	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-          	
-			builder.entity(fileData);
-				
-			response = builder.build();
-	
-
-		
+        	builder = Response.ok(file);
+        	builder.header("Content-type","application/zip");
+        	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+        	response = builder.build();
+        	
 		} catch (Exception e) {
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE, "Exception", e);

@@ -243,22 +243,16 @@ public class Survey extends Application {
 					}
 	        		
 	                File file = new File(filepath);
-	                byte [] fileData = new byte[(int)file.length()];
-	                DataInputStream dis = new DataInputStream(new FileInputStream(file));
-	                dis.readFully(fileData);
-	                dis.close();
-	                
-	                if(type.equals("codebook")) {
-	                	builder.header("Content-type","application/pdf; charset=UTF-8");
-	                } else if(type.equals("xls")) {
-	                	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
-	                } else if(type.equals("xml")) {
-	                	builder.header("Content-type","text/xml; charset=UTF-8");
-	                }
-	                builder.header("Content-Disposition", "attachment;Filename=" + filename);
-					builder.entity(fileData);
-					
-					response = builder.build();
+	            	builder = Response.ok(file);
+	            	if(type.equals("codebook")) {
+		                builder.header("Content-type","application/pdf; charset=UTF-8");
+		            } else if(type.equals("xls")) {
+		            	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
+		            } else if(type.equals("xml")) {
+		            	builder.header("Content-type","text/xml; charset=UTF-8");
+		            }
+	            	builder.header("Content-Disposition", "attachment;Filename=" + filename);
+	            	response = builder.build();
 	                
 	    		} catch (Exception e) {
 	    			log.log(Level.SEVERE, "", e);
