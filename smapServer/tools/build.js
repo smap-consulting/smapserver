@@ -15,6 +15,10 @@
 	toggle: 'bootstrap-toggle.min',
 	bootstrap: 'bootstrap.min',
         bootstrapfileinput: 'bootstrap.file-input',
+        inspinia: 'wb/inspinia',
+	metismenu: 'wb/plugins/metisMenu/jquery.metisMenu',
+	slimscroll: 'wb/plugins/slimscroll/jquery.slimscroll.min',
+	icheck: 'wb/plugins/iCheck/icheck.min'
     },
     dir: '../smapServer',
     modules: [
