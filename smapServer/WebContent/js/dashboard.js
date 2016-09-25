@@ -52,6 +52,8 @@ require([
 
 	$(document).ready(function() {
 
+		localise.setlang();		// Localise HTML
+		
 		globals.gIsAdministrator = false;
 		getLoggedInUser(undefined, false, true, undefined, false, false);
 		
