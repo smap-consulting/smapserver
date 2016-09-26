@@ -70,7 +70,7 @@ require([
 	});
 	
 	/*
-	 * Get 
+	 * Get the alerts
 	 */
 	function getAlerts() {
 		addHourglass();
@@ -156,6 +156,11 @@ require([
 			return Math.floor(seconds/ (60 * 60 * 24)) + ' ' + localise.set["i_days"];
 		}
 	}
+	
+	$('input', '#tab-settings-content').iCheck({
+		 checkboxClass: 'icheckbox_square-green',
+		 radioClass: 'iradio_square-green'
+	 });
 	
 });
 

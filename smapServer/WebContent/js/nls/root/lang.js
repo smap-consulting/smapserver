@@ -591,7 +591,10 @@ define({
 	"i_hour": "hour ago",
 	"i_hours": "hours ago",
 	"i_day": "day ago",
-	"i_days": "dayss ago"
+	"i_days": "days ago",
+	
+	// Dashboard
+	"d_sound": "Play sound on new alert"
 
 	 		
 });
