@@ -1091,7 +1091,9 @@ public class GeneralUtilityMethods {
 					qId = rs.getInt(1);
 					log.info("Found qId: " + qId);
 				} else {
-					throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
+					//throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
+					// Question has been deleted or renamed.  Not to worry
+					log.info("Question not found: " + sId + " : " + formId + " : " + qName);
 				}
 				
 				// If there is more than one question with the same name then use the qId in the change item

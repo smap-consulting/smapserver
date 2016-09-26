@@ -1556,9 +1556,6 @@ public class SurveyManager {
 						(ci.property.qType.equals("begin repeat") || ci.property.qType.equals("geopolygon") || ci.property.qType.equals("geolinestring")) && 
 						ci.property.prop.equals("calculation")) {
 					
-					//String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-					//String oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
-					
 					String sqlUpdateRepeat = "update form set repeats = ? "
 							+ "where s_id = ? "
 							+ "and parentquestion = ? "
@@ -1637,14 +1634,10 @@ public class SurveyManager {
 						
 					}
 					
-					// Convert from $ syntax to paths
+					
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
-						//ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-						//ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
-						
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
-							// The property must have referred to a question that no longer exists - just set to null
 							ci.property.oldVal = "_force_update";
 						}
 					}
@@ -1781,7 +1774,8 @@ public class SurveyManager {
 									+ ci.property.name
 									+ " was not updated to "
 									+ originalNewValue
-									+ ". It may have already been updated by someone else";
+									+ ". It may have already been updated by someone else "
+									+ "or the question may have been published while you were editing it.";
 							log.info(msg);
 							throw new Exception(msg);		// No matching value assume it has already been modified
 						}
