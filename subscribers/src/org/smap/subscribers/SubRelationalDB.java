@@ -1221,27 +1221,43 @@ public class SubRelationalDB extends Subscriber {
 						|| (ci.action.equals("update") && 
 								ci.property != null && 
 								ci.property.prop != null && 
-								ci.property.prop.equals("name")))) {
+								(ci.property.prop.equals("name") || ci.property.prop.equals("value"))
+								))) {
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
 					TableUpdateStatus status = null;
 					
-					if(ci.option != null) {
+					// Check for a new option or updating an existing option
+					if(ci.option != null || 
+							(ci.type.equals("option") && ci.action.equals("update") && ci.property.prop.equals("value"))
+							) {
 						
 						/*
 						 * Apply this option to every question that references the option list
 						 */
-						int listId = ci.option.l_id;
+						int listId = 0;
+						String listName = null;
+						String value = null;
+						if(ci.option != null) {
+							listId = ci.option.l_id;
+							listName = ci.option.optionList;
+							value = ci.option.value;
+						} else {
+							listId = ci.property.l_id;
+							listName = ci.property.optionList;
+							value = ci.property.newVal;
+						}
+						
 						if(listId == 0) {
-							listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.option.optionList);
+							listId = GeneralUtilityMethods.getListId(connectionSD, sId, listName);
 						}
 						String optionColumnName = null;
 						boolean externalFile = false;
 						
 						// Get the option details
 						pstmtGetAnOption.setInt(1, listId);
-						pstmtGetAnOption.setString(2, ci.option.value);
+						pstmtGetAnOption.setString(2, value);
 						
 						System.out.println("Get option details: " + pstmtGetAnOption);
 						ResultSet rsOption = pstmtGetAnOption.executeQuery();
@@ -1250,24 +1266,31 @@ public class SubRelationalDB extends Subscriber {
 							externalFile = rsOption.getBoolean(2);
 						}
 						
-						// Get the questions that use this option list
-						pstmtGetListQuestions.setInt(1, sId);
-						pstmtGetListQuestions.setInt(2, listId);
-						
-						System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
-						ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
-						
-						while(rsQuestions.next()) {
-							// Get the question details
-							int qId = rsQuestions.getInt(1);
-							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+						if(optionColumnName != null) { // Will be null if name changed prior to being published
+							// Get the questions that use this option list
+							pstmtGetListQuestions.setInt(1, sId);
+							pstmtGetListQuestions.setInt(2, listId);
 							
-							if(qd != null) {
-								if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-									status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+							System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
+							ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
+							
+							while(rsQuestions.next()) {
+								// Get the question details
+								int qId = rsQuestions.getInt(1);
+								QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+								
+								if(qd != null) {
+									if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+										status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+										if(status.tableAltered) {
+											tableChanged = true;
+										}
+									}
 								}
+	
 							}
-
+						} else {
+							log.info("Option column name for list: " + listId + " and value: " + ci.option.value + " was not found.");
 						}
 						
 					
