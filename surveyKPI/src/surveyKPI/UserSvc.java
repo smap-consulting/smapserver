@@ -70,6 +70,10 @@ public class UserSvc extends Application {
 	private static Logger log =
 			 Logger.getLogger(UserSvc.class.getName());
 
+	private class AlertStatus {
+		public String lastalert;
+		public boolean seen;
+	}
 	
 	@GET
 	@Produces("application/json")
@@ -146,6 +150,64 @@ public class UserSvc extends Application {
 		}
 		
 
+		return response;
+	}
+	
+	
+	/*
+	 * Update the alert status for a user
+	 * This includes the last time they were sent an alert
+	 * If they have acknowledged the alert
+	 */
+	@POST
+	@Path("/alertstatus")
+	@Consumes("application/json")
+	public Response alertStatus(@Context HttpServletRequest request, @FormParam("alertstatus") String alertStatus) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Not Required
+		Connection sd = SDDataSource.getConnection("surveyKPI-UserSvc");
+			
+		AlertStatus as = new Gson().fromJson(alertStatus, AlertStatus.class);
+		
+		String sql = "update users set lastalert = ?, "
+				+ "seen = ?"
+				+ "where ident = ?;";
+		PreparedStatement pstmt = null;
+		try {	
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, as.lastalert);
+			pstmt.setBoolean(2, as.seen);
+			pstmt.setString(3, request.getRemoteUser());
+			
+			log.info("Update alert status: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+			
+			
+		} catch (SQLException e) {
+
+			response = Response.serverError().build();
+			log.log(Level.SEVERE,"Error", e);
+			
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			SDDataSource.closeConnection("surveyKPI-UserSvc", sd);
+		}
+		
 		return response;
 	}
 	

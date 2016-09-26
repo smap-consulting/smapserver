@@ -154,6 +154,27 @@ function getMyProjects(projectId, callback, getAll) {
 }
 
 /*
+ * Save the time of the last alert for the user
+ */
+function saveLastAlert(lastAlert, seen) {
+	
+	var alertStatus = {
+			lastalert: lastAlert,
+			seen: seen
+		}
+	
+	$.ajax({
+		  type: "POST",
+		  contentType: "application/json",
+		  url: "/surveyKPI/user/alertstatus",
+		  cache: false,
+		  data: {
+			  alertstatus: JSON.stringify(alertStatus)
+		  }
+	});
+}
+
+/*
  * Save the current project id in the user defaults
  */
 function saveCurrentProject(projectId, surveyId, taskGroupId) {
@@ -580,6 +601,8 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			globals.gTwitterEnabled = data.allow_twitter;
 			globals.gCanEdit = data.can_edit;
 			globals.gSendTrail = data.ft_send_trail;
+			globals.gAlertSeen = data.seen;		// Alerts have been acknowledged
+			globals.gLastAlertTime = data.lastalert;
 			
 			if(!hideUserDetails) {
 				updateUserDetails(data, getOrganisationsFn);

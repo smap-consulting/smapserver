@@ -53,5 +53,8 @@ public class User {
 	public int all_time;
 	public boolean delSig;
 	public String action_details;
+	public String lastalert;
+	public boolean seen;
+	
 	
 }

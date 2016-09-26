@@ -72,30 +72,32 @@ public class UserManager {
 			/*
 			 * Get the user details
 			 */
-			sql = "SELECT u.id as id, " +
-					"u.name as name, " +
-					"u.settings as settings, " +
-					"u.signature as signature, " +
-					"u.language as language, " +
-					"u.email as email, " +
-					"u.current_project_id as current_project_id, " +
-					"u.current_survey_id as current_survey_id, " +
-					"u.current_task_group_id as current_task_group_id, " +
-					"o.id as o_id, " +
-					"o.name as organisation_name, " +
-					"o.company_name as company_name, " +
-					"o.company_address as company_address, " +
-					"o.company_phone as company_phone, " +
-					"o.company_email as company_email, " +
-					"o.allow_email, " +
-					"o.allow_facebook, " +
-					"o.allow_twitter, " +
-					"o.can_edit, " +
-					"o.ft_send_trail " +
-					" from users u, organisation o " +
-					" where u.ident = ? " +
-					" and u.o_id = o.id " +
-					" order by u.ident;"; 
+			sql = "SELECT u.id as id, "
+					+ "u.name as name, "
+					+ "u.settings as settings, "
+					+ "u.signature as signature, "
+					+ "u.language as language, "
+					+ "u.email as email, "
+					+ "u.current_project_id as current_project_id, "
+					+ "u.current_survey_id as current_survey_id, "
+					+ "u.current_task_group_id as current_task_group_id, "
+					+ "u.lastalert, "
+					+ "u.seen,"
+					+ "o.id as o_id, "
+					+ "o.name as organisation_name, "
+					+ "o.company_name as company_name, "
+					+ "o.company_address as company_address, "
+					+ "o.company_phone as company_phone, "
+					+ "o.company_email as company_email, "
+					+ "o.allow_email, "
+					+ "o.allow_facebook, "
+					+ "o.allow_twitter, "
+					+ "o.can_edit, "
+					+ "o.ft_send_trail "
+					+ " from users u, organisation o "
+					+ " where u.ident = ? "
+					+ " and u.o_id = o.id "
+					+ " order by u.ident;"; 
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, ident);
@@ -134,6 +136,8 @@ public class UserManager {
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
 				user.can_edit = resultSet.getBoolean("can_edit");
 				user.ft_send_trail = resultSet.getBoolean("ft_send_trail");
+				user.lastalert = resultSet.getString("lastalert");
+				user.seen = resultSet.getBoolean("seen");
 			}
 			
 			/*

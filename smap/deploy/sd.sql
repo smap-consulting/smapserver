@@ -625,3 +625,5 @@ ALTER TABLE alert OWNER TO ws;
 
 -- Add action details for temporary user
 alter table users add column action_details text;
+alter table users add column lastalert text;
+alter table users add column seen boolean;

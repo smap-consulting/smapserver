@@ -24,7 +24,6 @@ if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
 } 
 
-var gLastAlertTime;
 
 requirejs.config({
     baseUrl: 'js/libs',
@@ -63,10 +62,17 @@ require([
 		localise.setlang();		// Localise HTML
 		
 		globals.gIsAdministrator = false;
-		getLoggedInUser(undefined, false, true, undefined, false, false);
+		getLoggedInUser(getAlerts, false, true, undefined, false, false);
 		
-		getAlerts();
 		enableUserProfileBS();
+		
+		$('#show_alerts').click(function(){
+			if(!globals.gAlertSeen) {
+				globals.gAlertSeen = true;
+				$('.alert_icon').removeClass("text-danger");
+				saveLastAlert(globals.gLastAlertTime, true);
+			}
+		});
 	});
 	
 	/*
@@ -105,12 +111,15 @@ require([
 		 * Check for a change in the alert list
 		 */
 		if(alerts.length > 0) {
-			if(alerts[0].updatedTime != gLastAlertTime) {
+			if(alerts[0].updatedTime != globals.gLastAlertTime) {
 				$('.alert_icon').addClass("text-danger");
 				$('#chime')[0].play();
+				
+				globals.gLastAlertTime = alerts[0].updatedTime;
+				globals.gAlertSeen = false;
+				saveLastAlert(globals.gLastAlertTime, false);
 			}
-			gLastAlertTime = alerts[0].updatedTime;
-			// TODO save in user settings
+			
 		}
 		for(i = 0; i < alerts.length; i++) {
 			a = alerts[i];
