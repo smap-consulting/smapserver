@@ -167,12 +167,13 @@ public class XLS_LQAS_Manager {
 					for(LQASItem item : group.items) {
 						// Add the source data if required
 						if(showSources && item.sourceColumns != null) {
-							for(int i = 0; i < item.sourceColumns.length; i++ ) {
+							//for(int i = 0; i < item.sourceColumns.length; i++ ) {
+							for(String sourceColumn : item.sourceColumns) {
 								
 								// Add the raw source columns
 								for(int j = 0; j < lqasOld.dataItems.size(); j++) {
 									LQASdataItemOld di = lqasOld.dataItems.get(j);
-									if(di.ident.equals(item.sourceColumns[i])) {
+									if(di.ident.equals(sourceColumn)) {
 										if(di.sourceColumns != null) {
 											for(int k = 0; k < di.sourceColumns.length; k++) {
 												new_row = new LotRow(rowNum++, true, false, di.sourceColumns[k], null, true, true);
@@ -187,9 +188,9 @@ public class XLS_LQAS_Manager {
 									}
 									
 								}
-								new_row = new LotRow(rowNum++, true, false, "#{" + item.sourceColumns[i] + "}", null, true, false);
+								new_row = new LotRow(rowNum++, true, false, "#{" + sourceColumn + "}", null, true, false);
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
-								new_row.addCell(new LotCell(item.sourceColumns[i], new_row.colNum++, 1, false, styles.get("source"), 0));
+								new_row.addCell(new LotCell(sourceColumn, new_row.colNum++, 1, false, styles.get("source"), 0));
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
 								lot.addRow(new_row);
 								new_row.formulaStart = new_row.colNum;
@@ -406,12 +407,13 @@ public class XLS_LQAS_Manager {
 				sbSql.append(dataItem.ident);
 				
 				// If show sources was selected then add the source columns
-				if(showSources && dataItem.sourceColumns != null) {
-					for(int i = 0; i < dataItem.sourceColumns.length; i++ ) {
-						if(columnNames.get(dataItem.sourceColumns[i]) == null) {
+				if(showSources && dataItem.select.columns != null) {
+					//for(int i = 0; i < dataItem.sourceColumns.length; i++ ) {
+					for(String col : dataItem.select.columns){
+						if(columnNames.get(col) == null) {
 							sbSql.append(",");
-							sbSql.append(dataItem.sourceColumns[i]);
-							columnNames.put(dataItem.sourceColumns[i], dataItem.sourceColumns[i]);
+							sbSql.append(col);
+							columnNames.put(col, col);
 						}
 					}
 				}
@@ -471,17 +473,19 @@ public class XLS_LQAS_Manager {
 					for(LQASItem item : group.items) {
 						// Add the source data if required
 						if(showSources && item.sourceColumns != null) {
-							for(int i = 0; i < item.sourceColumns.length; i++ ) {
+							//for(int i = 0; i < item.sourceColumns.length; i++ ) {
+							for(String sourceColumn : item.sourceColumns) {
 								
 								// Add the raw source columns
 								for(int j = 0; j < lqas.dataItems.size(); j++) {
 									LQASdataItem di = lqas.dataItems.get(j);
-									if(di.ident.equals(item.sourceColumns[i])) {
-										if(di.sourceColumns != null) {
-											for(int k = 0; k < di.sourceColumns.length; k++) {
-												new_row = new LotRow(rowNum++, true, false, di.sourceColumns[k], null, true, true);
+									if(di.ident.equals(sourceColumn)) {
+										if(di.select.columns != null) {
+											//for(int k = 0; k < di.sourceColumns.length; k++) {
+											for(String col : di.select.columns) {
+												new_row = new LotRow(rowNum++, true, false, col, null, true, true);
 												new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("raw_source"), 0));
-												new_row.addCell(new LotCell(di.sourceColumns[k], new_row.colNum++, 1, false, styles.get("raw_source"), 0));
+												new_row.addCell(new LotCell(col, new_row.colNum++, 1, false, styles.get("raw_source"), 0));
 												new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("raw_source"), 0));
 												lot.addRow(new_row);
 												new_row.formulaStart = new_row.colNum;
@@ -491,9 +495,9 @@ public class XLS_LQAS_Manager {
 									}
 									
 								}
-								new_row = new LotRow(rowNum++, true, false, "#{" + item.sourceColumns[i] + "}", null, true, false);
+								new_row = new LotRow(rowNum++, true, false, "#{" + sourceColumn + "}", null, true, false);
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
-								new_row.addCell(new LotCell(item.sourceColumns[i], new_row.colNum++, 1, false, styles.get("source"), 0));
+								new_row.addCell(new LotCell(sourceColumn, new_row.colNum++, 1, false, styles.get("source"), 0));
 								new_row.addCell(new LotCell("", new_row.colNum++, 1, false, styles.get("source"), 0));
 								lot.addRow(new_row);
 								new_row.formulaStart = new_row.colNum;
@@ -508,12 +512,13 @@ public class XLS_LQAS_Manager {
 					}
 				}
 				
-				rowNum++;	// blank
+				if(lqas.footer != null) {
+					rowNum++;	// blank
 				
-				LotRow f1_row = new LotRow(rowNum++, false, true, null, null, false, false);	// Footer row
-				f1_row.addCell(new LotCell("The eight food groups are: 1. milk other than breast milk, cheese or yogurt (Q9 L); 2. foods made from grains, roots, and tubers, including porridge, fortified baby food from grains (Q9 A or C); 3. vitamin A-rich fruits and vegetables (and red palm oil) (Q9 B, D, E or P); 4. other fruits and vegetables (Q9 F); 5. eggs (Q9 I); 6. meat, poultry, fish, and shellfish (and organ meats) (Q9 G, H, J or O); 7. legumes and nuts (Q.9 K); 8. foods made with oil, fat, butter (Q9M). ", 
-						0, 1, false, styles.get("no_border"), 0));
-				lot.addRow(f1_row);
+					LotRow f1_row = new LotRow(rowNum++, false, true, null, null, false, false);	// Footer row
+					f1_row.addCell(new LotCell( lqas.footer.desc, 0, 1, false, styles.get("no_border"), 0));
+					lot.addRow(f1_row);
+				}
 				
 				if(showSources) {
 					rowNum++;

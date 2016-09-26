@@ -75,7 +75,6 @@ public class TableDataManager {
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
 		
-		System.out.println("$$$$$$$$$$$$ Get Data");
 		PreparedStatement pstmtGetData = null;
 		
 		try {

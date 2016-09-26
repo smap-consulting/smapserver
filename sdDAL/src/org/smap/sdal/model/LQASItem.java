@@ -1,5 +1,7 @@
 package org.smap.sdal.model;
 
+import java.util.ArrayList;
+
 import net.sourceforge.jeval.Evaluator;
 
 /*
@@ -10,10 +12,10 @@ public class LQASItem {
 	public String desc;
 	public String correctRespValue;
 	public String correctRespText;
-	public String [] sourceColumns;
+	public ArrayList<String> sourceColumns;
 	
 	public LQASItem(String ident, String desc, String correctRespValue, String correctRespText, 
-			String[] sources) {
+			ArrayList<String> sources) {
 		this.ident = ident;
 		this.desc = desc;
 		this.correctRespValue = correctRespValue;

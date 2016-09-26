@@ -48,6 +48,9 @@ import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
 
+import model.LotCell;
+import model.LotRow;
+
 
 
 public class XLSCustomReportsManager {
@@ -538,16 +541,14 @@ public class XLSCustomReportsManager {
 	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
-	                			currentDataItem = new LQASdataItem(name,  select, sources, dataType.equals("text"));
+	                			
+	                			currentDataItem = new LQASdataItem(name,  select, dataType.equals("text"));
 	                			lqas.dataItems.add(currentDataItem);
 	                			
 	                			
 	                			
 	                		} else if(rowType.equals("item")) {
 	                	
-	                			
-	                			String[] sources = null; 
-	                			
 	                			// Get data type
 	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
 	                			if(dataType != null) {
@@ -571,18 +572,19 @@ public class XLSCustomReportsManager {
 		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
 	                			if(calculation != null && calculation.length() > 0) {
 	                				calculation = calculation.trim();
-	                				if(calculation.equals("condition")) {
-	                					// Calculation set by condition rows
-	                				} else if(calculation.length() > 0) {
-	                				} 
 	                			} else {
 	                				throw new Exception(localisation.getString("mf_mc") + 
 	                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
-	                			currentItem = new LQASItem(name,  displayName, calculation, targetResponseText,  null);
+	                			ArrayList<String> sources = getSourcesFromItem(calculation);
+	                			currentItem = new LQASItem(name,  displayName, calculation, targetResponseText,  sources);
 	                			currentGroup.items.add(currentItem);
 	                			
+	                		} else if(rowType.equals("footer")) {
+	                			
+	                			String displayName = getColumn(row, "display name", header, lastCellNum, null);
+	                			lqas.footer = new LQASItem("footer",  displayName, null, null,  null);
 	                			
 	                			
 	                		} else if(rowType.equals("condition")) {
@@ -642,6 +644,31 @@ public class XLSCustomReportsManager {
 		
 	}
 	
+	private ArrayList<String> getSourcesFromItem(String calc) {
+		ArrayList<String> sources = new ArrayList<String> ();
+		
+		if(calc != null) {
+			String [] tokens = calc.split("[\\s]");  // Split on white space
+			for(int j = 0; j < tokens.length; j++) {
+				String token = tokens[j].trim();
+				if(token.startsWith("#{") && token.endsWith("}")) {
+					String name = token.substring(2, token.length() - 1);
+					boolean captured = false;
+					
+					for(int i = 0; i < sources.size(); i++) {
+						if(sources.get(i).equals(name)) {
+							captured = true;
+							break;
+						}
+					}
+					if(!captured) {
+						sources.add(name);
+					}
+				}
+			}
+		}
+		return sources;
+	}
 	/*
 	 * Convert an appearance to jquery classes
 	 */
