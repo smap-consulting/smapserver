@@ -1213,31 +1213,51 @@ public class SubRelationalDB extends Subscriber {
 				 * 		questions that have been moved to a new table
 				 * 		questions whose column_name has been changed
 				 */
-				if(ci.action.equals("add") || ci.action.equals("external option")
+				if(ci.type.equals("question") || ci.type.equals("option") &&
+						(ci.action.equals("add") || ci.action.equals("external option")
 						|| (ci.action.equals("move") && 
 								ci.question != null && 
 								ci.question.formIndex != ci.question.sourceFormIndex)
-						|| (ci.action.equals("update") && ci.property != null && ci.property.prop != null && ci.property.prop.equals("name"))) {
+						|| (ci.action.equals("update") && 
+								ci.property != null && 
+								ci.property.prop != null && 
+								(ci.property.prop.equals("name") || ci.property.prop.equals("value"))
+								))) {
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
 					TableUpdateStatus status = null;
 					
-					if(ci.option != null) {
+					// Check for a new option or updating an existing option
+					if(ci.option != null || 
+							(ci.type.equals("option") && ci.action.equals("update") && ci.property.prop.equals("value"))
+							) {
 						
 						/*
 						 * Apply this option to every question that references the option list
 						 */
-						int listId = ci.option.l_id;
+						int listId = 0;
+						String listName = null;
+						String value = null;
+						if(ci.option != null) {
+							listId = ci.option.l_id;
+							listName = ci.option.optionList;
+							value = ci.option.value;
+						} else {
+							listId = ci.property.l_id;
+							listName = ci.property.optionList;
+							value = ci.property.newVal;
+						}
+						
 						if(listId == 0) {
-							listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.option.optionList);
+							listId = GeneralUtilityMethods.getListId(connectionSD, sId, listName);
 						}
 						String optionColumnName = null;
 						boolean externalFile = false;
 						
 						// Get the option details
 						pstmtGetAnOption.setInt(1, listId);
-						pstmtGetAnOption.setString(2, ci.option.value);
+						pstmtGetAnOption.setString(2, value);
 						
 						System.out.println("Get option details: " + pstmtGetAnOption);
 						ResultSet rsOption = pstmtGetAnOption.executeQuery();
@@ -1246,24 +1266,31 @@ public class SubRelationalDB extends Subscriber {
 							externalFile = rsOption.getBoolean(2);
 						}
 						
-						// Get the questions that use this option list
-						pstmtGetListQuestions.setInt(1, sId);
-						pstmtGetListQuestions.setInt(2, listId);
-						
-						System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
-						ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
-						
-						while(rsQuestions.next()) {
-							// Get the question details
-							int qId = rsQuestions.getInt(1);
-							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+						if(optionColumnName != null) { // Will be null if name changed prior to being published
+							// Get the questions that use this option list
+							pstmtGetListQuestions.setInt(1, sId);
+							pstmtGetListQuestions.setInt(2, listId);
 							
-							if(qd != null) {
-								if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-									status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+							System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
+							ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
+							
+							while(rsQuestions.next()) {
+								// Get the question details
+								int qId = rsQuestions.getInt(1);
+								QuestionDetails qd = getQuestionDetails(connectionSD, qId);
+								
+								if(qd != null) {
+									if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+										status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+										if(status.tableAltered) {
+											tableChanged = true;
+										}
+									}
 								}
+	
 							}
-
+						} else {
+							log.info("Option column name for list: " + listId + " and value: " + ci.option.value + " was not found.");
 						}
 						
 					
@@ -1275,70 +1302,73 @@ public class SubRelationalDB extends Subscriber {
 						} else {
 							qId = ci.property.qId;
 						}
-						QuestionDetails qd = getQuestionDetails(connectionSD, qId);
-
-						if(qd.type.equals("begin group") || qd.type.equals("end group")) {
-							// Ignore group changes
-						} else if(qd.type.equals("begin repeat")) {
-							// Get the table name
-							String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
-							pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);
-							pstmtGetTableName.setInt(1, sId);
-							pstmtGetTableName.setInt(2, qId);
-							ResultSet rsTableName = pstmtGetTableName.executeQuery();
-							if(rsTableName.next()) {
-								String tableName = rsTableName.getString(1);
-								
-								String sqlCreateTable = "create table " + tableName + " ("
-										+ "prikey SERIAL PRIMARY KEY, "
-										+ "parkey int,"
-										+ "_bad boolean DEFAULT FALSE, _bad_reason text)";
-								pstmtCreateTable = cResults.prepareStatement(sqlCreateTable);
-								pstmtCreateTable.executeUpdate();
-							}
-							
-						} else {
-							columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
-							
-							if(qd.type.equals("string")) {
-								qd.type = "text";
-							} else if(qd.type.equals("dateTime")) {
-								qd.type = "timestamp with time zone";					
-							} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
-								qd.type = "text";					
-							} else if(qd.type.equals("decimal")) {
-								qd.type = "double precision";
-							} else if(qd.type.equals("barcode")) {
-								qd.type = "text";
-							} else if(qd.type.equals("note")) {
-								qd.type = "text";
-							} else if(qd.type.equals("select1")) {
-								qd.type = "text";
-							} else if (qd.type.equals("select")) {
-								qd.type = "integer";
-								
-								columns.clear();
-								pstmtGetOptions.setInt(1, l_id);
-								
-								System.out.println("Get options to add: "+ pstmtGetOptions.toString());
-								ResultSet rsOptions = pstmtGetOptions.executeQuery();
-								while(rsOptions.next()) {			
-									// Create if its an external choice and this question uses external choices
-									//  or its not an external choice and this question does not use external choices
-									String o_col_name = rsOptions.getString(1);
-									boolean externalFile = rsOptions.getBoolean(2);
+						
+						if(qId != 0) {
+							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 	
-									if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-										String column =  qd.columnName + "__" + o_col_name;
-										columns.add(column);
-									}
-								} 
-							}
-							
-							// Apply each column
-							for(String col : columns) {
-								status = alterColumn(cResults, qd.table, qd.type, col);
-								tableChanged = true;
+							if(qd.type.equals("begin group") || qd.type.equals("end group")) {
+								// Ignore group changes
+							} else if(qd.type.equals("begin repeat")) {
+								// Get the table name
+								String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
+								pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);
+								pstmtGetTableName.setInt(1, sId);
+								pstmtGetTableName.setInt(2, qId);
+								ResultSet rsTableName = pstmtGetTableName.executeQuery();
+								if(rsTableName.next()) {
+									String tableName = rsTableName.getString(1);
+									
+									String sqlCreateTable = "create table " + tableName + " ("
+											+ "prikey SERIAL PRIMARY KEY, "
+											+ "parkey int,"
+											+ "_bad boolean DEFAULT FALSE, _bad_reason text)";
+									pstmtCreateTable = cResults.prepareStatement(sqlCreateTable);
+									pstmtCreateTable.executeUpdate();
+								}
+								
+							} else {
+								columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
+								
+								if(qd.type.equals("string")) {
+									qd.type = "text";
+								} else if(qd.type.equals("dateTime")) {
+									qd.type = "timestamp with time zone";					
+								} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
+									qd.type = "text";					
+								} else if(qd.type.equals("decimal")) {
+									qd.type = "double precision";
+								} else if(qd.type.equals("barcode")) {
+									qd.type = "text";
+								} else if(qd.type.equals("note")) {
+									qd.type = "text";
+								} else if(qd.type.equals("select1")) {
+									qd.type = "text";
+								} else if (qd.type.equals("select")) {
+									qd.type = "integer";
+									
+									columns.clear();
+									pstmtGetOptions.setInt(1, l_id);
+									
+									System.out.println("Get options to add: "+ pstmtGetOptions.toString());
+									ResultSet rsOptions = pstmtGetOptions.executeQuery();
+									while(rsOptions.next()) {			
+										// Create if its an external choice and this question uses external choices
+										//  or its not an external choice and this question does not use external choices
+										String o_col_name = rsOptions.getString(1);
+										boolean externalFile = rsOptions.getBoolean(2);
+		
+										if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+											String column =  qd.columnName + "__" + o_col_name;
+											columns.add(column);
+										}
+									} 
+								}
+								
+								// Apply each column
+								for(String col : columns) {
+									status = alterColumn(cResults, qd.table, qd.type, col);
+									tableChanged = true;
+								}
 							}
 						}
 						

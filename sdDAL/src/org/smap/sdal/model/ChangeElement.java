@@ -25,6 +25,8 @@ public class ChangeElement {
 				this.type = "option";
 			} else if(ci.property.type.equals("question")) {
 				this.type = "question";
+			} else if(ci.property.type.equals("optionlist")) {
+				this.type = "optionlist";
 			} else {
 				this.type = "unknown";
 				System.out.println("Error: unknown change type");
