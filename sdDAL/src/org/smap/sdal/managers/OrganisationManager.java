@@ -206,7 +206,7 @@ public class OrganisationManager {
 			pstmt.setString(20, o.default_email_content);
 			pstmt.setString(21, o.website);
 			pstmt.setString(22, o.locale);
-			pstmt.setString(21, o.timeZone);
+			pstmt.setString(23, o.timeZone);
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
