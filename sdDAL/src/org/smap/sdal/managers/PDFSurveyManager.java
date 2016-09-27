@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
+import org.smap.sdal.model.ServerData;
 import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
@@ -123,6 +125,7 @@ public class PDFSurveyManager {
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
 		boolean hasAppendix = false;
+		String mapbox_key;
 		
 		// Map of questions that need to have the results of another question appended to their results in a pdf report
 		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
@@ -156,7 +159,9 @@ public class PDFSurveyManager {
 		User user = null;
 		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
 		
-	
+		ServerManager serverManager = new ServerManager();
+		ServerData serverData = serverManager.getServer(connectionSD);
+		
 		SurveyManager sm = new SurveyManager();
 		UserManager um = new UserManager();
 		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
@@ -235,6 +240,7 @@ public class PDFSurveyManager {
 					getDependencies(gv, survey.instance.results.get(i), survey, i);	
 				}
 			}
+			gv.mapbox_key = serverData.mapbox_default;
 			
 			
 			if(templateFile.exists()) {
@@ -1081,6 +1087,10 @@ public class PDFSurveyManager {
 						di.labelcaps = true;
 					} else if(appValues[i].equals("pdflabelbold")) {
 						di.labelbold = true;
+					} else if(appValues[i].startsWith("pdfmap")) {			// mapbox map id
+						di.map = getAppValue(appValues[i]);
+					} else if(appValues[i].startsWith("pdflocation")) {
+						di.location = getAppValue(appValues[i]);			// lon,lat,zoom
 					}
 				}
 			}
@@ -1159,6 +1169,14 @@ public class PDFSurveyManager {
 			di.space = Integer.valueOf(parts[1]);   		
 		}
 		
+	}
+	
+	String getAppValue(String aValue) {
+		String [] parts = aValue.split("_");
+		if(parts.length >= 2) {
+			return parts[1];   		
+		}
+		else return null;
 	}
 	
 	/*
@@ -1316,7 +1334,47 @@ public class PDFSurveyManager {
 			} else {
 				// TODO add empty image
 			}
+		
+		} else if (di.type.equals("geoshape")) {
 			
+			StringBuffer url = new StringBuffer();
+			boolean getMap = false;
+			url.append("https://api.mapbox.com/v4/");
+			if(di.map != null) {
+				url.append(di.map);
+			} else {
+				url.append("mapbox.streets");	// default map
+			}
+			url.append("/");
+			
+			if(di.value != null && di.value.trim().length() > 0) {
+				// GeoJson data
+				url.append("geojson(");
+				url.append(URLEncoder.encode(di.value));
+				url.append(")/auto/");
+				getMap = true;
+			} else {
+				// Attempt to get default map boundary from appearance
+				if(di.location != null) {
+					url.append(di.location);
+					url.append("/");
+					getMap = true;
+				}					
+			}
+			
+			if(getMap && gv.mapbox_key == null) {
+				log.info("Mapbox key not specified.  PDF Map not created");
+			}
+			
+			if(getMap) {
+				url.append("500x300.png?access_token=");
+				url.append(gv.mapbox_key);
+				Image img = Image.getInstance(url.toString());
+				valueCell.addElement(img);
+			} else {
+				// No map
+				valueCell.addElement(getPara(" ", di, gv, deps));
+			}
 		} else {
 			// Todo process other question types
 			if(di.value == null || di.value.trim().length() == 0) {

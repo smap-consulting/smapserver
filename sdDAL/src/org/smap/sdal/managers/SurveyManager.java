@@ -2237,8 +2237,8 @@ public class SurveyManager {
 		    			// This question is not a place holder for a subform
 		    			if(q.source != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				    		String qType = q.type;
-				    		if(qType.equals("geopoint")) {
-				    			col = "ST_AsText(" + q.columnName + ")";
+				    		if(qType.equals("geopoint") || qType.equals("geoshape") || qType.equals("geotrace") || q.name.startsWith("geopolygon_") || q.name.startsWith("geolinestring_")) {
+				    			col = "ST_AsGeoJSON(" + q.columnName + ")";
 				    		} else if(qType.equals("select")){
 				    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
 				    		} else {
