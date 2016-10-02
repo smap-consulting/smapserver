@@ -1335,7 +1335,7 @@ public class PDFSurveyManager {
 				// TODO add empty image
 			}
 		
-		} else if (di.type.equals("geoshape")) {
+		} else if(di.type.equals("geopoint") || di.type.equals("geoshape") || di.type.equals("geotrace") || di.type.startsWith("geopolygon_") || di.type.startsWith("geolinestring_")) {
 			
 			StringBuffer url = new StringBuffer();
 			boolean getMap = false;
