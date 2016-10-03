@@ -195,7 +195,7 @@ public class PDFSurveyManager {
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset);
+					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset, "geojson");
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -1350,7 +1350,24 @@ public class PDFSurveyManager {
 			if(di.value != null && di.value.trim().length() > 0) {
 				// GeoJson data
 				url.append("geojson(");
-				url.append(URLEncoder.encode(di.value));
+				System.out.println("json: " + di.value);
+				//if(di.stroke != null) {
+					//String jsonValue = "{\"type\": \"FeatureCollection\","
+					//		+ "\"features\": [" ;
+					
+					//String jsonValue = "{\"type\": \"Feature\",\"geometry\": ";
+					String jsonValue = di.value;
+					//jsonValue += ", \"properties\": {"
+					//		+ "\"marker-color\": " + "\"#f00\""
+				    //      	+ "}"
+				    //    	jsonValue += "}"
+					//		+ "]"
+				     // 	jsonValue += "}";
+					
+				//	
+				//}
+					System.out.println(jsonValue);
+				url.append(URLEncoder.encode(jsonValue, "UTF-8"));
 				url.append(")/auto/");
 				getMap = true;
 			} else {
@@ -1369,6 +1386,7 @@ public class PDFSurveyManager {
 			if(getMap) {
 				url.append("500x300.png?access_token=");
 				url.append(gv.mapbox_key);
+				System.out.println(url.toString());
 				Image img = Image.getInstance(url.toString());
 				valueCell.addElement(img);
 			} else {

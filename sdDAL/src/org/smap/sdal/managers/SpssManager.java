@@ -73,7 +73,7 @@ public class SpssManager {
 			 * Get the results and details of the user that submitted the survey
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
-			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real", superUser, 0);
+			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real", superUser, 0, null);
 			int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 			
 			System.out.println("Language: " + language + " : " + languageIdx) ;

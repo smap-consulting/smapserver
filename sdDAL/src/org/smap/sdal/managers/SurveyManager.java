@@ -188,7 +188,8 @@ public class SurveyManager {
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
 			boolean superUser,
-			int utcOffset
+			int utcOffset,
+			String geomFormat
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -268,7 +269,8 @@ public class SurveyManager {
 							0, 
 							s, 
 							generateDummyValues,
-							utcOffset);
+							utcOffset,
+							geomFormat);
 					ArrayList<Result> topForm = s.instance.results.get(0);
 					// Get the user ident that submitted the survey
 					for(Result r : topForm) {
@@ -2181,7 +2183,8 @@ public class SurveyManager {
     		int parentKey,
     		Survey s,
     		boolean generateDummyValues,
-    		int utcOffset) throws SQLException{
+    		int utcOffset,
+    		String geomFormat) throws SQLException{
  
     	ArrayList<ArrayList<Result>> output = new ArrayList<ArrayList<Result>> ();
     	
@@ -2241,7 +2244,7 @@ public class SurveyManager {
 				    		String qType = q.type;
 				    		if(qType.equals("geopoint") || qType.equals("geoshape") || qType.equals("geotrace") || q.name.startsWith("geopolygon_") || q.name.startsWith("geolinestring_")) {
 				    			
-				    			col = "ST_AsGeoJSON(" + q.columnName + ")";
+				    			col = "ST_AsGeoJSON(" + q.columnName + ", 5)";
 				    			
 				    		} else if(qType.equals("select")){
 				    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
@@ -2311,7 +2314,8 @@ public class SurveyManager {
 		    				pstmtSelect,
 		    				isTopLevel,
 		    				generateDummyValues,
-		    				utcOffset);
+		    				utcOffset,
+		    				geomFormat);
 
 		    		output.add(record);
 		    	}
@@ -2343,7 +2347,8 @@ public class SurveyManager {
 	    				pstmtSelect,
 	    				isTopLevel,
 	    				generateDummyValues,
-	    				utcOffset);
+	    				utcOffset,
+	    				geomFormat);
 
 	    		output.add(record);
 	    	}
@@ -2377,7 +2382,8 @@ public class SurveyManager {
     		PreparedStatement pstmtSelect,
     		boolean isTopLevel,
     		boolean generateDummyValues,
-    		int utcOffset) throws SQLException {
+    		int utcOffset,
+    		String geomFormat) throws SQLException {
 		/*
 		 * Add data for the remaining questions (prikey and user have already been extracted)
 		 */
@@ -2411,7 +2417,8 @@ public class SurveyManager {
     			    		newParentKey,
     			    		s,
     			    		generateDummyValues,
-    			    		utcOffset);
+    			    		utcOffset,
+    			    		geomFormat);
 
             		record.add(nr);
     			}
@@ -2498,13 +2505,16 @@ public class SurveyManager {
 					value = resultSet.getString(index);
 				}
 				
-				if(value != null && qType.equals("geopoint")) {
-					int idx1 = value.indexOf('(');
-					int idx2 = value.indexOf(')');
+				/*
+				 * Leave the geometry in geoJson unless the geometry format needs to be comaptible with an xForm
+				 */
+				if(value != null && qType.equals("geopoint") && geomFormat != null && geomFormat.equals("xform")) {
+					int idx1 = value.indexOf('[');
+					int idx2 = value.indexOf(']');
 					if(idx1 > 0 && (idx2 > idx1)) {
     					value = value.substring(idx1 + 1, idx2 );
     					// These values are in the order longitude latitude.  This needs to be reversed for the XForm
-    					String [] coords = value.split(" ");
+    					String [] coords = value.split(",");
     					if(coords.length > 1) {
     						value = coords[1] + " " + coords[0] + " 0 0";
     					}

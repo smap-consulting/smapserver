@@ -91,7 +91,7 @@ public class CreateXLSForm extends Application {
 			// Get the survey details
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false, true, 
-					false, "internal", superUser, 0);
+					false, "internal", superUser, 0, null);
 			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);

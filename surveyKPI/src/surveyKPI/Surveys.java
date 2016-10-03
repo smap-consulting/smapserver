@@ -195,7 +195,8 @@ public class Surveys extends Application {
 					true,
 					"internal",
 					superUser,
-					0);
+					0,
+					null);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -266,7 +267,7 @@ public class Surveys extends Application {
 			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
 			// Get the survey details.  superUser set to true as this user just created the survey so they are effectively a super user for this survey and we can save a database call
 			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, 
-					basePath, null, false, false, true, true, "internal", true, 0);
+					basePath, null, false, false, true, true, "internal", true, 0, null);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
@@ -340,7 +341,7 @@ public class Surveys extends Application {
 			GeneralUtilityMethods.setMediaForLanguages(sd, sId, languageList);	// Cope with media being duplicated across all languages
 			// Get the survey details.  superUser set to true as this user just edited the survey so they are effectively a super user for this survey and we can save a databse call
 			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, 
-					basePath, null, false, false, true, true, "internal", true, 0);
+					basePath, null, false, false, true, true, "internal", true, 0, null);
 			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
