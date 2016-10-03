@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.sdal.Utilities;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -62,11 +63,12 @@ public class QueryGenerator {
 			String hostname,
 			ArrayList<String> requiredColumns,
 			ArrayList<String> namedQuestions,
-			String user) throws Exception {
+			String user,
+			Date startDate,
+			Date endDate,
+			int dateId) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
-		
-
 		
 		PreparedStatement  pstmt = null;
 		PreparedStatement pstmtCols = null;
@@ -158,7 +160,10 @@ public class QueryGenerator {
 					requiredColumns,
 					namedQuestions,
 					user,
-					fId
+					fId,
+					startDate,
+					endDate,
+					dateId
 					);
 		} catch (Exception e) {
 			throw new Exception(e.getMessage()); 
@@ -193,6 +198,18 @@ public class QueryGenerator {
 		shpSqlBuf.append(" where ");
 		shpSqlBuf.append(sqlDesc.tables.get(0));
 		shpSqlBuf.append("._bad='false'");
+		
+		String sqlRestrictToDateRange = null;
+		if(dateId > 0) {
+			String dateName = GeneralUtilityMethods.getColumnNameFromId(connectionSD, sId, dateId);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, 
+					sqlDesc.tables.get(0), dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				shpSqlBuf.append(" and ");
+				shpSqlBuf.append(sqlRestrictToDateRange);
+			}
+		}
+		
 		if(format.equals("shape") && sqlDesc.geometry_type != null) {
 			shpSqlBuf.append(" and the_geom is not null");
 		}
@@ -268,7 +285,10 @@ public class QueryGenerator {
 			ArrayList<String> requiredColumns,
 			ArrayList<String> namedQuestions,
 			String user,
-			int fId) throws SQLException {
+			int fId,
+			Date startDate,
+			Date endDate,
+			int dateId) throws SQLException {
 		
 		int colLimit = 10000;
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
@@ -307,20 +327,12 @@ public class QueryGenerator {
 						requiredColumns,
 						namedQuestions,
 						user,
-						parentForm);
+						parentForm,
+						startDate,
+						endDate,
+						dateId);
 			}
 		}
-		
-		// - start collecting column data from meta info
-		/*
-		String sql = "SELECT * FROM " + tName + " LIMIT 1;";
-		
-		try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
-		pstmtCols = connectionResults.prepareStatement(sql);	 			
-		ResultSet resultSet = pstmtCols.executeQuery();
-		ResultSetMetaData rsMetaData = resultSet.getMetaData();
-		*/
-		// - End collecting column data from meta info
 
 		
 		ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
@@ -353,8 +365,6 @@ public class QueryGenerator {
 			ArrayList<OptionDesc> optionListLabels = null;
 			int qId = 0;
 			
-			//name = rsMetaData.getColumnName(i);
-			//type = rsMetaData.getColumnTypeName(i);
 			name = col.name;
 			type = col.type;
 			

@@ -119,6 +119,7 @@ define({
 	"c_unique": "Unique",
 	"c_survey": "Survey",
 	"c_date": "Date",
+	"c_dateq": "Date Question",
 	"c_none": "None",
 	"c_hour": "Hour",
 	"c_day": "Day",

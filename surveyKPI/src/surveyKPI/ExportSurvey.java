@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -154,6 +155,9 @@ public class ExportSurvey extends Application {
 			@QueryParam("format") String format,
 			@QueryParam("exp_ro") boolean exp_ro,
 			@QueryParam("forms") String include_forms,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
 			
 			@Context HttpServletResponse response) {
 
@@ -583,7 +587,10 @@ public class ExportSurvey extends Application {
 						flat, 
 						split_locn, 
 						merge_select_multiple, 
-						selMultChoiceNames);
+						selMultChoiceNames,
+						startDate,
+						endDate,
+						dateId);
 				outWriter.print("</tbody><table></body></html>");
 				
 				log.info("Content Type:" + response.getContentType());
@@ -806,7 +813,10 @@ public class ExportSurvey extends Application {
 			boolean flat, 
 			boolean split_locn, 
 			boolean merge_select_multiple, 
-			HashMap<String, String> choiceNames) throws SQLException {
+			HashMap<String, String> choiceNames,
+			Date startDate,
+			Date endDate,
+			int dateId) throws SQLException {
 		
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
@@ -822,7 +832,18 @@ public class ExportSurvey extends Application {
 		sql.append(f.columns);
 		sql.append(" from ");
 		sql.append(f.table_name);
-		sql.append(" where _bad is false");		
+		sql.append(" where _bad is false ");				
+		
+		String sqlRestrictToDateRange = null;
+		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
+			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name, dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql.append("and ");
+				sql.append(sqlRestrictToDateRange);
+			}
+		}
+		
 		
 		if(f.parkey != null && !f.parkey.equals("0")) {
 			sql.append(" and parkey=?");
@@ -844,6 +865,17 @@ public class ExportSurvey extends Application {
 		try {
 			pstmt = connectionResults.prepareStatement(sql.toString());
 			int paramCount = 1;
+			
+			// if date filter is set then add it
+			if(sqlRestrictToDateRange != null && sqlRestrictToDateRange.trim().length() > 0) {
+				if(startDate != null) {
+					pstmt.setDate(paramCount++, startDate);
+				}
+				if(endDate != null) {
+					pstmt.setTimestamp(paramCount++, GeneralUtilityMethods.endOfDay(endDate));
+				}
+			}
+			
 			if(f.parkey != null) {
 				pstmt.setInt(paramCount++, Integer.parseInt(f.parkey));
 			} else if(hasRbacFilter) {
@@ -937,7 +969,10 @@ public class ExportSurvey extends Application {
 								flat, 
 								split_locn, 
 								merge_select_multiple, 
-								choiceNames);
+								choiceNames,
+								startDate,
+								endDate,
+								dateId);
 					}
 				}
 				

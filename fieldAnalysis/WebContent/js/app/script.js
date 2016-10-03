@@ -38,6 +38,7 @@ $(document).ready(function() {
 			getViewSurveys({sId:"-1"});
 		} 
 
+		exportSurveyChanged();
 		$('#export').dialog("open");
 	}); 
 
@@ -50,11 +51,12 @@ $(document).ready(function() {
 	 * Export Dialog
 	 */	
 	setExportControls();
+	$('#exp_from_date,#exp_to_date').datepicker({ dateFormat: "yy-mm-dd" });
 	$('#export').dialog(
 		{
 			autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
 			show:"drop",
-			width: 350,
+			width: 480,
 			zIndex: 2000,
 			buttons: [
 		        {
@@ -80,10 +82,19 @@ $(document).ready(function() {
 			        		sources = $('#sources').prop("checked"),
 			        		exportReport = $('#export_report_defn').val(),
 			        		forms = [],
-			        		name_questions = [];
+			        		name_questions = [],
+			        		exp_from_date = $('#exp_from_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
+			        		exp_to_date = $('#exp_to_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
+			        		dateQuestionId = $('#export_date_question option:selected').val();
 		        			
 		        		if(sId == "-1") {
 		        			alert(localise.set["msg_pss"]);
+		        			return(false);
+		        		}
+		        		
+		        		// TODO validate dates
+		        		if(exp_from_date && exp_to_date && exp_to_date < exp_from_date) {
+		        			alert(localise.set["msg_sel_dates"]);
 		        			return(false);
 		        		}
 	        			
@@ -140,7 +151,8 @@ $(document).ready(function() {
 		        			      return this.value;
 		        			    }).get();
 		        			
-		        			url = exportSurveyMediaURL(sId, displayName, undefined, mediaQuestion, name_questions.join(','));
+		        			url = exportSurveyMediaURL(sId, displayName, undefined, mediaQuestion, name_questions.join(','),
+		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		
 		        		} else if(format === "lqas") {
 		        			
@@ -162,31 +174,10 @@ $(document).ready(function() {
 			        			}
 		        			}
 		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, 
-		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages);
+		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages,
+		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		}
 		        		
-		        		/*
-		        		if(format === "lqas" || (format === "xls" && xlstype !== "html")) {
-		        			var mime,
-		        				ext;
-		        			
-		        			if(format === "xls") {
-		        				if(xlstype === "xls") {
-			        				mime = "application/vnd.ms-excel";
-			        			} else if(xlstype === "xlsx") {
-			        				mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-			        			}
-		        				ext = xlstype;
-		        			} else if(format === "media") {
-		        				mime = "application/zip";
-		        				ext = "zip";
-		        			}
-		        			if(format === "lqas") {
-		        				xlstype = "xlsx";
-		        			}
-		        			downloadFile(url, displayName + "." + xlstype, mime);
-		        		} else {
-		        		*/
 		        		downloadFile(url);
 		  
 		        		//}
@@ -200,35 +191,7 @@ $(document).ready(function() {
 	
 	// Change event on export dialog survey select
 	$('#export_survey').change(function() {
-		var sId = $('#export_survey option:selected').val(),
-			languages = globals.gSelector.getSurveyLanguages(sId),
-			sMeta,
-			questions;
-		
-		if(!languages) {
-			if(sId > 0) {
-				getLanguageList(sId, addMediaPickList);		// Retrieve the languages and questions for the default language
-			}
-		} else {
-			setSurveyViewLanguages(languages, undefined, '#settings_language', false );
-			setSurveyViewLanguages(languages, undefined, '#export_language', true );
-			questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name);
-			addMediaPickList();
-		}
-		
-		// Add the form list for osm export an identifying forms to include in spreadsheet export
-		sMeta = globals.gSelector.getSurvey(sId);
-		if(!sMeta) {
-			getSurveyMetaSE(sId, {}, false,true, false);
-		} else {
-			addFormPickList(sMeta);
-		}
-
-		// Update the thingsat model if we changed the survey
-		if($('#exportformat').val() === "thingsat") {
-			showModel();
-		}
-		
+		exportSurveyChanged();
  	});
 	
 	/*
@@ -351,6 +314,40 @@ $(window).load(function() {
 	}
  	
 });
+
+function exportSurveyChanged() {
+	var sId = $('#export_survey option:selected').val(),
+		languages = globals.gSelector.getSurveyLanguages(sId),
+		sMeta,
+		questions;
+
+	if(sId > 0) {
+		if(!languages) {
+			getLanguageList(sId, addMediaPickList);		// Retrieve the languages and questions for the default language
+		} else {
+			setSurveyViewLanguages(languages, undefined, '#settings_language', false );
+			setSurveyViewLanguages(languages, undefined, '#export_language', true );
+			questions = globals.gSelector.getSurveyQuestions(sId, languages[0].name);
+			addMediaPickList();
+		}
+		
+		// Add the form list for osm export an identifying forms to include in spreadsheet export
+		sMeta = globals.gSelector.getSurvey(sId);
+		if(!sMeta) {
+			getSurveyMetaSE(sId, {}, false,true, true);
+		} else {
+			addFormPickList(sMeta);
+			addDatePickList(sMeta);
+		}
+		
+		// Update the thingsat model if we changed the survey
+		if($('#exportformat').val() === "thingsat") {
+			showModel();
+		}
+	} else {
+		$('#export_date_question').html("");
+	}
+}
 
 function setExportControls() {
 	var format = $('#exportformat').val();
@@ -595,27 +592,25 @@ function addDatePickList(sMeta, currentDate) {
 	i,
 	value;
 	
-	for(i = 0; i < sMeta.dates.length; i++) {
+	if(sMeta && sMeta.dates) {
+		for(i = 0; i < sMeta.dates.length; i++) {
+			
+			h[++idx] = '<option value="';
+			h[++idx] = sMeta.dates[i].id;
+			h[++idx] = '">';
+			h[++idx] = sMeta.dates[i].name;
+			h[++idx] = '</option>';
+			
+		}
 		
-		h[++idx] = '<option value="';
-		h[++idx] = sMeta.dates[i].id;
-		h[++idx] = '">';
-		h[++idx] = sMeta.dates[i].name;
-		h[++idx] = '</option>';
+		$(".date_question").html((h.join('')));
 		
+		if(typeof currentDate !== "undefined" && currentDate != 0) {
+			value = currentDate;
+		} else {
+			value = $("#settings_date_question").val();
+		}
 	}
-	
-	$("#settings_date_question").html((h.join('')));
-	
-	if(typeof currentDate !== "undefined" && currentDate != 0) {
-		value = currentDate;
-	} else {
-		value = $("#settings_date_question").val();
-	}
-
-	//if(typeof value !== "undefined" ) {
-	//	$("#settings_date_question").val(value);
-	//}
 	
 
 }
@@ -942,7 +937,20 @@ function cleanFileName(filename) {
 /*
  * Web service handler for exporting an entire survey to CSV
  */
-function exportSurveyURL (sId, filename, language, format, split_locn, forms, exp_ro, merge_select_multiple, xlstype, embedImages) {
+function exportSurveyURL (
+		sId, 
+		filename, 
+		language, 
+		format, 
+		split_locn, 
+		forms, 
+		exp_ro, 
+		merge_select_multiple, 
+		xlstype, 
+		embedImages,
+		exp_from_date,
+		exp_to_date,
+		dateQuestionId) {
 
 	var url;
 	if(xlstype === "html") {
@@ -977,10 +985,24 @@ function exportSurveyURL (sId, filename, language, format, split_locn, forms, ex
 	if(xlstype != "html") {
 		url += "&filetype=" + xlstype;
 	}
+	if(dateQuestionId > 0) {
+		url += "&dateId=" + dateQuestionId;
+		if(exp_from_date) {
+			url += "&from=" + exp_from_date;
+		}
+		if(exp_to_date) {
+			url += "&to=" + exp_to_date;
+		}
+	}
+	
 	return encodeURI(url);
 }
 
-function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions) {
+function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions,
+		exp_from_date,
+		exp_to_date,
+		dateQuestionId
+		) {
 
 	var url = "/surveyKPI/exportSurveyMedia/";
 	
@@ -996,6 +1018,15 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 		url+="&namequestions=" + nameQuestions;
 	}
 
+	if(dateQuestionId > 0) {
+		url += "&dateId=" + dateQuestionId;
+		if(exp_from_date) {
+			url += "&from=" + exp_from_date;
+		}
+		if(exp_to_date) {
+			url += "&to=" + exp_to_date;
+		}
+	}
 	
 	return encodeURI(url);
 }

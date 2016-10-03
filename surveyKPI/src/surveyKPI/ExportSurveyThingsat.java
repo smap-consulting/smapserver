@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -70,7 +71,10 @@ public class ExportSurveyThingsat extends Application {
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("form") int fId,
-			@QueryParam("language") String language) throws IOException {
+			@QueryParam("language") String language,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId) throws IOException {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -158,7 +162,10 @@ public class ExportSurveyThingsat extends Application {
 					request.getServerName().toLowerCase(),
 					null,
 					null,
-					request.getRemoteUser());
+					request.getRemoteUser(),
+					startDate,
+					endDate,
+					dateId);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

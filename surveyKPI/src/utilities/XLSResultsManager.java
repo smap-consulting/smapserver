@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -189,7 +190,10 @@ public class XLSResultsManager {
 			boolean split_locn,
 			HttpServletRequest request,
 			OutputStream outputStream,
-			boolean embedImages) throws Exception {
+			boolean embedImages, 
+			Date startDate, 
+			Date endDate, 
+			int dateId) throws Exception {
 		
 		Sheet resultsSheet = wb.createSheet("survey");
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
@@ -493,7 +497,11 @@ public class XLSResultsManager {
 						cols,
 						resultsSheet,
 						styles,
-						embedImages);
+						embedImages,
+						sId,
+						startDate, 
+						endDate, 
+						dateId);
 	
 			
 			} finally {
@@ -853,7 +861,7 @@ public class XLSResultsManager {
 	 * 
 	 * The function is called recursively until the last table
 	 */
-	private void getData(Connection con, 
+	private void getData(Connection sd, 
 			Connection connectionResults, 
 			ArrayList<FormDesc> formList, 
 			FormDesc f,
@@ -863,9 +871,13 @@ public class XLSResultsManager {
 			ArrayList<Column> cols, 
 			Sheet resultsSheet, 
 			Map<String, CellStyle> styles,
-			boolean embedImages) throws Exception {
+			boolean embedImages,
+			int sId,
+			Date startDate,
+			Date endDate,
+			int dateId) throws Exception {
 		
-		String sql = null;
+		StringBuffer sql = new StringBuffer();
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		//ResultSetMetaData rsMetaData = null;
@@ -873,18 +885,38 @@ public class XLSResultsManager {
 		/*
 		 * Retrieve the data for this table
 		 */
-		sql = "SELECT " + f.columns + " FROM " + f.table_name +
-				" WHERE _bad IS FALSE";		
+		sql.append("select " + f.columns + " from " + f.table_name +
+				" where _bad is false ");		
+		
+		String sqlRestrictToDateRange = null;
+		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
+			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name, dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql.append("and ");
+				sql.append(sqlRestrictToDateRange);
+			}
+		}
 		
 		if(f.parkey != null && !f.parkey.equals("0")) {
-			sql += " AND parkey=?";
+			sql.append(" and parkey=?");
 		}
-		sql += " ORDER BY prikey ASC;";	
+		sql.append(" order by prikey asc");	
 		
 		try {
-			pstmt = connectionResults.prepareStatement(sql);
+			pstmt = connectionResults.prepareStatement(sql.toString());
+			// if date filter is set then add it
+			int paramCount = 1;
+			if(sqlRestrictToDateRange != null && sqlRestrictToDateRange.trim().length() > 0) {
+				if(startDate != null) {
+					pstmt.setDate(paramCount++, startDate);
+				}
+				if(endDate != null) {
+					pstmt.setTimestamp(paramCount++, GeneralUtilityMethods.endOfDay(endDate));
+				}
+			}
 			if(f.parkey != null) {
-				pstmt.setInt(1, Integer.parseInt(f.parkey));
+				pstmt.setInt(paramCount++, Integer.parseInt(f.parkey));
 			}
 			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -897,7 +929,7 @@ public class XLSResultsManager {
 				// If this is the top level form reset the current parents and add the primary key
 				if(f.parkey == null || f.parkey.equals("0")) {
 					f.clearRecords();
-					record.addAll(getContent(con, prikey, true, "prikey", "key", split_locn));
+					record.addAll(getContent(sd, prikey, true, "prikey", "key", split_locn));
 				}
 				
 				
@@ -931,10 +963,10 @@ public class XLSResultsManager {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -944,16 +976,16 @@ public class XLSResultsManager {
 						} else {
 							if(multipleChoiceValue != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;
 								currentSelectMultipleQuestionName = null;
 							}
-							record.addAll(getContent(con, value, false, columnName, columnType, split_locn));
+							record.addAll(getContent(sd, value, false, columnName, columnType, split_locn));
 						}
 					} else {
-						record.addAll(getContent(con, value, false, columnName, columnType, split_locn));
+						record.addAll(getContent(sd, value, false, columnName, columnType, split_locn));
 					}
 				}
 				f.addRecord(prikey, f.parkey, record);
@@ -963,8 +995,9 @@ public class XLSResultsManager {
 					for(int j = 0; j < f.children.size(); j++) {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
-						getData(con, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
-								cols, resultsSheet, styles, embedImages);
+						getData(sd, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
+								cols, resultsSheet, styles, embedImages, 
+								sId, startDate, endDate, dateId);
 					}
 				}
 				
@@ -977,7 +1010,7 @@ public class XLSResultsManager {
 				if(f.parkey == null || f.parkey.equals("0")) {
 					
 					//f.printRecords(4, true);
-					appendToOutput(con, new ArrayList<String> (), 
+					appendToOutput(sd, new ArrayList<String> (), 
 							formList.get(0), formList, 0, null, resultsSheet, styles, embedImages);
 					
 				}

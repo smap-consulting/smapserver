@@ -1,6 +1,7 @@
 package surveyKPI;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,6 +72,9 @@ public class ExportSurveyXls extends Application {
 			@QueryParam("embedimages") boolean embedImages,
 			@QueryParam("forms") String include_forms,
 			@QueryParam("filetype") String filetype,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
 			
 			@Context HttpServletResponse response) {
 		
@@ -152,7 +156,8 @@ public class ExportSurveyXls extends Application {
 			xr.createXLS(sd, 
 					connectionResults,
 					request.getRemoteUser(),
-					sId, inc_id, 
+					sId, 
+					inc_id, 
 					inc_flat, 
 					exp_ro, 
 					merge_select_multiple, 
@@ -160,7 +165,10 @@ public class ExportSurveyXls extends Application {
 					split_locn,
 					request,
 					response.getOutputStream(),
-					embedImages);
+					embedImages,
+					startDate,
+					endDate,
+					dateId);
 			
 			responseVal = Response.ok("").build();
 			

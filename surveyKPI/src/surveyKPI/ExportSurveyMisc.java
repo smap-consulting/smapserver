@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -100,7 +101,10 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("language") String language,
 			@QueryParam("exp_ro") boolean exp_ro,
 			@QueryParam("excludeparents") boolean excludeParents,
-			@QueryParam("format") String format) {
+			@QueryParam("format") String format,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId) {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -202,7 +206,10 @@ public class ExportSurveyMisc extends Application {
 						null,
 						null,
 						null,
-						request.getRemoteUser());
+						request.getRemoteUser(),
+						startDate,
+						endDate,
+						dateId);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique

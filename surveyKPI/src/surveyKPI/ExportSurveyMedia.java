@@ -17,6 +17,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -96,7 +97,10 @@ public class ExportSurveyMedia extends Application {
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("mediaquestion") int mediaQuestion,			
-			@QueryParam("namequestions") String nameQuestionIdList) {
+			@QueryParam("namequestions") String nameQuestionIdList,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId) {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -197,7 +201,10 @@ public class ExportSurveyMedia extends Application {
 						null,
 						requiredColumns,
 						namedQuestions,
-						request.getRemoteUser());
+						request.getRemoteUser(),
+						startDate,
+						endDate,
+						dateId);
 				
 				/*
 				 * 1. Create the target folder

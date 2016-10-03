@@ -1155,6 +1155,45 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the column name from the question id
+	 * This assumes that all names in the survey are unique
+	 */
+	static public String getColumnNameFromId(
+			Connection sd, 
+			int sId,
+			int qId) throws SQLException {
+		
+		String column_name = null;
+		
+		String sql = "select q.column_name " +
+				" from question q, form f" +
+				" where q.f_id = f.f_id " +
+				" and f.s_id = ? " +
+				" and q.q_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				column_name = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return column_name;
+	}
+	
+	/*
 	 * Get an access key to allow results for a form to be securely submitted
 	 */
 	public static String  getNewAccessKey(
