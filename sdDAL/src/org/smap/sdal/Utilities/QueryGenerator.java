@@ -199,17 +199,6 @@ public class QueryGenerator {
 		shpSqlBuf.append(sqlDesc.tables.get(0));
 		shpSqlBuf.append("._bad='false'");
 		
-		String sqlRestrictToDateRange = null;
-		if(dateId > 0) {
-			String dateName = GeneralUtilityMethods.getColumnNameFromId(connectionSD, sId, dateId);
-			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, 
-					sqlDesc.tables.get(0), dateName);
-			if(sqlRestrictToDateRange.trim().length() > 0) {
-				shpSqlBuf.append(" and ");
-				shpSqlBuf.append(sqlRestrictToDateRange);
-			}
-		}
-		
 		if(format.equals("shape") && sqlDesc.geometry_type != null) {
 			shpSqlBuf.append(" and the_geom is not null");
 		}
@@ -224,6 +213,18 @@ public class QueryGenerator {
 				shpSqlBuf.append(".parkey");
 			}
 		}
+		
+		String sqlRestrictToDateRange = null;
+		if(dateId > 0) {
+			String dateName = GeneralUtilityMethods.getColumnNameFromId(connectionSD, sId, dateId);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, 
+					sqlDesc.tables.get(0), dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				shpSqlBuf.append(" and ");
+				shpSqlBuf.append(sqlRestrictToDateRange);
+			}
+		}
+		
 		// Add Rbac Row Filer
 		boolean hasRbacFilter = false;
 		RoleManager rm = new RoleManager();
@@ -244,6 +245,17 @@ public class QueryGenerator {
 		 */
 		PreparedStatement pstmtConvert = connectionResults.prepareStatement(shpSqlBuf.toString());
 		int paramCount = 1;
+		
+		// if date filter is set then add it
+		if(sqlRestrictToDateRange != null && sqlRestrictToDateRange.trim().length() > 0) {
+			if(startDate != null) {
+				pstmtConvert.setDate(paramCount++, startDate);
+			}
+			if(endDate != null) {
+				pstmtConvert.setTimestamp(paramCount++, GeneralUtilityMethods.endOfDay(endDate));
+			}
+		}
+		
 		if(hasRbacFilter) {
 			paramCount = rm.setRbacParameters(pstmtConvert, rfArray, paramCount);
 		}

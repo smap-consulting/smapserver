@@ -127,7 +127,7 @@ public class ExportSurveyMisc extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
 		// End Authorisation
