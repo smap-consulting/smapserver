@@ -414,7 +414,7 @@ public class Items extends Application {
 					whereClause += sqlFilter;
 				}
 				if(date != null) {
-					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
+					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getColumnName());
 					if(sqlRestrictToDateRange.trim().length() > 0) {
 						if(doneWhere) {
 							whereClause += " and ";

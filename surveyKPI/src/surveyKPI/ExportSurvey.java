@@ -837,7 +837,7 @@ public class ExportSurvey extends Application {
 		String sqlRestrictToDateRange = null;
 		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
 			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
-			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name, dateName);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, dateName);
 			if(sqlRestrictToDateRange.trim().length() > 0) {
 				sql.append("and ");
 				sql.append(sqlRestrictToDateRange);

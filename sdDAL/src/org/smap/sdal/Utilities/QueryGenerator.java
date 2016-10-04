@@ -215,10 +215,9 @@ public class QueryGenerator {
 		}
 		
 		String sqlRestrictToDateRange = null;
-		if(dateId > 0) {
+		if(dateId > 0 ) {
 			String dateName = GeneralUtilityMethods.getColumnNameFromId(connectionSD, sId, dateId);
-			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, 
-					sqlDesc.tables.get(0), dateName);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, dateName);
 			if(sqlRestrictToDateRange.trim().length() > 0) {
 				shpSqlBuf.append(" and ");
 				shpSqlBuf.append(sqlRestrictToDateRange);

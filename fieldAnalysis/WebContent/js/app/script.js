@@ -102,7 +102,8 @@ $(document).ready(function() {
 		        			forms = $(':checkbox:checked', '.osmforms').map(function() {
 		        			      return this.value;
 		        			    }).get();
-		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly);
+		        			url = exportSurveyOSMURL(sId, displayName, forms, exportReadOnly,
+		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		
 		        		} else if(format === "shape" 
 		        				|| format === "kml" 
@@ -117,7 +118,9 @@ $(document).ready(function() {
 		        				alert(localise.set["msg_one_f2"]);
 			        			return(false);
 		        			}		
-		        			url = exportSurveyShapeURL(sId, displayName, forms[0], format, exportReadOnly, language);
+		        			url = exportSurveyShapeURL(sId, displayName, forms[0], 
+		        					format, exportReadOnly, language,
+		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		
 		        		} else if(format === "thingsat") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
@@ -127,7 +130,8 @@ $(document).ready(function() {
 		        				alert(localise.set["msg_one_f2"]);
 			        			return(false);
 		        			}		
-		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language);
+		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language,
+		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		} else if(format === "trail") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
@@ -1030,15 +1034,36 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 	return encodeURI(url);
 }
 
-function exportSurveyLqasURL (sId, sources, reportDefn) {
+function exportSurveyLqasURL (sId, sources, reportDefn,
+		exp_from_date,
+		exp_to_date,
+		dateQuestionId) {
 
-	var url = "/surveyKPI/lqasExport/";
+	var url = "/surveyKPI/lqasExport/",
+		hasParam = false;
 
 	url += sId;
 	url += "/" + reportDefn;
 	
 	if(sources) {
 		url+="?sources=true";
+		hasParam = true;
+	}
+	
+	if(dateQuestionId > 0) {
+		if(hasParam) {
+			url += "&";
+		} else {
+			url += "?";
+		}
+		url += "dateId=" + dateQuestionId;
+		
+		if(exp_from_date) {
+			url += "&from=" + exp_from_date;
+		}
+		if(exp_to_date) {
+			url += "&to=" + exp_to_date;
+		}
 	}
 	
 	return encodeURI(url);
@@ -1047,7 +1072,10 @@ function exportSurveyLqasURL (sId, sources, reportDefn) {
 /*
  * Web service handler for exporting an entire survey to OSM
  */
-function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
+function exportSurveyOSMURL (sId, filename, forms, exp_ro,
+		exp_from_date,
+		exp_to_date,
+		dateQuestionId) {
 
 	var url = "/surveyKPI/exportSurveyOSM/",
 		form,
@@ -1062,16 +1090,20 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 	
 
 	if(typeof forms !== undefined && forms.length > 0 ) {
-
-		//for(i = 0; i < forms.length; i++) {
-		//	form = forms[i];		
-		//	form = form.substring(0, form.lastIndexOf(":"));
-		//	ways[i] = form;
-		//}
 		url += "?ways=" + forms.join(',');
 		url+= "&exp_ro=" + exp_ro;
 	} else {
 		url += "?exp_ro=" + exp_ro;
+	}
+	
+	if(dateQuestionId > 0) {
+		url += "&dateId=" + dateQuestionId;
+		if(exp_from_date) {
+			url += "&from=" + exp_from_date;
+		}
+		if(exp_to_date) {
+			url += "&to=" + exp_to_date;
+		}
 	}
 	
 	return encodeURI(url);
@@ -1080,7 +1112,10 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro) {
 /*
  * Web service handler for exporting a form as a shape file
  */
-function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
+function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
+		exp_from_date,
+		exp_to_date,
+		dateQuestionId) {
 
 	var url = "/surveyKPI/exportSurveyMisc/";
 	
@@ -1099,6 +1134,16 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language) {
 	url += "&exp_ro=" + exp_ro;
 	url += "&language=" + language;
 		
+	if(dateQuestionId > 0) {
+		url += "&dateId=" + dateQuestionId;
+		if(exp_from_date) {
+			url += "&from=" + exp_from_date;
+		}
+		if(exp_to_date) {
+			url += "&to=" + exp_to_date;
+		}
+	}
+	
 	return encodeURI(url);
 }
 

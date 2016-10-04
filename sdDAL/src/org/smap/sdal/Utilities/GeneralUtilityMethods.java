@@ -2365,19 +2365,19 @@ public class GeneralUtilityMethods {
 	/*
 	 * Returns the SQL fragment that makes up the date range restriction
 	 */
-	public static String getDateRange(Date startDate, Date endDate, String dateTable, String dateName) {
+	public static String getDateRange(Date startDate, Date endDate, String dateName) {
 		String sqlFrag = "";
 		boolean needAnd = false;
 		
 		if(startDate != null) {
-			sqlFrag += dateTable + "." + dateName + " >= ? ";
+			sqlFrag += dateName + " >= ? ";
 			needAnd = true;
 		}
 		if(endDate != null) {
 			if(needAnd) {
 				sqlFrag += "and ";
 			}
-			sqlFrag += dateTable + "." + dateName + " < ? ";
+			sqlFrag += dateName + " < ? ";
 		}
 
 		return sqlFrag;

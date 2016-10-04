@@ -298,7 +298,7 @@ public class Results2 extends Application {
 			String sqlRestrictToRecordId = restrictToRecordId(aQ, rId);
 			String sqlRestrictToDateRange = "";
 			if(date != null) {
-				sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
+				sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getColumnName());
 			} 
 			if(externalGeom) {
 				sqlGeom = getGeometryJoin(q);

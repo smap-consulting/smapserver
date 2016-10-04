@@ -204,11 +204,14 @@ public class XLSResultsManager {
 		surveyNames = new HashMap<String, String> ();
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
+		String dateName = null;
+		int dateForm = 0;
 		if(sId != 0) {
 			
 			PreparedStatement pstmt2 = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
+			PreparedStatement pstmtDateFilter = null;
 
 			try {
 				
@@ -233,6 +236,20 @@ public class XLSResultsManager {
 				HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;	
+				
+				/*
+				 * Get the details on the date filter
+				 */
+				if(dateId > 0) {
+					String sqlDateFilter = "select f_id, column_name from question where q_id = ?";
+					pstmtDateFilter = sd.prepareStatement(sqlDateFilter);
+					pstmtDateFilter.setInt(1, dateId);
+					ResultSet rs = pstmtDateFilter.executeQuery();
+					if(rs.next()) {
+						dateForm = rs.getInt("f_id");
+						dateName = rs.getString("column_name");
+					}
+				}
 				
 				/*
 				 * Get the tables / forms in this survey 
@@ -501,7 +518,8 @@ public class XLSResultsManager {
 						sId,
 						startDate, 
 						endDate, 
-						dateId);
+						dateName,
+						dateForm);
 	
 			
 			} finally {
@@ -509,6 +527,7 @@ public class XLSResultsManager {
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
+				try {if (pstmtDateFilter != null) {pstmtDateFilter.close();	}} catch (SQLException e) {	}
 				
 			}
 		}
@@ -875,7 +894,8 @@ public class XLSResultsManager {
 			int sId,
 			Date startDate,
 			Date endDate,
-			int dateId) throws Exception {
+			String dateName,
+			int dateForm) throws Exception {
 		
 		StringBuffer sql = new StringBuffer();
 		PreparedStatement pstmt = null;
@@ -889,9 +909,8 @@ public class XLSResultsManager {
 				" where _bad is false ");		
 		
 		String sqlRestrictToDateRange = null;
-		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
-			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
-			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name, dateName);
+		if(dateName != null && dateForm == Integer.parseInt(f.f_id)) {	
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name + "." + dateName);
 			if(sqlRestrictToDateRange.trim().length() > 0) {
 				sql.append("and ");
 				sql.append(sqlRestrictToDateRange);
@@ -997,7 +1016,7 @@ public class XLSResultsManager {
 						nextForm.parkey = prikey;
 						getData(sd, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
 								cols, resultsSheet, styles, embedImages, 
-								sId, startDate, endDate, dateId);
+								sId, startDate, endDate, dateName, dateForm);
 					}
 				}
 				
