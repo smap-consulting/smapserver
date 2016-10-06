@@ -80,7 +80,12 @@ public class ActionManager {
 			a.sId = sId;
 			a.managedId = managedId;
 			a.prikey = prikey;
-			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
+			if(value == null) {
+				System.out.println("Value is null");
+			} else {
+				System.out.println("value is not null it is: " + value);
+			}
+			log.info("Apply managed actions: Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
 			addAction(sd, a, oId, localisation, a.action, null, priority, value);
 		}
@@ -155,19 +160,45 @@ public class ActionManager {
 			String value) throws Exception {
 		
 		String sql = "insert into alert"
-				+ "(u_id, status, priority, updated_time, link, message) "
-				+ "values(?, ?, ?, now(), ?, ?)";
+				+ "(u_id, status, priority, created_time, updated_time, link, message, s_id, m_id, prikey) "
+				+ "values(?, ?, ?, now(), now(), ?, ?, ?, ?, ?)";
 		PreparedStatement pstmt = null;
 		
+		String sqlUpdate = "update alert "
+				+ "set "
+				+ "u_id = ?,"
+				+ "status = ?,"
+				+ "priority = ?, "
+				+ "updated_time = now(), "
+				+ "message = ? "
+				+ "where id = ?";
+		
+		String sqlActionExists = "select id from alert where s_id = ? and m_id = ? and prikey = ?";
+		PreparedStatement pstmtActionExists = null;
+		
+		String sqlDeleteAction = "delete from alert where id = ?";
+		PreparedStatement pstmtDeleteAction = null;
+				
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		
 		String link = null;
+		int actionId = 0;
 		try {
 			
-			if(a.action.equals("respond")) {
+			// Check to see if an action already exists for this managed form
+			pstmtActionExists = sd.prepareStatement(sqlActionExists);
+			pstmtActionExists.setInt(1, a.sId);
+			pstmtActionExists.setInt(2, a.managedId);
+			pstmtActionExists.setInt(3, a.prikey);
+			ResultSet rs = pstmtActionExists.executeQuery();
+			if(rs.next()) {
+				actionId = rs.getInt(1);
+			}
+			
+			if(a.action.equals("respond") && actionId == 0) {
 				
 				/*
-				 * Create a temporary user who can complete this action
+				 * If this is a new action then create a temporary user who can complete it
 				 */
 				UserManager um = new UserManager();
 				String tempUserId = "u" + String.valueOf(UUID.randomUUID());
@@ -185,35 +216,65 @@ public class ActionManager {
 			if(a.notify_type != null) {
 				if(a.notify_type.equals("ident")) {		// Only ident currently supported
 					if(a.notify_person == null) {
-						a.notify_person = value;	// Use the value that is being set as the idnet of the person to notify
+						a.notify_person = value;	// Use the value that is being set as the ident of the person to notify
 					}
-					uId = GeneralUtilityMethods.getUserId(sd, a.notify_person);
+					if(a.notify_person != null && a.notify_person.trim().length() > 0) {
+						uId = GeneralUtilityMethods.getUserId(sd, a.notify_person);
+					}
+					
 				} else {
 					log.info("Info: User attempted to use a notify type other than ident");
 				}
 			}
-			if(uId == 0) {
-				throw new Exception(
-						localisation.getString("mf_u") + " " + 
-						a.notify_person + 
-						localisation.getString("mf_nf"));
-			}
 			
-			if(action != null && msg == null) {
-				msg = localisation.getString("action_" + action);
-			}
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1,  uId);			// User
-			pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
-			pstmt.setInt(3, priority);				// Priority
-			pstmt.setString(4,  link);		// Link for the user to click on to complete the action
-			pstmt.setString(5,  msg);		// Message TODO set for info type actions
+			/*
+			 * If this alert is no longer assigned to an individual and has no subscriptions (TODO) then it can be deleted
+			 */
+			if(uId == 0 && actionId > 0) {
+				pstmtDeleteAction = sd.prepareStatement(sqlDeleteAction);
+				pstmtDeleteAction.setInt(1, actionId);
+				pstmtDeleteAction.executeUpdate();
+			} else {
 			
-			log.info("Create alert: " + pstmt.toString());
-			pstmt.executeUpdate();
+				if(action != null && msg == null) {
+					msg = localisation.getString("action_" + action);
+				}
+				
+				if(actionId > 0) {
+					// Update existing action
+					pstmt = sd.prepareStatement(sqlUpdate);
+					pstmt.setInt(1,  uId);			// User
+					pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
+					pstmt.setInt(3, priority);		// Priority
+					pstmt.setString(4,  msg);		// Message TODO set for info type actions
+					pstmt.setInt(5,  actionId);
+					log.info("Update alert: " + pstmt.toString());
+					pstmt.executeUpdate();
+					
+				} else {
+					// Insert action
+					if(action != null && msg == null) {
+						msg = localisation.getString("action_" + action);
+					}
+					pstmt = sd.prepareStatement(sql);
+					pstmt.setInt(1,  uId);			// User
+					pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
+					pstmt.setInt(3, priority);				// Priority
+					pstmt.setString(4,  link);		// Link for the user to click on to complete the action
+					pstmt.setString(5,  msg);		// Message TODO set for info type actions
+					pstmt.setInt(6,  a.sId);
+					pstmt.setInt(7,  a.managedId);
+					pstmt.setInt(8,  a.prikey);
+					
+					log.info("Create alert: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
+			}
 					    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtActionExists != null) {pstmtActionExists.close();}} catch (SQLException e) {}
+			try {if (pstmtDeleteAction != null) {pstmtDeleteAction.close();}} catch (SQLException e) {}
 		}
 		
 		

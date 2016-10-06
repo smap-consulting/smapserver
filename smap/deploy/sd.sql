@@ -614,12 +614,16 @@ ALTER SEQUENCE alert_seq OWNER TO ws;
 
 create TABLE alert (
 	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
-	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	u_id integer,
 	status integer,
 	priority integer,
 	updated_time TIMESTAMP WITH TIME ZONE,
+	created_time TIMESTAMP WITH TIME ZONE,
 	link text,
-	message text
+	message text,
+	s_id integer,	-- Survey Id that the alert applies to
+	m_id integer,	-- Managed form id that the alert applies to
+	prikey integer	-- Primary key of survey for which the alert applies
 );
 ALTER TABLE alert OWNER TO ws;
 

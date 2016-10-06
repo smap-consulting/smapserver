@@ -327,10 +327,6 @@ public class XLSCustomReportsManager {
 	                						throw new Exception(localisation.getString("mf_mnt") + 
 			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 	                					} 
-	                					if(action.equals("respond") && todo.notify_person == null) {
-	                						throw new Exception(localisation.getString("mf_mnp") + 
-			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-	                					}
 	                					
 	                					currentCol.actions.add(todo);
 	                					
