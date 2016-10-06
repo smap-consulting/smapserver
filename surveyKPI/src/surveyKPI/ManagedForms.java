@@ -368,6 +368,7 @@ public class ManagedForms extends Application {
 		// End Authorisation
 
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Update Managed Forms");
+		int priority = -1;
 		
 		try {
 
@@ -476,7 +477,10 @@ public class ManagedForms extends Application {
 				 */
 				if(tc.actions != null && tc.actions.size() > 0) {
 					ActionManager am = new ActionManager();
-					am.applyManagedFormActions(sd, tc, oId, sId, managedId, u.prikey, localisation);
+					if(priority < 0) {
+						priority = am.getPriority(sd, f.tableName, u.prikey);
+					}
+					am.applyManagedFormActions(sd, tc, oId, sId, managedId, u.prikey, priority, u.value, localisation);
 				}
 				
 
@@ -494,6 +498,7 @@ public class ManagedForms extends Application {
 			try{cResults.setAutoCommit(true);} catch(Exception ex) {}
 			
 			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
+			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);

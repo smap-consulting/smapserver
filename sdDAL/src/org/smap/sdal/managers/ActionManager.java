@@ -56,9 +56,9 @@ public class ActionManager {
 	public final static int ALERT_DELETED = 3;
 
 	// Alert priorities
-	public final static int PRI_LOW = 1;
+	public final static int PRI_LOW = 3;
 	public final static int PRI_MED = 2;
-	public final static int PRI_HIGH = 3;
+	public final static int PRI_HIGH = 1;
 	
 	/*
 	 * Apply actions resulting from a change to managed forms
@@ -69,6 +69,8 @@ public class ActionManager {
 			int sId, 
 			int managedId,
 			int prikey,
+			int priority,
+			String value,
 			ResourceBundle localisation) throws Exception {
 		
 		for(int i = 0; i < tc.actions.size(); i++) {
@@ -80,8 +82,37 @@ public class ActionManager {
 			a.prikey = prikey;
 			System.out.println("Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
-			addAction(sd, a, oId, localisation, a.action, null);
+			addAction(sd, a, oId, localisation, a.action, null, priority, value);
 		}
+	}
+	
+	/*
+	 * Get the priority of a record
+	 *  1 - high
+	 *  2 - medium
+	 *  3 - low
+	 */
+	public int getPriority(Connection sd, 
+			String tableName, 
+			int prikey) throws Exception {
+		
+		String sql = "select priority from " + tableName + " where prikey = ?";
+		PreparedStatement pstmt = null;
+		int priority = ActionManager.PRI_LOW;	// Default to a low priority
+		try {
+			if(GeneralUtilityMethods.hasColumn(sd, tableName, "priority")) {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, prikey);
+				ResultSet rs = pstmt.executeQuery();
+				if(rs.next()) {
+					priority = rs.getInt(1);
+				}
+			}
+		} finally {
+			if(pstmt != null) {try {pstmt.close();} catch (Exception e) {}}
+		}
+		
+		return priority;
 	}
 	
 	/*
@@ -119,7 +150,9 @@ public class ActionManager {
 	 */
 	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation, 
 			String action,
-			String msg) throws Exception {
+			String msg, 
+			int priority,
+			String value) throws Exception {
 		
 		String sql = "insert into alert"
 				+ "(u_id, status, priority, updated_time, link, message) "
@@ -151,6 +184,9 @@ public class ActionManager {
 			int uId = 0;
 			if(a.notify_type != null) {
 				if(a.notify_type.equals("ident")) {		// Only ident currently supported
+					if(a.notify_person == null) {
+						a.notify_person = value;	// Use the value that is being set as the idnet of the person to notify
+					}
 					uId = GeneralUtilityMethods.getUserId(sd, a.notify_person);
 				} else {
 					log.info("Info: User attempted to use a notify type other than ident");
@@ -169,7 +205,7 @@ public class ActionManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  uId);			// User
 			pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
-			pstmt.setInt(3, PRI_LOW);				// Priority
+			pstmt.setInt(3, priority);				// Priority
 			pstmt.setString(4,  link);		// Link for the user to click on to complete the action
 			pstmt.setString(5,  msg);		// Message TODO set for info type actions
 			

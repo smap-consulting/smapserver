@@ -121,29 +121,51 @@ require([
 			}
 			
 		}
+		/*
+		 * Drop down messages have x parts
+		 * At left icon
+		 * Main message
+		 * Small message to right of main message
+		 * Footer message (Required)
+		 */
 		for(i = 0; i < alerts.length; i++) {
 			a = alerts[i];
 			h[++idx] = '<li>';
+			h[++idx] = '<div class="dropdown-messages-box">';
 			if(a.link) {
 				h[++idx] = '<a href="';
 				h[++idx] = a.link;
-				h[++idx] = '">';
-			}    
-            h[++idx] = '<div>';
-            	h[++idx] = '<i class="fa ';
-            	h[++idx] = 'fa-envelope';
-            	h[++idx] = ' fa-fw"></i>';
-            	h[++idx] = a.message;
-                h[++idx] =  '<span class="pull-right text-muted small">';                 
-                h[++idx] = getInterval(a.since);
-                h[++idx] = '</span>';
-            h[++idx] = '<div>';
-            if(a.link) {
-            	h[++idx] = '</a>';
+				h[++idx] = '" class="pull-left">';
+			} 
+			h[++idx] = '<i class="fa ';
+			if(a.priority == 1) {
+				h[++idx] = "red-bg "
+			} else if(a.priority == 2) {
+				h[++idx] = "orange-bg "
+			} else {
+				h[++idx] = "blue-bg "
+			}
+        	h[++idx] = 'fa-edit';
+        	h[++idx] = ' fa-2x"></i>';
+        	if(a.link) {
+             	h[++idx] = '</a>';
             }
+
+            h[++idx] = '<div class="media-body">';
+            h[++idx] = '<small class="pull-right text-navy">'; 
+            h[++idx] = getInterval(a.since);
+            h[++idx] = '</small>';
+            h[++idx] = '<strong>';
+            h[++idx] = a.message;
+            h[++idx] = '</strong><br>';
+            h[++idx] =  '<small class="text-muted">Yesterday 1:21 pm - 11.06.2014</small>';
+            h[++idx] = '</div>';
+            h[++idx] = '</div>';
+           
             h[++idx] = '</li>';
+            h[++idx] = '<li class="divider"></li>';
 		}
-		$('.dropdown-alerts').html(h.join(''));
+		$('.dropdown-messages').html(h.join(''));
 	}
 	
 	function getInterval(seconds) {
