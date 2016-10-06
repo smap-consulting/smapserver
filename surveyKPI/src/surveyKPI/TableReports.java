@@ -106,12 +106,14 @@ public class TableReports extends Application {
 			
 			// Localisation
 			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			// Get columns
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId);
 			
 			// Convert data to an array
 			Type type = new TypeToken<ArrayList<ArrayList<KeyValue>>>(){}.getType();		

@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.TableColumn;
@@ -53,7 +54,8 @@ public class ManagedFormsManager {
 			Connection cResults,
 			int sId,
 			int managedId,
-			String uIdent) throws SQLException, Exception  {
+			String uIdent,
+			int oId) throws SQLException, Exception  {
 		
 		ManagedFormConfig mfc = new ManagedFormConfig();
 		ManagedFormConfig savedConfig = null;
@@ -144,7 +146,7 @@ public class ManagedFormsManager {
 			 * Add the data processing columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns);
+				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns, oId);
 			}
 		
 				
@@ -163,7 +165,10 @@ public class ManagedFormsManager {
 	/*
 	 * Get the managed columns
 	 */
-	public void getDataProcessingConfig(Connection sd, int crId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) throws Exception {
+	public void getDataProcessingConfig(Connection sd, int crId, 
+			ArrayList<TableColumn> formColumns, 
+			ArrayList<TableColumn> configColumns,
+			int oId) throws Exception {
 		
 		CustomReportsManager crm = new CustomReportsManager ();
 		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
@@ -193,6 +198,18 @@ public class ManagedFormsManager {
 				}
 			}
 			
+			// Add dynamic choice values such as users identified by role
+			if(tc.choices != null) {
+				ArrayList newChoices = new ArrayList<KeyValue> ();
+				for(KeyValue kv : tc.choices) {
+					if(kv.isRole) {
+						newChoices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, kv.k));
+					} else {
+						newChoices.add(kv);
+					}
+				}
+				tc.choices = newChoices;
+			}
 			// Add the management column to the array of columns
 			formColumns.add(tc);
 		}

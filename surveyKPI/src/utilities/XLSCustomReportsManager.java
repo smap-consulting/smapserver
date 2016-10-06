@@ -290,9 +290,9 @@ public class XLSCustomReportsManager {
 	                						currentCol.choices = new ArrayList<KeyValue> ();
 	                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
 	                					}
-	                					
+	                					currentCol.choices.add(new KeyValue(role, role, true));
 	                					// Get the users that have this role
-	                					currentCol.choices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, role));
+	                					//currentCol.choices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, role));
 	                					currentCol.filter = true;
 	                					
 	                				} else {

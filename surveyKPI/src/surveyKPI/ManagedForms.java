@@ -92,9 +92,9 @@ public class ManagedForms extends Application {
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId);
 			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
@@ -190,6 +190,8 @@ public class ManagedForms extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
 		
 		try {
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 
 			// Get the users locale
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
@@ -199,7 +201,8 @@ public class ManagedForms extends Application {
 			TableManager tm = new TableManager();
 			
 			// 1. Check that the managed form is compatible with the survey
-			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, am.manageId, request.getRemoteUser());
+			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
+					am.manageId, request.getRemoteUser(), oId);
 			if(compatibleMsg != null) {
 				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 			}
@@ -240,7 +243,8 @@ public class ManagedForms extends Application {
 	 */
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
 			int managedId,
-			String user) {
+			String user,
+			int oId) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 			
@@ -249,7 +253,7 @@ public class ManagedForms extends Application {
 			try {
 				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
 				ManagedFormsManager qm = new ManagedFormsManager();
-				qm.getDataProcessingConfig(sd, managedId, managedColumns, null);
+				qm.getDataProcessingConfig(sd, managedId, managedColumns, null, oId);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
 				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, 
@@ -397,7 +401,7 @@ public class ManagedForms extends Application {
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, managedId, columns, null);
+			qm.getDataProcessingConfig(sd, managedId, columns, null, oId);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
