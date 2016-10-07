@@ -3,8 +3,8 @@ package org.smap.sdal.model;
 public class Alert {
 	public int id;
 	public String userIdent;
-	public int status;
-	public int priority;
+	public String status;			// open || complete				
+	public int priority;			// 1 - High, 3 - Low
 	public String link;
 	public String message;
 	public String updatedTime;

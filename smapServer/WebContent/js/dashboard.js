@@ -138,7 +138,9 @@ require([
 				h[++idx] = '" class="pull-left">';
 			} 
 			h[++idx] = '<i class="fa ';
-			if(a.priority == 1) {
+			if(a.status == "complete") {
+				h[++idx] = "green-bg "
+			} else if(a.priority == 1) {
 				h[++idx] = "red-bg "
 			} else if(a.priority == 2) {
 				h[++idx] = "orange-bg "

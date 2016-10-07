@@ -272,12 +272,10 @@ public class UserManager {
 					+ "from alert a, users u "
 					+ "where a.u_id = u.id "
 					+ "and u.ident = ? "
-					+ "and a.status != ? "
 					+ "order by a.updated_time asc";
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, ident);
-			pstmt.setInt(2, ActionManager.ALERT_DELETED);
 			
 			log.info("Get alert details: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -286,7 +284,7 @@ public class UserManager {
 				Alert a = new Alert();
 				a.id = resultSet.getInt("id");
 				a.userIdent = ident;
-				a.status = resultSet.getInt("status");
+				a.status = resultSet.getString("status");
 				a.priority = resultSet.getInt("priority");
 				a.link = resultSet.getString("link");
 				a.message = resultSet.getString("message");

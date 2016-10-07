@@ -104,8 +104,22 @@ require([
         		 globals,
         		 datatables) {
 
+	window.gTasks = {
+			cache: {
+				surveyConfig: {},				// keep
+				managedData: {},
+				surveyList: {}					// keep
+			},
+			gSelectedRecord: undefined,			// keep
+			gSelectedSurveyIndex: undefined,	// Keep
+			gUpdate: [],
+			gCurrentIndex: undefined,
+			gPriKey: undefined,
+			gSort: undefined,
+			gDirn: undefined
+		}
 	
-	 $(document).ready(function() {
+	$(document).ready(function() {
 
 		var i,
 			params,
@@ -120,6 +134,16 @@ require([
 		var $editForm = $('#editRecordForm'),
 			$surveyForm = $('#surveyForm');
 		
+		/*
+		 * Set up the global data.  The structure of the caching aproach used by managed_forms is used
+		 *  as the code is shared.  However there not really a need for caching in this module.
+		 */
+		gTasks.gSelectedSurveyIndex = 0;
+		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = {};
+		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns = gSurveyConfig.columns;
+		gTasks.gSelectedRecord = gRecord[0];
+		
+		// Show the dialog
 		showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
 		
 		
@@ -131,11 +155,10 @@ require([
 					  dataType: 'text',
 					  contentType: "application/json",
 					  cache: false,
-					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id,
+					  url: "/surveyKPI/managed/update/" + gSurvey + "/" + gManage,
 					  data: { settings: saveString },
 					  success: function(data, status) {
 						  removeHourglass();
-						  globals.gMainTable.ajax.reload();
 					  }, error: function(data, status) {
 						  removeHourglass();
 						  alert(data.responseText);

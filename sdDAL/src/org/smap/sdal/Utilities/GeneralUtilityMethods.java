@@ -684,6 +684,41 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the organisation id for the survey
+	 */
+	static public int getOrganisationIdForSurvey(
+			Connection sd, 
+			int sId) throws SQLException {
+		
+		int o_id = -1;
+		
+		String sqlGetOrgId = "select p.o_id "
+				+ " from survey s, project p "
+				+ "where s.p_id = p.id "
+				+ "and s.s_id = ?";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sqlGetOrgId);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				o_id = rs.getInt(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return o_id;
+	}
+	
+	/*
 	 * Get the organisation name for the organisation id
 	 */
 	static public String getOrganisationName(

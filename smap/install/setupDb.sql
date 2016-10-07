@@ -849,7 +849,7 @@ DROP TABLE IF EXISTS alert CASCADE;
 create TABLE alert (
 	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
 	u_id integer,
-	status integer,
+	status varchar(10),
 	priority integer,
 	updated_time TIMESTAMP WITH TIME ZONE,
 	created_time TIMESTAMP WITH TIME ZONE,

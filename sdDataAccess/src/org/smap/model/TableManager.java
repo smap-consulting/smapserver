@@ -141,7 +141,7 @@ public class TableManager {
 			
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, managedId, columns, null);
+			qm.getDataProcessingConfig(sd, managedId, columns, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
 			
 			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			

@@ -19,19 +19,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package surveyMobileAPI;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,44 +32,21 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.xalan.processor.TransformerFactoryImpl;
 import org.codehaus.jettison.json.JSONArray;
-import org.smap.model.SurveyTemplate;
-import org.smap.sdal.Utilities.AuthorisationException;
-import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.JsonAuthorisationException;
-import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.ManagedFormsManager;
-import org.smap.sdal.managers.ServerManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TableDataManager;
-import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.ManagedFormConfig;
-import org.smap.sdal.model.ManifestValue;
-import org.smap.sdal.model.ServerData;
-import org.smap.sdal.model.Survey;
-import org.smap.server.utilities.GetXForm;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -217,7 +186,7 @@ public class ActionService extends Application{
 	    output.append("<script>");
 	    
 		ManagedFormsManager mfm = new ManagedFormsManager();
-		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent);
+		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId));
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
 		Form f = GeneralUtilityMethods.getTopLevelForm(sd, a.sId);
 		
@@ -226,6 +195,15 @@ public class ActionService extends Application{
 			urlprefix, 
 			request.getRemoteUser(),
 			f.tableName));
+	    
+	    output.append("var gSurvey=");  // Survey id
+	    output.append(a.sId);
+	    output.append(";\n");
+	    
+	    output.append("var gManage=");  // Manage id
+	    output.append(a.managedId);
+	    output.append(";\n");
+	    
 	    output.append("</script>");
 	    output.append("</head>\n");
 		

@@ -49,11 +49,6 @@ public class ActionManager {
 	
 	private static Logger log =
 			 Logger.getLogger(ActionManager.class.getName());
-	
-	// Alert status values
-	public final static int ALERT_OPEN = 1;
-	public final static int ALERT_DONE = 2;
-	public final static int ALERT_DELETED = 3;
 
 	// Alert priorities
 	public final static int PRI_LOW = 3;
@@ -244,7 +239,7 @@ public class ActionManager {
 					// Update existing action
 					pstmt = sd.prepareStatement(sqlUpdate);
 					pstmt.setInt(1,  uId);			// User
-					pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
+					pstmt.setString(2, "open");    // Status: open || reject || complete
 					pstmt.setInt(3, priority);		// Priority
 					pstmt.setString(4,  msg);		// Message TODO set for info type actions
 					pstmt.setInt(5,  actionId);
@@ -258,7 +253,7 @@ public class ActionManager {
 					}
 					pstmt = sd.prepareStatement(sql);
 					pstmt.setInt(1,  uId);			// User
-					pstmt.setInt(2, ALERT_OPEN);    // Status: open || reject || complete
+					pstmt.setString(2, "open");    // Status: open || reject || complete
 					pstmt.setInt(3, priority);				// Priority
 					pstmt.setString(4,  link);		// Link for the user to click on to complete the action
 					pstmt.setString(5,  msg);		// Message TODO set for info type actions
