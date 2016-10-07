@@ -175,6 +175,8 @@ public class ActionService extends Application{
 	    output.append("<link href=\"/css/wb/animate.css\" rel=\"stylesheet\">\n");
 	    output.append("<link href=\"/css/wb/style.css\" rel=\"stylesheet\">\n");
 	    output.append("<link href=\"/css/smap-wb.css\" rel=\"stylesheet\">\n");
+	    output.append("<link href=\"/css/wb/plugins/sweetalert/sweetalert.css\" rel=\"stylesheet\">");
+
 
 	    output.append("<script> if (!window.console) console = {log: function() {}}; </script>\n");
 
@@ -203,6 +205,10 @@ public class ActionService extends Application{
 	    output.append("var gManage=");  // Manage id
 	    output.append(a.managedId);
 	    output.append(";\n");
+	    
+	    output.append("var gIdent='");  // User Ident
+	    output.append(uIdent);
+	    output.append("';\n");
 	    
 	    output.append("</script>");
 	    output.append("</head>\n");

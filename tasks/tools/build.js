@@ -37,6 +37,7 @@
 	jquery_ui: '../../../../smapServer/WebContent/js/libs/wb/jquery-ui-1.10.4.min',
 	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
+	sweetalert: '../../../../smapServer/WebContent/js/libs/wb/plugins/sweetalert/sweetalert.min',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
 	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',

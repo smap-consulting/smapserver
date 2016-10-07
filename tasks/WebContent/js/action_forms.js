@@ -51,6 +51,7 @@ requirejs.config({
     	'datatables.net-bs': '../../../../js/libs/DataTables/DataTables/js/datatables.bootstrap',
     	'datatables.select': '../../../../js/libs/DataTables/Select/js/dataTables.select.min',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
+    	sweetalert: '../../../../js/libs/wb/plugins/sweetalert/sweetalert.min',
     	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
@@ -75,7 +76,8 @@ requirejs.config({
        	'datatables': ['jquery', 'bootstrap'],
     	'app/common_mgmt': ['jquery'],
     	'qrcode': ['jquery'],
-       	'toggle': ['bootstrap.min']
+       	'toggle': ['bootstrap.min'],
+       	'sweetalert': ['jquery', 'bootstrap']
 	
     	}
     });
@@ -95,7 +97,8 @@ require([
          'crf',
          'app/common_mgmt',
          'qrcode',
-         'toggle'
+         'toggle',
+         'sweetalert'
          
          ], function($, 
         		 bootstrap, 
@@ -135,7 +138,7 @@ require([
 			$surveyForm = $('#surveyForm');
 		
 		/*
-		 * Set up the global data.  The structure of the caching aproach used by managed_forms is used
+		 * Set up the global data.  The structure of the caching approach used by managed_forms is used
 		 *  as the code is shared.  However there not really a need for caching in this module.
 		 */
 		gTasks.gSelectedSurveyIndex = 0;
@@ -147,30 +150,67 @@ require([
 		showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
 		
 		
-		$('#saveRecord').click(function(){
-			 saveString = JSON.stringify(gTasks.gUpdate);
-			 addHourglass();
-			 $.ajax({
-				 type: "POST",
-					  dataType: 'text',
-					  contentType: "application/json",
-					  cache: false,
-					  url: "/surveyKPI/managed/update/" + gSurvey + "/" + gManage,
-					  data: { settings: saveString },
-					  success: function(data, status) {
-						  removeHourglass();
-					  }, error: function(data, status) {
-						  removeHourglass();
-						  alert(data.responseText);
-					  }
-				});
+		$('#saveRecord').click(function() {
+			saveUpdate();
 		});
-		
-
 		
      });	 
 	 
+	function cancelUpdate() {
+		updateActionStatus(localise.set["c_close"]);
+	}
 
+	function saveUpdate() {
+		 saveString = JSON.stringify(gTasks.gUpdate);
+		 addHourglass();
+		 $.ajax({
+			 type: "POST",
+				  dataType: 'text',
+				  contentType: "application/json",
+				  cache: false,
+				  url: "/surveyKPI/managed/update/" + gSurvey + "/" + gManage,
+				  data: { settings: saveString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  updateActionStatus(localise.set["msg_upd"]);
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  swal(localise.set["msg_err_save"], data.responseText, "error");
+				  }
+			});
+	}
+	
+	function updateActionStatus(type) {
+		swal({
+			title: type, 
+		    text: localise.set["t_ass_done"],
+		    type: "warning",
+		    showCancelButton: true,
+		    confirmButtonColor: "#56a817",
+		    confirmButtonText: localise.set["c_yes"],
+		    cancelButtonColor: "#DD6B55",
+            cancelButtonText: localise.set["c_no"],
+            closeOnConfirm: false,
+            closeOnCancel: true },
+         function (isConfirm) {
+             if (isConfirm) {
+            	 setStatus();
+             } 
+             window.history.back();
+		 });
+	}
+	
+	function setStatus() {
+		 $.ajax({
+			 type: "POST",
+				  dataType: 'text',
+				  contentType: "application/json",
+				  cache: false,
+				  url: "/surveyKPI/managed/updatestatus/" + gIdent + "/complete"
+				  
+			});
+	}
+	
 
 
 });

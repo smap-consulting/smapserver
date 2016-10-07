@@ -294,6 +294,7 @@ define({
 	"msg_err_get_r": "Error: Get roles failed",
 	"msg_err_get_a": "Error: Get alerts failed",
 	"msg_err_get_q": "Error: Get questions failed",
+	"msg_upd": "Update Succeeded",
 	"msg_err_nc": "Name cannot include a comma",
 	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
@@ -378,6 +379,7 @@ define({
 	"t_n_s": "Tasks without start time",
 	"t_drag": "Drag a task and drop onto calendar",
 	"t_g": "Guidance",
+	"t_ass_done": "Have you completed this assignment?",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",

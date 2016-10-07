@@ -515,6 +515,56 @@ public class ManagedForms extends Application {
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
+	@Path("/updatestatus/{uIdent}/{status}")
+	public Response updateStatus(
+			@Context HttpServletRequest request, 
+			@PathParam("uIdent") String uIdent,
+			@PathParam("status") String status
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sql = "update alert set status = ? where link like ?";
+		PreparedStatement pstmt = null;
+		
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, status);
+			pstmt.setString(2, "%" + uIdent);
+			log.info("Update action status" + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		
+			
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		
+		}
+		
+		return response;
+	}
+	
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
 	@Path("/config/{sId}")
 	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
