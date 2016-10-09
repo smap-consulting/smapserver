@@ -92,7 +92,7 @@ public class ActionManager {
 	 *  2 - medium
 	 *  3 - low
 	 */
-	public int getPriority(Connection sd, 
+	public int getPriority(Connection cResults, 
 			String tableName, 
 			int prikey) throws Exception {
 		
@@ -100,13 +100,16 @@ public class ActionManager {
 		PreparedStatement pstmt = null;
 		int priority = ActionManager.PRI_LOW;	// Default to a low priority
 		try {
-			if(GeneralUtilityMethods.hasColumn(sd, tableName, "priority")) {
-				pstmt = sd.prepareStatement(sql);
+			if(GeneralUtilityMethods.hasColumn(cResults, tableName, "priority")) {
+				pstmt = cResults.prepareStatement(sql);
 				pstmt.setInt(1, prikey);
+				log.info("Get priority: " + pstmt.toString());
 				ResultSet rs = pstmt.executeQuery();
 				if(rs.next()) {
 					priority = rs.getInt(1);
 				}
+			} else {
+				log.info("Cannot get priority for table: "+ tableName + " and prikey " + prikey);
 			}
 		} finally {
 			if(pstmt != null) {try {pstmt.close();} catch (Exception e) {}}

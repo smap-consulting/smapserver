@@ -482,7 +482,7 @@ public class ManagedForms extends Application {
 				if(tc.actions != null && tc.actions.size() > 0) {
 					ActionManager am = new ActionManager();
 					if(priority < 0) {
-						priority = am.getPriority(sd, f.tableName, u.prikey);
+						priority = am.getPriority(cResults, f.tableName, u.prikey);
 					}
 					am.applyManagedFormActions(sd, tc, oId, sId, managedId, u.prikey, priority, u.value, localisation);
 				}

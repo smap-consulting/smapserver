@@ -532,9 +532,10 @@ define([
 			linkedSurveys = globals.model.survey.linkedSurveys,
 			selProperty = globals.gSelProperty,
 			selLabel = globals.gSelLabel,
-			naMedia = '<div class="naMedia text-center">Media cannot be used with this question</div>';
+			naMedia = '<div class="naMedia text-center">' + localise.set["ed_namedia"] + '</div>';
 		
-			if(selProperty === "required" && type === "question") {		// Add a boolean type
+			if(selProperty === "required" && type === "question"
+				&& question.type != "calculate") {		// Add a boolean type
 				
 				h[++idx] = '<div class="row">';
 				
@@ -571,7 +572,8 @@ define([
 			    
 				h[++idx] ='</div>';		// End Row
 				
-			} else if(selProperty === "readonly" && type === "question") {		// Add a boolean type
+			} else if(selProperty === "readonly" && type === "question"
+				&& question.type != "calculate") {		// Add a boolean type
 				
 				h[++idx] = '<div class="row">';
 				
@@ -597,7 +599,8 @@ define([
 			    
 				h[++idx] ='</div>';		// End Row
 				
-			} else if(selProperty === "autoplay" && type === "question") {		// Add a radio buttons to select autoplay status
+			} else if(selProperty === "autoplay" && type === "question"
+				&& question.type != "calculate") {		// Add a radio buttons to select autoplay status
 				
 				h[++idx] = '<div class="btn-group" role="group" aria-label="Autoplay Selection" data-toggle="buttons-radio">';
 					// Add "none" autoplay option
@@ -682,9 +685,9 @@ define([
 				
 			
 				
-			} else if(selProperty === "media") {
+			} else if(selProperty === "media" && question.type != "calculate") {
 				h[++idx] = '<div class="row">';
-				if(type === "question" && (question.inMeta || question.source != "user" || question.calculation)) {
+				if(type === "question" && (question.inMeta || question.source != "user" )) {
 					h[++idx] = '<div class="col-sm-4 col-sm-offset-4">';
 					h[++idx] = naMedia;
 					h[++idx] = '</div>';

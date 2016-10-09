@@ -160,7 +160,7 @@ require([
             h[++idx] = '<strong>';
             h[++idx] = a.message;
             h[++idx] = '</strong><br>';
-            h[++idx] =  '<small class="text-muted">Yesterday 1:21 pm - 11.06.2014</small>';
+            h[++idx] =  '<small class="text-muted"></small>';
             h[++idx] = '</div>';
             h[++idx] = '</div>';
            

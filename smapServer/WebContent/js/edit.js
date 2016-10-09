@@ -1552,7 +1552,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		oldVal = qname;
 	}
 	
-	if(typeof questionType !== "undefined" && questionType === "calculate"  && prop === "label") {
+	if(typeof questionType !== "undefined" && questionType === "calculate" 
+			&& prop !== "linked_survey") {	// Whatever the property for a calculation type the label field contains the calculation expression 
 		changeType = "property";
 		prop = "calculation";
 	} else {

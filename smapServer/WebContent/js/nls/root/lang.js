@@ -484,6 +484,7 @@ define({
 	"ed_ld": "Allow Loading data from file",
 	"ed_i_bo": "Based On",
 	"ed_tlf": "Top Level Form",
+	"ed_namedia": "Media cannot be used with this question",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

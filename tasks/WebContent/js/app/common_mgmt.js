@@ -975,7 +975,7 @@ window.gTasks = {
 		});
 		
 		// Respond to changes in the data by creating an update object
-		$editForm.find('.form-control').keyup(function() {
+		$editForm.find('.form-control').bind("click propertychange paste change keyup input", function() {
 			dataChanged($(this));
 		});
 		$editForm.find('.date').on("dp.change", function() {
