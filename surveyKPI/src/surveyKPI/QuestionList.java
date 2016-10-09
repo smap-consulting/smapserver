@@ -84,8 +84,13 @@ public class QuestionList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		JSONArray jaQuestions = new JSONArray();
@@ -222,8 +227,13 @@ public class QuestionList extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		ArrayList<QuestionLite> questions = new ArrayList<QuestionLite> ();
@@ -363,8 +373,13 @@ public class QuestionList extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		ArrayList<QuestionLite> questions = new ArrayList<QuestionLite> ();
@@ -468,8 +483,13 @@ public class QuestionList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		JSONArray jaQuestions = new JSONArray();

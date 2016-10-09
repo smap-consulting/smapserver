@@ -64,6 +64,7 @@ import org.apache.http.util.EntityUtils;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.Notification;
@@ -274,8 +275,13 @@ public class NotificationList extends Application {
 		System.out.println("Notification:========== " + notificationString);
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false, superUser);
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
@@ -351,7 +357,13 @@ public class NotificationList extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false, superUser);
 		// End Authorisation
 		
 		log.info("Update notification for survey: " + n.s_id + " Remote s_id: " + 
@@ -360,7 +372,6 @@ public class NotificationList extends Application {
 		PreparedStatement pstmt = null;
 		
 		try {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false);
 			NotificationManager nm = new NotificationManager();
 			if(n.target.equals("forward") && nm.isFeedbackLoop(connectionSD, request.getServerName(), n)) {
 				throw new Exception("Survey is being forwarded to itself");
@@ -422,6 +433,7 @@ public class NotificationList extends Application {
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
+		boolean superUser = false;
 		
 		// Data level authorisation, is the user authorised to delete this forward
 		
@@ -438,7 +450,8 @@ public class NotificationList extends Application {
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				int sId = resultSet.getInt(1);
-				a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+				a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 				NotificationManager fm = new NotificationManager();
 				fm.deleteNotification(connectionSD, pstmt, request.getRemoteUser(), id);
 			}

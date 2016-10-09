@@ -187,7 +187,7 @@ public class Authorise {
 	/*
 	 * Verify that the user is entitled to access this particular survey
 	 */
-	public boolean isValidSurvey(Connection conn, String user, int sId, boolean isDeleted)
+	public boolean isValidSurvey(Connection conn, String user, int sId, boolean isDeleted, boolean superUser)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;
@@ -209,7 +209,6 @@ public class Authorise {
 				+ "and s.deleted = ? ");
 		
 		try {		
-			boolean superUser = GeneralUtilityMethods.isSuperUser(conn, user);
 			
 			if(!superUser) {
 				// Add RBAC
@@ -259,7 +258,7 @@ public class Authorise {
 	}
 	
 	/*
-	 * Verify that the user is entitled to access this particular survey
+	 * Verify that the user is entitled to access this particular role
 	 */
 	public boolean isValidRole(Connection conn, String user, int rId)
 			throws ServerException, AuthorisationException, NotFoundException {

@@ -39,6 +39,7 @@ import javax.ws.rs.core.MediaType;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
@@ -82,13 +83,18 @@ public class FormXML extends Application{
 
 		Survey survey = null;
 		String user = request.getRemoteUser();
+		boolean superUser = false;
 		 
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			} catch (Exception e) {
+			}
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
     		SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
         } else {
         	throw new AuthorisationException();
@@ -135,12 +141,18 @@ public class FormXML extends Application{
 
 		Survey survey = null;
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		
         a.isValidTemporaryUser(connectionSD, tempUser);
         a.isAuthorised(connectionSD, tempUser);
         
     	SurveyManager sm = new SurveyManager();
     	survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-    	a.isValidSurvey(connectionSD, tempUser, survey.id, false);	// Validate that the user can access this survey
+    	a.isValidSurvey(connectionSD, tempUser, survey.id, false, superUser);	// Validate that the user can access this survey
     	SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
         
 		// End Authorisation

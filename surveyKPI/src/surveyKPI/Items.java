@@ -131,13 +131,15 @@ public class Items extends Application {
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Items");
 		int sId = 0;
+		boolean superUser = false;
 		try {
 			sId = GeneralUtilityMethods.getSurveyIdForm(sd, fId);
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 			
 		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "View Results");
@@ -630,8 +632,13 @@ public class Items extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Items");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Connection cRel = null; 

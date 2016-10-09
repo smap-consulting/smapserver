@@ -58,6 +58,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
@@ -148,7 +149,9 @@ public class HtmlManifest extends Application{
 			a.isAuthorised(connectionSD, user);
 			SurveyManager sm = new SurveyManager();
 			survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-			a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+			boolean superUser = false;
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
 			a.isBlocked(connectionSD, survey.id, false);
 		} catch (Exception e) {
 			response = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();

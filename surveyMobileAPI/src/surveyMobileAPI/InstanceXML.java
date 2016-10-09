@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
@@ -106,7 +107,12 @@ public class InstanceXML extends Application{
 		SurveyManager sm = new SurveyManager();
 		Survey survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
 		a.isAuthorised(connectionSD, user);
-		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
 		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
 		
 		lm.writeLog(connectionSD, survey.id, request.getRemoteUser(), "view", "Get results instance: priKey=" + priKey + " key=" + key + " keyval=" + keyval);

@@ -104,7 +104,12 @@ public class FormsManifest {
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		SurveyManager sm = new SurveyManager();
 		Survey survey = sm.getSurveyId(connectionSD, key);	// Get the survey id from the templateName / key
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), survey.id, false);	// Validate that the user can access this survey
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), survey.id, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		if(portNumber == 443) {

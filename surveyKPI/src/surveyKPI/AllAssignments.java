@@ -352,10 +352,15 @@ public class AllAssignments extends Application {
 			
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 		if(sId > 0) {
-			a.isValidSurvey(connectionSD, userName, sId, false);	// Validate that the user can access this survey
+			a.isValidSurvey(connectionSD, userName, sId, false, superUser);	// Validate that the user can access this survey
 		}
 		// End Authorisation
 
@@ -1041,6 +1046,7 @@ public class AllAssignments extends Application {
 		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
+		boolean superUser = false;
 		try {
 			
 			// Get the base path
@@ -1057,7 +1063,11 @@ public class AllAssignments extends Application {
 				
 					if(item.getFieldName().equals("survey")) {
 						sId = Integer.parseInt(item.getString());
-						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+						try {
+							superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+						} catch (Exception e) {
+						}
+						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 						a.canLoadTasks(connectionSD, sId);
 						
 						sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);

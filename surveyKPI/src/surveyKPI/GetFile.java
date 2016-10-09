@@ -198,9 +198,14 @@ public class GetFile extends Application {
 
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("getFile");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation 
 		
 		try {

@@ -304,6 +304,7 @@ public class WebForm extends Application{
 		String accessKey = null;
 		String requester = "surveyMobileAPI-getWebForm";
 		ResourceBundle localisation = null;
+		boolean superUser = false;
 		
 		// Authorisation 
 		if(user != null) {
@@ -317,7 +318,11 @@ public class WebForm extends Application{
     		if(survey == null) {
     			throw new NotFoundException();
     		}
-    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+    		try {
+    			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+    		} catch (Exception e) {
+    		}
+    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
     		// Get the organisation id and an access key to upload the results of this form (used from iPhones which do not do authentication on POSTs)
@@ -971,6 +976,7 @@ public class WebForm extends Application{
 
 		Survey survey = null;
 		StringBuffer outputString = new StringBuffer();
+		boolean superUser = false;
 		
 		// Authorisation 
 		if(user != null) {
@@ -980,7 +986,12 @@ public class WebForm extends Application{
     		if(survey == null) {
     			throw new NotFoundException();
     		}
-    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+
+    		try {
+    			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+    		} catch (Exception e) {
+    		}
+    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
         } else {

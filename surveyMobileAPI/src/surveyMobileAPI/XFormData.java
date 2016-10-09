@@ -107,6 +107,7 @@ public class XFormData {
 		String templateName = null;
 		String form_status = request.getHeader("form_status");
 		boolean incomplete = false;	// Set true if odk has more attachments to send
+		boolean superUser = false;
 	
 		Connection sd = null;
 		
@@ -218,7 +219,11 @@ public class XFormData {
 				throw new SurveyBlockedException();
 			}
 			
-			a.isValidSurvey(sd, user, survey.id, false);		// Throw an exception of the user is not authorised to upload this survey		
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+			} catch (Exception e) {
+			}
+			a.isValidSurvey(sd, user, survey.id, false, superUser);		// Throw an exception of the user is not authorised to upload this survey		
 			
 			
 			

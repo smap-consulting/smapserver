@@ -114,6 +114,7 @@ public class UploadFiles extends Application {
 	
 		Connection connectionSD = null; 
 		Connection cResults = null;
+		boolean superUser = false;
 
 		try {
 			/*
@@ -156,7 +157,11 @@ public class UploadFiles extends Application {
 					auth.isAuthorised(connectionSD, request.getRemoteUser());
 					connectionSD = SDDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
 					if(sId > 0) {
-						auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+						try {
+							superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+						} catch (Exception e) {
+						}
+						auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 					} 
 					// End authorisation
 					
@@ -327,6 +332,7 @@ public class UploadFiles extends Application {
 		Response response = null;
 		String serverName = request.getServerName();
 		String user = request.getRemoteUser();
+		boolean superUser = false;
 		
 		/*
 		 * Authorise
@@ -336,8 +342,12 @@ public class UploadFiles extends Application {
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
 		if(sId > 0) {
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			} catch (Exception e) {
+			}
 			auth.isAuthorised(connectionSD, request.getRemoteUser());
-			auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+			auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		} else {
 			auth.isAuthorised(connectionSD, request.getRemoteUser());
 		}

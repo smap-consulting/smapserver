@@ -99,8 +99,13 @@ public class ExportLQAS extends Application {
 				
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("createLQAS");	
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());		
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		if(rId > 0) {
 			a.isValidManagedForm(sd, request.getRemoteUser(), rId);
 		}
@@ -123,7 +128,6 @@ public class ExportLQAS extends Application {
 		try {
 			
 			// Get the survey details
-			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, 
 					false, false, "real", superUser, 0, null);
 			

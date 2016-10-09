@@ -245,8 +245,13 @@ public class Roles extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aSM.isAuthorised(sd, request.getRemoteUser());
-		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		
 		// End Authorisation
 		
@@ -299,8 +304,13 @@ public class Roles extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aSM.isAuthorised(sd, request.getRemoteUser());
-		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
 		
