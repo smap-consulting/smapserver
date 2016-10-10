@@ -221,7 +221,8 @@ public class ExportSurveyMedia extends Application {
 						request.getRemoteUser(),
 						startDate,
 						endDate,
-						dateId);
+						dateId,
+						superUser);
 				
 				/*
 				 * 1. Create the target folder

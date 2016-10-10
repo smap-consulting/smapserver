@@ -113,7 +113,7 @@ public class ActionService extends Application{
 	        }
 		
 			// 3. Generate the form
-	    	outputString.append(addActionDocument(sd, cResults, request, localisation, a, userIdent));
+	    	outputString.append(addActionDocument(sd, cResults, request, localisation, a, userIdent, false));	// Assumed not to be a super user
 	    			
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
 		} catch (Exception e) {
@@ -135,13 +135,14 @@ public class ActionService extends Application{
 			HttpServletRequest request, 
 			ResourceBundle localisation,
 			Action a,
-			String uIdent) throws SQLException, Exception {
+			String uIdent,
+			boolean superUser) throws SQLException, Exception {
 	
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<!DOCTYPE html>\n");
 			
-		output.append(addHead(sd, cResults, request, a, uIdent));
+		output.append(addHead(sd, cResults, request, a, uIdent, superUser));
 		output.append(addBody(request, localisation));
 		
 		output.append("</html>\n");			
@@ -156,7 +157,8 @@ public class ActionService extends Application{
 			Connection cResults, 
 			HttpServletRequest request, 
 			Action a,
-			String uIdent) throws SQLException, Exception {
+			String uIdent,
+			boolean superUser) throws SQLException, Exception {
 		
 		StringBuffer output = new StringBuffer();
 
@@ -188,7 +190,9 @@ public class ActionService extends Application{
 	    output.append("<script>");
 	    
 		ManagedFormsManager mfm = new ManagedFormsManager();
-		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId));
+		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent, 
+				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId),
+				superUser);
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
 		Form f = GeneralUtilityMethods.getTopLevelForm(sd, a.sId);
 		
@@ -196,7 +200,8 @@ public class ActionService extends Application{
 	    output.append(getRecord(sd, cResults, mfc, a.sId, a.prikey,
 			urlprefix, 
 			request.getRemoteUser(),
-			f.tableName));
+			f.tableName,
+			superUser));
 	    
 	    output.append("var gSurvey=");  // Survey id
 	    output.append(a.sId);
@@ -323,7 +328,8 @@ public class ActionService extends Application{
 			int prikey,
 			String urlprefix, 
 			String uIdent,
-			String tableName) throws SQLException, Exception {
+			String tableName,
+			boolean superUser) throws SQLException, Exception {
 		
 		StringBuffer output = new StringBuffer();
 		
@@ -345,7 +351,8 @@ public class ActionService extends Application{
 				false,			// group
 				true,
 				prikey,			
-				1);				// Number of records to return
+				1,
+				superUser);				// Number of records to return
 		
 		output.append("\nvar gRecord=");
 		output.append(ja.toString());

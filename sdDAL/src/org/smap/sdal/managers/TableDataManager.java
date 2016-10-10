@@ -68,7 +68,8 @@ public class TableDataManager {
 			boolean group,
 			boolean isDt,
 			int start,
-			int limit) throws SQLException, Exception  {
+			int limit,
+			boolean superUser) throws SQLException, Exception  {
 		
 		StringBuffer columnSelect = new StringBuffer();
 		boolean hasRbacFilter = false;
@@ -106,13 +107,16 @@ public class TableDataManager {
 				
 				// RBAC filter
 				RoleManager rm = new RoleManager();
-				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, uIdent);
-				if(rfArray.size() > 0) {
-					String rFilter = rm.convertSqlFragsToSql(rfArray);
-					if(rFilter.length() > 0) {
-						sqlSelect.append(" and ");
-						sqlSelect.append(rFilter);
-						hasRbacFilter = true;
+				ArrayList<SqlFrag> rfArray = null;
+				if(!superUser) {
+					rfArray = rm.getSurveyRowFilter(sd, sId, uIdent);
+					if(rfArray.size() > 0) {
+						String rFilter = rm.convertSqlFragsToSql(rfArray);
+						if(rFilter.length() > 0) {
+							sqlSelect.append(" and ");
+							sqlSelect.append(rFilter);
+							hasRbacFilter = true;
+						}
 					}
 				}
 				

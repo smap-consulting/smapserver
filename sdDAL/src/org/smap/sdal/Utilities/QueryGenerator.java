@@ -66,7 +66,8 @@ public class QueryGenerator {
 			String user,
 			Date startDate,
 			Date endDate,
-			int dateId) throws Exception {
+			int dateId,
+			boolean superUser) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
 		
@@ -163,7 +164,8 @@ public class QueryGenerator {
 					fId,
 					startDate,
 					endDate,
-					dateId
+					dateId,
+					superUser
 					);
 		} catch (Exception e) {
 			throw new Exception(e.getMessage()); 
@@ -226,14 +228,17 @@ public class QueryGenerator {
 		
 		// Add Rbac Row Filer
 		boolean hasRbacFilter = false;
+		ArrayList<SqlFrag> rfArray = null;
 		RoleManager rm = new RoleManager();
-		ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(connectionSD, sId, user);
-		if(rfArray.size() > 0) {
-			String rFilter = rm.convertSqlFragsToSql(rfArray);
-			if(rFilter.length() > 0) {
-				shpSqlBuf.append(" and ");
-				shpSqlBuf.append(rFilter);
-				hasRbacFilter = true;
+		if(!superUser) {
+			rfArray = rm.getSurveyRowFilter(connectionSD, sId, user);
+			if(rfArray.size() > 0) {
+				String rFilter = rm.convertSqlFragsToSql(rfArray);
+				if(rFilter.length() > 0) {
+					shpSqlBuf.append(" and ");
+					shpSqlBuf.append(rFilter);
+					hasRbacFilter = true;
+				}
 			}
 		}
 		
@@ -299,7 +304,8 @@ public class QueryGenerator {
 			int fId,
 			Date startDate,
 			Date endDate,
-			int dateId) throws SQLException {
+			int dateId,
+			boolean superUser) throws SQLException {
 		
 		int colLimit = 10000;
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
@@ -341,7 +347,8 @@ public class QueryGenerator {
 						parentForm,
 						startDate,
 						endDate,
-						dateId);
+						dateId,
+						superUser);
 			}
 		}
 
@@ -358,7 +365,8 @@ public class QueryGenerator {
 				false,		// Don't include parent key
 				false,		// Don't include "bad" columns
 				false,		// Don't include instance id
-				true		// Include other meta data
+				true,		// Include other meta data
+				superUser
 				);
 		
 		StringBuffer colBuf = new StringBuffer();

@@ -2062,7 +2062,8 @@ public class GeneralUtilityMethods {
 			boolean includeParentKey,
 			boolean includeBad,
 			boolean includeInstanceId,
-			boolean includeOtherMeta) throws SQLException {
+			boolean includeOtherMeta,
+			boolean superUser) throws SQLException {
 		
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
@@ -2070,19 +2071,21 @@ public class GeneralUtilityMethods {
 		
 		// Get column restrictions for RBAC
 		StringBuffer colList = new StringBuffer("");
-		if(sId > 0) {
-			RoleManager rm = new RoleManager();
-			ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
-			if(rcfArray.size() > 0) {
-				colList.append(" and q_id in (");
-				for(int i = 0; i < rcfArray.size(); i++) {
-					RoleColumnFilter rcf = rcfArray.get(i);
-					if(i > 0) {
-						colList.append(",");
+		if(!superUser) {
+			if(sId > 0) {
+				RoleManager rm = new RoleManager();
+				ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
+				if(rcfArray.size() > 0) {
+					colList.append(" and q_id in (");
+					for(int i = 0; i < rcfArray.size(); i++) {
+						RoleColumnFilter rcf = rcfArray.get(i);
+						if(i > 0) {
+							colList.append(",");
+						}
+						colList.append(rcf.id);
 					}
-					colList.append(rcf.id);
+					colList.append(")");
 				}
-				colList.append(")");
 			}
 		}
 		

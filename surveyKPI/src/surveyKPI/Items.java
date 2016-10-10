@@ -223,7 +223,8 @@ public class Items extends Application {
 						true,	// Include parent key
 						true,	// Include "bad"
 						true,	// Include instanceId
-						true	// Include other meta data
+						true,	// Include other meta data
+						superUser
 						);		
 				
 				// Construct a new query that retrieves a geometry object as geoJson
@@ -350,27 +351,30 @@ public class Items extends Application {
 				 * Add row filtering performed by RBAC
 				 */
 				RoleManager rm = new RoleManager();
-				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
-				String rfString = "";
-				if(rfArray.size() > 0) {
-					for(SqlFrag rf : rfArray) {
-						if(rf.columns.size() > 0) {
-							for(int i = 0; i < rf.columns.size(); i++) {
-								int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
-								QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
-								tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+				ArrayList<SqlFrag> rfArray = null;
+				if(!superUser) {
+					rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
+					String rfString = "";
+					if(rfArray.size() > 0) {
+						for(SqlFrag rf : rfArray) {
+							if(rf.columns.size() > 0) {
+								for(int i = 0; i < rf.columns.size(); i++) {
+									int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
+									QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
+									tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+								}
+								if(rfString.length() > 0) {
+									rfString += " or";
+								}
+								rfString += " (" + rf.sql.toString() + ")";
+								hasRbacRowFilter = true;
 							}
-							if(rfString.length() > 0) {
-								rfString += " or";
-							}
-							rfString += " (" + rf.sql.toString() + ")";
-							hasRbacRowFilter = true;
 						}
-					}
-					if(sqlFilter.length() > 0) {
-						sqlFilter += " and " + "(" + rfString + ")";
-					} else {
-						sqlFilter = "(" + rfString + ")";
+						if(sqlFilter.length() > 0) {
+							sqlFilter += " and " + "(" + rfString + ")";
+						} else {
+							sqlFilter = "(" + rfString + ")";
+						}
 					}
 				}
 				

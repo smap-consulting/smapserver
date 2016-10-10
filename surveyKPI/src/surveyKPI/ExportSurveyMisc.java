@@ -214,7 +214,8 @@ public class ExportSurveyMisc extends Application {
 						request.getRemoteUser(),
 						startDate,
 						endDate,
-						dateId);
+						dateId,
+						superUser);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique

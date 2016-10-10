@@ -55,7 +55,8 @@ public class ManagedFormsManager {
 			int sId,
 			int managedId,
 			String uIdent,
-			int oId) throws SQLException, Exception  {
+			int oId,
+			boolean superUser) throws SQLException, Exception  {
 		
 		ManagedFormConfig mfc = new ManagedFormConfig();
 		ManagedFormConfig savedConfig = null;
@@ -83,7 +84,8 @@ public class ManagedFormsManager {
 					true,	// Include parent key
 					true,	// Include "bad"
 					true,	// Include instanceId
-					true	// Include other meta data
+					true,	// Include other meta data
+					superUser
 					);		
 			
 			/*

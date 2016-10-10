@@ -242,7 +242,8 @@ public class Data extends Application {
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
 					true,		// include instance id
-					true		// include other meta data
+					true,		// include other meta data
+					superUser
 					);
 			
 			if(mgmt) {
@@ -268,7 +269,8 @@ public class Data extends Application {
 					group,
 					isDt,
 					start,
-					limit);
+					limit,
+					superUser);
 			
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
@@ -408,7 +410,8 @@ public class Data extends Application {
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
 					true,		// include instance id
-					true		// Include other meta data
+					true,		// Include other meta data
+					superUser
 					);
 			
 			if(mgmt) {

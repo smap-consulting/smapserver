@@ -170,7 +170,8 @@ public class ExportSurveyThingsat extends Application {
 					request.getRemoteUser(),
 					startDate,
 					endDate,
-					dateId);
+					dateId,
+					superUser);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

@@ -193,7 +193,8 @@ public class XLSResultsManager {
 			boolean embedImages, 
 			Date startDate, 
 			Date endDate, 
-			int dateId) throws Exception {
+			int dateId,
+			boolean superUser) throws Exception {
 		
 		Sheet resultsSheet = wb.createSheet("survey");
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
@@ -328,7 +329,8 @@ public class XLSResultsManager {
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
-							true		// Include other meta data
+							true,		// Include other meta data
+							superUser
 							);
 						
 							

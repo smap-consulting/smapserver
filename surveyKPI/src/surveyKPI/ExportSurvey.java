@@ -399,7 +399,8 @@ public class ExportSurvey extends Application {
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
-							true		// Include other meta data
+							true,		// Include other meta data
+							superUser
 							);
 						
 							
@@ -595,7 +596,8 @@ public class ExportSurvey extends Application {
 						selMultChoiceNames,
 						startDate,
 						endDate,
-						dateId);
+						dateId,
+						superUser);
 				outWriter.print("</tbody><table></body></html>");
 				
 				log.info("Content Type:" + response.getContentType());
@@ -821,7 +823,8 @@ public class ExportSurvey extends Application {
 			HashMap<String, String> choiceNames,
 			Date startDate,
 			Date endDate,
-			int dateId) throws SQLException {
+			int dateId,
+			boolean superUser) throws SQLException {
 		
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
@@ -854,13 +857,15 @@ public class ExportSurvey extends Application {
 			sql.append(" and parkey=?");
 		} else {
 			// RBAC filter
-			rfArray = rm.getSurveyRowFilter(sd, sId, user);
-			if(rfArray.size() > 0) {
-				String rFilter = rm.convertSqlFragsToSql(rfArray);
-				if(rFilter.length() > 0) {
-					sql.append(" and ");
-					sql.append(rFilter);
-					hasRbacFilter = true;
+			if(!superUser) {
+				rfArray = rm.getSurveyRowFilter(sd, sId, user);
+				if(rfArray.size() > 0) {
+					String rFilter = rm.convertSqlFragsToSql(rfArray);
+					if(rFilter.length() > 0) {
+						sql.append(" and ");
+						sql.append(rFilter);
+						hasRbacFilter = true;
+					}
 				}
 			}
 		}
@@ -977,7 +982,8 @@ public class ExportSurvey extends Application {
 								choiceNames,
 								startDate,
 								endDate,
-								dateId);
+								dateId,
+								superUser);
 					}
 				}
 				

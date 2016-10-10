@@ -199,8 +199,8 @@ public class Data_CSV extends Application {
 						false,		// Don't include parent key
 						false,		// Don't include "bad" columns
 						false,		// Don't include instance id
-						true		// Include other meta data
-						);
+						true,		// Include other meta data
+						superUser);
 				
 				for(int i = 0; i < columns.size(); i ++) {
 					TableColumn c = columns.get(i);

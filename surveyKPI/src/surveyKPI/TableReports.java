@@ -118,7 +118,7 @@ public class TableReports extends Application {
 			
 			// Get columns
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId);
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
 			// Convert data to an array
 			Type type = new TypeToken<ArrayList<ArrayList<KeyValue>>>(){}.getType();		

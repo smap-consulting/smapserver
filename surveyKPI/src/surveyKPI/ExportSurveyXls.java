@@ -173,7 +173,8 @@ public class ExportSurveyXls extends Application {
 					embedImages,
 					startDate,
 					endDate,
-					dateId);
+					dateId,
+					superUser);
 			
 			responseVal = Response.ok("").build();
 			

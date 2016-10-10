@@ -99,7 +99,7 @@ public class ManagedForms extends Application {
 		try {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId);
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
 			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
@@ -212,7 +212,7 @@ public class ManagedForms extends Application {
 			
 			// 1. Check that the managed form is compatible with the survey
 			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
-					am.manageId, request.getRemoteUser(), oId);
+					am.manageId, request.getRemoteUser(), oId, superUser);
 			if(compatibleMsg != null) {
 				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 			}
@@ -254,7 +254,8 @@ public class ManagedForms extends Application {
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
 			int managedId,
 			String user,
-			int oId) {
+			int oId,
+			boolean superUser) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 			
@@ -277,7 +278,8 @@ public class ManagedForms extends Application {
 						false, 
 						false, 
 						false, 
-						false	// Don't include other meta data
+						false,	// Don't include other meta data
+						superUser
 						);
 				
 				for(TableColumn mc : managedColumns) {
