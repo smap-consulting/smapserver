@@ -159,6 +159,7 @@ public class EmailManager {
 		    	}
 	    	}
 		    
+	    	log.info("Email type: " + type + " content: " + content);
 		    StringBuffer txtMessage = new StringBuffer("");
 		    if(content != null && content.trim().length() > 0) {
 		    	txtMessage.append(content);			// User has specified email content

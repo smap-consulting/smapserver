@@ -206,7 +206,11 @@ public class OrganisationManager {
 			pstmt.setString(20, o.default_email_content);
 			pstmt.setString(21, o.website);
 			pstmt.setString(22, o.locale);
-			pstmt.setString(21, o.timeZone);
+			
+			if(o.timeZone == null || o.timeZone.trim().length() == 0) {
+				o.timeZone = "UTC";			// Default time zone for organisation
+			}
+			pstmt.setString(23, o.timeZone);
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			

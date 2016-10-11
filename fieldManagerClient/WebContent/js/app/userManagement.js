@@ -1676,7 +1676,7 @@ function deleteOrganisations () {
 	});
 
 	
-	decision = confirm(localise.set["mesg_del_orgs"] + "\n" + h.join());
+	decision = confirm(localise.set["msg_del_orgs"] + "\n" + h.join());
 	if (decision === true) {
 		addHourglass();
 		$.ajax({
