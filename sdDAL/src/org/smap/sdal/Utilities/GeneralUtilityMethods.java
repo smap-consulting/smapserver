@@ -2579,6 +2579,22 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Return true if a question type is a geometry
+	 */
+	public static boolean isGeometry(String qType) {
+		boolean isGeom = false;
+		if(qType.equals("geopoint") ||
+				qType.equals("geopolygon") ||
+				qType.equals("geolinestring") ||
+				qType.equals("geotrace") || 
+				qType.equals("geoshape")) {
+			
+			isGeom = true;
+		}
+		return isGeom;
+	}
+	
+	/*
 	 * Get the readonly value for a question as stored in the database
 	 */
 	public static boolean translateReadonlyToDB(String type, boolean in) {

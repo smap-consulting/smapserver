@@ -194,7 +194,7 @@ public class QueryGenerator {
 		shpSqlBuf.append(sqlDesc.tables.get(0));
 		shpSqlBuf.append("._bad='false'");
 		if(format.equals("shape") && sqlDesc.geometry_type != null) {
-			shpSqlBuf.append(" and the_geom is not null");
+			shpSqlBuf.append(" and " + sqlDesc.target_table + ".the_geom is not null");
 		}
 		if(numTables > 1) {
 			for(int i = 0; i < numTables - 1; i++) {
@@ -357,6 +357,9 @@ public class QueryGenerator {
 			//type = rsMetaData.getColumnTypeName(i);
 			name = col.name;
 			type = col.type;
+			if(GeneralUtilityMethods.isGeometry(type)) {
+				type = "geometry";
+			}
 			
 			if(name.equals("parkey") ||	name.equals("_bad") ||	name.equals("_bad_reason")
 					||	name.equals("_task_key") ||	name.equals("_task_replace") ||	name.equals("_modified")
