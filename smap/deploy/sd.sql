@@ -631,3 +631,9 @@ ALTER TABLE alert OWNER TO ws;
 alter table users add column action_details text;
 alter table users add column lastalert text;
 alter table users add column seen boolean;
+
+-- Delete entries from dashboard settings when the user is deleted
+delete from dashboard_settings where ds_user_ident not in (select ident from users);
+alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user_ident)
+	REFERENCES users (ident) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE;
