@@ -22,13 +22,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -38,6 +41,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -49,6 +53,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.QueryGenerator;
@@ -93,7 +98,6 @@ public class ExportSurveyMisc extends Application {
 	 */
 	@GET
 	@Path("/shape")
-	@Produces("application/x-download")
 	public Response exportShape (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
@@ -104,10 +108,12 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("format") String format,
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
-			@QueryParam("dateId") int dateId) {
+			@QueryParam("dateId") int dateId,
+			@Context HttpServletResponse response) {
 
 		ResponseBuilder builder = Response.ok();
-		Response response = null;
+		Response responseVal = null;
+		ResourceBundle localisation = null;
 		
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
@@ -120,7 +126,7 @@ public class ExportSurveyMisc extends Application {
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
 		    try {
-		    	response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    	responseVal = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
 		    } catch (Exception ex) {
 		    	log.log(Level.SEVERE, "Exception", ex);
 		    }
@@ -159,6 +165,11 @@ public class ExportSurveyMisc extends Application {
 			
 			try {
 		
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				
 				/*
 				 * Get the name of the database
 				 */
@@ -384,41 +395,45 @@ public class ExportSurveyMisc extends Application {
 	                if(code == 0) {
 	                	File file = new File(filepath + ".zip");
 	                	
-		            	builder = Response.ok(file);
-		            	if(format.equals("kml")) {
-		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".kmz\"");
-		              	} else {
-		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-		              	}
-		            	builder.header("Content-type","application/zip");
-		            	response = builder.build();
+	                	if(file.exists()) {
+			            	builder = Response.ok(file);
+			            	if(format.equals("kml")) {
+			              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".kmz\"");
+			              	} else {
+			              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+			              	}
+			            	builder.header("Content-type","application/zip");
+			            	responseVal = builder.build();
+	                	} else {
+	                		throw new ApplicationException(localisation.getString("msg_no_data"));
+	                	}
 		            	
 	                } else {
-	                	log.info("Error exporting file");
-	                	response = Response.serverError().entity("Error exporting file").build();
+	                	throw new ApplicationException("Error exporting file");
 	                }
 					
 				
 			
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-				response = Response.serverError().entity(e.getMessage()).build();
+			} catch (ApplicationException e) {
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				// Return an OK status so the message gets added to the web page
+				// Prepend the message with "Error: ", this will be removed by the client
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 			} catch (Exception e) {
-				response = Response.serverError().entity(e.getMessage()).build();
-				log.log(Level.SEVERE, "Exception", e);
-			} finally {
-				
+				log.log(Level.SEVERE, "Error", e);
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
+			} finally {	
 
 				try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
-				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
-				
+				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}				
 				
 				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}
 		
-		return response;
+		return responseVal;
 		
 	}
 	
