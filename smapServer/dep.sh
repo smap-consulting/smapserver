@@ -19,6 +19,9 @@ sudo rm -rf /Library/WebServer/Documents/js
 sudo cp -rf smapServer/* /Library/WebServer/Documents
 sudo apachectl restart
 
+# copy the motd
+cp ~/motd.html /Library/WebServer/Documents
+
 # clean up the temporary smapServer directory but first check that it is the right one
 if [ -f dep.sh ]
 then
