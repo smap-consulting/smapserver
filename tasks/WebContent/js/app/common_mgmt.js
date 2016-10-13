@@ -106,6 +106,7 @@ window.gTasks = {
 		 
 		 // Get the list of available surveys
 		 loadManagedSurveys(globals.gCurrentProject, surveyChanged);
+		 getAlerts();
 		 
 	 }
 	 

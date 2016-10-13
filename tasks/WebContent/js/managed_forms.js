@@ -281,7 +281,17 @@ require([
 		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
 	 });
 	 
-
+	    /*
+	     * Alerts
+	     */
+		$('#show_alerts').click(function(){
+			if(!globals.gAlertSeen) {
+				globals.gAlertSeen = true;
+				$('.alert_icon').removeClass("text-danger");
+				saveLastAlert(globals.gLastAlertTime, true);
+			}
+		});
+		
 	 // Respond to duplicate reports menu
 	 if(isDuplicates) {
 		 $('#duplicateSearch').click(function(){

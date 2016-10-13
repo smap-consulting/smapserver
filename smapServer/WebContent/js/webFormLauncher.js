@@ -37,7 +37,8 @@ requirejs.config({
     },
     shim: {
     	'app/common': ['jquery'],
-    	'bootstrap.min': ['jquery']
+    	'bootstrap.min': ['jquery'],
+    	'icheck': ['jquery']
     }
 });
 
@@ -47,7 +48,8 @@ require([
          'app/common', 
          'app/globals',
          'app/localise',
-         'bootstrapfileinput'
+         'bootstrapfileinput',
+         'icheck'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
 $(document).ready(function() {
@@ -127,6 +129,22 @@ $(document).ready(function() {
     
     $('.file-inputs').bootstrapFileInput();
     
+    /*
+     * Alerts
+     */
+	$('#show_alerts').click(function(){
+		if(!globals.gAlertSeen) {
+			globals.gAlertSeen = true;
+			$('.alert_icon').removeClass("text-danger");
+			saveLastAlert(globals.gLastAlertTime, true);
+		}
+	});
+	
+	$('input', '#tab-settings-content').iCheck({
+		 checkboxClass: 'icheckbox_square-green',
+		 radioClass: 'iradio_square-green'
+	});
+	
 	enableUserProfileBS();
 });
 
@@ -203,6 +221,7 @@ function getKey(formData) {
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys
+	getAlerts();
 }
 
 
