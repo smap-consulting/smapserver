@@ -202,7 +202,7 @@ public class ManagedFormsManager {
 			
 			// Add dynamic choice values such as users identified by role
 			if(tc.choices != null) {
-				ArrayList newChoices = new ArrayList<KeyValue> ();
+				ArrayList<KeyValue> newChoices = new ArrayList<KeyValue> ();
 				for(KeyValue kv : tc.choices) {
 					if(kv.isRole) {
 						newChoices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, kv.k));

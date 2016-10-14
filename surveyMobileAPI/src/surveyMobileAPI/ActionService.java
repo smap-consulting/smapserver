@@ -43,10 +43,13 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.Survey;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -140,10 +143,16 @@ public class ActionService extends Application{
 	
 		StringBuffer output = new StringBuffer();
 		
+	    SurveyManager sm = new SurveyManager();
+	    Survey s = sm.getById(sd, cResults, uIdent, a.sId, false, null, null, false, false, false, false, null, false, 0, null);
+	    if(s == null) {
+	    	throw new Exception(localisation.getString("mf_snf"));
+	    }
+		
 		output.append("<!DOCTYPE html>\n");
 			
 		output.append(addHead(sd, cResults, request, a, uIdent, superUser));
-		output.append(addBody(request, localisation));
+		output.append(addBody(request, localisation, s));
 		
 		output.append("</html>\n");			
 		return output;
@@ -188,8 +197,8 @@ public class ActionService extends Application{
 	    output.append("<script data-main=\"/tasks/js/action_forms\" src=\"/js/libs/require.js\"></script>\n");
 	    
 	    output.append("<script>");
-	    
-		ManagedFormsManager mfm = new ManagedFormsManager();
+	    	
+	    ManagedFormsManager mfm = new ManagedFormsManager();
 		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent, 
 				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId),
 				superUser);
@@ -225,13 +234,14 @@ public class ActionService extends Application{
 	 * Add the body
 	 */
 	private StringBuffer addBody(HttpServletRequest request, 
-			ResourceBundle localisation) {
+			ResourceBundle localisation,
+			Survey s) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body>\n");
 		output.append("<div id=\"wrapper\">");
 		output.append(addNoScriptWarning(localisation));
-		output.append(addMain(localisation));
+		output.append(addMain(localisation, s));
 		
 		output.append("</div>");
 		output.append("</body>\n");
@@ -241,12 +251,12 @@ public class ActionService extends Application{
 	/*
 	 * Get the "Main" element 
 	 */
-	private StringBuffer addMain(ResourceBundle localisation)  {
+	private StringBuffer addMain(ResourceBundle localisation, Survey s)  {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div id=\"page-wrapper\" class=\"gray-bg\">");
 		output.append(getNavBar());
-		output.append(addHeaderRow());
+		output.append(addHeaderRow(s));
 		output.append(addActionRow());
 		output.append("</div>");
 		return output;
@@ -255,13 +265,18 @@ public class ActionService extends Application{
 	/*
 	 * Add a header row
 	 */
-	StringBuffer addHeaderRow() {
+	StringBuffer addHeaderRow(Survey s) {
 		StringBuffer output = new StringBuffer();
 		
         output.append("<div class=\"row wrapper border-bottom white-bg page-heading\">");
-    	output.append("<div class=\"col-sm-2\">");
-        	output.append("<h2 class=\"lang\" data-lang=\"m_mf\">manage</h2>");   
-        output.append("</div>");
+	    	output.append("<div class=\"col-sm-2\">");
+	        	output.append("<h2 class=\"lang\" data-lang=\"m_mf\">manage</h2>");   
+	        output.append("</div>");
+	        output.append("<div class=\"col-sm-4\">");
+        		output.append("<h2");
+        		output.append(s.displayName);
+        		output.append("</h2>");   
+            output.append("</div>");
         output.append("</div>");
     
 		return output;

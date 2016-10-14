@@ -62,6 +62,7 @@ public class ActionManager {
 			TableColumn tc, 
 			int oId, 
 			int sId, 
+			int pId,
 			int managedId,
 			int prikey,
 			int priority,
@@ -73,6 +74,7 @@ public class ActionManager {
 			
 			// Add the action specific settings
 			a.sId = sId;
+			a.pId = pId;
 			a.managedId = managedId;
 			a.prikey = prikey;
 			if(value == null) {
@@ -100,7 +102,8 @@ public class ActionManager {
 		PreparedStatement pstmt = null;
 		int priority = ActionManager.PRI_LOW;	// Default to a low priority
 		try {
-			if(GeneralUtilityMethods.hasColumn(cResults, tableName, "priority")) {
+			String priType = GeneralUtilityMethods.columnType(cResults, tableName, "priority");
+			if(priType != null && priType.equals("integer")) {
 				pstmt = cResults.prepareStatement(sql);
 				pstmt.setInt(1, prikey);
 				log.info("Get priority: " + pstmt.toString());
@@ -193,6 +196,7 @@ public class ActionManager {
 				actionId = rs.getInt(1);
 			}
 			
+			System.out.println("About to add or update a user: " + a.action + " : " + actionId);
 			if(a.action.equals("respond") && actionId == 0) {
 				
 				/*
@@ -204,6 +208,16 @@ public class ActionManager {
 				u.ident = tempUserId;
 				u.name = a.notify_person;
 				u.action_details = gson.toJson(a);
+				
+				// Add the project that contains the survey
+				u.projects = new ArrayList<Project> ();
+				Project p = new Project();
+				p.id = a.pId;
+				u.projects.add(p);
+				
+				
+				// Add the roles for the temporary user
+				u.roles = a.roles;
 				
 				um.createTemporaryUser(sd, u, oId);
 				link = "/action/" + tempUserId;

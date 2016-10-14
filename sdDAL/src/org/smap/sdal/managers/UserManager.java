@@ -429,7 +429,7 @@ public class UserManager {
 			ResultSet rs = pstmt.getGeneratedKeys();
 			if (rs.next()){
 			    u_id = rs.getInt(1);
-			    insertUserGroupsProjects(sd, u, u_id, false, false);
+			    insertUserGroupsProjects(sd, u, u_id, false, true);		// The user roles are sourced from the action and have been added by a security manager hence we will act as a security manager here
 			}
 			
 		}  finally {		
@@ -561,33 +561,60 @@ public class UserManager {
 			} else {
 				sql = "delete from user_group where u_id = ? and g_id != 4 and g_id != 6;";		// Cannot change super user group, or security manager
 			}
-					
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, u.id);
-			log.info("SQL: " + pstmt.toString());
-			pstmt.executeUpdate();
 			
-			for(int j = 0; j < u.groups.size(); j++) {
-				UserGroup g = u.groups.get(j);
-				if(g.id != 4 || isOrgUser) {	
-					pstmtInsertUserGroup.setInt(2, g.id);
-					pstmtInsertUserGroup.executeUpdate();
+			if(u.groups != null) {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				for(int j = 0; j < u.groups.size(); j++) {
+					UserGroup g = u.groups.get(j);
+					if(g.id != 4 || isOrgUser) {	
+						pstmtInsertUserGroup.setInt(2, g.id);
+						pstmtInsertUserGroup.executeUpdate();
+					}
 				}
+				sd.commit();	// Commit changes to user group
+			} else {
+				log.info("No user groups");
 			}
 			
-			sd.commit();	// Commit changes to user group
-			
-			/*
-			 * Update user roles
-			 */
-			if(isOrgUser || isSecurityManager) {
-				sql = "delete from user_role where u_id = ?;";
-
-			
+			// Delete existing user projects
+			if(u.projects != null) {
+				sql = "delete from user_project where u_id = ?;";
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, u.id);
 				log.info("SQL: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				System.out.println("xxxxxxxxxxx Adding projects");
+				for(int j = 0; j < u.projects.size(); j++) {
+					Project p = u.projects.get(j);
+					
+					System.out.println("        Project " + p.id);
+					pstmtInsertProjectGroup.setInt(2, p.id);
+					pstmtInsertProjectGroup.executeUpdate();
+					
+				}
+				
+				sd.commit();
+			} else {
+				log.info("No projects to add");
+			}
+			
+			/*
+			 * Update user roles
+			 */
+			System.out.println("xxxxxxxxxxx Adding roles");
+			if((isOrgUser || isSecurityManager) && u.roles != null) {
+				sql = "delete from user_role where u_id = ?;";
+
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL add roles: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 				for(int j = 0; j < u.roles.size(); j++) {
@@ -600,23 +627,8 @@ public class UserManager {
 				sd.commit();	// Commit changes to user roles
 			}
 			
-			// Delete existing user projects
-			sql = "delete from user_project where u_id = ?;";
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, u.id);
-			log.info("SQL: " + pstmt.toString());
-			pstmt.executeUpdate();
-			
-			for(int j = 0; j < u.projects.size(); j++) {
-				Project p = u.projects.get(j);
-				
-				pstmtInsertProjectGroup.setInt(2, p.id);
-				pstmtInsertProjectGroup.executeUpdate();
-				
-			}
-			
 		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
 			try{sd.rollback();} catch(Exception ex) {}
 		} finally {
 			sd.setAutoCommit(true);

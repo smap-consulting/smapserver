@@ -414,6 +414,7 @@ public class UploadFiles extends Application {
 		Connection sd = null; 
 
 		try {
+			
 			/*
 			 * Parse the request
 			 */
@@ -473,6 +474,8 @@ public class UploadFiles extends Application {
 			auth.isAuthorised(sd, request.getRemoteUser());
 			// End authorisation
 			
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(sd, request.getRemoteUser());
+			
 			// Get the users locale
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
@@ -483,7 +486,7 @@ public class UploadFiles extends Application {
 				
 				// Process xls file
 				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
-				ArrayList<TableColumn> config = xcr.getCustomReport(sd, oId, filetype, fileItem.getInputStream(), localisation);
+				ArrayList<TableColumn> config = xcr.getCustomReport(sd, oId, filetype, fileItem.getInputStream(), localisation, isSecurityManager);
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error

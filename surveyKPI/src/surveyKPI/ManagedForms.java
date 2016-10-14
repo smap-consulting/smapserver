@@ -368,7 +368,7 @@ public class ManagedForms extends Application {
 		ArrayList<Update> updates = gson.fromJson(settings, type);
 		
 		
-		String sqlCanUpdate = "select count(*) from survey "
+		String sqlCanUpdate = "select p_id from survey "
 				+ "where s_id = ? "
 				+ "and managed_id = ? "
 				+ "and blocked = 'false' "
@@ -398,6 +398,7 @@ public class ManagedForms extends Application {
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int pId = 0;
 			/*
 			 * Verify that the survey is managed by the provided data processing id and get
 			 */
@@ -405,11 +406,10 @@ public class ManagedForms extends Application {
 			pstmtCanUpdate.setInt(1, sId);
 			pstmtCanUpdate.setInt(2, managedId);
 			ResultSet rs = pstmtCanUpdate.executeQuery();
-			int count = 0;
 			if(rs.next()) {
-				count = rs.getInt(1);
+				pId = rs.getInt(1);
 			}
-			if(count == 0) {
+			if(pId == 0) {
 				throw new Exception(localisation.getString("mf_blocked"));
 			}
 			
@@ -486,7 +486,7 @@ public class ManagedForms extends Application {
 				pstmtUpdate.setInt(paramCount++, u.prikey);
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
-				count = pstmtUpdate.executeUpdate();
+				int count = pstmtUpdate.executeUpdate();
 				if(count == 0) {
 					throw new Exception("Update failed: "
 							+ "Try refreshing your view of the data as someone may already "
@@ -501,7 +501,7 @@ public class ManagedForms extends Application {
 					if(priority < 0) {
 						priority = am.getPriority(cResults, f.tableName, u.prikey);
 					}
-					am.applyManagedFormActions(sd, tc, oId, sId, managedId, u.prikey, priority, u.value, localisation);
+					am.applyManagedFormActions(sd, tc, oId, sId, pId, managedId, u.prikey, priority, u.value, localisation);
 				}
 				
 
