@@ -940,8 +940,10 @@ public class WebForm extends Application{
 		if(surveyClass !=null && surveyClass.contains("pages")) {
 			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
 			output.append("<a class='next-page' href='#'>Next</span></a>\n");
-		}
+		}		
+		output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
 		output.append("</div>\n");	// main controls
+		
 		
 		if(surveyClass !=null && surveyClass.contains("pages")) {
 			
