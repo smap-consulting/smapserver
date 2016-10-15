@@ -18,6 +18,7 @@
         inspinia: 'wb/inspinia',
 	metismenu: 'wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: 'wb/plugins/slimscroll/jquery.slimscroll.min',
+        pace: 'wb/plugins/pace/pace.min',
 	icheck: 'wb/plugins/iCheck/icheck.min'
     },
     dir: '../smapServer',

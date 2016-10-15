@@ -38,7 +38,10 @@ requirejs.config({
     shim: {
     	'app/common': ['jquery'],
     	'bootstrap.min': ['jquery'],
-    	'icheck': ['jquery']
+    	'icheck': ['jquery'],
+       	'inspinia': ['jquery'],
+    	'metismenu': ['jquery'],
+    	'slimscroll': ['jquery']
     }
 });
 
@@ -49,6 +52,10 @@ require([
          'app/globals',
          'app/localise',
          'bootstrapfileinput',
+         'inspinia',
+         'metismenu',
+         'slimscroll',
+         'pace',
          'icheck'
          ], function($, bootstrap, common, globals, localise, bsfi) {
 
