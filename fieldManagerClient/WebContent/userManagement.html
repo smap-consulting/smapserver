@@ -40,21 +40,19 @@
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">Modules</span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             
-            <li><a class="lang" data-lang="m_home" href="/">home</a></li>
+            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
             <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></span></a></li>
             <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
-            <li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_web_forms" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
+            <li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_data_mod" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
             <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li> 
-            <li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/log.html"><span class="nav-label lang" data-lang="m_manage">manage</span><span class="glyphicon glyphicon-briefcase pull-right"></span></a></li>
+            <li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span><span class="glyphicon glyphicon-tasks pull-right"></span></a></li>
           </ul>
         </li>  
         <li id="m_tm" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>     
 		<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-		<li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-		<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
-		<li id="m_assign" class="restrict_role analyst_role bus_only"><a class="lang" data-lang="m_assign" href="/tasks/taskManagement.html">Tasks</a></li>
 		<li id="m_assign_pub" class="restrict_role analyst_role public_only" style="display:none"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
-		<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
+		<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>
+		<li id="m_os"><a href="/tasks/manage.html"><span class="lang" data-lang="m_s_m_f">setup mf</span></a></li>	
 		<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
         <li>
          	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">

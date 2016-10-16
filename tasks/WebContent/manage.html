@@ -39,18 +39,18 @@
 		          <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
 		          <ul class="nav nav-second-level animated fadeInRight m-t-xs">
 		            
-		            <li><a class="lang" data-lang="m_home" href="/">home</a></li>
+		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/log.html"><i class="fa fa-briefcase"></i> <span class="nav-label lang" data-lang="m_manage">manage</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
 		          
 		          </ul>
 		        </li> 
 
-			<li id="m_logs"><a href="/tasks/log.html"><i class="fa fa-ticket"></i> <span class="lang" data-lang="m_logs">logs</span></a></li>
-			<li id="m_task_m"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="lang" data-lang="m_task_m">tasks</span></a></li>
+ 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
+ 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-users"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
