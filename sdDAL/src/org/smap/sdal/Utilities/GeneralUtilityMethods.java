@@ -3437,17 +3437,35 @@ public class GeneralUtilityMethods {
 		return idx;
 	}
 	
+	public static String getLanguage(String s) {
+		String lang = "";
+		if(s != null) {
+			if(isLanguage(s, 0x0600, 0x06E0)) {		// Arabic
+				lang = "arabic";
+			} else if(isLanguage(s, 0x0980, 0x09FF)) {
+				lang = "bengali";
+			}
+		}
+		return lang;
+	}
+	
+	public static boolean isRtlLanguage(String s) {
+		
+		return isLanguage(s, 0x0600, 0x06E0);
+			
+	}
+	
 	/*
 	 * Return true if the language should be rendered Right to Left
 	 * Based on: http://stackoverflow.com/questions/15107313/how-to-determine-a-string-is-english-or-arabic
 	 */
-	public static boolean isRtlLanguage(String s) {
+	public static boolean isLanguage(String s, int start, int end) {
 		
 		// Check a maximum of 10 characters
 		int len = (s.length() > 10) ? 10 : s.length();
 	    for (int i = 0; i < len;) {
 	        int c = s.codePointAt(i);
-	        if (c >= 0x0600 && c <= 0x06E0)
+	        if (c >= start && c <= end)
 	            return true;
 	        i += Character.charCount(c);            
 	    }

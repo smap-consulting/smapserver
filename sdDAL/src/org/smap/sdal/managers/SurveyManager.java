@@ -860,7 +860,7 @@ public class SurveyManager {
 			
 			pstmtGetOptions.setInt(1, listId);
 			pstmtGetOptions.setBoolean(2, external);
-			log.info("SQL Get options: " + pstmtGetOptions.toString());
+			//log.info("SQL Get options: " + pstmtGetOptions.toString());
 			rsGetOptions = pstmtGetOptions.executeQuery();
 				
 			Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();		// Used to translate cascade filters json
