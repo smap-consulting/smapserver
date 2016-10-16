@@ -170,11 +170,13 @@ public class PDFTableManager {
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
 				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
 				FontFactory.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/Library/Fonts/NotoSans-Regular.ttf", "notosans");
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
 				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
 				FontFactory.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", "notosans");
 			}
 			
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
