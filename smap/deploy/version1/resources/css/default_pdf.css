@@ -17,6 +17,14 @@ group {
 	color: #ce4f07
 }
 
+.arabic { 
+	font-family: "noto naskh arabic"; 
+}
+
+.bengali { 
+	font-family: "noto sans bengali", "noto sans bengali bold"; 
+}
+
 * { 
-	font-family: "dejavu sans", "noto naskh arabic",  helvetica, sans-serif; 
+	font-family: "noto sans", "noto sans bold";
 }

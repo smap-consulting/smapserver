@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -98,14 +99,17 @@ public class PDFSurveyManager {
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
+	public static Font defaultFontBold = null;
 	public static Font arabicFont = null;
+	public static Font bengaliFont = null;
+	public static Font bengaliFontBold = null;
 	private static final String DEFAULT_CSS = "/smap/bin/resources/css/default_pdf.css";
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
 	
-	Font font = new Font(FontFamily.HELVETICA, 10);
-    Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
+	//Font font = new Font(FontFamily.HELVETICA, 10);
+    //Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
@@ -169,20 +173,34 @@ public class PDFSurveyManager {
 			
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
-				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
+				//FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
 				FontFactory.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/Library/Fonts/NotoSans-Regular.ttf", "notosans");
+				FontFactory.register("/Library/Fonts/NotoSans-Bold.ttf", "notosansbold");
+				FontFactory.register("/Library/Fonts/NotoSansBengali-Regular.ttf", "bengali");
+				FontFactory.register("/Library/Fonts/NotoSansBengali-Bold.ttf", "bengalibold");
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
-				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
+				//FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "dejavu");
 				FontFactory.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", "notosans");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", "notosansbold");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", "bengali");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Bold.ttf", "bengalibold");
 			}
 			
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
-			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
+			defaultFont = FontFactory.getFont("notosans", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			defaultFontBold = FontFactory.getFont("notosansbold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			arabicFont = FontFactory.getFont("arabic", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			bengaliFont = FontFactory.getFont("bengali", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			bengaliFontBold = FontFactory.getFont("bengalibold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
 			/*
@@ -310,7 +328,7 @@ public class PDFSurveyManager {
 				// Add appendix
 				if(gv.hasAppendix) {
 					document.newPage();
-					document.add(new Paragraph("Appendix", fontbold));
+					document.add(new Paragraph("Appendix", defaultFontBold));
 					
 					for(int i = 0; i < survey.instance.results.size(); i++) {
 						processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
@@ -567,24 +585,30 @@ public class PDFSurveyManager {
 		
 		
         XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
+       
 		if(os.startsWith("Mac")) {
+			fontProvider.register("/Library/Fonts/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
 	        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-	        FontFactory.register("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/Library/Fonts/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H);
 	        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/Library/Fonts/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
+	        
+	        
 		} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 			// Linux / Unix
+			fontProvider.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
 			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-			FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", BaseFont.IDENTITY_H);
 		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
 		}
- 
+
 		/*
-        System.out.println("Fonts present in " + fontProvider.getClass().getName());
-        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
-        for (String font : registeredFonts)
-            System.out.println(font);
- 		*/
-        
+		 System.out.println("Fonts present in " + fontProvider.getClass().getName());
+	        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
+	        for (String font : registeredFonts)
+	            System.out.println(font);
+        */
         CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
         
         // HTML
@@ -706,34 +730,6 @@ public class PDFSurveyManager {
 	}
 	
 	/*
-	private int processGroup(
-			Parser parser,
-			Document document, 
-			org.smap.sdal.model.Question question, 
-			Label label
-			) throws IOException, DocumentException {
-		
-		
-		StringBuffer html = new StringBuffer();
-		html.append("<span class='group'><h3>");
-		html.append(label.text);
-		html.append("</h3></span>");
-		
-		parser.elements.clear();
-		parser.xmlParser.parse(new StringReader(html.toString()));
-		for(Element element : parser.elements) {
-			document.add(element);
-		}
-		
-		int width = question.getWidth();
-		if(width <= 0) {
-			width = GROUP_WIDTH_DEFAULT;
-		}
-		
-		return width;
-	}
-	
-	/*
 	 * Make a decision as to whether this result should be included in the PDF
 	 */
 	private boolean includeResult(Result r, org.smap.sdal.model.Question question, 
@@ -800,7 +796,7 @@ public class PDFSurveyManager {
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
 			PdfPCell c = new PdfPCell();
-			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
+			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), defaultFont));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 
@@ -810,10 +806,9 @@ public class PDFSurveyManager {
 		int spanCount = NUMBER_TABLE_COLS;
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
-			//di.debug();
+
 			PdfPCell cell = new PdfPCell();
 			cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
-			//PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			// Make sure the last cell extends to the end of the table
@@ -1205,12 +1200,12 @@ public class PDFSurveyManager {
 		 
 		// Add label
 		StringBuffer html = new StringBuffer();
-		html.append("<span class='label");
+		html.append("<span class='label ");
 		if(di.labelbold) {
 			html.append(" lbold");
 		}
-		html.append("'>");
 		
+		// Get text value
 		String textValue = "";
 		if(di.text != null && di.text.trim().length() > 0) {
 			textValue = di.text;
@@ -1221,20 +1216,27 @@ public class PDFSurveyManager {
 		if(textValue.charAt(textValue.length() - 1) != ':') {
 			textValue += ":";
 		}
-		
 		if(di.labelcaps) {
 			textValue = textValue.toUpperCase();
 		}
+		
+		// Add language class
+		html.append(GeneralUtilityMethods.getLanguage(textValue));
+		html.append("'>");
+
+		// Add text value
 		html.append(GeneralUtilityMethods.unesc(textValue));
 		html.append("</span>");
 		
 		// Only include hints if we are generating a blank template
 		if(generateBlank) {
-			html.append("<span class='hint'>");
+			html.append("<span class='hint ");
 			if(di.hint != null) {
+				html.append(GeneralUtilityMethods.getLanguage(di.hint));
+				html.append("'>");
 				html.append(GeneralUtilityMethods.unesc(di.hint));
-			html.append("</span>");
 			}
+			html.append("</span>");
 		}
 		
 		parser.elements.clear();
@@ -1340,17 +1342,14 @@ public class PDFSurveyManager {
 		boolean hasContent = false;
 		Font f = null;
 		boolean isRtl = false;
+		String lang = "";
 		
-		Paragraph para = new Paragraph("", font);
+		Paragraph para = new Paragraph("", defaultFont);
 
 		if(value != null && value.trim().length() > 0) {
-			if(GeneralUtilityMethods.isRtlLanguage(value)) {
-				f = arabicFont;
-				isRtl = true;
-				
-			} else {
-				f= font;
-			}
+			lang = GeneralUtilityMethods.getLanguage(value);
+			f = getFont(lang);
+			isRtl = isRtl(lang);
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			hasContent = true;
 		}
@@ -1361,15 +1360,13 @@ public class PDFSurveyManager {
 			for(String n : deps) {
 				if(n != null && n.trim().length() > 0) {
 					if(hasContent) {
-						para.add(new Chunk(",", font));
+						para.add(new Chunk(",", defaultFont));
 					}
 					
-					if(GeneralUtilityMethods.isRtlLanguage(n)) {
-						f = arabicFont;
-						isRtl = true;
-						
-					} else {
-						f= font;
+					lang = GeneralUtilityMethods.getLanguage(n);
+					f = getFont(lang);
+					if(!isRtl) {		// Don't override RTL if it has already been set
+						isRtl = isRtl(lang);
 					}
 					para.add(new Chunk(n, f));
 				}
@@ -1377,6 +1374,31 @@ public class PDFSurveyManager {
 			}
 		}
 		return para;
+	}
+	
+	private Font getFont(String lang) {
+		Font f = defaultFont;
+		
+		if(lang.length() > 0) {
+			if(lang.equals("arabic")) {
+				f = arabicFont;
+			} else if(lang.equals("bengali")) {
+				f = bengaliFont;
+			}		
+		} 
+		
+		return f;
+	}
+	
+	private boolean isRtl(String lang) {
+		boolean isRtl = false;
+		
+		if(lang.length() > 0) {
+			if(lang.equals("arabic")) {
+				isRtl = true;
+			} 	
+		} 
+		return isRtl;
 	}
 	
 	private void processSelect(PdfPCell cell, DisplayItem di,
@@ -1392,6 +1414,7 @@ public class PDFSurveyManager {
 		list.setSymbolIndent(24);
 		
 		String stringValue = null;
+		String lang;
 		
 		boolean isSelectMultiple = di.type.equals("select") ? true : false;
 		
@@ -1405,13 +1428,11 @@ public class PDFSurveyManager {
 		 */
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
-				if(GeneralUtilityMethods.isRtlLanguage(aChoice.text)) {
-					f = arabicFont;
-					isRtl = true;
-					
-				} else {
-					f= font;
-				}
+				
+				lang = GeneralUtilityMethods.getLanguage(aChoice.text);
+				f = getFont(lang);
+				isRtl = isRtl(lang);
+				
 				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), f);
 			
 				if(isSelectMultiple) {
@@ -1535,13 +1556,14 @@ public class PDFSurveyManager {
 	private void addValue(Document document, String value, float indent) throws DocumentException {
 		
 		Font f = null;
+		String lang;
+		boolean isRtl;
 		
 		if(value != null && value.trim().length() > 0) {
-			if(GeneralUtilityMethods.isRtlLanguage(value)) {
-				f = arabicFont;		
-			} else {
-				f= font;
-			}
+			lang = GeneralUtilityMethods.getLanguage(value);
+			f = getFont(lang);
+			isRtl = isRtl(lang);
+			
 			Paragraph para = new Paragraph("", f);	
 			para.setIndentationLeft(indent);
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
