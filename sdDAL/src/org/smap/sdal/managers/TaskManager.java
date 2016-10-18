@@ -313,6 +313,7 @@ public class TaskManager {
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");
+				System.out.println("xxxx: geo type: " + geo_type);
 				ResultSet rsGeo = null;
 				if(geo_type != null) {
 					if(geo_type.equals("POINT")) {

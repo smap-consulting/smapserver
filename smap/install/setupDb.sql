@@ -233,7 +233,7 @@ CREATE TABLE users (
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	action_details text,			-- Details of a specific action the user can undertake
 	lastalert text,					-- Time last alert sent to the user
-	boolean seen					-- True if the user has aknowledged the alert
+	seen boolean					-- True if the user has aknowledged the alert
 	);
 CREATE UNIQUE INDEX idx_users_ident ON users(ident);
 ALTER TABLE users OWNER TO ws;
