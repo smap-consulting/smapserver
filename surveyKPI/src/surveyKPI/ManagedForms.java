@@ -470,8 +470,12 @@ public class ManagedForms extends Application {
 					if(tc.type.equals("text") || tc.type.equals("select_one")) {
 						pstmtUpdate.setString(paramCount++, u.value);
 					} else if(tc.type.equals("date")) {
-						java.util.Date inputDate = dateFormat.parse(u.value);
-						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+						if(u.value == null || u.value.trim().length() == 0) {
+							pstmtUpdate.setDate(paramCount++, null);
+						} else {
+							java.util.Date inputDate = dateFormat.parse(u.value);
+							pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+						}
 					} else if(tc.type.equals("integer")) {
 						int inputInt = Integer.parseInt(u.value);
 						pstmtUpdate.setInt(paramCount++, inputInt);
