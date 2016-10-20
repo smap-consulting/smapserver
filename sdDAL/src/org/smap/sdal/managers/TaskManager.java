@@ -244,9 +244,9 @@ public class TaskManager {
 		
 		String sqlPoint = "select ST_AsGeoJSON(geo_point), ST_AsText(geo_point) from tasks where id = ?;";
 		PreparedStatement pstmtPoint = null;
-		String sqlLine = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
+		String sqlPoly = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
 		PreparedStatement pstmtLine = null;
-		String sqlPoly = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
+		String sqlLine = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
 		PreparedStatement pstmtPoly = null;
 
 		TaskListGeoJson tl = new TaskListGeoJson();
@@ -313,7 +313,6 @@ public class TaskManager {
 				
 				// Add geometry
 				String geo_type = rs.getString("geo_type");
-				System.out.println("xxxx: geo type: " + geo_type);
 				ResultSet rsGeo = null;
 				if(geo_type != null) {
 					if(geo_type.equals("POINT")) {
@@ -477,8 +476,7 @@ public class TaskManager {
 			// Remove existing data
 			pstmtGetRules = sd.prepareStatement(sqlGetRules);
 			pstmtGetRules.setInt(1, sId);
-			
-			System.out.println("SQL get task rules: " + pstmtGetRules.toString());
+
 			ResultSet rs = pstmtGetRules.executeQuery();
 			while(rs.next()) {
 					
@@ -658,7 +656,6 @@ public class TaskManager {
 			pstmt.setString(11, tid.locationTrigger);
 			pstmt.setString(12, tid.address);	// Write the address into guidance
 			
-			System.out.println("Insert Tasks: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 			/*
@@ -956,7 +953,6 @@ public class TaskManager {
 			}
 			pstmt.setTimestamp(11, tf.properties.from);
 				
-			System.out.println("Adding from: " + tf.properties.from);
 			pstmt.setTimestamp(12, tf.properties.to);
 			pstmt.setString(13, tf.properties.location_trigger);
 			pstmt.setBoolean(14, tf.properties.repeat);
