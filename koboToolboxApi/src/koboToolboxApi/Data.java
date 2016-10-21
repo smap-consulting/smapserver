@@ -243,7 +243,8 @@ public class Data extends Application {
 					false,		// Don't include "bad" columns
 					true,		// include instance id
 					true,		// include other meta data
-					superUser
+					superUser,
+					false		// TODO include HXL
 					);
 			
 			if(mgmt) {
@@ -411,7 +412,8 @@ public class Data extends Application {
 					false,		// Don't include "bad" columns
 					true,		// include instance id
 					true,		// Include other meta data
-					superUser
+					superUser,
+					false		// Only include HXL with CSV and Excel output
 					);
 			
 			if(mgmt) {

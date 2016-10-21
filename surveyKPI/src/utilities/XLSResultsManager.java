@@ -71,12 +71,14 @@ public class XLSResultsManager {
 		String name;
 		String label;
 		String humanName;
+		String hxlTag;
 		boolean isImage;
 		
-		Column(String n, String l, String h) {
+		Column(String n, String l, String h, String hxlTag) {
 			name = n;
 			label = l;
 			humanName = h;
+			this.hxlTag = hxlTag;
 		}
 	}
 	
@@ -191,6 +193,7 @@ public class XLSResultsManager {
 			HttpServletRequest request,
 			OutputStream outputStream,
 			boolean embedImages, 
+			boolean hxl,
 			Date startDate, 
 			Date endDate, 
 			int dateId,
@@ -302,7 +305,7 @@ public class XLSResultsManager {
 				addChildren(topForm, forms, formList);
 
 				if(topForm.visible) {
-					cols.add(new Column("prikey", "", "Record"));
+					cols.add(new Column("prikey", "", "Record", null));
 				}
 				
 				/*
@@ -330,8 +333,8 @@ public class XLSResultsManager {
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
 							true,		// Include other meta data
-							superUser
-							);
+							superUser,
+							hxl);
 						
 							
 					for(int k = 0; k < f.maxRepeats; k++) {
@@ -342,6 +345,7 @@ public class XLSResultsManager {
 							String qType = c.type;
 							boolean ro = c.readonly;
 							String humanName = c.humanName;
+							String hxlCode = c.hxlCode;
 							
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
@@ -391,7 +395,7 @@ public class XLSResultsManager {
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
 						
-									addToHeader(sd, cols, language, humanName, name, qType, split_locn, sId, f,
+									addToHeader(sd, cols, language, humanName, name, hxlCode, qType, split_locn, sId, f,
 											merge_select_multiple);
 									
 								}
@@ -448,7 +452,7 @@ public class XLSResultsManager {
 
 							if(f.visible) {	// Add column headings if the form is visible
 								
-								addToHeader(sd, cols, language, colName, colName, sscType, split_locn, sId, f,
+								addToHeader(sd, cols, language, colName, colName, null, sscType, split_locn, sId, f,
 										merge_select_multiple);
 				
 							}
@@ -505,9 +509,12 @@ public class XLSResultsManager {
 
 				// Write out the column headings
 				if(!language.equals("none")) {	// Add the questions / option labels if requested
-					createHeader(cols, resultsSheet, styles, true);
+					createHeader(cols, resultsSheet, styles, true, false);
 				} 
-				createHeader(cols, resultsSheet, styles, false);	// Add the names
+				createHeader(cols, resultsSheet, styles, false, false);	// Add the names
+				if(hxl) {
+					createHeader(cols, resultsSheet, styles, false, true);	// Add the names
+				}
  
 				/*
 				 * Add the data
@@ -550,7 +557,8 @@ public class XLSResultsManager {
 			ArrayList<Column> cols, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles, 
-			boolean label) {
+			boolean label,
+			boolean hxl) {
 				
 		// Create survey sheet header row
 		Row headerRow = sheet.createRow(rowIndex++);
@@ -562,6 +570,8 @@ public class XLSResultsManager {
             cell.setCellStyle(headerStyle);
             if(label) {
             	cell.setCellValue(col.label);
+            } else if(hxl) {
+            	cell.setCellValue(col.hxlTag);
             } else {
             	cell.setCellValue(col.humanName);
             }
@@ -777,6 +787,7 @@ public class XLSResultsManager {
 			String language, 
 			String human_name, 
 			String colName, 
+			String hxlTag,
 			String qType, 
 			boolean split_locn, 
 			int sId, 
@@ -789,10 +800,10 @@ public class XLSResultsManager {
 		}
 		
 		if(split_locn && qType != null && qType.equals("geopoint")) {
-			cols.add(new Column("Latitude", "Latitude", "Latitude"));
-			cols.add(new Column("Longitude", "Longitude", "Longitude"));
+			cols.add(new Column("Latitude", "Latitude", "Latitude", "#geo+lat"));
+			cols.add(new Column("Longitude", "Longitude", "Longitude", "+geo+lon"));
 		} else {
-			Column col = new Column(colName, label, human_name);
+			Column col = new Column(colName, label, human_name, hxlTag);
 			if(qType.equals("image")) {
 				col.isImage = true;
 			}

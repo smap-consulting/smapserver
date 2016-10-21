@@ -2063,7 +2063,8 @@ public class GeneralUtilityMethods {
 			boolean includeBad,
 			boolean includeInstanceId,
 			boolean includeOtherMeta,
-			boolean superUser) throws SQLException {
+			boolean superUser,
+			boolean hxl) throws SQLException {
 		
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
@@ -2090,7 +2091,7 @@ public class GeneralUtilityMethods {
 		}
 		
 		// SQL to get the questions
-		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, path "
+		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, appearance "
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
@@ -2237,7 +2238,8 @@ public class GeneralUtilityMethods {
 				int qId = rsQuestions.getInt(4);
 				boolean ro = rsQuestions.getBoolean(5);
 				String source_param = rsQuestions.getString(6);
-				//String path = rsQuestions.getString(7);
+				String appearance = rsQuestions.getString(7);
+				String hxlCode = getHxlCode(appearance, question_human_name);
 				
 				String cName = question_column_name.trim().toLowerCase();
 				if(cName.equals("parkey") ||	cName.equals("_bad") ||	cName.equals("_bad_reason")
@@ -2275,6 +2277,10 @@ public class GeneralUtilityMethods {
 							c.qId = qId;
 							c.type = qType;
 							c.readonly = ro;
+							if(hxlCode != null) {
+								c.hxlCode = hxlCode.trim() + "+label";
+						
+							}
 							realQuestions.add(c);
 						}
 					}
@@ -2285,6 +2291,7 @@ public class GeneralUtilityMethods {
 					c.qId = qId;
 					c.type = qType;
 					c.readonly = ro;
+					c.hxlCode = hxlCode.trim();
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						columnList.add(c);
 					} else {
@@ -2305,65 +2312,25 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Add the management columns for the survey
-	 *
-	public static void addManagementColumns(ArrayList<Column> columnList) {
-		// TODO check that these exist
-		// TODO Possibly the columns should vary with survey
-		// TODO Possibly there could be more than one set of managment columns for a single survey
+	 * Get the Hxl Code from an appearance value and the question name
+	 */
+	public static String getHxlCode(String appearance, String name) {
+		String hxlCode = null;
+		if(appearance != null) {
+			String appValues[] = appearance.split(" ");
+			for(int i = 0; i < appValues.length; i++) {
+				if(appValues[i].startsWith("#")) {
+					hxlCode = appValues[i];
+					break;
+				}
+			}
+		}
 		
-		// Hardcoded for now
-		Column c = new Column();
-		c.name = "_mgmt_responsible";
-		c.humanName = "Responsible Person";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_deadline";
-		c.humanName = "Action Deadline";
-		c.qType = "date";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_date";
-		c.humanName = "Date of Action";
-		c.qType = "date";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_response_status";
-		c.humanName = "Response Status";
-		c.qType = "calculate";
-		c.calculation = "CASE "
-				+ "WHEN _mgmt_action_deadline >= _mgmt_action_date THEN 'Deadline met' "
-				+ "WHEN _mgmt_action_deadline < _mgmt_action_date THEN 'Done with delay' "
-				+ "WHEN _mgmt_action_deadline > now() THEN 'In the pipeline' "
-				+ "WHEN _mgmt_action_deadline is null THEN 'In the pipeline' "
-	            + "ELSE 'Deadline crossed' "
-	            + "END";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_taken";
-		c.humanName = "Action Taken";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_address_recommendation";
-		c.humanName = "Does the Action Address the Recommendation";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_comment";
-		c.humanName = "Comment";
-		c.qType = "string";
-		columnList.add(c);
-		
+		if(hxlCode == null) {
+			// TODO try to get hxl code from defaut column name
+		}
+		return hxlCode;
 	}
-	*/
 	
 	/*
 	 * Return true if this question is a property type question like deviceid
