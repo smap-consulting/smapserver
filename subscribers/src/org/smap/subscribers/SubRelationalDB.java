@@ -1213,7 +1213,8 @@ public class SubRelationalDB extends Subscriber {
 				 * 		questions that have been moved to a new table
 				 * 		questions whose column_name has been changed
 				 */
-				if(ci.type.equals("question") || ci.type.equals("option") &&
+				if(ci.type != null && ci.action != null && 
+						(ci.type.equals("question") || ci.type.equals("option") &&
 						(ci.action.equals("add") || ci.action.equals("external option")
 						|| (ci.action.equals("move") && 
 								ci.question != null && 
@@ -1222,7 +1223,7 @@ public class SubRelationalDB extends Subscriber {
 								ci.property != null && 
 								ci.property.prop != null && 
 								(ci.property.prop.equals("name") || ci.property.prop.equals("value"))
-								))) {
+								)))) {
 														
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
