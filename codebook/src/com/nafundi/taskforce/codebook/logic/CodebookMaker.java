@@ -133,12 +133,21 @@ public class CodebookMaker extends SwingWorker<Integer, String> {
             if (isWindows()) {
                 renderer.getFontResolver().addFont("C:\\WINDOWS\\Fonts\\ARIALUNI.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
             } else if (isMac()) {
-                renderer.getFontResolver().addFont("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                //renderer.getFontResolver().addFont("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/Library/Fonts/NotoSans-Bold.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/Library/Fonts/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/Library/Fonts/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
             } else if (isUnix()) {
-                // renderer.getFontResolver().addFont("/usr/share/fonts/truetype/ARIALUNI.TTF", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                renderer.getFontResolver().addFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                //renderer.getFontResolver().addFont("/usr/share/fonts/truetype/ZawgyiOne2008.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                //renderer.getFontResolver().addFont("/usr/share/fonts/truetype/mm3.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+               
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/fontawesome-webfont.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/NotoSans-Bold.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            	renderer.getFontResolver().addFont("/usr/share/fonts/truetype/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+               
             } else {
                 publish("Warning: No Arial Unicode found. Non-Latin characters may not display properly.");
             }

@@ -187,7 +187,6 @@ public class PDFSurveyManager {
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
-				//FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "dejavu");
 				FontFactory.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", "arabic");
 				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", "notosans");
 				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", "notosansbold");

@@ -925,7 +925,7 @@ public class SurveyManager {
 			cl.userName = rsGetChanges.getString(4);
 			cl.updatedTime = rsGetChanges.getTimestamp(5);
 			cl.apply_results = rsGetChanges.getBoolean(6);
-			cl.success = rsGetChanges.getBoolean(7);
+			cl.success = rsGetChanges.getBoolean(7) || !cl.apply_results;	// Set the update of the results database to success automatically if a change does not need to be applied
 			cl.msg = rsGetChanges.getString(8);
 
 			s.changes.add(cl);
