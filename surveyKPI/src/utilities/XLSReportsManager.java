@@ -105,7 +105,7 @@ public class XLSReportsManager {
 		Sheet taskSettingsSheet = wb.createSheet("settings");
 		//taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 
 		ArrayList<Column> cols = getColumnList(mfc, dArray, localisation);
 		createHeader(cols, dataSheet, styles);	
@@ -161,39 +161,6 @@ public class XLSReportsManager {
 		}
 		return idx;
 	}
-	
-	
-	/*
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        
-    	Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-		DataFormat format = wb.createDataFormat();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("default", style);
-
-		style = wb.createCellStyle();
-		style.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
-		styles.put("datetime", style);
-        
-		style = wb.createCellStyle();
-		Font linkFont = wb.createFont();
-		linkFont.setUnderline(Font.U_SINGLE);
-	    linkFont.setColor(IndexedColors.BLUE.getIndex());
-	    style.setFont(linkFont);
-	    styles.put("link", style);
-	      
-		return styles;
-    }
     
 	/*
 	 * Create a header row and set column widths

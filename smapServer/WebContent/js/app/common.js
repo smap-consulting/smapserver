@@ -2167,8 +2167,13 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 		
 		h[++idx] = '<button type="button" data-idx="';
 		h[++idx] = i;
-		h[++idx] = '" class="btn btn-default btn-sm rm_cr danger">';
+		h[++idx] = '" class="btn btn-default btn-sm rm_cr">';
 		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm download_cr">';
+		h[++idx] = '<span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></button>';
 		
 		h[++idx] = '</td>';
 		// end actions
@@ -2186,6 +2191,11 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 		if(confirm(localise.set["msg_confirm_del"] + " " + globals.gReports[idx].name)) {
 			deleteCustomReport(globals.gReports[idx].id, type);
 		}
+	});
+	
+	$(".download_cr", $selector).click(function(){
+		var idx = $(this).data("idx");
+		downloadFile("/surveyKPI/custom_reports/xls/" + globals.gReports[idx].id);
 	});
 	
 	

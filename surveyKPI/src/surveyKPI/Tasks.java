@@ -440,14 +440,10 @@ public class Tasks extends Application {
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			// Get the task group name
-			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
 			
-			// Get the task list
-			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);
-			
-			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response);
+			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);		// Get the task group name
+			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);	// Get the task list
+			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response); // Set file name
 			
 			// Create XLSTasks File
 			XLSTaskManager xf = new XLSTaskManager(filetype);

@@ -290,7 +290,7 @@ public class XLSFormManager {
 		surveySheet.createFreezePane(2, 1);
 		choicesSheet.createFreezePane(3, 1);
 		
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		
 		// Create Columns
 		HashMap<String, Integer> filterIndexes = new HashMap<String, Integer> ();
@@ -599,45 +599,6 @@ public class XLSFormManager {
 		
 		return cols;
 	}
-	
-   /**
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("label", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("begin repeat", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.DARK_YELLOW.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("begin group", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("is_required", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("not_required", style);
-
-        return styles;
-    }
     
     /*
      * write out the settings values

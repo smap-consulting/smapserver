@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,8 +29,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
-import org.omg.CORBA.UserException;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
@@ -37,10 +38,12 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.model.CustomReportItem;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import utilities.XLSCustomReportsManager;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -48,9 +51,6 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/*
- * Get the questions in the top level form for the requested survey
- */
 @Path("/custom_reports")
 public class CustomReports extends Application {
 	
@@ -159,6 +159,75 @@ public class CustomReports extends Application {
 
 	}
 	
+	/*
+	 * Export and oversight form to XLS
+	 */
+	@Path("/xls/{id}")
+	public Response exportOversightForm(@Context HttpServletRequest request,
+			@PathParam("id") int id,
+			@QueryParam("filetype") String filetype,
+			@Context HttpServletResponse response) { 
+		
+		Response responseVal = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
+			 try {
+			    	response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+			    		"Survey: Error: Can't find PostgreSQL JDBC Driver");
+			  } catch (Exception ex) {
+			    	log.log(Level.SEVERE, "Exception", ex);
+			  }
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-CustomReports");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation
+		
+		// Set file type to "xlsx" unless "xls" has been specified
+		if(filetype == null || !filetype.equals("xls")) {
+			filetype = "xlsx";
+		}
+		
+		try {
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			
+			GeneralUtilityMethods.setFilenameInResponse("thename" + "." + filetype, response); // Set file name
+			ArrayList<TableColumn> defn = null;
+			
+			// Create XLS oversight form
+			XLSCustomReportsManager xcrm = new XLSCustomReportsManager();
+			xcrm.writeOversightDefinition(sd,
+					oId,
+					filetype,
+					response.getOutputStream(), 
+					defn, 
+					localisation);
+		
+			
+			responseVal = Response.ok().build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+			response.setHeader("Content-type",  "text/html; charset=UTF-8");
+			// Return an OK status so the message gets added to the web page
+			// Prepend the message with "Error: ", this will be removed by the client
+			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-Survey", sd);
+		}
+
+		return responseVal;
+
+	}
 
 }
 

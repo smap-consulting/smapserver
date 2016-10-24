@@ -201,7 +201,7 @@ public class XLSResultsManager {
 		HashMap<String, String> selectMultipleColumnNames = new HashMap<String, String> ();
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		surveyNames = new HashMap<String, String> ();
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
@@ -642,35 +642,6 @@ public class XLSResultsManager {
         }
 	}
 	
-
-
-   /**
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("default", style);
-        
-		style = wb.createCellStyle();
-		Font linkFont = wb.createFont();
-		linkFont.setUnderline(Font.U_SINGLE);
-	    linkFont.setColor(IndexedColors.BLUE.getIndex());
-	    style.setFont(linkFont);
-	    styles.put("link", style);
-        
-
-        return styles;
-    }
-    
 	private int getMaxRepeats(Connection con, Connection results_con, int sId, int formId)  {
 		int maxRepeats = 1;
 		

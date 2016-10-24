@@ -8,7 +8,7 @@ define({
 	"m_export": "Export",
 	"m_discuss": "Discuss",
 	"m_modify": "Modify",
-	"m_data_mod": "Data",
+	"m_data_mod": "Web Forms",
 	"m_web_forms": "Web Forms",
 	"m_docs": "Documentation",
 	"m_monitor": "Monitoring",

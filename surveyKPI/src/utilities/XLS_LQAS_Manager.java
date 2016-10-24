@@ -90,7 +90,7 @@ public class XLS_LQAS_Manager {
 		PreparedStatement pstmt = null;
 		
 		// Create styles
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		HashMap<String, String> columnNames = new HashMap<String, String> ();		// Keep track of duplicate column names
 		
 		try {
@@ -386,7 +386,7 @@ public class XLS_LQAS_Manager {
 		PreparedStatement pstmt = null;
 		
 		// Create styles
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		HashMap<String, String> columnNames = new HashMap<String, String> ();		// Keep track of duplicate column names
 		
 		try {
@@ -689,86 +689,6 @@ public class XLS_LQAS_Manager {
     	}
     	
     	return lots;
-    }
-    
-    /**
-     * create a library of cell styles
-     */
-    private Map<String, CellStyle> createStyles(Workbook wb){
-        
-    	Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-    	/*
-    	 * Create fonts
-    	 */
-        Font largeFont = wb.createFont();
-        largeFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        largeFont.setFontHeightInPoints((short) 14);
-        
-        Font boldFont = wb.createFont();
-        boldFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        
-        /*
-         * Create styles
-         */
-        CellStyle style = wb.createCellStyle();
-        style.setFont(largeFont);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
-        styles.put("title", style);
-
-        style = wb.createCellStyle();	
-        style.setWrapText(true);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
-        styles.put("no_border", style);
-        
-        // Remaining styles are all derived from a common base style
-        style = getBaseStyle();
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setFont(boldFont);
-        styles.put("group", style);
-        
-        style = getBaseStyle();
-        style.setAlignment(CellStyle.ALIGN_CENTER);
-        styles.put("data", style);
-        
-        style = getBaseStyle();
-        style.setFillForegroundColor(HSSFColor.LIGHT_YELLOW.index);
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_CENTER);
-        styles.put("source", style);
-        
-        style = getBaseStyle();
-        style.setFillForegroundColor(HSSFColor.LAVENDER.index);
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_CENTER);
-        styles.put("raw_source", style);
-        
-        style = getBaseStyle();
-        style.setAlignment(CellStyle.ALIGN_CENTER);
-        style.setFont(boldFont);  
-        styles.put("data_header", style);
-        
-        style = getBaseStyle();
-        styles.put("default", style);
-        
-
-        return styles;
-    }
-    
-    private CellStyle getBaseStyle() {
-    	
-    	CellStyle style = wb.createCellStyle();
-    	
-        style.setWrapText(true);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
-        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
-        
-        return style;
     }
     
     private Sheet writeErrorToWorkSheet(Sheet errorSheet, String msg, int rowNumber) {

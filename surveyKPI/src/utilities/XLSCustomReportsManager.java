@@ -19,22 +19,21 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-
-
-//import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-//import org.apache.poi.ss.usermodel.Workbook;
-//import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
@@ -49,14 +48,94 @@ import org.smap.sdal.model.LQASdataItem;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
+import org.smap.sdal.model.TaskProperties;
 import org.smap.sdal.model.Role;
 
 import model.LotCell;
 import model.LotRow;
 
-
-
 public class XLSCustomReportsManager {
+	
+	private class Column {
+		String name;
+		String human_name;
+		int colNumber;
+		
+		public Column(ResourceBundle localisation, int col, String n) {
+			colNumber = col;
+			name = n;
+			human_name = n;
+		}
+		
+		// Return the width of this column
+		public int getWidth() {
+			int width = 256 * 20;		// 20 characters is default
+			return width;
+		}
+		
+		// Get a value for this column from the provided properties object
+		public String getValue(TaskProperties props) {
+			String value = null;
+			
+			if(name.equals("form")) {
+				value = props.form_name;
+			} else if(name.equals("name")) {
+				value = props.name;
+			} else if(name.equals("status")) {
+				value = props.status;
+			} else if(name.equals("assignee_ident")) {
+				value = props.assignee_ident;
+			} else if(name.equals("generated_user_name")) {
+				value = props.assignee_name;
+			} else if(name.equals("location_trigger")) {
+				value = props.location_trigger;
+			} else if(name.equals("from")) {
+				if(props.from == null) {
+					value = null;
+				} else {
+					value = String.valueOf(props.from);
+				}
+			} else if(name.equals("to")) {
+				if(props.to == null) {
+					value = null;
+				} else {
+					value = String.valueOf(props.to);
+				}
+			} else if(name.equals("guidance")) {
+				value = props.guidance;		
+			} else if(name.equals("repeat")) {
+				value = String.valueOf(props.repeat);
+			} else if(name.equals("email")) {
+				value = props.email;
+			} else if(name.equals("url")) {
+				value = props.url;
+			} else if(name.equals("lon")) {
+				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
+			} else if(name.equals("lat")) {
+				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lat"));
+			} else if(name.equals("address")) {
+				value = props.address;
+			}
+			
+			if(value == null) {
+				value = "";
+			}
+			return value;
+		}
+	
+		// Get a date value for this column from the provided properties object
+		public Timestamp getDateValue(TaskProperties props) {
+			Timestamp value = null;
+			
+			if(name.equals("from")) {
+				value = props.from;
+			} else if(name.equals("to")) {
+				value = props.to;
+			} 
+			
+			return value;
+		}
+	}
 	
 	private static Logger log =
 			 Logger.getLogger(SurveyInfo.class.getName());
@@ -69,18 +148,10 @@ public class XLSCustomReportsManager {
 
 	}
 	
-	public XLSCustomReportsManager(String type) {
-		if(type != null && type.equals("xls")) {
-			wb = new HSSFWorkbook();
-		} else {
-			wb = new XSSFWorkbook();
-		}
-	}
-	
 	/*
-	 * Create an customer report definition from an XLS file
+	 * Create an oversight form definition from an XLS file
 	 */
-	public ArrayList<TableColumn> getCustomReport(Connection sd, int oId, String type, 
+	public ArrayList<TableColumn> getOversightDefinition(Connection sd, int oId, String type, 
 			InputStream inputStream, ResourceBundle localisation, boolean isSecurityManager) throws Exception {
 		
 		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
@@ -432,7 +503,49 @@ public class XLSCustomReportsManager {
 	
 	
 	/*
-	 * Create an customer report definition from an XLS file
+	 * Export an oversight definition to an XLS file
+	 */
+	public void writeOversightDefinition(
+			Connection sd, 
+			int oId, 
+			String type, 
+			OutputStream outputStream, 
+			ArrayList<TableColumn> defn,
+			ResourceBundle localisation) throws Exception {
+		
+
+        Row row = null;
+        boolean isXLSX;
+        int lastRowNum = 0;
+        HashMap<String, Integer> header = null;
+ 
+        if(type != null && type.equals("xls")) {
+			wb = new HSSFWorkbook();
+			isXLSX = false;
+		} else {
+			wb = new SXSSFWorkbook(10);
+			isXLSX = true;
+		}
+		
+		Sheet sheet = wb.createSheet("definition");
+		sheet.createFreezePane(2, 1);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
+
+		ArrayList<Column> cols = getColumnList(localisation);
+		createHeader(cols, sheet, styles);	
+		//processTaskListForXLS(tl, taskListSheet, taskSettingsSheet, styles, cols, tz);
+		
+		wb.write(outputStream);
+		outputStream.close();
+		
+		// If XLSX then temporary streaming files need to be deleted
+		if(isXLSX) {
+			((SXSSFWorkbook) wb).dispose();
+		}
+	}
+	
+	/*
+	 * Create an LQAS definition from an XLS file
 	 */
 	public LQAS getLQASReport(Connection sd, int oId, String type, 
 			InputStream inputStream, ResourceBundle localisation) throws Exception {
@@ -785,7 +898,49 @@ public class XLSCustomReportsManager {
 		return value;
 	}
 	
+	/*
+	 * Get the columns for the oversight form definition sheet
+	 */
+	private ArrayList<Column> getColumnList(ResourceBundle localisation) {
+		
+		ArrayList<Column> cols = new ArrayList<Column> ();
+		
+		int colNumber = 0;
+	
+		cols.add(new Column(localisation, colNumber++, "row type"));
+		cols.add(new Column(localisation, colNumber++, "data type"));
+		cols.add(new Column(localisation, colNumber++, "name"));
+		cols.add(new Column(localisation, colNumber++, "display name"));
+		cols.add(new Column(localisation, colNumber++, "hide"));
+		cols.add(new Column(localisation, colNumber++, "readonly"));
+		cols.add(new Column(localisation, colNumber++, "filter"));
+		cols.add(new Column(localisation, colNumber++, "calculation"));
+		cols.add(new Column(localisation, colNumber++, "condition"));
+		cols.add(new Column(localisation, colNumber++, "value"));
+		cols.add(new Column(localisation, colNumber++, "appearance"));
+		
+		return cols;
+	}
 
-
+	/*
+	 * Create a header row and set column widths
+	 */
+	private void createHeader(ArrayList<Column> cols, Sheet sheet, Map<String, CellStyle> styles) {
+		// Set column widths
+		for(int i = 0; i < cols.size(); i++) {
+			sheet.setColumnWidth(i, cols.get(i).getWidth());
+		}
+				
+		// Create survey sheet header row
+		Row headerRow = sheet.createRow(0);
+		CellStyle headerStyle = styles.get("header");
+		for(int i = 0; i < cols.size(); i++) {
+			Column col = cols.get(i);
+			
+            Cell cell = headerRow.createCell(i);
+            cell.setCellStyle(headerStyle);
+            cell.setCellValue(col.name);
+        }
+	}
 
 }

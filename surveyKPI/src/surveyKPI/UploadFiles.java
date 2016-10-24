@@ -486,7 +486,7 @@ public class UploadFiles extends Application {
 				
 				// Process xls file
 				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
-				ArrayList<TableColumn> config = xcr.getCustomReport(sd, oId, filetype, fileItem.getInputStream(), localisation, isSecurityManager);
+				ArrayList<TableColumn> config = xcr.getOversightDefinition(sd, oId, filetype, fileItem.getInputStream(), localisation, isSecurityManager);
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error

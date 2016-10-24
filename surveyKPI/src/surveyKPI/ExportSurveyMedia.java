@@ -97,7 +97,6 @@ public class ExportSurveyMedia extends Application {
 	 * Export media in a zip file
 	 */
 	@GET
-	//@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response exportMedia (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,

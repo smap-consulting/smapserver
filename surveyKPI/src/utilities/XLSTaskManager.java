@@ -313,7 +313,7 @@ public class XLSTaskManager {
 		Sheet taskSettingsSheet = wb.createSheet("settings");
 		taskListSheet.createFreezePane(3, 1);	// Freeze header row and first 3 columns
 		
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 
 		ArrayList<Column> cols = getColumnList(localisation);
 		createHeader(cols, taskListSheet, styles);	
@@ -397,7 +397,7 @@ public class XLSTaskManager {
 		HashMap<String, Integer> rowMap = new HashMap<String, Integer> ();
 		
 		ArrayList<Column> cols = getLocationColumnList(localisation);
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		
 		/*
 		 * Create the worksheets
@@ -522,7 +522,7 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * Get the columns for the settings sheet
+	 * Get the columns for the tasks sheet
 	 */
 	private ArrayList<Column> getColumnList(ResourceBundle localisation) {
 		
@@ -552,7 +552,7 @@ public class XLSTaskManager {
 	}
 	
 	/*
-	 * Get the columns for the settings sheet
+	 * Get the columns for the task location sheet
 	 */
 	private ArrayList<Column> getLocationColumnList(ResourceBundle localisation) {
 		
@@ -565,25 +565,6 @@ public class XLSTaskManager {
 		
 		return cols;
 	}
-	
-	/*
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("default", style);
-
-        return styles;
-    }
     
 	/*
 	 * Create a header row and set column widths
