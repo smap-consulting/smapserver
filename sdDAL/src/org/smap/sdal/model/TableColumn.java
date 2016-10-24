@@ -17,6 +17,7 @@ public class TableColumn {
 	public boolean mgmt = false;
 	public boolean filter = false;
 	public String filterValue;
+	public String hxlCode;
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management

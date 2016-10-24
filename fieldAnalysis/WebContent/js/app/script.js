@@ -78,6 +78,7 @@ $(document).ready(function() {
 			        		xlstype = $('#export_xlstype').val(),
 			        		merge_select_multiple = $('#mergeSelectMultiple:checked').prop("checked"),
 			        		embedImages = $('#embedImages:checked').prop("checked"),
+			        		incHxl = $('#incHxl:checked').prop("checked"),
 			        		exportReadOnly = $('#exportReadOnly').prop("checked"),
 			        		sources = $('#sources').prop("checked"),
 			        		exportReport = $('#export_report_defn').val(),
@@ -178,7 +179,7 @@ $(document).ready(function() {
 			        			}
 		        			}
 		        			url = exportSurveyURL(sId, displayName, language, format, split_locn, 
-		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages,
+		        					forms, exportReadOnly, merge_select_multiple, xlstype, embedImages, incHxl,
 		        					exp_from_date, exp_to_date, dateQuestionId);
 		        		}
 		        		
@@ -951,6 +952,7 @@ function exportSurveyURL (
 		merge_select_multiple, 
 		xlstype, 
 		embedImages,
+		incHxl,
 		exp_from_date,
 		exp_to_date,
 		dateQuestionId) {
@@ -984,6 +986,7 @@ function exportSurveyURL (
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
 	url += "&embedimages=" + embedImages;
+	url += "&hxl=" + incHxl;
 	
 	if(xlstype != "html") {
 		url += "&filetype=" + xlstype;

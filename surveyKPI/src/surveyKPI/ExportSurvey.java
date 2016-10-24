@@ -400,7 +400,8 @@ public class ExportSurvey extends Application {
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
 							true,		// Include other meta data
-							superUser
+							superUser,
+							false		// TODO add HXL export processing
 							);
 						
 							
