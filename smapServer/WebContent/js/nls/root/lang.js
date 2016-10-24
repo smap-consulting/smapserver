@@ -262,6 +262,7 @@ define({
 	"a_dv": "Show Details",
 	"a_rd": "Report Definition",
 	"a_embed": "Embed Images in Excel File",
+	"a_hxl": "HXL",
 	
 	
 	// Messages

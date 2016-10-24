@@ -985,8 +985,12 @@ function exportSurveyURL (
 	}
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
-	url += "&embedimages=" + embedImages;
-	url += "&hxl=" + incHxl;
+	if(typeof embedimages !== "undefined") {
+		url += "&embedimages=" + embedImages;
+	}
+	if(typeof incHxl !== "undefined") {
+		url += "&hxl=" + incHxl;
+	}
 	
 	if(xlstype != "html") {
 		url += "&filetype=" + xlstype;

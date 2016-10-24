@@ -2278,8 +2278,7 @@ public class GeneralUtilityMethods {
 							c.type = qType;
 							c.readonly = ro;
 							if(hxlCode != null) {
-								c.hxlCode = hxlCode.trim() + "+label";
-						
+								c.hxlCode = hxlCode + "+label";
 							}
 							realQuestions.add(c);
 						}
@@ -2291,7 +2290,7 @@ public class GeneralUtilityMethods {
 					c.qId = qId;
 					c.type = qType;
 					c.readonly = ro;
-					c.hxlCode = hxlCode.trim();
+					c.hxlCode = hxlCode;
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						columnList.add(c);
 					} else {
@@ -2320,7 +2319,7 @@ public class GeneralUtilityMethods {
 			String appValues[] = appearance.split(" ");
 			for(int i = 0; i < appValues.length; i++) {
 				if(appValues[i].startsWith("#")) {
-					hxlCode = appValues[i];
+					hxlCode = appValues[i].trim();
 					break;
 				}
 			}
