@@ -249,7 +249,7 @@ public class Data extends Application {
 			
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
 			
@@ -418,7 +418,7 @@ public class Data extends Application {
 			
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
 			

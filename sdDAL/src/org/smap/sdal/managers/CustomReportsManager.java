@@ -136,16 +136,24 @@ public class CustomReportsManager {
 	/*
 	 * Get a report from the database
 	 */
-	public ArrayList<TableColumn> get(Connection sd, int crId) throws Exception {
+	public ArrayList<TableColumn> get(Connection sd, int crId, int oId) throws Exception {
 		
 		ArrayList<TableColumn> config = null;
-		String sql = "select config from custom_report where id = ?";
+		String sql = null;
+		if(oId > 0) {
+			sql = "select config from custom_report where id = ? and o_id = ?";
+		} else {
+			sql = "select config from custom_report where id = ?";	// trusted organisation
+		}
 		PreparedStatement pstmt = null;
 		
 		try {
 
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, crId);
+			if(oId > 0) {
+				pstmt.setInt(2, oId);
+			}
 			
 			log.info(pstmt.toString());
 			pstmt.executeQuery();

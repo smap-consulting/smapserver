@@ -174,7 +174,7 @@ public class ManagedFormsManager {
 			int oId) throws Exception {
 		
 		CustomReportsManager crm = new CustomReportsManager ();
-		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
+		ArrayList<TableColumn> managedColumns = crm.get(sd, crId, oId);
 		for(int i = 0; i < managedColumns.size(); i++) {
 			TableColumn tc = managedColumns.get(i);
 

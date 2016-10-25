@@ -35,8 +35,10 @@ import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
+import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.TableColumn;
 
@@ -105,6 +107,9 @@ public class CustomReports extends Application {
 	}
 
 
+	/*
+	 * Delete a custom report
+	 */
 	@Path("/{id}")
 	@DELETE
 	public Response deleteCustomReport(@Context HttpServletRequest request,
@@ -192,6 +197,8 @@ public class CustomReports extends Application {
 			filetype = "xlsx";
 		}
 		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
+		
 		try {
 			
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
@@ -199,13 +206,15 @@ public class CustomReports extends Application {
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			
 			GeneralUtilityMethods.setFilenameInResponse("thename" + "." + filetype, response); // Set file name
-			ArrayList<TableColumn> defn = null;
+			
+			CustomReportsManager crm = new CustomReportsManager ();
+			ArrayList<TableColumn> defn = crm.get(sd, id, oId);
 			
 			// Create XLS oversight form
 			XLSCustomReportsManager xcrm = new XLSCustomReportsManager();
 			xcrm.writeOversightDefinition(sd,
+					cResults,
 					oId,
 					filetype,
 					response.getOutputStream(), 
@@ -223,6 +232,7 @@ public class CustomReports extends Application {
 			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 		} finally {
 			SDDataSource.closeConnection("surveyKPI-Survey", sd);
+			ResultsDataSource.closeConnection("surveyKPI-GetConfig", cResults);
 		}
 
 		return responseVal;
