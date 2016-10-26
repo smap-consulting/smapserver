@@ -14,7 +14,9 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
  */
 
 public class SqlFrag {
-	public StringBuffer raw = new StringBuffer("");
+	public StringBuffer expression = null;		// The original expression used to create this sql
+	public ArrayList<String> conditions = null;	// Alternatively the original conditions used to create it
+	
 	public StringBuffer sql = new StringBuffer("");
 	public ArrayList<SqlFragParam> params = new ArrayList<SqlFragParam> ();
 	public ArrayList<String> columns = new ArrayList<String> ();
@@ -22,6 +24,10 @@ public class SqlFrag {
 	private static Logger log =
 			 Logger.getLogger(SqlFrag.class.getName());
 	
+	// Set the original expression used to create this SQlFrag
+	public void setExpression(String in) {
+		expression = new StringBuffer(in);
+	}
 	
 	public void add(String in) {
 		if(sql.length() > 0) {
@@ -45,11 +51,19 @@ public class SqlFrag {
 	/*
 	 * Add an SQL expression
 	 */
-	public void addRaw(String in, ResourceBundle localisation) throws Exception {
+	public void addSqlFragment(String in, ResourceBundle localisation, boolean isCondition) throws Exception {
 		
 		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
 		
-		raw.append(in);
+		/*
+		 * If this SQL fragment is part of a condition then save it so that it can be exported back to XLS or edited online
+		 */
+		if(isCondition) {
+			if(conditions == null) {
+				conditions = new ArrayList<String> ();
+			}
+			conditions.add(in);
+		}
 		
 		/*
 		 * Get the text parameters and the sql fragments

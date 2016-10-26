@@ -243,7 +243,7 @@ public class RoleManager {
 				if(sqlFragString != null) {
 					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
 					if(sq.sql != null) {
-						role.row_filter = sq.raw.toString();
+						role.row_filter = sq.expression.toString();
 					}
 				}
 				
@@ -317,7 +317,7 @@ public class RoleManager {
 		PreparedStatement pstmt = null;
 		
 		SqlFrag sq = new SqlFrag();
-		sq.addRaw(role.row_filter, localisation);
+		sq.addSqlFragment(role.row_filter, localisation, false);
 		StringBuilder bad = new StringBuilder();
 		for(int i = 0; i < sq.columns.size(); i++) {
 			if(!GeneralUtilityMethods.surveyHasQuestion(sd, sId, sq.columns.get(i))) {

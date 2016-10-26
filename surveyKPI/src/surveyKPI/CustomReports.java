@@ -38,7 +38,6 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
-import org.smap.sdal.managers.ManagedFormsManager;
 import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.TableColumn;
 
@@ -165,12 +164,14 @@ public class CustomReports extends Application {
 	}
 	
 	/*
-	 * Export and oversight form to XLS
+	 * Export an oversight form to XLS
 	 */
 	@Path("/xls/{id}")
 	public Response exportOversightForm(@Context HttpServletRequest request,
 			@PathParam("id") int id,
 			@QueryParam("filetype") String filetype,
+			@QueryParam("filename") String filename,
+			
 			@Context HttpServletResponse response) { 
 		
 		Response responseVal = null;
@@ -206,10 +207,11 @@ public class CustomReports extends Application {
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			GeneralUtilityMethods.setFilenameInResponse("thename" + "." + filetype, response); // Set file name
-			
 			CustomReportsManager crm = new CustomReportsManager ();
 			ArrayList<TableColumn> defn = crm.get(sd, id, oId);
+			
+			GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
+			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
 			
 			// Create XLS oversight form
 			XLSCustomReportsManager xcrm = new XLSCustomReportsManager();
@@ -220,7 +222,6 @@ public class CustomReports extends Application {
 					response.getOutputStream(), 
 					defn, 
 					localisation);
-		
 			
 			responseVal = Response.ok().build();
 			

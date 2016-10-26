@@ -83,48 +83,63 @@ public class XLSCustomReportsManager {
 			return width;
 		}
 		
+		/*
+		 * Return true if this table column is a question
+		 * All table/columns should probably be questions
+		 */
+		public boolean isQuestion(String type) {
+			boolean resp = false;
+			if(type != null &&
+					type.trim().length() > 0) {
+				resp = true;
+			}
+			return resp;
+		}
 		// Get a value for this column from the provided properties object
-		public String getValue(TaskProperties props) {
+		public String getValue(TableColumn props, Sheet sheet, 
+				ArrayList<Column> cols,
+				Map<String, CellStyle> styles) {
 			String value = null;
 			
-			if(name.equals("form")) {
-				value = props.form_name;
+			if(name.equals("row type")) {
+				if(isQuestion(props.type)) {
+					value="column";
+				}
+			} else if(name.equals("data type")) {
+				value = props.type;
 			} else if(name.equals("name")) {
 				value = props.name;
-			} else if(name.equals("status")) {
-				value = props.status;
-			} else if(name.equals("assignee_ident")) {
-				value = props.assignee_ident;
-			} else if(name.equals("generated_user_name")) {
-				value = props.assignee_name;
-			} else if(name.equals("location_trigger")) {
-				value = props.location_trigger;
-			} else if(name.equals("from")) {
-				if(props.from == null) {
-					value = null;
-				} else {
-					value = String.valueOf(props.from);
+			} else if(name.equals("display name")) {
+				value = props.humanName;
+			} else if(name.equals("hide")) {
+				value = props.readonly ? "yes" : "no";
+			} else if(name.equals("filter")) {
+				value = props.filter ? "yes" : "no";
+			} else if(name.equals("calculation")) {
+				if(props.calculation != null) {
+					if(props.type != null && props.type.equals("calculate")) {
+						if(props.isCondition) {
+							value = "condition";
+						} else {
+							if(props.calculation.expression != null) {
+								value = props.calculation.expression.toString();
+							}
+						}
+					}	
 				}
-			} else if(name.equals("to")) {
-				if(props.to == null) {
-					value = null;
-				} else {
-					value = String.valueOf(props.to);
+			} else if(name.equals("condition")) {
+				if(props.calculation != null && props.calculation.conditions != null && props.isCondition) {
+					for(int i = 0; i < props.calculation.conditions.size(); i++) {
+						
+						Row row = sheet.createRow(rowNumber++);
+						createCell(row, getIndexCol(cols, "row type"), "condition", styles.get("default"));
+						createCell(row, getIndexCol(cols, "condition"), props.calculation.conditions.get(i), styles.get("default"));
+						createCell(row, getIndexCol(cols, "condition"), props.calculation.conditions.get(i), styles.get("default"));
+						createCell(row, getIndexCol(cols, "value"), props.markup.get(i).value, styles.get("default"));
+						createCell(row, getIndexCol(cols, "appearance"), props.markup.get(i).classes, styles.get("default"));
+					}
+					
 				}
-			} else if(name.equals("guidance")) {
-				value = props.guidance;		
-			} else if(name.equals("repeat")) {
-				value = String.valueOf(props.repeat);
-			} else if(name.equals("email")) {
-				value = props.email;
-			} else if(name.equals("url")) {
-				value = props.url;
-			} else if(name.equals("lon")) {
-				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lng"));
-			} else if(name.equals("lat")) {
-				value = String.valueOf(GeneralUtilityMethods.wktToLatLng(props.location, "lat"));
-			} else if(name.equals("address")) {
-				value = props.address;
 			}
 			
 			if(value == null) {
@@ -144,6 +159,27 @@ public class XLSCustomReportsManager {
 			} 
 			
 			return value;
+		}
+		
+		private int getIndexCol(ArrayList<Column> cols, String name) {
+			int col = -1;
+			
+			for(int i = 0; i < cols.size(); i++) {
+				if(cols.get(i).name.equals(name)) {
+					col = i;
+					break;
+				}
+			}
+			
+			return col;
+		}
+		
+		private void createCell(Row row, int colIdx, String value, CellStyle style) {
+			if(colIdx >= 0) {
+				Cell cell = row.createCell(colIdx);
+				cell.setCellStyle(style);	
+				cell.setCellValue(value);
+			}
 		}
 	}
 	
@@ -330,9 +366,10 @@ public class XLSCustomReportsManager {
 			                				calculation = calculation.trim();
 			                				if(calculation.equals("condition")) {
 			                					// Calculation set by condition rows
+			                					currentCol.isCondition = true;
 			                				} else if(calculation.length() > 0) {
 			                					currentCol.calculation = new SqlFrag();
-			                					currentCol.calculation.addRaw(calculation, localisation);
+			                					currentCol.calculation.addSqlFragment(calculation, localisation, true);
 			                				} 
 			                			} else {
 			                				throw new Exception(localisation.getString("mf_mc") + 
@@ -464,21 +501,19 @@ public class XLSCustomReportsManager {
 		                						currentCol.calculation.addText(value);
 		                					} else {
 		                						currentCol.calculation.add("WHEN");
-		                						currentCol.calculation.addRaw(condition, localisation);
+		                						currentCol.calculation.addSqlFragment(condition, localisation, true);
 		                						currentCol.calculation.add("THEN");
 		                						currentCol.calculation.addText(value);
 		                					}
 		                				}
 		                				
-		                				// Add conditional color
+		                				
+		                				// Add conditional markup and save value for use in export of form
 		                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
-		                				if(appearance != null) {
-		                					if(currentCol.markup == null) {
-		                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
-		                					}
-		                					currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
-		                					
+		                				if(currentCol.markup == null) {
+		                					currentCol.markup = new ArrayList<TableColumnMarkup> ();        					
 		                				} 
+		                				currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
 		
 		                			} else {
 		                				throw new Exception(localisation.getString("mf_uc") + 
@@ -524,10 +559,7 @@ public class XLSCustomReportsManager {
 			ArrayList<TableColumn> defn,
 			ResourceBundle localisation) throws Exception {
 		
-
-        Row row = null;
         boolean isXLSX;
-        HashMap<String, Integer> header = null;
  
         if(type != null && type.equals("xls")) {
 			wb = new HSSFWorkbook();
@@ -552,6 +584,7 @@ public class XLSCustomReportsManager {
 		if(isXLSX) {
 			((SXSSFWorkbook) wb).dispose();
 		}
+
 	}
 	
 	/*
@@ -677,9 +710,10 @@ public class XLSCustomReportsManager {
 	                				calculation = calculation.trim();
 	                				if(calculation.equals("condition")) {
 	                					// Calculation set by condition rows
+	                					
 	                				} else if(calculation.length() > 0) {
 	                					select = new SqlFrag();
-	                					select.addRaw(calculation, localisation);
+	                					select.addSqlFragment(calculation, localisation, false);
 	                				} 
 	                			} else {
 	                				throw new Exception(localisation.getString("mf_mc") + 
@@ -753,7 +787,7 @@ public class XLSCustomReportsManager {
 	                						currentDataItem.select.addText(value);
 	                					} else {
 	                						currentDataItem.select.add("WHEN");
-	                						currentDataItem.select.addRaw(condition, localisation);
+	                						currentDataItem.select.addSqlFragment(condition, localisation, true);
 	                						currentDataItem.select.add("THEN");
 	                						currentDataItem.select.addText(value);
 	                					}
@@ -818,18 +852,22 @@ public class XLSCustomReportsManager {
 	 * Convert an appearance to jquery classes
 	 */
 	private String getMarkup(String app) {
+
 		StringBuffer markup = new StringBuffer("");
-		String [] apps = app.split(" ");
 		
-		for(int i = 0; i < apps.length; i++) {
-			if(apps[i].equals("red")) {
-				markup.append(" bg-danger");
-			} else if(apps[i].equals("green")) {
-				markup.append(" bg-success");
-			} else if(apps[i].equals("blue")) {
-				markup.append(" bg-info");
-			} else if(apps[i].equals("yellow")) {
-				markup.append(" bg-warning");
+		if(app != null) {
+			String [] apps = app.split(" ");
+			
+			for(int i = 0; i < apps.length; i++) {
+				if(apps[i].equals("red")) {
+					markup.append(" bg-danger");
+				} else if(apps[i].equals("green")) {
+					markup.append(" bg-success");
+				} else if(apps[i].equals("blue")) {
+					markup.append(" bg-info");
+				} else if(apps[i].equals("yellow")) {
+					markup.append(" bg-warning");
+				}
 			}
 		}
 		
@@ -954,7 +992,7 @@ public class XLSCustomReportsManager {
 	}
 
 	/*
-	 * Convert an oversightlist array to XLS
+	 * Convert an oversight list array to XLS
 	 */
 	private void processCustomReportListForXLS(
 			ArrayList<TableColumn> defn, 
@@ -970,10 +1008,8 @@ public class XLSCustomReportsManager {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
 
-				if(col.name.equals("from") || col.name.equals("to")) {
-					cell.setCellStyle(styles.get("default"));	
-					cell.setCellValue("xxxx");
-				}
+				cell.setCellStyle(styles.get("default"));	
+				cell.setCellValue(col.getValue(tc, sheet, cols, styles));
 	        }	
 		}
 		

@@ -925,20 +925,6 @@ function exportTableURL (table, format) {
 }
 
 /*
- * Clean the filename so that it can be passed in a URL
- */
-function cleanFileName(filename) {
-	
-	var n;
-	
-	n = filename.replace(/\//g, '_');	// remove slashes from the filename
-	n = n.replace(/[#?&]/g, '_');		// Remove other characters that are not wanted 
-	n = n.replace("'", "", 'g');		// Remove apostrophes
-	
-	return n;
-}
-
-/*
  * Web service handler for exporting an entire survey to CSV
  */
 function exportSurveyURL (

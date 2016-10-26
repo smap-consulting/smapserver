@@ -18,6 +18,7 @@ public class TableColumn {
 	public boolean filter = false;
 	public String filterValue;
 	public String hxlCode;
+	public boolean isCondition = false;	// For a calculate sql is created from an array of conditions
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management
@@ -27,7 +28,7 @@ public class TableColumn {
 	public ArrayList<TableColumnMarkup> markup;	// Specify how to present the data
 	
 	// Manage extraction of data
-	public SqlFrag calculation = null;	// Server only
+	public SqlFrag calculation = null;
 	
 	public TableColumn(String n, String hn) {
 		name = n;

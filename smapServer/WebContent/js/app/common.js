@@ -2195,7 +2195,8 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 	
 	$(".download_cr", $selector).click(function(){
 		var idx = $(this).data("idx");
-		downloadFile("/surveyKPI/custom_reports/xls/" + globals.gReports[idx].id);
+		downloadFile("/surveyKPI/custom_reports/xls/" + globals.gReports[idx].id +
+				"?filetype=xls&filename=" + cleanFileName(globals.gReports[idx].name));
 	});
 	
 	
@@ -2371,6 +2372,19 @@ function getInterval(seconds) {
 	}
 }
 
+/*
+ * Clean the filename so that it can be passed in a URL
+ */
+function cleanFileName(filename) {
+	
+	var n;
+	
+	n = filename.replace(/\//g, '_');	// remove slashes from the filename
+	n = n.replace(/[#?&]/g, '_');		// Remove other characters that are not wanted 
+	n = n.replace("'", "", 'g');		// Remove apostrophes
+	
+	return n;
+}
 
 /*
  * Prevent the menu bar from extending over two lines
