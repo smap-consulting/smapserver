@@ -3452,14 +3452,15 @@ public class GeneralUtilityMethods {
 				+ "and ur.r_id = r.id "
 				+ "and r.o_id = u.o_id "
 				+ "and u.o_id = ? "
-				+ "and r.name = ?";
+				+ "and r.name = ? "
+				+ "and u.temporary = false";
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  oId);
 			pstmt.setString(2,  role);
-			
+			log.info("Get users with role: " + pstmt.toString() );
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				users.add(new KeyValue(rs.getString(1), rs.getString(2)));

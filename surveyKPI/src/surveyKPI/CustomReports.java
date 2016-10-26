@@ -166,6 +166,7 @@ public class CustomReports extends Application {
 	/*
 	 * Export an oversight form to XLS
 	 */
+	@GET
 	@Path("/xls/{id}")
 	public Response exportOversightForm(@Context HttpServletRequest request,
 			@PathParam("id") int id,

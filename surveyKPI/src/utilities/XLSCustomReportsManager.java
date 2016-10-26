@@ -66,6 +66,7 @@ import model.LotRow;
 
 public class XLSCustomReportsManager {
 	
+	
 	private class Column {
 		String name;
 		String human_name;
@@ -127,20 +128,7 @@ public class XLSCustomReportsManager {
 						}
 					}	
 				}
-			} else if(name.equals("condition")) {
-				if(props.calculation != null && props.calculation.conditions != null && props.isCondition) {
-					for(int i = 0; i < props.calculation.conditions.size(); i++) {
-						
-						Row row = sheet.createRow(rowNumber++);
-						createCell(row, getIndexCol(cols, "row type"), "condition", styles.get("default"));
-						createCell(row, getIndexCol(cols, "condition"), props.calculation.conditions.get(i), styles.get("default"));
-						createCell(row, getIndexCol(cols, "condition"), props.calculation.conditions.get(i), styles.get("default"));
-						createCell(row, getIndexCol(cols, "value"), props.markup.get(i).value, styles.get("default"));
-						createCell(row, getIndexCol(cols, "appearance"), props.markup.get(i).classes, styles.get("default"));
-					}
-					
-				}
-			}
+			}  
 			
 			if(value == null) {
 				value = "";
@@ -161,26 +149,6 @@ public class XLSCustomReportsManager {
 			return value;
 		}
 		
-		private int getIndexCol(ArrayList<Column> cols, String name) {
-			int col = -1;
-			
-			for(int i = 0; i < cols.size(); i++) {
-				if(cols.get(i).name.equals(name)) {
-					col = i;
-					break;
-				}
-			}
-			
-			return col;
-		}
-		
-		private void createCell(Row row, int colIdx, String value, CellStyle style) {
-			if(colIdx >= 0) {
-				Cell cell = row.createCell(colIdx);
-				cell.setCellStyle(style);	
-				cell.setCellValue(value);
-			}
-		}
 	}
 	
 	private static Logger log =
@@ -189,9 +157,14 @@ public class XLSCustomReportsManager {
 	Workbook wb = null;
 	int rowNumber = 1;		// Heading row is 0
 	
+	ArrayList<KeyValue> markup = new ArrayList<KeyValue> ();
 
 	public XLSCustomReportsManager() {
-
+		// Add list of markup mappings between appearance values and bootstrap classes
+		markup.add(new KeyValue("red", "bg-danger", false));
+		markup.add(new KeyValue("green", "bg-success", false));
+		markup.add(new KeyValue("blue", "bg-info", false));
+		markup.add(new KeyValue("yellow", "bg-warning", false));
 	}
 	
 	/*
@@ -420,8 +393,6 @@ public class XLSCustomReportsManager {
 		                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
 		                					}
 		                					currentCol.choices.add(new KeyValue(role, role, true));
-		                					// Get the users that have this role
-		                					//currentCol.choices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, role));
 		                					currentCol.filter = true;
 		                					
 		                				} else {
@@ -459,7 +430,7 @@ public class XLSCustomReportsManager {
 		                								pstmtGetRoleId.setString(2, rArray[i].trim());
 		                								ResultSet rs = pstmtGetRoleId.executeQuery();
 		                								if(rs.next()) {
-		                									todo.roles.add(new Role(rs.getInt(1)));
+		                									todo.roles.add(new Role(rs.getInt(1), rArray[i].trim()));
 		                								}
 		                							}
 		                						}
@@ -848,30 +819,59 @@ public class XLSCustomReportsManager {
 		}
 		return sources;
 	}
+	
 	/*
 	 * Convert an appearance to jquery classes
+	 * TODO markup should be handled in the client
 	 */
 	private String getMarkup(String app) {
 
-		StringBuffer markup = new StringBuffer("");
+		StringBuffer markupString = new StringBuffer("");
 		
 		if(app != null) {
 			String [] apps = app.split(" ");
-			
+			boolean hasMarkup = false;
 			for(int i = 0; i < apps.length; i++) {
-				if(apps[i].equals("red")) {
-					markup.append(" bg-danger");
-				} else if(apps[i].equals("green")) {
-					markup.append(" bg-success");
-				} else if(apps[i].equals("blue")) {
-					markup.append(" bg-info");
-				} else if(apps[i].equals("yellow")) {
-					markup.append(" bg-warning");
+				for(int j = 0; j < markup.size(); j++) {
+					if(markup.get(j).k.equals(apps[i])) {
+						if(hasMarkup) {
+							markupString.append(" ");
+						}
+						hasMarkup = true;
+						markupString.append(markup.get(j).v);
+					}
 				}
 			}
 		}
 		
-		return markup.toString().trim();
+		return markupString.toString().trim();
+	}
+	
+	/*
+	 * Convert an appearance to jquery classes
+	 * TODO markup should be handled in the client
+	 */
+	private String markupToAppearance(String markupString) {
+
+		StringBuffer appString = new StringBuffer("");
+		
+		if(markup != null) {
+			String [] markupArray = markupString.split(" ");
+			boolean hasApp = false;
+			for(int i = 0; i < markupArray.length; i++) {
+				for(int j = 0; j < markup.size(); j++) {
+					if(markup.get(j).v.equals(markupArray[i])) {
+						if(hasApp) {
+							appString.append(" ");
+						}
+						hasApp = true;
+						appString.append(markup.get(j).k);
+					}
+				}
+			}
+		}
+		
+		return appString.toString().trim();
 	}
 
 	
@@ -1004,16 +1004,91 @@ public class XLSCustomReportsManager {
 		for(TableColumn tc : defn)  {
 				
 			Row row = sheet.createRow(rowNumber++);
+			
+			// Add question rows
 			for(int i = 0; i < cols.size(); i++) {
 				Column col = cols.get(i);			
 				Cell cell = row.createCell(i);
 
 				cell.setCellStyle(styles.get("default"));	
-				cell.setCellValue(col.getValue(tc, sheet, cols, styles));
+				cell.setCellValue(col.getValue(tc, sheet, cols, styles));	
 	        }	
+			
+			// Add condition rows
+			if(tc.calculation != null && tc.calculation.conditions != null && tc.isCondition) {
+				for(int j = 0; j < tc.calculation.conditions.size(); j++) {
+					
+					row = sheet.createRow(rowNumber++);
+					createCell(row, getIndexCol(cols, "row type"), "condition", styles.get("default"));
+					createCell(row, getIndexCol(cols, "condition"), tc.calculation.conditions.get(j), styles.get("default"));
+					createCell(row, getIndexCol(cols, "condition"), tc.calculation.conditions.get(j), styles.get("default"));
+					if(tc.markup != null) {
+						createCell(row, getIndexCol(cols, "value"), tc.markup.get(j).value, styles.get("default"));
+						createCell(row, getIndexCol(cols, "appearance"), markupToAppearance(tc.markup.get(j).classes), styles.get("default"));
+					}
+				}
+			}
+			
+			// Add choice rows
+			if(tc.choices != null) {
+				for(int j = 0; j < tc.choices.size(); j++) {
+					
+					KeyValue choice = tc.choices.get(j);
+					row = sheet.createRow(rowNumber++);
+					
+					createCell(row, getIndexCol(cols, "row type"), choice.isRole ? "user_role" : "choice", styles.get("default"));
+					createCell(row, getIndexCol(cols, "name"), choice.k, styles.get("default"));
+					createCell(row, getIndexCol(cols, "display name"), choice.v, styles.get("default"));
+					if(tc.markup != null) {
+						createCell(row, getIndexCol(cols, "appearance"), markupToAppearance(tc.markup.get(j).classes), styles.get("default"));
+					}
+				}	
+			}
+			
+			// Add action rows
+			if(tc.actions != null) {
+				for(int j = 0; j < tc.actions.size(); j++) {
+					
+					Action a = tc.actions.get(j);
+					
+					row = sheet.createRow(rowNumber++);
+					createCell(row, getIndexCol(cols, "row type"), "action", styles.get("default"));
+					createCell(row, getIndexCol(cols, "action"), a.action, styles.get("default"));
+					createCell(row, getIndexCol(cols, "notify type"), a.notify_type, styles.get("default"));
+					createCell(row, getIndexCol(cols, "notify person"), a.notify_person, styles.get("default"));
+					StringBuffer roles = new StringBuffer("");
+					for(int k = 0; k < a.roles.size(); k++) {
+						Role r = a.roles.get(k);
+						roles.append(r.name);
+					}
+					
+				}
+			}
+			
+
 		}
 		
-	
+	}
+
+	private int getIndexCol(ArrayList<Column> cols, String name) {
+		int col = -1;
+		
+		for(int i = 0; i < cols.size(); i++) {
+			if(cols.get(i).name.equals(name)) {
+				col = i;
+				break;
+			}
+		}
+		
+		return col;
+	}
+
+	private void createCell(Row row, int colIdx, String value, CellStyle style) {
+		if(colIdx >= 0) {
+			Cell cell = row.createCell(colIdx);
+			cell.setCellStyle(style);	
+			cell.setCellValue(value);
+		}
 	}
 	
 }
