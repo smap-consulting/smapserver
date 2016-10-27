@@ -1,4 +1,4 @@
-package surveyKPI;
+//package surveyKPI;
 
 
 /*
@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
+/*
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -59,6 +59,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+*/
 
 /*
  * Provides results of surveys
@@ -69,7 +70,7 @@ import java.util.logging.Logger;
  *   Order question id (can be a date question, in which case the data can be "played back")
  *   order
  *   constraints, ie "gender = male"
- */
+ *
 
 
 @Path("/deprecated/results2/{sId}")
@@ -219,9 +220,7 @@ public class Results2 extends Application {
 		try {
 			dConnection = ResultsDataSource.getConnection("surveyKPI-Results");
 
-			/*
-			 * Check that mandatory parameters have been set
-			 */	
+
 			if(lang == null) {
 				throw new Exception("Language must be set &lang=xxx");
 			}
@@ -255,14 +254,10 @@ public class Results2 extends Application {
 				tables.add(geoTable, -1, -1);
 			}
 	
-			/*
-			 * Get Survey meta data
-			 */
+			
 			SurveyInfo survey = new SurveyInfo(sId, connectionSD);
 			
-			/*
-			 * Add the the main question to the array of questions
-			 */
+		
 			QuestionInfo aQ = null;
 			if(qId_is_calc) {
 				aQ = new QuestionInfo(sId, qId, connectionSD, false, lang, qId_is_calc, urlprefix);
@@ -291,9 +286,7 @@ public class Results2 extends Application {
 			// Add any tables required to complete the join
 			tables.addIntermediateTables(connectionSD);
 			
-			/*
-			 * Create the sql statement
-			 */	
+			
 			boolean doneWhere = false;
 			String sqlSelect = getSelect(q, externalGeom);
 			String sqlTables = tables.getTablesSQL();
@@ -356,7 +349,7 @@ public class Results2 extends Application {
 
 			/*
 			 * Collect the data
-			 */
+			 *
 			Map<String, FeatureInfo> featureHash = new HashMap<String, FeatureInfo>();
 			//FeatureInfo defaultGroup = null;
 			
@@ -414,7 +407,7 @@ public class Results2 extends Application {
 
 			/*
 			 * Loop through each record
-			 */
+			 *
 			int totalRecordCount = 0;
 			int featureIndex = -1;
 			boolean firstTime = true;
@@ -555,7 +548,7 @@ public class Results2 extends Application {
 						
 					/*
 					 * If the group hasn't been created yet then create it
-					 */
+					 *
 					if(featureHash.get(combinedGroupIdent) == null) {
 						featureIndex++;
 							
@@ -616,7 +609,7 @@ public class Results2 extends Application {
 				
 				/*
 				 * Add this record to all the groups that it matches 
-				 */
+				 *
 				for(int i = 0; i < matchingGroups.size(); i++) {
 					combinedGroupIdent = matchingGroups.get(i).combinedGroupIdent;
 					
@@ -728,7 +721,7 @@ public class Results2 extends Application {
 			
 			/*
 			 * Add from to dates to JSON output
-			 */
+			 *
 			if(date != null) {
 				featureCollection.put("date_question", date.getColumnName());
 			}
@@ -745,7 +738,7 @@ public class Results2 extends Application {
 			
 			/*
 			 * If an aggregating function was used then add the aggregates to the results
-			 */
+			 *
 			firstTime = true;
 			if(!fn.equals("none")) {
 				for (FeatureInfo fi : featureHash.values()) {		
@@ -803,7 +796,7 @@ public class Results2 extends Application {
 	
 	/*
 	 * Returns the SQL fragment that makes up the select
-	 */
+	 *
 	private String getSelect(ArrayList<QuestionInfo> q, boolean externalGeom) {
 		String sqlFrag = "";
 		
@@ -827,7 +820,7 @@ public class Results2 extends Application {
 
 	/*
 	 * Returns the SQL fragment that joins geometry tables
-	 */
+	 *
 	private String getGeometryJoin(ArrayList<QuestionInfo> q) {
 		String sqlFrag = null;
 		String geomInternalTable = null;
@@ -849,7 +842,7 @@ public class Results2 extends Application {
 	
 	/*
 	 * Returns the SQL fragment that restricts results to a specific record
-	 */
+	 *
 	private String restrictToRecordId(QuestionInfo q, int rId) {
 		String sqlFrag = "";
 		
@@ -862,3 +855,4 @@ public class Results2 extends Application {
 
 }
 
+*/
