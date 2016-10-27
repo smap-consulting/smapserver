@@ -4,6 +4,8 @@ define({
 	"m_tm": "Forms",
 	"m_analysis": "Analysis",
 	"m_reports": "Reports",
+	"m_reports_def": "Default Reports",
+	"m_reports_org": "Organisation Reports",
 	"m_refresh": "Refresh",
 	"m_export": "Export",
 	"m_discuss": "Discuss",
@@ -600,7 +602,8 @@ define({
 	"i_days": "days ago",
 	
 	// Dashboard
-	"d_sound": "Play sound on new alert"
+	"d_sound": "Play sound on new alert",
+	"d_rep_def_freq": "Frequency Report"
 
 	 		
 });
