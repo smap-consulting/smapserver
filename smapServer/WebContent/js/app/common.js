@@ -421,6 +421,7 @@ function enableUserProfile () {
 		        		
 		        		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		        		user.current_survey_id = 0;
+		        		user.current_task_group_id = 0;
 		        		saveCurrentUser(user);			// Save the updated user details to disk
 		        		$(this).dialog("close");
 		        	}, 
@@ -507,6 +508,7 @@ function enableUserProfileBS () {
 		
 		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		user.current_survey_id = 0;
+		user.current_task_group_id = 0;
 		saveCurrentUser(user);			// Save the updated user details to disk	 
 	});
 
