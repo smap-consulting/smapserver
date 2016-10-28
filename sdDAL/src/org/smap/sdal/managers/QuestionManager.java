@@ -130,7 +130,6 @@ public class QuestionManager {
 	 */
 	public void save(Connection sd, Connection cResults, int sId, ArrayList<Question> questions) throws Exception {
 		
-		String formPath = null;
 		String columnName = null;
 		SurveyManager sm = new SurveyManager();		// To apply survey level updates resulting from this question change
 		
@@ -154,9 +153,11 @@ public class QuestionManager {
 				+ "relevant, "
 				+ "qconstraint, "
 				+ "constraint_msg, "
-				+ "required_msg"
+				+ "required_msg, "
+				+ "autoplay, "
+				+ "accuracy"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -189,8 +190,6 @@ public class QuestionManager {
 					ResultSet rs = pstmtGetFormId.executeQuery();
 					rs.next();
 					q.fId = rs.getInt(1);
-					formPath = rs.getString(2);
-					
 				}
 				
 				if(q.type.startsWith("select")) {	// Get the list id
@@ -243,11 +242,6 @@ public class QuestionManager {
 					columnName = "the_geom";
 				}
 				boolean readonly = GeneralUtilityMethods.translateReadonlyToDB(q.type, q.readonly);
-				String calculation = null;
-				//if(!q.type.equals("begin repeat") && !q.type.equals("geopolygon") && !q.type.equals("geolinestring")) {
-					// calculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false);
-					// rmpath  names are now converted before creation of an xlsForm
-				//}
 			
 				// Insert the question
 				if(columnName == null) {
@@ -271,26 +265,25 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(7, "question_" + columnName + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, source );
-				pstmtInsertQuestion.setString(10,  calculation);
+				pstmtInsertQuestion.setString(10,  q.calculation);
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
-				// String appearance = GeneralUtilityMethods.convertAllxlsNames(q.appearance, sId, sd, false);
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
 				pstmtInsertQuestion.setString(14, "No longer used");	// path
 				pstmtInsertQuestion.setBoolean(15, readonly);
-				//String relevant = GeneralUtilityMethods.convertAllxlsNames(q.relevant, sId, sd, false);
 				pstmtInsertQuestion.setString(16, q.relevant);
-				//String constraint = GeneralUtilityMethods.convertAllxlsNames(q.constraint, sId, sd, false);
 				pstmtInsertQuestion.setString(17, q.constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
 				pstmtInsertQuestion.setString(19, q.required_msg);
+				pstmtInsertQuestion.setString(20, q.autoplay);
+				pstmtInsertQuestion.setString(21, q.accuracy);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
 				
 				// Set the labels
 				if(q.name != null && q.name.trim().length() > 0) {
-					UtilityMethodsEmail.setLabels(sd, sId, "question_" + q.name, q.labels, "");
+					UtilityMethodsEmail.setLabels(sd, sId, "question_" + columnName, q.labels, "");
 				}
 				
 				// Update the survey manifest if this question references CSV files
@@ -303,19 +296,13 @@ public class QuestionManager {
 					rs.next();
 					int qId = rs.getInt(1);
 					
-					// The calculation holds the repeat value
-					//String convertedCalculation = null;
-					//if(q.calculation != null && q.calculation.trim().length() > 0) {
-						//convertedCalculation = GeneralUtilityMethods.convertAllxlsNames(q.calculation, sId, sd, false); rm paths
-					//}
-					
 					// Create the sub form
 					String tableName = "s" + sId + "_" + columnName;
 			
 					pstmtForm = sd.prepareStatement(sqlForm);
 					pstmtForm.setInt(1, sId);
 					pstmtForm.setString(2, q.name);
-					pstmtForm.setString(3, "question_" + q.columnName + ":label");
+					pstmtForm.setString(3, "question_" + columnName + ":label");
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
