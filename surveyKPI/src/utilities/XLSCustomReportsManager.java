@@ -829,7 +829,7 @@ public class XLSCustomReportsManager {
 		StringBuffer markupString = new StringBuffer("");
 		
 		if(app != null) {
-			String [] apps = app.split(" ");
+			String [] apps = app.trim().toLowerCase().split(" ");
 			boolean hasMarkup = false;
 			for(int i = 0; i < apps.length; i++) {
 				for(int j = 0; j < markup.size(); j++) {

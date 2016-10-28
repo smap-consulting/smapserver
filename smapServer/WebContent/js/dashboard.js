@@ -50,6 +50,7 @@ require([
          'app/globals',
          'app/localise',
          'bootstrapfileinput',
+         'd3',
          'inspinia',
          'metismenu',
          'slimscroll',
@@ -78,11 +79,47 @@ require([
 			 checkboxClass: 'icheckbox_square-green',
 			 radioClass: 'iradio_square-green'
 		});
+		
+		$('#d_rep_def_freq').click(function(){
+			getReportData(1490, "main");
+		});
 	});
 	
-
+	/*
+	 * Get the data for a form
+	 */
+	function getReportData(sId, form) {
+		$.ajax({
+			url: "/api/v1/data/" + sId,
+			dataType: 'json',
+			cache: false,
+			success: function(data) {
+				removeHourglass();
+				processReportResults(data);
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Error: Failed to get data: " + err);
+				}
+			}
+		});	
+	}
+	
+	/*
+	 * Get the data for a form
+	 */
+	function processReportResults(results) {
+		console.log(results);
+		var genderByRegion = d3.nest()
+		  .key(function(d) { return d.region; })
+		  .entries(results);
+		console.log(genderByRegion);
+	}
 	
 });
-
+	
 
 

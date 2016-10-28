@@ -12,6 +12,7 @@
     	lang_location: '..',
 	bootbox: 'bootbox.min',
 	moment: 'moment-with-locales.min',
+	d3: 'd3.v4.min',
 	toggle: 'bootstrap-toggle.min',
 	bootstrap: 'bootstrap.min',
         bootstrapfileinput: 'bootstrap.file-input',
