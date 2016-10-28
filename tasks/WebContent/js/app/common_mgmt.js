@@ -273,7 +273,7 @@ window.gTasks = {
 		    	 console.log("initComplete");
 				 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 				 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
-					 if(columns[colIdx].filter) {
+					 if(columns[colIdx].filter || columns[colIdx].type === "select1") {
 						 var select = $('<select class="form-control"/>')
 						 		.appendTo(
 						 				globals.gMainTable.column(colIdx).footer()

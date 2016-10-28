@@ -77,11 +77,7 @@ public class ActionManager {
 			a.pId = pId;
 			a.managedId = managedId;
 			a.prikey = prikey;
-			if(value == null) {
-				System.out.println("Value is null");
-			} else {
-				System.out.println("value is not null it is: " + value);
-			}
+			
 			log.info("Apply managed actions: Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
 			addAction(sd, a, oId, localisation, a.action, null, priority, value);
@@ -196,7 +192,6 @@ public class ActionManager {
 				actionId = rs.getInt(1);
 			}
 			
-			System.out.println("About to add or update a user: " + a.action + " : " + actionId);
 			if(a.action.equals("respond") && actionId == 0) {
 				
 				/*
