@@ -488,9 +488,10 @@ public class XLSFormManager {
 	private boolean isRow(Question q) {
 		boolean row = true;
 		
-		if(q.name.equals("prikey")) {
-			row = false;
-		} else if(q.name.startsWith("_")) {
+		if(q.name.equals("prikey") || q.name.equals("_task_key") ||
+				q.name.equals("_device") ||
+				q.name.equals("_start") || q.name.equals("_end")
+				) {
 			row = false;
 		} else if(q.type.equals("note") && !q.visible && (q.calculation == null || q.calculation.trim().length() == 0)) {
 			row = false;		// Loading a survey from an xml file may result in an instanceName not in a meta group which should not be included in the XLS
