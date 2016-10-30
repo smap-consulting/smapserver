@@ -1858,6 +1858,32 @@ function getUtcOffset() {
 	return moment().utcOffset();
 }
 
+/*
+ * Get the difference between 2 times
+ */
+function timeDifference(fromTime, toTime) {
+	var from,
+		to,
+		timeDiff;
+	
+	if(fromTime && toTime) {
+		if(fromTime.indexOf('+') > 0) {
+			from  = moment(fromTime, 'YYYY-MM-DD HH:mm:ss Z');
+		} else {
+			from  = moment.utc(fromTime, 'YYYY-MM-DD HH:mm:ss');
+		}
+		if(toTime.indexOf('+') > 0) {
+			to  = moment(toTime, 'YYYY-MM-DD HH:mm:ss Z');
+		} else {
+			to  = moment(toTime, 'YYYY-MM-DD HH:mm:ss');
+		}
+		
+    	timeDiff = moment.duration(to.diff(from));
+	}
+	return timeDiff;
+} 
+
+
 function downloadFile(url) {
 	$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
 	// Check for errors allow 5 seconds for an error to be returned

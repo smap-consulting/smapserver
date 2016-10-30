@@ -30,7 +30,7 @@ require.config({
     	jquery: 'jquery-2.1.1',
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
-    	moment: '../../../../js/libs/moment-with-locales.min',
+    	moment: 'moment-with-locales.min',
     	lang_location: '..'
 
     },
