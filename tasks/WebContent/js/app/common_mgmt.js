@@ -203,9 +203,6 @@ window.gTasks = {
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
-		 //if(typeof masterRecord === "undefined") {
-		//	 h[++idx] = '<th></th>';				// Select
-		 //}
 		 
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
@@ -367,6 +364,15 @@ window.gTasks = {
 		                    last = group;
 		                }
 		            } );
+			 } else {
+				 // For browse results and managed forms, update any charts
+				 var rows = globals.gMainTable.rows({
+				    	order:  'current',  // 'current', 'applied', 'index',  'original'
+				    	page:   'all',      // 'all',     'current'
+				    	search: 'applied',     // 'none',    'applied', 'removed'
+					}).data();
+				 
+				 chart.refreshCharts(rows);
 			 }
 	            
 	            

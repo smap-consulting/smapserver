@@ -1982,6 +1982,7 @@ function getTableData(table, columns) {
 	
 }
 
+
 /*
  * Get google map api
  */

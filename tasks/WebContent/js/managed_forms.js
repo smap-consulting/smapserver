@@ -74,6 +74,7 @@ requirejs.config({
     	'crf': ['jquery'],
        	'datatables': ['jquery', 'bootstrap'],
     	'app/common_mgmt': ['jquery'],
+    	'app/chart': ['jquery'],
     	'qrcode': ['jquery'],
        	'toggle': ['bootstrap.min']
 	
@@ -86,6 +87,8 @@ require([
          'common', 
          'localise', 
          'globals',
+         'moment',
+         'app/chart',
          'datatables.net-bs',
          'datatables.select',
          'inspinia',
@@ -97,6 +100,7 @@ require([
          'crf',
          'app/common_mgmt',
          'qrcode',
+         'd3',
          'toggle'
          
          ], function($, 
@@ -104,6 +108,8 @@ require([
         		 common, 
         		 localise, 
         		 globals,
+        		 moment,
+        		 chart,
         		 datatables) {
 
 	
@@ -116,7 +122,9 @@ require([
 			openingNew = false,
 			dont_get_current_survey = true,
 			bs = isBusinessServer();
-			
+		
+		window.chart = chart;
+		window.moment = moment;
 		localise.setlang();		// Localise HTML
 		
 		// Get the parameters and show a management survey if required
@@ -261,7 +269,7 @@ require([
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
-				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns)
+				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
 				 
 		 if($this.hasClass("xls")) {
 			 filename = title + ".xlsx"
@@ -298,6 +306,8 @@ require([
 			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
 		 });
 	 }
+	 
+	 chart.init();		// Initialise charts
 
 
 });

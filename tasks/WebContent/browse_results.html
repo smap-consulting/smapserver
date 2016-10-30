@@ -19,6 +19,42 @@
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
     <link href="/css/smap-wb.css" rel="stylesheet">
 
+	<!-- Style for charts -->
+	<!-- refer https://chartio.com/resources/tutorials/how-to-resize-an-svg-when-the-window-is-resized-in-d3-js -->
+	<style>
+	
+		.bar {
+		  fill: steelblue;
+		}
+		
+		.bar:hover {
+		  fill: brown;
+		}
+		
+		.axis--x path {
+		  display: none;
+		}
+		
+		.svg-container {
+		    display: inline-block;
+		    position: relative;
+		    width: 100%;
+		    height: 300px;
+		    //padding-bottom: 10%;
+		    vertical-align: top;
+		    overflow: hidden;
+		}
+		
+		.svg-content {
+		    display: inline-block;
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		}
+	
+	</style>
+
+
 <script> if (!window.console) console = {log: function() {}}; </script>
 
 <script src="/js/libs/modernizr.js"></script>
@@ -63,13 +99,17 @@ var isBrowseResults = true,
 			<li id="m_dash" class="restrict_role admin_role analyst_role"><a href="/dashboard.html"><i class="fa fa-bar-chart"></i> <span class="lang" data-lang="m_dash">Dashboard</span></a></li>  
 			<li id="m_logs"><a href="/tasks/log.html"><i class="fa fa-ticket"></i> <span class="lang" data-lang="m_logs">logs</span></a></li>
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
-	        <!--  
+	        
+	        <li class="nav-divider"></li>
+	        
 	        <li>
-	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-				</a>
-			</li>
-			-->
+             	<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label lang" data-lang="m_reports_def">Default Reports</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level collapse">
+                    <li><a href="#" id="d_rep_def_freq" class="lang" data-lang="d_rep_def_freq">Frequency Report</a></li>
+                </ul>
+             </li>
+             
+	  
 			
 	      </ul>
 		</div>
@@ -165,6 +205,32 @@ var isBrowseResults = true,
                 	</div>
              	</div>
         	</div>
+        	<div class="row">
+                <div class="col-lg-6">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">
+                            <h5>Bar Chart</h5>
+                        </div>
+                        <div class="ibox-content">
+                            <div>
+                                <div class="svg-container" id="chart1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                <div class="ibox float-e-margins">
+                        <div class="ibox-title">
+                            <h5>Bar Chart</h5>
+                        </div>
+                        <div class="ibox-content">
+                            <div>
+                                <div class="svg-container" id="chart2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="relatedData"></div>
     </div>
