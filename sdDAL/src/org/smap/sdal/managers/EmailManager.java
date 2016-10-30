@@ -125,6 +125,9 @@ public class EmailManager {
 				log.info("No authentication");
 			}
 		
+			props.setProperty("mail.smtp.connectiontimeout", "60000");
+			props.setProperty("mail.smtp.timeout", "60000");
+			props.setProperty("mail.smtp.writetimeout", "60000");
 			Session session = Session.getInstance(props, authenticator);
 			//session.setDebug(true);
 			Message msg = new MimeMessage(session);
