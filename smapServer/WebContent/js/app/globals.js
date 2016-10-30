@@ -84,6 +84,8 @@ define(function() {
 		
 		gReports: undefined,			// reports
 		
+		gCharts: {},					// charts
+		
 		model: new Model()
 
 	}

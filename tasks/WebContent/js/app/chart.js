@@ -85,21 +85,44 @@ define([
 		// Get dynamic widths of container
 		var widthContainer = $(chart).width();
 		var heightContainer = $(chart).height();
-		var view = "0 0 " + widthContainer + " " + heightContainer;
+		var view = "0 0 " + widthContainer + " " + heightContainer,
+			svg,
+			margin,
+			width,
+			height;
 		
-		var svg = d3.select(chart).append("svg")
+		var config = globals.gCharts[chart],
+			init = false;
+		
+		if(typeof config === "undefined") {
+			init = true;
+			globals.gCharts[chart] = {};
+			config = globals.gCharts[chart];
+		} 
+		
+		margin = {top: 20, right: 20, bottom: 30, left: 40};
+	    width = +widthContainer - margin.left - margin.right;
+	    height = +heightContainer - margin.top - margin.bottom;
+		
+		if(init) {
+			svg = d3.select(chart).append("svg")
 			  .attr("preserveAspectRatio", "xMinYMin meet")
 			  .attr("viewBox", view)
 			  .classed("svg-content", true);
-		
-		var margin = {top: 20, right: 20, bottom: 30, left: 40},
-	    	width = +widthContainer - margin.left - margin.right,
-	    	height = +heightContainer - margin.top - margin.bottom;
+		}
 		
 		if(type === "bar") {
-			addBarChart(svg, data, width, height, margin);
+			if(init) {
+				addBarChart(chart, config, svg, data, width, height, margin);
+			} else {
+				refreshBarChart(chart, config, svg, data, width, height, margin);
+			}
 		} else if(type === "pie") {
-			addPieChart(svg, data, width, height, margin);
+			if(init) {
+				addPieChart(chart, config, svg, data, width, height, margin);
+			} else {
+				refreshPieChart(chart, config, svg, data, width, height, margin);
+			}
 		} else {
 			console.log("unknown chart type");
 		}
@@ -108,27 +131,26 @@ define([
 	/*
 	 * Add a bar chart
 	 */
-	function addBarChart(svg, data, width, height, margin) {
+	function addBarChart(chart, config, svg, data, width, height, margin) {
 
-		var x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
-	    	y = d3.scaleLinear().rangeRound([height, 0]);
+		config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+	    config.y = d3.scaleLinear().rangeRound([height, 0]);
 		
-		var g = svg.append("g")
+		config.x.domain(data.map(function(d) { return d.key; }));
+		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+		
+		config.g = svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		
 
-
-		x.domain(data.map(function(d) { return d.key; }));
-		y.domain([0, d3.max(data, function(d) { return d.value; })]);
 	
-		  g.append("g")
+		  config.g.append("g")
 		      .attr("class", "axis axis--x")
 		      .attr("transform", "translate(0," + height + ")")
-		      .call(d3.axisBottom(x));
+		      .call(d3.axisBottom(config.x));
 	
-		  g.append("g")
+		  config.g.append("g")
 		      .attr("class", "axis axis--y")
-		      .call(d3.axisLeft(y).ticks(10).tickFormat(d3.format("d")))
+		      .call(d3.axisLeft(config.y).ticks(10).tickFormat(d3.format("d")))
 		    .append("text")
 		      .attr("transform", "rotate(-90)")
 		      .attr("y", 6)
@@ -136,18 +158,57 @@ define([
 		      .attr("text-anchor", "end")
 		      .text("Count");
 	
-		  g.selectAll(".bar")
+		  config.g.selectAll(".bar")
 		    .data(data)
 		    .enter().append("rect")
 		      .attr("class", "bar")
-		      .attr("x", function(d) { return x(d.key); })
-		      .attr("y", function(d) { return y(d.value); })
-		      .attr("width", x.bandwidth())
-		      .attr("height", function(d) { return height - y(d.value); });
+		      .attr("x", function(d) { return config.x(d.key); })
+		      .attr("y", function(d) { return config.y(d.value); })
+		      .attr("width", config.x.bandwidth())
+		      .attr("height", function(d) { return height - config.y(d.value); });
 		
 	}
 	
-	function addPieChart(svg, data, width, height, margin) {
+	/*
+	 * Update a bar chart
+	 */
+	function refreshBarChart(chart, config, svg, data, width, height, margin) {
+		
+		console.log("Refresh bar chart");
+		
+		config.x.domain(data.map(function(d) { return d.key; }));
+		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+		
+		// Update axes
+		d3.select(chart + " .axis--y")
+			.transition()
+			.duration(1000)
+			.call(config.y);
+		d3.select(chart + " .axis--x")
+			.transition()
+			.duration(1000)
+			.call(config.x);
+		
+		config.g.selectAll(".bar")
+			.data(data)
+			.transition()
+			.duration(1000)
+	    	.attr("x", function(d) { return config.x(d.key); })
+	    	.attr("y", function(d) { return config.y(d.value); })
+	    	.attr("width", config.x.bandwidth())
+	    	.attr("height", function(d) { return height - config.y(d.value); });
+					
+		config.g.selectAll(".bar")
+			.data(data)
+				.enter().append("rect")
+			    	.attr("class", "bar")
+			    	.attr("x", function(d) { return config.x(d.key); })
+			    	.attr("y", function(d) { return config.y(d.value); })
+			    	.attr("width", config.x.bandwidth())
+			    	.attr("height", function(d) { return height - config.y(d.value); });
+	}
+	
+	function addPieChart(chart, config, svg, data, width, height, margin) {
 		
 		var radius = Math.min(width, height) / 2;
 		
