@@ -32,19 +32,28 @@ define([
 		function($, modernizr, lang, globals, d3, bar, pie) {
 
 	
-	var chartList = {
+	/*
+	 * Available charts
+	 * The system knows how to show these
+	 */
+	var avCharts = {
 	                 bar: bar, 
 	                 pie: pie
 	                 };
 	
+	var report = undefined;
+	
 	return {	
-		init: init,
-		refreshCharts: refreshCharts
+		setReport: setReport,
+		setChartList: setChartList,
+		refreshCharts: refreshCharts,
+
 	};
 	
-	function init() {
-		
+	function setReport(r) {
+		report = r;
 	}
+	
 	
 
 	/*
@@ -54,6 +63,25 @@ define([
 		console.log("#############Refreshing chart");
 		console.log(results);
 		
+		var i,
+			data,
+			chart;
+		
+		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
+		
+		for(i = 0; i < filtered.length; i++) {
+			
+			chart = filtered[i];
+			
+			data = d3.nest()
+			  .key(function(d) { return d[chart.name]; })
+			  .rollup(function(v) { return v[chart.cFn]; })
+			  .entries(results);
+			
+			addChart("#c_" + chart.name, data, chart.cType);
+		}
+		
+		/*
 		var countByRegion = d3.nest()
 		  .key(function(d) { return d.region; })
 		  .rollup(function(v) { return v.length; })
@@ -82,6 +110,7 @@ define([
 		addChart("#chart1", countByRegion, "bar");
 		//addChart("#chart1", countByGender, "bar");
 		addChart("#chart2", countByRegion, "pie");
+		*/
 	}
 	
 	/*
@@ -129,15 +158,70 @@ define([
 			 
 		}
 		
-		if(chartList[type]) {
+		if(avCharts[type]) {
 			if(init) {
-				chartList[type].add(chart, config, data, width, height, margin)
+				avCharts[type].add(chart, config, data, width, height, margin)
 			} 
-			chartList[type].redraw(chart, config, data, width, height, margin);
+			avCharts[type].redraw(chart, config, data, width, height, margin);
 		} else {
 			alert("unknown chart type: " + type);
 		}
 		
+	}
+	
+	/*
+	 * Set the list of charts to show baed on:
+	 *     the report
+	 *     the available data
+	 */
+	function setChartList() {
+		
+		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+			filtered = columns.filter(function(d) {
+			   return d.include && !d.hide && d.name !== "prikey" && d.name !== "_start" && d.name !== "_end"; 
+			}),
+			i,
+			def = report.def;
+		
+		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
+		
+		for (i = 0; i < filtered.length; i++) {
+			if(!filtered[i].cFn) {
+				filtered[i].cFn = def.fn;
+			}
+			if(!filtered[i].cDom) {
+				filtered[i].cDom = "c_" + filtered[i].name;
+			}
+			if(!filtered[i].cType) {
+				filtered[i].cType = def.cType;
+			}
+		}
+		
+		/*
+		 * Generate the HTML
+		 */
+		var chartRow = d3.select("#chartrow")
+	    	.selectAll("aChart")
+	    	.data(filtered);
+		
+ 
+           /*
+          
+                <div>
+                    <div class="svg-container" id="chart1"></div>
+                </div>
+       
+			*/
+    
+		// New charts
+	    var wrapper = chartRow.enter()
+	    	.append("div").attr("class", "aChart col-lg-6")
+	    	.append("div").attr("class", "ibox float-e-margins");
+		
+	    wrapper.append("div").append("h5").text(function(d) {return d.humanName});
+	    wrapper.append("div").attr("class", "ibox-content")
+	    	.append("div")
+	    	.append("div").attr("class", "svg-container").attr("id", function(d) {return "c_" + d.name;})
 	}
 
 });

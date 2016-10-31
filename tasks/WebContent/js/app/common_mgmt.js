@@ -676,8 +676,7 @@ window.gTasks = {
 	 						
 	 						if(item.id === globals.gCurrentSurvey) {
 		 						gTasks.gSelectedSurveyIndex = i;
-		 					}
-	 						
+		 					}	
 	 					}
 	 					
 	 				}
@@ -724,6 +723,7 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
+					 chart.setChartList();	// Enable charts based on this survey config
 					 
 					 // Add a config item for the group value if this is a duplicates search
 					 if(isDuplicates) {

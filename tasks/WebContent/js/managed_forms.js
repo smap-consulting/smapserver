@@ -112,8 +112,24 @@ require([
         		 chart,
         		 datatables) {
 
+	/*
+	 * Report definition
+	 * Default Settings
+	 *    Create a chart for data table columns that are enabled and do not have column specific setting
+	 * Column specific settings 
+	 *    Override settings where names match
+	 */
+	var report = {
+			def: {
+				cType: "bar",
+				group: undefined,
+				fn: "count",
+				tSeries: false,
+				peiod: undefined
+			}
+	};
 	
-	 $(document).ready(function() {
+	$(document).ready(function() {
 
 		var i,
 			params,
@@ -306,9 +322,11 @@ require([
 			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
 		 });
 	 }
+
+	 /*
+	  * Set the current report
+	  */
+	 chart.setReport(report);
 	 
-	 chart.init();		// Initialise charts
-
-
 });
 
