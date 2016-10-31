@@ -26,9 +26,16 @@ define([
          'modernizr',
          'localise',
          'globals',
-         'd3'], 
-		function($, modernizr, lang, globals, d3) {
+         'd3',
+         'app/charts/bar',
+         'app/charts/pie'], 
+		function($, modernizr, lang, globals, d3, bar, pie) {
 
+	
+	var chartList = {
+	                 bar: bar, 
+	                 pie: pie
+	                 };
 	
 	return {	
 		init: init,
@@ -111,138 +118,39 @@ define([
 			  .classed("svg-content", true);
 		}
 		
+		if(chartList[type]) {
+		if(init) {
+			chartList[type].add(chart, config, svg, data, width, height, margin)
+		} else {
+			chartList[type].redraw(chart, config, svg, data, width, height, margin)
+		}
+		} else {
+			alert("unknown chart type: " + type);
+		}
+		/*
 		if(type === "bar") {
 			if(init) {
-				addBarChart(chart, config, svg, data, width, height, margin);
+				bar.add(chart, config, svg, data, width, height, margin);
 			} else {
-				refreshBarChart(chart, config, svg, data, width, height, margin);
+				bar.redraw(chart, config, svg, data, width, height, margin);
 			}
 		} else if(type === "pie") {
 			if(init) {
-				addPieChart(chart, config, svg, data, width, height, margin);
+				pie.add(chart, config, svg, data, width, height, margin);
 			} else {
-				refreshPieChart(chart, config, svg, data, width, height, margin);
+				pie.redraw(chart, config, svg, data, width, height, margin);
 			}
 		} else {
-			console.log("unknown chart type");
+			
 		}
+		*/
 	}
 	
-	/*
-	 * Add a bar chart
-	 */
-	function addBarChart(chart, config, svg, data, width, height, margin) {
 
-		config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-	    config.y = d3.scaleLinear().rangeRound([height, 0]);
-		
-		config.x.domain(data.map(function(d) { return d.key; }));
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
-		
-		config.g = svg.append("g")
-	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-	
-		  config.g.append("g")
-		      .attr("class", "axis axis--x")
-		      .attr("transform", "translate(0," + height + ")")
-		      .call(d3.axisBottom(config.x));
-	
-		  config.g.append("g")
-		      .attr("class", "axis axis--y")
-		      .call(d3.axisLeft(config.y).ticks(10).tickFormat(d3.format("d")))
-		    .append("text")
-		      .attr("transform", "rotate(-90)")
-		      .attr("y", 6)
-		      .attr("dy", "0.71em")
-		      .attr("text-anchor", "end")
-		      .text("Count");
-	
-		  config.g.selectAll(".bar")
-		    .data(data)
-		    .enter().append("rect")
-		      .attr("class", "bar")
-		      .attr("x", function(d) { return config.x(d.key); })
-		      .attr("y", function(d) { return config.y(d.value); })
-		      .attr("width", config.x.bandwidth())
-		      .attr("height", function(d) { return height - config.y(d.value); });
-		
-	}
-	
-	/*
-	 * Update a bar chart
-	 */
-	function refreshBarChart(chart, config, svg, data, width, height, margin) {
-		
-		console.log("Refresh bar chart");
-		
-		config.x.domain(data.map(function(d) { return d.key; }));
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
-		
-		// Update axes
-		d3.select(chart + " .axis--y")
-			.transition()
-			.duration(1000)
-			.call(config.y);
-		d3.select(chart + " .axis--x")
-			.transition()
-			.duration(1000)
-			.call(config.x);
-		
-		config.g.selectAll(".bar")
-			.data(data)
-			.transition()
-			.duration(1000)
-	    	.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { return config.y(d.value); })
-	    	.attr("width", config.x.bandwidth())
-	    	.attr("height", function(d) { return height - config.y(d.value); });
-					
-		config.g.selectAll(".bar")
-			.data(data)
-				.enter().append("rect")
-			    	.attr("class", "bar")
-			    	.attr("x", function(d) { return config.x(d.key); })
-			    	.attr("y", function(d) { return config.y(d.value); })
-			    	.attr("width", config.x.bandwidth())
-			    	.attr("height", function(d) { return height - config.y(d.value); });
-	}
 	
 	function addPieChart(chart, config, svg, data, width, height, margin) {
 		
-		var radius = Math.min(width, height) / 2;
-		
-		var color = d3.scaleOrdinal()
-	    	.range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
-		
-		var arc = d3.arc()
-	    	.outerRadius(radius - 10)
-	    	.innerRadius(0);
-		
-		var labelArc = d3.arc()
-	    	.outerRadius(radius - 40)
-	    	.innerRadius(radius - 40);
-		
-		var pie = d3.pie()
-	    	.sort(null)
-	    	.value(function(d) { return d.value; });
-		
-		svg.append("g")
-	    	.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-		
-		var g = svg.selectAll(".arc")
-	      .data(pie(data))
-	      .enter().append("g")
-	      .attr("class", "arc");
-		
-		g.append("path")
-	      .attr("d", arc)
-	      .style("fill", function(d) { return color(d.key); });
-		
-		g.append("text")
-	      .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-	      .attr("dy", ".35em")
-	      .text(function(d) { return d.key; });
+
 	}
 
 });
