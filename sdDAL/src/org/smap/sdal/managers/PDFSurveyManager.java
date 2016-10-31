@@ -477,7 +477,6 @@ public class PDFSurveyManager {
 	
 				if(value != null && !value.equals("") && !r.type.equals("image")) {
 					status = pdfForm.setField(fieldName, value);			
-					log.info("Set field: " + status + " : " + fieldName + " : " + value);
 					if(hideLabel) {
 						pdfForm.removeField(fieldName);
 					}
@@ -538,11 +537,12 @@ public class PDFSurveyManager {
 				if(ad != null) {
 					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 					ad.setProportionalIcon(true);
+					String filename = null;
 					try {
-						String filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
+						filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
 						ad.setImage(Image.getInstance(filename));
 					} catch (Exception e) {
-						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
+						log.info("Error: Failed to add signature " + filename + " to pdf");
 					}
 					pdfForm.replacePushbuttonField("user_signature", ad.getField());
 				} else {
