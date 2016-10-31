@@ -324,7 +324,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 		var userDetails = JSON.parse(data.settings);
 		$('#my_title').val(userDetails.title);
 		$('#my_license').val(userDetails.license);
-		$('#my_signature').attr("src", data.signature);
+		$('#my_signature').attr("src", "/surveyKPI/file/" + data.signature + "/users?type=sig");
 	}
 	
 	// Hide any menus that have been disabled by custom java scripts
