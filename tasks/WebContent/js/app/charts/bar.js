@@ -40,7 +40,7 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chart, config, svg, data, width, height, margin) {
+	function add(chart, config, data, width, height, margin) {
 
 		config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
@@ -48,18 +48,22 @@ define([
 		config.x.domain(data.map(function(d) { return d.key; }));
 		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
 		
-		config.g = svg.append("g")
+		config.xAxis = d3.axisBottom(config.x);
+		
+		config.yAxis = d3.axisLeft(config.y);
+		
+		config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+		config.svg.append("g")
+			.attr("class", "axis axis--x")
+		    .attr("transform", "translate(0," + height + ")")
+		    .call(config.xAxis)
+		    .call(config.xAxis);
 	
-		  config.g.append("g")
-		      .attr("class", "axis axis--x")
-		      .attr("transform", "translate(0," + height + ")")
-		      .call(d3.axisBottom(config.x));
-	
-		  config.g.append("g")
-		      .attr("class", "axis axis--y")
-		      .call(d3.axisLeft(config.y).ticks(10).tickFormat(d3.format("d")))
+		config.svg.append("g")
+		    .attr("class", "axis axis--y")
+		    .call(config.yAxis)
 		    .append("text")
 		      .attr("transform", "rotate(-90)")
 		      .attr("y", 6)
@@ -67,6 +71,7 @@ define([
 		      .attr("text-anchor", "end")
 		      .text("Count");
 	
+		/*
 		  config.g.selectAll(".bar")
 		    .data(data)
 		    .enter().append("rect")
@@ -75,46 +80,58 @@ define([
 		      .attr("y", function(d) { return config.y(d.value); })
 		      .attr("width", config.x.bandwidth())
 		      .attr("height", function(d) { return height - config.y(d.value); });
+		      */
 		
 	}
 	
 	/*
 	 * Update a bar chart
 	 */
-	function redraw(chart, config, svg, data, width, height, margin) {
+	function redraw(chart, config, data, width, height, margin) {
 		
 		console.log("Refresh bar chart");
 		
 		config.x.domain(data.map(function(d) { return d.key; }));
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+		config.y.domain([0, d3.max(data, function(d) { return d.value; })]);
 		
 		// Update axes
-		d3.select(chart + " .axis--y")
-			.transition()
-			.duration(1000)
-			.call(config.y);
-		d3.select(chart + " .axis--x")
-			.transition()
-			.duration(1000)
-			.call(config.x);
+		config.svg.select(".axis--y")
+			//.transition()
+			//.duration(500)
+			.call(config.yAxis.ticks(5, ""));
+		config.svg.select(".axis--x")
+			//.transition()
+			//.duration(500)
+			.call(config.xAxis);
 		
-		config.g.selectAll(".bar")
-			.data(data)
+		var bars = config.svg.selectAll(".bar").data(data, function(d) { return d.key; });
+		
+		// Bars being removed
+		bars.exit()
 			.transition()
-			.duration(1000)
+			.duration(300)
+			.attr("y", config.y(0))
+			.attr("height", height - config.y(0))
+			//.style('fill-opacity', 1e-6)
+			.remove();
+		
+		// New bars
+		bars.enter()
+			.append("rect")
+			.attr("class", "bar")
+			.attr("x", function(d) { return config.x(d.key); })
+	    	.attr("y", function(d) { return config.y(d.value); })
+	    	.attr("width", config.x.bandwidth())
+	    	.attr("height", function(d) { return height - config.y(d.value); });
+		
+		// BArs being update
+		bars.transition()
+			.duration(300)
 	    	.attr("x", function(d) { return config.x(d.key); })
 	    	.attr("y", function(d) { return config.y(d.value); })
 	    	.attr("width", config.x.bandwidth())
 	    	.attr("height", function(d) { return height - config.y(d.value); });
 					
-		config.g.selectAll(".bar")
-			.data(data)
-				.enter().append("rect")
-			    	.attr("class", "bar")
-			    	.attr("x", function(d) { return config.x(d.key); })
-			    	.attr("y", function(d) { return config.y(d.value); })
-			    	.attr("width", config.x.bandwidth())
-			    	.attr("height", function(d) { return height - config.y(d.value); });
 	}
 	
 

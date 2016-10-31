@@ -79,9 +79,9 @@ define([
 		  .entries(results);
 		
 		console.log("Duration by device: " + JSON.stringify(avgDurDevice));
-		//addChart("#chart1", countByRegion, "pie");
-		addChart("#chart1", countByGender, "bar");
-		addChart("#chart2", countByRegion, "bar");
+		addChart("#chart1", countByRegion, "bar");
+		//addChart("#chart1", countByGender, "bar");
+		addChart("#chart2", countByRegion, "pie");
 	}
 	
 	/*
@@ -93,7 +93,6 @@ define([
 		var widthContainer = $(chart).width();
 		var heightContainer = $(chart).height();
 		var view = "0 0 " + widthContainer + " " + heightContainer,
-			svg,
 			margin,
 			width,
 			height;
@@ -112,45 +111,33 @@ define([
 	    height = +heightContainer - margin.top - margin.bottom;
 		
 		if(init) {
-			svg = d3.select(chart).append("svg")
-			  .attr("preserveAspectRatio", "xMinYMin meet")
-			  .attr("viewBox", view)
-			  .classed("svg-content", true);
+			if(type === "pie") {
+				config.svg = d3.select(chart).append("svg")
+				  .attr("preserveAspectRatio", "xMinYMin meet")
+				  .attr("viewBox", view)
+				  .classed("svg-content", true)
+				  .append("g")
+				  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+			} else {
+				config.svg = d3.select(chart).append("svg")
+				  .attr("preserveAspectRatio", "xMinYMin meet")
+				  .attr("viewBox", view)
+				  .classed("svg-content", true);
+			}
+			
+		
+			 
 		}
 		
 		if(chartList[type]) {
-		if(init) {
-			chartList[type].add(chart, config, svg, data, width, height, margin)
-		} else {
-			chartList[type].redraw(chart, config, svg, data, width, height, margin)
-		}
+			if(init) {
+				chartList[type].add(chart, config, data, width, height, margin)
+			} 
+			chartList[type].redraw(chart, config, data, width, height, margin);
 		} else {
 			alert("unknown chart type: " + type);
 		}
-		/*
-		if(type === "bar") {
-			if(init) {
-				bar.add(chart, config, svg, data, width, height, margin);
-			} else {
-				bar.redraw(chart, config, svg, data, width, height, margin);
-			}
-		} else if(type === "pie") {
-			if(init) {
-				pie.add(chart, config, svg, data, width, height, margin);
-			} else {
-				pie.redraw(chart, config, svg, data, width, height, margin);
-			}
-		} else {
-			
-		}
-		*/
-	}
-	
-
-	
-	function addPieChart(chart, config, svg, data, width, height, margin) {
 		
-
 	}
 
 });
