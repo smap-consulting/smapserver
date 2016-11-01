@@ -145,6 +145,7 @@ public class FormsManifest {
 			List<ManifestValue> manifestList = translationMgr.
 					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
+			log.info("Retrieved manifest list: " + manifestList.size());
 			for( ManifestValue m : manifestList) {
 
 				String filepath = null;
@@ -158,6 +159,8 @@ public class FormsManifest {
 				} else {
 					filepath = m.filePath;
 				}
+				
+				log.info("Geting manifest at: " + filepath);
 				
 				// Check that the file exists
 				if(filepath != null) {
@@ -173,7 +176,11 @@ public class FormsManifest {
 						responseStr.append("<hash>" + md5 + "</hash>\n");
 						responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
 						responseStr.append("</mediaFile>");
+					} else {
+						log.info("Error: " + filepath + " not found");
 					}
+				} else {
+					log.info("Error: Manifest file path is null");
 				}
 					
 			}

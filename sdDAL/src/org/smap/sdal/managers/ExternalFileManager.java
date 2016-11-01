@@ -201,6 +201,8 @@ public class ExternalFileManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
+			log.info("Get link info: " + pstmt.toString());
+			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				int id = rs.getInt(1);

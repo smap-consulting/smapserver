@@ -197,7 +197,7 @@ public class TranslationManager {
 			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
 		}
 		
-		log.info("Manifest length: " + manifests.size());
+		log.info("Linked Manifest length: " + manifests.size());
 		
 		return manifests;
 	}
