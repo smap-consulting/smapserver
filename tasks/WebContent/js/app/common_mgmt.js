@@ -366,12 +366,6 @@ window.gTasks = {
 		            } );
 			 } else {
 				 // For browse results and managed forms, update any charts
-				 var rows = globals.gMainTable.rows({
-				    	order:  'current',  // 'current', 'applied', 'index',  'original'
-				    	page:   'all',      // 'all',     'current'
-				    	search: 'applied',     // 'none',    'applied', 'removed'
-					}).data();
-				 
 				 chart.refreshCharts(rows);
 			 }
 	            

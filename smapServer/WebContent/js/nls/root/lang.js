@@ -603,7 +603,9 @@ define({
 	
 	// Dashboard
 	"d_sound": "Play sound on new alert",
-	"d_rep_def_freq": "Frequency Report"
+	"d_rep_def_freq": "Frequency Report",
+	"bar": "Bar Chart",
+	"pie": "Pie Chart"
 
 	 		
 });

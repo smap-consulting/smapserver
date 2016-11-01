@@ -59,8 +59,15 @@ define([
 	/*
 	 * Show a report
 	 */
-	function refreshCharts(results) {
+	function refreshCharts() {
 		console.log("#############Refreshing chart");
+		
+		var results = globals.gMainTable.rows({
+	    	order:  'current',  // 'current', 'applied', 'index',  'original'
+	    	page:   'all',      // 'all',     'current'
+	    	search: 'applied',     // 'none',    'applied', 'removed'
+		}).data();
+		
 		console.log(results);
 		
 		var i,
@@ -78,7 +85,7 @@ define([
 			  .rollup(function(v) { return v[chart.cFn]; })
 			  .entries(results);
 			
-			addChart("#c_" + chart.name, data, chart.cType);
+			addChart("#c_" + chart.name, data, chart.cType, i);
 		}
 		
 		/*
@@ -116,7 +123,7 @@ define([
 	/*
 	 * Add a chart
 	 */
-	function addChart(chart, data, type) {
+	function addChart(chart, data, type, index) {
 		
 		// Get dynamic widths of container
 		var widthContainer = $(chart).width();
@@ -133,6 +140,7 @@ define([
 			init = true;
 			globals.gCharts[chart] = {};
 			config = globals.gCharts[chart];
+			config.index = index;
 		} 
 		
 		margin = {top: 20, right: 20, bottom: 30, left: 40};
@@ -153,9 +161,7 @@ define([
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
 			}
-			
-		
-			 
+ 
 		}
 		
 		if(avCharts[type]) {
@@ -209,6 +215,7 @@ define([
 		 */
 	    var wrapper = chartRow.enter()
 	    	.append("div").attr("class", "aChart col-lg-6")
+	    		.attr("id", function(d) {return "c_" + d.name + "_ibox"})
 	    	.append("div").attr("class", "ibox float-e-margins");
 		
 	    var title = wrapper.append("div").attr("class", "ibox-title");
@@ -220,7 +227,7 @@ define([
 	    	.append("div")
 	    	.append("div").attr("class", "svg-container").attr("id", function(d) {return "c_" + d.name;})
 	    
-	    setupIbox("#chartrow");
+	    setupIbox("#chartrow");		// Add event listeners
 	}
 	
 	/*
@@ -228,7 +235,8 @@ define([
 	 */
 	function addChartTools(title) {
 		
-		var tools = title.append("div").attr("class", "ibox-tools");
+		var tools = title.append("div").attr("class", "ibox-tools"),
+			i;
 		
 		tools.append("a").attr("class", "collapse-link")
 			.append("i").attr("class", "fa fa-chevron-up");
@@ -238,12 +246,71 @@ define([
 			.attr("href", "#")
 			.append("i").attr("class", "fa fa-wrench");
 		
-		var toolList = tools.append("ul").attr("class", "dropdown-menu dropdown-user");
-		toolList.append("li").append("a").attr("href", "#").text("config option 1");
+		var toolList = tools.append("ul")
+			.attr("class", "dropdown-menu dropdown-user");
 		
+		for (var key in avCharts) {
+		    if (avCharts.hasOwnProperty(key)) {
+		    	toolList.append("li").append("a")
+		    		.attr("href", "#")
+		    		.attr("class", "chart-type")
+		    		.attr("data-ctype", key)
+		    		.text(localise.set[key]);
+		    }
+		}
 		//tools.append("a").attr("class", "close-link")
 		//	.append("i").attr("class", "fa fa-times");
 
+	}
+	
+	function setupIbox(element) {
+	    // Collapse ibox function
+	    $('.collapse-link', element).click(function () {
+	        var ibox = $(this).closest('div.ibox');
+	        var button = $(this).find('i');
+	        var content = ibox.find('div.ibox-content');
+	        content.slideToggle(200);
+	        button.toggleClass('fa-chevron-up').toggleClass('fa-chevron-down');
+	        ibox.toggleClass('').toggleClass('border-bottom');
+	        setTimeout(function () {
+	            ibox.resize();
+	            ibox.find('[id^=map-]').resize();
+	        }, 50);
+	    });
+
+	    // Close ibox function
+	    $('.close-link', element).click(function () {
+	        var content = $(this).closest('div.ibox');
+	        content.remove();
+	    });
+
+	    // Fullscreen ibox function
+	    $('.fullscreen-link',element).click(function () {
+	        var ibox = $(this).closest('div.ibox');
+	        var button = $(this).find('i');
+	        $('body').toggleClass('fullscreen-ibox-mode');
+	        button.toggleClass('fa-expand').toggleClass('fa-compress');
+	        ibox.toggleClass('fullscreen');
+	        setTimeout(function () {
+	            $(window).trigger('resize');
+	        }, 100);
+	    });	
+	    
+	    $('.chart-type').off().click(function(){
+	    	var $this = $(this),
+	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+	    		cType = $this.data("ctype"),
+	    	    chart = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
+	    	    ibox = chart + "_ibox",
+	    	    name;
+	    	
+	    	var config = globals.gCharts[chart];
+	    	filtered[config.index].cType = cType;
+	    	config.svg.remove();
+	    	globals.gCharts[chart] = undefined;
+	    	
+	    	refreshCharts();
+	    })
 	}
 
 });
