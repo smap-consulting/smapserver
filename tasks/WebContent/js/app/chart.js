@@ -170,7 +170,7 @@ define([
 	}
 	
 	/*
-	 * Set the list of charts to show baed on:
+	 * Set the list of charts to show based on:
 	 *     the report
 	 *     the available data
 	 */
@@ -204,15 +204,6 @@ define([
 	    	.selectAll("aChart")
 	    	.data(filtered);
 		
- 
-           /*
-          
-                <div>
-                    <div class="svg-container" id="chart1"></div>
-                </div>
-       
-			*/
-    
 		// New charts
 	    var wrapper = chartRow.enter()
 	    	.append("div").attr("class", "aChart col-lg-6")
