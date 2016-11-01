@@ -123,7 +123,7 @@ require([
 			def: {
 				cType: "bar",
 				group: undefined,
-				fn: "count",
+				fn: "length",
 				tSeries: false,
 				peiod: undefined
 			}

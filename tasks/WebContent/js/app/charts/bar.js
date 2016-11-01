@@ -120,7 +120,11 @@ define([
 			.append("rect")
 			.attr("class", "bar")
 			.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { return config.y(d.value); })
+	    	.attr("y", function(d) { 
+	    		console.log(d);
+	    		console.log(config.y(d.value));
+	    		return config.y(d.value); 
+	    		})
 	    	.attr("width", config.x.bandwidth())
 	    	.attr("height", function(d) { return height - config.y(d.value); });
 		

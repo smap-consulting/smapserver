@@ -204,15 +204,46 @@ define([
 	    	.selectAll("aChart")
 	    	.data(filtered);
 		
-		// New charts
+		/*
+		 * New Charts
+		 */
 	    var wrapper = chartRow.enter()
 	    	.append("div").attr("class", "aChart col-lg-6")
 	    	.append("div").attr("class", "ibox float-e-margins");
 		
-	    wrapper.append("div").append("h5").text(function(d) {return d.humanName});
-	    wrapper.append("div").attr("class", "ibox-content")
+	    var title = wrapper.append("div").attr("class", "ibox-title");
+	    title.append("div").append("h5").text(function(d) {return d.humanName});		// Add title
+	    addChartTools(title);
+	    
+	    var content = wrapper.append("div").attr("class", "ibox-content");
+	    content
 	    	.append("div")
 	    	.append("div").attr("class", "svg-container").attr("id", function(d) {return "c_" + d.name;})
+	    
+	    setupIbox("#chartrow");
+	}
+	
+	/*
+	 * Add the controls to an chart ibox
+	 */
+	function addChartTools(title) {
+		
+		var tools = title.append("div").attr("class", "ibox-tools");
+		
+		tools.append("a").attr("class", "collapse-link")
+			.append("i").attr("class", "fa fa-chevron-up");
+	 
+		tools.append("a").attr("class", "dropdown-toggle")
+			.attr("data-toggle", "dropdown")
+			.attr("href", "#")
+			.append("i").attr("class", "fa fa-wrench");
+		
+		var toolList = tools.append("ul").attr("class", "dropdown-menu dropdown-user");
+		toolList.append("li").append("a").attr("href", "#").text("config option 1");
+		
+		//tools.append("a").attr("class", "close-link")
+		//	.append("i").attr("class", "fa fa-times");
+
 	}
 
 });
