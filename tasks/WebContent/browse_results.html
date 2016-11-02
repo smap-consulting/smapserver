@@ -152,29 +152,43 @@ var isBrowseResults = true,
         
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="col-sm-2">
-            	<h2 class="lang" data-lang="m_br">browse</h2>   
-            </div>
-            <div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
-						</div>
-					</form>	
-				</div>
-        	</div>
-        	<div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-						<div class="col-sm-8">
-							<select class="survey_select form-control" id="survey_name"></select>
-						</div>
-					</form>	
-				</div>
-        	</div>
+        	<div class="row">
+	        	<div class="col-sm-2">
+	            	<h2 class="lang" data-lang="m_br">browse</h2>   
+	            </div>
+	            <div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+							<div class="col-sm-8">
+								<select class="project_list form-control" id="project_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        	<div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
+							<div class="col-sm-8">
+								<select class="survey_select form-control" id="survey_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        </div>
+	        <div class="row">
+	        	<div class="col-sm-6">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element">
+							<label class="lang col-sm-4 control-label" data-lang="a_from_date" for="filter_from">from</label>
+							<div class="col-sm-8">
+								<input type="date" class="hasDatepicker survey_select form-control" id="filter_from"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        </div>
         </div>
         
 
@@ -188,7 +202,8 @@ var isBrowseResults = true,
                             <h5 id="survey_title"></h5> 
                             <div class="ibox-tools">
                                 <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
-                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>   
+                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>  
+                                <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a>   
                             </div>
                             
                         </div>

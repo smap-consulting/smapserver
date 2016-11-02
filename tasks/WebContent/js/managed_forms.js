@@ -91,6 +91,7 @@ require([
          'moment',
          'app/chart',
          'datatables.net-bs',
+         'svgsave',
          'datatables.select',
          'inspinia',
          'metismenu',
@@ -102,8 +103,7 @@ require([
          'app/common_mgmt',
          'qrcode',
          'd3',
-         'toggle',
-         'svgsave'
+         'toggle'
          
          ], function($, 
         		 bootstrap, 
@@ -112,7 +112,8 @@ require([
         		 globals,
         		 moment,
         		 chart,
-        		 datatables) {
+        		 datatables,
+        		 svgsave) {
 
 	/*
 	 * Report definition
@@ -315,18 +316,28 @@ require([
 			 filename = title + ".xlsx"
 			 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 			 format = "xlsx";
-		 } else {
+		 } else if($this.hasClass("pdf")) {
 			 filename = title + ".pdf"
 			 mime= "application/pdf";
 			 format = "pdf";
+		 } else {
+			 format = "image";
 		 }
 		 
-		 if(isBrowseResults || isDuplicates) {
-			 managedId = 0;
+		 if(format !== "image") {
+			 if(isBrowseResults || isDuplicates) {
+				 managedId = 0;
+			 } else {
+				 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
+			 }
+			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
 		 } else {
-			 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
+			 $('.svg-container svg').each(function(index) {
+				 var elem = $(this)[0];
+				 svgsave.saveSvgAsPng(elem, "diagram.png");
+			 });
+				
 		 }
-		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
 	 });
 	 
 	    /*
@@ -351,6 +362,39 @@ require([
 	  * Set the current report
 	  */
 	 chart.setReport(report);
+	 
+	 /*
+	  * Add date filtering to datatable
+	  */
+	 $.fn.dataTableExt.afnFiltering.push(
+				function( oSettings, aData, iDataIndex ) {
+					var fromDate = document.getElementById('filter_from').value;
+					var dateCol = 2,
+						dateParts = [],
+						dataDate;
+
+					fromDate=fromDate.replace(/\-/g, "");
+
+					dataDate=aData[dateCol].replace(/\-/g, "");
+					dateParts = dataDate.split(" ");
+					if(dateParts.length > 0) {
+						dataDate = dateParts[0];
+					}
+					console.log("From date: " + fromDate + " : " + dataDate);
+
+					if ( fromDate === "" )
+					{
+						return true;
+					}
+					else if ( fromDate <= dataDate )
+					{
+						return true;
+					}
+					
+					return false;
+				
+				}
+			);
 	 
 });
 

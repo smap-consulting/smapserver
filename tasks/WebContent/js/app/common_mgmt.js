@@ -408,6 +408,8 @@ window.gTasks = {
 			 
 		 });
 		
+		 // Rspond to date filter changes
+		 $('#filter_from').change( function() { globals.gMainTable.draw(); } );
 		 
 		 /*
 		  * Settings

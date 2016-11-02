@@ -103,13 +103,9 @@ define([
 					
 					addChart("#c_" + chart.name, data, chart.cType, i);
 					
-					lastChart = chart.name;
 				}
 			}
 		}
-		
-		var elem = $("#c_q1 svg")[0];
-		svgsave.saveSvgAsPng(elem, "diagram.png");
 		
 		/*
 		var countByRegion = d3.nest()
