@@ -76,8 +76,6 @@ public class SpssManager {
 			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, "real", superUser, 0, null);
 			int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 			
-			System.out.println("Language: " + language + " : " + languageIdx) ;
-			
 			/*
 			 * Add the variable labels
 			 */

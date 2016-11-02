@@ -588,11 +588,9 @@ public class UserManager {
 				log.info("SQL: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
-				System.out.println("xxxxxxxxxxx Adding projects");
 				for(int j = 0; j < u.projects.size(); j++) {
 					Project p = u.projects.get(j);
 					
-					System.out.println("        Project " + p.id);
 					pstmtInsertProjectGroup.setInt(2, p.id);
 					pstmtInsertProjectGroup.executeUpdate();
 					
@@ -606,7 +604,6 @@ public class UserManager {
 			/*
 			 * Update user roles
 			 */
-			System.out.println("xxxxxxxxxxx Adding roles");
 			if((isOrgUser || isSecurityManager) && u.roles != null) {
 				sql = "delete from user_role where u_id = ?;";
 

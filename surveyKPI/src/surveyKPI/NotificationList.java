@@ -225,7 +225,6 @@ public class NotificationList extends Application {
             	System.out.println("Length: " + fList.xform.size());
 				Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
 				resp = gsonResp.toJson(fList.xform);
-				System.out.println("Response: " + resp);
             }
 			
 			response = Response.ok(resp).build();

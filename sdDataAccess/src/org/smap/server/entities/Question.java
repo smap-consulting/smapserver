@@ -19,7 +19,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.server.entities;
 
-import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.utilities.UtilityMethods;
@@ -43,9 +43,10 @@ import JdbcManagers.JdbcOptionManager;
  *  question objects from a result set.
  */
 
-public class Question implements Serializable {
+public class Question {
 
-	private static final long serialVersionUID = 3323178679751031541L;
+	private static Logger log =
+			 Logger.getLogger(Question.class.getName());
 
 	// Database Attributes
 	private int q_id;
@@ -105,8 +106,6 @@ public class Question implements Serializable {
 	private String nodeset_label;
 	
 	private String cascade_instance;
-
-	private boolean soft_deleted;
 	
 	private int f_id;
 	
@@ -548,7 +547,7 @@ public class Question implements Serializable {
 					qType = "time";
 				}
 			} else {
-				System.out.println("Unknown type in cleanseOSM: " + qType);
+				log.info("Unknown type in cleanseOSM: " + qType);
 			}
 		}
 	}

@@ -105,7 +105,6 @@ public class GetFile extends Application {
 		try {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
-			System.out.println("Getting file: " + filepath);
 			getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
@@ -212,7 +211,6 @@ public class GetFile extends Application {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
-			System.out.println("Getting file: " + filepath + " linked is: " + linked);
 			
 			getFile(response, filepath, filename);
 			

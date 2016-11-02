@@ -379,7 +379,6 @@ public class SurveyManager {
 			 * 3. Create forms
 			 */
 			if(existing) {
-				System.out.println("Copying existing form");
 				QuestionManager qm = new QuestionManager();
 				qm.duplicateLanguages(sd, sId, existingSurveyId);
 				qm.duplicateForm(sd, sId, existingSurveyId, 
@@ -2321,7 +2320,6 @@ public class SurveyManager {
 		    	}
 	    	} else if(generateDummyValues){
 	    		// Add dummy values for a blank form
-	    		System.out.println("Adding dummy values for a blank form");
 	    		
 	    		ArrayList<Result> record = new ArrayList<Result> ();
 	    		
@@ -2527,7 +2525,7 @@ public class SurveyManager {
 
 			}
 			try {
-				//System.out.println("Index: " + index + " : " + q.name + " : " + q.type + " ; " + resultSet.getString(index));
+				
 			} catch (Exception e) {
 				
 			}
@@ -2535,7 +2533,6 @@ public class SurveyManager {
 			
 		}
 		
-		System.out.println("Record size: " + record.size());
     }
     
 	/*

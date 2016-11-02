@@ -345,7 +345,6 @@ public class Surveys extends Application {
 			/*
 			 * Parse the request
 			 */
-			System.out.println("Lnaguage String: " + languages);
 			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			ArrayList<Language> languageList = gson.fromJson(languages, type);

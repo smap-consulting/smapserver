@@ -29,7 +29,7 @@ public class ChangeElement {
 				this.type = "optionlist";
 			} else {
 				this.type = "unknown";
-				System.out.println("Error: unknown change type");
+				log.info("Error: unknown change type");
 			}
 		}
 		

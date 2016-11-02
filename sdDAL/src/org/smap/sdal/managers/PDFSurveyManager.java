@@ -1351,23 +1351,8 @@ public class PDFSurveyManager {
 			if(di.value != null && di.value.trim().length() > 0) {
 				// GeoJson data
 				url.append("geojson(");
-				System.out.println("json: " + di.value);
-				//if(di.stroke != null) {
-					//String jsonValue = "{\"type\": \"FeatureCollection\","
-					//		+ "\"features\": [" ;
-					
-					//String jsonValue = "{\"type\": \"Feature\",\"geometry\": ";
-					String jsonValue = di.value;
-					//jsonValue += ", \"properties\": {"
-					//		+ "\"marker-color\": " + "\"#f00\""
-				    //      	+ "}"
-				    //    	jsonValue += "}"
-					//		+ "]"
-				     // 	jsonValue += "}";
-					
-				//	
-				//}
-					System.out.println(jsonValue);
+
+				String jsonValue = di.value;
 				url.append(URLEncoder.encode(jsonValue, "UTF-8"));
 				url.append(")/auto/");
 				getMap = true;

@@ -98,7 +98,7 @@ public class ReviewQuestionsOther extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return Response.serverError().entity(e.getMessage()).build();
 
@@ -253,15 +253,12 @@ public class ReviewQuestionsOther extends Application {
 		String path = "";
 		String otherValue = "";
 		
-		System.out.println("addRelevantQuestionNames: " + q.relevant);
 		while((idx1 = q.relevant.indexOf("selected", idx1 + 1)) >= 0) {
 			idx1 = q.relevant.indexOf("(", idx1 + 1);
 			if(idx1 > 0) {
 				idx2 = q.relevant.indexOf(",", idx1);
 				if(idx2 > 0) {
 					path = q.relevant.substring(idx1+1, idx2);
-					
-					System.out.println("=== " + q.name + ":" + path);
 				}
 			}
 			RelevantQuestion rq = new RelevantQuestion();

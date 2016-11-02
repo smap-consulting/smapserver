@@ -346,17 +346,13 @@ public class QuestionManager {
 		
 		for(Question q : questions) {
 		
-			System.out.println("Move a question: " + q.name + " : " + q.type);
-			//newPath = getNewPath(sd, q, null);
+			log.info("Move a question: " + q.name + " : " + q.type);
 
 			if(q.type.equals("begin group")) {
-				//oldGroupPath = q.path;
-				//newGroupPath = newPath;
 				
 				// Move every question in this group
 				questionsInGroup = getQuestionsInGroup(sd, q, true);
 				for(Question groupQuestion : questionsInGroup) {
-					//newPath = newGroupPath + groupQuestion.path.substring(oldGroupPath.length());
 					moveAQuestion(sd, sId, groupQuestion, true);
 				}
 			} else {	
@@ -435,7 +431,6 @@ public class QuestionManager {
 			
 			ResultSet rs = pstmt.executeQuery();
 			newSeq = q.seq;											// The target sequence
-			System.out.println("Getting questions from group");
 			while(rs.next()) {
 				
 				Question groupQuestion = new Question();
@@ -449,9 +444,6 @@ public class QuestionManager {
 				groupQuestion.sourceSeq = rs.getInt(4);
 				
 				questions.add(groupQuestion);
-				System.out.println(" =====> " + rs.getString(1) + " : " + rs.getString(2) + " : " + rs.getString(3));
-				
-				
 			}
 		} catch(SQLException e) {
 			String msg = e.getMessage();
@@ -468,154 +460,6 @@ public class QuestionManager {
 		return questions;
 		
 	}
-	
-	/*
-	 * Update the path of questions in a group
-	 *
-	private void updatePathOfQuestionsBetween(Connection sd, Question q, String newBasePath) throws SQLException {
-		
-		int startSeq;
-		int endSeq;
-		boolean addToGroup;
-		String rootPath = newBasePath.substring(0, newBasePath.lastIndexOf('/'));
-		String groupName = newBasePath.substring(newBasePath.lastIndexOf('/') + 1);
-		int rootPathLength = rootPath.length();
-		
-		PreparedStatement pstmt = null;
-		String sql = "select q_id, path from question q where f_id = ?  and seq > ? and seq < ?  order by seq asc;";
-		
-		
-		String sqlUpdatePath = "update question set path = ? where q_id = ?;";
-		PreparedStatement pstmtUpdatePath = sd.prepareStatement(sqlUpdatePath);
-		
-		try {
-			
-			if(q.seq > q.sourceSeq) {
-				startSeq = q.sourceSeq;
-				endSeq = q.seq;
-				addToGroup = true;
-			} else {
-				startSeq = q.seq - 1;
-				endSeq = q.sourceSeq;
-				addToGroup = false;			// That is remove from the group
-			}
-			
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, q.sourceFormId);
-			pstmt.setInt(2, startSeq);
-			pstmt.setInt(3, endSeq);
-			
-			log.info("SQL Get questions Between: " + pstmt.toString());
-			
-			ResultSet rs = pstmt.executeQuery();
-			
-			System.out.println("Getting questions from group");
-			while(rs.next()) {
-				
-				int qId = rs.getInt(1);
-				String oldPath = rs.getString(2);
-				
-				String newPath = null;
-				if(addToGroup) {
-					newPath = newBasePath + oldPath.substring(rootPathLength);
-				} else {
-					System.out.println("Remove group from the path: " + groupName);
-					newPath = oldPath.replace("/" + groupName + "/" , "/");		// Remove the group from the path
-				}
-				System.out.println(" =====> " + oldPath + " => " + newPath);
-				
-				pstmtUpdatePath.setString(1, newPath);
-				pstmtUpdatePath.setInt(2, qId);
-				log.info("SQL: Update path when changing end location of question: " + pstmtUpdatePath.toString());
-				pstmtUpdatePath.executeUpdate();
-				
-			}
-		} catch(SQLException e) {
-			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
-				log.log(Level.SEVERE,"Error", e);
-			}
-			throw e;
-		} 
-		finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
-		}
-		
-		return;
-		
-	}	
-	*/
-	/*
-	 * Get the new path of a question being moved
-	 *
-	private String getNewPath(Connection sd, Question q, String formPath) throws SQLException {
-		
-		String path = null;
-		boolean isInFrontOfRelatedQuestion = false;
-		
-		PreparedStatement pstmtGetNewPath = null;
-		String sqlGetNewPath = "select path, qType from question q where f_id = ? and seq = ?;";
-		
-		*
-		 * Get the new path from the question before where this question is being moved which is in q.seq
-		 * However if the question is being moved to the beginning of the form it will be the question after this
-		 * These two cases result in different calculations for the path when this related queston is a group
-		 *  When the related question is before the new question and it is a group then the new path extends the path of the group
-		 *  When the related question is after the new question and it is a group then the path of the new question is the same as that of the group
-		 *  When the related question is not a group then the new question gets the path of the related question
-		 *
-		try {
-			int relatedSeq = q.seq;	
-			if(relatedSeq > 0) {
-				relatedSeq--;						// Sequence of question in front of the new location
-			} else {
-				isInFrontOfRelatedQuestion = true;
-			}
-			
-			pstmtGetNewPath = sd.prepareStatement(sqlGetNewPath);
-			pstmtGetNewPath.setInt(1, q.fId);
-			pstmtGetNewPath.setInt(2, relatedSeq);
-			
-			log.info("		SQL Get new path: " + pstmtGetNewPath.toString());
-			
-			ResultSet rs = pstmtGetNewPath.executeQuery();
-			if(rs.next()) {
-				path = rs.getString(1);
-				String type = rs.getString(2);
-				
-				if(type.equals("begin group") && !isInFrontOfRelatedQuestion && !q.type.equals("end group")) {
-					// Add question to the group
-					path += "/" + q.name;		
-				} else {
-					// Set the path as per the related question
-					String pathBase = path.substring(0, path.lastIndexOf('/'));
-					path = pathBase + "/" + q.name; 
-				}
-			} else if(formPath != null) {
-				// There are no other questions in this form, use the path of the form
-				log.info("No other questions in this form, setting the path to: " + formPath + "/" + q.name);
-				path = formPath + "/" + q.name; 
-			} else {
-				// Use the path set by the editor - not reliable
-				log.info("No other questions in this form, setting the path to: " + q.path);
-				path = q.path;
-			}
-		} catch(SQLException e) {
-			String msg = e.getMessage();
-			if(msg == null || !msg.startsWith("Already modified")) {
-				log.log(Level.SEVERE,"Error", e);
-			}
-			throw e;
-		} 
-		finally {
-			try {if (pstmtGetNewPath != null) {pstmtGetNewPath.close();}} catch (SQLException e) {}
-		}
-		
-		return path;
-		
-	}
-	*/
 	
 	/*
 	 * Move a question
@@ -834,8 +678,6 @@ public class QuestionManager {
 					published = rs.getBoolean(3);
 				}
 				
-				System.out.println("============= " + q.name + " : " + qType + " : " + published + " : " + getGroupContents + " : " + force);
-				
 				/*
 				 * If the question is a group question then get its members
 				 */
@@ -959,8 +801,6 @@ public class QuestionManager {
 					if(rsRepeat.next()) {
 						tableName = rsRepeat.getString(1);
 					}
-					
-					System.out.println("Deleting form for table: " + tableName);
 					
 					// 2. If the results table exists for this form then throw an exception
 					if(tableName != null) {
@@ -1758,7 +1598,6 @@ public class QuestionManager {
 			
 			List<Integer> listIds = new ArrayList<Integer>(listIdHash.keySet());
         	for(Integer listId : listIds) {
-        		System.out.println("List id to replicate: " + listId.toString());
         		
         		// 1. Get the list name
         		pstmtGetListName.setInt(1, listId);
@@ -1790,8 +1629,6 @@ public class QuestionManager {
     			rs = pstmtCreateList.getGeneratedKeys();
     			rs.next();
     			newListId = rs.getInt(1);
-    			
-    			System.out.println("    New id: " + newListId);
     			
         		// 4. Create the list entries
     			String sqlInsertOptions = "insert into option ("

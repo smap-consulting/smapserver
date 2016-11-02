@@ -114,7 +114,6 @@ public class Server extends Application {
 		
 		ServerData data = new Gson().fromJson(settings, ServerData.class);
 		
-		System.out.println("mb:" + data.mapbox_default);
 		String sqlDel = "truncate table server;";
 		PreparedStatement pstmtDel = null;
 		

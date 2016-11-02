@@ -77,7 +77,6 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
@@ -218,7 +217,6 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
 		}
@@ -364,7 +362,6 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
 		}
@@ -476,7 +473,6 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}

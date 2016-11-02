@@ -792,7 +792,6 @@ public class ManagedForms extends Application {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				count = rs.getInt(1);
-				System.out.println("There are " + count + " distinct values");
 			}
 			rs.close();
 			
@@ -845,7 +844,6 @@ public class ManagedForms extends Application {
 				if(rs.next()) {
 					filter.tMax = rs.getTimestamp(1);
 				}
-				System.out.println("Max: " + filter.tMax);
 				rs.close();
 				
 			} else {

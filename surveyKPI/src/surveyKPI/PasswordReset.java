@@ -99,7 +99,7 @@ public class PasswordReset extends Application {
 				
 				if(uuid != null) {
 					// Update succeeded
-					System.out.println("Sending email");
+					log.info("Sending email");
 					
 					// Localisation
 					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
@@ -131,7 +131,7 @@ public class PasswordReset extends Application {
 				} else {
 					// email was not found 
 					String msg = "Error password reset.  Email address not found:" + email;
-					System.out.println(msg);
+					log.info(msg);
 					response = Response.status(Status.NOT_FOUND).entity(msg).build();
 				}
 			} else {
@@ -180,7 +180,6 @@ public class PasswordReset extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -201,7 +200,7 @@ public class PasswordReset extends Application {
 			String sql = "select ident, name from users where one_time_password = ? and one_time_password_expiry > timestamp 'now'"; 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, pd.onetime);
-			System.out.println("SQL set passowrd: " + pstmt.toString());
+			log.info("SQL set password: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			int count = 0;
@@ -209,7 +208,7 @@ public class PasswordReset extends Application {
 				String ident = rs.getString(1);
 				String name = rs.getString(2);
 				
-				System.out.println("Updating password for user " + name + " with ident " + ident);
+				log.info("Updating password for user " + name + " with ident " + ident);
 				
 				sql = "update users set password = md5(?), password_reset = 'true' where one_time_password = ? and ident = ?;";
 				pstmtUpdate = connectionSD.prepareStatement(sql);
@@ -256,7 +255,7 @@ public class PasswordReset extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
+				log.info("Failed to close connection");
 			    e.printStackTrace();
 			}
 		}

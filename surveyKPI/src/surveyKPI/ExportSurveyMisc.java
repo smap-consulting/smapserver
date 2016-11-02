@@ -235,7 +235,7 @@ public class ExportSurveyMisc extends Application {
 				 * Create a VRT file for VRT exports
 				 */
 				if(format.equals("vrt")) {
-					System.out.println("Writing VRT file: " + filepath + "/" + sqlDesc.target_table + ".vrt");
+					log.info("Writing VRT file: " + filepath + "/" + sqlDesc.target_table + ".vrt");
 					// Write the vrt file to the file system
 
 					// Create the file
@@ -294,7 +294,7 @@ public class ExportSurveyMisc extends Application {
 					/*
 					 * Create a Stata "do" file 
 					 */
-					System.out.println("Writing stata do file: " + filepath + "/" + sqlDesc.target_table + ".do");
+					log.info("Writing stata do file: " + filepath + "/" + sqlDesc.target_table + ".do");
 					// Write the do file to the file system
 
 					// Create the file
@@ -332,7 +332,7 @@ public class ExportSurveyMisc extends Application {
 						for(int i = 0; i < sqlDesc.colNames.size(); i++) {
 			    	 		ColDesc cd = sqlDesc.colNames.get(i);
 			    	 		w.println("\n* variable: " + cd.name);
-			    	 		System.out.println("Stata types: " + cd.db_type + " : " + cd.qType);
+			    	 		log.info("Stata types: " + cd.db_type + " : " + cd.qType);
 				    	 	writeStataDataConversion(w, cd);
 				    	 	writeStataQuestionLabel(w,cd);
 				    	 	if(cd.qType != null && cd.qType.equals("select1")) {
@@ -353,7 +353,7 @@ public class ExportSurveyMisc extends Application {
 						/*
 						 * Create an SPSS "sps" file 
 						 */
-						System.out.println("Writing spss sps file: " + filepath + "/" + sqlDesc.target_table + ".sps");
+						log.info("Writing spss sps file: " + filepath + "/" + sqlDesc.target_table + ".sps");
 
 						// Create the file
 						FileUtils.forceMkdir(new File(filepath));

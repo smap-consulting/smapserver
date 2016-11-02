@@ -96,7 +96,6 @@ public class ExternalFileManager {
 				pstmtAppearance.setInt(1, sId);
 				rs = pstmtAppearance.executeQuery();
 				while(rs.next()) {
-					System.out.println("Appearance: " + rs.getString(2));
 					int qId = rs.getInt(1);
 					String appearance = rs.getString(2);
 					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true);
@@ -114,7 +113,6 @@ public class ExternalFileManager {
 				pstmtCalculate.setInt(1, sId);
 				rs = pstmtCalculate.executeQuery();
 				while(rs.next()) {
-					System.out.println("Calculate: " + rs.getString(2));
 					int qId = rs.getInt(1);
 					String calculate = rs.getString(2);
 					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false);
@@ -272,7 +270,7 @@ public class ExternalFileManager {
 		}
 		
 		
-		System.out.println("Result of regenerate question is: " + regenerate);
+		log.info("Result of regenerate question is: " + regenerate);
         
         return regenerate;
 	}
@@ -360,7 +358,7 @@ public class ExternalFileManager {
 		ArrayList<String> parentTables = new ArrayList<String> ();
 		
 		pstmt.setInt(2, parentId);
-		System.out.println("Get tables: " + pstmt.toString());
+		log.info("Get tables: " + pstmt.toString());
 		ResultSet rs = pstmt.executeQuery();
 		while(rs.next()) {
 			int fId = rs.getInt(1);

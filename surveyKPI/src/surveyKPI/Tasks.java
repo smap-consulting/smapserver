@@ -164,7 +164,6 @@ public class Tasks extends Application {
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(t);	
 			response = Response.ok(resp).build();	
-			System.out.println("Resp: " + resp);
 			
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
@@ -571,8 +570,6 @@ public class Tasks extends Application {
 				tl = tm.getTasks(sd, tgId, true, userId);	// TODO set "complete" flag from passed in parameter
 				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 				String resp = gson.toJson(tl);
-				
-				System.out.println("Task list: " + resp);
 				
 				if(tl.features.size() > 0) {
 					response = Response.ok(resp).build();

@@ -119,8 +119,6 @@ public class ReviewResultsText extends Application {
 				table = resultSet.getString(1);
 				name = resultSet.getString(2);
 				
-				System.out.println("Table: " + table + " : " + name);
-				
 				if (pstmt != null) {
 					pstmt.close();
 				}
@@ -147,7 +145,6 @@ public class ReviewResultsText extends Application {
 					r.history = resultSet.getString(3);
 					
 					results.add(r);
-					System.out.println("Text: " + r.text);
 				}
 			}
 			

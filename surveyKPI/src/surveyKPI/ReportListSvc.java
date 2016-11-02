@@ -1114,7 +1114,6 @@ public class ReportListSvc extends Application {
 		resp.append("</div>");	// End of report meta
 		resp.append("<div stye=\"clear: both;\"></div>");
 		
-		System.out.println("Meta response:" + resp.toString());
 		return resp.toString();
 	}
 	

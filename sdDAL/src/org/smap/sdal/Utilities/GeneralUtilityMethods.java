@@ -1730,11 +1730,6 @@ public class GeneralUtilityMethods {
 				String value = rs.getString(2);
 				String text_id = rs.getString(3);
 				
-				System.out.println("-------------");
-				System.out.println("    " + rs.getString(1));
-				System.out.println("    " + rs.getString(2));
-				System.out.println("    " + rs.getString(3));
-				
 				// 2. Check that each language has this media
 				for(Language language : languages) {
 					String languageName = language.name;
@@ -1753,7 +1748,6 @@ public class GeneralUtilityMethods {
 						}
 					}
 					
-					System.out.println("        Language: " + languageName + " : " + hasMedia);
 					if(!hasMedia) {
 						
 						// 3.  Delete any translation entries for the media that have the wrong value
@@ -2581,7 +2575,6 @@ public class GeneralUtilityMethods {
 			}
 		}
 		
-		System.out.println("HRK: " + output.toString().trim());
 		return output.toString().trim();
 	}
 	
@@ -2991,7 +2984,6 @@ public class GeneralUtilityMethods {
 							log.info("We have found a manifest link to " + filename);
 							refQuestions = getRefQuestionsSearch(criteria);
 							manifestType = "linked";
-							System.out.println("RefQuestions: " + refQuestions.toString());
 						} else {
 							filename += ".csv";
 							manifestType = "csv";
@@ -3045,7 +3037,6 @@ public class GeneralUtilityMethods {
 								log.info("We have found a manifest link to " + filename);
 								refQuestions = getRefQuestionsSearch(criteria);
 								manifestType = "linked";
-								System.out.println("RefQuestions: " + refQuestions.toString());
 							} else {
 								filename += ".csv";
 								manifestType = "csv";
@@ -3221,7 +3212,7 @@ public class GeneralUtilityMethods {
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
 			pstmt.setString(2, columnName);
-			System.out.println("SQL: " + pstmt.toString());
+			log.info("SQL: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -3365,9 +3356,7 @@ public class GeneralUtilityMethods {
 			if(idx >= 0) {
 				idx2 = location.lastIndexOf(')'); 
 				if(idx2 >= 0) {
-					System.out.println("location: " + location);
 					location = location.substring(idx + 1, idx2);
-					System.out.println("location2: " + location);
 					coords = location.split(" ");
 					
 					if(coords.length > 1) {

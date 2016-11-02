@@ -564,7 +564,7 @@ public class QueryGenerator {
 				idx++;
 				sqlDesc.numberFields++;
 			} else {
-				System.out.println("Warning: Field dropped during shapefile generation: " + tName + "." + name);
+				log.info("Warning: Field dropped during shapefile generation: " + tName + "." + name);
 			}
 		}
 		

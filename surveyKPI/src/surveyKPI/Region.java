@@ -58,7 +58,6 @@ public class Region extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
@@ -145,7 +144,6 @@ public class Region extends Application {
 			ResultsDataSource.closeConnection("surveyKPI-Region", connection);
 		}
 
-		//System.out.println(ja.toString());
 		return jGeoJSON.toString();
 	}
 

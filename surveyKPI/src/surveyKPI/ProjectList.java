@@ -332,7 +332,6 @@ public class ProjectList extends Application {
 					if(resultSet.next()) {
 						int count = resultSet.getInt(1);
 						if(count > 0) {
-							System.out.println("Count:" + count);
 							String msg = localisation.getString("msg_undel_proj").replace("%s1", String.valueOf(p.id));
 							throw new Exception(msg);
 							//throw new Exception("Error: Project " + p.id + " has undeleted surveys. Hint: You need to erase " +

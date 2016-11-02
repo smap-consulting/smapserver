@@ -112,7 +112,6 @@ public class ExportSurveyMedia extends Application {
 		Response responseVal = null;
 		ResourceBundle localisation = null;
 		
-		System.out.println("Export media: " + mediaQuestion + " : " + nameQuestionIdList);
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
 		log.info("userevent: " + request.getRemoteUser() + " Export media " + sId + " file to " + filename );

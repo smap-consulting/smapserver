@@ -486,7 +486,6 @@ public class MyAssignments extends Application {
 	 */
 	String addKeyValuePair(String jIn, String name, String value) {
 		
-		System.out.println("Adding value: " + value);
 		String jOut = null;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
 		Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();
@@ -532,7 +531,6 @@ public class MyAssignments extends Application {
 		
 		// Authorisation not required a user can only update their own assignments
 		
-		log.info("Response:" + assignInput);
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
 			
 		log.info("Device:" + tr.deviceId + " for user " + userName);
@@ -585,7 +583,7 @@ public class MyAssignments extends Application {
 					
 					if(ta.assignment.assignment_status.equals("submitted")) {
 						pstmtRepeats.setInt(1, ta.assignment.assignment_id);
-						System.out.println("Updating task repeats: " + pstmtRepeats.toString());
+						log.info("Updating task repeats: " + pstmtRepeats.toString());
 						pstmtRepeats.executeUpdate();
 					}
 				}
