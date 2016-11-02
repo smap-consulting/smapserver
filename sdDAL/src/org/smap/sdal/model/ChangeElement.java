@@ -1,8 +1,6 @@
 package org.smap.sdal.model;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.logging.Logger;
 
 /*
  * Contains details of a change
@@ -10,6 +8,9 @@ import java.util.Date;
  * This replaces the old ChangeItem Class
  */
 public class ChangeElement {
+	
+	private static Logger log =
+			 Logger.getLogger(ChangeElement.class.getName());
 	
 	// Constructor to create a ChangeElement from the old ChangeItem object
 	public ChangeElement(ChangeItem ci, String action) {

@@ -24,6 +24,7 @@
 	bootstrap: '../../../../smapServer/WebContent/js/libs/bootstrap.min',
 	toggle: '../../../../smapServer/WebContent/js/libs/bootstrap-toggle.min',
 	qrcode: '../../../../smapServer/WebContent/js/libs/jquery-qrcode-0.14.0.min',
+	svgsave: '../../../../smapServer/WebContent/js/libs/saveSvgAsPng',
     	bootstrapfileinput: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	bootbox: '../../../../smapServer/WebContent/js/libs/bootbox.min',
 	file_input: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',

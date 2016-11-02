@@ -52,6 +52,7 @@ requirejs.config({
     	'datatables.select': '../../../../js/libs/DataTables/Select/js/dataTables.select.min',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
     	inspinia: '../../../../js/libs/wb/inspinia',
+    	svgsave:  '../../../../js/libs/saveSvgAsPng',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
     	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
@@ -101,7 +102,8 @@ require([
          'app/common_mgmt',
          'qrcode',
          'd3',
-         'toggle'
+         'toggle',
+         'svgsave'
          
          ], function($, 
         		 bootstrap, 
@@ -120,13 +122,35 @@ require([
 	 *    Override settings where names match
 	 */
 	var report = {
-			def: {
-				cType: "bar",
-				group: undefined,
-				fn: "length",
-				tSeries: false,
-				peiod: undefined
-			}
+			row: [
+			      {
+						datatable: false,
+						name: "history",
+						charts: 
+							[
+						         {
+									humanName: "Feedback per month",
+						        	name: "_start",
+									cType: "bar",		// line
+									group: undefined,
+									fn: "length",
+									tSeries: true,
+									period: "month",
+									width: 12
+								}]
+			      },
+			      {
+					datatable: true,
+					name: "chartrow",
+					def: {
+						cType: "bar",
+						group: undefined,
+						fn: "length",
+						tSeries: false,
+						period: undefined
+					}
+			      }
+			    ]
 	};
 	
 	$(document).ready(function() {

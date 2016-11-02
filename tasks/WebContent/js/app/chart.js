@@ -28,8 +28,9 @@ define([
          'globals',
          'd3',
          'app/charts/bar',
-         'app/charts/pie'], 
-		function($, modernizr, lang, globals, d3, bar, pie) {
+         'app/charts/pie',
+         'svgsave'], 
+		function($, modernizr, lang, globals, d3, bar, pie, svgsave) {
 
 	
 	/*
@@ -72,21 +73,43 @@ define([
 		
 		var i,
 			data,
-			chart;
+			chart,
+			lastchart;
 		
 		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
 		
-		for(i = 0; i < filtered.length; i++) {
+		for(i = 0; i < report.row.length; i++) {
 			
-			chart = filtered[i];
+			if(report.row[i].datatable) {
+				for(j = 0; j < filtered.length; j++) {
 			
-			data = d3.nest()
-			  .key(function(d) { return d[chart.name]; })
-			  .rollup(function(v) { return v[chart.cFn]; })
-			  .entries(results);
+					chart = filtered[j];
 			
-			addChart("#c_" + chart.name, data, chart.cType, i);
+					data = d3.nest()
+					  .key(function(d) { return d[chart.name]; })
+					  .rollup(function(v) { return v[chart.cFn]; })
+					  .entries(results);
+					
+					addChart("#c_" + chart.name, data, chart.cType, i);
+				}
+			} else {
+				for(j = 0; j < report.row[i].charts.length; j++) {
+					chart = report.row[i].charts[j];
+					
+					data = d3.nest()
+					  .key(function(d) { return d[chart.name]; })
+					  .rollup(function(v) { return v[chart.cFn]; })
+					  .entries(results);
+					
+					addChart("#c_" + chart.name, data, chart.cType, i);
+					
+					lastChart = chart.name;
+				}
+			}
 		}
+		
+		var elem = $("#c_q1 svg")[0];
+		svgsave.saveSvgAsPng(elem, "diagram.png");
 		
 		/*
 		var countByRegion = d3.nest()
@@ -182,12 +205,15 @@ define([
 	 */
 	function setChartList() {
 		
+		/*
+		 * Get the list of visible columns
+		 */
 		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 			filtered = columns.filter(function(d) {
 			   return d.include && !d.hide && d.name !== "prikey" && d.name !== "_start" && d.name !== "_end"; 
 			}),
 			i,
-			def = report.def;
+			def = report.row[1].def;	
 		
 		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
 		
@@ -205,29 +231,58 @@ define([
 		
 		/*
 		 * Generate the HTML
+		 * Start by creating rows of related charts
 		 */
-		var chartRow = d3.select("#chartrow")
-	    	.selectAll("aChart")
-	    	.data(filtered);
+		var chartContent = d3.select("#chartcontent")
+			.selectAll(".row")
+			.data(report.row);
 		
+		var row = chartContent.enter()
+			.append("div")
+			.attr("class", "row")
+			.attr("id", function(d) {return d.name});
+		
+
 		/*
-		 * New Charts
+		 * Create the charts for each row
 		 */
-	    var wrapper = chartRow.enter()
-	    	.append("div").attr("class", "aChart col-lg-6")
-	    		.attr("id", function(d) {return "c_" + d.name + "_ibox"})
-	    	.append("div").attr("class", "ibox float-e-margins");
+		var chartRow,
+			wrapper,
+			title,
+			content,
+			data;
 		
-	    var title = wrapper.append("div").attr("class", "ibox-title");
-	    title.append("div").append("h5").text(function(d) {return d.humanName});		// Add title
-	    addChartTools(title);
+		for(i = 0; i < report.row.length; i++) {
+			if(report.row[i].datatable) {
+				data = filtered;
+			} else {
+				data = report.row[i].charts;
+			}
+			chartRow = d3.select("#" + report.row[i].name)
+		    	.selectAll(".aChart")
+		    	.data(data);
+		
+			/*
+			 * New Charts
+			 */
+		    wrapper = chartRow.enter()
+		    	.append("div").attr("class", function(d) {
+		    		return "aChart col-lg-" + (d.width ? d.width : "6");
+		    		})
+		    		.attr("id", function(d) {return "c_" + d.name + "_ibox"})
+		    	.append("div").attr("class", "ibox float-e-margins");
+			
+		    title = wrapper.append("div").attr("class", "ibox-title");
+		    title.append("div").append("h5").text(function(d) {return d.humanName});		// Add title
+		    addChartTools(title);
+		    
+		    content = wrapper.append("div").attr("class", "ibox-content");
+		    content
+		    	.append("div")
+		    	.append("div").attr("class", "svg-container").attr("id", function(d) {return "c_" + d.name;})
+		}
 	    
-	    var content = wrapper.append("div").attr("class", "ibox-content");
-	    content
-	    	.append("div")
-	    	.append("div").attr("class", "svg-container").attr("id", function(d) {return "c_" + d.name;})
-	    
-	    setupIbox("#chartrow");		// Add event listeners
+	    setupIbox("#chartcontent");		// Add event listeners
 	}
 	
 	/*
