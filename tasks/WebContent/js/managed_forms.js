@@ -123,6 +123,7 @@ require([
 	 *    Override settings where names match
 	 */
 	var report = {
+			date_q: "Upload Time",
 			row: [
 			      {
 						datatable: false,
@@ -131,7 +132,7 @@ require([
 							[
 						         {
 									humanName: "Feedback per month",
-						        	name: "_start",
+									name: "periodic_count",
 									cType: "bar",		// line
 									group: undefined,
 									fn: "length",

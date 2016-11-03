@@ -74,7 +74,7 @@ define([
 		var i,
 			data,
 			chart,
-			lastchart;
+			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
 		
 		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
 		
@@ -94,13 +94,44 @@ define([
 				}
 			} else {
 				for(j = 0; j < report.row[i].charts.length; j++) {
+					
 					chart = report.row[i].charts[j];
 					
-					data = d3.nest()
-					  .key(function(d) { return d[chart.name]; })
-					  .rollup(function(v) { return v[chart.cFn]; })
-					  .entries(results);
-					
+					if(chart.tSeries) {
+						data = d3.nest()
+						  .key(function(d) {
+							  var 	dateArray,
+							  		adjKey,
+							  		adjKeyArray;
+							  
+							  if(d[report.date_q]) {
+								  dateArray = d[report.date_q].split(" ");
+								  if(dateArray.length > 0) {
+									  adjKey = dateArray[0];
+									  adjKeyArray = adjKey.split("-");
+									  
+									  // Default is day
+									  if(chart.period === "month") {
+										  adjKey = adjKeyArray[0] + "-" + adjKeyArray[1]; 
+									  } else if(chart.period === "year") {
+										  adjKey = adjKeyArray[0];
+									  }
+								  }
+							  }
+							 
+							  return adjKey; 
+						  })
+						  .rollup(function(v) {return v[chart.fn]; })
+						  .entries(results);
+						
+						console.log(data);
+						
+					} else {
+						data = d3.nest()
+						  .key(function(d) { return d[chart.name]; })
+						  .rollup(function(v) { return v[chart.cFn]; })
+						  .entries(results);
+					}
 					addChart("#c_" + chart.name, data, chart.cType, i);
 					
 				}
@@ -362,6 +393,22 @@ define([
 	    	
 	    	refreshCharts();
 	    })
+	}
+	
+	/*
+	 * Get the human name  column name
+	 */
+	function getCol(qname, columns) {
+		var col = -1, 
+			i;
+		
+		for(i = 0; i < columns.length; i++) {
+			if(qname === columns[i].name) {
+				col = i;
+				break;
+			}
+		}
+		return col;
 	}
 
 });
