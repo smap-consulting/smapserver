@@ -35,22 +35,30 @@ define([
 		redraw: redraw
 	};
 	
-
-
 	/*
 	 * Add
 	 */
 	function add(chart, config, data, width, height, margin) {
 
-		config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+		config.x = d3.scaleTime().rangeRound([0, width]);
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
 		
-		config.x.domain(data.map(function(d) { return d.key; }));
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+		config.parseTime = d3.timeParse("%Y-%m-%d");
 		
-		config.xAxis = d3.axisBottom(config.x);
-		config.yAxis = d3.axisLeft(config.y).ticks(10, "");
+		data.forEach(function(d) {
+			  d.date = config.parseTime(d.key);
+			  d.value = +d.value;
+			});
 		
+		config.xAxis = d3.axisBottom(config.x);		
+		config.yAxis = d3.axisLeft(config.y);
+		config.x.domain(d3.extent(data, function(d) { return d.date; }));
+		config.y.domain(d3.extent(data, function(d) { return d.value; }));
+		
+		config.line = d3.line()
+	    	.x(function(d) { return config.x(d.date); })
+	    	.y(function(d) { return config.y(d.value); });
+			
 		config.g = config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -69,28 +77,22 @@ define([
 		      .attr("text-anchor", "end")
 		      .text("Count");
 	
-		/*
-		  config.g.selectAll(".bar")
-		    .data(data)
-		    .enter().append("rect")
-		      .attr("class", "bar")
-		      .attr("x", function(d) { return config.x(d.key); })
-		      .attr("y", function(d) { return config.y(d.value); })
-		      .attr("width", config.x.bandwidth())
-		      .attr("height", function(d) { return height - config.y(d.value); });
-		      */
-		
 	}
 	
 	/*
-	 * Update a bar chart
+	 * Update
 	 */
 	function redraw(chart, config, data, width, height, margin) {
 		
-		console.log("Refresh bar chart");
+		console.log("Refresh line chart");
 		
-		config.x.domain(data.map(function(d) { return d.key; }));
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]);
+		data.forEach(function(d) {
+			  d.date = config.parseTime(d.key);
+			  d.value = +d.value;
+			});
+		
+		config.x.domain(d3.extent(data, function(d) { return d.date; }));
+		config.y.domain(d3.extent(data, function(d) { return d.value; }));
 		
 		// Update axes
 		config.svg.select(".axis--y")
@@ -102,37 +104,12 @@ define([
 			//.duration(500)
 			.call(config.xAxis);
 		
-		var bars = config.g.selectAll(".bar").data(data, function(d) { return d.key; });
+		var lines = config.g.append("path")
+	      .datum(data)
+	      .attr("class", "line")
+	      .attr("d", config.line);
 		
-		// Bars being removed
-		bars.exit()
-			.transition()
-			.duration(300)
-			.attr("y", config.y(0))
-			.attr("height", height - config.y(0))
-			//.style('fill-opacity', 1e-6)
-			.remove();
-		
-		// New bars
-		bars.enter()
-			.append("rect")
-			.attr("class", "bar")
-			.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { 
-	    		console.log(d);
-	    		console.log(config.y(d.value));
-	    		return config.y(d.value); 
-	    		})
-	    	.attr("width", config.x.bandwidth())
-	    	.attr("height", function(d) { return height - config.y(d.value); });
-		
-		// Bars being update
-		bars.transition()
-			.duration(300)
-	    	.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { return config.y(d.value); })
-	    	.attr("width", config.x.bandwidth())
-	    	.attr("height", function(d) { return height - config.y(d.value); });
+	
 					
 	}
 	

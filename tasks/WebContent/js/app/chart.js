@@ -29,8 +29,9 @@ define([
          'd3',
          'app/charts/bar',
          'app/charts/pie',
+         'app/charts/line',
          'svgsave'], 
-		function($, modernizr, lang, globals, d3, bar, pie, svgsave) {
+		function($, modernizr, lang, globals, d3, bar, pie, line, svgsave) {
 
 	
 	/*
@@ -39,7 +40,8 @@ define([
 	 */
 	var avCharts = {
 	                 bar: bar, 
-	                 pie: pie
+	                 pie: pie,
+	                 line: line
 	                 };
 	
 	var report = undefined;

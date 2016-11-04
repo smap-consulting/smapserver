@@ -31,7 +31,7 @@
 	moment: '../../../../smapServer/WebContent/js/libs/moment-with-locales.min',
 	datetimepicker: '../../../../smapServer/WebContent/js/libs/bootstrap-datetimepicker.min',
 	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu',
-        d3: '../../../../smapServer/WebContent/js/libs/d3.v4.min',
+        d3: '../../../../smapServer/WebContent/js/libs/d3.v4',
 
 	mapbox: '../../../../smapServer/WebContent/js/libs/mapbox/js/mapbox',
 

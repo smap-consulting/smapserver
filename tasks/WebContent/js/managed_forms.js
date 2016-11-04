@@ -131,13 +131,13 @@ require([
 						charts: 
 							[
 						         {
-									humanName: "Feedback per month",
+									humanName: "Feedback per day",
 									name: "periodic_count",
-									cType: "bar",		// line
+									cType: "line",		// line
 									group: undefined,
 									fn: "length",
 									tSeries: true,
-									period: "month",
+									period: "day",
 									width: 12
 								}]
 			      },
