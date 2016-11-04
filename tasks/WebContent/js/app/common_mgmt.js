@@ -366,7 +366,7 @@ window.gTasks = {
 		            } );
 			 } else {
 				 // For browse results and managed forms, update any charts
-				 chart.refreshCharts(rows);
+				 //chart.refreshCharts(rows);
 			 }
 	            
 	            
