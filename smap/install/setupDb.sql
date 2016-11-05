@@ -851,7 +851,7 @@ ALTER SEQUENCE alert_seq OWNER TO ws;
 DROP TABLE IF EXISTS alert CASCADE;
 create TABLE alert (
 	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
-	u_id integer,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	status varchar(10),
 	priority integer,
 	updated_time TIMESTAMP WITH TIME ZONE,

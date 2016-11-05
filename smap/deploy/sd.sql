@@ -614,7 +614,7 @@ ALTER SEQUENCE alert_seq OWNER TO ws;
 
 create TABLE alert (
 	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
-	u_id integer,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
 	status varchar(10),
 	priority integer,
 	updated_time TIMESTAMP WITH TIME ZONE,
@@ -628,9 +628,9 @@ create TABLE alert (
 ALTER TABLE alert OWNER TO ws;
 
 -- Add action details for temporary user
-alter table users add column action_details text;
-alter table users add column lastalert text;
-alter table users add column seen boolean;
+alter table users add column action_details text;	// Only used by temporary users
+alter table users add column lastalert text;		// Normal users
+alter table users add column seen boolean;			// Normal users
 
 -- Delete entries from dashboard settings when the user is deleted
 delete from dashboard_settings where ds_user_ident not in (select ident from users);

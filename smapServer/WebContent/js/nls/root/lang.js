@@ -582,6 +582,7 @@ define({
 	"n_pdfp": "PDF (Portrait)",
 	"n_pdfl": "PDF (Landscape)",
 	"n_eq": "Email Question",
+	"n_share": "Get link",
 	
 	// Roles
 	"ro_fr": "Filter rows",

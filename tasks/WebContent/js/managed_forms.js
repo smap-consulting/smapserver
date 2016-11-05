@@ -238,6 +238,10 @@ require([
 				});
 		});
 		
+		$('#shareRecord').click(function(){
+			alert("hi");
+		});
+		
 		// Save changes to the table columns that are shown
 		$('#applyColumns').click(function(){
 			

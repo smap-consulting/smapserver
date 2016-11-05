@@ -175,8 +175,6 @@ public class ActionManager {
 		
 		String sqlDeleteAction = "delete from alert where id = ?";
 		PreparedStatement pstmtDeleteAction = null;
-				
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		
 		String link = null;
 		int actionId = 0;
@@ -192,30 +190,11 @@ public class ActionManager {
 				actionId = rs.getInt(1);
 			}
 			
+			/*
+			 * If this is a new action then create a temporary user that controls access to the resource
+			 */
 			if(a.action.equals("respond") && actionId == 0) {
-				
-				/*
-				 * If this is a new action then create a temporary user who can complete it
-				 */
-				UserManager um = new UserManager();
-				String tempUserId = "u" + String.valueOf(UUID.randomUUID());
-				User u = new User();
-				u.ident = tempUserId;
-				u.name = a.notify_person;
-				u.action_details = gson.toJson(a);
-				
-				// Add the project that contains the survey
-				u.projects = new ArrayList<Project> ();
-				Project p = new Project();
-				p.id = a.pId;
-				u.projects.add(p);
-				
-				
-				// Add the roles for the temporary user
-				u.roles = a.roles;
-				
-				um.createTemporaryUser(sd, u, oId);
-				link = "/action/" + tempUserId;
+				link = getLink(sd, a, oId);
 			}
 			
 			// Get the id of the user to notify
@@ -285,6 +264,56 @@ public class ActionManager {
 		}
 		
 		
+	}
+	
+	public String getLink(Connection sd, Action a, int oId) throws Exception {
+		
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		
+		String resource = gson.toJson(a);
+		String tempUserId = null;
+		String link = null;
+		
+		String sqlResourceHasUser = "select ident from users where action_details = ?";
+		PreparedStatement pstmtResourceHasUser = null;
+	
+		try {
+			//  If a temporary user already exists then use that user
+			pstmtResourceHasUser = sd.prepareStatement(sqlResourceHasUser);
+			pstmtResourceHasUser.setString(1, resource);
+			log.info("Check for resource with user: " + pstmtResourceHasUser);
+			ResultSet rs2 = pstmtResourceHasUser.executeQuery();
+			if(rs2.next()) {
+				tempUserId = rs2.getString(1);
+			}
+			
+			if(tempUserId == null) {
+				UserManager um = new UserManager();
+				tempUserId = "u" + String.valueOf(UUID.randomUUID());
+				User u = new User();
+				u.ident = tempUserId;
+				u.name = a.notify_person;
+				u.action_details = resource;
+				
+				// Add the project that contains the survey
+				u.projects = new ArrayList<Project> ();
+				Project p = new Project();
+				p.id = a.pId;
+				u.projects.add(p);
+				
+				
+				// Add the roles for the temporary user
+				u.roles = a.roles;
+				
+				um.createTemporaryUser(sd, u, oId);
+			}
+			
+			link = "/action/" + tempUserId;
+		} finally {
+			try {if (pstmtResourceHasUser != null) {pstmtResourceHasUser.close();}} catch (SQLException e) {}
+		}
+		
+		return link;
 	}
 
 
