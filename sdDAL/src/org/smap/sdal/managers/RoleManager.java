@@ -242,7 +242,7 @@ public class RoleManager {
 				String sqlFragString = resultSet.getString("row_filter");
 				if(sqlFragString != null) {
 					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
-					if(sq.sql != null) {
+					if(sq.expression != null) {
 						role.row_filter = sq.expression.toString();
 					}
 				}
