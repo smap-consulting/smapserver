@@ -453,7 +453,7 @@ public class RoleManager {
 	}
 	
 	/*
-	 * Set the parameters for RBAC statement
+	 * Set the parameters for an array of sql fragments
 	 */
 	public int setRbacParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
 		int attribIdx = index;

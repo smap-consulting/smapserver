@@ -168,12 +168,21 @@ public class SqlFrag {
 				token.equals("(") ||
 				token.equals("or") ||
 				token.equals("and") || 
+				token.equals("integer") || 
 				token.equals("now()")) {
 			out = token;
 		} else if (token.equals("empty")) {
 			out = "is null";
 		} else if (token.equals("all")) {
 			out = "";
+		} else if (token.startsWith("{") && token.endsWith("}")) {	// Preserve {xx} syntax if xx is integer
+			String content = token.substring(1, token.length() - 1);
+			try {
+				Integer iValue = Integer.parseInt(content);
+				out = "{" + iValue.toString() + "}";
+			} catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
+			}	
 		} else if (token.length() > 0) {
 			// Non text parameter, accept decimal or integer
 			try {
@@ -184,7 +193,7 @@ public class SqlFrag {
 					Integer iValue = Integer.parseInt(token);
 					out = iValue.toString();
 				}
-			}catch (Exception e) {
+			} catch (Exception e) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			
