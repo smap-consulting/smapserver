@@ -147,7 +147,7 @@ public class SqlFrag {
 	public String sqlToken(String token) throws Exception {
 		String out = "";
 		
-		token = token.trim();
+		token = token.trim().toLowerCase();
 		
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
@@ -177,6 +177,7 @@ public class SqlFrag {
 				token.equals("or") ||
 				token.equals("and") || 
 				token.equals("integer") || 
+				token.equals("current_date") ||
 				token.equals("now()")) {
 			out = token;
 		} else if (token.equals("empty")) {
