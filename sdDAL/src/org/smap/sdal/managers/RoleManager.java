@@ -242,7 +242,7 @@ public class RoleManager {
 				String sqlFragString = resultSet.getString("row_filter");
 				if(sqlFragString != null) {
 					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
-					if(sq.sql != null) {
+					if(sq.expression != null) {
 						role.row_filter = sq.expression.toString();
 					}
 				}
@@ -453,7 +453,7 @@ public class RoleManager {
 	}
 	
 	/*
-	 * Set the parameters for RBAC statement
+	 * Set the parameters for an array of sql fragments
 	 */
 	public int setRbacParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
 		int attribIdx = index;

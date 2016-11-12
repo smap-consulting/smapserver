@@ -182,8 +182,12 @@ public class XLSFormManager {
 			} else if(type == COL_APPEARANCE) {				
 				value = q.appearance;		
 				
-			} else if(type == COL_AUTOPLAY) {				
-				value = q.autoplay;		
+			} else if(type == COL_AUTOPLAY) {	
+				if(q.autoplay != null && q.autoplay.equals("none")) {
+					value = null;
+				} else {
+					value = q.autoplay;	
+				}
 				
 			} else if(type == COL_ACCURACY) {				
 				value = q.accuracy;		

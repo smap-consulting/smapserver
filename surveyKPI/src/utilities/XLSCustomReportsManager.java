@@ -469,12 +469,14 @@ public class XLSCustomReportsManager {
 		                					}
 		                					if(condition.toLowerCase().trim().equals("all")) {
 		                						currentCol.calculation.add("ELSE");
-		                						currentCol.calculation.addText(value);
+		                						currentCol.calculation.addSqlFragment(value, localisation, false);
+		                						//currentCol.calculation.addText(value);
 		                					} else {
 		                						currentCol.calculation.add("WHEN");
 		                						currentCol.calculation.addSqlFragment(condition, localisation, true);
 		                						currentCol.calculation.add("THEN");
-		                						currentCol.calculation.addText(value);
+		                						//currentCol.calculation.addText(value);
+		                						currentCol.calculation.addSqlFragment(value, localisation, false);
 		                					}
 		                				}
 		                				
@@ -1039,7 +1041,7 @@ public class XLSCustomReportsManager {
 					createCell(row, getIndexCol(cols, "row type"), choice.isRole ? "user_role" : "choice", styles.get("default"));
 					createCell(row, getIndexCol(cols, "name"), choice.k, styles.get("default"));
 					createCell(row, getIndexCol(cols, "display name"), choice.v, styles.get("default"));
-					if(tc.markup != null) {
+					if(tc.markup != null && j < tc.markup.size()) {
 						createCell(row, getIndexCol(cols, "appearance"), markupToAppearance(tc.markup.get(j).classes), styles.get("default"));
 					}
 				}	

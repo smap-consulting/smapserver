@@ -154,8 +154,8 @@ public class UploadFiles extends Application {
 					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
 	
 					// Authorisation - Access
-					auth.isAuthorised(connectionSD, request.getRemoteUser());
 					connectionSD = SDDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
+					auth.isAuthorised(connectionSD, request.getRemoteUser());
 					if(sId > 0) {
 						try {
 							superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());

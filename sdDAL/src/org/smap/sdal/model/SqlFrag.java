@@ -55,6 +55,8 @@ public class SqlFrag {
 		
 		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
 		
+		System.out.println("Add sqlFrag: " + in);
+		
 		/*
 		 * If this SQL fragment is part of a condition then save it so that it can be exported back to XLS or edited online
 		 */
@@ -64,6 +66,12 @@ public class SqlFrag {
 			}
 			conditions.add(in);
 		}
+		
+		/*
+		 * This SQL Fragment may actually be text without quotes
+		 * If so then wrap in single quotes
+		 */
+		in = checkForText(in);
 		
 		/*
 		 * Get the text parameters and the sql fragments
@@ -139,7 +147,7 @@ public class SqlFrag {
 	public String sqlToken(String token) throws Exception {
 		String out = "";
 		
-		token = token.trim();
+		token = token.trim().toLowerCase();
 		
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
@@ -168,12 +176,22 @@ public class SqlFrag {
 				token.equals("(") ||
 				token.equals("or") ||
 				token.equals("and") || 
+				token.equals("integer") || 
+				token.equals("current_date") ||
 				token.equals("now()")) {
 			out = token;
 		} else if (token.equals("empty")) {
 			out = "is null";
 		} else if (token.equals("all")) {
 			out = "";
+		} else if (token.startsWith("{") && token.endsWith("}")) {	// Preserve {xx} syntax if xx is integer
+			String content = token.substring(1, token.length() - 1);
+			try {
+				Integer iValue = Integer.parseInt(content);
+				out = "{" + iValue.toString() + "}";
+			} catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
+			}	
 		} else if (token.length() > 0) {
 			// Non text parameter, accept decimal or integer
 			try {
@@ -184,7 +202,7 @@ public class SqlFrag {
 					Integer iValue = Integer.parseInt(token);
 					out = iValue.toString();
 				}
-			}catch (Exception e) {
+			} catch (Exception e) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			
@@ -192,6 +210,29 @@ public class SqlFrag {
 		return out;
 	}
 	
+	/*
+	 * This function is used as it has been allowed to represent text without quotes when setting a condition value
+	 * It may return false negatives so it is recommended that quotes always be used to identify text
+	 */
+	private String checkForText(String in) {
+		String out = null;
+		boolean isText = true;
+		if(in != null) {
+			if(in.indexOf('\'') > -1) {
+				isText = false; // Contains a text fragment
+			} else if(in.contains("{")) {
+				isText = false; // Contains a column name
+			} else if(in.contains("()")) {
+				isText = false; // Contains a function without parameters such as now()
+			}
+		}
+		if(isText) {
+			out = "'" + in + "'";
+		} else {
+			out = in;
+		}
+		return out;
+	}
 	public void debug() {
 		System.out.println("======");
 		System.out.println("sql     " + sql.toString());

@@ -73,6 +73,6 @@ require([
          'tablesorter',
          'crf'
          
-         ], function($, jquery_ui, modernizr, rmm, common, localise, globals, moment) {
+         ], function($, jquery_ui, rmm, common, localise, globals, moment) {
 });
 

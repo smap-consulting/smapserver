@@ -16,6 +16,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.SqlFragParam;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -75,6 +76,7 @@ public class TableDataManager {
 		boolean hasRbacFilter = false;
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
+		ArrayList<SqlFrag> columnSqlFrags = new ArrayList<SqlFrag> ();
 		
 		PreparedStatement pstmtGetData = null;
 		
@@ -85,6 +87,9 @@ public class TableDataManager {
 					columnSelect.append(",");
 				}
 				columnSelect.append(c.getSqlSelect(urlprefix));
+				if(c.calculation != null && c.calculation.params != null) {
+					columnSqlFrags.add(c.calculation);
+				}
 			}
 			
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
@@ -144,6 +149,11 @@ public class TableDataManager {
 				
 				// Set parameters
 				int paramCount = 1;
+				
+				// Add parameters in table column selections
+				if(columnSqlFrags.size() > 0) {
+					paramCount = rm.setRbacParameters(pstmtGetData, columnSqlFrags, paramCount);
+				}
 				pstmtGetData.setInt(paramCount++, start);
 				if(parkey > 0) {
 					pstmtGetData.setInt(paramCount++, parkey);
