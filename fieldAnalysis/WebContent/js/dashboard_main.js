@@ -44,6 +44,7 @@ require.config({
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	common: '../../../../js/app/common',
     	globals: '../../../../js/app/globals',
+    	moment: '../../../../js/libs/moment-with-locales.min',
     	tablesorter: '../../../../js/libs/tablesorter',
     	crf: '../../../../js/libs/commonReportFunctions',
     	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
@@ -72,6 +73,7 @@ require.config({
     	'app/data': ['jquery'],
     	'app/reports': ['jquery_ui'],
     	'tablesorter': ['jquery'],
+    	'app/panels': ['jquery', 'moment', ],
     	'crf': ['jquery'],
     	'main/jqplot_main': ['jquery']
     	
@@ -105,8 +107,6 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals', 'moment'
          'crf'
          
          ], function($, jquery_ui, rmm, common, localise, globals, moment) {
-	
-	window.moment = moment;	// Required as common.js not part of module
 
 });
 
