@@ -215,7 +215,7 @@ define([
 			config.index = index;
 		} 
 		
-		margin = {top: 20, right: 20, bottom: 30, left: 40};
+		margin = {top: 20, right: 20, bottom: 60, left: 40};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 		

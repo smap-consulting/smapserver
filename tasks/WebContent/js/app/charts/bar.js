@@ -44,18 +44,10 @@ define([
 	function add(chartId, chart, config, data, width, height, margin) {
 
 		var barWidth;   
-		
-	    if(chart.tSeries) {
-	    	config.x = d3.scaleTime().range([0, width]);
-			config.x.domain(d3.extent(data, function(d) { return d.key; }));
-			
-			barWidth = (width - 100) / data.length; 
-			
-		} else {
-			config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-			config.x.domain(data.map(function(d) { return d.key; }));
-			barWidth = config.x.bandwidth();
-		}
+	    
+	    config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+		config.x.domain(data.map(function(d) { return d.key; }));
+		barWidth = config.x.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
 		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
@@ -71,6 +63,16 @@ define([
 		    .attr("transform", "translate(0," + height + ")")
 		    .call(config.xAxis);
 	
+		var text = config.svg.append("text")             
+	      .attr("x", width / 2 )
+	      .attr("y",  height + margin.top + 40 )
+	      .style("text-anchor", "middle");
+		if(chart.tSeries) {
+			text.text(localise.set["c_" + chart.period]);
+		} else {
+			text.text(chart.name);
+		}
+		
 		config.g.append("g")
 		    .attr("class", "axis axis--y")
 		    .call(config.yAxis)
@@ -93,19 +95,14 @@ define([
 		
 		console.log("Refresh bar chart");
 		
-		if(chart.tSeries) {
-			config.x.domain(d3.extent(data, function(d) { return d.key; }));
-			barWidth = (width - 100) / data.length; 
-		} else {
-			config.x.domain(data.map(function(d) { 
-				if(!d.key || d.key === "") {
-					return localise.set["c_undef"]; 
-				} else {
-					return d.key;
-				}
-			}));
-			barWidth = config.x.bandwidth();
-		}
+		config.x.domain(data.map(function(d) { 
+			if(!d.key || d.key === "") {
+				return localise.set["c_undef"]; 
+			} else {
+				return d.key;
+			}
+		}));
+		barWidth = config.x.bandwidth();
 		config.y.domain([0, d3.max(data, function(d) { return d.value; })]);
 		
 		// Update axes
