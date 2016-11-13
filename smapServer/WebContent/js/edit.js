@@ -324,13 +324,23 @@ $(document).ready(function() {
 	
 	$('#m_info').off().click(function() {	// Show the info dialog
 		
+		var tableNames ="",
+			i;
+		
+		for(i = 0; i < globals.model.survey.forms.length; i++) {
+			if(i > 0) {
+				tableNames += ", ";
+			}
+			tableNames += globals.model.survey.forms[i].tableName;
+		}
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
 		$('#i_ident').val(globals.model.survey.ident);		
 		$('#i_created').val(localTime(globals.model.survey.created));		
-		$('#i_based_on').val(globals.model.survey.basedOn);		
+		$('#i_based_on').val(globals.model.survey.basedOn);	
+		$('#i_table_names').val(tableNames);
 		$('#i_shared').prop('checked', globals.model.survey.sharedTable);	
 		
 		$('#infoModal').modal('show');

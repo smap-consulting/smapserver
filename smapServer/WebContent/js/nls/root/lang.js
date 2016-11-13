@@ -209,6 +209,7 @@ define({
 	"c_id": "Id",
 	"c_insert": "Insert",
 	"c_tz": "Time Zone",
+	"c_undef": "Not Defined",
 	
 	// File Types
 	"ft": "File Type",
@@ -487,6 +488,7 @@ define({
 	"ed_st": "Shared Table",
 	"ed_ld": "Allow Loading data from file",
 	"ed_i_bo": "Based On",
+	"ed_i_tn": "Table Names",
 	"ed_tlf": "Top Level Form",
 	"ed_namedia": "Media cannot be used with this question",
 	
@@ -606,7 +608,8 @@ define({
 	"d_sound": "Play sound on new alert",
 	"d_rep_def_freq": "Frequency Report",
 	"bar": "Bar Chart",
-	"pie": "Pie Chart"
+	"pie": "Pie Chart",
+	"line": "Line Chart"
 
 	 		
 });

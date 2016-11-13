@@ -133,11 +133,11 @@ require([
 						         {
 									humanName: "Feedback per day",
 									name: "periodic_count",
-									cType: "line",		// line
+									chart_type: "bar",		// line
 									group: undefined,
 									fn: "length",
 									tSeries: true,
-									period: "day",
+									period: "year",
 									width: 12
 								}]
 			      },
@@ -145,7 +145,7 @@ require([
 					datatable: true,
 					name: "chartrow",
 					def: {
-						cType: "bar",
+						chart_type: "bar",
 						group: undefined,
 						fn: "length",
 						tSeries: false,

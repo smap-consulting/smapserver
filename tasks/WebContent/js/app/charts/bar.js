@@ -26,8 +26,9 @@ define([
          'modernizr',
          'localise',
          'globals',
-         'd3'], 
-		function($, modernizr, lang, globals, d3) {
+         'd3',
+         'localise'], 
+		function($, modernizr, lang, globals, d3, localise) {
 
 	
 	return {	
@@ -40,12 +41,23 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chart, config, data, width, height, margin) {
+	function add(chartId, chart, config, data, width, height, margin) {
 
-		config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-	    config.y = d3.scaleLinear().rangeRound([height, 0]);
+		var barWidth;   
 		
-		config.x.domain(data.map(function(d) { return d.key; }));
+	    if(chart.tSeries) {
+	    	config.x = d3.scaleTime().range([0, width]);
+			config.x.domain(d3.extent(data, function(d) { return d.key; }));
+			
+			barWidth = (width - 100) / data.length; 
+			
+		} else {
+			config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+			config.x.domain(data.map(function(d) { return d.key; }));
+			barWidth = config.x.bandwidth();
+		}
+	    
+	    config.y = d3.scaleLinear().rangeRound([height, 0]);
 		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
 		
 		config.xAxis = d3.axisBottom(config.x);
@@ -69,27 +81,31 @@ define([
 		      .attr("text-anchor", "end")
 		      .text("Count");
 	
-		/*
-		  config.g.selectAll(".bar")
-		    .data(data)
-		    .enter().append("rect")
-		      .attr("class", "bar")
-		      .attr("x", function(d) { return config.x(d.key); })
-		      .attr("y", function(d) { return config.y(d.value); })
-		      .attr("width", config.x.bandwidth())
-		      .attr("height", function(d) { return height - config.y(d.value); });
-		      */
 		
 	}
 	
 	/*
 	 * Update a bar chart
 	 */
-	function redraw(chart, config, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, width, height, margin) {
+		
+		var barWidth;
 		
 		console.log("Refresh bar chart");
 		
-		config.x.domain(data.map(function(d) { return d.key; }));
+		if(chart.tSeries) {
+			config.x.domain(d3.extent(data, function(d) { return d.key; }));
+			barWidth = (width - 100) / data.length; 
+		} else {
+			config.x.domain(data.map(function(d) { 
+				if(!d.key || d.key === "") {
+					return localise.set["c_undef"]; 
+				} else {
+					return d.key;
+				}
+			}));
+			barWidth = config.x.bandwidth();
+		}
 		config.y.domain([0, d3.max(data, function(d) { return d.value; })]);
 		
 		// Update axes
@@ -117,13 +133,19 @@ define([
 		bars.enter()
 			.append("rect")
 			.attr("class", "bar")
-			.attr("x", function(d) { return config.x(d.key); })
+			.attr("x", function(d) { 
+				if(!d.key || d.key === "") {
+					return config.x(localise.set["c_undef"]);
+				} else {
+					return config.x(d.key); 
+				}
+			})
 	    	.attr("y", function(d) { 
 	    		console.log(d);
 	    		console.log(config.y(d.value));
 	    		return config.y(d.value); 
 	    		})
-	    	.attr("width", config.x.bandwidth())
+	    	.attr("width", barWidth)
 	    	.attr("height", function(d) { return height - config.y(d.value); });
 		
 		// Bars being update
@@ -131,7 +153,7 @@ define([
 			.duration(300)
 	    	.attr("x", function(d) { return config.x(d.key); })
 	    	.attr("y", function(d) { return config.y(d.value); })
-	    	.attr("width", config.x.bandwidth())
+	    	.attr("width", barWidth)
 	    	.attr("height", function(d) { return height - config.y(d.value); });
 					
 	}

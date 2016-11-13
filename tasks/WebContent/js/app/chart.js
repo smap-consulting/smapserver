@@ -76,7 +76,10 @@ define([
 		var i,
 			data,
 			chart,
-			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
+			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
+			parseTimeDay = d3.timeParse("%Y-%m-%d"),
+			parseTimeMonth = d3.timeParse("%Y-%m"),
+			parseTimeYear = d3.timeParse("%Y");	
 		
 		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
 		
@@ -92,7 +95,7 @@ define([
 					  .rollup(function(v) { return v[chart.cFn]; })
 					  .entries(results);
 					
-					addChart("#c_" + chart.name, data, chart.cType, i);
+					addChart("#c_" + chart.name, data, chart, i);
 				}
 			} else {
 				for(j = 0; j < report.row[i].charts.length; j++) {
@@ -134,64 +137,81 @@ define([
 						  .rollup(function(v) { return v[chart.cFn]; })
 						  .entries(results);
 					}
-					addChart("#c_" + chart.name, data, chart.cType, i);
+					
+					// Convert dates to date format
+					if(chart.tSeries) {
+						var parseTime = chart.period === "day" ? parseTimeDay : 
+								chart.period === "month" ? parseTimeMonth :
+								parseTimeYear;
+						
+						var dateRange = chart.period === "day" ? d3.timeDay : 
+								chart.period === "month" ? d3.timeMonth :
+									d3.timeYear;
+						
+						data.forEach(function(d) {
+						      d.key = parseTime(d.key);
+						});
+						
+						var dateValueMap = data.reduce(function(r, v) {
+							r[v.key.toISOString()] = v.value;
+								return r;
+						}, {});
+						
+						var dateExtent = d3.extent(data.map(function(v)  {
+							return v.key;
+						}));
+						
+						var range = dateRange.range(
+							    dateExtent[0], 
+							    dateRange.offset(dateExtent[1], 1)
+							  );
+						
+						var newData = [];
+						range.forEach(function(date) {
+							var dx = date.toISOString();
+							if(!(dx in dateValueMap)) {
+								newData.push({
+									'key'  : date,
+								    'value' : 0
+								});
+							} else {
+								newData.push({
+									'key'  : date,
+								    'value' : dateValueMap[dx]
+								});
+							}
+						});
+						
+						data = newData;
+					}
+					
+					addChart("#c_" + chart.name, data, chart, i);
 					
 				}
 			}
 		}
-		
-		/*
-		var countByRegion = d3.nest()
-		  .key(function(d) { return d.region; })
-		  .rollup(function(v) { return v.length; })
-		  .entries(results);
-		
-		
-		var countByGender = d3.nest()
-		  .key(function(d) { return d.gender; })
-		  .rollup(function(v) { return v.length; })
-		  .entries(results);
-		
-		var avgDurDevice = d3.nest()
-		  .key(function(d) { return d.User; })
-		  .rollup(function(v) { 
-			  return d3.mean(v, function(d) {
-				  var diff = timeDifference(d._start, d._end); 
-				  if(diff) {
-					  diff = diff._milliseconds / 1000;
-				  }
-				  return  diff;
-		  	  }); 
-		  })	  
-		  .entries(results);
-		
-		console.log("Duration by device: " + JSON.stringify(avgDurDevice));
-		addChart("#chart1", countByRegion, "bar");
-		//addChart("#chart1", countByGender, "bar");
-		addChart("#chart2", countByRegion, "pie");
-		*/
 	}
 	
 	/*
 	 * Add a chart
 	 */
-	function addChart(chart, data, type, index) {
+	function addChart(chartId, data, chart, index) {
 		
 		// Get dynamic widths of container
-		var widthContainer = $(chart).width();
-		var heightContainer = $(chart).height();
+		var widthContainer = $(chartId).width();
+		var heightContainer = $(chartId).height();
 		var view = "0 0 " + widthContainer + " " + heightContainer,
 			margin,
 			width,
 			height;
 		
-		var config = globals.gCharts[chart],
+		var config = globals.gCharts[chartId],
 			init = false;
 		
 		if(typeof config === "undefined") {
 			init = true;
-			globals.gCharts[chart] = {};
-			config = globals.gCharts[chart];
+			globals.gCharts[chartId] = {};
+			config = globals.gCharts[chartId];
 			config.index = index;
 		} 
 		
@@ -200,15 +220,15 @@ define([
 	    height = +heightContainer - margin.top - margin.bottom;
 		
 		if(init) {
-			if(type === "pie") {
-				config.svg = d3.select(chart).append("svg")
+			if(chart.chart_type === "pie") {
+				config.svg = d3.select(chartId).append("svg")
 				  .attr("preserveAspectRatio", "xMinYMin meet")
 				  .attr("viewBox", view)
 				  .classed("svg-content", true)
 				  .append("g")
 				  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 			} else {
-				config.svg = d3.select(chart).append("svg")
+				config.svg = d3.select(chartId).append("svg")
 				  .attr("preserveAspectRatio", "xMinYMin meet")
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
@@ -216,13 +236,13 @@ define([
  
 		}
 		
-		if(avCharts[type]) {
+		if(avCharts[chart.chart_type]) {
 			if(init) {
-				avCharts[type].add(chart, config, data, width, height, margin)
+				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
 			} 
-			avCharts[type].redraw(chart, config, data, width, height, margin);
+			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
 		} else {
-			alert("unknown chart type: " + type);
+			alert("unknown chart type: " + chart.chart_type);
 		}
 		
 	}
@@ -253,8 +273,8 @@ define([
 			if(!filtered[i].cDom) {
 				filtered[i].cDom = "c_" + filtered[i].name;
 			}
-			if(!filtered[i].cType) {
-				filtered[i].cType = def.cType;
+			if(!filtered[i].chart_type) {
+				filtered[i].chart_type = def.chart_type;
 			}
 		}
 		
@@ -383,13 +403,13 @@ define([
 	    $('.chart-type').off().click(function(){
 	    	var $this = $(this),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
-	    		cType = $this.data("ctype"),
+	    		chart_type = $this.data("ctype"),
 	    	    chart = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
 	    	    ibox = chart + "_ibox",
 	    	    name;
 	    	
 	    	var config = globals.gCharts[chart];
-	    	filtered[config.index].cType = cType;
+	    	filtered[config.index].chart_type = chart_type;
 	    	config.svg.remove();
 	    	globals.gCharts[chart] = undefined;
 	    	
