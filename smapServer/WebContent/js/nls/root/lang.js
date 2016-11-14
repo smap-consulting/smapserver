@@ -609,7 +609,8 @@ define({
 	"d_rep_def_freq": "Frequency Report",
 	"bar": "Bar Chart",
 	"pie": "Pie Chart",
-	"line": "Line Chart"
+	"line": "Line Chart",
+	"length": "Count"
 
 	 		
 });

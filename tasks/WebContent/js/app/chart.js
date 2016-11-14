@@ -227,11 +227,34 @@ define([
 			    	})
 			    }
 		    }
-		    
+		} else if (chart.type === "select") {   
+			var i, j,
+				data = [],
+				dc;
+			for(i = 0; i < chart.choices.length; i++) {
+				dc = d3.nest()
+				  .key(function(d) { return d[chart.choices[i]]; })
+				  .rollup(function(v) { return v[chart.fn]; })
+				  .entries(results);
+				
+				for(j = 0; j < dc.length; j++) {
+					if(dc[j].key == "1") {
+						data.push({
+							key: chart.choices[i],
+							value: dc[j].value
+						});
+						break;
+					}
+				}
+				console.log("----" + chart.choices[i]);
+				console.log(dc);
+			}
+			console.log("data");
+			console.log(data);
 		} else {
 			data = d3.nest()
 			  .key(function(d) { return d[chart.name]; })
-			  .rollup(function(v) { return v[chart.cFn]; })
+			  .rollup(function(v) { return v[chart.fn]; })
 			  .entries(results);
 		}
 		
@@ -261,7 +284,13 @@ define([
 			config.index = index;
 		} 
 		
-		margin = {top: 20, right: 20, bottom: 60, left: 40};
+		// Allow space for labels if needed
+		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var top_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		
+		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 		
@@ -304,7 +333,8 @@ define([
 		 * Get the list of visible columns
 		 */
 		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
-			filtered = columns.filter(function(d) {
+			filtered = [],
+			filtered_prelim = columns.filter(function(d) {
 			   return d.include && 
 			   		!d.hide && 
 			   		d.name !== "prikey" && 
@@ -313,13 +343,43 @@ define([
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,
-			def = report.row[1].def;	
+			def = report.row[1].def;
+			
+		
+		/*
+		 * Merge select multiple columns into a single chart
+		 */
+		var select_questions = {};
+		for(i = 0; i < filtered_prelim.length; i++) {
+			if(filtered_prelim[i].type === "select") {
+				var n = filtered_prelim[i].name.split("__");
+				if(n.length > 1) {
+					
+					if(!select_questions[n[0]]) {		// New choice
+						
+						filtered_prelim[i].select_name = n[0];
+						filtered_prelim[i].choices = [];
+						filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
+						
+						select_questions[n[0]] = filtered_prelim[i];
+						filtered.push(filtered_prelim[i]);
+					} else {
+						var f = select_questions[n[0]];
+						f.choices.push(filtered_prelim[i].humanName);
+					}
+				}
+				
+				
+			} else {
+				filtered.push(filtered_prelim[i]);
+			}
+		}
 		
 		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
 		
 		for (i = 0; i < filtered.length; i++) {
-			if(!filtered[i].cFn) {
-				filtered[i].cFn = def.fn;
+			if(!filtered[i].fn) {
+				filtered[i].fn = def.fn;
 			}
 			if(!filtered[i].cDom) {
 				filtered[i].cDom = "c_" + filtered[i].name;

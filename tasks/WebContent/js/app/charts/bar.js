@@ -63,25 +63,27 @@ define([
 		    .attr("transform", "translate(0," + height + ")")
 		    .call(config.xAxis);
 	
+		// Add x-axis label
 		var text = config.svg.append("text")             
-	      .attr("x", width / 2 )
-	      .attr("y",  height + margin.top + 40 )
-	      .style("text-anchor", "middle");
+	    		.attr("x", width / 2 )
+	    		.attr("y",  height + margin.top + 40 )
+	    		.style("text-anchor", "middle");
+		
 		if(chart.tSeries) {
 			text.text(localise.set["c_" + chart.period]);
 		} else {
 			text.text(chart.name);
 		}
 		
+		// Add y-axis label
+		config.svg.append("text")
+        	.attr("text-anchor", "middle")  
+        	.attr("transform", "translate("+ (margin.left/3) +","+(height/2)+")rotate(-90)")  
+        	.text(localise.set[chart.fn]);
+		
 		config.g.append("g")
 		    .attr("class", "axis axis--y")
-		    .call(config.yAxis)
-		    .append("text")
-		      .attr("transform", "rotate(-90)")
-		      .attr("y", 6)
-		      .attr("dy", "0.71em")
-		      .attr("text-anchor", "end")
-		      .text("Count");
+		    .call(config.yAxis);
 	
 		
 	}
