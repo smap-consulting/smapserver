@@ -71,8 +71,10 @@ define([
 		
 		if(chart.tSeries) {
 			text.text(localise.set["c_" + chart.period]);
+		} else if(chart.select_name) {
+			text.text(chart.select_name);
 		} else {
-			text.text(chart.name);
+			text.text(chart.humanName);
 		}
 		
 		// Add y-axis label

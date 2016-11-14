@@ -38,7 +38,7 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chart, config, data, width, height, margin) {
+	function add(chartId, chart, config, data, width, height, margin) {
 
 		config.x = d3.scaleTime().rangeRound([0, width]);
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
@@ -82,7 +82,7 @@ define([
 	/*
 	 * Update
 	 */
-	function redraw(chart, config, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, width, height, margin) {
 		
 		console.log("Refresh line chart");
 		

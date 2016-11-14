@@ -34,14 +34,13 @@ define([
 		add: add,
 		redraw: redraw
 	};
-	
-
 
 	/*
 	 * Add
 	 */
-	function add(chart, config, data, width, height, margin) {
+	function add(chartId, chart, config, data, width, height, margin) {
 
+		console.log("Show pie chart");
 		var radius = Math.min(width, height) / 2;
 		
 		var color = d3.scaleOrdinal()
@@ -80,7 +79,7 @@ define([
 	/*
 	 * Redraw
 	 */
-	function redraw(chart, config, svg, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, width, height, margin) {
 		
 		console.log("Redraw pie chart");
 		

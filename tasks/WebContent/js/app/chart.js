@@ -65,7 +65,6 @@ define([
 	 * Show a report
 	 */
 	function refreshCharts() {
-		console.log("#############Refreshing chart");
 		
 		var results = globals.gMainTable.rows({
 	    	order:  'current',  // 'current', 'applied', 'index',  'original'
@@ -78,7 +77,8 @@ define([
 			chart,
 			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
 		
-		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
+		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+			index = 0;
 		
 		for(i = 0; i < report.row.length; i++) {
 			
@@ -90,7 +90,7 @@ define([
 					
 					chart = filtered[j];
 					data = processData(results, chart);
-					addChart("#c_" + chart.name, data, chart, i);
+					addChart("#c_" + chart.name, data, chart, index++);
 				}
 			} else {
 				/*
@@ -102,9 +102,7 @@ define([
 					
 					data = processData(results, chart);
 					
-					
-					
-					addChart("#c_" + chart.name, data, chart, i);
+					addChart("#c_" + chart.name, data, chart, -1);
 					
 				}
 			}
@@ -238,19 +236,17 @@ define([
 				  .entries(results);
 				
 				for(j = 0; j < dc.length; j++) {
+					var choiceName = chart.choices[i].split(" - ");
 					if(dc[j].key == "1") {
 						data.push({
-							key: chart.choices[i],
+							key: choiceName[1],
 							value: dc[j].value
 						});
 						break;
 					}
 				}
-				console.log("----" + chart.choices[i]);
-				console.log(dc);
 			}
-			console.log("data");
-			console.log(data);
+
 		} else {
 			data = d3.nest()
 			  .key(function(d) { return d[chart.name]; })
@@ -352,7 +348,7 @@ define([
 		var select_questions = {};
 		for(i = 0; i < filtered_prelim.length; i++) {
 			if(filtered_prelim[i].type === "select") {
-				var n = filtered_prelim[i].name.split("__");
+				var n = filtered_prelim[i].humanName.split(" - ");
 				if(n.length > 1) {
 					
 					if(!select_questions[n[0]]) {		// New choice
