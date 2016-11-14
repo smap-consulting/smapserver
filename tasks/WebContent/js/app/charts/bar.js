@@ -93,8 +93,6 @@ define([
 		
 		var barWidth;
 		
-		console.log("Refresh bar chart");
-		
 		config.x.domain(data.map(function(d) { 
 			if(!d.key || d.key === "") {
 				return localise.set["c_undef"]; 
@@ -138,8 +136,6 @@ define([
 				}
 			})
 	    	.attr("y", function(d) { 
-	    		console.log(d);
-	    		console.log(config.y(d.value));
 	    		return config.y(d.value); 
 	    		})
 	    	.attr("width", barWidth)

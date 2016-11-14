@@ -385,7 +385,6 @@ require([
 					if(dateParts.length > 0) {
 						dataDate = dateParts[0];
 					}
-					console.log("From date: " + fromDate + " : " + dataDate);
 
 					if ( fromDate === "" )
 					{
