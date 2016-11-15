@@ -3476,22 +3476,22 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Return true if the question name is in the survey
+	 * Return true if the question column name is in the survey
 	 */
-	public static boolean surveyHasQuestion(Connection sd, int sId, String name) throws SQLException {
+	public static boolean surveyHasColumn(Connection sd, int sId, String columnName) throws SQLException {
 		
 		boolean hasQuestion = false;
 		
 		String sql = "select count(*) from question q "
 				+ "where q.f_id in (select f_id from form where s_id = ?) "
-				+ "and q.qname = ? ";
+				+ "and q.column_name = ? ";
 				
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  sId);
-			pstmt.setString(2,  name);
+			pstmt.setString(2,  columnName);
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
