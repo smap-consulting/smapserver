@@ -1059,9 +1059,11 @@ public class XLSCustomReportsManager {
 					createCell(row, getIndexCol(cols, "notify type"), a.notify_type, styles.get("default"));
 					createCell(row, getIndexCol(cols, "notify person"), a.notify_person, styles.get("default"));
 					StringBuffer roles = new StringBuffer("");
-					for(int k = 0; k < a.roles.size(); k++) {
-						Role r = a.roles.get(k);
-						roles.append(r.name);
+					if(a.roles != null) {
+						for(int k = 0; k < a.roles.size(); k++) {
+							Role r = a.roles.get(k);
+							roles.append(r.name);
+						}
 					}
 					
 				}

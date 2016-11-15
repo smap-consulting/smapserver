@@ -137,7 +137,7 @@ require([
 									group: undefined,
 									fn: "length",
 									tSeries: true,
-									period: "year",
+									period: "day",
 									width: 12
 								}]
 			      },
