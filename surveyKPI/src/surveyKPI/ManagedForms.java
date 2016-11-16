@@ -43,6 +43,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
+import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -100,6 +101,13 @@ public class ManagedForms extends Application {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			ManagedFormsManager qm = new ManagedFormsManager();
 			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			/*
+			 * Remove data that is only used on the server
+			 */
+			for(TableColumn tc : mfc.columns) {
+				tc.actions = null;
+				tc.calculation = null;
+			}
 			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
@@ -586,6 +594,9 @@ public class ManagedForms extends Application {
 		return response;
 	}
 	
+	/*
+	 * Update the configuration settings
+	 */
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
@@ -606,7 +617,6 @@ public class ManagedForms extends Application {
 		    return response;
 		}
 		
-
 		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = 'mf';";
 		PreparedStatement pstmtUpdate = null;
 		
@@ -626,17 +636,26 @@ public class ManagedForms extends Application {
 		
 		try {
 
+			/*
+			 * Convert the input to java classes and then back to json to ensure it is well formed
+			 */
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+			ManagedFormUserConfig uc = gson.fromJson(settings, type);
+			String configString = gson.toJson(uc);
+			
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
 			
 			pstmtUpdate = sd.prepareStatement(sqlUpdate);
-			pstmtUpdate.setString(1, settings);
+			pstmtUpdate.setString(1, configString);
 			pstmtUpdate.setInt(2, uId);
 			pstmtUpdate.setInt(3, sId);
 			log.info("Updating managed form settings: " + pstmtUpdate.toString());
 			int count = pstmtUpdate.executeUpdate();
+			
 			if(count == 0) {
 				pstmtInsert = sd.prepareStatement(sqlInsert);
-				pstmtInsert.setString(1, settings);
+				pstmtInsert.setString(1, configString);
 				pstmtInsert.setInt(2, uId);
 				pstmtInsert.setInt(3, sId);
 				log.info("Inserting managed form settings: " + pstmtInsert.toString());

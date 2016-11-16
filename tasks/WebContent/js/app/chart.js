@@ -520,6 +520,14 @@ define([
 	    	    name;
 	    	
 	    	var config = globals.gCharts[chart];
+	    	var fullIndex = getFullIndex(filtered[config.index].humanName);
+	    	console.log("Full index: " + fullIndex);
+	    	// Set the new value in the full index then save it
+	    	if(fullIndex >= 0) {
+	    		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex].chart_type = chart_type;
+	    		saveConfig();
+	    	}
+	    	// Set the new value in the current list of charts
 	    	filtered[config.index].chart_type = chart_type;
 	    	config.svg.remove();
 	    	globals.gCharts[chart] = undefined;
@@ -528,6 +536,22 @@ define([
 	    })
 	}
 	
+	/*
+	 * Get the config item that this filterd item refers to
+	 */
+	function getFullIndex(name) {
+		var i = 0,
+			columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+			index = -1;
+		
+		for(i = 0; i < columns.length; i++) {
+			if(columns[i].humanName === name) {
+				index = i;
+				break;
+			}
+		}
+		return index;
+	}
 	/*
 	 * Get the human name  column name
 	 */

@@ -912,7 +912,21 @@ window.gTasks = {
 	  * Update the saved configuration
 	  */
 	 function saveConfig() {
-		var config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex];
+		 var config = {
+				 columns: []
+		 },
+		 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+		 i;
+		 
+		for(i = 0; i < columns.length; i++) {
+			config.columns.push({
+				name: columns[i].name,
+				hide: columns[i].hide,
+				barcode: columns[i].barcode,
+				filterValue: columns[i].filterValue,
+				chart_type: columns[i].chart_type
+			});
+		}
 		
 		saveString = JSON.stringify(config);
 		 
