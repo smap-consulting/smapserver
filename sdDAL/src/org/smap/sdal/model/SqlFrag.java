@@ -55,8 +55,6 @@ public class SqlFrag {
 		
 		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
 		
-		System.out.println("Add sqlFrag: " + in);
-		
 		/*
 		 * If this SQL fragment is part of a condition then save it so that it can be exported back to XLS or edited online
 		 */

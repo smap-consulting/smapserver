@@ -320,7 +320,7 @@ public class RoleManager {
 		sq.addSqlFragment(role.row_filter, localisation, false);
 		StringBuilder bad = new StringBuilder();
 		for(int i = 0; i < sq.columns.size(); i++) {
-			if(!GeneralUtilityMethods.surveyHasQuestion(sd, sId, sq.columns.get(i))) {
+			if(!GeneralUtilityMethods.surveyHasColumn(sd, sId, sq.columns.get(i))) {
 				if(bad.length() > 0) {
 					bad.append(", ");
 				}
