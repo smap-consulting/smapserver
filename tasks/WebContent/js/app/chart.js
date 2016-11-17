@@ -43,7 +43,8 @@ define([
 	                 bar: bar, 
 	                 pie: pie,
 	                 line: line,
-	                 wordcloud: wordcloud
+	                 wordcloud: wordcloud,
+	                 map: map
 	                 };
 	
 	var report = undefined;
@@ -290,25 +291,13 @@ define([
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 		
-		if(init) {
-			if(chart.chart_type === "pie") {
-				config.svg = d3.select(chartId).append("svg")
-				  .attr("preserveAspectRatio", "xMinYMin meet")
-				  .attr("viewBox", view)
-				  .classed("svg-content", true)
-				  .append("g")
-				  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-			} else {
+		if(avCharts[chart.chart_type]) {
+			if(init) {
 				config.svg = d3.select(chartId).append("svg")
 				  .attr("preserveAspectRatio", "xMinYMin meet")
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
-			}
- 
-		}
-		
-		if(avCharts[chart.chart_type]) {
-			if(init) {
+				
 				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
 			} 
 			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
@@ -383,6 +372,8 @@ define([
 			if(!filtered[i].chart_type) {
 				if(filtered[i].type === "string") {
 					filtered[i].chart_type = "wordcloud";
+				} if(filtered[i].type === "geopoint") {
+					filtered[i].chart_type = "map";
 				} else {
 					filtered[i].chart_type = def.chart_type;
 				}
