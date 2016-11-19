@@ -30,8 +30,9 @@ define([
          'app/charts/bar',
          'app/charts/pie',
          'app/charts/line',
+         'app/charts/wordcloud',
          'svgsave'], 
-		function($, modernizr, lang, globals, d3, bar, pie, line, svgsave) {
+		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, svgsave) {
 
 	
 	/*
@@ -41,7 +42,9 @@ define([
 	var avCharts = {
 	                 bar: bar, 
 	                 pie: pie,
-	                 line: line
+	                 line: line,
+	                 wordcloud: wordcloud,
+	                 map: map
 	                 };
 	
 	var report = undefined;
@@ -63,7 +66,6 @@ define([
 	 * Show a report
 	 */
 	function refreshCharts() {
-		console.log("#############Refreshing chart");
 		
 		var results = globals.gMainTable.rows({
 	    	order:  'current',  // 'current', 'applied', 'index',  'original'
@@ -71,158 +73,240 @@ define([
 	    	search: 'applied',     // 'none',    'applied', 'removed'
 		}).data();
 		
-		console.log(results);
-		
 		var i,
 			data,
 			chart,
 			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
 		
-		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
+		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+			index = 0;
 		
 		for(i = 0; i < report.row.length; i++) {
 			
-			if(report.row[i].datatable) {
+			/*
+			 * Generate automatic charts from the data in the form
+			 */
+			if(report.row[i].datatable) {			
 				for(j = 0; j < filtered.length; j++) {
-			
-					chart = filtered[j];
-			
-					data = d3.nest()
-					  .key(function(d) { return d[chart.name]; })
-					  .rollup(function(v) { return v[chart.cFn]; })
-					  .entries(results);
 					
-					addChart("#c_" + chart.name, data, chart.cType, i);
+					chart = filtered[j];
+					data = processData(results, chart);
+					addChart("#c_" + chart.name, data, chart, index++);
 				}
 			} else {
+				/*
+				 * Generate custom charts
+				 */
 				for(j = 0; j < report.row[i].charts.length; j++) {
 					
 					chart = report.row[i].charts[j];
 					
-					if(chart.tSeries) {
-						data = d3.nest()
-						  .key(function(d) {
-							  var 	dateArray,
-							  		adjKey,
-							  		adjKeyArray;
-							  
-							  if(d[report.date_q]) {
-								  dateArray = d[report.date_q].split(" ");
-								  if(dateArray.length > 0) {
-									  adjKey = dateArray[0];
-									  adjKeyArray = adjKey.split("-");
-									  
-									  // Default is day
-									  if(chart.period === "month") {
-										  adjKey = adjKeyArray[0] + "-" + adjKeyArray[1]; 
-									  } else if(chart.period === "year") {
-										  adjKey = adjKeyArray[0];
-									  }
-								  }
-							  }
-							 
-							  return adjKey; 
-						  })
-						  .rollup(function(v) {return v[chart.fn]; })
-						  .entries(results);
-						
-						console.log(data);
-						
-					} else {
-						data = d3.nest()
-						  .key(function(d) { return d[chart.name]; })
-						  .rollup(function(v) { return v[chart.cFn]; })
-						  .entries(results);
-					}
-					addChart("#c_" + chart.name, data, chart.cType, i);
+					data = processData(results, chart);
+					
+					addChart("#c_" + chart.name, data, chart, -1);
 					
 				}
 			}
 		}
+	}
+	
+	/*
+	 * Process the data according to chart type
+	 */
+	function processData(results, chart) {
 		
-		/*
-		var countByRegion = d3.nest()
-		  .key(function(d) { return d.region; })
-		  .rollup(function(v) { return v.length; })
-		  .entries(results);
+		var data,
+			parseTimeDay = d3.timeParse("%Y-%m-%d"),
+			parseTimeMonth = d3.timeParse("%Y-%m"),
+			parseTimeYear = d3.timeParse("%Y");	
 		
-		
-		var countByGender = d3.nest()
-		  .key(function(d) { return d.gender; })
-		  .rollup(function(v) { return v.length; })
-		  .entries(results);
-		
-		var avgDurDevice = d3.nest()
-		  .key(function(d) { return d.User; })
-		  .rollup(function(v) { 
-			  return d3.mean(v, function(d) {
-				  var diff = timeDifference(d._start, d._end); 
-				  if(diff) {
-					  diff = diff._milliseconds / 1000;
+		if(chart.tSeries) {
+			data = d3.nest()
+			  .key(function(d) {
+				  var 	dateArray,
+				  		adjKey,
+				  		adjKeyArray;
+				  
+				  if(d[report.date_q]) {
+					  dateArray = d[report.date_q].split(" ");
+					  if(dateArray.length > 0) {
+						  adjKey = dateArray[0];
+						  adjKeyArray = adjKey.split("-");
+						  
+						  // Default is day
+						  if(chart.period === "month") {
+							  adjKey = adjKeyArray[0] + "-" + adjKeyArray[1]; 
+						  } else if(chart.period === "year") {
+							  adjKey = adjKeyArray[0];
+						  }
+					  }
 				  }
-				  return  diff;
-		  	  }); 
-		  })	  
-		  .entries(results);
+				 
+				  return adjKey; 
+			  })
+			  .rollup(function(v) {return v[chart.fn]; })
+			  .entries(results);
+			
+			// Add missing dates if this is a time series bar chart
+			// Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
+			if(chart.chart_type === "bar") {
+				var parseTime = chart.period === "day" ? parseTimeDay : 
+						chart.period === "month" ? parseTimeMonth :
+						parseTimeYear;
+				
+				var dateRange = chart.period === "day" ? d3.timeDay : 
+						chart.period === "month" ? d3.timeMonth :
+							d3.timeYear;
+				
+				data.forEach(function(d) {
+				      d.key = parseTime(d.key);
+				});
+				
+				var dateValueMap = data.reduce(function(r, v) {
+					r[v.key.toISOString()] = v.value;
+						return r;
+				}, {});
+				
+				var dateExtent = d3.extent(data.map(function(v)  {
+					return v.key;
+				}));
+				
+				var range = dateRange.range(
+					    dateExtent[0], 
+					    dateRange.offset(dateExtent[1], 1)
+					  );
+				
+				var newData = [];
+				range.forEach(function(date) {
+					var dx = date.toISOString();
+					if(!(dx in dateValueMap)) {
+						newData.push({
+							'key'  : date,
+						    'value' : 0
+						});
+					} else {
+						newData.push({
+							'key'  : date,
+						    'value' : dateValueMap[dx]
+						});
+					}
+				});
+				
+				data = newData;
+			}
+			
+		} else if (chart.chart_type === "wordcloud") {
+			/*
+			 * Generate data for a word cloud
+			 */
+			//var text_string = "Of course that’s your contention. You’re a first year grad student. You just got finished readin’ some Marxian historian, Pete Garrison probably. You’re gonna be convinced of that ’til next month when you get to James Lemon and then you’re gonna be talkin’ about how the economies of Virginia and Pennsylvania were entrepreneurial and capitalist way back in 1740. That’s gonna last until next year. You’re gonna be in here regurgitating Gordon Wood, talkin’ about, you know, the Pre-Revolutionary utopia and the capital-forming effects of military mobilization… ‘Wood drastically underestimates the impact of social distinctions predicated upon wealth, especially inherited wealth.’ You got that from Vickers, Work in Essex County, page 98, right? Yeah, I read that, too. Were you gonna plagiarize the whole thing for us? Do you have any thoughts of your own on this matter? Or do you, is that your thing? You come into a bar. You read some obscure passage and then pretend, you pawn it off as your own, as your own idea just to impress some girls and embarrass my friend? See, the sad thing about a guy like you is in 50 years, you’re gonna start doin’ some thinkin’ on your own and you’re gonna come up with the fact that there are two certainties in life. One: don’t do that. And two: you dropped a hundred and fifty grand on a fuckin’ education you coulda got for a dollar fifty in late charges at the public library.";
+		    var common = "poop,i,me,my,myself,we,us,our,ours,ourselves,you,your,yours,yourself,yourselves,he,him,his,himself,she,her,hers,herself,it,its,itself,they,them,their,theirs,themselves,what,which,who,whom,whose,this,that,these,those,am,is,are,was,were,be,been,being,have,has,had,having,do,does,did,doing,will,would,should,can,could,ought,i'm,you're,he's,she's,it's,we're,they're,i've,you've,we've,they've,i'd,you'd,he'd,she'd,we'd,they'd,i'll,you'll,he'll,she'll,we'll,they'll,isn't,aren't,wasn't,weren't,hasn't,haven't,hadn't,doesn't,don't,didn't,won't,wouldn't,shan't,shouldn't,can't,cannot,couldn't,mustn't,let's,that's,who's,what's,here's,there's,when's,where's,why's,how's,a,an,the,and,but,if,or,because,as,until,while,of,at,by,for,with,about,against,between,into,through,during,before,after,above,below,to,from,up,upon,down,in,out,on,off,over,under,again,further,then,once,here,there,when,where,why,how,all,any,both,each,few,more,most,other,some,such,no,nor,not,only,own,same,so,than,too,very,say,says,said,shall";
+
+		    var textArray = results.map(function(d) { return d[chart.humanName]; });
+		   
+		    var data = {};
+		    for(i = 0; i < textArray.length; i++) {
+			    var words = textArray[i].split(/[ '\-\(\)\*":;\[\]|{},.!?]+/);
+			    if (words.length == 1){
+			    	if (data[words[0]]){
+		        		data[words[0]]++;
+		            } else {
+		            	data[words[0]] = 1;
+		            }
+			    } else {
+			    	words.forEach(function(word){
+				        var word = word.toLowerCase();
+				        if (word != "" && common.indexOf(word)==-1 && word.length>1){
+				        	if (data[word]){
+				        		data[word]++;
+				            } else {
+				            	data[word] = 1;
+				            }
+				        }
+			    	})
+			    }
+		    }
+		} else if (chart.type === "select") {   
+			var i, j,
+				data = [],
+				dc;
+			for(i = 0; i < chart.choices.length; i++) {
+				dc = d3.nest()
+				  .key(function(d) { return d[chart.choices[i]]; })
+				  .rollup(function(v) { return v[chart.fn]; })
+				  .entries(results);
+				
+				for(j = 0; j < dc.length; j++) {
+					var choiceName = chart.choices[i].split(" - ");
+					if(dc[j].key == "1") {
+						data.push({
+							key: choiceName[1],
+							value: dc[j].value
+						});
+						break;
+					}
+				}
+			}
+
+		} else {
+			data = d3.nest()
+			  .key(function(d) { return d[chart.name]; })
+			  .rollup(function(v) { return v[chart.fn]; })
+			  .entries(results);
+		}
 		
-		console.log("Duration by device: " + JSON.stringify(avgDurDevice));
-		addChart("#chart1", countByRegion, "bar");
-		//addChart("#chart1", countByGender, "bar");
-		addChart("#chart2", countByRegion, "pie");
-		*/
+		return data;
 	}
 	
 	/*
 	 * Add a chart
 	 */
-	function addChart(chart, data, type, index) {
+	function addChart(chartId, data, chart, index) {
 		
 		// Get dynamic widths of container
-		var widthContainer = $(chart).width();
-		var heightContainer = $(chart).height();
+		var widthContainer = $(chartId).width();
+		var heightContainer = $(chartId).height();
 		var view = "0 0 " + widthContainer + " " + heightContainer,
 			margin,
 			width,
 			height;
 		
-		var config = globals.gCharts[chart],
+		var config = globals.gCharts[chartId],
 			init = false;
 		
 		if(typeof config === "undefined") {
 			init = true;
-			globals.gCharts[chart] = {};
-			config = globals.gCharts[chart];
+			globals.gCharts[chartId] = {};
+			config = globals.gCharts[chartId];
 			config.index = index;
 		} 
 		
-		margin = {top: 20, right: 20, bottom: 30, left: 40};
+		// Allow space for labels if needed
+		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var top_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		
+		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 		
-		if(init) {
-			if(type === "pie") {
-				config.svg = d3.select(chart).append("svg")
-				  .attr("preserveAspectRatio", "xMinYMin meet")
-				  .attr("viewBox", view)
-				  .classed("svg-content", true)
-				  .append("g")
-				  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-			} else {
-				config.svg = d3.select(chart).append("svg")
+		if(avCharts[chart.chart_type]) {
+			if(init) {
+				if(chart.chart_type === "map") {
+					config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
+				    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+				} else {
+				config.svg = d3.select(chartId).append("svg")
 				  .attr("preserveAspectRatio", "xMinYMin meet")
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
-			}
- 
-		}
-		
-		if(avCharts[type]) {
-			if(init) {
-				avCharts[type].add(chart, config, data, width, height, margin)
+				}
+				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
 			} 
-			avCharts[type].redraw(chart, config, data, width, height, margin);
+			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
 		} else {
-			alert("unknown chart type: " + type);
+			alert("unknown chart type: " + chart.chart_type);
 		}
 		
 	}
@@ -238,23 +322,65 @@ define([
 		 * Get the list of visible columns
 		 */
 		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
-			filtered = columns.filter(function(d) {
-			   return d.include && !d.hide && d.name !== "prikey" && d.name !== "_start" && d.name !== "_end"; 
+			filtered = [],
+			filtered_prelim = columns.filter(function(d) {
+			   return d.include && 
+			   		!d.hide && 
+			   		d.name !== "prikey" && 
+			   		d.name !== "_start" && 
+			   		d.name !== "_end" &&
+			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,
-			def = report.row[1].def;	
+			def = report.row[1].def;
+			
+		
+		/*
+		 * Merge select multiple columns into a single chart
+		 */
+		var select_questions = {};
+		for(i = 0; i < filtered_prelim.length; i++) {
+			if(filtered_prelim[i].type === "select") {
+				var n = filtered_prelim[i].humanName.split(" - ");
+				if(n.length > 1) {
+					
+					if(!select_questions[n[0]]) {		// New choice
+						
+						filtered_prelim[i].select_name = n[0];
+						filtered_prelim[i].choices = [];
+						filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
+						
+						select_questions[n[0]] = filtered_prelim[i];
+						filtered.push(filtered_prelim[i]);
+					} else {
+						var f = select_questions[n[0]];
+						f.choices.push(filtered_prelim[i].humanName);
+					}
+				}
+				
+				
+			} else {
+				filtered.push(filtered_prelim[i]);
+			}
+		}
 		
 		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
 		
 		for (i = 0; i < filtered.length; i++) {
-			if(!filtered[i].cFn) {
-				filtered[i].cFn = def.fn;
+			if(!filtered[i].fn) {
+				filtered[i].fn = def.fn;
 			}
 			if(!filtered[i].cDom) {
 				filtered[i].cDom = "c_" + filtered[i].name;
 			}
-			if(!filtered[i].cType) {
-				filtered[i].cType = def.cType;
+			if(!filtered[i].chart_type) {
+				if(filtered[i].type === "string") {
+					filtered[i].chart_type = "wordcloud";
+				} if(filtered[i].type === "geopoint") {
+					filtered[i].chart_type = "map";
+				} else {
+					filtered[i].chart_type = def.chart_type;
+				}
 			}
 		}
 		
@@ -383,13 +509,21 @@ define([
 	    $('.chart-type').off().click(function(){
 	    	var $this = $(this),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
-	    		cType = $this.data("ctype"),
+	    		chart_type = $this.data("ctype"),
 	    	    chart = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
 	    	    ibox = chart + "_ibox",
 	    	    name;
 	    	
 	    	var config = globals.gCharts[chart];
-	    	filtered[config.index].cType = cType;
+	    	var fullIndex = getFullIndex(filtered[config.index].humanName);
+	    	console.log("Full index: " + fullIndex);
+	    	// Set the new value in the full index then save it
+	    	if(fullIndex >= 0) {
+	    		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex].chart_type = chart_type;
+	    		saveConfig();
+	    	}
+	    	// Set the new value in the current list of charts
+	    	filtered[config.index].chart_type = chart_type;
 	    	config.svg.remove();
 	    	globals.gCharts[chart] = undefined;
 	    	
@@ -397,6 +531,22 @@ define([
 	    })
 	}
 	
+	/*
+	 * Get the config item that this filterd item refers to
+	 */
+	function getFullIndex(name) {
+		var i = 0,
+			columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+			index = -1;
+		
+		for(i = 0; i < columns.length; i++) {
+			if(columns[i].humanName === name) {
+				index = i;
+				break;
+			}
+		}
+		return index;
+	}
 	/*
 	 * Get the human name  column name
 	 */
