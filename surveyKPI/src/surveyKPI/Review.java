@@ -38,6 +38,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.model.KeyValue;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -301,10 +302,6 @@ public class Review extends Application {
 	}
 
 	//=======================================================================================
-	private class PathAndValue {
-		String path;
-		String value;
-	}
 	
 	private class RelevanceOption {
 		int oId;
@@ -382,10 +379,11 @@ public class Review extends Application {
 					" WHERE f.f_id = q.f_id " +
 					" AND f.s_id = t.s_id " +
 					" AND q.qtext_id = t.text_id " +
+					" AND q.qtype like 'select_' " +
 					" AND t.language = ? " +
 					" AND t.type = 'none' " +		// TODO support multiple types as questions
 					" AND f.s_id = ? " +
-					" AND q.path = ? " +
+					" AND q.qname = ? " +
 			        " ORDER BY f.table_name, q.seq;";
 			pstmtGetQuestion = connectionSD.prepareStatement(sqlGetQuestion);
 			
@@ -413,22 +411,21 @@ public class Review extends Application {
 				String relevance = resultSet.getString(1);
 				
 				/*
-				 * Get the paths of any select questions referenced in this relevance statement
+				 * Get the names of any questions referenced in this relevance statement
 				 */
-				ArrayList<PathAndValue> paths = new ArrayList<PathAndValue> ();
-				addRelevantQuestionPaths(paths, relevance);
+				 ArrayList<KeyValue> names = addRelevantQuestionNames(relevance);
 				
-				for(int i = 0; i < paths.size(); i++) {
+				for(int i = 0; i < names.size(); i++) {
 					
-					PathAndValue pAndV = paths.get(i);
-					String path = pAndV.path;
+					KeyValue kv = names.get(i);
+					String name = kv.k;
 					
 					/*
 					 * Get the question details
 					 */
 					pstmtGetQuestion.setString(1,  language);
 					pstmtGetQuestion.setInt(2,  sId);
-					pstmtGetQuestion.setString(3,  path);
+					pstmtGetQuestion.setString(3,  name);
 					
 					resultSet = pstmtGetQuestion.executeQuery();
 					if (resultSet.next()) {
@@ -437,29 +434,27 @@ public class Review extends Application {
 						q.type = resultSet.getString(2);
 						q.label = resultSet.getString(3);
 						q.name = resultSet.getString(4);
-						q.oname = pAndV.value;
+						q.oname = kv.v;
 						
 						/*
 						 * Get the options
 						 */
-						if(q.type.startsWith("select")) {
-							pstmtGetOption.setString(1, language);
-							pstmtGetOption.setInt(2, q.qId);
-							pstmtGetOption.setInt(3, sId);
-							
-							log.info("SQL: Get Options: " + pstmtGetOption.toString());
-							ResultSet resultSetOptions = pstmtGetOption.executeQuery();
-							while(resultSetOptions.next()) {
-								RelevanceOption o = new RelevanceOption();
-								o.oId = resultSetOptions.getInt(1);
-								o.name = resultSetOptions.getString(2);
-								o.label = resultSetOptions.getString(3);
-								q.options.add(o);
-							}		
-						}
+						pstmtGetOption.setString(1, language);
+						pstmtGetOption.setInt(2, q.qId);
+						pstmtGetOption.setInt(3, sId);
 						
+						log.info("SQL: Get Options: " + pstmtGetOption.toString());
+						ResultSet resultSetOptions = pstmtGetOption.executeQuery();
+						while(resultSetOptions.next()) {
+							RelevanceOption o = new RelevanceOption();
+							o.oId = resultSetOptions.getInt(1);
+							o.name = resultSetOptions.getString(2);
+							o.label = resultSetOptions.getString(3);
+							q.options.add(o);
+						}		
 						relResults.add(q);
-					}	
+					}
+					
 				}
 				
 			}
@@ -1316,32 +1311,108 @@ public class Review extends Application {
 	/*
 	 * Get the paths of any select questions that are referred to in the passed in relevance clause
 	 */
-	private void addRelevantQuestionPaths(ArrayList<PathAndValue> paths, String relevance) {
+	private ArrayList<KeyValue> addRelevantQuestionNames(String relevance) {
 		int idx1 = -1;
 		int idx2 = -1;
 		
-		PathAndValue pv = new PathAndValue();
+		String rawName = null;
+		String name = null;
+		String value = null;
 		
+		ArrayList<KeyValue> names = new ArrayList<KeyValue>();
+		
+		System.out.println("Relevance: " + relevance);
 		while((idx1 = relevance.indexOf("selected", idx1 + 1)) >= 0) {
 			idx1 = relevance.indexOf("(", idx1 + 1);
 			if(idx1 > 0) {
 				idx2 = relevance.indexOf(",", idx1);
 				if(idx2 > 0) {
-					pv.path = relevance.substring(idx1+1, idx2).trim();
+					rawName = relevance.substring(idx1+1, idx2);
+					name = getName(rawName);
+					
 					idx1 = relevance.indexOf("'", idx2);
 					if(idx1 > 0) {
 						idx2 = relevance.indexOf("'", idx1 + 1);
 						if(idx2 > 0) {
-							pv.value = relevance.substring(idx1+1, idx2).trim();
+							value = relevance.substring(idx1+1, idx2).trim();
 						}
 					}
 				}
 
 			}
 			
-		
-			paths.add(pv);
+			System.out.println("xxxxxx " + rawName + " : " + name + " : " + value);
+			KeyValue kv = new KeyValue(name, value);
+			names.add(kv);
 		}
+		
+		/*
+		 * If no questions were found that used the selected() function then try other question names that start with ${
+		 */
+		if(names.isEmpty()) {
+			while((idx1 = relevance.indexOf("${", idx1 + 1)) >= 0) {
+				idx1 = relevance.indexOf("{", idx1);
+				idx2 = relevance.indexOf("}", idx1);
+				if(idx2 > idx1) {
+					name = relevance.substring(idx1+1, idx2);
+					
+					idx1 = relevance.indexOf("'", idx2);
+					if(idx1 > 0) {
+						idx2 = relevance.indexOf("'", idx1 + 1);
+						if(idx2 > 0) {
+							value = relevance.substring(idx1+1, idx2).trim();
+						}
+					}
+				}
+				System.out.println("yyyy " + rawName + " : " + name + " : " + value);
+				KeyValue kv = new KeyValue(name, value);
+				names.add(kv);
+			}	
+		}
+		
+		/*
+		 * If no questions were found that used the selected() or ${..} syntax then try other question names that 
+		 * have a path
+		 */
+		if(names.isEmpty()) {
+			if((idx1 = relevance.lastIndexOf('/')) >= 0) {
+				idx2 = relevance.indexOf('\'', idx1);
+				if(idx2 > idx1) {
+					name = relevance.substring(idx1+1, idx2);
+				}
+				System.out.println("xxxxxx " + rawName + " : " + name + " : " + value);
+				KeyValue kv = new KeyValue(name, value);
+				names.add(kv);
+			}	
+		}
+		
+		return names;
+	}
+	
+	/*
+	 * Convert a name that can be in the format of a path or ${...} into just the name
+	 */
+	private String getName(String rawName) {
+		String name = null;
+		int idx1, idx2;
+		
+		if(rawName != null) {
+			rawName = rawName.trim();
+			if(rawName.startsWith("$")) {
+				idx1 = rawName.indexOf('{');
+				idx2 = rawName.indexOf('}');
+				if(idx1 > -1 && idx2 > idx1) {
+					name = rawName.substring(idx1 + 1, idx2);
+				}
+			} else {
+				idx1 = rawName.lastIndexOf('/');
+				if(idx1 > -1) {
+					name = rawName.substring(idx1 + 1);
+				}
+			}
+		}
+		
+		return name;
 	}
 }
 
