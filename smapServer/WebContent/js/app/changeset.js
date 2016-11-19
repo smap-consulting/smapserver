@@ -445,7 +445,7 @@ define([
 					 * 		- merge the update into the added item
 					 */						
 					} else if(newItem.action === "update" 
-							&& ((elementType === "queston" && typeof element.qId === "undefined") ||
+							&& ((elementType === "question" && typeof element.qId === "undefined") ||
 									(elementType === "option" && item.action === "add"))
 							&& (newItem.changeType === "label" || newItem.changeType === "property")) {
 								
