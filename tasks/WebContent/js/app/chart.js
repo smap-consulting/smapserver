@@ -293,11 +293,15 @@ define([
 		
 		if(avCharts[chart.chart_type]) {
 			if(init) {
+				if(chart.chart_type === "map") {
+					config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
+				    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+				} else {
 				config.svg = d3.select(chartId).append("svg")
 				  .attr("preserveAspectRatio", "xMinYMin meet")
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
-				
+				}
 				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
 			} 
 			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
