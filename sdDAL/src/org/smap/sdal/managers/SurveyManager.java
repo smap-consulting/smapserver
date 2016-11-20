@@ -1187,12 +1187,17 @@ public class SurveyManager {
 		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
 		PreparedStatement pstmtGetOptionTextId = null;
+		PreparedStatement pstmtGetQuestionTextId = null;
 		
 		try {
 			
-			// Get the text id for an option update
+			// Get the text id for a question update
 			String sqlGetOptionTextId = "select label_id from option where l_id = ? and ovalue = ?; ";
 			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
+			
+			// Get the text id for an option update
+			String sqlGetQuestionTextId = "select qtext_id from question where q_id = ?; ";
+			pstmtGetQuestionTextId = connectionSD.prepareStatement(sqlGetQuestionTextId);
 			
 			// Create prepared statements, one for the case where an existing value is being updated
 			String sqlLangOldVal = "update translation set value = ? " +
@@ -1232,7 +1237,13 @@ public class SurveyManager {
 					}
 					
 				} else {
-					text_id = ci.property.key;		// For question we can rely on the key?
+					pstmtGetQuestionTextId.setInt(1, ci.property.qId);
+					ResultSet rs = pstmtGetQuestionTextId.executeQuery();
+					if(rs.next()) {
+						text_id = rs.getString(1);
+					} else {
+						text_id = ci.property.key;		// For question we can rely on the key?
+					}
 				}
 				
 				if(ci.property.oldVal != null && ci.property.newVal != null) {
@@ -1301,6 +1312,7 @@ public class SurveyManager {
 			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtGetOptionTextId != null) {pstmtGetOptionTextId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionTextId != null) {pstmtGetQuestionTextId.close();}} catch (SQLException e) {}
 		}
 	}
 	

@@ -203,10 +203,6 @@ public class QuestionManager {
 					q.source = null;
 				}
 				
-				/*
-				 * Get the path of this question based on its position in the form
-				 */
-				//q.path = getNewPath(sd, q, formPath);
 				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 				// as the editor expects

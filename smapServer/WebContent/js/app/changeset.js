@@ -444,7 +444,9 @@ define([
 					 *      - the existing item is newly added then
 					 * 		- merge the update into the added item
 					 */						
-					} else if(newItem.action === "update" && (typeof element.qId === "undefined") 
+					} else if(newItem.action === "update" 
+							&& ((elementType === "question" && typeof element.qId === "undefined") ||
+									(elementType === "option" && item.action === "add"))
 							&& (newItem.changeType === "label" || newItem.changeType === "property")) {
 								
 						if(newItem.changeType === "label") {
@@ -656,7 +658,11 @@ define([
 				option[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
-					survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
+					if(property.prop !== "value" 
+						|| !survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType]
+						|| survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] === "") {
+							survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
+					}
 				} else {
 					// For non text changes update all languages
 					for(i = 0; i < survey.optionLists[property.optionList].options[property.itemIndex].labels.length; i++) {
