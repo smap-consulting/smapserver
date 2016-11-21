@@ -43,8 +43,7 @@ define([
 	                 bar: bar, 
 	                 pie: pie,
 	                 line: line,
-	                 wordcloud: wordcloud,
-	                 map: map
+	                 wordcloud: wordcloud
 	                 };
 	
 	var report = undefined;
@@ -284,7 +283,7 @@ define([
 		// Allow space for labels if needed
 		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
 		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var top_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
 		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
 		
 		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
@@ -303,6 +302,16 @@ define([
 				  .classed("svg-content", true);
 				}
 				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
+				
+				/*
+				 * Add a title
+				 */
+				config.svg.append("text")
+					.attr("x", (width / 2))				
+					.attr("y", 0 + (margin.top / 2))
+					.attr("text-anchor", "middle")	
+					.attr("class", "chart-title")
+				    .text(chart.humanName);
 			} 
 			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
 		} else {

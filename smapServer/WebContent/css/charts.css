@@ -51,3 +51,7 @@
 		.arc path {
 		  stroke: #fff;
 		}
+		
+		.chart-title {
+			font-size: 16px;
+		}
