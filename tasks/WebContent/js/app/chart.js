@@ -30,8 +30,9 @@ define([
          'app/charts/bar',
          'app/charts/pie',
          'app/charts/line',
+         'app/charts/wordcloud',
          'svgsave'], 
-		function($, modernizr, lang, globals, d3, bar, pie, line,  svgsave) {
+		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, svgsave) {
 
 	
 	/*
@@ -41,7 +42,9 @@ define([
 	var avCharts = {
 	                 bar: bar, 
 	                 pie: pie,
-	                 line: line
+	                 line: line,
+	                 wordcloud: wordcloud,
+	                 map: map
 	                 };
 	
 	var report = undefined;
