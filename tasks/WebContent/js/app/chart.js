@@ -114,61 +114,99 @@ define([
 	 */
 	function processData(results, chart) {
 		
-		var data,
+		var allData = [],
+			data,
 			parseTimeDay = d3.timeParse("%Y-%m-%d"),
+			formatTimeDay = d3.timeFormat("%Y-%m-%d"),
 			parseTimeMonth = d3.timeParse("%Y-%m"),
-			parseTimeYear = d3.timeParse("%Y");	
+			formatTimeMonth = d3.timeFormat("%Y-%m"),
+			parseTimeYear = d3.timeParse("%Y"),
+			formatTimeYear = d3.timeFormat("%Y"),
+			i,
+			dateValueMap = [],
+			dateExtent;
+		
+		var parseTime = chart.period === "day" ? parseTimeDay : 
+			chart.period === "month" ? parseTimeMonth :
+			parseTimeYear;
+		var formatTime = chart.period === "day" ? formatTimeDay : 
+			chart.period === "month" ? formatTimeMonth :
+			formatTimeYear;
+	
+		var dateRange = chart.period === "day" ? d3.timeDay : 
+			chart.period === "month" ? d3.timeMonth :
+				d3.timeYear;
 		
 		if(chart.tSeries) {
-			data = d3.nest()
-			  .key(function(d) {
-				  var 	dateArray,
-				  		adjKey,
-				  		adjKeyArray;
-				  
-				  if(d[report.date_q]) {
-					  dateArray = d[report.date_q].split(" ");
-					  if(dateArray.length > 0) {
-						  adjKey = dateArray[0];
-						  adjKeyArray = adjKey.split("-");
-						  
-						  // Default is day
-						  if(chart.period === "month") {
-							  adjKey = adjKeyArray[0] + "-" + adjKeyArray[1]; 
-						  } else if(chart.period === "year") {
-							  adjKey = adjKeyArray[0];
+			config.columns = [];
+			config.columnNames = [];
+			for(i = 0; i < chart.groups.length; i++) {
+				
+				config.columns.push(chart.groups[i].label);
+				config.columnNames.push(chart.groups[i].q);
+				allData.push(d3.nest()
+				  .key(function(d) {
+					  var 	dateArray,
+					  		adjKey,
+					  		adjKeyArray;
+					  
+					  if(d[chart.groups[i].q]) {
+						  dateArray = d[chart.groups[i].q].trim().split(" ");
+						  if(dateArray.length > 0) {
+							  adjKey = dateArray[0];
+							  adjKeyArray = adjKey.split("-");
+							  
+							  // Default is day
+							  if(chart.period === "month") {
+								  adjKey = adjKeyArray[0] + "-" + adjKeyArray[1]; 
+							  } else if(chart.period === "year") {
+								  adjKey = adjKeyArray[0];
+							  }
 						  }
 					  }
-				  }
-				 
-				  return adjKey; 
-			  })
-			  .rollup(function(v) {return v[chart.fn]; })
-			  .entries(results);
+					 
+					  return adjKey; 
+				  })
+				  .rollup(function(v) {return v[chart.fn]; })
+				  .entries(results));
+			}
 			
-			// Add missing dates if this is a time series bar chart
+			/*
+			 * Remove undefined dates
+			 */
+			for(i = 0; i < allData.length; i++) {
+				allData[i] = allData[i].filter(function(v){
+					return v.key !== "undefined";
+				})
+			}
+			
+			// Add missing dates
 			// Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
 			if(chart.chart_type === "bar") {
-				var parseTime = chart.period === "day" ? parseTimeDay : 
-						chart.period === "month" ? parseTimeMonth :
-						parseTimeYear;
 				
-				var dateRange = chart.period === "day" ? d3.timeDay : 
-						chart.period === "month" ? d3.timeMonth :
-							d3.timeYear;
+				for(i = 0; i < allData.length; i++) {
+					allData[i].forEach(function(d) {
+					      d.key = parseTime(d.key);
+					});
+					
+					dateValueMap[i] = allData[i].reduce(function(r, v) {
+						r[v.key.toISOString()] = v.value;
+							return r;
+					}, {});
+					
+					
+				}
 				
-				data.forEach(function(d) {
-				      d.key = parseTime(d.key);
-				});
+				// Get the extent from all the dates in the time series
+				var allDates = [];
+				for(i = 0; i < allData.length; i++) {
+					allDates = allDates.concat(allData[i])
+				}
 				
-				var dateValueMap = data.reduce(function(r, v) {
-					r[v.key.toISOString()] = v.value;
-						return r;
-				}, {});
-				
-				var dateExtent = d3.extent(data.map(function(v)  {
+				dateExtent = d3.extent(allDates.map(function(v)  {
 					return v.key;
 				}));
+				
 				
 				var range = dateRange.range(
 					    dateExtent[0], 
@@ -178,17 +216,18 @@ define([
 				var newData = [];
 				range.forEach(function(date) {
 					var dx = date.toISOString();
-					if(!(dx in dateValueMap)) {
-						newData.push({
-							'key'  : date,
-						    'value' : 0
-						});
-					} else {
-						newData.push({
-							'key'  : date,
-						    'value' : dateValueMap[dx]
-						});
+					var newDataItem = {
+							'key': formatTime(date)
+						};
+					
+					for(i = 0; i < allData.length; i++) {
+						if(!(dx in dateValueMap[i])) {
+							newDataItem[chart.groups[i].label] = 0;
+						} else {
+							newDataItem[chart.groups[i].label] = dateValueMap[i][dx];
+						}
 					}
+					newData.push(newDataItem);
 				});
 				
 				data = newData;

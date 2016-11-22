@@ -131,6 +131,15 @@ require([
 						charts: 
 							[
 						         {
+						        	groups: [
+						        	         {
+						        	        	 q: "_start",
+						        	        	 label: "Upload Time"
+						        	         },
+						        	         {
+						        	        	 q: "Action Date",
+						        	        	 label: "Date Closed"
+						        	         }],
 									humanName: "Feedback per day",
 									name: "periodic_count",
 									chart_type: "bar",		// line

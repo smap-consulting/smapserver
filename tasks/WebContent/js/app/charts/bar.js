@@ -45,12 +45,16 @@ define([
 
 		var barWidth;   
 	    
-	    config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-		config.x.domain(data.map(function(d) { return d.key; }));
-		barWidth = config.x.bandwidth();
+	    //config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+	    config.x0 = d3.scale.ordinal().rangeRoundBands([0, width], .1);
+	    config.x1 = d3.scale.ordinal();
+	    
+		config.x0.domain(data.map(function(d) { return d.key; }));
+		config.x1.domain(config.columns).rangeRoundBands([0, x0.rangeBand()]);
+		barWidth = config.x1.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+	    config.y.domain([0, d3.max(data, function(d) { return d[chart.groups[0].label]; })]);
 		
 		config.xAxis = d3.axisBottom(config.x);
 		config.yAxis = d3.axisLeft(config.y).ticks(10, "");
@@ -61,7 +65,14 @@ define([
 		config.g.append("g")
 			.attr("class", "axis axis--x")
 		    .attr("transform", "translate(0," + height + ")")
-		    .call(config.xAxis);
+		    .call(config.xAxis)
+		    .selectAll("text")	
+            	.style("text-anchor", "end")
+            	.attr("dx", "-.8em")
+            	.attr("dy", ".15em")
+            	.attr("transform", function(d) {
+            		return "rotate(-65)" 
+                	});
 	
 		// Add x-axis label
 		var text = config.svg.append("text")             
@@ -71,6 +82,17 @@ define([
 		
 		if(chart.tSeries) {
 			text.text(localise.set["c_" + chart.period]);
+			
+			// Max 10 X axis ticks
+			if(data.length > 10) {
+				var skips = Math.ceil(data.length / 10);
+				var tick_text = config.svg.selectAll(".axis--x .tick text");
+	
+				tick_text.attr("class", function(d,i){
+					if(i%skips != 0) d3.select(this).remove();
+				});
+			}
+			
 		} else if(chart.select_name) {
 			text.text(chart.select_name);
 		} else {
@@ -97,15 +119,17 @@ define([
 		
 		var barWidth;
 		
-		config.x.domain(data.map(function(d) { 
+		config.x0.domain(data.map(function(d) { 
 			if(!d.key || d.key === "") {
 				return localise.set["c_undef"]; 
 			} else {
 				return d.key;
 			}
 		}));
-		barWidth = config.x.bandwidth();
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]);
+		config.x1.domain(config.columns).rangeRoundBands([0, x0.rangeBand()]);
+		barWidth = config.x1.bandwidth();
+
+		config.y.domain([0, d3.max(data, function(d) { return d[chart.groups[0].label]; })]);
 		
 		// Update axes
 		config.svg.select(".axis--y")
@@ -117,16 +141,12 @@ define([
 			//.duration(500)
 			.call(config.xAxis);
 		
-		var bars = config.g.selectAll(".bar").data(data, function(d) { return d.key; });
+		var period = config.svg.selectAll(".period").data(data)
+	    	.enter().append("g")
+	        	.attr("class", "period")
+	        	.attr("transform", function(d) { return "translate(" + x0(d.key) + ",0)"; });
+		var bars = period.selectAll(".bar").data(data, function(d) { return d.columnNames; });
 		
-		// Bars being removed
-		bars.exit()
-			.transition()
-			.duration(300)
-			.attr("y", config.y(0))
-			.attr("height", height - config.y(0))
-			//.style('fill-opacity', 1e-6)
-			.remove();
 		
 		// New bars
 		bars.enter()
@@ -140,19 +160,27 @@ define([
 				}
 			})
 	    	.attr("y", function(d) { 
-	    		return config.y(d.value); 
+	    		return config.y(d[chart.groups[0].label]); 
 	    		})
 	    	.attr("width", barWidth)
-	    	.attr("height", function(d) { return height - config.y(d.value); });
+	    	.attr("height", function(d) { return height - config.y(d[chart.groups[0].label]); });
 		
 		// Bars being update
 		bars.transition()
 			.duration(300)
 	    	.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { return config.y(d.value); })
+	    	.attr("y", function(d) { return config.y(d[chart.groups[0].label]); })
 	    	.attr("width", barWidth)
-	    	.attr("height", function(d) { return height - config.y(d.value); });
-					
+	    	.attr("height", function(d) { return height - config.y(d[chart.groups[0].label]); });
+			
+		// Bars being removed
+		bars.exit()
+			.transition()
+			.duration(300)
+			.attr("y", config.y(0))
+			.attr("height", height - config.y(0))
+			//.style('fill-opacity', 1e-6)
+			.remove();
 	}
 	
 
