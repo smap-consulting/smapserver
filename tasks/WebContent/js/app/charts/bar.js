@@ -46,11 +46,13 @@ define([
 		var barWidth;   
 	    
 	    //config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-	    config.x0 = d3.scale.ordinal().rangeRoundBands([0, width], .1);
-	    config.x1 = d3.scale.ordinal();
+	    config.x0 = d3.scaleBand().rangeRound([0, width], .1);
+	    config.x1 = d3.scaleBand();
 	    
-		config.x0.domain(data.map(function(d) { return d.key; }));
-		config.x1.domain(config.columns).rangeRoundBands([0, x0.rangeBand()]);
+		config.x0.domain(data.map(function(d) { 
+			return d.period; 
+			}));
+		config.x1.domain(chart.groupLabels).rangeRound([0, config.x0.bandwidth()]);
 		barWidth = config.x1.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
@@ -119,6 +121,7 @@ define([
 		
 		var barWidth;
 		
+		/*
 		config.x0.domain(data.map(function(d) { 
 			if(!d.key || d.key === "") {
 				return localise.set["c_undef"]; 
@@ -126,7 +129,15 @@ define([
 				return d.key;
 			}
 		}));
-		config.x1.domain(config.columns).rangeRoundBands([0, x0.rangeBand()]);
+		*/
+
+	    config.x0 = d3.scaleBand().rangeRound([0, width], .1);
+	    config.x1 = d3.scaleBand();
+	    
+		config.x0.domain(data.map(function(d) { 
+			return d.period; 
+			}));
+		config.x1.domain(chart.groupLabels).rangeRound([0, config.x0.bandwidth()]);
 		barWidth = config.x1.bandwidth();
 
 		config.y.domain([0, d3.max(data, function(d) { return d[chart.groups[0].label]; })]);

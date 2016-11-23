@@ -99,7 +99,7 @@ define([
 				for(j = 0; j < report.row[i].charts.length; j++) {
 					
 					chart = report.row[i].charts[j];
-					
+					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 					data = processData(results, chart);
 					
 					addChart("#c_" + chart.name, data, chart, -1);
@@ -138,12 +138,8 @@ define([
 				d3.timeYear;
 		
 		if(chart.tSeries) {
-			config.columns = [];
-			config.columnNames = [];
 			for(i = 0; i < chart.groups.length; i++) {
 				
-				config.columns.push(chart.groups[i].label);
-				config.columnNames.push(chart.groups[i].q);
 				allData.push(d3.nest()
 				  .key(function(d) {
 					  var 	dateArray,
@@ -217,15 +213,20 @@ define([
 				range.forEach(function(date) {
 					var dx = date.toISOString();
 					var newDataItem = {
-							'key': formatTime(date)
-						};
+							'period': formatTime(date),
+							'pr': [] 
+						},
+						newResults;
 					
 					for(i = 0; i < allData.length; i++) {
+						newResults = {};
+						newResults.key = chart.groups[i].q;
 						if(!(dx in dateValueMap[i])) {
-							newDataItem[chart.groups[i].label] = 0;
+							newResults.value = 0;
 						} else {
-							newDataItem[chart.groups[i].label] = dateValueMap[i][dx];
+							newResults.value = dateValueMap[i][dx];
 						}
+						newDataItem.pr.push(newResults);
 					}
 					newData.push(newDataItem);
 				});
