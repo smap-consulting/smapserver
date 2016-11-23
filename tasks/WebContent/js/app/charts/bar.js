@@ -56,9 +56,16 @@ define([
 		barWidth = config.x1.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
-	    config.y.domain([0, d3.max(data, function(d) { return d[chart.groups[0].label]; })]);
+	    config.y.domain([0, d3.max(data, function(d) { 
+			var i,
+				maxv = d.pr[0].value;
+			for(i = 0; i < d.pr.length - 1; i++) {
+				maxv = Math.max(maxv, d.pr[i+1].value)
+			}
+			return maxv; 
+		})]);
 		
-		config.xAxis = d3.axisBottom(config.x);
+		config.xAxis = d3.axisBottom(config.x0);
 		config.yAxis = d3.axisLeft(config.y).ticks(10, "");
 		
 		config.g = config.svg.append("g")
@@ -111,6 +118,9 @@ define([
 		    .attr("class", "axis axis--y")
 		    .call(config.yAxis);
 	
+
+		
+
 		
 	}
 	
@@ -120,6 +130,7 @@ define([
 	function redraw(chartId, chart, config, data, width, height, margin) {
 		
 		var barWidth;
+		var color = d3.scaleOrdinal(d3.schemeCategory10);
 		
 		/*
 		config.x0.domain(data.map(function(d) { 
@@ -140,7 +151,14 @@ define([
 		config.x1.domain(chart.groupLabels).rangeRound([0, config.x0.bandwidth()]);
 		barWidth = config.x1.bandwidth();
 
-		config.y.domain([0, d3.max(data, function(d) { return d[chart.groups[0].label]; })]);
+		config.y.domain([0, d3.max(data, function(d) { 
+				var i,
+					maxv = d.pr[0].value;
+				for(i = 0; i < d.pr.length - 1; i++) {
+					maxv = Math.max(maxv, d.pr[i+1].value)
+				}
+				return maxv; 
+			})]);
 		
 		// Update axes
 		config.svg.select(".axis--y")
@@ -152,11 +170,12 @@ define([
 			//.duration(500)
 			.call(config.xAxis);
 		
-		var period = config.svg.selectAll(".period").data(data)
+		var period = config.g.selectAll(".period").data(data)
 	    	.enter().append("g")
 	        	.attr("class", "period")
-	        	.attr("transform", function(d) { return "translate(" + x0(d.key) + ",0)"; });
-		var bars = period.selectAll(".bar").data(data, function(d) { return d.columnNames; });
+	        	.attr("transform", function(d) { return "translate(" + config.x0(d.period) + ",0)"; });
+		
+		var bars = period.selectAll(".bar").data(function(d) { return d.pr; });
 		
 		
 		// New bars
@@ -165,24 +184,26 @@ define([
 			.attr("class", "bar")
 			.attr("x", function(d) { 
 				if(!d.key || d.key === "") {
-					return config.x(localise.set["c_undef"]);
+					return config.x1(localise.set["c_undef"]);
 				} else {
-					return config.x(d.key); 
+					return config.x1(d.key); 
 				}
 			})
 	    	.attr("y", function(d) { 
-	    		return config.y(d[chart.groups[0].label]); 
+	    		return config.y(d.value); 
 	    		})
 	    	.attr("width", barWidth)
-	    	.attr("height", function(d) { return height - config.y(d[chart.groups[0].label]); });
-		
+	    	.attr("height", function(d) { return height - config.y(d.value); })
+	    	.style("fill", function(d) { return color(d.key); });
+			
 		// Bars being update
 		bars.transition()
 			.duration(300)
-	    	.attr("x", function(d) { return config.x(d.key); })
-	    	.attr("y", function(d) { return config.y(d[chart.groups[0].label]); })
+	    	.attr("x", function(d) { return config.x0(d.key); })
+	    	.attr("y", function(d) { return config.y(d.value); })
 	    	.attr("width", barWidth)
-	    	.attr("height", function(d) { return height - config.y(d[chart.groups[0].label]); });
+	    	.attr("height", function(d) { return height - config.y(d.value); })
+	    	.style("fill", function(d) { return color(d.key); });
 			
 		// Bars being removed
 		bars.exit()
@@ -192,6 +213,25 @@ define([
 			.attr("height", height - config.y(0))
 			//.style('fill-opacity', 1e-6)
 			.remove();
+		
+		var legend = config.svg.selectAll(".legend")
+	      .data(chart.groupLabels.slice().reverse())
+	      .enter().append("g")
+		      .attr("class", "legend")
+		      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+		
+		legend.append("rect")
+	      .attr("x", width - 18)
+	      .attr("width", 18)
+	      .attr("height", 18)
+	      .style("fill", function(d) { return color(d); });
+		
+		legend.append("text")
+	      .attr("x", width - 24)
+	      .attr("y", 9)
+	      .attr("dy", ".35em")
+	      .style("text-anchor", "end")
+	      .text(function(d) { return d; });
 	}
 	
 

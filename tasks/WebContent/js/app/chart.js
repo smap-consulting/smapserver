@@ -85,13 +85,15 @@ define([
 			/*
 			 * Generate automatic charts from the data in the form
 			 */
-			if(report.row[i].datatable) {			
+			if(report.row[i].datatable) {	
+				/*
 				for(j = 0; j < filtered.length; j++) {
 					
 					chart = filtered[j];
 					data = processData(results, chart);
 					addChart("#c_" + chart.name, data, chart, index++);
 				}
+				*/
 			} else {
 				/*
 				 * Generate custom charts
@@ -220,7 +222,7 @@ define([
 					
 					for(i = 0; i < allData.length; i++) {
 						newResults = {};
-						newResults.key = chart.groups[i].q;
+						newResults.key = chart.groups[i].label;
 						if(!(dx in dateValueMap[i])) {
 							newResults.value = 0;
 						} else {
