@@ -142,7 +142,7 @@ require([
 						        	         }],
 									humanName: "Feedback per day",
 									name: "periodic_count",
-									chart_type: "bar",		// line
+									chart_type: "groupedBar",
 									group: undefined,
 									fn: "length",
 									tSeries: true,
@@ -155,6 +155,7 @@ require([
 					name: "chartrow",
 					def: {
 						chart_type: "bar",
+						groups: undefined,
 						group: undefined,
 						fn: "length",
 						tSeries: false,

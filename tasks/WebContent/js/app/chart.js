@@ -31,8 +31,9 @@ define([
          'app/charts/pie',
          'app/charts/line',
          'app/charts/wordcloud',
+         'app/charts/groupedBar',
          'svgsave'], 
-		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, svgsave) {
+		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, svgsave) {
 
 	
 	/*
@@ -43,7 +44,8 @@ define([
 	                 bar: bar, 
 	                 pie: pie,
 	                 line: line,
-	                 wordcloud: wordcloud
+	                 wordcloud: wordcloud,
+	                 groupedBar: groupedBar
 	                 };
 	
 	var report = undefined;
@@ -86,14 +88,12 @@ define([
 			 * Generate automatic charts from the data in the form
 			 */
 			if(report.row[i].datatable) {	
-				/*
 				for(j = 0; j < filtered.length; j++) {
 					
 					chart = filtered[j];
 					data = processData(results, chart);
 					addChart("#c_" + chart.name, data, chart, index++);
 				}
-				*/
 			} else {
 				/*
 				 * Generate custom charts
@@ -180,7 +180,7 @@ define([
 			
 			// Add missing dates
 			// Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
-			if(chart.chart_type === "bar") {
+			if(chart.chart_type === "groupedBar" || chart.chart_type === "bar") {
 				
 				for(i = 0; i < allData.length; i++) {
 					allData[i].forEach(function(d) {
@@ -215,7 +215,7 @@ define([
 				range.forEach(function(date) {
 					var dx = date.toISOString();
 					var newDataItem = {
-							'period': formatTime(date),
+							'key': formatTime(date),
 							'pr': [] 
 						},
 						newResults;
@@ -343,7 +343,7 @@ define([
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
 				}
-				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin)
+				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin);
 				
 				/*
 				 * Add a title
@@ -378,8 +378,12 @@ define([
 			   return d.include && 
 			   		!d.hide && 
 			   		d.name !== "prikey" && 
+			   		d.name !== "_upload_time" && 
 			   		d.name !== "_start" && 
 			   		d.name !== "_end" &&
+			   		d.name !== "instancename" && 
+			   		d.type !== "dateTime" &&
+			   		d.type !== "date" &&
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,

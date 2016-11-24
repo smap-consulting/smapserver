@@ -55,7 +55,7 @@ define([
 			.innerRadius(10);
 		
 		color = d3.scaleOrdinal()
-			.range(d3.schemeCategory20);
+			.range(d3.schemeCategory10);
 		
 		var labelArc = d3.arc()
 	    	.outerRadius(radius - 40)
@@ -90,19 +90,6 @@ define([
 	    			return d.data.key; 
 	    		});
 	    	
-		
-	
-	      
-		
-		
-		/*
-		config.g.append("text")
-	      .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-	      .attr("dy", ".35em")
-	      .text(function(d) { 
-	    	  return d.data.key; 
-	    	  });
-		 */
 	}
 	
 	/*
@@ -115,15 +102,16 @@ define([
 		config.path = config.path.data(config.pie(data));
 		
 		config.path.enter().append("path")
-	     	.attr("fill", function(d, i) { return color(d.data.key); })
-	      .attr("d", arc(enterAntiClockwise))
-	      .each(function (d) {
-	        this._current = {
-	          data: d.key,
-	          value: d.value,
-	          startAngle: enterAntiClockwise.startAngle,
-	          endAngle: enterAntiClockwise.endAngle
-	        };
+			.merge(config.path)
+	    	.attr("fill", function(d, i) { return color(d.data.key); })
+	    	.attr("d", arc(enterAntiClockwise))
+	    	.each(function (d) {
+	    		this._current = {
+	    		data: d.key,
+	    		value: d.value,
+	    		startAngle: enterAntiClockwise.startAngle,
+	    		endAngle: enterAntiClockwise.endAngle
+	    		};
 	      }); // store the initial values
 		 
 		config.path.exit()
