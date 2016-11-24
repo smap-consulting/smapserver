@@ -177,8 +177,6 @@ require([
 		window.chart = chart;
 		window.moment = moment;
 		localise.setlang();		// Localise HTML
-		
-		var x = y.nar;
 
 		// Get the parameters and show a management survey if required
 		params = location.search.substr(location.search.indexOf("?") + 1)

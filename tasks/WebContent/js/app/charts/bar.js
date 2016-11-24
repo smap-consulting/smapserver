@@ -45,6 +45,8 @@ define([
 
 		var barWidth;   
 	    
+		config.color = d3.scaleOrdinal(d3.schemeCategory10);
+		
 	    //config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
 	    config.x0 = d3.scaleBand().rangeRound([0, width], .1);
 	    config.x1 = d3.scaleBand();
@@ -71,19 +73,13 @@ define([
 		config.g = config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-		config.g.append("g")
+		config.xTicks = config.g.append("g")
 			.attr("class", "axis axis--x")
-		    .attr("transform", "translate(0," + height + ")")
-		    .call(config.xAxis)
-		    .selectAll("text")	
-            	.style("text-anchor", "end")
-            	.attr("dx", "-.8em")
-            	.attr("dy", ".15em")
-            	.attr("transform", function(d) {
-            		return "rotate(-65)" 
-                	});
+			.attr("transform", "translate(0," + height + ")");
+		config.xTicks.call(config.xAxis);
 	
 		// Add x-axis label
+		/*
 		var text = config.svg.append("text")             
 	    		.attr("x", width / 2 )
 	    		.attr("y",  height + margin.top + 40 )
@@ -107,6 +103,7 @@ define([
 		} else {
 			text.text(chart.humanName);
 		}
+		*/
 		
 		// Add y-axis label
 		config.svg.append("text")
@@ -117,9 +114,6 @@ define([
 		config.g.append("g")
 		    .attr("class", "axis axis--y")
 		    .call(config.yAxis);
-	
-
-		
 
 		
 	}
@@ -129,8 +123,8 @@ define([
 	 */
 	function redraw(chartId, chart, config, data, width, height, margin) {
 		
-		var barWidth;
-		var color = d3.scaleOrdinal(d3.schemeCategory10);
+		var barWidth,
+			i;
 		
 		/*
 		config.x0.domain(data.map(function(d) { 
@@ -141,12 +135,9 @@ define([
 			}
 		}));
 		*/
-
-	    config.x0 = d3.scaleBand().rangeRound([0, width], .1);
-	    config.x1 = d3.scaleBand();
 	    
 		config.x0.domain(data.map(function(d) { 
-			return d.period; 
+				return d.period; 
 			}));
 		config.x1.domain(chart.groupLabels).rangeRound([0, config.x0.bandwidth()]);
 		barWidth = config.x1.bandwidth();
@@ -161,27 +152,40 @@ define([
 			})]);
 		
 		// Update axes
-		config.svg.select(".axis--y")
-			//.transition()
-			//.duration(500)
-			.call(config.yAxis.ticks(5, ""));
-		config.svg.select(".axis--x")
-			//.transition()
-			//.duration(500)
-			.call(config.xAxis);
+		config.svg.select(".axis--y").call(config.yAxis.ticks(5, ""));
+		if(chart.tSeries) {
+			var tvArray = [];
+			if(data.length > 10) {
+				var skips = Math.ceil(data.length / 10);
+				for(i = 0; i < data.length; i++) {
+					if(i == data.length - 1 || i%skips == 0) {
+						tvArray.push(data[i].period);
+					}
+				}
+				
+			} else {
+				tvArray = data.map(function (d) { return d.period});
+			}
+			config.xAxis.tickValues(tvArray);
+		}
 		
-		var period = config.g.selectAll(".period").data(data)
-	    	.enter().append("g")
-	        	.attr("class", "period")
-	        	.attr("transform", function(d) { return "translate(" + config.x0(d.period) + ",0)"; });
+		config.xTicks.call(config.xAxis);
 		
-		var bars = period.selectAll(".bar").data(function(d) { return d.pr; });
 		
+		var period = config.g.selectAll(".period").data(data);
+		var periodEntries = period
+			.enter().append("g").attr("class", "period")
+			.merge(period)
+			.attr("transform", function(d) { return "translate(" + config.x0(d.period) + ",0)"; });
+		period.exit().remove();
+		
+		var bars = periodEntries.selectAll(".bar").data(function(d) { return d.pr; });
 		
 		// New bars
 		bars.enter()
 			.append("rect")
 			.attr("class", "bar")
+			.merge(bars)
 			.attr("x", function(d) { 
 				if(!d.key || d.key === "") {
 					return config.x1(localise.set["c_undef"]);
@@ -194,26 +198,49 @@ define([
 	    		})
 	    	.attr("width", barWidth)
 	    	.attr("height", function(d) { return height - config.y(d.value); })
-	    	.style("fill", function(d) { return color(d.key); });
-			
-		// Bars being update
-		bars.transition()
-			.duration(300)
-	    	.attr("x", function(d) { return config.x0(d.key); })
-	    	.attr("y", function(d) { return config.y(d.value); })
-	    	.attr("width", barWidth)
-	    	.attr("height", function(d) { return height - config.y(d.value); })
-	    	.style("fill", function(d) { return color(d.key); });
+	    	.style("fill", function(d) { return config.color(d.key); });
 			
 		// Bars being removed
 		bars.exit()
 			.transition()
-			.duration(300)
 			.attr("y", config.y(0))
 			.attr("height", height - config.y(0))
 			//.style('fill-opacity', 1e-6)
 			.remove();
 		
+		config.xTicks.call(config.xAxis);
+		/*
+		config.xTicks = config.g.append("g")
+			.attr("class", "axis axis--x")
+			.attr("transform", "translate(0," + height + ")")
+			.call(config.xAxis)
+			.selectAll("text");
+			
+		xText.enter()
+	        	.style("text-anchor", "end")
+	        	.attr("dx", "-.8em")
+	        	.attr("dy", ".15em")
+	        	.attr("transform", function(d) {
+	        		return "rotate(-65)" 
+	            	});
+		xText.exit().remove();
+		*
+		if(chart.tSeries) {
+			// Max 10 X axis ticks
+			if(data.length > 10) {
+				var skips = Math.ceil(data.length / 10);
+				var tick_text = config.svg.selectAll(".axis--x .tick text");
+	
+				tick_text.attr("class", function(d,i){
+					if(i%skips != 0) d3.select(this).remove();
+				});
+			}
+		}
+		*/
+		
+		/*
+		 * Legend
+		 */
 		var legend = config.svg.selectAll(".legend")
 	      .data(chart.groupLabels.slice().reverse())
 	      .enter().append("g")
@@ -224,7 +251,7 @@ define([
 	      .attr("x", width - 18)
 	      .attr("width", 18)
 	      .attr("height", 18)
-	      .style("fill", function(d) { return color(d); });
+	      .style("fill", function(d) { return config.color(d); });
 		
 		legend.append("text")
 	      .attr("x", width - 24)
