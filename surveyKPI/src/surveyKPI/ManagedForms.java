@@ -600,10 +600,11 @@ public class ManagedForms extends Application {
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
-	@Path("/config/{sId}")
+	@Path("/config/{sId}/{key}")
 	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
+			@PathParam("key") String key,
 			@FormParam("settings") String settings
 			) { 
 		
@@ -617,10 +618,10 @@ public class ManagedForms extends Application {
 		    return response;
 		}
 		
-		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = 'mf';";
+		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = ?;";
 		PreparedStatement pstmtUpdate = null;
 		
-		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, 'mf');";
+		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, ?);";
 		PreparedStatement pstmtInsert = null;
 		
 		// Authorisation - Access
@@ -636,28 +637,32 @@ public class ManagedForms extends Application {
 		
 		try {
 
-			/*
-			 * Convert the input to java classes and then back to json to ensure it is well formed
-			 */
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
-			ManagedFormUserConfig uc = gson.fromJson(settings, type);
-			String configString = gson.toJson(uc);
+			if(key.equals("mf")) {
+				/*
+				 * Convert the input to java classes and then back to json to ensure it is well formed
+				 */
+				Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+				ManagedFormUserConfig uc = gson.fromJson(settings, type);
+				settings = gson.toJson(uc);
+			}
 			
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
 			
 			pstmtUpdate = sd.prepareStatement(sqlUpdate);
-			pstmtUpdate.setString(1, configString);
+			pstmtUpdate.setString(1, settings);
 			pstmtUpdate.setInt(2, uId);
 			pstmtUpdate.setInt(3, sId);
+			pstmtUpdate.setString(4, key);
 			log.info("Updating managed form settings: " + pstmtUpdate.toString());
 			int count = pstmtUpdate.executeUpdate();
 			
 			if(count == 0) {
 				pstmtInsert = sd.prepareStatement(sqlInsert);
-				pstmtInsert.setString(1, configString);
+				pstmtInsert.setString(1, settings);
 				pstmtInsert.setInt(2, uId);
 				pstmtInsert.setInt(3, sId);
+				pstmtInsert.setString(4, key);
 				log.info("Inserting managed form settings: " + pstmtInsert.toString());
 				pstmtInsert.executeUpdate();
 			}
@@ -672,6 +677,74 @@ public class ManagedForms extends Application {
 			
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
+	
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Get the configuration settings
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/getconfig/{sId}/{key}")
+	public Response getManageConfig(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("key") String key
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key = ?;";
+		PreparedStatement pstmt = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		try {
+
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, uId);
+			pstmt.setInt(2, sId);
+			pstmt.setString(3, key);
+			
+			log.info("Getting settings: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				response = Response.ok(rs.getString(1)).build();
+			} else {
+
+				response = Response.ok().build();
+			}
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 	
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 		}

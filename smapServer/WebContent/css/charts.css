@@ -55,3 +55,13 @@
 		.chart-title {
 			font-size: 16px;
 		}
+
+.fa-widget-edit {
+	font-size: 1.5em;
+	margin: 5px;
+}
+		
+.fa-widget-close {
+	margin: 5px;
+	font-size: 1.5em;
+}

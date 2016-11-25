@@ -49,13 +49,48 @@ define([
 	                 };
 	
 	var report = undefined;
+	var gEdConfig,			// Temporary objects used when editing a chart
+		gEdChart,
+		gEdFilteredChart,
+		gChartId;
 	
-	return {	
+	return {
+		init: init,
 		setReport: setReport,
 		setChartList: setChartList,
 		refreshCharts: refreshCharts,
 
 	};
+	
+	function init() {
+		localise.setlang();
+		$('#editWidgetSave').off().click(function(){
+			
+			var width = $('#ew_width').val(),
+				reset = false;
+			
+			if(width != gEdChart.width) {
+				reset = true;
+			}
+			
+			gEdChart.width = $('#ew_width').val();
+			if(gEdConfig.fromDT) {
+				gEdFilteredChart.width = gEdChart.width;
+				saveConfig();
+			} else {
+				saveReport(report);
+			}
+
+	    	gEdConfig.svg.remove();
+	    	globals.gCharts[gChartId] = undefined;
+	    	
+	    	if(reset) {
+	    		setChartList();
+	    	} else {
+	    		refreshCharts();
+	    	}
+		});
+	}
 	
 	function setReport(r) {
 		report = r;
@@ -92,7 +127,7 @@ define([
 					
 					chart = filtered[j];
 					data = processData(results, chart);
-					addChart("#c_" + chart.name, data, chart, index++);
+					addChart("#c_" + chart.name, data, chart, i, index++, true);
 				}
 			} else {
 				/*
@@ -104,7 +139,7 @@ define([
 					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 					data = processData(results, chart);
 					
-					addChart("#c_" + chart.name, data, chart, -1);
+					addChart("#c_" + chart.name, data, chart, i, j, false);
 					
 				}
 			}
@@ -302,7 +337,7 @@ define([
 	/*
 	 * Add a chart
 	 */
-	function addChart(chartId, data, chart, index) {
+	function addChart(chartId, data, chart, rowIndex, index, fromDT) {
 		
 		// Get dynamic widths of container
 		var widthContainer = $(chartId).width();
@@ -319,7 +354,9 @@ define([
 			init = true;
 			globals.gCharts[chartId] = {};
 			config = globals.gCharts[chartId];
+			config.rowIndex = rowIndex;
 			config.index = index;
+			config.fromDT = fromDT;
 		} 
 		
 		// Allow space for labels if needed
@@ -503,14 +540,14 @@ define([
 		var tools = title.append("div").attr("class", "ibox-tools"),
 			i;
 		
-		tools.append("a").attr("class", "collapse-link")
-			.append("i").attr("class", "fa fa-chevron-up");
-	 
-		tools.append("a").attr("class", "dropdown-toggle")
-			.attr("data-toggle", "dropdown")
+		tools.append("a").attr("class", "widget-edit")
 			.attr("href", "#")
-			.append("i").attr("class", "fa fa-wrench");
+			.append("i").attr("class", "fa fa-edit fa-widget-edit");
 		
+		tools.append("a").attr("class", "close-link widget-close")
+			.append("i").attr("class", "fa fa-close fa-widget-close");
+		
+		/*
 		var toolList = tools.append("ul")
 			.attr("class", "dropdown-menu dropdown-user");
 		
@@ -523,33 +560,19 @@ define([
 		    		.text(localise.set[key]);
 		    }
 		}
-		//tools.append("a").attr("class", "close-link")
-		//	.append("i").attr("class", "fa fa-times");
+		*/
 
 	}
 	
 	function setupIbox(element) {
-	    // Collapse ibox function
-	    $('.collapse-link', element).click(function () {
-	        var ibox = $(this).closest('div.ibox');
-	        var button = $(this).find('i');
-	        var content = ibox.find('div.ibox-content');
-	        content.slideToggle(200);
-	        button.toggleClass('fa-chevron-up').toggleClass('fa-chevron-down');
-	        ibox.toggleClass('').toggleClass('border-bottom');
-	        setTimeout(function () {
-	            ibox.resize();
-	            ibox.find('[id^=map-]').resize();
-	        }, 50);
-	    });
-
+	
 	    // Close ibox function
 	    $('.close-link', element).click(function () {
 	        var content = $(this).closest('div.ibox');
 	        content.remove();
 	    });
 
-	    // Fullscreen ibox function
+	    // Full screen ibox function
 	    $('.fullscreen-link',element).click(function () {
 	        var ibox = $(this).closest('div.ibox');
 	        var button = $(this).find('i');
@@ -561,6 +584,31 @@ define([
 	        }, 100);
 	    });	
 	    
+	    
+	    $('.widget-edit').off().click(function(){
+	    	var chart = d3.select($(this).closest('.aChart'))
+	    	
+	    	var $this = $(this),
+	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+	    		chart_type = $this.data("ctype");
+	    	    
+	    	gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
+	    	gEdConfig = globals.gCharts[gChartId];
+	    	
+	    	if(gEdConfig.fromDT) {
+	    		var fullIndex = getFullIndex(filtered[gEdConfig.index].humanName);
+	    		gEdChart = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex];
+	    		gEdFilteredChart = filtered[gEdConfig.index];
+	    	} else {
+	    		// Custom report
+	    		gEdChart = report.row[gEdConfig.rowIndex].charts[gEdConfig.index];
+	    	}
+	    	$('#ew_width').val(gEdChart.width);
+	    	console.log(gEdChart);
+	    	
+	    	$('#editWidget').modal("show");
+	    });
+	    
 	    $('.chart-type').off().click(function(){
 	    	var $this = $(this),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
@@ -571,7 +619,7 @@ define([
 	    	
 	    	var config = globals.gCharts[chart];
 	    	var fullIndex = getFullIndex(filtered[config.index].humanName);
-	    	console.log("Full index: " + fullIndex);
+
 	    	// Set the new value in the full index then save it
 	    	if(fullIndex >= 0) {
 	    		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex].chart_type = chart_type;

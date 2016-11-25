@@ -122,48 +122,6 @@ require([
 	 * Column specific settings 
 	 *    Override settings where names match
 	 */
-	var report = {
-			date_q: "Upload Time",
-			row: [
-			      {
-						datatable: false,
-						name: "history",
-						charts: 
-							[
-						         {
-						        	groups: [
-						        	         {
-						        	        	 q: "_start",
-						        	        	 label: "Upload Time"
-						        	         },
-						        	         {
-						        	        	 q: "Action Date",
-						        	        	 label: "Date Closed"
-						        	         }],
-									humanName: "Feedback per day",
-									name: "periodic_count",
-									chart_type: "groupedBar",
-									group: undefined,
-									fn: "length",
-									tSeries: true,
-									period: "day",
-									width: 12
-								}]
-			      },
-			      {
-					datatable: true,
-					name: "chartrow",
-					def: {
-						chart_type: "bar",
-						groups: undefined,
-						group: undefined,
-						fn: "length",
-						tSeries: false,
-						period: undefined
-					}
-			      }
-			    ]
-	};
 	
 	$(document).ready(function() {
 
@@ -176,6 +134,7 @@ require([
 			bs = isBusinessServer();
 		
 		window.chart = chart;
+		chart.init();
 		window.moment = moment;
 		localise.setlang();		// Localise HTML
 
@@ -201,6 +160,8 @@ require([
 		getLoggedInUser(refreshData, false, true, undefined, false, dont_get_current_survey);
 
 		enableUserProfileBS();										// Enable user profile button	
+		
+		// Get the report definition
 		
 		// Set change function on projects
 		$('#project_name').change(function() {
@@ -366,17 +327,13 @@ require([
 			}
 		});
 		
-	 // Respond to duplicate reports menu
+	 // Respond to duplicate gReports menu
 	 if(isDuplicates) {
 		 $('#duplicateSearch').click(function(){
 			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
 		 });
 	 }
 
-	 /*
-	  * Set the current report
-	  */
-	 chart.setReport(report);
 	 
 	 /*
 	  * Add date filtering to datatable
@@ -411,4 +368,5 @@ require([
 			);
 	 
 });
+
 

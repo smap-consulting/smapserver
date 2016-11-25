@@ -610,7 +610,11 @@ define({
 	"bar": "Bar Chart",
 	"pie": "Pie Chart",
 	"line": "Line Chart",
-	"length": "Count"
+	"length": "Count",
+	"d_qtr": "25%",
+	"d_half": "50%",
+	"d_3qtr": "75%",
+	"d_full": "100%"
 
 	 		
 });

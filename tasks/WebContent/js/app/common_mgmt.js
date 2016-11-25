@@ -32,6 +32,50 @@ window.gTasks = {
 		gDirn: undefined
 	}
 
+var gReport = {
+		date_q: "Upload Time",
+		row: [
+		      {
+					datatable: false,
+					name: "history",
+					charts: 
+						[
+					         {
+					        	groups: [
+					        	         {
+					        	        	 q: "_start",
+					        	        	 label: "Upload Time"
+					        	         },
+					        	         {
+					        	        	 q: "Action Date",
+					        	        	 label: "Date Closed"
+					        	         }],
+								humanName: "Feedback per day",
+								name: "periodic_count",
+								chart_type: "groupedBar",
+								group: undefined,
+								fn: "length",
+								tSeries: true,
+								period: "day",
+								width: 12
+							}]
+		      },
+		      {
+				datatable: true,
+				name: "chartrow",
+				def: {
+					chart_type: "bar",
+					groups: undefined,
+					group: undefined,
+					fn: "length",
+					tSeries: false,
+					period: undefined
+				},
+				charts: []
+		      }
+		    ]
+};
+
 	 /*
 	  * Function called when the current survey is changed
 	  */
@@ -45,6 +89,7 @@ window.gTasks = {
 				 } else {
 					 getSurveyConfig(globals.gCurrentSurvey, 0);
 				 }
+				 getReport(gReport);
 			 } else {
 				 // No managed surveys in this project
 				 $('#trackingTable').empty();
@@ -623,7 +668,8 @@ window.gTasks = {
 	
 	/*
 	 * Get surveys and update the survey lists on this page
-	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
+	 *  This is a different function from the common loadSurveys function as processing differs depending on whether 
+	 *    there is a managed form
 	 *   applied to the survey
 	 */	
 	 function loadManagedSurveys(projectId, callback) {
@@ -908,6 +954,7 @@ window.gTasks = {
 		
 		saveConfig(config);
 	 }
+	 
 	 /*
 	  * Update the saved configuration
 	  */
@@ -924,7 +971,8 @@ window.gTasks = {
 				hide: columns[i].hide,
 				barcode: columns[i].barcode,
 				filterValue: columns[i].filterValue,
-				chart_type: columns[i].chart_type
+				chart_type: columns[i].chart_type,
+				width: columns[i].width ? columns[i].width : 6
 			});
 		}
 		
@@ -936,7 +984,7 @@ window.gTasks = {
 			 dataType: 'text',
 			 cache: false,
 				  contentType: "application/json",
-				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey,
+				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey + "/mf",
 				  data: { settings: saveString },
 				  success: function(data, status) {
 					  removeHourglass();
@@ -947,6 +995,64 @@ window.gTasks = {
 				  }
 			});
 	 }
+	 
+	 /*
+	  * Update the saved configuration
+	  */
+	 function saveReport(report) {
+		 
+		
+		saveString = JSON.stringify(report);
+		 
+		 addHourglass();
+		 $.ajax({
+			 type: "POST",
+			 dataType: 'text',
+			 cache: false,
+				  contentType: "application/json",
+				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey + "/db",
+				  data: { settings: saveString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  $('#right-sidebar').removeClass("sidebar-open");
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  alert(data.responseText);
+				  }
+			});
+	 }
+	 
+	 /*
+	  * Get the report
+	  */
+	 function getReport(gReport) {
+		 	
+			 addHourglass();
+			 $.ajax({
+				 url: "/surveyKPI/managed/getconfig/" + globals.gCurrentSurvey + "/db",
+				 cache: false,
+				 dataType: 'json',
+				 success: function(data) {
+					 removeHourglass();
+					 if(data) {
+						 chart.setReport(data);
+					 } else {
+						 chart.setReport(gReport);
+					 }
+				 },
+				 error: function(xhr, textStatus, err) {
+					 removeHourglass();
+					 if(xhr.readyState == 0 || xhr.status == 0) {
+						 return;  // Not an error
+					 } else {
+						 alert("Error getting report configuration: " + xhr);
+						 chart.setReport(gReport);
+					 }
+				 }
+			 });
+			 
+		 }
+	 
 	 
 	 /*
 	  * Add html to show a form to edit a record

@@ -138,6 +138,7 @@ public class ManagedFormsManager {
 							tc.barcode = tcConfig.barcode;
 							tc.filterValue = tcConfig.filterValue;
 							tc.chart_type = tcConfig.chart_type;
+							tc.width = tcConfig.width;
 							break;
 						}
 					}

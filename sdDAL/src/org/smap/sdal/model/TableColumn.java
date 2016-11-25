@@ -24,6 +24,7 @@ public class TableColumn {
 	public boolean readonly;	// Can't be modified by form management
 	public String type;			// text || select_one || date || calculate
 	public String chart_type;
+	public int width;
 	public ArrayList<KeyValue> choices;			// If type is select_one
 	public ArrayList<Action> actions;			// Actions to take when the column changes
 	public ArrayList<TableColumnMarkup> markup;	// Specify how to present the data

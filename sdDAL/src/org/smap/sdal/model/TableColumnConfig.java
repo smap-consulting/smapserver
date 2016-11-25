@@ -10,4 +10,5 @@ public class TableColumnConfig {
 	public boolean barcode;		// Show as barcode
 	public String filterValue;	
 	public String chart_type;
+	public int width;
 }
