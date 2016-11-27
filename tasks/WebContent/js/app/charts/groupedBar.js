@@ -140,8 +140,8 @@ define([
 		config.svg.select(".axis--y").call(config.yAxis.ticks(5, ""));
 		if(chart.tSeries) {
 			var tvArray = [];
-			if(data.length > 10) {
-				var skips = Math.ceil(data.length / 10);
+			if(data.length > chart.width) {
+				var skips = Math.ceil(data.length / chart.width);
 				for(i = 0; i < data.length; i++) {
 					if(i == data.length - 1 || i%skips == 0) {
 						tvArray.push(data[i].key);
