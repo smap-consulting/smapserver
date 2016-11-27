@@ -971,7 +971,7 @@ function exportSurveyURL (
 	}
 	url+="&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
-	if(typeof embedimages !== "undefined") {
+	if(typeof embedImages !== "undefined") {
 		url += "&embedimages=" + embedImages;
 	}
 	if(typeof incHxl !== "undefined") {
