@@ -34,6 +34,7 @@ requirejs.config({
     		   ],
     	modernizr: '../../../../js/libs/modernizr',
     	localise: '../../../../js/app/localise',
+    	common: '../../../../js/app/common',
     	rmm: '../../../../js/libs/responsivemobilemenu',
     	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js'
@@ -42,6 +43,7 @@ requirejs.config({
     	'rmm': ['jquery'],
     	'jquery_ui': 'jquery',
     	'app/map-functions': ['jquery_ui'],
+       	'common': ['jquery'], 	
     	'app/map-reports': ['jquery'],
     	}
     });
@@ -51,12 +53,13 @@ require([
          'jquery',  
          'modernizr', 
          'rmm', 
+         'common',
          'crf', 
          'localise', 
          'app/map-functions',
          'app/map-reports'
          
-         ], function($, modernizr, rmm, crf, localise, map_functions, map_reports) {
+         ], function($, modernizr, rmm, common, crf, localise, map_functions, map_reports) {
 	
 	$(document).ready(function() {		// Wait for Openlayers
 		var data_source = $("#data_source").text();

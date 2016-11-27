@@ -63,5 +63,6 @@ require([
         		 table_functions, table_reports) {
 	
 	var data_source = $("#data_source").text();
+	window.moment = moment;	// Required as common.js not part of module
 	getData(data_source);
 });
