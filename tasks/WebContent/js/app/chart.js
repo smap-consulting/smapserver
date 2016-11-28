@@ -74,6 +74,15 @@ define([
 			}
 			
 			gEdChart.width = $('#ew_width').val();
+			if(gEdChart.tSeries) {
+				gEdChart.period = $('#ew_period').val();
+				
+				gEdChart.groups[0].q = $("#ew_date1").val();
+				gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+				
+				gEdChart.groups[1].q = $("#ew_date2").val();
+				gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
+			}
 			if(gEdConfig.fromDT) {
 				gEdFilteredChart.width = gEdChart.width;
 				saveConfig();
@@ -424,7 +433,9 @@ define([
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,
-			def = report.row[1].def;
+			def = report.row[1].def,
+			h = [],
+			idx = -1;
 			
 		
 		/*
@@ -532,6 +543,25 @@ define([
 		}
 	    
 	    setupIbox("#chartcontent");		// Add event listeners
+	    
+		
+		/*
+		 * Add date columns based on all questions
+		 */
+	    h[++idx] = '<option value="none">';
+	    h[++idx] = localise.set["c_none"];
+	    h[++idx] = '</option>';
+		for(i = 0; i < columns.length; i++) {
+			if(columns[i].type === "date" || columns[i].type === "dateTime") {
+				console.log(columns[i]);
+				h[++idx] = '<option value="';
+				h[++idx] = columns[i].humanName;	// Data columns keyed on human name
+				h[++idx] = '">';
+				h[++idx] = columns[i].humanName;
+				h[++idx] = '</option>';
+			}
+		}
+		$('.date_question').empty().append(h.join(''));
 	}
 	
 	/*
@@ -605,8 +635,17 @@ define([
 	    		// Custom report
 	    		gEdChart = report.row[gEdConfig.rowIndex].charts[gEdConfig.index];
 	    	}
+	    	
+	    	// Set modal values
 	    	$('#ew_width').val(gEdChart.width);
-	    	console.log(gEdChart);
+	    	if(gEdChart.tSeries) {
+	    		$(".period_only").show();
+	    		$('#ew_period').val(gEdChart.period);
+	    		$("#ew_date1").val(gEdChart.groups[0].q);
+	    		$("#ew_date2").val(gEdChart.groups[1].q);
+	    	} else {
+	    		$(".period_only").hide();
+	    	}
 	    	
 	    	$('#editWidget').modal("show");
 	    });

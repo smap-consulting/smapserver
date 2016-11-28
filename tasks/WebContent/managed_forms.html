@@ -21,43 +21,6 @@
 
 <script> if (!window.console) console = {log: function() {}}; </script>
 
-<!-- Error Reporting -->
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-10035574-3', 'auto');
-  ga('send', 'pageview');
-</script>
- 
-<script>
-var globErr = [];
-
-function globErrFlush() {
-
-	if(typeof(ga) != 'undefined') {
-		while(globErr.length > 0) {
-			var err = globErr.shift();
-
-			ga('send', 'exception', {
-			    'exDescription': err,
-			    'exFatal': false
-			  });					
-
-		}
-	} else {
-		setTimeout(globErrFlush, 1000);
-	}
-}
-
-window.addEventListener('error', function (e) {
-	globErr.push((e.error ? e.error : e.message) + ' (' + e.filename + ' #' + e.lineno + (e.colno ? ':' + e.colno : '') + ")");
-	globErrFlush();
-});
-</script>
-
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script>
@@ -302,6 +265,32 @@ window.addEventListener('error', function (e) {
 					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
 						<form id="surveyForm" role="form" class="form-horizontal">
+							<div class="period_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_dateq" for="ew_date1">date</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date1">
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_dateq" for="ew_date2">date</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date2">
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
+									<div class="col-sm-10">
+										<select class="form-control" id="ew_period">
+											<option class="lang" value="day" data-lang="c_day">day</option>
+											<option class="lang" value="month" data-lang="c_month">month</option>
+											<option class="lang" value="year" data-lang="c_year">year</option>
+										</select>
+									</div>
+								</div>
+							</div>
 							<div class="form-group">
 			         			<label class="lang col-sm-2 control-label" data-lang="c_width" for="ew_width">width</label>
 								<div class="col-sm-10">

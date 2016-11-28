@@ -106,7 +106,7 @@ define([
 	}
 	
 	/*
-	 * Update a bar chart
+	 * Update a grouped bar chart
 	 */
 	function redraw(chartId, chart, config, data, width, height, margin) {
 		

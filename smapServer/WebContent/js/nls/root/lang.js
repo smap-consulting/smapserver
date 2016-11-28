@@ -124,6 +124,7 @@ define({
 	"c_date": "Date",
 	"c_dateq": "Date Question",
 	"c_none": "None",
+	"c_period": "Period",
 	"c_hour": "Hour",
 	"c_day": "Day",
 	"c_week": "Week",
