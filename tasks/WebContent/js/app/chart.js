@@ -86,6 +86,7 @@ define([
 	    	
 	    	if(reset) {
 	    		setChartList();
+	    		refreshCharts();
 	    	} else {
 	    		refreshCharts();
 	    	}
@@ -112,9 +113,8 @@ define([
 		var i,
 			data,
 			chart,
-			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
-		
-		var filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
+			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 			index = 0;
 		
 		for(i = 0; i < report.row.length; i++) {
@@ -480,6 +480,8 @@ define([
 		 * Generate the HTML
 		 * Start by creating rows of related charts
 		 */
+		$("#chartcontent").empty();
+		globals.gCharts = [];
 		var chartContent = d3.select("#chartcontent")
 			.selectAll(".row")
 			.data(report.row);
