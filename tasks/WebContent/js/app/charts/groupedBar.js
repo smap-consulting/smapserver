@@ -78,6 +78,7 @@ define([
 		config.xTicks.call(config.xAxis);
 	
 		// Add x-axis label
+		/*
 		var text = config.svg.append("text")             
 	    		.attr("x", width / 2 )
 	    		.attr("y",  height + margin.top + 40 )
@@ -89,6 +90,7 @@ define([
 		} else {
 			text.text(chart.humanName);
 		}
+		*/
 		
 		// Add y-axis label
 		config.svg.append("text")
@@ -154,7 +156,12 @@ define([
 			config.xAxis.tickValues(tvArray);
 		}
 		
-		config.xTicks.call(config.xAxis);
+		config.xTicks.call(config.xAxis)
+			.selectAll("text")
+				.style("text-anchor", "end")
+	    		.attr("dx", "-.8em")
+	    		.attr("dy", ".15em")
+	    		.attr("transform", "rotate(-45)");
 		
 		
 		var period = config.g.selectAll(".period").data(data);

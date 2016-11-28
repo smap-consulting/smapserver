@@ -115,7 +115,12 @@ define([
 		config.svg.select(".axis--x")
 			//.transition()
 			//.duration(500)
-			.call(config.xAxis);
+			.call(config.xAxis)
+			.selectAll("text")
+				.style("text-anchor", "end")
+				.attr("dx", "-.8em")
+	    		.attr("dy", ".15em")
+	    		.attr("transform", "rotate(-45)");
 		
 		var bars = config.g.selectAll(".bar").data(data, function(d) { return d.key; });
 		
