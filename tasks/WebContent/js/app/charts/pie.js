@@ -21,7 +21,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 "use strict";
 
-var arc,
+var arcs = {},
+	arc,
 	enterAntiClockwise = {
 		  startAngle: Math.PI * 2,
 		  endAngle: Math.PI * 2
@@ -44,18 +45,28 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chartId, chart, config, data, width, height, margin) {
+	function add(chartId, chart, config, data, widthContainer, heightContainer) {
 
 		console.log("Show pie chart");
 		
-		var radius = Math.min(width, height) / 2;
+		var radius,
+			margin,
+			width,
+			height;
 		
+
+		margin = {top: 10, right: 10, bottom: 10, left: 10};
+	    width = +widthContainer - margin.left - margin.right;
+	    height = +heightContainer - margin.top - margin.bottom;
+	    
+	    radius =  Math.min(width, height) / 2;
 		arc = d3.arc()
-			.outerRadius(radius - 10)
-			.innerRadius(10);
+			.outerRadius(radius)
+			.innerRadius(0);
+		arcs[chartId] = arc;
 		
 		color = d3.scaleOrdinal()
-			.range(d3.schemeCategory10);
+			.range(d3.schemeCategory20);
 		
 		var labelArc = d3.arc()
 	    	.outerRadius(radius - 40)
@@ -95,11 +106,12 @@ define([
 	/*
 	 * Redraw
 	 */
-	function redraw(chartId, chart, config, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, widthContainer, heightContainer) {
 		
 		console.log("Redraw pie chart");
-		
+
 		config.path = config.path.data(config.pie(data));
+		arc = arcs[chartId];
 		
 		config.path.enter().append("path")
 			.merge(config.path)
@@ -115,8 +127,6 @@ define([
 	      }); // store the initial values
 		 
 		config.path.exit()
-	      .transition()
-	      .duration(750)
 	      .attrTween('d', arcTweenOut)
 	      .remove(); // now remove the exiting arcs
 	      

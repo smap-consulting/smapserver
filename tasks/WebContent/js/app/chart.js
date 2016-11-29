@@ -73,6 +73,7 @@ define([
 				reset = true;
 			}
 			
+			gEdChart.chart_type = $('#ew_chart_type').val();
 			gEdChart.width = $('#ew_width').val();
 			if(gEdChart.tSeries) {
 				gEdChart.period = $('#ew_period').val();
@@ -351,10 +352,7 @@ define([
 		// Get dynamic widths of container
 		var widthContainer = $(chartId).width();
 		var heightContainer = $(chartId).height();
-		var view = "0 0 " + widthContainer + " " + heightContainer,
-			margin,
-			width,
-			height;
+		var view = "0 0 " + widthContainer + " " + heightContainer;
 		
 		var config = globals.gCharts[chartId],
 			init = false;
@@ -368,18 +366,9 @@ define([
 			config.fromDT = fromDT;
 		} 
 		
-		// Allow space for labels if needed
-		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
-		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
-		
-		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
-	    width = +widthContainer - margin.left - margin.right;
-	    height = +heightContainer - margin.top - margin.bottom;
 		
 		if(avCharts[chart.chart_type]) {
-			if(init) {
+			if(init || chart.chart_type === "pie") {	// Pie charts tricky to update
 				if(chart.chart_type === "map") {
 					config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
 				    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
@@ -389,19 +378,23 @@ define([
 				  .attr("viewBox", view)
 				  .classed("svg-content", true);
 				}
-				avCharts[chart.chart_type].add(chartId, chart, config, data, width, height, margin);
+				avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
 				
 				/*
 				 * Add a title
 				 */
+				/*
 				config.svg.append("text")
 					.attr("x", (width / 2))				
 					.attr("y", 0 + (margin.top / 2))
 					.attr("text-anchor", "middle")	
 					.attr("class", "chart-title")
 				    .text(chart.humanName);
+				    */
 			} 
-			avCharts[chart.chart_type].redraw(chartId, chart, config, data, width, height, margin);
+			if(chart.chart_type !== "pie") {
+				avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
+			}
 		} else {
 			alert("unknown chart type: " + chart.chart_type);
 		}
@@ -578,44 +571,22 @@ define([
 		
 		tools.append("a").attr("class", "close-link widget-close")
 			.append("i").attr("class", "fa fa-close fa-widget-close");
-		
-		/*
-		var toolList = tools.append("ul")
-			.attr("class", "dropdown-menu dropdown-user");
-		
-		for (var key in avCharts) {
-		    if (avCharts.hasOwnProperty(key)) {
-		    	toolList.append("li").append("a")
-		    		.attr("href", "#")
-		    		.attr("class", "chart-type")
-		    		.attr("data-ctype", key)
-		    		.text(localise.set[key]);
-		    }
-		}
-		*/
 
 	}
 	
 	function setupIbox(element) {
-	
+	    
+		var h = [],
+			idx = -1,
+			key,
+			keylangid;
+		
 	    // Close ibox function
 	    $('.close-link', element).click(function () {
 	        var content = $(this).closest('div.ibox');
 	        content.remove();
 	    });
-
-	    // Full screen ibox function
-	    $('.fullscreen-link',element).click(function () {
-	        var ibox = $(this).closest('div.ibox');
-	        var button = $(this).find('i');
-	        $('body').toggleClass('fullscreen-ibox-mode');
-	        button.toggleClass('fa-expand').toggleClass('fa-compress');
-	        ibox.toggleClass('fullscreen');
-	        setTimeout(function () {
-	            $(window).trigger('resize');
-	        }, 100);
-	    });	
-	    
+  
 	    
 	    $('.widget-edit').off().click(function(){
 	    	var chart = d3.select($(this).closest('.aChart'))
@@ -646,6 +617,35 @@ define([
 	    	} else {
 	    		$(".period_only").hide();
 	    	}
+	    	
+			/*
+			 * Add the chart type select list
+			 */
+			h = [];
+			idx = -1;
+			for (key in avCharts) {
+				
+			    if (avCharts.hasOwnProperty(key)) {
+			    	if(gEdChart.tSeries) {
+			    		if(key !== "groupedBar") {
+			    			continue;
+			    		}
+			    	} else {
+			    		if(key === "groupedBar") {
+			    			continue;
+			    		}
+			    	}
+			    	keylangid = (key === "groupedBar") ? "bar" : key;
+			    	h[++idx] = '<option value="';
+			    	h[++idx] = key;
+			    	h[++idx] = '">';
+			    	h[++idx] = localise.set[keylangid];
+			    	h[++idx] = '</option>';
+			    }
+			}
+			$('.chart_type').empty().append(h.join(''));
+			$('#ew_chart_type').val(gEdChart.chart_type);
+
 	    	
 	    	$('#editWidget').modal("show");
 	    });

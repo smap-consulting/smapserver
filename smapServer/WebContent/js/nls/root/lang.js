@@ -611,6 +611,7 @@ define({
 	"bar": "Bar Chart",
 	"pie": "Pie Chart",
 	"line": "Line Chart",
+	"wordcloud": "Word Cloud",
 	"length": "Count",
 	"d_qtr": "25%",
 	"d_half": "50%",

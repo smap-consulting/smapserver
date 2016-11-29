@@ -41,9 +41,22 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chartId, chart, config, data, width, height, margin) {
+	function add(chartId, chart, config, data, widthContainer, heightContainer) {
 
-		var barWidth;   
+		var barWidth,
+			width,
+			height,
+			margin;
+	    
+		// Allow space for labels if needed
+		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
+		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		
+		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+	    width = +widthContainer - margin.left - margin.right;
+	    height = +heightContainer - margin.top - margin.bottom;
 	    
 		config.color = d3.scaleOrdinal(d3.schemeCategory10);
 		
@@ -108,11 +121,24 @@ define([
 	/*
 	 * Update a grouped bar chart
 	 */
-	function redraw(chartId, chart, config, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, widthContainer, heightContainer) {
 		
 		var barWidth,
-			i;
+			i,
+			width,
+			height,
+			margin;
 		
+		// Allow space for labels if needed
+		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
+		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		
+		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+	    width = +widthContainer - margin.left - margin.right;
+	    height = +heightContainer - margin.top - margin.bottom;
+	    
 		/*
 		config.x0.domain(data.map(function(d) { 
 			if(!d.key || d.key === "") {

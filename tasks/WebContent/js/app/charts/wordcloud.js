@@ -54,10 +54,24 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chartID, chart, config, data, width, height, margin) {
+	function add(chartID, chart, config, data, widthContainer, heightContainer) {
 
 		console.log("Add cloud");
 		
+		var width,
+			height,
+			margin;
+		
+		// Allow space for labels if needed
+		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
+		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
+		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
+		
+		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+	    width = +widthContainer - margin.left - margin.right;
+	    height = +heightContainer - margin.top - margin.bottom;
+	    
 		var fill = d3.scale.category20();
 		var word_entries = d3.entries(data);
 		
@@ -102,7 +116,7 @@ define([
 	/*
 	 * Redraw
 	 */
-	function redraw(chartId, chart, config, data, width, height, margin) {
+	function redraw(chartId, chart, config, data, widthContainer, heightContainer) {
 		
 		console.log("Redraw word cloud chart: ");
 		console.log(data);
