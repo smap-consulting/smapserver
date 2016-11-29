@@ -1,5 +1,6 @@
 package surveyKPI;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -34,7 +35,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.codec.binary.Base64;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
@@ -52,13 +55,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import sun.misc.BASE64Decoder;
 import utilities.XLSReportsManager;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,14 +82,21 @@ public class TableReports extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 
+	private class Chart {
+		public String title;
+		public String image;
+		public String description;
+	}
+	
 	@POST
 	@Path("/generate")
 	public void setManaged(
 			@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
-			@FormParam("data") String data,
 			@FormParam("sId") int sId,
 			@FormParam("managedId") int managedId,
+			@FormParam("data") String data,
+			@FormParam("charts") String charts,
 			@FormParam("format") String format,
 			@FormParam("title") String title,
 			@FormParam("project") String project
@@ -98,6 +115,7 @@ public class TableReports extends Application {
 		
 		boolean isXLS = format.toLowerCase().equals("xls") || format.toLowerCase().equals("xlsx");
 		boolean isPdf = format.toLowerCase().equals("pdf");
+		boolean isImage = format.toLowerCase().equals("image");
 		if(title == null) {
 			title = "Results";
 		}
@@ -121,8 +139,17 @@ public class TableReports extends Application {
 			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
 			// Convert data to an array
-			Type type = new TypeToken<ArrayList<ArrayList<KeyValue>>>(){}.getType();		
-			ArrayList<ArrayList<KeyValue>> dArray = new Gson().fromJson(data, type);
+			ArrayList<ArrayList<KeyValue>> dArray = null;
+			if(data != null) {
+				Type type = new TypeToken<ArrayList<ArrayList<KeyValue>>>(){}.getType();		
+				dArray = new Gson().fromJson(data, type);
+			}
+			// Convert charts to an array
+			ArrayList<Chart> chartArray = null;
+			if(charts != null) {
+				Type type = new TypeToken<ArrayList<Chart>>(){}.getType();		
+				chartArray = new Gson().fromJson(charts, type);
+			}
 			
 			if(isXLS) {
 				XLSReportsManager xm = new XLSReportsManager(format);
@@ -142,6 +169,32 @@ public class TableReports extends Application {
 						title,
 						project);
 						
+			} else if(isImage) {
+				if(chartArray != null && chartArray.size() > 0) {
+					
+					/*
+					 * 1. Create the target folder
+					 */
+					String basePath = GeneralUtilityMethods.getBasePath(request);
+					String filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
+					File folder = new File(filePath);
+					folder.mkdir();
+					for(int i = 0; i < chartArray.size(); i++) {
+						try {
+							Chart chart = chartArray.get(i);
+							String imgData = chart.image.substring(chart.image.indexOf(",") + 1);
+							System.out.println(imgData);
+							byte[] imagedata = Base64.decodeBase64(imgData);
+							BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imagedata));
+							ImageIO.write(bufferedImage, "png", new File(filePath + "/" + chart.title + i + ".png"));
+						} catch(Exception e) {
+							log.info("Error: " + e.getMessage());
+						}
+						
+						
+						
+					}
+				}
 			}
 			
 		

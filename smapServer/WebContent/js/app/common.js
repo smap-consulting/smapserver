@@ -1901,7 +1901,66 @@ function downloadFileErrorCheck() {
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, format, mime, data, sId, managedId, title, project) {
+function generateFile(url, filename, format, mime, data, sId, managedId, title, project, charts) {
+
+	var payload = "sId=" + sId;
+	payload += "&format=" + format;
+	if(managedId) {
+		payload += "&managedId=" + managedId;
+	}
+		
+	if(data) {
+		payload += "&data=" + JSON.stringify(data);
+	}
+	if(title) {
+		payload += "&title=" + title;
+	}
+	if(project) {
+		payload += "&project=" + project;
+	}
+	if(charts) {
+		payload += "&charts=" + JSON.stringify(charts);
+	}
+	
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST', url, true);
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.responseType = 'blob';
+	 
+	xhr.onload = function(e) {
+		if (this.status == 200) {
+		    // get binary data as a response
+			var blob = new Blob([this.response], { type: mime });
+			var downloadUrl = URL.createObjectURL(blob);
+			var a = document.createElement("a");
+			a.href = downloadUrl;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+		    setTimeout(function(){
+		        document.body.removeChild(a);
+		        window.URL.revokeObjectURL(url);  
+		    }, 100);  
+		  } else {
+			  alert("Error: Download Failed");
+		  }
+	};
+	
+	xhr.onerror = function(e) {
+		 alert("Error: Upload Failed");
+	}
+	if(Pace) {
+		Pace.restart();
+	}
+	xhr.send(payload);
+	
+}
+
+/*
+ * Post data to be converted into a file
+ * This version creates a temporary file on the server
+ */
+function generateFile2(url, filename, format, mime, data, sId, managedId, title, project) {
 
 	var payload = "data=" + JSON.stringify(data);
 	payload += "&sId=" + sId;

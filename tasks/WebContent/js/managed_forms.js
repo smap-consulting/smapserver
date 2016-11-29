@@ -282,7 +282,8 @@ require([
 			data,
 		 	managedId,
 		 	title = $('#survey_name option:selected').text(),
-		 	project = $('#project_name option:selected').text();
+		 	project = $('#project_name option:selected').text(),
+		 	charts = [];
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
@@ -306,14 +307,29 @@ require([
 			 } else {
 				 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
 			 }
-			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
+			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts);
 		 } else {
+			 //countImages = $('.svg-container svg').length;
+			 countImages = 1;
 			 $('.svg-container svg').each(function(index) {
 				 var elem = $(this)[0];
-				 svgsave.saveSvgAsPng(elem, "diagram.png");
-			 });
+				 //svgsave.saveSvgAsPng(elem, "x.png");
+				 svgsave.svgAsPngUri(elem, undefined, function(uri) {
+					 var chart = {
+							 image: uri,
+							 title: "A Chart"
+					 }
+					 charts.push(chart);
+					 console.log("Got image: " + countImages);
+					 countImages--;
+					 if(countImages <= 0) {
+						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts);
+					 }
+				 });
 				
+			 });	
 		 }
+		  
 	 });
 	 
 	    /*
