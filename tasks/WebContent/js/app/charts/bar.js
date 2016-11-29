@@ -46,15 +46,11 @@ define([
 		var barWidth,
 			width,
 			height,
-			margin;
+			margin,
+			labelId;
 	    
 		// Allow space for labels if needed
-		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
-		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
-		
-		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+		margin = {top: 40, right: 20, bottom: 60, left: 60};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 	    
@@ -63,10 +59,10 @@ define([
 		barWidth = config.x.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
-		config.y.domain([0, d3.max(data, function(d) { return d.value; })]).nice();
+		config.y.domain([0, d3.max(data, function(d) { return +d.value; })]).nice();
 		
 		config.xAxis = d3.axisBottom(config.x);
-		config.yAxis = d3.axisLeft(config.y).ticks(10, "");
+		config.yAxis = d3.axisLeft(config.y).ticks(10);
 		
 		config.g = config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -77,6 +73,7 @@ define([
 		    .call(config.xAxis);
 	
 		// Add x-axis label
+		/*
 		var text = config.svg.append("text")             
 	    		.attr("x", width / 2 )
 	    		.attr("y",  height + margin.top + 40 )
@@ -89,12 +86,17 @@ define([
 		} else {
 			text.text(chart.humanName);
 		}
-		
+		*/
+		if(chart.fn === "avgdurn") {
+			labelId = "d_sec";
+		} else {
+			labelId = chart.fn;
+		}
 		// Add y-axis label
 		config.svg.append("text")
         	.attr("text-anchor", "middle")  
         	.attr("transform", "translate("+ (margin.left/3) +","+(height/2)+")rotate(-90)")  
-        	.text(localise.set[chart.fn]);
+        	.text(localise.set[labelId]);
 		
 		config.g.append("g")
 		    .attr("class", "axis axis--y")
@@ -137,7 +139,7 @@ define([
 		config.svg.select(".axis--y")
 			//.transition()
 			//.duration(500)
-			.call(config.yAxis.ticks(5, ""));
+			.call(config.yAxis.ticks(5));
 		config.svg.select(".axis--x")
 			//.transition()
 			//.duration(500)

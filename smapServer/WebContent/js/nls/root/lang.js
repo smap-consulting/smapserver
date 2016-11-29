@@ -616,7 +616,6 @@ define({
 	"d_qtr": "25%",
 	"d_half": "50%",
 	"d_3qtr": "75%",
-	"d_full": "100%"
-
-	 		
+	"d_full": "100%",
+	"d_sec": "Seconds" 		
 });

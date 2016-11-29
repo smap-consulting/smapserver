@@ -58,7 +58,27 @@ var gReport = {
 								tSeries: true,
 								period: "day",
 								width: 12
-							}]
+							},
+							{
+					        	groups: [
+					        	         {
+					        	        	 q: "_start",
+					        	        	 label: "Start Time"
+					        	         },
+					        	         {
+					        	        	 q: "_end",
+					        	        	 label: "Finish Time"
+					        	         }],
+								humanName: "Average survey completion time",
+								name: "completion_time",
+								chart_type: "bar",
+								group: "User",
+								fn: "avgdurn",
+								tSeries: false,
+								period: undefined,
+								width: 12
+							}
+					    ]
 		      },
 		      {
 				datatable: true,
@@ -1045,7 +1065,6 @@ var gReport = {
 					 if(xhr.readyState == 0 || xhr.status == 0) {
 						 return;  // Not an error
 					 } else {
-						 alert("Error getting report configuration: " + xhr);
 						 chart.setReport(gReport);
 					 }
 				 }

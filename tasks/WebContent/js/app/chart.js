@@ -75,6 +75,7 @@ define([
 			
 			gEdChart.chart_type = $('#ew_chart_type').val();
 			gEdChart.width = $('#ew_width').val();
+			gEdChart.group = $('#ew_group').val();
 			if(gEdChart.tSeries) {
 				gEdChart.period = $('#ew_period').val();
 				
@@ -163,6 +164,7 @@ define([
 		
 		var allData = [],
 			data,
+			parseTimeSec = d3.timeParse("%Y-%m-%d %H:%M:%S%Z"),
 			parseTimeDay = d3.timeParse("%Y-%m-%d"),
 			formatTimeDay = d3.timeFormat("%Y-%m-%d"),
 			parseTimeMonth = d3.timeParse("%Y-%m"),
@@ -171,18 +173,24 @@ define([
 			formatTimeYear = d3.timeFormat("%Y"),
 			i,
 			dateValueMap = [],
-			dateExtent;
+			dateExtent,
+			parseTime,
+			formatTime,
+			dateRange;
 		
-		var parseTime = chart.period === "day" ? parseTimeDay : 
-			chart.period === "month" ? parseTimeMonth :
-			parseTimeYear;
-		var formatTime = chart.period === "day" ? formatTimeDay : 
-			chart.period === "month" ? formatTimeMonth :
-			formatTimeYear;
-	
-		var dateRange = chart.period === "day" ? d3.timeDay : 
-			chart.period === "month" ? d3.timeMonth :
-				d3.timeYear;
+		if(chart.tSeries) {
+			parseTime = chart.period === "day" ? parseTimeDay : 
+				chart.period === "month" ? parseTimeMonth :
+				parseTimeYear;
+			formatTime = chart.period === "day" ? formatTimeDay : 
+				chart.period === "month" ? formatTimeMonth :
+				formatTimeYear;
+			dateRange = chart.period === "day" ? d3.timeDay : 
+				chart.period === "month" ? d3.timeMonth :
+					d3.timeYear;
+		} else {
+			parseTime = parseTimeSec;
+		}
 		
 		if(chart.tSeries) {
 			for(i = 0; i < chart.groups.length; i++) {
@@ -334,6 +342,19 @@ define([
 				}
 			}
 
+		} else if (chart.fn === "avgdurn") {   
+			var i, j,
+				data = [],
+				dc;
+			
+			data = d3.nest()
+			  .key(function(d) { return d[chart.group]; })
+			  .rollup(function(v) { return d3.mean(v, function(d) {
+				  		return d3.timeSecond.count(parseTime(d[chart.groups[0].q]), parseTime(d[chart.groups[1].q]));
+				  });   	
+			  })
+			  .entries(results);
+
 		} else {
 			data = d3.nest()
 			  .key(function(d) { return d[chart.name]; })
@@ -428,7 +449,9 @@ define([
 			i,
 			def = report.row[1].def,
 			h = [],
-			idx = -1;
+			idx = -1,
+			hGrp = [],
+			idxGrp = -1;
 			
 		
 		/*
@@ -539,22 +562,29 @@ define([
 	    
 		
 		/*
-		 * Add date columns based on all questions
+		 * Add date question select options
+		 * Add group questions
 		 */
-	    h[++idx] = '<option value="none">';
-	    h[++idx] = localise.set["c_none"];
-	    h[++idx] = '</option>';
+	    hGrp[++idxGrp] = h[++idx] = '<option value="none">';
+	    hGrp[++idxGrp] = h[++idx] = localise.set["c_none"];
+	    hGrp[++idxGrp] = h[++idx] = '</option>';
 		for(i = 0; i < columns.length; i++) {
 			if(columns[i].type === "date" || columns[i].type === "dateTime") {
-				console.log(columns[i]);
 				h[++idx] = '<option value="';
 				h[++idx] = columns[i].humanName;	// Data columns keyed on human name
 				h[++idx] = '">';
 				h[++idx] = columns[i].humanName;
 				h[++idx] = '</option>';
+			} else {
+				hGrp[++idxGrp] = '<option value="';
+				hGrp[++idxGrp] = columns[i].humanName;	// Data columns keyed on human name
+				hGrp[++idxGrp] = '">';
+				hGrp[++idxGrp] = columns[i].humanName;
+				hGrp[++idxGrp] = '</option>';
 			}
 		}
 		$('.date_question').empty().append(h.join(''));
+		$('.group_question').empty().append(hGrp.join(''));
 	}
 	
 	/*
@@ -616,6 +646,13 @@ define([
 	    		$("#ew_date2").val(gEdChart.groups[1].q);
 	    	} else {
 	    		$(".period_only").hide();
+	    	}
+	    	
+	    	if(gEdChart.group) {
+	    		$(".group_only").show();
+	    		$('#ew_group').val(gEdChart.group);
+	    	} else {
+	    		$(".group_only").show();
 	    	}
 	    	
 			/*
