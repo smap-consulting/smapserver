@@ -271,7 +271,9 @@ public class Data extends Application {
 					isDt,
 					start,
 					limit,
-					superUser);
+					superUser,
+					false			// Return records greater than or equal to primary key
+					);
 			
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
