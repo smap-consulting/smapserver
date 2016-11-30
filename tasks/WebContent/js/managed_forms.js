@@ -298,6 +298,8 @@ require([
 			 mime= "application/pdf";
 			 format = "pdf";
 		 } else {
+			 filename = title + ".zip"
+			 mime= "application/zip";
 			 format = "image";
 		 }
 		 
@@ -309,8 +311,7 @@ require([
 			 }
 			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts);
 		 } else {
-			 //countImages = $('.svg-container svg').length;
-			 countImages = 1;
+			 countImages = $('.svg-container svg').length;
 			 $('.svg-container svg').each(function(index) {
 				 var elem = $(this)[0];
 				 //svgsave.saveSvgAsPng(elem, "x.png");

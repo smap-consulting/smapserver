@@ -1910,7 +1910,7 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 	}
 		
 	if(data) {
-		payload += "&data=" + JSON.stringify(data);
+		payload += "&data=" + encodeURIComponent(JSON.stringify(data));
 	}
 	if(title) {
 		payload += "&title=" + title;
@@ -1919,8 +1919,9 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 		payload += "&project=" + project;
 	}
 	if(charts) {
-		payload += "&charts=" + JSON.stringify(charts);
+		payload += "&charts=" + encodeURIComponent(JSON.stringify(charts));
 	}
+	payload = payload.replace(/%20/g, '+');
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', url, true);
@@ -1960,50 +1961,35 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
  * Post data to be converted into a file
  * This version creates a temporary file on the server
  */
-function generateFile2(url, filename, format, mime, data, sId, managedId, title, project) {
+function sendReports(url, filename, format, mime, data, sId, managedId, title, project, charts) {
 
-	var payload = "data=" + JSON.stringify(data);
-	payload += "&sId=" + sId;
-	payload += "&managedId=" + managedId;
-	payload += "&format=" + format;
-	if(title) {
-		payload += "&title=" + title;
+	var update = {
+			sId: sId,
+			format: format,
+			managedId: managedId,
+			data: data,
+			title: title,
+			project: project,
+			charts: charts	
 	}
-	if(project) {
-		payload += "&project=" + project;
-	}
+	var saveString = JSON.stringify(update);
 	
-	var xhr = new XMLHttpRequest();
-	xhr.open('POST', url, true);
-	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.responseType = 'blob';
-	 
-	xhr.onload = function(e) {
-		if (this.status == 200) {
-		    // get binary data as a response
-			var blob = new Blob([this.response], { type: mime });
-			var downloadUrl = URL.createObjectURL(blob);
-			var a = document.createElement("a");
-			a.href = downloadUrl;
-			a.download = filename;
-			document.body.appendChild(a);
-			a.click();
-		    setTimeout(function(){
-		        document.body.removeChild(a);
-		        window.URL.revokeObjectURL(url);  
-		    }, 100);  
-		  } else {
-			  alert("Error: Download Failed");
-		  }
-	};
-	
-	xhr.onerror = function(e) {
-		 alert("Error: Upload Failed");
-	}
-	if(Pace) {
-		Pace.restart();
-	}
-	xhr.send(payload);
+	addHourglass();
+	$.ajax({
+		 type: "POST",
+			  dataType: 'text',
+			  cache: false,
+			  contentType: "application/json",
+			  url: url,
+			  data: { report: saveString },
+			  success: function(data, status) {
+				  removeHourglass();
+				 
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  alert(data.responseText);
+			  }
+		});
 	
 }
 

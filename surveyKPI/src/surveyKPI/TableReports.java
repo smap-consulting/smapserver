@@ -1,6 +1,7 @@
 package surveyKPI;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -61,6 +62,7 @@ import utilities.XLSReportsManager;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
@@ -71,6 +73,8 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Path("/tables")
 public class TableReports extends Application {
@@ -86,11 +90,23 @@ public class TableReports extends Application {
 		public String title;
 		public String image;
 		public String description;
+		public String filePath;
+		public String entry;	// A unique name for the chart
+	}
+	
+	private class Report {
+		public int sId;
+		public String format;
+		public int managedId;
+		public ArrayList<ArrayList<KeyValue>> data;
+		public String title;
+		public String project;
+		public ArrayList<Chart> charts;
 	}
 	
 	@POST
 	@Path("/generate")
-	public void setManaged(
+	public void generate(
 			@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@FormParam("sId") int sId,
@@ -170,7 +186,7 @@ public class TableReports extends Application {
 						project);
 						
 			} else if(isImage) {
-				if(chartArray != null && chartArray.size() > 0) {
+				if(charts != null && chartArray.size() > 0) {
 					
 					/*
 					 * 1. Create the target folder
@@ -179,21 +195,49 @@ public class TableReports extends Application {
 					String filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
 					File folder = new File(filePath);
 					folder.mkdir();
+					
+					/*
+					 * Save the charts in the folder
+					 */
 					for(int i = 0; i < chartArray.size(); i++) {
-						try {
+						try { 
 							Chart chart = chartArray.get(i);
 							String imgData = chart.image.substring(chart.image.indexOf(",") + 1);
-							System.out.println(imgData);
-							byte[] imagedata = Base64.decodeBase64(imgData);
-							BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imagedata));
-							ImageIO.write(bufferedImage, "png", new File(filePath + "/" + chart.title + i + ".png"));
+							byte[] b = Base64.decodeBase64(imgData);
+							BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(b));
+							if(bufferedImage == null) {
+								log.info("Image is null");
+							} 
+							chart.entry = chart.title + i + ".png";
+							chart.filePath = filePath + "/" + chart.entry;
+							ImageIO.write(bufferedImage, "png", new File(chart.filePath));
 						} catch(Exception e) {
-							log.info("Error: " + e.getMessage());
+							log.log(Level.SEVERE, "Error: Converting data url", e);
 						}
-						
-						
-						
 					}
+					
+					/*
+					 * Return the zip file
+					 */
+					//FileOutputStream fos = new FileOutputStream(filePath + ".zip");
+					ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+					byte[] buffer = new byte[1024];
+					for(int i = 0; i < chartArray.size(); i++) {
+						Chart chart = chartArray.get(i);
+						ZipEntry ze= new ZipEntry(chart.entry);
+			    		zos.putNextEntry(ze);
+			    		FileInputStream in = new FileInputStream(chart.filePath);
+			    		
+			    		int len;
+			    		while ((len = in.read(buffer)) > 0) {
+			    			zos.write(buffer, 0, len);
+			    		}
+
+			    		in.close();
+			    		zos.closeEntry();
+					}
+					zos.close();
+					
 				}
 			}
 			
@@ -211,6 +255,7 @@ public class TableReports extends Application {
 
 
 	}
+	
 	
 
 }
