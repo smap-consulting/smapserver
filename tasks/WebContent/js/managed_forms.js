@@ -209,7 +209,31 @@ require([
 		});
 		
 		$('#shareRecord').click(function(){
-			alert("hi");
+			
+			var url = "/surveyKPI/managed/actionlink/" + 
+				globals.gCurrentSurvey + "/" + 
+				gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id + "/" +
+				gTasks.gPriKey;
+			
+			addHourglass();
+			$.ajax({
+	 			url: url,
+	 			dataType: 'json',
+	 			cache: false,
+	 			success: function(data) {
+	 						
+	 				removeHourglass();
+	 				$('#srLink').val(data.link);
+	 			},
+	 			error: function(xhr, textStatus, err) {
+	 				removeHourglass();
+	 				if(xhr.readyState == 0 || xhr.status == 0) {
+	 		              return;  // Not an error
+	 				} else {
+	 					console.log("Error: Failed to get sharing link: " + err);
+	 				}
+	 			}
+	 		});	
 		});
 		
 		// Save changes to the table columns that are shown

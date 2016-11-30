@@ -38,6 +38,8 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.model.Action;
+import org.smap.sdal.model.ActionLink;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
@@ -533,7 +535,6 @@ public class ManagedForms extends Application {
 			
 			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
-			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 			
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 			ResultsDataSource.closeConnection("surveyKPI-Update Managed Forms", cResults);
@@ -542,6 +543,100 @@ public class ManagedForms extends Application {
 		return response;
 	}
 	
+	/*
+	 * Get link to an action without creating an alert
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/actionlink/{sId}/{managedId}/{prikey}")
+	public Response getActionLink(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("managedId") int managedId,
+			@PathParam("prikey") int prikey
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sqlCanUpdate = "select p_id from survey "
+				+ "where s_id = ? "
+				+ "and managed_id = ? "
+				+ "and blocked = 'false' "
+				+ "and deleted = 'false';";
+		PreparedStatement pstmtCanUpdate = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Get Action Link");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		try {
+
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int pId = 0;
+			
+			/*
+			 * Verify that the survey is managed by the provided data processing id and get the project id
+			 */
+			pstmtCanUpdate = sd.prepareStatement(sqlCanUpdate);
+			pstmtCanUpdate.setInt(1, sId);
+			pstmtCanUpdate.setInt(2, managedId);
+			ResultSet rs = pstmtCanUpdate.executeQuery();
+			if(rs.next()) {
+				pId = rs.getInt(1);
+			}
+			if(pId == 0) {
+				throw new Exception(localisation.getString("mf_blocked"));
+			}
+			ActionManager am = new ActionManager();
+			Action action = new Action("respond");
+			action.sId = sId;
+			action.managedId = managedId;
+			action.prikey = prikey;
+			action.pId = pId;
+			
+			log.info("Creating action for prikey: " + prikey);
+			ActionLink al = new ActionLink();
+			al.link = request.getScheme() +
+					"://" +
+					request.getServerName() + 
+					am.getLink(sd, action, oId);
+			
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			String resp = gson.toJson(al, ActionLink.class);
+			response = Response.ok(resp).build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+	
+			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
+			
+			SDDataSource.closeConnection("surveyKPI-Get Action Link", sd);
+		}
+		
+		return response;
+	}
 
 	
 	@POST

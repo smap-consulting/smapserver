@@ -227,8 +227,16 @@
 	<div class="modal-dialog custom-modal-width">
 		<div class="modal-content">
 			<div class="modal-header">
-				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<button id="shareRecord" type="button" class="btn btn-info col-sm-2"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button>
+						<div class="col-sm-9">
+							<input type="text" id="srLink" required class="form-control" readonly>
+						</div>
+					</div>
+				</form>
+     			
    			</div>
 			<div class="modal-body">
 				<div class="row">
