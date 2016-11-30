@@ -70,7 +70,8 @@ public class TableDataManager {
 			boolean isDt,
 			int start,
 			int limit,
-			boolean superUser) throws SQLException, Exception  {
+			boolean superUser,
+			boolean specificPrikey) throws SQLException, Exception  {
 		
 		StringBuffer columnSelect = new StringBuffer();
 		boolean hasRbacFilter = false;
@@ -98,7 +99,12 @@ public class TableDataManager {
 				sqlGetData.append(columnSelect);
 				sqlGetData.append(" from ");
 				sqlGetData.append(table_name);
-				sqlGetData.append(" where prikey >= ? ");
+				if(specificPrikey) {
+					sqlGetData.append(" where prikey = ? ");
+				} else {
+					sqlGetData.append(" where prikey >= ? ");
+				}
+				
 				sqlGetData.append("and _bad = 'false'");
 				
 				// Add row selection clause

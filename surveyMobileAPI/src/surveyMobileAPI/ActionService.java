@@ -366,8 +366,10 @@ public class ActionService extends Application{
 				false,			// group
 				true,
 				prikey,			
-				1,
-				superUser);				// Number of records to return
+				1,				// Number of records to return
+				superUser,
+				true			// Return the specific primary key
+				);				
 		
 		output.append("\nvar gRecord=");
 		output.append(ja.toString());
