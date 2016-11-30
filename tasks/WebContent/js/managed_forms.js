@@ -134,7 +134,6 @@ require([
 			bs = isBusinessServer();
 		
 		window.chart = chart;
-		chart.init();
 		window.moment = moment;
 		localise.setlang();		// Localise HTML
 
@@ -313,12 +312,18 @@ require([
 		 } else {
 			 countImages = $('.svg-container svg').length;
 			 $('.svg-container svg').each(function(index) {
-				 var elem = $(this)[0];
+				 var $this = $(this),
+				 	elem = $this[0],
+				 	title = $this.closest('.ibox').find('.ibox-title h5').text();
+				 	
+				 if(!title) {
+					 title = "A Chart";
+				 }
 				 //svgsave.saveSvgAsPng(elem, "x.png");
 				 svgsave.svgAsPngUri(elem, undefined, function(uri) {
 					 var chart = {
 							 image: uri,
-							 title: "A Chart"
+							 title: title
 					 }
 					 charts.push(chart);
 					 console.log("Got image: " + countImages);

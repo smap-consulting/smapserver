@@ -1059,6 +1059,7 @@ var gReport = {
 					 } else {
 						 chart.setReport(gReport);
 					 }
+					 chart.init();
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();
