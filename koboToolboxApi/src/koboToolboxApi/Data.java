@@ -572,7 +572,8 @@ public class Data extends Application {
 							} else {
 								
 								//String name = rsMetaData.getColumnName(i);	
-								name = c.humanName;
+								//name = c.humanName;
+								name = c.name;
 								value = rsD.getString(i + 1);	
 								
 								if(value == null) {

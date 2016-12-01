@@ -148,10 +148,10 @@ window.gTasks = {
 		h[++idx] = ' <div class="col-lg-8">';
 		if(configItem.readonly) {		// Read only text
 			h[++idx] = '<input type="text" disabled="" class="form-control" value="';
-			h[++idx] = record[configItem.humanName];
+			h[++idx] = record[configItem.name];
 			h[++idx] = '">';
 		} else {
-			h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], itemIndex, first);
+			h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first);
 			first = false;
 		}
 		h[++idx] = '</div>';
@@ -193,7 +193,7 @@ window.gTasks = {
 			i,
 			foundExistingUpdate;
 		
-		currentValue = record[columns[itemIndex].humanName];
+		currentValue = record[columns[itemIndex].name];
 		if(typeof currentValue === "undefined") {
 			currentValue = "";
 		}
@@ -279,7 +279,7 @@ window.gTasks = {
 			 hDups[hColSortIdx++] = addToDuplicateReportSelect(headItem);
 			 
 			 shownColumns.push({
-				 "data": headItem.humanName
+				 "data": headItem.name
 			 });
 			 h[++idx] = '<th>';
 			 h[++idx] = '<span class="ch">';

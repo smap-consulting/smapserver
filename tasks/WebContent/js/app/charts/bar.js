@@ -72,21 +72,6 @@ define([
 		    .attr("transform", "translate(0," + height + ")")
 		    .call(config.xAxis);
 	
-		// Add x-axis label
-		/*
-		var text = config.svg.append("text")             
-	    		.attr("x", width / 2 )
-	    		.attr("y",  height + margin.top + 40 )
-	    		.style("text-anchor", "middle");
-		
-		if(chart.tSeries) {
-			text.text(localise.set["c_" + chart.period]);
-		} else if(chart.select_name) {
-			text.text(chart.select_name);
-		} else {
-			text.text(chart.humanName);
-		}
-		*/
 		if(chart.fn === "avgdurn") {
 			labelId = "d_sec";
 		} else {
