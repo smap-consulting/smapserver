@@ -228,15 +228,6 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<button id="shareRecord" type="button" class="btn btn-info col-sm-2"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button>
-						<div class="col-sm-9">
-							<input type="text" id="srLink" required class="form-control" readonly>
-						</div>
-					</div>
-				</form>
-     			
    			</div>
 			<div class="modal-body">
 				<div class="row">
@@ -253,6 +244,23 @@
 						</form>
 						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
 						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+						<button id="shareRecord" type="button" class="btn btn-info"><span class="lang" data-lang="n_share">get link</span></button>
+						<div class="shareRecordOnly well">
+							<form role="form" class="form-horizontal" id="me_edit_form">
+								<div class="form-group role_select">
+									<h4 class="lang" data-lang="c_roles">roles</h4>
+									<div class="role_select_roles"></div>
+								</div>
+								<div class="form-group">	
+									<div class="input-group">
+										<span class="input-group-btn">
+        									<button id="getSharedRecord" class="btn btn-info" type="button"><i class="fa fa-share-alt"></i></button>
+      									</span>
+  										<input type="text" id="srLink" required class="form-control" readonly>
+									</div>				
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -21,7 +21,8 @@ window.gTasks = {
 		cache: {
 			surveyConfig: {},
 			managedData: {},
-			surveyList: {}
+			surveyList: {},
+			surveyRoles: {}
 		},
 		gSelectedRecord: undefined,
 		gSelectedSurveyIndex: undefined,
@@ -32,69 +33,71 @@ window.gTasks = {
 		gDirn: undefined
 	}
 
-var gReport = {
-		date_q: "Upload Time",
-		row: [
-		      {
-					datatable: false,
-					name: "history",
-					charts: 
-						[
-					         {
-					        	groups: [
-					        	         {
-					        	        	 q: "_start",
-					        	        	 label: "Upload Time"
-					        	         },
-					        	         {
-					        	        	 q: "Action Date",
-					        	        	 label: "Date Closed"
-					        	         }],
-								humanName: "Feedback per day",
-								name: "periodic_count",
-								chart_type: "groupedBar",
-								group: undefined,
-								fn: "length",
-								tSeries: true,
-								period: "day",
-								width: 12
-							},
-							{
-					        	groups: [
-					        	         {
-					        	        	 q: "_start",
-					        	        	 label: "Start Time"
-					        	         },
-					        	         {
-					        	        	 q: "_end",
-					        	        	 label: "Finish Time"
-					        	         }],
-								humanName: "Average survey completion time",
-								name: "completion_time",
-								chart_type: "bar",
-								group: "User",
-								fn: "avgdurn",
-								tSeries: false,
-								period: undefined,
-								width: 12
-							}
-					    ]
-		      },
-		      {
-				datatable: true,
-				name: "chartrow",
-				def: {
-					chart_type: "bar",
-					groups: undefined,
-					group: undefined,
-					fn: "length",
-					tSeries: false,
-					period: undefined
-				},
-				charts: []
-		      }
-		    ]
-};
+	var gReport = {
+			date_q: "Upload Time",
+			row: [
+			      {
+						datatable: false,
+						name: "history",
+						charts: 
+							[
+						         {
+						        	groups: [
+						        	         {
+						        	        	 q: "_start",
+						        	        	 label: "Upload Time"
+						        	         },
+						        	         {
+						        	        	 q: "Action Date",
+						        	        	 label: "Date Closed"
+						        	         }],
+									humanName: "Feedback per day",
+									name: "periodic_count",
+									chart_type: "groupedBar",
+									group: undefined,
+									fn: "length",
+									tSeries: true,
+									period: "day",
+									width: 12
+								},
+								{
+						        	groups: [
+						        	         {
+						        	        	 q: "_start",
+						        	        	 label: "Start Time"
+						        	         },
+						        	         {
+						        	        	 q: "_end",
+						        	        	 label: "Finish Time"
+						        	         }],
+									humanName: "Average survey completion time",
+									name: "completion_time",
+									chart_type: "bar",
+									group: "User",
+									fn: "avgdurn",
+									tSeries: false,
+									period: undefined,
+									width: 12
+								}
+						    ]
+			      },
+			      {
+					datatable: true,
+					name: "chartrow",
+					def: {
+						chart_type: "bar",
+						groups: undefined,
+						group: undefined,
+						fn: "length",
+						tSeries: false,
+						period: undefined
+					},
+					charts: []
+			      }
+			    ]
+	};
+	var gReportLoaded = false,
+		gDataLoaded = false;
 
 	 /*
 	  * Function called when the current survey is changed
@@ -473,7 +476,7 @@ var gReport = {
 			 
 		 });
 		
-		 // Rspond to date filter changes
+		 // Respond to date filter changes
 		 $('#filter_from').change( function() { globals.gMainTable.draw(); } );
 		 
 		 /*
@@ -701,7 +704,6 @@ var gReport = {
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
-
 	 		$.ajax({
 	 			url: url,
 	 			dataType: 'json',
@@ -784,8 +786,11 @@ var gReport = {
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
+					 gDataLoaded = true;
 					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
-					 chart.setChartList();	// Enable charts based on this survey config
+					 if(gReportLoaded) {
+						 chart.setChartList();	// Enable charts based on this survey config
+					 }
 					 
 					 // Add a config item for the group value if this is a duplicates search
 					 if(isDuplicates) {
@@ -1046,7 +1051,7 @@ var gReport = {
 	  * Get the report
 	  */
 	 function getReport(gReport) {
-		 	
+		 
 			 addHourglass();
 			 $.ajax({
 				 url: "/surveyKPI/managed/getconfig/" + globals.gCurrentSurvey + "/db",
@@ -1054,12 +1059,15 @@ var gReport = {
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
+					 gReportLoaded = true;
 					 if(data) {
 						 chart.setReport(data);
 					 } else {
 						 chart.setReport(gReport);
 					 }
-					 chart.init();
+					 if(gDataLoaded) {
+						 chart.setChartList();
+					 }
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();

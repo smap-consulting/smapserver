@@ -26,6 +26,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -46,6 +47,7 @@ import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.ManagedFormUserConfig;
+import org.smap.sdal.model.Role;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -553,7 +555,8 @@ public class ManagedForms extends Application {
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("managedId") int managedId,
-			@PathParam("prikey") int prikey
+			@PathParam("prikey") int prikey,
+			@QueryParam("roles") String roles
 			) { 
 		
 		Response response = null;
@@ -612,6 +615,23 @@ public class ManagedForms extends Application {
 			action.managedId = managedId;
 			action.prikey = prikey;
 			action.pId = pId;
+			
+			
+			if(roles != null) {
+				String [] rArray = roles.split(",");
+				if(rArray.length > 0) {
+					action.roles = new ArrayList<Role> ();
+					for (int i = 0; i < rArray.length; i++) {
+						Role r = new Role();
+						try {
+							r.id = Integer.parseInt(rArray[i]);
+							action.roles.add(r);
+						} catch (Exception e) {
+							log.info("Error: Invalid Role Id: " + rArray[i] + " : " + e.getMessage());
+						}
+					}
+				}
+			}
 			
 			log.info("Creating action for prikey: " + prikey);
 			ActionLink al = new ActionLink();

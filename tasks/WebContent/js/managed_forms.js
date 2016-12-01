@@ -134,6 +134,7 @@ require([
 			bs = isBusinessServer();
 		
 		window.chart = chart;
+		chart.init();
 		window.moment = moment;
 		localise.setlang();		// Localise HTML
 
@@ -184,6 +185,11 @@ require([
 				$editForm = $('#editRecordForm'),
 				$surveyForm = $('#surveyForm');
 			
+			$('.shareRecordOnly, .role_select').hide();
+			$('#srLink').val("");
+			if(globals.gIsSecurityAdministrator) {
+				getSurveyRoles(globals.gCurrentSurvey);
+			}
 			showEditRecordForm(record, columns, $editForm, $surveyForm);
 	
 		});
@@ -208,13 +214,29 @@ require([
 				});
 		});
 		
-		$('#shareRecord').click(function(){
+		$('#shareRecord').click(function(){	
+			$('.shareRecordOnly').toggle();
+		});
+		
+		$('#getSharedRecord').click(function(){
 			
 			var url = "/surveyKPI/managed/actionlink/" + 
 				globals.gCurrentSurvey + "/" + 
 				gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id + "/" +
 				gTasks.gPriKey;
 			
+			if(globals.gIsSecurityAdministrator) {
+				var roleIds = [],
+					id;
+				$('input[type=checkbox]:checked', '.role_select_roles').each(function() {
+					id = $(this).val();
+					roleIds.push(id);
+				});
+				if(roleIds.length > 0) {
+					url += "?roles=" + roleIds.join();
+				}
+			}
+				
 			addHourglass();
 			$.ajax({
 	 			url: url,
@@ -294,6 +316,61 @@ require([
 		
      });	 
 	 
+	/*
+	 * Get the roles for a survey
+	 */
+	function getSurveyRoles(sId) {
+		
+		if(!gTasks.cache.surveyRoles[sId]) {
+			addHourglass();
+	 		$.ajax({
+	 			url: "/surveyKPI/role/survey/" + sId + "?enabled=true",
+	 			dataType: 'json',
+	 			cache: false,
+	 			success: function(data) {
+	 			
+	 				gTasks.cache.surveyRoles[sId] = data;
+	 				showRoles(gTasks.cache.surveyRoles[sId]);	
+	 			},
+	 			error: function(xhr, textStatus, err) {
+	 				
+	 				removeHourglass();
+	 				if(xhr.readyState == 0 || xhr.status == 0) {
+	 		              return;  // Not an error
+	 				} else {
+	 					console.log("Error: Failed to get roles for a survey: " + err);
+	 				}
+	 			}
+	 		});	
+		} else {
+			showRoles(gTasks.cache.surveyRoles[sId]);
+		}
+	}
+
+	/*
+	 * Show the roles
+	 */
+	function showRoles(data) {
+		
+		var h = [],
+			idx = -1,
+			i;
+		
+		if(data.length > 0) {
+			for(i = 0; i < data.length; i++) {
+				h[++idx] = '<div class="checkbox">';
+				h[++idx] = '<label><input type="checkbox" value="';
+				h[++idx] = data[i].id;
+				h[++idx] = '">';
+				h[++idx] = data[i].name;
+				h[++idx] = '</label>';
+				h[++idx] = '</div>';
+			}
+			$('.role_select').show();
+			$('.role_select_roles').empty().append(h.join(''));	
+		}
+	}
+	
 	 /*
 	  * Respond to a request to generate a file
 	  */

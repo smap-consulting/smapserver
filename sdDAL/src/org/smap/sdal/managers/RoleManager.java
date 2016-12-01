@@ -202,7 +202,7 @@ public class RoleManager {
 	/*
 	 * Get roles associated with a survey
 	 */
-	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id, int o_id) throws SQLException {
+	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id, int o_id, boolean enabledOnly) throws SQLException {
 		PreparedStatement pstmt = null;
 		ArrayList<Role> roles = new ArrayList<Role> ();
 		
@@ -220,8 +220,11 @@ public class RoleManager {
 					+ "left outer join survey_role sr "
 					+ "on r.id = sr.r_id "
 					+ "and sr.s_id = ? "
-					+ "where o_id = ? "
-					+ "order by r.name asc";
+					+ "where o_id = ? ";
+			if(enabledOnly) {
+				sql += "and sr.enabled ";
+			}
+			sql += "order by r.name asc";
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, s_id);

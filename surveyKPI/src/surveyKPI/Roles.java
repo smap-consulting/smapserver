@@ -27,6 +27,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -230,7 +231,8 @@ public class Roles extends Application {
 	@Produces("application/json")
 	public Response getSurveyRoles(
 			@Context HttpServletRequest request,
-			@PathParam("sId") int sId
+			@PathParam("sId") int sId,
+			@QueryParam("enabled") boolean enabledOnly
 			) { 
 
 		Response response = null;
@@ -259,7 +261,7 @@ public class Roles extends Application {
 		try {
 	
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
-			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId);
+			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId, enabledOnly);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
