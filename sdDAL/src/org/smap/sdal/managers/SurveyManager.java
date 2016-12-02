@@ -1184,6 +1184,7 @@ public class SurveyManager {
 		PreparedStatement pstmtLangOldVal = null;
 		PreparedStatement pstmtLangNew = null;
 		PreparedStatement pstmtNewQuestionLabel = null;
+		PreparedStatement pstmtNewOptionLabel = null;
 		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
 		PreparedStatement pstmtGetOptionTextId = null;
@@ -1191,11 +1192,11 @@ public class SurveyManager {
 		
 		try {
 			
-			// Get the text id for a question update
+			// Get the text id for an option update
 			String sqlGetOptionTextId = "select label_id from option where l_id = ? and ovalue = ?; ";
 			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
 			
-			// Get the text id for an option update
+			// Get the text id for a question update
 			String sqlGetQuestionTextId = "select qtext_id from question where q_id = ?; ";
 			pstmtGetQuestionTextId = connectionSD.prepareStatement(sqlGetQuestionTextId);
 			
@@ -1210,6 +1211,9 @@ public class SurveyManager {
 			String sqlNewQLabel = "update question set qtext_id = ? where q_id = ?; ";
 			pstmtNewQuestionLabel = connectionSD.prepareStatement(sqlNewQLabel);
 			
+			String sqlNewOptionLabel = "update option set label_id = ? where l_id = ? and ovalue = ?; ";
+			pstmtNewOptionLabel = connectionSD.prepareStatement(sqlNewOptionLabel);
+			
 			String sqlNewQHint = "update question set infotext_id = ? where q_id = ?; ";
 			pstmtNewQuestionHint = connectionSD.prepareStatement(sqlNewQHint);
 			
@@ -1218,15 +1222,17 @@ public class SurveyManager {
 			
 			 // Get the languages
 			List<Language> lang = GeneralUtilityMethods.getLanguages(connectionSD, sId);
+			int listId = -1;
 			
 			for(ChangeItem ci : changeItemList) {
 			
 				boolean isQuestion = ci.property.type.equals("question");
+				boolean isOption = ci.property.type.equals("option");
 				String text_id = null;
 				if(!isQuestion) {
 					// Get the text id for an option
 					// Don't rely on the key as the text id may have been changed by a name change
-					int listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.property.optionList);
+					listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.property.optionList);
 					pstmtGetOptionTextId.setInt(1, listId);
 					pstmtGetOptionTextId.setString(2, ci.property.name);
 					
@@ -1234,6 +1240,10 @@ public class SurveyManager {
 					ResultSet rs = pstmtGetOptionTextId.executeQuery();
 					if(rs.next()) {
 						text_id = rs.getString(1);
+					}
+					
+					if(text_id == null) {
+						text_id = "option_" + listId + "_" + ci.property.name + ":label";
 					}
 					
 				} else {
@@ -1266,6 +1276,12 @@ public class SurveyManager {
 							pstmtNewQuestionLabel.setInt(2, ci.property.qId);
 							log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 							pstmtNewQuestionLabel.executeUpdate();
+						} else if(isOption) {
+							pstmtNewOptionLabel.setString(1, text_id);
+							pstmtNewOptionLabel.setInt(2, listId);
+							pstmtNewOptionLabel.setString(3, ci.property.name);
+							log.info("Update option label with label_id: " + pstmtNewOptionLabel.toString());
+							pstmtNewOptionLabel.executeUpdate();
 						}
 						
 					} else if(ci.property.propType.equals("hint")) {
@@ -1309,6 +1325,7 @@ public class SurveyManager {
 			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtNewOptionLabel != null) {pstmtNewOptionLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtGetOptionTextId != null) {pstmtGetOptionTextId.close();}} catch (SQLException e) {}
@@ -1326,7 +1343,6 @@ public class SurveyManager {
 		
 		String transType = null;
 		
-		//pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 		pstmtLangOldVal.setString(1, ci.property.newVal);	// rmpath
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
@@ -1337,8 +1353,6 @@ public class SurveyManager {
 			transType = ci.property.propType;
 		}
 		pstmtLangOldVal.setString(5,  transType);
-		//pstmtLangOldVal.setString(6, GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, true));
-		//pstmtLangOldVal.setString(6, ci.property.oldVal);	// rmpath
 		
 		log.info("Update question translation: " + pstmtLangOldVal.toString());
 		
@@ -1731,27 +1745,7 @@ public class SurveyManager {
 								ci.property.newVal = originalNewValue;	// Restore the original new value for logging
 							}
 							
-						} //else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
-						//	
-						//	pstmtProperty1.setInt(2, ci.property.qId);
-							
-						//	if(propertyType.equals("boolean")) {
-						//		pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
-						//		pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	} else if(propertyType.equals("integer")) {
-						//		pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
-						//		pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	} else {
-						//		pstmtProperty1.setString(1, ci.property.newVal);
-						//		pstmtProperty1.setString(3, ci.property.oldVal);
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	}
-						//	log.info("Update existing question property: " + pstmtProperty1.toString());
-						//	count = pstmtProperty1.executeUpdate();
-						//} 
-						else {
+						} else {
 							
 							pstmtProperty2.setInt(2, ci.property.qId);
 							
