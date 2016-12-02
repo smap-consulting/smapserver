@@ -273,6 +273,86 @@ var isBrowseResults = true,
 	</div>
 </div>
 
+<!-- Modal to edit a chart widget -->
+<div id="editWidget" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog custom-modal-width">
+		<div class="modal-content">
+			<div class="modal-header">
+				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+   			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+
+						<form id="surveyForm" role="form" class="form-horizontal">
+							<div class="not_period_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="a_type" for="ew_chart_type">chart_type</label>
+									<div class="col-sm-10">
+										<select class="form-control chart_type" id="ew_chart_type">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="group_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="a_gb" for="ew_group">group</label>
+									<div class="col-sm-10">
+										<select class="form-control group_question" id="ew_group">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="period_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_dateq" for="ew_date1">date</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date1">
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_dateq" for="ew_date2">date</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date2">
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
+									<div class="col-sm-10">
+										<select class="form-control" id="ew_period">
+											<option class="lang" value="day" data-lang="c_day">day</option>
+											<option class="lang" value="month" data-lang="c_month">month</option>
+											<option class="lang" value="year" data-lang="c_year">year</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+			         			<label class="lang col-sm-2 control-label" data-lang="c_width" for="ew_width">width</label>
+								<div class="col-sm-10">
+									<select class="form-control" id="ew_width">
+										<option class="lang" value="3" data-lang="d_qtr">25</option>
+										<option class="lang" value="6" data-lang="d_half">50</option>
+										<option class="lang" value="9" data-lang="d_3qtr">75</option>
+										<option class="lang" value="12" data-lang="d_full">100</option>
+									</select>
+								</div>
+							</div>
+						</form>
+					</div>
+					
+				</div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="editWidgetSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">

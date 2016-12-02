@@ -48,13 +48,7 @@ define([
 			height,
 			margin;
 	    
-		// Allow space for labels if needed
-		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var left_margin = chart.chart_type === "wordcloud" ? 0 : 60;
-		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
-		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
-		
-		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+		margin = {top: 40, right: 20, bottom: 60, left: 60};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 	    
@@ -123,16 +117,6 @@ define([
 		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
-	    
-		/*
-		config.x0.domain(data.map(function(d) { 
-			if(!d.key || d.key === "") {
-				return localise.set["c_undef"]; 
-			} else {
-				return d.key;
-			}
-		}));
-		*/
 	    
 		config.x0.domain(data.map(function(d) { 
 				return d.key; 
@@ -208,38 +192,9 @@ define([
 			.transition()
 			.attr("y", config.y(0))
 			.attr("height", height - config.y(0))
-			//.style('fill-opacity', 1e-6)
 			.remove();
 		
 		config.xTicks.call(config.xAxis);
-		/*
-		config.xTicks = config.g.append("g")
-			.attr("class", "axis axis--x")
-			.attr("transform", "translate(0," + height + ")")
-			.call(config.xAxis)
-			.selectAll("text");
-			
-		xText.enter()
-	        	.style("text-anchor", "end")
-	        	.attr("dx", "-.8em")
-	        	.attr("dy", ".15em")
-	        	.attr("transform", function(d) {
-	        		return "rotate(-65)" 
-	            	});
-		xText.exit().remove();
-		*
-		if(chart.tSeries) {
-			// Max 10 X axis ticks
-			if(data.length > 10) {
-				var skips = Math.ceil(data.length / 10);
-				var tick_text = config.svg.selectAll(".axis--x .tick text");
-	
-				tick_text.attr("class", function(d,i){
-					if(i%skips != 0) d3.select(this).remove();
-				});
-			}
-		}
-		*/
 		
 		/*
 		 * Legend

@@ -55,7 +55,13 @@ define([
 	    height = +heightContainer - margin.top - margin.bottom;
 	    
 	    config.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-		config.x.domain(data.map(function(d) { return d.key; }));
+	    config.x.domain(data.map(function(d) { 
+			if(!d.key || d.key === "") {
+				return localise.set["c_undef"]; 
+			} else {
+				return d.key;
+			}
+		}));
 		barWidth = config.x.bandwidth();
 	    
 	    config.y = d3.scaleLinear().rangeRound([height, 0]);
@@ -106,7 +112,7 @@ define([
 		var top_margin = chart.chart_type === "wordcloud" ? 40 : 40;
 		var right_margin = chart.chart_type === "wordcloud" ? 0 : 20;
 		
-		margin = {top: top_margin, right: right_margin, bottom: bottom_margin, left: left_margin};
+		margin = {top: 40, right: 20, bottom: 60, left: 60};
 	    width = +widthContainer - margin.left - margin.right;
 	    height = +heightContainer - margin.top - margin.bottom;
 	    
@@ -122,12 +128,8 @@ define([
 		
 		// Update axes
 		config.svg.select(".axis--y")
-			//.transition()
-			//.duration(500)
 			.call(config.yAxis.ticks(5));
 		config.svg.select(".axis--x")
-			//.transition()
-			//.duration(500)
 			.call(config.xAxis)
 			.selectAll("text")
 				.style("text-anchor", "end")
@@ -143,7 +145,6 @@ define([
 			.duration(300)
 			.attr("y", config.y(0))
 			.attr("height", height - config.y(0))
-			//.style('fill-opacity', 1e-6)
 			.remove();
 		
 		// New bars
@@ -166,7 +167,13 @@ define([
 		// Bars being update
 		bars.transition()
 			.duration(300)
-	    	.attr("x", function(d) { return config.x(d.key); })
+	    	.attr("x", function(d) { 
+				if(!d.key || d.key === "") {
+					return config.x(localise.set["c_undef"]);
+				} else {
+					return config.x(d.key); 
+				}
+			})
 	    	.attr("y", function(d) { return config.y(d.value); })
 	    	.attr("width", barWidth)
 	    	.attr("height", function(d) { return height - config.y(d.value); });

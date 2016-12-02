@@ -43,7 +43,7 @@ define([
 	var avCharts = {
 	                 bar: bar, 
 	                 pie: pie,
-	                 line: line,
+	                // line: line,
 	                 wordcloud: wordcloud,
 	                 groupedBar: groupedBar
 	                 };
@@ -400,10 +400,6 @@ define([
 				  .classed("svg-content", true);
 				}
 				avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
-				
-				/*
-				 * Add a title
-				 */
 			} 
 			if(chart.chart_type !== "pie") {
 				avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
