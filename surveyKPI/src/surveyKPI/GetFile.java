@@ -91,7 +91,7 @@ public class GetFile extends Application {
 		Connection connectionSD = SDDataSource.getConnection("getFile");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		try {		
-			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
 		} catch(Exception e) {
 			// ignore error
 		}

@@ -100,7 +100,7 @@ public class Roles extends Application {
 		
 		RoleManager rm = new RoleManager();
 		try {
-			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			ArrayList<Role> roles = rm.getRoles(sd, o_id);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -146,7 +146,7 @@ public class Roles extends Application {
 		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
 		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			RoleManager rm = new RoleManager();
 			
@@ -208,7 +208,7 @@ public class Roles extends Application {
 		RoleManager rm = new RoleManager();
 		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			rm.deleteRoles(sd, rArray, o_id);
 			response = Response.ok().build();			
 		}  catch (Exception ex) {
@@ -260,7 +260,7 @@ public class Roles extends Application {
 		RoleManager rm = new RoleManager();
 		try {
 	
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId, enabledOnly);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);

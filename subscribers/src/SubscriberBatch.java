@@ -27,6 +27,7 @@ import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.NotificationManager;
+import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.Survey;
@@ -69,6 +70,7 @@ public class SubscriberBatch {
 	DocumentBuilder db = null;
 	Document xmlConf = null;		
 	Connection sd = null;
+	Connection cResults;
 	PreparedStatement pstmt = null;
 	
 	
@@ -77,8 +79,6 @@ public class SubscriberBatch {
 	 */
 	public void go(String smapId, String basePath, String subscriberType) {
 		
-		//UploadEventManager uem = new UploadEventManager(pc);
-		
 		confFilePath = "./" + smapId;
 
 		// Get the connection details for the meta data database
@@ -86,6 +86,11 @@ public class SubscriberBatch {
 		String databaseMeta = null;
 		String userMeta = null;
 		String passwordMeta = null;
+		
+		String dbClass = null;
+		String database = null;
+		String user = null;
+		String password = null;
 		JdbcUploadEventManager uem = null;
 		
 		try {
@@ -96,8 +101,16 @@ public class SubscriberBatch {
 			userMeta = xmlConf.getElementsByTagName("user").item(0).getTextContent();
 			passwordMeta = xmlConf.getElementsByTagName("password").item(0).getTextContent();
 			
+			// Get the connection details for the target results database
+			xmlConf = db.parse(new File(confFilePath + "/results_db.xml"));
+			dbClass = xmlConf.getElementsByTagName("dbclass").item(0).getTextContent();
+			database = xmlConf.getElementsByTagName("database").item(0).getTextContent();
+			user = xmlConf.getElementsByTagName("user").item(0).getTextContent();
+			password = xmlConf.getElementsByTagName("password").item(0).getTextContent();
+			
 			Class.forName(dbClassMeta);
-			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);		
+			sd = DriverManager.getConnection(databaseMeta, userMeta, passwordMeta);	
+			cResults = DriverManager.getConnection(database, user, password);
 		
 			uem = new JdbcUploadEventManager(sd);
 			
@@ -285,13 +298,6 @@ public class SubscriberBatch {
 											if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 										}
 		
-										//se.setUploadEvent(ue);
-										//SubscriberEventManager sem = new SubscriberEventManager(pc);
-										//try {
-										//	sem.persist(se);
-										//} catch (Exception e) {
-										//	e.printStackTrace();
-										//}
 									} else if(se.getStatus() != null && se.getStatus().equals("host_unreachable")) {
 										// If the host is unreachable then stop forwarding for 10 seconds
 										// Also stop processing this subscriber, it may be that it has been taken off line
@@ -319,7 +325,10 @@ public class SubscriberBatch {
 				}
 			}
 			
+			// Erase any templates that were deleted more than a set time ago
+			eraseOldTemplates(sd, cResults, basePath);
 			subscribers = null;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -327,7 +336,8 @@ public class SubscriberBatch {
 			
 			if(uem != null) {uem.close();}
 			
-			try {if (sd != null) {
+			try {				
+				if (sd != null) {
 					sd.close();
 					sd = null;
 				}
@@ -335,10 +345,58 @@ public class SubscriberBatch {
 				System.out.println("Failed to close connection");
 				e.printStackTrace();
 			}
+			
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
+				}
+			} catch (SQLException e) {
+				System.out.println("Failed to close results connection");
+				e.printStackTrace();
+			}
 		}
 
 	}
-
+	
+	/*
+	 * Erase deleted templates more than a specified number of days old
+	 */
+	private void eraseOldTemplates(Connection sd, Connection cResults, String basePath) {
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+	
+			ServerManager sm = new ServerManager();
+			String sql = "select s_id, "
+					+ "p_id, "
+					+ "last_updated_time, "
+					+ "ident,"
+					+ "display_name "
+					+ "from survey where deleted "
+					+ "and ((last_updated_time < now() - interval '100 days') or last_updated_time is null) "
+					+ "order by last_updated_time asc limit 10;";
+			pstmt = sd.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int sId = rs.getInt("s_id");
+				int projectId = rs.getInt("p_id");
+				String deletedDate = rs.getString("last_updated_time");
+				String surveyIdent = rs.getString("ident");
+				String surveyDisplayName = rs.getString("display_name");
+				
+				System.out.println("######### Erasing: " + surveyDisplayName + " which was deleted on " +  deletedDate);
+				sm.deleteSurvey(sd, cResults, "auto erase", projectId, sId, surveyIdent, surveyDisplayName, basePath, true, "yes");
+				
+			}
+				
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}	
+		}
+	}
 	/*
 	 * Create a Subscriber object for each subscriber
 	 */

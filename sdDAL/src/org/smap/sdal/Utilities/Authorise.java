@@ -662,7 +662,7 @@ public class Authorise {
 		
 		
 		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(conn, user);
+			int oId = GeneralUtilityMethods.getOrganisationId(conn, user, 0);
 			
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pId);

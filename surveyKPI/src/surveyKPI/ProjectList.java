@@ -92,7 +92,7 @@ public class ProjectList extends Application {
 		ArrayList<Project> projects = new ArrayList<Project> ();
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
 			boolean securityRole = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			int uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
 			ResultSet resultSet = null;

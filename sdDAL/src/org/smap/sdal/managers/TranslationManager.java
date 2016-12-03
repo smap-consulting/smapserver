@@ -58,7 +58,7 @@ public class TranslationManager {
 		
 		HashMap<String, String> files = new HashMap<String, String> ();
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
 		
 		String sqlQuestionLevel = "select t.text_id, t.type, t.value " +
 				manifestQuerySql;

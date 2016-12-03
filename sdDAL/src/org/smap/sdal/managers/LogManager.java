@@ -76,7 +76,7 @@ public class LogManager {
 		
 		try {
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, uIdent);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, uIdent, sId);
 			pstmt = sd.prepareStatement(sql);	
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, oId);

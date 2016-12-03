@@ -42,23 +42,18 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.TableColumn;
 import org.smap.server.utilities.GetXForm;
 
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -898,121 +893,25 @@ public class Survey extends Application {
 						projectId = resultSet.getInt("p_id");
 					}
 					
-					// Get the organisation id
-					//int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
-					
 					/*
 					 * Delete the survey. Either a soft or a hard delete
 					 */
 					if(hard) {
+						
 						connectionRel = ResultsDataSource.getConnection("surveyKPI-Survey");
-	
-						// Get the tables associated with this survey
-						boolean nonEmptyDataTables = false;
-						if(tables != null && tables.equals("yes")) {
-									
-							sql = "SELECT DISTINCT f.table_name FROM form f " +
-									"WHERE f.s_id = ? " +
-									"ORDER BY f.table_name;";						
-						
-							log.info(sql);
-							pstmt = connectionSD.prepareStatement(sql);	
-							pstmt.setInt(1, sId);
-							resultSet = pstmt.executeQuery();
-							
-							while (resultSet.next() && (delData || !nonEmptyDataTables)) {		
-								
-								String tableName = resultSet.getString(1);
-								int rowCount = 0;
-								
-								// Ensure the table is empty
-								if(!delData) {
-									try {
-										sql = "SELECT COUNT(*) FROM " + tableName + ";";
-										log.info(sql + " : " + tableName);
-										
-										pstmt = connectionRel.prepareStatement(sql);
-										ResultSet resultSetCount = pstmt.executeQuery();
-										resultSetCount.next();							
-										rowCount = resultSetCount.getInt(1);
-									} catch (Exception e) {
-										log.severe("failed to get count from table");
-									}
-								}
-								
-								try {
-									if(delData || (rowCount == 0)) {
-										sql = "DROP TABLE " + tableName + ";";
-										log.info(sql + " : " + tableName);
-										Statement stmtRel = connectionRel.createStatement();
-										stmtRel.executeUpdate(sql);
-										
-									} else {
-										nonEmptyDataTables = true;
-									}
-								} catch (Exception e) {
-									log.severe("failed to drop table");
-								}
-							}
-							
-						} 
-		
 						String basePath = GeneralUtilityMethods.getBasePath(request);
-						
-						/*
-						 * Delete any attachments
-						 */
-						String fileFolder = basePath + "/attachments/" + surveyIdent;
-					    File folder = new File(fileFolder);
-					    try {
-					    	log.info("Deleting attachments folder: " + fileFolder);
-							FileUtils.deleteDirectory(folder);
-						} catch (IOException e) {
-							log.info("Error deleting attachments directory:" + fileFolder + " : " + e.getMessage());
-						}
-					    
-						/*
-						 * Delete any raw upload data
-						 */
-						fileFolder = basePath + "/uploadedSurveys/" + surveyIdent;
-					    folder = new File(fileFolder);
-					    try {
-					    	log.info("Deleting uploaded files for survey: " + surveyName + " in folder: " + fileFolder);
-							FileUtils.deleteDirectory(folder);
-						} catch (IOException e) {
-							log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
-						}
-					    
-
-					    // Delete the templates
-						try {
-							GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, projectId );
-						} catch (Exception e) {
-							log.info("Error deleting templates: " + surveyName + " : " + e.getMessage());
-						}
-						
-						// Delete survey definition
-						if(delData || !nonEmptyDataTables) {
-							sql = "DELETE FROM survey WHERE s_id = ?;";	
-							log.info(sql + " : " + sId);
-							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setInt(1, sId);
-							pstmt.execute();
-						}
-						
-						// Delete changeset data, this is an audit trail of modifications to the data
-						if(delData || !nonEmptyDataTables) {
-							sql = "DELETE FROM changeset WHERE s_id = ?;";	
-							log.info(sql + " : " + sId);
-							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-							pstmt = connectionRel.prepareStatement(sql);
-							pstmt.setInt(1, sId);
-							pstmt.execute();
-						}
-
-						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete survey " + surveyDisplayName + " and its results");
-						log.info("userevent: " + request.getRemoteUser() + " : hard delete survey : " + sId);
+						ServerManager sm = new ServerManager();
+						sm.deleteSurvey(
+								connectionSD, 
+								connectionRel,
+								request.getRemoteUser(),
+								projectId,
+								sId,
+								surveyIdent,
+								surveyDisplayName,
+								basePath,
+								delData,
+								tables);
 				
 					} else {
 						
@@ -1059,18 +958,20 @@ public class Survey extends Application {
 					 * Delete any panels that reference this survey
 					 */
 					sql = "delete from dashboard_settings where ds_s_id = ?;";	
-					log.info(sql + " : " + sId);
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
+					log.info("Delete dashboard panels: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 					/*
 					 * Delete any tasks that are to update this survey
 					 */
 					sql = "delete from tasks where form_id = ?;";	
-					log.info(sql + " : " + sId);
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
+					log.info("Delete tasks: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 				}

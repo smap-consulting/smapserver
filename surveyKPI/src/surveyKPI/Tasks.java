@@ -198,7 +198,7 @@ public class Tasks extends Application {
 		try {
 			
 			// Get locations
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			TaskManager tm = new TaskManager();
 			ArrayList<Location> locations = tm.getLocations(sd, oId);
 			
@@ -298,7 +298,7 @@ public class Tasks extends Application {
 				 */
 				if(locations.size() > 0) {
 					// Save locations to disk
-					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
 					TaskManager tm = new TaskManager();
 					tm.saveLocations(sd, locations, oId);
@@ -547,7 +547,7 @@ public class Tasks extends Application {
 				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
 				// End authorisation
 
-				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 				
 				// Process xls file
 				XLSTaskManager xf = new XLSTaskManager();
@@ -633,7 +633,7 @@ public class Tasks extends Application {
 		TaskManager tm = new TaskManager();
 		
 		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, oId);
 			response = Response.ok().build();
 		

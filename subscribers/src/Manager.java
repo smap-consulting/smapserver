@@ -47,7 +47,6 @@ public class Manager {
 		
 		System.out.println("Starting subscriber: " + smapId + " : " + fileLocn + " : " + subscriberType);
 		int delaySecs = 10;
-		//PersistenceContext pc = new PersistenceContext(smapId);
 		
 		while(true) {
 

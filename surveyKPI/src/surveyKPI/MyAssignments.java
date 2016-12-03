@@ -208,7 +208,7 @@ public class MyAssignments extends Application {
 		
 		Connection cRel = null;
 		
-		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName);
+		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName, 0);
 		
 		try {
 			String sql = null;

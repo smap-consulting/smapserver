@@ -1574,7 +1574,7 @@ public class SurveyTemplate {
 									cs.items = new ArrayList<ChangeItem> ();
 									changes.add(cs);
 	
-									int oId = org.smap.sdal.Utilities.GeneralUtilityMethods.getOrganisationId(connectionSD, user);
+									int oId = org.smap.sdal.Utilities.GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
 					
 									String filepath = basePath + "/media/organisation/" + oId + "/" + filename;		
 									File file = new File(filepath);

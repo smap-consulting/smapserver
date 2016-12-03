@@ -693,7 +693,7 @@ public class SurveyManager {
 		s.languages = GeneralUtilityMethods.getLanguages(sd, s.id);
 		
 		// Get the organisation id
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
 		
 		// Set the default language if it has not previously been set	
 		if(s.def_lang == null) {

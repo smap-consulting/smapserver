@@ -327,7 +327,7 @@ public class WebForm extends Application{
     		
     		// Get the organisation id and an access key to upload the results of this form (used from iPhones which do not do authentication on POSTs)
     		try {
-    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
+    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
     			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
     			
 				// Get the users locale

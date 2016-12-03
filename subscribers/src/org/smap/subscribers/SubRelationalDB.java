@@ -253,7 +253,7 @@ public class SubRelationalDB extends Subscriber {
 		
 		}
 	}
-		
+	
 	/*
 	 * Apply notifications
 	 */

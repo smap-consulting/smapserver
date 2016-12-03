@@ -120,7 +120,7 @@ public class UserList extends Application {
 				+ "email "
 				+ "from users "
 				+ "where users.o_id = ? "
-				+ "and users.temporary is not true "
+				+ "and not users.temporary "
 				+ "order by ident asc";
 		PreparedStatement pstmt = null;
 		
@@ -154,7 +154,7 @@ public class UserList extends Application {
 		ArrayList<User> users = new ArrayList<User> ();
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
@@ -311,6 +311,7 @@ public class UserList extends Application {
 					"where u.id = up.u_id " +
 					"and up.p_id = ? " +
 					"and u.o_id = ? " +
+					"and not u.temporary " +
 					"order by u.ident";
 			
 			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
