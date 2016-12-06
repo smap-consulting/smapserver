@@ -48,7 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
-  *Forgotton password
+ * Forgotton password
  */
 
 @Path("/onetimelogon")
@@ -86,7 +86,6 @@ public class PasswordReset extends Application {
 			if(email != null && email.trim().length() > 0) {	
 				
 				// Localisation
-				Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
 				String hostname = request.getServerName();
 				String loc_code = "en";
 				if(hostname.contains("kontrolid")) {
@@ -122,7 +121,7 @@ public class PasswordReset extends Application {
 					    String subject = localisation.getString("c_r_p");
 					    EmailManager em = new EmailManager();
 						em.sendEmail(email, uuid, "reset", subject, null, sender, null, interval, 
-					    		idents, null, null, null, organisation.getAdminEmail(), emailServer, 
+					    		idents, null, null, null, null, emailServer, 
 					    		request.getScheme(),
 					    		request.getServerName(),
 					    		localisation);
