@@ -83,8 +83,18 @@ public class PasswordReset extends Application {
 		PreparedStatement pstmt = null;
 
 		try {
-			
 			if(email != null && email.trim().length() > 0) {	
+				
+				// Localisation
+				Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
+				String hostname = request.getServerName();
+				String loc_code = "en";
+				if(hostname.contains("kontrolid")) {
+					loc_code = "es";
+				} 
+				Locale locale = new Locale(loc_code);
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
 				
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
@@ -100,11 +110,6 @@ public class PasswordReset extends Application {
 				if(uuid != null) {
 					// Update succeeded
 					log.info("Sending email");
-					
-					// Localisation
-					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
-					Locale locale = new Locale(organisation.locale);
-					ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 					
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
 					
@@ -130,7 +135,7 @@ public class PasswordReset extends Application {
 					}
 				} else {
 					// email was not found 
-					String msg = "Error password reset.  Email address not found:" + email;
+					String msg = localisation.getString("email_nf") + " :" + email;
 					log.info(msg);
 					response = Response.status(Status.NOT_FOUND).entity(msg).build();
 				}
