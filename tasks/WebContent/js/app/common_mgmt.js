@@ -106,20 +106,24 @@ window.gTasks = {
 	  * Function called when the current survey is changed
 	  */
 	 function surveyChanged() {
-			
-			if(globals.gCurrentSurvey > 0) {
-				// getManagedData(globals.gCurrentSurvey);
-				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 if(isManagedForms) {
-					 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
-				 } else {
-					 getSurveyConfig(globals.gCurrentSurvey, 0);
-				 }
-				 getReport(gReport);
+		
+		gReportLoaded = false;
+		gDataLoaded = false;
+		gConfigLoaded = false;
+		
+		if(globals.gCurrentSurvey > 0) {
+			// getManagedData(globals.gCurrentSurvey);
+			 saveCurrentProject(-1, globals.gCurrentSurvey);
+			 if(isManagedForms) {
+				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
 			 } else {
-				 // No managed surveys in this project
-				 $('#trackingTable').empty();
+				 getSurveyConfig(globals.gCurrentSurvey, 0);
 			 }
+			 getReport(gReport);
+		 } else {
+			 // No managed surveys in this project
+			 $('#trackingTable').empty();
+		 }
 	 }
 	 
 	 /*

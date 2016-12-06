@@ -445,6 +445,7 @@ define([
 			   		d.name !== "_end" &&
 			   		d.name !== "instancename" && 
 			   		d.type !== "dateTime" &&
+			   		d.type !== "time" &&
 			   		d.type !== "date" &&
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
