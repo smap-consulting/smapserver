@@ -76,18 +76,19 @@ define([
 			gEdChart.chart_type = $('#ew_chart_type').val();
 			gEdChart.width = $('#ew_width').val();
 			gEdChart.group = $('#ew_group').val();
+			if(gEdChart.time_interval) {
+				gEdChart.groups[0].q = $("#ew_date1").val();
+				gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+				
+				gEdChart.groups[1].q = $("#ew_date2").val();
+				gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
+			}
 			if(gEdChart.tSeries) {
 				var period = $('#ew_period').val();
 				if(period != gEdChart.period) {
 					reset = true;
 				}
 				gEdChart.period = $('#ew_period').val();
-				
-				gEdChart.groups[0].q = $("#ew_date1").val();
-				gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
-				
-				gEdChart.groups[1].q = $("#ew_date2").val();
-				gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
 			}
 			if(gEdConfig.fromDT) {
 				gEdFilteredChart.width = gEdChart.width;
@@ -354,7 +355,11 @@ define([
 			data = d3.nest()
 			  .key(function(d) { return d[chart.group]; })
 			  .rollup(function(v) { return d3.mean(v, function(d) {
+				  	if(d[chart.groups[0].q] && d[chart.groups[1].q]) {	
 				  		return d3.timeSecond.count(parseTime(d[chart.groups[0].q]), parseTime(d[chart.groups[1].q]));
+				  	} else {
+				  		return 0;
+				  	}
 				  });   	
 			  })
 			  .entries(results);
@@ -364,6 +369,8 @@ define([
 			  .key(function(d) { return d[chart.name]; })
 			  .rollup(function(v) { return v[chart.fn]; })
 			  .entries(results);
+			
+			
 		}
 		
 		return data;
@@ -393,19 +400,22 @@ define([
 		
 		
 		if(avCharts[chart.chart_type]) {
-			if(init || chart.chart_type === "pie") {	// Pie charts tricky to update
+			if(init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
 				if(chart.chart_type === "map") {
 					config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
 				    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
 				} else {
-				config.svg = d3.select(chartId).append("svg")
-				  .attr("preserveAspectRatio", "xMinYMin meet")
-				  .attr("viewBox", view)
-				  .classed("svg-content", true);
+					if(config.svg) {
+						config.svg.remove();
+					}
+					config.svg = d3.select(chartId).append("svg")
+					  .attr("preserveAspectRatio", "xMinYMin meet")
+					  .attr("viewBox", view)
+					  .classed("svg-content", true);
 				}
 				avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
 			} 
-			if(chart.chart_type !== "pie") {
+			if(chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
 				avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
 			}
 		} else {
@@ -487,7 +497,7 @@ define([
 			if(!filtered[i].chart_type) {
 				if(filtered[i].type === "string") {
 					filtered[i].chart_type = "wordcloud";
-				} if(filtered[i].type === "geopoint") {
+				} else if(filtered[i].type === "geopoint") {
 					filtered[i].chart_type = "map";
 				} else {
 					filtered[i].chart_type = def.chart_type;
@@ -622,7 +632,7 @@ define([
 	    	var $this = $(this),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 	    		chart_type = $this.data("ctype");
-	    	    
+	    	
 	    	gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
 	    	gEdConfig = globals.gCharts[gChartId];
 	    	
@@ -635,23 +645,34 @@ define([
 	    		gEdChart = report.row[gEdConfig.rowIndex].charts[gEdConfig.index];
 	    	}
 	    	
+	    	/*
+	    	 * Fix up saved configurations with changes
+	    	 */
+	    	if(gEdChart.name === "completion_time" || gEdChart.name === "periodic_count") {
+	    		gEdChart.time_interval = true;	// 2016-12-06
+	    	}
+	    	
 	    	// Set modal values
 	    	$('#ew_width').val(gEdChart.width);
-	    	if(gEdChart.group) {
+	    	if(gEdChart.group && gEdChart.chart_type !== "wordcloud") {
 	    		$(".group_only").show();
 	    		$('#ew_group').val(gEdChart.group);
 	    	} else {
 	    		$(".group_only").hide();
 	    	}
-	    	if(gEdChart.tSeries) {
-	    		$(".period_only").show();
-	    		$(".not_period").hide();
-	    		$('#ew_period').val(gEdChart.period);
+	    	if(gEdChart.time_interval) {
+	    		$(".date_range_only").show();
 	    		$("#ew_date1").val(gEdChart.groups[0].q);
 	    		$("#ew_date2").val(gEdChart.groups[1].q);
 	    	} else {
+	    		$(".date_range_only").hide();
+	    	}
+	    	if(gEdChart.tSeries) {
+	    		$(".period_only").show();		
+	    		$('#ew_period').val(gEdChart.period);
+
+	    	} else {
 	    		$(".period_only").hide();
-	    		$(".not_period").show();
 	    	}
 	    	
 

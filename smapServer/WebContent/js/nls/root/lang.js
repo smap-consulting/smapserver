@@ -341,6 +341,8 @@ define({
 	"msg_embed": "The excel type must be xls or xlsx to embed images",
 	"msg_pss": "Please select a survey",
 	"msg_nm": "No images, video, audio found",
+	"msg_pr": "Password has been reset",
+	"msg_es": "Email has been sent to",
 	
 	// Editor
 	"e_b_e": "Base on existing form",

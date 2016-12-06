@@ -51,7 +51,8 @@ window.gTasks = {
 						        	        	 q: "Action Date",
 						        	        	 label: "Date Closed"
 						        	         }],
-									humanName: "",
+									time_interval: true,
+						        	humanName: "",
 									name: "periodic_count",
 									chart_type: "groupedBar",
 									group: undefined,
@@ -70,6 +71,7 @@ window.gTasks = {
 						        	        	 q: "_end",
 						        	        	 label: "Finish Time"
 						        	         }],
+									time_interval: true,
 									humanName: "Average survey completion time",
 									name: "completion_time",
 									chart_type: "bar",
