@@ -617,5 +617,9 @@ define({
 	"d_half": "50%",
 	"d_3qtr": "75%",
 	"d_full": "100%",
-	"d_sec": "Seconds" 		
+	"d_sec": "Seconds" 	,
+	"d_c_day": "Count by day",
+	"d_c_month": "Coount by month",
+	"d_c_year": "Count by year"
+		
 });

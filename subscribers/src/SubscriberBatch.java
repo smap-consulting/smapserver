@@ -365,9 +365,10 @@ public class SubscriberBatch {
 	private void eraseOldTemplates(Connection sd, Connection cResults, String basePath) {
 		
 		PreparedStatement pstmt = null;
+		PreparedStatement pstmtTemp = null;
 		
 		try {
-	
+			
 			ServerManager sm = new ServerManager();
 			String sql = "select s_id, "
 					+ "p_id, "
@@ -376,9 +377,82 @@ public class SubscriberBatch {
 					+ "display_name "
 					+ "from survey where deleted "
 					+ "and ((last_updated_time < now() - interval '100 days') or last_updated_time is null) "
-					+ "order by last_updated_time asc limit 10;";
+					+ "order by last_updated_time;";
 			pstmt = sd.prepareStatement(sql);
 			ResultSet rs = pstmt.executeQuery();
+			
+			String sqlTemp = "update survey set last_updated_time = ? where s_id = ?";
+			pstmtTemp = sd.prepareStatement(sqlTemp);
+			
+			/*
+			 * Temporary fix for lack of accurate date when a survey was deleted
+			 */
+			while(rs.next()) {
+				int sId = rs.getInt("s_id");
+				int projectId = rs.getInt("p_id");
+				String deletedDate = rs.getString("last_updated_time");
+				String surveyIdent = rs.getString("ident");
+				String surveyDisplayName = rs.getString("display_name");
+				
+				// Get deleted date from the display name
+
+				int idx1 = surveyDisplayName.indexOf("(20");
+				String date = null;
+				if(idx1 > -1) {
+					int idx2 = surveyDisplayName.lastIndexOf(")");
+					if(idx2 > -1 && idx2 > idx1) {
+						String d = surveyDisplayName.substring(idx1 +1, idx2);
+						String [] da = d.split(" ");
+						if(da.length > 0) {
+							date = da[0].replaceAll("_", "-");
+						}
+					}
+				}
+				
+				if(date == null) {
+					idx1 = surveyDisplayName.lastIndexOf("_20");
+					if(idx1 > -1) {
+						String d = surveyDisplayName.substring(idx1 +1);
+						String [] da = d.split("_");
+						int year = -1;
+						int month = -1;
+						int day = -1;
+						if(da.length > 0) {
+							try {
+								year = Integer.parseInt(da[0]);
+								month = Integer.parseInt(da[1]);
+								String [] dd = da[2].split(" ");
+								day = Integer.parseInt(dd[0]);
+							} catch (Exception e) {
+								
+							}
+						}
+						if(year > -1 && month > -1 && day > -1) {
+							date = year + "-" + month + "-" + day;
+						}
+					}
+				}
+				if(date == null) {
+					System.out.println("******** Failed to get date from: " + surveyDisplayName + " deleted date was: " + deletedDate);
+				} else {
+					try {
+						java.sql.Date dx = java.sql.Date.valueOf(date);
+						pstmtTemp.setDate(1, dx);
+						pstmtTemp.setInt(2,  sId);
+						pstmtTemp.executeUpdate();	
+					} catch (Exception e) {
+						System.out.println("Error: " + surveyDisplayName + " : " + e.getMessage());
+					}
+				}
+				
+				
+				
+			}
+			
+			/*
+			 * Process surveys to be deleted for real now
+			 */
+			rs = pstmt.executeQuery();	
 			while(rs.next()) {
 				int sId = rs.getInt("s_id");
 				int projectId = rs.getInt("p_id");
@@ -388,13 +462,14 @@ public class SubscriberBatch {
 				
 				System.out.println("######### Erasing: " + surveyDisplayName + " which was deleted on " +  deletedDate);
 				sm.deleteSurvey(sd, cResults, "auto erase", projectId, sId, surveyIdent, surveyDisplayName, basePath, true, "yes");
-				
 			}
+
 				
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}	
+			try {if (pstmtTemp != null) {pstmtTemp.close();}} catch (SQLException e) {}	
 		}
 	}
 	/*

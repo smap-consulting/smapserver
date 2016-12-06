@@ -126,10 +126,16 @@ public class ServerManager {
 		ResultSet resultSet = null;
 		
 		try {
+			
+			
+			
 			boolean nonEmptyDataTables = false;
 			
 			if(delTables != null && delTables.equals("yes")) {
-					
+				
+				lm.writeLog(sd, sId, user, "erase", "Delete survey " + surveyDisplayName + " and its results");
+				log.info("userevent: " + user + " : hard delete survey : " + surveyDisplayName);
+				
 				sql = "SELECT DISTINCT f.table_name FROM form f " +
 						"WHERE f.s_id = ? " +
 						"ORDER BY f.table_name;";						
@@ -232,9 +238,6 @@ public class ServerManager {
 				log.info("Delete changeset data: " + pstmt.toString());
 				pstmt.execute();
 			}
-
-			lm.writeLog(sd, sId, user, "erase", "Delete survey " + surveyDisplayName + " and its results");
-			log.info("userevent: " + user + " : hard delete survey : " + surveyDisplayName);
 			
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}

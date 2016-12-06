@@ -65,7 +65,7 @@ public class Server extends Application {
 		}
 		
 		Response response = null;
-		Connection sd = SDDataSource.getConnection("SurveyKPI - version");
+		Connection sd = SDDataSource.getConnection("SurveyKPI-getServerSettings");
 
 		try {
 			
@@ -82,7 +82,7 @@ public class Server extends Application {
 			response = Response.serverError().build();
 		} finally {
 			
-			SDDataSource.closeConnection("SurveyKPI - version", sd);
+			SDDataSource.closeConnection("SurveyKPI-getServerSettings", sd);
 			
 		}
 

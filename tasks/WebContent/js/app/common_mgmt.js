@@ -51,7 +51,7 @@ window.gTasks = {
 						        	        	 q: "Action Date",
 						        	        	 label: "Date Closed"
 						        	         }],
-									humanName: "Feedback per day",
+									humanName: "",
 									name: "periodic_count",
 									chart_type: "groupedBar",
 									group: undefined,
@@ -73,7 +73,7 @@ window.gTasks = {
 									humanName: "Average survey completion time",
 									name: "completion_time",
 									chart_type: "bar",
-									group: "User",
+									group: "_user",
 									fn: "avgdurn",
 									tSeries: false,
 									period: undefined,
@@ -97,7 +97,8 @@ window.gTasks = {
 			    ]
 	};
 	var gReportLoaded = false,
-		gDataLoaded = false;
+		gDataLoaded = false,
+		gConfigLoaded = false;
 
 	 /*
 	  * Function called when the current survey is changed
@@ -168,7 +169,7 @@ window.gTasks = {
 	 function refreshData() {
 		 
 		 // Clear gTasks.cache
-		 gTasks.cache.surveyConfig = {};
+		 //gTasks.cache.surveyConfig = {};
 		 gTasks.cache.managedData = {};
 		 gTasks.cache.surveyList = {};
 		 
@@ -336,6 +337,12 @@ window.gTasks = {
 		     order: [[ 0, "desc" ]],
 		     initComplete: function(settings, json) {
 		    	 console.log("initComplete");
+		    	 gDataLoaded = true;
+		    	 console.log("Data loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+		    	 if(gReportLoaded && gConfigLoaded) {
+					 chart.setChartList();	// Enable charts based on this survey config
+					 chart.refreshCharts();
+				 }
 				 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 				 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
 					 if(columns[colIdx].filter || columns[colIdx].type === "select1") {
@@ -786,10 +793,12 @@ window.gTasks = {
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
-					 gDataLoaded = true;
+					 gConfigLoaded = true;
 					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
-					 if(gReportLoaded) {
+					 console.log("Config loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gReportLoaded && gDataLoaded) {
 						 chart.setChartList();	// Enable charts based on this survey config
+						 chart.refreshCharts();
 					 }
 					 
 					 // Add a config item for the group value if this is a duplicates search
@@ -1065,17 +1074,22 @@ window.gTasks = {
 					 } else {
 						 chart.setReport(gReport);
 					 }
-					 if(gDataLoaded) {
+					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gDataLoaded && gConfigLoaded) {
 						 chart.setChartList();
+						 chart.refreshChartList();
 					 }
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();
-					 if(xhr.readyState == 0 || xhr.status == 0) {
-						 return;  // Not an error
-					 } else {
-						 chart.setReport(gReport);
+					 chart.setReport(gReport);
+					 gReportLoaded = true;
+					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gDataLoaded && gConfigLoaded) {
+						 chart.setChartList();
+						 chart.refreshChartList();
 					 }
+					 
 				 }
 			 });
 			 

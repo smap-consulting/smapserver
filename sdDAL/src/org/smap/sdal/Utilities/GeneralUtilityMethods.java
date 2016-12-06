@@ -675,15 +675,18 @@ public class GeneralUtilityMethods {
 		
 			pstmt1 = sd.prepareStatement(sql1);
 			pstmt1.setString(1, user);
+
 			ResultSet rs = pstmt1.executeQuery();
 			if(rs.next()) {
 				o_id = rs.getInt(1);	
 			} else if (sId > 0) {
 				pstmt2 = sd.prepareStatement(sql2);
 				pstmt2.setInt(1, sId);
+
 				ResultSet rs2 = pstmt2.executeQuery();
-				if(rs.next()) {
-					o_id = rs.getInt(2);
+				
+				if(rs2.next()) {
+					o_id = rs2.getInt(1);
 				}
 			}
 			

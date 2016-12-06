@@ -74,7 +74,7 @@ define([
 		})]);
 		
 		config.xAxis = d3.axisBottom(config.x0);
-		config.yAxis = d3.axisLeft(config.y).ticks(10, "");
+		config.yAxis = d3.axisLeft(config.y).ticks(10);
 		
 		config.g = config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -134,7 +134,7 @@ define([
 			})]);
 		
 		// Update axes
-		config.svg.select(".axis--y").call(config.yAxis.ticks(5, ""));
+		config.svg.select(".axis--y").call(config.yAxis.ticks(5));
 		if(chart.tSeries) {
 			var tvArray = [];
 			if(data.length > chart.width) {

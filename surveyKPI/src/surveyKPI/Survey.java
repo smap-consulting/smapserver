@@ -862,7 +862,7 @@ public class Survey extends Application {
 					/*
 					 * Restore the survey
 					 */
-					sql = "update survey set deleted='false' where s_id = ?;";	
+					sql = "update survey set deleted='false', last_updated_time = now() where s_id = ?;";	
 					log.info(sql + " : " + sId);
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
@@ -935,6 +935,7 @@ public class Survey extends Application {
 						// Add the current date and time to the name and display name to ensure the deleted survey has a unique name 
 						sql = "update survey set " +
 								" deleted='true', " +
+								" last_updated_time = now(), " +
 								" name = ?, " +
 								" display_name = ? " +
 								"where s_id = ?;";	

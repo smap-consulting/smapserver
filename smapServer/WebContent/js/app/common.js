@@ -2344,7 +2344,7 @@ function getAlerts() {
 			removeHourglass();
 			showAlerts(data);
 			$('.alert_count').html(data.length);
-			setTimeout(getAlerts, 60000);
+			setTimeout(getAlerts, 600000);
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();

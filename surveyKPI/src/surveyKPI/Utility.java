@@ -133,7 +133,6 @@ public class Utility extends Application {
 
 		    }
 		    
-
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(smapTzList);
 			response = Response.ok(resp).build();
@@ -144,7 +143,7 @@ public class Utility extends Application {
 
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+			SDDataSource.closeConnection("surveyKPI-Utility", sd);
 		}
 
 		return response;

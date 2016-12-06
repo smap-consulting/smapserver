@@ -88,7 +88,7 @@ public class GetFile extends Application {
 		Response r = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("Get Organisation File");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		try {		
 			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
@@ -113,7 +113,7 @@ public class GetFile extends Application {
 			log.info("Error getting file:" + e.getMessage());
 			r = Response.serverError().build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Organisation File", connectionSD);	
 		}
 		
 		return r;
@@ -139,7 +139,7 @@ public class GetFile extends Application {
 		Response r = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("Get Users File");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		try {		
 			uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
@@ -168,7 +168,7 @@ public class GetFile extends Application {
 			log.info("Error getting file:" + e.getMessage());
 			r = Response.serverError().build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Users File", connectionSD);	
 		}
 		
 		return r;
@@ -197,7 +197,7 @@ public class GetFile extends Application {
 
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");
+		Connection connectionSD = SDDataSource.getConnection("Get Survey File");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
@@ -220,7 +220,7 @@ public class GetFile extends Application {
 			log.log(Level.SEVERE, "Error getting file", e);
 			r = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Survey File", connectionSD);	
 		}
 		
 		return r;

@@ -77,6 +77,10 @@ define([
 			gEdChart.width = $('#ew_width').val();
 			gEdChart.group = $('#ew_group').val();
 			if(gEdChart.tSeries) {
+				var period = $('#ew_period').val();
+				if(period != gEdChart.period) {
+					reset = true;
+				}
 				gEdChart.period = $('#ew_period').val();
 				
 				gEdChart.groups[0].q = $("#ew_date1").val();
@@ -133,7 +137,7 @@ define([
 			/*
 			 * Generate automatic charts from the data in the form
 			 */
-			if(report.row[i].datatable) {	
+			if(report.row[i].datatable && filtered) {	
 				for(j = 0; j < filtered.length; j++) {
 					
 					chart = filtered[j];
@@ -405,7 +409,7 @@ define([
 				avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
 			}
 		} else {
-			alert("unknown chart type: " + chart.chart_type);
+			console.log("unknown chart type: " + chart.chart_type);
 		}
 		
 	}
@@ -537,7 +541,13 @@ define([
 		    	.append("div").attr("class", "ibox float-e-margins");
 			
 		    title = wrapper.append("div").attr("class", "ibox-title");
-		    title.append("div").append("h5").text(function(d) {return d.humanName});		// Add title
+		    title.append("div").append("h5").text(function(d) {
+			    	if(d.tSeries) {
+			    		return localise.set["d_c_" + d.period];
+			    	} else {
+			    		return d.humanName;
+			    	}
+		    	});		// Add title
 		    addChartTools(title);
 		    
 		    content = wrapper.append("div").attr("class", "ibox-content");
@@ -627,21 +637,24 @@ define([
 	    	
 	    	// Set modal values
 	    	$('#ew_width').val(gEdChart.width);
+	    	if(gEdChart.group) {
+	    		$(".group_only").show();
+	    		$('#ew_group').val(gEdChart.group);
+	    	} else {
+	    		$(".group_only").hide();
+	    	}
 	    	if(gEdChart.tSeries) {
 	    		$(".period_only").show();
+	    		$(".not_period").hide();
 	    		$('#ew_period').val(gEdChart.period);
 	    		$("#ew_date1").val(gEdChart.groups[0].q);
 	    		$("#ew_date2").val(gEdChart.groups[1].q);
 	    	} else {
 	    		$(".period_only").hide();
+	    		$(".not_period").show();
 	    	}
 	    	
-	    	if(gEdChart.group) {
-	    		$(".group_only").show();
-	    		$('#ew_group').val(gEdChart.group);
-	    	} else {
-	    		$(".group_only").show();
-	    	}
+
 	    	
 			/*
 			 * Add the chart type select list
