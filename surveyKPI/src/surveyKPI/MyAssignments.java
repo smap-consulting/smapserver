@@ -213,6 +213,7 @@ public class MyAssignments extends Application {
 		try {
 			String sql = null;
 			
+			cRel = ResultsDataSource.getConnection("getFile");
 			connectionSD.setAutoCommit(true);
 			
 			// Get the assignments
@@ -373,7 +374,6 @@ public class MyAssignments extends Application {
 					log.info("Linked file:" + m.fileName);
 					
 					// Create file 
-					cRel = ResultsDataSource.getConnection("getFile");
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
 					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
@@ -675,12 +675,10 @@ public class MyAssignments extends Application {
 					pstmtTrail.setInt(1, userId);
 					pstmtTrail.setString(2, tr.deviceId);
 					for(PointEntry pe : tr.userTrail) {
-						log.info("    Adding point: " + pe.toString());
 						
 						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
 						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
 						
-						log.info("Insert into trail: " + pstmtTrail.toString());
 						pstmtTrail.executeUpdate();
 					}
 					
