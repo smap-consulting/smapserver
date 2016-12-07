@@ -216,6 +216,10 @@ require([
 		
 		$('#shareRecord').click(function(){	
 			$('.shareRecordOnly').toggle();
+			// Automatically get the link if there are no roles to select
+			if($('.role_select_roles').text().length === 0) {
+				$("#getSharedRecord").trigger("click");
+			}
 		});
 		
 		$('#getSharedRecord').click(function(){

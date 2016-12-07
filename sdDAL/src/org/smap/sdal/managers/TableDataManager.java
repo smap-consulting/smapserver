@@ -218,7 +218,7 @@ public class TableDataManager {
 							} else if(c.type.equals("dateTime")) {
 								value = rs.getString(i + 1);
 								if(value != null) {
-									value = value.replaceAll("\\.[0-9]{3}", "");		// Remove milliseconds
+									value = value.replaceAll("\\.[0-9]+", "");		// Remove milliseconds
 								}
 							} else if(c.type != null && c.type.equals("calculate")) {
 								// This calculation may be a decimal - give it a go
