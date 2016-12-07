@@ -1083,7 +1083,7 @@ window.gTasks = {
 					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
 					 if(gDataLoaded && gConfigLoaded) {
 						 chart.setChartList();
-						 chart.refreshChartList();
+						 chart.refreshCharts();
 					 }
 				 },
 				 error: function(xhr, textStatus, err) {
@@ -1093,7 +1093,7 @@ window.gTasks = {
 					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
 					 if(gDataLoaded && gConfigLoaded) {
 						 chart.setChartList();
-						 chart.refreshChartList();
+						 chart.refreshCharts();
 					 }
 					 
 				 }

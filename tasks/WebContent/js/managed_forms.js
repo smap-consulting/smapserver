@@ -273,6 +273,8 @@ require([
 			
 			updateVisibleColumns(config.columns);
 			saveConfig(config);
+			chart.setChartList();
+			chart.refreshCharts();
 	
 		});
 		
