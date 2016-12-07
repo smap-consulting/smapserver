@@ -214,7 +214,6 @@ public class MyAssignments extends Application {
 			String sql = null;
 			
 			cRel = ResultsDataSource.getConnection("surveyKPI-MyAssignments");
-			
 			connectionSD.setAutoCommit(true);
 			
 			// Get the assignments
@@ -676,12 +675,10 @@ public class MyAssignments extends Application {
 					pstmtTrail.setInt(1, userId);
 					pstmtTrail.setString(2, tr.deviceId);
 					for(PointEntry pe : tr.userTrail) {
-						log.info("    Adding point: " + pe.toString());
 						
 						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
 						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
 						
-						log.info("Insert into trail: " + pstmtTrail.toString());
 						pstmtTrail.executeUpdate();
 					}
 					

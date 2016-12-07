@@ -225,8 +225,6 @@ public class XFormData {
 			}
 			a.isValidSurvey(sd, user, survey.id, false, superUser);		// Throw an exception of the user is not authorised to upload this survey		
 			
-			
-			
 			/*
 			 * DeviceId should be included in the survey contents, 
 			 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
