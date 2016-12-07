@@ -55,8 +55,6 @@ define([
 	 * Add
 	 */
 	function add(chartID, chart, config, data, widthContainer, heightContainer) {
-
-		console.log("Add cloud");
 		
 		var width,
 			height,
@@ -92,9 +90,6 @@ define([
 		 	.on("end", draw)
 		 	.start();
 		 
-		 console.log("Width: " + width);
-		 console.log("     : " + width >> 1);
-		 
 		function draw(words) {
 	         config.svg
 	           .append("g")
@@ -117,9 +112,6 @@ define([
 	 * Redraw
 	 */
 	function redraw(chartId, chart, config, data, widthContainer, heightContainer) {
-		
-		console.log("Redraw word cloud chart: ");
-		console.log(data);
 		
 		var fill = d3.scale.category20();
 		var word_entries = d3.entries(data);

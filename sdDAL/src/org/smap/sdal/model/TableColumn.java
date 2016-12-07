@@ -86,7 +86,7 @@ public class TableColumn {
 			selName = name;
 		}
 		
-		// open and close curly brackets are usd to delimit quotes when these should not be used to identify a parameter
+		// open and close curly brackets are used to delimit quotes when these should not be used to identify a parameter
 		// For example integer + '7'  for adding 7 days to a date
 		if(selName != null) {
 			selName = selName.replace('{', '\'');

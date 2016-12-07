@@ -578,6 +578,8 @@ public class Data extends Application {
 								
 								if(value == null) {
 									value = "";
+								} else if(c.type.equals("dateTime")) {
+									value = value.replaceAll("\\.[0-9]{3}", "");
 								}
 								
 								if(name != null ) {

@@ -215,6 +215,11 @@ public class TableDataManager {
 								Double dValue = rs.getDouble(i + 1);
 								dValue = Math.round(dValue * 10000.0) / 10000.0; 
 								value = String.valueOf(dValue);
+							} else if(c.type.equals("dateTime")) {
+								value = rs.getString(i + 1);
+								if(value != null) {
+									value = value.replaceAll("\\.[0-9]{3}", "");		// Remove milliseconds
+								}
 							} else if(c.type != null && c.type.equals("calculate")) {
 								// This calculation may be a decimal - give it a go
 								String v = rs.getString(i + 1);
@@ -237,6 +242,7 @@ public class TableDataManager {
 							if(value == null) {
 								value = "";
 							}
+							
 							
 							if(name != null ) {
 								if(!isDt) {
