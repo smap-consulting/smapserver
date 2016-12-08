@@ -1,10 +1,8 @@
 package surveyKPI;
 
 import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 
 /*
@@ -25,19 +23,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-/*
- * This service handles requests from data tables components:
- *    1) PDF export
- */
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.DatatypeConverter;
-
 import org.apache.commons.codec.binary.Base64;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -47,24 +36,19 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
 import org.smap.sdal.managers.ManagedFormsManager;
-import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.Organisation;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import sun.misc.BASE64Decoder;
 import utilities.XLSReportsManager;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
@@ -92,16 +76,6 @@ public class TableReports extends Application {
 		public String description;
 		public String filePath;
 		public String entry;	// A unique name for the chart
-	}
-	
-	private class Report {
-		public int sId;
-		public String format;
-		public int managedId;
-		public ArrayList<ArrayList<KeyValue>> data;
-		public String title;
-		public String project;
-		public ArrayList<Chart> charts;
 	}
 	
 	@POST
