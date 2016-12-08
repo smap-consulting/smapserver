@@ -379,7 +379,7 @@ public class Review extends Application {
 					" WHERE f.f_id = q.f_id " +
 					" AND f.s_id = t.s_id " +
 					" AND q.qtext_id = t.text_id " +
-					" AND q.qtype like 'select_' " +
+					" AND (q.qtype = 'select' or q.qtype = 'select1') " +
 					" AND t.language = ? " +
 					" AND t.type = 'none' " +		// TODO support multiple types as questions
 					" AND f.s_id = ? " +
