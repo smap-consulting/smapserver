@@ -29,6 +29,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -205,7 +207,8 @@ public class WebForm extends Application{
 			throw new JsonAuthorisationException();
 		}
 		
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false);
+		return getWebform(request, "json", formIdent, datakey, 
+				datakeyvalue, assignmentId, callback, user, false, false, false);
 	}
 	
 	// Respond with HTML
@@ -232,6 +235,40 @@ public class WebForm extends Application{
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				request.getRemoteUser(), 
 				false,
+				true,
+				false);
+	}
+	
+	/*
+	 * Respond with HTML
+	 * Temporary User
+	 */
+	// 
+	@GET
+	@Path("/id/{temp_user}/{ident}")
+	@Produces(MediaType.TEXT_HTML)
+	public Response getFormHTMLTemporaryUser(@Context HttpServletRequest request,
+			@PathParam("ident") String formIdent,
+			@PathParam("temp_user") String tempUser,
+			@QueryParam("datakey") String datakey,			// Optional keys to instance data	
+			@QueryParam("datakeyvalue") String datakeyvalue,
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("callback") String callback
+			) throws IOException {
+		
+		String type = "html";
+		if(callback != null) {
+			// I guess they really want JSONP
+			type = "json";
+			
+		} 
+		log.info("Requesting " + type);
+		
+		System.out.println("Tempuser: " + tempUser);
+		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
+				tempUser, 
+				false,
+				true,
 				true);
 	}
 	
@@ -248,7 +285,8 @@ public class WebForm extends Application{
 			String callback,
 			String user,
 			boolean simplifyMedia,
-			boolean isWebForm) {
+			boolean isWebForm,
+			boolean isTemporaryUser) {
 		
 		Response response = null;
 		JsonResponse jr = null;
@@ -265,23 +303,36 @@ public class WebForm extends Application{
 		int orgId = 0;
 		String accessKey = null;
 		String requester = "surveyMobileAPI-getWebForm";
+		ResourceBundle localisation = null;
+		boolean superUser = false;
 		
 		// Authorisation 
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection(requester);
+			if(isTemporaryUser) {
+				a.isValidTemporaryUser(connectionSD, user);
+			}
             a.isAuthorised(connectionSD, user);
     		SurveyManager sm = new SurveyManager();
     		survey = sm.getSurveyId(connectionSD, formIdent);	// Get the survey id from the templateName / key
     		if(survey == null) {
     			throw new NotFoundException();
     		}
-    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+    		try {
+    			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+    		} catch (Exception e) {
+    		}
+    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
     		// Get the organisation id and an access key to upload the results of this form (used from iPhones which do not do authentication on POSTs)
     		try {
-    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
+    			orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
     			accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
+    			
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
     		} catch (Exception e) {
     			log.log(Level.SEVERE, "WebForm", e);
     		} finally {
@@ -402,7 +453,7 @@ public class WebForm extends Application{
     			jr.surveyData.surveyClass = xForm.getSurveyClass();
     			
     			jr.main = addMain(request, formXML, instanceStrToEditId, 
-    					orgId, true, surveyClass, serverData).toString();
+    					orgId, true, surveyClass, serverData, localisation).toString();
     				
     			if(callback != null) {
     				outputString.append(callback + " (");
@@ -418,7 +469,8 @@ public class WebForm extends Application{
     					survey.surveyClass, 
     					orgId, 
     					accessKey,
-    					serverData));
+    					serverData,
+    					localisation));
     		}
     		
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
@@ -446,7 +498,8 @@ public class WebForm extends Application{
 			String surveyClass,
 			int orgId,
 			String accessKey,
-			ServerData serverData) 
+			ServerData serverData,
+			ResourceBundle localisation) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -463,7 +516,7 @@ public class WebForm extends Application{
 		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, 
 				accessKey,
 				serverData));
-		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass));
+		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation));
 
 		output.append("</html>\n");			
 		return output;
@@ -626,13 +679,13 @@ public class WebForm extends Application{
 	private StringBuffer addBody(HttpServletRequest request, String formXML, 
 			String dataToEditId, 
 			int orgId,
-			String surveyClass) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			String surveyClass,
+			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
-
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
 		output.append(getDialogs());
 		
 		output.append("</body>");
@@ -647,10 +700,11 @@ public class WebForm extends Application{
 			int orgId, 
 			boolean minimal,
 			String surveyClass,
-			ServerData serverData) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			ServerData serverData,
+			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
-		output.append(openMain(orgId, minimal, serverData));
+		output.append(openMain(orgId, minimal, serverData, localisation));
 		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
@@ -836,7 +890,7 @@ public class WebForm extends Application{
 		return output;
 	}
 	
-	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData) {
+	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData, ResourceBundle localisation) {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<div class='main'>\n");
@@ -859,6 +913,7 @@ public class WebForm extends Application{
 					output.append("<div class='form-progress'></div>\n");
 
 					output.append("<span class='logo-wrapper'>\n");
+						output.append(addNoScriptWarning(localisation));
 						output.append("<img class='banner_logo' src='/media/organisation/");
 						output.append(orgId);
 						output.append("/settings/bannerLogo' onerror=\"if(this.src.indexOf('smap_logo.png') < 0) this.src='/images/smap_logo.png';\" alt='logo'>\n");
@@ -882,9 +937,13 @@ public class WebForm extends Application{
 		} else {
 			output.append("<button id='submit-form-single' class='btn btn-primary btn-large' >Submit</button>\n");
 		}
-		output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
-		output.append("<a class='next-page' href='#'>Next</span></a>\n");
+		if(surveyClass !=null && surveyClass.contains("pages")) {
+			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
+			output.append("<a class='next-page' href='#'>Next</span></a>\n");
+		}		
+		output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
 		output.append("</div>\n");	// main controls
+		
 		
 		if(surveyClass !=null && surveyClass.contains("pages")) {
 			
@@ -919,6 +978,7 @@ public class WebForm extends Application{
 
 		Survey survey = null;
 		StringBuffer outputString = new StringBuffer();
+		boolean superUser = false;
 		
 		// Authorisation 
 		if(user != null) {
@@ -928,7 +988,12 @@ public class WebForm extends Application{
     		if(survey == null) {
     			throw new NotFoundException();
     		}
-    		a.isValidSurvey(connectionSD, user, survey.id, false);	// Validate that the user can access this survey
+
+    		try {
+    			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+    		} catch (Exception e) {
+    		}
+    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
     		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
     		
         } else {
@@ -977,6 +1042,19 @@ public class WebForm extends Application{
 		} 
 				
 		return response;
+	}
+	
+	private String addNoScriptWarning(ResourceBundle localisation) {
+		StringBuffer output = new StringBuffer();
+		output.append("<noscript>");
+			output.append("<div>");
+			output.append("<span style=\"color:red\">");
+				output.append(localisation.getString("wf_njs"));
+			output.append("</span>");
+			output.append("</div>");
+		output.append("</noscript>");
+		
+		return output.toString();
 	}
 
 }

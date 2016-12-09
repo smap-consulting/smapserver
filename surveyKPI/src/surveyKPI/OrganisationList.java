@@ -25,7 +25,6 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
@@ -40,14 +39,10 @@ import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.OrganisationManager;
-import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.User;
-
-import model.MediaResponse;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,14 +71,6 @@ public class OrganisationList extends Application {
 	private static Logger log =
 			 Logger.getLogger(OrganisationList.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(OrganisationList.class);
-		return s;
-	}
-
-	
 	@GET
 	@Produces("application/json")
 	public Response getOrganisations(@Context HttpServletRequest request) { 
@@ -108,36 +95,37 @@ public class OrganisationList extends Application {
 		
 		try {
 			String sql = null;
-			int o_id;
 			ResultSet resultSet = null;
 			
 			/*
 			 * Get the organisation
 			 */
-			sql = "select id, name, " +
-					" company_name, " +
-					" company_address, " +
-					" company_phone, " +
-					" company_email, " +
-					" allow_email, " +
-					" allow_facebook, " +
-					" allow_twitter, " +
-					" can_edit, " +
-					" ft_delete_submitted," +
-					" ft_send_trail," +
-					" ft_sync_incomplete," +
-					" changed_by, " +
-					" changed_ts," + 
-					" admin_email, " +
-					" smtp_host, " +
-					" email_domain, " +
-					" email_user, " +
-					" email_password, " +
-					" email_port, " +
-					" default_email_content, " +
-					" website " +
-					" from organisation " + 
-					" order by name ASC;";			
+			sql = "select id, name, "
+					+ "company_name, "
+					+ "company_address, "
+					+ "company_phone, "
+					+ "company_email, "
+					+ "allow_email, "
+					+ "allow_facebook, "
+					+ "allow_twitter, "
+					+ "can_edit, "
+					+ "ft_delete_submitted,"
+					+ "ft_send_trail,"
+					+ "ft_sync_incomplete,"
+					+ "changed_by, "
+					+ "changed_ts," 
+					+ "admin_email, "
+					+ "smtp_host, "
+					+ "email_domain, "
+					+ "email_user, "
+					+ "email_password, "
+					+ "email_port, "
+					+ "default_email_content, "
+					+ "website, "
+					+ "locale,"
+					+ "timezone "
+					+ "from organisation "
+					+ "order by name asc;";			
 						
 			pstmt = connectionSD.prepareStatement(sql);
 			log.info("SQL: " + sql);
@@ -168,6 +156,14 @@ public class OrganisationList extends Application {
 				org.email_port = resultSet.getInt("email_port");
 				org.default_email_content = resultSet.getString("default_email_content");
 				org.website = resultSet.getString("website");
+				org.locale = resultSet.getString("locale");
+				if(org.locale == null) {
+					org.locale = "en";	// Default english
+				}
+				org.timeZone = resultSet.getString("timeZone");
+				if(org.timeZone == null) {
+					org.timeZone = "UTC";
+				}
 				organisations.add(org);
 			}
 	

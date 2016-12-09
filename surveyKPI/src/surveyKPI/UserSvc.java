@@ -39,6 +39,7 @@ import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.UserManager;
+import org.smap.sdal.model.Alert;
 import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
@@ -49,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -67,14 +69,11 @@ public class UserSvc extends Application {
 
 	private static Logger log =
 			 Logger.getLogger(UserSvc.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(UserSvc.class);
-		return s;
-	}
 
+	private class AlertStatus {
+		public String lastalert;
+		public boolean seen;
+	}
 	
 	@GET
 	@Produces("application/json")
@@ -110,6 +109,105 @@ public class UserSvc extends Application {
 		}
 		
 
+		return response;
+	}
+	
+	/*
+	 * Get alerts assigned to a user
+	 */
+	@GET
+	@Path("/alerts")
+	@Produces("application/json")
+	public Response getMyAlerts(@Context HttpServletRequest request) { 
+
+		Response response = null;
+		
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Not required
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserSvc");
+		
+		UserManager um = new UserManager();
+		
+		try {
+			ArrayList<Alert> alerts = um.getAlertsByIdent(connectionSD, request.getRemoteUser());
+
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(alerts);
+			response = Response.ok(resp).build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			response = Response.serverError().build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-UserSvc", connectionSD);
+		}
+		
+
+		return response;
+	}
+	
+	
+	/*
+	 * Update the alert status for a user
+	 * This includes the last time they were sent an alert
+	 * If they have acknowledged the alert
+	 */
+	@POST
+	@Path("/alertstatus")
+	@Consumes("application/json")
+	public Response alertStatus(@Context HttpServletRequest request, @FormParam("alertstatus") String alertStatus) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Not Required
+		Connection sd = SDDataSource.getConnection("surveyKPI-UserSvc");
+			
+		AlertStatus as = new Gson().fromJson(alertStatus, AlertStatus.class);
+		
+		String sql = "update users set lastalert = ?, "
+				+ "seen = ?"
+				+ "where ident = ?;";
+		PreparedStatement pstmt = null;
+		try {	
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, as.lastalert);
+			pstmt.setBoolean(2, as.seen);
+			pstmt.setString(3, request.getRemoteUser());
+			
+			log.info("Update alert status: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+			
+			
+		} catch (SQLException e) {
+
+			response = Response.serverError().build();
+			log.log(Level.SEVERE,"Error", e);
+			
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			SDDataSource.closeConnection("surveyKPI-UserSvc", sd);
+		}
+		
 		return response;
 	}
 	
@@ -378,7 +476,7 @@ public class UserSvc extends Application {
 					    try { 	
 							FileUtils.deleteDirectory(folder);
 						} catch (IOException e) {
-							log.log(Level.SEVERE, "Error deleting signatre directory");
+							log.log(Level.SEVERE, "Error deleting signature directory");
 						}
 					    
 					    // 4. Create the signature folder
@@ -405,7 +503,7 @@ public class UserSvc extends Application {
 			String sql = null;
 			String ident = user;
 			
-			if(sigPath == null) {
+			if(sigPath == null && !u.delSig) {
 				// Do not update the signature
 				sql = "update users set " +
 						" name = ?, " + 
@@ -426,7 +524,7 @@ public class UserSvc extends Application {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, u.name);
 			pstmt.setString(2, u.settings);
-			if(sigPath == null) {
+			if(sigPath == null && !u.delSig) {
 				pstmt.setString(3, ident);
 			} else {
 				pstmt.setString(3, fileName);
@@ -438,7 +536,11 @@ public class UserSvc extends Application {
 			pstmt.executeUpdate();
 			
 			// Set the updated signature and return it in the user id 
-			u.signature = "/surveyKPI/file/" + fileName + "/users?type=sig";
+			if(fileName != null) {
+				u.signature = "/surveyKPI/file/" + fileName + "/users?type=sig";
+			} else if(u.delSig) {
+				u.signature = null;
+			}
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(u);
 			

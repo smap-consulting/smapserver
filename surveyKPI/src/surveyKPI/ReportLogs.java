@@ -51,14 +51,6 @@ public class ReportLogs extends Application {
 	private static Logger log =
 			 Logger.getLogger(Survey.class.getName());
 	
-	// Tell class loader about the root classes.  
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReportLogs.class);
-		return s;
-	}
-
-	
 	/*
 	 * Post log for user authenticated with a key
 	 */

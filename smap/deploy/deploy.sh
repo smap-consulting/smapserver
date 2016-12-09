@@ -81,8 +81,8 @@ fi
 cp $deploy_from/subscribers.jar /usr/bin/smap
 cp $deploy_from/codebook.jar /usr/bin/smap
 cp -r $deploy_from/subscribers/default /usr/bin/smap
-cp -r $deploy_from/subscribers/etc/* /usr/bin/smap
 cp -r $deploy_from/resources /smap/bin
+cp -r $deploy_from/bin/* /smap/bin
 cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
 chmod +x /usr/bin/smap/*.sh
 
@@ -90,8 +90,8 @@ chmod +x /usr/bin/smap/*.sh
 cp $deploy_from/subscribers.jar /smap/bin
 cp $deploy_from/codebook.jar /smap/bin
 cp -r $deploy_from/subscribers/default /smap/bin
-cp -r $deploy_from/subscribers/etc/* /smap/bin
 cp -r $deploy_from/resources /smap/bin
+cp -r $deploy_from/bin/* /smap/bin
 cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
 chmod +x /smap/bin/*.sh
 

@@ -141,7 +141,7 @@ public class TableManager {
 			
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, managedId, columns, null);
+			qm.getDataProcessingConfig(sd, managedId, columns, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
 			
 			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			
@@ -235,7 +235,7 @@ public class TableManager {
 			// 1. Get all the affected forms
 			pstmtGetForms.setInt(1, sId);
 			
-			System.out.println("Get sharing forms: " + pstmtGetForms.toString());
+			log.info("Get sharing forms: " + pstmtGetForms.toString());
 			ResultSet rs = pstmtGetForms.executeQuery();
 			
 			while(rs.next()) {
@@ -266,12 +266,12 @@ public class TableManager {
 					
 					// 3.1a Update questions in the submitting form
 					pstmtSetPublishedThisForm.setInt(1, fd.fId);
-					System.out.println("Mark published: " + pstmtSetPublishedThisForm.toString());
+					log.info("Mark published: " + pstmtSetPublishedThisForm.toString());
 					pstmtSetPublishedThisForm.executeUpdate();
 					
 					// 3.2a Update Options in the submitting form
 					pstmtSetOptionsPublishedThisForm.setInt(1, fd.fId);
-					System.out.println("Mark published: " + pstmtSetOptionsPublishedThisForm.toString());
+					log.info("Mark published: " + pstmtSetOptionsPublishedThisForm.toString());
 					pstmtSetOptionsPublishedThisForm.executeUpdate();
 					
 				} else {
@@ -279,13 +279,13 @@ public class TableManager {
 					// 3.1b Update questions in the shared form
 					pstmtSetPublishedSharedForm.setInt(1, fd.fId);
 					pstmtSetPublishedSharedForm.setInt(2, fd.submittingFormId);
-					System.out.println("Mark published: " + pstmtSetPublishedSharedForm.toString());
+					log.info("Mark published: " + pstmtSetPublishedSharedForm.toString());
 					pstmtSetPublishedSharedForm.executeUpdate();
 					
 					// 3.1b Update options in the shared form
 					pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
 					pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
-					System.out.println("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());
+					log.info("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());
 					pstmtSetOptionsPublishedSharedForm.executeUpdate();
 				}
 			

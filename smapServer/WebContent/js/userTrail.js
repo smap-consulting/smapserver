@@ -271,28 +271,30 @@ $(document).ready(function() {
 
 
 
-function getUserList(projectId) {
+function getUserList() {
 	
-	addHourglass();
-	$.ajax({
-		url: "/surveyKPI/userList/" + globals.gCurrentProject,
-		cache: false,
-		dataType: 'json',
-		success: function(data) {
-			removeHourglass();
-			updateUserList(data);
-			getData();
-
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get user list: " + err);
+	if(globals.gCurrentProject > 0) { 
+		addHourglass();
+		$.ajax({
+			url: "/surveyKPI/userList/" + globals.gCurrentProject,
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				removeHourglass();
+				updateUserList(data);
+				getData();
+	
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Error: Failed to get user list: " + err);
+				}
 			}
-		}
-	});	
+		});	
+	}
 }
 
 function updateUserList(users, addAll) {

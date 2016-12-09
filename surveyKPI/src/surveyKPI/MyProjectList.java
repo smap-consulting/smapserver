@@ -50,14 +50,6 @@ public class MyProjectList extends Application {
 	private static Logger log =
 			 Logger.getLogger(MyProjectList.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(MyProjectList.class);
-		return s;
-	}
-
-	
 	@GET
 	@Produces("application/json")
 	public Response getMyProjects(@Context HttpServletRequest request) { 
@@ -92,8 +84,6 @@ public class MyProjectList extends Application {
 					" and u.id = up.u_id " + 
 					" and p.id = up.p_id " +
 					" and p.o_id = u.o_id " +
-					" and up.restricted = false " +
-					" and up.allocated = true " +
 					" order by name ASC;";				
 						
 			pstmt = connectionSD.prepareStatement(sql);

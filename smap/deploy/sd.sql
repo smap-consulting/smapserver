@@ -530,10 +530,6 @@ alter table survey add column created timestamp with time zone;
 alter table server add column google_key text;
 
 -- Upgrade to 16.07 from 16.06
-alter table user_project add column restricted boolean default false;
-alter table user_project add column allocated boolean;
-update user_project set allocated = true where allocated is null;
-alter table user_project alter column allocated set default false;
 
 insert into groups(id,name) values(6,'security');
 insert into user_group (u_id, g_id) select u_id, 6 from user_group where g_id = 4;
@@ -605,3 +601,39 @@ create TABLE survey_role (
 	);
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
+
+alter table users add column temporary boolean default false;
+update users set temporary = false where temporary is null;
+alter table organisation add column timezone text;
+
+-- Upgrade to 16.09 from 16.08
+
+-- Create alert table
+CREATE SEQUENCE alert_seq START 1;
+ALTER SEQUENCE alert_seq OWNER TO ws;
+
+create TABLE alert (
+	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	status varchar(10),
+	priority integer,
+	updated_time TIMESTAMP WITH TIME ZONE,
+	created_time TIMESTAMP WITH TIME ZONE,
+	link text,
+	message text,
+	s_id integer,	-- Survey Id that the alert applies to
+	m_id integer,	-- Managed form id that the alert applies to
+	prikey integer	-- Primary key of survey for which the alert applies
+);
+ALTER TABLE alert OWNER TO ws;
+
+-- Add action details for temporary user
+alter table users add column action_details text;	-- Only used by temporary users
+alter table users add column lastalert text;		-- Normal users
+alter table users add column seen boolean;			-- Normal users
+
+-- Delete entries from dashboard settings when the user is deleted
+delete from dashboard_settings where ds_user_ident not in (select ident from users);
+alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user_ident)
+	REFERENCES users (ident) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE;

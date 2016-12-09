@@ -13,6 +13,7 @@ public class PropertyChangeElement {
 	public PropertyChangeElement(PropertyChange pc) {
 		qId = pc.qId;
 		l_id = pc.l_id;
+		optionList = pc.optionList;
 		name = pc.name;
 		labelType = pc.propType;
 		prop = pc.prop;
@@ -29,6 +30,7 @@ public class PropertyChangeElement {
 	
 	public int qId;
 	public int l_id;				// Listname id
+	public String optionList;		// Listname
 	public String name;				// Name of question
 	public String labelType;		// text | image | video | audio
 	public String prop;				// The property to be changed

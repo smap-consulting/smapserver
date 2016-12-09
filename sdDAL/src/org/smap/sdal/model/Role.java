@@ -31,4 +31,12 @@ public class Role {
 	public String row_filter;							// String row filter sent to client
 	public String changed_by;
 	public String changed_ts;
+	
+	public Role() {
+	}
+	
+	public Role(int id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 }

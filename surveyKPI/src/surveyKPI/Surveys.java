@@ -170,8 +170,13 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
-		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		org.smap.sdal.model.Survey survey = null;
@@ -183,7 +188,6 @@ public class Surveys extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 			
 			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, 
 					true, 
@@ -194,7 +198,9 @@ public class Surveys extends Application {
 					true, 
 					true,
 					"internal",
-					superUser);
+					superUser,
+					0,
+					null);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -242,11 +248,16 @@ public class Surveys extends Application {
 				existingSurveyId + "," + existingFormId + ")");
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");	
+		boolean superUser = false;
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");
 		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
 		aUpdate.isValidProject(connectionSD, request.getRemoteUser(), projectId);
 		if(existing) {
-			aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), existingSurveyId, false);	// Validate that the user can access the existing survey
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			} catch (Exception e) {
+			}
+			aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), existingSurveyId, false, superUser);	// Validate that the user can access the existing survey
 		}
 		// End Authorisation
 		
@@ -264,7 +275,8 @@ public class Surveys extends Application {
 		try {
 			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
 			// Get the survey details.  superUser set to true as this user just created the survey so they are effectively a super user for this survey and we can save a database call
-			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, "internal", true);
+			survey = sm.getById(connectionSD, cResults,  request.getRemoteUser(), sId, true, 
+					basePath, null, false, false, true, true, "internal", true, 0, null);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
@@ -317,8 +329,13 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aUpdate.isAuthorised(sd, request.getRemoteUser());
-		aUpdate.isValidSurvey(sd, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		SurveyManager sm = new SurveyManager();
@@ -328,7 +345,6 @@ public class Surveys extends Application {
 			/*
 			 * Parse the request
 			 */
-			System.out.println("Lnaguage String: " + languages);
 			Type type = new TypeToken<ArrayList<Language>>(){}.getType();
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			ArrayList<Language> languageList = gson.fromJson(languages, type);
@@ -337,7 +353,8 @@ public class Surveys extends Application {
 			GeneralUtilityMethods.setLanguages(sd, sId, languageList);
 			GeneralUtilityMethods.setMediaForLanguages(sd, sId, languageList);	// Cope with media being duplicated across all languages
 			// Get the survey details.  superUser set to true as this user just edited the survey so they are effectively a super user for this survey and we can save a databse call
-			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, basePath, null, false, false, true, true, "internal", true);
+			org.smap.sdal.model.Survey  survey = sm.getById(sd, null,  request.getRemoteUser(), sId, true, 
+					basePath, null, false, false, true, true, "internal", true, 0, null);
 			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -382,9 +399,14 @@ public class Surveys extends Application {
 		ArrayList<ChangeSet> changes = gson.fromJson(changesString, type);	
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Surveys");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());	
-		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		
@@ -451,8 +473,13 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
-		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		FileItem pdfItem = null;
@@ -559,7 +586,6 @@ public class Surveys extends Application {
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setBoolean(4, survey.task_file);
 			pstmt.setInt(5, survey.p_id);
-			//pstmt.setString(6, GeneralUtilityMethods.convertAllxlsNames(survey.instanceNameDefn, sId, connectionSD, false));
 			pstmt.setString(6, survey.instanceNameDefn);
 			pstmt.setInt(7, version);
 			pstmt.setString(8, survey.surveyClass);
@@ -678,8 +704,13 @@ public class Surveys extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
-		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		aUpdate.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 				

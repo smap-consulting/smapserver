@@ -1,6 +1,7 @@
 package surveyKPI;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,7 +15,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.poi.ss.usermodel.Workbook;
 import org.smap.sdal.Utilities.Authorise;
@@ -58,7 +61,7 @@ public class ExportSurveyXls extends Application {
 	Workbook wb = null;
 	
 	@GET
-	@Produces("application/x-download")
+	//@Produces("application/x-download")
 	public Response exportSurvey (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
@@ -66,8 +69,13 @@ public class ExportSurveyXls extends Application {
 			@QueryParam("merge_select_multiple") boolean merge_select_multiple,
 			@QueryParam("language") String language,
 			@QueryParam("exp_ro") boolean exp_ro,
+			@QueryParam("embedimages") boolean embedImages,
+			@QueryParam("hxl") boolean hxl,
 			@QueryParam("forms") String include_forms,
 			@QueryParam("filetype") String filetype,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
 			
 			@Context HttpServletResponse response) {
 		
@@ -83,6 +91,8 @@ public class ExportSurveyXls extends Application {
 		    }
 		}
 		
+		Response responseVal = null;
+		
 		// Set defaults
 	
 		log.info("New export, filetype:" + filetype + " split:" + split_locn + 
@@ -90,13 +100,19 @@ public class ExportSurveyXls extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		Connection connectionResults = null;
 		
 		try {
+
 			lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to XLS");
 			
 			connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
@@ -138,7 +154,6 @@ public class ExportSurveyXls extends Application {
 				}
 			}
 			
-			
 			GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
 			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
 			
@@ -147,33 +162,39 @@ public class ExportSurveyXls extends Application {
 			xr.createXLS(sd, 
 					connectionResults,
 					request.getRemoteUser(),
-					sId, inc_id, 
+					sId, 
+					inc_id, 
 					inc_flat, 
 					exp_ro, 
 					merge_select_multiple, 
 					language, 
 					split_locn,
 					request,
-					response.getOutputStream());
+					response.getOutputStream(),
+					embedImages,
+					hxl,
+					startDate,
+					endDate,
+					dateId,
+					superUser);
+			
+			responseVal = Response.ok("").build();
+			
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			try {
-				throw new Exception("Exception: " + e.getMessage());
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+			response.setHeader("Content-type",  "text/html; charset=UTF-8");
+			// Return an OK status so the message gets added to the web page
+			// Prepend the message with "Error: ", this will be removed by the client
+			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 		} finally {
 			
-			SDDataSource.closeConnection("createPDF", sd);	
-			ResultsDataSource.closeConnection("createPDF", connectionResults);
+			SDDataSource.closeConnection("createXLS", sd);	
+			ResultsDataSource.closeConnection("createXLS", connectionResults);
 			
 		}
-		return Response.ok("").build();
 		
+		return responseVal;
 		
-	
-
 
 		
 	}

@@ -46,21 +46,24 @@
 		          <a href="#" id="m_modules_inspinia"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span></a>
 		          <ul class="nav nav-second-level" aria-expanded="false">
 		            
-		            <li><a class="lang" data-lang="m_home" href="/index.html?loggedin=yes">Home</a></li>
+		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-			        <li class="restrict_role admin_role analyst_role"><a href="/tasks/log.html"><i class="fa fa-briefcase"></i> <span class="nav-label lang" data-lang="m_manage">manage</span></a></li>
+			        <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
 		          
 		          </ul>
 		        </li> 
-		    <li id="m_task_m" class="restrict_role analyst_role bus_only"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="lang" data-lang="m_task_m">tasks</span></a></li>
-	        <li id="m_notify" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-			<li id="m_locations" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
-	        <li id="m_s_m_f"><a href="/tasks/manage.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_s_m_f">setup mf</span></a></li>           
-			<!-- <li id="m_dash" class="restrict_role admin_role analyst_role"><a href="/tasks/dashboard.html"><i class="fa fa-bar-chart"></i> <span class="lang" data-lang="m_manage_dash">mgmt dashboard</span></a></li> -->
 
+	        <li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
+			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
+			<li id="m_notify" class="restrict_role admin_role analyst_role public_only"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
+			<li id="m_locations" class="restrict_role admin_role analyst_role public_only"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
+			<li id="m_assign_pub" class="restrict_role analyst_role public_only"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
+			<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
+			<li id="m_os"><a href="/tasks/manage.html"><span class="lang" data-lang="m_os">oversight</span></a></li>
+		
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 			<li class="nav-divider"></li>
 			
@@ -165,7 +168,7 @@
 					<div class="form-group">
 						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
 						<div class="col-sm-10">
-							<select id="me_language" class="form-control"></select>
+							<select id="me_language" class="language_select form-control"></select>
 						</div>
 					</div>
 					<div class="form-group">
@@ -257,7 +260,7 @@
 </div>
 
 <script>
-	setCustomAssignments();			// Apply custom javascript
+
 </script>
 
 

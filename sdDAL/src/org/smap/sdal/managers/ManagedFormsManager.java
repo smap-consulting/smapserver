@@ -11,9 +11,13 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
+import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableColumnConfig;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -38,7 +42,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 /*
- * Manage the log table
+ * Managed Forms
  */
 public class ManagedFormsManager {
 	
@@ -53,10 +57,12 @@ public class ManagedFormsManager {
 			Connection cResults,
 			int sId,
 			int managedId,
-			String uIdent) throws SQLException, Exception  {
+			String uIdent,
+			int oId,
+			boolean superUser) throws SQLException, Exception  {
 		
 		ManagedFormConfig mfc = new ManagedFormConfig();
-		ManagedFormConfig savedConfig = null;
+		ManagedFormUserConfig savedConfig = null;
 		
 		// SQL to get default settings for this user and survey
 		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
@@ -81,11 +87,13 @@ public class ManagedFormsManager {
 					true,	// Include parent key
 					true,	// Include "bad"
 					true,	// Include instanceId
-					true	// Include other meta data
+					true,	// Include other meta data
+					superUser,
+					false		// HXL only include with XLS exports
 					);		
 			
 			/*
-			 * Get the columns to show for this survey and management function
+			 * Get the users custom configuration that has been stored for this survey
 			 */
 			pstmt = sd.prepareStatement(sql);	 
 			pstmt.setInt(1,  uId);
@@ -96,18 +104,18 @@ public class ManagedFormsManager {
 				String config = rs.getString("settings");
 			
 				if(config != null) {
-					Type type = new TypeToken<ManagedFormConfig>(){}.getType();	
+					Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
 					try {
 						savedConfig = gson.fromJson(config, type);
 					} catch (Exception e) {
-						log.log(Level.SEVERE, e.getMessage());
-						savedConfig = new ManagedFormConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
+						log.log(Level.SEVERE,"Error: ", e);
+						savedConfig = new ManagedFormUserConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
 					}
 				} else {
-					savedConfig = new ManagedFormConfig ();
+					savedConfig = new ManagedFormUserConfig ();
 				}
 			} else {
-				savedConfig = new ManagedFormConfig ();
+				savedConfig = new ManagedFormUserConfig ();
 			}
 			
 			
@@ -124,12 +132,13 @@ public class ManagedFormsManager {
 					tc.filter = c.filter;
 					tc.type = c.type;
 					for(int j = 0; j < savedConfig.columns.size(); j++) {
-						TableColumn tcConfig = savedConfig.columns.get(j);
+						TableColumnConfig tcConfig = savedConfig.columns.get(j);
 						if(tcConfig.name.equals(tc.name)) {
-							tc.include = tcConfig.include;
 							tc.hide = tcConfig.hide;
 							tc.barcode = tcConfig.barcode;
 							tc.filterValue = tcConfig.filterValue;
+							tc.chart_type = tcConfig.chart_type;
+							tc.width = tcConfig.width;
 							break;
 						}
 					}
@@ -141,10 +150,10 @@ public class ManagedFormsManager {
 			}
 			
 			/*
-			 * Add the data processing columns and configuration
+			 * Add the managed form columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns);
+				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns, oId);
 			}
 		
 				
@@ -163,22 +172,21 @@ public class ManagedFormsManager {
 	/*
 	 * Get the managed columns
 	 */
-	public void getDataProcessingConfig(Connection sd, int crId, ArrayList<TableColumn> formColumns, ArrayList<TableColumn> configColumns) throws Exception {
+	public void getDataProcessingConfig(Connection sd, int crId, 
+			ArrayList<TableColumn> formColumns, 
+			ArrayList<TableColumnConfig> configColumns,
+			int oId) throws Exception {
 		
-		/*
-		 * Manually create this (TODO retrieve from database)
-		 */
 		CustomReportsManager crm = new CustomReportsManager ();
-		ArrayList<TableColumn> managedColumns = crm.get(sd, crId);
+		ArrayList<TableColumn> managedColumns = crm.get(sd, crId, oId);
 		for(int i = 0; i < managedColumns.size(); i++) {
 			TableColumn tc = managedColumns.get(i);
 
 			tc.mgmt = true;
 			if(configColumns != null) {
 				for(int j = 0; j < configColumns.size(); j++) {
-					TableColumn tcConfig = configColumns.get(j);
+					TableColumnConfig tcConfig = configColumns.get(j);
 					if(tcConfig.name.equals(tc.name)) {
-						tc.include = tcConfig.include;
 						tc.hide = tcConfig.hide;
 						tc.barcode = tcConfig.barcode;
 						tc.filterValue = tcConfig.filterValue;
@@ -196,6 +204,18 @@ public class ManagedFormsManager {
 				}
 			}
 			
+			// Add dynamic choice values such as users identified by role
+			if(tc.choices != null) {
+				ArrayList<KeyValue> newChoices = new ArrayList<KeyValue> ();
+				for(KeyValue kv : tc.choices) {
+					if(kv.isRole) {
+						newChoices.addAll(GeneralUtilityMethods.getUsersWithRole(sd, oId, kv.k));
+					} else {
+						newChoices.add(kv);
+					}
+				}
+				tc.choices = newChoices;
+			}
 			// Add the management column to the array of columns
 			formColumns.add(tc);
 		}
@@ -306,51 +326,6 @@ public class ManagedFormsManager {
 		
 		return filter;
 	}
-	
-	/*
-	private void addProcessing(TableColumn tc) {
-		String name = tc.name;
-		tc.mgmt = true;
-		if(name.equals("_mgmt_responsible")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_action_deadline")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_action_date")) {
-			tc.hide = true;
-			tc.readonly = false;
-			tc.type = "date";
-		} else if(name.equals("_mgmt_response_status")) {
-			tc.hide = false;
-			tc.readonly = true;
-			tc.type = "calculate";
-			tc.markup = new ArrayList<TableColumnMarkup> ();
-			tc.markup.add(new TableColumnMarkup("Deadline met", "bg-success"));
-			tc.markup.add(new TableColumnMarkup("Done with delay", "bg-info"));
-			tc.markup.add(new TableColumnMarkup("In the pipeline", "bg-warning"));
-			tc.markup.add(new TableColumnMarkup("Deadline crossed", "bg-danger"));
-			tc.filter = true;
-		} else if(name.equals("_mgmt_action_taken")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		} else if(name.equals("_mgmt_address_recommendation")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "select_one";
-			tc.choices = new ArrayList<String> ();
-			tc.choices.add("Yes");
-			tc.choices.add("No, needs further work");		
-		} else if(name.equals("_mgmt_comment")) {
-			tc.hide = false;
-			tc.readonly = false;
-			tc.type = "text";
-		}
-	}
-	*/
 	
 }
 

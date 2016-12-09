@@ -53,13 +53,6 @@ public class SubscriberSvc extends Application {
 	private static Logger log =
 			 Logger.getLogger(SubscriberSvc.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(SubscriberSvc.class);
-		return s;
-	}
-
 	
 	@GET
 	@Produces("application/json")

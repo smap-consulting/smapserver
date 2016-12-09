@@ -32,6 +32,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import com.google.gson.Gson;
@@ -52,13 +53,6 @@ import java.util.logging.Logger;
 public class ReviewQuestionsOther extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
-
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReviewQuestionsOther.class);
-		return s;
-	}
 
 	ArrayList<Question> selectQuestions = new ArrayList<Question> ();
 	ArrayList<Question> textQuestions = new ArrayList<Question> ();
@@ -104,7 +98,7 @@ public class ReviewQuestionsOther extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
+		    log.info("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return Response.serverError().entity(e.getMessage()).build();
 
@@ -112,8 +106,13 @@ public class ReviewQuestionsOther extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		Response response = null;
@@ -254,15 +253,12 @@ public class ReviewQuestionsOther extends Application {
 		String path = "";
 		String otherValue = "";
 		
-		System.out.println("addRelevantQuestionNames: " + q.relevant);
 		while((idx1 = q.relevant.indexOf("selected", idx1 + 1)) >= 0) {
 			idx1 = q.relevant.indexOf("(", idx1 + 1);
 			if(idx1 > 0) {
 				idx2 = q.relevant.indexOf(",", idx1);
 				if(idx2 > 0) {
 					path = q.relevant.substring(idx1+1, idx2);
-					
-					System.out.println("=== " + q.name + ":" + path);
 				}
 			}
 			RelevantQuestion rq = new RelevantQuestion();

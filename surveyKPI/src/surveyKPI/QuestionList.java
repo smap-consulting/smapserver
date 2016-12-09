@@ -34,6 +34,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.QuestionLite;
 
 import com.google.gson.Gson;
@@ -59,14 +60,6 @@ public class QuestionList extends Application {
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(QuestionList.class);
-		return s;
-	}
-
-	
 	/*
 	 * Return a list of all questions in the survey
 	 * Deprecate.  This service has been replaced by the next one. It should be deleted however 
@@ -84,15 +77,19 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		JSONArray jaQuestions = new JSONArray();
@@ -220,7 +217,6 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
 		}
@@ -228,18 +224,23 @@ public class QuestionList extends Application {
 		Response response = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		ArrayList<QuestionLite> questions = new ArrayList<QuestionLite> ();
-
-		log.info("Get questions: " + single_type + " : " + exc_read_only);
 		
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtSSC = null;
 		try {
+			Form tf = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+			
 			StringBuffer combinedSql = new StringBuffer("");
 			String sql = null;
 			String sql1 = null;
@@ -249,10 +250,10 @@ public class QuestionList extends Application {
 			ResultSet resultSet = null;
 
 			if(language.equals("none")) {
-				language = GeneralUtilityMethods.getDefaultLanguage(connectionSD, sId);
+				language = GeneralUtilityMethods.getDefaultLanguage(sd, sId);
 			}
 			
-			sql1 = "select q.q_id, q.qtype, t.value, q.qname "
+			sql1 = "select q.q_id, q.qtype, t.value, q.qname, q.f_id "
 					+ "from form f "
 					+ "inner join question q "
 					+ "on f.f_id = q.f_id "
@@ -286,7 +287,7 @@ public class QuestionList extends Application {
 			combinedSql.append(sqlEnd);
 			sql = combinedSql.toString();	
 			
-			pstmt = connectionSD.prepareStatement(sql);	 
+			pstmt = sd.prepareStatement(sql);	 
 			pstmt.setString(1,  language);
 			pstmt.setInt(2,  sId);
 			if(single_type != null) {
@@ -302,6 +303,8 @@ public class QuestionList extends Application {
 				q.type = resultSet.getString(2);
 				q.q = resultSet.getString(3);
 				q.name = resultSet.getString(4);
+				q.f_id = resultSet.getInt(5);
+				q.toplevel = (q.f_id == tf.id);
 				questions.add(q);			
 			}
 			
@@ -312,7 +315,7 @@ public class QuestionList extends Application {
 				String sqlSSC = "select id, name, function, f_id from ssc " +
 						" where s_id = ? " + 
 						" order by id;";
-				pstmtSSC = connectionSD.prepareStatement(sqlSSC);	
+				pstmtSSC = sd.prepareStatement(sqlSSC);	
 				pstmtSSC.setInt(1, sId);
 				resultSet = pstmtSSC.executeQuery();
 				while(resultSet.next()) {
@@ -338,7 +341,113 @@ public class QuestionList extends Application {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
-			SDDataSource.closeConnection("surveyKPI-QuestionList", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-QuestionList", sd);
+		}
+
+
+		return response;
+	}
+	
+	/*
+	 * Return a list of all questions in the top level form for the survey
+	 */
+	@GET
+	@Path("/new/topform")
+	@Produces("application/json")
+	public Response getQuestionsNewTopForm(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@PathParam("language") String language,
+			@QueryParam("exc_read_only") boolean exc_read_only) { 
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+		    e.printStackTrace();
+		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
+		}
+		
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		ArrayList<QuestionLite> questions = new ArrayList<QuestionLite> ();
+		
+		PreparedStatement pstmt = null;
+		try {
+			StringBuffer combinedSql = new StringBuffer("");
+			String sql = null;
+			String sql1 = null;
+			String sqlro = null;
+			String sqlEnd = null;
+			ResultSet resultSet = null;
+
+			if(language.equals("none")) {
+				language = GeneralUtilityMethods.getDefaultLanguage(sd, sId);
+			}
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+			
+			sql1 = "select q.q_id, q.qtype, t.value, q.qname "
+					+"from question q "
+					+ "left outer join translation t "
+					+ "on q.qtext_id = t.text_id "
+					+ "and t.s_id = ? " 
+					+ "and t.language = ? "
+					+ "and t.type = 'none' "
+					+ "where q.f_id = ? "
+					+ "and q.source is not null "
+					+ "and q.soft_deleted = false ";
+								
+			
+			if(exc_read_only) {
+				sqlro = " and q.readonly = 'false' ";
+			} else {
+				sqlro = "";
+			}
+			
+			sqlEnd = " order by q.q_id asc;";		// Order required for Role Column Merge in survey_roles.js
+			
+			combinedSql.append(sql1);
+			combinedSql.append(sqlro);
+			combinedSql.append(sqlEnd);
+			sql = combinedSql.toString();	
+			
+			pstmt = sd.prepareStatement(sql);	 
+			pstmt.setInt(1, sId);
+			pstmt.setString(2,  language);
+			pstmt.setInt(3,  f.id);
+
+			log.info("Get questions for top level form: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			while(resultSet.next()) {
+				QuestionLite q = new QuestionLite();
+				
+				q.id = resultSet.getInt(1);
+				q.type = resultSet.getString(2);
+				q.q = resultSet.getString(3);
+				q.name = resultSet.getString(4);
+				questions.add(q);			
+			}
+			
+
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			response = Response.ok(gson.toJson(questions)).build();
+				
+		} catch (SQLException e) {
+		    log.log(Level.SEVERE, "SQL Error", e);	    
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			SDDataSource.closeConnection("surveyKPI-QuestionList", sd);
 		}
 
 
@@ -364,15 +473,19 @@ public class QuestionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		JSONArray jaQuestions = new JSONArray();

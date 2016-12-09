@@ -195,7 +195,6 @@ function saveEmail() {
 	notification.notifyDetails = {};
 	notification.notifyDetails.emails = $('#notify_emails').val().split(",");
 	notification.notifyDetails.emailQuestion = $('#email_question').val();
-	notification.notifyDetails.from = $('#from_email').val();
 	notification.notifyDetails.subject = $('#email_subject').val();
 	notification.notifyDetails.content = $('#email_content').val();
 	notification.notifyDetails.attach = $('#email_attach').val();
@@ -274,7 +273,6 @@ function edit_notification(idx) {
 		$('#survey').val(notification.s_id);
 		if(notification.notifyDetails && notification.notifyDetails.emails) {
 			$('#notify_emails').val(notification.notifyDetails.emails.join(","));
-			$('#from_email').val(notification.notifyDetails.from);
 			if(notification.notifyDetails.emailQuestion) {
 				surveyChanged(notification.notifyDetails.emailQuestion);
 			}

@@ -52,6 +52,7 @@ requirejs.config({
     	'datatables.select': '../../../../js/libs/DataTables/Select/js/dataTables.select.min',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
     	inspinia: '../../../../js/libs/wb/inspinia',
+    	svgsave:  '../../../../js/libs/saveSvgAsPng',
     	metismenu: '../../../../js/libs/wb/plugins/metisMenu/jquery.metisMenu',
     	slimscroll: '../../../../js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
     	pace: '../../../../js/libs/wb/plugins/pace/pace.min',
@@ -74,6 +75,7 @@ requirejs.config({
     	'crf': ['jquery'],
        	'datatables': ['jquery', 'bootstrap'],
     	'app/common_mgmt': ['jquery'],
+    	'app/chart': ['jquery'],
     	'qrcode': ['jquery'],
        	'toggle': ['bootstrap.min']
 	
@@ -86,7 +88,10 @@ require([
          'common', 
          'localise', 
          'globals',
+         'moment',
+         'app/chart',
          'datatables.net-bs',
+         'svgsave',
          'datatables.select',
          'inspinia',
          'metismenu',
@@ -97,6 +102,7 @@ require([
          'crf',
          'app/common_mgmt',
          'qrcode',
+         'd3',
          'toggle'
          
          ], function($, 
@@ -104,10 +110,20 @@ require([
         		 common, 
         		 localise, 
         		 globals,
-        		 datatables) {
+        		 moment,
+        		 chart,
+        		 datatables,
+        		 svgsave) {
 
+	/*
+	 * Report definition
+	 * Default Settings
+	 *    Create a chart for data table columns that are enabled and do not have column specific setting
+	 * Column specific settings 
+	 *    Override settings where names match
+	 */
 	
-	 $(document).ready(function() {
+	$(document).ready(function() {
 
 		var i,
 			params,
@@ -116,9 +132,12 @@ require([
 			openingNew = false,
 			dont_get_current_survey = true,
 			bs = isBusinessServer();
-			
-		localise.setlang();		// Localise HTML
 		
+		window.chart = chart;
+		chart.init();
+		window.moment = moment;
+		localise.setlang();		// Localise HTML
+
 		// Get the parameters and show a management survey if required
 		params = location.search.substr(location.search.indexOf("?") + 1)
 		pArray = params.split("&");
@@ -142,6 +161,8 @@ require([
 
 		enableUserProfileBS();										// Enable user profile button	
 		
+		// Get the report definition
+		
 		// Set change function on projects
 		$('#project_name').change(function() {
 			projectChanged();
@@ -158,65 +179,19 @@ require([
 		 * Set up dialog to edit a record
 		 */
 		$('#editRecord').on('show.bs.modal', function (event) {
-			var // index = $(event.relatedTarget).data("index"),
-				//record = gTasks.cache.managedData[globals.gCurrentSurvey][index],
+			var 
 				record = gTasks.gSelectedRecord,
 				columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 				$editForm = $('#editRecordForm'),
-				$surveyForm = $('#surveyForm'),
-				h = [],
-				idx = -1,
-				m = [],
-				cnt = -1,
-				i,
-				configItem,
-				first = true;
+				$surveyForm = $('#surveyForm');
 			
-			//gTasks.gCurrentIndex = index;
-			gTasks.gPriKey = record["prikey"];
-			
-			// Clear the update array
-			gTasks.gUpdate = [];
-			$('#saveRecord').prop("disabled", true);
-			
-			for(i = 0; i < columns.length; i++) {
-				configItem = columns[i];
-				
-				if(configItem.mgmt) {
-					h[++idx] = getEditMarkup(configItem, i, first, record);
-				} else {
-					m[++cnt] = getEditMarkup(configItem, i, first, record);
-				}
-				if(!configItem.readonly) {
-					first = false;
-				}
+			$('.shareRecordOnly, .role_select').hide();
+			$('#srLink').val("");
+			if(globals.gIsSecurityAdministrator) {
+				getSurveyRoles(globals.gCurrentSurvey);
 			}
-			
-			$editForm.html(h.join(''));
-			$surveyForm.html(m.join(''));
-			
-			// Set up date fields
-			$editForm.find('.date').datetimepicker({
-				locale: gUserLocale || 'en',
-				useCurrent: false,
-				showTodayButton: true
-			});
-			
-			// Respond to changes in the data by creating an update object
-			$editForm.find('.form-control').keyup(function() {
-				dataChanged($(this));
-			});
-			$editForm.find('.date').on("dp.change", function() {
-				dataChanged($(this).find('input'));
-			});
-			$editForm.find('select').change(function() {
-				dataChanged($(this));
-			});
-			
-			// Set focus to first editable data item
-			$editForm.find('[autofocus]').focus();
-			
-			
+			showEditRecordForm(record, columns, $editForm, $surveyForm);
+	
 		});
 		
 		$('#saveRecord').click(function(){
@@ -239,6 +214,54 @@ require([
 				});
 		});
 		
+		$('#shareRecord').click(function(){	
+			$('.shareRecordOnly').toggle();
+			// Automatically get the link if there are no roles to select
+			if($('.role_select_roles').text().length === 0) {
+				$("#getSharedRecord").trigger("click");
+			}
+		});
+		
+		$('#getSharedRecord').click(function(){
+			
+			var url = "/surveyKPI/managed/actionlink/" + 
+				globals.gCurrentSurvey + "/" + 
+				gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id + "/" +
+				gTasks.gPriKey;
+			
+			if(globals.gIsSecurityAdministrator) {
+				var roleIds = [],
+					id;
+				$('input[type=checkbox]:checked', '.role_select_roles').each(function() {
+					id = $(this).val();
+					roleIds.push(id);
+				});
+				if(roleIds.length > 0) {
+					url += "?roles=" + roleIds.join();
+				}
+			}
+				
+			addHourglass();
+			$.ajax({
+	 			url: url,
+	 			dataType: 'json',
+	 			cache: false,
+	 			success: function(data) {
+	 						
+	 				removeHourglass();
+	 				$('#srLink').val(data.link);
+	 			},
+	 			error: function(xhr, textStatus, err) {
+	 				removeHourglass();
+	 				if(xhr.readyState == 0 || xhr.status == 0) {
+	 		              return;  // Not an error
+	 				} else {
+	 					console.log("Error: Failed to get sharing link: " + err);
+	 				}
+	 			}
+	 		});	
+		});
+		
 		// Save changes to the table columns that are shown
 		$('#applyColumns').click(function(){
 			
@@ -254,6 +277,8 @@ require([
 			
 			updateVisibleColumns(config.columns);
 			saveConfig(config);
+			chart.setChartList();
+			chart.refreshCharts();
 	
 		});
 		
@@ -297,6 +322,61 @@ require([
 		
      });	 
 	 
+	/*
+	 * Get the roles for a survey
+	 */
+	function getSurveyRoles(sId) {
+		
+		if(!gTasks.cache.surveyRoles[sId]) {
+			addHourglass();
+	 		$.ajax({
+	 			url: "/surveyKPI/role/survey/" + sId + "?enabled=true",
+	 			dataType: 'json',
+	 			cache: false,
+	 			success: function(data) {
+	 			
+	 				gTasks.cache.surveyRoles[sId] = data;
+	 				showRoles(gTasks.cache.surveyRoles[sId]);	
+	 			},
+	 			error: function(xhr, textStatus, err) {
+	 				
+	 				removeHourglass();
+	 				if(xhr.readyState == 0 || xhr.status == 0) {
+	 		              return;  // Not an error
+	 				} else {
+	 					console.log("Error: Failed to get roles for a survey: " + err);
+	 				}
+	 			}
+	 		});	
+		} else {
+			showRoles(gTasks.cache.surveyRoles[sId]);
+		}
+	}
+
+	/*
+	 * Show the roles
+	 */
+	function showRoles(data) {
+		
+		var h = [],
+			idx = -1,
+			i;
+		
+		if(data.length > 0) {
+			for(i = 0; i < data.length; i++) {
+				h[++idx] = '<div class="checkbox">';
+				h[++idx] = '<label><input type="checkbox" value="';
+				h[++idx] = data[i].id;
+				h[++idx] = '">';
+				h[++idx] = data[i].name;
+				h[++idx] = '</label>';
+				h[++idx] = '</div>';
+			}
+			$('.role_select').show();
+			$('.role_select_roles').empty().append(h.join(''));	
+		}
+	}
+	
 	 /*
 	  * Respond to a request to generate a file
 	  */
@@ -308,38 +388,114 @@ require([
 			data,
 		 	managedId,
 		 	title = $('#survey_name option:selected').text(),
-		 	project = $('#project_name option:selected').text();
+		 	project = $('#project_name option:selected').text(),
+		 	charts = [];
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
-				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns)
+				 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
 				 
 		 if($this.hasClass("xls")) {
 			 filename = title + ".xlsx"
 			 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 			 format = "xlsx";
-		 } else {
+		 } else if($this.hasClass("pdf")) {
 			 filename = title + ".pdf"
 			 mime= "application/pdf";
 			 format = "pdf";
+		 } else {
+			 filename = title + ".zip"
+			 mime= "application/zip";
+			 format = "image";
 		 }
 		 
-		 if(isBrowseResults || isDuplicates) {
-			 managedId = 0;
+		 if(format !== "image") {
+			 if(isBrowseResults || isDuplicates) {
+				 managedId = 0;
+			 } else {
+				 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
+			 }
+			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts);
 		 } else {
-			 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
+			 countImages = $('.svg-container svg').length;
+			 $('.svg-container svg').each(function(index) {
+				 var $this = $(this),
+				 	elem = $this[0],
+				 	title = $this.closest('.ibox').find('.ibox-title h5').text();
+				 	
+				 if(!title) {
+					 title = "A Chart";
+				 }
+				 //svgsave.saveSvgAsPng(elem, "x.png");
+				 svgsave.svgAsPngUri(elem, undefined, function(uri) {
+					 var chart = {
+							 image: uri,
+							 title: title
+					 }
+					 charts.push(chart);
+					 console.log("Got image: " + countImages);
+					 countImages--;
+					 if(countImages <= 0) {
+						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts);
+					 }
+				 });
+				
+			 });	
 		 }
-		 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project); 
+		  
 	 });
 	 
-
-	 // Respond to duplicate reports menu
+	    /*
+	     * Alerts
+	     */
+		$('#show_alerts').click(function(){
+			if(!globals.gAlertSeen) {
+				globals.gAlertSeen = true;
+				$('.alert_icon').removeClass("text-danger");
+				saveLastAlert(globals.gLastAlertTime, true);
+			}
+		});
+		
+	 // Respond to duplicate gReports menu
 	 if(isDuplicates) {
 		 $('#duplicateSearch').click(function(){
 			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
 		 });
 	 }
 
+	 
+	 /*
+	  * Add date filtering to datatable
+	  */
+	 $.fn.dataTableExt.afnFiltering.push(
+				function( oSettings, aData, iDataIndex ) {
+					var fromDate = document.getElementById('filter_from').value;
+					var dateCol = 2,
+						dateParts = [],
+						dataDate;
 
+					fromDate=fromDate.replace(/\-/g, "");
+
+					dataDate=aData[dateCol].replace(/\-/g, "");
+					dateParts = dataDate.split(" ");
+					if(dateParts.length > 0) {
+						dataDate = dateParts[0];
+					}
+
+					if ( fromDate === "" )
+					{
+						return true;
+					}
+					else if ( fromDate <= dataDate )
+					{
+						return true;
+					}
+					
+					return false;
+				
+				}
+			);
+	 
 });
+
 

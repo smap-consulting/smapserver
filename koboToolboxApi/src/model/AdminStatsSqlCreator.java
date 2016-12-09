@@ -128,7 +128,7 @@ public class AdminStatsSqlCreator {
 		
 		// Get the check for the correct organisation
 		if(orgId > 0) {
-			orgCheck = "p_id in (select p_id from project where o_id = ?)";
+			orgCheck = "p_id in (select id from project where o_id = ?)";
 		}
 		
 		/*

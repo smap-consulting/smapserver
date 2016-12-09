@@ -93,7 +93,7 @@ create TABLE log (
 	s_id integer,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	user_ident text,
-	event text,
+	event text,	
 	note text
 	);
 ALTER TABLE log OWNER TO ws;
@@ -141,6 +141,7 @@ create TABLE organisation (
 	default_email_content text,
 	website text,
 	locale text,				-- default locale for the organisation
+	timezone text,				-- default timezone for the organisation
 	changed_ts TIMESTAMP WITH TIME ZONE
 	);
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);
@@ -205,6 +206,7 @@ DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
 	id INTEGER DEFAULT NEXTVAL('users_seq') CONSTRAINT pk_users PRIMARY KEY,
 	ident text,
+	temporary boolean default false,			-- If true will not show in user management page
 	password text,
 	realm text,
 	name text,
@@ -228,7 +230,10 @@ CREATE TABLE users (
 	one_time_password varchar(36),	-- For password reset
 	one_time_password_expiry timestamp with time zone,		-- Time and date one time password expires
 	password_reset boolean default false,	-- Set true if the user has reset their password
-	o_id integer REFERENCES organisation(id) ON DELETE CASCADE
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	action_details text,			-- Details of a specific action the user can undertake
+	lastalert text,					-- Time last alert sent to the user
+	seen boolean					-- True if the user has aknowledged the alert
 	);
 CREATE UNIQUE INDEX idx_users_ident ON users(ident);
 ALTER TABLE users OWNER TO ws;
@@ -275,11 +280,25 @@ DROP TABLE IF EXISTS user_project CASCADE;
 create TABLE user_project (
 	id INTEGER DEFAULT NEXTVAL('user_project_seq') CONSTRAINT pk_user_project PRIMARY KEY,
 	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE,
-	restricted boolean default false,
-	allocated boolean default false
+	p_id INTEGER REFERENCES project(id) ON DELETE CASCADE
 	);
 ALTER TABLE user_project OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS role_seq CASCADE;
+CREATE SEQUENCE role_seq START 1;
+ALTER TABLE role_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.role CASCADE;
+CREATE TABLE public.role (
+	id integer DEFAULT nextval('role_seq') NOT NULL PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,
+	description text,
+	changed_by text,
+	changed_ts TIMESTAMP WITH TIME ZONE
+);
+ALTER TABLE public.role OWNER TO ws;
+CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
 
 DROP SEQUENCE IF EXISTS user_role_seq CASCADE;
 CREATE SEQUENCE user_role_seq START 1;
@@ -315,7 +334,7 @@ insert into user_group (u_id, g_id) values (1, 6);
 
 insert into project (id, o_id, name) values (1, 1, 'A project');
 
-insert into user_project (u_id, p_id, restricted, allocated) values (1 , 1, false, true);
+insert into user_project (u_id, p_id) values (1 , 1);
 
 -- Monitoring tables
 DROP TABLE IF EXISTS upload_event CASCADE;
@@ -623,6 +642,9 @@ CREATE TABLE dashboard_settings (
 	ds_to_date date,
 	ds_filter text
 	);
+alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user_ident)
+	REFERENCES users (ident) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE;
 ALTER TABLE dashboard_settings OWNER TO ws;
 
 
@@ -805,21 +827,6 @@ CREATE TABLE public.linked_forms (
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 
-DROP SEQUENCE IF EXISTS role_seq CASCADE;
-CREATE SEQUENCE role_seq START 1;
-ALTER TABLE role_seq OWNER TO ws;
-
-DROP TABLE IF EXISTS public.role CASCADE;
-CREATE TABLE public.role (
-	id integer DEFAULT nextval('role_seq') NOT NULL PRIMARY KEY,
-	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	name text,
-	description text,
-	changed_by text,
-	changed_ts TIMESTAMP WITH TIME ZONE
-);
-ALTER TABLE public.role OWNER TO ws;
-CREATE UNIQUE INDEX role_name_index ON public.role(o_id, name);
 
 DROP SEQUENCE IF EXISTS survey_role_seq CASCADE;
 CREATE SEQUENCE survey_role_seq START 1;
@@ -836,3 +843,23 @@ create TABLE survey_role (
 	);
 ALTER TABLE survey_role OWNER TO ws;
 CREATE UNIQUE INDEX survey_role_index ON public.survey_role(s_id, r_id);
+
+DROP SEQUENCE IF EXISTS alert_seq CASCADE;
+CREATE SEQUENCE alert_seq START 1;
+ALTER SEQUENCE alert_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS alert CASCADE;
+create TABLE alert (
+	id integer DEFAULT NEXTVAL('alert_seq') CONSTRAINT pk_alert PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	status varchar(10),
+	priority integer,
+	updated_time TIMESTAMP WITH TIME ZONE,
+	created_time TIMESTAMP WITH TIME ZONE,
+	link text,
+	message text,
+	s_id integer,	-- Survey Id that the alert applies to
+	m_id integer,	-- Managed form id that the alert applies to
+	prikey integer	-- Primary key of survey for which the alert applies
+);
+ALTER TABLE alert OWNER TO ws;

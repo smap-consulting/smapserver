@@ -11,4 +11,5 @@ public class SqlDesc {
 	public String geometry_type = null;
 	public String sql;
 	public boolean gotPriKey = false;
+	public ArrayList<String> availableColumns = new ArrayList<String>();	// The subset of required columns that are available due to RBAC etc
 }

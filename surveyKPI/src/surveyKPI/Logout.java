@@ -47,13 +47,6 @@ public class Logout extends Application {
 	private static Logger log =
 			 Logger.getLogger(Logout.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Logout.class);
-		return s;
-	}
-	
 	@GET
 	@Produces("application/json")
 	public void logout(@Context HttpServletRequest request) {

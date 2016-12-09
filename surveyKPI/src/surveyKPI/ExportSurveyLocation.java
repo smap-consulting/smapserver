@@ -84,8 +84,13 @@ public class ExportSurveyLocation extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export to " + format);
@@ -116,7 +121,7 @@ public class ExportSurveyLocation extends Application {
 		    	if(rs.next()) {
 		    		ident = rs.getString(1);
 		    	} else {
-		    		System.out.println("Error: ident not found");
+		    		log.info("Error: ident not found");
 		    	}
 		    	
 				/*
@@ -137,16 +142,16 @@ public class ExportSurveyLocation extends Application {
 							" order by ut.id asc";
 				} else if(type.equals("event")) {
 					sqlDesc.target_table = "task_completion";
-					System.out.println("Location export error: un supported type: " + type);
+					log.info("Location export error: un supported type: " + type);
 				} else {
-					System.out.println("Location export error: unknown type: " + type);
+					log.info("Location export error: unknown type: " + type);
 				}
 	
 				String basePath = GeneralUtilityMethods.getBasePath(request);
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
 				
-				System.out.println("Table: " + sqlDesc.target_table);
-				System.out.println("SQL: " + sqlDesc.sql);
+				log.info("Table: " + sqlDesc.target_table);
+				log.info("SQL: " + sqlDesc.sql);
 				int code = 0;
 				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/getshape.sh " + 
 						database_name + " " +

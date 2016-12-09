@@ -98,7 +98,7 @@ public class MediaInfo {
 		
 		try {
 			if(organisationId == null) {
-				organisationId = String.valueOf(GeneralUtilityMethods.getOrganisationId(sd, user));
+				organisationId = String.valueOf(GeneralUtilityMethods.getOrganisationId(sd, user, 0));
 			}
 			folderUrl = "media/organisation/" + organisationId;
 			if(settings) {

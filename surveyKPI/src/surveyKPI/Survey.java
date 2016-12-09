@@ -42,21 +42,18 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.ServerManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.server.utilities.GetXForm;
 
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -87,13 +84,6 @@ public class Survey extends Application {
 			 Logger.getLogger(Survey.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
-
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Survey.class);
-		return s;
-	}
 	
 	public Survey() {
 		
@@ -240,7 +230,7 @@ public class Survey extends Application {
 				try {  		
 	        		int code = 0;
 					if(type.equals("codebook")) {
-						Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/gettemplate.sh " + sourceName +
+						Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/gettemplate.sh " + sourceName +
 								" " + language +
 	        					" >> /var/log/tomcat7/survey.log 2>&1"});
 						code = proc.waitFor();
@@ -248,22 +238,16 @@ public class Survey extends Application {
 					}
 	        		
 	                File file = new File(filepath);
-	                byte [] fileData = new byte[(int)file.length()];
-	                DataInputStream dis = new DataInputStream(new FileInputStream(file));
-	                dis.readFully(fileData);
-	                dis.close();
-	                
-	                if(type.equals("codebook")) {
-	                	builder.header("Content-type","application/pdf; charset=UTF-8");
-	                } else if(type.equals("xls")) {
-	                	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
-	                } else if(type.equals("xml")) {
-	                	builder.header("Content-type","text/xml; charset=UTF-8");
-	                }
-	                builder.header("Content-Disposition", "attachment;Filename=" + filename);
-					builder.entity(fileData);
-					
-					response = builder.build();
+	            	builder = Response.ok(file);
+	            	if(type.equals("codebook")) {
+		                builder.header("Content-type","application/pdf; charset=UTF-8");
+		            } else if(type.equals("xls")) {
+		            	builder.header("Content-type","application/vnd.ms-excel; charset=UTF-8");
+		            } else if(type.equals("xml")) {
+		            	builder.header("Content-type","text/xml; charset=UTF-8");
+		            }
+	            	builder.header("Content-Disposition", "attachment;Filename=" + filename);
+	            	response = builder.build();
 	                
 	    		} catch (Exception e) {
 	    			log.log(Level.SEVERE, "", e);
@@ -308,6 +292,7 @@ public class Survey extends Application {
 			@PathParam("sId") int sId) { 
 		
 		Response response = null;
+		String topTableName = null;
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -359,33 +344,6 @@ public class Survey extends Application {
 			ResultSet resultSetBounds = null;
 			ArrayList<DateInfo> dateInfoList = new ArrayList<DateInfo> ();
 			JSONArray ja = null;
-
-			/*
-			 * Get Date columns available in this survey
-			 * The maximum and minimum value for these dates will be added when 
-			 * the results data for each table is checked
-			 */
-			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
-					"FROM form f, question q " + 
-					"where f.f_id = q.f_id " +
-					"AND (q.qtype='date' " +
-					"OR q.qtype='dateTime') " +
-					"AND f.s_id = ?; "; 	
-			
-			
-			log.info(sql);
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			resultSet = pstmt.executeQuery();
-			
-			while (resultSet.next()) {	
-				DateInfo di = new DateInfo();
-				di.qId = resultSet.getInt(1);
-				di.name = resultSet.getString(2);
-				di.fId = resultSet.getInt(3);
-				di.columnName = resultSet.getString(4);
-				dateInfoList.add(di);
-			}			
 			
 			/*
 			 * Get Forms and row counts in this survey
@@ -488,6 +446,7 @@ public class Survey extends Application {
 				jp.put("f_id", fId);
 				jp.put("p_id", p_id);
 				if(p_id == null || p_id.equals("0")) {
+					topTableName = tableName;
 					jo.put("top_table", tableName);
 				}
 				jp.put("geom_id", geom_id);
@@ -499,6 +458,42 @@ public class Survey extends Application {
 			/*
 			 * Add the date information
 			 */
+			/*
+			 * Get Date columns available in this survey
+			 * The maximum and minimum value for these dates will be added when 
+			 * the results data for each table is checked
+			 */
+			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
+					"FROM form f, question q " + 
+					"where f.f_id = q.f_id " +
+					"AND (q.qtype='date' " +
+					"OR q.qtype='dateTime') " +
+					"AND f.s_id = ?; "; 	
+			
+
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			log.info("Get dates: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			
+			while (resultSet.next()) {	
+				DateInfo di = new DateInfo();
+				di.qId = resultSet.getInt(1);
+				di.name = resultSet.getString(2);
+				di.fId = resultSet.getInt(3);
+				di.columnName = resultSet.getString(4);
+				dateInfoList.add(di);
+			}	
+			
+			if(GeneralUtilityMethods.columnType(connectionRel, topTableName, "_upload_time") != null) {
+				DateInfo di = new DateInfo();
+				
+				di.columnName = "_upload_time";
+				di.name = "Upload Time";
+				di.qId = SurveyManager.UPLOAD_TIME_ID;
+				dateInfoList.add(di);
+			}
+			
 			ja = new JSONArray();
 			for (int i = 0; i < dateInfoList.size(); i++) {
 				DateInfo di = dateInfoList.get(i);
@@ -603,8 +598,13 @@ public class Survey extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
@@ -669,8 +669,13 @@ public class Survey extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
@@ -737,8 +742,13 @@ public class Survey extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
@@ -829,9 +839,14 @@ public class Survey extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		boolean surveyMustBeDeleted = undelete || hard;
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted);  // Note if hard delete is set to true the survey should have already been soft deleted
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted, superUser);  // Note if hard delete is set to true the survey should have already been soft deleted
 		// End Authorisation
 		
 		if(sId != 0) {
@@ -847,7 +862,7 @@ public class Survey extends Application {
 					/*
 					 * Restore the survey
 					 */
-					sql = "update survey set deleted='false' where s_id = ?;";	
+					sql = "update survey set deleted='false', last_updated_time = now() where s_id = ?;";	
 					log.info(sql + " : " + sId);
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
@@ -878,121 +893,25 @@ public class Survey extends Application {
 						projectId = resultSet.getInt("p_id");
 					}
 					
-					// Get the organisation id
-					//int orgId = GeneralUtilityMethods.getOrganisationId(connectionSD,request.getRemoteUser());
-					
 					/*
 					 * Delete the survey. Either a soft or a hard delete
 					 */
 					if(hard) {
+						
 						connectionRel = ResultsDataSource.getConnection("surveyKPI-Survey");
-	
-						// Get the tables associated with this survey
-						boolean nonEmptyDataTables = false;
-						if(tables != null && tables.equals("yes")) {
-									
-							sql = "SELECT DISTINCT f.table_name FROM form f " +
-									"WHERE f.s_id = ? " +
-									"ORDER BY f.table_name;";						
-						
-							log.info(sql);
-							pstmt = connectionSD.prepareStatement(sql);	
-							pstmt.setInt(1, sId);
-							resultSet = pstmt.executeQuery();
-							
-							while (resultSet.next() && (delData || !nonEmptyDataTables)) {		
-								
-								String tableName = resultSet.getString(1);
-								int rowCount = 0;
-								
-								// Ensure the table is empty
-								if(!delData) {
-									try {
-										sql = "SELECT COUNT(*) FROM " + tableName + ";";
-										log.info(sql + " : " + tableName);
-										
-										pstmt = connectionRel.prepareStatement(sql);
-										ResultSet resultSetCount = pstmt.executeQuery();
-										resultSetCount.next();							
-										rowCount = resultSetCount.getInt(1);
-									} catch (Exception e) {
-										log.severe("failed to get count from table");
-									}
-								}
-								
-								try {
-									if(delData || (rowCount == 0)) {
-										sql = "DROP TABLE " + tableName + ";";
-										log.info(sql + " : " + tableName);
-										Statement stmtRel = connectionRel.createStatement();
-										stmtRel.executeUpdate(sql);
-										
-									} else {
-										nonEmptyDataTables = true;
-									}
-								} catch (Exception e) {
-									log.severe("failed to drop table");
-								}
-							}
-							
-						} 
-		
 						String basePath = GeneralUtilityMethods.getBasePath(request);
-						
-						/*
-						 * Delete any attachments
-						 */
-						String fileFolder = basePath + "/attachments/" + surveyIdent;
-					    File folder = new File(fileFolder);
-					    try {
-					    	log.info("Deleting attachments folder: " + fileFolder);
-							FileUtils.deleteDirectory(folder);
-						} catch (IOException e) {
-							log.info("Error deleting attachments directory:" + fileFolder + " : " + e.getMessage());
-						}
-					    
-						/*
-						 * Delete any raw upload data
-						 */
-						fileFolder = basePath + "/uploadedSurveys/" + surveyIdent;
-					    folder = new File(fileFolder);
-					    try {
-					    	log.info("Deleting uploaded files for survey: " + surveyName + " in folder: " + fileFolder);
-							FileUtils.deleteDirectory(folder);
-						} catch (IOException e) {
-							log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
-						}
-					    
-
-					    // Delete the templates
-						try {
-							GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, projectId );
-						} catch (Exception e) {
-							log.info("Error deleting templates: " + surveyName + " : " + e.getMessage());
-						}
-						
-						// Delete survey definition
-						if(delData || !nonEmptyDataTables) {
-							sql = "DELETE FROM survey WHERE s_id = ?;";	
-							log.info(sql + " : " + sId);
-							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-							pstmt = connectionSD.prepareStatement(sql);
-							pstmt.setInt(1, sId);
-							pstmt.execute();
-						}
-						
-						// Delete changeset data, this is an audit trail of modifications to the data
-						if(delData || !nonEmptyDataTables) {
-							sql = "DELETE FROM changeset WHERE s_id = ?;";	
-							log.info(sql + " : " + sId);
-							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-							pstmt = connectionRel.prepareStatement(sql);
-							pstmt.setInt(1, sId);
-							pstmt.execute();
-						}
-
-						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Delete survey " + surveyDisplayName + " and its results");
-						log.info("userevent: " + request.getRemoteUser() + " : hard delete survey : " + sId);
+						ServerManager sm = new ServerManager();
+						sm.deleteSurvey(
+								connectionSD, 
+								connectionRel,
+								request.getRemoteUser(),
+								projectId,
+								sId,
+								surveyIdent,
+								surveyDisplayName,
+								basePath,
+								delData,
+								tables);
 				
 					} else {
 						
@@ -1016,6 +935,7 @@ public class Survey extends Application {
 						// Add the current date and time to the name and display name to ensure the deleted survey has a unique name 
 						sql = "update survey set " +
 								" deleted='true', " +
+								" last_updated_time = now(), " +
 								" name = ?, " +
 								" display_name = ? " +
 								"where s_id = ?;";	
@@ -1039,18 +959,20 @@ public class Survey extends Application {
 					 * Delete any panels that reference this survey
 					 */
 					sql = "delete from dashboard_settings where ds_s_id = ?;";	
-					log.info(sql + " : " + sId);
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
+					log.info("Delete dashboard panels: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 					/*
 					 * Delete any tasks that are to update this survey
 					 */
 					sql = "delete from tasks where form_id = ?;";	
-					log.info(sql + " : " + sId);
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
+					log.info("Delete tasks: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 				}

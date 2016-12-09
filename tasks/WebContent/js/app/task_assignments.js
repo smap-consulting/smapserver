@@ -123,8 +123,12 @@ $(document).ready(function() {
 		var url = '/surveyKPI/tasks/pdf/' + globals.gCurrentTaskGroup,
 			name = $('#taskgroup option:selected').text();
 	
-		downloadFile(url, name + ".pdf", 
-			"application/pdf");
+		if(globals.gCurrentTaskGroup) {
+			downloadFile(url);
+			//downloadFile(url, name + ".pdf", "application/pdf");
+		} else {
+			alert(localise.set["msg_tg_ns"]);
+		}
 	});
 	
 	$('#m_export_xls').click(function () {	// Export to XLS
@@ -140,15 +144,20 @@ $(document).ready(function() {
 			url = '/surveyKPI/tasks/xls/' + globals.gCurrentTaskGroup + tzParam,
 				name = $('#taskgroup option:selected').text();
 			
-			downloadFile(url, name + ".xlsx", 
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+				downloadFile(url);
+				//downloadFile(url, name + ".xlsx", 
+				//	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 		} else {
 			alert(localise.set["msg_tg_ns"]);
 		}
 	});
 	
 	$('#m_import_xls').click(function () {	// Import from XLS
-		$('#import_taskgroup').modal("show");
+		if(globals.gCurrentTaskGroup) {
+			$('#import_taskgroup').modal("show");
+		} else {
+			alert(localise.set["msg_tg_ns"]);
+		}
 	});
 	$(('#importTaskGroupGo')).click(function(){
 		importTaskGroup();

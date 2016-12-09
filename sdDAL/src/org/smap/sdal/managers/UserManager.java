@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.fileupload.FileItem;
 import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Alert;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
@@ -51,8 +52,7 @@ public class UserManager {
 	
 	private static Logger log =
 			 Logger.getLogger(UserManager.class.getName());
-
-
+	
 	/*
 	 * Get the user details
 	 */
@@ -72,30 +72,32 @@ public class UserManager {
 			/*
 			 * Get the user details
 			 */
-			sql = "SELECT u.id as id, " +
-					"u.name as name, " +
-					"u.settings as settings, " +
-					"u.signature as signature, " +
-					"u.language as language, " +
-					"u.email as email, " +
-					"u.current_project_id as current_project_id, " +
-					"u.current_survey_id as current_survey_id, " +
-					"u.current_task_group_id as current_task_group_id, " +
-					"o.id as o_id, " +
-					"o.name as organisation_name, " +
-					"o.company_name as company_name, " +
-					"o.company_address as company_address, " +
-					"o.company_phone as company_phone, " +
-					"o.company_email as company_email, " +
-					"o.allow_email, " +
-					"o.allow_facebook, " +
-					"o.allow_twitter, " +
-					"o.can_edit, " +
-					"o.ft_send_trail " +
-					" from users u, organisation o " +
-					" where u.ident = ? " +
-					" and u.o_id = o.id " +
-					" order by u.ident;"; 
+			sql = "SELECT u.id as id, "
+					+ "u.name as name, "
+					+ "u.settings as settings, "
+					+ "u.signature as signature, "
+					+ "u.language as language, "
+					+ "u.email as email, "
+					+ "u.current_project_id as current_project_id, "
+					+ "u.current_survey_id as current_survey_id, "
+					+ "u.current_task_group_id as current_task_group_id, "
+					+ "u.lastalert, "
+					+ "u.seen,"
+					+ "o.id as o_id, "
+					+ "o.name as organisation_name, "
+					+ "o.company_name as company_name, "
+					+ "o.company_address as company_address, "
+					+ "o.company_phone as company_phone, "
+					+ "o.company_email as company_email, "
+					+ "o.allow_email, "
+					+ "o.allow_facebook, "
+					+ "o.allow_twitter, "
+					+ "o.can_edit, "
+					+ "o.ft_send_trail "
+					+ " from users u, organisation o "
+					+ " where u.ident = ? "
+					+ " and u.o_id = o.id "
+					+ " order by u.ident;"; 
 			
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, ident);
@@ -133,6 +135,8 @@ public class UserManager {
 				user.allow_twitter = resultSet.getBoolean("allow_twitter");
 				user.can_edit = resultSet.getBoolean("can_edit");
 				user.ft_send_trail = resultSet.getBoolean("ft_send_trail");
+				user.lastalert = resultSet.getString("lastalert");
+				user.seen = resultSet.getBoolean("seen");
 			}
 			
 			/*
@@ -172,8 +176,6 @@ public class UserManager {
 					" from project p, user_project up " +
 					" where p.id = up.p_id " +
 					" and up.u_id = ? " +
-					" and up.restricted = false " +
-					" and up.allocated = true " +
 					" order by p.name;";
 
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
@@ -238,6 +240,80 @@ public class UserManager {
 		
 	}
 	
+	
+	/*
+	 * Get alerts for a user
+	 */
+	public ArrayList<Alert> getAlertsByIdent(
+			Connection connectionSD,
+			String ident
+			) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		
+		ArrayList<Alert> alerts = new ArrayList<Alert> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;			
+				
+			/*
+			 * Get the user details
+			 */
+			sql = "SELECT "
+					+ "a.id as id, "
+					+ "a.status as status, "
+					+ "a.priority as priority, "
+					+ "a.updated_time as updated_time, "
+					+ "a.link as link, "
+					+ "a.message as message, "
+					+ "extract(epoch from (now() - a.updated_time)) as since "
+					+ "from alert a, users u "
+					+ "where a.u_id = u.id "
+					+ "and u.ident = ? "
+					+ "order by a.updated_time asc";
+			
+			pstmt = connectionSD.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			
+			log.info("Get alert details: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+		
+			while(resultSet.next()) {
+				Alert a = new Alert();
+				a.id = resultSet.getInt("id");
+				a.userIdent = ident;
+				a.status = resultSet.getString("status");
+				a.priority = resultSet.getInt("priority");
+				a.link = resultSet.getString("link");
+				a.message = resultSet.getString("message");
+				a.updatedTime = resultSet.getString("updated_time");
+				a.since = resultSet.getInt("since");
+				
+				alerts.add(a);
+			}
+			
+		
+				
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error", e);
+		    throw new Exception(e);
+		    
+		} finally {
+			try {
+				if (pstmt != null) {
+					pstmt.close();
+				}
+			} catch (SQLException e) {
+			
+			}
+
+		}
+		
+		return alerts;
+		
+	}
+	
 	/*
 	 * Create a new user Parameters:
 	 *   u: Details of the new user
@@ -252,6 +328,7 @@ public class UserManager {
 			boolean isOrgUser, 
 			boolean isSecurityManager,
 			String userIdent,
+			String scheme,
 			String serverName,
 			String adminName,
 			ResourceBundle localisation) throws Exception {
@@ -310,12 +387,50 @@ public class UserManager {
 							null,
 							organisation.getAdminEmail(), 
 							emailServer,
+							scheme,
 							serverName,
 							localisation);
 				} else {
 					throw new Exception(localisation.getString("email_ne2"));
 				}
 			}
+		}  finally {		
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+			
+		}
+		return u_id;
+	}
+	
+	/*
+	 * Create a new temporary user
+	 */
+	public int createTemporaryUser(Connection sd, 
+			User u, 
+			int o_id) throws Exception {
+		
+		int u_id = -1;
+		String sql = "insert into users "
+				+ "(ident, o_id, email, name, temporary, action_details) "
+				+ "values (?, ?, ?, ?, true, ?) ";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.setString(1, u.ident);
+			pstmt.setInt(2, o_id);
+			pstmt.setString(3, u.email);
+			pstmt.setString(4, u.name);
+			pstmt.setString(5, u.action_details);
+			log.info("SQL: " + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if (rs.next()){
+			    u_id = rs.getInt(1);
+			    insertUserGroupsProjects(sd, u, u_id, false, true);		// The user roles are sourced from the action and have been added by a security manager hence we will act as a security manager here
+			}
+			
 		}  finally {		
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
 			
@@ -415,7 +530,6 @@ public class UserManager {
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtInsertUserGroup = null;
 		PreparedStatement pstmtInsertUserRole = null;
-		PreparedStatement pstmtUpdateProjectGroup = null;
 		PreparedStatement pstmtInsertProjectGroup = null;
 		
 		log.info("Update groups and projects user id:" + u_id);
@@ -431,13 +545,7 @@ public class UserManager {
 			pstmtInsertUserRole = sd.prepareStatement(sqlInsertUserRole);
 			pstmtInsertUserRole.setInt(1, u_id);
 			
-			String sqlUpdateProjectGroup = "update user_project set allocated = true "
-					+ "where u_id = ? "
-					+ "and p_id = ?";
-			pstmtUpdateProjectGroup = sd.prepareStatement(sqlUpdateProjectGroup);
-			pstmtUpdateProjectGroup.setInt(1, u_id);
-			
-			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id, allocated) values (?, ?, true);";
+			String sqlInsertProjectGroup = "insert into user_project (u_id, p_id) values (?, ?);";
 			pstmtInsertProjectGroup = sd.prepareStatement(sqlInsertProjectGroup);
 			pstmtInsertProjectGroup.setInt(1, u_id);
 			
@@ -452,33 +560,57 @@ public class UserManager {
 			} else {
 				sql = "delete from user_group where u_id = ? and g_id != 4 and g_id != 6;";		// Cannot change super user group, or security manager
 			}
-					
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, u.id);
-			log.info("SQL: " + pstmt.toString());
-			pstmt.executeUpdate();
 			
-			for(int j = 0; j < u.groups.size(); j++) {
-				UserGroup g = u.groups.get(j);
-				if(g.id != 4 || isOrgUser) {	
-					pstmtInsertUserGroup.setInt(2, g.id);
-					pstmtInsertUserGroup.executeUpdate();
+			if(u.groups != null) {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				for(int j = 0; j < u.groups.size(); j++) {
+					UserGroup g = u.groups.get(j);
+					if(g.id != 4 || isOrgUser) {	
+						pstmtInsertUserGroup.setInt(2, g.id);
+						pstmtInsertUserGroup.executeUpdate();
+					}
 				}
+				sd.commit();	// Commit changes to user group
+			} else {
+				log.info("No user groups");
 			}
 			
-			sd.commit();	// Commit changes to user group
-			
-			/*
-			 * Update user roles
-			 */
-			if(isOrgUser || isSecurityManager) {
-				sql = "delete from user_role where u_id = ?;";
-
-			
+			// Delete existing user projects
+			if(u.projects != null) {
+				sql = "delete from user_project where u_id = ?;";
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, u.id);
 				log.info("SQL: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
+				for(int j = 0; j < u.projects.size(); j++) {
+					Project p = u.projects.get(j);
+					
+					pstmtInsertProjectGroup.setInt(2, p.id);
+					pstmtInsertProjectGroup.executeUpdate();
+					
+				}
+				
+				sd.commit();
+			} else {
+				log.info("No projects to add");
+			}
+			
+			/*
+			 * Update user roles
+			 */
+			if((isOrgUser || isSecurityManager) && u.roles != null) {
+				sql = "delete from user_role where u_id = ?;";
+
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, u.id);
+				log.info("SQL add roles: " + pstmt.toString());
 				pstmt.executeUpdate();
 				
 				for(int j = 0; j < u.roles.size(); j++) {
@@ -491,34 +623,14 @@ public class UserManager {
 				sd.commit();	// Commit changes to user roles
 			}
 			
-			// Mark existing projects as un-allocated
-			sql = "update user_project set allocated = false where u_id = ?;";
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, u.id);
-			log.info("SQL: " + pstmt.toString());
-			pstmt.executeUpdate();
-			
-			for(int j = 0; j < u.projects.size(); j++) {
-				Project p = u.projects.get(j);
-				
-				pstmtUpdateProjectGroup.setInt(2, p.id);
-				int count = pstmtUpdateProjectGroup.executeUpdate();
-				
-				if(count == 0) {
-					pstmtInsertProjectGroup.setInt(2, p.id);
-					pstmtInsertProjectGroup.executeUpdate();
-				}
-			}
-			
 		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
 			try{sd.rollback();} catch(Exception ex) {}
 		} finally {
 			sd.setAutoCommit(true);
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertUserGroup != null) {pstmtInsertUserGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertUserRole != null) {pstmtInsertUserRole.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdateProjectGroup != null) {pstmtUpdateProjectGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtInsertProjectGroup != null) {pstmtInsertProjectGroup.close();}} catch (SQLException e) {}
 		}
 		

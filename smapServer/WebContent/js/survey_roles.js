@@ -127,7 +127,7 @@ $(document).ready(function() {
 				+ (current.length > 0 ? " " : "")
 				+ "${"
 				+ $('#filter_row_aq option:selected').val()
-				+ "}");
+				+ "} ");
 	});
 	
 	enableUserProfileBS();
@@ -146,7 +146,7 @@ function surveyChanged() {
 	if(!gCache[globals.gCurrentSurvey]) {
 		getSurveyQuestions(globals.gCurrentSurvey);
 	} else {
-		refreshQuestionSelect(gCache[globals.gCurrentSurvey]);
+		refreshRFQuestionSelect(gCache[globals.gCurrentSurvey]);
 	}
 	
 }
@@ -154,13 +154,13 @@ function surveyChanged() {
 function getSurveyQuestions(sId) {
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/questionList/" + sId + "/none/new",
+		url: "/surveyKPI/questionList/" + sId + "/none/new?exc_ssc=true",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
 			removeHourglass();
 			gCache[sId] = data;
-			refreshQuestionSelect(gCache[sId]);
+			refreshRFQuestionSelect(gCache[sId]);
 		},
 		error: function(xhr, textStatus, err) {
 			removeHourglass();
@@ -203,18 +203,20 @@ function getSurveyRoles() {
 /*
  * Update the select options in the question select control
  */
-function refreshQuestionSelect(questions) {
+function refreshRFQuestionSelect(questions) {
 	var h =[],
 		idx = -1,
 		i,
 		$element = $('#filter_row_aq');
 	
 	for(i = 0; i < questions.length; i++) {
-		h[++idx] = '<option value="';
-		h[++idx] = questions[i].name;
-		h[++idx] = '">';
-		h[++idx] = questions[i].name;
-		h[++idx] = '</option>';
+		if(questions[i].toplevel) {			// Only allow top level form questions in row filter
+			h[++idx] = '<option value="';
+			h[++idx] = questions[i].name;
+			h[++idx] = '">';
+			h[++idx] = questions[i].name;
+			h[++idx] = '</option>';
+		}
 	}
 	$element.empty().append(h.join(''));
 	
@@ -351,6 +353,9 @@ function refreshView() {
 		
 		if(!$this.hasClass("disabled")) {
 			gIdx = $this.closest('tr').find('.btn-group').data("idx");
+			if(!gRoles[gIdx].column_filter) {
+				gRoles[gIdx].column_filter = [];
+			}
 			refreshColumnSelect(gCache[globals.gCurrentSurvey], gRoles[gIdx].column_filter);
 			$('#column_filter_popup').modal("show");
 		}
@@ -365,7 +370,7 @@ function refreshView() {
 }
 
 /*
- * Update the table table that shows enabled columns for this role
+ * Update the table that shows enabled columns for this role
  * Filter columns are assumed to be in the same order as questions
  */
 function refreshColumnSelect(questions, filter_columns) {

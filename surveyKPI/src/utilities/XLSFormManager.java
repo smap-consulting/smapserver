@@ -182,8 +182,12 @@ public class XLSFormManager {
 			} else if(type == COL_APPEARANCE) {				
 				value = q.appearance;		
 				
-			} else if(type == COL_AUTOPLAY) {				
-				value = q.autoplay;		
+			} else if(type == COL_AUTOPLAY) {	
+				if(q.autoplay != null && q.autoplay.equals("none")) {
+					value = null;
+				} else {
+					value = q.autoplay;	
+				}
 				
 			} else if(type == COL_ACCURACY) {				
 				value = q.accuracy;		
@@ -290,7 +294,7 @@ public class XLSFormManager {
 		surveySheet.createFreezePane(2, 1);
 		choicesSheet.createFreezePane(3, 1);
 		
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		
 		// Create Columns
 		HashMap<String, Integer> filterIndexes = new HashMap<String, Integer> ();
@@ -369,7 +373,7 @@ public class XLSFormManager {
 			} 
 			
 				
-			if(!inMeta && !q.name.equals("meta_groupEnd")) {
+			if(!inMeta && !q.name.equals("meta_groupEnd") && !q.soft_deleted) {
 				
 				if(isRow(q)) {
 					Row row = surveySheet.createRow(rowNumberSurvey++);
@@ -488,9 +492,10 @@ public class XLSFormManager {
 	private boolean isRow(Question q) {
 		boolean row = true;
 		
-		if(q.name.equals("prikey")) {
-			row = false;
-		} else if(q.name.startsWith("_")) {
+		if(q.name.equals("prikey") || q.name.equals("_task_key") ||
+				q.name.equals("_device") ||
+				q.name.equals("_start") || q.name.equals("_end")
+				) {
 			row = false;
 		} else if(q.type.equals("note") && !q.visible && (q.calculation == null || q.calculation.trim().length() == 0)) {
 			row = false;		// Loading a survey from an xml file may result in an instanceName not in a meta group which should not be included in the XLS
@@ -599,45 +604,6 @@ public class XLSFormManager {
 		
 		return cols;
 	}
-	
-   /**
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("label", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("begin repeat", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.DARK_YELLOW.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("begin group", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("is_required", style);
-        
-        style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        styles.put("not_required", style);
-
-        return styles;
-    }
     
     /*
      * write out the settings values

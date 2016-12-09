@@ -72,13 +72,6 @@ public class SharedResources extends Application {
 	private static Logger log =
 			 Logger.getLogger(SharedResources.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(SharedResources.class);
-		return s;
-	}
-
 	/*
 	 * Return available maps
 	 */
@@ -101,7 +94,7 @@ public class SharedResources extends Application {
 		try {
 			ArrayList<MapResource> maps = new ArrayList<MapResource> ();	
 			
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, user);
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
 			
 			String sql = "select id, name, map_type, description, config, version " +
 					" from map " + 
@@ -178,7 +171,7 @@ public class SharedResources extends Application {
 		
 		try {	
 			
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			if(map.id < 1) {
 						
@@ -268,7 +261,7 @@ public class SharedResources extends Application {
 		
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			String sql = "delete from map where id = ? and o_id = ?; ";
 			pstmt = sd.prepareStatement(sql);	 			

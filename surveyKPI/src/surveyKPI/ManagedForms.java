@@ -26,6 +26,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -35,13 +36,18 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.model.Action;
+import org.smap.sdal.model.ActionLink;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.ManagedFormItem;
+import org.smap.sdal.model.ManagedFormUserConfig;
+import org.smap.sdal.model.Role;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -80,10 +86,15 @@ public class ManagedForms extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-GetConfig");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		if(managedId > 0) {
-			a.isValidCustomReport(sd, request.getRemoteUser(), managedId);
+			a.isValidManagedForm(sd, request.getRemoteUser(), managedId);
 		}
 		// End Authorisation
 		
@@ -91,9 +102,16 @@ public class ManagedForms extends Application {
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser());
+			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			/*
+			 * Remove data that is only used on the server
+			 */
+			for(TableColumn tc : mfc.columns) {
+				tc.actions = null;
+				tc.calculation = null;
+			}
 			response = Response.ok(gson.toJson(mfc)).build();
 		
 				
@@ -179,8 +197,13 @@ public class ManagedForms extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), am.sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), am.sId, false, superUser);
 		// End Authorisation
 
 		String sql = "update survey set managed_id = ? where s_id = ?;";
@@ -189,6 +212,8 @@ public class ManagedForms extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Add Managed Forms");
 		
 		try {
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 
 			// Get the users locale
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
@@ -198,7 +223,8 @@ public class ManagedForms extends Application {
 			TableManager tm = new TableManager();
 			
 			// 1. Check that the managed form is compatible with the survey
-			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, am.manageId, request.getRemoteUser());
+			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
+					am.manageId, request.getRemoteUser(), oId, superUser);
 			if(compatibleMsg != null) {
 				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 			}
@@ -239,7 +265,9 @@ public class ManagedForms extends Application {
 	 */
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
 			int managedId,
-			String user) {
+			String user,
+			int oId,
+			boolean superUser) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 			
@@ -248,7 +276,7 @@ public class ManagedForms extends Application {
 			try {
 				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
 				ManagedFormsManager qm = new ManagedFormsManager();
-				qm.getDataProcessingConfig(sd, managedId, managedColumns, null);
+				qm.getDataProcessingConfig(sd, managedId, managedColumns, null, oId);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
 				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, 
@@ -262,7 +290,9 @@ public class ManagedForms extends Application {
 						false, 
 						false, 
 						false, 
-						false	// Don't include other meta data
+						false,	// Don't include other meta data
+						superUser,
+						false		// HXL only include with XLS exports
 						);
 				
 				for(TableColumn mc : managedColumns) {
@@ -328,11 +358,11 @@ public class ManagedForms extends Application {
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
-	@Path("/update/{sId}/{dpId}")
+	@Path("/update/{sId}/{managedId}")
 	public Response updateManagedRecord(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@PathParam("dpId") int dpId,
+			@PathParam("managedId") int managedId,
 			@FormParam("settings") String settings
 			) { 
 		
@@ -351,7 +381,7 @@ public class ManagedForms extends Application {
 		ArrayList<Update> updates = gson.fromJson(settings, type);
 		
 		
-		String sqlCanUpdate = "select count(*) from survey "
+		String sqlCanUpdate = "select p_id from survey "
 				+ "where s_id = ? "
 				+ "and managed_id = ? "
 				+ "and blocked = 'false' "
@@ -362,11 +392,17 @@ public class ManagedForms extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Update Managed Forms");
+		int priority = -1;
 		
 		try {
 
@@ -374,18 +410,19 @@ public class ManagedForms extends Application {
 			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int pId = 0;
 			/*
 			 * Verify that the survey is managed by the provided data processing id and get
 			 */
 			pstmtCanUpdate = sd.prepareStatement(sqlCanUpdate);
 			pstmtCanUpdate.setInt(1, sId);
-			pstmtCanUpdate.setInt(2, dpId);
+			pstmtCanUpdate.setInt(2, managedId);
 			ResultSet rs = pstmtCanUpdate.executeQuery();
-			int count = 0;
 			if(rs.next()) {
-				count = rs.getInt(1);
+				pId = rs.getInt(1);
 			}
-			if(count == 0) {
+			if(pId == 0) {
 				throw new Exception(localisation.getString("mf_blocked"));
 			}
 			
@@ -394,7 +431,7 @@ public class ManagedForms extends Application {
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
 			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd,dpId, columns, null);
+			qm.getDataProcessingConfig(sd, managedId, columns, null, oId);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -412,28 +449,20 @@ public class ManagedForms extends Application {
 				
 				// 2. Confirm this is an editable managed column
 				boolean updateable = false;
-				String columnType = null;
+				TableColumn tc = null;
 				for(int j = 0; j < columns.size(); j++) {
-					TableColumn tc = columns.get(j);
-					if(tc.name.equals(u.name)) {
-						if(!tc.readonly) {
+					TableColumn xx = columns.get(j);
+					if(xx.name.equals(u.name)) {
+						if(!xx.readonly) {
 							updateable = true;
-							columnType = tc.type;
+							tc = xx;
 						}
 						break;
 					}
 				}
 				if(!updateable) {
-					throw new Exception("Update failed " + u.name + " is not updatable");
+					throw new Exception(u.name + " " + localisation.getString("mf_nu"));
 				}
-				
-				// 2. Apply the update
-				//if(u.value != null && u.value.trim().length() == 0) {
-				//	u.value = null;
-				//}
-				//if(u.currentValue != null && u.currentValue.trim().length() == 0) {
-				//	u.currentValue = null;
-				//}
 				
 				String sqlUpdate = "update " + f.tableName;
 				
@@ -444,14 +473,6 @@ public class ManagedForms extends Application {
 				}
 				sqlUpdate += "where "
 						+ "prikey = ? ";
-						//+ "and (" + u.name;
-				
-	
-				//if(u.currentValue == null) {
-				//	sqlUpdate += " is null);";
-				//} else {
-				//	sqlUpdate += " = ? or " + u.name + " is null)";
-				//}
 				
 				try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
 				pstmtUpdate = cResults.prepareStatement(sqlUpdate);
@@ -459,50 +480,45 @@ public class ManagedForms extends Application {
 				// Set the parameters
 				int paramCount = 1;
 				if(u.value != null) {
-					if(columnType.equals("text") || columnType.equals("select_one")) {
+					if(tc.type.equals("text") || tc.type.equals("select_one")) {
 						pstmtUpdate.setString(paramCount++, u.value);
-					} else if(columnType.equals("date")) {
-						java.util.Date inputDate = dateFormat.parse(u.value);
-						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
-					} else if(columnType.equals("integer")) {
+					} else if(tc.type.equals("date")) {
+						if(u.value == null || u.value.trim().length() == 0) {
+							pstmtUpdate.setDate(paramCount++, null);
+						} else {
+							java.util.Date inputDate = dateFormat.parse(u.value);
+							pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
+						}
+					} else if(tc.type.equals("integer")) {
 						int inputInt = Integer.parseInt(u.value);
 						pstmtUpdate.setInt(paramCount++, inputInt);
-					} else if(columnType.equals("decimal")) {
+					} else if(tc.type.equals("decimal")) {
 						double inputDouble = Double.parseDouble(u.value);
 						pstmtUpdate.setDouble(paramCount++, inputDouble);
 					} else {
-						log.info("Warning: unknown type: " + columnType + " value: " + u.value);
+						log.info("Warning: unknown type: " + tc.type + " value: " + u.value);
 						pstmtUpdate.setString(paramCount++, u.value);
 					}
 				}
 				pstmtUpdate.setInt(paramCount++, u.prikey);
-				/*
-				 * Disable this integrity check
-				 * There are currently too many false errors
-				if(u.currentValue != null) {
-					if(columnType.equals("text") || columnType.equals("select_one")) {
-						pstmtUpdate.setString(paramCount++, u.currentValue);
-					} else if(columnType.equals("date")) {
-						java.util.Date inputDate = dateFormat.parse(u.currentValue);
-						pstmtUpdate.setDate(paramCount++, new java.sql.Date(inputDate.getTime()));
-					} else if(columnType.equals("integer")) {
-						int inputInt = Integer.parseInt(u.currentValue);
-						pstmtUpdate.setInt(paramCount++, inputInt);
-					} else if(columnType.equals("decimal")) {
-						double inputDouble = Double.parseDouble(u.currentValue);
-						pstmtUpdate.setDouble(paramCount++, inputDouble);
-					} else {
-						pstmtUpdate.setString(paramCount++, u.currentValue);	// Default
-					}
-				} 
-				*/
 				
 				log.info("Updating managed survey: " + pstmtUpdate.toString());
-				count = pstmtUpdate.executeUpdate();
+				int count = pstmtUpdate.executeUpdate();
 				if(count == 0) {
 					throw new Exception("Update failed: "
 							+ "Try refreshing your view of the data as someone may already "
 							+ "have updated this record.");
+				}
+				
+				/*
+				 * Apply any required actions
+				 */
+				if(tc.actions != null && tc.actions.size() > 0) {
+					ActionManager am = new ActionManager();
+					if(priority < 0) {
+						priority = am.getPriority(cResults, f.tableName, u.prikey);
+					}
+					am.applyManagedFormActions(sd, tc, oId, sId, pId, managedId, u.prikey, priority, u.value, localisation);
 				}
 				
 
@@ -529,13 +545,181 @@ public class ManagedForms extends Application {
 		return response;
 	}
 	
+	/*
+	 * Get link to an action without creating an alert
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/actionlink/{sId}/{managedId}/{prikey}")
+	public Response getActionLink(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("managedId") int managedId,
+			@PathParam("prikey") int prikey,
+			@QueryParam("roles") String roles
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sqlCanUpdate = "select p_id from survey "
+				+ "where s_id = ? "
+				+ "and managed_id = ? "
+				+ "and blocked = 'false' "
+				+ "and deleted = 'false';";
+		PreparedStatement pstmtCanUpdate = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Get Action Link");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		try {
+
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int pId = 0;
+			
+			/*
+			 * Verify that the survey is managed by the provided data processing id and get the project id
+			 */
+			pstmtCanUpdate = sd.prepareStatement(sqlCanUpdate);
+			pstmtCanUpdate.setInt(1, sId);
+			pstmtCanUpdate.setInt(2, managedId);
+			ResultSet rs = pstmtCanUpdate.executeQuery();
+			if(rs.next()) {
+				pId = rs.getInt(1);
+			}
+			if(pId == 0) {
+				throw new Exception(localisation.getString("mf_blocked"));
+			}
+			ActionManager am = new ActionManager();
+			Action action = new Action("respond");
+			action.sId = sId;
+			action.managedId = managedId;
+			action.prikey = prikey;
+			action.pId = pId;
+			
+			
+			if(roles != null) {
+				String [] rArray = roles.split(",");
+				if(rArray.length > 0) {
+					action.roles = new ArrayList<Role> ();
+					for (int i = 0; i < rArray.length; i++) {
+						Role r = new Role();
+						try {
+							r.id = Integer.parseInt(rArray[i]);
+							action.roles.add(r);
+						} catch (Exception e) {
+							log.info("Error: Invalid Role Id: " + rArray[i] + " : " + e.getMessage());
+						}
+					}
+				}
+			}
+			
+			log.info("Creating action for prikey: " + prikey);
+			ActionLink al = new ActionLink();
+			al.link = request.getScheme() +
+					"://" +
+					request.getServerName() + 
+					am.getLink(sd, action, oId);
+			
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			String resp = gson.toJson(al, ActionLink.class);
+			response = Response.ok(resp).build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+	
+			try {if (pstmtCanUpdate != null) {pstmtCanUpdate.close();}} catch (Exception e) {}
+			
+			SDDataSource.closeConnection("surveyKPI-Get Action Link", sd);
+		}
+		
+		return response;
+	}
+
+	
 	@POST
 	@Produces("text/html")
 	@Consumes("application/json")
-	@Path("/config/{sId}")
+	@Path("/updatestatus/{uIdent}/{status}")
+	public Response updateStatus(
+			@Context HttpServletRequest request, 
+			@PathParam("uIdent") String uIdent,
+			@PathParam("status") String status
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sql = "update alert set status = ? where link like ?";
+		PreparedStatement pstmt = null;
+		
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, status);
+			pstmt.setString(2, "%" + uIdent);
+			log.info("Update action status" + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		
+			
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Update the configuration settings
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/config/{sId}/{key}")
 	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
+			@PathParam("key") String key,
 			@FormParam("settings") String settings
 			) { 
 		
@@ -549,34 +733,51 @@ public class ManagedForms extends Application {
 		    return response;
 		}
 		
-
-		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = 'mf';";
+		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = ?;";
 		PreparedStatement pstmtUpdate = null;
 		
-		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, 'mf');";
+		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, ?);";
 		PreparedStatement pstmtInsert = null;
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		try {
 
+			if(key.equals("mf")) {
+				/*
+				 * Convert the input to java classes and then back to json to ensure it is well formed
+				 */
+				Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+				Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+				ManagedFormUserConfig uc = gson.fromJson(settings, type);
+				settings = gson.toJson(uc);
+			}
+			
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
 			
 			pstmtUpdate = sd.prepareStatement(sqlUpdate);
 			pstmtUpdate.setString(1, settings);
 			pstmtUpdate.setInt(2, uId);
 			pstmtUpdate.setInt(3, sId);
+			pstmtUpdate.setString(4, key);
 			log.info("Updating managed form settings: " + pstmtUpdate.toString());
 			int count = pstmtUpdate.executeUpdate();
+			
 			if(count == 0) {
 				pstmtInsert = sd.prepareStatement(sqlInsert);
 				pstmtInsert.setString(1, settings);
 				pstmtInsert.setInt(2, uId);
 				pstmtInsert.setInt(3, sId);
+				pstmtInsert.setString(4, key);
 				log.info("Inserting managed form settings: " + pstmtInsert.toString());
 				pstmtInsert.executeUpdate();
 			}
@@ -599,6 +800,74 @@ public class ManagedForms extends Application {
 	}
 	
 	/*
+	 * Get the configuration settings
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/getconfig/{sId}/{key}")
+	public Response getManageConfig(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("key") String key
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key = ?;";
+		PreparedStatement pstmt = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		try {
+
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, uId);
+			pstmt.setInt(2, sId);
+			pstmt.setString(3, key);
+			
+			log.info("Getting settings: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				response = Response.ok(rs.getString(1)).build();
+			} else {
+
+				response = Response.ok().build();
+			}
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+	
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		}
+		
+		return response;
+	}
+	
+	/*
 	 * Get data connected to the passed in record
 	 */
 	@GET
@@ -611,8 +880,13 @@ public class ManagedForms extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ManagedForms-getLinks");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Response response = null;
@@ -656,8 +930,13 @@ public class ManagedForms extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-QuestionsInForm");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Response response = null;
@@ -722,7 +1001,6 @@ public class ManagedForms extends Application {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				count = rs.getInt(1);
-				System.out.println("There are " + count + " distinct values");
 			}
 			rs.close();
 			
@@ -775,7 +1053,6 @@ public class ManagedForms extends Application {
 				if(rs.next()) {
 					filter.tMax = rs.getTimestamp(1);
 				}
-				System.out.println("Max: " + filter.tMax);
 				rs.close();
 				
 			} else {

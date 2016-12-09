@@ -142,7 +142,7 @@ $(document).ready(function() {
     		return false;
     	}
     	
-    	uploadFiles('/surveyKPI/upload/customreport', "crupload", refreshCustomReportView, undefined, undefined);
+    	uploadFiles('/surveyKPI/upload/lqasreport', "crupload", refreshCustomReportView, undefined, undefined);
     });
     
     // Respond to nfc upload
@@ -156,8 +156,9 @@ $(document).ready(function() {
     $('#downloadNfcFiles').click( function() {
     	if(!$('#downloadNfcFiles').hasClass('disabled')) {
 		
-		downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
-			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    		downloadFile('/surveyKPI/tasks/locations/download');
+    		//downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
+    			//	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     	}
     });
     
@@ -197,7 +198,7 @@ $(document).ready(function() {
 		document.forms.namedItem("crupload").reset();
 		$('#addReportPopup').modal("show");
 	});
-	getReports(refreshCustomReportView, undefined, undefined);
+	getReports(refreshCustomReportView, undefined, "lqas");
 	
 	// On change of report name, hide any previous results
 	$('#templateName').keydown(function(){

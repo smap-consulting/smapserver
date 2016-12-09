@@ -55,13 +55,6 @@ public class CreateXLSForm extends Application {
 	private static Logger log =
 			 Logger.getLogger(CreateXLSForm.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	
 	@GET
 	@Produces("application/x-download")
 	public Response getXLSFormService (@Context HttpServletRequest request, 
@@ -78,8 +71,13 @@ public class CreateXLSForm extends Application {
 				
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("createXLSForm");	
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation 
 		
 		SurveyManager sm = new SurveyManager();
@@ -96,8 +94,8 @@ public class CreateXLSForm extends Application {
 		try {
 			
 			// Get the survey details
-			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false, true, false, "internal", superUser);
+			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, null, false, false, true, 
+					false, "internal", superUser, 0, null);
 			
 			// Set file name
 			GeneralUtilityMethods.setFilenameInResponse(survey.displayName + "." + filetype, response);

@@ -208,11 +208,12 @@ public class MyAssignments extends Application {
 		
 		Connection cRel = null;
 		
-		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName);
+		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName, 0);
 		
 		try {
 			String sql = null;
 			
+			cRel = ResultsDataSource.getConnection("surveyKPI-MyAssignments");
 			connectionSD.setAutoCommit(true);
 			
 			// Get the assignments
@@ -238,8 +239,6 @@ public class MyAssignments extends Application {
 					"where t.id = a.task_id " +
 					"and t.form_id = s.s_id " +
 					"and u.id = up.u_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and s.p_id = up.p_id " +
 					"and s.p_id = p.id " +
 					"and s.deleted = 'false' " +
@@ -342,8 +341,6 @@ public class MyAssignments extends Application {
 					"from users u, survey s, user_project up, project p " +
 					"where u.id = up.u_id " +
 					"and s.p_id = up.p_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and p.id = up.p_id " +
 					"and s.deleted = 'false' " +
 					"and s.blocked = 'false'" +
@@ -377,7 +374,6 @@ public class MyAssignments extends Application {
 					log.info("Linked file:" + m.fileName);
 					
 					// Create file 
-					cRel = ResultsDataSource.getConnection("getFile");
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
 					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
@@ -435,8 +431,6 @@ public class MyAssignments extends Application {
 					" from users u, user_project up, project p " + 
 					"where u.id = up.u_id " +
 					"and p.id = up.p_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and u.ident = ? " +
 					"and p.o_id = ? " +
 					"order by name ASC;";	
@@ -492,7 +486,6 @@ public class MyAssignments extends Application {
 	 */
 	String addKeyValuePair(String jIn, String name, String value) {
 		
-		System.out.println("Adding value: " + value);
 		String jOut = null;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
 		Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();
@@ -538,7 +531,6 @@ public class MyAssignments extends Application {
 		
 		// Authorisation not required a user can only update their own assignments
 		
-		log.info("Response:" + assignInput);
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
 			
 		log.info("Device:" + tr.deviceId + " for user " + userName);
@@ -591,7 +583,7 @@ public class MyAssignments extends Application {
 					
 					if(ta.assignment.assignment_status.equals("submitted")) {
 						pstmtRepeats.setInt(1, ta.assignment.assignment_id);
-						System.out.println("Updating task repeats: " + pstmtRepeats.toString());
+						log.info("Updating task repeats: " + pstmtRepeats.toString());
 						pstmtRepeats.executeUpdate();
 					}
 				}
@@ -683,12 +675,10 @@ public class MyAssignments extends Application {
 					pstmtTrail.setInt(1, userId);
 					pstmtTrail.setString(2, tr.deviceId);
 					for(PointEntry pe : tr.userTrail) {
-						log.info("    Adding point: " + pe.toString());
 						
 						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
 						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
 						
-						log.info("Insert into trail: " + pstmtTrail.toString());
 						pstmtTrail.executeUpdate();
 					}
 					

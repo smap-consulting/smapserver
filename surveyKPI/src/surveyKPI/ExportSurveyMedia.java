@@ -1,9 +1,13 @@
 package surveyKPI;
 
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -13,6 +17,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -21,22 +26,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -48,6 +60,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.QueryGenerator;
@@ -79,29 +92,26 @@ public class ExportSurveyMedia extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	
 	
 	/*
 	 * Export media in a zip file
 	 */
 	@GET
-	@Produces("application/x-download")
 	public Response exportMedia (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("mediaquestion") int mediaQuestion,			
-			@QueryParam("namequestions") String nameQuestionIdList) {
+			@QueryParam("namequestions") String nameQuestionIdList,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
+			@Context HttpServletResponse response
+			) {
 
 		ResponseBuilder builder = Response.ok();
-		Response response = null;
+		Response responseVal = null;
+		ResourceBundle localisation = null;
 		
-		System.out.println("Export media: " + mediaQuestion + " : " + nameQuestionIdList);
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
 		log.info("userevent: " + request.getRemoteUser() + " Export media " + sId + " file to " + filename );
@@ -113,7 +123,7 @@ public class ExportSurveyMedia extends Application {
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
 		    try {
-		    	response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    	responseVal = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
 		    } catch (Exception ex) {
 		    	log.log(Level.SEVERE, "Exception", ex);
 		    }
@@ -121,8 +131,13 @@ public class ExportSurveyMedia extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export Media from a survey");
@@ -147,6 +162,10 @@ public class ExportSurveyMedia extends Application {
 			
 			try {
 		
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
 				/*
 				 * Get the name of the database
 				 */
@@ -179,11 +198,6 @@ public class ExportSurveyMedia extends Application {
 						}
 					}
 				}
-					
-				System.out.println("Media Question name: " + media_name);
-				for(int i = 0; i < namedQuestions.size(); i++) {
-					System.out.println("   Named questions: " + namedQuestions.get(i));
-				}
 			
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
@@ -200,9 +214,13 @@ public class ExportSurveyMedia extends Application {
 						false,
 						false,
 						null,
-						requiredColumns);
-					
-				System.out.println("Generated SQL:" + sqlDesc.sql);
+						requiredColumns,
+						namedQuestions,
+						request.getRemoteUser(),
+						startDate,
+						endDate,
+						dateId,
+						superUser);
 				
 				/*
 				 * 1. Create the target folder
@@ -218,14 +236,15 @@ public class ExportSurveyMedia extends Application {
 				 * 2. Copy files to the folder, renaming them as per the export request
 				 */
 				pstmtGetData = connectionResults.prepareStatement(sqlDesc.sql); 
+				log.info("Generated SQL:" + pstmtGetData.toString());
 				ResultSet rs = pstmtGetData.executeQuery();
 				while(rs.next()) {
 					/*
 					 * Get the target name
 					 */
 					String mediafilename = "";
-					for(int k = 0; k < namedQuestions.size(); k++) {
-						String v = rs.getString(namedQuestions.get(k));
+					for(int k = 0; k < sqlDesc.availableColumns.size(); k++) {
+						String v = rs.getString(sqlDesc.availableColumns.get(k));
 						if(v != null) {
 							if(mediafilename.trim().length() > 0) {
 								mediafilename += "_";
@@ -257,7 +276,6 @@ public class ExportSurveyMedia extends Application {
 							ext = source_file.substring(idx);
 						}
 						mediafilename = mediafilename + ext;
-						System.out.println("File is: " + mediafilename); 
 						
 						/*
 						 * Copy the file
@@ -279,7 +297,7 @@ public class ExportSurveyMedia extends Application {
 				int code = 0;
 				//Process proc = Runtime.getRuntime().exec(new String [] {"/usr/bin/zip -rj ",filePath + ".zip ",filePath});
 				
-				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/getshape.sh " + 
+				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/getshape.sh " + 
 							database_name + " " +
 							sqlDesc.target_table + " " +
 							"\"" + sqlDesc.sql + "\" " +
@@ -292,31 +310,32 @@ public class ExportSurveyMedia extends Application {
 	            log.info("Process exitValue: " + code);
 	        		
 	            if(code == 0) {
+	            	
 	            	File file = new File(filePath + ".zip");
-		            byte [] fileData = new byte[(int)file.length()];
-		            DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		            dis.readFully(fileData);
-		            dis.close();
-		                
-		            builder.header("Content-type","application/zip");
-		            builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-		              	
-		            builder.entity(fileData);
-							
-					response = builder.build();
+	            	if(file.exists()) {
+		            	builder = Response.ok(file);
+		            	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+		            	responseVal = builder.build();
+	            	} else {
+	            		throw new ApplicationException(localisation.getString("msg_no_images"));
+	            	}
+		            
 				} else {
 	                log.info("Error exporting media files file");
-	                response = Response.serverError().entity("Error exporting media files").build();
+	                responseVal = Response.serverError().entity("Error exporting media files").build();
 	            }
 					
 				
 			
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-				response = Response.serverError().entity(e.getMessage()).build();
+			} catch (ApplicationException e) {
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				// Return an OK status so the message gets added to the web page
+				// Prepend the message with "Error: ", this will be removed by the client
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 			} catch (Exception e) {
-				response = Response.serverError().entity(e.getMessage()).build();
-				log.log(Level.SEVERE, "Exception", e);
+				log.log(Level.SEVERE, "Error", e);
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 			} finally {
 				
 
@@ -329,7 +348,7 @@ public class ExportSurveyMedia extends Application {
 			}
 		}
 		
-		return response;
+		return responseVal;
 		
 	}
 	

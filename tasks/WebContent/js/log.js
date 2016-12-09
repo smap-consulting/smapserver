@@ -69,8 +69,6 @@ requirejs.config({
     	'crf': ['jquery'],
     	'file_input': ['jquery'],
     	'datatables': ['jquery', 'bootstrap'],
- 
-        
     	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
     	'slimscroll': ['jquery'],

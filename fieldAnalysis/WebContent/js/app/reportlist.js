@@ -40,7 +40,9 @@ $(document).ready(function() {
 	
 	/*
 	 * Initialise Facebook
-	 */
+	 * 
+	 * This has been disabled as it needs fixing and the php channel needs to be replaced with java
+	 *
 	  window.fbAsyncInit = function() {
 	      FB.init({
 	        appId      : '563570780321012', // App ID
@@ -52,7 +54,9 @@ $(document).ready(function() {
 	  
 	  // Get notified of the users logon status
 	  FB.Event.subscribe('auth.statusChange', authStatusChange);
+	  
 	};
+	*/
 	
 	// Load the SDK Asynchronously
 	(function(d){

@@ -21,28 +21,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
-import org.smap.sdal.Utilities.SDDataSource;
-
 import lqas.LqasAppEntry;
 
-import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("/antlr")
@@ -52,13 +38,6 @@ public class AntlrTest extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(AntlrTest.class.getName());
-
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(AntlrTest.class);
-		return s;
-	}
 	
 	public AntlrTest() {
 		

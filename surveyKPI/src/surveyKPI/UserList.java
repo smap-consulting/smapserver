@@ -33,28 +33,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import model.Settings;
-
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.managers.EmailManager;
-import org.smap.sdal.managers.ProjectManager;
-import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.UserManager;
-import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
-import org.smap.sdal.model.RestrictedUser;
 import org.smap.sdal.model.Role;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
-import org.smap.server.utilities.UtilityMethods;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -62,10 +48,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -106,242 +90,6 @@ public class UserList extends Application {
 		aSM = new Authorise(authorisations, null);
 		
 	}
-
-	/*
-	@GET
-	@Produces("application/json")
-	public Response getUsers(
-			@Context HttpServletRequest request,
-			@QueryParam("month") int month,			// 1 - 12
-			@QueryParam("year") int year
-			) { 
-
-		Response response = null;
-		int previousMonth;
-		int previousMonthsYear;
-		
-		if(month == 1) {
-			previousMonth = 12;
-			previousMonthsYear = year - 1;
-		} else {
-			previousMonth = month - 1;
-			previousMonthsYear = year;
-		}
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		// End Authorisation
-	
-		PreparedStatement pstmt = null;
-		ArrayList<User> users = new ArrayList<User> ();
-		
-		try {
-			String sql = null;
-			int o_id;
-			ResultSet resultSet = null;
-			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
-			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
-			
-		
-			sql = "SELECT u.o_id " +
-					" FROM users u " +  
-					" WHERE u.ident = ?;";				
-						
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setString(1, request.getRemoteUser());
-			log.info("Get organisation: " + pstmt.toString());
-			resultSet = pstmt.executeQuery();
-			if(resultSet.next()) {
-				o_id = resultSet.getInt(1);
-				
-			
-				sql = "SELECT users.id as id," +
-						"users.ident as ident, " +
-						"users.name as name, " +
-						"users.email as email, " +
-						"groups.name as group_name, " +
-						"role.name as role_name, " +
-						"project.name as project_name, " +
-						"groups.id as group_id, " +
-						"role.id as role_id, " +
-						"project.id as project_id, " +
-						"user_project.allocated as allocated, " +
-						"user_project.restricted as restricted " +
-						// Disable all_time its too slow
-						//"(select count (*) from upload_event ue, subscriber_event se " +
-						//	"where ue.ue_id = se.ue_id " + 
-						//	"and se.status = 'success' " +
-						//	"and se.subscriber = 'results_db' " +
-						//	"and extract(month from upload_time) = ? " + 	// current month
-						//	"and extract(year from upload_time) = ? " + 	// current year
-						//	"and ue.user_name = users.ident) as this_month, " +
-						//"(select count (*) from upload_event ue, subscriber_event se " +
-						//	"where ue.ue_id = se.ue_id " + 
-						//	"and se.status = 'success' " +
-						//	"and se.subscriber = 'results_db' " +
-						//	"and extract(month from upload_time) = ? " +	// last month
-						//	"and extract(year from upload_time) = ? " + 	// last months year
-						//	"and ue.user_name = users.ident) as last_month, " +
-						//"(select count (*) from upload_event ue, subscriber_event se " +
-						//	"where ue.ue_id = se.ue_id " +
-						//	"and se.status = 'success'" +
-						//	"and se.subscriber = 'results_db'" +
-						//	"and ue.user_name = users.ident) as all_time " +
-						"from users " +
-						"left outer join user_group on user_group.u_id = users.id " +
-						"left outer join groups on groups.id = user_group.g_id " +
-						"left outer join user_role on user_role.u_id = users.id " +
-						"left outer join role on role.id = user_role.r_id " +
-						"left outer join user_project on user_project.u_id = users.id " +
-						"left outer join project on project.id = user_project.p_id " +
-						"where users.o_id = ? " + 
-						"order by users.ident, groups.name;";
-				
-				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-				pstmt = connectionSD.prepareStatement(sql);
-				//pstmt.setInt(1, month);
-				//pstmt.setInt(2, year);
-				//pstmt.setInt(3, previousMonth);
-				//pstmt.setInt(4, previousMonthsYear);
-				pstmt.setInt(1, o_id);
-				log.info("Get user list: " + pstmt.toString());
-				resultSet = pstmt.executeQuery();
-				
-				String current_user = null;
-				String current_group = null;
-				String current_role = null;
-				String current_project = null;
-				User user = null;
-				while(resultSet.next()) {
-
-					int id = resultSet.getInt("id");
-					String ident = resultSet.getString("ident");
-					String group_name = resultSet.getString("group_name");
-					String role_name = resultSet.getString("role_name");
-					String project_name = resultSet.getString("project_name");
-					int group_id = resultSet.getInt("group_id");
-					int role_id = resultSet.getInt("role_id");
-					int project_id = resultSet.getInt("project_id");
-					boolean allocated = resultSet.getBoolean("allocated");
-					boolean restricted = resultSet.getBoolean("restricted");
-					
-					if(current_user == null || !current_user.equals(ident)) {
-						
-						// New user
-						user = new User();
-						user.id = id;
-						user.ident = ident;
-						user.name = resultSet.getString("name");
-						user.email = resultSet.getString("email");
-						user.groups = new ArrayList<UserGroup> ();
-						user.roles = new ArrayList<Role> ();
-						user.projects = new ArrayList<Project> ();
-						//user.this_month = resultSet.getInt("this_month");
-						//user.last_month = resultSet.getInt("last_month");
-						//user.all_time = resultSet.getInt("all_time");
-						
-						UserGroup group = new UserGroup();
-						group.name = group_name;
-						group.id = group_id;
-						if(group_id != 4 || isOrgUser) {
-							user.groups.add(group);
-						}
-						
-						System.out.println("User: " + ident);
-						System.out.println("role: " + role_name);
-						
-						if(isOrgUser || isSecurityManager) {
-							if(role_name != null) {
-								Role role = new Role();
-								role.name = role_name;
-								role.id = role_id;
-								user.roles.add(role);
-							}
-						}
-						
-						if(allocated && !restricted) {
-							Project project = new Project();
-							project.name = project_name;
-							project.id = project_id;
-							user.projects.add(project);
-						}
-						
-						users.add(user);
-						current_user = ident;
-						current_group = group.name;
-						current_project = project_name;
-						current_role = role_name;
-					
-					} else {
-						if(current_group != null && !current_group.equals(group_name)) {
-						
-							// new group
-							UserGroup group = new UserGroup();
-							group.name = group_name;
-							if(group_id != 4 || isOrgUser || (group_id == 6 && isSecurityManager)) {
-								user.groups.add(group);
-							}
-							current_group = group.name;
-						}
-						
-						if(current_role != null && !current_role.equals(role_name)) {
-							
-							System.out.println("role: " + role_name);
-							// new role
-							if(isOrgUser || isSecurityManager) {
-								Role role = new Role();
-								role.name = role_name;
-								user.roles.add(role);
-								current_role = role.name;
-							}
-						}
-						
-						if(current_project != null && !current_project.equals(project_name)) {
-						
-							// new project
-							if(allocated && !restricted) {
-								Project project = new Project();
-								project.name = project_name;
-								project.id = project_id;
-								user.projects.add(project);
-							}
-							current_project = project_name;
-						}
-					}
-				}
-				
-				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-				String resp = gson.toJson(users);
-				response = Response.ok(resp).build();
-						
-			} else {
-				log.log(Level.SEVERE,"Error: No organisation");
-			    response = Response.serverError().build();
-			}
-				
-		} catch (Exception e) {
-			
-			log.log(Level.SEVERE,"Error: ", e);
-			response = Response.serverError().entity(e.getMessage()).build();
-		    
-		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
-
-		}
-
-		return response;
-	}
-	*/
 	
 	@GET
 	@Produces("application/json")
@@ -372,6 +120,7 @@ public class UserList extends Application {
 				+ "email "
 				+ "from users "
 				+ "where users.o_id = ? "
+				+ "and not users.temporary "
 				+ "order by ident asc";
 		PreparedStatement pstmt = null;
 		
@@ -405,7 +154,7 @@ public class UserList extends Application {
 		ArrayList<User> users = new ArrayList<User> ();
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
 			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
 			
@@ -560,10 +309,9 @@ public class UserList extends Application {
 					"u.email as email " +
 					"from users u, user_project up " +			
 					"where u.id = up.u_id " +
-					"and up.restricted = false " +
-					"and up.allocated = true " +
 					"and up.p_id = ? " +
 					"and u.o_id = ? " +
+					"and not u.temporary " +
 					"order by u.ident";
 			
 			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
@@ -600,92 +348,6 @@ public class UserList extends Application {
 
 		return response;
 	}
-	
-	/*
-	 * Get the users who are restricted from accessing a specific project
-	 *
-	@Path("/{projectId}/restricted")
-	@GET
-	@Produces("application/json")
-	public Response getRestrictedUsersForProject(
-			@Context HttpServletRequest request,
-			@PathParam("projectId") int projectId
-			) { 
-
-		Response response = null;
-		
-		log.info("restricted userList for project: " + projectId);
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		aSM.isAuthorised(connectionSD, request.getRemoteUser());
-		aSM.projectInUsersOrganisation(connectionSD, request.getRemoteUser(), projectId);
-		
-		// End Authorisation
-		
-		PreparedStatement pstmt = null;
-		ArrayList<RestrictedUser> users = new ArrayList<RestrictedUser> ();
-		
-		try {
-			String sql = null;
-			ResultSet resultSet = null;
-			
-			int o_id  = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
-			
-			
-			sql = "SELECT u.id as id, "
-					+ "up.restricted as restricted, "
-					+ "u.ident as ident, "
-					+ "u.name as name "
-					+ "from users u "
-					+ "left outer join user_project up "
-					+ "on u.id = up.u_id "
-					+ "and up.p_id = ? "	
-					+ "where u.o_id = ? "
-					+ "order by u.ident";
-			
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, projectId);
-			pstmt.setInt(2, o_id);
-			log.info("Get restricted users for project: " + pstmt.toString());
-			resultSet = pstmt.executeQuery();
-							
-			RestrictedUser user = null;
-			while(resultSet.next()) {
-				user = new RestrictedUser();
-				user.id = resultSet.getInt("id");
-				user.restricted = resultSet.getBoolean("restricted");
-				user.ident = resultSet.getString("ident");
-				user.name = resultSet.getString("name");
-				users.add(user);
-			}
-			
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(users);
-			response = Response.ok(resp).build();
-					
-				
-		} catch (Exception e) {
-			
-			log.log(Level.SEVERE,"Error: ", e);
-			response = Response.serverError().entity(e.getMessage()).build();
-		    
-		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
-		}
-
-		return response;
-	}
-	*/
 	
 	/*
 	 * Update the settings or create new user
@@ -761,6 +423,7 @@ public class UserList extends Application {
 								isOrgUser,
 								isSecurityManager,
 								request.getRemoteUser(),
+								request.getScheme(),
 								request.getServerName(),
 								adminName,
 								localisation);

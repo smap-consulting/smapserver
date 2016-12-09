@@ -24,12 +24,17 @@
 	bootstrap: '../../../../smapServer/WebContent/js/libs/bootstrap.min',
 	toggle: '../../../../smapServer/WebContent/js/libs/bootstrap-toggle.min',
 	qrcode: '../../../../smapServer/WebContent/js/libs/jquery-qrcode-0.14.0.min',
+	svgsave: '../../../../smapServer/WebContent/js/libs/saveSvgAsPng',
     	bootstrapfileinput: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	bootbox: '../../../../smapServer/WebContent/js/libs/bootbox.min',
 	file_input: '../../../../smapServer/WebContent/js/libs/bootstrap.file-input',
 	moment: '../../../../smapServer/WebContent/js/libs/moment-with-locales.min',
 	datetimepicker: '../../../../smapServer/WebContent/js/libs/bootstrap-datetimepicker.min',
 	rmm: '../../../../smapServer/WebContent/js/libs/responsivemobilemenu',
+        d3: '../../../../smapServer/WebContent/js/libs/d3.v4',
+        d3v3: '../../../../smapServer/WebContent/js/libs/d3.v3.min',
+        d3cloud: '../../../../smapServer/WebContent/js/libs/d3.layout.cloud',
+        d3cloud2: '../../../../smapServer/WebContent/js/libs/d3.layout.cloud2',
 
 	mapbox: '../../../../smapServer/WebContent/js/libs/mapbox/js/mapbox',
 
@@ -37,6 +42,7 @@
 	jquery_ui: '../../../../smapServer/WebContent/js/libs/wb/jquery-ui-1.10.4.min',
 	metismenu: '../../../../smapServer/WebContent/js/libs/wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: '../../../../smapServer/WebContent/js/libs/wb/plugins/slimscroll/jquery.slimscroll.min',
+	sweetalert: '../../../../smapServer/WebContent/js/libs/wb/plugins/sweetalert/sweetalert.min',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
 	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
@@ -50,6 +56,9 @@
         },
         {
             name: '../managed_forms'
+        },
+        {
+            name: '../action_forms'
         },
         {
             name: '../manage'

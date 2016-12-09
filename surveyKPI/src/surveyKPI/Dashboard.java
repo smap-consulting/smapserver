@@ -54,14 +54,6 @@ public class Dashboard extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(Dashboard.class.getName());
-
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Dashboard.class);
-		return s;
-	}
-
 	
 	/*
 	 * Get the dashboard settings
@@ -125,8 +117,6 @@ public class Dashboard extends Application {
 					"d.ds_filter as filter " +
 					" from dashboard_settings d, users u, user_project up, survey s " +
 					" where u.id = up.u_id " +
-					" and up.restricted = false " +
-					" and up.allocated = true " +
 					" and up.p_id = ? " +
 					" and s.p_id = up.p_id " +
 					" and s.s_id = d.ds_s_id " +

@@ -57,6 +57,8 @@ define(function() {
 		gCurrentTaskGroup: undefined,
 		gTaskList: undefined,
 		gCurrentSurveyIndex: 0,
+		gAlertSeen: false,
+		gLastAlertTime: undefined,
 		
 		// Editor
 		gExistingSurvey: false,		// Set true if modifying an existing survey
@@ -81,6 +83,8 @@ define(function() {
 		gMainTable: undefined,			// Data tables
 		
 		gReports: undefined,			// reports
+		
+		gCharts: {},					// charts
 		
 		model: new Model()
 

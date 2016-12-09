@@ -4,10 +4,13 @@ define({
 	"m_tm": "Forms",
 	"m_analysis": "Analysis",
 	"m_reports": "Reports",
+	"m_reports_def": "Default Reports",
+	"m_reports_org": "Organisation Reports",
 	"m_refresh": "Refresh",
 	"m_export": "Export",
 	"m_discuss": "Discuss",
 	"m_modify": "Modify",
+	"m_data_mod": "Web Forms",
 	"m_web_forms": "Web Forms",
 	"m_docs": "Documentation",
 	"m_monitor": "Monitoring",
@@ -31,7 +34,7 @@ define({
 	"m_mf": "Managed Forms",
 	"m_br": "Browse Results",
 	"m_manage": "Manage",
-	"m_manage_dash": "Management Dashboard",
+	"m_dash": "Dashboard",
 	"m_s_m_f": "Setup Managed Forms",
 	"m_task_m": "Task Management",
 	"m_user_profile": "User Profile",
@@ -119,7 +122,9 @@ define({
 	"c_unique": "Unique",
 	"c_survey": "Survey",
 	"c_date": "Date",
+	"c_dateq": "Date Question",
 	"c_none": "None",
+	"c_period": "Period",
 	"c_hour": "Hour",
 	"c_day": "Day",
 	"c_week": "Week",
@@ -141,6 +146,7 @@ define({
 	"c_attach": "Attach",
 	"c_details": "Details",
 	"c_action": "Action",
+	"c_actions": "Actions",
 	"c_mapid": "Map Id",
 	"c_zoom": "Zoom Levels",
 	"c_zoom_data": "Zoom to Data",
@@ -204,6 +210,8 @@ define({
 	"c_role": "Role",
 	"c_id": "Id",
 	"c_insert": "Insert",
+	"c_tz": "Time Zone",
+	"c_undef": "Not Defined",
 	
 	// File Types
 	"ft": "File Type",
@@ -258,12 +266,15 @@ define({
 	"a_cm": "Cluster Members",
 	"a_dv": "Show Details",
 	"a_rd": "Report Definition",
+	"a_embed": "Embed Images in Excel File",
+	"a_hxl": "HXL",
 	
 	
 	// Messages
 	"msg_wait": "Waiting for a response from the server. Please try again in a few seconds",
 	"msg_reason": "Please provide a reason: ",
 	"msg_sel_survey": "You must select a survey",
+	"msg_sel_dates": "From date is greater than To date",
 	"msg_sel_q": "You must select a question to show on a graph",
 	"msg_val_prot": "Protocol (http:// or https://) must be specified with the hostname",
 	"msg_val_p": "A project must be selected for this form",
@@ -288,7 +299,9 @@ define({
 	"msg_err_block": "Error: Block failed: ",
 	"msg_err_get_f": "Error: Get forms failed: ",
 	"msg_err_get_r": "Error: Get roles failed",
+	"msg_err_get_a": "Error: Get alerts failed",
 	"msg_err_get_q": "Error: Get questions failed",
+	"msg_upd": "Update Succeeded",
 	"msg_err_nc": "Name cannot include a comma",
 	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
 	"msg_err_cert": "Remote server does not have a signed certificate, try using http:// instead of https://",
@@ -324,6 +337,13 @@ define({
 	"msg_tg_ns": "Task group not selected",
 	"msg_no_roles": "There are no enabled roles. Hence there are no restrictions on access",
 	"msg_has_roles": "Only users who have one of the following enabled roles are allowed access",
+	"msg_one_f": "At least one form must be selected",
+	"msg_one_f2": "A form must be selected",
+	"msg_embed": "The excel type must be xls or xlsx to embed images",
+	"msg_pss": "Please select a survey",
+	"msg_nm": "No images, video, audio found",
+	"msg_pr": "Password has been reset",
+	"msg_es": "Email has been sent to",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -368,6 +388,7 @@ define({
 	"t_n_s": "Tasks without start time",
 	"t_drag": "Drag a task and drop onto calendar",
 	"t_g": "Guidance",
+	"t_ass_done": "Have you completed this assignment?",
 	
 	// template load errors
 	"e_u_err": "Form Upload Error",
@@ -471,7 +492,9 @@ define({
 	"ed_st": "Shared Table",
 	"ed_ld": "Allow Loading data from file",
 	"ed_i_bo": "Based On",
+	"ed_i_tn": "Table Names",
 	"ed_tlf": "Top Level Form",
+	"ed_namedia": "Media cannot be used with this question",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
@@ -565,13 +588,41 @@ define({
 	"n_pdfp": "PDF (Portrait)",
 	"n_pdfl": "PDF (Landscape)",
 	"n_eq": "Email Question",
+	"n_share": "Get link",
 	
 	// Roles
 	"ro_fr": "Filter rows",
 	"ro_fc": "Filter columns",
 	"ro_fr_rule": "Rows to be shown",
 	"ro_aq": "Available Questions",
-	"ro_fr_i": "Enter a rule that determines which rows will be shown for this role. Enclose question names in ${...}. Enclose text in single quotes.<br/>Example 1: ${region} = 'northern'<br/>Example 2: ${age} > 16"
-
-	 		
+	"ro_fr_i": "Enter a rule that determines which rows will be shown for this role. Enclose question names in ${...}. Enclose text in single quotes. Make sure there are spaces between the question names and operators such as =.<br/>Example 1: ${region} = 'northern'<br/>Example 2: ${age} > 16. If no rule is specified then all rows will be shown.",
+	"ro_fc_i": "Select the columns to show with this filter. If no columns are selected then all columns will be shown.",
+	
+	// Intervals
+	"i_sec": "second ago",
+	"i_secs": "seconds ago",
+	"i_min": "minute ago",
+	"i_mins": "minutes ago",
+	"i_hour": "hour ago",
+	"i_hours": "hours ago",
+	"i_day": "day ago",
+	"i_days": "days ago",
+	
+	// Dashboard
+	"d_sound": "Play sound on new alert",
+	"d_rep_def_freq": "Frequency Report",
+	"bar": "Bar Chart",
+	"pie": "Pie Chart",
+	"line": "Line Chart",
+	"wordcloud": "Word Cloud",
+	"length": "Count",
+	"d_qtr": "25%",
+	"d_half": "50%",
+	"d_3qtr": "75%",
+	"d_full": "100%",
+	"d_sec": "Seconds" 	,
+	"d_c_day": "Count by day",
+	"d_c_month": "Coount by month",
+	"d_c_year": "Count by year"
+		
 });

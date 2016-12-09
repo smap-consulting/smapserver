@@ -164,7 +164,6 @@ public class Tasks extends Application {
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(t);	
 			response = Response.ok(resp).build();	
-			System.out.println("Resp: " + resp);
 			
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
@@ -199,7 +198,7 @@ public class Tasks extends Application {
 		try {
 			
 			// Get locations
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			TaskManager tm = new TaskManager();
 			ArrayList<Location> locations = tm.getLocations(sd, oId);
 			
@@ -299,7 +298,7 @@ public class Tasks extends Application {
 				 */
 				if(locations.size() > 0) {
 					// Save locations to disk
-					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
 					TaskManager tm = new TaskManager();
 					tm.saveLocations(sd, locations, oId);
@@ -440,14 +439,10 @@ public class Tasks extends Application {
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			// Get the task group name
-			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);
 			
-			// Get the task list
-			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);
-			
-			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response);
+			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);		// Get the task group name
+			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);	// Get the task list
+			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response); // Set file name
 			
 			// Create XLSTasks File
 			XLSTaskManager xf = new XLSTaskManager(filetype);
@@ -495,6 +490,12 @@ public class Tasks extends Application {
 		FileItem file = null;
 
 		try {
+			
+			sd = SDDataSource.getConnection("Tasks-TaskUpload");
+			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			/*
 			 * Parse the request
 			 */
@@ -509,7 +510,11 @@ public class Tasks extends Application {
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					if(item.getFieldName().equals("tg")) {
-						tgId = Integer.valueOf(item.getString());
+						try {
+							tgId = Integer.valueOf(item.getString());
+						} catch (Exception e) {
+							throw new Exception(localisation.getString("t_notg"));
+						}
 					} else if(item.getFieldName().equals("tg_clear")) {
 						tgClear = Boolean.valueOf(item.getString());
 					}
@@ -537,17 +542,16 @@ public class Tasks extends Application {
 	
 			if(file != null && tgId > 0) {
 				// Authorisation - Access
-				sd = SDDataSource.getConnection("Tasks-TaskUpload");
 				a.isAuthorised(sd, request.getRemoteUser());
 				a.isValidProject(sd, request.getRemoteUser(), pId);
 				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
 				// End authorisation
 
-				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 				
 				// Process xls file
 				XLSTaskManager xf = new XLSTaskManager();
-				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream());
+				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream(), localisation);
 				
 				// Save tasks to the database
 				TaskManager tm = new TaskManager();
@@ -555,7 +559,7 @@ public class Tasks extends Application {
 				if(tgClear) {
 					tm.deleteTasksInTaskGroup(sd, tgId);
 				}
-				tm.writeTaskList(sd, tl, pId, tgId, request.getServerName(), true, oId);
+				tm.writeTaskList(sd, tl, pId, tgId, request.getScheme() + "://" + request.getServerName(), true, oId);
 				
 				/*
 				 * Get the tasks out of the database
@@ -566,8 +570,6 @@ public class Tasks extends Application {
 				tl = tm.getTasks(sd, tgId, true, userId);	// TODO set "complete" flag from passed in parameter
 				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 				String resp = gson.toJson(tl);
-				
-				System.out.println("Task list: " + resp);
 				
 				if(tl.features.size() > 0) {
 					response = Response.ok(resp).build();
@@ -625,12 +627,14 @@ public class Tasks extends Application {
 		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
+		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
 		TaskManager tm = new TaskManager();
 		
 		try {
-			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, oId);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {

@@ -31,30 +31,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import model.Settings;
-
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.managers.EmailManager;
-import org.smap.sdal.managers.ProjectManager;
 import org.smap.sdal.managers.RoleManager;
-import org.smap.sdal.managers.UserManager;
-import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.Organisation;
-import org.smap.sdal.model.Project;
-import org.smap.sdal.model.RestrictedUser;
 import org.smap.sdal.model.Role;
-import org.smap.sdal.model.User;
-import org.smap.sdal.model.UserGroup;
-import org.smap.server.utilities.UtilityMethods;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -62,10 +43,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -121,7 +100,7 @@ public class Roles extends Application {
 		
 		RoleManager rm = new RoleManager();
 		try {
-			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			ArrayList<Role> roles = rm.getRoles(sd, o_id);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -167,7 +146,7 @@ public class Roles extends Application {
 		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
 		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			
 			RoleManager rm = new RoleManager();
 			
@@ -229,7 +208,7 @@ public class Roles extends Application {
 		RoleManager rm = new RoleManager();
 		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			rm.deleteRoles(sd, rArray, o_id);
 			response = Response.ok().build();			
 		}  catch (Exception ex) {
@@ -252,7 +231,8 @@ public class Roles extends Application {
 	@Produces("application/json")
 	public Response getSurveyRoles(
 			@Context HttpServletRequest request,
-			@PathParam("sId") int sId
+			@PathParam("sId") int sId,
+			@QueryParam("enabled") boolean enabledOnly
 			) { 
 
 		Response response = null;
@@ -267,15 +247,21 @@ public class Roles extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aSM.isAuthorised(sd, request.getRemoteUser());
-		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		
 		// End Authorisation
 		
 		RoleManager rm = new RoleManager();
 		try {
 	
-			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId, enabledOnly);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
@@ -320,8 +306,13 @@ public class Roles extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		aSM.isAuthorised(sd, request.getRemoteUser());
-		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
 		

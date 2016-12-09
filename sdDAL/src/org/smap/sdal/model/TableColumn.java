@@ -17,15 +17,20 @@ public class TableColumn {
 	public boolean mgmt = false;
 	public boolean filter = false;
 	public String filterValue;
+	public String hxlCode;
+	public boolean isCondition = false;	// For a calculate sql is created from an array of conditions
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management
 	public String type;			// text || select_one || date || calculate
+	public String chart_type;
+	public int width;
 	public ArrayList<KeyValue> choices;			// If type is select_one
+	public ArrayList<Action> actions;			// Actions to take when the column changes
 	public ArrayList<TableColumnMarkup> markup;	// Specify how to present the data
 	
 	// Manage extraction of data
-	public SqlFrag calculation = null;	// Server only
+	public SqlFrag calculation = null;
 	
 	public TableColumn(String n, String hn) {
 		name = n;
@@ -79,6 +84,13 @@ public class TableColumn {
 			selName = calculation.sql.toString();
 		} else {
 			selName = name;
+		}
+		
+		// open and close curly brackets are used to delimit quotes when these should not be used to identify a parameter
+		// For example integer + '7'  for adding 7 days to a date
+		if(selName != null) {
+			selName = selName.replace('{', '\'');
+			selName = selName.replace('}', '\'');
 		}
 		return selName;
 	}

@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -21,13 +22,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,6 +41,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -48,6 +53,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.QueryGenerator;
@@ -92,7 +98,6 @@ public class ExportSurveyMisc extends Application {
 	 */
 	@GET
 	@Path("/shape")
-	@Produces("application/x-download")
 	public Response exportShape (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
@@ -100,10 +105,15 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("language") String language,
 			@QueryParam("exp_ro") boolean exp_ro,
 			@QueryParam("excludeparents") boolean excludeParents,
-			@QueryParam("format") String format) {
+			@QueryParam("format") String format,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
+			@Context HttpServletResponse response) {
 
 		ResponseBuilder builder = Response.ok();
-		Response response = null;
+		Response responseVal = null;
+		ResourceBundle localisation = null;
 		
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
@@ -116,16 +126,21 @@ public class ExportSurveyMisc extends Application {
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
 		    try {
-		    	response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
+		    	responseVal = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
 		    } catch (Exception ex) {
 		    	log.log(Level.SEVERE, "Exception", ex);
 		    }
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as: " + format);
@@ -150,6 +165,11 @@ public class ExportSurveyMisc extends Application {
 			
 			try {
 		
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				
 				/*
 				 * Get the name of the database
 				 */
@@ -184,7 +204,6 @@ public class ExportSurveyMisc extends Application {
 						}
 					}
 				}
-				System.out.println("Language: " + language);
 
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
@@ -201,7 +220,13 @@ public class ExportSurveyMisc extends Application {
 						false,
 						false,
 						null,
-						null);
+						null,
+						null,
+						request.getRemoteUser(),
+						startDate,
+						endDate,
+						dateId,
+						superUser);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
@@ -210,7 +235,7 @@ public class ExportSurveyMisc extends Application {
 				 * Create a VRT file for VRT exports
 				 */
 				if(format.equals("vrt")) {
-					System.out.println("Writing VRT file: " + filepath + "/" + sqlDesc.target_table + ".vrt");
+					log.info("Writing VRT file: " + filepath + "/" + sqlDesc.target_table + ".vrt");
 					// Write the vrt file to the file system
 
 					// Create the file
@@ -269,7 +294,7 @@ public class ExportSurveyMisc extends Application {
 					/*
 					 * Create a Stata "do" file 
 					 */
-					System.out.println("Writing stata do file: " + filepath + "/" + sqlDesc.target_table + ".do");
+					log.info("Writing stata do file: " + filepath + "/" + sqlDesc.target_table + ".do");
 					// Write the do file to the file system
 
 					// Create the file
@@ -307,7 +332,7 @@ public class ExportSurveyMisc extends Application {
 						for(int i = 0; i < sqlDesc.colNames.size(); i++) {
 			    	 		ColDesc cd = sqlDesc.colNames.get(i);
 			    	 		w.println("\n* variable: " + cd.name);
-			    	 		System.out.println("Stata types: " + cd.db_type + " : " + cd.qType);
+			    	 		log.info("Stata types: " + cd.db_type + " : " + cd.qType);
 				    	 	writeStataDataConversion(w, cd);
 				    	 	writeStataQuestionLabel(w,cd);
 				    	 	if(cd.qType != null && cd.qType.equals("select1")) {
@@ -328,7 +353,7 @@ public class ExportSurveyMisc extends Application {
 						/*
 						 * Create an SPSS "sps" file 
 						 */
-						System.out.println("Writing spss sps file: " + filepath + "/" + sqlDesc.target_table + ".sps");
+						log.info("Writing spss sps file: " + filepath + "/" + sqlDesc.target_table + ".sps");
 
 						// Create the file
 						FileUtils.forceMkdir(new File(filepath));
@@ -369,46 +394,46 @@ public class ExportSurveyMisc extends Application {
 	        		
 	                if(code == 0) {
 	                	File file = new File(filepath + ".zip");
-		                byte [] fileData = new byte[(int)file.length()];
-		                DataInputStream dis = new DataInputStream(new FileInputStream(file));
-		                dis.readFully(fileData);
-		                dis.close();
-		                
-		                builder.header("Content-type","application/zip");
-		              	if(format.equals("kml")) {
-		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".kmz\"");
-		              	} else {
-		              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-		              	}
-						builder.entity(fileData);
-							
-						response = builder.build();
+	                	
+	                	if(file.exists()) {
+			            	builder = Response.ok(file);
+			            	if(format.equals("kml")) {
+			              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".kmz\"");
+			              	} else {
+			              		builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+			              	}
+			            	builder.header("Content-type","application/zip");
+			            	responseVal = builder.build();
+	                	} else {
+	                		throw new ApplicationException(localisation.getString("msg_no_data"));
+	                	}
+		            	
 	                } else {
-	                	log.info("Error exporting file");
-	                	response = Response.serverError().entity("Error exporting file").build();
+	                	throw new ApplicationException("Error exporting file");
 	                }
 					
 				
 			
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-				response = Response.serverError().entity(e.getMessage()).build();
+			} catch (ApplicationException e) {
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				// Return an OK status so the message gets added to the web page
+				// Prepend the message with "Error: ", this will be removed by the client
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 			} catch (Exception e) {
-				response = Response.serverError().entity(e.getMessage()).build();
-				log.log(Level.SEVERE, "Exception", e);
-			} finally {
-				
+				log.log(Level.SEVERE, "Error", e);
+				response.setHeader("Content-type",  "text/html; charset=UTF-8");
+				responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
+			} finally {	
 
 				try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
-				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}
-				
+				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}				
 				
 				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}
 		
-		return response;
+		return responseVal;
 		
 	}
 	

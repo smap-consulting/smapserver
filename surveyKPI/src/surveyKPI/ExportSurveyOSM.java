@@ -41,10 +41,12 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.model.TableColumn;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -62,13 +64,7 @@ public class ExportSurveyOSM extends Application {
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyOSM.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	
+
 	private class Tag {
 		public String key;
 		public String value;
@@ -76,6 +72,18 @@ public class ExportSurveyOSM extends Application {
 		Tag(String k, String v) {
 			key = k;
 			value = v;
+		}
+	}
+	
+	private class LonLat {
+		public String lon;
+		public String lat;
+		public int id;
+		
+		LonLat(String lon, String lat, int id) {
+			this.lon = lon;
+			this.lat = lat;
+			this.id = id;
 		}
 	}
 	
@@ -100,6 +108,7 @@ public class ExportSurveyOSM extends Application {
 		boolean isWay = false;
 		boolean isPolygon = false;
 		ArrayList<FormDesc> children = null;
+		ArrayList<TableColumn> cols = null;
 		
 		public void print() {
 			System.out.println("========= ");
@@ -127,8 +136,6 @@ public class ExportSurveyOSM extends Application {
 			@QueryParam("language") String language) {
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
-		System.out.println("urlprefix: " + urlprefix);
-		System.out.println("Including read only: " + exp_ro);
 		
 		Response response = null;
 		ResponseBuilder builder = Response.ok();
@@ -149,15 +156,19 @@ public class ExportSurveyOSM extends Application {
 		    }
 		}
 		
-		System.out.println("New OSM export, ways:" + waylist );
 		if(waylist != null) {
 			wayArray = waylist.split(",");
 		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyOSM");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as OSM");
@@ -174,7 +185,6 @@ public class ExportSurveyOSM extends Application {
 		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
 		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
 
-		System.out.println("Escaped file name:" + escapedFileName);
 		builder.header("Content-Disposition", "attachment; filename=\"" + escapedFileName + ".osm\"");
 		
 		if(language != null) {
@@ -182,24 +192,15 @@ public class ExportSurveyOSM extends Application {
 		} else {
 			language = "none";
 		}
-		System.out.println("Language:" + language);
 
 		if(sId != 0) {
 			
 			Connection connectionResults = null;
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmt2 = null;
-			PreparedStatement pstmtQType = null;
 
 			try {
  
-				// Prepare the statement to get the question type and readonly attribute
-				String sqlQType = "select q.qtype, q.readonly from question q, form f " +
-						" where q.f_id = f.f_id " +
-						" and f.table_name = ? " +
-						" and q.qname = ?;";
-				pstmtQType = connectionSD.prepareStatement(sqlQType);
-				
 				HashMap<Integer, FormDesc> forms = new HashMap<Integer, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;
@@ -208,12 +209,9 @@ public class ExportSurveyOSM extends Application {
 				connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
 				
 				/*
-				 * Get the array of tables 
+				 * Get the tables in this survey
 				 */
-				String sql = null;
-				ResultSet resultSet2 = null;
-			
-				sql = "SELECT f_id, table_name, parentform, name FROM form" +
+				String sql = "SELECT f_id, table_name, parentform, name FROM form" +
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
 
@@ -253,19 +251,27 @@ public class ExportSurveyOSM extends Application {
 								
 
 				for(FormDesc f : formList) {
-
-					// Get the column names
-					sql = "SELECT * FROM " + f.table_name + " LIMIT 1;";
 					
-					if(pstmt2 != null) {pstmt2.close();};
-					pstmt2 = connectionResults.prepareStatement(sql);
-					if(resultSet2 != null) {resultSet2.close();};
-					resultSet2 = pstmt2.executeQuery();
-					ResultSetMetaData rsMetaData2 = resultSet2.getMetaData();
+					f.cols = GeneralUtilityMethods.getColumnsInForm(
+							connectionSD,
+							connectionResults,
+							sId,
+							request.getRemoteUser(),
+							f.parent,
+							f.f_id,
+							f.table_name,
+							exp_ro,
+							false,		// Don't include parent key
+							false,		// Don't include "bad" columns
+							false,		// Don't include instance id
+							true,		// Include other meta data
+							superUser,
+							false		// HXL only include with XLS exports
+							);
 					
-					for(int j = 1; j <= rsMetaData2.getColumnCount(); j++) {
-						String name = rsMetaData2.getColumnName(j);
-						String type = rsMetaData2.getColumnTypeName(j);
+					for(TableColumn col : f.cols) {
+						String name = col.name;
+						String qType = col.type;
 						
 						// Ignore the following columns
 						if(name.equals("parkey") ||	name.startsWith("_")) {
@@ -274,26 +280,18 @@ public class ExportSurveyOSM extends Application {
 							
 						// Set the sql selection text for this column 			
 						String selName = null;
-						if(type.equals("geometry")) {
-							selName = "ST_AsTEXT(" + name + ") ";
-						} else if(type.equals("timestamptz")) {	// Return all timestamps at UTC with no time zone
+						if(qType.equals("geopoint") || qType.equals("geoshape") 
+								|| qType.equals("geotrace")
+								|| qType.equals("geolinestring")
+								|| qType.equals("geopolygon")) {
+							selName = "ST_AsTEXT(" + name + ") as the_geom ";
+						} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 							selName = "timezone('UTC', " + name + ") as " + name;	
 						} else {
-							// Get the question type
-							pstmtQType.setString(1, f.table_name);
-							pstmtQType.setString(2, name);
-							ResultSet rsType = pstmtQType.executeQuery();
 							boolean isAttachment = false;
-							if(rsType.next()) {
-								String qType = rsType.getString(1);
-								boolean ro = rsType.getBoolean(2);
-								if(!exp_ro && ro) {
-									continue;			// Drop read only columns if they are not selected to be exported				
-								}
 								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
 									isAttachment = true;
 								}
-							}
 							if(isAttachment) {
 								selName = "'" + urlprefix + "' || " + name + " as " + name;
 							} else {
@@ -346,7 +344,6 @@ public class ExportSurveyOSM extends Application {
 			} finally {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
-				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
 
 				SDDataSource.closeConnection("surveyKPI-ExportSurveyOSM", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
@@ -374,15 +371,27 @@ public class ExportSurveyOSM extends Application {
 	/*
 	 * Get the latitude, longitude from a WKT POINT
 	 */
-	private String [] getLonLat(String point) {
+	private ArrayList<LonLat> getLonLat(String value) {
 		String [] coords = null;
-		int idx1 = point.indexOf("(");
-		int idx2 = point.indexOf(")");
+		String [] pointArray = null;
+		ArrayList<LonLat> points = new ArrayList<LonLat> ();
+		
+		int idx1 = value.lastIndexOf("(");	// Polygons with two brackets supported (Multi Polygons TODO)
+		int idx2 = value.indexOf(")");
 		if(idx2 > idx1) {
-			String lonLat = point.substring(idx1 + 1, idx2);
-			coords = lonLat.split(" ");
+			String coordString = value.substring(idx1 + 1, idx2);
+			if(value.startsWith("POINT")) {
+				coords = coordString.split(" ");
+				points.add(new LonLat(coords[0], coords[1], idcounter--));
+			} else if(value.startsWith("POLYGON") || value.startsWith("LINESTRING")) {			
+				pointArray = coordString.split(",");
+				for(int i = 0; i < pointArray.length; i++) {
+					coords = pointArray[i].split(" ");
+					points.add(new LonLat(coords[0], coords[1], idcounter--));
+				}
+			}
 		}
-		return coords;
+		return points;
 	}
 
 	/*
@@ -434,7 +443,6 @@ public class ExportSurveyOSM extends Application {
 		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
-		ResultSetMetaData rsMetaData = null;
 		
 		//f.print();
 		/*
@@ -453,62 +461,78 @@ public class ExportSurveyOSM extends Application {
 			if(f.parkey != null) {
 				pstmt.setInt(1, Integer.parseInt(f.parkey));
 			}
+			log.info("Getting node data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
-			rsMetaData = resultSet.getMetaData();
 			
-			System.out.println("getNodes: " + sql);
 			while (resultSet.next()) {
+				ArrayList<LonLat> points = null;
 				String prikey = resultSet.getString(1);				
 				
 				// Add the tags to the output node
 				ArrayList<Tag> tags = new ArrayList<Tag>();
-				String lon = null;
-				String lat = null;
-				for(int i = 2; i <= rsMetaData.getColumnCount(); i++) {
-											
-					String key = rsMetaData.getColumnName(i);
-					String value = resultSet.getString(i);
+				
+				for(TableColumn col : f.cols) {
 					
-					if(value != null && value.startsWith("POINT")) {	// Get the location
-						String coords [] = getLonLat(value);
-						if(coords != null && coords.length > 1) {
-							lon = coords[0];
-							lat = coords[1];		
+					String key = col.name;
+					if(key.equals("prikey") ||
+							key.equals("instancename") ||	
+							key.equals("parkey") ||	
+							key.startsWith("_")) {
+						continue;
+					}
+					String value = resultSet.getString(key);
+					
+					if(value != null) { 
+						if(key.equals("the_geom")) {  // Get the location
+							points = getLonLat(value);
+						} else if(!key.startsWith("_")) {	
+							tags.add(new Tag(key, value));
 						}
-					} else if(key.startsWith("_")) {
-						// Ignore default pre-loaded questions
-					} else if(key.equals("the_geom")) {		
-						// Ignore any other geometry types for the moment
-					} else if (value != null && !key.startsWith("_")) {	
-						tags.add(new Tag(key, value));
 					}
 					
 					
 				}
-				if(lon != null && lat != null) {	// Ignore records without location
-					populateNode(outputXML, rootElement, tags, lon, lat);
-					if(f.isWay) {								// Add node to way
+				if(points != null && points.size() > 0) {	// Ignore records without location
+					if(points.size() == 1) {
+						populateNode(outputXML, rootElement, tags, points);
+					} else {
+						populateNode(outputXML, rootElement, null, points);		// No node tags with polygons and lines
+					}
+					if(f.isWay || points.size() > 1) {			// Add nodes to way
 	
 						String wayId;							// Get the way identifier
-						if(f.parkey == null) {	
-							wayId = String.valueOf(f.f_id);
+						Way way = null;
+						if(points.size() == 1) {
+							if(f.parkey == null) {	
+								wayId = String.valueOf(f.f_id);
+							} else {
+								wayId = f.f_id + "_" + f.parkey;
+							}
+							way = ways.get(wayId);				// Get the way
+							if(way == null) {
+								way = new Way();
+								ways.put(wayId, way);
+							}
+							way.nodes.add(String.valueOf(points.get(0).id));	
 						} else {
-							wayId = f.f_id + "_" + f.parkey;
-						}
-						
-						Way way = ways.get(wayId);				// Get the way
-						if(way == null) {
+							wayId = String.valueOf(idcounter);
 							way = new Way();
 							ways.put(wayId, way);
+							for(int i = 0; i < points.size(); i++) {
+								way.nodes.add(String.valueOf(points.get(i).id));
+							}
 						}
 						
-						way.nodes.add(String.valueOf(idcounter));		
-						way.tags = f.tags;
-						if(f.isPolygon) {
+						
+						if(points.size() == 1) {
+							way.tags = f.tags;
+						} else {
+							way.tags = tags;
+						}
+						if(f.isPolygon) {		// Only required for polygons constructed from a subform of points (real polygons are already closed)
 							way.isPolygon = true;
 						}
 					}
-					idcounter--;
 				}
 								
 				// Process child tables
@@ -544,22 +568,26 @@ public class ExportSurveyOSM extends Application {
 	 * Populate the XML for a Node
 	 */
 	private void populateNode(Document outputXML, Element rootElement,  
-			ArrayList<Tag> tags, String lon, String lat) {
+			ArrayList<Tag> tags, ArrayList<LonLat> points) {
 		
-    	Element nodeElement = outputXML.createElement("node");
-    	String id = Integer.toString(idcounter);
-    	nodeElement.setAttribute("id", id);
-    	nodeElement.setAttribute("visible", "true");
-    	nodeElement.setAttribute("lat", lat);
-    	nodeElement.setAttribute("lon", lon);
-    	for(int i = 0; i < tags.size(); i++) {
-    		Element tagElement = outputXML.createElement("tag");
-    		Tag tag = tags.get(i);
-    		tagElement.setAttribute("k", translate(tag.key));
-    		tagElement.setAttribute("v", tag.value);
-    		nodeElement.appendChild(tagElement);
-    	}
-    	rootElement.appendChild(nodeElement);
+		for(LonLat ll : points) {
+	    	Element nodeElement = outputXML.createElement("node");
+	    	String id = Integer.toString(ll.id);
+	    	nodeElement.setAttribute("id", id);
+	    	nodeElement.setAttribute("visible", "true");
+	    	nodeElement.setAttribute("lat", ll.lat);
+	    	nodeElement.setAttribute("lon", ll.lon);
+	    	if(tags != null) {
+		    	for(int i = 0; i < tags.size(); i++) {
+		    		Element tagElement = outputXML.createElement("tag");
+		    		Tag tag = tags.get(i);
+		    		tagElement.setAttribute("k", translate(tag.key));
+		    		tagElement.setAttribute("v", tag.value);
+		    		nodeElement.appendChild(tagElement);
+		    	}
+	    	}
+	    	rootElement.appendChild(nodeElement);
+		}
 	}
 	
 	/*

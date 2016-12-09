@@ -55,11 +55,12 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TableDataManager;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
-
-import utils.Utils;
 
 /*
  * Provides access to collected data
@@ -151,8 +152,13 @@ public class Data extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Managed Forms or the API. " + (hrk == null ? "" : "Hrk: " + hrk));
@@ -169,14 +175,11 @@ public class Data extends Application {
 		PreparedStatement pstmtGetForm = null;
 		
 		
-		PreparedStatement pstmtGetData = null;
-		
-		StringBuffer columnSelect = new StringBuffer();
 		String table_name = null;
 		int parentform = 0;
 		int managedId = 0;
 		ResultSet rs = null;
-		JSONArray ja = new JSONArray();
+
 
 		if(sort != null && dirn == null) {
 			dirn = "asc";
@@ -239,140 +242,38 @@ public class Data extends Application {
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
 					true,		// include instance id
-					true		// include other meta data
+					true,		// include other meta data
+					superUser,
+					false		// TODO include HXL
 					);
 			
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
 			
-			for(int i = 0; i < columns.size(); i++) {
-				TableColumn c = columns.get(i);
-				if(i > 0) {
-					columnSelect.append(",");
-				}
-				columnSelect.append(c.getSqlSelect(urlprefix));
-			}
-			
-			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
-				
-				String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
-						+ " where prikey >= ? "
-						+ "and _bad = 'false'";
-				String sqlSelect = "";
-				if(parkey > 0) {
-					sqlSelect = " and parkey = ?";
-				}
-				if(hrk != null) {
-					sqlSelect = " and _hrk = ?";
-				}
-				
-				String sqlGetDataOrder = null;
-				if(sort != null) {
-					// User has requested a specific sort order
-					sqlGetDataOrder = " order by " + getSortColumn(columns, sort) + " " + dirn + ";";
-				} else {
-					// Set default sort order
-					if(mgmt) {
-						sqlGetDataOrder = " order by prikey desc limit 10000";
-					} else {
-						sqlGetDataOrder = " order by prikey asc;";
-					}
-				}
-				
-				pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + sqlGetDataOrder);
-				int paramCount = 1;
-				pstmtGetData.setInt(paramCount++, start);
-				if(parkey > 0) {
-					pstmtGetData.setInt(paramCount++, parkey);
-				}
-				if(hrk != null) {
-					pstmtGetData.setString(paramCount++, hrk);
-				}
-				
-				log.info("Get data: " + pstmtGetData.toString());
-				rs = pstmtGetData.executeQuery();
-				
-				int index = 0;
-				while (rs.next()) {
-					
-					if(limit > 0 && index >= limit) {
-						break;
-					}
-					index++;
-					
-					JSONObject jr = new JSONObject();
-					if(group) {
-						jr.put("_group", "");				// _group for duplicate queries
-					}
-					for(int i = 0; i < columns.size(); i++) {	
-						
-						TableColumn c = columns.get(i);
-						String name = null;
-						String value = null;
-						
-						if(c.isGeometry()) {							
-							// Add Geometry (assume one geometry type per table)
-							String geomValue = rs.getString(i + 1);	
-							name = "_geolocation";
-							JSONArray coords = null;
-							if(geomValue != null) {
-								JSONObject jg = new JSONObject(geomValue);									
-								coords = jg.getJSONArray("coordinates");
-							} else {
-								coords = new JSONArray();
-							}
-							jr.put(name, coords);
-				
-						} else {
-							
-							//String name = rsMetaData.getColumnName(i);	
-							name = c.humanName;
-								
-							if(c.type != null && c.type.equals("decimal")) {
-								Double dValue = rs.getDouble(i + 1);
-								dValue = Math.round(dValue * 10000.0) / 10000.0; 
-								value = String.valueOf(dValue);
-							} else if(c.type != null && c.type.equals("calculate")) {
-								// This calculation may be a decimal - give it a go
-								String v = rs.getString(i + 1);
-								if(v != null && v.indexOf('.') > -1) {
-									try {
-										Double dValue = rs.getDouble(i + 1);
-										dValue = Math.round(dValue * 10000.0) / 10000.0; 
-										value = String.valueOf(dValue);
-									} catch(Exception e) {
-										value = rs.getString(i + 1);	// Assume text
-									}
-								} else {
-									value = rs.getString(i + 1);	// Assume text
-								}
-								
-							} else {
-								value = rs.getString(i + 1);
-							}
-							
-							if(value == null) {
-								value = "";
-							}
-							
-							if(name != null ) {
-								if(!isDt) {
-									name = Utils.translateToKobo(name);
-								}
-								jr.put(name, value);
-							}
-						}
-						
-				
-					}
-						
-					ja.put(jr);
-				}
-						
-			} 
+			TableDataManager tdm = new TableDataManager();
+			JSONArray ja = tdm.getData(
+					sd, 
+					cResults,
+					columns,
+					urlprefix,
+					sId,
+					table_name,
+					parkey,
+					hrk,
+					request.getRemoteUser(),
+					sort,
+					dirn,
+					mgmt,
+					group,
+					isDt,
+					start,
+					limit,
+					superUser,
+					false			// Return records greater than or equal to primary key
+					);
 			
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
@@ -392,7 +293,6 @@ public class Data extends Application {
 			
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
 			
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
@@ -424,8 +324,13 @@ public class Data extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get similar data records");
@@ -508,14 +413,15 @@ public class Data extends Application {
 					false,		// Don't include parent key
 					false,		// Don't include "bad" columns
 					true,		// include instance id
-					true		// Include other meta data
+					true,		// Include other meta data
+					superUser,
+					false		// Only include HXL with CSV and Excel output
 					);
 			
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId);
+				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
-				//GeneralUtilityMethods.addManagementColumns(columns);
 			}
 			
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
@@ -554,9 +460,7 @@ public class Data extends Application {
 				for(int i = 0; i < selectPairs.length; i++) {
 					String [] aSelect = selectPairs[i].split("::");
 					if(aSelect.length > 1) {
-						System.out.println("Pair: " + aSelect[0] + " : " + aSelect[1]);
 						for(int j = 0; j < columns.size(); j++) {
-							//System.out.println("name: " + columns.get(j).name);
 							if(columns.get(j).name.equals(aSelect[0])) {
 								TableColumn c = columns.get(j);
 								boolean stringFnApplies = false;
@@ -604,7 +508,6 @@ public class Data extends Application {
 				
 				pstmtGetSimilar = cResults.prepareStatement(sqlGetSimilar + sqlGroup + sqlHaving);
 				pstmtGetSimilar.setInt(1, start);
-				System.out.println("Get Similar: " + pstmtGetSimilar.toString());
 				rs = pstmtGetSimilar.executeQuery();
 				
 				/*
@@ -669,16 +572,19 @@ public class Data extends Application {
 							} else {
 								
 								//String name = rsMetaData.getColumnName(i);	
-								name = c.humanName;
+								//name = c.humanName;
+								name = c.name;
 								value = rsD.getString(i + 1);	
 								
 								if(value == null) {
 									value = "";
+								} else if(c.type.equals("dateTime")) {
+									value = value.replaceAll("\\.[0-9]{3}", "");
 								}
 								
 								if(name != null ) {
 									if(!isDt) {
-										name = Utils.translateToKobo(name);
+										name = GeneralUtilityMethods.translateToKobo(name);
 									}
 									jr.put(name, value);
 								}
@@ -724,27 +630,6 @@ public class Data extends Application {
 		
 		return response;
 		
-	}
-	
-	/*
-	 * Convert the human name for the sort column into sql
-	 */
-	private String getSortColumn(ArrayList<TableColumn> columns, String sort) {
-		String col = "prikey";	// default to prikey
-		sort = sort.trim();
-		for(int i = 0; i < columns.size(); i++) {
-			if(columns.get(i).humanName.equals(sort)) {
-				TableColumn c = columns.get(i);
-
-				if(c.isCalculate()) {
-					col = c.calculation.sql.toString();
-				} else {
-					col = c.name;
-				}
-				break;
-			}
-		}
-		return col;
 	}
 	
 	

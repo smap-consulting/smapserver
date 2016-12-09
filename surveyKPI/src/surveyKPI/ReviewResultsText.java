@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 
@@ -55,13 +56,6 @@ public class ReviewResultsText extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(ReviewResultsText.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReviewResultsText.class);
-		return s;
-	}
 	
 	private class Result {
 		int r_id;
@@ -97,8 +91,13 @@ public class ReviewResultsText extends Application {
 		}
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Results");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);	// Validate that the user can access this survey
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 					
 		try {
@@ -119,8 +118,6 @@ public class ReviewResultsText extends Application {
 			if(resultSet.next()) {
 				table = resultSet.getString(1);
 				name = resultSet.getString(2);
-				
-				System.out.println("Table: " + table + " : " + name);
 				
 				if (pstmt != null) {
 					pstmt.close();
@@ -148,7 +145,6 @@ public class ReviewResultsText extends Application {
 					r.history = resultSet.getString(3);
 					
 					results.add(r);
-					System.out.println("Text: " + r.text);
 				}
 			}
 			

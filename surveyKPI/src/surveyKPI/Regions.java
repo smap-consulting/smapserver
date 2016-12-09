@@ -60,14 +60,6 @@ public class Regions extends Application {
 	private static Logger log =
 			 Logger.getLogger(Regions.class.getName());
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Regions.class);
-		return s;
-	}
-
-
 	public Regions() {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	
@@ -201,7 +193,7 @@ public class Regions extends Application {
 			} catch (SQLException e) {
 				try { connection.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 				try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-				System.out.println(e.getMessage());
+				log.log(Level.SEVERE,"Exception", e);
 				String resp = e.getMessage();		
 				response = Response.ok(resp).build();		// Most likely message is that table already exists.  Return this to the user
 				return response;
@@ -214,11 +206,6 @@ public class Regions extends Application {
 			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, tableName);
 			pstmt.executeQuery();
-			
-			System.out.println("Centre x:" + region.centre_x);
-			System.out.println("Left x:" + region.lower_left_x);
-			System.out.println("Right x:" + region.upper_right_x);
-			System.out.println("Width:" + region.width);
 			
 			int hr = (int) Math.ceil(region.width / 4);	// Half the radius
 			int r = hr *2;
@@ -235,8 +222,6 @@ public class Regions extends Application {
 			int startY = cy - w * ((int) Math.ceil((cy - lly) / w));
 			int stopX = cx + w * ((int) Math.ceil((urx - cx) / w));
 			int stopY = cy + w * ((int) Math.ceil((ury - cy) / w));
-			
-			System.out.println("bounds:" + startX + ":" + startY + ":" + stopX + ":" + stopY);
 			
 			// Generate the grid using the function from http://trac.osgeo.org/postgis/wiki/UsersWikiGenerateHexagonalGrid
 			String polygon = "0 0," + hr + " " +  hr + "," + hr + " " + r + ", 0 " + (hr*3) + "," + (-hr) + " " + r + "," + (-hr) + " " + hr + ",0 0";
@@ -364,11 +349,9 @@ public class Regions extends Application {
 			
 			log.info(sql);
 			pstmt = connectionSD.prepareStatement(sql);
-			System.out.println("Table:" + tableName);
 			pstmt.setString(1, tableName);
 			pstmt.setInt(2, o_id);
 			int count = pstmt.executeUpdate();
-			System.out.println("Count:" + count);
 				
 			// delete the table
 			sql = "drop table if exists " + tableName + ";";		// Ignore errors if table does nto exist

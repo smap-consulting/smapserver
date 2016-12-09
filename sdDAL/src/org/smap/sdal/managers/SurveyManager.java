@@ -63,6 +63,8 @@ public class SurveyManager {
 	private static Logger log =
 			 Logger.getLogger(SurveyManager.class.getName());
 
+	public static final int UPLOAD_TIME_ID = -100;		// Pseudo question id for upload time
+	
 	public ArrayList<Survey> getSurveys(Connection sd, PreparedStatement pstmt,
 			String user, 
 			boolean getDeleted, 
@@ -82,8 +84,6 @@ public class SurveyManager {
 				+ "and p.id = up.p_id "
 				+ "and s.p_id = up.p_id "
 				+ "and p.o_id = u.o_id "
-				+ "and up.restricted = false "
-				+ "and up.allocated = true "
 				+ "and u.ident = ? ");
 			
 		if(!superUser) {
@@ -187,7 +187,9 @@ public class SurveyManager {
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
-			boolean superUser
+			boolean superUser,
+			int utcOffset,
+			String geomFormat
 			) throws SQLException, Exception {
 		
 		Survey s = null;	// Survey to return
@@ -200,8 +202,6 @@ public class SurveyManager {
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
 				" and s.p_id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and u.ident = ? " +
 				" and s.s_id = ? ");
 		
@@ -260,7 +260,17 @@ public class SurveyManager {
 				if(getResults) {								// Add results
 					
 					Form ff = s.getFirstForm();
-					s.instance.results = getResults(ff, s.getFormIdx(ff.id), -1, 0,	cResults, instanceId, 0, s, generateDummyValues);
+					s.instance.results = getResults(ff, 
+							s.getFormIdx(ff.id), 
+							-1, 
+							0,	
+							cResults, 
+							instanceId, 
+							0, 
+							s, 
+							generateDummyValues,
+							utcOffset,
+							geomFormat);
 					ArrayList<Result> topForm = s.instance.results.get(0);
 					// Get the user ident that submitted the survey
 					for(Result r : topForm) {
@@ -369,7 +379,6 @@ public class SurveyManager {
 			 * 3. Create forms
 			 */
 			if(existing) {
-				System.out.println("Copying existing form");
 				QuestionManager qm = new QuestionManager();
 				qm.duplicateLanguages(sd, sId, existingSurveyId);
 				qm.duplicateForm(sd, sId, existingSurveyId, 
@@ -684,7 +693,7 @@ public class SurveyManager {
 		s.languages = GeneralUtilityMethods.getLanguages(sd, s.id);
 		
 		// Get the organisation id
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
 		
 		// Set the default language if it has not previously been set	
 		if(s.def_lang == null) {
@@ -864,7 +873,11 @@ public class SurveyManager {
 				o.externalFile = rsGetOptions.getBoolean(4);
 				String cascade_filters = rsGetOptions.getString(5);
 				if(cascade_filters != null) {
-					o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+					try {
+						o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+					} catch (Exception e) {
+						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascace format
+					}
 				}
 				o.columnName = rsGetOptions.getString(6);
 				o.published = rsGetOptions.getBoolean(7);
@@ -911,7 +924,7 @@ public class SurveyManager {
 			cl.userName = rsGetChanges.getString(4);
 			cl.updatedTime = rsGetChanges.getTimestamp(5);
 			cl.apply_results = rsGetChanges.getBoolean(6);
-			cl.success = rsGetChanges.getBoolean(7);
+			cl.success = rsGetChanges.getBoolean(7) || !cl.apply_results;	// Set the update of the results database to success automatically if a change does not need to be applied
 			cl.msg = rsGetChanges.getString(8);
 
 			s.changes.add(cl);
@@ -1171,15 +1184,21 @@ public class SurveyManager {
 		PreparedStatement pstmtLangOldVal = null;
 		PreparedStatement pstmtLangNew = null;
 		PreparedStatement pstmtNewQuestionLabel = null;
+		PreparedStatement pstmtNewOptionLabel = null;
 		PreparedStatement pstmtNewQuestionHint = null;
 		PreparedStatement pstmtDeleteLabel = null;
 		PreparedStatement pstmtGetOptionTextId = null;
+		PreparedStatement pstmtGetQuestionTextId = null;
 		
 		try {
 			
 			// Get the text id for an option update
 			String sqlGetOptionTextId = "select label_id from option where l_id = ? and ovalue = ?; ";
 			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
+			
+			// Get the text id for a question update
+			String sqlGetQuestionTextId = "select qtext_id from question where q_id = ?; ";
+			pstmtGetQuestionTextId = connectionSD.prepareStatement(sqlGetQuestionTextId);
 			
 			// Create prepared statements, one for the case where an existing value is being updated
 			String sqlLangOldVal = "update translation set value = ? " +
@@ -1192,6 +1211,9 @@ public class SurveyManager {
 			String sqlNewQLabel = "update question set qtext_id = ? where q_id = ?; ";
 			pstmtNewQuestionLabel = connectionSD.prepareStatement(sqlNewQLabel);
 			
+			String sqlNewOptionLabel = "update option set label_id = ? where l_id = ? and ovalue = ?; ";
+			pstmtNewOptionLabel = connectionSD.prepareStatement(sqlNewOptionLabel);
+			
 			String sqlNewQHint = "update question set infotext_id = ? where q_id = ?; ";
 			pstmtNewQuestionHint = connectionSD.prepareStatement(sqlNewQHint);
 			
@@ -1200,15 +1222,17 @@ public class SurveyManager {
 			
 			 // Get the languages
 			List<Language> lang = GeneralUtilityMethods.getLanguages(connectionSD, sId);
+			int listId = -1;
 			
 			for(ChangeItem ci : changeItemList) {
 			
 				boolean isQuestion = ci.property.type.equals("question");
+				boolean isOption = ci.property.type.equals("option");
 				String text_id = null;
 				if(!isQuestion) {
 					// Get the text id for an option
 					// Don't rely on the key as the text id may have been changed by a name change
-					int listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.property.optionList);
+					listId = GeneralUtilityMethods.getListId(connectionSD, sId, ci.property.optionList);
 					pstmtGetOptionTextId.setInt(1, listId);
 					pstmtGetOptionTextId.setString(2, ci.property.name);
 					
@@ -1218,8 +1242,18 @@ public class SurveyManager {
 						text_id = rs.getString(1);
 					}
 					
+					if(text_id == null) {
+						text_id = "option_" + listId + "_" + ci.property.name + ":label";
+					}
+					
 				} else {
-					text_id = ci.property.key;		// For question we can rely on the key?
+					pstmtGetQuestionTextId.setInt(1, ci.property.qId);
+					ResultSet rs = pstmtGetQuestionTextId.executeQuery();
+					if(rs.next()) {
+						text_id = rs.getString(1);
+					} else {
+						text_id = ci.property.key;		// For question we can rely on the key?
+					}
 				}
 				
 				if(ci.property.oldVal != null && ci.property.newVal != null) {
@@ -1242,6 +1276,12 @@ public class SurveyManager {
 							pstmtNewQuestionLabel.setInt(2, ci.property.qId);
 							log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 							pstmtNewQuestionLabel.executeUpdate();
+						} else if(isOption) {
+							pstmtNewOptionLabel.setString(1, text_id);
+							pstmtNewOptionLabel.setInt(2, listId);
+							pstmtNewOptionLabel.setString(3, ci.property.name);
+							log.info("Update option label with label_id: " + pstmtNewOptionLabel.toString());
+							pstmtNewOptionLabel.executeUpdate();
 						}
 						
 					} else if(ci.property.propType.equals("hint")) {
@@ -1285,9 +1325,11 @@ public class SurveyManager {
 			try {if (pstmtLangOldVal != null) {pstmtLangOldVal.close();}} catch (SQLException e) {}
 			try {if (pstmtLangNew != null) {pstmtLangNew.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionLabel != null) {pstmtNewQuestionLabel.close();}} catch (SQLException e) {}
+			try {if (pstmtNewOptionLabel != null) {pstmtNewOptionLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtNewQuestionHint != null) {pstmtNewQuestionHint.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteLabel != null) {pstmtDeleteLabel.close();}} catch (SQLException e) {}
 			try {if (pstmtGetOptionTextId != null) {pstmtGetOptionTextId.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionTextId != null) {pstmtGetQuestionTextId.close();}} catch (SQLException e) {}
 		}
 	}
 	
@@ -1301,7 +1343,6 @@ public class SurveyManager {
 		
 		String transType = null;
 		
-		//pstmtLangOldVal.setString(1, GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, true));
 		pstmtLangOldVal.setString(1, ci.property.newVal);	// rmpath
 		pstmtLangOldVal.setInt(2, sId);
 		pstmtLangOldVal.setString(3, language);
@@ -1312,8 +1353,6 @@ public class SurveyManager {
 			transType = ci.property.propType;
 		}
 		pstmtLangOldVal.setString(5,  transType);
-		//pstmtLangOldVal.setString(6, GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, true));
-		//pstmtLangOldVal.setString(6, ci.property.oldVal);	// rmpath
 		
 		log.info("Update question translation: " + pstmtLangOldVal.toString());
 		
@@ -1544,9 +1583,6 @@ public class SurveyManager {
 						(ci.property.qType.equals("begin repeat") || ci.property.qType.equals("geopolygon") || ci.property.qType.equals("geolinestring")) && 
 						ci.property.prop.equals("calculation")) {
 					
-					//String newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-					//String oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
-					
 					String sqlUpdateRepeat = "update form set repeats = ? "
 							+ "where s_id = ? "
 							+ "and parentquestion = ? "
@@ -1625,14 +1661,10 @@ public class SurveyManager {
 						
 					}
 					
-					// Convert from $ syntax to paths
+					
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
-						//ci.property.newVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.newVal, sId, sd, false);
-						//ci.property.oldVal = GeneralUtilityMethods.convertAllxlsNames(ci.property.oldVal, sId, sd, false);
-						
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
-							// The property must have referred to a question that no longer exists - just set to null
 							ci.property.oldVal = "_force_update";
 						}
 					}
@@ -1713,27 +1745,7 @@ public class SurveyManager {
 								ci.property.newVal = originalNewValue;	// Restore the original new value for logging
 							}
 							
-						} //else if(ci.property.oldVal != null && !ci.property.oldVal.equals("NULL")) {
-						//	
-						//	pstmtProperty1.setInt(2, ci.property.qId);
-							
-						//	if(propertyType.equals("boolean")) {
-						//		pstmtProperty1.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
-						//		pstmtProperty1.setBoolean(3, Boolean.parseBoolean(ci.property.oldVal));
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	} else if(propertyType.equals("integer")) {
-						//		pstmtProperty1.setInt(1, Integer.parseInt(ci.property.newVal));
-						//		pstmtProperty1.setInt(3, Integer.parseInt(ci.property.oldVal));
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	} else {
-						//		pstmtProperty1.setString(1, ci.property.newVal);
-						//		pstmtProperty1.setString(3, ci.property.oldVal);
-						//		pstmtProperty1.setString(4, ci.property.oldVal);
-						//	}
-						//	log.info("Update existing question property: " + pstmtProperty1.toString());
-						//	count = pstmtProperty1.executeUpdate();
-						//} 
-						else {
+						} else {
 							
 							pstmtProperty2.setInt(2, ci.property.qId);
 							
@@ -1769,7 +1781,8 @@ public class SurveyManager {
 									+ ci.property.name
 									+ " was not updated to "
 									+ originalNewValue
-									+ ". It may have already been updated by someone else";
+									+ ". It may have already been updated by someone else "
+									+ "or the question may have been published while you were editing it.";
 							log.info(msg);
 							throw new Exception(msg);		// No matching value assume it has already been modified
 						}
@@ -2174,7 +2187,9 @@ public class SurveyManager {
     		String instanceId,
     		int parentKey,
     		Survey s,
-    		boolean generateDummyValues) throws SQLException{
+    		boolean generateDummyValues,
+    		int utcOffset,
+    		String geomFormat) throws SQLException{
  
     	ArrayList<ArrayList<Result>> output = new ArrayList<ArrayList<Result>> ();
     	
@@ -2183,6 +2198,9 @@ public class SurveyManager {
     	 *  Select questions are retrieved using a separate query as there are multiple 
     	 *  columns per question
     	 */
+    	String sqlUtcOffset = "set local timezone=" + utcOffset/60;
+    	PreparedStatement pstmtUtcOffset = null;
+    	
     	String sql = null;
     	boolean isTopLevel = false;
     	if(parentKey == 0) {
@@ -2214,17 +2232,25 @@ public class SurveyManager {
     		 * Get the result set of data if an instanceID was passed or if 
     		 * this request is for a child form and real data is required
     		 */
+    		if(utcOffset != 0) {
+    			pstmtUtcOffset = cResults.prepareStatement(sqlUtcOffset);
+    		}
+    		
     		if(instanceId != null || parentKey > 0) {
     			String instanceName = null;
 		    	for(Question q : questions) {
 		    		String col = null;
 		    				
-		    		if(s.getSubForm(form, q) == null) {
+		    		q.columnName = q.columnName.replace("'", "''");	
+		    		
+		    		if(s.getSubForm(form, q) == null || q.name.startsWith("geopolygon_") || q.name.startsWith("geolinestring_")) {
 		    			// This question is not a place holder for a subform
 		    			if(q.source != null) {		// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
 				    		String qType = q.type;
-				    		if(qType.equals("geopoint")) {
-				    			col = "ST_AsText(" + q.columnName + ")";
+				    		if(qType.equals("geopoint") || qType.equals("geoshape") || qType.equals("geotrace") || q.name.startsWith("geopolygon_") || q.name.startsWith("geolinestring_")) {
+				    			
+				    			col = "ST_AsGeoJSON(" + q.columnName + ", 5)";
+				    			
 				    		} else if(qType.equals("select")){
 				    			continue;	// Select data columns are retrieved separately as there are multiple columns per question
 				    		} else {
@@ -2255,7 +2281,13 @@ public class SurveyManager {
 		    		pstmt.setInt(1, parentKey);
 		    	}
 		    	log.info("Retrieving results: " + pstmt.toString());
+		    	cResults.setAutoCommit(false);
+		    	if(utcOffset != 0) {
+		    		log.info("Time zone: " + pstmtUtcOffset.toString());
+		    		pstmtUtcOffset.execute();
+		    	}
 		    	resultSet = pstmt.executeQuery();
+		    	cResults.setAutoCommit(true);
     		}
 			
     		if (resultSet != null) {
@@ -2286,13 +2318,14 @@ public class SurveyManager {
 		    				id,
 		    				pstmtSelect,
 		    				isTopLevel,
-		    				generateDummyValues);
+		    				generateDummyValues,
+		    				utcOffset,
+		    				geomFormat);
 
 		    		output.add(record);
 		    	}
 	    	} else if(generateDummyValues){
 	    		// Add dummy values for a blank form
-	    		System.out.println("Adding dummy values for a blank form");
 	    		
 	    		ArrayList<Result> record = new ArrayList<Result> ();
 	    		
@@ -2317,15 +2350,19 @@ public class SurveyManager {
 	    				id,
 	    				pstmtSelect,
 	    				isTopLevel,
-	    				generateDummyValues);
+	    				generateDummyValues,
+	    				utcOffset,
+	    				geomFormat);
 
 	    		output.add(record);
 	    	}
     	} catch (SQLException e) {
     		throw e;
     	} finally {
+    		try {cResults.setAutoCommit(true);} catch(Exception e) {};
     		if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
     		if(pstmtSelect != null) try {pstmtSelect.close();} catch(Exception e) {};
+    		if(pstmtUtcOffset != null) try {pstmtUtcOffset.close();} catch(Exception e) {};
     	}
     	
 		return output;
@@ -2348,7 +2385,9 @@ public class SurveyManager {
     		int id,
     		PreparedStatement pstmtSelect,
     		boolean isTopLevel,
-    		boolean generateDummyValues) throws SQLException {
+    		boolean generateDummyValues,
+    		int utcOffset,
+    		String geomFormat) throws SQLException {
 		/*
 		 * Add data for the remaining questions (prikey and user have already been extracted)
 		 */
@@ -2381,7 +2420,9 @@ public class SurveyManager {
     			    		null,
     			    		newParentKey,
     			    		s,
-    			    		generateDummyValues);
+    			    		generateDummyValues,
+    			    		utcOffset,
+    			    		geomFormat);
 
             		record.add(nr);
     			}
@@ -2468,13 +2509,16 @@ public class SurveyManager {
 					value = resultSet.getString(index);
 				}
 				
-				if(value != null && qType.equals("geopoint")) {
-					int idx1 = value.indexOf('(');
-					int idx2 = value.indexOf(')');
+				/*
+				 * Leave the geometry in geoJson unless the geometry format needs to be comaptible with an xForm
+				 */
+				if(value != null && qType.equals("geopoint") && geomFormat != null && geomFormat.equals("xform")) {
+					int idx1 = value.indexOf('[');
+					int idx2 = value.indexOf(']');
 					if(idx1 > 0 && (idx2 > idx1)) {
     					value = value.substring(idx1 + 1, idx2 );
     					// These values are in the order longitude latitude.  This needs to be reversed for the XForm
-    					String [] coords = value.split(" ");
+    					String [] coords = value.split(",");
     					if(coords.length > 1) {
     						value = coords[1] + " " + coords[0] + " 0 0";
     					}
@@ -2487,7 +2531,7 @@ public class SurveyManager {
 
 			}
 			try {
-				//System.out.println("Index: " + index + " : " + q.name + " : " + q.type + " ; " + resultSet.getString(index));
+				
 			} catch (Exception e) {
 				
 			}
@@ -2495,7 +2539,6 @@ public class SurveyManager {
 			
 		}
 		
-		System.out.println("Record size: " + record.size());
     }
     
 	/*

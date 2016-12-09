@@ -104,7 +104,12 @@ public class FormsManifest {
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		SurveyManager sm = new SurveyManager();
 		Survey survey = sm.getSurveyId(connectionSD, key);	// Get the survey id from the templateName / key
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), survey.id, false);	// Validate that the user can access this survey
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), survey.id, false, superUser);	// Validate that the user can access this survey
 		// End Authorisation
 		
 		if(portNumber == 443) {
@@ -140,6 +145,7 @@ public class FormsManifest {
 			List<ManifestValue> manifestList = translationMgr.
 					getManifestBySurvey(connectionSD, request.getRemoteUser(), survey.id, basePath, key);
 
+			log.info("Retrieved manifest list: " + manifestList.size());
 			for( ManifestValue m : manifestList) {
 
 				String filepath = null;
@@ -153,6 +159,8 @@ public class FormsManifest {
 				} else {
 					filepath = m.filePath;
 				}
+				
+				log.info("Geting manifest at: " + filepath);
 				
 				// Check that the file exists
 				if(filepath != null) {
@@ -168,7 +176,11 @@ public class FormsManifest {
 						responseStr.append("<hash>" + md5 + "</hash>\n");
 						responseStr.append("<downloadUrl>" + fullUrl + "</downloadUrl>\n");
 						responseStr.append("</mediaFile>");
+					} else {
+						log.info("Error: " + filepath + " not found");
 					}
+				} else {
+					log.info("Error: Manifest file path is null");
 				}
 					
 			}

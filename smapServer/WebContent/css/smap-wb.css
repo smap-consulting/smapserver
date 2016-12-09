@@ -208,3 +208,7 @@ body {
 .sidebar-content button {
   width: 100%;
 }
+
+.new_alert {
+	color: red;
+}

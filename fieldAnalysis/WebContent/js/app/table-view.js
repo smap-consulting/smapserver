@@ -141,11 +141,12 @@ function setTableSurvey(view) {
 			]
 		}
 	);
+	
+	$selFoot.find('.tExport').button().off().click(function() {
+		downloadFile("/surveyKPI/surveyexchange/" + view.sId + "/" + view.sName);
+	});
+	
 	$selFoot.find('.tImport').button().off().click(function() {
-		//var surveyList = globals.gSelector.getSurveyList();
-		//if(!surveyList) {	// Surveys have not yet been retrieved
-		//	getViewSurveys({sId:"-1"});
-		//}
 		$('#survey_to_update').val(view.sId);
 		$('#survey_to_update_name').text(view.sName);
 		
@@ -508,7 +509,10 @@ $('#download_pdf').click(function () {
 	language = $('#download_language option:selected').val();
 	orientation = $("input[name='orientation']:checked", "#instance_functions_popup").val();
 
-	docURL = "/surveyKPI/pdf/" + gSelectedTemplate + "?language=" + language + "&instance=" + gInstanceId;	
+	docURL = "/surveyKPI/pdf/" + gSelectedTemplate 
+		+ "?language=" + language 
+		+ "&instance=" + gInstanceId
+		+ "&utcOffset=" + getUtcOffset();
 	if(orientation === "landscape") {
 		docURL += "&landscape=true";
 	}

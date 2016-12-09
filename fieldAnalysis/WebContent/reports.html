@@ -35,9 +35,9 @@
 	<div class="rmm noPrint" data-menu-style = "minimal" >
 		<!-- Menu Bar -->
 		<ul> 
-			<li><a class="lang" data-lang="m_home" href="/index.html?loggedin=yes">Home</a></li>
-			<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">Admin</a></li>
-			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis">Analysis</a></li>
+			<li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
+			<li><a class="lang" data-lang="m_admin" href="/fieldManager/templateManagement.html" title="Admin">admin</a></li>
+			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis">analysis</a></li>
 			<li class="restrict_role analyst_role"><a class="lang" data-lang="m_review" href="/fieldAnalysis/modify_data.html">Review</a></li>
 			<li><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li> 
 		</ul>
@@ -102,7 +102,7 @@
 				<label for="me_name" data-lang="c_name" class="lang">Name</label>
 				<input type="text" id="me_name" required><br/>
 				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
-				<select id="me_language"></select><br/>
+				<select class="language_select" id="me_language"></select><br/>
 				<label for="me_email" data-lang="c_email" class="lang">Email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">

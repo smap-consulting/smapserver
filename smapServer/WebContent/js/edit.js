@@ -30,7 +30,7 @@ require.config({
     	jquery: 'jquery-2.1.1',
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
-    	moment: '../../../../js/libs/moment-with-locales.min',
+    	moment: 'moment-with-locales.min',
     	lang_location: '..'
 
     },
@@ -324,13 +324,23 @@ $(document).ready(function() {
 	
 	$('#m_info').off().click(function() {	// Show the info dialog
 		
+		var tableNames ="",
+			i;
+		
+		for(i = 0; i < globals.model.survey.forms.length; i++) {
+			if(i > 0) {
+				tableNames += ", ";
+			}
+			tableNames += globals.model.survey.forms[i].tableName;
+		}
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
 		$('#i_ident').val(globals.model.survey.ident);		
 		$('#i_created').val(localTime(globals.model.survey.created));		
-		$('#i_based_on').val(globals.model.survey.basedOn);		
+		$('#i_based_on').val(globals.model.survey.basedOn);	
+		$('#i_table_names').val(tableNames);
 		$('#i_shared').prop('checked', globals.model.survey.sharedTable);	
 		
 		$('#infoModal').modal('show');
@@ -1552,7 +1562,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		oldVal = qname;
 	}
 	
-	if(typeof questionType !== "undefined" && questionType === "calculate"  && prop === "label") {
+	if(typeof questionType !== "undefined" && questionType === "calculate" 
+			&& prop !== "linked_survey") {	// Whatever the property for a calculation type the label field contains the calculation expression 
 		changeType = "property";
 		prop = "calculation";
 	} else {

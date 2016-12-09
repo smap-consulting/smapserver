@@ -30,14 +30,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
-
-import org.smap.sdal.resources.*;
 
 import com.google.gson.Gson;
 
@@ -51,7 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
-  *Forgotton password
+ * Forgotton password
  */
 
 @Path("/onetimelogon")
@@ -59,15 +56,6 @@ public class PasswordReset extends Application {
 		
 	private static Logger log =
 			 Logger.getLogger(PasswordReset.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(PasswordReset.class);
-		return s;
-	}
-	
-
 	
 	/*
 	 * Send an email with a link for a one time logon
@@ -95,8 +83,17 @@ public class PasswordReset extends Application {
 		PreparedStatement pstmt = null;
 
 		try {
-			
 			if(email != null && email.trim().length() > 0) {	
+				
+				// Localisation
+				String hostname = request.getServerName();
+				String loc_code = "en";
+				if(hostname.contains("kontrolid")) {
+					loc_code = "es";
+				} 
+				Locale locale = new Locale(loc_code);
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
 				
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
@@ -111,12 +108,7 @@ public class PasswordReset extends Application {
 				
 				if(uuid != null) {
 					// Update succeeded
-					System.out.println("Sending email");
-					
-					// Localisation
-					Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, email, request.getRemoteUser());
-					Locale locale = new Locale(organisation.locale);
-					ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+					log.info("Sending email");
 					
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
 					
@@ -129,7 +121,8 @@ public class PasswordReset extends Application {
 					    String subject = localisation.getString("c_r_p");
 					    EmailManager em = new EmailManager();
 						em.sendEmail(email, uuid, "reset", subject, null, sender, null, interval, 
-					    		idents, null, null, null, organisation.getAdminEmail(), emailServer, 
+					    		idents, null, null, null, null, emailServer, 
+					    		request.getScheme(),
 					    		request.getServerName(),
 					    		localisation);
 					    response = Response.ok().build();
@@ -141,8 +134,8 @@ public class PasswordReset extends Application {
 					}
 				} else {
 					// email was not found 
-					String msg = "Error password reset.  Email address not found:" + email;
-					System.out.println(msg);
+					String msg = localisation.getString("email_nf") + " :" + email;
+					log.info(msg);
 					response = Response.status(Status.NOT_FOUND).entity(msg).build();
 				}
 			} else {
@@ -191,7 +184,6 @@ public class PasswordReset extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 			response = Response.serverError().build();
 		    return response;
@@ -208,11 +200,11 @@ public class PasswordReset extends Application {
 			
 			connectionSD.setAutoCommit(false);
 			
-			// Get the user ident just for logging, also check that there is an valid onetime token
+			// Get the user ident just for logging, also check that there is a valid onetime token
 			String sql = "select ident, name from users where one_time_password = ? and one_time_password_expiry > timestamp 'now'"; 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setString(1, pd.onetime);
-			System.out.println("SQL set passowrd: " + pstmt.toString());
+			log.info("SQL set password: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			int count = 0;
@@ -220,7 +212,7 @@ public class PasswordReset extends Application {
 				String ident = rs.getString(1);
 				String name = rs.getString(2);
 				
-				System.out.println("Updating password for user " + name + " with ident " + ident);
+				log.info("Updating password for user " + name + " with ident " + ident);
 				
 				sql = "update users set password = md5(?), password_reset = 'true' where one_time_password = ? and ident = ?;";
 				pstmtUpdate = connectionSD.prepareStatement(sql);
@@ -267,7 +259,7 @@ public class PasswordReset extends Application {
 					connectionSD.close();
 				}
 			} catch (SQLException e) {
-				System.out.println("Failed to close connection");
+				log.info("Failed to close connection");
 			    e.printStackTrace();
 			}
 		}

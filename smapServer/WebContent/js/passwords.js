@@ -127,7 +127,7 @@ $(document).ready(function() {
 			  data: { passwordDetails: pdString },
 			  success: function(data, status) {
 				  removeHourglass();
-				  alert("Password has been reset");
+				  alert(localise.set["msg_pr"]);
 				  window.location.href="/";
 
 			  }, error: function(data, status) {
@@ -149,7 +149,7 @@ $(document).ready(function() {
 			  url: "/surveyKPI/onetimelogon/" + email,
 			  success: function(data, status) {
 				  removeHourglass();
-				  alert("Email sent to " + email);
+				  alert(localise.set["msg_es"] + email);
 				  window.location.href="/";
 			  }, error: function(data, status) {
 				  removeHourglass();

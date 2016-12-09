@@ -45,13 +45,6 @@ public class OptionList extends Application {
 
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(OptionList.class);
-		return s;
-	}
-	
 	@GET
 	@Produces("application/json")
 	public String getOptions(@Context HttpServletRequest request,
@@ -62,7 +55,6 @@ public class OptionList extends Application {
 		try {
 		    Class.forName("org.postgresql.Driver");	 
 		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
 		    e.printStackTrace();
 		    return "Error: Can't find PostgreSQL JDBC Driver";
 		}
@@ -110,7 +102,6 @@ public class OptionList extends Application {
 			}
 				
 		} catch (SQLException e) {
-		    System.out.println("Connection Failed! Check output console");
 		    e.printStackTrace();
 		} catch (JSONException e) {
 			e.printStackTrace();

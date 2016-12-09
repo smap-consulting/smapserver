@@ -17,6 +17,7 @@
     <link href="/js/libs/DataTables/Select/css/select.bootstrap.min.css" rel="stylesheet" >
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
     <link href="/css/smap-wb.css" rel="stylesheet">
+    <link href="/css/charts.css" rel="stylesheet">
 
 <script> if (!window.console) console = {log: function() {}}; </script>
 
@@ -32,6 +33,10 @@
 </head>
 <body>
 
+<audio id="chime">
+	<source src="/images/chime.mp3"></source>
+</audio>
+
 <div id="wrapper">
 
 	<nav class="navbar-default navbar-static-side" role="navigation">
@@ -46,19 +51,19 @@
 		          <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
 		          <ul class="nav nav-second-level animated fadeInRight m-t-xs">
 		            
-		            <li><a class="lang" data-lang="m_home" href="/index.html?loggedin=yes">Home</a></li>
+		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_web_forms">web forms</span></span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/log.html"><i class="fa fa-briefcase"></i> <span class="nav-label lang" data-lang="m_manage">manage</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
 		          
 		          </ul>
 		        </li> 
 
 			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
 			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-			<li id="m_br" class="restrict_role admin_role analyst_role manage_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>    
+			<li id="m_br" class="restrict_role admin_role analyst_role manage_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>
 			<li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
@@ -85,10 +90,17 @@
         		
 	            <ul class="nav navbar-top-links navbar-right">
 	            
-	          
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
+                	<li class="dropdown">
+                    	<a class="dropdown-toggle count-info" id="show_alerts" data-toggle="dropdown" href="#">
+                        	<i class="fa fa-bell alert_icon"></i>  <span class="label label-primary alert_count"></span>
+                    	</a>
+                    	<ul class="dropdown-menu dropdown-messages">
+                        	
+                       	</ul>
+                   </li>
                 	<li>
                     	<a class="right-sidebar-toggle">
                         	<i class="fa fa-cog"></i>
@@ -102,30 +114,44 @@
         
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="col-sm-2">
-            	<h2 class="lang" data-lang="m_mf">manage</h2>   
-            </div>
-            <div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
-						</div>
-					</form>	
-				</div>
-        	</div>
-        	<div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-						<div class="col-sm-8">
-							<select class="survey_select form-control" id="survey_name"></select>
-						</div>
-					</form>	
-				</div>
-        	</div>
-        </div>
+        	<div class="row">
+	        	<div class="col-sm-2">
+	            	<h2 class="lang" data-lang="m_mf">manage</h2>   
+	            </div>
+	            <div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+							<div class="col-sm-8">
+								<select class="project_list form-control" id="project_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        	<div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
+							<div class="col-sm-8">
+								<select class="survey_select form-control" id="survey_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        </div>
+		</div>
+		<div class="row">
+	        	<div class="col-sm-6">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element">
+							<label class="lang col-sm-4 control-label" data-lang="a_from_date" for="filter_from">from</label>
+							<div class="col-sm-8">
+								<input type="date" class="hasDatepicker survey_select form-control" id="filter_from"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        </div>
         
 
 		  
@@ -139,6 +165,7 @@
 							<div class="ibox-tools">
                                 <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
                                 <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>   
+                                <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a> 
                             </div>
                            
                         </div>
@@ -155,6 +182,7 @@
                 	</div>
              	</div>
         	</div>
+        	<div id = "chartcontent"></div>
         </div>
     </div>
 
@@ -185,11 +213,7 @@
 
                     </div>
                 </div>
-
             </div>
-
-
-
         </div>
 
 </div>
@@ -202,7 +226,7 @@
 	<div class="modal-dialog custom-modal-width">
 		<div class="modal-content">
 			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
    			</div>
 			<div class="modal-body">
 				<div class="row">
@@ -219,6 +243,23 @@
 						</form>
 						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
 						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+						<button id="shareRecord" type="button" class="btn btn-info"><span class="lang" data-lang="n_share">get link</span></button>
+						<div class="shareRecordOnly well">
+							<form role="form" class="form-horizontal" id="me_edit_form">
+								<div class="form-group role_select">
+									<h4 class="lang" data-lang="c_roles">roles</h4>
+									<div class="role_select_roles"></div>
+								</div>
+								<div class="form-group">	
+									<div class="input-group">
+										<span class="input-group-btn">
+        									<button id="getSharedRecord" class="btn btn-info" type="button"><i class="fa fa-share-alt"></i></button>
+      									</span>
+  										<input type="text" id="srLink" required class="form-control" readonly>
+									</div>				
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -227,7 +268,88 @@
 	</div>
 </div>
 
+<!-- Modal to edit a chart widget -->
+<div id="editWidget" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog custom-modal-width">
+		<div class="modal-content">
+			<div class="modal-header">
+				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+   			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
+						<form id="surveyForm" role="form" class="form-horizontal">
+							<div>
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="a_type" for="ew_chart_type">chart_type</label>
+									<div class="col-sm-10">
+										<select class="form-control chart_type" id="ew_chart_type">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="group_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="a_gb" for="ew_group">group</label>
+									<div class="col-sm-10">
+										<select class="form-control group_question" id="ew_group">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="date_range_only">
+								<div class="form-group">
+				         			<label class="col-sm-2 control-label" for="ew_date1"><span class="lang" data-lang="c_dateq" >date</span> 1</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date1">
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+				         			<label class="col-sm-2 control-label" for="ew_date2"><span class="lang" data-lang="c_dateq">date</span> 2</label>
+									<div class="col-sm-10">
+										<select class="form-control date_question" id="ew_date2">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="period_only">
+								<div class="form-group">
+				         			<label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
+									<div class="col-sm-10">
+										<select class="form-control" id="ew_period">
+											<option class="lang" value="day" data-lang="c_day">day</option>
+											<option class="lang" value="month" data-lang="c_month">month</option>
+											<option class="lang" value="year" data-lang="c_year">year</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+			         			<label class="lang col-sm-2 control-label" data-lang="c_width" for="ew_width">width</label>
+								<div class="col-sm-10">
+									<select class="form-control" id="ew_width">
+										<option class="lang" value="3" data-lang="d_qtr">25</option>
+										<option class="lang" value="6" data-lang="d_half">50</option>
+										<option class="lang" value="9" data-lang="d_3qtr">75</option>
+										<option class="lang" value="12" data-lang="d_full">100</option>
+									</select>
+								</div>
+							</div>
+						</form>
+					</div>
+					
+				</div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="editWidgetSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
 
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
@@ -248,7 +370,7 @@
 					<div class="form-group">
 						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
 						<div class="col-sm-10">
-							<select id="me_language" class="form-control"></select>
+							<select id="me_language" class="language_select form-control"></select>
 						</div>
 					</div>
 					<div class="form-group">
@@ -297,7 +419,7 @@
 </div>
 
 <script>
-	setCustomAssignments();			// Apply custom javascript
+	setCustomManage();
 </script>
 
 

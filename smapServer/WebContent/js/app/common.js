@@ -154,6 +154,27 @@ function getMyProjects(projectId, callback, getAll) {
 }
 
 /*
+ * Save the time of the last alert for the user
+ */
+function saveLastAlert(lastAlert, seen) {
+	
+	var alertStatus = {
+			lastalert: lastAlert,
+			seen: seen
+		}
+	
+	$.ajax({
+		  type: "POST",
+		  contentType: "application/json",
+		  url: "/surveyKPI/user/alertstatus",
+		  cache: false,
+		  data: {
+			  alertstatus: JSON.stringify(alertStatus)
+		  }
+	});
+}
+
+/*
  * Save the current project id in the user defaults
  */
 function saveCurrentProject(projectId, surveyId, taskGroupId) {
@@ -216,7 +237,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 			  $('#me_edit_form')[0].reset();
 			  $('#reset_me_password_fields').show();
 			  $('#password_me_fields').hide();
-			  addLanguageOptions($('#me_language'), data.language);
+			  addLanguageOptions($('.language_select'), data.language);
 			  $('#me_name').val(data.name);
 			  $('#me_email').val(data.email);
 				
@@ -231,7 +252,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 			
 			$('#reset_me_password_fields').show();
 			$('#password_me_fields').hide();
-			addLanguageOptions($('#me_language'), data.language);
+			addLanguageOptions($('.language_select'), data.language);
 			$('#me_name').val(data.name);
 			$('#me_email').val(data.email);
 			
@@ -303,7 +324,7 @@ function updateUserDetails(data, getOrganisationsFn) {
 		var userDetails = JSON.parse(data.settings);
 		$('#my_title').val(userDetails.title);
 		$('#my_license').val(userDetails.license);
-		$('#my_signature').attr("src", data.signature);
+		$('#my_signature').attr("src", "/surveyKPI/file/" + data.signature + "/users?type=sig");
 	}
 	
 	// Hide any menus that have been disabled by custom java scripts
@@ -400,6 +421,7 @@ function enableUserProfile () {
 		        		
 		        		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		        		user.current_survey_id = 0;
+		        		user.current_task_group_id = 0;
 		        		saveCurrentUser(user);			// Save the updated user details to disk
 		        		$(this).dialog("close");
 		        	}, 
@@ -486,6 +508,7 @@ function enableUserProfileBS () {
 		
 		user.current_project_id = 0;	// Tell service to ignore project id and update other details
 		user.current_survey_id = 0;
+		user.current_task_group_id = 0;
 		saveCurrentUser(user);			// Save the updated user details to disk	 
 	});
 
@@ -523,6 +546,46 @@ function saveCurrentUser(user) {
 	});
 }
 
+function getAvailableTimeZones($elem, callback) {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/utility/timezones",
+		contentType: "application/json",
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+		
+			if(typeof callback == "function") {
+				callback($elem, data);
+			}
+
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert("Error: Failed to get available time zones: " + err);
+			}
+		}
+	});	
+}
+
+function showTimeZones($elem, timeZones) {
+	var h =[],
+		idx = -1,
+		i;
+	
+	for (i = 0; i < timeZones.length; i++) {
+		tz = timeZones[i];
+		h[++idx] = '<option value="';
+		h[++idx] = tz.id;
+		h[++idx] = '">';
+		h[++idx] = tz.offset;
+		h[++idx] = '</option>';
+	}
+	$elem.empty().html(h.join(''));
+}
 
 function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hideUserDetails, dontGetCurrentSurvey) {
 	addHourglass();
@@ -540,6 +603,8 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			globals.gTwitterEnabled = data.allow_twitter;
 			globals.gCanEdit = data.can_edit;
 			globals.gSendTrail = data.ft_send_trail;
+			globals.gAlertSeen = data.seen;		// Alerts have been acknowledged
+			globals.gLastAlertTime = data.lastalert;
 			
 			if(!hideUserDetails) {
 				updateUserDetails(data, getOrganisationsFn);
@@ -1365,7 +1430,7 @@ function isBusinessServer() {
 	
 	if(hostname !== 'localhost' &&
 			hostname.indexOf('.smap.com.au') < 0 &&
-			hostname !== 'app.kontrolid.com' &
+			hostname.indexOf('kontrolid.com') < 0 &&
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
 			hostname.indexOf('.icanreach.com') < 0 &&
@@ -1389,7 +1454,7 @@ function isSelfRegistrationServer() {
 	if(hostname !== 'localhost' &&
 			hostname !== 'sg.smap.com.au' &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
-			hostname.indexOf('datacollect.icanreach.com') < 0 &&
+			hostname.indexOf('.icanreach.com') < 0 &&
 			hostname !== 'app.kontrolid.com') {
 		sr = false;
 	}
@@ -1689,36 +1754,6 @@ function getLocations(callback) {
 }
 
 /*
- * Get the custom reports from the server
- */
-function getCustomReports(callback) {
-
-	var url="/surveyKPI/tasks/locations";
-	
-	addHourglass();
-	$.ajax({
-		url: url,
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			if(typeof callback === "function") {
-				callback(data);
-			}
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				console.log("Error: Failed to get list of locations: " + err);
-			}
-		}
-	});	
-	
-}
-
-/*
  * Add the locations (NFC tags or geofence) to any drop down lists that use them
  */
 function setLocationList(locns) {
@@ -1819,62 +1854,74 @@ function utcTime(localTime) {
 
 }
 
-function downloadFile(url, filename, mime) {
+function getUtcOffset() {
+	return moment().utcOffset();
+}
 
-	// prevent caching
-	var urlComp = url.split("?");
-	if(urlComp.length > 1) {
-		url += "&";
-	} else {
-		url += "?";
+/*
+ * Get the difference between 2 times
+ */
+function timeDifference(fromTime, toTime) {
+	var from,
+		to,
+		timeDiff;
+	
+	if(fromTime && toTime) {
+		if(fromTime.indexOf('+') > 0) {
+			from  = moment(fromTime, 'YYYY-MM-DD HH:mm:ss Z');
+		} else {
+			from  = moment.utc(fromTime, 'YYYY-MM-DD HH:mm:ss');
+		}
+		if(toTime.indexOf('+') > 0) {
+			to  = moment(toTime, 'YYYY-MM-DD HH:mm:ss Z');
+		} else {
+			to  = moment(toTime, 'YYYY-MM-DD HH:mm:ss');
+		}
+		
+    	timeDiff = moment.duration(to.diff(from));
 	}
-	url += "_nocache=" + new Date().getTime();
-	
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', url, true);
-	xhr.responseType = 'blob';
-	 
-	xhr.onload = function(e) {
-		if (this.status == 200) {
-		    // get binary data as a response
-			var blob = new Blob([this.response], { type: mime });
-			var downloadUrl = URL.createObjectURL(blob);
-			var a = document.createElement("a");
-			a.href = downloadUrl;
-			a.download = filename;
-			document.body.appendChild(a);
-			a.click();
-		    setTimeout(function(){
-		        document.body.removeChild(a);
-		        window.URL.revokeObjectURL(url);  
-		    }, 100);  
-		  } else {
-			  alert("Error: Download Failed");
-		  }
-	};
-	 
-	Pace.restart();
-	Pace.track(function() {
-		xhr.send();
-	});
-	
+	return timeDiff;
+} 
+
+
+function downloadFile(url) {
+	$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
+	// Check for errors allow 5 seconds for an error to be returned
+	setTimeout(downloadFileErrorCheck, 5000);
+}
+
+// Show an error generated by file download
+function downloadFileErrorCheck() {
+	var msg = $("iframe").last().contents().find('body').html();
+	if(msg.indexOf("Error:") === 0) {
+		alert(msg.substring(7));	// Jump over "Error: "
+	}
 }
 
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, format, mime, data, sId, managedId, title, project) {
+function generateFile(url, filename, format, mime, data, sId, managedId, title, project, charts) {
 
-	var payload = "data=" + JSON.stringify(data);
-	payload += "&sId=" + sId;
-	payload += "&managedId=" + managedId;
+	var payload = "sId=" + sId;
 	payload += "&format=" + format;
+	if(managedId) {
+		payload += "&managedId=" + managedId;
+	}
+		
+	if(data) {
+		payload += "&data=" + encodeURIComponent(JSON.stringify(data));
+	}
 	if(title) {
 		payload += "&title=" + title;
 	}
 	if(project) {
 		payload += "&project=" + project;
 	}
+	if(charts) {
+		payload += "&charts=" + encodeURIComponent(JSON.stringify(charts));
+	}
+	payload = payload.replace(/%20/g, '+');
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', url, true);
@@ -1900,8 +1947,49 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 		  }
 	};
 	
-	Pace.restart();
+	xhr.onerror = function(e) {
+		 alert("Error: Upload Failed");
+	}
+	if(Pace) {
+		Pace.restart();
+	}
 	xhr.send(payload);
+	
+}
+
+/*
+ * Post data to be converted into a file
+ * This version creates a temporary file on the server
+ */
+function sendReports(url, filename, format, mime, data, sId, managedId, title, project, charts) {
+
+	var update = {
+			sId: sId,
+			format: format,
+			managedId: managedId,
+			data: data,
+			title: title,
+			project: project,
+			charts: charts	
+	}
+	var saveString = JSON.stringify(update);
+	
+	addHourglass();
+	$.ajax({
+		 type: "POST",
+			  dataType: 'text',
+			  cache: false,
+			  contentType: "application/json",
+			  url: url,
+			  data: { report: saveString },
+			  success: function(data, status) {
+				  removeHourglass();
+				 
+			  }, error: function(data, status) {
+				  removeHourglass();
+				  alert(data.responseText);
+			  }
+		});
 	
 }
 
@@ -1938,6 +2026,7 @@ function getTableData(table, columns) {
 	
 	
 }
+
 
 /*
  * Get google map api
@@ -2152,8 +2241,13 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 		
 		h[++idx] = '<button type="button" data-idx="';
 		h[++idx] = i;
-		h[++idx] = '" class="btn btn-default btn-sm rm_cr danger">';
+		h[++idx] = '" class="btn btn-default btn-sm rm_cr">';
 		h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+		h[++idx] = '<button type="button" data-idx="';
+		h[++idx] = i;
+		h[++idx] = '" class="btn btn-default btn-sm download_cr">';
+		h[++idx] = '<span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></button>';
 		
 		h[++idx] = '</td>';
 		// end actions
@@ -2173,14 +2267,26 @@ function refreshCustomReportView(data, callback1, callback2, type) {
 		}
 	});
 	
+	$(".download_cr", $selector).click(function(){
+		var idx = $(this).data("idx");
+		downloadFile("/surveyKPI/custom_reports/xls/" + globals.gReports[idx].id +
+				"?filetype=xls&filename=" + cleanFileName(globals.gReports[idx].name));
+	});
+	
 	
 }
 
 function deleteCustomReport(id, type) {
+	
+	var url = "/surveyKPI/custom_reports/" + id;
+	if(type) {
+		url += "?type=" + type;
+	}
+	
 	addHourglass();
 	$.ajax({
 		  type: "DELETE",
-		  url: "/surveyKPI/custom_reports/" + id,
+		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
 			  var t = type;
@@ -2223,6 +2329,135 @@ function getRoles(callback) {
 			}
 		}
 	});	
+}
+
+/*
+ * Get the alerts
+ */
+function getAlerts() {
+	addHourglass();
+	$.ajax({
+		url: "/surveyKPI/user/alerts",
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			removeHourglass();
+			showAlerts(data);
+			$('.alert_count').html(data.length);
+			setTimeout(getAlerts, 600000);
+		},
+		error: function(xhr, textStatus, err) {
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				alert(localise.set["msg_err_get_a"] + " " + err);
+			}
+		}
+	});	
+}
+
+function showAlerts(alerts) {
+	var h = [],
+		idx = -1,
+		i,
+		a;
+
+	/*
+	 * Check for a change in the alert list
+	 */
+	if(alerts.length > 0) {
+		if(alerts[0].updatedTime != globals.gLastAlertTime) {
+			$('.alert_icon').addClass("text-danger");
+			$('#chime')[0].play();
+			
+			globals.gLastAlertTime = alerts[0].updatedTime;
+			globals.gAlertSeen = false;
+			saveLastAlert(globals.gLastAlertTime, false);
+		}
+		
+	}
+	/*
+	 * Drop down messages have 4 parts
+	 * At left icon
+	 * Main message
+	 * Small message to right of main message
+	 * Footer message (Required)
+	 */
+	for(i = 0; i < alerts.length; i++) {
+		a = alerts[i];
+		h[++idx] = '<li>';
+		h[++idx] = '<div class="dropdown-messages-box">';
+		if(a.link) {
+			h[++idx] = '<a href="';
+			h[++idx] = a.link;
+			h[++idx] = '" class="pull-left">';
+		} 
+		h[++idx] = '<i class="fa ';
+		if(a.status == "complete") {
+			h[++idx] = "green-bg "
+		} else if(a.priority == 1) {
+			h[++idx] = "red-bg "
+		} else if(a.priority == 2) {
+			h[++idx] = "orange-bg "
+		} else {
+			h[++idx] = "blue-bg "
+		}
+    	h[++idx] = 'fa-edit';
+    	h[++idx] = ' fa-2x"></i>';
+    	if(a.link) {
+         	h[++idx] = '</a>';
+        }
+
+        h[++idx] = '<div class="media-body">';
+        h[++idx] = '<small class="pull-right text-navy">'; 
+        h[++idx] = getInterval(a.since);
+        h[++idx] = '</small>';
+        h[++idx] = '<strong>';
+        h[++idx] = a.message;
+        h[++idx] = '</strong><br>';
+        h[++idx] =  '<small class="text-muted"></small>';
+        h[++idx] = '</div>';
+        h[++idx] = '</div>';
+       
+        h[++idx] = '</li>';
+        h[++idx] = '<li class="divider"></li>';
+	}
+	$('.dropdown-messages').html(h.join(''));
+}
+
+function getInterval(seconds) {
+	if(seconds < 2) {
+		return seconds + ' ' + localise.set["i_sec"];
+	} else if(seconds < 60) {
+		return seconds + ' ' + localise.set["i_secs"];
+	} else if(seconds < 120) {
+		return Math.floor(seconds/ 60) + ' ' + localise.set["i_min"];
+	} else if(seconds < 3600) {
+		return Math.floor(seconds/ 60) + ' ' + localise.set["i_mins"];
+	} else if(seconds < (3600 * 2)) {
+		return Math.floor(seconds/ (60 * 60)) + ' ' + localise.set["i_hour"];
+	} else if(seconds < (3600 * 24)) {
+		return Math.floor(seconds/ (60 * 60)) + ' ' + localise.set["i_hours"];
+	} else if(seconds < (3600 * 24 * 2)) {
+		return Math.floor(seconds/ (60 * 60 * 24)) + ' ' + localise.set["i_day"];
+	} else if(seconds < (3600 * 24)) {
+		return Math.floor(seconds/ (60 * 60 * 24)) + ' ' + localise.set["i_days"];
+	}
+}
+
+/*
+ * Clean the filename so that it can be passed in a URL
+ */
+function cleanFileName(filename) {
+	
+	var n;
+	
+	n = filename.replace(/\//g, '_');	// remove slashes from the filename
+	n = n.replace(/[#?&]/g, '_');		// Remove other characters that are not wanted 
+	n = n.replace("'", "", 'g');		// Remove apostrophes
+	
+	return n;
 }
 
 /*

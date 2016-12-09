@@ -21,7 +21,8 @@ window.gTasks = {
 		cache: {
 			surveyConfig: {},
 			managedData: {},
-			surveyList: {}
+			surveyList: {},
+			surveyRoles: {}
 		},
 		gSelectedRecord: undefined,
 		gSelectedSurveyIndex: undefined,
@@ -32,23 +33,97 @@ window.gTasks = {
 		gDirn: undefined
 	}
 
+	var gReport = {
+			date_q: "Upload Time",
+			row: [
+			      {
+						datatable: false,
+						name: "history",
+						charts: 
+							[
+						         {
+						        	groups: [
+						        	         {
+						        	        	 q: "_start",
+						        	        	 label: "Upload Time"
+						        	         },
+						        	         {
+						        	        	 q: "Action Date",
+						        	        	 label: "Date Closed"
+						        	         }],
+									time_interval: true,
+						        	humanName: "",
+									name: "periodic_count",
+									chart_type: "groupedBar",
+									group: undefined,
+									fn: "length",
+									tSeries: true,
+									period: "day",
+									width: 12
+								},
+								{
+						        	groups: [
+						        	         {
+						        	        	 q: "_start",
+						        	        	 label: "Start Time"
+						        	         },
+						        	         {
+						        	        	 q: "_end",
+						        	        	 label: "Finish Time"
+						        	         }],
+									time_interval: true,
+									humanName: "Average survey completion time",
+									name: "completion_time",
+									chart_type: "bar",
+									group: "_user",
+									fn: "avgdurn",
+									tSeries: false,
+									period: undefined,
+									width: 12
+								}
+						    ]
+			      },
+			      {
+					datatable: true,
+					name: "chartrow",
+					def: {
+						chart_type: "bar",
+						groups: undefined,
+						group: undefined,
+						fn: "length",
+						tSeries: false,
+						period: undefined
+					},
+					charts: []
+			      }
+			    ]
+	};
+	var gReportLoaded = false,
+		gDataLoaded = false,
+		gConfigLoaded = false;
+
 	 /*
 	  * Function called when the current survey is changed
 	  */
 	 function surveyChanged() {
-			
-			if(globals.gCurrentSurvey > 0) {
-				// getManagedData(globals.gCurrentSurvey);
-				 saveCurrentProject(-1, globals.gCurrentSurvey);
-				 if(isManagedForms) {
-					 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
-				 } else {
-					 getSurveyConfig(globals.gCurrentSurvey, 0);
-				 }
+		
+		gReportLoaded = false;
+		gDataLoaded = false;
+		gConfigLoaded = false;
+		
+		if(globals.gCurrentSurvey > 0) {
+			// getManagedData(globals.gCurrentSurvey);
+			 saveCurrentProject(-1, globals.gCurrentSurvey);
+			 if(isManagedForms) {
+				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
 			 } else {
-				 // No managed surveys in this project
-				 $('#trackingTable').empty();
+				 getSurveyConfig(globals.gCurrentSurvey, 0);
 			 }
+			 getReport(gReport);
+		 } else {
+			 // No managed surveys in this project
+			 $('#trackingTable').empty();
+		 }
 	 }
 	 
 	 /*
@@ -80,10 +155,10 @@ window.gTasks = {
 		h[++idx] = ' <div class="col-lg-8">';
 		if(configItem.readonly) {		// Read only text
 			h[++idx] = '<input type="text" disabled="" class="form-control" value="';
-			h[++idx] = record[configItem.humanName];
+			h[++idx] = record[configItem.name];
 			h[++idx] = '">';
 		} else {
-			h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], itemIndex, first);
+			h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first);
 			first = false;
 		}
 		h[++idx] = '</div>';
@@ -100,12 +175,13 @@ window.gTasks = {
 	 function refreshData() {
 		 
 		 // Clear gTasks.cache
-		 gTasks.cache.surveyConfig = {};
+		 //gTasks.cache.surveyConfig = {};
 		 gTasks.cache.managedData = {};
 		 gTasks.cache.surveyList = {};
 		 
 		 // Get the list of available surveys
 		 loadManagedSurveys(globals.gCurrentProject, surveyChanged);
+		 getAlerts();
 		 
 	 }
 	 
@@ -124,7 +200,7 @@ window.gTasks = {
 			i,
 			foundExistingUpdate;
 		
-		currentValue = record[columns[itemIndex].humanName];
+		currentValue = record[columns[itemIndex].name];
 		if(typeof currentValue === "undefined") {
 			currentValue = "";
 		}
@@ -202,9 +278,6 @@ window.gTasks = {
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
-		 //if(typeof masterRecord === "undefined") {
-		//	 h[++idx] = '<th></th>';				// Select
-		 //}
 		 
 		 for(i = 0; i < columns.length; i++) {
 			 headItem = columns[i];
@@ -213,7 +286,7 @@ window.gTasks = {
 			 hDups[hColSortIdx++] = addToDuplicateReportSelect(headItem);
 			 
 			 shownColumns.push({
-				 "data": headItem.humanName
+				 "data": headItem.name
 			 });
 			 h[++idx] = '<th>';
 			 h[++idx] = '<span class="ch">';
@@ -270,9 +343,15 @@ window.gTasks = {
 		     order: [[ 0, "desc" ]],
 		     initComplete: function(settings, json) {
 		    	 console.log("initComplete");
+		    	 gDataLoaded = true;
+		    	 console.log("Data loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+		    	 if(gReportLoaded && gConfigLoaded) {
+					 chart.setChartList();	// Enable charts based on this survey config
+					 chart.refreshCharts();
+				 }
 				 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 				 globals.gMainTable.columns().flatten().each( function ( colIdx ) {
-					 if(columns[colIdx].filter) {
+					 if(columns[colIdx].filter || columns[colIdx].type === "select1") {
 						 var select = $('<select class="form-control"/>')
 						 		.appendTo(
 						 				globals.gMainTable.column(colIdx).footer()
@@ -366,6 +445,9 @@ window.gTasks = {
 		                    last = group;
 		                }
 		            } );
+			 } else {
+				 // For browse results and managed forms, update any charts
+				 chart.refreshCharts(rows);
 			 }
 	            
 	            
@@ -407,6 +489,8 @@ window.gTasks = {
 			 
 		 });
 		
+		 // Respond to date filter changes
+		 $('#filter_from').change( function() { globals.gMainTable.draw(); } );
 		 
 		 /*
 		  * Settings
@@ -620,7 +704,8 @@ window.gTasks = {
 	
 	/*
 	 * Get surveys and update the survey lists on this page
-	 *  This is a different function from the common loadSurveys function as processing differs depending on whether there is tracking
+	 *  This is a different function from the common loadSurveys function as processing differs depending on whether 
+	 *    there is a managed form
 	 *   applied to the survey
 	 */	
 	 function loadManagedSurveys(projectId, callback) {
@@ -632,7 +717,6 @@ window.gTasks = {
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
-
 	 		$.ajax({
 	 			url: url,
 	 			dataType: 'json',
@@ -669,8 +753,7 @@ window.gTasks = {
 	 						
 	 						if(item.id === globals.gCurrentSurvey) {
 		 						gTasks.gSelectedSurveyIndex = i;
-		 					}
-	 						
+		 					}	
 	 					}
 	 					
 	 				}
@@ -716,7 +799,13 @@ window.gTasks = {
 				 dataType: 'json',
 				 success: function(data) {
 					 removeHourglass();
+					 gConfigLoaded = true;
 					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
+					 console.log("Config loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gReportLoaded && gDataLoaded) {
+						 chart.setChartList();	// Enable charts based on this survey config
+						 chart.refreshCharts();
+					 }
 					 
 					 // Add a config item for the group value if this is a duplicates search
 					 if(isDuplicates) {
@@ -905,11 +994,27 @@ window.gTasks = {
 		
 		saveConfig(config);
 	 }
+	 
 	 /*
 	  * Update the saved configuration
 	  */
 	 function saveConfig() {
-		var config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex];
+		 var config = {
+				 columns: []
+		 },
+		 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+		 i;
+		 
+		for(i = 0; i < columns.length; i++) {
+			config.columns.push({
+				name: columns[i].name,
+				hide: columns[i].hide,
+				barcode: columns[i].barcode,
+				filterValue: columns[i].filterValue,
+				chart_type: columns[i].chart_type,
+				width: columns[i].width ? columns[i].width : 6
+			});
+		}
 		
 		saveString = JSON.stringify(config);
 		 
@@ -919,7 +1024,7 @@ window.gTasks = {
 			 dataType: 'text',
 			 cache: false,
 				  contentType: "application/json",
-				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey,
+				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey + "/mf",
 				  data: { settings: saveString },
 				  success: function(data, status) {
 					  removeHourglass();
@@ -929,4 +1034,128 @@ window.gTasks = {
 					  alert(data.responseText);
 				  }
 			});
+	 }
+	 
+	 /*
+	  * Update the saved configuration
+	  */
+	 function saveReport(report) {
+		 
+		
+		saveString = JSON.stringify(report);
+		 
+		 addHourglass();
+		 $.ajax({
+			 type: "POST",
+			 dataType: 'text',
+			 cache: false,
+				  contentType: "application/json",
+				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey + "/db",
+				  data: { settings: saveString },
+				  success: function(data, status) {
+					  removeHourglass();
+					  $('#right-sidebar').removeClass("sidebar-open");
+				  }, error: function(data, status) {
+					  removeHourglass();
+					  alert(data.responseText);
+				  }
+			});
+	 }
+	 
+	 /*
+	  * Get the report
+	  */
+	 function getReport(gReport) {
+		 
+			 addHourglass();
+			 $.ajax({
+				 url: "/surveyKPI/managed/getconfig/" + globals.gCurrentSurvey + "/db",
+				 cache: false,
+				 dataType: 'json',
+				 success: function(data) {
+					 removeHourglass();
+					 gReportLoaded = true;
+					 if(data) {
+						 chart.setReport(data);
+					 } else {
+						 chart.setReport(gReport);
+					 }
+					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gDataLoaded && gConfigLoaded) {
+						 chart.setChartList();
+						 chart.refreshCharts();
+					 }
+				 },
+				 error: function(xhr, textStatus, err) {
+					 removeHourglass();
+					 chart.setReport(gReport);
+					 gReportLoaded = true;
+					 console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
+					 if(gDataLoaded && gConfigLoaded) {
+						 chart.setChartList();
+						 chart.refreshCharts();
+					 }
+					 
+				 }
+			 });
+			 
+		 }
+	 
+	 
+	 /*
+	  * Add html to show a form to edit a record
+	  */
+	 function showEditRecordForm(record, columns, $editForm, $surveyForm) {
+		var 
+			h = [],
+			idx = -1,
+			m = [],
+			cnt = -1,
+			i,
+			configItem,
+			first = true;
+		
+		//gTasks.gCurrentIndex = index;
+		gTasks.gPriKey = record["prikey"];
+		
+		// Clear the update array
+		gTasks.gUpdate = [];
+		$('#saveRecord').prop("disabled", true);
+		
+		for(i = 0; i < columns.length; i++) {
+			configItem = columns[i];
+			
+			if(configItem.mgmt) {
+				h[++idx] = getEditMarkup(configItem, i, first, record);
+			} else {
+				m[++cnt] = getEditMarkup(configItem, i, first, record);
+			}
+			if(!configItem.readonly) {
+				first = false;
+			}
+		}
+		
+		$editForm.html(h.join(''));
+		$surveyForm.html(m.join(''));
+		
+		// Set up date fields
+		$editForm.find('.date').datetimepicker({
+			locale: gUserLocale || 'en',
+			useCurrent: false,
+			showTodayButton: true
+		});
+		
+		// Respond to changes in the data by creating an update object
+		$editForm.find('.form-control').bind("click propertychange paste change keyup input", function() {
+			dataChanged($(this));
+		});
+		$editForm.find('.date').on("dp.change", function() {
+			dataChanged($(this).find('input'));
+		});
+		$editForm.find('select').change(function() {
+			dataChanged($(this));
+		});
+		
+		// Set focus to first editable data item
+		$editForm.find('[autofocus]').focus();
 	 }

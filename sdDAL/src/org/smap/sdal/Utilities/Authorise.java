@@ -40,6 +40,13 @@ public class Authorise {
 	public static String MANAGE = "manage";
 	public static String SECURITY = "security";
 	
+	public static int ADMIN_ID = 1;
+	public static int ANALYST_ID = 2;
+	public static int ENUM_ID = 3;
+	public static int ORG_ID = 4;
+	public static int MANAGE_ID = 5;
+	public static int SECURITY_ID = 6;
+	
 	//private String requiredGroup;
 	ArrayList<String> permittedGroups; 
 	
@@ -57,7 +64,7 @@ public class Authorise {
 	}
 	
 	/*
-	 * Check to see if the user has the role required to upload any survey
+	 * Check to see if the user has the rights to perform the requested action
 	 */
 	public boolean isAuthorised(Connection conn, String user) {
 		ResultSet resultSet = null;
@@ -128,9 +135,59 @@ public class Authorise {
 	}
 	
 	/*
+	 * Check to make sure the user is a valid temporary user
+	 */
+	public boolean isValidTemporaryUser(Connection conn, String user) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		String sql = "select count(*) from users u " +
+				" where u.ident = ? " +
+				" and u.temporary = true";
+		
+		try {
+			pstmt = conn.prepareStatement(sql); 	
+			pstmt.setString(1, user);
+
+			log.info("is temporary user: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"SQL Error during authorisation", e);
+			sqlError = true;
+		} finally {		
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+		// Check to see if the user was authorised to access this service
+ 		if(count == 0 || sqlError) {
+ 			log.info("Authorisation failed for: " + user + " needs to be a temporary user");
+ 			SDDataSource.closeConnection("isAuthorised", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular survey
 	 */
-	public boolean isValidSurvey(Connection conn, String user, int sId, boolean isDeleted)
+	public boolean isValidSurvey(Connection conn, String user, int sId, boolean isDeleted, boolean superUser)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;
@@ -143,22 +200,29 @@ public class Authorise {
 		 * 2) Make sure survey is in a project that the user has access to
 		 */
 
-		String sql = "select count(*) from survey s, users u, user_project up, project p "
+		StringBuffer sql = new StringBuffer("select count(*) from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
-				+ "and up.restricted = false "
-				+ "and up.allocated = true "
 				+ "and s.p_id = up.p_id "
 				+ "and s.s_id = ? "
 				+ "and u.ident = ? "
-				+ "and s.deleted = ?";
+				+ "and s.deleted = ? ");
 		
-		try {
-			pstmt = conn.prepareStatement(sql);
+		try {		
+			
+			if(!superUser) {
+				// Add RBAC
+				sql.append(GeneralUtilityMethods.getSurveyRBAC());
+			}
+			
+			pstmt = conn.prepareStatement(sql.toString());
 			pstmt.setInt(1, sId);
 			pstmt.setString(2, user);
 			pstmt.setBoolean(3, isDeleted);
 			
+			if(!superUser) {
+				pstmt.setString(4, user);
+			}
 			log.info("IsValidSurvey: " + pstmt.toString());
 			
 			resultSet = pstmt.executeQuery();
@@ -194,7 +258,7 @@ public class Authorise {
 	}
 	
 	/*
-	 * Verify that the user is entitled to access this particular survey
+	 * Verify that the user is entitled to access this particular role
 	 */
 	public boolean isValidRole(Connection conn, String user, int rId)
 			throws ServerException, AuthorisationException, NotFoundException {
@@ -252,9 +316,9 @@ public class Authorise {
 	}
 	
 	/*
-	 * Verify that the user is entitled to access this custom report
+	 * Verify that the user is entitled to access this managedForm
 	 */
-	public boolean isValidCustomReport(Connection conn, String user, int crId)
+	public boolean isValidManagedForm(Connection conn, String user, int crId)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;
@@ -324,8 +388,6 @@ public class Authorise {
 		String sql = "select count(*) from task_group tg, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and tg.p_id = up.p_id" +
 				" and tg.tg_id = ? " +
 				" and u.ident = ?;";
@@ -544,8 +606,6 @@ public class Authorise {
 		String sql = "select count(*) from users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and p.id = ? " +
 				" and u.ident = ?;";
 		
@@ -602,7 +662,7 @@ public class Authorise {
 		
 		
 		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(conn, user);
+			int oId = GeneralUtilityMethods.getOrganisationId(conn, user, 0);
 			
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pId);
@@ -701,8 +761,6 @@ public class Authorise {
 		String sql = "select count(*) from tasks t, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and p.id = t.p_id " +
 				" and t.id = ? " +
 				" and u.ident = ?;";
@@ -761,8 +819,6 @@ public class Authorise {
 		String sql = "select count(*) from assignments a, tasks t, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and p.id = t.p_id " +
 				" and t.id = a.task_id " +
 				" and a.id = ? " +

@@ -25,6 +25,8 @@ public class DisplayItem {
 	public boolean labelbold = false;
 	public int fIdx = 0;
 	public int rec_number = 0;
+	public String map;
+	public String location;
 	
 	public void debug() {
 		System.out.println("======== Display Item:   width: " + width + "   value: " + value + " text: " + text + " : " + type  );

@@ -14,7 +14,9 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
  */
 
 public class SqlFrag {
-	public StringBuffer raw = new StringBuffer("");
+	public StringBuffer expression = null;		// The original expression used to create this sql
+	public ArrayList<String> conditions = null;	// Alternatively the original conditions used to create it
+	
 	public StringBuffer sql = new StringBuffer("");
 	public ArrayList<SqlFragParam> params = new ArrayList<SqlFragParam> ();
 	public ArrayList<String> columns = new ArrayList<String> ();
@@ -22,6 +24,10 @@ public class SqlFrag {
 	private static Logger log =
 			 Logger.getLogger(SqlFrag.class.getName());
 	
+	// Set the original expression used to create this SQlFrag
+	public void setExpression(String in) {
+		expression = new StringBuffer(in);
+	}
 	
 	public void add(String in) {
 		if(sql.length() > 0) {
@@ -45,11 +51,25 @@ public class SqlFrag {
 	/*
 	 * Add an SQL expression
 	 */
-	public void addRaw(String in, ResourceBundle localisation) throws Exception {
+	public void addSqlFragment(String in, ResourceBundle localisation, boolean isCondition) throws Exception {
 		
 		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
 		
-		raw.append(in);
+		/*
+		 * If this SQL fragment is part of a condition then save it so that it can be exported back to XLS or edited online
+		 */
+		if(isCondition) {
+			if(conditions == null) {
+				conditions = new ArrayList<String> ();
+			}
+			conditions.add(in);
+		}
+		
+		/*
+		 * This SQL Fragment may actually be text without quotes
+		 * If so then wrap in single quotes
+		 */
+		in = checkForText(in);
 		
 		/*
 		 * Get the text parameters and the sql fragments
@@ -125,7 +145,7 @@ public class SqlFrag {
 	public String sqlToken(String token) throws Exception {
 		String out = "";
 		
-		token = token.trim();
+		token = token.trim().toLowerCase();
 		
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
@@ -152,13 +172,24 @@ public class SqlFrag {
 				token.equals("/") ||
 				token.equals(")") ||
 				token.equals("(") ||
+				token.equals("or") ||
 				token.equals("and") || 
+				token.equals("integer") || 
+				token.equals("current_date") ||
 				token.equals("now()")) {
 			out = token;
 		} else if (token.equals("empty")) {
 			out = "is null";
 		} else if (token.equals("all")) {
 			out = "";
+		} else if (token.startsWith("{") && token.endsWith("}")) {	// Preserve {xx} syntax if xx is integer
+			String content = token.substring(1, token.length() - 1);
+			try {
+				Integer iValue = Integer.parseInt(content);
+				out = "{" + iValue.toString() + "}";
+			} catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
+			}	
 		} else if (token.length() > 0) {
 			// Non text parameter, accept decimal or integer
 			try {
@@ -169,7 +200,7 @@ public class SqlFrag {
 					Integer iValue = Integer.parseInt(token);
 					out = iValue.toString();
 				}
-			}catch (Exception e) {
+			} catch (Exception e) {
 				log.log(Level.SEVERE,"Error", e);
 			}
 			
@@ -177,6 +208,29 @@ public class SqlFrag {
 		return out;
 	}
 	
+	/*
+	 * This function is used as it has been allowed to represent text without quotes when setting a condition value
+	 * It may return false negatives so it is recommended that quotes always be used to identify text
+	 */
+	private String checkForText(String in) {
+		String out = null;
+		boolean isText = true;
+		if(in != null) {
+			if(in.indexOf('\'') > -1) {
+				isText = false; // Contains a text fragment
+			} else if(in.contains("{")) {
+				isText = false; // Contains a column name
+			} else if(in.contains("()")) {
+				isText = false; // Contains a function without parameters such as now()
+			}
+		}
+		if(isText) {
+			out = "'" + in + "'";
+		} else {
+			out = in;
+		}
+		return out;
+	}
 	public void debug() {
 		System.out.println("======");
 		System.out.println("sql     " + sql.toString());

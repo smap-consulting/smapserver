@@ -152,8 +152,13 @@ public class Data_CSV extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records csv");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "API CSV view");
@@ -194,7 +199,9 @@ public class Data_CSV extends Application {
 						false,		// Don't include parent key
 						false,		// Don't include "bad" columns
 						false,		// Don't include instance id
-						true		// Include other meta data
+						true,		// Include other meta data
+						superUser,
+						false		// TODO include HXL processing
 						);
 				
 				for(int i = 0; i < columns.size(); i ++) {

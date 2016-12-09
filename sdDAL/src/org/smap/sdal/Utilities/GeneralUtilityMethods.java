@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -650,23 +651,76 @@ public class GeneralUtilityMethods {
 	
 	/*
 	 * Get the organisation id for the user
+	 * If there is no organisation for that user then use the survey id, this is used when getting the organisation for a subscriber log
 	 */
 	static public int getOrganisationId(
 			Connection sd, 
-			String user) throws SQLException {
+			String user,
+			int sId) throws SQLException {
 		
 		int o_id = -1;
 		
-		String sqlGetOrgId = "select o_id " +
+		String sql1 = "select o_id " +
 				" from users u " +
 				" where u.ident = ?;";
+		PreparedStatement pstmt1 = null;
+		
+		String sql2 = "select p.o_id "
+				+ "from survey s, project p "
+				+ "where s.p_id = p.id "
+				+ "and s.s_id = ?";	
+		PreparedStatement pstmt2 = null;
+		
+		try {
+		
+			pstmt1 = sd.prepareStatement(sql1);
+			pstmt1.setString(1, user);
+
+			ResultSet rs = pstmt1.executeQuery();
+			if(rs.next()) {
+				o_id = rs.getInt(1);	
+			} else if (sId > 0) {
+				pstmt2 = sd.prepareStatement(sql2);
+				pstmt2.setInt(1, sId);
+
+				ResultSet rs2 = pstmt2.executeQuery();
+				
+				if(rs2.next()) {
+					o_id = rs2.getInt(1);
+				}
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt1 != null) { pstmt1.close();}} catch (SQLException e) {}
+			try {if (pstmt2 != null) { pstmt2.close();}} catch (SQLException e) {}
+		}
+		
+		return o_id;
+	}
+	
+	/*
+	 * Get the organisation id for the survey
+	 */
+	static public int getOrganisationIdForSurvey(
+			Connection sd, 
+			int sId) throws SQLException {
+		
+		int o_id = -1;
+		
+		String sqlGetOrgId = "select p.o_id "
+				+ " from survey s, project p "
+				+ "where s.p_id = p.id "
+				+ "and s.s_id = ?";
 		
 		PreparedStatement pstmt = null;
 		
 		try {
 		
 			pstmt = sd.prepareStatement(sqlGetOrgId);
-			pstmt.setString(1, user);
+			pstmt.setInt(1, sId);
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				o_id = rs.getInt(1);	
@@ -1090,7 +1144,9 @@ public class GeneralUtilityMethods {
 					qId = rs.getInt(1);
 					log.info("Found qId: " + qId);
 				} else {
-					throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
+					//throw new Exception("Question not found: " + sId + " : " + formId + " : " + qName);
+					// Question has been deleted or renamed.  Not to worry
+					log.info("Question not found: " + sId + " : " + formId + " : " + qName);
 				}
 				
 				// If there is more than one question with the same name then use the qId in the change item
@@ -1152,6 +1208,45 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the column name from the question id
+	 * This assumes that all names in the survey are unique
+	 */
+	static public String getColumnNameFromId(
+			Connection sd, 
+			int sId,
+			int qId) throws SQLException {
+		
+		String column_name = null;
+		
+		String sql = "select q.column_name " +
+				" from question q, form f" +
+				" where q.f_id = f.f_id " +
+				" and f.s_id = ? " +
+				" and q.q_id = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				column_name = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return column_name;
+	}
+	
+	/*
 	 * Get an access key to allow results for a form to be securely submitted
 	 */
 	public static String  getNewAccessKey(
@@ -1175,10 +1270,10 @@ public class GeneralUtilityMethods {
 				" values (?, ?, ?, timestamp 'now' + interval '" + interval + "');";		
 		PreparedStatement pstmtAddKey = null;
 		
-		String sqlGetKey = "select access_key from dynamic_users where u_id = ?;";	
+		String sqlGetKey = "select access_key from dynamic_users where u_id = ? "
+				+ "and expiry > now() + interval ' 2 days'";	// Get a new key if less than 2 days before old one expires
 		PreparedStatement pstmtGetKey = null;
 		
-		log.info("GetAccessKey");
 		try {
 		
 			/*
@@ -1653,11 +1748,6 @@ public class GeneralUtilityMethods {
 				String value = rs.getString(2);
 				String text_id = rs.getString(3);
 				
-				System.out.println("-------------");
-				System.out.println("    " + rs.getString(1));
-				System.out.println("    " + rs.getString(2));
-				System.out.println("    " + rs.getString(3));
-				
 				// 2. Check that each language has this media
 				for(Language language : languages) {
 					String languageName = language.name;
@@ -1676,7 +1766,6 @@ public class GeneralUtilityMethods {
 						}
 					}
 					
-					System.out.println("        Language: " + languageName + " : " + hasMedia);
 					if(!hasMedia) {
 						
 						// 3.  Delete any translation entries for the media that have the wrong value
@@ -1985,7 +2074,9 @@ public class GeneralUtilityMethods {
 			boolean includeParentKey,
 			boolean includeBad,
 			boolean includeInstanceId,
-			boolean includeOtherMeta) throws SQLException {
+			boolean includeOtherMeta,
+			boolean superUser,
+			boolean hxl) throws SQLException {
 		
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
@@ -1993,26 +2084,26 @@ public class GeneralUtilityMethods {
 		
 		// Get column restrictions for RBAC
 		StringBuffer colList = new StringBuffer("");
-		if(sId > 0) {
-			System.out.println("Get column restrictions for survey: " + sId);
-			RoleManager rm = new RoleManager();
-			ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
-			System.out.println("Number of column fikters: " + rcfArray.size());
-			if(rcfArray.size() > 0) {
-				colList.append(" and q_id in (");
-				for(int i = 0; i < rcfArray.size(); i++) {
-					RoleColumnFilter rcf = rcfArray.get(i);
-					if(i > 0) {
-						colList.append(",");
+		if(!superUser) {
+			if(sId > 0) {
+				RoleManager rm = new RoleManager();
+				ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
+				if(rcfArray.size() > 0) {
+					colList.append(" and q_id in (");
+					for(int i = 0; i < rcfArray.size(); i++) {
+						RoleColumnFilter rcf = rcfArray.get(i);
+						if(i > 0) {
+							colList.append(",");
+						}
+						colList.append(rcf.id);
 					}
-					colList.append(rcf.id);
+					colList.append(")");
 				}
-				colList.append(")");
 			}
 		}
 		
 		// SQL to get the questions
-		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, path "
+		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, appearance "
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
@@ -2090,7 +2181,7 @@ public class GeneralUtilityMethods {
 				c = new TableColumn();
 				c.name = "_upload_time";
 				c.humanName = "Upload Time";
-				c.type = "";
+				c.type = "dateTime";
 				columnList.add(c);
 				
 				c = new TableColumn();
@@ -2159,7 +2250,8 @@ public class GeneralUtilityMethods {
 				int qId = rsQuestions.getInt(4);
 				boolean ro = rsQuestions.getBoolean(5);
 				String source_param = rsQuestions.getString(6);
-				String path = rsQuestions.getString(7);
+				String appearance = rsQuestions.getString(7);
+				String hxlCode = getHxlCode(appearance, question_human_name);
 				
 				String cName = question_column_name.trim().toLowerCase();
 				if(cName.equals("parkey") ||	cName.equals("_bad") ||	cName.equals("_bad_reason")
@@ -2197,6 +2289,9 @@ public class GeneralUtilityMethods {
 							c.qId = qId;
 							c.type = qType;
 							c.readonly = ro;
+							if(hxlCode != null) {
+								c.hxlCode = hxlCode + "+label";
+							}
 							realQuestions.add(c);
 						}
 					}
@@ -2207,6 +2302,7 @@ public class GeneralUtilityMethods {
 					c.qId = qId;
 					c.type = qType;
 					c.readonly = ro;
+					c.hxlCode = hxlCode;
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						columnList.add(c);
 					} else {
@@ -2227,65 +2323,25 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Add the management columns for the survey
-	 *
-	public static void addManagementColumns(ArrayList<Column> columnList) {
-		// TODO check that these exist
-		// TODO Possibly the columns should vary with survey
-		// TODO Possibly there could be more than one set of managment columns for a single survey
+	 * Get the Hxl Code from an appearance value and the question name
+	 */
+	public static String getHxlCode(String appearance, String name) {
+		String hxlCode = null;
+		if(appearance != null) {
+			String appValues[] = appearance.split(" ");
+			for(int i = 0; i < appValues.length; i++) {
+				if(appValues[i].startsWith("#")) {
+					hxlCode = appValues[i].trim();
+					break;
+				}
+			}
+		}
 		
-		// Hardcoded for now
-		Column c = new Column();
-		c.name = "_mgmt_responsible";
-		c.humanName = "Responsible Person";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_deadline";
-		c.humanName = "Action Deadline";
-		c.qType = "date";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_date";
-		c.humanName = "Date of Action";
-		c.qType = "date";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_response_status";
-		c.humanName = "Response Status";
-		c.qType = "calculate";
-		c.calculation = "CASE "
-				+ "WHEN _mgmt_action_deadline >= _mgmt_action_date THEN 'Deadline met' "
-				+ "WHEN _mgmt_action_deadline < _mgmt_action_date THEN 'Done with delay' "
-				+ "WHEN _mgmt_action_deadline > now() THEN 'In the pipeline' "
-				+ "WHEN _mgmt_action_deadline is null THEN 'In the pipeline' "
-	            + "ELSE 'Deadline crossed' "
-	            + "END";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_action_taken";
-		c.humanName = "Action Taken";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_address_recommendation";
-		c.humanName = "Does the Action Address the Recommendation";
-		c.qType = "string";
-		columnList.add(c);
-		
-		c = new Column();
-		c.name = "_mgmt_comment";
-		c.humanName = "Comment";
-		c.qType = "string";
-		columnList.add(c);
-		
+		if(hxlCode == null) {
+			// TODO try to get hxl code from defaut column name
+		}
+		return hxlCode;
 	}
-	*/
 	
 	/*
 	 * Return true if this question is a property type question like deviceid
@@ -2325,19 +2381,19 @@ public class GeneralUtilityMethods {
 	/*
 	 * Returns the SQL fragment that makes up the date range restriction
 	 */
-	public static String getDateRange(Date startDate, Date endDate, String dateTable, String dateName) {
+	public static String getDateRange(Date startDate, Date endDate, String dateName) {
 		String sqlFrag = "";
 		boolean needAnd = false;
 		
 		if(startDate != null) {
-			sqlFrag += dateTable + "." + dateName + " >= ? ";
+			sqlFrag += dateName + " >= ? ";
 			needAnd = true;
 		}
 		if(endDate != null) {
 			if(needAnd) {
 				sqlFrag += "and ";
 			}
-			sqlFrag += dateTable + "." + dateName + " < ? ";
+			sqlFrag += dateName + " < ? ";
 		}
 
 		return sqlFrag;
@@ -2537,7 +2593,6 @@ public class GeneralUtilityMethods {
 			}
 		}
 		
-		System.out.println("HRK: " + output.toString().trim());
 		return output.toString().trim();
 	}
 	
@@ -2575,6 +2630,22 @@ public class GeneralUtilityMethods {
 		
 		return out;
 		
+	}
+	
+	/*
+	 * Return true if a question type is a geometry
+	 */
+	public static boolean isGeometry(String qType) {
+		boolean isGeom = false;
+		if(qType.equals("geopoint") ||
+				qType.equals("geopolygon") ||
+				qType.equals("geolinestring") ||
+				qType.equals("geotrace") || 
+				qType.equals("geoshape")) {
+			
+			isGeom = true;
+		}
+		return isGeom;
 	}
 	
 	/*
@@ -2931,7 +3002,6 @@ public class GeneralUtilityMethods {
 							log.info("We have found a manifest link to " + filename);
 							refQuestions = getRefQuestionsSearch(criteria);
 							manifestType = "linked";
-							System.out.println("RefQuestions: " + refQuestions.toString());
 						} else {
 							filename += ".csv";
 							manifestType = "csv";
@@ -2985,7 +3055,6 @@ public class GeneralUtilityMethods {
 								log.info("We have found a manifest link to " + filename);
 								refQuestions = getRefQuestionsSearch(criteria);
 								manifestType = "linked";
-								System.out.println("RefQuestions: " + refQuestions.toString());
 							} else {
 								filename += ".csv";
 								manifestType = "csv";
@@ -3161,7 +3230,7 @@ public class GeneralUtilityMethods {
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
 			pstmt.setString(2, columnName);
-			System.out.println("SQL: " + pstmt.toString());
+			log.info("SQL: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -3204,7 +3273,7 @@ public class GeneralUtilityMethods {
 			}
 			
 			if(count == 0) {
-				throw new Exception("Table containing data for " + column_name + " in survey " + sId + " not found");
+				throw new Exception("Table containing question \"" + column_name + "\" in survey " + sId + " not found. Check your LQAS template to see if this question name should be there.");
 			} else if (count > 1) {
 				throw new Exception("Duplicate " + column_name + " found in survey " + sId);
 			}
@@ -3305,9 +3374,7 @@ public class GeneralUtilityMethods {
 			if(idx >= 0) {
 				idx2 = location.lastIndexOf(')'); 
 				if(idx2 >= 0) {
-					System.out.println("location: " + location);
 					location = location.substring(idx + 1, idx2);
-					System.out.println("location2: " + location);
 					coords = location.split(" ");
 					
 					if(coords.length > 1) {
@@ -3343,17 +3410,35 @@ public class GeneralUtilityMethods {
 		return idx;
 	}
 	
+	public static String getLanguage(String s) {
+		String lang = "";
+		if(s != null) {
+			if(isLanguage(s, 0x0600, 0x06E0)) {		// Arabic
+				lang = "arabic";
+			} else if(isLanguage(s, 0x0980, 0x09FF)) {
+				lang = "bengali";
+			}
+		}
+		return lang;
+	}
+	
+	public static boolean isRtlLanguage(String s) {
+		
+		return isLanguage(s, 0x0600, 0x06E0);
+			
+	}
+	
 	/*
 	 * Return true if the language should be rendered Right to Left
 	 * Based on: http://stackoverflow.com/questions/15107313/how-to-determine-a-string-is-english-or-arabic
 	 */
-	public static boolean isRtlLanguage(String s) {
+	public static boolean isLanguage(String s, int start, int end) {
 		
 		// Check a maximum of 10 characters
 		int len = (s.length() > 10) ? 10 : s.length();
 	    for (int i = 0; i < len;) {
 	        int c = s.codePointAt(i);
-	        if (c >= 0x0600 && c <= 0x06E0)
+	        if (c >= start && c <= end)
 	            return true;
 	        i += Character.charCount(c);            
 	    }
@@ -3374,14 +3459,15 @@ public class GeneralUtilityMethods {
 				+ "and ur.r_id = r.id "
 				+ "and r.o_id = u.o_id "
 				+ "and u.o_id = ? "
-				+ "and r.name = ?";
+				+ "and r.name = ? "
+				+ "and u.temporary = false";
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  oId);
 			pstmt.setString(2,  role);
-			
+			log.info("Get users with role: " + pstmt.toString() );
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				users.add(new KeyValue(rs.getString(1), rs.getString(2)));
@@ -3408,22 +3494,22 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Return true if the question name is in the survey
+	 * Return true if the question column name is in the survey
 	 */
-	public static boolean surveyHasQuestion(Connection sd, int sId, String name) throws SQLException {
+	public static boolean surveyHasColumn(Connection sd, int sId, String columnName) throws SQLException {
 		
 		boolean hasQuestion = false;
 		
 		String sql = "select count(*) from question q "
 				+ "where q.f_id in (select f_id from form where s_id = ?) "
-				+ "and q.qname = ? ";
+				+ "and q.column_name = ? ";
 				
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,  sId);
-			pstmt.setString(2,  name);
+			pstmt.setString(2,  columnName);
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -3438,6 +3524,39 @@ public class GeneralUtilityMethods {
 		}	
 		
 		return hasQuestion;
+	}
+	
+	/*
+	 * Translate a question name to the version used in Kobo
+	 */
+	public static String translateToKobo(String in) {
+		String out = in;
+		
+		if(in.equals("_end")) {
+			out = "end";
+		} else if(in.equals("_start")) {
+			out = "start";
+		} else if(in.equals("_device")) {
+			out = "deviceid";
+		} else if(in.equals("instanceid")) {
+			out = "uuid";
+		}
+		return out;
+	}
+
+	/*
+	 * Set the time on a java date to 23:59 and convert to a Timestamp
+	 */
+	// Set the time on a date to 23:59
+	public static Timestamp endOfDay(Date d) {
+		
+		Calendar cal=Calendar.getInstance();
+		cal.setTime(d);
+		cal.set(Calendar.HOUR_OF_DAY, 23);
+		cal.set(Calendar.MINUTE, 59);
+		Timestamp endOfDay= new Timestamp(cal.getTime().getTime());
+		
+		return endOfDay;
 	}
 
 }

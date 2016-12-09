@@ -3862,10 +3862,22 @@ table.table-mail tr td {
   background-color: #f8ac59;
   color: #ffffff;
 }
+
+.green-bg {
+  background-color: #07bf1a;
+  color: #ffffff;
+}
+
 .red-bg {
   background-color: #ed5565;
   color: #ffffff;
 }
+
+.orange-bg {
+  background-color: #e59216;
+  color: #ffffff;
+}
+
 .black-bg {
   background-color: #262626;
 }

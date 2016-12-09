@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.Row;
+import org.smap.sdal.model.ServerData;
 import org.smap.sdal.model.User;
 
 import com.google.gson.Gson;
@@ -46,7 +48,6 @@ import com.itextpdf.text.List;
 import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -100,14 +101,17 @@ public class PDFSurveyManager {
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
+	public static Font defaultFontBold = null;
 	public static Font arabicFont = null;
+	public static Font bengaliFont = null;
+	public static Font bengaliFontBold = null;
 	private static final String DEFAULT_CSS = "/smap/bin/resources/css/default_pdf.css";
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
 	
-	Font font = new Font(FontFamily.HELVETICA, 10);
-    Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
+	//Font font = new Font(FontFamily.HELVETICA, 10);
+    //Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
@@ -125,6 +129,7 @@ public class PDFSurveyManager {
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
 		boolean hasAppendix = false;
+		String mapbox_key;
 		
 		// Map of questions that need to have the results of another question appended to their results in a pdf report
 		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
@@ -145,7 +150,8 @@ public class PDFSurveyManager {
 			String instanceId,
 			String filename,
 			boolean landscape,					// Set true if landscape
-			HttpServletResponse response) {
+			HttpServletResponse response,
+			int utcOffset) {
 		
 		if(language != null) {
 			language = language.replace("'", "''");	// Escape apostrophes
@@ -157,7 +163,9 @@ public class PDFSurveyManager {
 		User user = null;
 		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
 		
-	
+		ServerManager serverManager = new ServerManager();
+		ServerData serverData = serverManager.getServer(connectionSD);
+		
 		SurveyManager sm = new SurveyManager();
 		UserManager um = new UserManager();
 		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
@@ -170,20 +178,33 @@ public class PDFSurveyManager {
 			
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
-				FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
+				//FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
 				FontFactory.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/Library/Fonts/NotoSans-Regular.ttf", "notosans");
+				FontFactory.register("/Library/Fonts/NotoSans-Bold.ttf", "notosansbold");
+				FontFactory.register("/Library/Fonts/NotoSansBengali-Regular.ttf", "bengali");
+				FontFactory.register("/Library/Fonts/NotoSansBengali-Bold.ttf", "bengalibold");
 			} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 				// Linux / Unix
 				FontFactory.register("/usr/share/fonts/truetype/fontawesome-webfont.ttf", "Symbols");
-				FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "default");
 				FontFactory.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", "arabic");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", "notosans");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", "notosansbold");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", "bengali");
+				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Bold.ttf", "bengalibold");
 			}
 			
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
-			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
+			defaultFont = FontFactory.getFont("notosans", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			defaultFontBold = FontFactory.getFont("notosansbold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			arabicFont = FontFactory.getFont("arabic", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			bengaliFont = FontFactory.getFont("bengali", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 10); 
+			bengaliFontBold = FontFactory.getFont("bengalibold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
 			/*
@@ -191,7 +212,7 @@ public class PDFSurveyManager {
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, "real", superUser);
+					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset, "geojson");
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -236,6 +257,7 @@ public class PDFSurveyManager {
 					getDependencies(gv, survey.instance.results.get(i), survey, i);	
 				}
 			}
+			gv.mapbox_key = serverData.mapbox_default;
 			
 			
 			if(templateFile.exists()) {
@@ -311,7 +333,7 @@ public class PDFSurveyManager {
 				// Add appendix
 				if(gv.hasAppendix) {
 					document.newPage();
-					document.add(new Paragraph("Appendix", fontbold));
+					document.add(new Paragraph("Appendix", defaultFontBold));
 					
 					for(int i = 0; i < survey.instance.results.size(); i++) {
 						processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
@@ -351,7 +373,6 @@ public class PDFSurveyManager {
 			org.smap.sdal.model.Survey survey,
 			int recNumber) {
 		
-		System.out.println("++++ Set dependencies for record: " + record.size() + " : " + recNumber);
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
@@ -366,7 +387,6 @@ public class PDFSurveyManager {
 						String refKey = r.fIdx + "_" + recNumber + "_" + name; 
 						ArrayList<String> deps = gv.addToList.get(refKey);
 						
-						System.out.println("GV: add reference " + refKey );
 						if(deps == null) {
 							deps = new ArrayList<String> ();
 							gv.addToList.put(refKey, deps);
@@ -410,9 +430,10 @@ public class PDFSurveyManager {
 		try {
 			
 			boolean status = false;
-			String value = "";
+			
 			for(Result r : record) {
 				
+				String value = "";
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
@@ -451,8 +472,9 @@ public class PDFSurveyManager {
 							}
 						}
 					}
-				} else if(r.type.equals("image")) {
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, r.value);
+				} else if(r.value != null && r.type.equals("image")) {
+					value = r.value;
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
 					
 				} else {
 					value = r.value;
@@ -460,7 +482,6 @@ public class PDFSurveyManager {
 	
 				if(value != null && !value.equals("") && !r.type.equals("image")) {
 					status = pdfForm.setField(fieldName, value);			
-					log.info("Set field: " + status + " : " + fieldName + " : " + value);
 					if(hideLabel) {
 						pdfForm.removeField(fieldName);
 					}
@@ -521,11 +542,12 @@ public class PDFSurveyManager {
 				if(ad != null) {
 					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 					ad.setProportionalIcon(true);
+					String filename = null;
 					try {
-						String filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
+						filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
 						ad.setImage(Image.getInstance(filename));
 					} catch (Exception e) {
-						log.info("Error: Failed to add signature " + basePath + "/" + user.signature + " to pdf");
+						log.info("Error: Failed to add signature " + filename + " to pdf");
 					}
 					pdfForm.replacePushbuttonField("user_signature", ad.getField());
 				} else {
@@ -568,24 +590,30 @@ public class PDFSurveyManager {
 		
 		
         XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
+       
 		if(os.startsWith("Mac")) {
+			fontProvider.register("/Library/Fonts/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
 	        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-	        FontFactory.register("/Library/Fonts/Arial Unicode.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/Library/Fonts/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H);
 	        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/Library/Fonts/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
+	        
+	        
 		} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 			// Linux / Unix
+			fontProvider.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
+	        fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
 			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-			FontFactory.register("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", BaseFont.IDENTITY_H);
 		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
 		}
- 
+
 		/*
-        System.out.println("Fonts present in " + fontProvider.getClass().getName());
-        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
-        for (String font : registeredFonts)
-            System.out.println(font);
- 		*/
-        
+		 System.out.println("Fonts present in " + fontProvider.getClass().getName());
+	        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
+	        for (String font : registeredFonts)
+	            System.out.println(font);
+        */
         CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
         
         // HTML
@@ -650,7 +678,7 @@ public class PDFSurveyManager {
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
 						// Maintain array list of parent records in order to look up ${values}
-						parentRecords.add(0, record);		// Push this record in at the beginnig of the list as we want to search most recent first
+						parentRecords.add(0, record);		// Push this record in at the beginning of the list as we want to search most recent first
 						repIndexes[depth] = k;
 						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 
@@ -704,34 +732,6 @@ public class PDFSurveyManager {
 		}
 		
 		return;
-	}
-	
-	/*
-	private int processGroup(
-			Parser parser,
-			Document document, 
-			org.smap.sdal.model.Question question, 
-			Label label
-			) throws IOException, DocumentException {
-		
-		
-		StringBuffer html = new StringBuffer();
-		html.append("<span class='group'><h3>");
-		html.append(label.text);
-		html.append("</h3></span>");
-		
-		parser.elements.clear();
-		parser.xmlParser.parse(new StringReader(html.toString()));
-		for(Element element : parser.elements) {
-			document.add(element);
-		}
-		
-		int width = question.getWidth();
-		if(width <= 0) {
-			width = GROUP_WIDTH_DEFAULT;
-		}
-		
-		return width;
 	}
 	
 	/*
@@ -801,7 +801,7 @@ public class PDFSurveyManager {
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
 			PdfPCell c = new PdfPCell();
-			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), font));
+			c.addElement(new Paragraph(String.valueOf(repIndexes[i] + 1), defaultFont));
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 
@@ -811,10 +811,9 @@ public class PDFSurveyManager {
 		int spanCount = NUMBER_TABLE_COLS;
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
-			//di.debug();
+
 			PdfPCell cell = new PdfPCell();
 			cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
-			//PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			// Make sure the last cell extends to the end of the table
@@ -1015,7 +1014,6 @@ public class PDFSurveyManager {
 		
 		for(Result r : record) {
 			if(r.name.equals(name)) {
-				System.out.println("Found matching question: " + r.value);
 				if(r.type.startsWith("select")) {
 					value = "";
 					for(Result rc : r.choices) {
@@ -1083,6 +1081,10 @@ public class PDFSurveyManager {
 						di.labelcaps = true;
 					} else if(appValues[i].equals("pdflabelbold")) {
 						di.labelbold = true;
+					} else if(appValues[i].startsWith("pdfmap")) {			// mapbox map id
+						di.map = getAppValue(appValues[i]);
+					} else if(appValues[i].startsWith("pdflocation")) {
+						di.location = getAppValue(appValues[i]);			// lon,lat,zoom
 					}
 				}
 			}
@@ -1163,6 +1165,14 @@ public class PDFSurveyManager {
 		
 	}
 	
+	String getAppValue(String aValue) {
+		String [] parts = aValue.split("_");
+		if(parts.length >= 2) {
+			return parts[1];   		
+		}
+		else return null;
+	}
+	
 	/*
 	 * Convert the results  and survey definition arrays to display items
 	 */
@@ -1207,12 +1217,12 @@ public class PDFSurveyManager {
 		 
 		// Add label
 		StringBuffer html = new StringBuffer();
-		html.append("<span class='label");
+		html.append("<span class='label ");
 		if(di.labelbold) {
 			html.append(" lbold");
 		}
-		html.append("'>");
 		
+		// Get text value
 		String textValue = "";
 		if(di.text != null && di.text.trim().length() > 0) {
 			textValue = di.text;
@@ -1223,20 +1233,27 @@ public class PDFSurveyManager {
 		if(textValue.charAt(textValue.length() - 1) != ':') {
 			textValue += ":";
 		}
-		
 		if(di.labelcaps) {
 			textValue = textValue.toUpperCase();
 		}
+		
+		// Add language class
+		html.append(GeneralUtilityMethods.getLanguage(textValue));
+		html.append("'>");
+
+		// Add text value
 		html.append(GeneralUtilityMethods.unesc(textValue));
 		html.append("</span>");
 		
 		// Only include hints if we are generating a blank template
 		if(generateBlank) {
-			html.append("<span class='hint'>");
+			html.append("<span class='hint ");
 			if(di.hint != null) {
+				html.append(GeneralUtilityMethods.getLanguage(di.hint));
+				html.append("'>");
 				html.append(GeneralUtilityMethods.unesc(di.hint));
-			html.append("</span>");
 			}
+			html.append("</span>");
 		}
 		
 		parser.elements.clear();
@@ -1318,7 +1335,50 @@ public class PDFSurveyManager {
 			} else {
 				// TODO add empty image
 			}
+		
+		} else if(di.type.equals("geopoint") || di.type.equals("geoshape") || di.type.equals("geotrace") || di.type.startsWith("geopolygon_") || di.type.startsWith("geolinestring_")) {
 			
+			StringBuffer url = new StringBuffer();
+			boolean getMap = false;
+			url.append("https://api.mapbox.com/v4/");
+			if(di.map != null) {
+				url.append(di.map);
+			} else {
+				url.append("mapbox.streets");	// default map
+			}
+			url.append("/");
+			
+			if(di.value != null && di.value.trim().length() > 0) {
+				// GeoJson data
+				url.append("geojson(");
+
+				String jsonValue = di.value;
+				url.append(URLEncoder.encode(jsonValue, "UTF-8"));
+				url.append(")/auto/");
+				getMap = true;
+			} else {
+				// Attempt to get default map boundary from appearance
+				if(di.location != null) {
+					url.append(di.location);
+					url.append("/");
+					getMap = true;
+				}					
+			}
+			
+			if(getMap && gv.mapbox_key == null) {
+				log.info("Mapbox key not specified.  PDF Map not created");
+			}
+			
+			if(getMap) {
+				url.append("500x300.png?access_token=");
+				url.append(gv.mapbox_key);
+				System.out.println(url.toString());
+				Image img = Image.getInstance(url.toString());
+				valueCell.addElement(img);
+			} else {
+				// No map
+				valueCell.addElement(getPara(" ", di, gv, deps));
+			}
 		} else {
 			// Todo process other question types
 			if(di.value == null || di.value.trim().length() == 0) {
@@ -1342,17 +1402,14 @@ public class PDFSurveyManager {
 		boolean hasContent = false;
 		Font f = null;
 		boolean isRtl = false;
+		String lang = "";
 		
-		Paragraph para = new Paragraph("", font);
+		Paragraph para = new Paragraph("", defaultFont);
 
 		if(value != null && value.trim().length() > 0) {
-			if(GeneralUtilityMethods.isRtlLanguage(value)) {
-				f = arabicFont;
-				isRtl = true;
-				
-			} else {
-				f= font;
-			}
+			lang = GeneralUtilityMethods.getLanguage(value);
+			f = getFont(lang);
+			isRtl = isRtl(lang);
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			hasContent = true;
 		}
@@ -1363,15 +1420,13 @@ public class PDFSurveyManager {
 			for(String n : deps) {
 				if(n != null && n.trim().length() > 0) {
 					if(hasContent) {
-						para.add(new Chunk(",", font));
+						para.add(new Chunk(",", defaultFont));
 					}
 					
-					if(GeneralUtilityMethods.isRtlLanguage(n)) {
-						f = arabicFont;
-						isRtl = true;
-						
-					} else {
-						f= font;
+					lang = GeneralUtilityMethods.getLanguage(n);
+					f = getFont(lang);
+					if(!isRtl) {		// Don't override RTL if it has already been set
+						isRtl = isRtl(lang);
 					}
 					para.add(new Chunk(n, f));
 				}
@@ -1379,6 +1434,31 @@ public class PDFSurveyManager {
 			}
 		}
 		return para;
+	}
+	
+	private Font getFont(String lang) {
+		Font f = defaultFont;
+		
+		if(lang.length() > 0) {
+			if(lang.equals("arabic")) {
+				f = arabicFont;
+			} else if(lang.equals("bengali")) {
+				f = bengaliFont;
+			}		
+		} 
+		
+		return f;
+	}
+	
+	private boolean isRtl(String lang) {
+		boolean isRtl = false;
+		
+		if(lang.length() > 0) {
+			if(lang.equals("arabic")) {
+				isRtl = true;
+			} 	
+		} 
+		return isRtl;
 	}
 	
 	private void processSelect(PdfPCell cell, DisplayItem di,
@@ -1394,6 +1474,7 @@ public class PDFSurveyManager {
 		list.setSymbolIndent(24);
 		
 		String stringValue = null;
+		String lang;
 		
 		boolean isSelectMultiple = di.type.equals("select") ? true : false;
 		
@@ -1407,13 +1488,11 @@ public class PDFSurveyManager {
 		 */
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
-				if(GeneralUtilityMethods.isRtlLanguage(aChoice.text)) {
-					f = arabicFont;
-					isRtl = true;
-					
-				} else {
-					f= font;
-				}
+				
+				lang = GeneralUtilityMethods.getLanguage(aChoice.text);
+				f = getFont(lang);
+				isRtl = isRtl(lang);
+				
 				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), f);
 			
 				if(isSelectMultiple) {
@@ -1537,13 +1616,14 @@ public class PDFSurveyManager {
 	private void addValue(Document document, String value, float indent) throws DocumentException {
 		
 		Font f = null;
+		String lang;
+		boolean isRtl;
 		
 		if(value != null && value.trim().length() > 0) {
-			if(GeneralUtilityMethods.isRtlLanguage(value)) {
-				f = arabicFont;		
-			} else {
-				f= font;
-			}
+			lang = GeneralUtilityMethods.getLanguage(value);
+			f = getFont(lang);
+			isRtl = isRtl(lang);
+			
 			Paragraph para = new Paragraph("", f);	
 			para.setIndentationLeft(indent);
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));

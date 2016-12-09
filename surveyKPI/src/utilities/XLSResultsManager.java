@@ -1,5 +1,8 @@
 package utilities;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 /*
 This file is part of SMAP.
 
@@ -19,8 +22,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,8 +42,10 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -58,16 +65,20 @@ public class XLSResultsManager {
 	Workbook wb = null;
 	boolean isXLSX = false;
 	int rowIndex = 0;		// Heading row is 0
+	String basePath = null;
 
 	private class Column {
 		String name;
 		String label;
 		String humanName;
+		String hxlTag;
+		boolean isImage;
 		
-		Column(String n, String l, String h) {
+		Column(String n, String l, String h, String hxlTag) {
 			name = n;
 			label = l;
 			humanName = h;
+			this.hxlTag = hxlTag;
 		}
 	}
 	
@@ -92,14 +103,19 @@ public class XLSResultsManager {
 		ArrayList<TableColumn> columnList = null;
 		
 		@SuppressWarnings("unused")
-		public void debugForm() {
-			System.out.println("Form=============");
-			System.out.println("    f_id:" + f_id);
-			System.out.println("    parent:" + parent);
-			System.out.println("    table_name:" + table_name);
-			System.out.println("    maxRepeats:" + maxRepeats);
-			System.out.println("    visible:" + visible);
-			System.out.println("    flat:" + flat);
+		public void debugForm(String indent) {
+			System.out.println(indent + "Form=============");
+			System.out.println(indent + "    f_id:" + f_id);
+			System.out.println(indent + "    parent:" + parent);
+			System.out.println(indent + "    table_name:" + table_name);
+			System.out.println(indent + "    maxRepeats:" + maxRepeats);
+			System.out.println(indent + "    visible:" + visible);
+			System.out.println(indent + "    flat:" + flat);
+			if(children != null) {
+				for(int i = 0; i < children.size(); i++) {
+					children.get(i).debugForm("      ");
+				}
+			}
 			System.out.println("End Form=============");
 		}
 		
@@ -156,7 +172,7 @@ public class XLSResultsManager {
 			wb = new HSSFWorkbook();
 			isXLSX = false;
 		} else {
-			wb = new XSSFWorkbook();
+			wb = new SXSSFWorkbook(10);
 			isXLSX = true;
 		}
 	}
@@ -175,26 +191,37 @@ public class XLSResultsManager {
 			String language,
 			boolean split_locn,
 			HttpServletRequest request,
-			OutputStream outputStream) throws IOException {
+			OutputStream outputStream,
+			boolean embedImages, 
+			boolean hxl,
+			Date startDate, 
+			Date endDate, 
+			int dateId,
+			boolean superUser) throws Exception {
 		
 		Sheet resultsSheet = wb.createSheet("survey");
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
 		HashMap<String, String> selectMultipleColumnNames = new HashMap<String, String> ();
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 
-		Map<String, CellStyle> styles = createStyles(wb);
+		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		surveyNames = new HashMap<String, String> ();
 		ArrayList<Column> cols = new ArrayList<Column> ();
 		
+		String dateName = null;
+		int dateForm = 0;
 		if(sId != 0) {
 			
 			PreparedStatement pstmt2 = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
-			
+			PreparedStatement pstmtDateFilter = null;
 
-			
 			try {
+				
+				if(embedImages) {
+					basePath = GeneralUtilityMethods.getBasePath(request);
+				}
 				
 				// Prepare statement to get server side includes
 				String sqlSSC = "select ssc.name, ssc.function, ssc.type, ssc.units from ssc ssc, form f " +
@@ -212,9 +239,21 @@ public class XLSResultsManager {
 				
 				HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
-				FormDesc topForm = null;
-							
+				FormDesc topForm = null;	
 				
+				/*
+				 * Get the details on the date filter
+				 */
+				if(dateId > 0) {
+					String sqlDateFilter = "select f_id, column_name from question where q_id = ?";
+					pstmtDateFilter = sd.prepareStatement(sqlDateFilter);
+					pstmtDateFilter.setInt(1, dateId);
+					ResultSet rs = pstmtDateFilter.executeQuery();
+					if(rs.next()) {
+						dateForm = rs.getInt("f_id");
+						dateName = rs.getString("column_name");
+					}
+				}
 				
 				/*
 				 * Get the tables / forms in this survey 
@@ -264,10 +303,9 @@ public class XLSResultsManager {
 				 */
 				formList.add(topForm);		// The top level form
 				addChildren(topForm, forms, formList);
-					
 
 				if(topForm.visible) {
-					cols.add(new Column("prikey", "", "Record"));
+					cols.add(new Column("prikey", "", "Record", null));
 				}
 				
 				/*
@@ -294,8 +332,9 @@ public class XLSResultsManager {
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
-							true		// Include other meta data
-							);
+							true,		// Include other meta data
+							superUser,
+							hxl);
 						
 							
 					for(int k = 0; k < f.maxRepeats; k++) {
@@ -306,6 +345,7 @@ public class XLSResultsManager {
 							String qType = c.type;
 							boolean ro = c.readonly;
 							String humanName = c.humanName;
+							String hxlCode = c.hxlCode;
 							
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
@@ -355,7 +395,7 @@ public class XLSResultsManager {
 							if(!name.equals("prikey") && !skipSelectMultipleOption) {	// Primary key is only added once for all the tables
 								if(f.visible) {	// Add column headings if the form is visible
 						
-									addToHeader(sd, cols, language, humanName, name, qType, split_locn, sId, f,
+									addToHeader(sd, cols, language, humanName, name, hxlCode, qType, split_locn, sId, f,
 											merge_select_multiple);
 									
 								}
@@ -412,7 +452,7 @@ public class XLSResultsManager {
 
 							if(f.visible) {	// Add column headings if the form is visible
 								
-								addToHeader(sd, cols, language, colName, colName, sscType, split_locn, sId, f,
+								addToHeader(sd, cols, language, colName, colName, null, sscType, split_locn, sId, f,
 										merge_select_multiple);
 				
 							}
@@ -469,36 +509,45 @@ public class XLSResultsManager {
 
 				// Write out the column headings
 				if(!language.equals("none")) {	// Add the questions / option labels if requested
-					createHeader(cols, resultsSheet, styles, true);
+					createHeader(cols, resultsSheet, styles, true, false);
 				} 
-				createHeader(cols, resultsSheet, styles, false);	// Add the names
-
+				createHeader(cols, resultsSheet, styles, false, false);	// Add the names
+				if(hxl) {
+					createHeader(cols, resultsSheet, styles, false, true);	// Add the names
+				}
+ 
 				/*
 				 * Add the data
 				 */
 				getData(sd, connectionResults, formList, topForm, split_locn, merge_select_multiple, selMultChoiceNames,
 						cols,
 						resultsSheet,
-						styles);
+						styles,
+						embedImages,
+						sId,
+						startDate, 
+						endDate, 
+						dateName,
+						dateForm);
 	
 			
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "SQL Error", e);
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception", e);
 			} finally {
 				
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
+				try {if (pstmtDateFilter != null) {pstmtDateFilter.close();	}} catch (SQLException e) {	}
 				
-				SDDataSource.closeConnection("surveyKPI-ExportSurvey", sd);
-				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}
 		
 		wb.write(outputStream);
 		outputStream.close();
+		
+		// If XLSX then temporary streaming files need to be deleted
+		if(isXLSX) {
+			((SXSSFWorkbook) wb).dispose();
+		}
 	}
 	
 	/*
@@ -508,7 +557,8 @@ public class XLSResultsManager {
 			ArrayList<Column> cols, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles, 
-			boolean label) {
+			boolean label,
+			boolean hxl) {
 				
 		// Create survey sheet header row
 		Row headerRow = sheet.createRow(rowIndex++);
@@ -520,6 +570,8 @@ public class XLSResultsManager {
             cell.setCellStyle(headerStyle);
             if(label) {
             	cell.setCellValue(col.label);
+            } else if(hxl) {
+            	cell.setCellValue(col.hxlTag);
             } else {
             	cell.setCellValue(col.humanName);
             }
@@ -532,11 +584,16 @@ public class XLSResultsManager {
 	private void closeRecord(
 			ArrayList<String> record, 
 			Sheet sheet, 
-			Map<String, CellStyle> styles) {
+			Map<String, CellStyle> styles,
+			boolean embedImages) throws IOException {
 		
 		CreationHelper createHelper = wb.getCreationHelper();
 		
+		
 		Row row = sheet.createRow(rowIndex++);
+		if(embedImages) {
+			row.setHeight((short) 1000);
+		}
 		CellStyle style = styles.get("default");
 		for(int i = 0; i < record.size(); i++) {
 			String v = record.get(i);
@@ -544,6 +601,37 @@ public class XLSResultsManager {
             Cell cell = row.createCell(i);
             
             if(v != null && (v.startsWith("https://") || v.startsWith("http://"))) {
+            	
+            	if(embedImages) {
+            		if(v.endsWith(".jpg") || v.endsWith(".png")) {
+            			int idx = v.indexOf("attachments");
+            			int idxName = v.lastIndexOf('/');
+            			if(idx > 0 && idxName > 0) {
+            				String fileName = v.substring(idxName);
+	            			String stem = basePath + "/" + v.substring(idx, idxName);
+	            			String imageName = stem + "/thumbs" + fileName + ".jpg";
+	            			try {
+				            	InputStream inputStream = new FileInputStream(imageName);
+				            	byte[] imageBytes = IOUtils.toByteArray(inputStream);
+				            	int pictureureIdx = wb.addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+				            	inputStream.close();
+				            	
+				            	ClientAnchor anchor = createHelper.createClientAnchor();
+				            	anchor.setCol1(i);
+				            	anchor.setRow1(rowIndex - 1);
+				            	anchor.setCol2(i + 1);
+				            	anchor.setRow2(rowIndex);
+				            	//sheet.setColumnWidth(i, 20 * 256);
+				            	Drawing drawing = sheet.createDrawingPatriarch();
+				            	Picture pict = drawing.createPicture(anchor, pictureureIdx);
+				            	//pict.resize();
+	            			} catch (Exception e) {
+	            				log.info("Error: Missing image file: " + imageName);
+	            			}
+            			}
+            		}
+            	} 
+            	
 				cell.setCellStyle(styles.get("link"));
 				if(isXLSX) {
 					XSSFHyperlink url = (XSSFHyperlink)createHelper.createHyperlink(Hyperlink.LINK_URL);
@@ -564,35 +652,6 @@ public class XLSResultsManager {
         }
 	}
 	
-
-
-   /**
-     * create a library of cell styles
-     */
-    private static Map<String, CellStyle> createStyles(Workbook wb){
-        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
-
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        styles.put("header", style);
-
-        style = wb.createCellStyle();
-        style.setWrapText(true);
-        styles.put("default", style);
-        
-		style = wb.createCellStyle();
-		Font linkFont = wb.createFont();
-		linkFont.setUnderline(Font.U_SINGLE);
-	    linkFont.setColor(IndexedColors.BLUE.getIndex());
-	    style.setFont(linkFont);
-	    styles.put("link", style);
-        
-
-        return styles;
-    }
-    
 	private int getMaxRepeats(Connection con, Connection results_con, int sId, int formId)  {
 		int maxRepeats = 1;
 		
@@ -699,6 +758,7 @@ public class XLSResultsManager {
 			String language, 
 			String human_name, 
 			String colName, 
+			String hxlTag,
 			String qType, 
 			boolean split_locn, 
 			int sId, 
@@ -711,16 +771,21 @@ public class XLSResultsManager {
 		}
 		
 		if(split_locn && qType != null && qType.equals("geopoint")) {
-			cols.add(new Column("Latitude", "Latitude", "Latitude"));
-			cols.add(new Column("Longitude", "Longitude", "Longitude"));
+			cols.add(new Column("Latitude", "Latitude", "Latitude", "#geo+lat"));
+			cols.add(new Column("Longitude", "Longitude", "Longitude", "+geo+lon"));
 		} else {
-			cols.add(new Column(colName, label, human_name));
+			Column col = new Column(colName, label, human_name, hxlTag);
+			if(qType.equals("image")) {
+				col.isImage = true;
+			}
+			cols.add(col);
+			
 		}
 		
 	}
 	
 	/*
-	 * Return the text formatted for html or csv
+	 * Return the text
 	 */
 	private ArrayList<String> getContent(Connection con, String value, boolean firstCol, String columnName,
 			String columnType, boolean split_locn) throws NumberFormatException, SQLException {
@@ -756,8 +821,7 @@ public class XLSResultsManager {
 						coords[1] +
 						"&mlon=" +
 						coords[0] +
-						"&zoom=14\">" +
-						value);
+						"&zoom=14");
 			
 			} else {
 				out.add(value);
@@ -800,7 +864,7 @@ public class XLSResultsManager {
 	 * 
 	 * The function is called recursively until the last table
 	 */
-	private void getData(Connection con, 
+	private void getData(Connection sd, 
 			Connection connectionResults, 
 			ArrayList<FormDesc> formList, 
 			FormDesc f,
@@ -809,9 +873,15 @@ public class XLSResultsManager {
 			HashMap<String, String> choiceNames,
 			ArrayList<Column> cols, 
 			Sheet resultsSheet, 
-			Map<String, CellStyle> styles) {
+			Map<String, CellStyle> styles,
+			boolean embedImages,
+			int sId,
+			Date startDate,
+			Date endDate,
+			String dateName,
+			int dateForm) throws Exception {
 		
-		String sql = null;
+		StringBuffer sql = new StringBuffer();
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		//ResultSetMetaData rsMetaData = null;
@@ -819,31 +889,50 @@ public class XLSResultsManager {
 		/*
 		 * Retrieve the data for this table
 		 */
-		sql = "SELECT " + f.columns + " FROM " + f.table_name +
-				" WHERE _bad IS FALSE";		
+		sql.append("select " + f.columns + " from " + f.table_name +
+				" where _bad is false ");		
+		
+		String sqlRestrictToDateRange = null;
+		if(dateName != null && dateForm == Integer.parseInt(f.f_id)) {	
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, f.table_name + "." + dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql.append("and ");
+				sql.append(sqlRestrictToDateRange);
+			}
+		}
 		
 		if(f.parkey != null && !f.parkey.equals("0")) {
-			sql += " AND parkey=?";
+			sql.append(" and parkey=?");
 		}
-		sql += " ORDER BY prikey ASC;";	
+		sql.append(" order by prikey asc");	
 		
 		try {
-			pstmt = connectionResults.prepareStatement(sql);
+			pstmt = connectionResults.prepareStatement(sql.toString());
+			// if date filter is set then add it
+			int paramCount = 1;
+			if(sqlRestrictToDateRange != null && sqlRestrictToDateRange.trim().length() > 0) {
+				if(startDate != null) {
+					pstmt.setDate(paramCount++, startDate);
+				}
+				if(endDate != null) {
+					pstmt.setTimestamp(paramCount++, GeneralUtilityMethods.endOfDay(endDate));
+				}
+			}
 			if(f.parkey != null) {
-				pstmt.setInt(1, Integer.parseInt(f.parkey));
+				pstmt.setInt(paramCount++, Integer.parseInt(f.parkey));
 			}
 			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			while (resultSet.next()) {
-
+				
 				String prikey = resultSet.getString(1);
 				ArrayList<String> record = new ArrayList<String>();
 				
 				// If this is the top level form reset the current parents and add the primary key
 				if(f.parkey == null || f.parkey.equals("0")) {
 					f.clearRecords();
-					record.addAll(getContent(con, prikey, true, "prikey", "key", split_locn));
+					record.addAll(getContent(sd, prikey, true, "prikey", "key", split_locn));
 				}
 				
 				
@@ -877,10 +966,10 @@ public class XLSResultsManager {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -890,16 +979,16 @@ public class XLSResultsManager {
 						} else {
 							if(multipleChoiceValue != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.addAll(getContent(con, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;
 								currentSelectMultipleQuestionName = null;
 							}
-							record.addAll(getContent(con, value, false, columnName, columnType, split_locn));
+							record.addAll(getContent(sd, value, false, columnName, columnType, split_locn));
 						}
 					} else {
-						record.addAll(getContent(con, value, false, columnName, columnType, split_locn));
+						record.addAll(getContent(sd, value, false, columnName, columnType, split_locn));
 					}
 				}
 				f.addRecord(prikey, f.parkey, record);
@@ -909,8 +998,9 @@ public class XLSResultsManager {
 					for(int j = 0; j < f.children.size(); j++) {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
-						getData(con, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
-								cols, resultsSheet, styles);
+						getData(sd, connectionResults, formList, nextForm, split_locn, merge_select_multiple, choiceNames,
+								cols, resultsSheet, styles, embedImages, 
+								sId, startDate, endDate, dateName, dateForm);
 					}
 				}
 				
@@ -923,16 +1013,12 @@ public class XLSResultsManager {
 				if(f.parkey == null || f.parkey.equals("0")) {
 					
 					//f.printRecords(4, true);
-					appendToOutput(con, new ArrayList<String> (), 
-							formList.get(0), formList, 0, null, resultsSheet, styles);
+					appendToOutput(sd, new ArrayList<String> (), 
+							formList.get(0), formList, 0, null, resultsSheet, styles, embedImages);
 					
 				}
 			}
 			
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
 		} finally {
 			try{
 				if(resultSet != null) {resultSet.close();};
@@ -951,8 +1037,9 @@ public class XLSResultsManager {
 			FormDesc f, ArrayList<FormDesc> formList, int index, 
 			String parent,
 			Sheet resultsSheet, 
-			Map<String, CellStyle> styles
-			) throws NumberFormatException, SQLException {
+			Map<String, CellStyle> styles,
+			boolean embedImages
+			) throws NumberFormatException, SQLException, IOException {
 
 		int number_records = 0;
 		if(f.records != null) {
@@ -980,9 +1067,9 @@ public class XLSResultsManager {
 
 				if(index < formList.size() - 1) {
 					appendToOutput(sd,  newRec , formList.get(index + 1), 
-							formList, index + 1, null, resultsSheet, styles);
+							formList, index + 1, null, resultsSheet, styles, embedImages);
 				} else {
-					closeRecord(newRec, resultsSheet, styles);
+					closeRecord(newRec, resultsSheet, styles, embedImages);
 				}
 				
 			} else {
@@ -1003,9 +1090,9 @@ public class XLSResultsManager {
 						FormDesc nextForm = formList.get(index + 1);
 						String filter = null;
 						
-						appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+						appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 					} else {
-						closeRecord(in, resultsSheet, styles);
+						closeRecord(in, resultsSheet, styles, embedImages);
 					}
 				} else {
 					/*
@@ -1037,9 +1124,9 @@ public class XLSResultsManager {
 								if(nextForm.parent.equals(f.f_id)) {
 									filter = rd.prikey;
 								}
-								appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+								appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 							} else {
-								closeRecord(newRec, resultsSheet, styles);
+								closeRecord(newRec, resultsSheet, styles, embedImages);
 							} 
 						} else {
 							/*
@@ -1065,14 +1152,14 @@ public class XLSResultsManager {
 									FormDesc nextForm = formList.get(index + 1);
 									String filter = null;
 									
-									appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles);
+									appendToOutput(sd, newRec , nextForm, formList, index + 1, filter, resultsSheet, styles, embedImages);
 								} else {
 									/*
 									 * Add the record if there are no matching records for this form
 									 * This means that if a child form was not completed the main form will still be shown (outer join)
 									 */
 									if(!hasMatchingRecord) {
-										closeRecord(in, resultsSheet, styles);
+										closeRecord(in, resultsSheet, styles, embedImages);
 									}
 								}
 							}
@@ -1085,9 +1172,9 @@ public class XLSResultsManager {
 			// Proceed with any lower level forms
 			if(index < formList.size() - 1) {
 				appendToOutput(sd,  in , formList.get(index + 1), 
-						formList, index + 1, null, resultsSheet, styles);
+						formList, index + 1, null, resultsSheet, styles, embedImages);
 			} else {
-				closeRecord(in, resultsSheet, styles);
+				closeRecord(in, resultsSheet, styles, embedImages);
 			}
 		}
 		

@@ -43,6 +43,7 @@ public class Organisation {
 	public String default_email_content;
 	public String website;
 	public String locale;
+	public String timeZone;
 	
 	public String getAdminEmail() {
 		

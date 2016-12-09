@@ -6,21 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.commons.fileupload.FileItem;
 import org.smap.sdal.Utilities.MediaInfo;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.Organisation;
-import org.smap.sdal.model.Project;
-import org.smap.sdal.model.User;
-import org.smap.sdal.model.UserGroup;
 
 /*****************************************************************************
 
@@ -50,7 +41,7 @@ public class OrganisationManager {
 			 Logger.getLogger(OrganisationManager.class.getName());
 
 	/*
-	 * Create a new organisation
+	 * Update a new organisation
 	 */
 	public void updateOrganisation(
 			Connection connectionSD,
@@ -83,6 +74,8 @@ public class OrganisationManager {
 				" email_port = ?, " +
 				" default_email_content = ?, " +
 				" website = ?, " +
+				" locale = ?, " +
+				" timezone = ?, " +
 				" changed_by = ?, " + 
 				" changed_ts = now() " + 
 				" where " +
@@ -112,8 +105,10 @@ public class OrganisationManager {
 			pstmt.setInt(18, o.email_port);
 			pstmt.setString(19, o.default_email_content);
 			pstmt.setString(20, o.website);
-			pstmt.setString(21, userIdent);
-			pstmt.setInt(22, o.id);
+			pstmt.setString(21, o.locale);
+			pstmt.setString(22, o.timeZone);
+			pstmt.setString(23, userIdent);
+			pstmt.setInt(24, o.id);
 					
 			log.info("Update organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -164,8 +159,8 @@ public class OrganisationManager {
 				"company_email, " +
 				"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
 				"ft_sync_incomplete, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
-				"email_port, default_email_content, website, changed_ts) " +
-				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";	
+				"email_port, default_email_content, website, locale, timezone, changed_ts) " +
+				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";	
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -210,6 +205,12 @@ public class OrganisationManager {
 			pstmt.setInt(19, o.email_port);
 			pstmt.setString(20, o.default_email_content);
 			pstmt.setString(21, o.website);
+			pstmt.setString(22, o.locale);
+			
+			if(o.timeZone == null || o.timeZone.trim().length() == 0) {
+				o.timeZone = "UTC";			// Default time zone for organisation
+			}
+			pstmt.setString(23, o.timeZone);
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			

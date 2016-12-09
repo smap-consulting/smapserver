@@ -183,7 +183,7 @@ public class UtilityMethodsEmail {
 		
 		String sqlOrganisation = "select o.id, o.name, o.company_name, o.admin_email, o.smtp_host, " +
 				" o.email_domain, o.default_email_content,"
-				+ "o.locale, o.company_email " +
+				+ "o.locale, o.company_email, o.timezone " +
 				" from organisation o, users u " +
 				" where u.o_id = o.id ";
 		String sqlUser = " and u.ident = ?;";
@@ -217,6 +217,7 @@ public class UtilityMethodsEmail {
 				o.default_email_content = rs.getString(7);
 				o.locale = rs.getString(8);
 				o.company_email = rs.getString(9);
+				o.timeZone = rs.getString(10);
 				
 				if(o.locale == null) {
 					o.locale = "en";

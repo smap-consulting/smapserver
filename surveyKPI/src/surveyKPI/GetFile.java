@@ -88,10 +88,10 @@ public class GetFile extends Application {
 		Response r = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("Get Organisation File");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		try {		
-			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser());
+			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
 		} catch(Exception e) {
 			// ignore error
 		}
@@ -105,7 +105,6 @@ public class GetFile extends Application {
 		try {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
-			System.out.println("Getting file: " + filepath);
 			getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
@@ -114,7 +113,7 @@ public class GetFile extends Application {
 			log.info("Error getting file:" + e.getMessage());
 			r = Response.serverError().build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Organisation File", connectionSD);	
 		}
 		
 		return r;
@@ -140,7 +139,7 @@ public class GetFile extends Application {
 		Response r = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("Get Users File");	
 		a.isAuthorised(connectionSD, request.getRemoteUser());		
 		try {		
 			uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
@@ -169,7 +168,7 @@ public class GetFile extends Application {
 			log.info("Error getting file:" + e.getMessage());
 			r = Response.serverError().build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Users File", connectionSD);	
 		}
 		
 		return r;
@@ -198,16 +197,20 @@ public class GetFile extends Application {
 
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("getFile");	
+		Connection connectionSD = SDDataSource.getConnection("Get Survey File");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation 
 		
 		try {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 			String filepath = basepath + "/media/" + sIdent+ "/" + filename;
-			System.out.println("Getting file: " + filepath + " linked is: " + linked);
 			
 			getFile(response, filepath, filename);
 			
@@ -217,7 +220,7 @@ public class GetFile extends Application {
 			log.log(Level.SEVERE, "Error getting file", e);
 			r = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
 		} finally {	
-			SDDataSource.closeConnection("getFile", connectionSD);	
+			SDDataSource.closeConnection("Get Survey File", connectionSD);	
 		}
 		
 		return r;

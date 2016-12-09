@@ -18,6 +18,7 @@ import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.CustomReportItem;
+import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,7 +56,7 @@ public class CustomReportsManager {
 	 */
 	public void save(Connection sd, 
 			String reportName, 
-			ArrayList<TableColumn> config, 
+			String config, 
 			int oId,
 			String type) throws Exception {
 		
@@ -64,13 +65,10 @@ public class CustomReportsManager {
 		
 		try {
 			
-			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-			String configString = gson.toJson(config);
-
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, oId);
 			pstmt.setString(2, reportName);
-			pstmt.setString(3, configString);
+			pstmt.setString(3, config);
 			pstmt.setString(4,  type);
 			
 			log.info(pstmt.toString());
@@ -86,12 +84,14 @@ public class CustomReportsManager {
 	/*
 	 * get a list of reports for a select list
 	 */
-	public ArrayList<CustomReportItem> getList(Connection sd, int oId, String type) throws SQLException {
+	public ArrayList<CustomReportItem> getList(Connection sd, int oId, 
+			String type, boolean negateType) throws SQLException {
 		
 		ArrayList<CustomReportItem> reports = new ArrayList<CustomReportItem> ();
 		
 		String sql1 = "select id, name, type from custom_report where o_id = ? ";
 		String sql2 = "and type = ? ";
+		String sql2b = "and type != ? ";
 		String sql3 = "order by name asc";
 		
 		PreparedStatement pstmt = null;
@@ -99,7 +99,11 @@ public class CustomReportsManager {
 		try {
 			
 			if(type != null) {
-				pstmt = sd.prepareStatement(sql1 + sql2 + sql3);
+				if(negateType) {
+					pstmt = sd.prepareStatement(sql1 + sql2b + sql3);
+				} else {
+					pstmt = sd.prepareStatement(sql1 + sql2 + sql3);
+				}
 			} else {
 				pstmt = sd.prepareStatement(sql1 + sql3);
 			}
@@ -132,9 +136,53 @@ public class CustomReportsManager {
 	/*
 	 * Get a report from the database
 	 */
-	public ArrayList<TableColumn> get(Connection sd, int crId) throws Exception {
+	public ArrayList<TableColumn> get(Connection sd, int crId, int oId) throws Exception {
 		
 		ArrayList<TableColumn> config = null;
+		String sql = null;
+		if(oId > 0) {
+			sql = "select config from custom_report where id = ? and o_id = ?";
+		} else {
+			sql = "select config from custom_report where id = ?";	// trusted organisation
+		}
+		PreparedStatement pstmt = null;
+		
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, crId);
+			if(oId > 0) {
+				pstmt.setInt(2, oId);
+			}
+			
+			log.info(pstmt.toString());
+			pstmt.executeQuery();
+			
+			String configString = null;
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				configString = rs.getString(1);
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();
+				config = gson.fromJson(configString, type);
+			}
+			
+			
+		} catch (SQLException e) {
+			throw(new Exception(e.getMessage()));
+		} finally {
+			try {pstmt.close();} catch(Exception e) {};
+		}
+		
+		return config;
+	}
+	
+	/*
+	 * Get a report from the database
+	 */
+	public LQAS getLQASReport(Connection sd, int crId) throws Exception {
+		
+		LQAS config = null;
 		String sql = "select config from custom_report where id = ?";
 		PreparedStatement pstmt = null;
 		
@@ -150,9 +198,8 @@ public class CustomReportsManager {
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				configString = rs.getString(1);
-				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-				Type type = new TypeToken<ArrayList<TableColumn>>(){}.getType();
-				config = gson.fromJson(configString, type);
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();		
+				config = gson.fromJson(configString, LQAS.class);
 			}
 			
 			

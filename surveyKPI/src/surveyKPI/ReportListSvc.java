@@ -87,13 +87,6 @@ public class ReportListSvc extends Application {
 	private static Logger log =
 			 Logger.getLogger(ReportListSvc.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(ReportListSvc.class);
-		return s;
-	}
-	
 	private class ImageDim {
 		int width = 0;
 		int height = 0;
@@ -1121,7 +1114,6 @@ public class ReportListSvc extends Application {
 		resp.append("</div>");	// End of report meta
 		resp.append("<div stye=\"clear: both;\"></div>");
 		
-		System.out.println("Meta response:" + resp.toString());
 		return resp.toString();
 	}
 	

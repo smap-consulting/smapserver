@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,6 +29,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 
 /*
@@ -152,6 +155,9 @@ public class ExportSurvey extends Application {
 			@QueryParam("format") String format,
 			@QueryParam("exp_ro") boolean exp_ro,
 			@QueryParam("forms") String include_forms,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId,
 			
 			@Context HttpServletResponse response) {
 
@@ -180,8 +186,13 @@ public class ExportSurvey extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to XLS");
@@ -388,7 +399,9 @@ public class ExportSurvey extends Application {
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
-							true		// Include other meta data
+							true,		// Include other meta data
+							superUser,
+							false		// TODO add HXL export processing
 							);
 						
 							
@@ -571,7 +584,21 @@ public class ExportSurvey extends Application {
 				/*
 				 * Add the data
 				 */
-				getData(sd, connectionResults, outWriter, formList, topForm, flat, split_locn, merge_select_multiple, selMultChoiceNames);
+				getData(sd, 
+						connectionResults, 
+						sId,
+						request.getRemoteUser(),
+						outWriter, 
+						formList, 
+						topForm, 
+						flat, 
+						split_locn, 
+						merge_select_multiple, 
+						selMultChoiceNames,
+						startDate,
+						endDate,
+						dateId,
+						superUser);
 				outWriter.print("</tbody><table></body></html>");
 				
 				log.info("Content Type:" + response.getContentType());
@@ -783,29 +810,87 @@ public class ExportSurvey extends Application {
 	 * 
 	 * The function is called recursively until the last table
 	 */
-	private void getData(Connection con, Connection connectionResults, PrintWriter outWriter, 
-			ArrayList<FormDesc> formList, FormDesc f, boolean flat, boolean split_locn, boolean merge_select_multiple, HashMap<String, String> choiceNames) {
+	private void getData(
+			Connection sd, 
+			Connection connectionResults, 
+			int sId,
+			String user,
+			PrintWriter outWriter, 
+			ArrayList<FormDesc> formList, 
+			FormDesc f, 
+			boolean flat, 
+			boolean split_locn, 
+			boolean merge_select_multiple, 
+			HashMap<String, String> choiceNames,
+			Date startDate,
+			Date endDate,
+			int dateId,
+			boolean superUser) throws SQLException {
 		
-		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
-		//ResultSetMetaData rsMetaData = null;
+		boolean hasRbacFilter = false;
+		RoleManager rm = new RoleManager();
+		ArrayList<SqlFrag> rfArray = null;
 		
 		/*
 		 * Retrieve the data for this table
 		 */
-		sql = "SELECT " + f.columns + " FROM " + f.table_name +
-				" WHERE _bad IS FALSE";		
+		StringBuffer sql = new StringBuffer("");
+		sql.append("select ");
+		sql.append(f.columns);
+		sql.append(" from ");
+		sql.append(f.table_name);
+		sql.append(" where _bad is false ");				
+		
+		String sqlRestrictToDateRange = null;
+		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
+			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
+			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, dateName);
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql.append("and ");
+				sql.append(sqlRestrictToDateRange);
+			}
+		}
+		
 		
 		if(f.parkey != null && !f.parkey.equals("0")) {
-			sql += " AND parkey=?";
+			sql.append(" and parkey=?");
+		} else {
+			// RBAC filter
+			if(!superUser) {
+				rfArray = rm.getSurveyRowFilter(sd, sId, user);
+				if(rfArray.size() > 0) {
+					String rFilter = rm.convertSqlFragsToSql(rfArray);
+					if(rFilter.length() > 0) {
+						sql.append(" and ");
+						sql.append(rFilter);
+						hasRbacFilter = true;
+					}
+				}
+			}
 		}
-		sql += " ORDER BY prikey ASC;";	
+			
+		sql.append(" order by prikey asc");	
 		
 		try {
-			pstmt = connectionResults.prepareStatement(sql);
+			pstmt = connectionResults.prepareStatement(sql.toString());
+			int paramCount = 1;
+			
+			// if date filter is set then add it
+			if(sqlRestrictToDateRange != null && sqlRestrictToDateRange.trim().length() > 0) {
+				if(startDate != null) {
+					pstmt.setDate(paramCount++, startDate);
+				}
+				if(endDate != null) {
+					pstmt.setTimestamp(paramCount++, GeneralUtilityMethods.endOfDay(endDate));
+				}
+			}
+			
 			if(f.parkey != null) {
-				pstmt.setInt(1, Integer.parseInt(f.parkey));
+				pstmt.setInt(paramCount++, Integer.parseInt(f.parkey));
+			} else if(hasRbacFilter) {
+				paramCount = rm.setRbacParameters(pstmt, rfArray, paramCount);
 			}
 			log.info("Get data: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -818,7 +903,7 @@ public class ExportSurvey extends Application {
 				// If this is the top level form reset the current parents and add the primary key
 				if(f.parkey == null || f.parkey.equals("0")) {
 					f.clearRecords();
-					record.append(getContent(con, prikey, false, true, "prikey", "key", split_locn));
+					record.append(getContent(sd, prikey, false, true, "prikey", "key", split_locn));
 				}
 				
 				
@@ -852,10 +937,10 @@ public class ExportSurvey extends Application {
 								//  Its the end of the record		
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
-								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -865,16 +950,16 @@ public class ExportSurvey extends Application {
 						} else {
 							if(multipleChoiceValue != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.append(getContent(con, multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;
 								currentSelectMultipleQuestionName = null;
 							}
-							record.append(getContent(con, value, false, false, columnName, columnType, split_locn));
+							record.append(getContent(sd, value, false, false, columnName, columnType, split_locn));
 						}
 					} else {
-						record.append(getContent(con, value, false, false, columnName, columnType, split_locn));
+						record.append(getContent(sd, value, false, false, columnName, columnType, split_locn));
 					}
 				}
 				f.addRecord(prikey, f.parkey, record);
@@ -884,7 +969,22 @@ public class ExportSurvey extends Application {
 					for(int j = 0; j < f.children.size(); j++) {
 						FormDesc nextForm = f.children.get(j);
 						nextForm.parkey = prikey;
-						getData(con, connectionResults, outWriter, formList, nextForm, flat, split_locn, merge_select_multiple, choiceNames);
+						getData(
+								sd, 
+								connectionResults, 
+								sId,
+								user,
+								outWriter, 
+								formList, 
+								nextForm, 
+								flat, 
+								split_locn, 
+								merge_select_multiple, 
+								choiceNames,
+								startDate,
+								endDate,
+								dateId,
+								superUser);
 					}
 				}
 				
@@ -898,7 +998,7 @@ public class ExportSurvey extends Application {
 					
 					//f.printRecords(4, true);
 					
-					appendToOutput(con, outWriter, new StringBuffer(""), formList.get(0), formList, 0, null);
+					appendToOutput(sd, outWriter, new StringBuffer(""), formList.get(0), formList, 0, null);
 					
 				}
 			}

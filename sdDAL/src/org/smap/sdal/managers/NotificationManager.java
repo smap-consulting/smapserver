@@ -5,6 +5,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -14,8 +18,6 @@ import java.util.logging.Logger;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
-import javax.servlet.http.HttpServletRequest;
-
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
@@ -218,8 +220,6 @@ public class NotificationManager {
 				" from forward f, survey s, users u, user_project up, project p " +
 				" where u.id = up.u_id" +
 				" and p.id = up.p_id" +
-				" and up.restricted = false " +
-				" and up.allocated = true " +
 				" and s.p_id = up.p_id" +
 				" and s.s_id = f.s_id" +
 				" and u.ident = ? " +
@@ -295,6 +295,7 @@ public class NotificationManager {
 			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
+			String scheme,
 			String serverName,
 			String basePath,
 			int sId,
@@ -312,7 +313,6 @@ public class NotificationManager {
 		 * 4. Update upload event table to show that notifications have been applied
 		 */
 		
-		ResultSet rs = null;
 		ResultSet rsNotifications = null;		
 		
 		log.info("notifyForSubmission:: " + ue_id);
@@ -338,7 +338,21 @@ public class NotificationManager {
 		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, remoteUser);
 		Locale locale = new Locale(organisation.locale);
 		ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-			
+		
+		// Time Zone
+		int utcOffset = 0;	
+		LocalDateTime dt = LocalDateTime.now();
+		if(organisation.timeZone != null) {
+			try {
+				ZoneId zone = ZoneId.of(organisation.timeZone);
+			    ZonedDateTime zdt = dt.atZone(zone);
+			    ZoneOffset offset = zdt.getOffset();
+			    utcOffset = offset.getTotalSeconds() / 60;
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+			}
+		}
+		
 		pstmtGetNotifications.setInt(1, sId);
 		log.info("Get notifications:: " + pstmtGetNotifications.toString());
 		rsNotifications = pstmtGetNotifications.executeQuery();
@@ -388,7 +402,8 @@ public class NotificationManager {
 							instanceId,
 							null,
 							landscape,
-							null);
+							null,
+							utcOffset);
 					
 					logContent = filePath;
 					
@@ -486,6 +501,7 @@ public class NotificationManager {
 								filename,
 								organisation.getAdminEmail(), 
 								emailServer,
+								scheme,
 								serverName,
 								localisation);
 					} catch(Exception e) {

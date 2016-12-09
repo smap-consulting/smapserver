@@ -58,6 +58,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -130,13 +131,15 @@ public class Items extends Application {
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Items");
 		int sId = 0;
+		boolean superUser = false;
 		try {
 			sId = GeneralUtilityMethods.getSurveyIdForm(sd, fId);
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 			
 		}
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "View Results");
@@ -220,7 +223,9 @@ public class Items extends Application {
 						true,	// Include parent key
 						true,	// Include "bad"
 						true,	// Include instanceId
-						true	// Include other meta data
+						true,	// Include other meta data
+						superUser,
+						false		// HXL only include with XLS exports
 						);		
 				
 				// Construct a new query that retrieves a geometry object as geoJson
@@ -347,27 +352,30 @@ public class Items extends Application {
 				 * Add row filtering performed by RBAC
 				 */
 				RoleManager rm = new RoleManager();
-				ArrayList<SqlFrag> rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
-				String rfString = "";
-				if(rfArray.size() > 0) {
-					for(SqlFrag rf : rfArray) {
-						if(rf.columns.size() > 0) {
-							for(int i = 0; i < rf.columns.size(); i++) {
-								int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
-								QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
-								tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+				ArrayList<SqlFrag> rfArray = null;
+				if(!superUser) {
+					rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
+					String rfString = "";
+					if(rfArray.size() > 0) {
+						for(SqlFrag rf : rfArray) {
+							if(rf.columns.size() > 0) {
+								for(int i = 0; i < rf.columns.size(); i++) {
+									int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
+									QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
+									tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+								}
+								if(rfString.length() > 0) {
+									rfString += " or";
+								}
+								rfString += " (" + rf.sql.toString() + ")";
+								hasRbacRowFilter = true;
 							}
-							if(rfString.length() > 0) {
-								rfString += " or";
-							}
-							rfString += " (" + rf.sql.toString() + ")";
-							hasRbacRowFilter = true;
 						}
-					}
-					if(sqlFilter.length() > 0) {
-						sqlFilter += " and " + "(" + rfString + ")";
-					} else {
-						sqlFilter = "(" + rfString + ")";
+						if(sqlFilter.length() > 0) {
+							sqlFilter += " and " + "(" + rfString + ")";
+						} else {
+							sqlFilter = "(" + rfString + ")";
+						}
 					}
 				}
 				
@@ -413,7 +421,7 @@ public class Items extends Application {
 					whereClause += sqlFilter;
 				}
 				if(date != null) {
-					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getTableName(), date.getColumnName());
+					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getColumnName());
 					if(sqlRestrictToDateRange.trim().length() > 0) {
 						if(doneWhere) {
 							whereClause += " and ";
@@ -457,7 +465,7 @@ public class Items extends Application {
 						pstmt.setDate(attribIdx++, startDate);
 					}
 					if(endDate != null) {
-						pstmt.setDate(attribIdx++, endDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 					}
 				}
 				
@@ -562,7 +570,7 @@ public class Items extends Application {
 						pstmt.setDate(attribIdx++, startDate);
 					}
 					if(endDate != null) {
-						pstmt.setDate(attribIdx++, endDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
 					}
 				}
 				
@@ -587,6 +595,8 @@ public class Items extends Application {
 				}
 			} catch (JSONException e) {
 				log.log(Level.SEVERE,"JSON Error", e);
+			} catch (Exception e) {
+				log.log(Level.SEVERE,"Error", e);
 			} finally {
 				
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
@@ -627,8 +637,13 @@ public class Items extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Items");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Connection cRel = null; 

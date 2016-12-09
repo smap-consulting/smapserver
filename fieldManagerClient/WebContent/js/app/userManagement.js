@@ -42,6 +42,8 @@ $(document).ready(function() {
 	getProjects();
 	getLoggedInUser(userKnown, false, false, getOrganisations);
 	
+	getAvailableTimeZones($('#o_tz'), showTimeZones);
+	
 	// Add change event on group and project filter
 	$('#group_name, #project_name').change(function() {
 		var group=$('#group_name').val(), 
@@ -307,19 +309,6 @@ $(document).ready(function() {
 		project.name = $('#p_name').val();
 		project.desc = $('#p_desc').val();
 		project.tasks_only = $('#p_tasks_only').is(':checked');
-		if(globals.gIsSecurityAdministrator) {
-			project.applyRestrictions = true;
-			project.restrictUsers = [];
-			$('input', '.restricted_users_list').each(function() {
-				var $this = $(this),
-					isChecked = $this.is(':checked');
-				
-				if(!isChecked) {
-					project.restrictUsers.push($this.val());
-				}
-				
-			});
-		}
 	  		
 		projectList[0] = project;
 		var projectString = JSON.stringify(projectList);
@@ -434,6 +423,8 @@ $(document).ready(function() {
 		organisation.email_password = $('#o_email_password').val();
 		organisation.email_port = parseInt($('#o_email_port').val());
 		organisation.default_email_content = $('#o_default_email_content').val();
+		organisation.locale = $('#o_language').val();
+		organisation.timeZone = $('#o_tz').val();
 	
 		if(typeof organisation.email_port !== "number") {
 			organisation.email_port = 0;
@@ -864,16 +855,6 @@ function openProjectDialog(existing, projectIndex) {
 		$('#p_tasks_only').prop('checked', globals.gProjectList[projectIndex].tasks_only);
 	}
 	
-	/*
-	if(globals.gIsSecurityAdministrator && projectIndex >= 0) {
-		$('.restricted_users').show();	
-		addRestrictedUsers(".restricted_users_list", globals.gProjectList[projectIndex].id);
-	} else {
-		$('.restricted_users').hide();
-	}
-	*/
-	$('.restricted_users').hide();
-	
 	$('#create_project_popup').modal("show");
 }
 
@@ -893,55 +874,7 @@ function openRoleDialog(existing, roleIndex) {
 	$('#create_role_popup').modal("show");
 }
 
-/*
-function addRestrictedUsers(elem, pId) {
-	
-	addHourglass();
-	$.ajax({
-		url: "/surveyKPI/userList/" + pId + "/restricted",
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			
-			var h = [],
-			idx = -1,
-			$elem = $(elem);
 
-			for(i = 0; i < data.length; i++) {
-				h[++idx] = '<div class="col-sm-10 col-sm-offset-2">';
-				h[++idx] = '<div class="checkbox"><label>';
-				h[++idx] = '<input type="checkbox" id="'; 
-				h[++idx] = 'user_projects_cb' + i;
-				h[++idx] = '" name="';
-				h[++idx] = 'user_projects_cb';
-				h[++idx] = '" value="';
-				h[++idx] = data[i].id + '"';
-				
-				if(!data[i].restricted) {
-					h[++idx] = ' checked="checked"';
-				}
-				
-				h[++idx] = '/>';
-				h[++idx] = data[i].name;
-				h[++idx] = '</label></div>';
-				h[++idx] = '</div>';
-			}
-			$elem.empty().append(h.join(''));
-			
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert("Error: Failed to get list of users: " + err);
-			}
-		}
-	});	
-	
-}
-*/
 /*
  * Show the organisation dialog
  */
@@ -985,6 +918,8 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_sync_incomplete;
 			}
 		});
+		addLanguageOptions($('#o_language'), org.locale);
+		$('#o_tz').val(org.timeZone);
 		gOrgId = org.id;
 		setBannerLogo(org.id);
 
@@ -1741,7 +1676,7 @@ function deleteOrganisations () {
 	});
 
 	
-	decision = confirm(localise.set["mesg_del_orgs"] + "\n" + h.join());
+	decision = confirm(localise.set["msg_del_orgs"] + "\n" + h.join());
 	if (decision === true) {
 		addHourglass();
 		$.ajax({

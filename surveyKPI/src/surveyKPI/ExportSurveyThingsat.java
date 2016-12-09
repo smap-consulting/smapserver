@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -49,7 +50,7 @@ import com.google.gson.Gson;
  * Various types of export related to a survey
  *    
  */
-@Path("/exportSurveyThingsat/{sId}/{filename}")
+@Path("/deprected/exportSurveyThingsat/{sId}/{filename}")
 public class ExportSurveyThingsat extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
@@ -58,14 +59,6 @@ public class ExportSurveyThingsat extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyThingsat.class.getName());
-	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Items.class);
-		return s;
-	}
-	
 	
 	/*
 	 * Export as:
@@ -78,7 +71,10 @@ public class ExportSurveyThingsat extends Application {
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("form") int fId,
-			@QueryParam("language") String language) throws IOException {
+			@QueryParam("language") String language,
+			@QueryParam("from") Date startDate,
+			@QueryParam("to") Date endDate,
+			@QueryParam("dateId") int dateId) throws IOException {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -100,8 +96,13 @@ public class ExportSurveyThingsat extends Application {
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+		} catch (Exception e) {
+		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false);
+		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as Neo4J");
@@ -164,7 +165,13 @@ public class ExportSurveyThingsat extends Application {
 					false,
 					true,
 					request.getServerName().toLowerCase(),
-					null);
+					null,
+					null,
+					request.getRemoteUser(),
+					startDate,
+					endDate,
+					dateId,
+					superUser);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();
@@ -182,20 +189,11 @@ public class ExportSurveyThingsat extends Application {
 			things.localLoad();
 			
 			File file = new File(filepath + ".zip");
-            byte [] fileData = new byte[(int)file.length()];
-            DataInputStream dis = new DataInputStream(new FileInputStream(file));
-            dis.readFully(fileData);
-            dis.close();
-            
-            builder.header("Content-type","application/zip");
-          	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
-          	
-			builder.entity(fileData);
-				
-			response = builder.build();
-	
-
-		
+        	builder = Response.ok(file);
+        	builder.header("Content-type","application/zip");
+        	builder.header("Content-Disposition", "attachment;Filename=\"" + escapedFileName + ".zip\"");
+        	response = builder.build();
+        	
 		} catch (Exception e) {
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE, "Exception", e);

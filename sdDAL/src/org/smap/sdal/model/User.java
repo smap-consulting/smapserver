@@ -51,5 +51,10 @@ public class User {
 	public int this_month;
 	public int last_month;
 	public int all_time;
+	public boolean delSig;
+	public String action_details;
+	public String lastalert;
+	public boolean seen;
+	
 	
 }
