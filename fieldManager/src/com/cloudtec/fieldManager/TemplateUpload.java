@@ -446,9 +446,9 @@ public class TemplateUpload extends Application {
 	    // 3. Transform to XML if it is an XLS file
 	    if(isXLS || isXLSX) {
 
-	    	log.info("Transforming from: " + "python /usr/bin/smap/pyxform/xls2xform.py " +
+	    	log.info("Transforming from: " + "python /smap_bin/smap/pyxform/xls2xform.py " +
 		    		filePath + " " + response.fileName +" 2>&1");
-	    	Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/processUpload.sh " +
+	    	Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap_bin/processUpload.sh " +
 		    		filePath + " " + response.fileName + " 2>&1"});
 	        
 	    	InputStream stderr = proc.getInputStream();

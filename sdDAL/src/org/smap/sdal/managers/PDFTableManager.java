@@ -88,7 +88,7 @@ public class PDFTableManager {
 	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
-	private static final String DEFAULT_CSS = "/smap/bin/resources/css/default_pdf.css";
+	private static final String DEFAULT_CSS = "/smap_bin/resources/css/default_pdf.css";
 	private static int NUMBER_QUESTION_COLS = 10;
 	
 	Font font = new Font(FontFamily.HELVETICA, 10);

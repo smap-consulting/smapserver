@@ -4,7 +4,7 @@ Description=Smap Database Subscriber
 [Service]
 Type=simple
 User=tomcat7
-ExecStart=/usr/bin/smap/subscribers.sh default /smap forward
+ExecStart=/smap_bin/subscribers.sh default /smap forward
 Restart=on-failure
 
 [Install]

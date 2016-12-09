@@ -27,7 +27,7 @@ do
                 ext="${file##*.}"
 
                 echo "base: " $base " " $ext
-                /usr/bin/smap/processAttachment.sh $base $dirname $content_type $ext
+                /smap_bin/processAttachment.sh $base $dirname $content_type $ext
 
         done
 done

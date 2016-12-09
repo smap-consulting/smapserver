@@ -37,7 +37,7 @@ then
 	echo "Applying patches for version 14.03"
 	echo "set up forwarding - assumes uploaded files are under /smap"
         sudo cp -v  ../install/config_files/subscribers_fwd.conf /etc/init
-        sudo cp -v  ../install/subscribers.sh /usr/bin/smap
+        sudo cp -v  ../install/subscribers.sh /smap_bin
 	sudo sed -i "s#{your_files}#/smap#g" /etc/init/subscribers_fwd.conf
 	echo "Modifying URLs of attachments to remove hostname, also moving uploaded files to facilitate forwarding of old surveys"
 	java -jar version1/patch.jar apply survey_definitions results
@@ -60,8 +60,8 @@ then
 	sudo pip install xlrd
 	sudo rm -rf src/pyxform
 	sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform
-	sudo rm -rf /usr/bin/smap/pyxform
-	sudo cp -r src/pyxform/pyxform/ /usr/bin/smap/
+	sudo rm -rf /smap_bin/pyxform
+	sudo cp -r src/pyxform/pyxform/ /smap_bin
 	sudo a2enmod headers
 fi
 
@@ -113,8 +113,8 @@ fi
 # version 15.03
 if [ $version -lt "1503" ]
 then
-sudo mkdir /usr/bin/smap/resources
-sudo mkdir /usr/bin/smap/resources/css
+sudo mkdir /smap_bin/resources
+sudo mkdir /smap_bin/resources/css
 fi
 
 # version 15.09
@@ -176,10 +176,10 @@ fi
 if [ $version -lt "160601" ]
 then
 echo "Applying patches for version 16.06"
-sudo mkdir /smap/bin
-sudo mkdir /smap/bin/resources
-sudo mkdir /smap/bin/resources/css
-sudo chown -R tomcat7 /smap/bin
+sudo mkdir /smap_bin
+sudo mkdir /smap_bin/resources
+sudo mkdir /smap_bin/resources/css
+sudo chown -R tomcat7 /smap_bin
 fi
 
 #####################################################################################
@@ -192,7 +192,7 @@ chmod +x apacheConfig.sh
 cd ../deploy
 
 # Patch pyxform
-sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
+sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 # update version reference
 new_version="161101"

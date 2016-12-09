@@ -153,7 +153,7 @@ public class ExportSurveyLocation extends Application {
 				log.info("Table: " + sqlDesc.target_table);
 				log.info("SQL: " + sqlDesc.sql);
 				int code = 0;
-				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/usr/bin/smap/getshape.sh " + 
+				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap_bin/getshape.sh " + 
 						database_name + " " +
 						sqlDesc.target_table + " " +
 						"\"" + sqlDesc.sql + "\" " +

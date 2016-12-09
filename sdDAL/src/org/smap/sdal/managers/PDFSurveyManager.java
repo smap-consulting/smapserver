@@ -105,7 +105,7 @@ public class PDFSurveyManager {
 	public static Font arabicFont = null;
 	public static Font bengaliFont = null;
 	public static Font bengaliFontBold = null;
-	private static final String DEFAULT_CSS = "/smap/bin/resources/css/default_pdf.css";
+	private static final String DEFAULT_CSS = "/smap_bin/resources/css/default_pdf.css";
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;

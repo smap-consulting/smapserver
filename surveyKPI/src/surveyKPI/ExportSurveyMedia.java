@@ -297,7 +297,7 @@ public class ExportSurveyMedia extends Application {
 				int code = 0;
 				//Process proc = Runtime.getRuntime().exec(new String [] {"/usr/bin/zip -rj ",filePath + ".zip ",filePath});
 				
-				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap/bin/getshape.sh " + 
+				Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap_bin/getshape.sh " + 
 							database_name + " " +
 							sqlDesc.target_table + " " +
 							"\"" + sqlDesc.sql + "\" " +

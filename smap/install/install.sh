@@ -125,7 +125,7 @@ then
 
 	echo '# copy postgres conf file'
 	sudo mv $pg_conf $pg_conf.bu
-	sudo cp config_files/postgresql.conf $pg_conf
+	sudo cp config_files/postgresql.conf.$PGV $pg_conf
 
 	echo '# copy tomcat server file'
 	sudo mv $tc_server_xml $tc_server_xml.bu
@@ -226,15 +226,15 @@ echo "==================> $results database already exists.  Apply patches if ne
 fi
 
 echo '##### 12. Setup subscribers'
-sudo rm -rf /usr/bin/smap
-sudo mkdir /usr/bin/smap
+sudo rm -rf /smap_bin
+sudo mkdir /smap_bin
 sudo mkdir /var/log/subscribers
-sudo cp subscribers.sh /usr/bin/smap
+sudo cp subscribers.sh /smap_bin
 sudo chmod -R 777 /var/log/subscribers
 sudo chmod -R +x /var/log/subscribers
-chmod +x /usr/bin/smap/subscribers.sh
-sudo mkdir /smap/bin/resources
-sudo mkdir /smap/bin/resources/css
+chmod +x /smap_bin/subscribers.sh
+sudo mkdir /smap_bin/resources
+sudo mkdir /smap_bin/resources/css
 
 
 echo '##### 13. Set up deployment script'
@@ -266,8 +266,8 @@ sudo easy_install pip
 sudo pip install setuptools --no-use-wheel --upgrade
 sudo pip install xlrd 
 sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform 
-sudo cp -r src/pyxform/pyxform/ /usr/bin/smap/
-sudo sed -i "s/from pyxform import constants/import constants/g" /usr/bin/smap/pyxform/survey.py
+sudo cp -r src/pyxform/pyxform/ /smap_bin
+sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 echo '##### 17. Backups'
 sudo mkdir ~postgres/backups

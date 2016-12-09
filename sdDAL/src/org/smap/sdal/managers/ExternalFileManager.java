@@ -132,7 +132,7 @@ public class ExternalFileManager {
 				// 6. Create the file
 				int code = 0;
 				
-				String [] cmd = {"/bin/sh", "-c", "/smap/bin/getshape.sh "
+				String [] cmd = {"/bin/sh", "-c", "/smap_bin/getshape.sh "
 						+ "results linked "
 						+ "\"" + sql + "\" "
 						+ filepath
