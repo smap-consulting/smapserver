@@ -60,7 +60,6 @@ sudo sysctl -w kernel.shmmax=67068800		# 64MB of shared memory
 sudo apt-get install ntp
 
 echo '##### 2. Install Apache' 
-# Note install pre-fork as mod-php is not compatable with mpm-worker
 sudo apt-get install apache2 apache2-doc apache2-utils -y
 #sudo apt-get install apache2-mpm-worker apache2-doc apache2-utils -y
 sudo apt-get install libaprutil1-dbd-pgsql -y
@@ -247,10 +246,10 @@ sudo apt-get install imagemagick -y
 sudo apt-get install ffmpeg -y  --force-yes
 sudo apt-get install flvtool2 -y --force-yes
 
-echo '##### 15. Install PHP'
-sudo apt-get install php5-json -y
-sudo apt-get install libpcre3-dev -y
-sudo apt-get install php5 php5-pgsql libapache2-mod-php5 -y
+#echo '##### 15. Install PHP'
+#sudo apt-get install php5-json -y
+#sudo apt-get install libpcre3-dev -y
+#sudo apt-get install php5 php5-pgsql libapache2-mod-php5 -y
 
 echo '##### 16. Install Python for xls form translations'
 sudo apt-get install python-dev -y
@@ -272,13 +271,13 @@ sudo mkdir ~postgres/restore
 sudo chmod +x ~postgres/bu.sh ~postgres/re.sh
 sudo chown postgres ~postgres/bu.sh ~postgres/re.sh ~postgres/backups ~postgres/restore
 
-echo '##### 18. install PHP pecl_http extension'
-sudo apt-get install php5 libapache2-mod-php5 php5-xsl php5-curl git php-apc php5-mcrypt -y
-sudo apt-get install libcurl3 php5-dev libcurl4-gnutls-dev libmagic-dev php-pear -y
-sudo apt-get install libcurl3-openssl-dev -y
-sudo printf "\n" | sudo pear upgrade
-sudo printf "\n" | sudo /usr/bin/pecl install pecl_http-1.7.6
-echo "extension=http.so" | sudo tee -a /etc/php5/apache2/php.ini
+#echo '##### 18. install PHP pecl_http extension'
+#sudo apt-get install php5 libapache2-mod-php5 php5-xsl php5-curl git php-apc php5-mcrypt -y
+#sudo apt-get install libcurl3 php5-dev libcurl4-gnutls-dev libmagic-dev php-pear -y
+#sudo apt-get install libcurl3-openssl-dev -y
+#sudo printf "\n" | sudo pear upgrade
+#sudo printf "\n" | sudo /usr/bin/pecl install pecl_http-1.7.6
+#echo "extension=http.so" | sudo tee -a /etc/php5/apache2/php.ini
 
 echo '##### 19. Update miscelaneous file configurations'
 
