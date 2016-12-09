@@ -146,6 +146,7 @@ define({
 	"c_attach": "Attach",
 	"c_details": "Details",
 	"c_action": "Action",
+	"c_actions": "Actions",
 	"c_mapid": "Map Id",
 	"c_zoom": "Zoom Levels",
 	"c_zoom_data": "Zoom to Data",

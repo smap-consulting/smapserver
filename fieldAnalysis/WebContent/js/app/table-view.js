@@ -141,11 +141,12 @@ function setTableSurvey(view) {
 			]
 		}
 	);
+	
+	$selFoot.find('.tExport').button().off().click(function() {
+		downloadFile("/surveyKPI/surveyexchange/" + view.sId + "/" + view.sName);
+	});
+	
 	$selFoot.find('.tImport').button().off().click(function() {
-		//var surveyList = globals.gSelector.getSurveyList();
-		//if(!surveyList) {	// Surveys have not yet been retrieved
-		//	getViewSurveys({sId:"-1"});
-		//}
 		$('#survey_to_update').val(view.sId);
 		$('#survey_to_update_name').text(view.sName);
 		

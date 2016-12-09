@@ -96,19 +96,13 @@ var htable3 = '"></div>';
 var htable4 = '<div class="pSidebar">';
 var htable5 = 	'<h3>' + localise.set["c_tables"] + '</h3>';
 var htable6 =	'<div class="phead"></div>';
-var htable7 = 	'<h3>' + localise.set["m_export"] + '</h3>';
+var htable7 =  '<h3>' + localise.set["c_actions"] + '</h3>';
 var htable8 =	'<div class="pfoot">';
-var htable9 =		'<form action="services/getCSV.php" method="post">';
-var htable10 =			'<input type="hidden" name="csv_text" class="csv_text"/>';
-var htable11 = 			'<input type="hidden" name="csv_name" class="csv_name"/>';
-var htable12 =			'<input type="submit" value="Export Table" class="tExport" />';
-var htable13 = 		'</form>';
-var htable14 =      '<h3>' + localise.set["m_import"] + '</h3>';
-var htable15 =		'<button class="tImport">' + localise.set["m_import"] + '</button>';
-var htable16 =      '<h3>' + localise.set["c_del"] + '</h3>';
-var htable17 =		'<button class="tDelete">' + localise.set["c_del"] + '</button>';
-var htable18 =	'</div>' ;
-var htable19 = '</div>';
+var htable9 =	  '<button class="tExport">' + localise.set["m_export"] + '</button>';
+var htable10 =	  '<button class="tImport">' + localise.set["m_import"] + '</button>';
+var htable11 =	  '<button class="tDelete">' + localise.set["c_del"] + '</button>';
+var htable12 =	'</div>' ;
+var htable13 = '</div>';
 
 var hmedia1	= '<div class="analysis media_panel" id="media_panel';
 var hmedia2 = '"><div class="image_wrap"><img src="img/blank.gif" width="512" height="344" /></div>' +
@@ -605,13 +599,6 @@ function setPanelType(type, idx, period, qId) {
 		h[++i] = htable10;
 		h[++i] = htable11;
 		h[++i] = htable12;
-		h[++i] = htable13;
-		h[++i] = htable14;
-		h[++i] = htable15;
-		h[++i] = htable16;
-		h[++i] = htable17;
-		h[++i] = htable18;
-		h[++i] = htable19;
 		$panelContent.append(h.join(''));
 		break;
 	case "graph":
