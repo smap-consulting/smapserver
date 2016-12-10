@@ -450,7 +450,7 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * 
+	 * Add an attachment to a survey
 	 */
 	static public String createAttachments(String srcName, File srcPathFile, String basePath, String surveyName) {
 		

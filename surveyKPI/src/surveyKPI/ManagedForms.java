@@ -239,7 +239,12 @@ public class ManagedForms extends Application {
 			// 3. Create results tables if they do not exist
 			if(am.manageId > 0) {
 				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-				tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
+				boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
+				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId);			
+				if(tableChanged || tablePublished) {
+					tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
+				}
 			}
 			
 			response = Response.ok().build();

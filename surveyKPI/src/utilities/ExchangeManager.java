@@ -1,6 +1,7 @@
 package utilities;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 /*
@@ -22,12 +23,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 //import org.apache.poi.ss.usermodel.Workbook;
@@ -36,18 +41,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.ExchangeFile;
 import org.smap.sdal.model.TableColumn;
+
+import model.FormDesc;
 import surveyKPI.ExportSurveyXls;
 
 public class ExchangeManager {
@@ -60,27 +69,24 @@ public class ExchangeManager {
 	Workbook wb = null;
 	boolean isXLSX = false;
 	String basePath = null;
-
+	
 	private class Column {
 		String humanName;
+		
+		int index;
+		String name;
+		String columnName;
+		String type;
+		String geomCol;
+		ArrayList<String> choices = null;
 		
 		Column(String h) {
 			humanName = h;
 		}
-	}
-	
-	private class FormDesc {
-		int f_id;
-		String name;
-		int parent;
-		String table_name;
-		String columns = null;
-		Boolean visible = true;					// Set to false if the data from this form should not be included in the export
-		ArrayList<FormDesc> children = null;
-		ArrayList<TableColumn> columnList = null;
 		
+		Column() {
 
-		
+		}
 	}
 	
 	public ExchangeManager() {
@@ -138,41 +144,7 @@ public class ExchangeManager {
 						" and q.qname = ?;";
 				pstmtQType = sd.prepareStatement(sqlQType);
 				
-				HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
-				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
-				FormDesc topForm = null;	
-				
-				
-				/*
-				 * Get the tables / forms in this survey 
-				 */
-				String sql = null;
-				sql = "SELECT name, f_id, table_name, parentform FROM form" +
-						" WHERE s_id = ? " +
-						" ORDER BY f_id;";	
-
-				PreparedStatement  pstmt = sd.prepareStatement(sql);	
-				pstmt.setInt(1, sId);
-				ResultSet resultSet = pstmt.executeQuery();
-				
-				while (resultSet.next()) {
-
-					FormDesc fd = new FormDesc();
-					fd.name = resultSet.getString("name");
-					fd.f_id = resultSet.getInt("f_id");
-					fd.parent = resultSet.getInt("parentform");
-					fd.table_name = resultSet.getString("table_name");
-					forms.put(fd.name, fd);
-					if(fd.parent == 0) {
-						topForm = fd;
-					}
-				}
-				
-				/*
-				 * Put the forms into a list in top down order
-				 */
-				formList.add(topForm);		// The top level form
-				addChildren(topForm, forms, formList);
+				ArrayList <FormDesc> formList = getFormList(sd, sId);
 				
 				/*
 				 * Create a work sheet for each form
@@ -277,6 +249,326 @@ public class ExchangeManager {
 	}
 	
 	/*
+	 * Get a sorted list of forms in order from parents to children
+	 */
+	public ArrayList <FormDesc> getFormList(Connection sd, int sId) throws SQLException {
+		
+		HashMap<String, FormDesc> forms = new HashMap<String, FormDesc> ();			// A description of each form in the survey
+		ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
+		FormDesc topForm = null;	
+		
+		
+		/*
+		 * Get the tables / forms in this survey 
+		 */
+		String sql = null;
+		sql = "SELECT name, f_id, table_name, parentform FROM form" +
+				" WHERE s_id = ? " +
+				" ORDER BY f_id;";	
+
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, sId);
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while (resultSet.next()) {
+	
+				FormDesc fd = new FormDesc();
+				fd.name = resultSet.getString("name");
+				fd.f_id = resultSet.getInt("f_id");
+				fd.parent = resultSet.getInt("parentform");
+				fd.table_name = resultSet.getString("table_name");
+				forms.put(fd.name, fd);
+				if(fd.parent == 0) {
+					topForm = fd;
+				}
+			}
+			
+			/*
+			 * Put the forms into a list in top down order
+			 */
+			formList.add(topForm);		// The top level form
+			addChildren(topForm, forms, formList);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return formList;
+	}
+	
+	/*
+	 * Load data from a file into the form
+	 */
+	public void loadFormDataFromFile(
+			Connection results,
+			PreparedStatement pstmtGetCol, 
+			PreparedStatement pstmtGetChoices,
+			File file,
+			FormDesc form,
+			String sIdent,
+			HashMap<String, File> mediaFiles,
+			boolean isCSV
+			) throws Exception {
+		
+		CSVReader reader = null;
+		XlsReader xlsReader = null;
+		boolean hasGeopoint = false;
+		int lonIndex = -1;			// Column containing longitude TODO support multiple geometries
+		int latIndex = -1;			// Column containing latitude
+		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
+		PreparedStatement pstmtInsert = null;
+		PreparedStatement pstmtDeleteExisting = null;
+		
+		try {
+			
+			pstmtGetCol.setInt(1, form.f_id);		// Prepare the statement to get column names for the form
+			
+			String [] line;
+			if(isCSV) {
+				reader = new CSVReader(new InputStreamReader(new FileInputStream(file)));
+				line = reader.readNext();
+			} else {
+				xlsReader = new XlsReader(new FileInputStream(file), form.name);
+				line = xlsReader.readNext();
+			}
+			
+			ArrayList<Column> columns = new ArrayList<Column> ();
+			if(line != null && line.length > 0) {
+				
+				// Assume first line is the header
+				for(int i = 0; i < line.length; i++) {
+					String colName = line[i].replace("'", "''");	// Escape apostrophes
+					
+					if(!colName.equals("the_geom")) { // Cannot directly insert a geometry TODO add this capability
+						// If this column is in the survey then add it to the list of columns to be processed
+						Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns);
+						if(col != null) {
+							col.index = i;
+							if(col.geomCol != null) {
+								// Do not add the geom columns to the list of columns to be parsed
+								if(col.geomCol.equals("lon")) {
+									lonIndex = i;
+								} else if(col.geomCol.equals("lat")) {
+									latIndex = i;
+								}
+							} else {
+								columns.add(col);
+							}
+						}
+					}
+				}
+				
+				log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
+				
+				if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
+								
+					/*
+					 * Create the insert statement
+					 */		
+					boolean moreThanOneCol = false;
+					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(parkey,instanceid");
+					for(int i = 0; i < columns.size(); i++) {
+						
+						Column col = columns.get(i);
+						
+						if(i > 0) {
+							moreThanOneCol = true;
+						}
+						sqlInsert.append(",");
+						if(col.type.equals("select")) {
+							for(int j = 0; j < col.choices.size(); j++) {
+								if(j > 0) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append(col.columnName + "__" + col.choices.get(j));
+							}
+						} else {
+							sqlInsert.append(col.columnName);
+						}
+	
+					}
+					
+					// Add the geometry column if latitude and longitude were provided in the csv
+					if(lonIndex >= 0 && latIndex >= 0 ) {
+						if(moreThanOneCol) {
+							sqlInsert.append(",");
+						}
+						hasGeopoint = true;
+						sqlInsert.append("the_geom");
+					}
+					
+					sqlInsert.append(") values(0, ?"); 
+					for(int i = 0; i < columns.size(); i++) {
+						
+						Column col = columns.get(i);
+						
+						sqlInsert.append(",");
+						if(col.type.equals("select")) {
+							
+							for(int j = 0; j < col.choices.size(); j++) {
+								if(j > 0) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append("?");
+							}
+						} else {
+							sqlInsert.append("?");
+						}
+					}
+					
+					// Add the geometry value
+					if(hasGeopoint) {
+						if(moreThanOneCol) {
+							sqlInsert.append(",");
+						}
+						sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
+					}
+					sqlInsert.append(");");
+					
+					pstmtInsert = results.prepareStatement(sqlInsert.toString());
+					
+					/*
+					 * Get the data
+					 */
+					while (true) {
+						
+						if(isCSV) {
+							line = reader.readNext();
+						} else {
+							line = xlsReader.readNext();
+						}
+						if(line == null) {
+							break;
+						}
+						
+						int index = 1;
+						pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
+						
+						for(int i = 0; i < columns.size(); i++) {
+							Column col = columns.get(i);
+							String value = line[col.index].trim();				
+	
+							// If the data references a media file then process the attachement
+							if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
+								
+								File srcPathFile = mediaFiles.get(value);
+								if(srcPathFile != null) {
+									value = GeneralUtilityMethods.createAttachments(
+										value, 
+										srcPathFile, 
+										basePath, 
+										sIdent);
+								}
+								if(value.trim().length() == 0) {
+									value = null;
+								}
+							}
+							
+							if(col.type.equals("select")) {
+								String [] choices = value.split("\\s");
+								for(int k = 0; k < col.choices.size(); k++) {
+									String cVal = col.choices.get(k);
+									boolean hasChoice = false;
+									for(int l = 0; l < choices.length; l++) {
+										if(cVal.equals(choices[l])) {
+											hasChoice = true;
+											break;
+										}
+									}
+									if(hasChoice) {
+										pstmtInsert.setInt(index++, 1);
+									} else {
+										pstmtInsert.setInt(index++, 0);
+									}
+									
+								}
+							} else if(col.type.equals("int")) {
+								int iVal = 0;
+								try { iVal = Integer.parseInt(value);} catch (Exception e) {}
+								pstmtInsert.setInt(index++, iVal);
+							} else if(col.type.equals("decimal")) {
+								double dVal = 0.0;
+								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
+								pstmtInsert.setDouble(index++, dVal);
+							} else if(col.type.equals("date")) {
+								Date dateVal = null;
+								try {
+									dateVal = Date.valueOf(value); 
+								} catch (Exception e) {
+									log.info("Error parsing date: " + col.columnName + " : " + value + " : " + e.getMessage());
+								}
+								pstmtInsert.setDate(index++, dateVal);
+							} else if(col.type.equals("dateTime")) {
+								Timestamp tsVal = null;
+								try {
+									java.util.Date uDate = dateFormatDT.parse(value);
+									tsVal = new Timestamp(uDate.getTime());
+								} catch (Exception e) {
+									log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+								}
+								
+								pstmtInsert.setTimestamp(index++, tsVal);
+							} else {
+								pstmtInsert.setString(index++, value);
+							}
+							
+						}
+						
+						// Add the geopoint value if it exists
+						if(hasGeopoint) {
+							String lon = line[lonIndex];
+							String lat = line[latIndex];
+							if(lon == null) {
+								lon = "0.0";
+							}
+							if(lat == null) {
+								lat = "0.0";
+							}
+							pstmtInsert.setString(index++, lon);
+							pstmtInsert.setString(index++, lat);
+							
+						}
+						log.info("Inserting row: " + pstmtInsert.toString());
+						pstmtInsert.executeUpdate();
+						
+				    }
+					results.commit();
+					
+				} else {
+					throw new Exception("No columns found that match questions in this form.");
+				}
+				
+			}
+		} finally {
+			try {if (reader != null) {reader.close();}} catch (Exception e) {}
+			
+			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
+			try {if (pstmtDeleteExisting != null) {pstmtDeleteExisting.close();}} catch (Exception e) {}
+		}
+	}
+	
+	public ArrayList<String> getFormsFromXLSX(InputStream inputStream) throws Exception {
+
+		ArrayList<String> forms = new ArrayList<String> ();
+		Workbook wb = null;
+		try {
+			wb = new XSSFWorkbook(inputStream);
+			int sheetCount = wb.getNumberOfSheets();
+			for(int i = 0; i < sheetCount; i++) {
+				String name = wb.getSheetName(i);
+				if(name.startsWith("d_"));
+				forms.add(name.substring(2));
+			}
+		} finally {
+			try{wb.close();} catch(Exception e) {}
+		}
+		return forms;
+	}
+	
+	/*
 	 * Create a header row and set column widths
 	 */
 	private void createHeader(
@@ -296,47 +588,6 @@ public class ExchangeManager {
         }
 	}
 	
-	/*
-	 * Create a header row and set column widths
-	 */
-	private void writeValue(
-			Row row,
-			int idx,
-			String value, 
-			Sheet sheet, 
-			Map<String, CellStyle> styles) throws IOException {
-		
-		CreationHelper createHelper = wb.getCreationHelper();
-		
-		
-		CellStyle style = styles.get("default");
-		
-			
-        Cell cell = row.createCell(idx);        
-		cell.setCellStyle(style);
-        
-        cell.setCellValue(value);
-
-
-	}
-	
-	/*
-	 * Add the list of children to parent forms
-	 */
-	private void addChildren(FormDesc parentForm, HashMap<String, FormDesc> forms, ArrayList<FormDesc> formList) {
-		
-		for(FormDesc fd : forms.values()) {
-			if(fd.parent != 0 && fd.parent == parentForm.f_id) {
-				if(parentForm.children == null) {
-					parentForm.children = new ArrayList<FormDesc> ();
-				}
-				parentForm.children.add(fd);
-				formList.add(fd);
-				addChildren(fd,  forms, formList);
-			}
-		}
-		
-	}
 	
 	/*
 	 * Add to the header
@@ -365,71 +616,39 @@ public class ExchangeManager {
 		
 	}
 	
-	/*
-	 * Return the text
-	 */
-	private ArrayList<String> getContent(Connection con, String value, boolean firstCol, String columnName,
-			String columnType) throws NumberFormatException, SQLException {
 
-		ArrayList<String> out = new ArrayList<String>();
-		if(value == null) {
-			value = "";
+
+	/*
+	 * Get the longitude and latitude from a WKT POINT
+	 */
+	private String [] getLonLat(String point) {
+		String [] coords = null;
+		int idx1 = point.indexOf("(");
+		int idx2 = point.indexOf(")");
+		if(idx2 > idx1) {
+			String lonLat = point.substring(idx1 + 1, idx2);
+			coords = lonLat.split(" ");
+		}
+		return coords;
+	}
+	
+
+	/*
+	 * Add the list of children to parent forms
+	 */
+	private void addChildren(FormDesc parentForm, HashMap<String, FormDesc> forms, ArrayList<FormDesc> formList) {
+		
+		for(FormDesc fd : forms.values()) {
+			if(fd.parent != 0 && fd.parent == parentForm.f_id) {
+				if(parentForm.children == null) {
+					parentForm.children = new ArrayList<FormDesc> ();
+				}
+				parentForm.children.add(fd);
+				formList.add(fd);
+				addChildren(fd,  forms, formList);
+			}
 		}
 		
-		if(value.startsWith("POINT")) {
-
-			String coords [] = getLonLat(value);
-
-			if(coords.length > 1) {
-				out.add(coords[1]);
-				out.add(coords[0]); 
-			} else {
-				out.add(value);
-				out.add(value);
-			}
-				
-			
-		} else if(value.startsWith("POLYGON") || value.startsWith("LINESTRING")) {
-			
-			// Can't split linestrings and polygons so just remove the POLYGON or LINESTRING wrapper
-			int idx = value.lastIndexOf('(');
-			int idx2 = value.indexOf(')');
-			if(idx2 > idx && idx > -1) {
-				out.add(value.substring(idx + 1, idx2));
-			} else {
-				out.add("");
-			}
-
-			
-		} else if(columnName.equals("_device")) {
-			out.add(value);				
-		} else if(columnName.equals("_complete")) {
-			out.add(value.equals("f") ? "No" : "Yes"); 
-				
-		} else if(columnName.equals("_s_id")) {
-			String displayName = surveyNames.get(out);
-			if(displayName == null) {
-				try {
-					displayName = GeneralUtilityMethods.getSurveyName(con, Integer.parseInt(value));
-				} catch (Exception e) {
-					displayName = "";
-				}
-				surveyNames.put(value, displayName);
-			}
-			out.add(displayName); 
-				
-		} else if(columnType.equals("dateTime")) {
-			// Convert the timestamp to the excel format specified in the xl2 mso-format
-			int idx1 = out.indexOf('.');	// Drop the milliseconds
-			if(idx1 > 0) {
-				value = value.substring(0, idx1);
-			} 
-			out.add(value);
-		} else {
-			out.add(value);
-		}
-
-		return out;
 	}
 	
 	/*
@@ -534,41 +753,153 @@ public class ExchangeManager {
 	}
 	
 	/*
-	 * Get the longitude and latitude from a WKT POINT
+	 * Create a header row and set column widths
 	 */
-	private String [] getLonLat(String point) {
-		String [] coords = null;
-		int idx1 = point.indexOf("(");
-		int idx2 = point.indexOf(")");
-		if(idx2 > idx1) {
-			String lonLat = point.substring(idx1 + 1, idx2);
-			coords = lonLat.split(" ");
-		}
-		return coords;
+	private void writeValue(
+			Row row,
+			int idx,
+			String value, 
+			Sheet sheet, 
+			Map<String, CellStyle> styles) throws IOException {
+		
+		CreationHelper createHelper = wb.getCreationHelper();
+		
+		
+		CellStyle style = styles.get("default");
+		
+			
+        Cell cell = row.createCell(idx);        
+		cell.setCellStyle(style);
+        
+        cell.setCellValue(value);
+
+
 	}
 	
 	/*
-	 * 
+	 * Return the text
 	 */
-	String updateMultipleChoiceValue(String dbValue, String choiceName, String currentValue) {
-		boolean isSet = false;
-		String newValue = currentValue;
-		
-		if(dbValue.equals("1")) {
-			isSet = true;
+	private ArrayList<String> getContent(Connection con, String value, boolean firstCol, String columnName,
+			String columnType) throws NumberFormatException, SQLException {
+
+		ArrayList<String> out = new ArrayList<String>();
+		if(value == null) {
+			value = "";
 		}
 		
-		if(isSet) {
-			if(currentValue == null) {
-				newValue = choiceName;
+		if(value.startsWith("POINT")) {
+
+			String coords [] = getLonLat(value);
+
+			if(coords.length > 1) {
+				out.add(coords[1]);
+				out.add(coords[0]); 
 			} else {
-				newValue += " " + choiceName;
+				out.add(value);
+				out.add(value);
+			}
+				
+			
+		} else if(value.startsWith("POLYGON") || value.startsWith("LINESTRING")) {
+			
+			// Can't split linestrings and polygons so just remove the POLYGON or LINESTRING wrapper
+			int idx = value.lastIndexOf('(');
+			int idx2 = value.indexOf(')');
+			if(idx2 > idx && idx > -1) {
+				out.add(value.substring(idx + 1, idx2));
+			} else {
+				out.add("");
+			}
+
+			
+		} else if(columnName.equals("_device")) {
+			out.add(value);				
+		} else if(columnName.equals("_complete")) {
+			out.add(value.equals("f") ? "No" : "Yes"); 
+				
+		} else if(columnName.equals("_s_id")) {
+			String displayName = surveyNames.get(out);
+			if(displayName == null) {
+				try {
+					displayName = GeneralUtilityMethods.getSurveyName(con, Integer.parseInt(value));
+				} catch (Exception e) {
+					displayName = "";
+				}
+				surveyNames.put(value, displayName);
+			}
+			out.add(displayName); 
+				
+		} else if(columnType.equals("dateTime")) {
+			// Convert the timestamp to the excel format specified in the xl2 mso-format
+			int idx1 = out.indexOf('.');	// Drop the milliseconds
+			if(idx1 > 0) {
+				value = value.substring(0, idx1);
+			} 
+			out.add(value);
+		} else {
+			out.add(value);
+		}
+
+		return out;
+	}
+	
+	/*
+	 * Check to see if a question is in a form
+	 */
+	private Column getColumn(PreparedStatement pstmtGetCol, 
+			PreparedStatement pstmtGetChoices, 
+			String qName,
+			ArrayList<Column> columns) throws SQLException {
+		
+		Column col = null;
+		String geomCol = null;
+		
+		// Cater for lat, lon columns which map to a geopoint
+		if(qName.equals("lat") || qName.equals("lon")) {
+			geomCol = qName;
+			qName = "the_geom";
+		} 
+		
+		// Only add this question if it has not previously been added, questions can only be updated once in a single transaction
+		boolean questionExists = false;
+		for(Column haveColumn : columns) {
+			if(haveColumn.name.equals(qName)) {
+				questionExists = true;
+				break;
 			}
 		}
 		
-		return newValue;
+		if(!questionExists) {
+			pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
+			log.info("Get column: " + pstmtGetCol.toString());
+			ResultSet rs = pstmtGetCol.executeQuery();
+			if(rs.next()) {
+				// This column name is in the survey
+				col = new Column();
+				col.name = qName;
+				col.columnName = rs.getString("column_name");
+				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
+				col.type = rs.getString("qtype");
+				
+				if(col.type.startsWith("select")) {
+					
+					// Get choices for this select question
+					int qId = rs.getInt("q_id");
+					
+					col.choices = new ArrayList<String> ();
+					pstmtGetChoices.setInt(1, qId);
+					log.info("Get choices:" + pstmtGetChoices.toString());
+					ResultSet rsChoices = pstmtGetChoices.executeQuery();
+					while(rsChoices.next()) {
+						col.choices.add(rsChoices.getString("column_name"));
+					}
+				}
+			}
+		} else {
+			log.info("Already have column " + qName);
+		}
+		
+		return col;
 	}
-	
- 
 
 }

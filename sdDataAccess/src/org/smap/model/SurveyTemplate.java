@@ -875,6 +875,7 @@ public class SurveyTemplate {
 						alreadyHas_task_key = true;
 				} else if(q.getName().toLowerCase().equals("instancename")) {
 						alreadyHas_instancename = true;
+						q.setSource("user");	// Always add instance name as a column in the results database even if not initially set in client
 				}
 	
 			}

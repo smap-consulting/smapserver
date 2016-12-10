@@ -44,27 +44,6 @@ then
 	sudo chown -R tomcat7 /smap/uploadedSurveys
 fi
 
-# version 14.05
-if [ $version -lt "1405" ]
-then
-	echo "Applying patches for version 14.05"
-	echo "Upgrade pyxform to support geoshape and geotrace types"
-	sudo apt-get install python-dev -y
-	sudo apt-get install libxml2-dev -y
-	sudo apt-get install libxslt-dev
-	sudo apt-get install libxslt1-dev -y
-	sudo apt-get install git -y
-	sudo apt-get install python-setuptools -y
-	sudo easy_install pip
-	sudo pip install setuptools --no-use-wheel --upgrade
-	sudo pip install xlrd
-	sudo rm -rf src/pyxform
-	sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform
-	sudo rm -rf /smap_bin/pyxform
-	sudo cp -r src/pyxform/pyxform/ /smap_bin
-	sudo a2enmod headers
-fi
-
 # version 14.08
 if [ $version -lt "1408" ]
 then
@@ -172,13 +151,29 @@ then
 	echo "no patches for 16.03"
 fi
 
-# version 16.06
-if [ $version -lt "160601" ]
+# version 16.12
+if [ $version -lt "161201" ]
 then
-echo "Applying patches for version 16.06"
+echo "Applying patches for version 16.12"
 sudo mkdir /smap_bin
 sudo mkdir /smap_bin/resources
 sudo mkdir /smap_bin/resources/css
+
+sudo apt-get install python-dev -y
+sudo apt-get install libxml2-dev -y
+sudo apt-get install libxslt-dev
+sudo apt-get install libxslt1-dev -y
+sudo apt-get install git -y
+sudo apt-get install python-setuptools -y
+sudo easy_install pip
+sudo pip install setuptools --no-use-wheel --upgrade
+sudo pip install xlrd
+sudo rm -rf src/pyxform
+sudo pip install -e git+https://github.com/UW-ICTD/pyxform.git@master#egg=pyxform
+sudo rm -rf /smap_bin/pyxform
+sudo cp -r src/pyxform/pyxform/ /smap_bin
+sudo a2enmod headers
+
 sudo chown -R tomcat7 /smap_bin
 fi
 

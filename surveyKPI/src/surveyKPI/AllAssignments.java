@@ -37,6 +37,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
+import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -55,12 +56,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import model.FormDesc;
 import taskModel.TaskAddress;
 import utilities.CSVReader;
+import utilities.ExchangeManager;
 import utilities.QuestionInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -971,17 +975,15 @@ public class AllAssignments extends Application {
 		return response;
 	}
 	
-	private class Column {
-		int index;
-		String name;
-		String columnName;
-		String type;
-		String geomCol;
-		ArrayList<String> choices = null;
-	}
+
 	
 	/*
-	 * Load tasks, that is survey results, from a file
+	 * Load tasks, that is survey results, from:
+	 *   1) a CSV file
+	 *   2) an XLSX file
+	 *   3) a ZIP file containing a CSV file and images
+	 *   4) a ZIP file containing an XLSX file and images
+	 * Deprecated. The XLSX load should be used
 	 */
 	@POST
 	@Path("/load")
@@ -1001,22 +1003,14 @@ public class AllAssignments extends Application {
 		log.info("Load results from file");
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End role based authorisation - Check access to the requested survey once the survey id has been extracted
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();	
 		fileItemFactory.setSizeThreshold(20*1024*1024); // 20 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 
-		// SQL to get the form id of the top level form for the survey
-		String sqlGetFormId = "select f_id, table_name from form where s_id = ? and (parentform is null or parentform = 0)";
-		PreparedStatement pstmtGetFormId = null;
-		
-		// SQL to get the table names of all the forms in the survey 
-		String sqlGetTableNames = "select table_name from form where s_id = ?";
-		PreparedStatement pstmtGetTableNames = null;
-		
 		// SQL to get a column name from the survey
 		String sqlGetCol = "select q_id, qname, column_name, qtype from question where f_id = ? and lower(qname) = ?";
 		PreparedStatement pstmtGetCol = null;
@@ -1025,25 +1019,20 @@ public class AllAssignments extends Application {
 		String sqlGetChoices = "select o.ovalue, o.column_name from option o, question q where q.q_id = ? and o.l_id = q.l_id";
 		PreparedStatement pstmtGetChoices = null;
 		
-		// Prepared Statements used in the clearing and inserting of data
 		PreparedStatement pstmtDeleteExisting = null;
-		PreparedStatement pstmtInsert = null;
 		
 		String fileName = null;
 		String filePath = null;
-		File savedFile = null;
+		File savedFile = null;									// The uploaded file
+		ArrayList<File> dataFiles = new ArrayList<File> ();		// Uploaded data files - There may be multiple of these in a zip file
+		HashMap<String, String> formFile = new HashMap<String, String> ();	// Mapping between form and the file that contains the data to populate it
 		String contentType = null;
 		int sId = 0;
 		String sIdent = null;		// Survey Ident
-		boolean hasGeopoint = false;
-		int lonIndex = -1;			// Column containing longitude TODO support multiple geometries
-		int latIndex = -1;			// Column containing latitude
-		int fId = 0;
-		String tableName = null;
+		String sName = null;		// Survey Name
 		boolean clear_existing = false;
 		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
-		SimpleDateFormat dateFormatDate = new SimpleDateFormat("yyyy-MM-dd");
-		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		HashMap<String, File> formFileMap = null;
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		boolean superUser = false;
@@ -1064,13 +1053,14 @@ public class AllAssignments extends Application {
 					if(item.getFieldName().equals("survey")) {
 						sId = Integer.parseInt(item.getString());
 						try {
-							superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+							superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 						} catch (Exception e) {
 						}
-						a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
-						a.canLoadTasks(connectionSD, sId);
+						a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+						a.canLoadTasks(sd, sId);
 						
-						sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
+						sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+						sName = GeneralUtilityMethods.getSurveyName(sd, sId);
 					} else if(item.getFieldName().equals("clear_existing")) {
 						clear_existing = true;
 					}
@@ -1087,41 +1077,32 @@ public class AllAssignments extends Application {
 					    contentType = item.getContentType();
 						fileName = String.valueOf(UUID.randomUUID());
 						
-						filePath = basePath + "/temp/" + fileName + ".csv";
+						filePath = basePath + "/temp/" + fileName;
 					    savedFile = new File(filePath);
 					    item.write(savedFile);
 					}					
 				}
 
 			}
-			
-			// Get the form id for the top level form of this survey
-			pstmtGetFormId = connectionSD.prepareStatement(sqlGetFormId);
-			pstmtGetFormId.setInt(1, sId);
-			log.info("Get top level form: " + pstmtGetFormId.toString());
-			ResultSet rs = pstmtGetFormId.executeQuery();
-			if(rs.next()) {
-				fId = rs.getInt(1);
-				tableName = rs.getString(2);
-			}
-			
-			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "import data", "Import data from a file");
-			
-			// Prepare the statement to get the column names in the survey that are to be updated
-			pstmtGetCol = connectionSD.prepareStatement(sqlGetCol);
-			pstmtGetCol.setInt(1, fId);
-			
-			// Prepare the statement to get select choices
-			pstmtGetChoices = connectionSD.prepareStatement(sqlGetChoices);
-			
-			// If this is a zip file extract the contents and set the path to the expand csv file that should be inside
-			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
-			
+			log.info("Content Type: " + contentType);
 			if(contentType == null) {
 				throw new Exception("Missing file");
 			}
 			
-			log.info("Content Type: " + contentType);
+			lm.writeLog(sd, sId, request.getRemoteUser(), "import data", "Import data from a file for survey: " + sName);
+			log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));
+			
+			/*
+			 * Get the forms for this survey 
+			 */
+			ExchangeManager xm = new ExchangeManager();
+			ArrayList <FormDesc> formList = xm.getFormList(sd, sId);		
+			
+			pstmtGetCol = sd.prepareStatement(sqlGetCol);  			// Prepare the statement to get the column names in the survey that are to be updated
+			pstmtGetChoices = sd.prepareStatement(sqlGetChoices);  // Prepare the statement to get select choices
+			
+			// If this is a zip file extract the contents and set the path to the expanded data file that should be inside
+			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
 			if(contentType.contains("zip")) {
 				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
 				File zipFolder = new File(zipFolderPath);
@@ -1137,22 +1118,24 @@ public class AllAssignments extends Application {
 						
 						log.info("File in zip: " + ze.getName());
 						File zFile = new File(zipFolderPath + File.separator + zFileName);
-						if(zFileName.endsWith(".csv")) {
-							savedFile = zFile;
-						}
+						
 						new File(zFile.getParent()).mkdirs();	// Make sure path is complete 
 					
 						if(ze.isDirectory()) {
 							zFile.mkdir();
 						} else {
-							// Save the filename and File for processing with each record of data
-							
-							// Remove the path from the filename - every file in the zip file must have a unique name
-							int idx = zFileName.lastIndexOf('/');
-							if(idx > 0) {
-								zFileName = zFileName.substring(idx + 1);
+							if(zFileName.endsWith(".csv") || zFileName.endsWith(".xlsx")) {
+								// Data file
+								dataFiles.add(zFile);
+							} else {
+								// Media File. Save the filename and File for processing with each record of data
+								// Remove the path from the filename - every file in the zip file must have a unique name
+								int idx = zFileName.lastIndexOf('/');
+								if(idx > 0) {
+									zFileName = zFileName.substring(idx + 1);
+								}
+								mediaFiles.put(zFileName, zFile);
 							}
-							mediaFiles.put(zFileName, zFile);
 							
 							// Write the file
 							FileOutputStream fos = new FileOutputStream(zFile);
@@ -1170,235 +1153,86 @@ public class AllAssignments extends Application {
 				// throw new Exception("only csv");
 				log.info("Potential Error: loading results from file with content type: " + contentType);
 			}
+
+			for(int i = 0; i < formList.size(); i++) {
+				System.out.println("Form: " + formList.get(i).name);
+			}
 			
 			/*
-			 * Process the CSV file
+			 * Get a mapping between form name and file name
+			 * We need this as the data will need to be applied from parent form to child form in order rather than
+			 *  in file order
 			 */
-			log.info("Form Id: " + fId);
-			if(savedFile != null && fId != 0) {
+			formFileMap = getFormFileMap(xm, dataFiles, formList);
+			
+			/*
+			 * Create the results tables if they do not exist
+			 */
+			TableManager tm = new TableManager();
+			FormDesc topForm = formList.get(0);
+			boolean tableCreated = tm.createTable(results, sd, topForm.table_name, sIdent, sId, 0);
+			boolean tableChanged = false;
+			boolean tablePublished = false;
 
-				String [] line;
-				CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(savedFile)));
-				line = reader.readNext();
-				ArrayList<Column> columns = new ArrayList<Column> ();
-				if(line != null && line.length > 0) {
+			// Apply any updates that have been made to the table structure since the last submission
+			if(!tableCreated) {
+				tableChanged = tm.applyTableChanges(sd, results, sId);
 					
-					// Assume first line is the header
-					for(int i = 0; i < line.length; i++) {
-						String colName = line[i].replace("'", "''");	// Escape apostrophes
-						
-						if(!colName.equals("the_geom")) { // Cannot directly insert a geometry TODO add this capability
-							// If this column is in the survey then add it to the list of columns to be processed
-							Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns);
-							if(col != null) {
-								col.index = i;
-								if(col.geomCol != null) {
-									// Do not add the geom columns to the list of columns to be parsed
-									if(col.geomCol.equals("lon")) {
-										lonIndex = i;
-									} else if(col.geomCol.equals("lat")) {
-										latIndex = i;
-									}
-								} else {
-									columns.add(col);
-								}
-							}
-						}
-					}
-					
-					log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
-					
-					if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
-									
-						/*
-						 * Create the insert statement
-						 */		
-						boolean moreThanOneCol = false;
-						StringBuffer sqlInsert = new StringBuffer("insert into " + tableName + "(parkey,instanceid");
-						for(int i = 0; i < columns.size(); i++) {
-							
-							Column col = columns.get(i);
-							
-							if(i > 0) {
-								moreThanOneCol = true;
-							}
-							sqlInsert.append(",");
-							if(col.type.equals("select")) {
-								for(int j = 0; j < col.choices.size(); j++) {
-									if(j > 0) {
-										sqlInsert.append(",");
-									}
-									sqlInsert.append(col.columnName + "__" + col.choices.get(j));
-								}
-							} else {
-								sqlInsert.append(col.columnName);
-							}
-	
-						}
-						
-						// Add the geometry column if latitude and longitude were provided in the csv
-						if(lonIndex >= 0 && latIndex >= 0 ) {
-							if(moreThanOneCol) {
-								sqlInsert.append(",");
-							}
-							hasGeopoint = true;
-							sqlInsert.append("the_geom");
-						}
-						
-						sqlInsert.append(") values(0, ?"); 
-						for(int i = 0; i < columns.size(); i++) {
-							
-							Column col = columns.get(i);
-							
-							sqlInsert.append(",");
-							if(col.type.equals("select")) {
-								
-								for(int j = 0; j < col.choices.size(); j++) {
-									if(j > 0) {
-										sqlInsert.append(",");
-									}
-									sqlInsert.append("?");
-								}
-							} else {
-								sqlInsert.append("?");
-							}
-						}
-						
-						// Add the geometry value
-						if(hasGeopoint) {
-							if(moreThanOneCol) {
-								sqlInsert.append(",");
-							}
-							sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
-						}
-						sqlInsert.append(");");
-						
-						pstmtInsert = results.prepareStatement(sqlInsert.toString());
-						
-						/*
-						 * Get the data
-						 */
-						log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));
-						results.setAutoCommit(false);
-						if(clear_existing) {
-							pstmtGetTableNames = connectionSD.prepareStatement(sqlGetTableNames);
-							pstmtGetTableNames.setInt(1, sId);
-							ResultSet rsTabs = pstmtGetTableNames.executeQuery();
-							while(rsTabs.next()) {
-								
-								String sqlDeleteExisting = "truncate " + rsTabs.getString(1) + ";";
-								if(pstmtDeleteExisting != null) try {pstmtDeleteExisting.close();} catch(Exception e) {}
-								pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
-								
-								log.info("Clearing results: " + pstmtDeleteExisting.toString());
-								pstmtDeleteExisting.executeUpdate();
-							}
-							
-						}
-						
-						while ((line = reader.readNext()) != null) {
-							
-							int index = 1;
-							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
-							
-							for(int i = 0; i < columns.size(); i++) {
-								Column col = columns.get(i);
-								String value = line[col.index].trim();				
-	
-								// If the data references a media file then process the attachement
-								if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
-									
-									File srcPathFile = mediaFiles.get(value);
-									if(srcPathFile != null) {
-										value = GeneralUtilityMethods.createAttachments(
-											value, 
-											srcPathFile, 
-											basePath, 
-											sIdent);
-									}
-									if(value.trim().length() == 0) {
-										value = null;
-									}
-								}
-								
-								if(col.type.equals("select")) {
-									String [] choices = value.split("\\s");
-									for(int k = 0; k < col.choices.size(); k++) {
-										String cVal = col.choices.get(k);
-										boolean hasChoice = false;
-										for(int l = 0; l < choices.length; l++) {
-											if(cVal.equals(choices[l])) {
-												hasChoice = true;
-												break;
-											}
-										}
-										if(hasChoice) {
-											pstmtInsert.setInt(index++, 1);
-										} else {
-											pstmtInsert.setInt(index++, 0);
-										}
-										
-									}
-								} else if(col.type.equals("int")) {
-									int iVal = 0;
-									try { iVal = Integer.parseInt(value);} catch (Exception e) {}
-									pstmtInsert.setInt(index++, iVal);
-								} else if(col.type.equals("decimal")) {
-									double dVal = 0.0;
-									try { dVal = Double.parseDouble(value);} catch (Exception e) {}
-									pstmtInsert.setDouble(index++, dVal);
-								} else if(col.type.equals("date")) {
-									Date dateVal = null;
-									try {
-										dateVal = Date.valueOf(value); 
-									} catch (Exception e) {
-										log.info("Error parsing date: " + col.columnName + " : " + value + " : " + e.getMessage());
-									}
-									pstmtInsert.setDate(index++, dateVal);
-								} else if(col.type.equals("dateTime")) {
-									Timestamp tsVal = null;
-									try {
-										java.util.Date uDate = dateFormatDT.parse(value);
-										tsVal = new Timestamp(uDate.getTime());
-									} catch (Exception e) {
-										log.info("Error parsing datetime: " + value + " : " + e.getMessage());
-									}
-									
-									pstmtInsert.setTimestamp(index++, tsVal);
-								} else {
-									pstmtInsert.setString(index++, value);
-								}
-								
-							}
-							
-							// Add the geopoint value if it exists
-							if(hasGeopoint) {
-								String lon = line[lonIndex];
-								String lat = line[latIndex];
-								if(lon == null) {
-									lon = "0.0";
-								}
-								if(lat == null) {
-									lat = "0.0";
-								}
-								pstmtInsert.setString(index++, lon);
-								pstmtInsert.setString(index++, lat);
-								
-							}
-							//log.info("Inserting row: " + pstmtInsert.toString());
-							pstmtInsert.executeUpdate();
-							
-					    }
-						results.commit();
-						
-					} else {
-						throw new Exception("No columns found that match questions in this form.");
-					}
-					
-				}	
-				
-
+				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+				tablePublished = tm.addUnpublishedColumns(sd, results, sId);			
+				if(tableChanged || tablePublished) {
+					tm.markPublished(sd, sId);		// only mark published if there have been changes made
+				}
 			}
+			
+			/*
+			 * Delete the existing data if requested
+			 */
+			results.setAutoCommit(false);
+			if(clear_existing) {
+				for(int i = 0; i < formList.size(); i++) {
+					
+					String sqlDeleteExisting = "truncate " + formList.get(i).table_name + ";";
+					if(pstmtDeleteExisting != null) try {pstmtDeleteExisting.close();} catch(Exception e) {}
+					pstmtDeleteExisting = results.prepareStatement(sqlDeleteExisting);
+					
+					log.info("Clearing results: " + pstmtDeleteExisting.toString());
+					pstmtDeleteExisting.executeUpdate();
+				}
+			}
+			
+			/*
+			 * Process the data files
+			 *   Identify forms
+			 *   Identify columns in forms
+			 */
+			for(int formIdx = 0; formIdx < formList.size(); formIdx++) {
+				System.out.println("Form file: " + formList.get(formIdx).name);
+				
+				FormDesc formDesc = formList.get(formIdx);
+				File f = formFileMap.get(formDesc.name);
+				
+				if(f != null) {
+					boolean isCSV = false;
+					if(f.getName().endsWith(".csv")) {
+						isCSV = true;
+					}
+					
+					xm.loadFormDataFromFile(results, 
+							pstmtGetCol, 
+							pstmtGetChoices, 
+							f, 
+							formDesc, 
+							sIdent,
+							mediaFiles,
+							isCSV);
+				} else {
+					log.info("No file of data for form: " + formDesc.name);
+				}
+			}				
+
+			
+			results.commit();
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
@@ -1424,11 +1258,12 @@ public class AllAssignments extends Application {
 			
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
-			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
-			try {if (pstmtGetTableNames != null) {pstmtGetTableNames.close();}} catch (SQLException e) {}
 			try {if (pstmtGetChoices != null) {pstmtGetChoices.close();}} catch (SQLException e) {}
+			try {if (pstmtDeleteExisting != null) {pstmtDeleteExisting.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", connectionSD);
+			try {results.setAutoCommit(true);} catch (SQLException e) {}
+			
+			SDDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", sd);
 			ResultsDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", results);
 		}
 		
@@ -1546,64 +1381,7 @@ public class AllAssignments extends Application {
 		return response;
 	}
 	
-	/*
-	 * Check to see if a question is in a form
-	 */
-	private Column getColumn(PreparedStatement pstmtGetCol, 
-			PreparedStatement pstmtGetChoices, 
-			String qName,
-			ArrayList<Column> columns) throws SQLException {
-		
-		Column col = null;
-		String geomCol = null;
-		
-		// Cater for lat, lon columns which map to a geopoint
-		if(qName.equals("lat") || qName.equals("lon")) {
-			geomCol = qName;
-			qName = "the_geom";
-		} 
-		
-		// Only add this question if it has not previously been added, questions can only be updated once in a single transaction
-		boolean questionExists = false;
-		for(Column haveColumn : columns) {
-			if(haveColumn.name.equals(qName)) {
-				questionExists = true;
-				break;
-			}
-		}
-		
-		if(!questionExists) {
-			pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
-			log.info("Get column: " + pstmtGetCol.toString());
-			ResultSet rs = pstmtGetCol.executeQuery();
-			if(rs.next()) {
-				// This column name is in the survey
-				col = new Column();
-				col.name = qName;
-				col.columnName = rs.getString("column_name");
-				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
-				col.type = rs.getString("qtype");
-				
-				if(col.type.startsWith("select")) {
-					
-					// Get choices for this select question
-					int qId = rs.getInt("q_id");
-					
-					col.choices = new ArrayList<String> ();
-					pstmtGetChoices.setInt(1, qId);
-					log.info("Get choices:" + pstmtGetChoices.toString());
-					ResultSet rsChoices = pstmtGetChoices.executeQuery();
-					while(rsChoices.next()) {
-						col.choices.add(rsChoices.getString("column_name"));
-					}
-				}
-			}
-		} else {
-			log.info("Already have column " + qName);
-		}
-		
-		return col;
-	}
+
 	
 	/*
 	 * Delete tasks
@@ -1818,6 +1596,40 @@ public class AllAssignments extends Application {
 		}
 		
 		return response;
+	}
+	
+	private FormDesc getFormDesc(String name, ArrayList<FormDesc> formList) {
+		FormDesc f = null;
+		
+		for(int i = 0; i < formList.size(); i++) {
+			if(name.equals(formList.get(i).name)) {
+				f = formList.get(i);
+				break;
+			}
+		}
+		return f;
+	}
+	
+	private HashMap<String, File> getFormFileMap(ExchangeManager xm, ArrayList<File> files, ArrayList<FormDesc> forms) throws Exception {
+		HashMap<String, File> formFileMap = new HashMap<String, File> ();
+		
+		for(int i = 0; i < files.size(); i++) {
+			File file = files.get(i);
+			String filename = file.getName();
+			
+			if(filename.endsWith(".csv")) {
+				int idx = filename.lastIndexOf('.');
+				String formName = filename.substring(0, idx);
+				formFileMap.put(formName, file);
+			} else {
+				FileInputStream fis = new FileInputStream(file);
+				ArrayList<String> formNames = xm.getFormsFromXLSX(fis);
+				for(int j = 0; j < formNames.size(); j++) {
+					formFileMap.put(formNames.get(j), file);
+				}
+			}
+		}
+		return formFileMap;
 	}
 }
 

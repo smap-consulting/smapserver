@@ -212,6 +212,7 @@ public class XLSResultsManager {
 		int dateForm = 0;
 		if(sId != 0) {
 			
+			PreparedStatement pstmt = null;
 			PreparedStatement pstmt2 = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtQType = null;
@@ -263,7 +264,7 @@ public class XLSResultsManager {
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
 
-				PreparedStatement  pstmt = sd.prepareStatement(sql);	
+				pstmt = sd.prepareStatement(sql);	
 				pstmt.setInt(1, sId);
 				ResultSet resultSet = pstmt.executeQuery();
 				
@@ -533,6 +534,7 @@ public class XLSResultsManager {
 			
 			} finally {
 				
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtQType != null) {pstmtQType.close();	}} catch (SQLException e) {	}
