@@ -31,6 +31,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
@@ -79,6 +80,7 @@ public class ExchangeManager {
 		String type;
 		String geomCol;
 		ArrayList<String> choices = null;
+		boolean write = true;
 		
 		Column(String h) {
 			humanName = h;
@@ -348,6 +350,7 @@ public class ExchangeManager {
 		
 		try {
 			
+			form.keyMap = new HashMap<Integer, Integer> ();
 			pstmtGetCol.setInt(1, form.f_id);		// Prepare the statement to get column names for the form
 			
 			String [] line;
@@ -362,7 +365,10 @@ public class ExchangeManager {
 			ArrayList<Column> columns = new ArrayList<Column> ();
 			if(line != null && line.length > 0) {
 				
-				// Assume first line is the header
+				/*
+				 * Get the columns in the file that are also in the form
+				 * Assume first line is the header
+				 */
 				for(int i = 0; i < line.length; i++) {
 					String colName = line[i].replace("'", "''");	// Escape apostrophes
 					
@@ -388,43 +394,49 @@ public class ExchangeManager {
 				
 				log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
 				
+				for(int i = 0; i < columns.size(); i++) {
+					System.out.println("Adding column: " + columns.get(i).name);
+				}
+				
 				if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
 								
 					/*
 					 * Create the insert statement
 					 */		
-					boolean moreThanOneCol = false;
-					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(parkey");
+					boolean addedCol = false;
+					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(");
 					if(form.parent == 0) {
-						sqlInsert.append(",instanceid");
+						sqlInsert.append("instanceid");
+						addedCol = true;
 					}
-					System.out.println("======= Form: " + form.name);
+					
 					for(int i = 0; i < columns.size(); i++) {
-						
-						System.out.println("Inserting column: " + columns.get(i).columnName + " : " + columns.get(i).type);
 						
 						Column col = columns.get(i);
 						
-						if(i > 0) {
-							moreThanOneCol = true;
-						}
-						sqlInsert.append(",");
-						if(col.type.equals("select")) {
-							for(int j = 0; j < col.choices.size(); j++) {
-								if(j > 0) {
+						if(col.write) {
+							if(col.type.equals("select")) {
+								for(int j = 0; j < col.choices.size(); j++) {
+									if(addedCol) {
+										sqlInsert.append(",");
+									}
+									sqlInsert.append(col.columnName + "__" + col.choices.get(j));
+									addedCol = true;
+								}
+							} else {
+								if(addedCol) {
 									sqlInsert.append(",");
 								}
-								sqlInsert.append(col.columnName + "__" + col.choices.get(j));
+								sqlInsert.append(col.columnName);
+								addedCol = true;
 							}
-						} else {
-							sqlInsert.append(col.columnName);
 						}
 	
 					}
 					
 					// Add the geopoint column if latitude and longitude were provided in the data file
 					if(lonIndex >= 0 && latIndex >= 0 ) {
-						if(moreThanOneCol) {
+						if(addedCol) {
 							sqlInsert.append(",");
 						}
 						hasGeopoint = true;
@@ -434,41 +446,52 @@ public class ExchangeManager {
 					/*
 					 * Add place holders for the data
 					 */
-					sqlInsert.append(") values(0"); 
+					addedCol = false;
+					sqlInsert.append(") values("); 
 					if(form.parent == 0) {
-						sqlInsert.append(",?");
+						sqlInsert.append("?");		// instanceid
+						addedCol = true;
 					}
 					for(int i = 0; i < columns.size(); i++) {
 						
 						Column col = columns.get(i);
 						
-						sqlInsert.append(",");
-						if(col.type.equals("select")) {
-							
-							for(int j = 0; j < col.choices.size(); j++) {
-								if(j > 0) {
+						if(col.write) {
+							if(col.type.equals("select")) {
+								
+								for(int j = 0; j < col.choices.size(); j++) {
+									if(addedCol) {
+										sqlInsert.append(",");
+									}	
+									sqlInsert.append("?");
+									addedCol = true;
+								}
+							} else if(col.type.equals("geoshape")) {
+								if(addedCol) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
+								addedCol = true;
+							} else {
+								if(addedCol) {
 									sqlInsert.append(",");
 								}
 								sqlInsert.append("?");
+								addedCol = true;
 							}
-						} else if(col.type.equals("geoshape")) {
-							sqlInsert.append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
-						} else {
-							sqlInsert.append("?");
 						}
 					}
 					
 					// Add the geometry value
 					if(hasGeopoint) {
-						if(moreThanOneCol) {
+						if(addedCol) {
 							sqlInsert.append(",");
 						}
 						sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
 					}
 					sqlInsert.append(");");
 					
-					pstmtInsert = results.prepareStatement(sqlInsert.toString());
-					System.out.println("Insert string: " + pstmtInsert.toString());
+					pstmtInsert = results.prepareStatement(sqlInsert.toString(), Statement.RETURN_GENERATED_KEYS);
 					
 					/*
 					 * Get the data
@@ -485,16 +508,34 @@ public class ExchangeManager {
 						}
 						
 						int index = 1;
+						int prikey = -1;
+						boolean writeRecord = true;
 						if(form.parent == 0) {
 							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
-						}
+						} 
 						
 						for(int i = 0; i < columns.size(); i++) {
 							Column col = columns.get(i);
-							String value = line[col.index].trim();				
+							String value = line[col.index].trim();	
 	
 							// If the data references a media file then process the attachement
-							if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
+							if(col.name.equals("prikey")) {
+								try { prikey = Integer.parseInt(value);} catch (Exception e) {}
+							} else if(col.name.equals("parkey")) {
+								if(form.parent == 0) {
+									pstmtInsert.setInt(index++, 0);
+								} else {
+									int parkey = -1;
+									try { parkey = Integer.parseInt(value);} catch (Exception e) {}
+									Integer newParKey = form.parentForm.keyMap.get(parkey);
+									if(newParKey == null) {
+										responseMsg.add("Parent record not found for record with parent key " + parkey + " in form " + form.name);
+										writeRecord = false;
+									} else {
+										pstmtInsert.setInt(index++, newParKey);
+									}
+								}
+							} else if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
 								
 								File srcPathFile = mediaFiles.get(value);
 								if(srcPathFile != null) {
@@ -504,12 +545,11 @@ public class ExchangeManager {
 										basePath, 
 										sIdent);
 								}
-								if(value.trim().length() == 0) {
+								if(value != null && value.trim().length() == 0) {
 									value = null;
 								}
-							}
-							
-							if(col.type.equals("select")) {
+								pstmtInsert.setString(index++, value);
+							} else if(col.type.equals("select")) {
 								String [] choices = value.split("\\s");
 								for(int k = 0; k < col.choices.size(); k++) {
 									String cVal = col.choices.get(k);
@@ -577,8 +617,16 @@ public class ExchangeManager {
 							pstmtInsert.setString(index++, lat);
 							
 						}
-						log.info("Inserting row: " + pstmtInsert.toString());
-						pstmtInsert.executeUpdate();
+						
+						if(writeRecord) {
+							log.info("Inserting row: " + pstmtInsert.toString());
+							pstmtInsert.executeUpdate();
+							ResultSet rs = pstmtInsert.getGeneratedKeys();
+							if(rs.next()) {
+								System.out.println("New key:  " + rs.getInt(1) + " for prikey: " + prikey);
+								form.keyMap.put(prikey, rs.getInt(1));
+							}
+						}
 						
 				    }
 					results.commit();
@@ -690,6 +738,7 @@ public class ExchangeManager {
 					parentForm.children = new ArrayList<FormDesc> ();
 				}
 				parentForm.children.add(fd);
+				fd.parentForm = parentForm;
 				formList.add(fd);
 				addChildren(fd,  forms, formList);
 			}
@@ -963,7 +1012,18 @@ public class ExchangeManager {
 		}
 		
 		if(!questionExists) {
-			if(qName.equals("User")) {
+			if(qName.equals("prikey")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "prikey";
+				col.type = "int";
+				col.write = false;					// Don't write the primary key a new one will be generated
+			} else if(qName.equals("parkey")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "parkey";
+				col.type = "int";
+			} if(qName.equals("User")) {
 				col = new Column();
 				col.name = qName;
 				col.columnName = "_user";
@@ -972,6 +1032,16 @@ public class ExchangeManager {
 				col = new Column();
 				col.name = qName;
 				col.columnName = "_s_id";
+				col.type = "int";
+			} else if(qName.equals("Survey Notes")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_survey_notes";
+				col.type = "int";
+			} else if(qName.equals("Location Trigger")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_location_trigger";
 				col.type = "int";
 			} else if(qName.equals("Upload Time")) {
 				col = new Column();
