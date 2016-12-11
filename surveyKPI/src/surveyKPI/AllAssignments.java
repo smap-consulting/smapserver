@@ -1012,7 +1012,12 @@ public class AllAssignments extends Application {
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 
 		// SQL to get a column name from the survey
-		String sqlGetCol = "select q_id, qname, column_name, qtype from question where f_id = ? and lower(qname) = ?";
+		String sqlGetCol = "select q_id, qname, column_name, qtype "
+				+ "from question "
+				+ "where f_id = ? "
+				+ "and lower(qname) = ? "
+				+ "and source is not null "
+				+ "and not soft_deleted";
 		PreparedStatement pstmtGetCol = null;
 		
 		// SQL to get choices for a select question
@@ -1033,6 +1038,7 @@ public class AllAssignments extends Application {
 		boolean clear_existing = false;
 		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
 		HashMap<String, File> formFileMap = null;
+		ArrayList<String> responseMsg = new ArrayList<String> ();
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		boolean superUser = false;
@@ -1210,6 +1216,24 @@ public class AllAssignments extends Application {
 				System.out.println("Form file: " + formList.get(formIdx).name);
 				
 				FormDesc formDesc = formList.get(formIdx);
+				/*
+				formDesc.columnList = GeneralUtilityMethods.getColumnsInForm(
+						sd,
+						results,
+						sId,
+						request.getRemoteUser(),
+						formDesc.parent,
+						formDesc.f_id,
+						formDesc.table_name,
+						false,		// Don't include Read Only
+						true,		// Include parent key
+						false,		// Don't include "bad" columns
+						false,		// Don't include instance id
+						true,		// Include other meta data
+						superUser,
+						false);
+						*/
+				
 				File f = formFileMap.get(formDesc.name);
 				
 				if(f != null) {
@@ -1225,14 +1249,21 @@ public class AllAssignments extends Application {
 							formDesc, 
 							sIdent,
 							mediaFiles,
-							isCSV);
+							isCSV,
+							responseMsg);
 				} else {
 					log.info("No file of data for form: " + formDesc.name);
 				}
 			}				
 
-			
 			results.commit();
+			
+			StringBuffer msg = new StringBuffer("");
+			for(int i = 0; i < responseMsg.size(); i++) {
+				msg.append(responseMsg.get(i));
+				msg.append("\n");
+			}
+			response = Response.status(Status.OK).entity(msg.toString()).build();
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);

@@ -159,6 +159,7 @@ public class ExchangeManager {
 					if(f.parent > 0) {
 						parentId = f.parent;
 					}
+					HashMap<String, String> selectMultipleColumnNames = new HashMap<String, String> ();
 					
 					// Get the list of table columns
 					f.columnList = GeneralUtilityMethods.getColumnsInForm(
@@ -185,9 +186,31 @@ public class ExchangeManager {
 						String name = c.name;
 						String qType = c.type;
 						String humanName = c.humanName;
+						boolean isSelectMultiple = false;
+						String selectMultipleQuestionName = null;
+						String optionName = null;
 						
-						addToHeader(sd, cols, "none", humanName, name, qType, false, sId, f,
-										false);
+						if(qType.equals("select")) {
+							isSelectMultiple = true;
+							selectMultipleQuestionName = c.question_name;
+							optionName = c.option_name;
+						}
+						
+						boolean skipSelectMultipleOption = false;
+						if(isSelectMultiple) {
+							humanName = selectMultipleQuestionName;
+							selMultChoiceNames.put(name, optionName);		// Add the name of sql column to a look up table for the get data stage
+							String n = selectMultipleColumnNames.get(humanName);
+							if(n != null) {
+								skipSelectMultipleOption = true;
+							} else {
+								selectMultipleColumnNames.put(humanName, humanName);		// Record that we have 
+							}
+						}
+						
+						if(!skipSelectMultipleOption) {
+							addToHeader(sd, cols, "none", humanName, name, qType, false, sId, f,true);
+						}
 								
 						
 						// Set the sql selection text for this column (Only need to do this once, not for every repeating record)	
@@ -309,7 +332,8 @@ public class ExchangeManager {
 			FormDesc form,
 			String sIdent,
 			HashMap<String, File> mediaFiles,
-			boolean isCSV
+			boolean isCSV,
+			ArrayList<String> responseMsg
 			) throws Exception {
 		
 		CSVReader reader = null;
@@ -357,6 +381,8 @@ public class ExchangeManager {
 							} else {
 								columns.add(col);
 							}
+						} else {
+							responseMsg.add("Column " + colName + " not found in form");
 						}
 					}
 				}
@@ -538,7 +564,7 @@ public class ExchangeManager {
 					results.commit();
 					
 				} else {
-					throw new Exception("No columns found that match questions in this form.");
+					responseMsg.add("No columns found in the data file that match questions in form " + form.name);
 				}
 				
 			}
@@ -691,21 +717,66 @@ public class ExchangeManager {
 			
 			int rowIndex = 1;
 			while (resultSet.next()) {	
-				System.out.println("----------- Row: " + rowIndex);
 				Row row = sheet.createRow(rowIndex);
+				
 				int colIndex = 0;	// Column index
+				String currentSelectMultipleQuestionName = null;
+				String multipleChoiceValue = null;
 				for(int i = 0; i < f.columnList.size(); i++) {
 					
-					System.out.println("      Col: " + colIndex);
 					TableColumn c = f.columnList.get(i);
 
 					String columnName = c.name;
 					String columnType = c.type;
 					String value = resultSet.getString(i + 1);
+					boolean writeValue = true;
 					
 					if(value == null) {
 						value = "";	
 					}
+					
+					System.out.println("---- " + value + " : " +  choiceNames.get(columnName) + " : " + multipleChoiceValue);
+					String choice = choiceNames.get(columnName);
+					if(choice != null) {
+						// Have to handle merge of select multiple
+						String selectMultipleQuestionName = columnName.substring(0, columnName.indexOf("__"));
+						if(currentSelectMultipleQuestionName == null) {
+							currentSelectMultipleQuestionName = selectMultipleQuestionName;
+							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							writeValue = false;
+						} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != f.columnList.size() - 1)) {
+							// Continuing on with the same select multiple and its not the end of the record
+							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							writeValue = false;
+						} else if (i == f.columnList.size() - 1) {
+							//  Its the end of the record		
+							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							value = multipleChoiceValue;
+						} else {
+							// A second select multiple directly after the first - write out the previous
+							value = multipleChoiceValue;
+					
+							// Restart process for the new select multiple
+							currentSelectMultipleQuestionName = selectMultipleQuestionName;
+							multipleChoiceValue = null;
+							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+						}
+					} else {
+						if(multipleChoiceValue != null) {
+							// Write out the previous multiple choice value before continuing with the non multiple choice value
+							ArrayList<String> values = getContent(sd, multipleChoiceValue, false, columnName, columnType);
+							for(int j = 0; j < values.size(); j++) {
+								writeValue(row, colIndex++, values.get(j), sheet, styles);
+							}
+							
+							// Restart Select Multiple Process
+							multipleChoiceValue = null;
+							currentSelectMultipleQuestionName = null;
+						}
+					}
+					
+					
+					
 					
 					if(c.isAttachment()) {
 						
@@ -731,9 +802,11 @@ public class ExchangeManager {
 						
 					}
 					
-					ArrayList<String> values = getContent(sd, value, false, columnName, columnType);
-					for(int j = 0; j < values.size(); j++) {
-						writeValue(row, colIndex++, values.get(j), sheet, styles);
+					if(writeValue) {
+						ArrayList<String> values = getContent(sd, value, false, columnName, columnType);
+						for(int j = 0; j < values.size(); j++) {
+							writeValue(row, colIndex++, values.get(j), sheet, styles);
+						}
 					}
 				}
 				rowIndex++;

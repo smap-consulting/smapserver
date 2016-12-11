@@ -1246,3 +1246,11 @@ span.selectProject
   width: 100%;
   height: 2px;
 }
+
+.alert-success {
+	background-color: #dff0d8;
+}
+
+.alert-danger {
+	background-color: #f2dede;
+}

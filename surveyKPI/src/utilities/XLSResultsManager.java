@@ -389,7 +389,7 @@ public class XLSResultsManager {
 								if(n != null) {
 									skipSelectMultipleOption = true;
 								} else {
-									selectMultipleColumnNames.put(humanName, humanName);
+									selectMultipleColumnNames.put(humanName, humanName);		// Record that we have 
 								}
 							}
 							
@@ -960,13 +960,13 @@ public class XLSResultsManager {
 							String selectMultipleQuestionName = columnName.substring(0, columnName.indexOf("__"));
 							if(currentSelectMultipleQuestionName == null) {
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
-								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 							} else if(currentSelectMultipleQuestionName.equals(selectMultipleQuestionName) && (i != f.columnList.size() - 1)) {
 								// Continuing on with the same select multiple and its not the end of the record
-								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 							} else if (i == f.columnList.size() - 1) {
 								//  Its the end of the record		
-								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 								
 								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 							} else {
@@ -976,7 +976,7 @@ public class XLSResultsManager {
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
 								multipleChoiceValue = null;
-								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+								multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 							}
 						} else {
 							if(multipleChoiceValue != null) {
@@ -1280,28 +1280,6 @@ public class XLSResultsManager {
 			coords = lonLat.split(" ");
 		}
 		return coords;
-	}
-	
-	/*
-	 * 
-	 */
-	String updateMultipleChoiceValue(String dbValue, String choiceName, String currentValue) {
-		boolean isSet = false;
-		String newValue = currentValue;
-		
-		if(dbValue.equals("1")) {
-			isSet = true;
-		}
-		
-		if(isSet) {
-			if(currentValue == null) {
-				newValue = choiceName;
-			} else {
-				newValue += " " + choiceName;
-			}
-		}
-		
-		return newValue;
 	}
 	
  

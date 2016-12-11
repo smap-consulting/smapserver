@@ -141,4 +141,26 @@ public class XLSUtilities {
         
         return style;
     }
+    
+	/*
+	 * Merge multiple choice values into a single value
+	 */
+	public static String updateMultipleChoiceValue(String dbValue, String choiceName, String currentValue) {
+		boolean isSet = false;
+		String newValue = currentValue;
+		
+		if(dbValue.equals("1")) {
+			isSet = true;
+		}
+		
+		if(isSet) {
+			if(currentValue == null) {
+				newValue = choiceName;
+			} else {
+				newValue += " " + choiceName;
+			}
+		}
+		
+		return newValue;
+	}
 }

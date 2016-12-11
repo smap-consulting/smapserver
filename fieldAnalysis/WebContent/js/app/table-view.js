@@ -185,8 +185,11 @@ function importData() {
 		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
-			  $('#load_data_popup').dialog("close");
-			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html();
+			  
+			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(data);
+			  if(!data || data.length === 0) {
+				  $('#load_data_popup').dialog("close");
+			  }
 			  refreshAnalysisData();
 		  },
 		  error: function(xhr, textStatus, err) {
