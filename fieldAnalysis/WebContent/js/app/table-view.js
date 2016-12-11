@@ -127,7 +127,7 @@ function setTableSurvey(view) {
 			zIndex: 2000,
 			buttons: [
 		        {
-		        	text: localise.set["c_cancel"],
+		        	text: localise.set["c_close"],
 		        	click: function() {
 		        		$(this).dialog("close");
 		        	}
@@ -181,15 +181,29 @@ function importData() {
 		  data: formData,
 		  cache: false,
           contentType: false,
+          dataType: "json",
           processData:false,
 		  url: url,
 		  success: function(data, status) {
 			  removeHourglass();
 			  
-			  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(data);
+			  var idx = -1,
+			  	h = [],
+			  	i;
+			  
 			  if(!data || data.length === 0) {
 				  $('#load_data_popup').dialog("close");
+			  } else {
+				  for(i = 0; i < data.length; i++) {
+					h[++idx] = '<ul>';
+					  	h[++idx] = '<li>';
+					  	h[++idx] = data[i];
+						h[++idx] = '</li>';
+					h[++idx] = '</ul>';
+				  }
+				  $('#load_tasks_alert').show().removeClass('alert-danger').addClass('alert-success').html(h.join(''));  
 			  }
+			  
 			  refreshAnalysisData();
 		  },
 		  error: function(xhr, textStatus, err) {

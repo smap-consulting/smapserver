@@ -366,25 +366,24 @@ public class ExchangeManager {
 				for(int i = 0; i < line.length; i++) {
 					String colName = line[i].replace("'", "''");	// Escape apostrophes
 					
-					if(!colName.equals("the_geom")) { // Cannot directly insert a geometry TODO add this capability
-						// If this column is in the survey then add it to the list of columns to be processed
-						Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns);
-						if(col != null) {
-							col.index = i;
-							if(col.geomCol != null) {
-								// Do not add the geom columns to the list of columns to be parsed
-								if(col.geomCol.equals("lon")) {
-									lonIndex = i;
-								} else if(col.geomCol.equals("lat")) {
-									latIndex = i;
-								}
-							} else {
-								columns.add(col);
+					// If this column is in the survey then add it to the list of columns to be processed
+					Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns, responseMsg);
+					if(col != null) {
+						col.index = i;
+						if(col.geomCol != null) {
+							// Do not add the geom columns to the list of columns to be parsed
+							if(col.geomCol.equals("lon")) {
+								lonIndex = i;
+							} else if(col.geomCol.equals("lat")) {
+								latIndex = i;
 							}
 						} else {
-							responseMsg.add("Column " + colName + " not found in form");
+							columns.add(col);
 						}
+					} else {
+						responseMsg.add("Column " + colName + " not found in form: " + form.name);  
 					}
+
 				}
 				
 				log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
@@ -395,8 +394,14 @@ public class ExchangeManager {
 					 * Create the insert statement
 					 */		
 					boolean moreThanOneCol = false;
-					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(parkey,instanceid");
+					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(parkey");
+					if(form.parent == 0) {
+						sqlInsert.append(",instanceid");
+					}
+					System.out.println("======= Form: " + form.name);
 					for(int i = 0; i < columns.size(); i++) {
+						
+						System.out.println("Inserting column: " + columns.get(i).columnName + " : " + columns.get(i).type);
 						
 						Column col = columns.get(i);
 						
@@ -417,7 +422,7 @@ public class ExchangeManager {
 	
 					}
 					
-					// Add the geometry column if latitude and longitude were provided in the csv
+					// Add the geopoint column if latitude and longitude were provided in the data file
 					if(lonIndex >= 0 && latIndex >= 0 ) {
 						if(moreThanOneCol) {
 							sqlInsert.append(",");
@@ -426,7 +431,13 @@ public class ExchangeManager {
 						sqlInsert.append("the_geom");
 					}
 					
-					sqlInsert.append(") values(0, ?"); 
+					/*
+					 * Add place holders for the data
+					 */
+					sqlInsert.append(") values(0"); 
+					if(form.parent == 0) {
+						sqlInsert.append(",?");
+					}
 					for(int i = 0; i < columns.size(); i++) {
 						
 						Column col = columns.get(i);
@@ -440,6 +451,8 @@ public class ExchangeManager {
 								}
 								sqlInsert.append("?");
 							}
+						} else if(col.type.equals("geoshape")) {
+							sqlInsert.append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
 						} else {
 							sqlInsert.append("?");
 						}
@@ -455,6 +468,7 @@ public class ExchangeManager {
 					sqlInsert.append(");");
 					
 					pstmtInsert = results.prepareStatement(sqlInsert.toString());
+					System.out.println("Insert string: " + pstmtInsert.toString());
 					
 					/*
 					 * Get the data
@@ -471,7 +485,9 @@ public class ExchangeManager {
 						}
 						
 						int index = 1;
-						pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
+						if(form.parent == 0) {
+							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
+						}
 						
 						for(int i = 0; i < columns.size(); i++) {
 							Column col = columns.get(i);
@@ -519,6 +535,10 @@ public class ExchangeManager {
 								double dVal = 0.0;
 								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
 								pstmtInsert.setDouble(index++, dVal);
+							} else if(col.type.equals("boolean")) {
+								boolean bVal = false;
+								try { bVal = Boolean.parseBoolean(value);} catch (Exception e) {}
+								pstmtInsert.setBoolean(index++, bVal);
 							} else if(col.type.equals("date")) {
 								Date dateVal = null;
 								try {
@@ -735,7 +755,6 @@ public class ExchangeManager {
 						value = "";	
 					}
 					
-					System.out.println("---- " + value + " : " +  choiceNames.get(columnName) + " : " + multipleChoiceValue);
 					String choice = choiceNames.get(columnName);
 					if(choice != null) {
 						// Have to handle merge of select multiple
@@ -922,7 +941,8 @@ public class ExchangeManager {
 	private Column getColumn(PreparedStatement pstmtGetCol, 
 			PreparedStatement pstmtGetChoices, 
 			String qName,
-			ArrayList<Column> columns) throws SQLException {
+			ArrayList<Column> columns,
+			ArrayList<String> responseMsg) throws SQLException {
 		
 		Column col = null;
 		String geomCol = null;
@@ -943,33 +963,60 @@ public class ExchangeManager {
 		}
 		
 		if(!questionExists) {
-			pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
-			log.info("Get column: " + pstmtGetCol.toString());
-			ResultSet rs = pstmtGetCol.executeQuery();
-			if(rs.next()) {
-				// This column name is in the survey
+			if(qName.equals("User")) {
 				col = new Column();
 				col.name = qName;
-				col.columnName = rs.getString("column_name");
-				col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
-				col.type = rs.getString("qtype");
-				
-				if(col.type.startsWith("select")) {
+				col.columnName = "_user";
+				col.type = "string";
+			} else if(qName.equals("Survey Name")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_s_id";
+				col.type = "int";
+			} else if(qName.equals("Upload Time")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_upload_time";
+				col.type = "dateTime";
+			} else if(qName.equals("Version")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_version";
+				col.type = "int";
+			} else if(qName.equals("Complete")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_complete";
+				col.type = "boolean";
+			} else {
+				pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
+				log.info("Get column: " + pstmtGetCol.toString());
+				ResultSet rs = pstmtGetCol.executeQuery();
+				if(rs.next()) {
+					// This column name is in the survey
+					col = new Column();
+					col.name = qName;
+					col.columnName = rs.getString("column_name");
+					col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
+					col.type = rs.getString("qtype");
 					
-					// Get choices for this select question
-					int qId = rs.getInt("q_id");
-					
-					col.choices = new ArrayList<String> ();
-					pstmtGetChoices.setInt(1, qId);
-					log.info("Get choices:" + pstmtGetChoices.toString());
-					ResultSet rsChoices = pstmtGetChoices.executeQuery();
-					while(rsChoices.next()) {
-						col.choices.add(rsChoices.getString("column_name"));
+					if(col.type.startsWith("select")) {
+						
+						// Get choices for this select question
+						int qId = rs.getInt("q_id");
+						
+						col.choices = new ArrayList<String> ();
+						pstmtGetChoices.setInt(1, qId);
+						log.info("Get choices:" + pstmtGetChoices.toString());
+						ResultSet rsChoices = pstmtGetChoices.executeQuery();
+						while(rsChoices.next()) {
+							col.choices.add(rsChoices.getString("column_name"));
+						}
 					}
 				}
 			}
 		} else {
-			log.info("Already have column " + qName);
+			responseMsg.add("Column " + qName + " was included twice");
 		}
 		
 		return col;

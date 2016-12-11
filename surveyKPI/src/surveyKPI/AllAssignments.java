@@ -1258,12 +1258,9 @@ public class AllAssignments extends Application {
 
 			results.commit();
 			
-			StringBuffer msg = new StringBuffer("");
-			for(int i = 0; i < responseMsg.size(); i++) {
-				msg.append(responseMsg.get(i));
-				msg.append("\n");
-			}
-			response = Response.status(Status.OK).entity(msg.toString()).build();
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			
+			response = Response.status(Status.OK).entity(gson.toJson(responseMsg)).build();
 				
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
