@@ -215,7 +215,7 @@ public class ExchangeManager {
 						}
 								
 						
-						// Set the sql selection text for this column (Only need to do this once, not for every repeating record)	
+						// Set the sql selection text for this column
 						String selName = null;
 						if(c.isGeometry()) {
 							selName = "ST_AsTEXT(" + name + ") ";
@@ -471,6 +471,13 @@ public class ExchangeManager {
 									sqlInsert.append(",");
 								}
 								sqlInsert.append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
+								addedCol = true;
+								
+							} else if(col.type.equals("geotrace")) {
+								if(addedCol) {
+									sqlInsert.append(",");
+								}
+								sqlInsert.append("ST_GeomFromText('LINESTRING(' || ? || ')', 4326)");
 								addedCol = true;
 							} else {
 								if(addedCol) {
@@ -822,12 +829,13 @@ public class ExchangeManager {
 							value = multipleChoiceValue;
 						} else {
 							// A second select multiple directly after the first - write out the previous
+							String newMultipleChoiceValue = value;
 							value = multipleChoiceValue;
 					
 							// Restart process for the new select multiple
 							currentSelectMultipleQuestionName = selectMultipleQuestionName;
 							multipleChoiceValue = null;
-							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
+							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(newMultipleChoiceValue, choice, multipleChoiceValue);
 						}
 					} else {
 						if(multipleChoiceValue != null) {
