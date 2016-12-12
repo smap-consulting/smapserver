@@ -79,7 +79,13 @@ define([
 		    .call(config.xAxis);
 	
 		if(chart.fn === "avgdurn") {
-			labelId = "d_sec";
+			if(chart.scale === "seconds") {
+				labelId = "d_sec";
+			} else if(chart.scale === "minutes") {
+				labelId = "d_min";
+			} else {
+				label_id = "d_hour";
+			}
 		} else {
 			labelId = chart.fn;
 		}

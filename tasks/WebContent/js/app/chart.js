@@ -350,7 +350,8 @@ define([
 		} else if (chart.fn === "avgdurn") {   
 			var i, j,
 				data = [],
-				dc;
+				dc,
+				maxValue;
 			
 			data = d3.nest()
 			  .key(function(d) { return d[chart.group]; })
@@ -363,6 +364,22 @@ define([
 				  });   	
 			  })
 			  .entries(results);
+			
+			maxValue = d3.max(data, function(d) { return +d.value; });
+			console.log("Max value: " + maxValue);
+			if(maxValue < 120) {
+				chart.scale = "seconds";
+			} else if(maxValue >= 120 && maxValue < 120 * 60) {	// Between 2 minutes and 2 hours
+				data.forEach(function(d) {
+				      d.value = d.value / 60;
+				});
+				chart.scale = "minutes";
+			} else {
+				data.forEach(function(d) {
+				      d.value = d.value / 3600;
+				});
+				chart.scale = "hours";
+			}
 
 		} else {
 			data = d3.nest()
