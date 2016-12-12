@@ -983,7 +983,6 @@ public class AllAssignments extends Application {
 	 *   2) an XLSX file
 	 *   3) a ZIP file containing a CSV file and images
 	 *   4) a ZIP file containing an XLSX file and images
-	 * Deprecated. The XLSX load should be used
 	 */
 	@POST
 	@Path("/load")
@@ -1139,7 +1138,7 @@ public class AllAssignments extends Application {
 						if(ze.isDirectory()) {
 							zFile.mkdir();
 						} else {
-							if(zFileName.endsWith(".csv") || zFileName.endsWith(".xlsx")) {
+							if((zFileName.endsWith(".csv") || zFileName.endsWith(".xlsx")) && !zFileName.startsWith("~$")) {
 								// Data file
 								dataFiles.add(zFile);
 							} else {
@@ -1261,7 +1260,8 @@ public class AllAssignments extends Application {
 							sIdent,
 							mediaFiles,
 							isCSV,
-							responseMsg);
+							responseMsg,
+							basePath);
 				} else {
 					responseMsg.add("No file of data for form: " + formDesc.name);
 					log.info("No file of data for form: " + formDesc.name);

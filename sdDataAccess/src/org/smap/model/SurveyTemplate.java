@@ -664,7 +664,7 @@ public class SurveyTemplate {
 						". Each of these create a data base column (in total " + (fd.questions + fd.options) + ")" +
 						" and there is a maximum of " + MAX_COLUMNS +
 						" allowed. You will need to put some questions in a sub form. " +
-						"Refer to http://blog.smap.com.au/wp-admin/post.php?post=517&action=edit for details.");
+						"Refer to http://blog.smap.com.au/limits-number-questions-per-form/ for details.");
 			}
 
 		}

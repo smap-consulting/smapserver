@@ -70,7 +70,6 @@ public class ExchangeManager {
 	
 	Workbook wb = null;
 	boolean isXLSX = false;
-	String basePath = null;
 	
 	private class Column {
 		String humanName;
@@ -119,6 +118,7 @@ public class ExchangeManager {
 
 		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		surveyNames = new HashMap<String, String> ();
+		String basePath = null;
 		
 		String dateName = null;
 		int dateForm = 0;
@@ -336,7 +336,8 @@ public class ExchangeManager {
 			String sIdent,
 			HashMap<String, File> mediaFiles,
 			boolean isCSV,
-			ArrayList<String> responseMsg
+			ArrayList<String> responseMsg,
+			String basePath
 			) throws Exception {
 		
 		CSVReader reader = null;
@@ -537,7 +538,6 @@ public class ExchangeManager {
 							
 							String value = line[col.index].trim();	
 	
-							// If the data references a media file then process the attachment
 							if(col.name.equals("prikey")) {
 								try { prikey = Integer.parseInt(value);} catch (Exception e) {}
 							} else if(col.name.equals("parkey")) {
@@ -556,6 +556,7 @@ public class ExchangeManager {
 								}
 							} else if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
 								
+								// If the data references a media file then process the attachment
 								File srcPathFile = mediaFiles.get(value);
 								if(srcPathFile != null) {
 									value = GeneralUtilityMethods.createAttachments(
@@ -883,9 +884,7 @@ public class ExchangeManager {
 							currentSelectMultipleQuestionName = null;
 						}
 					}
-					
-					
-					
+
 					
 					if(c.isAttachment()) {
 						
