@@ -672,11 +672,13 @@ public class SurveyTemplate {
 	}
 	
 	/*
-	 * Method to check for duplicate names in each form
+	 * Method to check for duplicate names in a survey
 	 */
 	public ArrayList <String> duplicateNames() {
 		// Hashmap of form names each of which contains a hashmap of question in that form
-		HashMap <String, HashMap<String, String>> forms = new HashMap <String, HashMap<String, String>> ();
+		//HashMap <String, HashMap<String, String>> forms = new HashMap <String, HashMap<String, String>> ();
+		
+		HashMap<String, String> questionMap = new HashMap<String, String> ();
 		ArrayList<String> badNames = new ArrayList<String> ();
 		
 		List<Question> questionList = new ArrayList<Question>(questions.values());
@@ -691,18 +693,12 @@ public class SurveyTemplate {
 				fName = "_topLevelForm";
 			}
 			
-			HashMap<String, String> questionsInForm = forms.get(fName);
-			if(questionsInForm == null) {
-				questionsInForm = new HashMap<String, String> ();
-				forms.put(fName, questionsInForm);
-			}
-			String existingQuestion = questionsInForm.get(qName.trim().toLowerCase());
+			String existingQuestion = questionMap.get(qName.trim().toLowerCase());
 			if(existingQuestion != null) {
-				badNames.add(qName);
-				badNames.add(existingQuestion);
+				badNames.add(qName + " in forms(" + fName + "," + existingQuestion + ")");
 				System.out.println("Duplicate Question:" + qName + " in form:" + fName);
 			} else {
-				questionsInForm.put(qName.trim().toLowerCase(), qName);
+				questionMap.put(qName.trim().toLowerCase(), fName);
 			}
 			
 		}

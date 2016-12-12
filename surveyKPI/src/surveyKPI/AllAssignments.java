@@ -1224,9 +1224,9 @@ public class AllAssignments extends Application {
 			 *   Identify columns in forms
 			 */
 			for(int formIdx = 0; formIdx < formList.size(); formIdx++) {
-				System.out.println("Form file: " + formList.get(formIdx).name);
 				
 				FormDesc formDesc = formList.get(formIdx);
+				System.out.println("Form: " + formDesc.name);
 				/*
 				formDesc.columnList = GeneralUtilityMethods.getColumnsInForm(
 						sd,
@@ -1643,13 +1643,22 @@ public class AllAssignments extends Application {
 		HashMap<String, File> formFileMap = new HashMap<String, File> ();
 		
 		/*
-		 * If there is only one file then associate it with the main form
+		 * If there is only one csv file then associate it with the main form
 		 * This is to ensure backward compatability for versions prior to 16.12 which only allowed a single data file of any name to load the main form
 		 */
+		boolean allDone = false;
 		if(files.size() == 1) {
 			File file = files.get(0);
-			formFileMap.put("main", file);
-		} else {
+			if(file.getName().endsWith(".csv")) {
+				formFileMap.put("main", file);
+				allDone = true;
+			}
+		}
+		
+		/*
+		 * Otherwise associate forms with files
+		 */
+		if(!allDone) {
 			for(int i = 0; i < files.size(); i++) {
 				File file = files.get(i);
 				String filename = file.getName();

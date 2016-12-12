@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -142,6 +144,10 @@ public class TemplateUpload extends Application {
 		
 		try {
 		
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			/*
 			 * Parse the request
 			 */
@@ -307,8 +313,8 @@ public class TemplateUpload extends Application {
 			
 			// If there are duplicate question names in a form then throw an error
 			ArrayList<String> duplicateNames = null;
-			if((duplicateNames = model.duplicateNames()).size() > 0) {		
-				String mesg = "Error: The following question names are duplicates (only the first 63 characters are checked)";
+			if((duplicateNames = model.duplicateNames()).size() > 0) {	
+				String mesg = localisation.getString("up_dup_q") + ": ";
 				for(int i = 0; i < duplicateNames.size(); i++) {
 					if(i > 0) {
 						mesg += ", ";

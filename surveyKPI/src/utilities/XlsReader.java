@@ -40,6 +40,7 @@ public class XlsReader {
 		for(int i = 0; i <= lastCellNum; i++) {
             cell = row.getCell(i);
             if(cell != null) {
+            	cell.setCellType(Cell.CELL_TYPE_STRING); 
                 value = cell.getStringCellValue();
                 if(value == null) {
                 	value = "";
