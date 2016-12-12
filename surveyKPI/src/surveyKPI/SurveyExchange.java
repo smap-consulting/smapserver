@@ -121,6 +121,7 @@ public class SurveyExchange extends Application {
 					filePath,
 					superUser);
 			
+			System.out.println("Created "+ files.size() + "  exchange files");
 			/*
 			 * Save the images into the folder
 			 */

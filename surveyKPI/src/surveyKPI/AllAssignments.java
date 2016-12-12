@@ -1081,7 +1081,16 @@ public class AllAssignments extends Application {
 					
 					if(item.getSize() > 0) {
 					    contentType = item.getContentType();
-						fileName = String.valueOf(UUID.randomUUID());
+					    
+					    String ext = "";
+					    if(contentType.contains("zip")) {
+					    	ext = ".zip";
+					    } else if(contentType.contains("csv")) {
+					    	ext = ".csv";
+					    } else {
+					    	ext = ".xlsx";
+					    }
+						fileName = String.valueOf(UUID.randomUUID()) + ext;
 						
 						filePath = basePath + "/temp/" + fileName;
 					    savedFile = new File(filePath);
@@ -1109,7 +1118,7 @@ public class AllAssignments extends Application {
 			
 			// If this is a zip file extract the contents and set the path to the expanded data file that should be inside
 			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
-			if(contentType.contains("zip")) {
+			if(savedFile.getName().endsWith(".zip")) {
 				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
 				File zipFolder = new File(zipFolderPath);
 				if(!zipFolder.exists()) {
@@ -1155,13 +1164,15 @@ public class AllAssignments extends Application {
 		            zis.closeEntry();
 				}
 				zis.close();
-			} else if(!contentType.equals("text/csv")) {
-				// throw new Exception("only csv");
-				log.info("Potential Error: loading results from file with content type: " + contentType);
-			}
+			} else {
+				dataFiles.add(savedFile);
+			} 
 
 			for(int i = 0; i < formList.size(); i++) {
 				System.out.println("Form: " + formList.get(i).name);
+			}
+			for(int i = 0; i < dataFiles.size(); i++) {
+				System.out.println("File: " + dataFiles.get(i).getName());
 			}
 			
 			/*
@@ -1252,6 +1263,7 @@ public class AllAssignments extends Application {
 							isCSV,
 							responseMsg);
 				} else {
+					responseMsg.add("No file of data for form: " + formDesc.name);
 					log.info("No file of data for form: " + formDesc.name);
 				}
 			}				
@@ -1626,34 +1638,32 @@ public class AllAssignments extends Application {
 		return response;
 	}
 	
-	private FormDesc getFormDesc(String name, ArrayList<FormDesc> formList) {
-		FormDesc f = null;
-		
-		for(int i = 0; i < formList.size(); i++) {
-			if(name.equals(formList.get(i).name)) {
-				f = formList.get(i);
-				break;
-			}
-		}
-		return f;
-	}
 	
 	private HashMap<String, File> getFormFileMap(ExchangeManager xm, ArrayList<File> files, ArrayList<FormDesc> forms) throws Exception {
 		HashMap<String, File> formFileMap = new HashMap<String, File> ();
 		
-		for(int i = 0; i < files.size(); i++) {
-			File file = files.get(i);
-			String filename = file.getName();
-			
-			if(filename.endsWith(".csv")) {
-				int idx = filename.lastIndexOf('.');
-				String formName = filename.substring(0, idx);
-				formFileMap.put(formName, file);
-			} else {
-				FileInputStream fis = new FileInputStream(file);
-				ArrayList<String> formNames = xm.getFormsFromXLSX(fis);
-				for(int j = 0; j < formNames.size(); j++) {
-					formFileMap.put(formNames.get(j), file);
+		/*
+		 * If there is only one file then associate it with the main form
+		 * This is to ensure backward compatability for versions prior to 16.12 which only allowed a single data file of any name to load the main form
+		 */
+		if(files.size() == 1) {
+			File file = files.get(0);
+			formFileMap.put("main", file);
+		} else {
+			for(int i = 0; i < files.size(); i++) {
+				File file = files.get(i);
+				String filename = file.getName();
+				
+				if(filename.endsWith(".csv")) {
+					int idx = filename.lastIndexOf('.');
+					String formName = filename.substring(0, idx);
+					formFileMap.put(formName, file);
+				} else {
+					FileInputStream fis = new FileInputStream(file);
+					ArrayList<String> formNames = xm.getFormsFromXLSX(fis);
+					for(int j = 0; j < formNames.size(); j++) {
+						formFileMap.put(formNames.get(j), file);
+					}
 				}
 			}
 		}

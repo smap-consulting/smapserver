@@ -32,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
@@ -394,10 +395,6 @@ public class ExchangeManager {
 				
 				log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
 				
-				for(int i = 0; i < columns.size(); i++) {
-					System.out.println("Adding column: " + columns.get(i).name);
-				}
-				
 				if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
 								
 					/*
@@ -619,6 +616,28 @@ public class ExchangeManager {
 								}
 								
 								pstmtInsert.setTimestamp(index++, tsVal);
+							} else if(col.type.equals("time")) {
+								
+								int hour = 0;
+								int minute = 0;
+								int second = 0;
+								try {
+									String [] tVals = value.split(":");
+									if(tVals.length > 0) {
+										hour = Integer.parseInt(tVals[0]);
+									}
+									if(tVals.length > 1) {
+										minute = Integer.parseInt(tVals[1]);
+									}
+									if(tVals.length > 2) {
+										second = Integer.parseInt(tVals[2]);
+									}
+								} catch (Exception e) {
+									log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+								}
+								
+								Time tVal = new Time(hour, minute, second);
+								pstmtInsert.setTime(index++, tVal);
 							} else {
 								pstmtInsert.setString(index++, value);
 							}
