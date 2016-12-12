@@ -1027,7 +1027,8 @@ public class ExchangeManager {
 	/*
 	 * Check to see if a question is in a form
 	 */
-	private Column getColumn(PreparedStatement pstmtGetCol, 
+	private Column getColumn(
+			PreparedStatement pstmtGetCol, 
 			PreparedStatement pstmtGetChoices, 
 			String qName,
 			ArrayList<Column> columns,

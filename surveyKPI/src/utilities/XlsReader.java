@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -36,12 +37,12 @@ public class XlsReader {
 		Cell cell = null;
 		Row row = sheet.getRow(rowNum);
 		int lastCellNum = row.getLastCellNum();
-		
+		DataFormatter df = new DataFormatter();
+	
 		for(int i = 0; i <= lastCellNum; i++) {
             cell = row.getCell(i);
             if(cell != null) {
-            	cell.setCellType(Cell.CELL_TYPE_STRING); 
-                value = cell.getStringCellValue();
+                value = df.formatCellValue(cell);
                 if(value == null) {
                 	value = "";
                 }

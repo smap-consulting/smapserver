@@ -1272,6 +1272,7 @@ public class AllAssignments extends Application {
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			
+			responseMsg.add("Completed import");
 			response = Response.status(Status.OK).entity(gson.toJson(responseMsg)).build();
 				
 		} catch (AuthorisationException e) {
