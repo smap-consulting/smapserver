@@ -322,7 +322,7 @@ sudo apt-get install gdal-bin -y
 sudo apt-get install ttf-dejavu -y
 
 # Add a file containing the version number
-echo "161001" > ~/smap_version
+echo "161201" > ~/smap_version
 
 echo '##### 21. Deploy Smap'
 cd ../deploy

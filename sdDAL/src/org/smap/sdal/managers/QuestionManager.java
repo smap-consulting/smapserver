@@ -248,7 +248,7 @@ public class QuestionManager {
 				String infotextId = null;
 				for(Label l : q.labels) {
 					if(l.hint != null && l.hint.trim().length() > 0) {
-						infotextId = "question_" + columnName + ":hint";
+						infotextId = q.fId + "_question_" + columnName + ":hint";
 					}
 				}
 
@@ -258,7 +258,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(4, q.name );
 				pstmtInsertQuestion.setString(5, columnName);
 				pstmtInsertQuestion.setString(6, type );
-				pstmtInsertQuestion.setString(7, "question_" + columnName + ":label" );
+				pstmtInsertQuestion.setString(7, q.fId + "_question_" + columnName + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, source );
 				pstmtInsertQuestion.setString(10,  q.calculation);
@@ -279,7 +279,7 @@ public class QuestionManager {
 				
 				// Set the labels
 				if(q.name != null && q.name.trim().length() > 0) {
-					UtilityMethodsEmail.setLabels(sd, sId, "question_" + columnName, q.labels, "");
+					UtilityMethodsEmail.setLabels(sd, sId, q.fId + "_question_" + columnName, q.labels, "");
 				}
 				
 				// Update the survey manifest if this question references CSV files
@@ -298,7 +298,7 @@ public class QuestionManager {
 					pstmtForm = sd.prepareStatement(sqlForm);
 					pstmtForm.setInt(1, sId);
 					pstmtForm.setString(2, q.name);
-					pstmtForm.setString(3, "question_" + columnName + ":label");
+					pstmtForm.setString(3, q.fId + "_question_" + columnName + ":label");
 					pstmtForm.setString(4, tableName);
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id

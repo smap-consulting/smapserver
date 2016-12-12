@@ -1563,7 +1563,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetListId = null;
 		PreparedStatement pstmtListname = null;
 		PreparedStatement pstmtUpdateRepeat = null;
-		PreparedStatement pstmtUpdatePath = null;
+		PreparedStatement pstmtUpdateEndGroup = null;
 		PreparedStatement pstmtUpdateForm = null;
 		PreparedStatement pstmtUpdateColumnName = null;
 		PreparedStatement pstmtUpdateLabelRef = null;
@@ -1818,21 +1818,19 @@ public class SurveyManager {
 							
 
 							// 1. Get question details
-							pstmtUpdatePath = sd.prepareStatement(sqlGetQuestionDetails);
-							pstmtUpdatePath.setInt(1, ci.property.qId);
-							ResultSet rsPath = pstmtUpdatePath.executeQuery();
+							pstmtGetQuestionDetails = sd.prepareStatement(sqlGetQuestionDetails);
+							pstmtGetQuestionDetails.setInt(1, ci.property.qId);
+							ResultSet rsQuestionDetails = pstmtGetQuestionDetails.executeQuery();
 
-							if(rsPath.next()) {
-								fId = rsPath.getInt(1);
-								//currentPath = rsPath.getString(2);
-								qType = rsPath.getString(3);
-								qTextId = rsPath.getString(4);
-								infoTextId = rsPath.getString(5);
-								newTextId = "question_" + ci.property.newVal + ":label";
-								newHintId = "question_" + ci.property.newVal + ":hint";
-								//if(currentPath != null) {
-								//	newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + "/" + ci.property.newVal;
-								//}
+							if(rsQuestionDetails.next()) {
+								fId = rsQuestionDetails.getInt(1);
+
+								qType = rsQuestionDetails.getString(3);
+								qTextId = rsQuestionDetails.getString(4);
+								infoTextId = rsQuestionDetails.getString(5);
+								newTextId = fId + "_question_" + ci.property.newVal + ":label";
+								newHintId = fId + "_question_" + ci.property.newVal + ":hint";
+								
 							}
 							
 							// 2. Update column name
@@ -1875,14 +1873,14 @@ public class SurveyManager {
 										+ "where f_id = ? "
 										+ "and qtype = 'end group' " 
 										+ "and qname = ?";
-								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
-								pstmtUpdatePath = sd.prepareStatement(sqlUpdateEndGroup);
-								pstmtUpdatePath.setString(1,  ci.property.newVal + "_groupEnd");
-								pstmtUpdatePath.setInt(2,  fId);
-								pstmtUpdatePath.setString(3,  ci.property.oldVal + "_groupEnd");
 								
-								log.info("Updating group end name: " + pstmtUpdatePath.toString());
-								pstmtUpdatePath.executeUpdate();
+								pstmtUpdateEndGroup = sd.prepareStatement(sqlUpdateEndGroup);
+								pstmtUpdateEndGroup.setString(1,  ci.property.newVal + "_groupEnd");
+								pstmtUpdateEndGroup.setInt(2,  fId);
+								pstmtUpdateEndGroup.setString(3,  ci.property.oldVal + "_groupEnd");
+								
+								log.info("Updating group end name: " + pstmtUpdateEndGroup.toString());
+								pstmtUpdateEndGroup.executeUpdate();
 							}
 							
 							// 6. If this is a begin repeat, geopolygon or geolinestring (that is a form) then update the form specification
@@ -1896,36 +1894,12 @@ public class SurveyManager {
 								pstmtUpdateForm = sd.prepareStatement(sqlUpdateForm);
 								pstmtUpdateForm.setString(1,  ci.property.newVal);
 								pstmtUpdateForm.setString(2,  "s" + sId + "_" + ci.property.newVal);
-								//pstmtUpdateForm.setString(3,  currentPath);
-								//pstmtUpdateForm.setString(4,  newPath);
 								pstmtUpdateForm.setInt(3,  sId);
 								pstmtUpdateForm.setString(4,  ci.property.oldVal);
 								
 								log.info("Updating form name: " + pstmtUpdateForm.toString());
 								pstmtUpdateForm.executeUpdate();
 							}
-							
-							/*
-							if(currentPath != null && newPath != null) {
-								
-								// 7. Update all question paths with this path in them
-								String sqlUpdateQuestionPaths = "update question "
-									+ "set path = replace(path, ?, ?) "
-									+ "where q_id in "
-									+ "(select q_id from question where f_id in (select f_id from form where s_id = ?));";
-								
-								try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
-								pstmtUpdatePath = sd.prepareStatement(sqlUpdateQuestionPaths);
-								pstmtUpdatePath.setString(1,  currentPath);
-								pstmtUpdatePath.setString(2,  newPath);
-								pstmtUpdatePath.setInt(3, sId);
-								
-								log.info("Updating question paths: " + pstmtUpdatePath.toString());
-								pstmtUpdatePath.executeUpdate();
-								
-
-							}
-							*/
 							
 						}
 						log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
@@ -1953,7 +1927,6 @@ public class SurveyManager {
 			}
 			throw e;
 		} finally {
-			//try {if (pstmtProperty1 != null) {pstmtProperty1.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty2 != null) {pstmtProperty2.close();}} catch (SQLException e) {}
 			try {if (pstmtProperty3 != null) {pstmtProperty3.close();}} catch (SQLException e) {}
 			try {if (pstmtDependent != null) {pstmtDependent.close();}} catch (SQLException e) {}
@@ -1963,13 +1936,14 @@ public class SurveyManager {
 			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
 			try {if (pstmtListname != null) {pstmtListname.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateRepeat != null) {pstmtUpdateRepeat.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdatePath != null) {pstmtUpdatePath.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionDetails != null) {pstmtGetQuestionDetails.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateForm != null) {pstmtUpdateForm.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateColumnName != null) {pstmtUpdateColumnName.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateLabelRef != null) {pstmtUpdateLabelRef.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateHintRef != null) {pstmtUpdateHintRef.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateQuestion != null) {pstmtUpdateQuestion.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateEndGroup != null) {pstmtUpdateEndGroup.close();}} catch (SQLException e) {}
 		
 		}
 	

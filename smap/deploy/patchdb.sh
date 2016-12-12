@@ -175,6 +175,7 @@ sudo cp -r src/pyxform/pyxform/ /smap_bin
 sudo a2enmod headers
 
 sudo chown -R tomcat7 /smap_bin
+
 fi
 
 #####################################################################################
@@ -190,5 +191,5 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 # update version reference
-new_version="161101"
+new_version="161201"
 echo "$new_version" > ~/smap_version

@@ -211,7 +211,7 @@ public class ExchangeManager {
 						}
 						
 						if(!skipSelectMultipleOption) {
-							addToHeader(sd, cols, "none", humanName, name, qType, false, sId, f,true);
+							addToHeader(sd, cols, "none", humanName, name, qType, sId, f,true);
 						}
 								
 						
@@ -341,7 +341,7 @@ public class ExchangeManager {
 		CSVReader reader = null;
 		XlsReader xlsReader = null;
 		boolean hasGeopoint = false;
-		int lonIndex = -1;			// Column containing longitude TODO support multiple geometries
+		int lonIndex = -1;			// Column containing longitude
 		int latIndex = -1;			// Column containing latitude
 		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
@@ -452,6 +452,8 @@ public class ExchangeManager {
 						sqlInsert.append("?");		// instanceid
 						addedCol = true;
 					}
+					
+					
 					for(int i = 0; i < columns.size(); i++) {
 						
 						Column col = columns.get(i);
@@ -489,7 +491,7 @@ public class ExchangeManager {
 						}
 					}
 					
-					// Add the geometry value
+					// Add the geopoint value
 					if(hasGeopoint) {
 						if(addedCol) {
 							sqlInsert.append(",");
@@ -523,9 +525,22 @@ public class ExchangeManager {
 						
 						for(int i = 0; i < columns.size(); i++) {
 							Column col = columns.get(i);
+							
+							// ignore empty columns at end of line
+							if(col.index >= line.length) {
+								String v;
+								if(col.index == lonIndex || col.index == latIndex) {
+									v = "0.0";
+								} else {
+									v = null;
+								}
+								pstmtInsert.setString(index++, v);
+								continue;
+							}
+							
 							String value = line[col.index].trim();	
 	
-							// If the data references a media file then process the attachement
+							// If the data references a media file then process the attachment
 							if(col.name.equals("prikey")) {
 								try { prikey = Integer.parseInt(value);} catch (Exception e) {}
 							} else if(col.name.equals("parkey")) {
@@ -614,15 +629,15 @@ public class ExchangeManager {
 						if(hasGeopoint) {
 							String lon = line[lonIndex];
 							String lat = line[latIndex];
-							if(lon == null) {
+							if(lon == null || lon.length() == 0) {
 								lon = "0.0";
 							}
-							if(lat == null) {
+							if(lat == null || lat.length() == 0) {
 								lat = "0.0";
 							}
 							pstmtInsert.setString(index++, lon);
 							pstmtInsert.setString(index++, lat);
-							
+
 						}
 						
 						if(writeRecord) {
@@ -699,14 +714,13 @@ public class ExchangeManager {
 			String human_name, 
 			String colName, 
 			String qType, 
-			boolean split_locn, 
 			int sId, 
 			FormDesc f,
 			boolean merge_select_multiple) throws SQLException {
 		
-		if(split_locn && qType != null && qType.equals("geopoint")) {
-			cols.add(new Column("Latitude"));
-			cols.add(new Column("Longitude"));
+		if(qType != null && qType.equals("geopoint")) {
+			cols.add(new Column("lat"));
+			cols.add(new Column("lon"));
 		} else {
 			Column col = new Column(human_name);
 			if(qType.equals("image")) {
@@ -1031,7 +1045,12 @@ public class ExchangeManager {
 				col.name = qName;
 				col.columnName = "parkey";
 				col.type = "int";
-			} if(qName.equals("User")) {
+			} else if(qName.equals("Key")) {
+				col = new Column();
+				col.name = qName;
+				col.columnName = "_hrk";
+				col.type = "string";
+			} else if(qName.equals("User")) {
 				col = new Column();
 				col.name = qName;
 				col.columnName = "_user";
