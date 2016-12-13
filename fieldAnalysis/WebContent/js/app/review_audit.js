@@ -34,6 +34,8 @@ define(['jquery', 'jquery_ui', 'localise', 'common', 'globals'], function($, ui,
 
 $(document).ready(function() {
 	
+	localise.setlang();		// Localise HTML
+	
 	 /*
 	  * Get the user details so we have the default project
 	  * Then load the available projects for the user and load the surveys for the default project

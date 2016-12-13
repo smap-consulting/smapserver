@@ -34,7 +34,7 @@ var gTextValues,
 
 $(document).ready(function() {
 	
-	console.log("review");
+	localise.setlang();		// Localise HTML
 	 /*
 	  * Get the user details so we have the default project
 	  * Then load the available projects for the user and load the surveys for the default project
@@ -110,7 +110,7 @@ $(document).ready(function() {
 		
 		e.preventDefault();
 		if(targetHasChanged()) {
-			if (confirm("You have made some changes and not saved them, are you sure you want to refresh?")) {
+			if (confirm(localise.set["msg_refresh"])) {
 
 				getData();
 			}
@@ -124,7 +124,7 @@ $(document).ready(function() {
 	 */
 	window.onbeforeunload = function() {
 		if(targetHasChanged()) {
-			return "You have unsaved changes are you sure you want to leave?";
+			return localise.set["msg_leave"];
 		}
 	};
 });
@@ -133,19 +133,19 @@ function enableTextUpdate() {
 	 $('#text_update_popup').dialog(
 				{
 					autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-					title:"Update Text",
+					title: localise.set["rev_upd_text"],
 					show:"drop",
 					width: 350,
 					zIndex: 2000,
 					buttons: [
 				        {
-				        	text: "Cancel",
+				        	text: localise.set["c_cancel"],
 				        	click: function() {
 				        		
 				        		$(this).dialog("close");
 				        	}
 				        }, {
-				        	text: "Save",
+				        	text: localise.set["c_save"],
 				        	click: function() {
 				        		
 				        		// TODO only save if value has changed
@@ -167,7 +167,7 @@ function enableTextUpdate() {
 					        			newValue = $('#tu_new_text').val();
 					        		}
 					        		if(typeof newValue === "undefined" || newValue === "") {
-					        			alert("Please specify a new value");
+					        			alert(localise.set["msg_nv"]);
 					        			if(gHasSelect) {
 					        				$('#tu_existing_option').focus();
 					        			} else if (gHasText) {
@@ -210,13 +210,13 @@ function enableTextUpdate() {
 				        		}
 				        		
 				        		// Set description of change
-				        		gUpdate.description = "Replace text (" + gUpdate.valueFilter + ") in ";
+				        		gUpdate.description = localise.set["rev_rt"] + " (" + gUpdate.valueFilter + ") " + localise.set["c_in"] + " ";
 				        		gUpdate.description += gCountRecords;
 				        		if(optionSelected) {
-				        			gUpdate.description += " records with option (" + newValue + ") from question (";
+				        			gUpdate.description += " " + localise.set["rev_rc"] + " (" + newValue + ") " + localise.set["rev_fc"] + " (";
 				        			gUpdate.description += gRelevance[0].label + ")";
 				        		} else {
-				        			gUpdate.description += " records with (" + newValue + ")";
+				        			gUpdate.description += " " + localise.set["rev_rw"] + " (" + newValue + ")";
 				        		}
 				        		
 				        		// Create combined list of all items to be updated

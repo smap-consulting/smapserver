@@ -212,6 +212,8 @@ define({
 	"c_insert": "Insert",
 	"c_tz": "Time Zone",
 	"c_undef": "Not Defined",
+	"c_license": "License Number",
+	"c_in": "in",
 	
 	// File Types
 	"ft": "File Type",
@@ -282,6 +284,7 @@ define({
 	"msg_val_rh": "You must select a remote host",
 	"msg_val_u_id": "You must specify a user id",
 	"msg_val_pass": "You must specify a password",
+	"msg_nv": "Please specify a new value",
 	"msg_val_nm": "Name is required",
 	"msg_val_file": "A file must be selected",
 	"msg_val_let": "Name must start with a letter or underscore",
@@ -344,6 +347,8 @@ define({
 	"msg_nm": "No images, video, audio found",
 	"msg_pr": "Password has been reset",
 	"msg_es": "Email has been sent to",
+	"msg_refresh": "You have made some changes and not saved them, are you sure you want to refresh?",
+	"msg_leave": "You have made some changes and not saved them, are you sure you want to leave?",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -363,6 +368,9 @@ define({
     "t_cfe": "Create from existing data",
 	"t_ep": "Existing Project",
 	"t_es": "Existing Survey",
+	"t_ec": "Existing Choice",
+	"t_et": "Existing Text",
+	"t_nt": "New Text",
 	"t_ns": "New Survey",
 	"t_ft": "Filter Tasks",
 	"t_fq": "Filter by Question",
@@ -620,9 +628,24 @@ define({
 	"d_half": "50%",
 	"d_3qtr": "75%",
 	"d_full": "100%",
-	"d_sec": "Seconds" 	,
+	"d_sec": "Seconds",
+	"d_min": "Minutes",
+	"d_hour": "Hours",
 	"d_c_day": "Count by day",
 	"d_c_month": "Coount by month",
-	"d_c_year": "Count by year"
+	"d_c_year": "Count by year",
+	
+	// Review
+	"rev_upd_diff": "Update a different question to the source question",
+	"rev_q_upd": "Question to update",
+	"rev_text": "Text",
+	"rev_upd": "Update",
+	"rev_upd_t": "Update target question",
+	"rev_upd_text": "Update Text Questions",
+	"rev_rt": "Replace text",
+	"rev_rc": "records with choice",
+	"rev_fq": "from question",
+	"rev_rw": "records with"
+		
 		
 });

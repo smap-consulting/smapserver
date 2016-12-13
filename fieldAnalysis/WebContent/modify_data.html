@@ -46,33 +46,33 @@
 		<div class="rmm noPrint" data-menu-style = "minimal">
 			<!-- Menu Bar -->
 		<ul> 
-			<li><a href="/fieldAnalysis" title="Analysis">Analysis</a></li>
-			<li><a id="refreshMenu" href="#" title="Refresh">Refresh</a></li> 
-			<li><a href="/fieldAnalysis/review_audit.html" title="Review Data Modifications">Review Data Modifications</a></li>
+			<li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">analysis</span></a></li>
+			<li id="m_refresh"><a class="lang" data-lang="m_refresh" id="refreshMenu" href="#" title="Refresh">refresh</a></li> 
+			<li id="m_review"><a href="/fieldAnalysis/review_audit.html" title="Review Data Modifications"><span class="lang" data-lang="m_review">review</span></a></li>
 		</ul>
 		</div> 	<!-- End of menu -->
 	
 		<p style="clear: both;"></p>
 		<div id="header">
 			<div id="username"></div>
-			<div id="banner">Modify Data</div>
+			<div id="banner" class="lang" data-lang="m_modify">modify</div>
 		</div>
 	
 		<div id="main" role="main">
-			<p>Project:
+			<p><span class="lang" data-lang="c_project">project</span>:
 			<select class="project_list" id="project_name"></select>
-			Survey:
+			<span class="lang" data-lang="c_survey">survey</span>:
 			<select class="survey_select" id="survey_name"></select>
-			Language:
+			<span class="lang" data-lang="c_lang">language</span>:
 			<select class="language_select" id="language_name"></select>
-			Question:
+			<span class="lang" data-lang="c_question">question</span>:
 			<select id="text_name"></select>
 			</p>
 			<p>
-			Update a different question to the source question:
+			<span class="lang" data-lang="rev_upd_diff">Update different</span>:
 			<input type="checkbox" name="other_target" id="other_target_cb">
 			<span id="target_question_name_cont" style="display:none;">
-				Question to update:
+				<span class="lang" data-lang="rev_q_upd">question</span>:
 				<select id="target_question_name"></select>
 			</span>
 			</p>
@@ -81,10 +81,10 @@
 				<table class="tablesorter">
 					<thead>
 					<tr>
-						<th>Text</th>
-						<th>Count</th>
-						<th>Update</th>
-						<th class="review_update_other">Update target question</th>
+						<th class="lang" data-lang="rev_text">text</th>
+						<th class="lang" data-lang="count">count</th>
+						<th class="lang" data-lang="rev_upd">update</th>
+						<th class="lang review_update_other" data-lang="rev_upd_t">update question</th>
 					</tr>	
 					</thead>
 					<tbody>
@@ -94,18 +94,18 @@
 			
 	<!-- Popup to allow the user to select a new value for a text question -->
 	<div id="text_update_popup" style="display:none;">
-		<p>Modify "<span id=text_to_mod></span>" to:</p>
+		<p><span class="lang" data-lang="m_modify">modify</span> "<span id=text_to_mod></span>" <span class="lang" data-lang="c_to">to</span></p>
 		<ul>
 		</ul>
-		<label for="tu_reason">Reason: </label>
+		<label for="tu_reason"><span class="lang" data-lang="c_reason">reason</span></label>
 		<input type="text" id="tu_reason"><br/>
 		<div class="left_panel">
 			<form id="tu_edit_form">
-				<label class="tu_existing_option" for="tu_existing_option">Existing choice:</label>
+				<label class="lang tu_existing_option" data-lang="t_ec" for="tu_existing_option">choice</label>
 				<select class="tu_existing_option" id="tu_existing_option"></select>
-				<label class="tu_existing_text" for="tu_existing_text">Existing text: </label>
+				<label class="lang tu_existing_text" data-lang="t_et" for="tu_existing_text">text</label>
 				<select class="tu_existing_text" id="tu_existing_text"></select>
-				<label for="tu_new_text">New text: </label>
+				<label class="lang" data-lang="t_nt" for="tu_new_text">new text</label>
 				<input type="text" id="tu_new_text"><br/>
 			</form>	
 		</div>
@@ -122,18 +122,20 @@
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
-				<label for="me_name">Name</label>
+				<label for="me_name" data-lang="c_name" class="lang">Name</label>
 				<input type="text" id="me_name" required><br/>
-				<label for="me_email">Email</label>
+				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
+				<select class="language_select" id="me_language"></select><br/>
+				<label for="me_email" data-lang="c_email" class="lang">Email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
+					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
 					<input type="checkbox" id="reset_me_password"/><br/>
 				</span>
 				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
+					<label for="me_password" data-lang="c_password" class="lang">Password</label>
 					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
+					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
 					<input id="me_password_confirm" type="password"><br/>	
 				</span>		
 			</form>	
