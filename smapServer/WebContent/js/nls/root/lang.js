@@ -214,6 +214,7 @@ define({
 	"c_undef": "Not Defined",
 	"c_license": "License Number",
 	"c_in": "in",
+	"c_rev": "Reverse",
 	
 	// File Types
 	"ft": "File Type",
@@ -645,7 +646,15 @@ define({
 	"rev_rt": "Replace text",
 	"rev_rc": "records with choice",
 	"rev_fq": "from question",
-	"rev_rw": "records with"
+	"rev_rw": "records with",
+	"rev_rdm": "Review Data Modifications",
+	"rev_ci": "Change Id",
+	"rev_rb": "Reversed By",
+	"rev_rcn": "Reverse Change Number",
+	"rev_det": "Details for change number",
+	"rev_cq": "Changed Question",
+	"rev_sc": "Selcted Choice",
+	"rev_usc": "Un-Selected Choice"
 		
 		
 });

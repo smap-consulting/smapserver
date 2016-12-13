@@ -46,21 +46,21 @@
 		<div class="rmm noPrint" data-menu-style = "minimal">
 			<!-- Menu Bar -->
 		<ul> 
-			<li><a href="/fieldAnalysis" title="Analysis">Analysis</a></li>
-			<li><a href="/fieldAnalysis/modify_data.html" title="Modify Data">Modify Data</a></li>
+			<li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">analysis</span></a></li>
+			<li id="m_modify"><a class="lang" data-lang="m_modify" href="/fieldAnalysis/modify_data.html" title="Modify">modify</a></li>
 		</ul>
 		</div> 	<!-- End of menu -->
 	
 		<p style="clear: both;"></p>
 		<div id="header">
 			<div id="username"></div>
-			<div id="banner">Review Data Modifications</div>
+			<div id="banner" class="lang" data-lang="rev_rdm">review</div>
 		</div>
 	
 		<div id="main" role="main">
-			<p>Project:
+			<p><span class="lang" data-lang="c_project">project</span>:
 			<select class="project_list" id="project_name"></select>
-			Survey:
+			<span class="lang" data-lang="c_survey">survey</span>:
 			<select class="survey_select" id="survey_name"></select>
 			</p>
 			
@@ -68,13 +68,13 @@
 				<table class="tablesorter">
 					<thead>
 					<tr>
-						<th>Change Id</th>
-						<th>Reason</th>
-						<th>Description</th>
-						<th>Details</th>
-						<th>Changed By</th>
-						<th>Reversed By</th>
-						<th>Reverse</th>
+						<th class="lang" data-lang="rev_ci">change id</th>
+						<th class="lang" data-lang="c_reason">reason</th>
+						<th class="lang" data-lang="c_desc">description</th>
+						<th class="lang" data-lang="c_details">details</th>
+						<th class="lang" data-lang="u_chg">changed</th>
+						<th class="lang" data-lang="rev_rb">reversed</th>
+						<th class="lang" data-lang="c_rev">reverse</th>
 					</tr>	
 					</thead>
 					<tbody>
@@ -90,7 +90,6 @@
 	<!-- Popup to provide details of a changeset -->
 	<div id="details_popup" style="display:none;">
 		<h1></h1>
-		<p>Details:</p>
 		<ul>
 		</ul>
 	</div>
@@ -106,18 +105,20 @@
 	
 		<div class="left_panel">
 			<form id="me_edit_form">
-				<label for="me_name">Name</label>
+				<label for="me_name" data-lang="c_name" class="lang">Name</label>
 				<input type="text" id="me_name" required><br/>
-				<label for="me_email">Email</label>
+				<label for="me_language" data-lang="c_lang" class="lang">Language</label>
+				<select class="language_select" id="me_language"></select><br/>
+				<label for="me_email" data-lang="c_email" class="lang">Email</label>
 				<input type="text" id="me_email" pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"><br/>
 				<span id="reset_me_password_fields" style="display:none;">
-					<label for="reset_me_password">Reset Password</label>
+					<label for="reset_me_password" data-lang="c_r_p" class="lang">Reset Password</label>
 					<input type="checkbox" id="reset_me_password"/><br/>
 				</span>
 				<span id="password_me_fields" style="display:none;">
-					<label for="me_password">Password</label>
+					<label for="me_password" data-lang="c_password" class="lang">Password</label>
 					<input id="me_password" type="password"><br/>	
-					<label for="me_password_confirm">Confirm Password</label>
+					<label for="me_password_confirm" data-lang="c_c_p" class="lang">Confirm Password</label>
 					<input id="me_password_confirm" type="password"><br/>	
 				</span>		
 			</form>	

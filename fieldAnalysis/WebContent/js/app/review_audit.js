@@ -67,13 +67,13 @@ function enableDetails() {
 	 $('#details_popup').dialog(
 				{
 					autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-					title:"Change Details",
+					title: localise.set["c_details"],
 					show:"drop",
 					width: 350,
 					zIndex: 2000,
 					buttons: [
 				        {
-				        	text: "Close",
+				        	text: localise.set["c_close"],
 				        	click: function() {
 				        		
 				        		$(this).dialog("close");
@@ -88,19 +88,19 @@ function enableReversal() {
 	 $('#reversal_popup').dialog(
 				{
 					autoOpen: false, closeOnEscape:true, draggable:true, modal:true,
-					title:"Reverse Update",
+					title: localise.set["c_rev"],
 					show:"drop",
 					width: 350,
 					zIndex: 2000,
 					buttons: [
 				        {
-				        	text: "Cancel",
+				        	text: localise.set["c_cancel"],
 				        	click: function() {
 				        		
 				        		$(this).dialog("close");
 				        	}
 				        }, {
-				        	text: "Reverse Change",
+				        	text: localise.set["c_rev"],
 				        	click: function() {
 				        		addHourglass();
 				        		$.ajax({
@@ -184,7 +184,9 @@ function getAuditList(highlightCS) {
 				h[++idx] = '<td>';
 				h[++idx] = '<button class="details" type="button" value="';
 				h[++idx] = data[i].id;
-				h[++idx] = '">Details</button>';
+				h[++idx] = '">';
+				h[++idx] = localise.set["c_details"];
+				h[++idx] = '</button>';
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
 				h[++idx] = data[i].change_name;
@@ -205,7 +207,7 @@ function getAuditList(highlightCS) {
 			$('.reverse').button().click(function(e) {
 
 				gChangeset = $(this).val();
-				$('h1', '#reversal_popup').html("Reverse change number " + gChangeset);
+				$('h1', '#reversal_popup').html(localise.set["rev_rcn"] + " " + gChangeset);
 				$('#reversal_popup').dialog("open");
 			});
 			$('.reversed .reverse').prop("disabled", true);
@@ -213,7 +215,7 @@ function getAuditList(highlightCS) {
 			$('.details').button().click(function(e) {
 
 				gChangeset = $(this).val();
-				$('h1', '#details_popup').html("Details for change number " + gChangeset);
+				$('h1', '#details_popup').html(localise.set["rev_det"] + " " + gChangeset);
 				
 				$.ajax({
 					url: "/surveyKPI/review/" + globals.gCurrentSurvey + "/audit/details/" + gChangeset,
@@ -231,19 +233,27 @@ function getAuditList(highlightCS) {
 							h[++idx] = '<li>';
 							h[++idx] = '[';
 							h[++idx] = data[j].rId;
-							h[++idx] = '] Changed question: ';
+							h[++idx] = '] ';
+							h[++idx] = localise.set["rev_cq"];
+							h[++idx] = ' ';
 							h[++idx] = data[j].qname;
 							if(data[j].qtype === "select") {
+								h[++idx] = ' ';
 								if(data[j].set) {
-									h[++idx] = ' selected option: ';
+									h[++idx] = localise.set["rev_sc"];
 								} else {
-									h[++idx] = ' un-selected option: ';
+									h[++idx] = localise.set["rev_usc"];
 								}
+								h[++idx] = ' ';
 								h[++idx] = data[j].newValue;
 							} else {
-								h[++idx] = ' from "';
+								h[++idx] = ' ';
+								h[++idx] = localise.set["c_from"];
+								h[++idx] = ' "';
 								h[++idx] = data[j].oldValue;
-								h[++idx] = '" to "';
+								h[++idx] = '" ';
+								h[++idx] = localise.set["c_to"];
+								h[++idx] = ' "';
 								h[++idx] = data[j].newValue;
 								h[++idx] = '"';
 							}

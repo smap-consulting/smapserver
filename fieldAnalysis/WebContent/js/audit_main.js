@@ -16,10 +16,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-/*
- * Entry point for report list page
- */
-
 var gUserLocale = navigator.language;
 if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
@@ -27,6 +23,7 @@ if (Modernizr.localstorage) {
 
 requirejs.config({
     baseUrl: 'js/libs',
+    locale: gUserLocale,
     waitSeconds: 0,
     paths: {
      	app: '../app',
@@ -55,11 +52,10 @@ requirejs.config({
 require([
          'jquery', 
          'jquery_ui', 
-         'modernizr', 
          'rmm', 
          'common', 
          'globals',
          'localise', 
          'app/review_audit'
          
-         ], function($, jquery_ui, modernizr, rmm, common, globals, localise) {});
+         ], function($, jquery_ui, rmm, common, globals, localise) {});
