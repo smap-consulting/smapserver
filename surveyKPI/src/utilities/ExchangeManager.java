@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -337,7 +338,8 @@ public class ExchangeManager {
 			HashMap<String, File> mediaFiles,
 			boolean isCSV,
 			ArrayList<String> responseMsg,
-			String basePath
+			String basePath,
+			ResourceBundle localisation
 			) throws Exception {
 		
 		CSVReader reader = null;
@@ -375,7 +377,7 @@ public class ExchangeManager {
 					String colName = line[i].replace("'", "''");	// Escape apostrophes
 					
 					// If this column is in the survey then add it to the list of columns to be processed
-					Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns, responseMsg);
+					Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns, responseMsg, localisation);
 					if(col != null) {
 						col.index = i;
 						if(col.geomCol != null) {
@@ -389,7 +391,11 @@ public class ExchangeManager {
 							columns.add(col);
 						}
 					} else {
-						responseMsg.add("Column " + colName + " not found in form: " + form.name);  
+						responseMsg.add(
+								localisation.getString("imp_qn") +
+								" " + colName + " " +
+								localisation.getString("imp_nfi") +
+								": " + form.name);  
 					}
 
 				}
@@ -548,7 +554,11 @@ public class ExchangeManager {
 									try { parkey = Integer.parseInt(value);} catch (Exception e) {}
 									Integer newParKey = form.parentForm.keyMap.get(parkey);
 									if(newParKey == null) {
-										responseMsg.add("Parent record not found for record with parent key " + parkey + " in form " + form.name);
+										responseMsg.add(
+												localisation.getString("pk_nf") +
+												" " + parkey + " " +
+												localisation.getString("pk_if") +
+												" " + form.name);
 										writeRecord = false;
 									} else {
 										pstmtInsert.setInt(index++, newParKey);
@@ -674,7 +684,8 @@ public class ExchangeManager {
 					results.commit();
 					
 				} else {
-					responseMsg.add("No columns found in the data file that match questions in form " + form.name);
+					responseMsg.add(
+							localisation.getString("pk_nq") + " " + form.name);
 				}
 				
 			}
@@ -1032,7 +1043,9 @@ public class ExchangeManager {
 			PreparedStatement pstmtGetChoices, 
 			String qName,
 			ArrayList<Column> columns,
-			ArrayList<String> responseMsg) throws SQLException {
+			ArrayList<String> responseMsg,
+			ResourceBundle localisation
+			) throws SQLException {
 		
 		Column col = null;
 		String geomCol = null;
@@ -1132,7 +1145,11 @@ public class ExchangeManager {
 				}
 			}
 		} else {
-			responseMsg.add("Column " + qName + " was included twice");
+			responseMsg.add(
+					localisation.getString("mf_col") +
+					" " + qName + " " +
+					localisation.getString("imp_i2"));
+
 		}
 		
 		return col;
