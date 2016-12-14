@@ -46,8 +46,7 @@ define([
 		var barWidth,
 			width,
 			height,
-			margin,
-			labelId;
+			margin;
 	    
 		// Allow space for labels if needed
 		margin = {top: 40, right: 20, bottom: 60, left: 60};
@@ -78,22 +77,11 @@ define([
 		    .attr("transform", "translate(0," + height + ")")
 		    .call(config.xAxis);
 	
-		if(chart.fn === "avgdurn") {
-			if(chart.scale === "seconds") {
-				labelId = "d_sec";
-			} else if(chart.scale === "minutes") {
-				labelId = "d_min";
-			} else {
-				label_id = "d_hour";
-			}
-		} else {
-			labelId = chart.fn;
-		}
 		// Add y-axis label
-		config.svg.append("text")
+		config.ylabel = config.svg.append("text")
         	.attr("text-anchor", "middle")  
-        	.attr("transform", "translate("+ (margin.left/3) +","+(height/2)+")rotate(-90)")  
-        	.text(localise.set[labelId]);
+        	.attr("transform", "translate("+ (margin.left/3) +","+(height/2)+")rotate(-90)"); 
+       
 		
 		config.g.append("g")
 		    .attr("class", "axis axis--y")
@@ -110,7 +98,8 @@ define([
 		var barWidth,
 			width,
 			height,
-			margin;
+			margin,
+			labelId;
 		
 		// Allow space for labels if needed
 		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
@@ -142,6 +131,20 @@ define([
 				.attr("dx", "-.8em")
 	    		.attr("dy", ".15em")
 	    		.attr("transform", "rotate(-45)");
+		
+		
+		if(chart.fn === "avgdurn") {
+			if(chart.scale === "seconds") {
+				labelId = "d_sec";
+			} else if(chart.scale === "minutes") {
+				labelId = "d_min";
+			} else {
+				label_id = "d_hour";
+			}
+		} else {
+			labelId = chart.fn;
+		}
+		config.ylabel.text(localise.set[labelId]);
 		
 		var bars = config.g.selectAll(".bar").data(data, function(d) { return d.key; });
 		

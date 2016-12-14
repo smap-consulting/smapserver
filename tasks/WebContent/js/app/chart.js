@@ -347,7 +347,7 @@ define([
 				}
 			}
 
-		} else if (chart.fn === "avgdurn") {   
+		} else if (chart.fn === "avgdurn") { 
 			var i, j,
 				data = [],
 				dc,
@@ -367,9 +367,10 @@ define([
 			
 			maxValue = d3.max(data, function(d) { return +d.value; });
 			console.log("Max value: " + maxValue);
+			console.log(data);
 			if(maxValue < 120) {
 				chart.scale = "seconds";
-			} else if(maxValue >= 120 && maxValue < 120 * 60) {	// Between 2 minutes and 2 hours
+			} else if(maxValue >= 120 && maxValue < 7200) {	// Between 2 minutes and 2 hours
 				data.forEach(function(d) {
 				      d.value = d.value / 60;
 				});
