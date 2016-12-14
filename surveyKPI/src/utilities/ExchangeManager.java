@@ -913,8 +913,12 @@ public class ExchangeManager {
 						if (source.exists()) {
 							String newPath = dirPath + "/" + value;
 							File dest = new File(newPath);
-							FileUtils.copyFile(source, dest);				
-							files.add(new ExchangeFile(value, newPath));
+							try {
+								FileUtils.copyFile(source, dest);				
+								files.add(new ExchangeFile(value, newPath));
+							} catch (Exception e) {
+								log.info("Error: Failed to add file " + source + " to exchange export. " + e.getMessage());
+							}
 						} else {
 							log.info("Error: media file does not exist: " + attachmentPath);
 						}

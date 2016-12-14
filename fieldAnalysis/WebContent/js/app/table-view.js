@@ -109,10 +109,6 @@ function setTableSurvey(view) {
 	);
 	$('#download_edit, #download_pdf').button();
 	
-	// Enable the export and delete button
-	$selFoot.find('.tExport').button().off().click(function() {
-		exportTable($(this), view);
-	});
 	$selFoot.find('.tDelete').button().off().click(function() {
 		deleteAllTables(view.sId);
 	});
@@ -143,7 +139,8 @@ function setTableSurvey(view) {
 	);
 	
 	$selFoot.find('.tExport').button().off().click(function() {
-		downloadFile("/surveyKPI/surveyexchange/" + view.sId + "/" + view.sName);
+		var filename = cleanFileName(view.sName);
+		downloadFile("/surveyKPI/surveyexchange/" + view.sId + "/" + filename);
 	});
 	
 	$selFoot.find('.tImport').button().off().click(function() {
@@ -221,6 +218,9 @@ function importData() {
 	});
 }
 
+/*
+ * Export of table data as csv no longer supported
+ *
 function exportTable($this, view) {
 	
 	var tableName = "",
@@ -260,6 +260,7 @@ function exportTable($this, view) {
 	
 	
 }
+*/
 
 function deleteAllTables(sId) {
 	var msg = localise.set["msg_del_data"];
@@ -366,9 +367,11 @@ function setTableQuestion(view) {
 	}
 	
 	// Enable the export and hide the delete button
-	$selFoot.find('.tExport').button().click(function() {
-		exportTable($(this), view);
-	});
+	//$selFoot.find('.tExport').button().click(function() {
+	//	exportTable($(this), view);
+	//});
+	$selFoot.find('.tExport').hide();		// Export of table level data from question view no longer supported
+	$selFoot.find('.tImport').hide();
 	$selFoot.find('.tDelete').hide();
 	
 }
