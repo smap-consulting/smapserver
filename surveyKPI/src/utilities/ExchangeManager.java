@@ -983,11 +983,11 @@ public class ExchangeManager {
 			value = "";
 		}
 		
-		if(value.startsWith("POINT")) {
+		if(columnType.equals("geopoint")) {
 
 			String coords [] = getLonLat(value);
 
-			if(coords.length > 1) {
+			if(coords != null && coords.length > 1) { 
 				out.add(coords[1]);
 				out.add(coords[0]); 
 			} else {
