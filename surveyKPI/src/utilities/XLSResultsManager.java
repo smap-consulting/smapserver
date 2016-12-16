@@ -971,7 +971,7 @@ public class XLSResultsManager {
 								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, currentSelectMultipleQuestionName, "select", split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -979,9 +979,9 @@ public class XLSResultsManager {
 								multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 							}
 						} else {
-							if(multipleChoiceValue != null) {
+							if(currentSelectMultipleQuestionName != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.addAll(getContent(sd, multipleChoiceValue, false, columnName, columnType, split_locn));
+								record.addAll(getContent(sd, multipleChoiceValue, false, currentSelectMultipleQuestionName, "select", split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;

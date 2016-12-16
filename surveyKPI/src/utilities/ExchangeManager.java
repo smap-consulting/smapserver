@@ -883,17 +883,18 @@ public class ExchangeManager {
 							multipleChoiceValue = XLSUtilities.updateMultipleChoiceValue(newMultipleChoiceValue, choice, multipleChoiceValue);
 						}
 					} else {
-						if(multipleChoiceValue != null) {
-							// Write out the previous multiple choice value before continuing with the non multiple choice value
-							ArrayList<String> values = getContent(sd, multipleChoiceValue, false, columnName, columnType);
+						// Write out the previous multiple choice value before continuing with the non multiple choice value
+						if(currentSelectMultipleQuestionName != null) {
+							ArrayList<String> values = getContent(sd, multipleChoiceValue, false, 
+									currentSelectMultipleQuestionName, "select");
 							for(int j = 0; j < values.size(); j++) {
 								writeValue(row, colIndex++, values.get(j), sheet, styles);
 							}
-							
-							// Restart Select Multiple Process
-							multipleChoiceValue = null;
-							currentSelectMultipleQuestionName = null;
 						}
+						
+						// Restart Select Multiple Process
+						multipleChoiceValue = null;
+						currentSelectMultipleQuestionName = null;
 					}
 
 					

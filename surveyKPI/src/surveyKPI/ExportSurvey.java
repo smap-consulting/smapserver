@@ -942,7 +942,7 @@ public class ExportSurvey extends Application {
 								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
 							} else {
 								// A second select multiple directly after the first - write out the previous
-								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(sd, multipleChoiceValue, false, false, currentSelectMultipleQuestionName, "select", split_locn));
 								
 								// Restart process for the new select multiple
 								currentSelectMultipleQuestionName = selectMultipleQuestionName;
@@ -950,9 +950,9 @@ public class ExportSurvey extends Application {
 								multipleChoiceValue = updateMultipleChoiceValue(value, choice, multipleChoiceValue);
 							}
 						} else {
-							if(multipleChoiceValue != null) {
+							if(currentSelectMultipleQuestionName != null) {
 								// Write out the previous multiple choice value before continuing with the non multiple choice value
-								record.append(getContent(sd, multipleChoiceValue, false, false, columnName, columnType, split_locn));
+								record.append(getContent(sd, multipleChoiceValue, false, false, currentSelectMultipleQuestionName, "select", split_locn));
 								
 								// Restart Process
 								multipleChoiceValue = null;
