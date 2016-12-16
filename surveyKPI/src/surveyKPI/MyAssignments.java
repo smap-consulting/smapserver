@@ -171,7 +171,7 @@ public class MyAssignments extends Application {
 			@Context HttpServletRequest request, 
 			@FormParam("assignInput") String assignInput) {
 		
-		log.info("webserviceevent : updateTasksCredentials");
+		log.info("webserviceevent : updateAssignments");
 		return updateTasks(request, assignInput, request.getRemoteUser());
 	}
 	
